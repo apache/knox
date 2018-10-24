@@ -18,7 +18,7 @@ package org.apache.knox.gateway.shell.hbase.table.row;
 
 import org.apache.commons.codec.binary.Base64;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 public class InsertableColumn extends Column {
 
@@ -39,12 +39,12 @@ public class InsertableColumn extends Column {
     return time;
   }
 
-  public String encodedName() throws UnsupportedEncodingException {
-    return Base64.encodeBase64String( toURIPart().getBytes( "UTF-8" ) );
+  public String encodedName() {
+    return Base64.encodeBase64String( toURIPart().getBytes( StandardCharsets.UTF_8 ) );
   }
 
-  public String encodedValue() throws UnsupportedEncodingException {
+  public String encodedValue() {
     String stringValue = value.toString();
-    return Base64.encodeBase64String( stringValue.getBytes( "UTF-8" ) );
+    return Base64.encodeBase64String( stringValue.getBytes( StandardCharsets.UTF_8 ) );
   }
 }

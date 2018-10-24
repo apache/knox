@@ -212,11 +212,11 @@ public class BaseKeystoreService {
 
   protected void writeCertificateToFile( Certificate cert, final File file ) throws CertificateEncodingException, IOException {
     byte[] bytes = cert.getEncoded();
-    Base64 encoder = new Base64( 76, "\n".getBytes( "ASCII" ) );
+    Base64 encoder = new Base64( 76, "\n".getBytes( StandardCharsets.US_ASCII ) );
     try( final FileOutputStream out = new FileOutputStream( file ) ) {
-      out.write( "-----BEGIN CERTIFICATE-----\n".getBytes( "ASCII" ) );
-      out.write( encoder.encodeToString( bytes ).getBytes( "ASCII" ) );
-      out.write( "-----END CERTIFICATE-----\n".getBytes( "ASCII" ) );
+      out.write( "-----BEGIN CERTIFICATE-----\n".getBytes( StandardCharsets.US_ASCII ) );
+      out.write( encoder.encodeToString( bytes ).getBytes( StandardCharsets.US_ASCII ) );
+      out.write( "-----END CERTIFICATE-----\n".getBytes( StandardCharsets.US_ASCII ) );
     }
   }
 

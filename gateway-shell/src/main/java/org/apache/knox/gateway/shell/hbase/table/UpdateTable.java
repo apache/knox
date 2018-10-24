@@ -31,6 +31,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -89,7 +90,7 @@ public class UpdateTable {
 
           URIBuilder uri = uri( HBase.SERVICE_PATH, "/", tableName, "/schema" );
           HttpPost request = new HttpPost( uri.build() );
-          HttpEntity entity = new StringEntity( writer.toString(), ContentType.create( "text/xml", "UTF-8" ) );
+          HttpEntity entity = new StringEntity( writer.toString(), ContentType.create( "text/xml", StandardCharsets.UTF_8 ) );
           request.setEntity( entity );
 
           return new Response( execute( request ) );

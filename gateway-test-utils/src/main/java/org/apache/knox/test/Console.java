@@ -20,6 +20,7 @@ package org.apache.knox.test;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 public class Console {
 
@@ -30,11 +31,11 @@ public class Console {
   public void capture() throws UnsupportedEncodingException {
     oldErr = System.err;
     newErrBuf = new ByteArrayOutputStream();
-    newErr = new PrintStream( newErrBuf, false, "UTF-8" );
+    newErr = new PrintStream( newErrBuf, false, StandardCharsets.UTF_8.name() );
 
     oldOut = System.out; // I18N not required.
     newOutBuf = new ByteArrayOutputStream();
-    newOut = new PrintStream( newOutBuf, false, "UTF-8" );
+    newOut = new PrintStream( newOutBuf, false, StandardCharsets.UTF_8.name() );
 
     System.setErr( newErr );
     System.setOut( newOut );

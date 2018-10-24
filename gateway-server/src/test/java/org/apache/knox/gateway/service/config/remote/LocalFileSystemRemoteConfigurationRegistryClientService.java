@@ -26,6 +26,7 @@ import org.apache.knox.gateway.services.security.AliasService;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -173,7 +174,7 @@ public class LocalFileSystemRemoteConfigurationRegistryClientService implements 
 
             @Override
             public String getEntryData(String path) {
-                return getEntryData(path, "UTF-8");
+                return getEntryData(path, StandardCharsets.UTF_8.name());
             }
 
             @Override
@@ -197,7 +198,7 @@ public class LocalFileSystemRemoteConfigurationRegistryClientService implements 
 
             @Override
             public void createEntry(String path, String data) {
-                createEntry(path, data, "UTF-8");
+                createEntry(path, data, StandardCharsets.UTF_8.name());
             }
 
             @Override
@@ -216,7 +217,7 @@ public class LocalFileSystemRemoteConfigurationRegistryClientService implements 
 
             @Override
             public int setEntryData(String path, String data) {
-                setEntryData(path, data, "UTF-8");
+                setEntryData(path, data, StandardCharsets.UTF_8.name());
                 return 0;
             }
 

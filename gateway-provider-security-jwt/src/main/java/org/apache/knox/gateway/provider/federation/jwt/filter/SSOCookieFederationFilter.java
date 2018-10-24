@@ -35,6 +35,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 
 public class SSOCookieFederationFilter extends AbstractJWTFilter {
@@ -134,7 +135,7 @@ private String gatewayPath;
     /* We don't need redirect if this is a XHR request */
     if (request.getHeader(XHR_HEADER) != null && request.getHeader(XHR_HEADER)
         .equalsIgnoreCase(XHR_VALUE)) {
-      final byte[] data = error.getBytes("UTF-8");
+      final byte[] data = error.getBytes(StandardCharsets.UTF_8);
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
       response.setContentType(MimeTypes.Type.TEXT_PLAIN.toString());
       response.setContentLength(data.length);

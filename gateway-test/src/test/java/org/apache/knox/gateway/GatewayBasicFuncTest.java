@@ -81,7 +81,6 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
@@ -107,9 +106,6 @@ import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
 
 @Category( { VerifyTest.class, MediumTests.class } )
 public class GatewayBasicFuncTest {
-
-  private static final Charset UTF8 = Charset.forName("UTF-8");
-
   // Uncomment to cause the test to hang after the gateway instance is setup.
   // This will allow the gateway instance to be hit directly via some external client.
 //  @Test
@@ -1082,7 +1078,7 @@ public class GatewayBasicFuncTest {
         .content( driver.getResourceBytes( "hive/open-session-request.bin" ) )
         .contentType( "application/x-thrift" )
         .respond()
-        .characterEncoding( "UTF-8" )
+        .characterEncoding( StandardCharsets.UTF_8.name() )
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/open-session-result.bin" ) )
         .contentType( "application/x-thrift" );
@@ -1107,7 +1103,7 @@ public class GatewayBasicFuncTest {
         .content( driver.getResourceBytes( "hive/execute-set-fetch-output-serde-request.bin" ) )
         .contentType( "application/x-thrift" )
         .respond()
-        .characterEncoding( "UTF-8" )
+        .characterEncoding( StandardCharsets.UTF_8.name() )
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/execute-set-fetch-output-serde-result.bin" ) )
         .contentType( "application/x-thrift" );
@@ -1131,7 +1127,7 @@ public class GatewayBasicFuncTest {
         .content( driver.getResourceBytes( "hive/close-operation-1-request.bin" ) )
         .contentType( "application/x-thrift" )
         .respond()
-        .characterEncoding( "UTF-8" )
+        .characterEncoding( StandardCharsets.UTF_8.name() )
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/close-operation-1-result.bin" ) )
         .contentType( "application/x-thrift" );
@@ -1155,7 +1151,7 @@ public class GatewayBasicFuncTest {
         .content( driver.getResourceBytes( "hive/execute-set-server2-http-path-request.bin" ) )
         .contentType( "application/x-thrift" )
         .respond()
-        .characterEncoding( "UTF-8" )
+        .characterEncoding( StandardCharsets.UTF_8.name() )
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/execute-set-server2-http-path-result.bin" ) )
         .contentType( "application/x-thrift" );
@@ -1179,7 +1175,7 @@ public class GatewayBasicFuncTest {
         .content( driver.getResourceBytes( "hive/close-operation-2-request.bin" ) )
         .contentType( "application/x-thrift" )
         .respond()
-        .characterEncoding( "UTF-8" )
+        .characterEncoding( StandardCharsets.UTF_8.name() )
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/close-operation-2-result.bin" ) )
         .contentType( "application/x-thrift" );
@@ -1203,7 +1199,7 @@ public class GatewayBasicFuncTest {
         .content( driver.getResourceBytes( "hive/execute-set-server2-servermode-request.bin" ) )
         .contentType( "application/x-thrift" )
         .respond()
-        .characterEncoding( "UTF-8" )
+        .characterEncoding( StandardCharsets.UTF_8.name() )
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/execute-set-server2-servermode-result.bin" ) )
         .contentType( "application/x-thrift" );
@@ -1227,7 +1223,7 @@ public class GatewayBasicFuncTest {
         .content( driver.getResourceBytes( "hive/close-operation-3-request.bin" ) )
         .contentType( "application/x-thrift" )
         .respond()
-        .characterEncoding( "UTF-8" )
+        .characterEncoding( StandardCharsets.UTF_8.name() )
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/close-operation-3-result.bin" ) )
         .contentType( "application/x-thrift" );
@@ -1251,7 +1247,7 @@ public class GatewayBasicFuncTest {
         .content( driver.getResourceBytes( "hive/execute-set-security-authorization-enabled-request.bin" ) )
         .contentType( "application/x-thrift" )
         .respond()
-        .characterEncoding( "UTF-8" )
+        .characterEncoding( StandardCharsets.UTF_8.name() )
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/execute-set-security-authorization-enabled-result.bin" ) )
         .contentType( "application/x-thrift" );
@@ -1275,7 +1271,7 @@ public class GatewayBasicFuncTest {
         .content( driver.getResourceBytes( "hive/close-operation-4-request.bin" ) )
         .contentType( "application/x-thrift" )
         .respond()
-        .characterEncoding( "UTF-8" )
+        .characterEncoding( StandardCharsets.UTF_8.name() )
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/close-operation-4-result.bin" ) )
         .contentType( "application/x-thrift" );
@@ -1299,7 +1295,7 @@ public class GatewayBasicFuncTest {
         .content( driver.getResourceBytes( "hive/execute-create-table-request.bin" ) )
         .contentType( "application/x-thrift" )
         .respond()
-        .characterEncoding( "UTF-8" )
+        .characterEncoding( StandardCharsets.UTF_8.name() )
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/execute-create-table-result.bin" ) )
         .contentType( "application/x-thrift" );
@@ -1323,7 +1319,7 @@ public class GatewayBasicFuncTest {
         .content( driver.getResourceBytes( "hive/close-operation-5-request.bin" ) )
         .contentType( "application/x-thrift" )
         .respond()
-        .characterEncoding( "UTF-8" )
+        .characterEncoding( StandardCharsets.UTF_8.name() )
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/close-operation-5-result.bin" ) )
         .contentType( "application/x-thrift" );
@@ -1347,7 +1343,7 @@ public class GatewayBasicFuncTest {
         .content( driver.getResourceBytes( "hive/execute-select-from-table-request.bin" ) )
         .contentType( "application/x-thrift" )
         .respond()
-        .characterEncoding( "UTF-8" )
+        .characterEncoding( StandardCharsets.UTF_8.name() )
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/execute-select-from-table-result.bin" ) )
         .contentType( "application/x-thrift" );
@@ -1371,7 +1367,7 @@ public class GatewayBasicFuncTest {
         .content( driver.getResourceBytes( "hive/get-result-set-metadata-request.bin" ) )
         .contentType( "application/x-thrift" )
         .respond()
-        .characterEncoding( "UTF-8" )
+        .characterEncoding( StandardCharsets.UTF_8.name() )
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/get-result-set-metadata-result.bin" ) )
         .contentType( "application/x-thrift" );
@@ -1395,7 +1391,7 @@ public class GatewayBasicFuncTest {
         .content( driver.getResourceBytes( "hive/fetch-results-request.bin" ) )
         .contentType( "application/x-thrift" )
         .respond()
-        .characterEncoding( "UTF-8" )
+        .characterEncoding( StandardCharsets.UTF_8.name() )
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/fetch-results-result.bin" ) )
         .contentType( "application/x-thrift" );
@@ -1419,7 +1415,7 @@ public class GatewayBasicFuncTest {
         .content( driver.getResourceBytes( "hive/close-operation-6-request.bin" ) )
         .contentType( "application/x-thrift" )
         .respond()
-        .characterEncoding( "UTF-8" )
+        .characterEncoding( StandardCharsets.UTF_8.name() )
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/close-operation-6-result.bin" ) )
         .contentType( "application/x-thrift" );
@@ -1443,7 +1439,7 @@ public class GatewayBasicFuncTest {
         .content( driver.getResourceBytes( "hive/close-session-request.bin" ) )
         .contentType( "application/x-thrift" )
         .respond()
-        .characterEncoding( "UTF-8" )
+        .characterEncoding( StandardCharsets.UTF_8.name() )
         .status( HttpStatus.SC_OK )
         .content( driver.getResourceBytes( "hive/close-session-result.bin" ) )
         .contentType( "application/x-thrift" );
@@ -1491,7 +1487,7 @@ public class GatewayBasicFuncTest {
     MatcherAssert
         .assertThat(
             the( response.getBody().asString() ),
-            isEquivalentTo( the( driver.getResourceString( resourceName + ".xml", UTF8 ) ) ) );
+            isEquivalentTo( the( driver.getResourceString( resourceName + ".xml" ) ) ) );
     driver.assertComplete();
 
     driver.getMock( "WEBHBASE" )
@@ -1514,7 +1510,7 @@ public class GatewayBasicFuncTest {
     .when().get( driver.getUrl( "WEBHBASE" ) );
 
     MatcherAssert
-    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json", UTF8 ) ) );
+    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json") ) );
     driver.assertComplete();
 
     driver.getMock( "WEBHBASE" )
@@ -1524,7 +1520,7 @@ public class GatewayBasicFuncTest {
     .header( "Accept", "application/x-protobuf" )
     .respond()
     .status( HttpStatus.SC_OK )
-    .content( driver.getResourceString( resourceName + ".protobuf", UTF8 ), UTF8 )
+    .content( driver.getResourceString( resourceName + ".protobuf"), StandardCharsets.UTF_8 )
     .contentType( "application/x-protobuf" );
 
     given()
@@ -1534,7 +1530,7 @@ public class GatewayBasicFuncTest {
     .then()
     .statusCode( HttpStatus.SC_OK )
     .contentType( "application/x-protobuf" )
-    .body( is( driver.getResourceString( resourceName + ".protobuf", UTF8 ) ) )
+    .body( is( driver.getResourceString( resourceName + ".protobuf") ) )
     .when().get( driver.getUrl( "WEBHBASE" ) );
     driver.assertComplete();
     LOG_EXIT();
@@ -1641,7 +1637,7 @@ public class GatewayBasicFuncTest {
     MatcherAssert
         .assertThat(
             the(response.getBody().asString()),
-            isEquivalentTo(the(driver.getResourceString(resourceName + ".xml", UTF8))));
+            isEquivalentTo(the(driver.getResourceString(resourceName + ".xml"))));
     driver.assertComplete();
 
     driver.getMock("WEBHBASE")
@@ -1664,7 +1660,7 @@ public class GatewayBasicFuncTest {
     .when().get( driver.getUrl( "WEBHBASE" ) + path );
 
     MatcherAssert
-    .assertThat(response.getBody().asString(), sameJSONAs(driver.getResourceString(resourceName + ".json", UTF8)));
+    .assertThat(response.getBody().asString(), sameJSONAs(driver.getResourceString(resourceName + ".json")));
     driver.assertComplete();
 
     driver.getMock( "WEBHBASE" )
@@ -1929,7 +1925,7 @@ public class GatewayBasicFuncTest {
     MatcherAssert
     .assertThat(
         the(response.getBody().asString()),
-        isEquivalentTo(the(driver.getResourceString(resourceName + ".xml", UTF8))));
+        isEquivalentTo(the(driver.getResourceString(resourceName + ".xml"))));
     driver.assertComplete();
 
     driver.getMock( "WEBHBASE" )
@@ -1954,7 +1950,7 @@ public class GatewayBasicFuncTest {
     MatcherAssert
     .assertThat(
         the(response.getBody().asString()),
-        isEquivalentTo(the(driver.getResourceString(resourceName + ".xml", UTF8))));
+        isEquivalentTo(the(driver.getResourceString(resourceName + ".xml"))));
     driver.assertComplete();
 
     driver.getMock( "WEBHBASE" )
@@ -1977,7 +1973,7 @@ public class GatewayBasicFuncTest {
     .when().get( driver.getUrl( "WEBHBASE" ) + rowsWithKeyPath );
 
     MatcherAssert
-    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json", UTF8 ) ) );
+    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json") ) );
     driver.assertComplete();
 
     driver.getMock( "WEBHBASE" )
@@ -2000,7 +1996,7 @@ public class GatewayBasicFuncTest {
     .when().get( driver.getUrl( "WEBHBASE" ) + rowsWithKeyAndColumnPath );
 
     MatcherAssert
-    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json", UTF8 ) ) );
+    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json") ) );
     driver.assertComplete();
     LOG_EXIT();
   }
@@ -2059,7 +2055,7 @@ public class GatewayBasicFuncTest {
     MatcherAssert
     .assertThat(
         the(response.getBody().asString()),
-        isEquivalentTo(the(driver.getResourceString(tableDataResourceName + ".xml", UTF8))));
+        isEquivalentTo(the(driver.getResourceString(tableDataResourceName + ".xml"))));
     driver.assertComplete();
 
     //Delete scanner
@@ -2452,12 +2448,12 @@ public class GatewayBasicFuncTest {
     switch( contentType ) {
     case JSON:
       MatcherAssert.assertThat( response.getBody().asString(),
-          sameJSONAs( driver.getResourceString( resource, UTF8 ) ) );
+          sameJSONAs( driver.getResourceString( resource ) ) );
       break;
     case XML:
       MatcherAssert
       .assertThat( the( response.getBody().asString() ),
-          isEquivalentTo( the( driver.getResourceString( resource, UTF8 ) ) ) );
+          isEquivalentTo( the( driver.getResourceString( resource ) ) ) );
       break;
     default:
       break;
@@ -2807,12 +2803,12 @@ public class GatewayBasicFuncTest {
       switch( contentType ) {
       case JSON:
         MatcherAssert.assertThat( response.getBody().asString(),
-            sameJSONAs( driver.getResourceString( resource, UTF8 ) ) );
+            sameJSONAs( driver.getResourceString( resource ) ) );
         break;
       case XML:
         MatcherAssert
         .assertThat( the( response.getBody().asString() ),
-            isEquivalentTo(the(driver.getResourceString(resource, UTF8))) );
+            isEquivalentTo(the(driver.getResourceString(resource))) );
         break;
       default:
         break;
@@ -2931,7 +2927,7 @@ public class GatewayBasicFuncTest {
         .statusCode(HttpStatus.SC_OK)
         .when().get( gatewayPath );
 
-    Assert.assertEquals(response.getBody().asString(), driver.getResourceString( resourceName, UTF8 ) );
+    Assert.assertEquals(response.getBody().asString(), driver.getResourceString( resourceName ) );
     driver.assertComplete();
     LOG_EXIT();
   }
@@ -3057,7 +3053,7 @@ public class GatewayBasicFuncTest {
         .when().get( gatewayPath );
 
     MatcherAssert.assertThat(response.getBody().asString(),
-        sameJSONAs(driver.getResourceString(resourceName, UTF8)));
+        sameJSONAs(driver.getResourceString(resourceName)));
     driver.assertComplete();
     LOG_EXIT();
   }
@@ -3119,12 +3115,12 @@ public class GatewayBasicFuncTest {
     switch( contentType ) {
       case JSON:
         MatcherAssert.assertThat( response.getBody().asString(),
-            sameJSONAs( driver.getResourceString( resourceName, UTF8 ) ) );
+            sameJSONAs( driver.getResourceString( resourceName ) ) );
         break;
       case XML:
         MatcherAssert
             .assertThat( the( response.getBody().asString() ),
-                isEquivalentTo( the( driver.getResourceString( resourceName, UTF8 ) ) ) );
+                isEquivalentTo( the( driver.getResourceString( resourceName ) ) ) );
         break;
       default:
         break;
@@ -3185,12 +3181,12 @@ public class GatewayBasicFuncTest {
     switch( contentType ) {
       case JSON:
         MatcherAssert.assertThat( response.getBody().asString(),
-            sameJSONAs( driver.getResourceString( responseResource, UTF8 ) ) );
+            sameJSONAs( driver.getResourceString( responseResource ) ) );
         break;
       case XML:
         MatcherAssert
             .assertThat( the( response.getBody().asString() ),
-                isEquivalentTo( the( driver.getResourceString( responseResource, UTF8 ) ) ) );
+                isEquivalentTo( the( driver.getResourceString( responseResource ) ) ) );
         break;
       default:
         break;
@@ -3327,7 +3323,7 @@ public class GatewayBasicFuncTest {
         .when().get( gatewayPath );
 
     MatcherAssert.assertThat(response.getBody().asString(),
-        sameJSONAs(driver.getResourceString(resourceName, UTF8)));
+        sameJSONAs(driver.getResourceString(resourceName)));
     driver.assertComplete();
   }
 
@@ -3661,16 +3657,16 @@ public class GatewayBasicFuncTest {
     PrintStream out = System.out;
     InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
     final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-    System.setOut(new PrintStream(outContent, false, "UTF-8"));
+    System.setOut(new PrintStream(outContent, false, StandardCharsets.UTF_8.name()));
 
     String[] args = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", gatewayAddress.getHostName(),
         "--port", Integer.toString(gatewayAddress.getPort()), "--u", "kminder","--p", "kminder-password" };
     KnoxCLI cli = new KnoxCLI();
     cli.run(args);
 
-    assertThat(outContent.toString("UTF-8"), not(containsString("\"httpCode\": 401")));
-    assertThat( outContent.toString("UTF-8"), not(containsString("404")));
-    assertThat(outContent.toString("UTF-8"), not(containsString("403")));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), not(containsString("\"httpCode\": 401")));
+    assertThat( outContent.toString(StandardCharsets.UTF_8.name()), not(containsString("404")));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), not(containsString("403")));
     outContent.reset();
 
     setupResources();
@@ -3681,7 +3677,7 @@ public class GatewayBasicFuncTest {
 
     cli = new KnoxCLI();
     cli.run(args2);
-    assertThat(outContent.toString("UTF-8"), (containsString("Username and/or password not supplied. Expect HTTP 401 Unauthorized responses.")));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), (containsString("Username and/or password not supplied. Expect HTTP 401 Unauthorized responses.")));
     outContent.reset();
 
 
@@ -3690,7 +3686,7 @@ public class GatewayBasicFuncTest {
 
     cli = new KnoxCLI();
     cli.run(args3);
-    assertThat(outContent.toString("UTF-8").toLowerCase(Locale.ROOT),
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()).toLowerCase(Locale.ROOT),
         either(containsString("nodename nor servname provided")).or(containsString("name or service not known"))
             .or(containsString("//bad-host:0/")));
     outContent.reset();
@@ -3700,7 +3696,7 @@ public class GatewayBasicFuncTest {
 
     cli = new KnoxCLI();
     cli.run(args4);
-    assertThat(outContent.toString("UTF-8"), containsString("failed: Connection refused"));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("failed: Connection refused"));
     outContent.reset();
 
 
@@ -3709,7 +3705,7 @@ public class GatewayBasicFuncTest {
 
     cli = new KnoxCLI();
     cli.run(args5);
-    assertThat(outContent.toString("UTF-8"), containsString("--cluster argument is required"));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("--cluster argument is required"));
     outContent.reset();
 
 //    Reset the out content
@@ -3782,7 +3778,7 @@ public class GatewayBasicFuncTest {
         .respond()
         .status(HttpStatus.SC_OK)
         .contentType("application/json")
-        .characterEncoding("utf-8");
+        .characterEncoding(StandardCharsets.UTF_8.name());
 //            .content(driver.getResourceBytes(classLoaderResource + "." + type.toString().toLowerCase(Locale.ROOT)))
 //            .contentType(type.toString());
   }
@@ -3956,7 +3952,7 @@ public class GatewayBasicFuncTest {
         .when().get( driver.getUrl("WEBHDFS") + "/v1" + file + ( driver.isUseGateway() ? "" : "?user.name=" + user ) );
     if( response.getStatusCode() == HttpStatus.SC_OK ) {
       String actualContent = response.asString();
-      String thenedContent = driver.getResourceString( resource, Charset.forName("UTF-8") );
+      String thenedContent = driver.getResourceString( resource );
       assertThat( actualContent, Matchers.is(thenedContent) );
     }
     driver.assertComplete();
@@ -4394,7 +4390,7 @@ public class GatewayBasicFuncTest {
 
     HttpPost post = new HttpPost( url.toURI() );
 //      post.getParams().setParameter( "action", "start" );
-    StringEntity entity = new StringEntity( request, org.apache.http.entity.ContentType.create( "application/xml", "UTF-8" ) );
+    StringEntity entity = new StringEntity( request, org.apache.http.entity.ContentType.create( "application/xml", StandardCharsets.UTF_8.name() ) );
     post.setEntity( entity );
     post.setHeader( "X-XSRF-Header", "ksdjfhdsjkfhds" );
     HttpResponse response = client.execute( targetHost, post, context );

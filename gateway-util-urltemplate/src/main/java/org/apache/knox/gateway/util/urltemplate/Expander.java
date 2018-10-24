@@ -21,6 +21,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -262,7 +263,7 @@ public class Expander {
 
   private static void appendQueryPart(String part, StringBuilder builder) {
     try {
-      builder.append(URLEncoder.encode(part, "UTF-8"));
+      builder.append(URLEncoder.encode(part, StandardCharsets.UTF_8.name()));
     } catch ( UnsupportedEncodingException e ) {
       builder.append(part);
     }

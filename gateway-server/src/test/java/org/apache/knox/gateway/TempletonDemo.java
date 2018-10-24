@@ -33,7 +33,7 @@ import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 import java.net.URL;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,7 +59,7 @@ public class TempletonDemo {
     parameters.add( new BasicNameValuePair( "class", "org.apache.org.apache.hadoop.examples.WordCount" ) );
     parameters.add( new BasicNameValuePair( "arg", "wordcount/input" ) );
     parameters.add( new BasicNameValuePair( "arg", "wordcount/output" ) );
-    UrlEncodedFormEntity entity = new UrlEncodedFormEntity( parameters, Charset.forName( "UTF-8" ) );
+    UrlEncodedFormEntity entity = new UrlEncodedFormEntity( parameters, StandardCharsets.UTF_8 );
     HttpPost request = new HttpPost( url );
     request.setEntity( entity );
 

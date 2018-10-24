@@ -46,7 +46,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 import java.util.Enumeration;
@@ -249,7 +248,7 @@ public class UrlRewriteServletFilterTest {
     interaction.expect()
         .method( "PUT" )
         .requestUrl( "http://mock-host:1/test-output-path-1" )
-        .content( outputJson, Charset.forName( "UTF-8" ) );
+        .content( outputJson, StandardCharsets.UTF_8 );
     interaction.respond()
         .status( 200 );
     interactions.add( interaction );
@@ -281,7 +280,7 @@ public class UrlRewriteServletFilterTest {
     interaction.expect()
         .method( "PUT" )
         .requestUrl( "http://mock-host:1/test-output-path-1" )
-        .content( output, Charset.forName( "UTF-8" ) );
+        .content( output, StandardCharsets.UTF_8 );
     interaction.respond()
         .status( 200 );
     interactions.add( interaction );
@@ -314,7 +313,7 @@ public class UrlRewriteServletFilterTest {
     interaction.respond()
         .status( 200 )
         .contentType( "application/json" )
-        .content( input, Charset.forName( "UTF-8" ) );
+        .content( input, StandardCharsets.UTF_8 );
     interactions.add( interaction );
     request.setMethod( "PUT" );
     request.setURI( "/test-input-path" );
@@ -340,7 +339,7 @@ public class UrlRewriteServletFilterTest {
     interaction.expect()
         .method( "PUT" )
         .requestUrl( "http://mock-host:1/test-output-path-1" )
-        .content( output, Charset.forName( "UTF-8" ) );
+        .content( output, StandardCharsets.UTF_8 );
     interaction.respond()
         .status( 200 );
     interactions.add( interaction );
@@ -369,7 +368,7 @@ public class UrlRewriteServletFilterTest {
     interaction.expect()
         .method( "PUT" )
         .requestUrl( "http://mock-host:1/test-output-path-1" )
-        .content( expect, Charset.forName( "UTF-8" ) );
+        .content( expect, StandardCharsets.UTF_8 );
     interaction.respond()
         .status( 200 );
     interactions.add( interaction );
@@ -401,8 +400,8 @@ public class UrlRewriteServletFilterTest {
         .method( "PUT" )
         .requestUrl( "http://mock-host:42/test-output-path-2" )
         .contentType( "text/xml" )
-        .characterEncoding( "UTF-8" )
-        .content( expect, Charset.forName( "UTF-8" ) );
+        .characterEncoding( StandardCharsets.UTF_8.name() )
+        .content( expect, StandardCharsets.UTF_8 );
     interaction.respond()
         .status( 200 );
     interactions.add( interaction );
@@ -434,8 +433,8 @@ public class UrlRewriteServletFilterTest {
         .method( "PUT" )
         .requestUrl( "http://mock-host:42/test-output-path-1" )
         .contentType( "text/xml" )
-        .characterEncoding( "UTF-8" )
-        .content( expect, Charset.forName( "UTF-8" ) )
+        .characterEncoding( StandardCharsets.UTF_8.name() )
+        .content( expect, StandardCharsets.UTF_8 )
         .header( "Location", "http://mock-host:42/test-output-path-2" );
     interaction.respond()
         .status( 200 );
@@ -477,7 +476,7 @@ public class UrlRewriteServletFilterTest {
         .method( "PUT" )
         .requestUrl( "http://mock-host:42/test-output-path-1" )
         .contentType( "application/json" )
-        .content( expectJson, Charset.forName( "UTF-8" ) );
+        .content( expectJson, StandardCharsets.UTF_8 );
     interaction.respond()
         .status( 200 );
     interactions.add( interaction );
@@ -509,8 +508,8 @@ public class UrlRewriteServletFilterTest {
         .method( "PUT" )
         .requestUrl( "http://mock-host:42/test-output-path-1" )
         .contentType( "text/xml" )
-        .characterEncoding( "UTF-8" )
-        .content( expect, Charset.forName( "UTF-8" ) );
+        .characterEncoding( StandardCharsets.UTF_8.name() )
+        .content( expect, StandardCharsets.UTF_8 );
     interaction.respond()
         .status( 200 );
     interactions.add( interaction );
@@ -545,8 +544,8 @@ public class UrlRewriteServletFilterTest {
           .method( "PUT" )
           .requestUrl( "http://mock-host:42/test-output-path-1" )
           .contentType( "text/xml" )
-          .characterEncoding( "UTF-8" )
-          .content( expect, Charset.forName( "UTF-8" ) );
+          .characterEncoding( StandardCharsets.UTF_8.name() )
+          .content( expect, StandardCharsets.UTF_8 );
       interaction.respond()
           .status( 200 );
       interactions.add( interaction );
@@ -580,8 +579,8 @@ public class UrlRewriteServletFilterTest {
     interaction.expect()
         .method( "PUT" )
         .requestUrl( "http://mock-host:1/test-output-path-1" )
-        .content( expect, Charset.forName( "UTF-8" ) )
-        .characterEncoding( "UTF-8" );
+        .content( expect, StandardCharsets.UTF_8 )
+        .characterEncoding( StandardCharsets.UTF_8.name() );
     interaction.respond()
         .status( 200 );
     interactions.add( interaction );
@@ -612,7 +611,7 @@ public class UrlRewriteServletFilterTest {
         .method( "GET" )
         .requestUrl( "http://mock-host:42/test-output-path-1" );
     interaction.respond()
-        .content( output, Charset.forName( "UTF-8" ) )
+        .content( output, StandardCharsets.UTF_8 )
         .contentType( "text/xml" )
         .header( "Location", "http://mock-host:42/test-input-path-4" )
         .status( 307 );
@@ -657,7 +656,7 @@ public class UrlRewriteServletFilterTest {
         .requestUrl( "http://mock-host:42/test-output-path-1" );
     interaction.respond()
         .contentType( "application/json" )
-        .content( responseJson, Charset.forName( "UTF-8" ) )
+        .content( responseJson, StandardCharsets.UTF_8 )
         .status( 200 );
     interactions.add( interaction );
     request.setMethod( "GET" );
@@ -709,7 +708,7 @@ public class UrlRewriteServletFilterTest {
         .requestUrl( "http://mock-host:42/test-output-path-1" );
     interaction.respond()
         .contentType( "application/html" )
-        .content( responseHtml, Charset.forName( "UTF-8" ) )
+        .content( responseHtml, StandardCharsets.UTF_8 )
         .status( 200 );
     interactions.add( interaction );
     request.setMethod( "GET" );
@@ -738,7 +737,7 @@ public class UrlRewriteServletFilterTest {
         .method( "GET" )
         .requestUrl( "http://mock-host:42/test-output-path-1" );
     interaction.respond()
-        .content( output, Charset.forName( "UTF-8" ) )
+        .content( output, StandardCharsets.UTF_8 )
         .contentType( "text/xml" )
         .status( 200 );
     interactions.add( interaction );
@@ -789,7 +788,7 @@ public class UrlRewriteServletFilterTest {
                .requestUrl( "http://mock-host:42/test-output-path-1" );
     interaction.respond()
                .contentType( "application/html" )
-               .content( responseHtml, Charset.forName( "UTF-8" ) )
+               .content( responseHtml, StandardCharsets.UTF_8 )
                .status( 200 );
     interactions.add( interaction );
     request.setMethod( "GET" );
@@ -826,7 +825,7 @@ public class UrlRewriteServletFilterTest {
         .requestUrl( "http://mock-host:42/test-output-path-1" );
     interaction.respond()
         .contentType( "application/html" )
-        .content( responseHtml, Charset.forName( "UTF-8" ) )
+        .content( responseHtml, StandardCharsets.UTF_8 )
         .status( 200 );
     interactions.add( interaction );
     request.setMethod( "GET" );
@@ -867,7 +866,7 @@ public class UrlRewriteServletFilterTest {
     interaction.respond()
         .contentType( "application/html" )
         .header("Location", locationHeader )
-        .content( responseHtml, Charset.forName( "UTF-8" ) )
+        .content( responseHtml, StandardCharsets.UTF_8 )
         .status( 200 );
     interactions.add( interaction );
     request.setMethod( "GET" );
@@ -907,7 +906,7 @@ public class UrlRewriteServletFilterTest {
     interaction.respond()
         .contentType( "application/html" )
         .header("CustomHeader", customHeader )
-        .content( responseHtml, Charset.forName( "UTF-8" ) )
+        .content( responseHtml, StandardCharsets.UTF_8 )
         .status( 200 );
     interactions.add( interaction );
     request.setMethod( "GET" );
@@ -952,7 +951,7 @@ public class UrlRewriteServletFilterTest {
     interaction.expect().method("GET")
         .requestUrl("http://mock-host:42/test-output-path-1");
     interaction.respond().contentType("application/html")
-        .content(responseHtml, Charset.forName("UTF-8")).status(200);
+        .content(responseHtml, StandardCharsets.UTF_8).status(200);
     interactions.add(interaction);
     request.setMethod("GET");
     request.setURI("/test-input-path");

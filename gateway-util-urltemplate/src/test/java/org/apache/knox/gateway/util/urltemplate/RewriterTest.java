@@ -27,6 +27,7 @@ import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,8 +42,8 @@ import java.io.UnsupportedEncodingException;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 @Category( { UnitTests.class, FastTests.class } )
 public class RewriterTest {
@@ -360,7 +361,7 @@ public class RewriterTest {
 
     Map<String, String> actualInputParameters = this.getParameters( actualInput.toURL());
     Map<String, String> actualOutputParameters = this.getParameters( actualOutput.toURL());
-    assertTrue( actualInputParameters.equals(actualOutputParameters));
+    assertEquals(actualInputParameters, actualOutputParameters);
 
   }
 
@@ -369,8 +370,8 @@ public class RewriterTest {
     final String[] pairs = url.getQuery().split("&");
     for (String pair : pairs) {
        final int idx = pair.indexOf("=");
-       final String key = idx > 0 ? URLDecoder.decode(pair.substring(0, idx), "UTF-8") : pair;
-       final String value = idx > 0 && pair.length() > idx + 1 ? URLDecoder.decode(pair.substring(idx + 1), "UTF-8") : "";
+       final String key = idx > 0 ? URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8.name()) : pair;
+       final String value = idx > 0 && pair.length() > idx + 1 ? URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8.name()) : "";
        parameter_pairs.put(key, value);
     }
     return parameter_pairs;

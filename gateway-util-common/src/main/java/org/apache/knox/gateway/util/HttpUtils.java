@@ -19,6 +19,7 @@ package org.apache.knox.gateway.util;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -30,19 +31,19 @@ public class HttpUtils {
 
   public static Map<String, List<String>> splitQuery(String queryString)
       throws UnsupportedEncodingException {
-    final Map<String, List<String>> queryPairs = new HashMap<String, List<String>>();
+    final Map<String, List<String>> queryPairs = new HashMap<>();
     if (queryString == null || queryString.trim().isEmpty()) {
       return queryPairs;
     }
     final String[] pairs = queryString.split("&");
     for (String pair : pairs) {
-      final int idx = pair.indexOf("=");
-      final String key = idx > 0 ? URLDecoder.decode(pair.substring(0, idx), "UTF-8") : pair;
+      final int idx = pair.indexOf('=');
+      final String key = idx > 0 ? URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8.name()) : pair;
       if (!queryPairs.containsKey(key)) {
         queryPairs.put(key, new ArrayList<String>());
       }
       final String value = idx > 0 && pair.length() > idx + 1 
-          ? URLDecoder.decode(pair.substring(idx + 1), "UTF-8") : "";
+          ? URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8.name()) : "";
       queryPairs.get(key).add(value);
     }
     return queryPairs;
@@ -97,7 +98,7 @@ public class HttpUtils {
   private static final String urlDecodeUtf8( String s ) {
     if( s != null ) {
       try {
-        s = URLDecoder.decode( s, "UTF-8" );
+        s = URLDecoder.decode( s, StandardCharsets.UTF_8.name() );
       } catch( UnsupportedEncodingException e ) {
         // Ignore it.
       }

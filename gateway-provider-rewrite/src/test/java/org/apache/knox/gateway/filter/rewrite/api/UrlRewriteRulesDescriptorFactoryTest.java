@@ -31,6 +31,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.containsString;
@@ -75,18 +76,17 @@ public class UrlRewriteRulesDescriptorFactoryTest {
 
   private static InputStream getTestResourceStream( String name ) throws IOException {
     URL url = getTestResourceUrl( name );
-    InputStream stream = url.openStream();
-    return stream;
+    return url.openStream();
   }
 
-  private static Reader getTestResourceReader( String name, String charset ) throws IOException {
-    return new InputStreamReader( getTestResourceStream( name ), charset );
+  private static Reader getTestResourceReader( String name) throws IOException {
+    return new InputStreamReader( getTestResourceStream( name ), StandardCharsets.UTF_8 );
   }
 
   @Test
   public void testLoadMissingFile() throws IOException {
     try {
-      UrlRewriteRulesDescriptorFactory.load( "xml", getTestResourceReader( "missing.xml", "UTF-8" ) );
+      UrlRewriteRulesDescriptorFactory.load( "xml", getTestResourceReader( "missing.xml" ) );
       fail( "Should have thrown a FileNotFoundException." );
     } catch ( FileNotFoundException e ) {
       assertThat( e.getMessage(), containsString( "missing.xml" ) );
@@ -99,7 +99,7 @@ public class UrlRewriteRulesDescriptorFactoryTest {
     Level level = logger.getLevel();
     try {
       logger.setLevel( org.apache.log4j.Level.OFF );
-      UrlRewriteRulesDescriptorFactory.load( "xml", getTestResourceReader( "empty.xml", "UTF-8" ) );
+      UrlRewriteRulesDescriptorFactory.load( "xml", getTestResourceReader( "empty.xml" ) );
       fail( "Should have thrown an IOException." );
     } catch ( IOException e ) {
       // Expected.
@@ -116,7 +116,7 @@ public class UrlRewriteRulesDescriptorFactoryTest {
     Level level = logger.getLevel();
     try {
       logger.setLevel( org.apache.log4j.Level.OFF );
-      UrlRewriteRulesDescriptorFactory.load( "xml", getTestResourceReader( "invalid.xml", "UTF-8" ) );
+      UrlRewriteRulesDescriptorFactory.load( "xml", getTestResourceReader( "invalid.xml" ) );
       fail( "Should have thrown an IOException." );
     } catch ( IOException e ) {
       // Expected.
@@ -130,21 +130,21 @@ public class UrlRewriteRulesDescriptorFactoryTest {
   @Test
   public void testLoadNoopFile() throws IOException {
     UrlRewriteRulesDescriptor config =
-        UrlRewriteRulesDescriptorFactory.load( "xml", getTestResourceReader( "noop.xml", "UTF-8" ) );
+        UrlRewriteRulesDescriptorFactory.load( "xml", getTestResourceReader( "noop.xml" ) );
     assertThat( "Rules should be an empty list.", config.getRules().isEmpty(), Matchers.is( true ) );
   }
 
   @Test
   public void testLoadSimpleFile() throws IOException {
     UrlRewriteRulesDescriptor config =
-        UrlRewriteRulesDescriptorFactory.load( "xml", getTestResourceReader( "simple.xml", "UTF-8" ) );
+        UrlRewriteRulesDescriptorFactory.load( "xml", getTestResourceReader( "simple.xml" ) );
     assertThat( "Failed to load simple config file.", config, notNullValue() );
   }
 
   @Test
   public void testLoadSimpleFilterFile() throws IOException {
     UrlRewriteRulesDescriptor config =
-        UrlRewriteRulesDescriptorFactory.load( "xml", getTestResourceReader( "filter-simple.xml", "UTF-8" ) );
+        UrlRewriteRulesDescriptorFactory.load( "xml", getTestResourceReader( "filter-simple.xml" ) );
     List<UrlRewriteFilterDescriptor> filters = config.getFilters();
     assertThat( filters.size(), is( 1 ) );
     UrlRewriteFilterDescriptor filter = config.getFilter( "test-filter-1" );
@@ -155,7 +155,7 @@ public class UrlRewriteRulesDescriptorFactoryTest {
   @Test
   public void testLoadStoreCompleteFilterFile() throws IOException {
     UrlRewriteRulesDescriptor config =
-        UrlRewriteRulesDescriptorFactory.load( "xml", getTestResourceReader( "filter-complete.xml", "UTF-8" ) );
+        UrlRewriteRulesDescriptorFactory.load( "xml", getTestResourceReader( "filter-complete.xml" ) );
 
     List<UrlRewriteFilterDescriptor> filters = config.getFilters();
     assertThat( filters.size(), is( 1 ) );

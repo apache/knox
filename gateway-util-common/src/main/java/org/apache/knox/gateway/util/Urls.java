@@ -20,6 +20,7 @@ package org.apache.knox.gateway.util;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -123,7 +124,7 @@ public class Urls {
   public static String encode( String str ) {
     URLCodec codec = new URLCodec();
     try {
-      return codec.encode( str, "UTF-8" );
+      return codec.encode( str, StandardCharsets.UTF_8.name() );
     } catch( UnsupportedEncodingException e ) {
       throw new IllegalArgumentException( e );
     }
@@ -132,7 +133,7 @@ public class Urls {
   public static String decode( String str ) {
     URLCodec codec = new URLCodec();
     try {
-      return codec.decode( str, "UTF-8" );
+      return codec.decode( str, StandardCharsets.UTF_8.name() );
     } catch( UnsupportedEncodingException e ) {
       throw new IllegalArgumentException( e );
     } catch( DecoderException e ) {

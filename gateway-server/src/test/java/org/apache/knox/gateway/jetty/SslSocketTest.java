@@ -108,7 +108,7 @@ public class SslSocketTest {
 
     HttpParams params = new BasicHttpParams();
     HttpProtocolParams.setVersion( params, HttpVersion.HTTP_1_1 );
-    HttpProtocolParams.setContentCharset( params, "utf-8" );
+    HttpProtocolParams.setContentCharset( params, StandardCharsets.UTF_8.name() );
     params.setBooleanParameter( "http.protocol.expect-continue", false );
 
     SSLSocketFactory sslsocketfactory = SSLSocketFactory.getSocketFactory();

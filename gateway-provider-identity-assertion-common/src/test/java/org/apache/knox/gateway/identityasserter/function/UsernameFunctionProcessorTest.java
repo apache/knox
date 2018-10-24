@@ -51,7 +51,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
@@ -182,7 +182,7 @@ public class UsernameFunctionProcessorTest {
         .queryParam( "test-query-input-name", "test-query-input-value" )
         .queryParam( "test-query-output-name", "test-query-output-value" )
         .contentType( "text/xml" )
-        .content( expect, Charset.forName( "UTF-8" ) );
+        .content( expect, StandardCharsets.UTF_8 );
     interaction.respond().status( 200 );
     interactions.add( interaction );
     request.setMethod( "PUT" );

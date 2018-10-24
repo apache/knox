@@ -25,6 +25,8 @@ import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteStepStatus;
 import org.apache.knox.gateway.util.urltemplate.Parser;
 import org.apache.knox.gateway.util.urltemplate.Template;
 
+import java.nio.charset.StandardCharsets;
+
 public class SecureQueryEncodeProcessor
     implements UrlRewriteStepProcessor<SecureQueryEncodeDescriptor> {
 
@@ -54,7 +56,7 @@ public class SecureQueryEncodeProcessor
       }
     }
     if( query != null ) {
-      query = Base64.encodeBase64String( query.getBytes( "UTF-8" ) );
+      query = Base64.encodeBase64String( query.getBytes( StandardCharsets.UTF_8 ) );
       query = removeTrailingEquals( query );
       url = Parser.parseLiteral( path + "?" + ENCODED_PARAMETER_NAME +"=" + query );
       context.setCurrentUrl( url );

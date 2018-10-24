@@ -39,6 +39,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import java.io.InputStream;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 
 import static org.apache.knox.test.TestUtils.LOG_ENTER;
 import static org.apache.knox.test.TestUtils.LOG_EXIT;
@@ -82,7 +83,7 @@ public class OozieServiceDefinitionTest {
 
     UrlRewriteEnvironment rewriteEnvironment = new UrlRewriteServletEnvironment( servletContext );
 
-    Reader rulesReader = TestUtils.getResourceReader( "services/oozie/4.0.0/rewrite.xml", "UTF-8" );
+    Reader rulesReader = TestUtils.getResourceReader( "services/oozie/4.0.0/rewrite.xml", StandardCharsets.UTF_8 );
     UrlRewriteRulesDescriptor rewriteRules = UrlRewriteRulesDescriptorFactory
         .load( "xml", rulesReader );
     rulesReader.close();
@@ -136,7 +137,7 @@ public class OozieServiceDefinitionTest {
 
     UrlRewriteEnvironment rewriteEnvironment = new UrlRewriteServletEnvironment( servletContext );
 
-    Reader rulesReader = TestUtils.getResourceReader( "services/oozie/4.0.0/rewrite.xml", "UTF-8" );
+    Reader rulesReader = TestUtils.getResourceReader( "services/oozie/4.0.0/rewrite.xml", StandardCharsets.UTF_8 );
     UrlRewriteRulesDescriptor rewriteRules = UrlRewriteRulesDescriptorFactory.load( "xml", rulesReader );
     rulesReader.close();
 
@@ -190,7 +191,7 @@ public class OozieServiceDefinitionTest {
 
     UrlRewriteEnvironment rewriteEnvironment = new UrlRewriteServletEnvironment( servletContext );
 
-    Reader rulesReader = TestUtils.getResourceReader( "services/oozie/4.0.0/rewrite.xml", "UTF-8" );
+    Reader rulesReader = TestUtils.getResourceReader( "services/oozie/4.0.0/rewrite.xml", StandardCharsets.UTF_8 );
     UrlRewriteRulesDescriptor rewriteRules = UrlRewriteRulesDescriptorFactory.load( "xml", rulesReader );
     rulesReader.close();
 

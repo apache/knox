@@ -41,6 +41,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Properties;
@@ -89,15 +90,15 @@ public class TestUtils {
     return stream;
   }
 
-  public static Reader getResourceReader( String name, String charset ) throws IOException {
+  public static Reader getResourceReader( String name, Charset charset ) throws IOException {
     return new InputStreamReader( getResourceStream( name ), charset );
   }
 
-  public static Reader getResourceReader( Class clazz, String name, String charset ) throws IOException {
+  public static Reader getResourceReader( Class clazz, String name, Charset charset ) throws IOException {
     return new InputStreamReader( getResourceStream( clazz, name ), charset );
   }
 
-  public static String getResourceString( Class clazz, String name, String charset ) throws IOException {
+  public static String getResourceString( Class clazz, String name, Charset charset ) throws IOException {
     return IOUtils.toString( getResourceReader( clazz, name, charset ) );
   }
 

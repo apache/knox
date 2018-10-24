@@ -19,6 +19,7 @@ package org.apache.knox.gateway.util;
 
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -27,15 +28,13 @@ public class MimeTypes {
 
   private static final String CHARSET_PARAMETER_NAME = "charset";
 
-  private static final String UTF8_CHARSET = "UTF-8";
-
   private static Map<String,String> DEFAULT_CHARSETS;
   static {
     DEFAULT_CHARSETS = new HashMap<>();
-    DEFAULT_CHARSETS.put( "text/xml", UTF8_CHARSET );
-    DEFAULT_CHARSETS.put( "text/json", UTF8_CHARSET );
-    DEFAULT_CHARSETS.put( "application/xml", UTF8_CHARSET );
-    DEFAULT_CHARSETS.put( "application/json", UTF8_CHARSET );
+    DEFAULT_CHARSETS.put( "text/xml", StandardCharsets.UTF_8.name() );
+    DEFAULT_CHARSETS.put( "text/json", StandardCharsets.UTF_8.name() );
+    DEFAULT_CHARSETS.put( "application/xml", StandardCharsets.UTF_8.name() );
+    DEFAULT_CHARSETS.put( "application/json", StandardCharsets.UTF_8.name() );
   }
 
   public static MimeType create( final String base, final String encoding ) {

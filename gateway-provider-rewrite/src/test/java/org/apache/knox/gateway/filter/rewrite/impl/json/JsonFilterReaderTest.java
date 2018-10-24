@@ -32,7 +32,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -111,7 +111,7 @@ public class JsonFilterReaderTest {
   @Test
   public void testUnscopedStreaming() throws IOException {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "simple-values.json" );
-    String input = IOUtils.toString( stream, Charset.forName( "UTF-8" ) );
+    String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
     //System.out.println( "INPUT=" + input );
 
@@ -131,7 +131,7 @@ public class JsonFilterReaderTest {
   @Test
   public void testNamesWithDots() throws IOException {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "dotted-field-name.json" );
-    String input = IOUtils.toString( stream, Charset.forName( "UTF-8" ) );
+    String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
     //System.out.println( "INPUT=" + input );
 
@@ -158,7 +158,7 @@ public class JsonFilterReaderTest {
 //  @Test
 //  public void testJsonPathObject() throws IOException {
 //    InputStream stream = TestUtils.getResourceStream( this.getClass(), "complex.json" );
-//    String input = IOUtils.toString( stream, Charset.forName( "UTF-8" ) );
+//    String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 //
 //    Object o;
 //
@@ -186,7 +186,7 @@ public class JsonFilterReaderTest {
 //  @Test
 //  public void testJsonPathArray() throws IOException {
 //    InputStream stream = TestUtils.getResourceStream( this.getClass(), "array.json" );
-//    String input = IOUtils.toString( stream, Charset.forName( "UTF-8" ) );
+//    String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 //
 //    Object o;
 //
@@ -210,7 +210,7 @@ public class JsonFilterReaderTest {
   @Test
   public void testBuffered() throws IOException {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "simple-values.json" );
-    String input = IOUtils.toString( stream, Charset.forName( "UTF-8" ) );
+    String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
     //System.out.println( "INPUT=" + input );
 
@@ -232,7 +232,7 @@ public class JsonFilterReaderTest {
   @Test
   public void testBufferedDetectApply() throws IOException {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties.json" );
-    String input = IOUtils.toString( stream, Charset.forName( "UTF-8" ) );
+    String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
     //System.out.println( "INPUT=" + input );
 
@@ -261,7 +261,7 @@ public class JsonFilterReaderTest {
   @Test
   public void testBufferedApply() throws IOException {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties.json" );
-    String input = IOUtils.toString( stream, Charset.forName( "UTF-8" ) );
+    String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
     //System.out.println( "INPUT=" + input );
 
@@ -289,7 +289,7 @@ public class JsonFilterReaderTest {
   @Test
   public void testBufferedMultiApply() throws IOException {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties.json" );
-    String input = IOUtils.toString( stream, Charset.forName( "UTF-8" ) );
+    String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
     //System.out.println( "INPUT=" + input );
 

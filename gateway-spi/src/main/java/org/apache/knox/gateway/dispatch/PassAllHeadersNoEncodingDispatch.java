@@ -20,6 +20,7 @@ package org.apache.knox.gateway.dispatch;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -36,7 +37,7 @@ public class PassAllHeadersNoEncodingDispatch extends PassAllHeadersDispatch {
     String query = request.getQueryString();
     if (query != null) {
       try {
-        query = URLDecoder.decode(query, "UTF-8");
+        query = URLDecoder.decode(query, StandardCharsets.UTF_8.name());
       } catch (UnsupportedEncodingException e) {
         // log
       }
@@ -44,7 +45,6 @@ public class PassAllHeadersNoEncodingDispatch extends PassAllHeadersDispatch {
       str.append( query );
     }
     encodeUnwiseCharacters(str);
-    URI uri = URI.create( str.toString() );
-    return uri;
+    return URI.create( str.toString() );
   }
 }

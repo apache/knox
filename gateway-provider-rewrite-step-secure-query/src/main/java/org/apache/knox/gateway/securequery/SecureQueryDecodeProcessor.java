@@ -27,6 +27,7 @@ import org.apache.knox.gateway.util.urltemplate.Query;
 import org.apache.knox.gateway.util.urltemplate.Template;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -81,7 +82,7 @@ public class SecureQueryDecodeProcessor implements
   }
 
   private static String decode( String string ) throws UnsupportedEncodingException {
-    return new String( Base64.decodeBase64( string ), "UTF-8" );
+    return new String( Base64.decodeBase64( string ), StandardCharsets.UTF_8 );
   }
 
 }

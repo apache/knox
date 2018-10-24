@@ -34,6 +34,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -134,10 +135,10 @@ public class CreateScanner {
 
           Element root = document.createElement( ELEMENT_SCANNER );
           if( startRow != null ) {
-            root.setAttribute( ATTRIBUTE_START_ROW, Base64.encodeBase64String( startRow.getBytes( "UTF-8" ) ) );
+            root.setAttribute( ATTRIBUTE_START_ROW, Base64.encodeBase64String( startRow.getBytes( StandardCharsets.UTF_8 ) ) );
           }
           if( endRow != null ) {
-            root.setAttribute( ATTRIBUTE_END_ROW, Base64.encodeBase64String( endRow.getBytes( "UTF-8" ) ) );
+            root.setAttribute( ATTRIBUTE_END_ROW, Base64.encodeBase64String( endRow.getBytes( StandardCharsets.UTF_8 ) ) );
           }
           if( batch != null ) {
             root.setAttribute( ATTRIBUTE_BATCH, batch.toString() );
@@ -155,7 +156,7 @@ public class CreateScanner {
 
           for( Column column : columns ) {
             Element columnElement = document.createElement( ELEMENT_COLUMN );
-            columnElement.setTextContent( Base64.encodeBase64String( column.toURIPart().getBytes( "UTF-8" ) ) );
+            columnElement.setTextContent( Base64.encodeBase64String( column.toURIPart().getBytes( StandardCharsets.UTF_8 ) ) );
             root.appendChild( columnElement );
           }
 
@@ -171,7 +172,7 @@ public class CreateScanner {
 
           URIBuilder uri = uri( HBase.SERVICE_PATH, "/", tableName, "/scanner" );
           HttpPut request = new HttpPut( uri.build() );
-          HttpEntity entity = new StringEntity( writer.toString(), ContentType.create( "text/xml", "UTF-8" ) );
+          HttpEntity entity = new StringEntity( writer.toString(), ContentType.create( "text/xml", StandardCharsets.UTF_8 ) );
           request.setEntity( entity );
 
           return new Response( execute( request ) );

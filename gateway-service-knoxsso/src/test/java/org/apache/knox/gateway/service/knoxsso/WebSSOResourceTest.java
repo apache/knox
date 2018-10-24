@@ -28,6 +28,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.Field;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -597,8 +598,8 @@ public class WebSSOResourceTest {
     EasyMock.expect(context.getInitParameter("knoxsso.enable.session")).andReturn(null);
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getParameter("originalUrl")).andReturn(URLEncoder.encode("http://disallowedhost:9080/service",
-                                                                                     "UTF-8"));
+    EasyMock.expect(request.getParameter("originalUrl")).andReturn(
+        URLEncoder.encode("http://disallowedhost:9080/service", StandardCharsets.UTF_8.name()));
     EasyMock.expect(request.getAttribute("targetServiceRole")).andReturn("KNOXSSO").anyTimes();
     EasyMock.expect(request.getParameterMap()).andReturn(Collections.<String,String[]>emptyMap());
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();

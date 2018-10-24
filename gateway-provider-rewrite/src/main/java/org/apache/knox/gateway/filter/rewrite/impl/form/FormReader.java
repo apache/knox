@@ -21,10 +21,9 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 public class FormReader {
-
-  private static final String DEFFAULT_FORM_ENCODING = "UTF-8";
 
   private static final int DEFAULT_BUFFER_SIZE = 1024;
 
@@ -80,8 +79,8 @@ public class FormReader {
       name = buffer.toString();
       value = "";
     }
-    name = URLDecoder.decode( name, DEFFAULT_FORM_ENCODING );
-    value = URLDecoder.decode( value, DEFFAULT_FORM_ENCODING );
+    name = URLDecoder.decode( name, StandardCharsets.UTF_8.name() );
+    value = URLDecoder.decode( value, StandardCharsets.UTF_8.name() );
     FormPair pair = new FormPair( name, value );
     current = pair;
     buffer.setLength( 0 );

@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,8 +50,6 @@ import static org.xmlmatchers.transform.XmlConverters.the;
 import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
 
 public class MockRequestMatcher {
-
-  private static final Charset UTF8 = Charset.forName( "UTF-8" );
 
   private String from;
   private MockResponseProvider response;
@@ -292,15 +291,15 @@ public class MockRequestMatcher {
     if( entity != null ) {
       if( contentType != null && contentType.endsWith( "/xml" ) ) {
         String expectEncoding = characterEncoding;
-        String expect = new String( entity, ( expectEncoding == null ? UTF8.name() : expectEncoding ) );
+        String expect = new String( entity, ( expectEncoding == null ? StandardCharsets.UTF_8.name() : expectEncoding ) );
         String actualEncoding = request.getCharacterEncoding();
-        String actual = IOUtils.toString( request.getInputStream(), actualEncoding == null ? UTF8.name() : actualEncoding );
+        String actual = IOUtils.toString( request.getInputStream(), actualEncoding == null ? StandardCharsets.UTF_8.name() : actualEncoding );
         assertThat( the( actual ), isEquivalentTo( the( expect ) ) );
       } else if ( contentType != null && contentType.endsWith( "/json" ) )  {
         String expectEncoding = characterEncoding;
-        String expect = new String( entity, ( expectEncoding == null ? UTF8.name() : expectEncoding ) );
+        String expect = new String( entity, ( expectEncoding == null ? StandardCharsets.UTF_8.name() : expectEncoding ) );
         String actualEncoding = request.getCharacterEncoding();
-        String actual = IOUtils.toString( request.getInputStream(), actualEncoding == null ? UTF8.name() : actualEncoding );
+        String actual = IOUtils.toString( request.getInputStream(), actualEncoding == null ? StandardCharsets.UTF_8.name() : actualEncoding );
 //        System.out.println( "EXPECT=" + expect );
 //        System.out.println( "ACTUAL=" + actual );
         assertThat( actual, sameJSONAs( expect ) );

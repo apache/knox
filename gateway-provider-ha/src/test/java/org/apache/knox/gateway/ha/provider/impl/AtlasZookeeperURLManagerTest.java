@@ -30,7 +30,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -61,7 +61,7 @@ public class AtlasZookeeperURLManagerTest {
         zooKeeperClient.create().forPath("/apache_atlas");
         zooKeeperClient.create().forPath("/apache_atlas/active_server_info");
         zooKeeperClient.setData().forPath("/apache_atlas/active_server_info",
-                                          atlasNode1.getBytes(Charset.forName("UTF-8")));
+                                          atlasNode1.getBytes(StandardCharsets.UTF_8));
         zooKeeperClient.close();
         setAtlasActiveHostURLInZookeeper(atlasNode1);
 
@@ -155,7 +155,7 @@ public class AtlasZookeeperURLManagerTest {
             zooKeeperClient.blockUntilConnected(10, TimeUnit.SECONDS);
 
             zooKeeperClient.setData().forPath("/apache_atlas/active_server_info",
-                activeURL.getBytes(Charset.forName("UTF-8")));
+                activeURL.getBytes(StandardCharsets.UTF_8));
         }
     }
 

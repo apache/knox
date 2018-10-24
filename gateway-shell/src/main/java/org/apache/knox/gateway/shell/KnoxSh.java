@@ -190,15 +190,14 @@ public class KnoxSh {
         
         File tokenfile = new File(System.getProperty("user.home"), ".knoxtokencache");
         try( FileOutputStream fos = new FileOutputStream(tokenfile) ) {
-          fos.write(text.getBytes("UTF-8"));
+          fos.write(text.getBytes(StandardCharsets.UTF_8));
           Set<PosixFilePermission> perms = new HashSet<>();
           //add owners permission only
           perms.add(PosixFilePermission.OWNER_READ);
           perms.add(PosixFilePermission.OWNER_WRITE);
           Files.setPosixFilePermissions(Paths.get(System.getProperty("user.home") + "/.knoxtokencache"), perms);
         }
-      }
-      catch(HadoopException he) {
+      } catch(HadoopException he) {
         System.out.println("Failure to acquire token. Please verify your credentials and Knox URL and try again.");
       }
       if ( session != null ) {

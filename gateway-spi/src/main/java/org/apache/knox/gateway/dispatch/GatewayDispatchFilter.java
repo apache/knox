@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Locale;
@@ -145,7 +146,7 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
 
         String decodedURL = null;
         try {
-          decodedURL = URLDecoder.decode(requestURI, "UTF-8");
+          decodedURL = URLDecoder.decode(requestURI, StandardCharsets.UTF_8.name());
         } catch (UnsupportedEncodingException e) {
           //
         }

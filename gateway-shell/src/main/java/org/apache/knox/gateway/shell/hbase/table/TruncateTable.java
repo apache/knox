@@ -31,6 +31,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 
 public class TruncateTable {
@@ -63,7 +64,7 @@ public class TruncateTable {
           }
 
           HttpPut put = new HttpPut(uri);
-          HttpEntity entity = new StringEntity(schema, ContentType.create("text/xml", "UTF-8"));
+          HttpEntity entity = new StringEntity(schema, ContentType.create("text/xml", StandardCharsets.UTF_8));
           put.setEntity(entity);
           return new TruncateTable.Response(execute(put));
         }

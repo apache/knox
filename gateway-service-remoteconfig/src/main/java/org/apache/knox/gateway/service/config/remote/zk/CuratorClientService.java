@@ -44,6 +44,7 @@ import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -149,8 +150,6 @@ class CuratorClientService implements ZooKeeperClientService {
 
 
     private static final class ClientAdapter implements RemoteConfigurationRegistryClient {
-
-        private static final String DEFAULT_ENCODING = "UTF-8";
 
         private CuratorFramework delegate;
 
@@ -261,7 +260,7 @@ class CuratorClientService implements ZooKeeperClientService {
 
         @Override
         public String getEntryData(String path) {
-            return getEntryData(path, DEFAULT_ENCODING);
+            return getEntryData(path, StandardCharsets.UTF_8.name());
         }
 
         @Override
@@ -291,7 +290,7 @@ class CuratorClientService implements ZooKeeperClientService {
 
         @Override
         public void createEntry(String path, String data) {
-            createEntry(path, data, DEFAULT_ENCODING);
+            createEntry(path, data, StandardCharsets.UTF_8.name());
         }
 
         @Override
@@ -306,7 +305,7 @@ class CuratorClientService implements ZooKeeperClientService {
 
         @Override
         public int setEntryData(String path, String data) {
-            return setEntryData(path, data, DEFAULT_ENCODING);
+            return setEntryData(path, data, StandardCharsets.UTF_8.name());
         }
 
         @Override

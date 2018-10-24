@@ -31,6 +31,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 public class UrlRewriteServletContextListener implements ServletContextListener {
 
@@ -93,7 +94,7 @@ public class UrlRewriteServletContextListener implements ServletContextListener 
 
   private static UrlRewriteRulesDescriptor loadDescriptor( URL url ) throws IOException {
     InputStream stream = url.openStream();
-    Reader reader = new InputStreamReader( stream, "UTF-8" );
+    Reader reader = new InputStreamReader( stream, StandardCharsets.UTF_8 );
     UrlRewriteRulesDescriptor descriptor = UrlRewriteRulesDescriptorFactory.load( "xml", reader );
     try {
       reader.close();

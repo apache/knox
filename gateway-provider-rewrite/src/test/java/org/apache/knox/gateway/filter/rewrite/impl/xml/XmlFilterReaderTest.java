@@ -51,7 +51,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -712,7 +712,7 @@ public class XmlFilterReaderTest {
   @Test
   public void testStreamedApplyForElements() throws Exception {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties-elements.xml" );
-    String input = IOUtils.toString( stream, Charset.forName( "UTF-8" ) );
+    String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
     //System.out.println( "INPUT=" + input );
 
@@ -739,7 +739,7 @@ public class XmlFilterReaderTest {
   @Test
   public void testStreamedApplyForElementsConfigShortcut() throws Exception {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties-elements.xml" );
-    String input = IOUtils.toString( stream, Charset.forName( "UTF-8" ) );
+    String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
     //System.out.println( "INPUT=" + input );
 
@@ -766,7 +766,7 @@ public class XmlFilterReaderTest {
   @Test
   public void testStreamedApplyForAttributes() throws Exception {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties-attributes.xml" );
-    String input = IOUtils.toString( stream, Charset.forName( "UTF-8" ) );
+    String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
     //System.out.println( "INPUT=" + input );
 
@@ -793,7 +793,7 @@ public class XmlFilterReaderTest {
   @Test
   public void testBufferedApplyForAttributes() throws Exception {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties-attributes.xml" );
-    String input = IOUtils.toString( stream, Charset.forName( "UTF-8" ) );
+    String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
     //System.out.println( "INPUT=" + input );
 
@@ -821,7 +821,7 @@ public class XmlFilterReaderTest {
   @Test
   public void testBufferedDetectApplyForElements() throws Exception {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties-elements.xml" );
-    String input = IOUtils.toString( stream, Charset.forName( "UTF-8" ) );
+    String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
     //System.out.println( "INPUT=" + input );
 
@@ -850,7 +850,7 @@ public class XmlFilterReaderTest {
   @Test
   public void testBufferedDetectApplyForAttributes() throws Exception {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties-attributes.xml" );
-    String input = IOUtils.toString( stream, Charset.forName( "UTF-8" ) );
+    String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
     //System.out.println( "INPUT=" + input );
 

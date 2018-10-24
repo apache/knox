@@ -19,7 +19,6 @@ package org.apache.knox.gateway;
 
 import java.io.File;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -415,7 +414,7 @@ public class GatewayAppFuncTest {
         .queryParam( "user.name", "guest" )
         .respond()
         .status( HttpStatus.SC_OK )
-        .content( "{\"path\":\"/users/guest\"}", Charset.forName("UTF-8") )
+        .content( "{\"path\":\"/users/guest\"}", StandardCharsets.UTF_8 )
         .contentType( "application/json" );
     given()
         //.log().all()

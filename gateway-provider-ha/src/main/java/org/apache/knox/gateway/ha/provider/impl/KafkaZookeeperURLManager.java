@@ -25,7 +25,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -105,7 +105,7 @@ public class KafkaZookeeperURLManager extends BaseZookeeperURLManager {
       List<String> brokers = zooKeeperClient.getChildren().forPath(BASE_PATH);
 
       for (String broker : brokers) {
-        String serverInfo = new String(zooKeeperClient.getData().forPath(BASE_PATH + "/" + broker), Charset.forName("UTF-8"));
+        String serverInfo = new String(zooKeeperClient.getData().forPath(BASE_PATH + "/" + broker), StandardCharsets.UTF_8);
 
         String serverURL = constructURL(serverInfo);
         serverHosts.add(serverURL);

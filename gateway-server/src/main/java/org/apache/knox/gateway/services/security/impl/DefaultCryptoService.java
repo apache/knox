@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.services.security.impl;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -144,7 +145,7 @@ public class DefaultCryptoService implements CryptoService {
     try {
       Signature sig=Signature.getInstance(algorithm);
       sig.initVerify(ks.getKeystoreForGateway().getCertificate(alias).getPublicKey());
-      sig.update(signed.getBytes("UTF-8"));
+      sig.update(signed.getBytes(StandardCharsets.UTF_8));
       verified = sig.verify(signature);
     } catch (SignatureException e) {
       LOG.failedToVerifySignature( e );
@@ -153,8 +154,6 @@ public class DefaultCryptoService implements CryptoService {
     } catch (InvalidKeyException e) {
       LOG.failedToVerifySignature( e );
     } catch (KeyStoreException e) {
-      LOG.failedToVerifySignature( e );
-    } catch (UnsupportedEncodingException e) {
       LOG.failedToVerifySignature( e );
     } catch (KeystoreServiceException e) {
       LOG.failedToVerifySignature( e );
@@ -171,15 +170,13 @@ public class DefaultCryptoService implements CryptoService {
       PrivateKey privateKey = (PrivateKey) ks.getKeyForGateway(alias, passphrase);
       Signature signature = Signature.getInstance(algorithm);
       signature.initSign(privateKey);
-      signature.update(payloadToSign.getBytes("UTF-8"));
+      signature.update(payloadToSign.getBytes(StandardCharsets.UTF_8));
       return signature.sign();
     } catch (NoSuchAlgorithmException e) {
       LOG.failedToSignData( e );
     } catch (InvalidKeyException e) {
       LOG.failedToSignData( e );
     } catch (SignatureException e) {
-      LOG.failedToSignData( e );
-    } catch (UnsupportedEncodingException e) {
       LOG.failedToSignData( e );
     } catch (KeystoreServiceException e) {
       LOG.failedToSignData( e );

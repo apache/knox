@@ -1261,7 +1261,7 @@ public class GatewayAdminTopologyFuncTest {
     given()
         .auth().preemptive().basic(username, password)
         .header("Content-type", MediaType.APPLICATION_XML)
-        .body(newProviderConfigXML.toBytes("utf-8"))
+        .body(newProviderConfigXML.toBytes(StandardCharsets.UTF_8.name()))
         .then()
         .statusCode(HttpStatus.SC_CREATED)
         .when().put(serviceUrl + "/" + newProviderConfigName);
@@ -1320,7 +1320,7 @@ public class GatewayAdminTopologyFuncTest {
     // Attempt to PUT a provider config
     given().auth().preemptive().basic(username, password)
            .header("Content-type", MediaType.APPLICATION_XML)
-           .body(newProviderConfigXML.toBytes("utf-8"))
+           .body(newProviderConfigXML.toBytes(StandardCharsets.UTF_8.name()))
            .then()
            .statusCode(HttpStatus.SC_BAD_REQUEST)
            .when().put(serviceUrl + "/" + newProviderConfigName);
@@ -1459,7 +1459,7 @@ public class GatewayAdminTopologyFuncTest {
     given()
         .auth().preemptive().basic(username, password)
         .header("Content-type", MediaType.APPLICATION_JSON)
-        .body(newDescriptorJSON.getBytes("utf-8"))
+        .body(newDescriptorJSON.getBytes(StandardCharsets.UTF_8.name()))
         .then()
         .statusCode(HttpStatus.SC_CREATED)
         .when().put(descriptorsUrl + "/" + descriptorName);
@@ -1485,7 +1485,7 @@ public class GatewayAdminTopologyFuncTest {
     given()
         .auth().preemptive().basic(username, password)
         .header("Content-type", MediaType.APPLICATION_JSON)
-        .body(updatedDescriptorJSON.getBytes("utf-8"))
+        .body(updatedDescriptorJSON.getBytes(StandardCharsets.UTF_8.name()))
         .then()
         .statusCode(HttpStatus.SC_NO_CONTENT)
         .when().put(descriptorsUrl + "/" + descriptorName);
@@ -1516,7 +1516,7 @@ public class GatewayAdminTopologyFuncTest {
     given()
         .auth().preemptive().basic(username, password)
         .header("Content-type", MediaType.APPLICATION_JSON)
-        .body(updatedDescriptorJSON.getBytes("utf-8"))
+        .body(updatedDescriptorJSON.getBytes(StandardCharsets.UTF_8.name()))
         .then()
         .statusCode(HttpStatus.SC_NO_CONTENT)
         .when().put(descriptorsUrl + "/" + descriptorName);
@@ -1593,7 +1593,7 @@ public class GatewayAdminTopologyFuncTest {
     given()
         .auth().preemptive().basic(username, password)
         .header("Content-type", MediaType.APPLICATION_JSON)
-        .body(newDescriptorJSON.getBytes("utf-8"))
+        .body(newDescriptorJSON.getBytes(StandardCharsets.UTF_8.name()))
         .then()
         .statusCode(HttpStatus.SC_CREATED)
         .when().put(descriptorsUrl + "/" + descriptorName);
@@ -1632,7 +1632,7 @@ public class GatewayAdminTopologyFuncTest {
     given()
         .auth().preemptive().basic(username, password)
         .header("Content-type", MediaType.APPLICATION_JSON)
-        .body(updatedDescriptorJSON.getBytes("utf-8"))
+        .body(updatedDescriptorJSON.getBytes(StandardCharsets.UTF_8.name()))
         .then()
         .statusCode(HttpStatus.SC_NO_CONTENT)
         .when().put(descriptorsUrl + "/" + descriptorName);
@@ -1782,7 +1782,7 @@ public class GatewayAdminTopologyFuncTest {
     given()
       .auth().preemptive().basic(username, password)
       .header("Content-type", MediaType.APPLICATION_XML)
-      .body(newDescriptorJSON.getBytes("utf-8"))
+      .body(newDescriptorJSON.getBytes(StandardCharsets.UTF_8.name()))
       .then()
       .statusCode(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE)
       .when().put(serviceUrl + "/" + newDescriptorName);
@@ -1791,7 +1791,7 @@ public class GatewayAdminTopologyFuncTest {
     given()
       .auth().preemptive().basic(username, password)
       .header("Content-type", MediaType.APPLICATION_JSON)
-      .body(newDescriptorJSON.getBytes("utf-8"))
+      .body(newDescriptorJSON.getBytes(StandardCharsets.UTF_8.name()))
       .then()
       .statusCode(HttpStatus.SC_CREATED)
       .when().put(serviceUrl + "/" + newDescriptorName);
@@ -1835,7 +1835,7 @@ public class GatewayAdminTopologyFuncTest {
   public void testPutDescriptorWithValidEncodedName() throws Exception {
 
     final String encodedName = "new%2Ddescriptor";
-    final String newDescriptorName = URLDecoder.decode(encodedName, "UTF-8");
+    final String newDescriptorName = URLDecoder.decode(encodedName, StandardCharsets.UTF_8.name());
 
     final String username = "admin";
     final String password = "admin-password";
@@ -1849,7 +1849,7 @@ public class GatewayAdminTopologyFuncTest {
     // Attempt to PUT the descriptor
     given().auth().preemptive().basic(username, password)
            .header("Content-type", MediaType.APPLICATION_JSON)
-           .body(newDescriptorJSON.getBytes("utf-8"))
+           .body(newDescriptorJSON.getBytes(StandardCharsets.UTF_8.name()))
            .then()
            .statusCode(HttpStatus.SC_CREATED)
            .when().put(serviceUrl + "/" + encodedName);
@@ -1897,7 +1897,7 @@ public class GatewayAdminTopologyFuncTest {
     // Attempt to PUT the descriptor
     given().auth().preemptive().basic(username, password)
            .header("Content-type", MediaType.APPLICATION_JSON)
-           .body(newDescriptorJSON.getBytes("utf-8"))
+           .body(newDescriptorJSON.getBytes(StandardCharsets.UTF_8.name()))
            .then()
            .statusCode(HttpStatus.SC_CREATED)
            .when().put(serviceUrl + "/" + newDescriptorFileName);
@@ -1932,7 +1932,7 @@ public class GatewayAdminTopologyFuncTest {
   public void testPutDescriptorWithInvalidEncodedName() throws Exception {
 
     final String encodedName = "'';!--%22%3CXSS%3E=&%7B()%7D";
-    final String newDescriptorName = URLDecoder.decode(encodedName, "UTF-8");
+    final String newDescriptorName = URLDecoder.decode(encodedName, StandardCharsets.UTF_8.name());
 
     final String username = "admin";
     final String password = "admin-password";
@@ -1946,7 +1946,7 @@ public class GatewayAdminTopologyFuncTest {
     // Attempt to PUT the descriptor
     given().auth().preemptive().basic(username, password)
            .header("Content-type", MediaType.APPLICATION_JSON)
-           .body(newDescriptorJSON.getBytes("utf-8"))
+           .body(newDescriptorJSON.getBytes(StandardCharsets.UTF_8.name()))
            .then()
            .statusCode(HttpStatus.SC_BAD_REQUEST)
            .when().put(serviceUrl + "/" + encodedName);
@@ -2018,7 +2018,7 @@ public class GatewayAdminTopologyFuncTest {
     // Attempt to PUT the descriptor
     given().auth().preemptive().basic(username, password)
            .header("Content-type", MediaType.APPLICATION_JSON)
-           .body(newDescriptorJSON.getBytes("utf-8"))
+           .body(newDescriptorJSON.getBytes(StandardCharsets.UTF_8.name()))
            .then()
            .statusCode(HttpStatus.SC_BAD_REQUEST)
            .when().put(serviceUrl + "/" + newDescriptorName);

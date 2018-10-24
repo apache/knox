@@ -51,6 +51,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -161,7 +162,7 @@ public class TopologiesResource {
     Topology result = null;
 
     try {
-      id = URLDecoder.decode(id, "UTF-8");
+      id = URLDecoder.decode(id, StandardCharsets.UTF_8.name());
     } catch (Exception e) {
       // Ignore
     }
@@ -328,7 +329,7 @@ public class TopologiesResource {
     Response response = null;
 
     try {
-      name = URLDecoder.decode(name, "UTF-8");
+      name = URLDecoder.decode(name, StandardCharsets.UTF_8.name());
     } catch (Exception e) {
       // Ignore
     }
@@ -375,7 +376,7 @@ public class TopologiesResource {
     Response response = null;
 
     try {
-      name = URLDecoder.decode(name, "UTF-8");
+      name = URLDecoder.decode(name, StandardCharsets.UTF_8.name());
     } catch (Exception e) {
       // Ignore
     }

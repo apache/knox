@@ -31,6 +31,7 @@ import org.apache.knox.gateway.util.urltemplate.Query;
 import org.apache.knox.gateway.util.urltemplate.Template;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -117,7 +118,7 @@ public class SecureQueryDecryptProcessor implements
       log.unableToDecryptValue(e);
     }
     if (clear != null) {
-      return new String(clear, "UTF-8");
+      return new String(clear, StandardCharsets.UTF_8);
     }
     return null;
   }

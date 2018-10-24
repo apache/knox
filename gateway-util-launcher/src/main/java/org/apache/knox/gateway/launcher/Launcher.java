@@ -26,6 +26,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 public class Launcher {
@@ -108,7 +109,7 @@ public class Launcher {
   }
 
   private static File calcLauncherDir( URL libUrl ) throws UnsupportedEncodingException {
-    String libPath = URLDecoder.decode(libUrl.getFile(), "UTF-8");
+    String libPath = URLDecoder.decode(libUrl.getFile(), StandardCharsets.UTF_8.name());
     File libFile = new File( libPath );
     File dir;
     if( libFile.isDirectory() ) {

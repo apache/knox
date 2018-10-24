@@ -18,7 +18,7 @@
 package org.apache.knox.gateway;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
@@ -40,9 +40,6 @@ import static org.apache.knox.test.TestUtils.LOG_EXIT;
 
 @Category( { VerifyTest.class, MediumTests.class } )
 public class GatewayUIFuncTest {
-
-  private static final Charset UTF8 = Charset.forName("UTF-8");
-
   // Uncomment to cause the test to hang after the gateway instance is setup.
   // This will allow the gateway instance to be hit directly via some external client.
 //  @Test
@@ -172,7 +169,7 @@ public class GatewayUIFuncTest {
         .respond()
         .status(HttpStatus.SC_OK)
         .contentType("application/json")
-        .characterEncoding("utf-8");
+        .characterEncoding(StandardCharsets.UTF_8.name());
     given()
         .auth().preemptive().basic( username, password )
         .header( "X-XSRF-Header", "test-xsrf-header-value" )
@@ -188,7 +185,7 @@ public class GatewayUIFuncTest {
         .respond()
         .status(HttpStatus.SC_OK)
         .contentType("application/json")
-        .characterEncoding("utf-8");
+        .characterEncoding(StandardCharsets.UTF_8.name());
     given()
         .auth().preemptive().basic( username, password )
         .header( "X-XSRF-Header", "test-xsrf-header-value" )
@@ -204,7 +201,7 @@ public class GatewayUIFuncTest {
         .respond()
         .status(HttpStatus.SC_OK)
         .contentType("application/json")
-        .characterEncoding("utf-8");
+        .characterEncoding(StandardCharsets.UTF_8.name());
     given()
         .auth().preemptive().basic( username, password )
         .header( "X-XSRF-Header", "test-xsrf-header-value" )
@@ -220,7 +217,7 @@ public class GatewayUIFuncTest {
         .respond()
         .status(HttpStatus.SC_OK)
         .contentType("application/json")
-        .characterEncoding("utf-8");
+        .characterEncoding(StandardCharsets.UTF_8.name());
     given()
         .auth().preemptive().basic( username, password )
         .header( "X-XSRF-Header", "test-xsrf-header-value" )
@@ -236,7 +233,7 @@ public class GatewayUIFuncTest {
         .respond()
         .status(HttpStatus.SC_OK)
         .contentType("application/json")
-        .characterEncoding("utf-8");
+        .characterEncoding(StandardCharsets.UTF_8.name());
     given()
         .auth().preemptive().basic( username, password )
         .header( "X-XSRF-Header", "test-xsrf-header-value" )
@@ -252,7 +249,7 @@ public class GatewayUIFuncTest {
         .respond()
         .status(HttpStatus.SC_OK)
         .contentType("application/json")
-        .characterEncoding("utf-8");
+        .characterEncoding(StandardCharsets.UTF_8.name());
     given()
         .auth().preemptive().basic( username, password )
         .header( "X-XSRF-Header", "test-xsrf-header-value" )
@@ -268,7 +265,7 @@ public class GatewayUIFuncTest {
         .respond()
         .status(HttpStatus.SC_OK)
         .contentType("application/json")
-        .characterEncoding("utf-8");
+        .characterEncoding(StandardCharsets.UTF_8.name());
     given()
         .auth().preemptive().basic( username, password )
         .header( "X-XSRF-Header", "test-xsrf-header-value" )
@@ -283,7 +280,7 @@ public class GatewayUIFuncTest {
         .respond()
         .status(HttpStatus.SC_OK)
         .contentType("application/json")
-        .characterEncoding("utf-8");
+        .characterEncoding(StandardCharsets.UTF_8.name());
     given()
         .auth().preemptive().basic( username, password )
         .header( "X-XSRF-Header", "test-xsrf-header-value" )

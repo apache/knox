@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.encrypturi.impl;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import org.apache.commons.codec.binary.Base64;
@@ -51,7 +52,7 @@ public class EncryptUriProcessor
   public void initialize( UrlRewriteEnvironment environment, EncryptUriDescriptor descriptor ) throws Exception {
     clusterName = environment.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE );
     GatewayServices services = environment.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    cryptoService = (CryptoService) services.getService(GatewayServices.CRYPTO_SERVICE);
+    cryptoService = services.getService(GatewayServices.CRYPTO_SERVICE);
     template = descriptor.getTemplate();
     param = descriptor.getParam();
   }
@@ -78,7 +79,9 @@ public class EncryptUriProcessor
   }
 
   private String encode( String string ) throws UnsupportedEncodingException {
-    EncryptionResult result = cryptoService.encryptForCluster(clusterName, EncryptUriDescriptor.PASSWORD_ALIAS, string.getBytes("UTF-8"));
+    EncryptionResult result = cryptoService.encryptForCluster(clusterName,
+        EncryptUriDescriptor.PASSWORD_ALIAS,
+        string.getBytes(StandardCharsets.UTF_8));
     string = Base64.encodeBase64URLSafeString(result.toByteAray());
     return string;
   }

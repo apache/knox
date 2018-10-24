@@ -22,6 +22,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -202,7 +203,7 @@ public class WebSSOResource {
       if (whitelist != null) {
         String decodedOriginal = null;
         try {
-          decodedOriginal = URLDecoder.decode(original, "UTF-8");
+          decodedOriginal = URLDecoder.decode(original, StandardCharsets.UTF_8.name());
         } catch (UnsupportedEncodingException e) {
           //
         }
@@ -218,7 +219,7 @@ public class WebSSOResource {
     }
 
     JWTokenAuthority ts = services.getService(GatewayServices.TOKEN_SERVICE);
-    Principal p = ((HttpServletRequest)request).getUserPrincipal();
+    Principal p = request.getUserPrincipal();
 
     try {
       JWT token = null;

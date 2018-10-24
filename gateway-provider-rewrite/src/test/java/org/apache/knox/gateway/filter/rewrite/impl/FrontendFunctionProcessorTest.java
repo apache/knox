@@ -56,7 +56,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.EnumSet;
@@ -176,7 +176,7 @@ public class FrontendFunctionProcessorTest {
     initParams.put( "response.body", "test-filter" );
     setUp( "test-user", initParams, null );
 
-    String input = TestUtils.getResourceString( FrontendFunctionProcessorTest.class, "test-input-body.json", "UTF-8" );
+    String input = TestUtils.getResourceString( FrontendFunctionProcessorTest.class, "test-input-body.json", StandardCharsets.UTF_8 );
 
     interaction.expect()
         .method( "GET" )
@@ -184,8 +184,8 @@ public class FrontendFunctionProcessorTest {
     interaction.respond()
         .status( 200 )
         .contentType( "application/json" )
-        .characterEncoding( "UTF-8" )
-        .content( input, Charset.forName( "UTF-8" ) );
+        .characterEncoding(StandardCharsets.UTF_8.name())
+        .content( input, StandardCharsets.UTF_8 );
     interactions.add( interaction );
     request.setMethod( "GET" );
     request.setURI( "/test-path" );
@@ -222,7 +222,7 @@ public class FrontendFunctionProcessorTest {
 
     setUp( "test-user", initParams, attributes );
 
-    String input = TestUtils.getResourceString( FrontendFunctionProcessorTest.class, "test-input-body.json", "UTF-8" );
+    String input = TestUtils.getResourceString( FrontendFunctionProcessorTest.class, "test-input-body.json", StandardCharsets.UTF_8 );
 
     interaction.expect()
         .method( "GET" )
@@ -230,8 +230,8 @@ public class FrontendFunctionProcessorTest {
     interaction.respond()
         .status( 200 )
         .contentType( "application/json" )
-        .characterEncoding( "UTF-8" )
-        .content( input, Charset.forName( "UTF-8" ) );
+        .characterEncoding( StandardCharsets.UTF_8.name() )
+        .content( input, StandardCharsets.UTF_8 );
     interactions.add( interaction );
     request.setMethod( "GET" );
     request.setURI( "/test-path" );

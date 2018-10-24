@@ -29,6 +29,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -265,7 +266,7 @@ public class AmbariServiceDiscoveryTest {
         File urlMappingOverrides = File.createTempFile(getClass().getName()+"_url-overrides", ".xml");
         FileUtils.writeStringToFile(urlMappingOverrides,
                                     URL_MAPPING_OVERRIDES,
-                                    java.nio.charset.Charset.forName("utf-8"));
+                                    StandardCharsets.UTF_8);
         System.setProperty(AmbariDynamicServiceURLCreator.MAPPING_CONFIG_OVERRIDE_PROPERTY,
                            urlMappingOverrides.getAbsolutePath());
 

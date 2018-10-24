@@ -20,6 +20,7 @@ package org.apache.knox.gateway.hbase;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.knox.gateway.dispatch.DefaultDispatch;
@@ -34,9 +35,9 @@ public class HBaseDispatch extends DefaultDispatch {
   // KNOX-709: HBase can't handle URL encoded paths.
   public URI getDispatchUrl( HttpServletRequest request) {
     String base = request.getRequestURI();
-    StringBuffer str = new StringBuffer();
+    StringBuilder str = new StringBuilder();
     try {
-      str.append( URLDecoder.decode( base, "UTF-8" ) );
+      str.append( URLDecoder.decode( base, StandardCharsets.UTF_8.name() ) );
     } catch( UnsupportedEncodingException e ) {
       str.append( base );
     } String query = request.getQueryString();
@@ -44,8 +45,7 @@ public class HBaseDispatch extends DefaultDispatch {
       str.append( '?' );
       str.append( query );
     }
-    URI uri = URI.create( str.toString() );
-    return uri;
+    return URI.create( str.toString() );
   }
 
 }

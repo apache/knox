@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.services.security.impl;
 
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
@@ -98,9 +99,8 @@ public class ConfigurableEncryptor {
   }
 
   public EncryptionResult encrypt(String encrypt) throws Exception {
-      byte[] bytes = encrypt.getBytes("UTF-8");
-      EncryptionResult atom = encrypt(bytes);
-      return atom;
+      byte[] bytes = encrypt.getBytes(StandardCharsets.UTF_8);
+    return encrypt(bytes);
   }
 
   public EncryptionResult encrypt(byte[] plain) throws Exception {

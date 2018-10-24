@@ -29,7 +29,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -290,8 +290,8 @@ public class GatewayTestDriver {
     return IOUtils.toByteArray( getResourceStream( resource ) );
   }
 
-  public String getResourceString( String resource, Charset charset ) throws IOException {
-    return IOUtils.toString( getResourceBytes( resource ), "UTF-8" );
+  public String getResourceString( String resource ) throws IOException {
+    return IOUtils.toString( getResourceBytes( resource ), StandardCharsets.UTF_8.name() );
   }
 
   public void assertComplete() {

@@ -29,8 +29,8 @@ import org.apache.knox.gateway.services.security.KeystoreServiceException;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.KeyPair;
@@ -388,7 +388,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
             Key credentialKey = ks.getKey( alias, masterSecret );
             if (credentialKey != null) {
               byte[] credentialBytes = credentialKey.getEncoded();
-              String credentialString = new String( credentialBytes, "UTF-8" );
+              String credentialString = new String( credentialBytes, StandardCharsets.UTF_8 );
               credential = credentialString.toCharArray();
               addToCache(clusterName, alias, credentialString);
             }
@@ -398,10 +398,8 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
             LOG.failedToGetCredentialForCluster( clusterName, e );
           } catch (NoSuchAlgorithmException e) {
             LOG.failedToGetCredentialForCluster( clusterName, e );
-          } catch (UnsupportedEncodingException e) {
-            LOG.failedToGetCredentialForCluster( clusterName, e );
-           }
-  
+          }
+
         }
       }
       return credential;

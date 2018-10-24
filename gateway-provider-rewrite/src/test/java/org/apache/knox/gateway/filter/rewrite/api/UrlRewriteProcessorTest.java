@@ -31,6 +31,7 @@ import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -62,8 +63,8 @@ public class UrlRewriteProcessorTest {
     return stream;
   }
 
-  private static Reader getTestResourceReader( String name, String charset ) throws IOException {
-    return new InputStreamReader( getTestResourceStream( name ), charset );
+  private static Reader getTestResourceReader( String name ) throws IOException {
+    return new InputStreamReader( getTestResourceStream( name ), StandardCharsets.UTF_8 );
   }
 
   @Test
@@ -75,7 +76,7 @@ public class UrlRewriteProcessorTest {
 
     UrlRewriteProcessor processor = new UrlRewriteProcessor();
     UrlRewriteRulesDescriptor config = UrlRewriteRulesDescriptorFactory.load(
-        "xml", getTestResourceReader( "rewrite.xml", "UTF-8" ) );
+        "xml", getTestResourceReader( "rewrite.xml" ) );
     processor.initialize( environment, config );
 
     Template inputUrl = Parser.parseLiteral( "test-scheme://test-host:1/test-input-path" );
@@ -98,7 +99,7 @@ public class UrlRewriteProcessorTest {
 
     UrlRewriteProcessor processor = new UrlRewriteProcessor();
     UrlRewriteRulesDescriptor config = UrlRewriteRulesDescriptorFactory.load(
-        "xml", getTestResourceReader( "rewrite-with-same-rules.xml", "UTF-8" ) );
+        "xml", getTestResourceReader( "rewrite-with-same-rules.xml" ) );
     processor.initialize( environment, config );
 
     Template inputUrl = Parser.parseLiteral( "scheme://input-mock-host:42/test-input-path" );
@@ -139,7 +140,7 @@ public class UrlRewriteProcessorTest {
 
     UrlRewriteProcessor processor = new UrlRewriteProcessor();
     UrlRewriteRulesDescriptor config = UrlRewriteRulesDescriptorFactory.load(
-        "xml", getTestResourceReader( "rewrite-with-same-rules-different-scope.xml", "UTF-8" ) );
+        "xml", getTestResourceReader( "rewrite-with-same-rules-different-scope.xml" ) );
     processor.initialize( environment, config );
 
     Template inputUrl = Parser.parseLiteral( "scheme://input-mock-host:42/test-input-path" );
@@ -216,7 +217,7 @@ public class UrlRewriteProcessorTest {
 
     UrlRewriteProcessor processor = new UrlRewriteProcessor();
     UrlRewriteRulesDescriptor config = UrlRewriteRulesDescriptorFactory.load(
-        "xml", getTestResourceReader( "rewrite-with-same-rules.xml", "UTF-8" ) );
+        "xml", getTestResourceReader( "rewrite-with-same-rules.xml" ) );
     processor.initialize( environment, config );
 
     Template inputUrl = Parser.parseLiteral( "input-mock-scheme-1://input-mock-host-1:42/test-input-path" );
@@ -248,7 +249,7 @@ public class UrlRewriteProcessorTest {
 
     UrlRewriteProcessor processor = new UrlRewriteProcessor();
     UrlRewriteRulesDescriptor config = UrlRewriteRulesDescriptorFactory.load(
-        "xml", getTestResourceReader( "rewrite.xml", "UTF-8" ) );
+        "xml", getTestResourceReader( "rewrite.xml" ) );
     processor.initialize( environment, config );
 
     Template inputUrl;
@@ -278,7 +279,7 @@ public class UrlRewriteProcessorTest {
 
     UrlRewriteProcessor processor = new UrlRewriteProcessor();
     UrlRewriteRulesDescriptor config = UrlRewriteRulesDescriptorFactory.load(
-        "xml", getTestResourceReader( "rewrite.xml", "UTF-8" ) );
+        "xml", getTestResourceReader( "rewrite.xml" ) );
     processor.initialize( environment, config );
 
     Template inputUrl;

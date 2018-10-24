@@ -50,6 +50,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.Locale;
 
@@ -123,7 +124,7 @@ public class UrlConnectionDispatch extends AbstractGatewayFilter {
       String paramValue = request.getParameter( paramName );
       paramStr.append( paramName );
       paramStr.append( "=" );
-      paramStr.append( URLEncoder.encode( paramValue, "UTF-8" ) );
+      paramStr.append( URLEncoder.encode( paramValue, StandardCharsets.UTF_8.name() ) );
       if( paramNames.hasMoreElements() ) {
         paramStr.append( "&" );
       }

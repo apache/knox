@@ -25,7 +25,7 @@ import org.apache.knox.gateway.ha.provider.HaServiceConfig;
 import org.apache.knox.gateway.ha.provider.impl.i18n.HaMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -78,7 +78,7 @@ public class AtlasZookeeperURLManager extends DefaultURLManager {
 
             byte[] bytes = zooKeeperClient.getData().forPath(zooKeeperNamespace + APACHE_ATLAS_ACTIVE_SERVER_INFO);
 
-            String activeURL = new String(bytes, Charset.forName("UTF-8"));
+            String activeURL = new String(bytes, StandardCharsets.UTF_8);
 
             serverHosts.add(activeURL);
         } catch (Exception e) {

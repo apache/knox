@@ -25,6 +25,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyStore;
@@ -269,18 +270,17 @@ public class X509CertificateUtil {
       throws Exception {
     Field privateStringField = obj.getClass().getDeclaredField(setString);
     privateStringField.setAccessible(true);
-    String fieldValue = (String) privateStringField.get(obj);
-    return fieldValue;
+    return (String) privateStringField.get(obj);
   }
 
   public static void writeCertificateToFile(Certificate cert, final File file)
        throws CertificateEncodingException, IOException {
     byte[] bytes = cert.getEncoded();
-    Base64 encoder = new Base64( 76, "\n".getBytes( "ASCII" ) );
+    Base64 encoder = new Base64( 76, "\n".getBytes( StandardCharsets.US_ASCII ) );
     try( final FileOutputStream out = new FileOutputStream( file ) ) {
-      out.write( "-----BEGIN CERTIFICATE-----\n".getBytes( "ASCII" ) );
-      out.write( encoder.encodeToString( bytes ).getBytes( "ASCII" ) );
-      out.write( "-----END CERTIFICATE-----\n".getBytes( "ASCII" ) );
+      out.write( "-----BEGIN CERTIFICATE-----\n".getBytes( StandardCharsets.US_ASCII ) );
+      out.write( encoder.encodeToString( bytes ).getBytes( StandardCharsets.US_ASCII ) );
+      out.write( "-----END CERTIFICATE-----\n".getBytes( StandardCharsets.US_ASCII ) );
     }
   }
 
@@ -291,12 +291,9 @@ public class X509CertificateUtil {
     char[] password = "changeit".toCharArray();
     ks.load(null, password);
     ks.setCertificateEntry("gateway-identity", cert);
-    FileOutputStream fos = new FileOutputStream(file);
     /* Coverity Scan CID 1361992 */
-    try {
+    try (FileOutputStream fos = new FileOutputStream(file)) {
       ks.store(fos, password);
-    } finally {
-      fos.close();
     }
   }
 }

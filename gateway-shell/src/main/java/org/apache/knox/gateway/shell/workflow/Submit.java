@@ -31,6 +31,7 @@ import org.apache.http.entity.StringEntity;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 
 class Submit {
@@ -69,7 +70,7 @@ class Submit {
           HttpPost request = new HttpPost( uri.build() );
           HttpEntity entity = null;
           if( text != null ) {
-            entity = new StringEntity( text, ContentType.create( "application/xml", "UTF-8" ) );
+            entity = new StringEntity( text, ContentType.create( "application/xml", StandardCharsets.UTF_8 ) );
           } else if( file != null ) {
             entity = new FileEntity( new File( file ), ContentType.create( "application/xml" ) );
           }

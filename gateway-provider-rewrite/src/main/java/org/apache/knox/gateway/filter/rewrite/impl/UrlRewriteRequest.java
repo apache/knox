@@ -160,7 +160,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
     String[] split = splitTargetUrl( getTargetUrl() );
     if( split.length > 1 ) {
       try {
-        return URLDecoder.decode(split[1], "UTF-8");
+        return URLDecoder.decode(split[1], StandardCharsets.UTF_8.name());
       } catch ( UnsupportedEncodingException e ) {
         LOG.failedToDecodeQueryString(split[1], e);
         return split[1];

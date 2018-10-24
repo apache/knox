@@ -33,6 +33,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -59,8 +60,8 @@ public class KnoxCliSysBindTest {
   @BeforeClass
   public static void setupSuite() throws Exception {
     LOG_ENTER();
-    System.setOut(new PrintStream(outContent, false, "UTF-8"));
-    System.setErr(new PrintStream(errContent, false, "UTF-8"));
+    System.setOut(new PrintStream(outContent, false, StandardCharsets.UTF_8.name()));
+    System.setErr(new PrintStream(errContent, false, StandardCharsets.UTF_8.name()));
     driver.setupLdap(0);
     setupGateway();
     LOG_EXIT();
@@ -237,7 +238,7 @@ public class KnoxCliSysBindTest {
     KnoxCLI cli = new KnoxCLI();
     cli.setConf(config);
     cli.run(args);
-    assertThat(outContent.toString("UTF-8"), containsString("System LDAP Bind successful"));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("System LDAP Bind successful"));
 
     //    Test 2: Make sure authentication fails
     outContent.reset();
@@ -245,7 +246,7 @@ public class KnoxCliSysBindTest {
     cli = new KnoxCLI();
     cli.setConf(config);
     cli.run(args2);
-    assertThat(outContent.toString("UTF-8"), containsString("System LDAP Bind successful"));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("System LDAP Bind successful"));
 
 
     //    Test 3: Make sure authentication is successful
@@ -259,8 +260,8 @@ public class KnoxCliSysBindTest {
     } finally {
       NoOpAppender.tearDown( before );
     }
-    assertThat(outContent.toString("UTF-8"), containsString("LDAP authentication failed"));
-    assertThat(outContent.toString("UTF-8"), containsString("Unable to successfully bind to LDAP server with topology credentials"));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("LDAP authentication failed"));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("Unable to successfully bind to LDAP server with topology credentials"));
 
     //    Test 4: Assert that we get a username/password not present error is printed
     outContent.reset();
@@ -268,8 +269,8 @@ public class KnoxCliSysBindTest {
     cli = new KnoxCLI();
     cli.setConf(config);
     cli.run(args4);
-    assertThat(outContent.toString("UTF-8"), containsString("Warn: main.ldapRealm.contextFactory.systemUsername is not present"));
-    assertThat(outContent.toString("UTF-8"), containsString("Warn: main.ldapRealm.contextFactory.systemPassword is not present"));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("Warn: main.ldapRealm.contextFactory.systemUsername is not present"));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("Warn: main.ldapRealm.contextFactory.systemPassword is not present"));
 
 
     //    Test 5: Assert that we get a username/password not present error is printed
@@ -278,7 +279,7 @@ public class KnoxCliSysBindTest {
     cli = new KnoxCLI();
     cli.setConf(config);
     cli.run(args5);
-    assertThat(outContent.toString("UTF-8"), containsString("Topology not-a-cluster does not exist"));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("Topology not-a-cluster does not exist"));
 
     LOG_EXIT();
   }

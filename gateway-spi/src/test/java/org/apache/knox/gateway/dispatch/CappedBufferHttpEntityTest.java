@@ -28,6 +28,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -35,9 +36,6 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.fail;
 
 public class CappedBufferHttpEntityTest {
-
-  private static Charset UTF8 = Charset.forName( "UTF-8" );
-
   // Variables
   // Consumers: C1, C2
   // Reads: FC - Full Content, PC - Partial Content, AC - Any Content
@@ -71,7 +69,7 @@ public class CappedBufferHttpEntityTest {
     CappedBufferHttpEntity replay;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( "UTF-8" ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 20 );
 
     String output;
@@ -87,12 +85,12 @@ public class CappedBufferHttpEntityTest {
     CappedBufferHttpEntity replay;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( "UTF-8" ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 20 );
 
     String output;
 
-    output = blockRead( replay.getContent(), UTF8, -1, 3 );
+    output = blockRead( replay.getContent(), StandardCharsets.UTF_8, -1, 3 );
     assertThat( output, is( data ) );
   }
 
@@ -103,7 +101,7 @@ public class CappedBufferHttpEntityTest {
     CappedBufferHttpEntity replay;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( "UTF-8" ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 5 );
 
     String output;
@@ -123,13 +121,13 @@ public class CappedBufferHttpEntityTest {
     CappedBufferHttpEntity replay;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( "UTF-8" ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 5 );
 
     String output;
 
     try {
-      output = blockRead( replay.getContent(), UTF8, -1, 3 );
+      output = blockRead( replay.getContent(), StandardCharsets.UTF_8, -1, 3 );
       fail("expected IOException");
     } catch (IOException e) {
       // expected
@@ -143,7 +141,7 @@ public class CappedBufferHttpEntityTest {
     CappedBufferHttpEntity replay;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( "UTF-8" ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 20 );
 
     String output;
@@ -162,15 +160,15 @@ public class CappedBufferHttpEntityTest {
     CappedBufferHttpEntity replay;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( "UTF-8" ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 20 );
 
     String output;
 
-    output = blockRead( replay.getContent(), UTF8, -1, 3 );
+    output = blockRead( replay.getContent(), StandardCharsets.UTF_8, -1, 3 );
     assertThat( output, is( data ) );
 
-    output = blockRead( replay.getContent(), UTF8, -1, 3 );
+    output = blockRead( replay.getContent(), StandardCharsets.UTF_8, -1, 3 );
     assertThat( output, is( data ) );
   }
 
@@ -181,7 +179,7 @@ public class CappedBufferHttpEntityTest {
     CappedBufferHttpEntity replay;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 5 );
 
     String output;
@@ -202,12 +200,12 @@ public class CappedBufferHttpEntityTest {
     CappedBufferHttpEntity replay;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 5 );
 
     String output;
     try {
-      output = blockRead( replay.getContent(), UTF8, -1, 3 );
+      output = blockRead( replay.getContent(), StandardCharsets.UTF_8, -1, 3 );
       fail( "Expected IOException" );
     } catch( IOException e ) {
       // Expected.
@@ -224,7 +222,7 @@ public class CappedBufferHttpEntityTest {
     String text;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 20 );
     stream = replay.getContent();
     text = byteRead( stream, -1 );
@@ -246,16 +244,16 @@ public class CappedBufferHttpEntityTest {
     String text;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 20 );
 
     stream = replay.getContent();
-    text = blockRead( stream, UTF8, -1, 3 );
+    text = blockRead( stream, StandardCharsets.UTF_8, -1, 3 );
     assertThat( text, is( "0123456789" ) );
     stream.close();
 
     stream = replay.getContent();
-    text = blockRead( stream, UTF8, -1, 3 );
+    text = blockRead( stream, StandardCharsets.UTF_8, -1, 3 );
     assertThat( text, is( "0123456789" ) );
   }
 
@@ -269,7 +267,7 @@ public class CappedBufferHttpEntityTest {
     String text;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 5 );
 
     stream = replay.getContent();
@@ -291,12 +289,12 @@ public class CappedBufferHttpEntityTest {
     String text;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 5 );
 
     stream = replay.getContent();
     try {
-      text = blockRead( stream, UTF8, -1, 3 );
+      text = blockRead( stream, StandardCharsets.UTF_8, -1, 3 );
       fail( "Expected IOException" );
     } catch( IOException e ) {
       // Expected.
@@ -313,7 +311,7 @@ public class CappedBufferHttpEntityTest {
     String text;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 20 );
 
     stream = replay.getContent();
@@ -331,11 +329,11 @@ public class CappedBufferHttpEntityTest {
     String text;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 20 );
 
     stream = replay.getContent();
-    text = blockRead( stream, UTF8, 3, 3 );
+    text = blockRead( stream, StandardCharsets.UTF_8, 3, 3 );
     assertThat( text, is( "012" ) );
   }
 
@@ -351,7 +349,7 @@ public class CappedBufferHttpEntityTest {
       String text;
 
       basic = new BasicHttpEntity();
-      basic.setContent(new ByteArrayInputStream(data.getBytes(UTF8)));
+      basic.setContent(new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8)));
       replay = new CappedBufferHttpEntity(basic, 5);
       stream = replay.getContent();
       text = byteRead(stream, -1);
@@ -373,12 +371,12 @@ public class CappedBufferHttpEntityTest {
     String text;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 5 );
 
     stream = replay.getContent();
     try {
-      text = blockRead( stream, UTF8, -1, 4 );
+      text = blockRead( stream, StandardCharsets.UTF_8, -1, 4 );
       fail( "Expected IOException" );
     } catch (IOException e) {
       // expected
@@ -395,7 +393,7 @@ public class CappedBufferHttpEntityTest {
     String text;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 20 );
 
     stream = replay.getContent();
@@ -418,16 +416,16 @@ public class CappedBufferHttpEntityTest {
     String text;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 20 );
 
     stream = replay.getContent();
-    text = blockRead( stream, UTF8, 4, 1 );
+    text = blockRead( stream, StandardCharsets.UTF_8, 4, 1 );
     assertThat( text, is( "0123" ) );
     stream.close();
 
     stream = replay.getContent();
-    text = blockRead( stream, UTF8, -1, 7 );
+    text = blockRead( stream, StandardCharsets.UTF_8, -1, 7 );
     assertThat( text, is( "0123456789" ) );
   }
 
@@ -442,7 +440,7 @@ public class CappedBufferHttpEntityTest {
 
     try {
       basic = new BasicHttpEntity();
-      basic.setContent(new ByteArrayInputStream(data.getBytes(UTF8)));
+      basic.setContent(new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8)));
       replay = new CappedBufferHttpEntity(basic, 5);
 
       stream = replay.getContent();
@@ -465,12 +463,12 @@ public class CappedBufferHttpEntityTest {
     String text;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 5 );
 
     stream = replay.getContent();
     try {
-      text = blockRead( stream, UTF8, 7, 2 );
+      text = blockRead( stream, StandardCharsets.UTF_8, 7, 2 );
       fail("Expected IOExceptin");
     } catch (IOException e) {
       // expected
@@ -487,7 +485,7 @@ public class CappedBufferHttpEntityTest {
     String text;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 20 );
 
     stream = replay.getContent();
@@ -510,16 +508,16 @@ public class CappedBufferHttpEntityTest {
     String text;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 20 );
 
     stream = replay.getContent();
-    text = blockRead( stream, UTF8, 7, 2 );
+    text = blockRead( stream, StandardCharsets.UTF_8, 7, 2 );
     assertThat( text, is( "0123456" ) );
     stream.close();
 
     stream = replay.getContent();
-    text = blockRead( stream, UTF8, -1, 7 );
+    text = blockRead( stream, StandardCharsets.UTF_8, -1, 7 );
     assertThat( text, is( "0123456789" ) );
   }
 
@@ -533,7 +531,7 @@ public class CappedBufferHttpEntityTest {
     String text;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 5 );
 
     try {
@@ -553,12 +551,12 @@ public class CappedBufferHttpEntityTest {
     String text;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 5 );
 
     stream = replay.getContent();
     try {    
-      text = blockRead( stream, UTF8, 7, 2 );
+      text = blockRead( stream, StandardCharsets.UTF_8, 7, 2 );
       fail( "Expected IOException" );
     } catch ( IOException e ) {
       // Expected.
@@ -575,7 +573,7 @@ public class CappedBufferHttpEntityTest {
     String text;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 20 );
 
     stream1 = replay.getContent();
@@ -600,17 +598,17 @@ public class CappedBufferHttpEntityTest {
     String text;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 20 );
     stream1 = replay.getContent();
-    text = blockRead( stream1, UTF8, 3, 2 );
+    text = blockRead( stream1, StandardCharsets.UTF_8, 3, 2 );
     assertThat( text, is( "012" ) );
 
     stream2 = replay.getContent();
-    text = blockRead( stream2, UTF8, 4, 3 );
+    text = blockRead( stream2, StandardCharsets.UTF_8, 4, 3 );
     assertThat( text, is( "0123" ) );
 
-    text = blockRead( stream1, UTF8, 3, 2 );
+    text = blockRead( stream1, StandardCharsets.UTF_8, 3, 2 );
     assertThat( text, is( "345" ) );
   }
 
@@ -624,7 +622,7 @@ public class CappedBufferHttpEntityTest {
     String text;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 5 );
 
     stream1 = replay.getContent();
@@ -646,16 +644,16 @@ public class CappedBufferHttpEntityTest {
     String text;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( data.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( data.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 5 );
 
     stream1 = replay.getContent();
-    text = blockRead( stream1, UTF8, 3, 2 );
+    text = blockRead( stream1, StandardCharsets.UTF_8, 3, 2 );
     assertThat( text, is( "012" ) );
 
     stream2 = replay.getContent();
     try {
-      text = blockRead( stream2, UTF8, 6, 4 );
+      text = blockRead( stream2, StandardCharsets.UTF_8, 6, 4 );
       fail("expected IOException");
     } catch (IOException e) {
       // expected
@@ -670,7 +668,7 @@ public class CappedBufferHttpEntityTest {
     CappedBufferHttpEntity replay;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( input.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( input.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 5 );
 
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -689,12 +687,12 @@ public class CappedBufferHttpEntityTest {
     CappedBufferHttpEntity replay;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( text.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( text.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic );
     assertThat( replay.isRepeatable(), is( true ) );
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( text.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( text.getBytes( StandardCharsets.UTF_8 ) ) );
     BufferedHttpEntity buffered = new BufferedHttpEntity( basic );
     replay = new CappedBufferHttpEntity( buffered );
     assertThat( replay.isRepeatable(), is( true ) );
@@ -707,12 +705,12 @@ public class CappedBufferHttpEntityTest {
     CappedBufferHttpEntity replay;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( input.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( input.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 5 );
     assertThat( replay.isChunked(), is( false ) );
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( input.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( input.getBytes( StandardCharsets.UTF_8 ) ) );
     basic.setChunked( true );
     replay = new CappedBufferHttpEntity( basic, 5 );
     assertThat( replay.isChunked(), is( true ) );
@@ -725,12 +723,12 @@ public class CappedBufferHttpEntityTest {
     CappedBufferHttpEntity replay;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( input.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( input.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 5 );
     assertThat( replay.getContentLength(), is( -1L ) );
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( input.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( input.getBytes( StandardCharsets.UTF_8 ) ) );
     basic.setContentLength( input.length() );
     replay = new CappedBufferHttpEntity( basic, 5 );
     assertThat( replay.getContentLength(), is( 10L ) );
@@ -743,12 +741,12 @@ public class CappedBufferHttpEntityTest {
     CappedBufferHttpEntity replay;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( input.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( input.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 5 );
     assertThat( replay.getContentType(), nullValue() );
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( input.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( input.getBytes( StandardCharsets.UTF_8 ) ) );
     basic.setContentType( ContentType.APPLICATION_JSON.getMimeType() );
     replay = new CappedBufferHttpEntity( basic, 5 );
     assertThat( replay.getContentType().getValue(), is( "application/json" ) );
@@ -761,15 +759,15 @@ public class CappedBufferHttpEntityTest {
     CappedBufferHttpEntity replay;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( input.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( input.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 5 );
     assertThat( replay.getContentEncoding(), nullValue() );
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( input.getBytes( UTF8 ) ) );
-    basic.setContentEncoding( "UTF-8" );
+    basic.setContent( new ByteArrayInputStream( input.getBytes( StandardCharsets.UTF_8 ) ) );
+    basic.setContentEncoding( StandardCharsets.UTF_8.name() );
     replay = new CappedBufferHttpEntity( basic, 5 );
-    assertThat( replay.getContentEncoding().getValue(), is( "UTF-8" ) );
+    assertThat( replay.getContentEncoding().getValue(), is( StandardCharsets.UTF_8.name() ) );
   }
 
   @Test
@@ -780,7 +778,7 @@ public class CappedBufferHttpEntityTest {
     CappedBufferHttpEntity replay;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( input.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( input.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 5 );
     assertThat( replay.isStreaming(), is( true ) );
 
@@ -789,7 +787,7 @@ public class CappedBufferHttpEntityTest {
     replay = new CappedBufferHttpEntity( basic, 5 );
     assertThat( replay.isStreaming(), is( false ) );
 
-    streaming = new InputStreamEntity( new ByteArrayInputStream( input.getBytes( UTF8 ) ), 10, ContentType.TEXT_PLAIN );
+    streaming = new InputStreamEntity( new ByteArrayInputStream( input.getBytes( StandardCharsets.UTF_8 ) ), 10, ContentType.TEXT_PLAIN );
     replay = new CappedBufferHttpEntity( streaming, 5 );
     assertThat( replay.isStreaming(), is( true ) );
   }
@@ -801,7 +799,7 @@ public class CappedBufferHttpEntityTest {
     CappedBufferHttpEntity replay;
 
     basic = new BasicHttpEntity();
-    basic.setContent( new ByteArrayInputStream( input.getBytes( UTF8 ) ) );
+    basic.setContent( new ByteArrayInputStream( input.getBytes( StandardCharsets.UTF_8 ) ) );
     replay = new CappedBufferHttpEntity( basic, 5 );
 
     try {

@@ -20,11 +20,9 @@ package org.apache.knox.gateway.filter.rewrite.impl.form;
 import java.io.IOException;
 import java.io.Writer;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 public class FormWriter {
-
-  private static final String DEFFAULT_FORM_ENCODING = "UTF-8";
-
   private Writer writer;
   boolean first;
 
@@ -39,9 +37,9 @@ public class FormWriter {
     } else {
       writer.write( "&" );
     }
-    writer.write( URLEncoder.encode( pair.getName(), DEFFAULT_FORM_ENCODING ) );
+    writer.write( URLEncoder.encode( pair.getName(), StandardCharsets.UTF_8.name() ) );
     writer.write( "=" );
-    writer.write( URLEncoder.encode( pair.getValue(), DEFFAULT_FORM_ENCODING ) );
+    writer.write( URLEncoder.encode( pair.getValue(), StandardCharsets.UTF_8.name() ) );
   }
 
 }

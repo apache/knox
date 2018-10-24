@@ -30,6 +30,7 @@ import org.junit.experimental.categories.Category;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -53,8 +54,8 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     String inputBody = "jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaWebHCat%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
 
     MockHttpServletRequest request = new MockHttpServletRequest();
-    request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( "UTF-8" ) ) ) );
-    request.setCharacterEncoding( "UTF-8" );
+    request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( StandardCharsets.UTF_8 ) ) ) );
+    request.setCharacterEncoding( StandardCharsets.UTF_8.name() );
     request.setContentType( "application/x-www-form-urlencoded" );
     request.setMethod("POST");
 
@@ -71,7 +72,7 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     String inputBody = "jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaWebHCat%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
 
     MockHttpServletRequest request = new MockHttpServletRequest();
-    request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( "UTF-8" ) ) ) );
+    request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( StandardCharsets.UTF_8 ) ) ) );
     request.setContentType( "application/x-www-form-urlencoded" );
     request.setMethod("POST");
 
@@ -88,9 +89,9 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     String inputBody = "jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaWebHCat%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
 
     MockHttpServletRequest request = new MockHttpServletRequest();
-    request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( "UTF-8" ) ) ) );
+    request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( StandardCharsets.UTF_8 ) ) ) );
     request.setContentType( "application/x-www-form-urlencoded" );
-    request.setCharacterEncoding( "ISO-8859-1" );
+    request.setCharacterEncoding( StandardCharsets.ISO_8859_1.name() );
     request.setMethod("POST");
 
     IdentityAsserterHttpServletRequestWrapper wrapper
@@ -106,8 +107,8 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     String inputBody = "user.name=input-user&jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaWebHCat%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
 
     MockHttpServletRequest request = new MockHttpServletRequest();
-    request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( "UTF-8" ) ) ) );
-    request.setCharacterEncoding( "UTF-8" );
+    request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( StandardCharsets.UTF_8 ) ) ) );
+    request.setCharacterEncoding( StandardCharsets.UTF_8.name() );
     request.setContentType( "application/x-www-form-urlencoded" );
     request.setMethod("POST");
     
@@ -125,8 +126,8 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     String inputBody = "user.name=input-user&jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaWebHCat%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
 
     MockHttpServletRequest request = new MockHttpServletRequest();
-    request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( "UTF-8" ) ) ) );
-    request.setCharacterEncoding( "UTF-8" );
+    request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( StandardCharsets.UTF_8 ) ) ) );
+    request.setCharacterEncoding( StandardCharsets.UTF_8.name() );
     request.setContentType( "text/plain" );
 
     IdentityAsserterHttpServletRequestWrapper wrapper
@@ -252,27 +253,26 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
 
     m = new HashMap<>();
     m.put( "null-values", null );
-    s = IdentityAsserterHttpServletRequestWrapper.urlEncode( m, "UTF-8" );
+    s = IdentityAsserterHttpServletRequestWrapper.urlEncode( m, StandardCharsets.UTF_8.name() );
     assertThat( s, is( "null-values" ) );
 
     m = new HashMap<>();
     m.put( "no-values", new ArrayList<String>(0) );
-    s = IdentityAsserterHttpServletRequestWrapper.urlEncode( m, "UTF-8" );
+    s = IdentityAsserterHttpServletRequestWrapper.urlEncode( m, StandardCharsets.UTF_8.name() );
     assertThat( s, is( "no-values" ) );
 
     m = new HashMap<>();
     List<String> lst = new ArrayList<>();
     lst.add("value1");
     m.put( "one-value", lst);
-    s = IdentityAsserterHttpServletRequestWrapper.urlEncode( m, "UTF-8" );
+    s = IdentityAsserterHttpServletRequestWrapper.urlEncode( m, StandardCharsets.UTF_8.name() );
     assertThat( s, is( "one-value=value1" ) );
 
     m = new HashMap<>();
-    lst = new ArrayList<>();
     String[] a = {"value1", "value2"};
-    lst.addAll(Arrays.asList(a));
+    lst = new ArrayList<>(Arrays.asList(a));
     m.put( "two-values", lst);
-    s = IdentityAsserterHttpServletRequestWrapper.urlEncode( m, "UTF-8" );
+    s = IdentityAsserterHttpServletRequestWrapper.urlEncode( m, StandardCharsets.UTF_8.name() );
     assertThat( s, is( "two-values=value1&two-values=value2" ) );
   }
 

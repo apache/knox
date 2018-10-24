@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway.shell;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 public abstract class AbstractCredentialCollector implements CredentialCollector {
 
@@ -48,12 +48,7 @@ public abstract class AbstractCredentialCollector implements CredentialCollector
 
   @Override
   public byte[] bytes() {
-    try {
-      return value.getBytes("UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      System.out.println("Unsupported encoding.");
-    }
-    return null;
+    return value.getBytes(StandardCharsets.UTF_8);
   }
 
   @Override

@@ -50,7 +50,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.EnumSet;
@@ -124,16 +124,16 @@ public class ServiceRegistryFunctionsTest {
     initParams.put( "request.body", "oozie-conf" );
     setUp( "test-user", initParams );
 
-    String input = TestUtils.getResourceString( ServiceRegistryFunctionsTest.class, "test-input-body.xml", "UTF-8" );
-    String expect = TestUtils.getResourceString( ServiceRegistryFunctionsTest.class, "test-expect-body.xml", "UTF-8" );
+    String input = TestUtils.getResourceString( ServiceRegistryFunctionsTest.class, "test-input-body.xml", StandardCharsets.UTF_8 );
+    String expect = TestUtils.getResourceString( ServiceRegistryFunctionsTest.class, "test-expect-body.xml", StandardCharsets.UTF_8 );
 
     // Setup the server side request/response interaction.
     interaction.expect()
         .method( "PUT" )
         .requestUrl( "http://test-host:42/test-path" )
         .contentType( "text/xml" )
-        .characterEncoding( "UTF-8" )
-        .content( expect, Charset.forName( "UTF-8" ) );
+        .characterEncoding( StandardCharsets.UTF_8.name() )
+        .content( expect, StandardCharsets.UTF_8 );
     interaction.respond()
         .status( 200 );
     interactions.add( interaction );
@@ -156,16 +156,16 @@ public class ServiceRegistryFunctionsTest {
     initParams.put( "request.body", "oozie-conf" );
     setUp( "test-user", initParams );
 
-    String input = TestUtils.getResourceString( ServiceRegistryFunctionsTest.class, "test-input-body.json", "UTF-8" );
-    String expect = TestUtils.getResourceString( ServiceRegistryFunctionsTest.class, "test-expect-body.json", "UTF-8" );
+    String input = TestUtils.getResourceString( ServiceRegistryFunctionsTest.class, "test-input-body.json", StandardCharsets.UTF_8 );
+    String expect = TestUtils.getResourceString( ServiceRegistryFunctionsTest.class, "test-expect-body.json", StandardCharsets.UTF_8 );
 
     // Setup the server side request/response interaction.
     interaction.expect()
         .method( "PUT" )
         .requestUrl( "http://test-host:42/test-path" )
         .contentType( "application/json" )
-        .characterEncoding( "UTF-8" )
-        .content( expect, Charset.forName( "UTF-8" ) );
+        .characterEncoding( StandardCharsets.UTF_8.name() )
+        .content( expect, StandardCharsets.UTF_8 );
     interaction.respond()
         .status( 200 );
     interactions.add( interaction );

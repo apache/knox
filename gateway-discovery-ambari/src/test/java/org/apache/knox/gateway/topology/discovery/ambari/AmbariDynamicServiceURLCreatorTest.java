@@ -24,6 +24,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,7 +38,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-
 
 public class AmbariDynamicServiceURLCreatorTest {
 
@@ -275,7 +275,7 @@ public class AmbariDynamicServiceURLCreatorTest {
         File tmpFile = File.createTempFile("knox-discovery-external-url-mapping", ".xml");
         System.setProperty(AmbariDynamicServiceURLCreator.MAPPING_CONFIG_OVERRIDE_PROPERTY, tmpFile.getAbsolutePath());
         try {
-            FileUtils.writeStringToFile(tmpFile, OOZIE_OVERRIDE_MAPPING_FILE_CONTENTS, java.nio.charset.Charset.forName("utf-8"));
+            FileUtils.writeStringToFile(tmpFile, OOZIE_OVERRIDE_MAPPING_FILE_CONTENTS, StandardCharsets.UTF_8);
             testOozieURL(null, "OOZIE", "http://host3:2222/OVERRIDE");
         } finally {
             System.clearProperty(AmbariDynamicServiceURLCreator.MAPPING_CONFIG_OVERRIDE_PROPERTY);
@@ -1218,7 +1218,7 @@ public class AmbariDynamicServiceURLCreatorTest {
         File tmpFile = File.createTempFile("knox-discovery-url-mapping-extension", ".xml");
         System.setProperty(AmbariDynamicServiceURLCreator.MAPPING_CONFIG_OVERRIDE_PROPERTY, tmpFile.getAbsolutePath());
         try {
-            FileUtils.writeStringToFile(tmpFile, CUSTOM_AUGMENT_MAPPING_FILE_CONTENTS, java.nio.charset.Charset.forName("utf-8"));
+            FileUtils.writeStringToFile(tmpFile, CUSTOM_AUGMENT_MAPPING_FILE_CONTENTS, StandardCharsets.UTF_8);
 
             final String[] HOSTNAMES = {"host2", "host4"};
 

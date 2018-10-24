@@ -24,7 +24,7 @@ import org.apache.knox.gateway.ha.provider.HaServiceConfig;
 import org.apache.knox.gateway.ha.provider.impl.i18n.HaMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -80,7 +80,7 @@ public class HS2ZookeeperURLManager extends DefaultURLManager {
         String serverInfo =
             new String(
                 zooKeeperClient.getData().forPath("/" + zooKeeperNamespace + "/" + serverNode),
-                Charset.forName("UTF-8"));
+                StandardCharsets.UTF_8);
         String serverURL = constructURL(serverInfo);
         serverHosts.add(serverURL);
       }

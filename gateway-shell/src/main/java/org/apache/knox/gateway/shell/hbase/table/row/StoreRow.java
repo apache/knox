@@ -32,6 +32,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -79,7 +80,7 @@ public class StoreRow {
           document.appendChild( root );
 
           Element row = document.createElement( ELEMENT_ROW );
-          row.setAttribute( ATTRIBUTE_KEY, Base64.encodeBase64String( rowId.getBytes( "UTF-8" ) ) );
+          row.setAttribute( ATTRIBUTE_KEY, Base64.encodeBase64String( rowId.getBytes( StandardCharsets.UTF_8 ) ) );
           root.appendChild( row );
 
           for( InsertableColumn column : columns ) {
@@ -98,7 +99,7 @@ public class StoreRow {
 
           URIBuilder uri = uri( HBase.SERVICE_PATH, "/", tableName, "/false-row-key" );
           HttpPost request = new HttpPost( uri.build() );
-          HttpEntity entity = new StringEntity( writer.toString(), ContentType.create( "text/xml", "UTF-8" ) );
+          HttpEntity entity = new StringEntity( writer.toString(), ContentType.create( "text/xml", StandardCharsets.UTF_8 ) );
           request.setEntity( entity );
 
           return new Response( execute( request ) );

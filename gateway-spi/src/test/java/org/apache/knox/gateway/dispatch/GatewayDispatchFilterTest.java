@@ -27,6 +27,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -150,7 +151,7 @@ public class GatewayDispatchFilterTest {
     doTestServiceDispatchWhitelist(Collections.singletonList(serviceRole),
                                    null,
                                    serviceRole,
-                                   URLEncoder.encode("http://localhost:9999", "UTF-8"),
+                                   URLEncoder.encode("http://localhost:9999", StandardCharsets.UTF_8.name()),
                                    true);
   }
 
@@ -166,7 +167,7 @@ public class GatewayDispatchFilterTest {
     doTestServiceDispatchWhitelist(Collections.singletonList(serviceRole),
                                    "DEFAULT",
                                    serviceRole,
-                                   URLEncoder.encode("http://www.notonmylist.org:9999", "UTF-8"),
+                                   URLEncoder.encode("http://www.notonmylist.org:9999", StandardCharsets.UTF_8.name()),
                                    false);
   }
 

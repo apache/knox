@@ -33,6 +33,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -60,8 +61,8 @@ public class KnoxCliLdapFuncTestPositive {
   @BeforeClass
   public static void setupSuite() throws Exception {
     LOG_ENTER();
-    System.setOut(new PrintStream(outContent, false, "UTF-8"));
-    System.setErr(new PrintStream(errContent, false, "UTF-8"));
+    System.setOut(new PrintStream(outContent, false, StandardCharsets.UTF_8.name()));
+    System.setErr(new PrintStream(errContent, false, StandardCharsets.UTF_8.name()));
     driver.setupLdap(0);
     setupGateway();
     LOG_EXIT();
@@ -236,9 +237,9 @@ public class KnoxCliLdapFuncTestPositive {
     KnoxCLI cli = new KnoxCLI();
     cli.setConf(config);
     cli.run(args);
-    assertThat(outContent.toString("UTF-8"), containsString("success"));
-    assertThat(outContent.toString("UTF-8"), containsString("analyst"));
-    assertThat(outContent.toString("UTF-8"), containsString("scientist"));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("success"));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("analyst"));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("scientist"));
 
 //    Test 2: Give an invalid name and password combinatinon.
     outContent.reset();
@@ -253,7 +254,7 @@ public class KnoxCliLdapFuncTestPositive {
     } finally {
       NoOpAppender.tearDown( before );
     }
-    assertThat(outContent.toString("UTF-8"), containsString("LDAP authentication failed"));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("LDAP authentication failed"));
 
 //    Test 3: Authenticate a user who belongs to no groups, but specify groups with --g
     outContent.reset();
@@ -264,8 +265,8 @@ public class KnoxCliLdapFuncTestPositive {
     String[] args3 = {"user-auth-test", "--master", "knox", "--cluster", "test-cluster",
         "--u", username, "--p", password, "--g" };
     cli.run(args3);
-    assertThat(outContent.toString("UTF-8"), containsString("LDAP authentication success"));
-    assertThat(outContent.toString("UTF-8"), containsString("does not belong to any groups"));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("LDAP authentication success"));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("does not belong to any groups"));
 
     //    Test 4: Pass a non-existent topology
     outContent.reset();
@@ -276,7 +277,7 @@ public class KnoxCliLdapFuncTestPositive {
     String[] args4 = {"user-auth-test", "--master", "knox", "--cluster", "cluster-dne",
         "--u", username, "--p", password };
     cli.run(args4);
-    assertThat(outContent.toString("UTF-8"), containsString("Topology cluster-dne does not exist"));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("Topology cluster-dne does not exist"));
 
 
     //    Test 5: Authenticate a user who belongs to no groups, but specify groups with --g
@@ -288,8 +289,8 @@ public class KnoxCliLdapFuncTestPositive {
     String[] args5 = {"user-auth-test", "--master", "knox", "--cluster", "test-cluster",
         "--u", username, "--p", password };
     cli.run( args5 );
-    assertThat(outContent.toString("UTF-8"), containsString("LDAP authentication success"));
-    assertThat(outContent.toString("UTF-8"), not(containsString("does not belong to any groups")));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("LDAP authentication success"));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), not(containsString("does not belong to any groups")));
 
     LOG_EXIT();
   }
