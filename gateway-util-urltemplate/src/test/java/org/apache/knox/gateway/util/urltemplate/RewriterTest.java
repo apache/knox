@@ -366,7 +366,7 @@ public class RewriterTest {
   }
 
   private Map<String, String> getParameters(URL url) throws UnsupportedEncodingException {
-    final Map<String, String> parameter_pairs = new LinkedHashMap<String, String>();
+    final Map<String, String> parameter_pairs = new LinkedHashMap<>();
     final String[] pairs = url.getQuery().split("&");
     for (String pair : pairs) {
        final int idx = pair.indexOf("=");

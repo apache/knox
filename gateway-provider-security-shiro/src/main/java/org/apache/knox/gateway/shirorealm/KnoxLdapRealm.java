@@ -179,8 +179,8 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     private String memberAttributeValuePrefix = "uid={0}";
     private String memberAttributeValueSuffix = "";
     
-    private final Map<String,String> rolesByGroup = new LinkedHashMap<String, String>();
-    private final Map<String,List<String>> permissionsByRole = new LinkedHashMap<String, List<String>>();
+    private final Map<String,String> rolesByGroup = new LinkedHashMap<>();
+    private final Map<String,List<String>> permissionsByRole = new LinkedHashMap<>();
     
     private boolean authorizationEnabled;
 

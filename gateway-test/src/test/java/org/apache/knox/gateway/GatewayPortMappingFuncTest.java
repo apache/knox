@@ -77,7 +77,7 @@ public class GatewayPortMappingFuncTest {
 
     eeriePort = getAvailablePort(1240, 49151);
 
-    ConcurrentHashMap<String, Integer> topologyPortMapping = new ConcurrentHashMap<String, Integer>();
+    ConcurrentHashMap<String, Integer> topologyPortMapping = new ConcurrentHashMap<>();
     topologyPortMapping.put("eerie", eeriePort);
 
     masterServer = new MockServer("master", true);

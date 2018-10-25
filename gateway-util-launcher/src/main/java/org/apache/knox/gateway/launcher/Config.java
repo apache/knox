@@ -136,7 +136,7 @@ public class Config {
     name = fixName( name );
     Map<String,String> map = sections.get( section );
     if( map == null ) {
-      map = new LinkedHashMap<String, String>();
+      map = new LinkedHashMap<>();
       sections.put( section, map );
     }
     map.put( name, value );

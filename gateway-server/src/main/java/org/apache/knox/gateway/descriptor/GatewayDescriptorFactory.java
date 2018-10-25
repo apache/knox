@@ -53,13 +53,13 @@ public abstract class GatewayDescriptorFactory {
   }
 
   private static Map<String, GatewayDescriptorImporter> loadImporters() {
-    Map<String, GatewayDescriptorImporter> map = new ConcurrentHashMap<String, GatewayDescriptorImporter>();
+    Map<String, GatewayDescriptorImporter> map = new ConcurrentHashMap<>();
     map.put( "xml", new XmlGatewayDescriptorImporter() );
     return map;
   }
 
   private static Map<String, GatewayDescriptorExporter> loadExporters() {
-    Map<String, GatewayDescriptorExporter> map = new ConcurrentHashMap<String, GatewayDescriptorExporter>();
+    Map<String, GatewayDescriptorExporter> map = new ConcurrentHashMap<>();
     map.put( "xml", new XmlGatewayDescriptorExporter() );
     return map;
   }

@@ -892,7 +892,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public Map<String, Integer> getGatewayPortMappings() {
 
-    final Map<String, Integer> result = new ConcurrentHashMap<String, Integer>();
+    final Map<String, Integer> result = new ConcurrentHashMap<>();
     final Map<String, String> properties = getValByRegex(GATEWAY_PORT_MAPPING_REGEX);
 
     // Convert port no. from string to int

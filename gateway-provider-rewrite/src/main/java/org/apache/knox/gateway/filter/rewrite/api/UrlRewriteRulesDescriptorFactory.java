@@ -62,13 +62,13 @@ public abstract class UrlRewriteRulesDescriptorFactory {
   }
 
   private static Map<String, UrlRewriteRulesImporter> loadImporters() {
-    Map<String, UrlRewriteRulesImporter> map = new ConcurrentHashMap<String, UrlRewriteRulesImporter>();
+    Map<String, UrlRewriteRulesImporter> map = new ConcurrentHashMap<>();
     map.put( "xml", new XmlUrlRewriteRulesImporter() );
     return map;
   }
 
   private static Map<String, UrlRewriteRulesExporter> loadExporters() {
-    Map<String, UrlRewriteRulesExporter> map = new ConcurrentHashMap<String, UrlRewriteRulesExporter>();
+    Map<String, UrlRewriteRulesExporter> map = new ConcurrentHashMap<>();
     map.put( "xml", new XmlUrlRewriteRulesExporter() );
     return map;
   }

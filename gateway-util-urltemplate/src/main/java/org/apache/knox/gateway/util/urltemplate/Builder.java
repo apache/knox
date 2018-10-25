@@ -154,7 +154,7 @@ public class Builder {
   }
 
   private LinkedHashMap<String, Query> copyQuery( Map<String, Query> orig ) {
-    LinkedHashMap<String,Query> copy = new LinkedHashMap<String, Query>();
+    LinkedHashMap<String,Query> copy = new LinkedHashMap<>();
     if( orig != null ) {
       for( Map.Entry<String,Query> entry : orig.entrySet() ) {
         copy.put( entry.getKey(), new Query( entry.getValue() ) );

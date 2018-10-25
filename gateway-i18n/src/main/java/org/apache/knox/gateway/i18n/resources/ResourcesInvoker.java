@@ -45,7 +45,7 @@ public class ResourcesInvoker implements InvocationHandler {
   public ResourcesInvoker( Class<?> bundleClass ) {
     this.bundleClass = bundleClass;
     this.bundleName = calcBundleName( bundleClass );
-    this.bundles = new ConcurrentHashMap<Locale, ResourceBundle>();
+    this.bundles = new ConcurrentHashMap<>();
   }
 
   @Override

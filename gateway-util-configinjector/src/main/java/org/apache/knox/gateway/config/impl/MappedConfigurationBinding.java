@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class MappedConfigurationBinding implements ConfigurationBinding {
 
-  private Map<String,String> map = new ConcurrentHashMap<String, String>();
+  private Map<String,String> map = new ConcurrentHashMap<>();
 
   public void bind( String targetName, String sourceName ) {
     map.put( targetName, sourceName );

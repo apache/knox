@@ -79,7 +79,7 @@ public class GatewayPortMappingConfigTest {
   @BeforeClass
   public static void init() throws Exception {
 
-    Map<String, Integer> topologyPortMapping = new ConcurrentHashMap<String, Integer>();
+    Map<String, Integer> topologyPortMapping = new ConcurrentHashMap<>();
 
     // get unique ports
     eeriePort = getAvailablePort(1240, 49151);

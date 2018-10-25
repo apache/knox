@@ -32,7 +32,7 @@ public class Service {
   private String role;
   private String name;
   private Version version;
-  private Map<String, String> params = new LinkedHashMap<String, String>();
+  private Map<String, String> params = new LinkedHashMap<>();
   private List<String> urls;
   private CustomDispatch dispatch = null;
 

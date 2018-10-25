@@ -25,7 +25,7 @@ import java.util.Map.Entry;
 
 public class ShiroConfig {
   
-  private Map<String, Map<String, String>> sections = new LinkedHashMap<String, Map<String, String>>();
+  private Map<String, Map<String, String>> sections = new LinkedHashMap<>();
  
   public ShiroConfig(Provider provider, String clusterName) {
     Map<String, String> params = provider.getParams();
@@ -52,7 +52,7 @@ public class ShiroConfig {
   private void addNameValueToSection(String name, String value, String sectionName) {
     Map<String, String> section = sections.get(sectionName);
     if (section == null) {
-      section = new LinkedHashMap<String, String>();
+      section = new LinkedHashMap<>();
       sections.put(sectionName, section);
     }
     section.put(name, value);

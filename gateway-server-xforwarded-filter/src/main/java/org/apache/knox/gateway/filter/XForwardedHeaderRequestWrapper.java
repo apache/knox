@@ -50,7 +50,7 @@ public class XForwardedHeaderRequestWrapper extends GatewayRequestWrapper {
     headerNames.add(X_FORWARDED_CONTEXT);
   }
 
-  Hashtable<String,String> proxyHeaders = new Hashtable<String, String>();
+  Hashtable<String,String> proxyHeaders = new Hashtable<>();
 
   public XForwardedHeaderRequestWrapper(HttpServletRequest request) {
     super( request );

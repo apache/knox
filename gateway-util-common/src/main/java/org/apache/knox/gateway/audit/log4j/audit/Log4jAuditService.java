@@ -29,7 +29,7 @@ import org.apache.log4j.MDC;
 public class Log4jAuditService implements AuditService {
 
   public static final String MDC_AUDIT_CONTEXT_KEY = "audit_context";
-  private Map<String, Auditor> auditors = new ConcurrentHashMap<String, Auditor>();
+  private Map<String, Auditor> auditors = new ConcurrentHashMap<>();
 
   @Override
   public AuditContext createContext() {

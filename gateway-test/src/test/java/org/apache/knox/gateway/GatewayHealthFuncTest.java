@@ -113,7 +113,7 @@ public class GatewayHealthFuncTest {
     stream.close();
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
-    Map<String, String> options = new HashMap<String, String>();
+    Map<String, String> options = new HashMap<>();
     options.put("persist-master", "false");
     options.put("master", "password");
     try {

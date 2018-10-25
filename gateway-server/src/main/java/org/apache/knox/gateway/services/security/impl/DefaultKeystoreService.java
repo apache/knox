@@ -64,7 +64,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
 
   private String signingKeystoreName = null;
   private String signingKeyAlias = null;
-  private Map<String, Map<String, String>> cache = new ConcurrentHashMap<String,Map<String, String>>();
+  private Map<String, Map<String, String>> cache = new ConcurrentHashMap<>();
   private Lock readLock = null;
   private Lock writeLock = null;
 
@@ -463,7 +463,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
   private void addToCache(String clusterName, String alias, String credentialString) {
       HashMap<String, String> clusterCache = (HashMap<String, String>) cache.get(clusterName);
       if (clusterCache == null) {
-        clusterCache = new HashMap<String, String>();
+        clusterCache = new HashMap<>();
       }
       clusterCache.put(alias, credentialString);
   }

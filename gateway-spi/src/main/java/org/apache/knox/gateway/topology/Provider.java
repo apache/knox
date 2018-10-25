@@ -27,7 +27,7 @@ public class Provider {
   private String role;
   private String name;
   private boolean enabled;
-  private Map<String, String> params = new LinkedHashMap<String, String>();
+  private Map<String, String> params = new LinkedHashMap<>();
 
   public Provider() {
   }

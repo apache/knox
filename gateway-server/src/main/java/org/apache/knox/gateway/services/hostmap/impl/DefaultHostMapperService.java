@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class DefaultHostMapperService implements HostMapperService {
 
-  private ConcurrentHashMap<String, HostMapper> map = new ConcurrentHashMap<String, HostMapper>();
+  private ConcurrentHashMap<String, HostMapper> map = new ConcurrentHashMap<>();
 
   /* (non-Javadoc)
    * @see Service#init(GatewayConfig, java.util.Map)
