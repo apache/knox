@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway.shell.hbase
 
-import org.apache.knox.gateway.shell.Hadoop
+import org.apache.knox.gateway.shell.KnoxSession
 
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -34,7 +34,7 @@ credentials.collect()
 username = credentials.get("user").string()
 pass = credentials.get("pass").string()
 
-session = Hadoop.login(gateway, username, pass)
+session = KnoxSession.login(gateway, username, pass)
 
 println "System version : " + HBase.session(session).systemVersion().now().string
 

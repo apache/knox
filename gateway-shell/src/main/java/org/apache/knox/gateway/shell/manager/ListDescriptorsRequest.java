@@ -16,11 +16,11 @@
  */
 package org.apache.knox.gateway.shell.manager;
 
-import org.apache.knox.gateway.shell.Hadoop;
+import org.apache.knox.gateway.shell.KnoxSession;
 
 class ListDescriptorsRequest extends ListResourcesRequest {
 
-  ListDescriptorsRequest(Hadoop session) {
+  ListDescriptorsRequest(KnoxSession session) {
     super(session, ResourceType.Descriptor);
   }
 

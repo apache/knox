@@ -20,7 +20,7 @@ package org.apache.knox.gateway.shell.job;
 import com.jayway.jsonpath.JsonPath;
 import org.apache.knox.gateway.shell.AbstractRequest;
 import org.apache.knox.gateway.shell.BasicResponse;
-import org.apache.knox.gateway.shell.Hadoop;
+import org.apache.knox.gateway.shell.KnoxSession;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -41,7 +41,7 @@ public class Hive {
     private String statusDir;
     List<NameValuePair> params = new ArrayList<>();
 
-    public Request( Hadoop session ) {
+    public Request( KnoxSession session ) {
       super( session );
     }
 

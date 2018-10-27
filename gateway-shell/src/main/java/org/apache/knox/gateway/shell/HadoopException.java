@@ -17,10 +17,10 @@
  */
 package org.apache.knox.gateway.shell;
 
-public class HadoopException extends RuntimeException {
+public class HadoopException extends KnoxShellException {
 
-  public HadoopException( String message ) {
-    super( message );
+  public HadoopException(String message) {
+    super(message);
   }
 
   public HadoopException( Throwable throwable ) {
@@ -30,5 +30,4 @@ public class HadoopException extends RuntimeException {
   public HadoopException( String message, Throwable throwable ) {
     super( message, throwable );
   }
-
 }

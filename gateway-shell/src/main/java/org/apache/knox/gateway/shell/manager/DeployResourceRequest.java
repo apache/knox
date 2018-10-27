@@ -24,7 +24,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.FileEntity;
 import org.apache.knox.gateway.shell.AbstractRequest;
 import org.apache.knox.gateway.shell.BasicResponse;
-import org.apache.knox.gateway.shell.Hadoop;
+import org.apache.knox.gateway.shell.KnoxSession;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -38,7 +38,7 @@ class DeployResourceRequest extends AbstractRequest<BasicResponse> {
   private String       resourceFileName = null;
 
 
-  DeployResourceRequest(Hadoop session, ResourceType type, String name, String resourceFileName) {
+  DeployResourceRequest(KnoxSession session, ResourceType type, String name, String resourceFileName) {
     super(session);
     this.resourceType     = type;
     this.resourceName     = name;

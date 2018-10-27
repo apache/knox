@@ -19,7 +19,7 @@ package org.apache.knox.gateway.shell.job;
 
 import org.apache.knox.gateway.shell.AbstractRequest;
 import org.apache.knox.gateway.shell.BasicResponse;
-import org.apache.knox.gateway.shell.Hadoop;
+import org.apache.knox.gateway.shell.KnoxSession;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
@@ -32,7 +32,7 @@ class Status {
 
     private String jobId;
 
-    public Request( Hadoop session ) {
+    public Request( KnoxSession session ) {
       super( session );
     }
 

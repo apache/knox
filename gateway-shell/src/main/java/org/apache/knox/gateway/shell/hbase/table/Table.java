@@ -16,14 +16,14 @@
  */
 package org.apache.knox.gateway.shell.hbase.table;
 
-import org.apache.knox.gateway.shell.Hadoop;
+import org.apache.knox.gateway.shell.KnoxSession;
 import org.apache.knox.gateway.shell.hbase.table.row.Row;
 import org.apache.knox.gateway.shell.hbase.table.scanner.Scanner;
 
 public class Table {
 
   private String name;
-  private Hadoop session;
+  private KnoxSession session;
 
   public Table( String name ) {
     this.name = name;
@@ -33,12 +33,12 @@ public class Table {
     return name;
   }
 
-  public Table session( Hadoop session ) {
+  public Table session( KnoxSession session ) {
     this.session = session;
     return this;
   }
 
-  public Hadoop session() {
+  public KnoxSession session() {
     return session;
   }
 

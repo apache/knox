@@ -15,20 +15,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.shell.workflow;
+package org.apache.knox.gateway.shell;
 
-import org.apache.knox.gateway.shell.KnoxSession;
+public class KnoxShellException extends RuntimeException {
 
-public class Workflow {
-
-  static final String SERVICE_PATH = "/oozie/v1";
-
-  public static Submit.Request submit( KnoxSession session ) {
-    return new Submit.Request( session );
+  public KnoxShellException( String message ) {
+    super( message );
   }
 
-  public static Status.Request status( KnoxSession session ) {
-    return new Status.Request( session );
+  public KnoxShellException( Throwable throwable ) {
+    super( throwable );
+  }
+
+  public KnoxShellException( String message, Throwable throwable ) {
+    super( message, throwable );
   }
 
 }

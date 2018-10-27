@@ -20,7 +20,7 @@ package org.apache.knox.gateway.shell.yarn;
 import com.jayway.jsonpath.JsonPath;
 import org.apache.knox.gateway.shell.AbstractRequest;
 import org.apache.knox.gateway.shell.BasicResponse;
-import org.apache.knox.gateway.shell.Hadoop;
+import org.apache.knox.gateway.shell.KnoxSession;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
@@ -32,7 +32,7 @@ public class NewApp {
 
     public static class Request extends AbstractRequest<Response> {
 
-        protected Request(Hadoop session) {
+        protected Request(KnoxSession session) {
             super(session);
         }
 

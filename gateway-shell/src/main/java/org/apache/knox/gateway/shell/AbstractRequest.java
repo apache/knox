@@ -35,13 +35,13 @@ import java.util.concurrent.Future;
 
 public abstract class AbstractRequest<T> {
 
-  private Hadoop session;
+  private KnoxSession session;
 
-  protected AbstractRequest( Hadoop session ) {
+  protected AbstractRequest( KnoxSession session ) {
     this.session = session;
   }
 
-  protected Hadoop hadoop() {
+  protected KnoxSession hadoop() {
     return session;
   }
 
@@ -78,11 +78,11 @@ public abstract class AbstractRequest<T> {
 
   abstract protected Callable<T> callable();
 
-  public T now() throws HadoopException {
+  public T now() throws KnoxShellException {
     try {
       return callable().call();
     } catch( Exception e ) {
-      throw new HadoopException( e );
+      throw new KnoxShellException( e );
     }
   }
 

@@ -20,7 +20,7 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.knox.gateway.shell.AbstractRequest;
 import org.apache.knox.gateway.shell.BasicResponse;
-import org.apache.knox.gateway.shell.Hadoop;
+import org.apache.knox.gateway.shell.KnoxSession;
 
 import java.util.concurrent.Callable;
 
@@ -30,7 +30,7 @@ class UndeployResourceRequest extends AbstractRequest<BasicResponse> {
   private String resourceName = null;
 
 
-  UndeployResourceRequest(Hadoop session, ResourceType type, String name) {
+  UndeployResourceRequest(KnoxSession session, ResourceType type, String name) {
     super(session);
     this.resourceType = type;
     this.resourceName = name;

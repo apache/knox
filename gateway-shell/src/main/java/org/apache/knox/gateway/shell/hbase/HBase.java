@@ -16,20 +16,20 @@
  */
 package org.apache.knox.gateway.shell.hbase;
 
-import org.apache.knox.gateway.shell.Hadoop;
+import org.apache.knox.gateway.shell.KnoxSession;
 import org.apache.knox.gateway.shell.hbase.table.Table;
 
 public class HBase {
 
   public static final String SERVICE_PATH = "/hbase";
 
-  private Hadoop session;
+  private KnoxSession session;
 
-  public HBase( Hadoop session ) {
+  public HBase( KnoxSession session ) {
     this.session = session;
   }
 
-  public static HBase session( Hadoop session ) {
+  public static HBase session( KnoxSession session ) {
     HBase hbase = new HBase( session );
     return hbase;
   }

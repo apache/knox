@@ -16,7 +16,7 @@
  */
 package org.apache.knox.gateway.shell.manager;
 
-import org.apache.knox.gateway.shell.Hadoop;
+import org.apache.knox.gateway.shell.KnoxSession;
 
 import java.util.List;
 
@@ -25,39 +25,39 @@ import java.util.List;
  */
 public class Manager {
 
-  public static List<String> listDescriptors(Hadoop session) throws Exception {
+  public static List<String> listDescriptors(KnoxSession session) throws Exception {
     return (new ListDescriptorsRequest(session)).execute();
   }
 
 
-  public static void deployDescriptor(Hadoop session, String name, String descriptorFileName) throws Exception {
+  public static void deployDescriptor(KnoxSession session, String name, String descriptorFileName) throws Exception {
     (new DeployResourceRequest(session, ResourceType.Descriptor, name, descriptorFileName)).execute();
   }
 
 
-  public static void undeployDescriptor(Hadoop session, String name) throws Exception {
+  public static void undeployDescriptor(KnoxSession session, String name) throws Exception {
     (new UndeployResourceRequest(session, ResourceType.Descriptor, name)).execute();
   }
 
 
-  public static List<String> listProviderConfigurations(Hadoop session) throws Exception {
+  public static List<String> listProviderConfigurations(KnoxSession session) throws Exception {
     return (new ListProviderConfigurationsRequest(session)).execute();
   }
 
 
-  public static void deployProviderConfiguration(Hadoop session,
+  public static void deployProviderConfiguration(KnoxSession session,
                                                  String name,
                                                  String providerConfigFileName) throws Exception {
     (new DeployResourceRequest(session, ResourceType.ProviderConfiguration, name, providerConfigFileName)).execute();
   }
 
 
-  public static void undeployProviderConfiguration(Hadoop session, String name) throws Exception {
+  public static void undeployProviderConfiguration(KnoxSession session, String name) throws Exception {
     (new UndeployResourceRequest(session, ResourceType.ProviderConfiguration, name)).execute();
   }
 
 
-  public static List<String> listTopologies(Hadoop session) throws Exception {
+  public static List<String> listTopologies(KnoxSession session) throws Exception {
     return (new ListTopologiesRequest(session)).execute();
   }
 

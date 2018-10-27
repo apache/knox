@@ -17,13 +17,13 @@
  */
 package org.apache.knox.gateway.shell.knox.token;
 
-import org.apache.knox.gateway.shell.Hadoop;
+import org.apache.knox.gateway.shell.KnoxSession;
 
 public class Token {
 
   static String SERVICE_PATH = "/knoxtoken/api/v1/token";
 
-  public static Get.Request get( Hadoop session ) {
+  public static Get.Request get( KnoxSession session ) {
     return new Get.Request( session );
   }
 }

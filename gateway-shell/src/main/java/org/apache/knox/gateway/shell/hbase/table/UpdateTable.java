@@ -18,7 +18,7 @@ package org.apache.knox.gateway.shell.hbase.table;
 
 import org.apache.knox.gateway.shell.AbstractRequest;
 import org.apache.knox.gateway.shell.EmptyResponse;
-import org.apache.knox.gateway.shell.Hadoop;
+import org.apache.knox.gateway.shell.KnoxSession;
 import org.apache.knox.gateway.shell.hbase.HBase;
 import org.apache.knox.gateway.util.XmlUtils;
 import org.apache.http.HttpEntity;
@@ -49,7 +49,7 @@ public class UpdateTable {
     private String tableName;
     private List<Family<Request>> families = new ArrayList<>();
 
-    public Request( Hadoop session, String tableName ) {
+    public Request( KnoxSession session, String tableName ) {
       super( session );
       this.tableName = tableName;
     }

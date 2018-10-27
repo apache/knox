@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import org.apache.knox.gateway.shell.Hadoop
+import org.apache.knox.gateway.shell.KnoxSession
 import org.apache.knox.gateway.shell.hdfs.Hdfs
 import org.apache.knox.gateway.shell.Credentials
 
@@ -32,7 +32,7 @@ pass = credentials.get("pass").string()
 
 dataDir = "/user/" + username + "/example"
 
-session = Hadoop.login( gateway, username, pass )
+session = KnoxSession.login( gateway, username, pass )
 
 Hdfs.rm( session ).file( dataDir ).recursive().now()
 

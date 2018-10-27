@@ -20,14 +20,14 @@ import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
 import org.apache.knox.gateway.shell.BasicResponse;
-import org.apache.knox.gateway.shell.Hadoop;
+import org.apache.knox.gateway.shell.KnoxSession;
 
 import java.util.ArrayList;
 import java.util.List;
 
 class ListTopologiesRequest extends ListResourcesRequest {
 
-  ListTopologiesRequest(Hadoop session) {
+  ListTopologiesRequest(KnoxSession session) {
     super(session, ResourceType.Topology);
   }
 

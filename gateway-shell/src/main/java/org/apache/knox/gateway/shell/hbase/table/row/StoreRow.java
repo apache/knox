@@ -19,7 +19,7 @@ package org.apache.knox.gateway.shell.hbase.table.row;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.knox.gateway.shell.AbstractRequest;
 import org.apache.knox.gateway.shell.EmptyResponse;
-import org.apache.knox.gateway.shell.Hadoop;
+import org.apache.knox.gateway.shell.KnoxSession;
 import org.apache.knox.gateway.shell.hbase.HBase;
 import org.apache.knox.gateway.util.XmlUtils;
 import org.apache.http.HttpEntity;
@@ -54,7 +54,7 @@ public class StoreRow {
     private String tableName;
     private List<InsertableColumn> columns = new ArrayList<>();
 
-    public Request( Hadoop session, String rowId, String tableName ) {
+    public Request( KnoxSession session, String rowId, String tableName ) {
       super( session );
       this.rowId = rowId;
       this.tableName = tableName;

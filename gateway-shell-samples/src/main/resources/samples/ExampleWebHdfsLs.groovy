@@ -17,7 +17,7 @@
  */
 
 import groovy.json.JsonSlurper
-import org.apache.knox.gateway.shell.Hadoop
+import org.apache.knox.gateway.shell.KnoxSession
 import org.apache.knox.gateway.shell.hdfs.Hdfs
 
 import org.apache.knox.gateway.shell.Credentials
@@ -32,7 +32,7 @@ credentials.collect()
 username = credentials.get("user").string()
 pass = credentials.get("pass").string()
 
-session = Hadoop.login( gateway, username, pass )
+session = KnoxSession.login( gateway, username, pass )
 
 text = Hdfs.ls( session ).dir( "/" ).now().string
 json = (new JsonSlurper()).parseText( text )

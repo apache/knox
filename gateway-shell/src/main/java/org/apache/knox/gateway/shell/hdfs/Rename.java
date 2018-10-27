@@ -19,7 +19,7 @@ package org.apache.knox.gateway.shell.hdfs;
 
 import org.apache.knox.gateway.shell.AbstractRequest;
 import org.apache.knox.gateway.shell.EmptyResponse;
-import org.apache.knox.gateway.shell.Hadoop;
+import org.apache.knox.gateway.shell.KnoxSession;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.utils.URIBuilder;
@@ -33,7 +33,7 @@ public class Rename {
     private String file;
     private String to;
 
-    Request(Hadoop session) {
+    Request(KnoxSession session) {
       super(session);
     }
 

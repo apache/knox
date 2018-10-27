@@ -19,8 +19,8 @@ package org.apache.knox.gateway.shell.hdfs;
 
 import org.apache.knox.gateway.shell.AbstractRequest;
 import org.apache.knox.gateway.shell.EmptyResponse;
-import org.apache.knox.gateway.shell.Hadoop;
-import org.apache.knox.gateway.shell.HadoopException;
+import org.apache.knox.gateway.shell.KnoxSession;
+import org.apache.knox.gateway.shell.KnoxShellException;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -47,7 +47,7 @@ class Put {
     private Integer buffersize;
     private Short replication;
 
-    Request( Hadoop session ) {
+    Request( KnoxSession session ) {
       super( session );
     }
 
@@ -105,12 +105,12 @@ class Put {
           HttpPut nn = new HttpPut( uri.build() );
           HttpResponse r = execute( nn );
           if( r.getStatusLine().getStatusCode() != HttpStatus.SC_TEMPORARY_REDIRECT ) {
-            throw new HadoopException( r.getStatusLine().toString() );
+            throw new KnoxShellException( r.getStatusLine().toString() );
           }
           EntityUtils.consumeQuietly( r.getEntity() );
           Header[] h = r.getHeaders( "Location" );
           if( h == null || h.length != 1 ) {
-            throw new HadoopException( "Invalid Location header." );
+            throw new KnoxShellException( "Invalid Location header." );
           }
           String loc = h[0].getValue();
           HttpPut dn = new HttpPut( loc );

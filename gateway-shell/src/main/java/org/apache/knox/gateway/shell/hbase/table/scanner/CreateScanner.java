@@ -19,7 +19,7 @@ package org.apache.knox.gateway.shell.hbase.table.scanner;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.knox.gateway.shell.AbstractRequest;
 import org.apache.knox.gateway.shell.EmptyResponse;
-import org.apache.knox.gateway.shell.Hadoop;
+import org.apache.knox.gateway.shell.KnoxSession;
 import org.apache.knox.gateway.shell.hbase.HBase;
 import org.apache.knox.gateway.shell.hbase.table.row.Column;
 import org.apache.knox.gateway.util.XmlUtils;
@@ -65,7 +65,7 @@ public class CreateScanner {
     private String filter;
     private Integer maxVersions;
 
-    public Request( Hadoop session, String tableName ) {
+    public Request( KnoxSession session, String tableName ) {
       super( session );
       this.tableName = tableName;
     }

@@ -17,33 +17,33 @@
  */
 package org.apache.knox.gateway.shell.job;
 
-import org.apache.knox.gateway.shell.Hadoop;
+import org.apache.knox.gateway.shell.KnoxSession;
 
 public class Job {
 
   static final String SERVICE_PATH = "/templeton/v1";
 
-  public static Java.Request submitJava( Hadoop session ) {
+  public static Java.Request submitJava( KnoxSession session ) {
     return new Java.Request( session );
   }
 
-  public static Sqoop.Request submitSqoop( Hadoop session ) {
+  public static Sqoop.Request submitSqoop( KnoxSession session ) {
     return new Sqoop.Request( session );
   }
 
-  public static Pig.Request submitPig( Hadoop session ) {
+  public static Pig.Request submitPig( KnoxSession session ) {
     return new Pig.Request( session );
   }
 
-  public static Hive.Request submitHive( Hadoop session ) {
+  public static Hive.Request submitHive( KnoxSession session ) {
     return new Hive.Request( session );
   }
 
-  public static Queue.Request queryQueue( Hadoop session ) {
+  public static Queue.Request queryQueue( KnoxSession session ) {
     return new Queue.Request( session );
   }
 
-  public static Status.Request queryStatus( Hadoop session ) {
+  public static Status.Request queryStatus( KnoxSession session ) {
     return new Status.Request( session );
   }
 

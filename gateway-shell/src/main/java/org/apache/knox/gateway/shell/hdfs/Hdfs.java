@@ -17,37 +17,37 @@
  */
 package org.apache.knox.gateway.shell.hdfs;
 
-import org.apache.knox.gateway.shell.Hadoop;
+import org.apache.knox.gateway.shell.KnoxSession;
 
 public class Hdfs {
 
   static final String SERVICE_PATH = "/webhdfs/v1";
 
-  public static Rename.Request rename( Hadoop session ) {
+  public static Rename.Request rename( KnoxSession session ) {
     return new Rename.Request( session );
   }
 
-  public static Status.Request status(Hadoop session ) {
+  public static Status.Request status(KnoxSession session ) {
     return new Status.Request( session );
   }
 
-  public static Ls.Request ls( Hadoop session ) {
+  public static Ls.Request ls( KnoxSession session ) {
     return new Ls.Request( session );
   }
 
-  public static Rm.Request rm( Hadoop session ) {
+  public static Rm.Request rm( KnoxSession session ) {
     return new Rm.Request( session );
   }
 
-  public static Put.Request put( Hadoop session ) {
+  public static Put.Request put( KnoxSession session ) {
     return new Put.Request( session );
   }
 
-  public static Get.Request get( Hadoop session ) {
+  public static Get.Request get( KnoxSession session ) {
     return new Get.Request( session );
   }
 
-  public static Mkdir.Request mkdir( Hadoop session ) {
+  public static Mkdir.Request mkdir( KnoxSession session ) {
     return new Mkdir.Request( session );
   }
 

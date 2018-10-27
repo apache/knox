@@ -17,7 +17,7 @@
  */
 import com.jayway.jsonpath.JsonPath
 import groovy.json.JsonSlurper
-import org.apache.knox.gateway.shell.Hadoop
+import org.apache.knox.gateway.shell.KnoxSession
 import org.apache.knox.gateway.shell.hdfs.Hdfs
 import org.apache.knox.gateway.shell.workflow.Workflow
 
@@ -91,7 +91,7 @@ configuration = """\
 </configuration>
 """
 
-session = Hadoop.login( gateway, username, pass )
+session = KnoxSession.login( gateway, username, pass )
 
 println "Delete " + jobDir + ": " + Hdfs.rm( session ).file( jobDir ).recursive().now().statusCode
 println "Mkdir " + jobDir + ": " + Hdfs.mkdir( session ).dir( jobDir ).now().statusCode

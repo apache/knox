@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-import org.apache.knox.gateway.shell.Hadoop
+import org.apache.knox.gateway.shell.KnoxSession
 import org.apache.knox.gateway.shell.manager.Manager
 import org.apache.knox.gateway.shell.Credentials
 
@@ -30,7 +30,7 @@ credentials.collect()
 username = credentials.get("user").string()
 pass = credentials.get("pass").string()
 
-session = Hadoop.login( gateway, username, pass )
+session = KnoxSession.login( gateway, username, pass )
 
 List<String> pcs = Manager.listProviderConfigurations(session);
 System.out.println("Provider Configurations")

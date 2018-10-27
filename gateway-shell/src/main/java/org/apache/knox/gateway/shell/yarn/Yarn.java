@@ -17,25 +17,25 @@
  */
 package org.apache.knox.gateway.shell.yarn;
 
-import org.apache.knox.gateway.shell.Hadoop;
+import org.apache.knox.gateway.shell.KnoxSession;
 
 public class Yarn {
 
     static final String SERVICE_PATH = "/resourcemanager";
 
-    public static NewApp.Request newApp(Hadoop session) {
+    public static NewApp.Request newApp(KnoxSession session) {
         return new NewApp.Request(session);
     }
 
-    public static SubmitApp.Request submitApp(Hadoop session) {
+    public static SubmitApp.Request submitApp(KnoxSession session) {
         return new SubmitApp.Request(session);
     }
 
-    public static KillApp.Request killApp(Hadoop session) {
+    public static KillApp.Request killApp(KnoxSession session) {
         return new KillApp.Request(session);
     }
 
-    public static AppState.Request appState(Hadoop session) {
+    public static AppState.Request appState(KnoxSession session) {
         return new AppState.Request(session);
     }
 

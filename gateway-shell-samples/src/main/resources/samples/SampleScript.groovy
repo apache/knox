@@ -15,7 +15,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-import org.apache.knox.gateway.shell.Hadoop
+import org.apache.knox.gateway.shell.KnoxSession
 import org.apache.knox.gateway.shell.Credentials
 
 gateway = "https://localhost:8443/gateway/sandbox"
@@ -28,7 +28,7 @@ credentials.collect()
 username = credentials.get("user").string()
 pass = credentials.get("pass").string()
 
-session = Hadoop.login( gateway, username, pass )
+session = KnoxSession.login( gateway, username, pass )
 
 println "JSON=" + SampleService.simple( session ).param( "/tmp" ).now().string
 

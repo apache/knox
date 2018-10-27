@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 public class Shell {
 
   private static final String[] IMPORTS = new String[] {
-      Hadoop.class.getName(),
+      KnoxSession.class.getName(),
       HBase.class.getName(),
       Hdfs.class.getName(),
       Job.class.getName(),

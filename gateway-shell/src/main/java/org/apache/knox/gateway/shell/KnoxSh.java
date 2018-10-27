@@ -175,10 +175,10 @@ public class KnoxSh {
       String username = credentials.get("user").string();
       String pass = credentials.get("pass").string();
       
-      Hadoop session = null;
+      KnoxSession session = null;
       Get.Response response = null;
       try {
-        session = Hadoop.login(gateway, username, pass);
+        session = KnoxSession.login(gateway, username, pass);
   
         response = Token.get( session ).now();
         String text = response.getString();
@@ -197,7 +197,7 @@ public class KnoxSh {
           perms.add(PosixFilePermission.OWNER_WRITE);
           Files.setPosixFilePermissions(Paths.get(System.getProperty("user.home") + "/.knoxtokencache"), perms);
         }
-      } catch(HadoopException he) {
+      } catch(KnoxShellException he) {
         System.out.println("Failure to acquire token. Please verify your credentials and Knox URL and try again.");
       }
       if ( session != null ) {

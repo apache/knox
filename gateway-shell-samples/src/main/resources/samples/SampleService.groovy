@@ -15,17 +15,17 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-import org.apache.knox.gateway.shell.Hadoop
+import org.apache.knox.gateway.shell.KnoxSession
 
 class SampleService {
 
   static String PATH = "/webhdfs/v1"
 
-  static SampleSimpleCommand simple( Hadoop hadoop ) {
+  static SampleSimpleCommand simple( KnoxSession hadoop ) {
     return new SampleSimpleCommand( hadoop )
   }
 
-  static SampleComplexCommand.Request complex( Hadoop hadoop ) {
+  static SampleComplexCommand.Request complex( KnoxSession hadoop ) {
     return new SampleComplexCommand.Request( hadoop )
   }
 

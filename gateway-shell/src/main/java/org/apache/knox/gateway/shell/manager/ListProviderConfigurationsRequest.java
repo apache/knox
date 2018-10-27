@@ -16,11 +16,11 @@
  */
 package org.apache.knox.gateway.shell.manager;
 
-import org.apache.knox.gateway.shell.Hadoop;
+import org.apache.knox.gateway.shell.KnoxSession;
 
 class ListProviderConfigurationsRequest extends ListResourcesRequest {
 
-  ListProviderConfigurationsRequest(Hadoop session) {
+  ListProviderConfigurationsRequest(KnoxSession session) {
     super(session, ResourceType.ProviderConfiguration);
   }
 

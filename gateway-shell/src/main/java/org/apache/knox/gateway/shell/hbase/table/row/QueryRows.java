@@ -18,7 +18,7 @@ package org.apache.knox.gateway.shell.hbase.table.row;
 
 import org.apache.knox.gateway.shell.AbstractRequest;
 import org.apache.knox.gateway.shell.BasicResponse;
-import org.apache.knox.gateway.shell.Hadoop;
+import org.apache.knox.gateway.shell.KnoxSession;
 import org.apache.knox.gateway.shell.hbase.HBase;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -39,7 +39,7 @@ public class QueryRows {
     private Long endTime;
     private Long numVersions;
 
-    public Request( Hadoop session, String rowsId, String tableName ) {
+    public Request( KnoxSession session, String rowsId, String tableName ) {
       super( session );
       this.rowsId = rowsId;
       this.tableName = tableName;

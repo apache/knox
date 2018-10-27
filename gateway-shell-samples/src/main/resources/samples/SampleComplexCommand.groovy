@@ -18,7 +18,7 @@
 import com.jayway.jsonpath.JsonPath
 import org.apache.knox.gateway.shell.AbstractRequest
 import org.apache.knox.gateway.shell.BasicResponse
-import org.apache.knox.gateway.shell.Hadoop
+import org.apache.knox.gateway.shell.KnoxSession
 import org.apache.http.HttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.utils.URIBuilder
@@ -29,7 +29,7 @@ class SampleComplexCommand {
 
   static class Request extends AbstractRequest<Response> {
 
-    Request( Hadoop hadoop ) {
+    Request( KnoxSession hadoop ) {
       super( hadoop )
     }
 

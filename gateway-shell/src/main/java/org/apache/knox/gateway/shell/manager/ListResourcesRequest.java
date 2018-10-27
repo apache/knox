@@ -23,7 +23,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.knox.gateway.shell.AbstractRequest;
 import org.apache.knox.gateway.shell.BasicResponse;
-import org.apache.knox.gateway.shell.Hadoop;
+import org.apache.knox.gateway.shell.KnoxSession;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +33,7 @@ class ListResourcesRequest extends AbstractRequest<BasicResponse> {
 
   private ResourceType resourceType = null;
 
-  ListResourcesRequest(Hadoop session, ResourceType resourceType) {
+  ListResourcesRequest(KnoxSession session, ResourceType resourceType) {
     super(session);
     this.resourceType = resourceType;
   }
