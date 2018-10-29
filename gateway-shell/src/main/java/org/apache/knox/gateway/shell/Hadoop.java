@@ -26,7 +26,6 @@ import java.util.concurrent.Executors;
 public class Hadoop extends KnoxSession {
 
   public Hadoop(ClientContext clientContext) throws KnoxShellException, URISyntaxException {
-    super(clientContext);
     this.executor = Executors.newCachedThreadPool();
     this.base = clientContext.url();
 

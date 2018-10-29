@@ -107,6 +107,9 @@ public class KnoxSession implements Closeable {
             .connection().secure(false).end());
   }
 
+  protected KnoxSession() throws KnoxShellException, URISyntaxException {
+  }
+
   public KnoxSession( ClientContext clientContext) throws KnoxShellException, URISyntaxException {
     this.executor = Executors.newCachedThreadPool();
     this.base = clientContext.url();
