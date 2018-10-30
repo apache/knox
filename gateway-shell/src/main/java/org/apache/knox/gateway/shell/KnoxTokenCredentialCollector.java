@@ -30,12 +30,12 @@ import java.util.Map;
 import org.apache.knox.gateway.util.JsonUtils;
 
 public class KnoxTokenCredentialCollector extends AbstractCredentialCollector {
-  /**
-   * 
-   */
-  private static final String KNOXTOKENCACHE = ".knoxtokencache";
+
   public static final String COLLECTOR_TYPE = "KnoxToken";
-  public String targetUrl = null;
+
+  private static final String KNOXTOKENCACHE = ".knoxtokencache";
+
+  private String targetUrl = null;
 
   /* (non-Javadoc)
    * @see CredentialCollector#collect()
@@ -54,17 +54,13 @@ public class KnoxTokenCredentialCollector extends AbstractCredentialCollector {
         targetUrl = attrs.get("target_url");
         Date expires = new Date(Long.parseLong(attrs.get("expires_in")));
         if (expires.before(new Date())) {
-          System.out.println("Cached knox token has expired. Please relogin through knoxinit.");
-          System.exit(1);
+          throw new CredentialCollectionException("Cached knox token has expired. Please relogin through knoxinit.");
         }
       } catch (IOException e) {
-        System.out.println("Cached knox token cannot be read. Please login through knoxinit.");
-        System.exit(1);
-        e.printStackTrace();
+        throw new CredentialCollectionException("Cached knox token cannot be read. Please login through knoxinit.", e);
       }
     } else {
-      System.out.println("Cached knox token cannot be found. Please login through knoxinit.");
-      System.exit(1);
+      throw new CredentialCollectionException("Cached knox token cannot be found. Please login through knoxinit.");
     }
   }
 
