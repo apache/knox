@@ -37,6 +37,8 @@ public class KnoxTokenCredentialCollector extends AbstractCredentialCollector {
 
   private String targetUrl = null;
 
+  private String tokenType = null;
+
   /* (non-Javadoc)
    * @see CredentialCollector#collect()
    */
@@ -52,6 +54,7 @@ public class KnoxTokenCredentialCollector extends AbstractCredentialCollector {
         Map<String, String> attrs = JsonUtils.getMapFromJsonString(lines.get(0));
         value = attrs.get("access_token");
         targetUrl = attrs.get("target_url");
+        tokenType = attrs.get("token_type");
         Date expires = new Date(Long.parseLong(attrs.get("expires_in")));
         if (expires.before(new Date())) {
           throw new CredentialCollectionException("Cached knox token has expired. Please relogin through knoxinit.");
@@ -66,6 +69,10 @@ public class KnoxTokenCredentialCollector extends AbstractCredentialCollector {
 
   public String getTargetUrl() {
     return targetUrl;
+  }
+
+  public String getTokenType() {
+    return tokenType;
   }
 
   /* (non-Javadoc)
