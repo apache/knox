@@ -251,6 +251,10 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-provider-security-clientcert</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-provider-security-preauth</artifactId>
         </dependency>
         <dependency>
