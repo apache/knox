@@ -16,19 +16,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-language: java
+language: minimal
 matrix:
   fast_finish: true
   include:
     #- env: IMAGE=maven:3-jdk-8
     - env: IMAGE=maven@sha256:b37da91062d450f3c11c619187f0207bbb497fc89d265a46bbc6dc5f17c02a2b # See https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=911925
-    - env: IMAGE=maven:3-jdk-9
-    - env: IMAGE=maven:3-jdk-10
-    - env: IMAGE=maven:3-jdk-11
-  allow_failures:
-    - env: IMAGE=maven:3-jdk-9
-    - env: IMAGE=maven:3-jdk-10
-    - env: IMAGE=maven:3-jdk-11
+    #- env: IMAGE=maven:3-jdk-9
+    #- env: IMAGE=maven:3-jdk-10
+    #- env: IMAGE=maven:3-jdk-11
+  #allow_failures:
+    #- env: IMAGE=maven:3-jdk-9
+    #- env: IMAGE=maven:3-jdk-10
+    #- env: IMAGE=maven:3-jdk-11
     
 env:
   global:
