@@ -58,7 +58,7 @@ public class WebHdfsHaFuncTest {
     * registry of sorts for all of the services that will be used by the test methods.
     * The createTopology method is used to create the topology file that would normally be read from disk.
     * The driver.setupGateway invocation is where the creation of GATEWAY_HOME occurs.
-    * <p/>
+    * <p>
     * This would normally be done once for this suite but the failure tests start affecting each other depending
     * on the state the last 'active' url
     *

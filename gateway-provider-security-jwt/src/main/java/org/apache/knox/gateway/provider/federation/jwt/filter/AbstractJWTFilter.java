@@ -60,9 +60,6 @@ import org.apache.knox.gateway.services.security.token.impl.JWT;
 
 import com.nimbusds.jose.JWSHeader;
 
-/**
- *
- */
 public abstract class AbstractJWTFilter implements Filter {
   /**
    * If specified, this configuration property refers to a value which the issuer of a received
@@ -123,10 +120,6 @@ public abstract class AbstractJWTFilter implements Filter {
     }
   }
 
-  /**
-   * @param expectedAudiences
-   * @return
-   */
   protected List<String> parseExpectedAudiences(String expectedAudiences) {
     List<String> audList = null;
     // setup the list of valid audiences for token validation

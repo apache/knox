@@ -64,10 +64,8 @@ public class BadBackendTest {
     
   }
   
-  /**
+  /*
    * Test for a message within limit.
-   * @throws IOException
-   * @throws Exception
    */
   @Test(timeout = 8000)
   public void testBadBackEnd() throws IOException, Exception {

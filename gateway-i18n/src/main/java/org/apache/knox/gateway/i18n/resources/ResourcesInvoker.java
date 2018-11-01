@@ -26,9 +26,6 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- *
- */
 public class ResourcesInvoker implements InvocationHandler {
 
   private static ResourceBundle MISSING_BUNDLE = new ListResourceBundle() {

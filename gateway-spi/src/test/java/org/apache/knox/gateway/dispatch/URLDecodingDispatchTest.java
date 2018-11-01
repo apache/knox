@@ -40,10 +40,8 @@ public class URLDecodingDispatchTest {
     super();
   }
 
-  /**
+  /*
    * Test whether the encoded url is decoded properly.
-   *
-   * @throws Exception
    */
   @Test(timeout = TestUtils.MEDIUM_TIMEOUT)
   public void testGetDispatchUrl() throws Exception {

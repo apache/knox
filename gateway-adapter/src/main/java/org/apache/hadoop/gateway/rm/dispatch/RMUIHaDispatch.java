@@ -22,9 +22,6 @@ import javax.servlet.ServletException;
 
 @Deprecated
 public class RMUIHaDispatch extends org.apache.knox.gateway.rm.dispatch.RMUIHaDispatch {
-  /**
-   * @throws ServletException
-   */
   public RMUIHaDispatch() throws ServletException {
     super();
   }

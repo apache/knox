@@ -17,12 +17,9 @@
  */
 package org.apache.knox.gateway.shell;
 
-
 public class HiddenInputCredentialCollector extends AbstractJavaConsoleCredentialCollector {
   public static final String COLLECTOR_TYPE = "HiddenInput";
-  /* (non-Javadoc)
-   * @see CredentialCollector#collect()
-   */
+
   @Override
   public void collect() throws CredentialCollectionException {
     boolean valid = false;
@@ -35,9 +32,6 @@ public class HiddenInputCredentialCollector extends AbstractJavaConsoleCredentia
     }
   }
 
-  /* (non-Javadoc)
-   * @see CredentialCollector#name()
-   */
   @Override
   public String type() {
     return COLLECTOR_TYPE;

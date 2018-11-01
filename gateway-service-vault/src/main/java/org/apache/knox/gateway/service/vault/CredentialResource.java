@@ -73,9 +73,6 @@ public class CredentialResource {
     }
   }
 
-  /**
-   * @return
-   */
   private List<String> getCredentialsList() {
     GatewayServices services = (GatewayServices)request.getServletContext().
         getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
@@ -90,10 +87,6 @@ public class CredentialResource {
     return aliases;
   }
 
-  /**
-   * @param alias
-   * @return
-   */
   private CredentialValue getCredentialValueForAlias(String alias) {
     GatewayServices services = (GatewayServices)request.getServletContext().
         getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);

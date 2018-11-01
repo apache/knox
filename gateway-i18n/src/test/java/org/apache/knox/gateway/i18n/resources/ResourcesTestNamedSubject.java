@@ -17,9 +17,6 @@
  */
 package org.apache.knox.gateway.i18n.resources;
 
-/**
- *
- */
 @Resources( bundle="org.apache.knox.gateway.i18n.resources.NamedBundle" )
 public interface ResourcesTestNamedSubject {
 

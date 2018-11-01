@@ -17,9 +17,6 @@
  */
 package org.apache.knox.gateway.i18n.messages;
 
-/**
- *
- */
 public enum MessageLevel {
   FATAL, ERROR, WARN, INFO, DEBUG, TRACE
 }

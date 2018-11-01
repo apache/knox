@@ -17,9 +17,6 @@
  */
 package org.apache.knox.gateway.i18n.messages;
 
-/**
- *
- */
 public interface MessageLogger {
 
   boolean isLoggable( MessageLevel level );

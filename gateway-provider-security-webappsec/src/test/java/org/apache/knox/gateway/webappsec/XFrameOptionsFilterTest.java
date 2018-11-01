@@ -37,9 +37,6 @@ import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Test;
 
-/**
- *
- */
 public class XFrameOptionsFilterTest {
   /**
    * 
@@ -147,25 +144,16 @@ public class XFrameOptionsFilterTest {
       return null;
     }
 
-    /* (non-Javadoc)
-     * @see javax.servlet.FilterConfig#getServletContext()
-     */
     @Override
     public ServletContext getServletContext() {
       return null;
     }
 
-    /* (non-Javadoc)
-     * @see javax.servlet.FilterConfig#getInitParameter(java.lang.String)
-     */
     @Override
     public String getInitParameter(String name) {
       return props.getProperty(name, null);
     }
 
-    /* (non-Javadoc)
-     * @see javax.servlet.FilterConfig#getInitParameterNames()
-     */
     @Override
     public Enumeration<String> getInitParameterNames() {
       return null;
@@ -176,9 +164,6 @@ public class XFrameOptionsFilterTest {
   class TestFilterChain implements FilterChain {
     boolean doFilterCalled = false;
 
-    /* (non-Javadoc)
-     * @see javax.servlet.FilterChain#doFilter(javax.servlet.ServletRequest, javax.servlet.ServletResponse)
-     */
     @Override
     public void doFilter(ServletRequest request, ServletResponse response)
         throws IOException, ServletException {

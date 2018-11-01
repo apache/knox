@@ -28,39 +28,24 @@ import org.apache.knox.gateway.config.GatewayConfig;
  */
 public class DefaultServerInfoService implements ServerInfoService {
 
-  /* (non-Javadoc)
-   * @see Service#init(GatewayConfig, java.util.Map)
-   */
   @Override
   public void init(GatewayConfig config, Map<String, String> options)
       throws ServiceLifecycleException {
   }
 
-  /* (non-Javadoc)
-   * @see Service#start()
-   */
   @Override
   public void start() throws ServiceLifecycleException {
   }
 
-  /* (non-Javadoc)
-   * @see Service#stop()
-   */
   @Override
   public void stop() throws ServiceLifecycleException {
   }
 
-  /* (non-Javadoc)
-   * @see ServerInfoService#getBuildVersion()
-   */
   @Override
   public String getBuildVersion() {
     return GatewayServer.getBuildVersion();
   }
 
-  /* (non-Javadoc)
-   * @see ServerInfoService#getBuildHash()
-   */
   @Override
   public String getBuildHash() {
     return GatewayServer.getBuildHash();

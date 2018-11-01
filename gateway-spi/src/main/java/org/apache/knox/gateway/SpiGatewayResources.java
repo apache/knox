@@ -20,9 +20,6 @@ package org.apache.knox.gateway;
 import org.apache.knox.gateway.i18n.resources.Resource;
 import org.apache.knox.gateway.i18n.resources.Resources;
 
-/**
- *
- */
 @Resources
 public interface SpiGatewayResources {
 

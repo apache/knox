@@ -37,13 +37,7 @@ import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Test;
 
-/**
- *
- */
 public class StrictTransportFilterTest {
-  /**
-   * 
-   */
   private static final String STRICT_TRANSPORT = "Strict-Transport-Security";
   String options = null;
   Collection<String> headerNames = null;
@@ -118,38 +112,25 @@ public class StrictTransportFilterTest {
       return null;
     }
 
-    /* (non-Javadoc)
-     * @see javax.servlet.FilterConfig#getServletContext()
-     */
     @Override
     public ServletContext getServletContext() {
       return null;
     }
 
-    /* (non-Javadoc)
-     * @see javax.servlet.FilterConfig#getInitParameter(java.lang.String)
-     */
     @Override
     public String getInitParameter(String name) {
       return props.getProperty(name, null);
     }
 
-    /* (non-Javadoc)
-     * @see javax.servlet.FilterConfig#getInitParameterNames()
-     */
     @Override
     public Enumeration<String> getInitParameterNames() {
       return null;
     }
-    
   }
 
   class TestFilterChain implements FilterChain {
     boolean doFilterCalled = false;
 
-    /* (non-Javadoc)
-     * @see javax.servlet.FilterChain#doFilter(javax.servlet.ServletRequest, javax.servlet.ServletResponse)
-     */
     @Override
     public void doFilter(ServletRequest request, ServletResponse response)
         throws IOException, ServletException {
@@ -158,7 +139,5 @@ public class StrictTransportFilterTest {
       headerNames = ((HttpServletResponse)response).getHeaderNames();
       headers = ((HttpServletResponse)response).getHeaders(STRICT_TRANSPORT);
     }
-    
   }
-
 }

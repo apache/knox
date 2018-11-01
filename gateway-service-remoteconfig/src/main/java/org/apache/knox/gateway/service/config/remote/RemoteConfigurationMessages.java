@@ -22,9 +22,6 @@ import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
 
 
-/**
- *
- */
 @Messages(logger="org.apache.knox.gateway.service.config.remote")
 public interface RemoteConfigurationMessages {
 

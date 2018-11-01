@@ -94,20 +94,6 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
       GATEWAY_CONFIG_DIR_PREFIX + "/" + GATEWAY_CONFIG_FILE_PREFIX + "-site.xml"
   };
 
-//  private static final String[] HADOOP_CONF_FILENAMES = {
-//      "core-default.xml",
-//      "core-site.xml"
-////      "hdfs-default.xml",
-////      "hdfs-site.xml",
-////      "mapred-default.xml",
-////      "mapred-site.xml"
-//  };
-
-//  private static final String[] HADOOP_PREFIX_VARS = {
-//      "HADOOP_PREFIX",
-//      "HADOOP_HOME"
-//  };
-
   public static final String HTTP_HOST = GATEWAY_CONFIG_FILE_PREFIX + ".host";
   public static final String HTTP_PORT = GATEWAY_CONFIG_FILE_PREFIX + ".port";
   public static final String HTTP_PATH = GATEWAY_CONFIG_FILE_PREFIX + ".path";
@@ -197,8 +183,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   /* Websocket defaults */
   public static final boolean DEFAULT_WEBSOCKET_FEATURE_ENABLED = false;
-  public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE = Integer.MAX_VALUE;;
-  public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_SIZE = Integer.MAX_VALUE;;
+  public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE = Integer.MAX_VALUE;
+  public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_SIZE = Integer.MAX_VALUE;
   public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_BUFFER_SIZE = 32768;
   public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_BUFFER_SIZE = 32768;
   public static final int DEFAULT_WEBSOCKET_INPUT_BUFFER_SIZE = 4096;
@@ -244,7 +230,6 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static List<String> DEFAULT_GLOBAL_RULES_SERVICES;
 
-
   public GatewayConfigImpl() {
     init();
   }
@@ -264,12 +249,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   private String getGatewayHomeDir() {
-    String home = get(
-        GATEWAY_HOME_VAR,
-        System.getProperty(
-            GATEWAY_HOME_VAR,
-            System.getenv( GATEWAY_HOME_VAR ) ) );
-    return home;
+    return get(GATEWAY_HOME_VAR, System.getProperty(GATEWAY_HOME_VAR, System.getenv(GATEWAY_HOME_VAR)));
   }
 
   private void setGatewayHomeDir( String dir ) {
@@ -425,8 +405,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public String getGatewayHost() {
-    String host = get( HTTP_HOST, "0.0.0.0" );
-    return host;
+    return get( HTTP_HOST, "0.0.0.0" );
   }
 
   @Override
@@ -468,8 +447,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public InetSocketAddress getGatewayAddress() throws UnknownHostException {
     String host = getGatewayHost();
     int port = getGatewayPort();
-    InetSocketAddress address = new InetSocketAddress( host, port );
-    return address;
+    return new InetSocketAddress( host, port );
   }
 
   @Override
@@ -501,18 +479,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return get( KRB5_LOGIN_CONFIG );
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getDefaultTopologyName()
-   */
   @Override
   public String getDefaultTopologyName() {
     String name = get(GATEWAY_DEFAULT_TOPOLOGY_NAME_PARAM);
     return name != null ? name : GATEWAY_DEFAULT_TOPOLOGY_NAME;
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getDefaultAppRedirectPath()
-   */
   @Override
   public String getDefaultAppRedirectPath() {
     String defTopo = getDefaultTopologyName();
@@ -523,18 +495,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     }
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getFrontendUrl()
-   */
   @Override
   public String getFrontendUrl() {
-    String url = get( FRONTEND_URL, null );
-    return url;
+    return get( FRONTEND_URL, null );
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getExcludedSSLProtocols()
-   */
   @Override
   public List<String> getExcludedSSLProtocols() {
     List<String> protocols = null;
@@ -565,52 +530,34 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return list;
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#isClientAuthNeeded()
-   */
   @Override
   public boolean isClientAuthNeeded() {
     String clientAuthNeeded = get( CLIENT_AUTH_NEEDED, "false" );
     return "true".equals(clientAuthNeeded);
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.config.GatewayConfig#isClientAuthWanted()
-   */
   @Override
   public boolean isClientAuthWanted() {
     String clientAuthWanted = get( CLIENT_AUTH_WANTED, "false" );
     return "true".equals(clientAuthWanted);
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getTruststorePath()
-   */
   @Override
   public String getTruststorePath() {
     return get( TRUSTSTORE_PATH, null);
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getTrustAllCerts()
-   */
   @Override
   public boolean getTrustAllCerts() {
     String trustAllCerts = get( TRUST_ALL_CERTS, "false" );
     return "true".equals(trustAllCerts);
   }
-  
-  /* (non-Javadoc)
-   * @see GatewayConfig#getTruststorePath()
-   */
+
   @Override
   public String getTruststoreType() {
     return get( TRUSTSTORE_TYPE, "JKS");
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getTruststorePath()
-   */
   @Override
   public String getKeystoreType() {
     return get( KEYSTORE_TYPE, "JKS");
@@ -622,17 +569,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return "true".equals(xForwardedEnabled);
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getEphemeralDHKeySize()
-   */
   @Override
   public String getEphemeralDHKeySize() {
     return get( EPHEMERAL_DH_KEY_SIZE, "2048");
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getHttpClientMaxConnections()
-   */
   @Override
   public int getHttpClientMaxConnections() {
     return getInt( HTTP_CLIENT_MAX_CONNECTION, 32 );
@@ -666,9 +607,6 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return t;
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getThreadPoolMax()
-   */
   @Override
   public int getThreadPoolMax() {
     int i = getInt( THREAD_POOL_MAX, 254 );
@@ -681,26 +619,22 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public int getHttpServerRequestBuffer() {
-    int i = getInt( HTTP_SERVER_REQUEST_BUFFER, 16 * 1024 );
-    return i;
+    return getInt( HTTP_SERVER_REQUEST_BUFFER, 16 * 1024 );
   }
 
   @Override
   public int getHttpServerRequestHeaderBuffer() {
-    int i = getInt( HTTP_SERVER_REQUEST_HEADER_BUFFER, 8 * 1024 );
-    return i;
+    return getInt( HTTP_SERVER_REQUEST_HEADER_BUFFER, 8 * 1024 );
   }
 
   @Override
   public int getHttpServerResponseBuffer() {
-    int i = getInt( HTTP_SERVER_RESPONSE_BUFFER, 32 * 1024 );
-    return i;
+    return getInt( HTTP_SERVER_RESPONSE_BUFFER, 32 * 1024 );
   }
 
   @Override
   public int getHttpServerResponseHeaderBuffer() {
-    int i = getInt( HTTP_SERVER_RESPONSE_HEADER_BUFFER, 8 * 1024 );
-    return i;
+    return getInt( HTTP_SERVER_RESPONSE_HEADER_BUFFER, 8 * 1024 );
   }
 
   @Override
@@ -773,92 +707,60 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public String getGraphiteHost() {
-    String host = get( GRAPHITE_METRICS_REPORTING_HOST, "localhost" );
-    return host;
+    return get( GRAPHITE_METRICS_REPORTING_HOST, "localhost" );
   }
 
   @Override
   public int getGraphitePort() {
-    int i = getInt( GRAPHITE_METRICS_REPORTING_PORT, 32772 );
-    return i;
+    return getInt( GRAPHITE_METRICS_REPORTING_PORT, 32772 );
   }
 
   @Override
   public int getGraphiteReportingFrequency() {
-    int i = getInt( GRAPHITE_METRICS_REPORTING_FREQUENCY, 1 );
-    return i;
+    return getInt( GRAPHITE_METRICS_REPORTING_FREQUENCY, 1 );
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#isWebsocketEnabled()
-   */
   @Override
   public boolean isWebsocketEnabled() {
     final String result = get( WEBSOCKET_FEATURE_ENABLED, Boolean.toString(DEFAULT_WEBSOCKET_FEATURE_ENABLED));
     return Boolean.parseBoolean(result);
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#websocketMaxTextMessageSize()
-   */
   @Override
   public int getWebsocketMaxTextMessageSize() {
     return getInt( WEBSOCKET_MAX_TEXT_MESSAGE_SIZE, DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE);
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#websocketMaxBinaryMessageSize()
-   */
   @Override
   public int getWebsocketMaxBinaryMessageSize() {
     return getInt( WEBSOCKET_MAX_BINARY_MESSAGE_SIZE, DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_SIZE);
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#websocketMaxTextMessageBufferSize()
-   */
   @Override
   public int getWebsocketMaxTextMessageBufferSize() {
     return getInt( WEBSOCKET_MAX_TEXT_MESSAGE_BUFFER_SIZE, DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_BUFFER_SIZE);
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#websocketMaxBinaryMessageBufferSize()
-   */
   @Override
   public int getWebsocketMaxBinaryMessageBufferSize() {
     return getInt( WEBSOCKET_MAX_BINARY_MESSAGE_BUFFER_SIZE, DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_BUFFER_SIZE);
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#websocketInputBufferSize()
-   */
   @Override
   public int getWebsocketInputBufferSize() {
     return getInt( WEBSOCKET_INPUT_BUFFER_SIZE, DEFAULT_WEBSOCKET_INPUT_BUFFER_SIZE);
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#websocketAsyncWriteTimeout()
-   */
   @Override
   public int getWebsocketAsyncWriteTimeout() {
     return getInt( WEBSOCKET_ASYNC_WRITE_TIMEOUT, DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT);
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#websocketIdleTimeout()
-   */
   @Override
   public int getWebsocketIdleTimeout() {
     return getInt( WEBSOCKET_IDLE_TIMEOUT, DEFAULT_WEBSOCKET_IDLE_TIMEOUT);
   }
 
-  /**
-   * Map of Topology names and their ports.
-   *
-   * @return
-   */
   @Override
   public Map<String, Integer> getGatewayPortMappings() {
 
@@ -872,17 +774,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
         // extract the topology name and use it as a key
         result.put(StringUtils.substringAfter(e.getKey(), GATEWAY_PORT_MAPPING_PREFIX), Integer.parseInt(e.getValue()) );
       }
-
     }
 
     return Collections.unmodifiableMap(result);
   }
 
-  /**
-   * Is the Port Mapping feature on ?
-   *
-   * @return
-   */
   @Override
   public boolean isGatewayPortMappingEnabled() {
     final String result = get( GATEWAY_PORT_MAPPING_ENABLED, Boolean.toString(DEFAULT_GATEWAY_PORT_MAPPING_ENABLED));
@@ -900,15 +796,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isCookieScopingToPathEnabled() {
-    final boolean result = Boolean.parseBoolean(get(COOKIE_SCOPING_ENABLED,
-            Boolean.toString(DEFAULT_COOKIE_SCOPING_FEATURE_ENABLED)));
-    return result;
+    return Boolean.parseBoolean(get(COOKIE_SCOPING_ENABLED,
+        Boolean.toString(DEFAULT_COOKIE_SCOPING_FEATURE_ENABLED)));
   }
 
   @Override
   public String getHeaderNameForRemoteAddress() {
-    String value = getVar(REMOTE_IP_HEADER_NAME, "X-Forwarded-For");
-    return value;
+    return getVar(REMOTE_IP_HEADER_NAME, "X-Forwarded-For");
   }
 
   @Override
@@ -999,14 +893,6 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return Boolean.parseBoolean(get(REMOTE_CONFIG_MONITOR_CLIENT_ALLOW_READ_ACCESS, String.valueOf(false)));
   }
 
-  /**
-   * Returns whether the Remote Alias Service is enabled or not.
-   * This value also depends on whether remote registry is enabled or not.
-   * if it is enabled then this option takes effect else this option has no
-   * effect.
-   *
-   * @return
-   */
   @Override
   public boolean isRemoteAliasServiceEnabled() {
     final String result = get( REMOTE_ALIAS_SERVICE_ENABLED, Boolean.toString(DEFAULT_REMOTE_ALIAS_SERVICE_ENABLED));
@@ -1027,23 +913,14 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public String getKnoxAdminGroups() {
-    final String result = get(KNOX_ADMIN_GROUPS, null);
-    return result;
+    return get(KNOX_ADMIN_GROUPS, null);
   }
 
   @Override
   public String getKnoxAdminUsers() {
-    final String result = get(KNOX_ADMIN_USERS, null);
-    return result;
+    return get(KNOX_ADMIN_USERS, null);
   }
 
-  /**
-   * Custom header name to be used to pass the authenticated principal via
-   * dispatch
-   *
-   * @return
-   * @since 1.1.0
-   */
   @Override
   public String getFederationHeaderName() {
     return get(CUSTOM_FEDERATION_HEADER_NAME, DEFAULT_FEDERATION_HEADER_NAME);
@@ -1072,7 +949,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
     String serviceList = get(DISPATCH_HOST_WHITELIST_SERVICES);
     if (serviceList != null) {
-      for (String service : Arrays.asList(serviceList.split(","))) {
+      for (String service : serviceList.split(",")) {
         result.add(service.trim());
       }
     }
@@ -1080,18 +957,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return result;
   }
 
-  /**
-   * Returns true when strict topology validation is enabled, in which case if
-   * topology validation fails Knox will throw a runtime exception. If false and
-   * topology validation fails Knox will log an ERROR and move on.
-   *
-   * @return
-   * @since 1.1.0
-   */
   @Override
   public boolean isTopologyValidationEnabled() {
     final String result = get(STRICT_TOPOLOGY_VALIDATION, Boolean.toString(DEFAULT_STRICT_TOPOLOGY_VALIDATION));
     return Boolean.parseBoolean(result);
   }
-
 }

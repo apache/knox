@@ -27,13 +27,9 @@ public class SimplePrincipalMapper implements PrincipalMapper {
 
   public SimplePrincipalMapper() {
   }
-  
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.filter.PrincipalMapper#loadMappingTable(java.lang.String)
-   */
+
   @Override
   public void loadMappingTable(String principalMapping, String groupMapping) throws PrincipalMappingException {
-//    System.out.println("+++++++++++++ Loading the Mapping Table");
     if (principalMapping != null) {
       principalMappings = parseMapping(principalMapping);
       groupMappings = parseMapping(groupMapping);
@@ -51,15 +47,12 @@ public class SimplePrincipalMapper implements PrincipalMapper {
       if (t.hasMoreTokens()) {
         do {
           String mapping = t.nextToken();
-   //        System.out.println("+++++++++++++ Mapping: " + mapping);
           String principals = mapping.substring(0, mapping.indexOf('='));
-   //        System.out.println("+++++++++++++ Principals: " + principals);
           String value = mapping.substring(mapping.indexOf('=')+1);
           String[] v = value.split(",");
           String[] p = principals.split(",");
           for(int i = 0; i < p.length; i++) {
             table.put(p[i], v);
-   //          System.out.println("+++++++++++++ Mapping into Table: " + p[i] + "->" + value);
           }
         } while(t.hasMoreTokens());
       }
@@ -72,10 +65,7 @@ public class SimplePrincipalMapper implements PrincipalMapper {
       throw new PrincipalMappingException("Unable to load mappings from provided string: " + mappings + " - no principal mapping will be provided.", e);
     }
   }
-  
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.filter.PrincipalMapper#mapPrincipal(java.lang.String)
-   */
+
   @Override
   public String mapUserPrincipal(String principalName) {
     String[] p = null;
@@ -89,9 +79,6 @@ public class SimplePrincipalMapper implements PrincipalMapper {
     return p[0];
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.filter.PrincipalMapper#mapPrincipal(java.lang.String)
-   */
   @Override
   public String[] mapGroupPrincipal(String principalName) {
     String[] groups = null;
@@ -111,11 +98,6 @@ public class SimplePrincipalMapper implements PrincipalMapper {
     return groups;
   }
 
-  /**
-   * @param first
-   * @param second
-   * @return
-   */
   public static <T> T[] concat(T[] first, T[] second) {
     T[] result = Arrays.copyOf(first, first.length + second.length);
     System.arraycopy(second, 0, result, first.length, second.length);

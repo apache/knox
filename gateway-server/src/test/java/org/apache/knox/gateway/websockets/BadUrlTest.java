@@ -96,9 +96,7 @@ public class BadUrlTest {
 
   @BeforeClass
   public static void startServers() throws Exception {
-
     startGatewayServer();
-
   }
 
   @AfterClass
@@ -111,14 +109,7 @@ public class BadUrlTest {
 
     /* Cleanup the created files */
     FileUtils.deleteQuietly(topoDir);
-
   }
-
-  /**
-   * Test websocket proxying through gateway.
-   *
-   * @throws Exception
-   */
 
   @Test
   public void testBadUrl() throws Exception {
@@ -137,12 +128,6 @@ public class BadUrlTest {
 
   }
 
-
-  /**
-   * Start Gateway Server.
-   *
-   * @throws Exception
-   */
   private static void startGatewayServer() throws Exception {
     gatewayServer = new Server();
     final ServerConnector connector = new ServerConnector(gatewayServer);
@@ -177,11 +162,8 @@ public class BadUrlTest {
     gatewayWebsocketHandler.start();
   }
 
-  /**
+  /*
    * Initialize the configs and components required for this test.
-   *
-   * @param backend
-   * @throws IOException
    */
   private static void setupGatewayConfig(final String backend)
       throws IOException {
@@ -280,9 +262,6 @@ public class BadUrlTest {
 
   /**
    * Intentionally add bad URL
-   *
-   * @param backend
-   * @return
    */
   private static XMLTag createKnoxTopology(final String backend) {
     XMLTag xml = XMLDoc.newDocument(true).addRoot("topology").addTag("service")
@@ -310,10 +289,7 @@ public class BadUrlTest {
 
           }
         }
-
       }
-
     }
-
   }
 }

@@ -42,9 +42,6 @@ public class IdentityAsserterDeploymentContributor extends AbstractIdentityAsser
     context.getWebAppDescriptor().createContextParam().paramName(GROUP_PRINCIPAL_MAPPING_PARAM_NAME).paramValue(groupMappings);
   }
 
-  /* (non-Javadoc)
-   * @see AbstractIdentityAsserterDeploymentContributor#getFilterClassname()
-   */
   @Override
   protected String getFilterClassname() {
     return FILTER_CLASSNAME;

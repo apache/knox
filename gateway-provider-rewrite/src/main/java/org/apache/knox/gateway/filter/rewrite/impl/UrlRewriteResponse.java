@@ -59,9 +59,6 @@ import java.util.zip.GZIPOutputStream;
 import static org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteUtil.getRewriteFilterConfig;
 import static org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteUtil.pickFirstRuleWithEqualsIgnoreCasePathMatch;
 
-/**
- *
- */
 public class UrlRewriteResponse extends GatewayResponseWrapper implements Params,
     ResponseStreamer {
 

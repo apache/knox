@@ -33,12 +33,6 @@ public class DefaultValidator implements PreAuthValidator {
   public DefaultValidator() {
   }
 
-  /**
-   * @param httpRequest
-   * @param filterConfig
-   * @return true if validated, otherwise false
-   * @throws PreAuthValidationException
-   */
   @Override
   public boolean validate(HttpServletRequest httpRequest, FilterConfig filterConfig) throws PreAuthValidationException {
     return true;

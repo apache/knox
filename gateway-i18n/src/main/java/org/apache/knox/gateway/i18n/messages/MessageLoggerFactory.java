@@ -17,9 +17,6 @@
  */
 package org.apache.knox.gateway.i18n.messages;
 
-/**
- *
- */
 public interface MessageLoggerFactory {
 
   MessageLogger getLogger( String name );

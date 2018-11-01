@@ -17,9 +17,6 @@
  */
 package org.apache.knox.gateway.i18n.messages;
 
-/**
- *
- */
 @Messages( bundle="some.bundle.name", logger="some.logger.name", codes="ID:{0}" )
 public interface MessagesTestSubject {
 

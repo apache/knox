@@ -72,18 +72,12 @@ public class DefaultAliasService implements AliasService {
     return passphrase;
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.services.security.impl.AliasService#getAliasForCluster(java.lang.String, java.lang.String)
-   */
   @Override
   public char[] getPasswordFromAliasForCluster(String clusterName, String alias)
       throws AliasServiceException {
     return getPasswordFromAliasForCluster(clusterName, alias, false);
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.services.security.impl.AliasService#getAliasForCluster(java.lang.String, java.lang.String, boolean)
-   */
   @Override
   public char[] getPasswordFromAliasForCluster(String clusterName, String alias, boolean generate)
       throws AliasServiceException {
@@ -134,9 +128,6 @@ public class DefaultAliasService implements AliasService {
     addAliasForCluster(clusterName, alias, passwordString);
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.services.security.impl.AliasService#addAliasForCluster(java.lang.String, java.lang.String, java.lang.String)
-   */
   @Override
   public void addAliasForCluster(String clusterName, String alias, String value) {
     try {
@@ -168,9 +159,6 @@ public class DefaultAliasService implements AliasService {
     generateAliasForCluster("__gateway", alias);
   }
 
-  /* (non-Javadoc)
-   * @see AliasService#getCertificateForGateway(java.lang.String)
-   */
   @Override
   public Certificate getCertificateForGateway(String alias) {
     Certificate cert = null;
@@ -185,9 +173,6 @@ public class DefaultAliasService implements AliasService {
     return cert;
   }
 
-  /* (non-Javadoc)
-   * @see AliasService#getAliasesForCluster(java.lang.String)
-   */
   @Override
   public List<String> getAliasesForCluster(String clusterName) {
     ArrayList<String> list = new ArrayList<>();

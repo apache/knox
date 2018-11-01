@@ -22,9 +22,6 @@ import javax.servlet.ServletException;
 public class HdfsUIHaDispatch extends AbstractHdfsHaDispatch {
   public static final String RESOURCE_ROLE = "HDFSUI";
 
-  /**
-   * @throws javax.servlet.ServletException
-   */
   public HdfsUIHaDispatch() throws ServletException {
     super();
   }

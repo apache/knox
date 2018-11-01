@@ -27,9 +27,7 @@ import java.net.URI;
 import java.nio.charset.Charset;
 
 
-/**
- *
- */
+
 @Messages(logger="org.apache.knox.gateway")
 public interface SpiGatewayMessages {
 

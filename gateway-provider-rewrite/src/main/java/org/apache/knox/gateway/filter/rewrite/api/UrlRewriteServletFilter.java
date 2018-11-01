@@ -30,9 +30,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-/**
- *
- */
 public class UrlRewriteServletFilter extends AbstractGatewayFilter {
 
   public static final String REQUEST_URL_RULE_PARAM = "request.url";

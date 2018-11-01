@@ -244,7 +244,7 @@ public class AmbariConfigurationMonitorTest {
      * @param name           The cluster name
      * @param serviceConfigs A map of service configurations (keyed by service name)
      *
-     * @return
+     * @return a mocked AmbariCluster
      */
     private AmbariCluster createTestCluster(String name,
                                             Map<String, Map<String, AmbariCluster.ServiceConfiguration>> serviceConfigs) {

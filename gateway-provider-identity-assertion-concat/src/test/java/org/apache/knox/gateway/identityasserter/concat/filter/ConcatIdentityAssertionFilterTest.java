@@ -31,9 +31,6 @@ import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
-/**
- *
- */
 public class ConcatIdentityAssertionFilterTest {
 
   @Test

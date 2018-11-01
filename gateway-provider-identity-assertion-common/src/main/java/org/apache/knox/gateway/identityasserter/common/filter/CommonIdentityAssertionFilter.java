@@ -41,10 +41,7 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
   private static final String GROUP_PRINCIPAL_MAPPING = "group.principal.mapping";
   private static final String PRINCIPAL_MAPPING = "principal.mapping";
   private SimplePrincipalMapper mapper = new SimplePrincipalMapper();
-
-  /* (non-Javadoc)
-   * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)
-   */
+  
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
     String principalMapping = filterConfig.getInitParameter(PRINCIPAL_MAPPING);
@@ -64,9 +61,6 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     }
   }
 
-  /* (non-Javadoc)
-   * @see javax.servlet.Filter#destroy()
-   */
   @Override
   public void destroy() {
   }
@@ -99,11 +93,6 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     continueChainAsPrincipal(wrapper, response, chain, mappedPrincipalName, groups);
   }
 
-  /**
-   * @param mappedGroups
-   * @param groups
-   * @return
-   */
   private String[] combineGroupMappings(String[] mappedGroups, String[] groups) {
     if (mappedGroups != null && groups != null) {
       return (String[])ArrayUtils.addAll(mappedGroups, groups);
@@ -132,18 +121,12 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     return mapper.mapUserPrincipal(principalName);
   }
 
-  /* (non-Javadoc)
-   * @see AbstractIdentityAssertionFilter#mapGroupPrincipals(java.lang.String, javax.security.auth.Subject)
-   */
   @Override
   public String[] mapGroupPrincipals(String mappedPrincipalName, Subject subject) {
     // NOP
     return null;
   }
 
-  /* (non-Javadoc)
-   * @see AbstractIdentityAssertionFilter#mapUserPrincipal(java.lang.String)
-   */
   @Override
   public String mapUserPrincipal(String principalName) {
     // NOP

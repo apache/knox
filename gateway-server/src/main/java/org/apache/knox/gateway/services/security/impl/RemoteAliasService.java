@@ -111,10 +111,6 @@ public class RemoteAliasService implements AliasService {
 
   /**
    * Build an entry path for the given cluster and alias
-   *
-   * @param clusterName
-   * @param alias
-   * @return
    */
   private static String buildAliasEntryName(final String clusterName,
       final String alias) {
@@ -123,9 +119,6 @@ public class RemoteAliasService implements AliasService {
 
   /**
    * Build an entry path for the given cluster
-   *
-   * @param clusterName
-   * @return
    */
   private static String buildClusterEntryName(final String clusterName) {
     return PATH_KNOX_ALIAS_STORE_TOPOLOGY + PATH_SEPARATOR + clusterName;
@@ -133,9 +126,6 @@ public class RemoteAliasService implements AliasService {
 
   /**
    * Ensure that the given entry path exists.
-   *
-   * @param path
-   * @param remoteClient
    */
   private static void ensureEntry(final String path,
       final RemoteConfigurationRegistryClient remoteClient) {
@@ -168,8 +158,6 @@ public class RemoteAliasService implements AliasService {
 
   /**
    * Check to make sure all the required entries are properly set up
-   *
-   * @param remoteClient
    */
   private static void checkPathsExist(
       final RemoteConfigurationRegistryClient remoteClient) {
@@ -185,9 +173,6 @@ public class RemoteAliasService implements AliasService {
   /**
    * Returns an empty list if the given list is null,
    * else returns the given list.
-   *
-   * @param given
-   * @return
    */
   private static List<String> safe(final List given) {
     return given == null ? Collections.EMPTY_LIST : given;
@@ -196,8 +181,6 @@ public class RemoteAliasService implements AliasService {
   /**
    * Set a {@link RemoteConfigurationRegistryClientService} instance
    * used to talk to remote remote service registry.
-   *
-   * @param registryClientService
    */
   public void setRegistryClientService(
       final RemoteConfigurationRegistryClientService registryClientService) {
@@ -206,8 +189,6 @@ public class RemoteAliasService implements AliasService {
 
   /**
    * Set a {@link MasterService} instance.
-   *
-   * @param ms
    */
   public void setMasterService(final MasterService ms) {
     this.ms = ms;
@@ -215,8 +196,6 @@ public class RemoteAliasService implements AliasService {
 
   /**
    * Set local alias service
-   *
-   * @param localAliasService
    */
   public void setLocalAliasService(AliasService localAliasService) {
     this.localAliasService = localAliasService;
@@ -228,7 +207,6 @@ public class RemoteAliasService implements AliasService {
    *
    * @param clusterName cluster name
    * @return List of all the aliases
-   * @throws AliasServiceException
    */
   @Override
   public List<String> getAliasesForCluster(final String clusterName)
@@ -507,7 +485,6 @@ public class RemoteAliasService implements AliasService {
    * @param clusterName Name of the cluster
    * @param alias       Alias name to be added
    * @param value       alias value to be added
-   * @throws AliasServiceException
    */
   public void addAliasForClusterLocally(final String clusterName,
       final String alias, final String value) throws AliasServiceException {
@@ -520,7 +497,6 @@ public class RemoteAliasService implements AliasService {
    *
    * @param clusterName Name of the cluster
    * @param alias       Alias name to be removed
-   * @throws AliasServiceException
    */
   public void removeAliasForClusterLocally(final String clusterName,
       final String alias) throws AliasServiceException {
@@ -530,8 +506,6 @@ public class RemoteAliasService implements AliasService {
 
   /**
    * Ensure that the nodes are properly set up.
-   *
-   * @param remoteClient
    */
   private void ensureEntries(
       final RemoteConfigurationRegistryClient remoteClient) {
@@ -547,7 +521,6 @@ public class RemoteAliasService implements AliasService {
    * Encrypt the clear text with master password.
    * @param clear clear text to be encrypted
    * @return encrypted and base 64 encoded result.
-   * @throws Exception
    */
   public String encrypt(final String clear) throws Exception {
 
@@ -658,9 +631,6 @@ public class RemoteAliasService implements AliasService {
 
     /**
      * Create an instance
-     *
-     * @param cluster
-     * @param alias
      */
     public RemoteAliasEntryListener(final String cluster, final String alias, final RemoteAliasService remoteAliasService) {
       super();

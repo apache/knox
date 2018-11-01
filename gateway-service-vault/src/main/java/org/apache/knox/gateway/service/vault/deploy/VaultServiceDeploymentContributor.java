@@ -19,38 +19,23 @@ package org.apache.knox.gateway.service.vault.deploy;
 
 import org.apache.knox.gateway.jersey.JerseyServiceDeploymentContributorBase;
 
-/**
- *
- */
 public class VaultServiceDeploymentContributor extends JerseyServiceDeploymentContributorBase {
 
-  /* (non-Javadoc)
-   * @see ServiceDeploymentContributor#getRole()
-   */
   @Override
   public String getRole() {
     return "VAULT";
   }
 
-  /* (non-Javadoc)
-   * @see ServiceDeploymentContributor#getName()
-   */
   @Override
   public String getName() {
     return "KnoxVaultService";
   }
 
-  /* (non-Javadoc)
-   * @see JerseyServiceDeploymentContributorBase#getPackages()
-   */
   @Override
   protected String[] getPackages() {
     return new String[]{ "org.apache.knox.gateway.service.vault" };
   }
 
-  /* (non-Javadoc)
-   * @see JerseyServiceDeploymentContributorBase#getPatterns()
-   */
   @Override
   protected String[] getPatterns() {
     return new String[]{ "vault/**?**" };

@@ -39,9 +39,6 @@ public class KnoxTokenCredentialCollector extends AbstractCredentialCollector {
 
   private String tokenType = null;
 
-  /* (non-Javadoc)
-   * @see CredentialCollector#collect()
-   */
   @Override
   public void collect() throws CredentialCollectionException {
     String userDir = System.getProperty("user.home");
@@ -75,9 +72,6 @@ public class KnoxTokenCredentialCollector extends AbstractCredentialCollector {
     return tokenType;
   }
 
-  /* (non-Javadoc)
-   * @see CredentialCollector#name()
-   */
   @Override
   public String type() {
     return COLLECTOR_TYPE;

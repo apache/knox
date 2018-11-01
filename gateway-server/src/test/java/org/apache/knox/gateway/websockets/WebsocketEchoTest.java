@@ -62,7 +62,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * A basic test that attempts to proxy websocket connections through Knox
  * gateway.
  * <p>
- * The way the test is set up is as follows: <br/>
+ * The way the test is set up is as follows: <br>
  * <ul>
  * <li>A Mock Websocket server is setup which simply echos the responses sent by
  * client.
@@ -115,10 +115,8 @@ public class WebsocketEchoTest {
 
   @BeforeClass
   public static void startServers() throws Exception {
-
     startWebsocketServer();
     startGatewayServer();
-
   }
 
   @AfterClass
@@ -132,13 +130,10 @@ public class WebsocketEchoTest {
 
     /* Cleanup the created files */
     FileUtils.deleteQuietly(topoDir);
-
   }
 
   /**
    * Test direct connection to websocket server without gateway
-   * 
-   * @throws Exception
    */
   @Test
   public void testDirectEcho() throws Exception {
@@ -150,13 +145,10 @@ public class WebsocketEchoTest {
 
     session.getBasicRemote().sendText("Echo");
     client.messageQueue.awaitMessages(1, 1000, TimeUnit.MILLISECONDS);
-
   }
 
   /**
    * Test websocket proxying through gateway.
-   * 
-   * @throws Exception
    */
   @Test
   public void testGatewayEcho() throws Exception {
@@ -170,13 +162,10 @@ public class WebsocketEchoTest {
     client.messageQueue.awaitMessages(1, 1000, TimeUnit.MILLISECONDS);
 
     assertThat(client.messageQueue.get(0), is("Echo"));
-
   }
 
   /**
    * Test websocket rewrite rules proxying through gateway.
-   *
-   * @throws Exception
    */
   @Test
   public void testGatewayRewriteEcho() throws Exception {
@@ -190,13 +179,10 @@ public class WebsocketEchoTest {
     client.messageQueue.awaitMessages(1, 1000, TimeUnit.MILLISECONDS);
 
     assertThat(client.messageQueue.get(0), is("Echo"));
-
   }
 
   /**
    * Start Mock Websocket server that acts as backend.
-   * 
-   * @throws Exception
    */
   private static void startWebsocketServer() throws Exception {
 
@@ -220,13 +206,10 @@ public class WebsocketEchoTest {
     }
     int port = connector.getLocalPort();
     backendServerUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/ws", host, port));
-
   }
 
   /**
    * Start Gateway Server.
-   * 
-   * @throws Exception
    */
   private static void startGatewayServer() throws Exception {
     gatewayServer = new Server();
@@ -264,9 +247,6 @@ public class WebsocketEchoTest {
 
   /**
    * Initialize the configs and components required for this test.
-   * 
-   * @param backend
-   * @throws IOException
    */
   private static void setupGatewayConfig(final String backend)
       throws IOException {
@@ -382,17 +362,12 @@ public class WebsocketEchoTest {
       synchronized (this) {
         for (TopologyEvent event : events) {
           if (!event.getType().equals(TopologyEvent.Type.DELETED)) {
-
             /* for this test we only care about this part */
             DeploymentFactory.createDeployment(gatewayConfig,
                 event.getTopology());
-
           }
         }
-
       }
-
     }
-
   }
 }

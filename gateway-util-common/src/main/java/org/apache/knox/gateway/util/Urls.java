@@ -27,9 +27,6 @@ import java.util.regex.Pattern;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.net.URLCodec;
 
-/**
- *
- */
 public class Urls {
 
   public static String ensureLeadingSlash( String s ) {
@@ -80,7 +77,7 @@ public class Urls {
    * @param url a given URL
    * @param domainSuffix a domain suffix (can be <code>null</code>)
    * @return the extracted domain name
-   * @throws MalformedURLException
+   * @throws MalformedURLException exception on a bad url
    */
   public static String getDomainName(String url, String domainSuffix) throws MalformedURLException {
 

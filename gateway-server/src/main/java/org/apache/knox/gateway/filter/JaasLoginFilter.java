@@ -23,9 +23,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-/**
- *
- */
 public class JaasLoginFilter extends AbstractGatewayFilter {
 
   public static final String JGSS_LOGIN_MOUDLE = "com.sun.security.jgss.login";

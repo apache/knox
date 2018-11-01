@@ -72,7 +72,7 @@ public class GatewayPortMappingDisableFeatureTest {
    * registry of sorts for all of the services that will be used by the test methods.
    * The createTopology method is used to create the topology file that would normally be read from disk.
    * The driver.setupGateway invocation is where the creation of GATEWAY_HOME occurs.
-   * <p/>
+   * <p>
    * This would normally be done once for this suite but the failure tests start affecting each other depending
    * on the state the last 'active' url
    *
@@ -113,10 +113,8 @@ public class GatewayPortMappingDisableFeatureTest {
     LOG_EXIT();
   }
 
-  /**
+  /*
    * Test the standard case
-   *
-   * @throws IOException
    */
   @Test(timeout = TestUtils.MEDIUM_TIMEOUT )
   public void testBasicListOperation() throws IOException {
@@ -125,9 +123,8 @@ public class GatewayPortMappingDisableFeatureTest {
     LOG_EXIT();
   }
 
-  /**
+  /*
    * Test the multi port fail scenario when the feature is disabled.
-   * @throws IOException
    */
   @Test(timeout = TestUtils.MEDIUM_TIMEOUT )
   public void testMultiPortFailOperation() throws IOException {

@@ -33,8 +33,8 @@ public class InstrUtils {
      * returns the segment that is related to the resource.
      * For example, if the path is "/webhdfs/v1/d1/d2/d2/d4". it returns "/webhdfs/v1"
      *
-     * @param fullPath
-     * @return
+     * @param fullPath full path to determine the resource from
+     * @return resource path
      */
     public static String getResourcePath(String fullPath) {
         String resourcePath = "";

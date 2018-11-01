@@ -32,34 +32,26 @@ public interface MessageEventCallback {
   
   /**
    * Callback when connection is established.
-   * @param session 
    */
   void onConnectionOpen(final Object session);
   
   /**
    * Callback when connection is closed.
-   * @param reason
    */
   void onConnectionClose(final CloseReason reason);
   
   /**
    * Callback when there is an error in connection.
-   * @param cause
    */
   void onError(final Throwable cause);
   
   /**
    * Callback when a text message is received.
-   * @param message
-   * @param session
    */
   void onMessageText(final String message, final Object session);
   
   /**
    * Callback when a binary message is received.
-   * @param message
-   * @param last
-   * @param session
    */
   void onMessageBinary(final byte[]  message, final boolean last, final Object session);
   

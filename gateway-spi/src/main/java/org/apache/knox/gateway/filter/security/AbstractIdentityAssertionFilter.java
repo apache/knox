@@ -95,9 +95,6 @@ public abstract class AbstractIdentityAssertionFilter extends AbstractIdentityAs
    * Recreate the current Subject based upon the provided mappedPrincipal
    * and look for the groups that should be associated with the new Subject.
    * Upon finding groups mapped to the principal - add them to the new Subject.
-   * @param mappedPrincipalName
-   * @throws ServletException 
-   * @throws IOException 
    */
   protected void continueChainAsPrincipal(final ServletRequest request, final ServletResponse response, 
       final FilterChain chain, String mappedPrincipalName) throws IOException, ServletException {

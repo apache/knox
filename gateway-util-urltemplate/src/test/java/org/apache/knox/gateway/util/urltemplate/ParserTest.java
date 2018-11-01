@@ -343,7 +343,7 @@ public class ParserTest {
     assertThat( template.toString(), is( text ) );
   }
 
-  /**
+  /*
    *  KNOX-1055
    *  In some cases & could be encoded as &amp;
    */

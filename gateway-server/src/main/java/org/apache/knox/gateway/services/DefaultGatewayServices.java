@@ -197,20 +197,13 @@ public class DefaultGatewayServices implements GatewayServices {
 
     DefaultMetricsService metricsService = (DefaultMetricsService) services.get(METRICS_SERVICE);
     metricsService.stop();
-
   }
-  
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.GatewayServices#getServiceNames()
-   */
+
   @Override
   public Collection<String> getServiceNames() {
     return services.keySet();
   }
-  
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.GatewayServices#getService(java.lang.String)
-   */
+
   @Override
   public <T> T getService(String serviceName) {
     return (T)services.get(serviceName);

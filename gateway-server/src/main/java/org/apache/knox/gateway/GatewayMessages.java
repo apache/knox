@@ -30,9 +30,6 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
-/**
- *
- */
 @Messages(logger="org.apache.knox.gateway")
 public interface GatewayMessages {
 
@@ -439,83 +436,40 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.INFO, text = "Cookie scoping feature enabled: {0}" )
   void cookieScopingFeatureEnabled( boolean enabled );
 
-  /**
-   * Log whether Topology port mapping feature is enabled/disabled.
-   *
-   * @param enabled
-   */
   @Message(level = MessageLevel.INFO,
            text = "Topology port mapping feature enabled: {0}")
   void gatewayTopologyPortMappingEnabled(final boolean enabled);
 
-  /**
-   * @param topology
-   * @param port
-   */
   @Message(level = MessageLevel.DEBUG,
            text = "Creating a connector for topology {0} listening on port {1}.")
   void createJettyConnector(final String topology, final int port);
 
-  /**
-   * @param topology
-   */
   @Message(level = MessageLevel.DEBUG,
            text = "Creating a handler for topology {0}.")
   void createJettyHandler(final String topology);
 
-  /**
-   * @param oldTarget
-   * @param newTarget
-   */
   @Message(level = MessageLevel.INFO,
            text = "Updating request context from {0} to {1}")
   void topologyPortMappingAddContext(final String oldTarget,
       final String newTarget);
 
-  /**
-   * @param oldTarget
-   * @param newTarget
-   */
   @Message(level = MessageLevel.DEBUG,
            text = "Updating request target from {0} to {1}")
   void topologyPortMappingUpdateRequest(final String oldTarget,
       final String newTarget);
 
-  /**
-   * Messages for Topology Port Mapping
-   *
-   * @param port
-   * @param topology
-   */
   @Message(level = MessageLevel.ERROR,
            text = "Port {0} configured for Topology - {1} is already in use.")
   void portAlreadyInUse(final int port, final String topology);
 
-  /**
-   * Messages for Topology Port Mapping
-   *
-   * @param port
-   */
   @Message(level = MessageLevel.ERROR,
            text = "Port {0} is already in use.")
   void portAlreadyInUse(final int port);
 
-  /**
-   * Log topology and port
-   *
-   * @param topology
-   * @param port
-   */
   @Message(level = MessageLevel.INFO,
            text = "Started gateway, topology \"{0}\" listening on port \"{1}\".")
   void startedGateway(final String topology, final int port);
 
-  /**
-   * Log topology and port
-   *
-   * @param topology
-   * @param port
-   */
   @Message(level = MessageLevel.ERROR,
            text = "Topology \"{0}\" failed to start listening on port \"{1}\".")
   void startedGatewayPortConflict(final String topology, final int port);

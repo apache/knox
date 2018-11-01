@@ -19,38 +19,22 @@ package org.apache.knox.gateway.service.admin.deploy;
 
 import org.apache.knox.gateway.jersey.JerseyServiceDeploymentContributorBase;
 
-/**
- *
- */
 public class AdminServiceDeploymentContributor extends JerseyServiceDeploymentContributorBase {
-
-  /* (non-Javadoc)
-   * @see ServiceDeploymentContributor#getRole()
-   */
   @Override
   public String getRole() {
     return "KNOX";
   }
 
-  /* (non-Javadoc)
-   * @see ServiceDeploymentContributor#getName()
-   */
   @Override
   public String getName() {
     return "knox";
   }
 
-  /* (non-Javadoc)
-   * @see JerseyServiceDeploymentContributorBase#getPackages()
-   */
   @Override
   protected String[] getPackages() {
     return new String[]{ "org.apache.knox.gateway.service.admin" };
   }
 
-  /* (non-Javadoc)
-   * @see JerseyServiceDeploymentContributorBase#getPatterns()
-   */
   @Override
   protected String[] getPatterns() {
     return new String[]{ "*/**?**" };

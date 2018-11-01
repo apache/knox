@@ -182,11 +182,9 @@ public class GatewayPortMappingConfigTest {
 
   }
 
-  /**
+  /*
    * Test a case where gateway is already running and same port is used to start
    * another gateway.
-   *
-   * @throws IOException
    */
   @Test
   public void testDefaultPortInUse() throws IOException {

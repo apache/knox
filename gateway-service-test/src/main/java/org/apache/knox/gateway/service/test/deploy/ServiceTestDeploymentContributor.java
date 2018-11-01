@@ -27,40 +27,25 @@ import org.apache.knox.gateway.topology.Service;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- *
- */
 public class ServiceTestDeploymentContributor extends JerseyServiceDeploymentContributorBase {
 
   private static final String PACKAGES_PARAM = "jersey.config.server.provider.packages";
 
-  /* (non-Javadoc)
-   * @see ServiceDeploymentContributor#getRole()
-   */
   @Override
   public String getRole() {
     return "SERVICE-TEST";
   }
 
-  /* (non-Javadoc)
-   * @see ServiceDeploymentContributor#getName()
-   */
   @Override
   public String getName() {
     return "service-test";
   }
 
-  /* (non-Javadoc)
-   * @see JerseyServiceDeploymentContributorBase#getPackages()
-   */
   @Override
   protected String[] getPackages() {
     return new String[]{ "org.apache.knox.gateway.service.test" };
   }
 
-  /* (non-Javadoc)
-   * @see JerseyServiceDeploymentContributorBase#getPatterns()
-   */
   @Override
   protected String[] getPatterns() {
     return new String[]{ "*/**?**", "/*" };
@@ -92,11 +77,7 @@ public class ServiceTestDeploymentContributor extends JerseyServiceDeploymentCon
       traceLevel.name( "jersey.config.server.tracing.threshold" );
       traceLevel.value( "VERBOSE" );
       params.add( traceLevel );
-      context.contributeFilter( service, resource, "pivot", "jersey", params );
-
-
       context.contributeFilter(service, resource, "pivot", "jersey", params);
-
     }
   }
 }

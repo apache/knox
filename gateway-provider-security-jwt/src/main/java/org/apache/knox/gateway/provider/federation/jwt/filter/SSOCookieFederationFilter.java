@@ -192,8 +192,8 @@ private String gatewayPath;
   /**
    * Derive a provider URL from the request assuming that the
    * KnoxSSO endpoint is local to the endpoint serving this request.
-   * @param request
-   * @return
+   * @param request origin request
+   * @return url that is based on KnoxSSO endpoint
    */
   public String deriveDefaultAuthenticationProviderUrl(HttpServletRequest request) {
     String scheme = null;

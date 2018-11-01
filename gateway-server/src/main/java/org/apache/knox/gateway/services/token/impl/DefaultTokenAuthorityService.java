@@ -74,39 +74,28 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     this.as = as;
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(javax.security.auth.Subject, java.lang.String)
-   */
   @Override
   public JWT issueToken(Subject subject, String algorithm) throws TokenServiceException {
     Principal p = (Principal) subject.getPrincipals().toArray()[0];
     return issueToken(p, algorithm);
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String)
-   */
   @Override
   public JWT issueToken(Principal p, String algorithm) throws TokenServiceException {
     return issueToken(p, null, algorithm);
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String, long expires)
-   */
   @Override
   public JWT issueToken(Principal p, String algorithm, long expires) throws TokenServiceException {
     return issueToken(p, (String)null, algorithm, expires);
   }
 
+  @Override
   public JWT issueToken(Principal p, String audience, String algorithm)
       throws TokenServiceException {
     return issueToken(p, audience, algorithm, -1);
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.provider.federation.jwt.JWTokenAuthority#issueToken(java.security.Principal, java.lang.String, java.lang.String)
-   */
   @Override
   public JWT issueToken(Principal p, String audience, String algorithm, long expires)
       throws TokenServiceException {

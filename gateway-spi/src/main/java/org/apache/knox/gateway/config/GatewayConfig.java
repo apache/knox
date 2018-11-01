@@ -168,56 +168,56 @@ public interface GatewayConfig {
    * Returns true if websocket feature enabled else false.
    * Default is false.
    * @since 0.10
-   * @return
+   * @return true if websocket feature is enabled
    */
   boolean isWebsocketEnabled();
 
   /**
    * Websocket connection max text message size.
    * @since 0.10
-   * @return
+   * @return max text message size
    */
   int getWebsocketMaxTextMessageSize();
 
   /**
    * Websocket connection max binary message size.
    * @since 0.10
-   * @return
+   * @return max binary message size
    */
   int getWebsocketMaxBinaryMessageSize();
 
   /**
    * Websocket connection max text message buffer size.
    * @since 0.10
-   * @return
+   * @return buffer size
    */
   int getWebsocketMaxTextMessageBufferSize();
 
   /**
    * Websocket connection max binary message buffer size.
    * @since 0.10
-   * @return
+   * @return buffer size
    */
   int getWebsocketMaxBinaryMessageBufferSize();
 
   /**
    * Websocket connection input buffer size.
    * @since 0.10
-   * @return
+   * @return buffer size
    */
   int getWebsocketInputBufferSize();
 
   /**
    * Websocket connection async write timeout.
    * @since 0.10
-   * @return
+   * @return timeout
    */
   int getWebsocketAsyncWriteTimeout();
 
   /**
    * Websocket connection idle timeout.
    * @since 0.10
-   * @return
+   * @return timeout
    */
   int getWebsocketIdleTimeout();
 
@@ -243,68 +243,67 @@ public interface GatewayConfig {
   /**
    * Configured name of the HTTP Header that is expected
    * to be set by a proxy in front of the gateway.
-   * @return
+   * @return header name
    */
   String getHeaderNameForRemoteAddress();
 
   /**
    * Configured Algorithm name to be used by the CryptoService
    * and MasterService implementations
-   * @return
+   * @return algorithm
    */
   String getAlgorithm();
 
   /**
    * Configured Algorithm name to be used by the CryptoService
    * for password based encryption
-   * @return
+   * @return algorithm
    */
   String getPBEAlgorithm();
 
   /**
    * Configured Transformation name to be used by the CryptoService
    * and MasterService implementations
-   * @return
+   * @return transformation name
    */
   String getTransformation();
 
   /**
    * Configured SaltSize to be used by the CryptoService
    * and MasterService implementations
-   * @return
+   * @return salt size
    */
   String getSaltSize();
 
   /**
    * Configured IterationCount to be used by the CryptoService
    * and MasterService implementations
-   * @return
+   * @return iteration count
    */
   String getIterationCount();
 
   /**
    * Configured KeyLength to be used by the CryptoService
    * and MasterService implementations
-   * @return
+   * @return key length
    */
   String getKeyLength();
 
   /**
    * Map of Topology names and their ports.
-   *
-   * @return
+   * @return Map of Topology names and their ports.
    */
   Map<String, Integer> getGatewayPortMappings();
 
   /**
    * Is the Port Mapping feature on
-   * @return
+   * @return true if port mapping enabled
    */
   boolean isGatewayPortMappingEnabled();
 
   /**
    * Is the Server header suppressed
-   * @return
+   * @return turn if server header enabled
    */
   boolean isGatewayServerHeaderEnabled();
 
@@ -385,13 +384,13 @@ public interface GatewayConfig {
 
   /**
    * Get the comma separated list of group names that represent Knox Admin users
-   * @return
+   * @return comma separate list of admin group names
    */
   String getKnoxAdminGroups();
 
   /**
    * Get the comma separated list of user names that represent Knox Admin users
-   * @return
+   * @return comma separated list of admin user names
    */
   String getKnoxAdminUsers();
 
@@ -399,7 +398,7 @@ public interface GatewayConfig {
    * Custom header name to be used to pass the authenticated principal
    * via dispatch
    * @since 1.1.0
-   * @return
+   * @return federation header
    */
   String getFederationHeaderName();
 
@@ -407,7 +406,7 @@ public interface GatewayConfig {
    * Get the list of topology names that should be redeployed on restart.
    * manager and admin are default topologies as they may depend on gateway-site.xml
    * configuration for deployment time config. 
-   * @return
+   * @return list of topology names
    */
   List<String> getAutoDeployTopologyNames();
 
@@ -433,7 +432,7 @@ public interface GatewayConfig {
    * Knox will log an ERROR and move on.
    *
    * @since 1.1.0
-   * @return
+   * @return true if topology validation enabled
    */
   boolean isTopologyValidationEnabled();
 

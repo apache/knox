@@ -25,9 +25,6 @@ import java.lang.reflect.Method;
 import java.text.MessageFormat;
 import java.util.Locale;
 
-/**
- *
- */
 public class MessagesInvoker extends ResourcesInvoker implements InvocationHandler {
 
   private String codes;

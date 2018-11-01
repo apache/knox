@@ -31,9 +31,6 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import java.io.IOException;
 
-/**
- *
- */
 public abstract class AbstractGatewayFilter implements Filter {
 
   public static final String SOURCE_REQUEST_URL_ATTRIBUTE_NAME = "sourceRequestUrl";

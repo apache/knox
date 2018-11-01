@@ -29,9 +29,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-/**
- *
- */
 @Category( { UnitTests.class, FastTests.class } )
 public class MessagesTest {
 

@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.webappsec.filter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -49,9 +50,7 @@ public class CSRFPreventionFilter implements Filter {
     }
     String[] methods = mti.split(",");
     methodsToIgnore = new HashSet<>();
-    for (int i = 0; i < methods.length; i++) {
-      methodsToIgnore.add(methods[i]);
-    }
+    methodsToIgnore.addAll(Arrays.asList(methods));
   }
   
   @Override
@@ -65,9 +64,6 @@ public class CSRFPreventionFilter implements Filter {
     }
   }
 
-  /* (non-Javadoc)
-   * @see javax.servlet.Filter#destroy()
-   */
   @Override
   public void destroy() {
     

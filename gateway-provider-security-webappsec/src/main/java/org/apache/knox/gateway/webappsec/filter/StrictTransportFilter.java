@@ -41,16 +41,10 @@ public class StrictTransportFilter implements Filter {
 
   private String option = "max-age=31536000";
 
-  /* (non-Javadoc)
-   * @see javax.servlet.Filter#destroy()
-   */
   @Override
   public void destroy() {
   }
 
-  /* (non-Javadoc)
-   * @see javax.servlet.Filter#doFilter(javax.servlet.ServletRequest, javax.servlet.ServletResponse, javax.servlet.FilterChain)
-   */
   @Override
   public void doFilter(ServletRequest req, ServletResponse res,
       FilterChain chain) throws IOException, ServletException {
@@ -58,9 +52,6 @@ public class StrictTransportFilter implements Filter {
     chain.doFilter(req, new StrictTransportResponseWrapper((HttpServletResponse) res));
   }
 
-  /* (non-Javadoc)
-   * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)
-   */
   @Override
   public void init(FilterConfig config) throws ServletException {
     String customOption = config.getInitParameter(CUSTOM_HEADER_PARAM);
@@ -87,11 +78,6 @@ public class StrictTransportFilter implements Filter {
       }
     }
 
-    /**
-     * construct a wrapper for this response
-     * 
-     * @param response
-     */
     public StrictTransportResponseWrapper(HttpServletResponse response) {
         super(response);
     }
@@ -107,10 +93,7 @@ public class StrictTransportFilter implements Filter {
         }
         return headerValue;
     }
-
-    /**
-     * get the Header names
-     */
+    
     @Override
     public Collection<String> getHeaderNames() {
         List<String> names = (List<String>) super.getHeaderNames();
@@ -133,5 +116,4 @@ public class StrictTransportFilter implements Filter {
         return values;
     }
   }
-
 }

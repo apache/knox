@@ -28,9 +28,6 @@ import java.io.IOException;
 @Deprecated
 public class WebHdfsHaDispatch extends org.apache.knox.gateway.hdfs.dispatch.WebHdfsHaDispatch {
 
-  /**
-   * @throws ServletException
-   */
   public WebHdfsHaDispatch() throws ServletException {
     super();
   }
@@ -57,14 +54,6 @@ public class WebHdfsHaDispatch extends org.apache.knox.gateway.hdfs.dispatch.Web
     super.executeRequest(outboundRequest, inboundRequest, outboundResponse);
   }
 
-  /**
-   * Checks for specific outbound response codes/content to trigger a retry or failover
-   *
-   * @param outboundRequest
-   * @param inboundRequest
-   * @param outboundResponse
-   * @param inboundResponse
-   */
   @Override
   protected void writeOutboundResponse(HttpUriRequest outboundRequest,
       HttpServletRequest inboundRequest, HttpServletResponse outboundResponse,

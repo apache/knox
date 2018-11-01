@@ -101,36 +101,20 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return gatewayHomeDir + "/deployments";
   }
 
-//  public void setDeploymentDir( String clusterConfDir ) {
-//    this.deployDir = clusterConfDir;
-//  }
-
   @Override
   public String getHadoopConfDir() {
     return hadoopConfDir;
   }
-
-//  public void setHadoopConfDir( String hadoopConfDir ) {
-//    this.hadoopConfDir = hadoopConfDir;
-//  }
 
   @Override
   public String getGatewayHost() {
     return gatewayHost;
   }
 
-//  public void setGatewayHost( String gatewayHost ) {
-//    this.gatewayHost = gatewayHost;
-//  }
-
   @Override
   public int getGatewayPort() {
     return gatewayPort;
   }
-
-//  public void setGatewayPort( int gatewayPort ) {
-//    this.gatewayPort = gatewayPort;
-//  }
 
   @Override
   public String getGatewayPath() {
@@ -145,7 +129,6 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public InetSocketAddress getGatewayAddress() throws UnknownHostException {
     return new InetSocketAddress( getGatewayHost(), getGatewayPort() );
   }
-
 
   public long getGatewayIdleTimeout() {
     return 0l;
@@ -201,23 +184,15 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     this.defaultTopologyName = defaultTopologyName;
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getDefaultAppRedirectPath()
-   */
   @Override
   public String getDefaultAppRedirectPath() {
-
     if(StringUtils.isBlank(this.defaultTopologyName)) {
       return "/gateway/sandbox";
     } else {
       return "/gateway/"+this.defaultTopologyName;
     }
-
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getFrontendUrl()
-   */
   @Override
   public String getFrontendUrl() { return frontendUrl; }
 
@@ -225,9 +200,6 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     this.frontendUrl = frontendUrl;
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getExcludedSSLProtocols()
-   */
   @Override
   public List getExcludedSSLProtocols() {
     List<String> protocols = new ArrayList<>();
@@ -253,33 +225,21 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     excludedSSLCiphers = list;
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#isClientAuthNeeded()
-   */
   @Override
   public boolean isClientAuthNeeded() {
     return false;
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getTruststorePath()
-   */
   @Override
   public String getTruststorePath() {
     return null;
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getTrustAllCerts()
-   */
   @Override
   public boolean getTrustAllCerts() {
     return false;
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getTruststoreType()
-   */
   @Override
   public String getTruststoreType() {
     return truststoreType;
@@ -289,9 +249,6 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     this.truststoreType = truststoreType;
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getKeystoreType()
-   */
   @Override
   public String getKeystoreType() {
     return keystoreType;
@@ -341,9 +298,6 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     xForwardedEnabled = enabled;
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getEphemeralDHKeySize()
-   */
   @Override
   public String getEphemeralDHKeySize() {
     return "2048";
@@ -415,17 +369,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     backupAgeLimit = newBackupAgeLimit;
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getSigningKeystoreName()
-   */
   @Override
   public String getSigningKeystoreName() {
     return null;
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getSigningKeyAlias()
-   */
   @Override
   public String getSigningKeyAlias() {
     return null;
@@ -443,65 +391,41 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return services;
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#isWebsocketEnabled()
-   */
   @Override
   public boolean isWebsocketEnabled() {
     return DEFAULT_WEBSOCKET_FEATURE_ENABLED;
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getWebsocketMaxTextMessageSize()
-   */
   @Override
   public int getWebsocketMaxTextMessageSize() {
     return DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE;
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getWebsocketMaxBinaryMessageSize()
-   */
   @Override
   public int getWebsocketMaxBinaryMessageSize() {
     return DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_SIZE;
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getWebsocketMaxTextMessageBufferSize()
-   */
   @Override
   public int getWebsocketMaxTextMessageBufferSize() {
     return DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_BUFFER_SIZE;
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getWebsocketMaxBinaryMessageBufferSize()
-   */
   @Override
   public int getWebsocketMaxBinaryMessageBufferSize() {
     return DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_BUFFER_SIZE;
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getWebsocketInputBufferSize()
-   */
   @Override
   public int getWebsocketInputBufferSize() {
     return DEFAULT_WEBSOCKET_INPUT_BUFFER_SIZE;
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getWebsocketAsyncWriteTimeout()
-   */
   @Override
   public int getWebsocketAsyncWriteTimeout() {
     return DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT;
   }
 
-  /* (non-Javadoc)
-   * @see GatewayConfig#getWebsocketIdleTimeout()
-   */
   @Override
   public int getWebsocketIdleTimeout() {
     return DEFAULT_WEBSOCKET_IDLE_TIMEOUT;
@@ -577,21 +501,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return null;
   }
 
-  /**
-   * Map of Topology names and their ports.
-   *
-   * @return
-   */
   @Override
   public Map<String, Integer> getGatewayPortMappings() {
     return topologyPortMapping;
   }
 
-  /**
-   * Is the Port Mapping feature on ?
-   *
-   * @return
-   */
   @Override
   public boolean isGatewayPortMappingEnabled() {
     return isTopologyPortMappingEnabled;
@@ -642,14 +556,6 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return null;
   }
 
-  /**
-   * Returns whether the Remote Alias Service is enabled or not.
-   * This value also depends on whether remote registry is enabled or not.
-   * if it is enabled then this option takes effect else this option has no
-   * effect.
-   *
-   * @return
-   */
   @Override
   public boolean isRemoteAliasServiceEnabled() {
     return true;
@@ -692,13 +598,6 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return null;
   }
 
-  /**
-   * Custom header name to be used to pass the authenticated principal via
-   * dispatch
-   *
-   * @return
-   * @since 1.1.0
-   */
   @Override
   public String getFederationHeaderName() {
     return "SM_USER";
@@ -721,17 +620,8 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return Collections.emptyList();
   }
 
-  /**
-   * Returns true when strict topology validation is enabled, in which case if
-   * topology validation fails Knox will throw a runtime exception. If false and
-   * topology validation fails Knox will log an ERROR and move on.
-   *
-   * @return
-   * @since 1.1.0
-   */
   @Override
   public boolean isTopologyValidationEnabled() {
     return false;
   }
-
 }

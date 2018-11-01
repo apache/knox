@@ -42,9 +42,6 @@ import java.net.URISyntaxException;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-/**
- *
- */
 @Category( { UnitTests.class, FastTests.class } )
 public class GatewayFilterTest {
 

@@ -80,11 +80,6 @@ public class WebsocketClient {
 
   /**
    * Check whether we have expected close code
-   *
-   * @param expectedCloseCode
-   * @param timeoutDuration
-   * @param timeoutUnit
-   * @throws TimeoutException
    */
   public void awaitClose(int expectedCloseCode, int timeoutDuration,
       TimeUnit timeoutUnit) throws TimeoutException {

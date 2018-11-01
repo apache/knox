@@ -22,9 +22,6 @@ import javax.servlet.ServletException;
 public class WebHdfsHaDispatch extends AbstractHdfsHaDispatch {
   public static final String RESOURCE_ROLE = "WEBHDFS";
 
-  /**
-   * @throws javax.servlet.ServletException
-   */
   public WebHdfsHaDispatch() throws ServletException {
     super();
   }

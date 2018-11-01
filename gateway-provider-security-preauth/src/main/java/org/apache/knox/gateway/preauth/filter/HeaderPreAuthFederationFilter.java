@@ -45,17 +45,11 @@ public class HeaderPreAuthFederationFilter extends AbstractPreAuthFederationFilt
     }
   }
 
-  /**
-   * @param httpRequest
-   */
   @Override
   protected String getPrimaryPrincipal(HttpServletRequest httpRequest) {
     return httpRequest.getHeader(headerName);
   }
 
-  /**
-   * @param principals
-   */
   @Override
   protected void addGroupPrincipals(HttpServletRequest request, Set<Principal> principals) {
     if (groupHeaderName != null) {

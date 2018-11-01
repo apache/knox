@@ -43,7 +43,6 @@ public class PreAuthService {
     initializeValidators();
   }
 
-
   private static void initializeValidators() {
     ServiceLoader<PreAuthValidator> servLoader = ServiceLoader.load(PreAuthValidator.class);
     validatorMap = new ConcurrentHashMap<>();
@@ -61,9 +60,7 @@ public class PreAuthService {
    * This method returns appropriate pre-auth Validator as defined in config
    *
    * @since 0.12
-   * @param filterConfig
    * @return a list of PreAuthValidator instances as defined in config
-   * @throws ServletException
    */
   public static List<PreAuthValidator> getValidators(FilterConfig filterConfig) throws ServletException {
     String validationMethods = filterConfig.getInitParameter(VALIDATION_METHOD_PARAM);

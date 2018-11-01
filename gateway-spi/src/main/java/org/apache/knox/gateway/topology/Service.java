@@ -167,7 +167,7 @@ public class Service {
    * Add a custom dispatch that overrides the dispatch
    * specified in service definition.
    * @since 1.2.0
-   * @param dispatch
+   * @param dispatch dispatch to add
    */
   public void addDispatch(CustomDispatch dispatch) {
     this.dispatch = dispatch;

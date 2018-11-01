@@ -25,54 +25,32 @@ import org.apache.knox.gateway.services.hostmap.HostMapperService;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- *
- *
- */
 public class DefaultHostMapperService implements HostMapperService {
 
   private ConcurrentHashMap<String, HostMapper> map = new ConcurrentHashMap<>();
 
-  /* (non-Javadoc)
-   * @see Service#init(GatewayConfig, java.util.Map)
-   */
   @Override
   public void init( GatewayConfig config, Map<String, String> options ) throws ServiceLifecycleException {
   }
 
-  /* (non-Javadoc)
-   * @see Service#start()
-   */
   @Override
   public void start() throws ServiceLifecycleException {
   }
 
-  /* (non-Javadoc)
-   * @see Service#stop()
-   */
   @Override
   public void stop() throws ServiceLifecycleException {
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.services.hostmap.HostMappingService#getHostMapper(java.lang.String)
-   */
   @Override
   public HostMapper getHostMapper( String clusterName ) {
     return map.get( clusterName );
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.services.hostmap.HostMappingService#registerHostMapperForCluster(java.lang.String, HostMapper)
-   */
   @Override
   public void registerHostMapperForCluster( String clusterName, HostMapper hostMapper ) {
     map.put( clusterName, hostMapper );
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.services.hostmap.HostMappingService#removeHostMapperForCluster(java.lang.String)
-   */
   @Override
   public void removeHostMapperForCluster( String clusterName ) {
     map.remove( clusterName );

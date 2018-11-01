@@ -436,9 +436,6 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
 
   /**
    * Called only from within critical sections of other methods above.
-   * @param clusterName
-   * @param alias
-   * @return
    */
   private char[] checkCache(String clusterName, String alias) {
     char[] c = null;
@@ -456,9 +453,6 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
 
   /**
    * Called only from within critical sections of other methods above.
-   * @param clusterName
-   * @param alias
-   * @param credentialString
    */
   private void addToCache(String clusterName, String alias, String credentialString) {
       HashMap<String, String> clusterCache = (HashMap<String, String>) cache.get(clusterName);
@@ -470,8 +464,6 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
 
   /**
    * Called only from within critical sections of other methods above.
-   * @param clusterName
-   * @param alias
    */
   private void removeFromCache(String clusterName, String alias) {
       HashMap<String, String> clusterCache = (HashMap<String, String>) cache.get(clusterName);

@@ -350,11 +350,6 @@ public class GatewayServer {
    * @param port         If value is > 0 then the given value is used else we
    *                     use the port provided in GatewayConfig.
    * @param topologyName Connector name, only used when not null
-   * @return
-   * @throws IOException
-   * @throws CertificateException
-   * @throws NoSuchAlgorithmException
-   * @throws KeyStoreException
    */
   private Connector createConnector(final Server server,
       final GatewayConfig config, final int port, final String topologyName)
@@ -472,10 +467,10 @@ public class GatewayServer {
    * Sanity Check to make sure configured ports are free and there is not port
    * conflict.
    *
-   * @param port
-   * @param topologyName
-   * @param config
-   * @throws IOException
+   * @param port port to check
+   * @param topologyName topology name to log
+   * @param config config to use for topology name validation
+   * @throws IOException if there is a port conflict
    */
   public void checkPortConflict(final int port,
       final String topologyName, final GatewayConfig config)
@@ -625,7 +620,7 @@ public class GatewayServer {
   /**
    * Check whether a port is free
    *
-   * @param port
+   * @param port port to check
    * @return true if port in use else false
    */
   public static boolean isPortInUse(final int port) {
@@ -647,24 +642,16 @@ public class GatewayServer {
   /**
    * Checks whether the topologies defined in gateway-xml as part of Topology
    * Port mapping feature exists. If it does not Log a message and move on.
-   *
-   * @param configTopologies
-   * @param topologies
-   * @return
    */
   private void checkMappedTopologiesExist(
       final Map<String, Integer> configTopologies,
-      final List<String> topologies) throws IOException {
-
+      final List<String> topologies) {
     for(final Map.Entry<String, Integer> entry : configTopologies.entrySet()) {
-
       // If the topologies defined in gateway-config.xml are not found in gateway
       if (!topologies.contains(entry.getKey())) {
         log.topologyPortMappingCannotFindTopology(entry.getKey(), entry.getValue());
       }
-
     }
-
   }
 
   public URI getURI() {

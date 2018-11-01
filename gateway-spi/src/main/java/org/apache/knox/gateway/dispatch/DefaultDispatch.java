@@ -54,9 +54,6 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
-/**
- *
- */
 public class DefaultDispatch extends AbstractGatewayDispatch {
 
   protected static final String SET_COOKIE = "SET-COOKIE";
@@ -228,11 +225,10 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
     * This method provides a hook for specialized credential propagation
     * in subclasses.
     *
-    * @param outboundRequest
+    * @param outboundRequest outboundRequest to add credentials to
     */
    protected void addCredentialsToRequest(HttpUriRequest outboundRequest) {
    }
-
 
    protected HttpEntity createRequestEntity(HttpServletRequest request)
          throws IOException {

@@ -78,24 +78,18 @@ public class JWTToken implements JWT {
     jwt = new SignedJWT(header, claims);
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getPayloadToSign()
-   */
   @Override
   public String getHeader() {
     JWSHeader header = jwt.getHeader();
     return header.toString();
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getPayloadToSign()
-   */
   @Override
   public String getClaims() {
     String c = null;
     JWTClaimsSet claims = null;
     try {
-      claims = (JWTClaimsSet) jwt.getJWTClaimsSet();
+      claims = jwt.getJWTClaimsSet();
       c = claims.toJSONObject().toJSONString();
     } catch (ParseException e) {
       log.unableToParseToken(e);
@@ -103,9 +97,6 @@ public class JWTToken implements JWT {
     return c;
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getPayloadToSign()
-   */
   @Override
   public String getPayload() {
     Payload payload = jwt.getPayload();
@@ -116,17 +107,11 @@ public class JWTToken implements JWT {
     return jwt.serialize();
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.services.security.token.impl.JWT#setSignaturePayload(byte[])
-   */
   @Override
   public void setSignaturePayload(byte[] payload) {
 //    this.payload = payload;
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getSignaturePayload()
-   */
   @Override
   public byte[] getSignaturePayload() {
     byte[] b = null;
@@ -143,9 +128,6 @@ public class JWTToken implements JWT {
     return new JWTToken(parts[0], parts[1], parts[2]);
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getClaim(java.lang.String)
-   */
   @Override
   public String getClaim(String claimName) {
     String claim = null;
@@ -159,25 +141,16 @@ public class JWTToken implements JWT {
     return claim;
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getSubject()
-   */
   @Override
   public String getSubject() {
     return getClaim(JWT.SUBJECT);
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getIssuer()
-   */
   @Override
   public String getIssuer() {
     return getClaim(JWT.ISSUER);
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getAudience()
-   */
   @Override
   public String getAudience() {
     String[] claim = null;
@@ -191,9 +164,6 @@ public class JWTToken implements JWT {
     return c;
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getAudienceClaims()
-   */
   @Override
   public String[] getAudienceClaims() {
     String[] claims = null;
@@ -207,9 +177,6 @@ public class JWTToken implements JWT {
     return claims;
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getExpires()
-   */
   @Override
   public String getExpires() {
     Date expires = getExpiresDate();
@@ -241,18 +208,11 @@ public class JWTToken implements JWT {
     return date;
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.services.security.token.impl.JWT#getPrincipal()
-   */
   @Override
   public String getPrincipal() {
     return getClaim(JWT.PRINCIPAL);
   }
 
-
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.services.security.token.impl.JWT#sign(JWSSigner)
-   */
   @Override
   public void sign(JWSSigner signer) {
     try {
@@ -262,9 +222,6 @@ public class JWTToken implements JWT {
     }
   }
 
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.services.security.token.impl.JWT#verify(JWSVerifier)
-   */
   public boolean verify(JWSVerifier verifier) {
     boolean rc = false;
 

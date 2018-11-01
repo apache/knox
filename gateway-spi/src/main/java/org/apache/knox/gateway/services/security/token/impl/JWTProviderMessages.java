@@ -26,9 +26,6 @@ import org.apache.knox.gateway.i18n.messages.StackTrace;
 
 import com.nimbusds.jose.JOSEException;
 
-/**
- *
- */
 @Messages(logger="org.apache.knox.gateway")
 public interface JWTProviderMessages {
 

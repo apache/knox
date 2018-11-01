@@ -24,13 +24,12 @@ import org.junit.Test;
 
 public class UrlsTest {
 
-  /**
+  /*
    * Domain name creation follows the following algorithm:
    * 1. if the incoming request hostname endsWith a configured domain suffix return the suffix - with prefixed dot
    * 2. if the request hostname is an ip address return null for default domain
    * 3. if the request hostname has less than 3 dots return null for default domain
    * 4. if request hostname has more than two dots strip the first element and return the remainder as domain
-   * @throws Exception
    */
   @Test
   public void testDomainNameCreation() throws Exception {

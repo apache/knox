@@ -21,9 +21,6 @@ import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- *
- */
 public class ResourcesFactory {
 
   private static Map<Class<?>, Object> proxies = new ConcurrentHashMap<>();

@@ -26,7 +26,7 @@ public class AbstractIdentityAssertionBase {
   /**
    * Retrieve the principal to represent the asserted identity from
    * the provided Subject.
-   * @param subject
+   * @param subject subject to get the principal from
    * @return principalName
    */
   protected String getPrincipalName(Subject subject) {

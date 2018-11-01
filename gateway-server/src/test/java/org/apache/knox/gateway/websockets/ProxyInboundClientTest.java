@@ -110,65 +110,32 @@ public class ProxyInboundClientTest {
     final WebSocketContainer container = ContainerProvider.getWebSocketContainer();
     final ProxyInboundClient client = new ProxyInboundClient( new MessageEventCallback() {
 
-      /**
-       * A generic callback, can be left un-implemented
-       *
-       * @param message
-       */
       @Override
       public void doCallback(String message) {
 
       }
 
-      /**
-       * Callback when connection is established.
-       *
-       * @param session
-       */
       @Override
       public void onConnectionOpen(Object session) {
 
       }
 
-      /**
-       * Callback when connection is closed.
-       *
-       * @param reason
-       */
       @Override
       public void onConnectionClose(CloseReason reason) {
         isTestComplete.set(true);
       }
 
-      /**
-       * Callback when there is an error in connection.
-       *
-       * @param cause
-       */
       @Override
       public void onError(Throwable cause) {
         isTestComplete.set(true);
       }
 
-      /**
-       * Callback when a text message is received.
-       *
-       * @param message
-       * @param session
-       */
       @Override
       public void onMessageText(String message, Object session) {
         recievedMessage = message;
         isTestComplete.set(true);
       }
 
-      /**
-       * Callback when a binary message is received.
-       *
-       * @param message
-       * @param last
-       * @param session
-       */
       @Override
       public void onMessageBinary(byte[] message, boolean last,
           Object session) {
@@ -200,65 +167,32 @@ public class ProxyInboundClientTest {
     final WebSocketContainer container = ContainerProvider.getWebSocketContainer();
     final ProxyInboundClient client = new ProxyInboundClient( new MessageEventCallback() {
 
-      /**
-       * A generic callback, can be left un-implemented
-       *
-       * @param message
-       */
       @Override
       public void doCallback(String message) {
 
       }
 
-      /**
-       * Callback when connection is established.
-       *
-       * @param session
-       */
       @Override
       public void onConnectionOpen(Object session) {
 
       }
 
-      /**
-       * Callback when connection is closed.
-       *
-       * @param reason
-       */
       @Override
       public void onConnectionClose(CloseReason reason) {
         isTestComplete.set(true);
       }
 
-      /**
-       * Callback when there is an error in connection.
-       *
-       * @param cause
-       */
       @Override
       public void onError(Throwable cause) {
         isTestComplete.set(true);
       }
 
-      /**
-       * Callback when a text message is received.
-       *
-       * @param message
-       * @param session
-       */
       @Override
       public void onMessageText(String message, Object session) {
         recievedMessage = message;
         isTestComplete.set(true);
       }
 
-      /**
-       * Callback when a binary message is received.
-       *
-       * @param message
-       * @param last
-       * @param session
-       */
       @Override
       public void onMessageBinary(byte[] message, boolean last,
           Object session) {
@@ -290,65 +224,32 @@ public class ProxyInboundClientTest {
     final WebSocketContainer container = ContainerProvider.getWebSocketContainer();
     final ProxyInboundClient client = new ProxyInboundClient( new MessageEventCallback() {
 
-      /**
-       * A generic callback, can be left un-implemented
-       *
-       * @param message
-       */
       @Override
       public void doCallback(String message) {
 
       }
 
-      /**
-       * Callback when connection is established.
-       *
-       * @param session
-       */
       @Override
       public void onConnectionOpen(Object session) {
 
       }
 
-      /**
-       * Callback when connection is closed.
-       *
-       * @param reason
-       */
       @Override
       public void onConnectionClose(CloseReason reason) {
         isTestComplete.set(true);
       }
 
-      /**
-       * Callback when there is an error in connection.
-       *
-       * @param cause
-       */
       @Override
       public void onError(Throwable cause) {
         isTestComplete.set(true);
       }
 
-      /**
-       * Callback when a text message is received.
-       *
-       * @param message
-       * @param session
-       */
       @Override
       public void onMessageText(String message, Object session) {
         recievedMessage = message;
         isTestComplete.set(true);
       }
 
-      /**
-       * Callback when a binary message is received.
-       *
-       * @param message
-       * @param last
-       * @param session
-       */
       @Override
       public void onMessageBinary(byte[] message, boolean last,
           Object session) {

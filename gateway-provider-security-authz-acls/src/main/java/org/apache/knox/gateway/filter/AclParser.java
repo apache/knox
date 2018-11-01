@@ -23,9 +23,6 @@ import java.util.Collections;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.util.IpAddressValidator;
 
-/**
- *
- */
 public class AclParser {
   private static AclsAuthorizationMessages log = MessagesFactory.get( AclsAuthorizationMessages.class );
 

@@ -58,9 +58,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- *
- */
 public class GatewayFilter implements Filter {
 
   private static final FilterChain EMPTY_CHAIN = new FilterChain() {

@@ -44,9 +44,6 @@ import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 
-/**
- *
- */
 public abstract class AbstractPreAuthFederationFilter implements Filter {
 
   private List<PreAuthValidator> validators = null;
@@ -129,14 +126,8 @@ public abstract class AbstractPreAuthFederationFilter implements Filter {
       }
     }
   }
-  
-  /**
-   * @param httpRequest
-   */
+
   abstract protected String getPrimaryPrincipal(HttpServletRequest httpRequest);
 
-  /**
-   * @param principals
-   */
   abstract protected void addGroupPrincipals(HttpServletRequest request, Set<Principal> principals);
 }

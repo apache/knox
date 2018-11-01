@@ -25,7 +25,6 @@ import org.apache.knox.test.log.NoOpAppender;
 import org.apache.knox.test.mock.MockInteraction;
 import org.apache.knox.test.mock.MockServlet;
 import org.apache.log4j.Appender;
-import org.apache.log4j.Logger;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpTester;
 import org.eclipse.jetty.servlet.FilterHolder;
@@ -61,8 +60,6 @@ import static org.xmlmatchers.transform.XmlConverters.the;
 
 public class UrlRewriteServletFilterTest {
 
-  Logger LOG = Logger.getLogger(UrlRewriteServletFilterTest.class);
-
   private ServletTester server;
   private HttpTester.Request request;
   private HttpTester.Response response;
@@ -71,8 +68,7 @@ public class UrlRewriteServletFilterTest {
 
   private static URL getTestResource( String name ) {
     name = UrlRewriteServletFilterTest.class.getName().replaceAll( "\\.", "/" ) + "/" + name;
-    URL url = ClassLoader.getSystemResource( name );
-    return url;
+    return ClassLoader.getSystemResource( name );
   }
 
   public void setUp( Map<String,String> initParams ) throws Exception {
@@ -805,7 +801,7 @@ public class UrlRewriteServletFilterTest {
     assertThat(content, anyOf( is(responseHtmlOne), is(responseHtmlTwo)));
   }
 
-  /**
+  /*
    * Test the prefix function
    * @see KNOX-994
    * @since 0.14.0
@@ -843,7 +839,7 @@ public class UrlRewriteServletFilterTest {
 
   }
 
-  /**
+  /*
    * Test the postfix function
    * @since 1.1.0
    * KNOX-1305
@@ -883,7 +879,7 @@ public class UrlRewriteServletFilterTest {
     assertThat(content,  is(expectedLocationHeader));
   }
 
-  /**
+  /*
    * Test the infix function
    * @since 1.1.0
    * KNOX-1305
@@ -922,13 +918,9 @@ public class UrlRewriteServletFilterTest {
 
     assertThat(content,  is(expectedCustomHeader));
   }
-
-
-
-  /**
+  
+  /*
    * See KNOX-791
-   * @since 0.11.0
-   * @throws Exception
    */
   @Test
   public void testResponseHtmlAttributeEscaping() throws Exception {

@@ -22,33 +22,21 @@ import org.apache.knox.gateway.jersey.JerseyServiceDeploymentContributorBase;
 public class KnoxSSOServiceDeploymentContributor extends
     JerseyServiceDeploymentContributorBase {
 
-  /* (non-Javadoc)
-   * @see ServiceDeploymentContributor#getRole()
-   */
   @Override
   public String getRole() {
     return "KNOXSSO";
   }
 
-  /* (non-Javadoc)
-   * @see ServiceDeploymentContributor#getName()
-   */
   @Override
   public String getName() {
     return "KnoxSSOService";
   }
 
-  /* (non-Javadoc)
-   * @see JerseyServiceDeploymentContributorBase#getPackages()
-   */
   @Override
   protected String[] getPackages() {
     return new String[]{ "org.apache.knox.gateway.service.knoxsso" };
   }
 
-  /* (non-Javadoc)
-   * @see JerseyServiceDeploymentContributorBase#getPatterns()
-   */
   @Override
   protected String[] getPatterns() {
     return new String[]{ "api/**?**" };

@@ -33,9 +33,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-/**
- *
- */
 public class DefaultIdentityAssertionFilterTest {
 
   @Test
@@ -94,10 +91,6 @@ public class DefaultIdentityAssertionFilterTest {
     assertTrue("group1 not found in groups: " + Arrays.toString(mappedGroups), groupFoundIn("group1", mappedGroups));
   }
 
-  /**
-   * @param string
-   * @return
-   */
   private boolean groupFoundIn(String expected, String[] mappedGroups) {
     if (mappedGroups == null) return false;
     for(int i = 0; i < mappedGroups.length; i++) {

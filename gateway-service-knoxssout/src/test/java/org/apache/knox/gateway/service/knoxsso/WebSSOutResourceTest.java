@@ -20,9 +20,6 @@ package org.apache.knox.gateway.service.knoxsso;
 import org.junit.Assert;
 import org.junit.Test;
 
-/**
- *
- */
 public class WebSSOutResourceTest {
 
   @Test

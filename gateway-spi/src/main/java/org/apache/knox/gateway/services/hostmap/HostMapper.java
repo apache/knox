@@ -17,21 +17,9 @@
  */
 package org.apache.knox.gateway.services.hostmap;
 
-/**
- *
- */
 public interface HostMapper {
-
-  /**
-   * @param inboundHost
-   * @return
-   */
   public abstract String resolveInboundHostName( String inboundHost );
 
-  /**
-   * @param outboundHost
-   * @return
-   */
   public abstract String resolveOutboundHostName( String outboundHost );
 
 }

@@ -21,33 +21,21 @@ import org.apache.knox.gateway.jersey.JerseyServiceDeploymentContributorBase;
 
 public class HealthServiceDeploymentContributor extends JerseyServiceDeploymentContributorBase {
 
-  /* (non-Javadoc)
-   * @see ServiceDeploymentContributor#getRole()
-   */
   @Override
   public String getRole() {
     return "HEALTH";
   }
 
-  /* (non-Javadoc)
-   * @see ServiceDeploymentContributor#getName()
-   */
   @Override
   public String getName() {
     return "HealthService";
   }
 
-  /* (non-Javadoc)
-   * @see JerseyServiceDeploymentContributorBase#getPackages()
-   */
   @Override
   protected String[] getPackages() {
     return new String[]{"org.apache.knox.gateway.service.health"};
   }
 
-  /* (non-Javadoc)
-   * @see JerseyServiceDeploymentContributorBase#getPatterns()
-   */
   @Override
   protected String[] getPatterns() {
     return new String[]{"*/**?**"};

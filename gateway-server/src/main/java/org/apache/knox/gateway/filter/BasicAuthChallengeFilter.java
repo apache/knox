@@ -28,9 +28,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-/**
- *
- */
 //TODO: Remove the Authenticate header from the expect so that downstream filters and dispatch don't see it.
 public class BasicAuthChallengeFilter extends AbstractGatewayFilter {
 

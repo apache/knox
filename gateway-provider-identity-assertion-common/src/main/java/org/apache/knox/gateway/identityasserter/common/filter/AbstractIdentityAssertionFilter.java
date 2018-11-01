@@ -50,9 +50,6 @@ import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.ImpersonatedPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 
-/**
- *
- */
 public abstract class AbstractIdentityAssertionFilter extends
   AbstractIdentityAssertionBase implements Filter {
 
@@ -86,18 +83,11 @@ public abstract class AbstractIdentityAssertionFilter extends
    * This method is used to map the username of the authenticated identity to some other
    * principal name based on an implementation specific mechanism. It will either return
    * a new principal name or the provided principal name if there is no mapping required.
-   * @param principalName
+   * @param principalName principal to try to map
    * @return new username or the provided principalName
    */
   public abstract String mapUserPrincipal(String principalName);
 
-  /**
-   * @param request
-   * @param response
-   * @param chain
-   * @param mappedPrincipalName
-   * @param groups
-   */
   protected void continueChainAsPrincipal(HttpServletRequestWrapper request, ServletResponse response,
       FilterChain chain, String mappedPrincipalName, String[] groups) throws IOException,
       ServletException {

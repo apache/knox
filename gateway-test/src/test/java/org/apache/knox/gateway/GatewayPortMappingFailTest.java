@@ -64,7 +64,7 @@ public class GatewayPortMappingFailTest {
    * registry of sorts for all of the services that will be used by the test methods.
    * The createTopology method is used to create the topology file that would normally be read from disk.
    * The driver.setupGateway invocation is where the creation of GATEWAY_HOME occurs.
-   * <p/>
+   * <p>
    * This would normally be done once for this suite but the failure tests start affecting each other depending
    * on the state the last 'active' url
    *
@@ -104,13 +104,11 @@ public class GatewayPortMappingFailTest {
   }
 
 
-  /**
+  /*
    * Fail when trying to use this feature on the standard port.
    * Here we do not have Default Topology Feature not enabled.
    *
    * http://localhost:{gatewayPort}/webhdfs/v1
-   *
-   * @throws IOException
    */
   @Test(timeout = TestUtils.MEDIUM_TIMEOUT )
   public void testMultiPortOperationFail() throws IOException {

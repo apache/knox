@@ -145,7 +145,7 @@ public class KnoxSessionStore implements SessionStore {
 
     /**
      * A function used to compress the data using GZIP
-     * @param data
+     * @param data data to be compressed
      * @return gziped data
      * @since 1.1.0
      */
@@ -163,9 +163,9 @@ public class KnoxSessionStore implements SessionStore {
     /**
      * Decompress the data compressed using gzip
      *
-     * @param data
+     * @param data data to be decompressed
      * @return uncompressed data
-     * @throws IOException
+     * @throws IOException exception if can't decompress
      * @since 1.1.0
      */
     private static byte[] unCompress(final byte[] data) throws IOException {

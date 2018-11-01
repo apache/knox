@@ -89,8 +89,7 @@ public abstract class AbstractJWTFilterTest  {
     MessageFormat headerFormatter = new MessageFormat(dnTemplate, Locale.ROOT);
     String[] paramArray = new String[1];
     paramArray[0] = hostname;
-    String dn = headerFormatter.format(paramArray);
-    return dn;
+    return headerFormatter.format(paramArray);
   }
 
   @BeforeClass
@@ -202,7 +201,7 @@ public abstract class AbstractJWTFilterTest  {
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be true.", !chain.doFilterCalled);
-      Assert.assertTrue("No Subject should be returned.", chain.subject == null);
+      Assert.assertNull("No Subject should be returned.", chain.subject);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
     }
@@ -264,7 +263,7 @@ public abstract class AbstractJWTFilterTest  {
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be true.", !chain.doFilterCalled);
-      Assert.assertTrue("No Subject should be returned.", chain.subject == null);
+      Assert.assertNull("No Subject should be returned.", chain.subject);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
     }
@@ -338,8 +337,6 @@ public abstract class AbstractJWTFilterTest  {
     try {
       Properties props = getProperties();
 
-//      System.out.println("+" + pem + "+");
-
       props.put(getAudienceProperty(), "bar");
       props.put("sso.authentication.provider.url", "https://localhost:8443/gateway/knoxsso/api/v1/websso");
       props.put(getVerificationPemProperty(), pem);
@@ -393,7 +390,7 @@ public abstract class AbstractJWTFilterTest  {
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be false.", !chain.doFilterCalled);
-      Assert.assertTrue("No Subject should be returned.", chain.subject == null);
+      Assert.assertNull("No Subject should be returned.", chain.subject);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
     }
@@ -452,7 +449,7 @@ public abstract class AbstractJWTFilterTest  {
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be true.", !chain.doFilterCalled);
-      Assert.assertTrue("No Subject should be returned.", chain.subject == null);
+      Assert.assertNull("No Subject should be returned.", chain.subject);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
     }
@@ -487,7 +484,7 @@ public abstract class AbstractJWTFilterTest  {
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be true.", !chain.doFilterCalled);
-      Assert.assertTrue("No Subject should be returned.", chain.subject == null);
+      Assert.assertNull("No Subject should be returned.", chain.subject);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
     }
@@ -556,7 +553,7 @@ public abstract class AbstractJWTFilterTest  {
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be true.", !chain.doFilterCalled);
-      Assert.assertTrue("No Subject should be returned.", chain.subject == null);
+      Assert.assertNull("No Subject should be returned.", chain.subject);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
     }
@@ -648,7 +645,7 @@ public abstract class AbstractJWTFilterTest  {
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be false.", !chain.doFilterCalled );
-      Assert.assertTrue("No Subject should be returned.", chain.subject == null);
+      Assert.assertNull("No Subject should be returned.", chain.subject);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
     }
@@ -743,9 +740,6 @@ public abstract class AbstractJWTFilterTest  {
       return null;
     }
 
-    /* (non-Javadoc)
-     * @see javax.servlet.FilterConfig#getServletContext()
-     */
     @Override
     public ServletContext getServletContext() {
 //      JWTokenAuthority authority = EasyMock.createNiceMock(JWTokenAuthority.class);
@@ -756,17 +750,11 @@ public abstract class AbstractJWTFilterTest  {
       return null;
     }
 
-    /* (non-Javadoc)
-     * @see javax.servlet.FilterConfig#getInitParameter(java.lang.String)
-     */
     @Override
     public String getInitParameter(String name) {
       return props.getProperty(name, null);
     }
 
-    /* (non-Javadoc)
-     * @see javax.servlet.FilterConfig#getInitParameterNames()
-     */
     @Override
     public Enumeration<String> getInitParameterNames() {
       return null;
@@ -782,43 +770,28 @@ public abstract class AbstractJWTFilterTest  {
       this.verifyingKey = verifyingKey;
     }
 
-    /* (non-Javadoc)
-     * @see JWTokenAuthority#issueToken(javax.security.auth.Subject, java.lang.String)
-     */
     @Override
     public JWT issueToken(Subject subject, String algorithm) throws TokenServiceException {
       return null;
     }
 
-    /* (non-Javadoc)
-     * @see JWTokenAuthority#issueToken(java.security.Principal, java.lang.String)
-     */
     @Override
     public JWT issueToken(Principal p, String algorithm) throws TokenServiceException {
       return null;
     }
 
-    /* (non-Javadoc)
-     * @see JWTokenAuthority#issueToken(java.security.Principal, java.lang.String, java.lang.String)
-     */
     @Override
     public JWT issueToken(Principal p, String audience, String algorithm)
         throws TokenServiceException {
       return null;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.knox.gateway.services.security.token.JWTokenAuthority#verifyToken(org.apache.knox.gateway.services.security.token.impl.JWT)
-     */
     @Override
     public boolean verifyToken(JWT token) throws TokenServiceException {
       JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey) verifyingKey);
       return token.verify(verifier);
     }
 
-    /* (non-Javadoc)
-     * @see JWTokenAuthority#issueToken(java.security.Principal, java.lang.String, java.lang.String, long)
-     */
     @Override
     public JWT issueToken(Principal p, String audience, String algorithm,
         long expires) throws TokenServiceException {
@@ -831,9 +804,6 @@ public abstract class AbstractJWTFilterTest  {
       return null;
     }
 
-    /* (non-Javadoc)
-     * @see JWTokenAuthority#issueToken(java.security.Principal, java.lang.String, long)
-     */
     @Override
     public JWT issueToken(Principal p, String algorithm, long expires) throws TokenServiceException {
       return null;
@@ -844,16 +814,12 @@ public abstract class AbstractJWTFilterTest  {
       JWSVerifier verifier = new RSASSAVerifier(publicKey);
       return token.verify(verifier);
     }
-
   }
 
   protected static class TestFilterChain implements FilterChain {
     boolean doFilterCalled = false;
     Subject subject = null;
 
-    /* (non-Javadoc)
-     * @see javax.servlet.FilterChain#doFilter(javax.servlet.ServletRequest, javax.servlet.ServletResponse)
-     */
     @Override
     public void doFilter(ServletRequest request, ServletResponse response)
         throws IOException, ServletException {
@@ -861,6 +827,5 @@ public abstract class AbstractJWTFilterTest  {
 
       subject = Subject.getSubject( AccessController.getContext() );
     }
-
   }
 }

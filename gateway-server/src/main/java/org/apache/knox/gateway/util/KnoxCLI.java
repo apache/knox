@@ -85,9 +85,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
-/**
- *
- */
 public class KnoxCLI extends Configured implements Tool {
 
   private static final String USAGE_PREFIX = "KnoxCLI {cmd} [options]";
@@ -141,9 +138,6 @@ public class KnoxCLI extends Configured implements Tool {
   private String master = null;
   private String type = null;
 
-  /* (non-Javadoc)
-   * @see org.apache.hadoop.util.Tool#run(java.lang.String[])
-   */
   @Override
   public int run(String[] args) throws Exception {
     int exitCode = 0;
@@ -210,9 +204,9 @@ public class KnoxCLI extends Configured implements Tool {
    * % knoxcli delete-provider-config providerConfig --registry-client name
    * % knoxcli delete-descriptor descriptor --registry-client name
    * </pre>
-   * @param args
-   * @return
-   * @throws IOException
+   * @param args command line arguments
+   * @return return exit code
+   * @throws IOException exception on starting KnoxCLI
    */
   private int init(String[] args) throws IOException {
     if (args.length == 0) {
@@ -559,9 +553,6 @@ public class KnoxCLI extends Configured implements Tool {
                                     "for the given hadoop --cluster. The default\n" +
                                     "--cluster being the gateway itself.";
 
-   /* (non-Javadoc)
-    * @see KnoxCLI.Command#execute()
-    */
    @Override
    public void execute() throws Exception {
      AliasService as = getAliasService();
@@ -584,9 +575,6 @@ public class KnoxCLI extends Configured implements Tool {
       }
    }
 
-   /* (non-Javadoc)
-    * @see org.apache.knox.gateway.util.KnoxCLI.Command#getUsage()
-    */
    @Override
    public String getUsage() {
      return USAGE + ":\n\n" + DESC;
@@ -615,9 +603,6 @@ public class KnoxCLI extends Configured implements Tool {
       return result;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.knox.gateway.util.KnoxCLI.Command#execute()
-     */
     @Override
     public void execute() throws Exception {
       KeystoreService ks = getKeystoreService();
@@ -660,9 +645,6 @@ public class KnoxCLI extends Configured implements Tool {
       }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.knox.gateway.util.KnoxCLI.Command#getUsage()
-     */
     @Override
     public String getUsage() {
       return USAGE + ":\n\n" + DESC;
@@ -683,9 +665,6 @@ public class KnoxCLI extends Configured implements Tool {
    public CertCreateCommand() {
    }
 
-   /* (non-Javadoc)
-    * @see org.apache.knox.gateway.util.KnoxCLI.Command#execute()
-    */
    @Override
    public void execute() throws Exception {
      KeystoreService ks = getKeystoreService();
@@ -731,9 +710,6 @@ public class KnoxCLI extends Configured implements Tool {
      }
    }
 
-   /* (non-Javadoc)
-    * @see org.apache.knox.gateway.util.KnoxCLI.Command#getUsage()
-    */
    @Override
    public String getUsage() {
      return USAGE + ":\n\n" + DESC;
@@ -754,16 +730,10 @@ public class KnoxCLI extends Configured implements Tool {
 
   private String name = null;
 
-  /**
-    * @param alias
-    */
    public AliasCreateCommand(String alias) {
      name = alias;
    }
 
-   /* (non-Javadoc)
-    * @see org.apache.knox.gateway.util.KnoxCLI.Command#execute()
-    */
    @Override
    public void execute() throws Exception {
      AliasService as = getAliasService();
@@ -787,9 +757,6 @@ public class KnoxCLI extends Configured implements Tool {
      }
    }
 
-   /* (non-Javadoc)
-    * @see org.apache.knox.gateway.util.KnoxCLI.Command#getUsage()
-    */
    @Override
    public String getUsage() {
      return USAGE + ":\n\n" + DESC;
@@ -822,9 +789,6 @@ public class KnoxCLI extends Configured implements Tool {
 
  }
 
- /**
-  *
-  */
  public class AliasDeleteCommand extends Command {
   public static final String USAGE = "delete-alias aliasname [--cluster clustername]";
   public static final String DESC = "The delete-alias command removes the\n" +
@@ -833,16 +797,10 @@ public class KnoxCLI extends Configured implements Tool {
 
   private String name = null;
 
-  /**
-    * @param alias
-    */
    public AliasDeleteCommand(String alias) {
      name = alias;
    }
 
-   /* (non-Javadoc)
-    * @see org.apache.knox.gateway.util.KnoxCLI.Command#execute()
-    */
    @Override
    public void execute() throws Exception {
      AliasService as = getAliasService();
@@ -868,9 +826,6 @@ public class KnoxCLI extends Configured implements Tool {
      }
    }
 
-   /* (non-Javadoc)
-    * @see org.apache.knox.gateway.util.KnoxCLI.Command#getUsage()
-    */
    @Override
    public String getUsage() {
      return USAGE + ":\n\n" + DESC;
@@ -878,9 +833,6 @@ public class KnoxCLI extends Configured implements Tool {
 
  }
 
- /**
-  *
-  */
  public class MasterCreateCommand extends Command {
   public static final String USAGE = "create-master [--force]";
   public static final String DESC = "The create-master command persists the\n" +
@@ -944,17 +896,11 @@ public class KnoxCLI extends Configured implements Tool {
      return valid;
    }
 
-   /* (non-Javadoc)
-    * @see org.apache.knox.gateway.util.KnoxCLI.Command#execute()
-    */
    @Override
    public void execute() throws Exception {
      out.println("Master secret has been persisted to disk.");
    }
 
-   /* (non-Javadoc)
-    * @see org.apache.knox.gateway.util.KnoxCLI.Command#getUsage()
-    */
    @Override
    public String getUsage() {
      return USAGE + ":\n\n" + DESC;
@@ -1004,8 +950,8 @@ public class KnoxCLI extends Configured implements Tool {
     }
 
     /**
-     * @param cluster
-     * @param ts
+     * @param cluster Cluster name to validate against the TopologyService
+     * @param ts ToplogyService to validate the given cluster name
      */
     private boolean validateClusterName(String cluster, TopologyService ts) {
       boolean valid = false;
@@ -1870,9 +1816,6 @@ public class KnoxCLI extends Configured implements Tool {
     static final String USAGE = "list-registry-clients";
     static final String DESC = "Lists all of the remote configuration registry clients defined in gateway-site.xml.\n";
 
-    /* (non-Javadoc)
-     * @see org.apache.knox.gateway.util.KnoxCLI.Command#execute()
-     */
     @Override
     public void execute() throws Exception {
       GatewayConfig config = getGatewayConfig();
@@ -1885,9 +1828,6 @@ public class KnoxCLI extends Configured implements Tool {
       }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.knox.gateway.util.KnoxCLI.Command#getUsage()
-     */
     @Override
     public String getUsage() {
       return USAGE + ":\n\n" + DESC;
@@ -2021,7 +1961,6 @@ public class KnoxCLI extends Configured implements Tool {
     }
   }
 
-
   public class RemoteRegistryUploadProviderConfigCommand extends RemoteRegistryUploadCommand {
 
     static final String USAGE = "upload-provider-config providerConfigFile --registry-client name [--entry-name entryName]";
@@ -2033,17 +1972,11 @@ public class KnoxCLI extends Configured implements Tool {
       super(fileName);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.knox.gateway.util.KnoxCLI.Command#execute()
-     */
     @Override
     public void execute() throws Exception {
       super.execute(getEntryName(PROVIDER_CONFIG_ENTRY), getSourceFile());
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.knox.gateway.util.KnoxCLI.Command#getUsage()
-     */
     @Override
     public String getUsage() {
       return USAGE + ":\n\n" + DESC;
@@ -2062,17 +1995,11 @@ public class KnoxCLI extends Configured implements Tool {
       super(fileName);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.knox.gateway.util.KnoxCLI.Command#execute()
-     */
     @Override
     public void execute() throws Exception {
       super.execute(getEntryName(DESCRIPTORS_ENTRY), getSourceFile());
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.knox.gateway.util.KnoxCLI.Command#getUsage()
-     */
     @Override
     public String getUsage() {
       return USAGE + ":\n\n" + DESC;
@@ -2091,9 +2018,6 @@ public class KnoxCLI extends Configured implements Tool {
       this.entry = entry;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.knox.gateway.util.KnoxCLI.Command#execute()
-     */
     @Override
     public void execute() throws Exception {
       RemoteConfigurationRegistryClient client = getClient();
@@ -2107,9 +2031,6 @@ public class KnoxCLI extends Configured implements Tool {
       }
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.knox.gateway.util.KnoxCLI.Command#getUsage()
-     */
     @Override
     public String getUsage() {
       return USAGE + ":\n\n" + DESC;
@@ -2199,10 +2120,6 @@ public class KnoxCLI extends Configured implements Tool {
     return properties;
   }
 
-  /**
-   * @param args
-   * @throws Exception
-   */
   public static void main(String[] args) throws Exception {
     PropertyConfigurator.configure( System.getProperty( "log4j.configuration" ) );
     int res = ToolRunner.run(new GatewayConfigImpl(), new KnoxCLI(), args);

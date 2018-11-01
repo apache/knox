@@ -21,33 +21,21 @@ import org.apache.knox.gateway.jersey.JerseyServiceDeploymentContributorBase;
 
 public class TokenServiceDeploymentContributor extends JerseyServiceDeploymentContributorBase {
 
-  /* (non-Javadoc)
-   * @see ServiceDeploymentContributor#getRole()
-   */
   @Override
   public String getRole() {
     return "KNOXTOKEN";
   }
 
-  /* (non-Javadoc)
-   * @see ServiceDeploymentContributor#getName()
-   */
   @Override
   public String getName() {
     return "KnoxTokenService";
   }
 
-  /* (non-Javadoc)
-   * @see JerseyServiceDeploymentContributorBase#getPackages()
-   */
   @Override
   protected String[] getPackages() {
     return new String[]{ "org.apache.knox.gateway.service.knoxtoken" };
   }
 
-  /* (non-Javadoc)
-   * @see JerseyServiceDeploymentContributorBase#getPatterns()
-   */
   @Override
   protected String[] getPatterns() {
     return new String[]{ "knoxtoken/api/**?**" };

@@ -130,22 +130,12 @@ public class HeaderPreAuthFederationFilterTest extends org.junit.Assert {
 
     }
 
-    /**
-     * @param httpRequest
-     * @param filterConfig
-     * @return true if validated, otherwise false
-     */
     @Override
     public boolean validate(HttpServletRequest httpRequest, FilterConfig filterConfig) {
       String token = httpRequest.getHeader("CUSTOM_TOKEN");
       return token.equalsIgnoreCase("HelloWorld");
     }
 
-    /**
-     * Return unique validator name
-     *
-     * @return name of validator
-     */
     @Override
     public String getName() {
       return NAME;

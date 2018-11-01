@@ -49,11 +49,7 @@ public abstract class AbstractRequest<T> {
     addHeaders(request, session.getHeaders());
     return session.executeNow( request );
   }
-
-  /**
-   * @param request
-   * @param headers
-   */
+  
   private void addHeaders(HttpRequest request, Map<String, String> headers) {
     for(Entry<String, String> header : headers.entrySet()) {
       request.setHeader(header.getKey(), header.getValue());

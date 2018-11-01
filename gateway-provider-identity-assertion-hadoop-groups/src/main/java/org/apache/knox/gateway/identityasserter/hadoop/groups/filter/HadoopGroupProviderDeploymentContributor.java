@@ -51,23 +51,11 @@ public class HadoopGroupProviderDeploymentContributor
     super();
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see
-   * ProviderDeploymentContributor#getName()
-   */
   @Override
   public String getName() {
     return HADOOP_GROUP_PROVIDER;
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.apache.knox.gateway.identityasserter.common.filter.
-   * AbstractIdentityAsserterDeploymentContributor#getFilterClassname()
-   */
   @Override
   protected String getFilterClassname() {
     return HadoopGroupProviderFilter.class.getName();

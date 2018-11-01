@@ -302,10 +302,8 @@ public class UrlRewriteProcessorTest {
     processor.destroy();
   }
 
-  /**
+  /*
    * Tests the rewrite pattern used for re-writing Solr urls passed through Knox.
-   * 
-   * @throws Exception
    */
   @Test
   public void testSolrRewrite() throws Exception {

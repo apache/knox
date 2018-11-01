@@ -100,11 +100,9 @@ public class UrlRewriteRequestTest {
     assertEquals(hostHeader, "targethost.com");
   }
 
-  /**
+  /*
    * Test the case where a request has
    * Content-Type:text/xml and Content-Encoding:gzip
-   * @since 1.1.0
-   * @throws Exception
    */
   @Test
   public void testContentEncoding() throws Exception {

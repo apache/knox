@@ -52,9 +52,6 @@ public class VersionResource {
     }
   }
 
-  /**
-   * @return
-   */
   private ServerVersion getServerVersion() {
     GatewayServices services = (GatewayServices)request.getServletContext().
         getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);

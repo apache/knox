@@ -36,13 +36,8 @@ public class XSSProtectionFilter implements Filter {
 
   public static final String DEFAULT_VALUE = "1;mode=block";
 
-
   private String option = DEFAULT_VALUE;
 
-
-  /* (non-Javadoc)
-   * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)
-   */
   @Override
   public void init(FilterConfig config) throws ServletException {
     String customOption = config.getInitParameter(CUSTOM_HEADER_PARAM);
@@ -51,18 +46,12 @@ public class XSSProtectionFilter implements Filter {
     }
   }
 
-  /* (non-Javadoc)
-   * @see javax.servlet.Filter#doFilter(javax.servlet.ServletRequest, javax.servlet.ServletResponse, javax.servlet.FilterChain)
-   */
   @Override
   public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
     ((HttpServletResponse) res).setHeader(X_XSS_PROTECTION, option);
     chain.doFilter(req, new XSSProtectionResponseWrapper((HttpServletResponse) res));
   }
 
-  /* (non-Javadoc)
-   * @see javax.servlet.Filter#destroy()
-   */
   @Override
   public void destroy() {
   }
@@ -103,14 +92,11 @@ public class XSSProtectionFilter implements Filter {
       return headerValue;
     }
 
-    /**
-     * get the Header names
-     */
     @Override
     public Collection<String> getHeaderNames() {
       List<String> names = (List<String>) super.getHeaderNames();
       if (names == null) {
-        names = new ArrayList();
+        names = new ArrayList<>();
       }
       names.add(X_XSS_PROTECTION);
       return names;
@@ -121,12 +107,11 @@ public class XSSProtectionFilter implements Filter {
       List<String> values = (List<String>) super.getHeaders(name);
       if (name.equals(X_XSS_PROTECTION)) {
         if (values == null) {
-          values = new ArrayList();
+          values = new ArrayList<>();
         }
         values.add(option);
       }
       return values;
     }
   }
-
 }

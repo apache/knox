@@ -22,9 +22,6 @@ import org.apache.knox.gateway.i18n.messages.MessageLoggerFactory;
 
 import java.util.logging.Logger;
 
-/**
- *
- */
 public class JdkMessageLoggerFactory implements MessageLoggerFactory {
 
   @Override

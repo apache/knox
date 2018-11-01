@@ -25,9 +25,6 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- *
- */
 public class MessagesFactory {
 
   private static MessageLoggerFactory loggers = getMessageLoggerFactory();

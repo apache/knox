@@ -56,9 +56,6 @@ public class FileBasedHostMapper implements HostMapper {
     }
   }
 
-  /* (non-Javadoc)
-   * @see HostMapper#resolveInboundHostName(java.lang.String)
-   */
   @Override
   public String resolveInboundHostName( String hostName ) {
     String resolvedHostName = inbound.get( hostName );
@@ -68,9 +65,6 @@ public class FileBasedHostMapper implements HostMapper {
     return resolvedHostName;
   }
 
-  /* (non-Javadoc)
-   * @see HostMapper#resolveOutboundHostName(java.lang.String)
-   */
   @Override
   public String resolveOutboundHostName( String hostName ) {
     String resolvedHostName = outbound.get( hostName );

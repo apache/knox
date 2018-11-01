@@ -29,9 +29,6 @@ import java.util.Locale;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 
-/**
- *
- */
 @Category( { UnitTests.class, FastTests.class } )
 public class ResourcesTest {
 

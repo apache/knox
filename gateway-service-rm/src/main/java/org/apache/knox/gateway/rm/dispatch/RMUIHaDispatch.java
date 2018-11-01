@@ -27,9 +27,6 @@ public class RMUIHaDispatch extends RMHaBaseDispatcher {
     private static final String RESOURCE_ROLE = "YARNUI";
     private HaProvider haProvider;
 
-    /**
-   * @throws javax.servlet.ServletException
-   */
   public RMUIHaDispatch() throws ServletException {
     super();
   }

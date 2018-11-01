@@ -19,9 +19,6 @@ package org.apache.knox.gateway.shell;
 
 import java.io.Console;
 
-/**
- *
- */
 public abstract class AbstractJavaConsoleCredentialCollector extends AbstractCredentialCollector {
 
   public AbstractJavaConsoleCredentialCollector() {

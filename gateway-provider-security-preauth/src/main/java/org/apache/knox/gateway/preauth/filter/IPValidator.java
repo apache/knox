@@ -22,9 +22,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.knox.gateway.util.IpAddressValidator;
 
-/**
- *
- */
 public class IPValidator implements PreAuthValidator {
   public static final String IP_ADDRESSES_PARAM = "preauth.ip.addresses";
   public static final String IP_VALIDATION_METHOD_VALUE = "preauth.ip.validation";
@@ -32,12 +29,6 @@ public class IPValidator implements PreAuthValidator {
   public IPValidator() {
   }
 
-  /**
-   * @param httpRequest
-   * @param filterConfig
-   * @return true if validated, otherwise false
-   * @throws PreAuthValidationException
-   */
   @Override
   public boolean validate(HttpServletRequest httpRequest, FilterConfig filterConfig)
       throws PreAuthValidationException {

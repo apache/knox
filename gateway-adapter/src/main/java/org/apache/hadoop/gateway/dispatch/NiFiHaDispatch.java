@@ -36,14 +36,6 @@ public class NiFiHaDispatch extends org.apache.knox.gateway.dispatch.NiFiHaDispa
     super.executeRequest(outboundRequest, inboundRequest, outboundResponse);
   }
 
-  /**
-   * Overridden to provide a spot to modify the outbound response before its stream is closed.
-   *
-   * @param outboundRequest
-   * @param inboundRequest
-   * @param outboundResponse
-   * @param inboundResponse
-   */
   @Override
   protected void writeOutboundResponse(HttpUriRequest outboundRequest,
       HttpServletRequest inboundRequest, HttpServletResponse outboundResponse,

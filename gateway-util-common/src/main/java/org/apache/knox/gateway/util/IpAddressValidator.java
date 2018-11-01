@@ -42,6 +42,7 @@ public class IpAddressValidator {
 
   /**
    * ctor - initialize an instance with the given ip address list
+   * @param commaSeparatedIpAddresses - comma separated list of ip addresses
    */
   public IpAddressValidator(String commaSeparatedIpAddresses) {
     if (commaSeparatedIpAddresses == null) {
@@ -52,9 +53,6 @@ public class IpAddressValidator {
     parseIpAddesses(commaSeparatedIpAddresses);
   }
 
-  /**
-   * @param commaSeparatedIpAddresses
-   */
   private void parseIpAddesses(String commaSeparatedIpAddresses) {
     String[] ips = commaSeparatedIpAddresses.split(",");
     ipaddr = new ArrayList<>();
@@ -100,16 +98,10 @@ public class IpAddressValidator {
     return valid;
   }
 
-  /**
-   * @return
-   */
   public boolean allowsAnyIP() {
     return anyIP;
   }
-
-  /**
-   * @return
-   */
+  
   public ArrayList<String> getIPAddresses() {
     return ipaddr;
   }

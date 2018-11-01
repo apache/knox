@@ -64,7 +64,6 @@ public class ConnectionDroppedTest {
   public static void startServer() throws Exception {
     startBackend();
     startProxy();
-
   }
 
   @AfterClass
@@ -72,15 +71,11 @@ public class ConnectionDroppedTest {
     /* ORDER MATTERS ! */
     proxy.stop();
     backend.stop();
-
   }
 
-  /**
+  /*
    * The connection is dropped, so we should see a tineout exception when we try
    * to poll the message from queue.
-   * 
-   * @throws IOException
-   * @throws Exception
    */
   @Test(expected = java.util.concurrent.TimeoutException.class)
   public void testDroppedConnection() throws IOException, Exception {

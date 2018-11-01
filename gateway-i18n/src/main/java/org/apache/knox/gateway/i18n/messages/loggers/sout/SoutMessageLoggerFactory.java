@@ -23,9 +23,6 @@ import org.apache.knox.gateway.i18n.messages.MessageLoggerFactory;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- *
- */
 public class SoutMessageLoggerFactory implements MessageLoggerFactory {
 
   private static SoutMessageLoggerFactory INSTANCE;

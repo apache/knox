@@ -87,12 +87,6 @@ public class DefaultDispatch extends org.apache.knox.gateway.dispatch.DefaultDis
     super.closeInboundResponse(response, stream);
   }
 
-  /**
-   * This method provides a hook for specialized credential propagation
-   * in subclasses.
-   *
-   * @param outboundRequest
-   */
   @Override
   protected void addCredentialsToRequest(HttpUriRequest outboundRequest) {
     super.addCredentialsToRequest(outboundRequest);

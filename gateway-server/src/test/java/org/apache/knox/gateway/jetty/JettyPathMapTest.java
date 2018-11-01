@@ -22,9 +22,6 @@ import org.eclipse.jetty.http.PathMap;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-/**
- *
- */
 //@Category( { UnitTests.class, FastTests.class } )
 public class JettyPathMapTest {
 

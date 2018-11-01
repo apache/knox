@@ -32,7 +32,7 @@ public class SimpleDescriptorFactory {
      * @param path The path to the file.
      * @return A SimpleDescriptor based on the contents of the file.
      *
-     * @throws IOException
+     * @throws IOException exception on parsing the path
      */
     public static SimpleDescriptor parse(String path) throws IOException {
         SimpleDescriptor sd;

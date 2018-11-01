@@ -54,9 +54,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.Locale;
 
-/**
- *
- */
 public class UrlConnectionDispatch extends AbstractGatewayFilter {
 
   private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );

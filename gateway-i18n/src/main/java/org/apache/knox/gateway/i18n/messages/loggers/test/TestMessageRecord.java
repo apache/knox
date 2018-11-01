@@ -19,9 +19,6 @@ package org.apache.knox.gateway.i18n.messages.loggers.test;
 
 import org.apache.knox.gateway.i18n.messages.MessageLevel;
 
-/**
- *
- */
 public class TestMessageRecord {
 
   private final TestMessageLogger logger;

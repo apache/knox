@@ -125,7 +125,7 @@ public class KafkaZookeeperURLManager extends BaseZookeeperURLManager {
    * @param serverInfo Server Info in JSON Format from Zookeeper (required)
    *
    * @return URL to Kafka
-   * @throws ParseException
+   * @throws ParseException failure parsing json from string
    */
   private String constructURL(String serverInfo) throws ParseException {
     String scheme = "http";

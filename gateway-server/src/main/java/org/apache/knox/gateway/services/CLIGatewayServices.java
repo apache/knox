@@ -95,9 +95,6 @@ public class CLIGatewayServices implements GatewayServices {
     DefaultTopologyService tops = new DefaultTopologyService();
     tops.init(  config, options  );
     services.put(TOPOLOGY_SERVICE, tops);
-
-
-
   }
   
   public void start() throws ServiceLifecycleException {
@@ -125,18 +122,12 @@ public class CLIGatewayServices implements GatewayServices {
     DefaultTopologyService tops = (DefaultTopologyService)services.get(TOPOLOGY_SERVICE);
     tops.stop();
   }
-  
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.GatewayServices#getServiceNames()
-   */
+
   @Override
   public Collection<String> getServiceNames() {
     return services.keySet();
   }
-  
-  /* (non-Javadoc)
-   * @see org.apache.knox.gateway.GatewayServices#getService(java.lang.String)
-   */
+
   @Override
   public <T> T getService(String serviceName) {
     return (T)services.get( serviceName );

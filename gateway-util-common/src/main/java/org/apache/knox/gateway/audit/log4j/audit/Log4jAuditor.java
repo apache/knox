@@ -137,7 +137,7 @@ public class Log4jAuditor implements Auditor {
 
   /**
    * If the url contains knoxtoken parameter, mask it when logging.
-   * @param originalUrl
+   * @param originalUrl original url to try to mask
    * @return originalUrl masking token value
    */
   public static String maskTokenFromURL(final String originalUrl) {

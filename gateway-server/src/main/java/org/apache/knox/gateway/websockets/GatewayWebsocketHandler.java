@@ -76,12 +76,6 @@ public class GatewayWebsocketHandler extends WebSocketHandler
   final GatewayConfig config;
   final GatewayServices services;
 
-  /**
-   * Create an instance
-   *
-   * @param config
-   * @param services
-   */
   public GatewayWebsocketHandler(final GatewayConfig config,
       final GatewayServices services) {
     super();
@@ -92,13 +86,6 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see
-   * org.eclipse.jetty.websocket.server.WebSocketHandler#configure(org.eclipse.
-   * jetty.websocket.servlet.WebSocketServletFactory)
-   */
   @Override
   public void configure(final WebSocketServletFactory factory) {
     factory.setCreator(this);
@@ -121,14 +108,6 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see
-   * org.eclipse.jetty.websocket.servlet.WebSocketCreator#createWebSocket(org.
-   * eclipse.jetty.websocket.servlet.ServletUpgradeRequest,
-   * org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse)
-   */
   @Override
   public Object createWebSocket(ServletUpgradeRequest req,
       ServletUpgradeResponse resp) {
@@ -152,8 +131,6 @@ public class GatewayWebsocketHandler extends WebSocketHandler
    * Returns a {@link ClientEndpointConfig} config that contains the headers
    * to be passed to the backend.
    * @since 0.14.0
-   * @param req
-   * @return
    */
   private ClientEndpointConfig getClientEndpointConfig(final ServletUpgradeRequest req) {
 
@@ -173,8 +150,6 @@ public class GatewayWebsocketHandler extends WebSocketHandler
    * This method looks at the context path and returns the backend websocket
    * url. If websocket url is found it is used as is, or we default to
    * ws://{host}:{port} which might or might not be right.
-   *
-   * @param
    * @return Websocket backend url
    */
   private synchronized String getMatchedBackendURL(final String path) {

@@ -42,9 +42,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 
-/**
- *
- */
 public class KnoxSh {
 
   private static final String USAGE_PREFIX = "KnoxSh {cmd} [options]";
@@ -61,9 +58,7 @@ public class KnoxSh {
 
   private Command command;
   private String gateway = null;
-  /* (non-Javadoc)
-   * @see org.apache.hadoop.util.Tool#run(java.lang.String[])
-   */
+
   public int run(String[] args) throws Exception {
     int exitCode = 0;
     try {
@@ -94,9 +89,9 @@ public class KnoxSh {
    * % knoxcli service-test [--u user] [--p password] [--cluster clustername] [--hostname name] [--port port]
    *
    * </pre>
-   * @param args
-   * @return
-   * @throws IOException
+   * @param args command line arguments
+   * @return exit code
+   * @throws IOException exception on init
    */
   private int init(String[] args) throws IOException {
     if (args.length == 0) {
@@ -298,8 +293,8 @@ public class KnoxSh {
 }
 
   /**
-   * @param args
-   * @throws Exception
+   * @param args command line arguments
+   * @throws Exception thrown if there is an issue
    */
   public static void main(String[] args) throws Exception {
     KnoxSh sh = new KnoxSh();

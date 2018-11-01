@@ -31,8 +31,6 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 
 import org.apache.knox.gateway.security.PrimaryPrincipal;
-import org.apache.hadoop.security.LdapGroupsMapping;
-import org.apache.hadoop.security.ShellBasedUnixGroupsMapping;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
@@ -54,22 +52,14 @@ public class HadoopGroupProviderFilterTest {
   private static final String username = System.getProperty("user.name");
 
   /**
-   * Configuration object needed by for hadoop classes
-   */
-
-  /**
    * Hadoop Groups implementation.
    */
-
-  /* create an instance */
   public HadoopGroupProviderFilterTest() {
     super();
   }
 
-  /**
+  /*
    * Test that valid groups are retrieved for a legitimate user.
-   *
-   * @throws ServletException
    */
   @Test
   public void testGroups() throws ServletException {
@@ -100,10 +90,8 @@ public class HadoopGroupProviderFilterTest {
 
   }
 
-  /**
+  /*
    * Test that no groups are retrieved for a dummy user.
-   *
-   * @throws ServletException
    */
   @Test
   public void testUnknownUser() throws ServletException {
@@ -134,13 +122,11 @@ public class HadoopGroupProviderFilterTest {
 
   }
 
-  /**
+  /*
    * Test for a bad config (nonexistent). This test proves, we are not falling
    * back on {@link ShellBasedUnixGroupsMapping} because we explicitly use
    * {@link LdapGroupsMapping} and in case of bad config we get empty groups
    * (Hadoop way).
-   *
-   * @throws ServletException
    */
   @SuppressWarnings({ "unchecked", "rawtypes" })
   @Test

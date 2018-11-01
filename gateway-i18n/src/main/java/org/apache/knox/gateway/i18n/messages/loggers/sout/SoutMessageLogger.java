@@ -23,9 +23,6 @@ import org.apache.knox.gateway.i18n.messages.MessageLogger;
 import java.text.MessageFormat;
 import java.util.Locale;
 
-/**
- *
- */
 public class SoutMessageLogger implements MessageLogger {
 
   private static final String FORMAT_WITHOUT_ID = "{0}: {2}";

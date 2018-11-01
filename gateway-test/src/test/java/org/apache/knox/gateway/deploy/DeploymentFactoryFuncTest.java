@@ -635,16 +635,10 @@ public class DeploymentFactoryFuncTest {
     LOG_EXIT();
   }
 
-  /**
+  /*
    * Test the case where topology has federation provider configured
    * and service uses anonymous authentication in which case we should
    * add AnonymousFilter to the filter chain.
-   * @since 1.1.0
-   * @throws IOException
-   * @throws SAXException
-   * @throws ParserConfigurationException
-   * @throws URISyntaxException
-   * @throws TransformerException
    */
   @Test( timeout = MEDIUM_TIMEOUT )
   public void testServiceAnonAuth() throws IOException, SAXException, ParserConfigurationException, URISyntaxException, TransformerException {

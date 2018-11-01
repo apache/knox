@@ -21,21 +21,10 @@ import org.apache.knox.gateway.services.Service;
 
 public interface HostMapperService extends Service {
 
-  /**
-   * @param clusterName
-   * @return
-   */
   HostMapper getHostMapper( String clusterName );
 
-  /**
-   * @param clusterName
-   * @param hostMapper
-   */
   void registerHostMapperForCluster( String clusterName, HostMapper hostMapper );
 
-  /**
-   * @param clusterName
-   */
   void removeHostMapperForCluster( String clusterName );
 
 }

@@ -123,13 +123,10 @@ public class WebsocketMultipleConnectionTest {
 
     /* Cleanup the created files */
     FileUtils.deleteQuietly(topoDir);
-
   }
 
   /**
    * Test websocket proxying through gateway.
-   * 
-   * @throws Exception
    */
   @Test
   public void testMultipleConnections() throws Exception {
@@ -186,8 +183,6 @@ public class WebsocketMultipleConnectionTest {
 
   /**
    * Start Mock Websocket server that acts as backend.
-   * 
-   * @throws Exception
    */
   private static void startWebsocketServer() throws Exception {
 
@@ -214,11 +209,6 @@ public class WebsocketMultipleConnectionTest {
 
   }
 
-  /**
-   * Start Gateway Server.
-   * 
-   * @throws Exception
-   */
   private static void startGatewayServer() throws Exception {
     /* use default Max threads */
     gatewayServer = new Server(new QueuedThreadPool(254));
@@ -256,9 +246,6 @@ public class WebsocketMultipleConnectionTest {
 
   /**
    * Initialize the configs and components required for this test.
-   * 
-   * @param backend
-   * @throws IOException
    */
   private static void setupGatewayConfig(final String backend)
       throws IOException {
@@ -347,7 +334,6 @@ public class WebsocketMultipleConnectionTest {
         .getService(GatewayServices.TOPOLOGY_SERVICE);
     monitor.addTopologyChangeListener(topoListener);
     monitor.reloadTopologies();
-
   }
 
   private static File createDir() throws IOException {
@@ -381,11 +367,8 @@ public class WebsocketMultipleConnectionTest {
 
           }
         }
-
       }
-
     }
-
   }
 
   private static abstract class WebsocketClient extends Endpoint
@@ -395,5 +378,4 @@ public class WebsocketMultipleConnectionTest {
       session.addMessageHandler(this);
     }
   }
-
 }

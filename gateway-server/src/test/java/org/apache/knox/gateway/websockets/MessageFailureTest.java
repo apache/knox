@@ -64,7 +64,6 @@ public class MessageFailureTest {
   public static void startServer() throws Exception {
     startBackend();
     startProxy();
-
   }
 
   @AfterClass
@@ -72,14 +71,10 @@ public class MessageFailureTest {
     /* ORDER MATTERS ! */
     proxy.stop();
     backend.stop();
-    
   }
-
 
   /**
    * Test for a message that bigger than configured value
-   * @throws IOException
-   * @throws Exception
    */
   @Test(timeout = 8000)
   public void testMessageTooBig() throws IOException, Exception {
@@ -96,14 +91,10 @@ public class MessageFailureTest {
         TimeUnit.MILLISECONDS);
     
     Assert.assertThat(client.close.getCloseCode().getCode(), CoreMatchers.is(CloseReason.CloseCodes.TOO_BIG.getCode()));
-
   }
-  
 
   /**
    * Test for a message within limit.
-   * @throws IOException
-   * @throws Exception
    */
   @Test(timeout = 8000)
   public void testMessageOk() throws IOException, Exception {

@@ -25,10 +25,7 @@ import org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAsse
 public class ConcatIdentityAssertionFilter extends CommonIdentityAssertionFilter {
   private String prefix = null;
   private String suffix = null;
-  
-  /* (non-Javadoc)
-   * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)
-   */
+
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
     super.init(filterConfig);
@@ -43,17 +40,11 @@ public class ConcatIdentityAssertionFilter extends CommonIdentityAssertionFilter
     }
   }
 
-  /* (non-Javadoc)
-   * @see AbstractIdentityAssertionFilter#mapGroupPrincipals(java.lang.String, javax.security.auth.Subject)
-   */
   @Override
   public String[] mapGroupPrincipals(String mappedPrincipalName, Subject subject) {
     return null;
   }
 
-  /* (non-Javadoc)
-   * @see AbstractIdentityAssertionFilter#mapUserPrincipal(java.lang.String)
-   */
   @Override
   public String mapUserPrincipal(String principalName) {
     return prefix + principalName + suffix;
