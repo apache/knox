@@ -24,7 +24,6 @@ import com.nimbusds.jose.crypto.RSASSAVerifier;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
-import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.easymock.EasyMock;
@@ -38,7 +37,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
@@ -60,11 +58,11 @@ import static org.junit.Assert.assertTrue;
  */
 public class TokenServiceResourceTest {
 
-  protected static RSAPublicKey publicKey;
-  protected static RSAPrivateKey privateKey;
+  private static RSAPublicKey publicKey;
+  private static RSAPrivateKey privateKey;
 
   @BeforeClass
-  public static void setup() throws Exception, NoSuchAlgorithmException {
+  public static void setup() throws Exception {
     KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
     kpg.initialize(1024);
     KeyPair KPair = kpg.generateKeyPair();
@@ -74,25 +72,25 @@ public class TokenServiceResourceTest {
   }
 
   @Test
-  public void testTokenService() throws Exception {
+  public void testTokenService() {
     Assert.assertTrue(true);
   }
 
   @Test
-  public void testClientData() throws Exception {
+  public void testClientData() {
     TokenResource tr = new TokenResource();
 
     Map<String,Object> clientDataMap = new HashMap<>();
     tr.addClientDataToMap("cookie.name=hadoop-jwt,test=value".split(","), clientDataMap);
-    Assert.assertTrue(clientDataMap.size() == 2);
+    Assert.assertEquals(2, clientDataMap.size());
 
     clientDataMap = new HashMap<>();
     tr.addClientDataToMap("cookie.name=hadoop-jwt".split(","), clientDataMap);
-    Assert.assertTrue(clientDataMap.size() == 1);
+    Assert.assertEquals(1, clientDataMap.size());
 
     clientDataMap = new HashMap<>();
     tr.addClientDataToMap("".split(","), clientDataMap);
-    Assert.assertTrue(clientDataMap.size() == 0);
+    Assert.assertEquals(0, clientDataMap.size());
   }
 
   @Test
@@ -631,39 +629,36 @@ public class TokenServiceResourceTest {
     private RSAPublicKey publicKey;
     private RSAPrivateKey privateKey;
 
-    public TestJWTokenAuthority(RSAPublicKey publicKey, RSAPrivateKey privateKey) {
+    TestJWTokenAuthority(RSAPublicKey publicKey, RSAPrivateKey privateKey) {
       this.publicKey = publicKey;
       this.privateKey = privateKey;
     }
 
     @Override
-    public JWT issueToken(Subject subject, String algorithm)
-      throws TokenServiceException {
+    public JWT issueToken(Subject subject, String algorithm) {
       Principal p = (Principal) subject.getPrincipals().toArray()[0];
       return issueToken(p, algorithm);
     }
 
     @Override
-    public JWT issueToken(Principal p, String algorithm)
-      throws TokenServiceException {
+    public JWT issueToken(Principal p, String algorithm) {
       return issueToken(p, null, algorithm);
     }
 
     @Override
-    public JWT issueToken(Principal p, String audience, String algorithm)
-      throws TokenServiceException {
+    public JWT issueToken(Principal p, String audience, String algorithm) {
       return issueToken(p, audience, algorithm, -1);
     }
 
     @Override
-    public boolean verifyToken(JWT token) throws TokenServiceException {
+    public boolean verifyToken(JWT token) {
       JWSVerifier verifier = new RSASSAVerifier(publicKey);
       return token.verify(verifier);
     }
 
     @Override
     public JWT issueToken(Principal p, String audience, String algorithm,
-                               long expires) throws TokenServiceException {
+                               long expires) {
       ArrayList<String> audiences = null;
       if (audience != null) {
         audiences = new ArrayList<>();
@@ -673,8 +668,13 @@ public class TokenServiceResourceTest {
     }
 
     @Override
-    public JWT issueToken(Principal p, List<String> audiences, String algorithm,
-                               long expires) throws TokenServiceException {
+    public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires,
+                          String signingkeyName, String signingkeyAlias, char[] signingkeyPassphrase) {
+      return issueToken(p, audiences, algorithm, expires);
+    }
+
+    @Override
+    public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires) {
       String[] claimArray = new String[4];
       claimArray[0] = "KNOXSSO";
       claimArray[1] = p.getName();
@@ -693,18 +693,14 @@ public class TokenServiceResourceTest {
     }
 
     @Override
-    public JWT issueToken(Principal p, String algorithm, long expiry)
-        throws TokenServiceException {
-      return issueToken(p, Collections.<String>emptyList(), algorithm, expiry);
+    public JWT issueToken(Principal p, String algorithm, long expiry) {
+      return issueToken(p, Collections.emptyList(), algorithm, expiry);
     }
 
     @Override
-    public boolean verifyToken(JWT token, RSAPublicKey publicKey) throws TokenServiceException {
+    public boolean verifyToken(JWT token, RSAPublicKey publicKey) {
       JWSVerifier verifier = new RSASSAVerifier(publicKey);
       return token.verify(verifier);
     }
-
   }
-
-
 }

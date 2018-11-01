@@ -110,6 +110,13 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   @Override
   public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires)
       throws TokenServiceException {
+    return issueToken(p, audiences, algorithm, expires, null, null, null);
+  }
+
+  @Override
+  public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires,
+                        String signingKeystoreName, String signingKeystoreAlias, char[] signingKeystorePassphrase)
+      throws TokenServiceException {
     String[] claimArray = new String[4];
     claimArray[0] = "KNOXSSO";
     claimArray[1] = p.getName();
@@ -121,19 +128,18 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
       claimArray[3] = String.valueOf(expires);
     }
 
-    JWT token = null;
+    JWT token;
     if (SUPPORTED_SIG_ALGS.contains(algorithm)) {
       token = new JWTToken(algorithm, claimArray, audiences);
-      RSAPrivateKey key;
-      char[] passphrase = null;
+      char[] passphrase;
       try {
-        passphrase = getSigningKeyPassphrase();
+        passphrase = getSigningKeyPassphrase(signingKeystorePassphrase);
       } catch (AliasServiceException e) {
         throw new TokenServiceException(e);
       }
       try {
-        key = (RSAPrivateKey) ks.getSigningKey(getSigningKeyAlias(),
-            passphrase);
+        RSAPrivateKey key = (RSAPrivateKey) ks.getSigningKey(signingKeystoreName,
+            getSigningKeyAlias(signingKeystoreAlias), passphrase);
         JWSSigner signer = new RSASSASigner(key);
         token.sign(signer);
       } catch (KeystoreServiceException e) {
@@ -147,7 +153,10 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     return token;
   }
 
-  private char[] getSigningKeyPassphrase() throws AliasServiceException {
+  private char[] getSigningKeyPassphrase(char[] signingKeyPassphrase) throws AliasServiceException {
+    if(signingKeyPassphrase != null) {
+      return signingKeyPassphrase;
+    }
     char[] phrase = as.getPasswordFromAliasForGateway(SIGNING_KEY_PASSPHRASE);
     if (phrase == null) {
       phrase = as.getGatewayIdentityPassphrase();
@@ -155,11 +164,14 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     return phrase;
   }
 
-  private String getSigningKeyAlias() {
-    if (signingKeyAlias == null) {
-      return "gateway-identity";
+  private String getSigningKeyAlias(String signingKeystoreAlias) {
+    if(signingKeystoreAlias != null) {
+     return signingKeystoreAlias;
     }
-    return signingKeyAlias;
+    if(signingKeyAlias != null) {
+      return signingKeyAlias;
+    }
+    return "gateway-identity";
   }
 
   @Override
@@ -171,11 +183,11 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   @Override
   public boolean verifyToken(JWT token, RSAPublicKey publicKey)
       throws TokenServiceException {
-    boolean rc = false;
+    boolean rc;
     PublicKey key;
     try {
       if (publicKey == null) {
-        key = ks.getSigningKeystore().getCertificate(getSigningKeyAlias()).getPublicKey();
+        key = ks.getSigningKeystore().getCertificate(getSigningKeyAlias(signingKeyAlias)).getPublicKey();
       }
       else {
         key = publicKey;
@@ -184,9 +196,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
       // TODO: interrogate the token for issuer claim in order to determine the public key to use for verification
       // consider jwk for specifying the key too
       rc = token.verify(verifier);
-    } catch (KeyStoreException e) {
-      throw new TokenServiceException("Cannot verify token.", e);
-    } catch (KeystoreServiceException e) {
+    } catch (KeyStoreException | KeystoreServiceException e) {
       throw new TokenServiceException("Cannot verify token.", e);
     }
     return rc;
@@ -200,21 +210,18 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     }
     signingKeyAlias = config.getSigningKeyAlias();
 
-    @SuppressWarnings("unused")
     RSAPrivateKey key;
-    char[] passphrase = null;
+    char[] passphrase;
     try {
       passphrase = as.getPasswordFromAliasForGateway(SIGNING_KEY_PASSPHRASE);
       if (passphrase != null) {
-        key = (RSAPrivateKey) ks.getSigningKey(getSigningKeyAlias(),
+        key = (RSAPrivateKey) ks.getSigningKey(getSigningKeyAlias(signingKeyAlias),
             passphrase);
         if (key == null) {
           throw new ServiceLifecycleException("Provisioned passphrase cannot be used to acquire signing key.");
         }
       }
-    } catch (AliasServiceException e) {
-      throw new ServiceLifecycleException("Provisioned signing key passphrase cannot be acquired.", e);
-    } catch (KeystoreServiceException e) {
+    } catch (AliasServiceException | KeystoreServiceException e) {
       throw new ServiceLifecycleException("Provisioned signing key passphrase cannot be acquired.", e);
     }
   }

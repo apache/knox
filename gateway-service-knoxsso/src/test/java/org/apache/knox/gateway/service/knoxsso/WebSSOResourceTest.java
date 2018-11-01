@@ -20,7 +20,10 @@ package org.apache.knox.gateway.service.knoxsso;
 import org.apache.http.HttpStatus;
 import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditor;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.util.RegExUtils;
+
+import static org.apache.knox.gateway.services.GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -31,7 +34,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -73,21 +75,21 @@ import com.nimbusds.jose.crypto.RSASSAVerifier;
  */
 public class WebSSOResourceTest {
 
-  protected static RSAPublicKey publicKey;
-  protected static RSAPrivateKey privateKey;
+  private static RSAPublicKey gatewayPublicKey;
+  private static RSAPrivateKey gatewayPrivateKey;
 
   @BeforeClass
-  public static void setup() throws Exception, NoSuchAlgorithmException {
+  public static void setup() throws Exception {
     KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
     kpg.initialize(1024);
-    KeyPair KPair = kpg.generateKeyPair();
+    KeyPair keyPair = kpg.generateKeyPair();
 
-    publicKey = (RSAPublicKey) KPair.getPublic();
-    privateKey = (RSAPrivateKey) KPair.getPrivate();
+    gatewayPublicKey = (RSAPublicKey) keyPair.getPublic();
+    gatewayPrivateKey = (RSAPrivateKey) keyPair.getPrivate();
   }
 
   @Test
-  public void testWhitelistMatching() throws Exception {
+  public void testWhitelistMatching() {
     String whitelist = "^https?://.*example.com:8080/.*$;" +
         "^https?://.*example.com/.*$;" +
         "^https?://.*example2.com:\\d{0,9}/.*$;" +
@@ -144,7 +146,7 @@ public class WebSSOResourceTest {
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getParameter("originalUrl")).andReturn("http://localhost:9080/service");
-    EasyMock.expect(request.getParameterMap()).andReturn(Collections.<String,String[]>emptyMap());
+    EasyMock.expect(request.getParameterMap()).andReturn(Collections.emptyMap());
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
 
     Principal principal = EasyMock.createNiceMock(Principal.class);
@@ -154,7 +156,7 @@ public class WebSSOResourceTest {
     GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
 
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    JWTokenAuthority authority = new TestJWTokenAuthority(gatewayPublicKey, gatewayPrivateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
@@ -196,7 +198,7 @@ public class WebSSOResourceTest {
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getParameter("originalUrl")).andReturn("http://localhost:9080/service");
-    EasyMock.expect(request.getParameterMap()).andReturn(Collections.<String,String[]>emptyMap());
+    EasyMock.expect(request.getParameterMap()).andReturn(Collections.emptyMap());
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
 
     Principal principal = EasyMock.createNiceMock(Principal.class);
@@ -206,7 +208,7 @@ public class WebSSOResourceTest {
     GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
 
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    JWTokenAuthority authority = new TestJWTokenAuthority(gatewayPublicKey, gatewayPrivateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
@@ -254,7 +256,7 @@ public class WebSSOResourceTest {
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getParameter("originalUrl")).andReturn("http://localhost:9080/service");
-    EasyMock.expect(request.getParameterMap()).andReturn(Collections.<String,String[]>emptyMap());
+    EasyMock.expect(request.getParameterMap()).andReturn(Collections.emptyMap());
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
 
     Principal principal = EasyMock.createNiceMock(Principal.class);
@@ -264,7 +266,7 @@ public class WebSSOResourceTest {
     GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
 
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    JWTokenAuthority authority = new TestJWTokenAuthority(gatewayPublicKey, gatewayPrivateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
@@ -313,7 +315,7 @@ public class WebSSOResourceTest {
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getParameter("originalUrl")).andReturn("http://localhost:9080/service");
-    EasyMock.expect(request.getParameterMap()).andReturn(Collections.<String,String[]>emptyMap());
+    EasyMock.expect(request.getParameterMap()).andReturn(Collections.emptyMap());
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
 
     Principal principal = EasyMock.createNiceMock(Principal.class);
@@ -323,7 +325,7 @@ public class WebSSOResourceTest {
     GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
 
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    JWTokenAuthority authority = new TestJWTokenAuthority(gatewayPublicKey, gatewayPrivateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
@@ -366,7 +368,7 @@ public class WebSSOResourceTest {
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getParameter("originalUrl")).andReturn("http://localhost:9080/service");
-    EasyMock.expect(request.getParameterMap()).andReturn(Collections.<String,String[]>emptyMap());
+    EasyMock.expect(request.getParameterMap()).andReturn(Collections.emptyMap());
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
 
     Principal principal = EasyMock.createNiceMock(Principal.class);
@@ -376,7 +378,7 @@ public class WebSSOResourceTest {
     GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
 
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    JWTokenAuthority authority = new TestJWTokenAuthority(gatewayPublicKey, gatewayPrivateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
@@ -422,7 +424,7 @@ public class WebSSOResourceTest {
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getParameter("originalUrl")).andReturn("http://localhost:9080/service");
-    EasyMock.expect(request.getParameterMap()).andReturn(Collections.<String,String[]>emptyMap());
+    EasyMock.expect(request.getParameterMap()).andReturn(Collections.emptyMap());
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
 
     Principal principal = EasyMock.createNiceMock(Principal.class);
@@ -432,7 +434,7 @@ public class WebSSOResourceTest {
     GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
 
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    JWTokenAuthority authority = new TestJWTokenAuthority(gatewayPublicKey, gatewayPrivateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
@@ -480,7 +482,7 @@ public class WebSSOResourceTest {
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getParameter("originalUrl")).andReturn("http://localhost:9080/service");
-    EasyMock.expect(request.getParameterMap()).andReturn(Collections.<String,String[]>emptyMap());
+    EasyMock.expect(request.getParameterMap()).andReturn(Collections.emptyMap());
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
 
     Principal principal = EasyMock.createNiceMock(Principal.class);
@@ -490,7 +492,7 @@ public class WebSSOResourceTest {
     GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
 
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    JWTokenAuthority authority = new TestJWTokenAuthority(gatewayPublicKey, gatewayPrivateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
@@ -537,7 +539,7 @@ public class WebSSOResourceTest {
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getParameter("originalUrl")).andReturn("http://localhost:9080/service");
-    EasyMock.expect(request.getParameterMap()).andReturn(Collections.<String,String[]>emptyMap());
+    EasyMock.expect(request.getParameterMap()).andReturn(Collections.emptyMap());
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
 
     Principal principal = EasyMock.createNiceMock(Principal.class);
@@ -546,8 +548,8 @@ public class WebSSOResourceTest {
 
     GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
-
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    
+    JWTokenAuthority authority = new TestJWTokenAuthority(gatewayPublicKey, gatewayPrivateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
@@ -601,7 +603,7 @@ public class WebSSOResourceTest {
     EasyMock.expect(request.getParameter("originalUrl")).andReturn(
         URLEncoder.encode("http://disallowedhost:9080/service", StandardCharsets.UTF_8.name()));
     EasyMock.expect(request.getAttribute("targetServiceRole")).andReturn("KNOXSSO").anyTimes();
-    EasyMock.expect(request.getParameterMap()).andReturn(Collections.<String,String[]>emptyMap());
+    EasyMock.expect(request.getParameterMap()).andReturn(Collections.emptyMap());
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
     EasyMock.expect(request.getServerName()).andReturn("localhost").anyTimes();
 
@@ -612,7 +614,7 @@ public class WebSSOResourceTest {
     GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
 
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    JWTokenAuthority authority = new TestJWTokenAuthority(gatewayPublicKey, gatewayPrivateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
@@ -636,7 +638,6 @@ public class WebSSOResourceTest {
     }
   }
 
-
   @Test
   public void testTopologyDefinedWhitelist() throws Exception {
     final String testServiceRole = "TEST";
@@ -659,7 +660,7 @@ public class WebSSOResourceTest {
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getParameter("originalUrl")).andReturn("http://localhost:9080/service");
-    EasyMock.expect(request.getParameterMap()).andReturn(Collections.<String,String[]>emptyMap());
+    EasyMock.expect(request.getParameterMap()).andReturn(Collections.emptyMap());
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
     EasyMock.expect(request.getAttribute("targetServiceRole")).andReturn(testServiceRole).anyTimes();
     EasyMock.expect(request.getServerName()).andReturn("localhost").anyTimes();
@@ -671,7 +672,7 @@ public class WebSSOResourceTest {
     GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
 
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    JWTokenAuthority authority = new TestJWTokenAuthority(gatewayPublicKey, gatewayPrivateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
@@ -694,7 +695,7 @@ public class WebSSOResourceTest {
   }
 
   @Test
-  public void testExpectedKnoxSSOParams() throws Exception {
+  public void testExpectedKnoxSSOParams() {
 
     final HashMap<String, String[]> paramMap = new HashMap<>();
     paramMap.put("knoxtoken", new String[]{"eyJhbGciOiJSUzI1NiJ9.eyJzdWIiO"
@@ -723,7 +724,7 @@ public class WebSSOResourceTest {
     GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services).anyTimes();
 
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    JWTokenAuthority authority = new TestJWTokenAuthority(gatewayPublicKey, gatewayPrivateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority).anyTimes();
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
@@ -759,7 +760,7 @@ public class WebSSOResourceTest {
   }
 
   @Test
-  public void testRedactToken() throws Exception {
+  public void testRedactToken() {
 
     final String token = "eyJhbGciOiJSUzI1NiJ9."
         + "eyJzdWIiOiJhZG1pbjEiLCJpc3MiOiJLTk9YU1NPIiwiZXhwIjoxNTMwNzkwMjkxfQ."
@@ -787,7 +788,85 @@ public class WebSSOResourceTest {
         "&originalUrl=http://www.local.com:8443/?gateway=one&knoxtoken", Log4jAuditor.maskTokenFromURL(fragment2));
     assertEquals("/gateway/knoxsso/api/v1/websso?test=value"+
         "&originalUrl=http://www.local.com:8443/?gateway=one&knoxtoken", Log4jAuditor.maskTokenFromURL(fragment3));
+  }
 
+  @Test
+  public void testCustomSigningKey() throws Exception {
+
+    String topologyName = "testCustomSigningKeyTopology";
+    String customSigningKeyName = "testSigningKeyName";
+    String customSigningKeyAlias = "testSigningKeyAlias";
+    String customSigningKeyPassphraseAlias = "testSigningKeyPassphraseAlias";
+    String customSigningKeyPassphrase = "testSigningKeyPassphrase";
+
+    KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+    kpg.initialize(1024);
+    KeyPair keyPair = kpg.generateKeyPair();
+    RSAPublicKey customPublicKey = (RSAPublicKey) keyPair.getPublic();
+    RSAPrivateKey customPrivateKey = (RSAPrivateKey) keyPair.getPrivate();
+
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.name")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.secure.only")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.max.age")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.domain.suffix")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.redirect.whitelist.regex")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.token.audiences")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.token.ttl")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.enable.session")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knoxsso.signingkey.keystore.name"))
+        .andReturn(customSigningKeyName);
+    EasyMock.expect(context.getInitParameter("knoxsso.signingkey.keystore.alias"))
+        .andReturn(customSigningKeyAlias);
+    EasyMock.expect(context.getInitParameter("knoxsso.signingkey.keystore.passphrase.alias"))
+        .andReturn(customSigningKeyPassphraseAlias);
+    EasyMock.expect(context.getAttribute(GATEWAY_CLUSTER_ATTRIBUTE)).andReturn(topologyName);
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getParameter("originalUrl")).andReturn("http://localhost:9080/service");
+    EasyMock.expect(request.getParameterMap()).andReturn(Collections.emptyMap());
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+
+    TestJWTokenAuthority authority = new TestJWTokenAuthority(gatewayPublicKey, gatewayPrivateKey);
+    authority.addCustomSigningKey(customSigningKeyName, customSigningKeyAlias, customSigningKeyPassphrase.toCharArray(),
+        customPrivateKey);
+    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+
+    AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(aliasService.getPasswordFromAliasForCluster(topologyName, customSigningKeyPassphraseAlias))
+        .andReturn(customSigningKeyPassphrase.toCharArray());
+    EasyMock.expect(services.getService(GatewayServices.ALIAS_SERVICE)).andReturn(aliasService);
+
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    ServletOutputStream outputStream = EasyMock.createNiceMock(ServletOutputStream.class);
+    CookieResponseWrapper responseWrapper = new CookieResponseWrapper(response, outputStream);
+
+    EasyMock.replay(principal, services, context, request, aliasService);
+
+    WebSSOResource webSSOResponse = new WebSSOResource();
+    webSSOResponse.request = request;
+    webSSOResponse.response = responseWrapper;
+    webSSOResponse.context = context;
+    webSSOResponse.init();
+
+    // Issue a token
+    webSSOResponse.doGet();
+
+    // Check the cookie
+    Cookie cookie = responseWrapper.getCookie("hadoop-jwt");
+    assertNotNull(cookie);
+
+    JWT parsedToken = new JWTToken(cookie.getValue());
+    assertEquals("alice", parsedToken.getSubject());
+    assertFalse(authority.verifyToken(parsedToken, gatewayPublicKey));
+    assertTrue(authority.verifyToken(parsedToken, customPublicKey));
   }
 
   /**
@@ -798,11 +877,7 @@ public class WebSSOResourceTest {
     private ServletOutputStream outputStream;
     private Map<String, Cookie> cookies = new HashMap<>();
 
-    public CookieResponseWrapper(HttpServletResponse response) {
-        super(response);
-    }
-
-    public CookieResponseWrapper(HttpServletResponse response, ServletOutputStream outputStream) {
+    CookieResponseWrapper(HttpServletResponse response, ServletOutputStream outputStream) {
         super(response);
         this.outputStream = outputStream;
     }
@@ -818,20 +893,29 @@ public class WebSSOResourceTest {
         cookies.put(cookie.getName(), cookie);
     }
 
-    public Cookie getCookie(String name) {
+    Cookie getCookie(String name) {
         return cookies.get(name);
     }
-
   }
 
   private static class TestJWTokenAuthority implements JWTokenAuthority {
-
     private RSAPublicKey publicKey;
     private RSAPrivateKey privateKey;
+    private Map<String, Map<String,Object>> customSigningKeys = new HashMap<>();
 
-    public TestJWTokenAuthority(RSAPublicKey publicKey, RSAPrivateKey privateKey) {
+    TestJWTokenAuthority(RSAPublicKey publicKey, RSAPrivateKey privateKey) {
       this.publicKey = publicKey;
       this.privateKey = privateKey;
+    }
+
+    void addCustomSigningKey(String signingKeystoreName, String signingKeystoreAlias,
+                             char[] signingKeystorePassphrase, RSAPrivateKey customPrivateKey) {
+
+      Map<String, Object> signingKey = new HashMap<>();
+      signingKey.put("alias", signingKeystoreAlias);
+      signingKey.put("passphrase", signingKeystorePassphrase);
+      signingKey.put("privateKey", customPrivateKey);
+      customSigningKeys.put(signingKeystoreName, signingKey);
     }
 
     @Override
@@ -854,7 +938,7 @@ public class WebSSOResourceTest {
     }
 
     @Override
-    public boolean verifyToken(JWT token) throws TokenServiceException {
+    public boolean verifyToken(JWT token) {
       JWSVerifier verifier = new RSASSAVerifier(publicKey);
       return token.verify(verifier);
     }
@@ -872,7 +956,14 @@ public class WebSSOResourceTest {
 
     @Override
     public JWT issueToken(Principal p, List<String> audiences, String algorithm,
-                               long expires) throws TokenServiceException {
+                          long expires) throws TokenServiceException {
+      return issueToken(p, audiences, algorithm, expires, null, null, null);
+    }
+
+    @Override
+    public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires,
+                          String signingKeystoreName, String signingKeystoreAlias, char[] signingKeystorePassphrase)
+        throws TokenServiceException {
       String[] claimArray = new String[4];
       claimArray[0] = "KNOXSSO";
       claimArray[1] = p.getName();
@@ -884,24 +975,36 @@ public class WebSSOResourceTest {
       }
 
       JWT token = new JWTToken(algorithm, claimArray, audiences);
+      RSAPrivateKey privateKey = getPrivateKey(signingKeystoreName, signingKeystoreAlias, signingKeystorePassphrase);
       JWSSigner signer = new RSASSASigner(privateKey);
       token.sign(signer);
 
       return token;
     }
 
+    private RSAPrivateKey getPrivateKey(String signingKeystoreName, String signingKeystoreAlias,
+                                        char[] signingKeystorePassphrase) throws TokenServiceException {
+      if(signingKeystoreName != null) {
+        Map<String, Object> signingKey = customSigningKeys.get(signingKeystoreName);
+        if(signingKey == null || !signingKey.get("alias").equals(signingKeystoreAlias) ||
+               !Arrays.equals((char[])signingKey.get("passphrase"), signingKeystorePassphrase)) {
+          throw new TokenServiceException("Invalid alias or passphrase");
+        }
+        return (RSAPrivateKey)signingKey.get("privateKey");
+      }
+      return privateKey;
+    }
+
     @Override
     public JWT issueToken(Principal p, String algorithm, long expiry)
         throws TokenServiceException {
-      return issueToken(p, Collections.<String>emptyList(), algorithm, expiry);
+      return issueToken(p, Collections.emptyList(), algorithm, expiry);
     }
 
     @Override
-    public boolean verifyToken(JWT token, RSAPublicKey publicKey) throws TokenServiceException {
+    public boolean verifyToken(JWT token, RSAPublicKey publicKey) {
       JWSVerifier verifier = new RSASSAVerifier(publicKey);
       return token.verify(verifier);
     }
-
   }
-
 }

@@ -22,33 +22,37 @@ import java.security.KeyStore;
 
 public interface KeystoreService {
 
-  public void createKeystoreForGateway() throws KeystoreServiceException;
+  void createKeystoreForGateway() throws KeystoreServiceException;
 
-  public void addSelfSignedCertForGateway(String alias, char[] passphrase) throws KeystoreServiceException;
+  void addSelfSignedCertForGateway(String alias, char[] passphrase) throws KeystoreServiceException;
   
   void addSelfSignedCertForGateway(String alias, char[] passphrase, String hostname) throws KeystoreServiceException;
 
-  public KeyStore getKeystoreForGateway() throws KeystoreServiceException;
+  KeyStore getKeystoreForGateway() throws KeystoreServiceException;
 
-  public KeyStore getSigningKeystore() throws KeystoreServiceException;
+  KeyStore getSigningKeystore() throws KeystoreServiceException;
 
-  public Key getKeyForGateway(String alias, char[] passphrase) throws KeystoreServiceException;
+  KeyStore getSigningKeystore(String keystoreName) throws KeystoreServiceException;
 
-  public Key getSigningKey(String alias, char[] passphrase) throws KeystoreServiceException;
+  Key getKeyForGateway(String alias, char[] passphrase) throws KeystoreServiceException;
 
-  public void createCredentialStoreForCluster(String clusterName) throws KeystoreServiceException;
-  
-  public boolean isCredentialStoreForClusterAvailable(String clusterName) throws KeystoreServiceException;
+  Key getSigningKey(String alias, char[] passphrase) throws KeystoreServiceException;
 
-  public boolean isKeystoreForGatewayAvailable() throws KeystoreServiceException;
-  
-  public KeyStore getCredentialStoreForCluster(String clusterName) throws KeystoreServiceException;
+  Key getSigningKey(String keystoreName, String alias, char[] passphrase) throws KeystoreServiceException;
 
-  public void addCredentialForCluster(String clusterName, String alias, String key) throws KeystoreServiceException;
+  void createCredentialStoreForCluster(String clusterName) throws KeystoreServiceException;
 
-  public void removeCredentialForCluster(String clusterName, String alias) throws KeystoreServiceException;
+  boolean isCredentialStoreForClusterAvailable(String clusterName) throws KeystoreServiceException;
 
-  public char[] getCredentialForCluster(String clusterName, String alias) throws KeystoreServiceException;
+  boolean isKeystoreForGatewayAvailable() throws KeystoreServiceException;
 
-  public String getKeystorePath();
+  KeyStore getCredentialStoreForCluster(String clusterName) throws KeystoreServiceException;
+
+  void addCredentialForCluster(String clusterName, String alias, String key) throws KeystoreServiceException;
+
+  void removeCredentialForCluster(String clusterName, String alias) throws KeystoreServiceException;
+
+  char[] getCredentialForCluster(String clusterName, String alias) throws KeystoreServiceException;
+
+  String getKeystorePath();
 }

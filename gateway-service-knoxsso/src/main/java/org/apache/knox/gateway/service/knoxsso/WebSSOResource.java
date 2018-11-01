@@ -47,6 +47,8 @@ import javax.ws.rs.WebApplicationException;
 import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditor;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
@@ -56,6 +58,7 @@ import org.apache.knox.gateway.util.WhitelistUtils;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static org.apache.knox.gateway.services.GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE;
 
 @Path( WebSSOResource.RESOURCE_PATH )
 public class WebSSOResource {
@@ -67,6 +70,10 @@ public class WebSSOResource {
   private static final String SSO_COOKIE_TOKEN_AUDIENCES_PARAM = "knoxsso.token.audiences";
   private static final String SSO_COOKIE_TOKEN_SIG_ALG = "knoxsso.token.sigalg";
   private static final String SSO_COOKIE_TOKEN_WHITELIST_PARAM = "knoxsso.redirect.whitelist.regex";
+
+  private static final String SSO_SIGNINGKEY_KEYSTORE_NAME = "knoxsso.signingkey.keystore.name";
+  private static final String SSO_SIGNINGKEY_KEYSTORE_ALIAS = "knoxsso.signingkey.keystore.alias";
+  private static final String SSO_SIGNINGKEY_KEYSTORE_PASSPHRASE_ALIAS = "knoxsso.signingkey.keystore.passphrase.alias";
 
   /* parameters expected by knoxsso */
   private static final String SSO_EXPECTED_PARAM = "knoxsso.expected.params";
@@ -88,6 +95,7 @@ public class WebSSOResource {
   private boolean enableSession = false;
   private String signatureAlgorithm = "RS256";
   private List<String> ssoExpectedparams = new ArrayList<>();
+  private String clusterName = null;
 
   @Context
   HttpServletRequest request;
@@ -100,19 +108,34 @@ public class WebSSOResource {
 
   @PostConstruct
   public void init() {
+    clusterName = String.valueOf(context.getAttribute(GATEWAY_CLUSTER_ATTRIBUTE));
 
-    // configured cookieName
+    handleCookieSetup();
+
+    String enableSessionStr = context.getInitParameter(SSO_ENABLE_SESSION_PARAM);
+    this.enableSession = Boolean.parseBoolean(enableSessionStr);
+
+    String sigAlg = context.getInitParameter(SSO_COOKIE_TOKEN_SIG_ALG);
+    if (sigAlg != null) {
+      signatureAlgorithm = sigAlg;
+    }
+
+    final String expectedParams = context.getInitParameter(SSO_EXPECTED_PARAM);
+    if (expectedParams != null) {
+      ssoExpectedparams = Arrays.asList(expectedParams.split(","));
+    }
+  }
+
+  private void handleCookieSetup() {
     cookieName = context.getInitParameter(SSO_COOKIE_NAME);
     if (cookieName == null) {
       cookieName = DEFAULT_SSO_COOKIE_NAME;
     }
 
     String secure = context.getInitParameter(SSO_COOKIE_SECURE_ONLY_INIT_PARAM);
-    if (secure != null) {
-      secureOnly = ("false".equals(secure) ? false : true);
-      if (!secureOnly) {
-        log.cookieSecureOnly(secureOnly);
-      }
+    secureOnly = Boolean.parseBoolean(secure);
+    if (!secureOnly) {
+      log.cookieSecureOnly(secureOnly);
     }
 
     String age = context.getInitParameter(SSO_COOKIE_MAX_AGE_INIT_PARAM);
@@ -136,8 +159,8 @@ public class WebSSOResource {
     String audiences = context.getInitParameter(SSO_COOKIE_TOKEN_AUDIENCES_PARAM);
     if (audiences != null) {
       String[] auds = audiences.split(",");
-      for (int i = 0; i < auds.length; i++) {
-        targetAudiences.add(auds[i].trim());
+      for (String aud : auds) {
+        targetAudiences.add(aud.trim());
       }
     }
 
@@ -153,19 +176,6 @@ public class WebSSOResource {
       catch (NumberFormatException nfe) {
         log.invalidTokenTTLEncountered(ttl);
       }
-    }
-
-    String enableSession = context.getInitParameter(SSO_ENABLE_SESSION_PARAM);
-    this.enableSession = ("true".equals(enableSession));
-
-    String sigAlg = context.getInitParameter(SSO_COOKIE_TOKEN_SIG_ALG);
-    if (sigAlg != null) {
-      signatureAlgorithm = sigAlg;
-    }
-
-    final String expectedParams = context.getInitParameter(SSO_EXPECTED_PARAM);
-    if (expectedParams != null) {
-      ssoExpectedparams = Arrays.asList(expectedParams.split(","));
     }
   }
 
@@ -185,7 +195,7 @@ public class WebSSOResource {
     GatewayServices services =
                 (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     boolean removeOriginalUrlCookie = true;
-    String original = getCookieValue((HttpServletRequest) request, ORIGINAL_URL_COOKIE_NAME);
+    String original = getCookieValue(request, ORIGINAL_URL_COOKIE_NAME);
     if (original == null) {
       // in the case where there are no SAML redirects done before here
       // we need to get it from the request parameters
@@ -218,16 +228,21 @@ public class WebSSOResource {
       }
     }
 
+    AliasService as = services.getService(GatewayServices.ALIAS_SERVICE);
     JWTokenAuthority ts = services.getService(GatewayServices.TOKEN_SERVICE);
     Principal p = request.getUserPrincipal();
 
     try {
-      JWT token = null;
-      if (targetAudiences.isEmpty()) {
-        token = ts.issueToken(p, signatureAlgorithm, getExpiry());
-      } else {
-        token = ts.issueToken(p, targetAudiences, signatureAlgorithm, getExpiry());
+      String signingKeystoreName = context.getInitParameter(SSO_SIGNINGKEY_KEYSTORE_NAME);
+      String signingKeystoreAlias = context.getInitParameter(SSO_SIGNINGKEY_KEYSTORE_ALIAS);
+      String signingKeystorePassphraseAlias = context.getInitParameter(SSO_SIGNINGKEY_KEYSTORE_PASSPHRASE_ALIAS);
+      char[] signingKeystorePassphrase = null;
+      if(signingKeystorePassphraseAlias != null) {
+        signingKeystorePassphrase = as.getPasswordFromAliasForCluster(clusterName, signingKeystorePassphraseAlias);
       }
+
+      JWT token = ts.issueToken(p, targetAudiences, signatureAlgorithm, getExpiry(),
+          signingKeystoreName,  signingKeystoreAlias, signingKeystorePassphrase);
 
       // Coverity CID 1327959
       if( token != null ) {
@@ -246,8 +261,7 @@ public class WebSSOResource {
       } catch (IOException e) {
         log.unableToCloseOutputStream(e.getMessage(), Arrays.toString(e.getStackTrace()));
       }
-    }
-    catch (TokenServiceException e) {
+    } catch (TokenServiceException| AliasServiceException e) {
       log.unableToIssueToken(e);
     }
     URI location = null;
@@ -272,7 +286,7 @@ public class WebSSOResource {
 
   private String getOriginalUrlFromQueryParams() {
     String original = request.getParameter(ORIGINAL_URL_REQUEST_PARAM);
-    StringBuffer buf = new StringBuffer(original);
+    StringBuilder buf = new StringBuilder(original);
 
     boolean first = true;
 
@@ -310,7 +324,7 @@ public class WebSSOResource {
   }
 
   private long getExpiry() {
-    long expiry = 0l;
+    long expiry;
     if (tokenTTL == -1) {
       expiry = -1;
     }

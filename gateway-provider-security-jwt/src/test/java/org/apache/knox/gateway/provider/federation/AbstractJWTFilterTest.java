@@ -31,7 +31,6 @@ import org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederatio
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.security.impl.X509CertificateUtil;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
-import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.easymock.EasyMock;
 import org.junit.After;
@@ -48,7 +47,6 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
@@ -107,7 +105,7 @@ public abstract class AbstractJWTFilterTest  {
   }
 
   @After
-  public void teardown() throws Exception {
+  public void teardown() {
     handler.destroy();
   }
 
@@ -675,7 +673,7 @@ public abstract class AbstractJWTFilterTest  {
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be false.", !chain.doFilterCalled);
-      Assert.assertTrue("No Subject should be returned.", chain.subject == null);
+      Assert.assertNull("No Subject should be returned.", chain.subject);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
     }
@@ -765,51 +763,56 @@ public abstract class AbstractJWTFilterTest  {
 
     private PublicKey verifyingKey;
 
-    public TestJWTokenAuthority(PublicKey verifyingKey) {
+    TestJWTokenAuthority(PublicKey verifyingKey) {
       this.verifyingKey = verifyingKey;
     }
 
     @Override
-    public JWT issueToken(Subject subject, String algorithm) throws TokenServiceException {
+    public JWT issueToken(Subject subject, String algorithm) {
       return null;
     }
 
     @Override
-    public JWT issueToken(Principal p, String algorithm) throws TokenServiceException {
+    public JWT issueToken(Principal p, String algorithm) {
       return null;
     }
 
     @Override
-    public JWT issueToken(Principal p, String audience, String algorithm)
-        throws TokenServiceException {
+    public JWT issueToken(Principal p, String audience, String algorithm) {
       return null;
     }
 
     @Override
-    public boolean verifyToken(JWT token) throws TokenServiceException {
+    public boolean verifyToken(JWT token) {
       JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey) verifyingKey);
       return token.verify(verifier);
     }
 
     @Override
     public JWT issueToken(Principal p, String audience, String algorithm,
-        long expires) throws TokenServiceException {
+        long expires) {
       return null;
     }
 
     @Override
     public JWT issueToken(Principal p, List<String> audiences, String algorithm,
-        long expires) throws TokenServiceException {
+        long expires) {
       return null;
     }
 
     @Override
-    public JWT issueToken(Principal p, String algorithm, long expires) throws TokenServiceException {
+    public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires,
+                          String signingKeystoreName, String signingKeystoreAlias, char[] signingKeystorePassphrase) {
       return null;
     }
 
     @Override
-    public boolean verifyToken(JWT token, RSAPublicKey publicKey) throws TokenServiceException {
+    public JWT issueToken(Principal p, String algorithm, long expires) {
+      return null;
+    }
+
+    @Override
+    public boolean verifyToken(JWT token, RSAPublicKey publicKey) {
       JWSVerifier verifier = new RSASSAVerifier(publicKey);
       return token.verify(verifier);
     }
@@ -820,8 +823,7 @@ public abstract class AbstractJWTFilterTest  {
     Subject subject = null;
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response)
-        throws IOException, ServletException {
+    public void doFilter(ServletRequest request, ServletResponse response) {
       doFilterCalled = true;
 
       subject = Subject.getSubject( AccessController.getContext() );

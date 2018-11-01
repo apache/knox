@@ -46,6 +46,10 @@ public interface JWTokenAuthority {
   JWT issueToken(Principal p, String audience, String algorithm,
       long expires) throws TokenServiceException;
 
-  JWT issueToken(Principal p, List<String> audience, String algorithm,
+  JWT issueToken(Principal p, List<String> audiences, String algorithm,
       long expires) throws TokenServiceException;
+
+  JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires,
+                 String signingKeystoreName, String signingKeystoreAlias, char[] signingKeystorePassphrase)
+      throws TokenServiceException;
 }

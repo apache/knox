@@ -144,16 +144,23 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
 
   @Override
   public KeyStore getSigningKeystore() throws KeystoreServiceException {
-    File  keyStoreFile = null;
-    if (signingKeystoreName == null) {
+    return getSigningKeystore(null);
+  }
+
+  @Override
+  public KeyStore getSigningKeystore(String keystoreName) throws KeystoreServiceException {
+    File  keyStoreFile;
+    if(keystoreName != null) {
+      keyStoreFile = new File(keyStoreDir + keystoreName + ".jks");
+    } else if (signingKeystoreName != null) {
+      keyStoreFile = new File(keyStoreDir + signingKeystoreName);
+    } else {
       keyStoreFile = new File(keyStoreDir + GATEWAY_KEYSTORE);
     }
-    else {
-      keyStoreFile = new File(keyStoreDir + signingKeystoreName);
-      // make sure the keystore exists
-      if (!keyStoreFile.exists()) {
-        throw new KeystoreServiceException("Configured signing keystore does not exist.");
-      }
+      
+    // make sure the keystore exists
+    if (!keyStoreFile.exists()) {
+      throw new KeystoreServiceException("Configured signing keystore does not exist.");
     }
     readLock.lock();
     try {
@@ -305,10 +312,15 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
 
   @Override
   public Key getSigningKey(String alias, char[] passphrase) throws KeystoreServiceException {
+    return getSigningKey(null, alias, passphrase);
+  }
+
+  @Override
+  public Key getSigningKey(String keystoreName, String alias, char[] passphrase) throws KeystoreServiceException {
     Key key = null;
     readLock.lock();
     try {
-      KeyStore ks = getSigningKeystore();
+      KeyStore ks = getSigningKeystore(keystoreName);
       if (passphrase == null) {
         passphrase = masterService.getMasterSecret();
         LOG.assumingKeyPassphraseIsMaster();
@@ -331,7 +343,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
     }
   }
 
-  public KeyStore getCredentialStoreForCluster(String clusterName) 
+  public KeyStore getCredentialStoreForCluster(String clusterName)
       throws KeystoreServiceException {
     final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
     readLock.lock();
