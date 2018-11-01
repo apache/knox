@@ -46,6 +46,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 public class TestUtils {
@@ -190,6 +191,25 @@ public class TestUtils {
     int port = socket.getLocalPort();
     socket.close();
     return port;
+  }
+
+  /**
+   * Waits until a given function meets a given condition
+   * @param function function to check before the timeout
+   * @param expected boolean expected value to check
+   * @param timeout Timeout in milliseconds to wait for condition to be met
+   * @return expected based on condition
+   * @throws Exception on any error
+   */
+  public static boolean waitUntil(Callable<Boolean> function, boolean expected, long timeout) throws Exception {
+    long before = System.currentTimeMillis();
+    while((System.currentTimeMillis() - before) < timeout) {
+      if(function.call() == expected) {
+        return expected;
+      }
+      Thread.sleep(100);
+    }
+    return false;
   }
 
   public static void waitUntilNextSecond() {

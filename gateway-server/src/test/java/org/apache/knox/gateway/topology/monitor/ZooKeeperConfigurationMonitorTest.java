@@ -198,27 +198,27 @@ public class ZooKeeperConfigurationMonitorTest {
             final File pc_two         = new File(providersDir, "providers-config2.xml");
 
             client.create().withMode(CreateMode.PERSISTENT).forPath(pc_one_znode, TEST_PROVIDERS_CONFIG_1.getBytes(StandardCharsets.UTF_8));
-            Thread.sleep(100);
-            assertTrue(pc_one.exists());
+
+            assertTrue(TestUtils.waitUntil(pc_one::exists, true,1000));
             assertEquals(TEST_PROVIDERS_CONFIG_1, FileUtils.readFileToString(pc_one, StandardCharsets.UTF_8));
 
             client.create().withMode(CreateMode.PERSISTENT).forPath(getProviderPath("providers-config2.xml"), TEST_PROVIDERS_CONFIG_2.getBytes(StandardCharsets.UTF_8));
-            Thread.sleep(100);
-            assertTrue(pc_two.exists());
-            assertEquals(TEST_PROVIDERS_CONFIG_2, FileUtils.readFileToString(pc_two, StandardCharsets.UTF_8));
+            assertTrue(TestUtils.waitUntil(pc_two::exists, true,1000));
+            assertTrue(TestUtils.waitUntil(
+                () -> TEST_PROVIDERS_CONFIG_2.equals(FileUtils.readFileToString(pc_two, StandardCharsets.UTF_8)),
+                true, 1000));
 
             client.setData().forPath(pc_two_znode, TEST_PROVIDERS_CONFIG_1.getBytes(StandardCharsets.UTF_8));
-            Thread.sleep(100);
-            assertTrue(pc_two.exists());
-            assertEquals(TEST_PROVIDERS_CONFIG_1, FileUtils.readFileToString(pc_two, StandardCharsets.UTF_8));
+            assertTrue(TestUtils.waitUntil(pc_two::exists, true,1000));
+            assertTrue(TestUtils.waitUntil(
+                () -> TEST_PROVIDERS_CONFIG_1.equals(FileUtils.readFileToString(pc_two, StandardCharsets.UTF_8)),
+                true, 1000));
 
             client.delete().forPath(pc_two_znode);
-            Thread.sleep(100);
-            assertFalse(pc_two.exists());
+            assertFalse(TestUtils.waitUntil(pc_two::exists, false,1000));
 
             client.delete().forPath(pc_one_znode);
-            Thread.sleep(100);
-            assertFalse(pc_one.exists());
+            assertFalse(TestUtils.waitUntil(pc_one::exists, false,1000));
 
             final String desc_one_znode   = getDescriptorPath("test1.json");
             final String desc_two_znode   = getDescriptorPath("test2.json");
@@ -228,36 +228,38 @@ public class ZooKeeperConfigurationMonitorTest {
             final File desc_three         = new File(descriptorsDir, "test3.json");
 
             client.create().withMode(CreateMode.PERSISTENT).forPath(desc_one_znode, TEST_DESCRIPTOR_1.getBytes(StandardCharsets.UTF_8));
-            Thread.sleep(100);
-            assertTrue(desc_one.exists());
-            assertEquals(TEST_DESCRIPTOR_1, FileUtils.readFileToString(desc_one, StandardCharsets.UTF_8));
+            assertTrue(TestUtils.waitUntil(desc_one::exists, true,1000));
+            assertTrue(TestUtils.waitUntil(
+                () -> TEST_DESCRIPTOR_1.equals(FileUtils.readFileToString(desc_one, StandardCharsets.UTF_8)),
+                true, 1000));
 
             client.create().withMode(CreateMode.PERSISTENT).forPath(desc_two_znode, TEST_DESCRIPTOR_1.getBytes(StandardCharsets.UTF_8));
-            Thread.sleep(100);
-            assertTrue(desc_two.exists());
-            assertEquals(TEST_DESCRIPTOR_1, FileUtils.readFileToString(desc_two, StandardCharsets.UTF_8));
+            assertTrue(TestUtils.waitUntil(desc_two::exists, true,1000));
+            assertTrue(TestUtils.waitUntil(
+                () -> TEST_DESCRIPTOR_1.equals(FileUtils.readFileToString(desc_two, StandardCharsets.UTF_8)),
+                true, 1000));
 
             client.setData().forPath(desc_two_znode, TEST_DESCRIPTOR_2.getBytes(StandardCharsets.UTF_8));
-            Thread.sleep(100);
-            assertTrue(desc_two.exists());
-            assertEquals(TEST_DESCRIPTOR_2, FileUtils.readFileToString(desc_two, StandardCharsets.UTF_8));
+            assertTrue(TestUtils.waitUntil(desc_two::exists, true,1000));
+            assertTrue(TestUtils.waitUntil(
+                () -> TEST_DESCRIPTOR_2.equals(FileUtils.readFileToString(desc_two, StandardCharsets.UTF_8)),
+                true, 1000));
 
             client.create().withMode(CreateMode.PERSISTENT).forPath(desc_three_znode, TEST_DESCRIPTOR_1.getBytes(StandardCharsets.UTF_8));
-            Thread.sleep(100);
-            assertTrue(desc_three.exists());
-            assertEquals(TEST_DESCRIPTOR_1, FileUtils.readFileToString(desc_three, StandardCharsets.UTF_8));
+            assertTrue(TestUtils.waitUntil(desc_three::exists, true,1000));
+            assertTrue(TestUtils.waitUntil(
+                () -> TEST_DESCRIPTOR_1.equals(FileUtils.readFileToString(desc_three, StandardCharsets.UTF_8)),
+                true, 1000));
 
             client.delete().forPath(desc_two_znode);
-            Thread.sleep(100);
-            assertFalse("Expected test2.json to have been deleted.", desc_two.exists());
+            assertFalse("Expected test2.json to have been deleted.",
+                TestUtils.waitUntil(desc_two::exists, false,1000));
 
             client.delete().forPath(desc_three_znode);
-            Thread.sleep(100);
-            assertFalse(desc_three.exists());
+            assertFalse(TestUtils.waitUntil(desc_three::exists, false,1000));
 
             client.delete().forPath(desc_one_znode);
-            Thread.sleep(100);
-            assertFalse(desc_one.exists());
+            assertFalse(TestUtils.waitUntil(desc_one::exists, false,1000));
         } finally {
             clientService.stop();
             cm.stop();
