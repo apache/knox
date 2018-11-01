@@ -102,6 +102,13 @@ public class KnoxSession implements Closeable {
     return new KnoxSession(ClientContext.with(username, password, url));
   }
 
+  public static KnoxSession login( String url, String username, String password,
+      String truststoreLocation, String truststorePass ) throws URISyntaxException {
+
+    return new KnoxSession(ClientContext.with(username, password, url)
+            .connection().withTruststore(truststoreLocation, truststorePass).end());
+  }
+
   public static KnoxSession loginInsecure(String url, String username, String password) throws URISyntaxException {
     return new KnoxSession(ClientContext.with(username, password, url)
             .connection().secure(false).end());
@@ -139,7 +146,7 @@ public class KnoxSession implements Closeable {
               + "*******************************************");
     }
 
-    KeyStore trustStore = getTrustStore();
+    KeyStore trustStore = getTrustStore(clientContext);
     SSLContext sslContext = SSLContexts.custom().loadTrustMaterial(trustStore, trustStrategy).build();
     Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
             .register("http", PlainConnectionSocketFactory.getSocketFactory())
@@ -188,29 +195,22 @@ public class KnoxSession implements Closeable {
 
   }
 
-  private static KeyStore getTrustStore() throws GeneralSecurityException {
+  private KeyStore getTrustStore(ClientContext clientContext) throws GeneralSecurityException {
     KeyStore ks = null;
-    String truststoreDir = System.getenv(KNOX_CLIENT_TRUSTSTORE_DIR);
-    if (truststoreDir == null) {
-      truststoreDir = System.getProperty("user.home");
-    }
-    String truststoreFileName = System.getenv(KNOX_CLIENT_TRUSTSTORE_FILENAME);
-    if (truststoreFileName == null) {
-      truststoreFileName = GATEWAY_CLIENT_TRUST;
-    }
-    String truststorePass = System.getenv(KNOX_CLIENT_TRUSTSTORE_PASS);
-    if (truststorePass == null) {
-      truststorePass = GATEWAY_CLIENT_TRUST_DEFAULT_PASS;
-    }
+    String truststorePass = null;
+
+    discoverTruststoreDetails(clientContext);
 
     InputStream is = null;
     try {
       ks = KeyStore.getInstance("JKS");
-      File file = new File(truststoreDir, truststoreFileName);
-      if (!file.exists()) {
+      File file = new File(clientContext.connection().truststoreLocation());
+      if (file.exists()) {
+        truststorePass = clientContext.connection().truststorePass();
+      } else {
         String truststore = System.getProperty("javax.net.ssl.trustStore");
         if (truststore == null) {
-          truststoreDir = System.getProperty("java.home");
+          String truststoreDir = System.getProperty("java.home");
           truststore = truststoreDir + File.separator + "lib" + File.separator
               + "security" + File.separator + "cacerts";
           truststorePass = System.getProperty("javax.net.ssl.trustStorePassword", "changeit");
@@ -249,6 +249,30 @@ public class KnoxSession implements Closeable {
     }
 
     return ks;
+  }
+
+  protected void discoverTruststoreDetails(ClientContext clientContext) {
+    String truststoreDir = null;
+    String truststoreFileName = null;
+    if (clientContext.connection().truststoreLocation() != null &&
+        clientContext.connection().truststorePass() != null) {
+      return;
+    } else {
+      truststoreDir = System.getenv(KNOX_CLIENT_TRUSTSTORE_DIR);
+      if (truststoreDir == null) {
+        truststoreDir = System.getProperty("user.home");
+      }
+      truststoreFileName = System.getenv(KNOX_CLIENT_TRUSTSTORE_FILENAME);
+      if (truststoreFileName == null) {
+        truststoreFileName = GATEWAY_CLIENT_TRUST;
+      }
+    }
+    String truststorePass = System.getenv(KNOX_CLIENT_TRUSTSTORE_PASS);
+    if (truststorePass == null) {
+      truststorePass = GATEWAY_CLIENT_TRUST_DEFAULT_PASS;
+    }
+    String truststoreLocation = truststoreDir + File.separator + truststoreFileName;
+    clientContext.connection().withTruststore(truststoreLocation, truststorePass);
   }
 
   public String base() {

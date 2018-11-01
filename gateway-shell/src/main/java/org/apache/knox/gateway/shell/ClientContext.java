@@ -169,6 +169,21 @@ public class ClientContext {
       configuration.addProperty("buffer-size", size);
       return this;
     }
+
+    public ConnectionContext withTruststore(final String truststoreLocation,
+        final String truststorePass) {
+      configuration.addProperty("truststoreLocation", truststoreLocation);
+      configuration.addProperty("truststorePass", truststorePass);
+      return this;
+    }
+
+    public String truststoreLocation() {
+      return configuration.getString("truststoreLocation");
+    }
+
+    public String truststorePass() {
+      return configuration.getString("truststorePass");
+    }
   }
 
   public PoolContext pool() {
