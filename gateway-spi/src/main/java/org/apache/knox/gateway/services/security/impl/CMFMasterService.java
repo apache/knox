@@ -140,9 +140,9 @@ public class CMFMasterService {
       String line = Base64.encodeBase64String((
           Base64.encodeBase64String(atom.salt) + "::" + 
           Base64.encodeBase64String(atom.iv) + "::" + 
-          Base64.encodeBase64String(atom.cipher)).getBytes("UTF8"));
+          Base64.encodeBase64String(atom.cipher)).getBytes(StandardCharsets.UTF_8));
       lines.add(line);
-      FileUtils.writeLines(masterFile, "UTF8", lines);
+      FileUtils.writeLines(masterFile, StandardCharsets.UTF_8.name(), lines);
       
       // restrict os permissions to only the user running this process
       chmod("600", masterFile);
@@ -169,7 +169,7 @@ public class CMFMasterService {
         String[] parts = line.split("::");
         this.master = new String(encryptor.decrypt(Base64.decodeBase64(parts[0]),
             Base64.decodeBase64(parts[1]), Base64.decodeBase64(parts[2])),
-            "UTF8").toCharArray();
+            StandardCharsets.UTF_8).toCharArray();
       } catch (IOException e) {
         LOG.failedToInitializeFromPersistentMaster(masterFile.getName(), e);
         throw e;

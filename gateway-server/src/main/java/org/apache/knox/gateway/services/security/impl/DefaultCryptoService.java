@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.services.security.impl;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
@@ -108,12 +107,7 @@ public class DefaultCryptoService implements CryptoService {
 
   @Override
   public byte[] decryptForCluster(String clusterName, String alias, String cipherText) {
-    try {
-      return decryptForCluster(clusterName, alias, cipherText.getBytes("UTF8"), null, null);
-    } catch (UnsupportedEncodingException e) {
-      LOG.unsupportedEncoding( e );
-    }
-    return null;
+    return decryptForCluster(clusterName, alias, cipherText.getBytes(StandardCharsets.UTF_8), null, null);
   }
 
   @Override

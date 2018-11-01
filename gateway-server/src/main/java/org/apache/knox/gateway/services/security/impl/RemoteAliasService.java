@@ -556,7 +556,7 @@ public class RemoteAliasService implements AliasService {
     return Base64.encodeBase64String(
         (Base64.encodeBase64String(result.salt) + "::" + Base64
             .encodeBase64String(result.iv) + "::" + Base64
-            .encodeBase64String(result.cipher)).getBytes("UTF8"));
+            .encodeBase64String(result.cipher)).getBytes(StandardCharsets.UTF_8));
 
   }
 

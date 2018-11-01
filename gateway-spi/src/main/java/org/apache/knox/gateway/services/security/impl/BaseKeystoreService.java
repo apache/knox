@@ -173,11 +173,9 @@ public class BaseKeystoreService {
   protected void addCredential(String alias, String value, KeyStore ks) {
     if (ks != null) {
       try {
-        final Key key = new SecretKeySpec(value.getBytes("UTF8"), "AES");
+        final Key key = new SecretKeySpec(value.getBytes(StandardCharsets.UTF_8), "AES");
         ks.setKeyEntry( alias, key, masterService.getMasterSecret(), null);
       } catch (KeyStoreException e) {
-        LOG.failedToAddCredential(e);
-      } catch (IOException e) {
         LOG.failedToAddCredential(e);
       }
     }
