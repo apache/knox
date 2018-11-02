@@ -446,37 +446,34 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
   private char[] checkCache(String clusterName, String alias) {
     char[] c = null;
     String cred = null;
-      HashMap<String, String> clusterCache = (HashMap<String, String>) cache.get(clusterName);
-      if (clusterCache == null) {
-        return null;
-      }
-      cred = clusterCache.get(alias);
-      if (cred != null) {
-        c = cred.toCharArray();
-      }
-      return c;
+    Map<String, String> clusterCache = cache.get(clusterName);
+    if (clusterCache == null) {
+      return null;
+    }
+    cred = clusterCache.get(alias);
+    if (cred != null) {
+      c = cred.toCharArray();
+    }
+    return c;
   }
 
   /**
    * Called only from within critical sections of other methods above.
    */
   private void addToCache(String clusterName, String alias, String credentialString) {
-      HashMap<String, String> clusterCache = (HashMap<String, String>) cache.get(clusterName);
-      if (clusterCache == null) {
-        clusterCache = new HashMap<>();
-      }
-      clusterCache.put(alias, credentialString);
+    Map<String, String> clusterCache = cache.computeIfAbsent(clusterName, k -> new HashMap<>());
+    clusterCache.put(alias, credentialString);
   }
 
   /**
    * Called only from within critical sections of other methods above.
    */
   private void removeFromCache(String clusterName, String alias) {
-      HashMap<String, String> clusterCache = (HashMap<String, String>) cache.get(clusterName);
-      if (clusterCache == null) {
-        return;
-      }
-      clusterCache.remove(alias);
+    Map<String, String> clusterCache = cache.get(clusterName);
+    if (clusterCache == null) {
+      return;
+    }
+    clusterCache.remove(alias);
   }
 
   @Override
