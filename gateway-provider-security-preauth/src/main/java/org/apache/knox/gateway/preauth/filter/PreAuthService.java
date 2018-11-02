@@ -60,7 +60,9 @@ public class PreAuthService {
    * This method returns appropriate pre-auth Validator as defined in config
    *
    * @since 0.12
+   * @param filterConfig filter config to pull validators from
    * @return a list of PreAuthValidator instances as defined in config
+   * @throws ServletException unable to find validator
    */
   public static List<PreAuthValidator> getValidators(FilterConfig filterConfig) throws ServletException {
     String validationMethods = filterConfig.getInitParameter(VALIDATION_METHOD_PARAM);

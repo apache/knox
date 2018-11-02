@@ -34,6 +34,7 @@ public abstract class GatewayResponseWrapper extends HttpServletResponseWrapper 
   /**
    * Constructs a response adaptor wrapping the given response.
    *
+   * @param response the response object to wrap
    * @throws IllegalArgumentException if the response is null
    */
   public GatewayResponseWrapper( HttpServletResponse response ) {

@@ -36,9 +36,6 @@ public class ProxyInboundSocket {
    */
   final MessageEventCallback callback;
 
-  /**
-   * Create an instance
-   */
   public ProxyInboundSocket(final MessageEventCallback callback) {
     super();
     this.callback = callback;

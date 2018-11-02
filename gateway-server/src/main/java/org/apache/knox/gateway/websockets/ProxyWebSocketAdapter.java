@@ -64,10 +64,7 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
    * @since 0.14
    */
   private ClientEndpointConfig clientConfig;
-
-  /**
-   * Create an instance
-   */
+  
   public ProxyWebSocketAdapter(final URI backend, final ExecutorService pool) {
     this(backend, pool, null);
   }

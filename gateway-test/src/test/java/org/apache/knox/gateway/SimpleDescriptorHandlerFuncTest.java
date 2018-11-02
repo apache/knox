@@ -106,7 +106,7 @@ public class SimpleDescriptorHandlerFuncTest {
           "    </gateway>\n";
 
 
-  /**
+  /*
    * KNOX-1136
    * <p>
    * Test that a credential store is created, and a encryptQueryString alias is defined, with a password that is not

@@ -54,7 +54,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
@@ -93,7 +92,7 @@ public abstract class AbstractJWTFilterTest  {
   }
 
   @BeforeClass
-  public static void generateKeys() throws Exception, NoSuchAlgorithmException {
+  public static void generateKeys() throws Exception {
     KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
     kpg.initialize(2048);
     KeyPair KPair = kpg.generateKeyPair();

@@ -41,6 +41,7 @@ public interface ServiceDiscovery {
     /**
      * Discover details of all the clusters known to the target registry.
      *
+     * @param gwConfig The gateway configuration
      * @param config The configuration for the discovery invocation
      *
      * @return A Map of the discovered service data, keyed by the cluster name.
@@ -51,6 +52,7 @@ public interface ServiceDiscovery {
     /**
      * Discover details for a single cluster.
      *
+     * @param gwConfig The gateway configuration
      * @param config The configuration for the discovery invocation
      * @param clusterName The name of a particular cluster
      *

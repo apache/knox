@@ -205,13 +205,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
         
         writeKeystoreToFile(privateKS, new File( keyStoreDir + GATEWAY_KEYSTORE  ));
         //writeCertificateToFile( cert, new File( keyStoreDir + alias + ".pem" ) );
-      } catch (NoSuchAlgorithmException e) {
-        LOG.failedToAddSeflSignedCertForGateway( alias, e );
-        throw new KeystoreServiceException(e);
-      } catch (GeneralSecurityException e) {
-        LOG.failedToAddSeflSignedCertForGateway( alias, e );
-        throw new KeystoreServiceException(e);
-      } catch (IOException e) {
+      } catch (GeneralSecurityException | IOException e) {
         LOG.failedToAddSeflSignedCertForGateway( alias, e );
         throw new KeystoreServiceException(e);
       }

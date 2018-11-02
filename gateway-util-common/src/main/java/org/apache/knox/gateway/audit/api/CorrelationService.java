@@ -65,6 +65,7 @@ public interface CorrelationService {
    * The provided context is attached and detached around the invocation of the callable.
    * @param context The correlation context to establish around the invocation of the callable.  May not be null.
    * @param callable The callable to invoke after establishing the correlation context.  May not be null.
+   * @param <T> Type of callable
    * @return The result of the callable's call method.
    * @throws Exception Thrown if thrown by the callable's call method.
    */

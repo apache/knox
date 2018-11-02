@@ -23,22 +23,30 @@ public interface PrincipalMapper {
    * Load the internal principal mapping table from the provided
    * string value which conforms to the following semicolon delimited format:
    * actual[,another-actual]=mapped;...
+   *
+   * @param principalMapping semicolon delimited format of principal mapping
+   * @param groupMapping semicolon delimited format of principal mapping
+   * @throws PrincipalMappingException Exception if principal mapping cannot be loaded
    */
-  public abstract void loadMappingTable(String principalMapping, String groupMapping)
+  void loadMappingTable(String principalMapping, String groupMapping)
       throws PrincipalMappingException;
 
   /**
    * Acquire a mapped principal name from the mapping table
    * as appropriate. Otherwise, the provided principalName
    * will be used.
+   *
+   * @param principalName principal name to look up in the mapping table
    * @return principal name to be used in the assertion
    */
-  public abstract String mapUserPrincipal(String principalName);
+  String mapUserPrincipal(String principalName);
 
   /**
    * Acquire array of group principal names from the mapping table
    * as appropriate. Otherwise, return null.
+   *
+   * @param principalName principal name to look up in the mapping table
    * @return group principal names to be used in the assertion
    */
-  public abstract String[] mapGroupPrincipal(String principalName);
+  String[] mapGroupPrincipal(String principalName);
 }

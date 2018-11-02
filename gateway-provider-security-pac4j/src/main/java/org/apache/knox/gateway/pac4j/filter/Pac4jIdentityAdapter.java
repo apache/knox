@@ -145,6 +145,7 @@ public class Pac4jIdentityAdapter implements Filter {
 
   /**
    * For tests only.
+   * @param auditService AuditService to set
    */
   public static void setAuditService(AuditService auditService) {
     Pac4jIdentityAdapter.auditService = auditService;
@@ -152,6 +153,7 @@ public class Pac4jIdentityAdapter implements Filter {
 
   /**
    * For tests only.
+   * @param auditor Auditor to set
    */
   public static void setAuditor(Auditor auditor) {
     Pac4jIdentityAdapter.auditor = auditor;
@@ -159,7 +161,8 @@ public class Pac4jIdentityAdapter implements Filter {
 
   /**
    * For tests only.
-     */
+   * @return testIdentifier
+   */
   public String getTestIdentifier() {
     return testIdentifier;
   }

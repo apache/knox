@@ -18,13 +18,8 @@
 package org.apache.knox.gateway.preauth.filter;
 
 import java.io.IOException;
-import java.security.AccessController;
-import java.security.Principal;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.util.List;
 
-import javax.security.auth.Subject;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -33,8 +28,6 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.apache.knox.gateway.security.PrimaryPrincipal;
 
 public class PreAuthFederationFilter implements Filter {
   private static final String CUSTOM_HEADER_PARAM = "preauth.customHeader";
@@ -73,64 +66,4 @@ public class PreAuthFederationFilter implements Filter {
   public void destroy() {
 
   }
-
-  /**
-   * Recreate the current Subject based upon the provided mappedPrincipal
-   * and look for the groups that should be associated with the new Subject.
-   * Upon finding groups mapped to the principal - add them to the new Subject.
-   */
-  protected void continueChainAsPrincipal(final ServletRequest request, final ServletResponse response,
-                                          final FilterChain chain, String principal) throws IOException, ServletException {
-    Subject subject = null;
-    Principal primaryPrincipal = null;
-
-    // do some check to ensure that the extracted identity matches any existing security context
-    // if not, there is may be someone tampering with the request - consult config to determine
-    // how we are to handle it
-
-    // TODO: make sure that this makes sense with existing sessions or lack thereof
-    Subject currentSubject = Subject.getSubject(AccessController.getContext());
-    if (currentSubject != null) {
-      primaryPrincipal = (PrimaryPrincipal) currentSubject.getPrincipals(PrimaryPrincipal.class).toArray()[0];
-      if (primaryPrincipal != null) {
-        if (!primaryPrincipal.getName().equals(principal)) {
-          // TODO?
-        }
-      }
-    }
-
-    subject = new Subject();
-    subject.getPrincipals().add(primaryPrincipal);
-    doAs(request, response, chain, subject);
-  }
-
-  private void doAs(final ServletRequest request,
-                    final ServletResponse response, final FilterChain chain, Subject subject)
-      throws IOException, ServletException {
-    try {
-      Subject.doAs(
-          subject,
-          new PrivilegedExceptionAction<Object>() {
-            public Object run() throws Exception {
-              doFilterInternal(request, response, chain);
-              return null;
-            }
-          }
-      );
-    } catch (PrivilegedActionException e) {
-      Throwable t = e.getCause();
-      if (t instanceof IOException) {
-        throw (IOException) t;
-      } else if (t instanceof ServletException) {
-        throw (ServletException) t;
-      } else {
-        throw new ServletException(t);
-      }
-    }
-  }
-
-  private void doFilterInternal(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-    chain.doFilter(request, response);
-  }
-
 }

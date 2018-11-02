@@ -26,7 +26,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -54,15 +53,15 @@ public class X509CertificateUtil {
    * @param pair the KeyPair
    * @param days how many days from now the Certificate is valid for
    * @param algorithm the signing algorithm, eg "SHA1withRSA"
+   * @return self-signed X.509 certificate
    */
-  public static X509Certificate generateCertificate(String dn, KeyPair pair,
-   int days, String algorithm) throws GeneralSecurityException, IOException {
+  public static X509Certificate generateCertificate(String dn, KeyPair pair, int days, String algorithm) {
 
   PrivateKey privkey = pair.getPrivate();
   Object x509CertImplObject = null;
   try {
     Date from = new Date();
-    Date to = new Date(from.getTime() + days * 86400000l);
+    Date to = new Date(from.getTime() + days * 86400000L);
 
     Class<?> certInfoClass = Class.forName(getX509CertInfoModuleName());
     Constructor<?> certInfoConstr = certInfoClass.getConstructor();

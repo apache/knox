@@ -167,20 +167,20 @@ public class RemoteAliasService implements AliasService {
     ensureEntry(
         PATH_KNOX_ALIAS_STORE_TOPOLOGY + PATH_SEPARATOR + DEFAULT_CLUSTER_NAME,
         remoteClient);
-
   }
 
   /**
    * Returns an empty list if the given list is null,
    * else returns the given list.
    */
-  private static List<String> safe(final List given) {
+  private static List<String> safe(final List<String> given) {
     return given == null ? Collections.EMPTY_LIST : given;
   }
 
   /**
    * Set a {@link RemoteConfigurationRegistryClientService} instance
    * used to talk to remote remote service registry.
+   * @param registryClientService registryClientService to set
    */
   public void setRegistryClientService(
       final RemoteConfigurationRegistryClientService registryClientService) {
@@ -189,6 +189,7 @@ public class RemoteAliasService implements AliasService {
 
   /**
    * Set a {@link MasterService} instance.
+   * @param ms master service to set
    */
   public void setMasterService(final MasterService ms) {
     this.ms = ms;
@@ -196,6 +197,7 @@ public class RemoteAliasService implements AliasService {
 
   /**
    * Set local alias service
+   * @param localAliasService local alias service to set
    */
   public void setLocalAliasService(AliasService localAliasService) {
     this.localAliasService = localAliasService;
@@ -485,6 +487,7 @@ public class RemoteAliasService implements AliasService {
    * @param clusterName Name of the cluster
    * @param alias       Alias name to be added
    * @param value       alias value to be added
+   * @throws AliasServiceException exception on failure adding alias
    */
   public void addAliasForClusterLocally(final String clusterName,
       final String alias, final String value) throws AliasServiceException {
@@ -497,6 +500,7 @@ public class RemoteAliasService implements AliasService {
    *
    * @param clusterName Name of the cluster
    * @param alias       Alias name to be removed
+   * @throws AliasServiceException exception on failure removing alias
    */
   public void removeAliasForClusterLocally(final String clusterName,
       final String alias) throws AliasServiceException {
@@ -521,6 +525,7 @@ public class RemoteAliasService implements AliasService {
    * Encrypt the clear text with master password.
    * @param clear clear text to be encrypted
    * @return encrypted and base 64 encoded result.
+   * @throws Exception exception on failure
    */
   public String encrypt(final String clear) throws Exception {
 
@@ -538,6 +543,7 @@ public class RemoteAliasService implements AliasService {
    *
    * @param encoded encoded and encrypted string.
    * @return decrypted password.
+   * @throws Exception exception on failure
    */
   public String decrypt(final String encoded) throws Exception {
 

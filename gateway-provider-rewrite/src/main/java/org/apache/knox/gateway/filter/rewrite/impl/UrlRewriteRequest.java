@@ -72,9 +72,11 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
   /**
    * Constructs a request object wrapping the given request.
    *
+   * @param config  FilterConfig
+   * @param request request to wrap
    * @throws IllegalArgumentException if the request is null
    */
-  public UrlRewriteRequest( FilterConfig config, HttpServletRequest request ) throws IOException {
+  public UrlRewriteRequest( FilterConfig config, HttpServletRequest request ) {
     super( request );
     this.config = config;
     this.rewriter = UrlRewriteServletContextListener.getUrlRewriter( config.getServletContext() );

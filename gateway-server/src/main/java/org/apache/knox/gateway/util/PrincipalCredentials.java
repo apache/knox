@@ -36,9 +36,6 @@ public class PrincipalCredentials implements Credentials, Serializable {
 
   private final Principal principal;
 
-  /**
-   * The constructor with the principal.
-   */
   public PrincipalCredentials( Principal principal ) {
     super();
     if( principal == null ) throw new IllegalArgumentException( "principal==null" );

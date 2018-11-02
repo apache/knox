@@ -236,6 +236,7 @@ public interface GatewayConfig {
   /**
    * Enable cookie scoping to gateway path
    *
+   * @return true if cookie scoping to path is enabled
    * @since 0.13
    */
   boolean isCookieScopingToPathEnabled();

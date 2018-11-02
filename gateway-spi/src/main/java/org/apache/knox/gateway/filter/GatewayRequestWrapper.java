@@ -28,6 +28,7 @@ public class GatewayRequestWrapper extends HttpServletRequestWrapper implements 
   /**
    * Constructs a request object wrapping the given request.
    *
+   * @param request the request object to wrap
    * @throws IllegalArgumentException if the request is null
    */
   public GatewayRequestWrapper( HttpServletRequest request ) {

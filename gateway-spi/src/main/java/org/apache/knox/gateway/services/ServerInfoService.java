@@ -24,11 +24,13 @@ package org.apache.knox.gateway.services;
 public interface ServerInfoService extends Service {
   /**
    * Get the build version for the server instance
+   * @return build version
    */
   String getBuildVersion();
   
   /**
    * Get the build hash for the server instance
+   * @return build hash
    */
   String getBuildHash();
 }

@@ -80,9 +80,14 @@ public class WebsocketClient {
 
   /**
    * Check whether we have expected close code
+   *
+   * @param expectedCloseCode code to expect on close
+   * @param timeoutDuration duration to wait
+   * @param timeoutUnit duration unit
+   * @throws TimeoutException if waiting too long to close
    */
-  public void awaitClose(int expectedCloseCode, int timeoutDuration,
-      TimeUnit timeoutUnit) throws TimeoutException {
+  public void awaitClose(int expectedCloseCode, int timeoutDuration, TimeUnit timeoutUnit)
+      throws TimeoutException {
 
     long msDur = TimeUnit.MILLISECONDS.convert(timeoutDuration, timeoutUnit);
     long now = System.currentTimeMillis();

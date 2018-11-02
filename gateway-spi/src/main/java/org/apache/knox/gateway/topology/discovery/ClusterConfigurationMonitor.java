@@ -36,11 +36,14 @@ public interface ClusterConfigurationMonitor {
 
     /**
      * Register for notifications from the monitor.
+     * @param listener ConfigurationChangeListener
      */
     void addListener(ConfigurationChangeListener listener);
 
     /**
      * Clear the configuration data cache for the specified source and cluster name.
+     * @param source source to clear for
+     * @param clusterName clusterName to clear for
      */
     void clearCache(String source, String clusterName);
 

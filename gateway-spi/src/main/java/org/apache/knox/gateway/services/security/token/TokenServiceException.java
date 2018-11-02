@@ -28,9 +28,6 @@ public class TokenServiceException extends Exception {
     super(message, e);
   }
 
-  /**
-   * 
-   */
   public TokenServiceException(String message) {
     super(message);
   }
