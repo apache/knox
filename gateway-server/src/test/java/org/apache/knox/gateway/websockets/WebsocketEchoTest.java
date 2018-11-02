@@ -132,7 +132,7 @@ public class WebsocketEchoTest {
     FileUtils.deleteQuietly(topoDir);
   }
 
-  /**
+  /*
    * Test direct connection to websocket server without gateway
    */
   @Test
@@ -147,7 +147,7 @@ public class WebsocketEchoTest {
     client.messageQueue.awaitMessages(1, 1000, TimeUnit.MILLISECONDS);
   }
 
-  /**
+  /*
    * Test websocket proxying through gateway.
    */
   @Test
@@ -164,7 +164,7 @@ public class WebsocketEchoTest {
     assertThat(client.messageQueue.get(0), is("Echo"));
   }
 
-  /**
+  /*
    * Test websocket rewrite rules proxying through gateway.
    */
   @Test
@@ -183,6 +183,7 @@ public class WebsocketEchoTest {
 
   /**
    * Start Mock Websocket server that acts as backend.
+   * @throws Exception exception on websocket server start
    */
   private static void startWebsocketServer() throws Exception {
 
@@ -210,6 +211,7 @@ public class WebsocketEchoTest {
 
   /**
    * Start Gateway Server.
+   * @throws Exception exception on server start
    */
   private static void startGatewayServer() throws Exception {
     gatewayServer = new Server();
@@ -247,9 +249,10 @@ public class WebsocketEchoTest {
 
   /**
    * Initialize the configs and components required for this test.
+   * @param backend topology to use
+   * @throws IOException exception on setting up the gateway
    */
-  private static void setupGatewayConfig(final String backend)
-      throws IOException {
+  private static void setupGatewayConfig(final String backend) throws IOException {
     services = new DefaultGatewayServices();
 
     topoDir = createDir();

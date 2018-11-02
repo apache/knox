@@ -287,7 +287,7 @@ public class RemoteConfigurationMonitorTest {
     }
 
 
-    /**
+    /*
      * KNOX-1135
      */
     @Test

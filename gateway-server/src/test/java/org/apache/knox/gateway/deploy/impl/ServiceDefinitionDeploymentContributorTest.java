@@ -62,7 +62,7 @@ public class ServiceDefinitionDeploymentContributorTest {
     }
   }
 
-  /**
+  /*
    * Test that service param useTwoWaySsl in topologies overrides the corresponding custom dispatch property.
    */
   @Test
@@ -163,7 +163,7 @@ public class ServiceDefinitionDeploymentContributorTest {
                  "true", useTwoWaySslFilterParamValues.get(0));
   }
 
-  /**
+  /*
    * Test for a feature that sets dispatch the services defined in a
    * topology. The dispatch is defined per service in a topology.
    * @since 1.2.0
@@ -277,7 +277,6 @@ public class ServiceDefinitionDeploymentContributorTest {
         EXPECTED_HA_DISPATCH_CLASS, dispatchImpl.get(0));
 
   }
-
 
   private static class TestGatewayDescriptor extends GatewayDescriptorImpl {
   }

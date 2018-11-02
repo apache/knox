@@ -49,7 +49,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
-
 public class HaProviderDeploymentContributorTest {
 
    @Test
@@ -66,7 +65,7 @@ public class HaProviderDeploymentContributorTest {
       fail( "Failed to find " + HaProviderDeploymentContributor.class.getName() + " via service loader." );
    }
 
-   /**
+   /*
     * Basically, a backward-compatibility test to ensure that HaProvider service params specified ONLY at the provider
     * level still work.
     */
@@ -112,7 +111,7 @@ public class HaProviderDeploymentContributorTest {
                               false, 40, 4, 50, 5, "testRoleOne", "http://host1:2181,http://host2:2181");
    }
 
-   /**
+   /*
     * Simple test verifying that HaProvider service params specified ONLY at the service level works.
     */
    @Test
@@ -167,7 +166,7 @@ public class HaProviderDeploymentContributorTest {
                               true, 80, 8, 60, 6, "testRoleOneOverride", "http://host3:2181,http://host4:2181");
    }
 
-   /**
+   /*
     * Verify a mixture of provider-level params and service-level params.
     */
    @Test
@@ -218,7 +217,6 @@ public class HaProviderDeploymentContributorTest {
       validateServiceHaConfig(descriptor.getServiceConfig("TestRoleOne"),
                               true, 40, 4, 60, 5, "testRoleOneOverride", "http://host3:2181,http://host4:2181");
    }
-
 
    @Test
    public void testServiceLevelParamOverrides_MultipleMixed() throws Exception {
@@ -289,7 +287,6 @@ public class HaProviderDeploymentContributorTest {
                               true, 80, 8, 60, 6, "testRoleTwoOverride", "http://host3:2181,http://host4:2181");
    }
 
-
    private static String getHaProviderParamValue(boolean enabled,
                                                  long    failoverSleep,
                                                  int     maxFailoverAttempts,
@@ -297,7 +294,6 @@ public class HaProviderDeploymentContributorTest {
                                                  int     maxRetryAttempts) {
       return getHaProviderParamValue(enabled, failoverSleep, maxFailoverAttempts, retrySleep, maxRetryAttempts, null, null);
    }
-
 
    private static String getHaProviderParamValue(boolean enabled,
                                                  long    failoverSleep,
@@ -358,7 +354,8 @@ public class HaProviderDeploymentContributorTest {
    }
 
    /**
-    *
+    * Validate the service ha config.
+    * 
     * @param config              The HaServiceConfig to validate
     * @param isEnabled           The expected enabled param value
     * @param failoverSleep       The expected failoverSleep param value
@@ -375,7 +372,7 @@ public class HaProviderDeploymentContributorTest {
                                                int             retrySleep,
                                                int             maxRetryAttempts,
                                                String          zookeeperNamespace,
-                                               String          zookeeperEnsemble) throws Exception {
+                                               String          zookeeperEnsemble) {
       assertNotNull(config);
       assertEquals(isEnabled, config.isEnabled());
       assertEquals(failoverSleep, config.getFailoverSleep());
@@ -404,7 +401,6 @@ public class HaProviderDeploymentContributorTest {
       EasyMock.replay(provider);
       return provider;
    }
-
 
    private static class DescriptorCaptureDeploymentContext implements DeploymentContext {
 

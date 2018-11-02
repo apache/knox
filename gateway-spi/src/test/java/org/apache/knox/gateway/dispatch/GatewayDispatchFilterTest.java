@@ -37,7 +37,7 @@ import static org.junit.Assert.assertEquals;
 
 public class GatewayDispatchFilterTest {
 
-  /**
+  /*
    * Verify that a whitelist violation results in a HTTP 400 response.
    */
   @Test
@@ -67,7 +67,7 @@ public class GatewayDispatchFilterTest {
   }
 
 
-  /**
+  /*
    * If the dispatch service is not configured to honor the whitelist, the dispatching should be permitted.
    */
   @Test
@@ -79,7 +79,7 @@ public class GatewayDispatchFilterTest {
                                    "http://www.notonmylist.org:9999", true);
   }
 
-  /**
+  /*
    * If the dispatch service is configured to honor the whitelist, but no whitelist is configured, then the default
    * whitelist should be applied. If the dispatch URL does not match the default whitelist, then the dispatch should be
    * disallowed.
@@ -94,7 +94,7 @@ public class GatewayDispatchFilterTest {
                                    false);
   }
 
-  /**
+  /*
    * If the dispatch service is configured to honor the whitelist, but no whitelist is configured, then the default
    * whitelist should be applied. If the dispatch URL does not match the default whitelist, then the dispatch should be
    * disallowed.
@@ -109,7 +109,7 @@ public class GatewayDispatchFilterTest {
                                    "http://www.notonmylist.org:9999", false);
   }
 
-  /**
+  /*
    * If the dispatch service is configured to honor the whitelist, but no whitelist is configured, then the default
    * whitelist should be applied. If the dispatch URL does not match the default domain-based whitelist, then the
    * dispatch should be disallowed.
@@ -125,7 +125,7 @@ public class GatewayDispatchFilterTest {
                                    false);
   }
 
-  /**
+  /*
    * If the dispatch service is configured to honor the whitelist, but no whitelist is configured, then the default
    * whitelist should be applied. If the dispatch URL does match the default whitelist, then the dispatch should be
    * allowed.
@@ -140,7 +140,7 @@ public class GatewayDispatchFilterTest {
                                    true);
   }
 
-  /**
+  /*
    * If the dispatch service is configured to honor the whitelist, but no whitelist is configured, then the default
    * whitelist should be applied. If the dispatch URL does match the default whitelist, then the dispatch should be
    * allowed.
@@ -156,7 +156,7 @@ public class GatewayDispatchFilterTest {
   }
 
 
-  /**
+  /*
    * If the dispatch service is configured to honor the whitelist, but DEFAULT whitelist is configured, then the default
    * whitelist should be applied. If the dispatch URL does match the default whitelist, then the dispatch should be
    * allowed.
@@ -172,7 +172,7 @@ public class GatewayDispatchFilterTest {
   }
 
 
-  /**
+  /*
    * An empty whitelist should be treated as the default whitelist.
    */
   @Test
@@ -186,7 +186,7 @@ public class GatewayDispatchFilterTest {
   }
 
 
-  /**
+  /*
    * If a custom whitelist is configured, and the requested service role is among those configured to honor that
    * whitelist, the request should be disallowed if the URL does NOT match the whitelist.
    */
@@ -201,7 +201,7 @@ public class GatewayDispatchFilterTest {
   }
 
 
-  /**
+  /*
    * If a custom whitelist is configured, and the requested service role is among those configured to honor that
    * whitelist, the request should be permitted if the URL matches the whitelist.
    */
@@ -215,7 +215,7 @@ public class GatewayDispatchFilterTest {
                                    true);
   }
 
-  /**
+  /*
    * The configured whitelist should be ignored for services which are NOT configured to honor the whitelist, and those
    * dispatches should be permitted.
    */

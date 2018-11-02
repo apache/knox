@@ -155,7 +155,6 @@ public class GatewayPortMappingFuncTest {
     LOG_EXIT();
   }
 
-
   private void test (final String url) throws IOException {
     String password = "hdfs-password";
     String username = "hdfs";
@@ -182,11 +181,12 @@ public class GatewayPortMappingFuncTest {
     masterServer.isEmpty();
   }
 
-
   /**
    * Creates a topology that is deployed to the gateway instance for the test suite.
    * Note that this topology is shared by all of the test methods in this suite.
-   *
+   * @param role role name
+   * @param ldapURL ldap url
+   * @param gatewayPort port for the gateway
    * @return A populated XML structure for a topology file.
    */
   public static XMLTag createTopology(final String role, final String ldapURL, final int gatewayPort ) {
@@ -248,7 +248,8 @@ public class GatewayPortMappingFuncTest {
   /**
    * This utility method will return the next available port
    * that can be used.
-   *
+   * @param min min port to check
+   * @param max max port to check
    * @return Port that is available.
    */
   public static int getAvailablePort(final int min, final int max) {

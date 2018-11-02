@@ -33,8 +33,6 @@ import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.TopologyEvent;
 import org.apache.knox.gateway.topology.TopologyListener;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
@@ -64,14 +62,6 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class DefaultTopologyServiceTest {
-
-  @Before
-  public void setUp() throws Exception {
-  }
-
-  @After
-  public void tearDown() throws Exception {
-  }
 
   private File createDir() throws IOException {
     return TestUtils.createTempDir(this.getClass().getSimpleName() + "-");
@@ -191,7 +181,7 @@ public class DefaultTopologyServiceTest {
     }
   }
 
-  /**
+  /*
    * KNOX-1014
    *
    * Test the lifecycle relationship between simple descriptors and topology files.
@@ -311,7 +301,7 @@ public class DefaultTopologyServiceTest {
     }
   }
 
-  /**
+  /*
    * KNOX-1014
    *
    * Test the lifecycle relationship between provider configuration files, simple descriptors, and topology files.
@@ -409,7 +399,7 @@ public class DefaultTopologyServiceTest {
     }
   }
 
-  /**
+  /*
    * KNOX-1039
    */
   @Test
@@ -561,7 +551,6 @@ public class DefaultTopologyServiceTest {
     }
   }
 
-
   @Test
   public void testProviderParamsOrderIsPreserved() {
 
@@ -587,9 +576,8 @@ public class DefaultTopologyServiceTest {
     Iterator<String> iter = keySet.iterator();
     int i = 0;
     while (iter.hasNext()) {
-      assertTrue(iter.next().equals(names[i++]));
+      assertEquals(iter.next(), names[i++]);
     }
-
   }
 
   private class TestTopologyListener implements TopologyListener {
@@ -602,7 +590,6 @@ public class DefaultTopologyServiceTest {
     }
 
   }
-
 
   private class TestTopologyDeleteListener implements TopologyListener {
 
@@ -620,7 +607,5 @@ public class DefaultTopologyServiceTest {
         }
       }
     }
-
   }
-
 }

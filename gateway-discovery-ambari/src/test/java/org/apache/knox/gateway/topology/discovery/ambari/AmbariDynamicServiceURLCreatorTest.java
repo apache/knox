@@ -350,13 +350,11 @@ public class AmbariDynamicServiceURLCreatorTest {
         validateServiceURLs(urls, HOSTNAMES, "http", hbaseMasterConfig.get(HBASE_REST_PORT_PROPERTY), null);
     }
 
-
     @Test
     public void testWebHdfsURLHttp() throws Exception {
         final String ADDRESS = "host3:1357";
         assertEquals(("http://" + ADDRESS + "/webhdfs"), getTestHdfsURL("WEBHDFS", ADDRESS, false));
     }
-
 
     @Test
     public void testWebHdfsURLHttps() throws Exception {
@@ -364,20 +362,17 @@ public class AmbariDynamicServiceURLCreatorTest {
         assertEquals(("https://" + ADDRESS + "/webhdfs"), getTestHdfsURL("WEBHDFS", ADDRESS, true));
     }
 
-
     @Test
     public void testHdfsUIURLHttp() throws Exception {
         final String ADDRESS = "host3:1357";
         assertEquals(("http://" + ADDRESS), getTestHdfsURL("HDFSUI", ADDRESS, false));
     }
 
-
     @Test
     public void testHdfsUIURLHttps() throws Exception {
         final String ADDRESS = "host3:1357";
         assertEquals(("https://" + ADDRESS), getTestHdfsURL("HDFSUI", ADDRESS, true));
     }
-
 
     private String getTestHdfsURL(String serviceName, String address, boolean isHttps) throws Exception {
         AmbariCluster.ServiceConfiguration hdfsSC = EasyMock.createNiceMock(AmbariCluster.ServiceConfiguration.class);
@@ -398,7 +393,6 @@ public class AmbariDynamicServiceURLCreatorTest {
         assertFalse(urls.isEmpty());
         return urls.get(0);
     }
-
 
     @Test
     public void testWebHdfsURLHASingleNameService() throws Exception {
@@ -427,7 +421,6 @@ public class AmbariDynamicServiceURLCreatorTest {
         assertTrue(webhdfsURLs.contains(EXPECTED_ADDR_1));
         assertTrue(webhdfsURLs.contains(EXPECTED_ADDR_2));
     }
-
 
     @Test
     public void testHdfsUIURLHASingleNameService() throws Exception {
@@ -458,7 +451,7 @@ public class AmbariDynamicServiceURLCreatorTest {
     }
 
 
-    /**
+    /*
      * Test federated NameNode scenario, which chooses the "first" nameservice because there is no information from
      * which one can be selected from among the set.
      */
@@ -497,7 +490,7 @@ public class AmbariDynamicServiceURLCreatorTest {
     }
 
 
-    /**
+    /*
      * Test federated NameNode scenario, which chooses the "first" nameservice because there is no information from
      * which one can be selected from among the set.
      */
@@ -535,8 +528,7 @@ public class AmbariDynamicServiceURLCreatorTest {
         assertTrue(webhdfsURLs.contains(EXPECTED_ADDR_2));
     }
 
-
-    /**
+    /*
      * Test federated NameNode scenario, relying on the core-site property for identifying the default nameservice.
      */
     @Test
@@ -580,8 +572,7 @@ public class AmbariDynamicServiceURLCreatorTest {
         assertTrue(webhdfsURLs.contains(EXPECTED_ADDR_2));
     }
 
-
-    /**
+    /*
      * Test federated NameNode scenario, relying on the core-site property for identifying the default nameservice.
      */
     @Test
@@ -625,8 +616,7 @@ public class AmbariDynamicServiceURLCreatorTest {
         assertTrue(webhdfsURLs.contains(EXPECTED_ADDR_2));
     }
 
-
-    /**
+    /*
      * Recent version of HDFS config include properties for mapping NN nodes to nameservices (e.g., dfs.ha.namenode.ns1).
      * This test verifies that discovery works correctly in those cases, when no nameservice is explicitly declared in
      * a descriptor.
@@ -674,8 +664,7 @@ public class AmbariDynamicServiceURLCreatorTest {
         assertTrue(webhdfsURLs.contains(EXPECTED_ADDR_2));
     }
 
-
-    /**
+    /*
      * Recent version of HDFS config include properties for mapping NN nodes to nameservices (e.g., dfs.ha.namenode.ns1).
      * This test verifies that discovery works correctly in those cases, when no nameservice is explicitly declared in
      * a descriptor.
@@ -723,8 +712,7 @@ public class AmbariDynamicServiceURLCreatorTest {
         assertTrue(webhdfsURLs.contains(EXPECTED_ADDR_2));
     }
 
-
-    /**
+    /*
      * Recent version of HDFS config include properties for mapping NN nodes to nameservices (e.g., dfs.ha.namenode.ns1).
      * This test verifies that discovery works correctly in those cases, when a nameservice is declared in descriptor.
      */
@@ -779,8 +767,7 @@ public class AmbariDynamicServiceURLCreatorTest {
         assertTrue(webhdfsURLs.contains(EXPECTED_ADDR_2));
     }
 
-
-    /**
+    /*
      * Previous version of HDFS config DO NOT include properties for mapping NN nodes to nameservices.
      * This test verifies that discovery works correctly in those cases, when a nameservice is declared in descriptor.
      */
@@ -833,7 +820,6 @@ public class AmbariDynamicServiceURLCreatorTest {
         assertTrue(webhdfsURLs.contains(EXPECTED_ADDR_2));
     }
 
-
     @Test
     public void testAtlasApiURL() throws Exception {
         final String ATLAS_REST_ADDRESS = "http://host2:21000";
@@ -852,7 +838,6 @@ public class AmbariDynamicServiceURLCreatorTest {
         assertEquals(1, urls.size());
         assertEquals(ATLAS_REST_ADDRESS, urls.get(0));
     }
-
 
     @Test
     public void testAtlasURL() throws Exception {
@@ -890,18 +875,15 @@ public class AmbariDynamicServiceURLCreatorTest {
         validateServiceURLs(urls, HOSTNAMES, "https", HTTPS_PORT, null);
     }
 
-
     @Test
     public void testRangerURL() throws Exception {
         doTestRangerURLs("RANGER");
     }
 
-
     @Test
     public void testRangerUIURL() throws Exception {
         doTestRangerURLs("RANGERUI");
     }
-
 
     private void doTestRangerURLs(String serviceName) throws Exception {
         final String HTTP_PORT = "6080";
@@ -946,7 +928,6 @@ public class AmbariDynamicServiceURLCreatorTest {
         assertEquals(EXT_URL, urls.get(0));
     }
 
-
     @Test
     public void testZeppelinURL() throws Exception {
         final String HTTP_PORT = "8787";
@@ -981,7 +962,6 @@ public class AmbariDynamicServiceURLCreatorTest {
         // Run the test
         validateServiceURLs(builder.create("ZEPPELIN", null), HOSTNAMES, "https", HTTPS_PORT, null);
     }
-
 
     @Test
     public void testZeppelinUiURL() throws Exception {
@@ -1018,7 +998,6 @@ public class AmbariDynamicServiceURLCreatorTest {
         validateServiceURLs(builder.create("ZEPPELINUI", null), HOSTNAMES, "https", HTTPS_PORT, null);
     }
 
-
     @Test
     public void testZeppelinWsURL() throws Exception {
         final String HTTP_PORT = "8787";
@@ -1054,7 +1033,6 @@ public class AmbariDynamicServiceURLCreatorTest {
         validateServiceURLs(builder.create("ZEPPELINWS", null), HOSTNAMES, "wss", HTTPS_PORT, null);
     }
 
-
     @Test
     public void testDruidCoordinatorURL() throws Exception {
         final String PORT = "8787";
@@ -1076,7 +1054,6 @@ public class AmbariDynamicServiceURLCreatorTest {
         List<String> urls = builder.create("DRUID-COORDINATOR", null);
         validateServiceURLs(urls, HOSTNAMES, "http", PORT, null);
     }
-
 
     @Test
     public void testDruidBrokerURL() throws Exception {
@@ -1100,7 +1077,6 @@ public class AmbariDynamicServiceURLCreatorTest {
         validateServiceURLs(urls, HOSTNAMES, "http", PORT, null);
     }
 
-
     @Test
     public void testDruidRouterURL() throws Exception {
         final String PORT = "8282";
@@ -1122,7 +1098,6 @@ public class AmbariDynamicServiceURLCreatorTest {
         List<String> urls = builder.create("DRUID-ROUTER", null);
         validateServiceURLs(urls, HOSTNAMES, "http", PORT, null);
     }
-
 
     @Test
     public void testDruidOverlordURL() throws Exception {
@@ -1146,7 +1121,6 @@ public class AmbariDynamicServiceURLCreatorTest {
         validateServiceURLs(urls, HOSTNAMES, "http", PORT, null);
     }
 
-
     @Test
     public void testDruidSupersetURL() throws Exception {
         final String PORT = "8484";
@@ -1169,7 +1143,6 @@ public class AmbariDynamicServiceURLCreatorTest {
         validateServiceURLs(urls, HOSTNAMES, "http", PORT, null);
     }
 
-
     @Test
     public void testFalconURL() throws Exception {
         final String PORT = "8998";
@@ -1191,7 +1164,6 @@ public class AmbariDynamicServiceURLCreatorTest {
         List<String> urls = builder.create("FALCON", null);
         validateServiceURLs(urls, HOSTNAMES, "http", PORT, null);
     }
-
 
     @Test
     public void testMissingServiceComponentURL() throws Exception {
@@ -1249,7 +1221,6 @@ public class AmbariDynamicServiceURLCreatorTest {
         }
     }
 
-
     /**
      * Convenience method for creating AmbariDynamicServiceURLCreator instances from different mapping configuration
      * input sources.
@@ -1275,7 +1246,6 @@ public class AmbariDynamicServiceURLCreatorTest {
 
         return result;
     }
-
 
     /**
      * Validate the specifed HIVE URLs.
@@ -1319,7 +1289,6 @@ public class AmbariDynamicServiceURLCreatorTest {
         }
         assertTrue(hostNamesToTest.isEmpty());
     }
-
 
     private static final String TEST_MAPPING_CONFIG =
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
@@ -1453,7 +1422,6 @@ public class AmbariDynamicServiceURLCreatorTest {
             "    </properties>\n" +
             "  </service>\n" +
             "</service-discovery-url-mappings>\n";
-
 
     private static final String OOZIE_OVERRIDE_MAPPING_FILE_CONTENTS =
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +

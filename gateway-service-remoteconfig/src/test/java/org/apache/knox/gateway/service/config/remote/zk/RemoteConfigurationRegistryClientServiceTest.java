@@ -54,7 +54,7 @@ import static org.junit.Assert.assertTrue;
 
 public class RemoteConfigurationRegistryClientServiceTest {
 
-    /**
+    /*
      * Test a configuration for an unsecured remote registry, included in the gateway configuration.
      */
     @Test
@@ -85,7 +85,7 @@ public class RemoteConfigurationRegistryClientServiceTest {
         }
     }
 
-    /**
+    /*
      * Test multiple configurations for an unsecured remote registry.
      */
     @Test
@@ -136,7 +136,7 @@ public class RemoteConfigurationRegistryClientServiceTest {
         }
     }
 
-    /**
+    /*
      * Test a configuration for a secure remote registry, included in the gateway configuration.
      */
     @Test
@@ -171,7 +171,7 @@ public class RemoteConfigurationRegistryClientServiceTest {
         }
     }
 
-    /**
+    /*
      * Test the remote registry configuration external to, and referenced from, the gateway configuration, for a secure
      * client.
      */
@@ -217,7 +217,7 @@ public class RemoteConfigurationRegistryClientServiceTest {
         }
     }
 
-    /**
+    /*
      * Setup and start a secure test ZooKeeper cluster.
      */
     private TestingCluster setupAndStartSecureTestZooKeeper(String principal, String digestPassword) throws Exception {
@@ -263,6 +263,9 @@ public class RemoteConfigurationRegistryClientServiceTest {
 
     /**
      * Create a ZooKeeper client with SASL digest auth configured, and initialize the test znodes.
+     * @param zkCluster zkCluster to initialize
+     * @param principal principal for SASL digrest auth
+     * @throws Exception exception on failure
      */
     private CuratorFramework initializeTestClientAndZNodes(TestingCluster zkCluster, String principal) throws Exception {
         // Create the client for the test cluster
@@ -327,6 +330,7 @@ public class RemoteConfigurationRegistryClientServiceTest {
      * @param testClientName The name of the client to use from the registry client service.
      * @param clientService  The RemoteConfigurationRegistryClientService
      * @param isSecureTest   Flag to indicate whether this is a secure interaction test
+     * @throws Exception exception on failure
      */
     private void doTestZooKeeperClient(final CuratorFramework                         setupClient,
                                        final String                                   testClientName,
@@ -407,5 +411,4 @@ public class RemoteConfigurationRegistryClientServiceTest {
 
         assertFalse(listenerLog.isEmpty());
     }
-
 }

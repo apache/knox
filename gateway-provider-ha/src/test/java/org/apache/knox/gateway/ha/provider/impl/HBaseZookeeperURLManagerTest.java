@@ -72,7 +72,7 @@ public class HBaseZookeeperURLManagerTest {
     doTest(SECURE_NS);
   }
 
-  /**
+  /*
    * KNOX-1149
    */
   @Test
@@ -82,7 +82,7 @@ public class HBaseZookeeperURLManagerTest {
     doTest(null);
   }
 
-  /**
+  /*
    * KNOX-1149
    */
   @Test
@@ -112,7 +112,6 @@ public class HBaseZookeeperURLManagerTest {
     Assert.assertNotNull(manager);
     Assert.assertTrue(manager instanceof HBaseZookeeperURLManager);
   }
-
 
   private void createZNodes(String namespace) throws Exception {
     try (CuratorFramework zooKeeperClient =

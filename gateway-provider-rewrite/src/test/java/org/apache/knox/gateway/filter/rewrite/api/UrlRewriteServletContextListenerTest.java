@@ -77,11 +77,4 @@ public class UrlRewriteServletContextListenerTest {
   public void tearDown() throws Exception {
     server.stop();
   }
-
-//  @Test
-//  @Ignore("TODO")
-//  public void testProvider() throws Exception {
-//    fail( "TODO" );
-//  }
-
 }

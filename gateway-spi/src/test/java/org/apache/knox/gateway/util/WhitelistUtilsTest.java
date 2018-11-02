@@ -44,7 +44,7 @@ public class WhitelistUtilsTest {
                whitelist);
   }
 
-  /**
+  /*
    * KNOXSSO is implicitly included in the set of service roles for which the whitelist will be applied.
    */
   @Test
@@ -158,7 +158,6 @@ public class WhitelistUtilsTest {
   private String doTestGetDispatchWhitelist(GatewayConfig config, String serviceRole) {
     return doTestGetDispatchWhitelist(config, "localhost", serviceRole);
   }
-
 
   private String doTestGetDispatchWhitelist(GatewayConfig config,
                                             String        serverName,

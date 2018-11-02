@@ -30,7 +30,7 @@ import static org.junit.Assert.assertNull;
 public class AmbariClusterTest {
 
   @Test
-  public void testHiveZooKeeperConfiguration() throws Exception {
+  public void testHiveZooKeeperConfiguration() {
 
     final boolean isEnabled = true;
     final String ensemble = "host1:2181,host2:2181,host3:2181";
@@ -49,7 +49,7 @@ public class AmbariClusterTest {
   }
 
   @Test
-  public void testWebHBaseZooKeeperConfiguration() throws Exception {
+  public void testWebHBaseZooKeeperConfiguration() {
 
     final boolean isEnabled = true;
     final String ensemble = "host1:2181,host2:2181,host3:2181";
@@ -66,9 +66,8 @@ public class AmbariClusterTest {
     assertEquals(namespace, config.getNamespace());
   }
 
-
   @Test
-  public void testKafkaZooKeeperConfiguration() throws Exception {
+  public void testKafkaZooKeeperConfiguration() {
 
     final boolean isEnabled = true;
     final String ensemble = "host1:2181,host2:2181,host3:2181";
@@ -84,7 +83,7 @@ public class AmbariClusterTest {
   }
 
   @Test
-  public void testWebHDFSZooKeeperConfiguration() throws Exception {
+  public void testWebHDFSZooKeeperConfiguration() {
 
     final boolean isEnabled = true;
     final String ensemble = "host3:2181,host2:2181,host1:2181";
@@ -99,9 +98,8 @@ public class AmbariClusterTest {
     assertNull(config.getNamespace());
   }
 
-
   @Test
-  public void testOozieZooKeeperConfiguration() throws Exception {
+  public void testOozieZooKeeperConfiguration() {
 
     final boolean isEnabled = true;
     final String ensemble = "host1:2181,host2:2181,host3:2181";
@@ -119,7 +117,7 @@ public class AmbariClusterTest {
   }
 
   @Test
-  public void testHBaseZooKeeperConfiguration() throws Exception {
+  public void testHBaseZooKeeperConfiguration() {
 
     final boolean isEnabled = true;
     final String ensemble = "host1:2181,host2:2181,host3:2181";
@@ -137,13 +135,12 @@ public class AmbariClusterTest {
     assertEquals(namespace, config.getNamespace());
   }
 
-
   /**
    * The Atlas ZooKeeper ensemble determination is based on multiple properties with a prioritized search order.
    * This test verifies that the default property is used when the primary property value is undefined.
    */
   @Test
-  public void testAtlasZooKeeperEnsemblePropsConfigurationSecondary() throws Exception {
+  public void testAtlasZooKeeperEnsemblePropsConfigurationSecondary() {
 
     final boolean isEnabled = true;
     final String ensemble = "host1:2181,host2:2181,host3:2181";
@@ -165,13 +162,12 @@ public class AmbariClusterTest {
     assertEquals(namespace, config.getNamespace());
   }
 
-
   /**
    * The Atlas ZooKeeper ensemble determination is based on multiple properties with a prioritized search order.
    * This test verifies that the primary property value is used when it's defined.
    */
   @Test
-  public void testAtlasZooKeeperEnsemblePropsConfigurationPrimary() throws Exception {
+  public void testAtlasZooKeeperEnsemblePropsConfigurationPrimary() {
 
     final boolean isEnabled = true;
     final String ensemble = "host1:2181,host2:2181,host3:2181";
@@ -193,14 +189,11 @@ public class AmbariClusterTest {
     assertEquals(namespace, config.getNamespace());
   }
 
-
-
   private ServiceDiscovery.Cluster.ZooKeeperConfig getZooKeeperConfiguration(final String              serviceName,
                                                                              final String              configType,
                                                                              final Map<String, String> serviceConfigProps) {
     return getZooKeeperConfiguration(serviceName, serviceName, configType, serviceConfigProps);
   }
-
 
   private ServiceDiscovery.Cluster.ZooKeeperConfig getZooKeeperConfiguration(final String              serviceName,
                                                                              final String              componentName,
@@ -216,6 +209,4 @@ public class AmbariClusterTest {
 
     return cluster.getZooKeeperConfiguration(serviceName);
   }
-
-
 }

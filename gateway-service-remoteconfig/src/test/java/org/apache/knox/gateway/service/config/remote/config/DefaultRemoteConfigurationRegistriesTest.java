@@ -32,11 +32,11 @@ import static org.junit.Assert.assertNotNull;
 
 public class DefaultRemoteConfigurationRegistriesTest {
 
-    /**
+    /*
      * Test a single registry configuration with digest auth configuration.
      */
     @Test
-    public void testPropertiesRemoteConfigurationRegistriesSingleDigest() throws Exception {
+    public void testPropertiesRemoteConfigurationRegistriesSingleDigest() {
         Map<String, Properties> testProperties = new HashMap<>();
         Properties p = new Properties();
         p.setProperty(GatewayConfig.REMOTE_CONFIG_REGISTRY_TYPE, "ZooKeeper");
@@ -50,11 +50,11 @@ public class DefaultRemoteConfigurationRegistriesTest {
     }
 
 
-    /**
+    /*
      * Test a single registry configuration with kerberos auth configuration.
      */
     @Test
-    public void testPropertiesRemoteConfigurationRegistriesSingleKerberos() throws Exception {
+    public void testPropertiesRemoteConfigurationRegistriesSingleKerberos() {
         Map<String, Properties> testProperties = new HashMap<>();
         Properties p = new Properties();
         p.setProperty(GatewayConfig.REMOTE_CONFIG_REGISTRY_TYPE, "ZooKeeper");
@@ -69,11 +69,11 @@ public class DefaultRemoteConfigurationRegistriesTest {
         doTestPropertiesRemoteConfigurationRegistries(testProperties);
     }
 
-    /**
+    /*
      * Test multiple registry configuration with varying auth configurations.
      */
     @Test
-    public void testPropertiesRemoteConfigurationRegistriesMultipleMixed() throws Exception {
+    public void testPropertiesRemoteConfigurationRegistriesMultipleMixed() {
         Map<String, Properties> testProperties = new HashMap<>();
 
         Properties kerb = new Properties();
@@ -103,13 +103,12 @@ public class DefaultRemoteConfigurationRegistriesTest {
         doTestPropertiesRemoteConfigurationRegistries(testProperties);
     }
 
-
     /**
      * Perform the actual test.
      *
      * @param testProperties The test properties
      */
-    private void doTestPropertiesRemoteConfigurationRegistries(Map<String, Properties> testProperties) throws Exception {
+    private void doTestPropertiesRemoteConfigurationRegistries(Map<String, Properties> testProperties) {
         // Mock gateway config
         GatewayConfig gc = mockGatewayConfig(testProperties);
 
@@ -128,7 +127,6 @@ public class DefaultRemoteConfigurationRegistriesTest {
         }
     }
 
-
     /**
      * Create a mock GatewayConfig based on the specified test properties.
      *
@@ -141,18 +139,18 @@ public class DefaultRemoteConfigurationRegistriesTest {
         for (String registryName : testProperties.keySet()) {
             configNames.add(registryName);
 
-            String propertyValueString = "";
+            StringBuilder propertyValueString = new StringBuilder();
             Properties props = testProperties.get(registryName);
             Enumeration names = props.propertyNames();
             while (names.hasMoreElements()) {
                 String propertyName = (String) names.nextElement();
-                propertyValueString += propertyName + "=" + props.get(propertyName);
+                propertyValueString.append(propertyName).append("=").append(props.get(propertyName));
                 if (names.hasMoreElements()) {
-                    propertyValueString += ";";
+                    propertyValueString.append(";");
                 }
             }
             EasyMock.expect(gc.getRemoteRegistryConfiguration(registryName))
-                    .andReturn(propertyValueString)
+                    .andReturn(propertyValueString.toString())
                     .anyTimes();
         }
         EasyMock.expect(gc.getRemoteRegistryConfigurationNames()).andReturn(configNames).anyTimes();
@@ -161,13 +159,16 @@ public class DefaultRemoteConfigurationRegistriesTest {
         return gc;
     }
 
-
     /**
      * Validate the specified RemoteConfigurationRegistry based on the expected test properties.
+     *
+     * @param configName config name to validate
+     * @param expected expected properties
+     * @param registryConfig registryConfig to validate
      */
     private void validateRemoteRegistryConfig(String                      configName,
                                               Properties                  expected,
-                                              RemoteConfigurationRegistry registryConfig) throws Exception {
+                                              RemoteConfigurationRegistry registryConfig) {
         assertEquals(configName, registryConfig.getName());
         assertEquals(expected.get(GatewayConfig.REMOTE_CONFIG_REGISTRY_TYPE), registryConfig.getRegistryType());
         assertEquals(expected.get(GatewayConfig.REMOTE_CONFIG_REGISTRY_ADDRESS), registryConfig.getConnectionString());

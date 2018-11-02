@@ -17,10 +17,6 @@
 package org.apache.knox.gateway;
 
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.services.DefaultGatewayServices;
-import org.apache.knox.gateway.services.topology.TopologyService;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.VelocityEngine;
 import org.easymock.EasyMock;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -36,7 +32,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -59,15 +54,7 @@ public class GatewayPortMappingConfigTest {
 
   private static int defaultPort;
 
-  private static DefaultGatewayServices services;
-  private static TopologyService topos;
-
-  private static VelocityEngine velocity;
-  private static VelocityContext context;
-
   private static Server gatewayServer;
-
-  private static Properties params;
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -103,7 +90,6 @@ public class GatewayPortMappingConfigTest {
 
     // Start gateway to check port conflicts
     startGatewayServer();
-
   }
 
   @AfterClass
@@ -118,7 +104,8 @@ public class GatewayPortMappingConfigTest {
   /**
    * This utility method will return the next available port
    * that can be used.
-   *
+   * @param min min port to check
+   * @param max max port to check
    * @return Port that is available.
    */
   public static int getAvailablePort(final int min, final int max) {
@@ -133,9 +120,7 @@ public class GatewayPortMappingConfigTest {
     return -1;
   }
 
-
-
-  /**
+  /*
    * This method simply tests the configs
    */
   @Test
@@ -148,7 +133,7 @@ public class GatewayPortMappingConfigTest {
         greaterThan(-1));
   }
 
-  /**
+  /*
    * Test case where topologies "eerie" and "huron" use same ports.
    */
   @Test
@@ -179,7 +164,6 @@ public class GatewayPortMappingConfigTest {
     field.set(gatewayServer, mockedJetty);
 
     gatewayServer.checkPortConflict(huronPort, "eerie", gatewayConfig);
-
   }
 
   /*
@@ -195,7 +179,6 @@ public class GatewayPortMappingConfigTest {
 
     final GatewayServer gatewayServer = new GatewayServer(gatewayConfig);
     gatewayServer.checkPortConflict(defaultPort, null, gatewayConfig);
-
   }
 
   private static void startGatewayServer() throws Exception {

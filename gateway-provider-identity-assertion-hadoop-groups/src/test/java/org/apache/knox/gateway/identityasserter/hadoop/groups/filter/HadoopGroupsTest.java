@@ -71,7 +71,7 @@ public class HadoopGroupsTest {
 
   }
 
-  /**
+  /*
    * Test Groups on the machine running the unit test.
    */
   @Test

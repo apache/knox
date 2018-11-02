@@ -106,6 +106,11 @@ public class GatewayTestDriver {
 
   /**
    * Adds a mock service to the registry.
+   * @param role role to create service for
+   * @param realUrl real url for the service
+   * @param gatewayPath gateway path to respond on
+   * @param mock whether to mock or use real service from realUrl
+   * @throws Exception Thrown if new service fails.
    */
   public void setupService( String role, String realUrl, String gatewayPath, boolean mock ) throws Exception {
     Service service = new Service( role, realUrl, gatewayPath, mock );
@@ -115,6 +120,11 @@ public class GatewayTestDriver {
 
   /**
    * Creates a GATEWAY_HOME, starts a gateway instance and deploys a test topology.
+   * @param config config for setting up the gateway
+   * @param cluster cluster name to setup
+   * @param topology topology to setup
+   * @param use whether to use the gateway or real service
+   * @throws Exception Thrown if failure during setup.
    */
   public void setupGateway( GatewayTestConfig config, String cluster, XMLTag topology, boolean use ) throws Exception {
     this.useGateway = use;

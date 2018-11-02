@@ -75,6 +75,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.xml.HasXPath.hasXPath;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
@@ -285,11 +286,9 @@ public class GatewayAdminTopologyFuncTest {
     return xml;
   }
 
-
   private static String createDescriptor(String clusterName) {
     return createDescriptor(clusterName, null);
   }
-
 
   private static String createDescriptor(String clusterName, String providerConfigRef) {
     return createDescriptor(clusterName, providerConfigRef, true);
@@ -329,7 +328,6 @@ public class GatewayAdminTopologyFuncTest {
 
     return sb.toString();
   }
-
 
   //@Test
   public void waitForManualTesting() throws IOException {
@@ -371,7 +369,6 @@ public class GatewayAdminTopologyFuncTest {
         .statusCode(HttpStatus.SC_OK)
         .when().get(serviceUrl);
 
-
     given()
         //.log().all()
         .auth().preemptive().basic(username, password)
@@ -380,7 +377,6 @@ public class GatewayAdminTopologyFuncTest {
         .statusCode(HttpStatus.SC_OK)
         .contentType(MediaType.APPLICATION_XML)
         .when().get(serviceUrl);
-
 
     given().auth().preemptive().basic(username, password)
         .header("Accept", MediaType.APPLICATION_JSON)
@@ -433,7 +429,6 @@ public class GatewayAdminTopologyFuncTest {
         .when()
         .get(hrefJson);
 
-
     String hrefXml = given()
         //.log().all()
         .auth().preemptive().basic(username, password)
@@ -456,8 +451,7 @@ public class GatewayAdminTopologyFuncTest {
     LOG_EXIT();
   }
 
-
-  /**
+  /*
    * KNOX-1322
    */
   @Test( timeout = TestUtils.LONG_TIMEOUT )
@@ -492,12 +486,12 @@ public class GatewayAdminTopologyFuncTest {
     LOG_EXIT();
   }
 
-
   /**
    * Access the specified topology, and validate the value of the generated element therein.
    *
    * @param topologyName  The name of the topology to validate
    * @param expectedValue The expected value of the generated element.
+   * @throws Exception exception on failure
    */
   private void validateGeneratedElement(String topologyName, String expectedValue) throws Exception {
     String testClusterTopology = given().auth().preemptive().basic("admin", "admin-password")
@@ -511,7 +505,6 @@ public class GatewayAdminTopologyFuncTest {
     assertNotNull(doc);
     assertThat(doc, hasXPath("/topology/generated", is(expectedValue)));
   }
-
 
   @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testPositiveAuthorization() throws ClassNotFoundException{
@@ -792,7 +785,6 @@ public class GatewayAdminTopologyFuncTest {
     LOG_EXIT();
   }
 
-
   @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testPutTopologyWithInvalidName() throws Exception {
     LOG_ENTER() ;
@@ -816,7 +808,6 @@ public class GatewayAdminTopologyFuncTest {
 
     LOG_EXIT();
   }
-
 
   @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testPutTopologyWithEntityInjection() throws Exception {
@@ -899,7 +890,6 @@ public class GatewayAdminTopologyFuncTest {
     LOG_EXIT();
   }
 
-
   @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testPutTopologyWithEntityExpansion() throws Exception {
     LOG_ENTER() ;
@@ -981,7 +971,6 @@ public class GatewayAdminTopologyFuncTest {
     LOG_EXIT();
   }
 
-
   @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testXForwardedHeaders() {
     LOG_ENTER();
@@ -1014,7 +1003,6 @@ public class GatewayAdminTopologyFuncTest {
         .body(containsString("test-cluster"))
         .body(containsString("admin"))
         .when().get(url);
-
 
 //     Case 2: add in x-forward headers (host, server, proto, context)
     given()
@@ -1114,7 +1102,6 @@ public class GatewayAdminTopologyFuncTest {
         .body(containsString(url + "/test-cluster"))
         .when().get(url);
 
-
 //     Case 2: Change gateway.path to another String. Ensure HTTP OK resp + valid URL.
    try {
      gateway.stop();
@@ -1143,7 +1130,6 @@ public class GatewayAdminTopologyFuncTest {
 
     LOG_EXIT();
   }
-
 
   @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testProviderConfigurationCollection() throws Exception {
@@ -1243,7 +1229,6 @@ public class GatewayAdminTopologyFuncTest {
     LOG_EXIT();
   }
 
-
   @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testPutProviderConfiguration() throws Exception {
     LOG_ENTER();
@@ -1303,7 +1288,6 @@ public class GatewayAdminTopologyFuncTest {
     LOG_EXIT();
   }
 
-
   @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testPutProviderConfigurationWithInvalidName() throws Exception {
     LOG_ENTER();
@@ -1332,7 +1316,6 @@ public class GatewayAdminTopologyFuncTest {
 
     LOG_EXIT();
   }
-
 
   @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testDeleteProviderConfiguration() throws Exception {
@@ -1408,8 +1391,7 @@ public class GatewayAdminTopologyFuncTest {
     LOG_EXIT();
   }
 
-
-  /**
+  /*
    * KNOX-1176
    */
   @Test( timeout = TestUtils.LONG_TIMEOUT )
@@ -1542,8 +1524,7 @@ public class GatewayAdminTopologyFuncTest {
     LOG_EXIT();
   }
 
-
-  /**
+  /*
    * KNOX-1331
    */
   @Test( timeout = TestUtils.LONG_TIMEOUT )
@@ -1660,7 +1641,6 @@ public class GatewayAdminTopologyFuncTest {
     LOG_EXIT();
   }
 
-
   @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testDescriptorCollection() throws Exception {
     LOG_ENTER();
@@ -1762,7 +1742,6 @@ public class GatewayAdminTopologyFuncTest {
 
     LOG_EXIT();
   }
-
 
   @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testPutDescriptor() throws Exception {
@@ -1879,7 +1858,6 @@ public class GatewayAdminTopologyFuncTest {
     newDescriptorFile.delete();
   }
 
-
   @Test
   public void testPutDescriptorWithFileExtension() throws Exception {
 
@@ -1927,7 +1905,6 @@ public class GatewayAdminTopologyFuncTest {
     newDescriptorFile.delete();
   }
 
-
   @Test
   public void testPutDescriptorWithInvalidEncodedName() throws Exception {
 
@@ -1956,7 +1933,6 @@ public class GatewayAdminTopologyFuncTest {
     assertFalse(newDescriptorFile.exists());
   }
 
-
   @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testPutDescriptorWithInvalidNameEncodedElement() throws Exception {
     LOG_ENTER();
@@ -1965,7 +1941,6 @@ public class GatewayAdminTopologyFuncTest {
 
     LOG_EXIT();
   }
-
 
   @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testPutDescriptorWithInvalidNamePercent() throws Exception {
@@ -1976,7 +1951,6 @@ public class GatewayAdminTopologyFuncTest {
     LOG_EXIT();
   }
 
-
   @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testPutDescriptorWithInvalidNameXMLElement() throws Exception {
     LOG_ENTER();
@@ -1985,7 +1959,6 @@ public class GatewayAdminTopologyFuncTest {
 
     LOG_EXIT();
   }
-
 
   @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testPutDescriptorWithInvalidNameTooLong() throws Exception {
@@ -2000,7 +1973,6 @@ public class GatewayAdminTopologyFuncTest {
 
     LOG_EXIT();
   }
-
 
   private void doTestPutDescriptorWithInvalidName(final String newDescriptorName) throws Exception {
 
@@ -2037,10 +2009,9 @@ public class GatewayAdminTopologyFuncTest {
     assertNotNull(responseBody);
     List<Map<String, String>> items = responseBody.path("items");
     for (Map<String, String> item : items) {
-      assertFalse(item.get("name").equals(newDescriptorName));
+      assertNotEquals(item.get("name"), newDescriptorName);
     }
   }
-
 
   @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testDeleteDescriptor() throws Exception {
@@ -2111,6 +2082,4 @@ public class GatewayAdminTopologyFuncTest {
 
     LOG_EXIT();
   }
-
-
 }

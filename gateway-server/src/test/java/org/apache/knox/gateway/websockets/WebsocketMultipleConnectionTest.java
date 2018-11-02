@@ -125,7 +125,7 @@ public class WebsocketMultipleConnectionTest {
     FileUtils.deleteQuietly(topoDir);
   }
 
-  /**
+  /*
    * Test websocket proxying through gateway.
    */
   @Test
@@ -183,6 +183,7 @@ public class WebsocketMultipleConnectionTest {
 
   /**
    * Start Mock Websocket server that acts as backend.
+   * @throws Exception exception on websocket server start
    */
   private static void startWebsocketServer() throws Exception {
 
@@ -206,7 +207,6 @@ public class WebsocketMultipleConnectionTest {
     }
     int port = connector.getLocalPort();
     backendServerUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/ws", host, port));
-
   }
 
   private static void startGatewayServer() throws Exception {
@@ -246,6 +246,7 @@ public class WebsocketMultipleConnectionTest {
 
   /**
    * Initialize the configs and components required for this test.
+   * @param backend name of topology
    */
   private static void setupGatewayConfig(final String backend)
       throws IOException {

@@ -35,7 +35,6 @@ import org.junit.Test;
 import javax.websocket.CloseReason;
 import javax.websocket.ContainerProvider;
 import javax.websocket.WebSocketContainer;
-import java.io.IOException;
 import java.net.URI;
 import java.util.Locale;
 import java.util.concurrent.Executors;
@@ -73,11 +72,11 @@ public class MessageFailureTest {
     backend.stop();
   }
 
-  /**
+  /*
    * Test for a message that bigger than configured value
    */
   @Test(timeout = 8000)
-  public void testMessageTooBig() throws IOException, Exception {
+  public void testMessageTooBig() throws Exception {
     final String bigMessage = "Echooooooooooooo";
 
     WebSocketContainer container = ContainerProvider.getWebSocketContainer();
@@ -93,11 +92,11 @@ public class MessageFailureTest {
     Assert.assertThat(client.close.getCloseCode().getCode(), CoreMatchers.is(CloseReason.CloseCodes.TOO_BIG.getCode()));
   }
 
-  /**
+  /*
    * Test for a message within limit.
    */
   @Test(timeout = 8000)
-  public void testMessageOk() throws IOException, Exception {
+  public void testMessageOk() throws Exception {
     final String message = "Echo";
 
     WebSocketContainer container = ContainerProvider.getWebSocketContainer();
@@ -113,7 +112,6 @@ public class MessageFailureTest {
 
   }
 
-  
   private static void startBackend() throws Exception {
     backend = new Server();
     connector = new ServerConnector(backend);
@@ -170,7 +168,6 @@ public class MessageFailureTest {
 
 /**
  * A Mock websocket handler that just Echos messages
- *
  */
 class BigEchoSocketHandler extends WebSocketHandler
     implements WebSocketCreator {

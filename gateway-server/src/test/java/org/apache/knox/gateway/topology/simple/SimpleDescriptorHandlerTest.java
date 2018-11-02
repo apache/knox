@@ -127,7 +127,7 @@ public class SimpleDescriptorHandlerTest {
             "        </provider>\n" +
             "    </gateway>\n";
 
-    /**
+    /*
      * KNOX-1006
      *
      * N.B. This test depends on the PropertiesFileServiceDiscovery extension being configured:
@@ -311,7 +311,7 @@ public class SimpleDescriptorHandlerTest {
     }
 
 
-    /**
+    /*
      * KNOX-1006
      *
      * Verify the behavior of the SimpleDescriptorHandler when service discovery fails to produce a valid URL for
@@ -458,7 +458,7 @@ public class SimpleDescriptorHandlerTest {
     }
 
 
-    /**
+    /*
      * KNOX-1216
      */
     @Test
@@ -513,7 +513,7 @@ public class SimpleDescriptorHandlerTest {
     }
 
 
-    /**
+    /*
      * KNOX-1153
      *
      * N.B. This test depends on the PropertiesFileServiceDiscovery extension being configured:
@@ -765,13 +765,11 @@ public class SimpleDescriptorHandlerTest {
         }
     }
 
-
     private File writeProviderConfig(String path, String content) throws IOException {
         File f = new File(path);
         FileUtils.write(f, content, StandardCharsets.UTF_8);
         return f;
     }
-
 
     private void validateGeneratedProviderConfiguration(ProviderConfiguration expected, Node generatedGatewayNode) throws Exception {
         assertNotNull(expected);
@@ -795,7 +793,7 @@ public class SimpleDescriptorHandlerTest {
         }
     }
 
-    /**
+    /*
      * Verify that the expected provider is included in the specified set of actual providers.
      *
      * @param expected        A Provider that should be among the specified actual providers
@@ -830,6 +828,4 @@ public class SimpleDescriptorHandlerTest {
 
         return foundMatch;
     }
-
-
 }
