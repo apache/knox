@@ -23,7 +23,7 @@
 -->
   <Project rdf:about="http://knox.apache.org">
     <created>2014-06-12</created>
-    <license rdf:resource="http://spdx.org/licenses/Apache-2.0" />
+    <license rdf:resource="http://www.apache.org/licenses/LICENSE-2.0"/>
     <name>Apache Knox</name>
     <homepage rdf:resource="http://knox.apache.org" />
     <asfext:pmc rdf:resource="http://knox.apache.org" />
@@ -50,9 +50,111 @@ Protects the details of the Hadoop cluster deployment (hosts and ports are hidde
 Simplifies the number of services that clients need to interact with</description>
     <bug-database rdf:resource="http://issues.apache.org/jira/browse/KNOX" />
     <mailing-list rdf:resource="http://knox.apache.org/mail-lists.html" />
-    <download-page rdf:resource="https://cwiki.apache.org/confluence/display/KNOX/Release+0.4.0" />
+    <download-page rdf:resource="https://cwiki.apache.org/confluence/display/KNOX/Release+1.1.0" />
     <programming-language>Java</programming-language>
     <category rdf:resource="http://projects.apache.org/category/big-data" />
+    <repository>
+      <GitRepository>
+        <location rdf:resource="https://git-wip-us.apache.org/repos/asf/knox.git"/>
+      </GitRepository>
+    </repository>
+    <maintainer>
+      <foaf:Person>
+        <foaf:name>Apache Knox Team</foaf:name>
+          <foaf:mbox rdf:resource="mailto:dev@knox.apache.org"/>
+      </foaf:Person>
+    </maintainer>
+    <release>
+      <Version>
+        <name>Apache Knox Gateway 1.1.0</name>
+        <created>2018/07/30</created>
+        <revision>1.1.0</revision>
+      </Version>
+    </release>
+    <release>
+      <Version>
+        <name>Apache Knox Gateway 1.0.0</name>
+        <created>2018/02/07</created>
+        <revision>1.0.0</revision>
+      </Version>
+    </release>
+    <release>
+      <Version>
+        <name>Apache Knox Gateway 0.14.0</name>
+        <created>2017/12/14</created>
+        <revision>0.14.0</revision>
+      </Version>
+    </release>
+    <release>
+      <Version>
+        <name>Apache Knox Gateway 0.13.0</name>
+        <created>2017/08/19</created>
+        <revision>0.13.0</revision>
+      </Version>
+    </release>
+    <release>
+      <Version>
+        <name>Apache Knox Gateway 0.12.0</name>
+        <created>2017/03/20</created>
+        <revision>0.12.0</revision>
+      </Version>
+    </release>
+    <release>
+      <Version>
+        <name>Apache Knox Gateway 0.11.0</name>
+        <created>2016/12/28</created>
+        <revision>0.11.0</revision>
+      </Version>
+    </release>
+    <release>
+      <Version>
+        <name>Apache Knox Gateway 0.10.0</name>
+        <created>2016/11/07</created>
+        <revision>0.10.0</revision>
+      </Version>
+    </release>
+    <release>
+      <Version>
+        <name>Apache Knox Gateway 0.9.1</name>
+        <created>2016/08/04</created>
+        <revision>0.9.1</revision>
+      </Version>
+    </release>
+    <release>
+      <Version>
+        <name>Apache Knox Gateway 0.9.0</name>
+        <created>2016/04/24</created>
+        <revision>0.9.0</revision>
+      </Version>
+    </release>
+    <release>
+      <Version>
+        <name>Apache Knox Gateway 0.8.0</name>
+        <created>2016/02/04</created>
+        <revision>0.8.0</revision>
+      </Version>
+    </release>
+    <release>
+      <Version>
+        <name>Apache Knox Gateway 0.7.0</name>
+        <created>2015/12/23</created>
+        <revision>0.7.0</revision>
+      </Version>
+    </release>
+    <release>
+      <Version>
+        <name>Apache Knox Gateway 0.6.0</name>
+        <created>2015/04/30</created>
+        <revision>0.6.0</revision>
+      </Version>
+    </release>
+    <release>
+      <Version>
+        <name>Apache Knox Gateway 0.5.0</name>
+        <created>2014/11/06</created>
+        <revision>0.5.0</revision>
+      </Version>
+    </release>
     <release>
       <Version>
         <name>Apache Knox Gateway 0.4.0</name>
@@ -60,17 +162,26 @@ Simplifies the number of services that clients need to interact with</descriptio
         <revision>0.4.0</revision>
       </Version>
     </release>
-    <repository>
-      <SVNRepository>
-        <location rdf:resource="https://git-wip-us.apache.org/repos/asf/knox.git"/>
-        <browse rdf:resource="https://git-wip-us.apache.org/repos/asf?p=knox.git;a=tree"/>
-      </SVNRepository>
-    </repository>
-    <maintainer>
-      <foaf:Person>
-        <foaf:name>Kevin Minder</foaf:name>
-          <foaf:mbox rdf:resource="mailto:kminder@apache.org"/>
-      </foaf:Person>
-    </maintainer>
+    <release>
+      <Version>
+        <name>Apache Knox Gateway 0.3.0</name>
+        <created>2013/10/22</created>
+        <revision>0.3.0</revision>
+      </Version>
+    </release>
+    <release>
+      <Version>
+        <name>Apache Knox Gateway 0.2.0</name>
+        <created>2013/04/23</created>
+        <revision>0.2.0</revision>
+      </Version>
+    </release>
+    <release>
+      <Version>
+        <name>Apache Knox Gateway 0.1.0</name>
+        <created>2012/12/30</created>
+        <revision>0.1.0</revision>
+      </Version>
+    </release>
   </Project>
 </rdf:RDF>
