@@ -87,5 +87,17 @@ public class PassAllHeadersNoEncodingDispatchTest {
     EasyMock.replay( request );
     uri = dispatch.getDispatchUrl( request );
     assertThat( uri.toASCIIString(), is( "https://test-host:42/api/v1/views/TEZ/versions/0.7.0.2.6.2.0-205/instances/TEZ_CLUSTER_INSTANCE/resources/atsproxy/ws/v1/timeline/TEZ_DAG_ID?limit=9007199254740991&primaryFilter=applicationId:%22application_1518808140659_0007%22&_=1519053586839" ) );
+
+    // encode < and > sign
+    path = "http://test-host:8080/api/v1/clusters/mmolnar-knox2/configurations/service_config_versions";
+    query = "group_id%3E0&fields=*&_=1541527314780";
+    request = EasyMock.createNiceMock( HttpServletRequest.class );
+    EasyMock.expect( request.getRequestURI() ).andReturn( path ).anyTimes();
+    EasyMock.expect( request.getRequestURL() ).andReturn( new StringBuffer( path ) ).anyTimes();
+    EasyMock.expect( request.getQueryString() ).andReturn( query ).anyTimes();
+    EasyMock.replay( request );
+    uri = dispatch.getDispatchUrl( request );
+    assertThat( uri.toASCIIString(), is( "http://test-host:8080/api/v1/clusters/mmolnar-knox2/configurations/service_config_versions?group_id%3E0&fields=*&_=1541527314780" ) );
+
   }
 }
