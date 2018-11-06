@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.service.knoxtoken;
 
-import java.io.IOException;
 import java.security.Principal;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -28,7 +27,6 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -72,9 +70,6 @@ public class TokenResource {
 
   @Context
   HttpServletRequest request;
-
-  @Context
-  HttpServletResponse response;
 
   @Context
   ServletContext context;
@@ -193,14 +188,13 @@ public class TokenResource {
 
         String jsonResponse = JsonUtils.renderAsJsonString(map);
 
-        response.getWriter().write(jsonResponse);
-        return Response.ok().build();
+        return Response.ok().entity(jsonResponse).build();
       }
       else {
         return Response.serverError().build();
       }
     }
-    catch (TokenServiceException | IOException e) {
+    catch (TokenServiceException e) {
       log.unableToIssueToken(e);
     }
     return Response.ok().entity("{ \"Unable to acquire token.\" }").build();

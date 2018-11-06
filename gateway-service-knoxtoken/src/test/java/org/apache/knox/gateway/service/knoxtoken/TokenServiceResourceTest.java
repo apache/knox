@@ -35,10 +35,7 @@ import org.junit.Test;
 import javax.security.auth.Subject;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -115,16 +112,10 @@ public class TokenServiceResourceTest {
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 
-    StringWriter writer = new StringWriter();
-    PrintWriter printWriter = new PrintWriter(writer);
-    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-    EasyMock.expect(response.getWriter()).andReturn(printWriter);
-
-    EasyMock.replay(principal, services, context, request, response);
+    EasyMock.replay(principal, services, context, request);
 
     TokenResource tr = new TokenResource();
     tr.request = request;
-    tr.response = response;
 
     // Issue a token
     Response retResponse = tr.doGet();
@@ -132,7 +123,7 @@ public class TokenServiceResourceTest {
     assertEquals(200, retResponse.getStatus());
 
     // Parse the response
-    String retString = writer.toString();
+    String retString = retResponse.getEntity().toString();
     String accessToken = getTagValue(retString, "access_token");
     assertNotNull(accessToken);
     String expiry = getTagValue(retString, "expires_in");
@@ -165,16 +156,10 @@ public class TokenServiceResourceTest {
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 
-    StringWriter writer = new StringWriter();
-    PrintWriter printWriter = new PrintWriter(writer);
-    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-    EasyMock.expect(response.getWriter()).andReturn(printWriter);
-
-    EasyMock.replay(principal, services, context, request, response);
+    EasyMock.replay(principal, services, context, request);
 
     TokenResource tr = new TokenResource();
     tr.request = request;
-    tr.response = response;
     tr.context = context;
     tr.init();
 
@@ -184,7 +169,7 @@ public class TokenServiceResourceTest {
     assertEquals(200, retResponse.getStatus());
 
     // Parse the response
-    String retString = writer.toString();
+    String retString = retResponse.getEntity().toString();
     String accessToken = getTagValue(retString, "access_token");
     assertNotNull(accessToken);
     String expiry = getTagValue(retString, "expires_in");
@@ -223,16 +208,10 @@ public class TokenServiceResourceTest {
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 
-    StringWriter writer = new StringWriter();
-    PrintWriter printWriter = new PrintWriter(writer);
-    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-    EasyMock.expect(response.getWriter()).andReturn(printWriter);
-
-    EasyMock.replay(principal, services, context, request, response);
+    EasyMock.replay(principal, services, context, request);
 
     TokenResource tr = new TokenResource();
     tr.request = request;
-    tr.response = response;
     tr.context = context;
     tr.init();
 
@@ -242,7 +221,7 @@ public class TokenServiceResourceTest {
     assertEquals(200, retResponse.getStatus());
 
     // Parse the response
-    String retString = writer.toString();
+    String retString = retResponse.getEntity().toString();
     String accessToken = getTagValue(retString, "access_token");
     assertNotNull(accessToken);
     String expiry = getTagValue(retString, "expires_in");
@@ -286,16 +265,10 @@ public class TokenServiceResourceTest {
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 
-    StringWriter writer = new StringWriter();
-    PrintWriter printWriter = new PrintWriter(writer);
-    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-    EasyMock.expect(response.getWriter()).andReturn(printWriter);
-
-    EasyMock.replay(principal, services, context, request, response, trustedCertMock);
+    EasyMock.replay(principal, services, context, request, trustedCertMock);
 
     TokenResource tr = new TokenResource();
     tr.request = request;
-    tr.response = response;
     tr.context = context;
     tr.init();
 
@@ -305,7 +278,7 @@ public class TokenServiceResourceTest {
     assertEquals(200, retResponse.getStatus());
 
     // Parse the response
-    String retString = writer.toString();
+    String retString = retResponse.getEntity().toString();
     String accessToken = getTagValue(retString, "access_token");
     assertNotNull(accessToken);
     String expiry = getTagValue(retString, "expires_in");
@@ -343,16 +316,10 @@ public class TokenServiceResourceTest {
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 
-    StringWriter writer = new StringWriter();
-    PrintWriter printWriter = new PrintWriter(writer);
-    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-    EasyMock.expect(response.getWriter()).andReturn(printWriter);
-
-    EasyMock.replay(principal, services, context, request, response, trustedCertMock);
+    EasyMock.replay(principal, services, context, request, trustedCertMock);
 
     TokenResource tr = new TokenResource();
     tr.request = request;
-    tr.response = response;
     tr.context = context;
     tr.init();
 
@@ -383,16 +350,10 @@ public class TokenServiceResourceTest {
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 
-    StringWriter writer = new StringWriter();
-    PrintWriter printWriter = new PrintWriter(writer);
-    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-    EasyMock.expect(response.getWriter()).andReturn(printWriter);
-
-    EasyMock.replay(principal, services, context, request, response);
+    EasyMock.replay(principal, services, context, request);
 
     TokenResource tr = new TokenResource();
     tr.request = request;
-    tr.response = response;
     tr.context = context;
     tr.init();
 
@@ -423,16 +384,10 @@ public class TokenServiceResourceTest {
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 
-    StringWriter writer = new StringWriter();
-    PrintWriter printWriter = new PrintWriter(writer);
-    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-    EasyMock.expect(response.getWriter()).andReturn(printWriter);
-
-    EasyMock.replay(principal, services, context, request, response);
+    EasyMock.replay(principal, services, context, request);
 
     TokenResource tr = new TokenResource();
     tr.request = request;
-    tr.response = response;
     tr.context = context;
     tr.init();
 
@@ -442,7 +397,7 @@ public class TokenServiceResourceTest {
     assertEquals(200, retResponse.getStatus());
 
     // Parse the response
-    String retString = writer.toString();
+    String retString = retResponse.getEntity().toString();
     String accessToken = getTagValue(retString, "access_token");
     assertNotNull(accessToken);
     String expiry = getTagValue(retString, "expires_in");
@@ -475,16 +430,10 @@ public class TokenServiceResourceTest {
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 
-    StringWriter writer = new StringWriter();
-    PrintWriter printWriter = new PrintWriter(writer);
-    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-    EasyMock.expect(response.getWriter()).andReturn(printWriter);
-
-    EasyMock.replay(principal, services, context, request, response);
+    EasyMock.replay(principal, services, context, request);
 
     TokenResource tr = new TokenResource();
     tr.request = request;
-    tr.response = response;
     tr.context = context;
     tr.init();
 
@@ -494,7 +443,7 @@ public class TokenServiceResourceTest {
     assertEquals(200, retResponse.getStatus());
 
     // Parse the response
-    String retString = writer.toString();
+    String retString = retResponse.getEntity().toString();
     String accessToken = getTagValue(retString, "access_token");
     assertNotNull(accessToken);
     String expiry = getTagValue(retString, "expires_in");
@@ -531,16 +480,10 @@ public class TokenServiceResourceTest {
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 
-    StringWriter writer = new StringWriter();
-    PrintWriter printWriter = new PrintWriter(writer);
-    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-    EasyMock.expect(response.getWriter()).andReturn(printWriter);
-
-    EasyMock.replay(principal, services, context, request, response);
+    EasyMock.replay(principal, services, context, request);
 
     TokenResource tr = new TokenResource();
     tr.request = request;
-    tr.response = response;
     tr.context = context;
     tr.init();
 
@@ -550,7 +493,7 @@ public class TokenServiceResourceTest {
     assertEquals(200, retResponse.getStatus());
 
     // Parse the response
-    String retString = writer.toString();
+    String retString = retResponse.getEntity().toString();
     String accessToken = getTagValue(retString, "access_token");
     assertNotNull(accessToken);
     String expiry = getTagValue(retString, "expires_in");
@@ -588,16 +531,10 @@ public class TokenServiceResourceTest {
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 
-    StringWriter writer = new StringWriter();
-    PrintWriter printWriter = new PrintWriter(writer);
-    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-    EasyMock.expect(response.getWriter()).andReturn(printWriter);
-
-    EasyMock.replay(principal, services, context, request, response);
+    EasyMock.replay(principal, services, context, request);
 
     TokenResource tr = new TokenResource();
     tr.request = request;
-    tr.response = response;
     tr.context = context;
     tr.init();
 
@@ -607,7 +544,7 @@ public class TokenServiceResourceTest {
     assertEquals(200, retResponse.getStatus());
 
     // Parse the response
-    String retString = writer.toString();
+    String retString = retResponse.getEntity().toString();
     String accessToken = getTagValue(retString, "access_token");
     assertNotNull(accessToken);
     String expiry = getTagValue(retString, "expires_in");
@@ -644,16 +581,10 @@ public class TokenServiceResourceTest {
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 
-    StringWriter writer = new StringWriter();
-    PrintWriter printWriter = new PrintWriter(writer);
-    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-    EasyMock.expect(response.getWriter()).andReturn(printWriter);
-
-    EasyMock.replay(principal, services, context, request, response);
+    EasyMock.replay(principal, services, context, request);
 
     TokenResource tr = new TokenResource();
     tr.request = request;
-    tr.response = response;
     tr.context = context;
     tr.init();
 
@@ -663,7 +594,7 @@ public class TokenServiceResourceTest {
     assertEquals(200, retResponse.getStatus());
 
     // Parse the response
-    String retString = writer.toString();
+    String retString = retResponse.getEntity().toString();
     String accessToken = getTagValue(retString, "access_token");
     assertNotNull(accessToken);
     String expiry = getTagValue(retString, "expires_in");
