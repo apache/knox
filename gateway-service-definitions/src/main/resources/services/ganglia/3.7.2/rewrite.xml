@@ -1,0 +1,120 @@
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+
+    <!-- INBOUND RULES -->
+
+    <rule dir="IN" name="GANGLIA/ganglia/inbound/root" pattern="*://*:*/**/ganglia">
+        <rewrite template="{$serviceUrl[GANGLIA]}/"/>
+    </rule>
+
+    <rule dir="IN" name="GANGLIA/ganglia/inbound/root/query" pattern="*://*:*/**/ganglia?{**}">
+        <rewrite template="{$serviceUrl[GANGLIA]}/?{**}"/>
+    </rule>
+
+    <rule dir="IN" name="GANGLIA/ganglia/inbound/path/query" pattern="*://*:*/**/ganglia/{**}?{**}">
+        <rewrite template="{$serviceUrl[GANGLIA]}/{**}?{**}"/>
+    </rule>
+
+    <rule dir="IN" name="GANGLIA/ganglia/inbound/css" pattern="*://*:*/**/ganglia/css/{path=**}">
+        <rewrite template="{$serviceUrl[GANGLIA]}/css/{path}"/>
+    </rule>
+
+    <rule dir="IN" name="GANGLIA/ganglia/inbound/js" pattern="*://*:*/**/ganglia/js/{path=**}">
+        <rewrite template="{$serviceUrl[GANGLIA]}/js/{path}"/>
+    </rule>
+
+    <rule dir="IN" name="GANGLIA/ganglia/inbound/img" pattern="*://*:*/**/ganglia/img/{path=**}">
+        <rewrite template="{$serviceUrl[GANGLIA]}/img/{path}"/>
+    </rule>
+
+    <!-- OUTBOUND RULES -->
+
+    <rule dir="OUT" name="GANGLIA/ganglia/inbound/root" pattern="*://*:*/**/ganglia">
+        <rewrite template="{$frontend[url]}/ganglia/"/>
+    </rule>
+
+    <rule dir="OUT" name="GANGLIA/ganglia/inbound/root/query" pattern="*://*:*/**/ganglia?{**}">
+        <rewrite template="{$frontend[url]}/ganglia/?{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="GANGLIA/ganglia/outbound/css" pattern="css/{path=**}">
+        <rewrite template="{$frontend[url]}/ganglia/css/{path}"/>
+    </rule>
+
+    <rule dir="OUT" name="GANGLIA/ganglia/outbound/js" pattern="js/{path=**}">
+        <rewrite template="{$frontend[url]}/ganglia/js/{path}"/>
+    </rule>
+
+    <rule dir="OUT" name="GANGLIA/ganglia/outbound/imgslash" pattern="/img/{path=**}">
+        <rewrite template="{$frontend[url]}/ganglia/img/{path}"/>
+    </rule>
+
+    <rule dir="OUT" name="GANGLIA/ganglia/outbound/img" pattern="img/{path=**}">
+        <rewrite template="{$frontend[url]}/ganglia/img/{path}"/>
+    </rule>
+
+    <rule dir="OUT" name="GANGLIA/ganglia/outbound/script/root/query" pattern="./{**}?{**}">
+        <rewrite template="{$frontend[url]}/ganglia/{**}?{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="GANGLIA/ganglia/outbound/script/root/path" pattern="./{**}">
+        <rewrite template="{$frontend[url]}/ganglia/{**}"/>
+    </rule>
+
+    <rule flow="OR" dir="OUT" name="GANGLIA/ganglia/outbound/graph" >
+        <match pattern="./graph.php?{query=**}">
+          <rewrite template="{$frontend[url]}/ganglia/graph.php?{query}"/>
+        </match>
+        <match pattern="{**}/graph.php?{query=**}">
+          <rewrite template="{$frontend[url]}/ganglia/graph.php?{query}"/>
+        </match>
+    </rule>
+
+    <rule dir="OUT" name="GANGLIA/ganglia/outbound/stacked" pattern="stacked.php?{**}">
+        <rewrite template="{$frontend[url]}/ganglia/stacked.php?{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="GANGLIA/ganglia/outbound/stacked" pattern="/stacked.php?{**}">
+        <rewrite template="{$frontend[url]}/ganglia/stacked.php?{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="GANGLIA/ganglia/outbound/calendar" pattern="calendar.gif">
+        <rewrite template="{$frontend[url]}/ganglia/calendar.gif"/>
+    </rule>
+
+    <!-- HEADERS RULES -->
+
+    <rule flow="OR" dir="OUT" name="GANGLIA/ganglia/outbound/headers">
+        <match pattern="*://*:*/**/ganglia/{path=**}">
+          <rewrite template="{$serviceUrl[GANGLIA]}/{path}"/>
+        </match>
+        <match pattern="*://*:*/**/ganglia/{path=**}?{query=**}">
+          <rewrite template="{$serviceUrl[GANGLIA]}/{path}?{query}"/>
+        </match>
+        <match pattern="*://*:*/**/ganglia?{query=**}">
+          <rewrite template="{$serviceUrl[GANGLIA]}/?{query}"/>
+        </match>
+        <match pattern="*://*:*/**/ganglia/">
+          <rewrite template="{$serviceUrl[GANGLIA]}/"/>
+        </match>
+        <match pattern="*://*:*/**/ganglia">
+          <rewrite template="{$serviceUrl[GANGLIA]}/"/>
+        </match>
+    </rule>
+
+</rules>
