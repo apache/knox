@@ -53,6 +53,12 @@
     <rule dir="OUT" name="AMBARIUI/ambari/outbound/appjs">
         <rewrite template="{$frontend[path]}/ambari/javascripts/app.js"/>
     </rule>
+    <rule dir="OUT" name="AMBARIUI/ambari/outbound/favicon">
+        <rewrite template="{$frontend[path]}/ambari/img/logo.png"/>
+    </rule>
+     <rule dir="OUT" name="AMBARIUI/ambari/outbound/notice">
+        <rewrite template="{$frontend[path]}/ambari/licenses/NOTICE.txt"/>
+    </rule>
 
     <!-- WS support -->
     <rule dir="OUT" name="AMBARIUI/ambari/outbound/websocket">
@@ -120,6 +126,8 @@
             <apply path="stylesheets/app.css" rule="AMBARIUI/ambari/outbound/appcss" />
             <apply path="javascripts/vendor.js" rule="AMBARIUI/ambari/outbound/vendorjs" />
             <apply path="javascripts/app.js" rule="AMBARIUI/ambari/outbound/appjs" />
+            <apply path="/img/logo.png" rule="AMBARIUI/ambari/outbound/favicon"/>
+            <apply path="/licenses/NOTICE.txt" rule="AMBARIUI/ambari/outbound/notice"/>
         </content>
     </filter>
 </rules>
