@@ -193,7 +193,7 @@
         <okhttp.version>2.7.5</okhttp.version>
         <pac4j.version>2.1.0</pac4j.version>
         <protobuf.version>3.6.1</protobuf.version>
-        <rest-assured.version>3.1.1</rest-assured.version>
+        <rest-assured.version>3.2.0</rest-assured.version>
         <shiro.version>1.4.0</shiro.version>
         <shrinkwrap.version>1.2.6</shrinkwrap.version>
         <shrinkwrap.descriptors.version>2.0.0</shrinkwrap.descriptors.version>
