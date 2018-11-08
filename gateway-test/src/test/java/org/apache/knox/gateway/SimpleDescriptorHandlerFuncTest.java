@@ -165,7 +165,6 @@ public class SimpleDescriptorHandlerFuncTest {
       EasyMock.expect(config.getGatewayDeploymentDir()).andReturn(testDeployDir.getAbsolutePath()).anyTimes();
       EasyMock.expect(config.getGatewayAddress()).andReturn(gatewayAddress).anyTimes();
       EasyMock.expect(config.getGatewayPortMappings()).andReturn(Collections.emptyMap()).anyTimes();
-      EasyMock.expect(config.getThreadPoolMax()).andReturn(200).anyTimes();
       EasyMock.replay(config);
 
       // Setup the Gateway Services
