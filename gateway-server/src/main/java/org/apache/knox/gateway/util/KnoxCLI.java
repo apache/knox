@@ -185,7 +185,7 @@ public class KnoxCLI extends Configured implements Tool {
    * <pre>
    * % knoxcli version
    * % knoxcli list-topologies
-   * % knoxcli master-create keyName [--size size] [--generate]
+   * % knoxcli master-create keyName [--size size] [--master mastersecret] [--generate]
    * % knoxcli create-alias alias [--cluster clustername] [--generate] [--value v]
    * % knoxcli list-alias [--cluster clustername]
    * % knoxcli delete=alias alias [--cluster clustername]
@@ -834,12 +834,18 @@ public class KnoxCLI extends Configured implements Tool {
  }
 
  public class MasterCreateCommand extends Command {
-  public static final String USAGE = "create-master [--force]";
-  public static final String DESC = "The create-master command persists the\n" +
-                                    "master secret in a file located at:\n" +
-                                    "{GATEWAY_HOME}/data/security/master. It\n" +
-                                    "will prompt the user for the secret to persist.\n" +
-                                    "Use --force to overwrite the master secret.";
+  public static final String USAGE = "create-master [--force] [--master mastersecret] [--generate]";
+  public static final String DESC = "The create-master command persists the master secret in a file located at:\n" +
+                                    "{GATEWAY_HOME}/data/security/master.\n" +
+                                    "It will prompt the user for the secret to persist.\n" +
+                                    "Use --force to overwrite the master secret.\n" +
+                                    "Use --master to pass in a master secret to persist.\n" +
+                                    "This can be used to persist the secret without any user interaction.\n" +
+                                    "Be careful as the secret might appear in shell histories or process listings.\n" +
+                                    "Instead of --master it is usually a better idea to use --generate instead!\n" +
+                                    "Use --generate to have Knox automatically generate a random secret.\n" +
+                                    "The generated secret will not be printed or otherwise exposed.\n" +
+                                    "Do not specify both --master and --generate at the same time.\n";
 
    public MasterCreateCommand() {
    }
