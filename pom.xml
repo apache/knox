@@ -198,8 +198,8 @@
         <shrinkwrap.version>1.2.6</shrinkwrap.version>
         <shrinkwrap.descriptors.version>2.0.0</shrinkwrap.descriptors.version>
         <slf4j.version>1.7.25</slf4j.version>
-        <spotbugs.version>3.1.7</spotbugs.version>
-        <spotbugs-maven-plugin.version>3.1.6</spotbugs-maven-plugin.version>
+        <spotbugs.version>3.1.8</spotbugs.version>
+        <spotbugs-maven-plugin.version>3.1.8</spotbugs-maven-plugin.version>
         <taglibs-standard.version>1.2.5</taglibs-standard.version>
         <velocity.version>1.7</velocity.version>
         <xmltool.version>3.3</xmltool.version>
