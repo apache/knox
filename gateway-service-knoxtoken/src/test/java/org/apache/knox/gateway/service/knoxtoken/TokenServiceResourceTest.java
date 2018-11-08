@@ -64,7 +64,7 @@ public class TokenServiceResourceTest {
   @BeforeClass
   public static void setup() throws Exception {
     KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
-    kpg.initialize(1024);
+    kpg.initialize(2048);
     KeyPair KPair = kpg.generateKeyPair();
 
     publicKey = (RSAPublicKey) KPair.getPublic();

@@ -68,7 +68,7 @@ public class CMFKeystoreService extends BaseKeystoreService {
     KeyPairGenerator keyPairGenerator;
     try {
       keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-      keyPairGenerator.initialize(1024);
+      keyPairGenerator.initialize(2048);
       KeyPair KPair = keyPairGenerator.generateKeyPair();
       X509Certificate cert = X509CertificateUtil.generateCertificate(TEST_CERT_DN, KPair, 365, "SHA1withRSA");
 

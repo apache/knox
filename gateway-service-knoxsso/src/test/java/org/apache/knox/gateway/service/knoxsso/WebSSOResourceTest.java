@@ -81,7 +81,7 @@ public class WebSSOResourceTest {
   @BeforeClass
   public static void setup() throws Exception {
     KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
-    kpg.initialize(1024);
+    kpg.initialize(2048);
     KeyPair keyPair = kpg.generateKeyPair();
 
     gatewayPublicKey = (RSAPublicKey) keyPair.getPublic();
@@ -800,7 +800,7 @@ public class WebSSOResourceTest {
     String customSigningKeyPassphrase = "testSigningKeyPassphrase";
 
     KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
-    kpg.initialize(1024);
+    kpg.initialize(2048);
     KeyPair keyPair = kpg.generateKeyPair();
     RSAPublicKey customPublicKey = (RSAPublicKey) keyPair.getPublic();
     RSAPrivateKey customPrivateKey = (RSAPrivateKey) keyPair.getPrivate();

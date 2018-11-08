@@ -189,7 +189,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
       KeyPairGenerator keyPairGenerator;
       try {
         keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        keyPairGenerator.initialize(1024);
+        keyPairGenerator.initialize(2048);
         KeyPair KPair = keyPairGenerator.generateKeyPair();
         if (hostname == null) {
           hostname = System.getProperty(CERT_GEN_MODE, CERT_GEN_MODE_LOCALHOST);

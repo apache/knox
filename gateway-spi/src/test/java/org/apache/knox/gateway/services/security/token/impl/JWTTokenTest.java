@@ -19,7 +19,6 @@ package org.apache.knox.gateway.services.security.token.impl;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
@@ -44,7 +43,7 @@ public class JWTTokenTest extends org.junit.Assert {
   private static RSAPrivateKey privateKey;
 
   @BeforeClass
-  public static void setup() throws Exception, NoSuchAlgorithmException {
+  public static void setup() throws Exception {
     KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
     kpg.initialize(2048);
 
@@ -236,5 +235,4 @@ public class JWTTokenTest extends org.junit.Assert {
           // expected
       }
   }
-
 }

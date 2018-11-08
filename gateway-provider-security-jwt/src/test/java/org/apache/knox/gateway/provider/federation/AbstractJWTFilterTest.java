@@ -457,7 +457,7 @@ public abstract class AbstractJWTFilterTest  {
     try {
       // Create a private key to sign the token
       KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
-      kpg.initialize(1024);
+      kpg.initialize(2048);
 
       KeyPair kp = kpg.genKeyPair();
 
@@ -493,7 +493,7 @@ public abstract class AbstractJWTFilterTest  {
       Properties props = getProperties();
 
       KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
-      kpg.initialize(1024);
+      kpg.initialize(2048);
 
       KeyPair KPair = kpg.generateKeyPair();
       String dn = buildDistinguishedName(InetAddress.getLocalHost().getHostName());

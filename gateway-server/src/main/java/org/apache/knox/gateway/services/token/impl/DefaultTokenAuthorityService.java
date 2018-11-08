@@ -140,7 +140,8 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
       try {
         RSAPrivateKey key = (RSAPrivateKey) ks.getSigningKey(signingKeystoreName,
             getSigningKeyAlias(signingKeystoreAlias), passphrase);
-        JWSSigner signer = new RSASSASigner(key);
+        // allowWeakKey to not break existing 1024 bit certificates
+        JWSSigner signer = new RSASSASigner(key, true);
         token.sign(signer);
       } catch (KeystoreServiceException e) {
         throw new TokenServiceException(e);
