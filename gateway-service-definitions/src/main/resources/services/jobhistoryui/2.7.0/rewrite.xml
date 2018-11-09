@@ -76,20 +76,12 @@
     <rewrite template="{$serviceUrl[JOBHISTORYUI]}/ws/{**}"/>
   </rule>
 
-  <rule dir="IN" name="JOBHISTORYUI/nodelink/inbound" pattern="*://*:*/**/jobhistory/node?{scheme}?{host}?{port}">
-    <rewrite template="{scheme}://{host}:{port}/node?{scheme}?{host}?{port}"/>
-  </rule>
-
-  <rule dir="IN" name="JOBHISTORYUI/jobhistory/inbound/node" pattern="*://*:*/**/jobhistory/node?{host}&amp;{port=**}">
-    <rewrite template="http://{host}:{port=**}/node"/>
-  </rule>
-
   <!-- request out web content rewrite rules -->
 
   <!-- rewrite map reduce node manager request -->
   <!-- This maps to Nodemanager           -->
   <rule dir="OUT" name="JOBHISTORYUI/nodelink" pattern="{scheme}://{host}:{port}">
-    <rewrite template="{$frontend[scheme]}://{$frontend[address]}/gateway/nodemanagerui/node?{host}"/>
+    <rewrite template="{$frontend[url]}/yarn/nodemanager/node?{scheme}?{host}?{port}"/>
   </rule>
 
   <!-- static web resources (css, js, jpeg, etc). -->
@@ -168,6 +160,6 @@
 
   <rule dir="OUT" name="JOBHISTORYUI/jobhistory/outbound/jobs/node">
     <match pattern="{scheme}://{host}:{port}"/>
-    <rewrite template="{$frontend[url]}/jobhistory/node?{host}?{port}"/>
+    <rewrite template="{$frontend[url]}/yarn/nodemanager/node?{scheme}?{host}?{port}"/>
   </rule>
 </rules>
