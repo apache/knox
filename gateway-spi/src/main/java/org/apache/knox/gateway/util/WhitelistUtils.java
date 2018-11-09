@@ -34,7 +34,7 @@ public class WhitelistUtils {
 
   static final String LOCALHOST_REGEXP = "^" + LOCALHOST_REGEXP_SEGMENT + "$";
 
-  static final String DEFAULT_DISPATCH_WHITELIST_TEMPLATE = "^/.*$;^https?://%s:[0-9]+/?.*$";
+  static final String DEFAULT_DISPATCH_WHITELIST_TEMPLATE = "^\\/.*$;^https?:\\/\\/%s:[0-9]+\\/?.*$";
 
   private static final String IP_ADDRESS_REGEX = "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$";
 
