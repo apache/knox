@@ -23,8 +23,8 @@
      e.g. http://host.com:8088
 -->
 
-<rule dir="IN" name="YARNUI/yarn/inbound/ws" pattern="*://*:*/**/yarn/ws/v1/cluster/apps/{**}">
-    <rewrite template="{$serviceUrl[YARNUI]}/ws/v1/cluster/apps/{**}"/>
+<rule dir="IN" name="YARNUI/yarn/inbound/ws" pattern="*://*:*/**/yarn/ws/v1/{**}">
+    <rewrite template="{$serviceUrl[YARNUI]}/ws/v1/{**}"/>
 </rule>
 <rule dir="IN" name="YARNUI/yarn/inbound/root" pattern="*://*:*/**/yarn/">
     <rewrite template="{$serviceUrl[YARNUI]}/cluster"/>
@@ -214,6 +214,7 @@
 <filter name="YARNUI/yarn/outbound/filter/cluster">
     <content type="*/html">
         <apply path="(https?://[^/':,]+:[\d]+)?/ws/v1/cluster/apps/application" rule="YARNUI/yarn/outbound/apps/cluster1"/>
+        <apply path="/ws/v1/.*" rule="YARNUI/yarn/outbound/ws1"/>
         <apply path="https?://[^/':,]+:[\d]+/cluster/scheduler.*" rule="YARNUI/yarn/outbound/scheduler1"/>
         <apply path="/cluster/scheduler.*" rule="YARNUI/yarn/outbound/scheduler2"/>
         <apply path="(https?://[^/':,]+:[\d]+)?/cluster/app/application" rule="YARNUI/yarn/outbound/cluster/app/application"/>
@@ -241,10 +242,15 @@
 <rule dir="OUT" name="YARNUI/yarn/outbound/apps/cluster1">
     <rewrite template="{$frontend[url]}/yarn/ws/v1/cluster/apps/application"/>
 </rule>
+<rule dir="OUT" name="YARNUI/yarn/outbound/ws1">
+    <match pattern="/ws/v1/{**}"/>
+    <rewrite template="{$frontend[url]}/yarn/ws/v1/{**}"/>
+</rule>
 
 <rule dir="OUT" name="YARNUI/yarn/outbound/cluster/app/application">
     <rewrite template="{$frontend[url]}/yarn/cluster/app/application"/>
 </rule>
+
 
 <rule dir="OUT" name="YARNUI/yarn/outbound/apps/history">
     <match pattern="*://*:*/proxy/{**}"/>
