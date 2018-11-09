@@ -160,7 +160,7 @@
         <rewrite template="{$frontend[url]}/yarn/jobhistory/job/{**}?{scheme}?{host}?{port}"/>
     </match>
     <match pattern="*://*:*/history/{**}?{**}">
-        <rewrite template="{gateway.scheme}://{gateway.host}:{gateway.port}/gateway/sparkui/spark/history/{**}?{**}"/>
+        <rewrite template="{$frontend[url]}/sparkhistory/history/{**}?{**}"/>
     </match>
     <match pattern="*://*:*/cluster/app/{**}">
         <rewrite template="{$frontend[url]}/yarn/cluster/app/{**}"/>
