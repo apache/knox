@@ -31,6 +31,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.knox.gateway.audit.api.AuditContext;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.audit.api.AuditService;
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
@@ -68,7 +69,10 @@ public class HadoopAuthPostFilter implements Filter {
         Subject subject = new Subject();
         subject.getPrincipals().add(new PrimaryPrincipal(principal));
         log.hadoopAuthAssertedPrincipal(principal);
-        auditService.getContext().setUsername( principal ); //KM: Audit Fix
+        AuditContext context = auditService.getContext();
+        context.setUsername( principal );
+        auditService.attachContext(context);
+
         String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
         auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
         doAs(httpRequest, response, chain, subject);

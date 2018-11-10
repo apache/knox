@@ -18,8 +18,6 @@
 package org.apache.knox.gateway.audit;
 
 import org.apache.knox.gateway.audit.log4j.appender.JdbmQueue;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.PropertyConfigurator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,7 +51,6 @@ public class JdbmQueueTest {
       queue.close();
       queue = null;
     }
-    LogManager.shutdown();
     String absolutePath = "target/audit";
     File db = new File( absolutePath + ".db" );
     if( db.exists() ) {
@@ -63,7 +60,6 @@ public class JdbmQueueTest {
     if( lg.exists() ) {
       assertThat( "Failed to delete audit store lg file.", lg.delete(), is( true ) );
     }
-    PropertyConfigurator.configure( ClassLoader.getSystemResourceAsStream( "audit-log4j.properties" ) );
   }
 
   @Test

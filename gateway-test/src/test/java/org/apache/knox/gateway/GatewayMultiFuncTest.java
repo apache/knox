@@ -40,12 +40,12 @@ import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.category.ReleaseTest;
 import org.apache.knox.test.mock.MockServer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.URL;
@@ -68,7 +68,7 @@ import static org.xmlmatchers.transform.XmlConverters.the;
 
 @Category(ReleaseTest.class)
 public class GatewayMultiFuncTest {
-  private static final Logger LOG = LoggerFactory.getLogger( GatewayMultiFuncTest.class );
+  private static final Logger LOG = LogManager.getLogger( GatewayMultiFuncTest.class );
   private static final Class<?> DAT = GatewayMultiFuncTest.class;
 
   private static GatewayTestConfig config;

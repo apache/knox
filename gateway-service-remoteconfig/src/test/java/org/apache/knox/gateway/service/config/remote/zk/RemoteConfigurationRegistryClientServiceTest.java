@@ -222,9 +222,10 @@ public class RemoteConfigurationRegistryClientServiceTest {
     private TestingCluster setupAndStartSecureTestZooKeeper(String principal, String digestPassword) throws Exception {
         final boolean applyAuthentication = (principal != null);
 
+        System.setProperty("zookeeper.jmx.log4j.disable", "true");
+
         // Configure security for the ZK cluster instances
         Map<String, Object> customInstanceSpecProps = new HashMap<>();
-
         if (applyAuthentication) {
             customInstanceSpecProps.put("authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
             customInstanceSpecProps.put("requireClientAuthScheme", "sasl");

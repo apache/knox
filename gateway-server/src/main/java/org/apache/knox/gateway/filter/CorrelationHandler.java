@@ -37,6 +37,7 @@ public class CorrelationHandler extends HandlerWrapper {
     CorrelationService correlationService = CorrelationServiceFactory.getCorrelationService();
     CorrelationContext correlationContext = correlationService.createContext();
     correlationContext.setRequestId( UUID.randomUUID().toString() );
+    correlationService.attachContext(correlationContext);
     try {
       super.handle( target, baseRequest, request, response );
     } finally {

@@ -33,9 +33,8 @@ import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.store.LdifFileLoader;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.directory.server.protocol.shared.transport.Transport;
-import org.apache.log4j.PropertyConfigurator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -44,7 +43,7 @@ import java.util.UUID;
 
 public class SimpleLdapDirectoryServer {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SimpleLdapDirectoryServer.class);
+  private static final Logger LOG = LogManager.getLogger(SimpleLdapDirectoryServer.class);
 
   private static final String DEFAULT_PORT = "33389";
 
@@ -127,8 +126,6 @@ public class SimpleLdapDirectoryServer {
   }
 
   public static void main( String[] args ) throws Exception {
-    PropertyConfigurator.configure( System.getProperty( "log4j.configuration" ) );
-
     SimpleLdapDirectoryServer ldap;
 
     File file;

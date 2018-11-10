@@ -52,7 +52,6 @@ public class Knox242FuncTest {
   @BeforeClass
   public static void setupSuite() throws Exception {
     LOG_ENTER();
-    //appenders = NoOpAppender.setUpAndReturnOriginalAppenders();
     String basedir = System.getProperty("basedir");
     if (basedir == null) {
       basedir = new File(".").getCanonicalPath();

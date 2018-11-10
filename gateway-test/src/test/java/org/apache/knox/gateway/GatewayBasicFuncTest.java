@@ -50,6 +50,8 @@ import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.category.MediumTests;
 import org.apache.knox.test.category.VerifyTest;
 import org.apache.knox.test.mock.MockRequestMatcher;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -65,8 +67,6 @@ import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
 import java.io.ByteArrayOutputStream;
@@ -106,7 +106,7 @@ import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
 
 @Category( { VerifyTest.class, MediumTests.class } )
 public class GatewayBasicFuncTest {
-  private static Logger log = LoggerFactory.getLogger( GatewayBasicFuncTest.class );
+  private static final Logger log = LogManager.getLogger( GatewayBasicFuncTest.class );
 
   private static GatewayTestDriver driver = new GatewayTestDriver();
 
@@ -358,7 +358,7 @@ public class GatewayBasicFuncTest {
   }
 
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
-  public void testBasicOutboundEncodedHeaderUseCase() throws IOException {
+  public void testBasicOutboundEncodedHeaderUseCase() {
     LOG_ENTER();
     String root = "/tmp/GatewayBasicFuncTest/testBasicOutboundHeaderUseCase";
     String username = "hdfs";

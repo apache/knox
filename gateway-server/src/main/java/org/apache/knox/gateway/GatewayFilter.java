@@ -24,6 +24,7 @@ import org.apache.knox.gateway.audit.api.AuditService;
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.audit.api.CorrelationContext;
+import org.apache.knox.gateway.audit.api.CorrelationService;
 import org.apache.knox.gateway.audit.api.CorrelationServiceFactory;
 import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
@@ -153,9 +154,13 @@ public class GatewayFilter implements Filter {
     assignCorrelationRequestId();
     // Populate Audit/correlation parameters
     AuditContext auditContext = auditService.getContext();
+    if(auditContext == null) {
+      auditContext = auditService.createContext();
+    }
     auditContext.setTargetServiceName( match == null ? null : match.getValue().getResourceRole() );
     auditContext.setRemoteIp( getRemoteAddress(servletRequest) );
     auditContext.setRemoteHostname( servletRequest.getRemoteHost() );
+    auditService.attachContext(auditContext);
     auditor.audit(
         Action.ACCESS, contextWithPathAndQuery, ResourceType.URI,
         ActionOutcome.UNAVAILABLE, RES.requestMethod(((HttpServletRequest)servletRequest).getMethod()));
@@ -233,14 +238,16 @@ public class GatewayFilter implements Filter {
 
   // Now creating the correlation context only if required since it may be created upstream in the CorrelationHandler.
   private void assignCorrelationRequestId() {
-    CorrelationContext correlationContext = CorrelationServiceFactory.getCorrelationService().getContext();
+    CorrelationService correlationService = CorrelationServiceFactory.getCorrelationService();
+    CorrelationContext correlationContext = correlationService.getContext();
     if( correlationContext == null ) {
-      correlationContext = CorrelationServiceFactory.getCorrelationService().createContext();
+      correlationContext = correlationService.createContext();
     }
     String requestId = correlationContext.getRequestId();
     if( requestId == null ) {
       correlationContext.setRequestId( UUID.randomUUID().toString() );
     }
+    correlationService.attachContext(correlationContext);
   }
 
   private class Chain implements FilterChain {

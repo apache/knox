@@ -85,6 +85,8 @@ public class ZooKeeperConfigurationMonitorTest {
     }
 
     private static void configureAndStartZKCluster() throws Exception {
+        System.setProperty("zookeeper.jmx.log4j.disable", "true");
+
         // Configure security for the ZK cluster instances
         Map<String, Object> customInstanceSpecProps = new HashMap<>();
         customInstanceSpecProps.put("authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");

@@ -36,6 +36,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.AuditContext;
 import org.apache.knox.gateway.audit.api.AuditService;
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.audit.api.Auditor;
@@ -78,7 +79,9 @@ public abstract class AbstractPreAuthFederationFilter implements Filter {
         Subject subject = new Subject();
         subject.getPrincipals().add(new PrimaryPrincipal(principal));
         addGroupPrincipals(httpRequest, subject.getPrincipals());
-        auditService.getContext().setUsername( principal ); //KM: Audit Fix
+        AuditContext context = auditService.getContext();
+        context.setUsername( principal );
+        auditService.attachContext(context);
         String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
         auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
         doAs(httpRequest, response, chain, subject);

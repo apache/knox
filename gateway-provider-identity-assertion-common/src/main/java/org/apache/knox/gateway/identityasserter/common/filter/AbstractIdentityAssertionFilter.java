@@ -37,6 +37,7 @@ import javax.servlet.http.HttpServletRequestWrapper;
 import org.apache.knox.gateway.IdentityAsserterMessages;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.AuditContext;
 import org.apache.knox.gateway.audit.api.AuditService;
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.audit.api.Auditor;
@@ -110,7 +111,9 @@ public abstract class AbstractIdentityAssertionFilter extends
         if (primaryPrincipal != null) {
           if (!primaryPrincipal.getName().equals(mappedPrincipalName)) {
             impersonationNeeded = true;
-            auditService.getContext().setProxyUsername( mappedPrincipalName );
+            AuditContext context = auditService.getContext();
+            context.setProxyUsername( mappedPrincipalName );
+            auditService.attachContext(context);
             auditor.audit( Action.IDENTITY_MAPPING, primaryPrincipal.getName(),
                 ResourceType.PRINCIPAL, ActionOutcome.SUCCESS, RES.effectiveUser(mappedPrincipalName) );
           }

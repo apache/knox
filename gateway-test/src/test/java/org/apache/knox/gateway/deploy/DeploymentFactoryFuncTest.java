@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -44,8 +43,6 @@ import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.util.XmlUtils;
 import org.apache.knox.test.TestUtils;
-import org.apache.knox.test.log.NoOpAppender;
-import org.apache.log4j.Appender;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
@@ -180,7 +177,6 @@ public class DeploymentFactoryFuncTest {
     provider.addParam( param );
     topology.addProvider( provider );
 
-    Enumeration<Appender> appenders = NoOpAppender.setUpAndReturnOriginalAppenders();
     try {
       DeploymentFactory.createDeployment( config, topology );
       fail( "Should have throws IllegalArgumentException" );
@@ -190,8 +186,6 @@ public class DeploymentFactoryFuncTest {
                        "Please check the topology for errors in name and role and that " +
                        "the provider is on the classpath.",
           e.getMessage());
-    } finally {
-      NoOpAppender.resetOriginalAppenders( appenders );
     }
     LOG_EXIT();
   }

@@ -17,13 +17,9 @@
  */
 package org.apache.knox.gateway.audit.log4j.audit;
 
-import java.io.Serializable;
-
 import org.apache.knox.gateway.audit.api.AuditContext;
 
-public class Log4jAuditContext implements Serializable, AuditContext {
-
-  private static final long serialVersionUID = 1L;
+public class Log4jAuditContext implements AuditContext {
 
   private String username;
   private String proxyUsername;
@@ -31,6 +27,19 @@ public class Log4jAuditContext implements Serializable, AuditContext {
   private String targetServiceName;
   private String remoteIp;
   private String remoteHostname;
+
+  public Log4jAuditContext() {
+  }
+
+  public Log4jAuditContext(String username, String proxyUsername, String systemUsername,
+                           String targetServiceName, String remoteIp, String remoteHostname) {
+    this.username = username;
+    this.proxyUsername = proxyUsername;
+    this.systemUsername = systemUsername;
+    this.targetServiceName = targetServiceName;
+    this.remoteIp = remoteIp;
+    this.remoteHostname = remoteHostname;
+  }
 
   @Override
   public String getUsername() {

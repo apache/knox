@@ -21,55 +21,52 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.log4j.AppenderSkeleton;
-import org.apache.log4j.Logger;
-import org.apache.log4j.spi.LoggingEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.Core;
+import org.apache.logging.log4j.core.Filter;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.Logger;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.plugins.Plugin;
+import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
+import org.apache.logging.log4j.core.config.plugins.PluginElement;
+import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 
-public class JdbmStoreAndForwardAppender extends AppenderSkeleton {
-
-  private File file;
+@Plugin(
+    name = "JdbmStoreAndForwardAppender",
+    category = Core.CATEGORY_NAME,
+    elementType = Appender.ELEMENT_TYPE)
+public class JdbmStoreAndForwardAppender extends AbstractAppender {
   private Thread forwarder; //NOPMD - Expected use of threading
-  private JdbmQueue<LoggingEvent> queue;
+  private JdbmQueue<LogEvent> queue;
   private Logger forward;
-  private boolean fetchLocationInfo = true;
 
-  @Override
-  public boolean requiresLayout() {
-    return false;
-  }
-
-  public void setFile( String file ) {
-    this.file = new File( file );
-  }
-
-  public void setFetchLocationInfo( boolean fetchLocationInfo ) {
-    this.fetchLocationInfo = fetchLocationInfo;
-  }
-
-  public boolean isFetchLocationInfo() {
-    return fetchLocationInfo;
-  }
-
-  @Override
-  public void activateOptions() {
+  private JdbmStoreAndForwardAppender(String name, Filter filter, String file) {
+    super(name, filter, null);
     try {
-      queue = new JdbmQueue<>( file );
+      queue = new JdbmQueue<>(new File(file));
     } catch ( IOException e ) {
       throw new IllegalStateException( e );
     }
-    forward = Logger.getLogger( "audit.forward" );
-    forward.setAdditivity( false );
+    forward = (Logger)LogManager.getLogger( "audit.forward" );
+    forward.setAdditive( false );
     forwarder = new Forwarder();
     forwarder.setDaemon( true );
     forwarder.start();
   }
 
+  @PluginFactory
+  public static JdbmStoreAndForwardAppender createAppender(
+      @PluginAttribute("name") String name,
+      @PluginElement("Filter") Filter filter,
+      @PluginAttribute("file") String file) {
+    return new JdbmStoreAndForwardAppender(name, filter, file);
+  }
+
   @Override
-  protected void append( LoggingEvent event ) {
+  public void append( LogEvent event ) {
     try {
-      if( fetchLocationInfo ) {
-        event.getLocationInformation();
-      }
       queue.enqueue( event );
     } catch ( IOException e ) {
       throw new RuntimeException( e );
@@ -77,7 +74,7 @@ public class JdbmStoreAndForwardAppender extends AppenderSkeleton {
   }
 
   @Override
-  public void close() {
+  public void stop() {
     try {
       queue.stop();
       forwarder.join();
@@ -85,6 +82,7 @@ public class JdbmStoreAndForwardAppender extends AppenderSkeleton {
     } catch( InterruptedException | IOException e ) {
       throw new RuntimeException( e );
     }
+    super.stop();
   }
 
   @SuppressWarnings("PMD.DoNotUseThreads")
@@ -94,22 +92,21 @@ public class JdbmStoreAndForwardAppender extends AppenderSkeleton {
       final AtomicBoolean done = new AtomicBoolean( false );
       while( !done.get() ) {
         try {
-          queue.process( new JdbmQueue.Consumer<LoggingEvent>() {
-            @Override
-            public boolean consume( LoggingEvent event ) {
-              try {
-                if( event == null ) {
-                  done.set( true );
-                } else {
-                  forward.callAppenders( event );
+          queue.process(event -> {
+            try {
+              if( event == null ) {
+                done.set( true );
+              } else {
+                for(Appender appender : forward.getAppenders().values()) {
+                  appender.append(event);
                 }
-                return true;
-              } catch ( Exception e ) {
-                e.printStackTrace();
-                return false;
               }
+              return true;
+            } catch ( Exception e ) {
+              e.printStackTrace();
+              return false;
             }
-          } );
+          });
         } catch ( ThreadDeath e ) {
           throw e;
         } catch ( Throwable t ) {

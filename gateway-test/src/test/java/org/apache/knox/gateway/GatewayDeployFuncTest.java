@@ -27,14 +27,14 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.category.ReleaseTest;
 import org.apache.http.HttpStatus;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -57,7 +57,7 @@ import static org.hamcrest.Matchers.greaterThan;
 
 @Category(ReleaseTest.class)
 public class GatewayDeployFuncTest {
-  private static final Logger LOG = LoggerFactory.getLogger( GatewayDeployFuncTest.class );
+  private static final Logger LOG = LogManager.getLogger( GatewayDeployFuncTest.class );
 
   public static GatewayConfig config;
   public static GatewayServer gateway;
