@@ -190,7 +190,7 @@
         <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
         <maven-enforcer-plugin.version>3.0.0-M2</maven-enforcer-plugin.version>
-        <metrics.version>3.1.2</metrics.version>
+        <metrics.version>4.0.3</metrics.version>
         <nimbus-jose-jwt.version>6.0.2</nimbus-jose-jwt.version>
         <okhttp.version>2.7.5</okhttp.version>
         <pac4j.version>2.1.0</pac4j.version>
@@ -1581,6 +1581,11 @@
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-jetty9</artifactId>
+                <version>${metrics.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-jmx</artifactId>
                 <version>${metrics.version}</version>
             </dependency>
 

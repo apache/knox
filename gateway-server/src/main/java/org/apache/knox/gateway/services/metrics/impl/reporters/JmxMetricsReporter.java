@@ -17,8 +17,8 @@
  */
 package org.apache.knox.gateway.services.metrics.impl.reporters;
 
-import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.jmx.JmxReporter;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.metrics.MetricsContext;
 import org.apache.knox.gateway.services.metrics.MetricsReporterException;
