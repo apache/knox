@@ -729,9 +729,9 @@ public class KnoxLdapRealm extends JndiLdapRealm {
         }
       } catch (AuthenticationException e) {
         LOG.failedToGetSystemLdapConnection(e);
-        throw new IllegalArgumentException("Illegal principal name: " + principal);
+        throw new IllegalArgumentException("Illegal principal name: " + principal, e);
       } catch (NamingException e) {
-        throw new IllegalArgumentException("Hit NamingException: " + e.getMessage());
+        throw new IllegalArgumentException("Hit NamingException", e);
       } finally {
         try {
           if (searchResultEnum != null) {
