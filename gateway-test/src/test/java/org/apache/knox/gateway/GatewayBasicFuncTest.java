@@ -62,6 +62,7 @@ import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -3653,27 +3654,30 @@ public class GatewayBasicFuncTest {
     LOG_ENTER();
 
     setupResources();
+
+    InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
+    String gatewayPort = Integer.toString(gatewayAddress.getPort());
+
     //    Now let's make sure we can run this same command from the CLI.
     PrintStream out = System.out;
-    InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
     final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     System.setOut(new PrintStream(outContent, false, StandardCharsets.UTF_8.name()));
 
     String[] args = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", gatewayAddress.getHostName(),
-        "--port", Integer.toString(gatewayAddress.getPort()), "--u", "kminder","--p", "kminder-password" };
+        "--port", gatewayPort, "--u", "kminder","--p", "kminder-password" };
     KnoxCLI cli = new KnoxCLI();
     cli.run(args);
 
+    Assume.assumeTrue("Gateway port should not contain status code",
+        !gatewayPort.contains("404") && !gatewayPort.contains("403"));
     assertThat(outContent.toString(StandardCharsets.UTF_8.name()), not(containsString("\"httpCode\": 401")));
-    assertThat( outContent.toString(StandardCharsets.UTF_8.name()), not(containsString("404")));
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), not(containsString("404")));
     assertThat(outContent.toString(StandardCharsets.UTF_8.name()), not(containsString("403")));
     outContent.reset();
 
     setupResources();
-
-
     String[] args2 = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", gatewayAddress.getHostName(),
-        "--port", Integer.toString(gatewayAddress.getPort()) };
+        "--port", gatewayPort};
 
     cli = new KnoxCLI();
     cli.run(args2);
