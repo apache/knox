@@ -16,12 +16,6 @@
    limitations under the License.
 -->
 <service role="YARNUIV2" name="yarnuiv2" version="3.0.0">
-  <policies>
-    <policy role="webappsec"/>
-    <policy role="authentication" name="Anonymous"/>
-    <policy role="rewrite"/>
-    <policy role="authorization"/>
-  </policies>
   <routes>
     <route path="/yarnuiv2">
       <rewrite apply="YARNUIV2/yarnuiv2/inbound/rootAppScript" to="request.url"/>
