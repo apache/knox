@@ -103,6 +103,7 @@
         <module>gateway-service-knoxsso</module>
         <module>gateway-service-knoxssout</module>
         <module>gateway-service-knoxtoken</module>
+        <module>gateway-service-livy</module>
         <module>gateway-service-health</module>
         <module>gateway-service-webhdfs</module>
         <module>gateway-service-tgs</module>
@@ -816,6 +817,11 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-storm</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-service-livy</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
