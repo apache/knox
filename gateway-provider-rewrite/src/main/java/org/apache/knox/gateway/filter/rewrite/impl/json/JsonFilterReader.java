@@ -305,6 +305,10 @@ class JsonFilterReader extends Reader {
     Level child;
     Level parent;
     String value = null;
+    if(stack.isEmpty()) {
+      generator.writeString( parser.getText() );
+      return;
+    }
     parent = stack.peek();
     if( parent.isArray() ) {
       ArrayNode array = (ArrayNode)parent.node;
@@ -337,6 +341,10 @@ class JsonFilterReader extends Reader {
   private void processValueNumber() throws IOException {
     Level child;
     Level parent;
+    if(stack.isEmpty()) {
+      processedUnbufferedValueNumber();
+      return;
+    }
     parent = stack.peek();
     if( parent.isArray() ) {
       if( bufferingLevel != null ) {
@@ -430,6 +438,10 @@ class JsonFilterReader extends Reader {
   private void processValueBoolean() throws IOException {
     Level child;
     Level parent;
+    if(stack.isEmpty()) {
+      generator.writeBoolean(parser.getBooleanValue());
+      return;
+    }
     parent = stack.peek();
     if( parent.isArray() ) {
       ((ArrayNode)parent.node ).add( parser.getBooleanValue() );
@@ -453,6 +465,10 @@ class JsonFilterReader extends Reader {
 
   private void processValueNull() throws IOException {
     Level child;
+    if(stack.isEmpty()) {
+      generator.writeNull();
+      return;
+    }
     Level parent = stack.peek();
     if( parent.isArray() ) {
       ((ArrayNode)parent.node ).addNull();
