@@ -15,14 +15,11 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 -->
-
 <service role="LIVYSERVER" name="livy" version="0.4.0">
   <routes>
-    <route path="/livy/v1/sessions">
-        <rewrite apply="LIVYSERVER/livy/addusername/inbound" to="request.body"/>
-    </route>
     <route path="/livy/v1/**?**"/>
     <route path="/livy/v1"/>
     <route path="/livy/v1/"/>
   </routes>
+  <dispatch classname="org.apache.knox.gateway.livy.LivyDispatch"/>
 </service>

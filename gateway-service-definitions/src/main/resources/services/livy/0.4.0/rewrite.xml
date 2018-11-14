@@ -16,18 +16,10 @@
    limitations under the License.
 -->
 <rules>
-  <rule name="LIVYSERVER/livy/user-name">
-    <rewrite template="{$username}"/>
-  </rule>
   <rule dir="IN" name="LIVYSERVER/livy/root/inbound" pattern="*://*:*/**/livy/v1">
     <rewrite template="{$serviceUrl[LIVYSERVER]}"/>
   </rule>
   <rule dir="IN" name="LIVYSERVER/livy/path/inbound" pattern="*://*:*/**/livy/v1/{path=**}?{**}">
     <rewrite template="{$serviceUrl[LIVYSERVER]}/{path=**}?{**}"/>
   </rule>
-  <filter name="LIVYSERVER/livy/addusername/inbound">
-    <content type="*/json">
-      <apply path="$.proxyUser" rule="LIVYSERVER/livy/user-name"/>
-    </content>
-  </filter>
 </rules>
