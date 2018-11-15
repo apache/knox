@@ -33,7 +33,8 @@ import org.apache.knox.gateway.dispatch.DefaultDispatch;
 public class HBaseDispatch extends DefaultDispatch {
 
   // KNOX-709: HBase can't handle URL encoded paths.
-  public URI getDispatchUrl( HttpServletRequest request) {
+  @Override
+  public URI getDispatchUrl(HttpServletRequest request) {
     String base = request.getRequestURI();
     StringBuilder str = new StringBuilder();
     try {

@@ -58,6 +58,7 @@ public class ShiroConfig {
     section.put(name, value);
   }
   
+  @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     for(Entry<String, Map<String, String>> section : sections.entrySet()) {

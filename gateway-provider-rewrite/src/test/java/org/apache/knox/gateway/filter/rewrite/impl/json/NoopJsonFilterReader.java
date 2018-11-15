@@ -28,11 +28,13 @@ public class NoopJsonFilterReader extends JsonFilterReader {
     super( reader, config );
   }
 
-  protected String filterFieldName( String name ) {
+  @Override
+  protected String filterFieldName(String name ) {
     return name;
   }
 
-  protected String filterValueString( String name, String value, String rule ) {
+  @Override
+  protected String filterValueString(String name, String value, String rule ) {
     return value;
   }
 

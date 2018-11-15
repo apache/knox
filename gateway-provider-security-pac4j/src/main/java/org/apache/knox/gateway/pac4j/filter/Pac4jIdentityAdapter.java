@@ -73,9 +73,11 @@ public class Pac4jIdentityAdapter implements Filter {
     idAttribute = filterConfig.getInitParameter(PAC4J_ID_ATTRIBUTE);
   }
 
+  @Override
   public void destroy() {
   }
 
+  @Override
   public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain chain)
       throws IOException, ServletException {
 
@@ -122,6 +124,7 @@ public class Pac4jIdentityAdapter implements Filter {
       Subject.doAs(
           subject,
           new PrivilegedExceptionAction<Object>() {
+            @Override
             public Object run() throws Exception {
               chain.doFilter(request, response);
               return null;

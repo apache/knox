@@ -214,6 +214,7 @@ public class JdbmQueueTest {
     public Producer( int iterations ) {
       this.iterations = iterations;
     }
+    @Override
     public void run() {
       try {
         for( int i = 0; i < iterations; i++ ) {
@@ -230,6 +231,7 @@ public class JdbmQueueTest {
     public Consumer( Set<String> consumed ) {
       this.consumed = consumed;
     }
+    @Override
     public void run() {
       try {
         while( true ) {
@@ -254,6 +256,7 @@ public class JdbmQueueTest {
     public Processor( Set<String> consumed ) {
       this.consumed = consumed;
     }
+    @Override
     public void run() {
       try {
         final AtomicBoolean done = new AtomicBoolean( false );

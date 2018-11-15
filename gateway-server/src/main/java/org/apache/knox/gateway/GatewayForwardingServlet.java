@@ -88,6 +88,7 @@ public class GatewayForwardingServlet extends HttpServlet{
     redirectToContext = config.getInitParameter("redirectTo");
   }
 
+  @Override
   public void doGet(HttpServletRequest request,
                     HttpServletResponse response)
             throws ServletException, IOException

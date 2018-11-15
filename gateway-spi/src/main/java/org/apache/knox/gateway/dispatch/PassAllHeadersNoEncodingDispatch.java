@@ -30,7 +30,8 @@ import javax.servlet.http.HttpServletRequest;
    * UIs may require this at some point as well.
    */
 public class PassAllHeadersNoEncodingDispatch extends PassAllHeadersDispatch {
-  public URI getDispatchUrl( HttpServletRequest request) {
+  @Override
+  public URI getDispatchUrl(HttpServletRequest request) {
     String base = request.getRequestURI();
     StringBuffer str = new StringBuffer();
     str.append( base );

@@ -26,6 +26,7 @@ public class WebHdfsHaDispatch extends AbstractHdfsHaDispatch {
     super();
   }
   
+  @Override
   protected String getResourceRole() {
     return RESOURCE_ROLE;
   }

@@ -58,6 +58,7 @@ public class UrlRewriteProcessor implements UrlRewriter {
     initializeRules( descriptor );
   }
 
+  @Override
   public UrlRewriteRulesDescriptor getConfig() {
     return descriptor;
   }

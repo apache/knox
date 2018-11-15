@@ -47,6 +47,7 @@ public class Rename {
       return this;
     }
 
+    @Override
     protected Callable<Rename.Response> callable() {
       return new Callable<Rename.Response>() {
         @Override

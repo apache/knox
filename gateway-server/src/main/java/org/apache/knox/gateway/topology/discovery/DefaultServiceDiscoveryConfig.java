@@ -33,14 +33,17 @@ public class DefaultServiceDiscoveryConfig implements ServiceDiscoveryConfig {
         this.pwdAlias = alias;
     }
 
+    @Override
     public String getAddress() {
         return address;
     }
 
+    @Override
     public String getUser() {
         return user;
     }
 
+    @Override
     public String getPasswordAlias() {
         return pwdAlias;
     }

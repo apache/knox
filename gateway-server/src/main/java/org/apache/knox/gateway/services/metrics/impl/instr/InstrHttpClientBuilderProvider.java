@@ -47,6 +47,7 @@ public class InstrHttpClientBuilderProvider implements
   }
 
   private static final HttpClientMetricNameStrategy TOPOLOGY_URL_AND_METHOD = new HttpClientMetricNameStrategy() {
+    @Override
     public String getNameFor(String name, HttpRequest request) {
       try {
         String context = "";

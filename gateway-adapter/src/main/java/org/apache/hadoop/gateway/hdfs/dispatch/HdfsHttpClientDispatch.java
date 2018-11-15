@@ -38,6 +38,7 @@ public class HdfsHttpClientDispatch extends org.apache.knox.gateway.hdfs.dispatc
    * send the entire payload before redirect to the target component
    * like a datanode and have to send it again.
    */
+  @Override
   protected HttpEntity createRequestEntity(HttpServletRequest request)
       throws IOException {
     return super.createRequestEntity(request);

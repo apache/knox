@@ -22,9 +22,11 @@ import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFunctionDescriptor;
 
 public abstract class UrlRewriteFunctionProcessorBase<T extends UrlRewriteFunctionDescriptor> implements UrlRewriteFunctionProcessor<T> {
 
-  public void initialize( UrlRewriteEnvironment environment, T descriptor ) throws Exception {
+  @Override
+  public void initialize(UrlRewriteEnvironment environment, T descriptor ) throws Exception {
   }
 
+  @Override
   public void destroy() throws Exception {
   }
 

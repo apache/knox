@@ -76,26 +76,31 @@ class RemoteConfigurationRegistry implements RemoteConfigurationRegistryConfig {
         this.keyTab = keytab;
     }
 
+    @Override
     @XmlElement(name="name")
     public String getName() {
         return name;
     }
 
+    @Override
     @XmlElement(name="type")
     public String getRegistryType() {
         return type;
     }
 
+    @Override
     @XmlElement(name="auth-type")
     public String getAuthType() {
         return authType;
     }
 
+    @Override
     @XmlElement(name="principal")
     public String getPrincipal() {
         return principal;
     }
 
+    @Override
     @XmlElement(name="credential-alias")
     public String getCredentialAlias() {
         return credentialAlias;

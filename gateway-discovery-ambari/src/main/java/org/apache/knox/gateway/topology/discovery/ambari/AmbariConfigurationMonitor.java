@@ -122,14 +122,17 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
                     props.load(in);
 
                     addDiscoveryConfig(props.getProperty(PROP_CLUSTER_NAME), new ServiceDiscoveryConfig() {
+                                                            @Override
                                                             public String getAddress() {
                                                                 return props.getProperty(PROP_CLUSTER_SOURCE);
                                                             }
 
+                                                            @Override
                                                             public String getUser() {
                                                                 return props.getProperty(PROP_CLUSTER_USER);
                                                             }
 
+                                                            @Override
                                                             public String getPasswordAlias() {
                                                                 return props.getProperty(PROP_CLUSTER_ALIAS);
                                                             }
@@ -291,10 +294,12 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
         }
     }
 
+    @Override
     public void start() {
         (new Thread(internalMonitor, "AmbariConfigurationMonitor")).start();
     }
 
+    @Override
     public void stop() {
         internalMonitor.stop();
     }

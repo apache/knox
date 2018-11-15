@@ -41,6 +41,7 @@ class TraceResponse extends HttpServletResponseWrapper {
     this.filter = filter;
   }
 
+  @Override
   public synchronized ServletOutputStream getOutputStream() throws IOException {
     if( log.isTraceEnabled() ) {
       traceResponseDetails();

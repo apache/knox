@@ -29,11 +29,13 @@ public class DecryptUriDescriptor extends UrlRewriteActionDescriptorBase
     super( STEP_NAME );
   }
 
+  @Override
   public String getParam() {
     return param;
   }
 
-  public void setParam( String param ) {
+  @Override
+  public void setParam(String param ) {
     this.param = param;
   }
 }

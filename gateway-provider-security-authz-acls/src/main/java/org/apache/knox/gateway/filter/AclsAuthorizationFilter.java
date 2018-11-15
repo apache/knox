@@ -95,11 +95,13 @@ public class AclsAuthorizationFilter implements Filter {
     Collections.addAll(adminUsers, users.split(","));
   }
 
+  @Override
   public void destroy() {
   }
 
+  @Override
   public void doFilter(ServletRequest request, ServletResponse response,
-      FilterChain chain) throws IOException, ServletException {
+                       FilterChain chain) throws IOException, ServletException {
     boolean accessGranted = enforceAclAuthorizationPolicy(request, response, chain);
     log.accessGranted(accessGranted);
     String sourceUrl = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );

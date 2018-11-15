@@ -87,6 +87,7 @@ public abstract class AbstractJWTFilter implements Filter {
   private String expectedIssuer;
   private String expectedSigAlg;
 
+  @Override
   public abstract void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException;
 

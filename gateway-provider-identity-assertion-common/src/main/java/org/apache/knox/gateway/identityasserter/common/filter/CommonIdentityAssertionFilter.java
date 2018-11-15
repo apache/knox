@@ -70,7 +70,8 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
    * to the identity to be asserted as appropriate and create the provider specific
    * assertion token. Add the assertion token to the request.
    */
-  public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 
+  @Override
+  public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
     Subject subject = Subject.getSubject(AccessController.getContext());
 

@@ -31,6 +31,7 @@ public class HiveHaDispatch extends DefaultHaDispatch {
     setServiceRole("HIVE");
   }
 
+  @Override
   protected void addCredentialsToRequest(HttpUriRequest request) {
     if ( isBasicAuthPreemptive() ) {
       HiveDispatchUtils.addCredentialsToRequest(request);

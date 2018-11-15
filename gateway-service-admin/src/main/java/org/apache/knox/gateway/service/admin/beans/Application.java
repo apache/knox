@@ -23,11 +23,13 @@ import javax.xml.bind.annotation.XmlAccessorType;
 @XmlAccessorType(XmlAccessType.NONE)
 public class Application extends Service {
 
+  @Override
   public String getRole() {
     return getName();
   }
 
-  public void setRole( String role ) {
+  @Override
+  public void setRole(String role ) {
     setName( role );
   }
 

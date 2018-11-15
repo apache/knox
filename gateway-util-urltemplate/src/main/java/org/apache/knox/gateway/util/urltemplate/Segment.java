@@ -133,6 +133,7 @@ abstract class Segment {
 //    values.put( valuePattern, value );
 //  }
 
+  @Override
   public String toString() {
     StringBuilder s = new StringBuilder();
     s.append( getParamName() );
@@ -227,6 +228,7 @@ abstract class Segment {
       return regex;
     }
 
+    @Override
     public String toString() {
       return token.effectivePattern;
     }

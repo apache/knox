@@ -55,10 +55,12 @@ public class AccessTokenFederationFilter implements Filter {
     authority = (JWTokenAuthority) services.getService(GatewayServices.TOKEN_SERVICE);
   }
 
+  @Override
   public void destroy() {
   }
 
-  public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 
+  @Override
+  public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
     String header = ((HttpServletRequest) request).getHeader("Authorization");
     if (header != null && header.startsWith(BEARER)) {

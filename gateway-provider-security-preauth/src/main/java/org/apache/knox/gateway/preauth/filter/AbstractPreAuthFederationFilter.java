@@ -106,6 +106,7 @@ public abstract class AbstractPreAuthFederationFilter implements Filter {
       Subject.doAs(
           subject,
           new PrivilegedExceptionAction<Object>() {
+            @Override
             public Object run() throws Exception {
               chain.doFilter(request, response);
               return null;

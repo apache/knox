@@ -50,6 +50,7 @@ public class CLIGatewayServices implements GatewayServices {
     super();
   }
 
+  @Override
   public void init(GatewayConfig config, Map<String,String> options) throws ServiceLifecycleException {
 
     /* create an instance so that it can be passed to other services */
@@ -97,6 +98,7 @@ public class CLIGatewayServices implements GatewayServices {
     services.put(TOPOLOGY_SERVICE, tops);
   }
   
+  @Override
   public void start() throws ServiceLifecycleException {
     ms.start();
 
@@ -111,6 +113,7 @@ public class CLIGatewayServices implements GatewayServices {
     (services.get(REMOTE_REGISTRY_CLIENT_SERVICE)).start();
   }
 
+  @Override
   public void stop() throws ServiceLifecycleException {
     ms.stop();
 

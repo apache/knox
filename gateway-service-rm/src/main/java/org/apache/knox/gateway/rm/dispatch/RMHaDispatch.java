@@ -28,6 +28,7 @@ public class RMHaDispatch extends RMHaBaseDispatcher {
   public RMHaDispatch() {
     super();
   }
+   @Override
    @Configure
    public void setHaProvider(HaProvider haProvider) {
         this.haProvider = haProvider;

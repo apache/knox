@@ -168,7 +168,8 @@ public class JettySSLService implements SSLService {
     }
   }
 
-  public Object buildSslContextFactory( String keystoreFileName ) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException {
+  @Override
+  public Object buildSslContextFactory(String keystoreFileName ) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException {
     SslContextFactory sslContextFactory = new SslContextFactory( true );
     sslContextFactory.setCertAlias( "gateway-identity" );
     sslContextFactory.setKeyStoreType(keystoreType);

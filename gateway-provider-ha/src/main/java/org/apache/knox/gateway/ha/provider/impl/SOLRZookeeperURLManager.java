@@ -59,6 +59,7 @@ public class SOLRZookeeperURLManager extends BaseZookeeperURLManager {
     return hosts;
   }
 
+  @Override
   protected String getServiceName() {
     return "SOLR";
   };

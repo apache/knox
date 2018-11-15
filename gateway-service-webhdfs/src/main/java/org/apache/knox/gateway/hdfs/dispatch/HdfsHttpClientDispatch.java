@@ -39,6 +39,7 @@ public class HdfsHttpClientDispatch extends DefaultDispatch {
    * send the entire payload before redirect to the target component
    * like a datanode and have to send it again.
    */
+  @Override
   protected HttpEntity createRequestEntity(HttpServletRequest request)
       throws IOException {
     return null;

@@ -90,27 +90,32 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
     return url;
   }
 
-  public void doGet( URI url, HttpServletRequest request, HttpServletResponse response )
+  @Override
+  public void doGet(URI url, HttpServletRequest request, HttpServletResponse response )
       throws IOException, URISyntaxException {
     response.sendError( HttpServletResponse.SC_METHOD_NOT_ALLOWED );
   }
 
-  public void doPost( URI url, HttpServletRequest request, HttpServletResponse response )
+  @Override
+  public void doPost(URI url, HttpServletRequest request, HttpServletResponse response )
       throws IOException, URISyntaxException {
     response.sendError( HttpServletResponse.SC_METHOD_NOT_ALLOWED );
   }
 
-  public void doPut( URI url, HttpServletRequest request, HttpServletResponse response )
+  @Override
+  public void doPut(URI url, HttpServletRequest request, HttpServletResponse response )
       throws IOException, URISyntaxException {
     response.sendError( HttpServletResponse.SC_METHOD_NOT_ALLOWED );
   }
 
-  public void doDelete( URI url, HttpServletRequest request, HttpServletResponse response )
+  @Override
+  public void doDelete(URI url, HttpServletRequest request, HttpServletResponse response )
       throws IOException, URISyntaxException {
     response.sendError( HttpServletResponse.SC_METHOD_NOT_ALLOWED );
   }
 
-  public void doOptions( URI url, HttpServletRequest request, HttpServletResponse response )
+  @Override
+  public void doOptions(URI url, HttpServletRequest request, HttpServletResponse response )
       throws IOException, URISyntaxException {
     response.sendError( HttpServletResponse.SC_METHOD_NOT_ALLOWED );
   }
@@ -118,7 +123,8 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
   /**
    * @since 0.14.0
    */
-  public void doHead( URI url, HttpServletRequest request, HttpServletResponse response )
+  @Override
+  public void doHead(URI url, HttpServletRequest request, HttpServletResponse response )
       throws IOException, URISyntaxException {
     response.sendError( HttpServletResponse.SC_METHOD_NOT_ALLOWED );
   }

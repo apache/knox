@@ -159,6 +159,7 @@ public abstract class AbstractIdentityAssertionFilter extends
       Subject.doAs(
         subject,
         new PrivilegedExceptionAction<Object>() {
+          @Override
           public Object run() throws Exception {
             doFilterInternal(request, response, chain);
             return null;

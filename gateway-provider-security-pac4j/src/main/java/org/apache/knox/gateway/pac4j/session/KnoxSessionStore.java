@@ -68,6 +68,7 @@ public class KnoxSessionStore implements SessionStore {
         this.domainSuffix = domainSuffix;
     }
 
+    @Override
     public String getOrCreateSessionId(WebContext context) {
         return null;
     }
@@ -92,6 +93,7 @@ public class KnoxSessionStore implements SessionStore {
         return null;
     }
 
+    @Override
     public Object get(WebContext context, String key) {
         final Cookie cookie = ContextHelper.getCookie(context, PAC4J_SESSION_PREFIX + key);
         Object value = null;
@@ -126,6 +128,7 @@ public class KnoxSessionStore implements SessionStore {
         }
     }
 
+    @Override
     public void set(WebContext context, String key, Object value) {
         logger.debug("Save in session: {} = {}", key, value);
         final Cookie cookie = new Cookie(PAC4J_SESSION_PREFIX + key, compressEncryptBase64(value));

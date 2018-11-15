@@ -280,14 +280,17 @@ public class GatewaySslFuncTest {
 
   public static class TrustAllCerts implements X509TrustManager {
 
-    public void checkClientTrusted( X509Certificate[] x509Certificates, String s ) throws CertificateException {
+    @Override
+    public void checkClientTrusted(X509Certificate[] x509Certificates, String s ) throws CertificateException {
       // Trust all certificates.
     }
 
-    public void checkServerTrusted( X509Certificate[] x509Certificates, String s ) throws CertificateException {
+    @Override
+    public void checkServerTrusted(X509Certificate[] x509Certificates, String s ) throws CertificateException {
       // Trust all certificates.
     }
 
+    @Override
     public X509Certificate[] getAcceptedIssuers() {
       return null;
     }

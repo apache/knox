@@ -44,6 +44,7 @@ public class TruncateTable {
       this.tableName = tableName;
     }
 
+    @Override
     protected Callable<TruncateTable.Response> callable() {
       return new Callable<TruncateTable.Response>() {
         @Override

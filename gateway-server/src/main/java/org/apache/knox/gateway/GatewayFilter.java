@@ -61,7 +61,8 @@ import java.util.UUID;
 public class GatewayFilter implements Filter {
 
   private static final FilterChain EMPTY_CHAIN = new FilterChain() {
-    public void doFilter( ServletRequest servletRequest, ServletResponse servletResponse ) throws IOException, ServletException {
+    @Override
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse ) throws IOException, ServletException {
     }
   };
   
@@ -262,7 +263,8 @@ public class GatewayFilter implements Filter {
       this.chain = chain;
     }
 
-    public void doFilter( ServletRequest servletRequest, ServletResponse servletResponse ) throws IOException, ServletException {
+    @Override
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse ) throws IOException, ServletException {
       if( chain != null && !chain.isEmpty() ) {
         final Filter filter = chain.get( 0 );
         final FilterChain chain = subChain();

@@ -103,6 +103,7 @@ public class JWTToken implements JWT {
     return payload.toString();
   }
 
+  @Override
   public String toString() {
     return jwt.serialize();
   }
@@ -222,6 +223,7 @@ public class JWTToken implements JWT {
     }
   }
 
+  @Override
   public boolean verify(JWSVerifier verifier) {
     boolean rc = false;
 

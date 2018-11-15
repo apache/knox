@@ -34,11 +34,13 @@ public abstract class ServiceDeploymentContributorBase extends DeploymentContrib
     return new Version();
   }
 
-  public void initializeContribution( DeploymentContext context ) {
+  @Override
+  public void initializeContribution(DeploymentContext context ) {
     // Noop.
   }
 
-  public void finalizeContribution( DeploymentContext context ) {
+  @Override
+  public void finalizeContribution(DeploymentContext context ) {
     // Noop.
   }
 

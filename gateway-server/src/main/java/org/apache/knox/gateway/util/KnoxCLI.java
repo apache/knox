@@ -861,6 +861,7 @@ public class KnoxCLI extends Configured implements Tool {
      return result;
    }
 
+   @Override
    public boolean validate() {
      boolean valid = true;
      GatewayConfig config = getGatewayConfig();
@@ -990,6 +991,7 @@ public class KnoxCLI extends Configured implements Tool {
       return USAGE + ":\n\n" + DESC;
     }
 
+    @Override
     public void execute() throws Exception {
       GatewayConfig gc = getGatewayConfig();
       String topDir = gc.getGatewayTopologyDir();

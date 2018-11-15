@@ -59,6 +59,7 @@ public class DefaultGatewayServices implements GatewayServices {
     super();
   }
 
+  @Override
   public void init(GatewayConfig config, Map<String,String> options) throws ServiceLifecycleException {
     ms = new DefaultMasterService();
     ms.init(config, options);
@@ -149,6 +150,7 @@ public class DefaultGatewayServices implements GatewayServices {
     services.put( METRICS_SERVICE, metricsService );
   }
 
+  @Override
   public void start() throws ServiceLifecycleException {
     ms.start();
 
@@ -176,6 +178,7 @@ public class DefaultGatewayServices implements GatewayServices {
     metricsService.start();
   }
 
+  @Override
   public void stop() throws ServiceLifecycleException {
     ms.stop();
 

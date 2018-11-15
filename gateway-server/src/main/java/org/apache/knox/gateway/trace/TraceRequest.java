@@ -40,6 +40,7 @@ class TraceRequest extends HttpServletRequestWrapper {
     }
   }
 
+  @Override
   public synchronized ServletInputStream getInputStream() throws IOException {
     if( log.isTraceEnabled() ) {
       if( input == null ) {

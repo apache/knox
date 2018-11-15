@@ -42,6 +42,7 @@ public class Status {
       return this;
     }
 
+    @Override
     public Callable<Response> callable() {
       return new Callable<Response>() {
         @Override

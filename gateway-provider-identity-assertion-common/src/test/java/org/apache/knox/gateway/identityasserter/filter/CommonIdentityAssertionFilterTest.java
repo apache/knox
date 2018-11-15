@@ -103,6 +103,7 @@ public class CommonIdentityAssertionFilterTest {
       Subject.doAs(
         subject,
         new PrivilegedExceptionAction<Object>() {
+          @Override
           public Object run() throws Exception {
             filter.doFilter(request, response, chain);
             return null;

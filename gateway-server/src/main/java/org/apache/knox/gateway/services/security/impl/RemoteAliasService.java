@@ -71,22 +71,27 @@ public class RemoteAliasService implements AliasService {
 
   static {
     AUTHENTICATED_USERS_ALL = new RemoteConfigurationRegistryClient.EntryACL() {
+      @Override
       public String getId() {
         return "";
       }
 
+      @Override
       public String getType() {
         return "auth";
       }
 
+      @Override
       public Object getPermissions() {
         return ZooDefs.Perms.ALL;
       }
 
+      @Override
       public boolean canRead() {
         return true;
       }
 
+      @Override
       public boolean canWrite() {
         return true;
       }

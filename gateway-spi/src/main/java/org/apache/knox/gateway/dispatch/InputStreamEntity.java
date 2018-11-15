@@ -94,6 +94,7 @@ public class InputStreamEntity extends AbstractHttpEntity {
     }
   }
 
+  @Override
   public boolean isRepeatable() {
     return false;
   }
@@ -101,10 +102,12 @@ public class InputStreamEntity extends AbstractHttpEntity {
   /**
    * @return the content length or {@code -1} if unknown
    */
+  @Override
   public long getContentLength() {
     return this.length;
   }
 
+  @Override
   public InputStream getContent() throws IOException {
     return this.content;
   }
@@ -115,7 +118,8 @@ public class InputStreamEntity extends AbstractHttpEntity {
    * determines how many bytes are written.  If the length is unknown ({@code -1}), the
    * stream will be completely consumed (to the end of the stream).
    */
-  public void writeTo( final OutputStream outstream ) throws IOException {
+  @Override
+  public void writeTo(final OutputStream outstream ) throws IOException {
     Args.notNull( outstream, "Output stream" );
     final InputStream instream = this.content;
     try {
@@ -143,6 +147,7 @@ public class InputStreamEntity extends AbstractHttpEntity {
     }
   }
 
+  @Override
   public boolean isStreaming() {
     return true;
   }

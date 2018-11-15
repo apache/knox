@@ -184,8 +184,10 @@ public class HadoopAuthCookieStore extends BasicCookieStore {
       return delegate.isExpired( date );
     }
 
+    @Override
     public String toString() {
       return (new ReflectionToStringBuilder(this) {
+        @Override
         protected boolean accept(Field f) {
           return super.accept(f) && !f.getName().equals("delegate");
         }

@@ -343,6 +343,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
     }
   }
 
+  @Override
   public KeyStore getCredentialStoreForCluster(String clusterName)
       throws KeystoreServiceException {
     final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
@@ -355,7 +356,8 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
     }
   }
 
-  public void addCredentialForCluster(String clusterName, String alias, String value) 
+  @Override
+  public void addCredentialForCluster(String clusterName, String alias, String value)
       throws KeystoreServiceException {
     writeLock.lock();
     try {

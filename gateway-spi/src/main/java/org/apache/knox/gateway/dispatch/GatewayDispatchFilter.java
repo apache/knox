@@ -167,6 +167,7 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
   }
 
   private static class GetAdapter implements Adapter {
+    @Override
     public void doMethod(Dispatch dispatch, HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException, URISyntaxException {
       dispatch.doGet( dispatch.getDispatchUrl(request), request, response);
@@ -174,6 +175,7 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
   }
 
   private static class PostAdapter implements Adapter {
+    @Override
     public void doMethod(Dispatch dispatch, HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException, URISyntaxException {
       dispatch.doPost( dispatch.getDispatchUrl(request), request, response);
@@ -181,6 +183,7 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
   }
 
   private static class PutAdapter implements Adapter {
+    @Override
     public void doMethod(Dispatch dispatch, HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException, URISyntaxException {
       dispatch.doPut( dispatch.getDispatchUrl(request), request, response);
@@ -188,6 +191,7 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
   }
 
   private static class DeleteAdapter implements Adapter {
+    @Override
     public void doMethod(Dispatch dispatch, HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException, URISyntaxException {
       dispatch.doDelete( dispatch.getDispatchUrl(request), request, response);
@@ -195,6 +199,7 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
   }
 
   private static class OptionsAdapter implements Adapter {
+    @Override
     public void doMethod(Dispatch dispatch, HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException, URISyntaxException {
       dispatch.doOptions( dispatch.getDispatchUrl(request), request, response);
@@ -202,6 +207,7 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
   }
 
   private static class HeadAdapter implements Adapter {
+    @Override
     public void doMethod(Dispatch dispatch, HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException, URISyntaxException {
       dispatch.doHead( dispatch.getDispatchUrl(request), request, response);

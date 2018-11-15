@@ -51,6 +51,7 @@ public class Get {
     }
 
 
+    @Override
     protected Callable<Response> callable() {
       return new Callable<Response>() {
         @Override

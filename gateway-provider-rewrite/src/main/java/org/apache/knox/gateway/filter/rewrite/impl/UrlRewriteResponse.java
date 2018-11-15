@@ -298,23 +298,27 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
     }
   }
 
+  @Override
   @SuppressWarnings("deprecation")
   public String encodeUrl( String url ) {
     return this.encodeURL( url );
   }
 
   //TODO: Route these through the rewriter.
-  public String encodeURL( String url ) {
+  @Override
+  public String encodeURL(String url ) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   @SuppressWarnings("deprecation")
   public String encodeRedirectUrl( String url ) {
     return this.encodeRedirectURL( url );
   }
 
   //TODO: Route these through the rewriter.
-  public String encodeRedirectURL( String url ) {
+  @Override
+  public String encodeRedirectURL(String url ) {
     throw new UnsupportedOperationException();
   }
 

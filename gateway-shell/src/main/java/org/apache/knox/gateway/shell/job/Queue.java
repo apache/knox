@@ -34,6 +34,7 @@ class Queue {
       super( session );
     }
 
+    @Override
     protected Callable<Response> callable() {
       return new Callable<Response>() {
         @Override

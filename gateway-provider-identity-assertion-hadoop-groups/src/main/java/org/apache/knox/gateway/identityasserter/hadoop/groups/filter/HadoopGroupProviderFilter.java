@@ -90,8 +90,9 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
    * Query the Hadoop implementation of {@link Groups} to retrieve groups for
    * provided user.
    */
+  @Override
   public String[] mapGroupPrincipals(final String mappedPrincipalName,
-      final Subject subject) {
+                                     final Subject subject) {
     /* return the groups as seen by Hadoop */
     String[] groups = null;
     try {
@@ -113,6 +114,7 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
     return groups;
   }
 
+  @Override
   public String mapUserPrincipal(final String principalName) {
     /* return the passed principal */
     return principalName;

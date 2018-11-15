@@ -72,6 +72,7 @@ public class JsonPath {
       return index;
     }
 
+    @Override
     public String toString() {
       StringBuilder s = new StringBuilder();
       s.append( "JsonPath{" );
@@ -312,6 +313,7 @@ public class JsonPath {
       }
     }
 
+    @Override
     public String toString() {
       StringBuilder s = new StringBuilder();
       s.append( "JsonPath.Expression{" );
@@ -368,6 +370,7 @@ public class JsonPath {
       return index;
     }
 
+    @Override
     public String toString() {
       StringBuilder s = new StringBuilder();
       s.append( "JsonPath.Segment{" );

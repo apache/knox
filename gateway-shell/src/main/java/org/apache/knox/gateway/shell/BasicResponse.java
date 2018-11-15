@@ -44,6 +44,7 @@ public class BasicResponse implements Closeable {
     }
   }
 
+  @Override
   public void close() {
     consume();
   }

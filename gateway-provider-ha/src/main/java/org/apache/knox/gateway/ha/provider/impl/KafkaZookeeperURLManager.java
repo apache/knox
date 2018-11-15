@@ -79,6 +79,7 @@ public class KafkaZookeeperURLManager extends BaseZookeeperURLManager {
     return validatedHosts;
   }
 
+  @Override
   protected String getServiceName() {
     return "KAFKA";
   };

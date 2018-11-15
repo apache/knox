@@ -54,14 +54,17 @@ public class UrlRewriteDeploymentContributor extends
     return PROVIDER_IMPL_NAME;
   }
 
-  public void initializeContribution( DeploymentContext context ) {
+  @Override
+  public void initializeContribution(DeploymentContext context ) {
     context.addDescriptor( getRole(), UrlRewriteRulesDescriptorFactory.create() );
   }
 
-  public void contributeProvider( DeploymentContext context, Provider provider ) {
+  @Override
+  public void contributeProvider(DeploymentContext context, Provider provider ) {
   }
 
-  public void finalizeContribution( DeploymentContext context ) {
+  @Override
+  public void finalizeContribution(DeploymentContext context ) {
     // Write the descriptor into the archive.
     UrlRewriteRulesDescriptor descriptor = context.getDescriptor( getRole() );
     StringWriter writer = new StringWriter();

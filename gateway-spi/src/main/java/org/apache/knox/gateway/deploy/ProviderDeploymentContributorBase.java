@@ -21,15 +21,18 @@ import org.apache.knox.gateway.topology.Provider;
 
 public abstract class ProviderDeploymentContributorBase extends DeploymentContributorBase implements ProviderDeploymentContributor {
 
-  public void initializeContribution( DeploymentContext context ) {
+  @Override
+  public void initializeContribution(DeploymentContext context ) {
     // Noop.
   }
 
-  public void contributeProvider( DeploymentContext context, Provider provider ) {
+  @Override
+  public void contributeProvider(DeploymentContext context, Provider provider ) {
     // Noop.
   }
 
-  public void finalizeContribution( DeploymentContext context ) {
+  @Override
+  public void finalizeContribution(DeploymentContext context ) {
     // Noop.
   }
 

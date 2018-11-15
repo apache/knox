@@ -50,7 +50,8 @@ public class JsonUrlRewriteFilterReader extends JsonFilterReader {
     this.direction = direction;
   }
 
-  protected String filterValueString( String name, String value, String rule ) {
+  @Override
+  protected String filterValueString(String name, String value, String rule ) {
     try {
       Template input = Parser.parseLiteral( value );
       Template output = rewriter.rewrite( resolver, input, direction, rule );

@@ -27,6 +27,7 @@ public class MockParams implements Params {
 
   private Map<String,List<String>> map = new HashMap<>();
 
+  @Override
   public Set<String> getNames() {
     return map.keySet();
   }

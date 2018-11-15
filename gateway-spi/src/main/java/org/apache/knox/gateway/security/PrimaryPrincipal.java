@@ -26,6 +26,7 @@ public class PrimaryPrincipal implements Principal {
     this.name = name;
   }
   
+  @Override
   public String getName() {
     return name;
   }

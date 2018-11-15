@@ -61,6 +61,7 @@ public class CMFKeystoreServiceTest {
 
         public void stop() throws ServiceLifecycleException {}
 
+        @Override
         public char[] getMasterSecret() {
           return "testmaster".toCharArray();
         }

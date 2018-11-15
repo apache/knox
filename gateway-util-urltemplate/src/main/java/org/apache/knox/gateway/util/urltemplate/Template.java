@@ -311,6 +311,7 @@ public class Template {
     }
   }
 
+  @Override
   public String toString() {
     String s = null;
     StringBuilder b = new StringBuilder();
@@ -323,6 +324,7 @@ public class Template {
     return s;
   }
 
+  @Override
   public int hashCode() {
     Integer hc = hash;
     if( hc == null ) {
@@ -332,7 +334,8 @@ public class Template {
     return hc.intValue();
   }
 
-  public boolean equals( Object object ) {
+  @Override
+  public boolean equals(Object object ) {
     boolean equals = false;
     if( object != null && object instanceof Template ) {
       String thisStr = toString();

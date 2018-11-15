@@ -56,11 +56,13 @@ public class RegexIdentityAssertionFilter extends
     }
   }
 
+  @Override
   public String[] mapGroupPrincipals(String mappedPrincipalName, Subject subject) {
     // Returning null will allow existing Subject group principals to remain the same
     return null;
   }
 
+  @Override
   public String mapUserPrincipal(String principalName) {
     return template.apply( principalName );
   }

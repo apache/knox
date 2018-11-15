@@ -62,6 +62,7 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
     this.crypto = crypto;
   }
 
+  @Override
   public String getRegistrationCode(String clusterName) {
     String code = generateRegCode(16);
     byte[] signature = crypto.sign("SHA256withRSA","gateway-identity",code);
@@ -79,10 +80,12 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
     return sb.toString();
   }
 
+  @Override
   public void removeClusterServices(String clusterName) {
     registry.remove(clusterName);
   }
 
+  @Override
   public boolean registerService(String regCode, String clusterName, String serviceName, List<String> urls) {
     boolean rc = false;
     // verify the signature of the regCode

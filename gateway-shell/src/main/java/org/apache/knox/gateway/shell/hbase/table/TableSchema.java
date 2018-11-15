@@ -37,6 +37,7 @@ public class TableSchema {
       this.tableName = tableName;
     }
 
+    @Override
     protected Callable<Response> callable() {
       return new Callable<Response>() {
         @Override

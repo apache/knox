@@ -129,7 +129,8 @@ public class PartiallyRepeatableHttpEntity extends HttpEntityWrapper {
       return b;
     }
 
-    public int read( byte[] buffer, int offset, int limit ) throws IOException {
+    @Override
+    public int read(byte[] buffer, int offset, int limit ) throws IOException {
       int count = -1;
       if( finalStream != null && finalStream != this ) {
         throw new IOException( "Replay stream taken over by another consumer." );

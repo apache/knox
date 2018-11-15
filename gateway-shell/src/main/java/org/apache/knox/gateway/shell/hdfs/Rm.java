@@ -52,6 +52,7 @@ class Rm {
       return recursive( true );
     }
 
+    @Override
     public Callable<Response> callable() {
       return new Callable<Response>() {
         @Override

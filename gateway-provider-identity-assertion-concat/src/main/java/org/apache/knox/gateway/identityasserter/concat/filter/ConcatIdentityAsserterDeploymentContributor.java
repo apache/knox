@@ -26,6 +26,7 @@ public class ConcatIdentityAsserterDeploymentContributor extends AbstractIdentit
     return "Concat";
   }
 
+  @Override
   protected String getFilterClassname() {
     return ConcatIdentityAssertionFilter.class.getName();
   }

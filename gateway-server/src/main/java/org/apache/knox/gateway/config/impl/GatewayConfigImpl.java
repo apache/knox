@@ -939,6 +939,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return topologyNames;
   }
 
+  @Override
   public String getDispatchWhitelist() {
     return get(DISPATCH_HOST_WHITELIST);
   }

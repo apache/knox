@@ -22,10 +22,12 @@ import org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAs
 public class SwitchCaseIdentityAsserterDeploymentContributor extends
     AbstractIdentityAsserterDeploymentContributor {
 
+  @Override
   public String getName() {
     return "SwitchCase";
   }
 
+  @Override
   protected String getFilterClassname() {
     return SwitchCaseIdentityAssertionFilter.class.getName();
   }

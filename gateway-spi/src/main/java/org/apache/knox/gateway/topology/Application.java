@@ -19,11 +19,13 @@ package org.apache.knox.gateway.topology;
 
 public class Application extends Service {
 
+  @Override
   public String getRole() {
     return getName();
   }
 
-  public void setRole( String role ) {
+  @Override
+  public void setRole(String role ) {
     setName( role );
   }
 

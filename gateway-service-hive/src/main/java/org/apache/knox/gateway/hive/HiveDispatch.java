@@ -34,6 +34,7 @@ public class HiveDispatch extends DefaultDispatch {
     super.init();
   }
 
+  @Override
   protected void addCredentialsToRequest(HttpUriRequest request) {
     if( isBasicAuthPreemptive() ) {
       HiveDispatchUtils.addCredentialsToRequest(request);

@@ -50,16 +50,19 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
     ((TestSSOCookieFederationProvider) handler).setTokenService(new TestJWTokenAuthority(publicKey));
   }
 
+  @Override
   protected void setTokenOnRequest(HttpServletRequest request, SignedJWT jwt) {
     Cookie cookie = new Cookie("hadoop-jwt", jwt.serialize());
     EasyMock.expect(request.getCookies()).andReturn(new Cookie[] { cookie });
   }
 
+  @Override
   protected void setGarbledTokenOnRequest(HttpServletRequest request, SignedJWT jwt) {
     Cookie cookie = new Cookie("hadoop-jwt", "ljm" + jwt.serialize());
     EasyMock.expect(request.getCookies()).andReturn(new Cookie[] { cookie });
   }
 
+  @Override
   protected String getAudienceProperty() {
     return TestSSOCookieFederationProvider.SSO_EXPECTED_AUDIENCES;
   }

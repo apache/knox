@@ -37,7 +37,8 @@ public abstract class JerseyServiceDeploymentContributorBase extends ServiceDepl
 
   protected abstract String[] getPatterns();
 
-  public void contributeService( DeploymentContext context, Service service ) throws Exception {
+  @Override
+  public void contributeService(DeploymentContext context, Service service ) throws Exception {
     String packages = StringUtils.join( getPackages(), ";" );
     for( String pattern : getPatterns() ) {
       ResourceDescriptor resource = context.getGatewayDescriptor().addResource();

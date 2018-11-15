@@ -43,6 +43,7 @@ public class NiFiDispatch extends DefaultDispatch {
   /**
    * Overridden to provide a spot to modify the outbound response before its stream is closed.
    */
+  @Override
   protected void writeOutboundResponse(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse, HttpResponse inboundResponse) throws IOException {
     // Copy the client respond header to the server respond.
     outboundResponse.setStatus(inboundResponse.getStatusLine().getStatusCode());

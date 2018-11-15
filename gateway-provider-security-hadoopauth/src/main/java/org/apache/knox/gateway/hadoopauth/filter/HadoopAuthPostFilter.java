@@ -84,6 +84,7 @@ public class HadoopAuthPostFilter implements Filter {
         Subject.doAs(
             subject,
             new PrivilegedExceptionAction<Object>() {
+              @Override
               public Object run() throws Exception {
                 chain.doFilter(request, response);
                 return null;

@@ -56,19 +56,22 @@ public class ResponseCookieFilter extends AbstractGatewayFilter {
       super( response );
     }
 
-    public void addCookie( Cookie cookie ) {
+    @Override
+    public void addCookie(Cookie cookie ) {
       if( cookie != null && isAllowedHeader( cookie.getName() ) ) {
         super.addCookie( cookie );
       }
     }
 
-    public void setHeader( String name, String value ) {
+    @Override
+    public void setHeader(String name, String value ) {
       if( isAllowedHeader( name ) ) {
         super.setHeader( name, value );
       }
     }
 
-    public void addHeader( String name, String value ) {
+    @Override
+    public void addHeader(String name, String value ) {
       if( isAllowedHeader( name ) ) {
         super.addHeader( name, value );
       }

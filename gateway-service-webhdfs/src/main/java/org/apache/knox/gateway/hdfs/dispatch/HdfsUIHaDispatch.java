@@ -26,6 +26,7 @@ public class HdfsUIHaDispatch extends AbstractHdfsHaDispatch {
     super();
   }
 
+  @Override
   protected String getResourceRole() {
     return RESOURCE_ROLE;
   }

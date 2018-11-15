@@ -45,20 +45,24 @@ public class ResourceDescriptorImpl implements ResourceDescriptor {
     return parent;
   }
 
-  public ResourceDescriptor role( String role ) {
+  @Override
+  public ResourceDescriptor role(String role ) {
     this.role = role;
     return this;
   }
 
+  @Override
   public String role() {
     return role;
   }
 
-  public ResourceDescriptor pattern( String pattern ) {
+  @Override
+  public ResourceDescriptor pattern(String pattern ) {
     this.pattern = pattern;
     return this;
   }
 
+  @Override
   public String pattern() {
     return pattern;
   }

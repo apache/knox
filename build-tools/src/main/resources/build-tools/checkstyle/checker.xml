@@ -80,6 +80,8 @@ limitations under the License.
         <module name="StringLiteralEquality"/>
         <!-- Don't declare multiple variables in the same statement -->
         <!--<module name="MultipleVariableDeclarations"/>-->
+        <!-- Make sure @Override annotation is on methods -->
+        <module name="MissingOverride"/>
         
         <!-- Checks for imports                              -->
         <!-- See http://checkstyle.sf.net/config_import.html -->

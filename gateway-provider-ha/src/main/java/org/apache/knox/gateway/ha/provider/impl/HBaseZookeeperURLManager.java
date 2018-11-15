@@ -75,6 +75,7 @@ public class HBaseZookeeperURLManager extends BaseZookeeperURLManager {
     return validatedHosts;
   }
 
+  @Override
   protected String getServiceName() {
     return "WEBHBASE";
   };

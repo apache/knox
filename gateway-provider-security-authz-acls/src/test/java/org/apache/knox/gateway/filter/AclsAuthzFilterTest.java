@@ -46,8 +46,9 @@ public class AclsAuthzFilterTest {
   @Before
   public void setup() {
     filter = new AclsAuthorizationFilter() {
+      @Override
       public void doFilter(ServletRequest request, ServletResponse response,
-          FilterChain chain) throws IOException, ServletException {
+                           FilterChain chain) throws IOException, ServletException {
         boolean accessGranted = enforceAclAuthorizationPolicy(request, response, chain);
         String sourceUrl = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
         if (accessGranted) {
@@ -55,8 +56,9 @@ public class AclsAuthzFilterTest {
         }
       }
       
+      @Override
       protected boolean enforceAclAuthorizationPolicy(ServletRequest request,
-          ServletResponse response, FilterChain chain) {
+                                                      ServletResponse response, FilterChain chain) {
         accessGranted = super.enforceAclAuthorizationPolicy(request, response, chain);
         return accessGranted;
       }
@@ -98,6 +100,7 @@ public class AclsAuthzFilterTest {
       Subject.doAs(
         subject,
         new PrivilegedExceptionAction<Object>() {
+          @Override
           public Object run() throws Exception {
             filter.doFilter(request, response, chain);
             return null;
@@ -154,6 +157,7 @@ public class AclsAuthzFilterTest {
       Subject.doAs(
         subject,
         new PrivilegedExceptionAction<Object>() {
+          @Override
           public Object run() throws Exception {
             filter.doFilter(request, response, chain);
             return null;
@@ -210,6 +214,7 @@ public class AclsAuthzFilterTest {
       Subject.doAs(
         subject,
         new PrivilegedExceptionAction<Object>() {
+          @Override
           public Object run() throws Exception {
             filter.doFilter(request, response, chain);
             return null;
@@ -266,6 +271,7 @@ public class AclsAuthzFilterTest {
       Subject.doAs(
         subject,
         new PrivilegedExceptionAction<Object>() {
+          @Override
           public Object run() throws Exception {
             filter.doFilter(request, response, chain);
             return null;
@@ -322,6 +328,7 @@ public class AclsAuthzFilterTest {
       Subject.doAs(
         subject,
         new PrivilegedExceptionAction<Object>() {
+          @Override
           public Object run() throws Exception {
             filter.doFilter(request, response, chain);
             return null;
@@ -378,6 +385,7 @@ public class AclsAuthzFilterTest {
       Subject.doAs(
         subject,
         new PrivilegedExceptionAction<Object>() {
+          @Override
           public Object run() throws Exception {
             filter.doFilter(request, response, chain);
             return null;
@@ -434,6 +442,7 @@ public class AclsAuthzFilterTest {
       Subject.doAs(
         subject,
         new PrivilegedExceptionAction<Object>() {
+          @Override
           public Object run() throws Exception {
             filter.doFilter(request, response, chain);
             return null;

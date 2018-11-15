@@ -27,6 +27,7 @@ public class RegexIdentityAsserterDeploymentContributor extends
     return "Regex";
   }
 
+  @Override
   protected String getFilterClassname() {
     return RegexIdentityAssertionFilter.class.getName();
   }

@@ -76,6 +76,7 @@ public class QueryRows {
       return this;
     }
 
+    @Override
     protected Callable<Response> callable() {
       return new Callable<Response>() {
         @Override

@@ -38,6 +38,7 @@ public abstract class ResourceManagerURLCreatorBase implements ServiceURLCreator
   private AmbariCluster cluster = null;
 
 
+  @Override
   public void init(AmbariCluster cluster) {
     this.cluster = cluster;
   }

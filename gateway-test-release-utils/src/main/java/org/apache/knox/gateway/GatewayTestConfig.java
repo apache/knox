@@ -130,6 +130,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return new InetSocketAddress( getGatewayHost(), getGatewayPort() );
   }
 
+  @Override
   public long getGatewayIdleTimeout() {
     return 0l;
   }
@@ -347,6 +348,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     backupVersionLimit = newBackupVersionLimit;
   }
 
+  @Override
   public int getGatewayDeploymentsBackupVersionLimit() {
     return backupVersionLimit;
   }
@@ -611,6 +613,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return null;
   }
 
+  @Override
   public String getDispatchWhitelist() {
     return null;
   }

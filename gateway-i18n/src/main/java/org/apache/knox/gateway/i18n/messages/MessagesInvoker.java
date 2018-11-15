@@ -101,7 +101,8 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
     return throwable;
   }
 
-  protected String getAnnotationPattern( final Method method ) {
+  @Override
+  protected String getAnnotationPattern(final Method method ) {
     String pattern = null;
     Message anno = method.getAnnotation( Message.class );
     if( anno != null ) {
@@ -157,6 +158,7 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
     return logger;
   }
 
+  @Override
   protected String getBundleName() {
     return bundle;
   }
@@ -165,6 +167,7 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
     return loggers.getLogger( calcLoggerName( clazz, anno ) );
   }
 
+  @Override
   public String toString() {
     return "MessageInvoker["+bundle+"]";
   }

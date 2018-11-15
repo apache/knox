@@ -66,6 +66,7 @@ public abstract class AbstractIdentityAssertionFilter extends AbstractIdentityAs
     loadPrincipalMappings(filterConfig);
   }
 
+  @Override
   public void destroy() {
     
   }

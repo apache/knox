@@ -93,6 +93,7 @@ private String gatewayPath;
     configureExpectedParameters(filterConfig);
   }
 
+  @Override
   public void destroy() {
   }
 
@@ -128,6 +129,7 @@ private String gatewayPath;
     }
   }
 
+  @Override
   protected void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status,
                                        String error) throws IOException {
     String loginURL = constructLoginURL(request);

@@ -47,10 +47,12 @@ public abstract class HDFSURLCreatorBase implements ServiceURLCreator {
   private AmbariCluster cluster = null;
 
 
+  @Override
   public void init(AmbariCluster cluster) {
     this.cluster = cluster;
   }
 
+  @Override
   public List<String> create(String service, Map<String, String> serviceParams) {
     List<String> urls = new ArrayList<>();
 

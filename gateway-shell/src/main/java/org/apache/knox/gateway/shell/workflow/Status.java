@@ -41,6 +41,7 @@ class Status {
       return this;
     }
 
+    @Override
     protected Callable<Response> callable() {
       return new Callable<Response>() {
         @Override

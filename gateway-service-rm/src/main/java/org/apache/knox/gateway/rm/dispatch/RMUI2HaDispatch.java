@@ -29,6 +29,7 @@ public class RMUI2HaDispatch extends RMHaBaseDispatcher {
    super();
   }
 
+  @Override
   @Configure
   public void setHaProvider(HaProvider haProvider) {
     this.haProvider = haProvider;

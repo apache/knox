@@ -91,6 +91,7 @@ public class JdbmStoreAndForwardAppender extends AppenderSkeleton {
 
   private class Forwarder extends Thread {
 
+    @Override
     public void run() {
       final AtomicBoolean done = new AtomicBoolean( false );
       while( !done.get() ) {

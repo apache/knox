@@ -67,9 +67,11 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     configureExpectedParameters(filterConfig);
   }
 
+  @Override
   public void destroy() {
   }
 
+  @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
     String header = ((HttpServletRequest) request).getHeader("Authorization");
@@ -100,6 +102,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     }
   }
 
+  @Override
   protected void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status,
                                        String error) throws IOException {
     if (error != null) {

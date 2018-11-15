@@ -65,6 +65,7 @@ public class Hive {
       return this;
     }
 
+    @Override
     protected Callable<Response> callable() {
       return new Callable<Response>() {
         @Override

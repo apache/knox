@@ -30,6 +30,7 @@ public class RMUIHaDispatch extends RMHaBaseDispatcher {
   public RMUIHaDispatch() throws ServletException {
     super();
   }
+   @Override
    @Configure
    public void setHaProvider(HaProvider haProvider) {
         this.haProvider = haProvider;

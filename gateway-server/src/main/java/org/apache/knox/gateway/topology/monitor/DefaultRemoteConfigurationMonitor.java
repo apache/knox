@@ -46,22 +46,27 @@ class DefaultRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
     private static final RemoteConfigurationRegistryClient.EntryACL AUTHENTICATED_USERS_ALL;
     static {
         AUTHENTICATED_USERS_ALL = new RemoteConfigurationRegistryClient.EntryACL() {
+            @Override
             public String getId() {
                 return "";
             }
 
+            @Override
             public String getType() {
                 return "auth";
             }
 
+            @Override
             public Object getPermissions() {
                 return ZooDefs.Perms.ALL;
             }
 
+            @Override
             public boolean canRead() {
                 return true;
             }
 
+            @Override
             public boolean canWrite() {
                 return true;
             }
@@ -71,22 +76,27 @@ class DefaultRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
     private static final RemoteConfigurationRegistryClient.EntryACL WORLD_ANYONE_READ;
     static {
         WORLD_ANYONE_READ = new RemoteConfigurationRegistryClient.EntryACL() {
+            @Override
             public String getId() {
                 return "anyone";
             }
 
+            @Override
             public String getType() {
                 return "world";
             }
 
+            @Override
             public Object getPermissions() {
                 return ZooDefs.Perms.READ;
             }
 
+            @Override
             public boolean canRead() {
                 return true;
             }
 
+            @Override
             public boolean canWrite() {
                 return false;
             }
