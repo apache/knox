@@ -64,6 +64,8 @@ limitations under the License.
         <module name="EmptyStatement"/>
         <!-- Require hash code override when equals is -->
         <module name="EqualsHashCode"/>
+        <!-- Enforce array type style -->
+        <module name="ArrayTypeStyle"/>
         <!-- Disallow unnecessary instantiation of Boolean, String -->
         <!--<module name="IllegalInstantiation">
             <property name="classes" value="java.lang.Boolean, java.lang.String"/>
