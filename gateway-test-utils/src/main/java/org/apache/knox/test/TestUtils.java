@@ -127,10 +127,8 @@ public class TestUtils {
   public static void awaitPortOpen( InetSocketAddress address, int timeout, int delay ) throws InterruptedException {
     long maxTime = System.currentTimeMillis() + timeout;
     do {
-      try {
-        Socket socket = new Socket();
+      try (Socket socket = new Socket()) {
         socket.connect( address, delay );
-        socket.close();
         return;
       } catch ( IOException e ) {
         //e.printStackTrace();

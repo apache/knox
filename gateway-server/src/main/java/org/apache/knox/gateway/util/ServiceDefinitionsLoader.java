@@ -118,15 +118,9 @@ public class ServiceDefinitionsLoader {
   public static UrlRewriteRulesDescriptor loadRewriteRules(File servicesDir) {
     File rewriteFile = new File(servicesDir, REWRITE_FILE);
     if ( rewriteFile.exists() ) {
-      InputStream stream;
-      try {
-        stream = new FileInputStream(rewriteFile);
-        Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
-        UrlRewriteRulesDescriptor rules = UrlRewriteRulesDescriptorFactory.load(
-            "xml", reader);
-        reader.close();
-        stream.close();
-        return rules;
+      try (InputStream stream = new FileInputStream(rewriteFile);
+           Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+        return UrlRewriteRulesDescriptorFactory.load("xml", reader);
       } catch ( FileNotFoundException e ) {
         log.failedToFindRewriteFile(rewriteFile.getAbsolutePath(), e);
       } catch ( IOException e ) {

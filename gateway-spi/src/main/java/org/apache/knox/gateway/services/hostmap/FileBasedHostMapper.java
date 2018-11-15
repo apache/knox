@@ -32,27 +32,28 @@ public class FileBasedHostMapper implements HostMapper {
   private Map<String, String> outbound = new HashMap<>();
 
   public FileBasedHostMapper( URL url ) throws IOException {
-    if( url != null ) {
-      InputStream stream = url.openStream();
-      BufferedReader reader = new BufferedReader( new InputStreamReader( stream, StandardCharsets.UTF_8 ) );
-      String line = reader.readLine();
-      while( line != null ) {
-        String[] lineSplit = line.split( "=" );
-        if( lineSplit.length >= 2 ) {
-          String[] externalSplit = lineSplit[ 0 ].split( "," );
-          String[] internalSplit = lineSplit[ 1 ].split( "," );
-          if( externalSplit.length >= 1 && internalSplit.length >= 1 ) {
-            for( String external : externalSplit ) {
-              inbound.put( external.trim(), internalSplit[ 0 ].trim() );
-            }
-            for( String internal : internalSplit ) {
-              outbound.put( internal.trim(), externalSplit[ 0 ].trim() );
+    if (url != null) {
+      try (InputStream stream = url.openStream();
+           InputStreamReader inputStreamReader = new InputStreamReader(stream, StandardCharsets.UTF_8);
+           BufferedReader reader = new BufferedReader(inputStreamReader)) {
+        String line = reader.readLine();
+        while (line != null) {
+          String[] lineSplit = line.split("=");
+          if (lineSplit.length >= 2) {
+            String[] externalSplit = lineSplit[0].split(",");
+            String[] internalSplit = lineSplit[1].split(",");
+            if (externalSplit.length >= 1 && internalSplit.length >= 1) {
+              for (String external : externalSplit) {
+                inbound.put(external.trim(), internalSplit[0].trim());
+              }
+              for (String internal : internalSplit) {
+                outbound.put(internal.trim(), externalSplit[0].trim());
+              }
             }
           }
+          line = reader.readLine();
         }
-        line = reader.readLine();
       }
-      reader.close();
     }
   }
 

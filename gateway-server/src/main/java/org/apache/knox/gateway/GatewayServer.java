@@ -960,9 +960,9 @@ public class GatewayServer {
   }
 
   private static void checkAddressAvailability( InetSocketAddress address ) throws IOException {
-    ServerSocket socket = new ServerSocket();
-    socket.bind( address );
-    socket.close();
+    try( ServerSocket socket = new ServerSocket() ) {
+      socket.bind(address);
+    }
   }
 
   private static class RegexFilenameFilter implements FilenameFilter {

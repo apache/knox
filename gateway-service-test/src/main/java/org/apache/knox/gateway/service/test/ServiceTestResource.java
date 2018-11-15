@@ -70,7 +70,7 @@ public class ServiceTestResource {
     String authString;
     GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
     SSLContext ctx = null;
-    CloseableHttpClient client;
+    CloseableHttpClient client = null;
     String id = getTopologyName();
 
     Topology topology = getTopology(id);
@@ -92,63 +92,67 @@ public class ServiceTestResource {
     }
 
 //    Initialize the HTTP client
-    if(ctx == null) {
-      client = HttpClients.createDefault();
-    } else {
-      client = HttpClients.custom().setSslcontext(ctx).build();
-    }
+    try {
+      if (ctx == null) {
+        client = HttpClients.createDefault();
+      } else {
+        client = HttpClients.custom().setSSLContext(ctx).build();
+      }
 
-    if(topology != null) {
-      for (Service s : topology.getServices()) {
-        List<String> urls = getServiceTestURLs(config, s.getRole(), topology);
+      if (topology != null) {
+        for (Service s : topology.getServices()) {
+          List<String> urls = getServiceTestURLs(config, s.getRole(), topology);
 
-//          Make sure we handle a case where no URLs are found.
-        if(urls.size() <= 0) {
-          ServiceTest test = new ServiceTest(s);
-          test.setMessage("This service did not contain any test URLs");
+          //          Make sure we handle a case where no URLs are found.
+          if (urls.size() <= 0) {
+            ServiceTest test = new ServiceTest(s);
+            test.setMessage("This service did not contain any test URLs");
+          }
+
+          for (String url : urls) {
+            HttpGet req = new HttpGet();
+            ServiceTest test = new ServiceTest(s, url);
+
+            if (authString != null) {
+              req.setHeader("Authorization", authString);
+            } else {
+              messages.add("No credentials provided. Expect HTTP 401 responses.");
+            }
+
+            try {
+              req.setURI(new URIBuilder(url).build());
+              CloseableHttpResponse res = client.execute(req);
+              String contentLength = "Content-Length:" + res.getEntity().getContentLength();
+              String contentType = (res.getEntity().getContentType() != null) ? res.getEntity().getContentType().toString() : "No-contenttype";
+              test.setResponseContent(contentLength + "," + contentType);
+              test.setHttpCode(res.getStatusLine().getStatusCode());
+              res.close();
+
+            } catch (IOException e) {
+              messages.add("Exception: " + e.getMessage());
+              test.setMessage(e.getMessage());
+            } catch (URISyntaxException e) {
+              test.setMessage(e.getMessage());
+            } catch (Exception e) {
+              messages.add(e.getMessage());
+              test.setMessage(e.getMessage());
+            } finally {
+              req.releaseConnection();
+              tests.add(test);
+            }
+          }
         }
-
-        for (String url : urls) {
-          HttpGet req = new HttpGet();
-          ServiceTest test = new ServiceTest(s, url);
-
-          if(authString != null) {
-            req.setHeader("Authorization", authString);
-          } else {
-            messages.add("No credentials provided. Expect HTTP 401 responses.");
-          }
-
-          try {
-            req.setURI(new URIBuilder(url).build());
-            CloseableHttpResponse res = client.execute(req);
-            String contentLength = "Content-Length:" + res.getEntity().getContentLength();
-            String contentType = (res.getEntity().getContentType() != null) ? res.getEntity().getContentType().toString() : "No-contenttype";
-            test.setResponseContent( contentLength + "," + contentType );
-            test.setHttpCode(res.getStatusLine().getStatusCode());
-            res.close();
-
-          } catch (IOException e) {
-            messages.add("Exception: " + e.getMessage());
-            test.setMessage(e.getMessage());
-          } catch (URISyntaxException e) {
-            test.setMessage(e.getMessage());
-          } catch (Exception e) {
-            messages.add(e.getMessage());
-            test.setMessage(e.getMessage());
-          } finally {
-            req.releaseConnection();
-            tests.add(test);
-          }
+      } else {
+        messages.add("Topology " + id + " not found");
+      }
+    } finally {
+      if(client != null) {
+        try {
+          client.close();
+        } catch (IOException e) {
+          e.printStackTrace();
         }
       }
-    } else {
-      messages.add("Topology " + id + " not found");
-    }
-
-    try {
-      client.close();
-    } catch (IOException e) {
-      e.printStackTrace();
     }
 
     ServiceTestWrapper stw = new ServiceTestWrapper();
