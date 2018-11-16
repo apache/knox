@@ -696,7 +696,7 @@ public class GatewayServer {
     context.setTempDirectory( FileUtils.getFile( warFile, "META-INF", "temp" ) );
     context.setErrorHandler( createErrorHandler() );
     context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false");
-
+    context.setClassLoader(this.getClass().getClassLoader());
     return context;
   }
 
@@ -793,15 +793,17 @@ public class GatewayServer {
       }
       contexts.addHandler( newContext );
       if( contexts.isRunning() && !newContext.isRunning() ) {
-          newContext.start();
+        newContext.start();
+        if(!newContext.isAvailable()) {
+          throw newContext.getUnavailableException();
+        }
       }
 
-    } catch( Exception e ) {
+    } catch( Throwable e ) {
       auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE );
       log.failedToDeployTopology( topology.getName(), e );
     }
   }
-
 
   private synchronized void internalDeactivateTopology( Topology topology ) {
 
