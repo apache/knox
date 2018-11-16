@@ -17,13 +17,84 @@
  */
 package org.apache.knox.gateway.service.knoxsso;
 
-import org.junit.Assert;
+import org.easymock.EasyMock;
 import org.junit.Test;
+
+import javax.servlet.ServletContext;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 public class WebSSOutResourceTest {
 
   @Test
-  public void test() throws Exception {
-    Assert.assertTrue(true);
+  public void testClearCookies() {
+    testClearCookie("hadoop-jwt");
+    testClearCookie(UUID.randomUUID().toString());
+  }
+
+  private void testClearCookie(String cookieName) {
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.name")).andReturn(cookieName);
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(""));
+
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    ServletOutputStream outputStream = EasyMock.createNiceMock(ServletOutputStream.class);
+    CookieResponseWrapper responseWrapper = new CookieResponseWrapper(response, outputStream);
+
+    EasyMock.replay(context, request);
+
+    WebSSOutResource webSSOutResponse = new WebSSOutResource();
+    webSSOutResponse.request = request;
+    webSSOutResponse.response = responseWrapper;
+    webSSOutResponse.context = context;
+    webSSOutResponse.init();
+
+    // Issue a token
+    webSSOutResponse.doGet();
+
+    // Check the cookie
+    Cookie cookie = responseWrapper.getCookie(cookieName);
+    assertNotNull(cookie);
+    assertNull(cookie.getValue());
+  }
+
+  /**
+   * A wrapper for HttpServletResponseWrapper to store the cookies
+   */
+  private static class CookieResponseWrapper extends HttpServletResponseWrapper {
+
+    private ServletOutputStream outputStream;
+    private Map<String, Cookie> cookies = new HashMap<>();
+
+    CookieResponseWrapper(HttpServletResponse response, ServletOutputStream outputStream) {
+      super(response);
+      this.outputStream = outputStream;
+    }
+
+    @Override
+    public ServletOutputStream getOutputStream() {
+      return outputStream;
+    }
+
+    @Override
+    public void addCookie(Cookie cookie) {
+      super.addCookie(cookie);
+      cookies.put(cookie.getName(), cookie);
+    }
+
+    Cookie getCookie(String name) {
+      return cookies.get(name);
+    }
   }
 }

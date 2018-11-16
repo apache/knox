@@ -39,24 +39,30 @@ import static javax.ws.rs.core.Response.ok;
 
 @Path( WebSSOutResource.RESOURCE_PATH )
 public class WebSSOutResource {
-  private static final String JWT_COOKIE_NAME = "hadoop-jwt";
+  private static final KnoxSSOutMessages log = MessagesFactory.get( KnoxSSOutMessages.class );
+
+  private static final String SSO_COOKIE_NAME = "knoxsso.cookie.name";
+  private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
+
   static final String RESOURCE_PATH = "/api/v1/webssout";
-  static final String KNOXSSO_RESOURCE_PATH = "/api/v1/websso";
-  private static KnoxSSOutMessages log = MessagesFactory.get( KnoxSSOutMessages.class );
 
-  private String domainSuffix = null;
+  private String cookieName = null;
 
   @Context
-  private HttpServletRequest request;
+  HttpServletRequest request;
 
   @Context
-  private HttpServletResponse response;
+  HttpServletResponse response;
 
   @Context
   ServletContext context;
 
   @PostConstruct
   public void init() {
+    cookieName = context.getInitParameter(SSO_COOKIE_NAME);
+    if (cookieName == null) {
+      cookieName = DEFAULT_SSO_COOKIE_NAME;
+    }
   }
 
   @GET
@@ -80,18 +86,17 @@ public class WebSSOutResource {
       return ok().entity("{ \"loggedOut\" : false }").build();
     }
   }
-  
-  public void setDomainSuffix(String domainSuffix) {
-    this.domainSuffix = domainSuffix;
-  }
 
   private boolean removeAuthenticationToken(HttpServletResponse response) {
     boolean rc = true;
-    Cookie c = new Cookie(JWT_COOKIE_NAME, null);
+    Cookie c = new Cookie(cookieName, null);
     c.setMaxAge(0);
     c.setPath("/");
     try {
-      c.setDomain(Urls.getDomainName(request.getRequestURL().toString(), domainSuffix));
+      String domainName = Urls.getDomainName(request.getRequestURL().toString(), null);
+      if(domainName != null) {
+        c.setDomain(domainName);
+      }
     } catch (MalformedURLException e) {
       log.problemWithCookieDomainUsingDefault();
       // we are probably not going to be able to
