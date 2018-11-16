@@ -16,10 +16,20 @@
    limitations under the License.
 -->
 <rules>
-  <rule dir="IN" name="LIVYSERVER/livy/root/inbound" pattern="*://*:*/**/livy/v1">
+  <!-- These should be removed at some point since Livy 
+       doesn't have /v1 in the REST API specification -->
+  <rule dir="IN" name="LIVYSERVER/livy/root/v1/inbound/" pattern="*://*:*/**/livy/v1">
     <rewrite template="{$serviceUrl[LIVYSERVER]}"/>
   </rule>
-  <rule dir="IN" name="LIVYSERVER/livy/path/inbound" pattern="*://*:*/**/livy/v1/{path=**}?{**}">
+  <rule dir="IN" name="LIVYSERVER/livy/path/v1/inbound" pattern="*://*:*/**/livy/v1/{path=**}?{**}">
+    <rewrite template="{$serviceUrl[LIVYSERVER]}/{path=**}?{**}"/>
+  </rule>
+
+  <!-- Prefer these rules without v1 in the url -->
+  <rule dir="IN" name="LIVYSERVER/livy/root/inbound" pattern="*://*:*/**/livy">
+    <rewrite template="{$serviceUrl[LIVYSERVER]}"/>
+  </rule>
+  <rule dir="IN" name="LIVYSERVER/livy/path/inbound" pattern="*://*:*/**/livy/{path=**}?{**}">
     <rewrite template="{$serviceUrl[LIVYSERVER]}/{path=**}?{**}"/>
   </rule>
 </rules>
