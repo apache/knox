@@ -21,33 +21,18 @@ import static io.restassured.RestAssured.given;
 import static org.apache.knox.test.TestUtils.LOG_ENTER;
 import static org.apache.knox.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.URL;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
-
-import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.GatewayServices;
-import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.test.TestUtils;
 import org.apache.http.HttpStatus;
-import org.apache.log4j.Appender;
-import org.hamcrest.MatcherAssert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
@@ -58,106 +43,43 @@ import com.mycila.xmltool.XMLTag;
  *
  */
 public class GatewayLdapGroupFuncTest {
-
-  private static Logger LOG = LoggerFactory.getLogger( GatewayLdapGroupFuncTest.class );
-
-  public static Enumeration<Appender> appenders;
-  public static GatewayConfig config;
-  public static GatewayServer gateway;
-  public static String gatewayUrl;
-  public static String clusterUrl;
-  public static String serviceUrl;
-  private static GatewayTestDriver driver = new GatewayTestDriver();
+  private static final GatewayTestDriver driver = new GatewayTestDriver();
+  private static final String cluster = "test-cluster";
 
   @BeforeClass
   public static void setupSuite() throws Exception {
     LOG_ENTER();
-    //appenders = NoOpAppender.setUp();
     driver.setupLdap(0);
     setupGateway();
-    TestUtils.awaitNon404HttpStatus( new URL( serviceUrl ), 10000, 100 );
     LOG_EXIT();
   }
 
   @AfterClass
   public static void cleanupSuite() throws Exception {
     LOG_ENTER();
-    gateway.stop();
     driver.cleanup();
-    //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
-    //NoOpAppender.tearDown( appenders );
     LOG_EXIT();
   }
 
   public static void setupGateway() throws Exception {
+    GatewayTestConfig config = new GatewayTestConfig();
+    XMLTag topology = createTopology();
+    driver.setupGateway(config, cluster, topology, true);
+    String serviceUrl = driver.getClusterUrl() + "/test-service-path/test-service-resource";
+    TestUtils.awaitNon404HttpStatus( new URL( serviceUrl ), 10000, 100 );
 
-    File targetDir = new File( System.getProperty( "user.dir" ), "target" );
-    File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
-    gatewayDir.mkdirs();
-
-    GatewayTestConfig testConfig = new GatewayTestConfig();
-    config = testConfig;
-    testConfig.setGatewayHomeDir( gatewayDir.getAbsolutePath() );
-
-    File topoDir = new File( testConfig.getGatewayTopologyDir() );
-    topoDir.mkdirs();
-
-    File deployDir = new File( testConfig.getGatewayDeploymentDir() );
-    deployDir.mkdirs();
-
-    DefaultGatewayServices srvcs = new DefaultGatewayServices();
-    Map<String,String> options = new HashMap<>();
-    options.put( "persist-master", "true" );
-    options.put( "master", "hadoop" );
-
-    try {
-      srvcs.init( testConfig, options );
-    } catch ( ServiceLifecycleException e ) {
-      e.printStackTrace(); // I18N not required.
-    }
-
-    /*
-    System.setProperty(GatewayConfig.GATEWAY_HOME_VAR, gatewayDir.getAbsolutePath());
-    System.err.println("GH 10: " + System.getProperty(GatewayConfig.GATEWAY_HOME_VAR));
-    ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-    System.setOut(new PrintStream(outContent));
-    String[] argvals = {"create-alias", "ldcSystemPassword", "--value", "guest-password", "--master", "hadoop", "--cluster", "test-cluster"};
-    KnoxCLI cli = new KnoxCLI();
-    cli.setConf(new GatewayConfigImpl());
-    cli.run(argvals);
-
-    outContent.reset();
-    String[] args1 = {"list-alias", "--cluster", "test-cluster", "--master", "hadoop"};
-    cli = new KnoxCLI();
-    cli.run(args1);
-    System.err.println("ALIAS LIST: " + outContent.toString());
-
-    AliasService as1 = cli.getGatewayServices().getService(GatewayServices.ALIAS_SERVICE);
-    char[] passwordChars1 = as1.getPasswordFromAliasForCluster( "test-cluster", "ldcsystemPassword");
-    System.err.println("ALIAS value1: " + new String(passwordChars1));
-    */
-
-    gateway = GatewayServer.startGateway( testConfig, srvcs );
-    MatcherAssert.assertThat( "Failed to start gateway.", gateway, notNullValue() );
-
-    LOG.info( "Gateway port = " + gateway.getAddresses()[ 0 ].getPort() );
-
-    gatewayUrl = "http://localhost:" + gateway.getAddresses()[0].getPort() + "/" + config.getGatewayPath();
-    clusterUrl = gatewayUrl + "/test-cluster";
-    serviceUrl = clusterUrl + "/test-service-path/test-service-resource";
-
-    ///*
     GatewayServices services = GatewayServer.getGatewayServices();
-    AliasService aliasService = (AliasService)services.getService(GatewayServices.ALIAS_SERVICE);
-    aliasService.addAliasForCluster("test-cluster", "ldcSystemPassword", "guest-password");
+    AliasService aliasService = services.getService(GatewayServices.ALIAS_SERVICE);
+    aliasService.addAliasForCluster(cluster, "ldcSystemPassword", "guest-password");
 
-    // char[] password1 = aliasService.getPasswordFromAliasForCluster( "test-cluster", "ldcSystemPassword");
-    //System.err.println("SETUP password 10: " + ((password1 == null) ? "NULL" : new String(password1)));
+    driver.stop();
+    driver.start();
 
-    File descriptor = new File( topoDir, "test-cluster.xml" );
-    FileOutputStream stream = new FileOutputStream( descriptor );
-    createTopology().toStream( stream );
-    stream.close();
+    File descriptor = new File( driver.config.getGatewayTopologyDir(), cluster + ".xml" );
+    assertTrue(descriptor.setLastModified(System.currentTimeMillis()));
+
+    serviceUrl = driver.getClusterUrl() + "/test-service-path/test-service-resource";
+    TestUtils.awaitNon404HttpStatus( new URL( serviceUrl ), 10000, 100 );
   }
 
   private static XMLTag createTopology() {
@@ -207,7 +129,7 @@ public class GatewayLdapGroupFuncTest {
         .addTag( "value" ).addText( "uid={0},ou=people,dc=hadoop,dc=apache,dc=org" )
         .gotoParent().addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.contextFactory.clusterName" )
-        .addTag( "value" ).addText( "test-cluster" )
+        .addTag( "value" ).addText( cluster )
         .gotoParent().addTag( "param" )
         .addTag( "name" ).addText( "main.ldapRealm.contextFactory.systemUsername" )
         .addTag( "value" ).addText( "uid=guest,ou=people,dc=hadoop,dc=apache,dc=org" )
@@ -239,18 +161,12 @@ public class GatewayLdapGroupFuncTest {
     return xml;
   }
 
-  @Ignore
-  // @Test
-  public void waitForManualTesting() throws IOException {
-    System.in.read();
-  }
-
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
-  public void testGroupMember() throws ClassNotFoundException, Exception {
+  public void testGroupMember() {
     LOG_ENTER();
     String username = "sam";
     String password = "sam-password";
-    String serviceUrl = clusterUrl + "/test-service-path/test-service-resource";
+    String serviceUrl = driver.getClusterUrl() + "/test-service-path/test-service-resource";
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )
@@ -264,11 +180,11 @@ public class GatewayLdapGroupFuncTest {
   }
 
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
-  public void testNonGroupMember() throws ClassNotFoundException {
+  public void testNonGroupMember() {
     LOG_ENTER();
     String username = "guest";
     String password = "guest-password";
-    String serviceUrl = clusterUrl + "/test-service-path/test-service-resource";
+    String serviceUrl = driver.getClusterUrl() + "/test-service-path/test-service-resource";
     given()
         //.log().all()
         .auth().preemptive().basic( username, password )

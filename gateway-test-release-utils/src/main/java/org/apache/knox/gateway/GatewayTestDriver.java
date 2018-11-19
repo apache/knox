@@ -72,6 +72,7 @@ public class GatewayTestDriver {
   public GatewayServer gateway;
   public GatewayConfig config;
   public String clusterName;
+  public DefaultGatewayServices srvcs;
 
   /**
    * Sets the class from which relative test resource names should be resolved.
@@ -148,26 +149,33 @@ public class GatewayTestDriver {
     topology.toStream( stream );
     stream.close();
 
-    DefaultGatewayServices srvcs = new DefaultGatewayServices();
+    this.srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<>();
     options.put("persist-master", "false");
     options.put("master", "password");
     try {
-      srvcs.init(config, options);
+      this.srvcs.init(config, options);
     } catch (ServiceLifecycleException e) {
       e.printStackTrace(); // I18N not required.
     }
 
+    start();
+  }
+
+  public void start() throws Exception {
     gateway = GatewayServer.startGateway( config, srvcs );
     MatcherAssert.assertThat( "Failed to start gateway.", gateway, CoreMatchers.notNullValue() );
-
     log.info( "Gateway port = " + gateway.getAddresses()[ 0 ].getPort() );
   }
 
-  public void cleanup() throws Exception {
-    if ( gateway != null ) {
+  public void stop() throws Exception {
+    if (gateway != null) {
       gateway.stop();
     }
+  }
+
+  public void cleanup() throws Exception {
+    stop();
     if ( config != null ) {
       FileUtils.deleteQuietly( new File( config.getGatewayTopologyDir() ) );
       FileUtils.deleteQuietly( new File( config.getGatewayConfDir() ) );
