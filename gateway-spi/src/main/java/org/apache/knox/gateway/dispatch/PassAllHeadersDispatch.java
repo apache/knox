@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PassAllHeadersDispatch extends DefaultDispatch {
+public class PassAllHeadersDispatch extends ConfigurableDispatch {
 
   private static final Set<String> REQUEST_EXCLUDE_HEADERS = new HashSet<>();
 
@@ -30,8 +30,13 @@ public class PassAllHeadersDispatch extends DefaultDispatch {
   }
 
   @Override
-  public void init() {
-    super.init();
+  protected void setResponseExcludeHeaders(String headers) {
+    super.setResponseExcludeHeaders(String.join(",", REQUEST_EXCLUDE_HEADERS));
+  }
+
+  @Override
+  protected void setRequestExcludeHeaders(String headers) {
+    super.setRequestExcludeHeaders("");
   }
 
   @Override

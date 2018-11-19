@@ -17,35 +17,19 @@
  */
 package org.apache.knox.gateway.dispatch;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-
-import javax.servlet.http.HttpServletRequest;
-
-  /**
-   * This is a specialized PassAllHeadersDispatch dispatch that decodes the URL before
-   * dispatch. Ambari Views do not work with the query string percent encoded. Other
-   * UIs may require this at some point as well.
-   */
+/**
+ * This is a specialized PassAllHeadersDispatch dispatch that decodes the URL before
+ * dispatch. Ambari Views do not work with the query string percent encoded. Other
+ * UIs may require this at some point as well.
+ */
 public class PassAllHeadersNoEncodingDispatch extends PassAllHeadersDispatch {
   @Override
-  public URI getDispatchUrl(HttpServletRequest request) {
-    String base = request.getRequestURI();
-    StringBuffer str = new StringBuffer();
-    str.append( base );
-    String query = request.getQueryString();
-    if (query != null) {
-      try {
-        query = URLDecoder.decode(query, StandardCharsets.UTF_8.name());
-      } catch (UnsupportedEncodingException e) {
-        // log
-      }
-      str.append( '?' );
-      str.append( query );
-    }
-    encodeUnwiseCharacters(str);
-    return URI.create( str.toString() );
+  protected void setRemoveUrlEncoding(String removeUrlEncoding) {
+    super.setRemoveUrlEncoding(Boolean.TRUE.toString());
+  }
+
+  @Override
+  public boolean getRemoveUrlEncoding() {
+    return Boolean.TRUE;
   }
 }

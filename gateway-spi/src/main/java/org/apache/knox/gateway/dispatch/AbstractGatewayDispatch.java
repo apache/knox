@@ -29,20 +29,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 
 public abstract class AbstractGatewayDispatch implements Dispatch {
-
-  private static final Set<String> REQUEST_EXCLUDE_HEADERS = new HashSet<>();
-
-  static {
-      REQUEST_EXCLUDE_HEADERS.add("Host");
-      REQUEST_EXCLUDE_HEADERS.add("Authorization");
-      REQUEST_EXCLUDE_HEADERS.add("Content-Length");
-      REQUEST_EXCLUDE_HEADERS.add("Transfer-Encoding");
-  }
+  private static final Set<String> REQUEST_EXCLUDE_HEADERS = new HashSet<>(Arrays.asList(
+      "Host", "Authorization", "Content-Length", "Transfer-Encoding"));
 
   protected  HttpClient client;
 

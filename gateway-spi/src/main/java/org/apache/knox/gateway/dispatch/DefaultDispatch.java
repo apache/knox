@@ -50,6 +50,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -64,18 +65,10 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
   protected static final Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
       AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
 
-  private Set<String> outboundResponseExcludeHeaders;
+  private Set<String> outboundResponseExcludeHeaders = new HashSet<>(Arrays.asList(SET_COOKIE, WWW_AUTHENTICATE));
 
   //Buffer size in bytes
   private int replayBufferSize = -1;
-
-  @Override
-  public void init() {
-    super.init();
-    outboundResponseExcludeHeaders = new HashSet<>();
-    outboundResponseExcludeHeaders.add(SET_COOKIE);
-    outboundResponseExcludeHeaders.add(WWW_AUTHENTICATE);
-  }
 
   @Override
   public void destroy() {
@@ -151,20 +144,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
   protected void writeOutboundResponse(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse, HttpResponse inboundResponse) throws IOException {
     // Copy the client respond header to the server respond.
     outboundResponse.setStatus(inboundResponse.getStatusLine().getStatusCode());
-    Header[] headers = inboundResponse.getAllHeaders();
-    Set<String> excludeHeaders = getOutboundResponseExcludeHeaders();
-    boolean hasExcludeHeaders = false;
-    if ((excludeHeaders != null) && !(excludeHeaders.isEmpty())) {
-      hasExcludeHeaders = true;
-    }
-    for ( Header header : headers ) {
-      String name = header.getName();
-      if (hasExcludeHeaders && excludeHeaders.contains(name.toUpperCase(Locale.ROOT))) {
-        continue;
-      }
-      String value = header.getValue();
-      outboundResponse.addHeader(name, value);
-    }
+    copyResponseHeaderFields(outboundResponse, inboundResponse);
 
     HttpEntity entity = inboundResponse.getEntity();
     if( entity != null ) {
@@ -318,8 +298,24 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
     executeRequest(method, request, response);
   }
 
+  public void copyResponseHeaderFields(HttpServletResponse outboundResponse, HttpResponse inboundResponse) {
+    Header[] headers = inboundResponse.getAllHeaders();
+    Set<String> excludeHeaders = getOutboundResponseExcludeHeaders();
+    boolean hasExcludeHeaders = false;
+    if ((excludeHeaders != null) && !(excludeHeaders.isEmpty())) {
+      hasExcludeHeaders = true;
+    }
+    for ( Header header : headers ) {
+      String name = header.getName();
+      if (hasExcludeHeaders && excludeHeaders.contains(name.toUpperCase(Locale.ROOT))) {
+        continue;
+      }
+      String value = header.getValue();
+      outboundResponse.addHeader(name, value);
+    }
+  }
+
   public Set<String> getOutboundResponseExcludeHeaders() {
     return outboundResponseExcludeHeaders;
   }
-
 }
