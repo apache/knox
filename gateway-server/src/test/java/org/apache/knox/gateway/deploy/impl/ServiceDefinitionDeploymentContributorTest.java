@@ -278,6 +278,94 @@ public class ServiceDefinitionDeploymentContributorTest {
 
   }
 
+  @Test
+  public void testServiceAttributeParameters() throws Exception {
+    final String TEST_SERVICE_ROLE     = "Test";
+
+    UrlRewriteRulesDescriptor clusterRules = EasyMock.createNiceMock(UrlRewriteRulesDescriptor.class);
+    EasyMock.replay(clusterRules);
+
+    UrlRewriteRulesDescriptor svcRules = EasyMock.createNiceMock(UrlRewriteRulesDescriptor.class);
+    EasyMock.replay(svcRules);
+
+    ServiceDefinition svcDef = EasyMock.createNiceMock(ServiceDefinition.class);
+    EasyMock.expect(svcDef.getRole()).andReturn(TEST_SERVICE_ROLE).anyTimes();
+    List<Route> svcRoutes = new ArrayList<>();
+    Route route = EasyMock.createNiceMock(Route.class);
+    List<Rewrite> filters = new ArrayList<>();
+    EasyMock.expect(route.getRewrites()).andReturn(filters).anyTimes();
+    svcRoutes.add(route);
+    EasyMock.replay(route);
+    EasyMock.expect(svcDef.getRoutes()).andReturn(svcRoutes).anyTimes();
+    CustomDispatch cd = EasyMock.createNiceMock(CustomDispatch.class);
+    EasyMock.expect(cd.getClassName()).andReturn("TestDispatch").anyTimes();
+    EasyMock.expect(cd.getHaClassName()).andReturn("TestHADispatch").anyTimes();
+    EasyMock.expect(cd.getHaContributorName()).andReturn(null).anyTimes();
+
+    EasyMock.replay(cd);
+    EasyMock.expect(svcDef.getDispatch()).andReturn(cd).anyTimes();
+    EasyMock.replay(svcDef);
+
+    ServiceDefinitionDeploymentContributor sddc = new ServiceDefinitionDeploymentContributor(svcDef, svcRules);
+
+    DeploymentContext context = EasyMock.createNiceMock(DeploymentContext.class);
+    EasyMock.expect(context.getDescriptor("rewrite")).andReturn(clusterRules).anyTimes();
+    GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gc.isXForwardedEnabled()).andReturn(false).anyTimes();
+    EasyMock.expect(gc.isCookieScopingToPathEnabled()).andReturn(false).anyTimes();
+    EasyMock.replay(gc);
+    EasyMock.expect(context.getGatewayConfig()).andReturn(gc).anyTimes();
+
+    // Configure the HaProvider
+    Topology topology = EasyMock.createNiceMock(Topology.class);
+    List<Provider> providers = new ArrayList<>();
+    Provider haProvider = EasyMock.createNiceMock(Provider.class);
+    EasyMock.expect(haProvider.getRole()).andReturn("ha").anyTimes();
+    EasyMock.expect(haProvider.isEnabled()).andReturn(true).anyTimes();
+    Map<String, String> providerParams = new HashMap<>();
+    providerParams.put(TEST_SERVICE_ROLE, "whatever");
+    EasyMock.expect(haProvider.getParams()).andReturn(providerParams).anyTimes();
+
+    EasyMock.replay(haProvider);
+    providers.add(haProvider);
+    EasyMock.expect(topology.getProviders()).andReturn(providers).anyTimes();
+    EasyMock.replay(topology);
+    EasyMock.expect(context.getTopology()).andReturn(topology).anyTimes();
+
+    TestGatewayDescriptor gd = new TestGatewayDescriptor();
+    EasyMock.expect(context.getGatewayDescriptor()).andReturn(gd).anyTimes();
+    EasyMock.replay(context);
+
+    // Configure the service with the useTwoWaySsl param to OVERRIDE the value in the service definition
+    Service service = EasyMock.createNiceMock(Service.class);
+    Map<String, String> svcParams = new HashMap<>();
+    svcParams.put("test1", "test1abc");
+    svcParams.put("test2", "test2def");
+    EasyMock.expect(service.getParams()).andReturn(svcParams).anyTimes();
+    EasyMock.replay(service);
+
+    sddc.contributeService(context, service);
+
+    assertEquals(1, gd.resources().size());
+    ResourceDescriptor res = gd.resources().get(0);
+    assertNotNull(res);
+    List<FilterDescriptor> filterList = res.filters();
+    assertEquals(1, filterList.size());
+    FilterDescriptor f = filterList.get(0);
+    assertNotNull(f);
+    assertEquals("dispatch", f.role());
+    List<FilterParamDescriptor> fParams = f.params();
+    assertNotNull(fParams);
+
+    Map<String, String> fparamKeyVal = new HashMap<>();
+    for(FilterParamDescriptor fparam : fParams) {
+      fparamKeyVal.put(fparam.name(), fparam.value());
+    }
+
+    assertEquals("test1abc", fparamKeyVal.get("test1"));
+    assertEquals("test2def", fparamKeyVal.get("test2"));
+  }
+
   private static class TestGatewayDescriptor extends GatewayDescriptorImpl {
   }
 

@@ -20,6 +20,7 @@ package org.apache.knox.gateway.topology.xml;
 import org.apache.commons.digester3.Rule;
 import org.apache.commons.digester3.binder.AbstractRulesModule;
 import org.apache.knox.gateway.service.definition.CustomDispatch;
+import org.apache.knox.gateway.service.definition.DispatchParam;
 import org.apache.knox.gateway.topology.Application;
 import org.apache.knox.gateway.topology.Param;
 import org.apache.knox.gateway.topology.Provider;
@@ -54,6 +55,7 @@ public class KnoxFormatXmlTopologyRules extends AbstractRulesModule {
   private static final String USE_TWO_WAY_SSL = "use-two-way-ssl";
 
   private static final Rule paramRule = new ParamRule();
+  private static final Rule dispatchParamRule = new DispatchParamRule();
 
   @Override
   protected void configure() {
@@ -88,6 +90,9 @@ public class KnoxFormatXmlTopologyRules extends AbstractRulesModule {
     forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + DISPATCH_TAG + "/" + HA_CLASSNAME ).callMethod( "setHaClassName" ).usingElementBodyAsArgument();
     forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + DISPATCH_TAG + "/" + HTTP_CLIENT_FACTORY ).callMethod( "setHttpClientFactory" ).usingElementBodyAsArgument();
     forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + DISPATCH_TAG + "/" + USE_TWO_WAY_SSL ).callMethod( "setUseTwoWaySsl" ).usingElementBodyAsArgument();
+    forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + DISPATCH_TAG + "/" + PARAM_TAG ).createObject().ofType( DispatchParam.class ).then().addRule( dispatchParamRule ).then().setNext( "addParam" );
+    forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + DISPATCH_TAG + "/" + PARAM_TAG + "/" + NAME_TAG ).setBeanProperty();
+    forPattern( ROOT_TAG + "/" + SERVICE_TAG + "/" + DISPATCH_TAG + "/" + PARAM_TAG + "/" + VALUE_TAG ).setBeanProperty();
 
     forPattern( ROOT_TAG + "/" + PROVIDER_TAG ).createObject().ofType( Provider.class ).then().setNext( "addProvider" );
     forPattern( ROOT_TAG + "/" + PROVIDER_TAG + "/" + ROLE_TAG ).setBeanProperty();
@@ -100,7 +105,6 @@ public class KnoxFormatXmlTopologyRules extends AbstractRulesModule {
   }
 
   private static class ParamRule extends Rule {
-
     @Override
     public void begin( String namespace, String name, Attributes attributes ) {
       Param param = getDigester().peek();
@@ -110,7 +114,17 @@ public class KnoxFormatXmlTopologyRules extends AbstractRulesModule {
         param.setValue( attributes.getValue( "value" ) );
       }
     }
-
   }
 
+  private static class DispatchParamRule extends Rule {
+    @Override
+    public void begin( String namespace, String name, Attributes attributes ) {
+      DispatchParam param = getDigester().peek();
+      String paramName = attributes.getValue( "name" );
+      if( paramName != null ) {
+        param.setName( paramName );
+        param.setValue( attributes.getValue( "value" ) );
+      }
+    }
+  }
 }

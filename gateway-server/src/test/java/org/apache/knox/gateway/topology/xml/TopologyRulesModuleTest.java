@@ -277,5 +277,33 @@ public class TopologyRulesModuleTest {
     assertThat( dispatch.getHaClassName(), is("testHAClassName") );
     assertThat( dispatch.getHttpClientFactory(), is("testHttpClientFactory") );
     assertThat( dispatch.getUseTwoWaySsl(), is(true) );
+    assertThat( dispatch.getParams().size(), is(0) );
+  }
+
+  @Test
+  public void testParseTopologyWithDispatchParameters() throws IOException, SAXException {
+    final Digester digester = loader.newDigester();
+    final String name = "topology-with-dispatch-parameters.xml";
+    final URL url = TestUtils.getResourceUrl( TopologyRulesModuleTest.class, name );
+    assertThat( "Failed to find URL for resource " + name, url, notNullValue() );
+    final File file = new File( url.getFile() );
+    final TopologyBuilder topologyBuilder = digester.parse( url );
+    final Topology topology = topologyBuilder.build();
+    assertThat( "Failed to parse resource " + name, topology, notNullValue() );
+    topology.setTimestamp( file.lastModified() );
+
+    final Collection<Service> services =  topology.getServices();
+    final CustomDispatch dispatch = services.iterator().next().getDispatch();
+
+    assertThat( "Failed to find dispatch", dispatch, notNullValue() );
+    assertThat( dispatch.getContributorName(), is("testContributor") );
+    assertThat( dispatch.getHaContributorName(), is("testHAContributor") );
+    assertThat( dispatch.getClassName(), is("org.apache.hadoop.gateway.hbase.HBaseDispatch") );
+    assertThat( dispatch.getHaClassName(), is("testHAClassName") );
+    assertThat( dispatch.getHttpClientFactory(), is("testHttpClientFactory") );
+    assertThat( dispatch.getUseTwoWaySsl(), is(true) );
+    assertThat( dispatch.getParams().size(), is(2) );
+    assertThat( dispatch.getParams().get("abc"), is("def") );
+    assertThat( dispatch.getParams().get("ghi"), is("123") );
   }
 }

@@ -38,6 +38,7 @@ import org.apache.knox.gateway.topology.Version;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -200,25 +201,26 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
       String haClassName = customDispatch.getHaClassName();
       String httpClientFactory = customDispatch.getHttpClientFactory();
       boolean useTwoWaySsl = customDispatch.getUseTwoWaySsl();
+      Map<String, String> dispatchParams = customDispatch.getParams();
       if ( isHaEnabled) {
         if (haContributorName != null) {
-          addDispatchFilter(context, service, resource, DISPATCH_ROLE, haContributorName);
+          addDispatchFilter(context, service, resource, DISPATCH_ROLE, haContributorName, dispatchParams);
         } else if (haClassName != null) {
-          addDispatchFilterForClass(context, service, resource, haClassName, httpClientFactory, useTwoWaySsl);
+          addDispatchFilterForClass(context, service, resource, haClassName, httpClientFactory, useTwoWaySsl, dispatchParams);
         } else {
-          addDefaultHaDispatchFilter(context, service, resource);
+          addDefaultHaDispatchFilter(context, service, resource, dispatchParams);
         }
       } else {
         String contributorName = customDispatch.getContributorName();
         if ( contributorName != null ) {
-          addDispatchFilter(context, service, resource, DISPATCH_ROLE, contributorName);
+          addDispatchFilter(context, service, resource, DISPATCH_ROLE, contributorName, dispatchParams);
         } else {
           String className = customDispatch.getClassName();
           if ( className != null ) {
-            addDispatchFilterForClass(context, service, resource, className, httpClientFactory, useTwoWaySsl);
+            addDispatchFilterForClass(context, service, resource, className, httpClientFactory, useTwoWaySsl, dispatchParams);
           } else {
             //final fallback to the default dispatch
-            addDispatchFilter(context, service, resource, DISPATCH_ROLE, "http-client");
+            addDispatchFilter(context, service, resource, DISPATCH_ROLE, "http-client", dispatchParams);
           }
         }
       }
@@ -230,16 +232,31 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
   }
 
   private void addDefaultHaDispatchFilter(DeploymentContext context, Service service, ResourceDescriptor resource) {
-    FilterDescriptor filter = addDispatchFilterForClass(context, service, resource, DEFAULT_HA_DISPATCH_CLASS, null);
+    addDefaultHaDispatchFilter(context, service, resource, Collections.emptyMap());
+  }
+
+  private void addDefaultHaDispatchFilter(DeploymentContext context, Service service, ResourceDescriptor resource,
+                                          Map<String, String> dispatchParams) {
+    FilterDescriptor filter = addDispatchFilterForClass(context, service, resource, DEFAULT_HA_DISPATCH_CLASS, null, dispatchParams);
     filter.param().name(SERVICE_ROLE_PARAM).value(service.getRole());
   }
 
-  private FilterDescriptor addDispatchFilterForClass(DeploymentContext context, Service service, ResourceDescriptor resource, String dispatchClass, String httpClientFactory, boolean useTwoWaySsl) {
+  private FilterDescriptor addDispatchFilterForClass(DeploymentContext context, Service service,
+                                                     ResourceDescriptor resource, String dispatchClass,
+                                                     String httpClientFactory, boolean useTwoWaySsl,
+                                                     Map<String, String> dispatchParams) {
     FilterDescriptor filter = resource.addFilter().name(getName()).role(DISPATCH_ROLE).impl(GatewayDispatchFilter.class);
     filter.param().name(DISPATCH_IMPL_PARAM).value(dispatchClass);
     if (httpClientFactory != null) {
       filter.param().name(HTTP_CLIENT_FACTORY_PARAM).value(httpClientFactory);
     }
+
+    if(dispatchParams != null) {
+      for ( Map.Entry<String, String> dispatchParam : dispatchParams.entrySet() ) {
+        filter.param().name(dispatchParam.getKey()).value(dispatchParam.getValue());
+      }
+    }
+
     // let's take the value of useTwoWaySsl which is derived from the service definition
     // then allow it to be overridden by service params from the topology
     filter.param().name("useTwoWaySsl").value(Boolean.toString(useTwoWaySsl));
@@ -256,8 +273,10 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
     return filter;
   }
 
-  private FilterDescriptor addDispatchFilterForClass(DeploymentContext context, Service service, ResourceDescriptor resource, String dispatchClass, String httpClientFactory) {
-    return addDispatchFilterForClass(context, service, resource, dispatchClass, httpClientFactory, false);
+  private FilterDescriptor addDispatchFilterForClass(DeploymentContext context, Service service,
+                                                     ResourceDescriptor resource, String dispatchClass,
+                                                     String httpClientFactory, Map<String, String> dispatchParams) {
+    return addDispatchFilterForClass(context, service, resource, dispatchClass, httpClientFactory, false, dispatchParams);
   }
 
   private boolean isHaEnabled(DeploymentContext context) {

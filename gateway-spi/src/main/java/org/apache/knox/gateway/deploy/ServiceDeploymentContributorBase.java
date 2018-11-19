@@ -24,8 +24,11 @@ import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Version;
 
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public abstract class ServiceDeploymentContributorBase extends DeploymentContributorBase implements ServiceDeploymentContributor {
 
@@ -107,10 +110,22 @@ public abstract class ServiceDeploymentContributorBase extends DeploymentContrib
   }
 
   protected void addDispatchFilter(DeploymentContext context, Service service, ResourceDescriptor resource, String role, String name ) {
+    addDispatchFilter(context, service, resource, role, name, Collections.emptyMap());
+  }
+
+  protected void addDispatchFilter(DeploymentContext context, Service service, ResourceDescriptor resource, String role,
+                                   String name, Map<String, String> dispatchParams) {
+    List<FilterParamDescriptor> params = new ArrayList<>();
+    if(dispatchParams != null) {
+      for ( Map.Entry<String, String> dispatchParam : dispatchParams.entrySet() ) {
+        params.add(resource.createFilterParam().name(dispatchParam.getKey()).value(dispatchParam.getValue()));
+      }
+    }
+
     if (name == null) {
       name = "http-client";
     }
-    context.contributeFilter( service, resource, role, name, null );
+    context.contributeFilter( service, resource, role, name, params );
   }
 
 }

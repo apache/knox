@@ -23,9 +23,14 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public class MockHttpServletResponse implements HttpServletResponse {
+
+  private Map<String, String> headers = new HashMap<>();
 
   @Override
   public void addCookie( Cookie cookie ) {
@@ -33,7 +38,7 @@ public class MockHttpServletResponse implements HttpServletResponse {
 
   @Override
   public boolean containsHeader( String s ) {
-    return false;
+    return headers.containsKey(s);
   }
 
   @Override
@@ -78,11 +83,13 @@ public class MockHttpServletResponse implements HttpServletResponse {
   }
 
   @Override
-  public void setHeader( String s, String s1 ) {
+  public void setHeader( String name, String value ) {
+    headers.put(name, value);
   }
 
   @Override
-  public void addHeader( String s, String s1 ) {
+  public void addHeader( String name, String value ) {
+    headers.put(name, value);
   }
 
   @Override
@@ -109,17 +116,17 @@ public class MockHttpServletResponse implements HttpServletResponse {
 
   @Override
   public String getHeader( String s ) {
-    return null;
+    return headers.get(s);
   }
 
   @Override
   public Collection<String> getHeaders( String s ) {
-    return null;
+    return Collections.singletonList(headers.get(s));
   }
 
   @Override
   public Collection<String> getHeaderNames() {
-    return null;
+    return headers.keySet();
   }
 
   @Override
