@@ -21,7 +21,6 @@ import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
-import org.eclipse.jetty.http.HttpURI;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.ScopedHandler;
 
@@ -87,7 +86,7 @@ public class RequestUpdateHandler extends ScopedHandler {
     // if the request already has the /{gatewaypath}/{topology} part then skip
     if (!StringUtils.startsWithIgnoreCase(target, redirectContext)) {
       baseRequest.setPathInfo(redirectContext + baseRequest.getPathInfo());
-      baseRequest.setHttpURI(new HttpURI(redirectContext + baseRequest.getRequestURI()));
+      baseRequest.setURIPathQuery(redirectContext + baseRequest.getRequestURI());
 
       LOG.topologyPortMappingUpdateRequest(target, newTarget);
       nextHandle(newTarget, baseRequest, newRequest, response);
