@@ -117,7 +117,6 @@ class CuratorClientService implements ZooKeeperClientService {
         return clients.get(name);
     }
 
-
     private RemoteConfigurationRegistryClient createClient(RemoteConfigurationRegistryConfig config) {
         ACLProvider aclProvider;
         if (config.isSecureRegistry()) {
@@ -279,13 +278,7 @@ class CuratorClientService implements ZooKeeperClientService {
 
         @Override
         public void createEntry(String path) {
-            try {
-                if (delegate.checkExists().forPath(path) == null) {
-                    delegate.create().forPath(path);
-                }
-            } catch (Exception e) {
-                log.errorInteractingWithRemoteConfigRegistry(e);
-            }
+            createEntry(path, null);
         }
 
         @Override
@@ -296,8 +289,17 @@ class CuratorClientService implements ZooKeeperClientService {
         @Override
         public void createEntry(String path, String data, String encoding) {
             try {
-                createEntry(path);
-                setEntryData(path, data, encoding);
+                byte[] dataBytes;
+                if(data == null) {
+                    // Match default znode value like curator
+                    // {@see CuratorFrameworkImpl#getDefaultData}
+                    dataBytes = new byte[0];
+                } else {
+                    dataBytes = data.getBytes(encoding);
+                }
+                if (delegate.checkExists().forPath(path) == null) {
+                    delegate.create().forPath(path, dataBytes);
+                }
             } catch (Exception e) {
                 log.errorInteractingWithRemoteConfigRegistry(e);
             }
