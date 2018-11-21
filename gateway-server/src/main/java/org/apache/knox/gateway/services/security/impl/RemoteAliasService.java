@@ -64,8 +64,7 @@ public class RemoteAliasService implements AliasService {
   public static final String DEFAULT_CLUSTER_NAME = "__gateway";
   public static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase";
 
-  private static final GatewayMessages LOG = MessagesFactory
-      .get(GatewayMessages.class);
+  private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
   // N.B. This is ZooKeeper-specific, and should be abstracted when another registry is supported
   private static final RemoteConfigurationRegistryClient.EntryACL AUTHENTICATED_USERS_ALL;
 
@@ -259,9 +258,7 @@ public class RemoteAliasService implements AliasService {
       checkPathsExist(remoteClient);
       ensureEntry(buildClusterEntryName(clusterName), remoteClient);
       try {
-
         remoteClient.createEntry(aliasEntryPath, encrypt(value));
-
       } catch (Exception e) {
         throw new AliasServiceException(e);
       }
@@ -271,7 +268,6 @@ public class RemoteAliasService implements AliasService {
             "Failed to store alias %s for cluster %s in remote registry", alias,
             clusterName));
       }
-
     }
   }
 
@@ -298,13 +294,10 @@ public class RemoteAliasService implements AliasService {
               "Failed to delete alias %s for cluster %s in remote registry",
               alias, clusterName));
         }
-
       }
-
     } else {
       LOG.missingClientConfigurationForRemoteMonitoring();
     }
-
   }
 
   @Override
@@ -349,7 +342,6 @@ public class RemoteAliasService implements AliasService {
           throw new AliasServiceException(e);
         }
       }
-
     }
 
     /*
@@ -434,7 +426,6 @@ public class RemoteAliasService implements AliasService {
     } else {
       LOG.missingClientConfigurationForRemoteMonitoring();
     }
-
   }
 
   @Override
@@ -463,7 +454,6 @@ public class RemoteAliasService implements AliasService {
             "Unable to add listener for path " + PATH_KNOX_ALIAS_STORE_TOPOLOGY,
             e);
       }
-
     }
 
     if(!config.isRemoteAliasServiceEnabled()) {
@@ -540,7 +530,6 @@ public class RemoteAliasService implements AliasService {
         (Base64.encodeBase64String(result.salt) + "::" + Base64
             .encodeBase64String(result.iv) + "::" + Base64
             .encodeBase64String(result.cipher)).getBytes(StandardCharsets.UTF_8));
-
   }
 
   /**
@@ -554,7 +543,9 @@ public class RemoteAliasService implements AliasService {
 
     final String line = new String(Base64.decodeBase64(encoded), StandardCharsets.UTF_8);
     final String[] parts = line.split("::");
-
+    if(parts.length != 3) {
+      throw new IllegalArgumentException("Data should have 3 parts split by ::");
+    }
     return new String(encryptor
         .decrypt(Base64.decodeBase64(parts[0]), Base64.decodeBase64(parts[1]),
             Base64.decodeBase64(parts[2])), StandardCharsets.UTF_8);
@@ -590,13 +581,12 @@ public class RemoteAliasService implements AliasService {
             /* remove the alias from local keystore */
             final AliasService aliasService = GatewayServer.getGatewayServices()
                 .getService(GatewayServices.ALIAS_SERVICE);
-            if (aliasService != null && paths.length > 1
-                && aliasService instanceof RemoteAliasService) {
+            if (paths.length > 1
+                    && aliasService instanceof RemoteAliasService) {
               ((RemoteAliasService) aliasService)
                   .removeAliasForClusterLocally(paths[0], paths[1]);
             }
           }
-
         } catch (final Exception e) {
           LOG.errorRemovingAliasLocally(paths[0], paths[1], e.toString());
         }
@@ -612,7 +602,6 @@ public class RemoteAliasService implements AliasService {
           } catch (final Exception e) {
             LOG.errorRemovingAliasLocally(paths[0], paths[1], e.toString());
           }
-
         } else if (subPath != null) {
           /* Add a child listener for the cluster */
           LOG.addRemoteListener(path);
@@ -621,12 +610,10 @@ public class RemoteAliasService implements AliasService {
           } catch (Exception e) {
             LOG.errorAddingRemoteListener(path, e.toString());
           }
-
         }
 
         break;
       }
-
     }
   }
 
@@ -640,11 +627,7 @@ public class RemoteAliasService implements AliasService {
     final String alias;
     final RemoteAliasService remoteAliasService;
 
-    /**
-     * Create an instance
-     */
     public RemoteAliasEntryListener(final String cluster, final String alias, final RemoteAliasService remoteAliasService) {
-      super();
       this.cluster = cluster;
       this.alias = alias;
       this.remoteAliasService = remoteAliasService;
@@ -658,21 +641,16 @@ public class RemoteAliasService implements AliasService {
         final AliasService aliasService = GatewayServer.getGatewayServices()
             .getService(GatewayServices.ALIAS_SERVICE);
 
-        if (aliasService != null
-            && aliasService instanceof RemoteAliasService) {
+        if (aliasService instanceof RemoteAliasService) {
           try {
-            ((RemoteAliasService) aliasService)
-                .addAliasForClusterLocally(cluster, alias, remoteAliasService.decrypt(new String(data, StandardCharsets.UTF_8)));
+            ((RemoteAliasService) aliasService).addAliasForClusterLocally(cluster, alias,
+                remoteAliasService.decrypt(new String(data, StandardCharsets.UTF_8)));
           } catch (final Exception e) {
             /* log and move on */
             LOG.errorAddingAliasLocally(cluster, alias, e.toString());
           }
-
         }
-
       }
     }
-
   }
-
 }
