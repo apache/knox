@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.services.metrics.impl;
 
+import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.services.metrics.InstrumentationProvider;
@@ -43,6 +44,7 @@ public class DefaultMetricsServiceTest {
     MetricRegistry metricRegistry = (MetricRegistry) service.getContext().getProperty(DefaultMetricsService.METRICS_REGISTRY);
     Assert.assertNotNull(metricRegistry);
     service.stop();
+    service.getMetricRegistry().removeMatching(MetricFilter.ALL);
   }
 
   @Test
@@ -52,7 +54,7 @@ public class DefaultMetricsServiceTest {
     Map<Class<?>, InstrumentationProvider> map = service.getInstrumentationProviders();
     Assert.assertTrue(map.entrySet().isEmpty());
     Assert.assertNull(service.getInstrumented(HttpClientBuilder.class));
-
+    service.getMetricRegistry().removeMatching(MetricFilter.ALL);
   }
 
   @Test
@@ -64,11 +66,11 @@ public class DefaultMetricsServiceTest {
     Map<Class<?>, InstrumentationProvider> map = service.getInstrumentationProviders();
     Assert.assertTrue(map.entrySet().size() >= 2);
     Assert.assertNotNull(service.getInstrumented(HttpClientBuilder.class));
-
+    service.getMetricRegistry().removeMatching(MetricFilter.ALL);
   }
 
   @Test
-  public void reportersLoading() throws Exception {
+  public void reportersLoadingDisabled() throws Exception {
     DefaultMetricsService service = new DefaultMetricsService();
     GatewayConfigImpl config = new GatewayConfigImpl();
     config.set(GatewayConfigImpl.METRICS_ENABLED, "true");
@@ -79,6 +81,7 @@ public class DefaultMetricsServiceTest {
     for (MetricsReporter reporter : reporters) {
       Assert.assertFalse(reporter.isEnabled());
     }
+    service.getMetricRegistry().removeMatching(MetricFilter.ALL);
     config.set(GatewayConfigImpl.JMX_METRICS_REPORTING_ENABLED, "true");
     config.set(GatewayConfigImpl.GRAPHITE_METRICS_REPORTING_ENABLED, "true");
     service.init(config, null);
@@ -88,6 +91,6 @@ public class DefaultMetricsServiceTest {
     }
     service.start();
     service.stop();
+    service.getMetricRegistry().removeMatching(MetricFilter.ALL);
   }
-
 }

@@ -1700,6 +1700,12 @@
                 <version>${metrics.version}</version>
             </dependency>
             <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-jvm</artifactId>
+                <version>${metrics.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>de.thetaphi</groupId>
                 <artifactId>forbiddenapis</artifactId>
                 <version>${forbiddenapis.version}</version>

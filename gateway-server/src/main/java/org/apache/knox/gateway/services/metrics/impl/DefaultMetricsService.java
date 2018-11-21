@@ -18,6 +18,12 @@
 package org.apache.knox.gateway.services.metrics.impl;
 
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.jvm.BufferPoolMetricSet;
+import com.codahale.metrics.jvm.CachedThreadStatesGaugeSet;
+import com.codahale.metrics.jvm.ClassLoadingGaugeSet;
+import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
+import com.codahale.metrics.jvm.JvmAttributeGaugeSet;
+import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -29,11 +35,13 @@ import org.apache.knox.gateway.services.metrics.MetricsReporter;
 import org.apache.knox.gateway.services.metrics.MetricsReporterException;
 import org.apache.knox.gateway.services.metrics.MetricsService;
 
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.concurrent.TimeUnit;
 
 public class DefaultMetricsService implements MetricsService {
   private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
@@ -65,6 +73,7 @@ public class DefaultMetricsService implements MetricsService {
     if (config.isMetricsEnabled()) {
       loadInstrumentationProviders();
       loadAndInitReporters(config);
+      registerJvmMetricSets();
     }
   }
 
@@ -88,6 +97,15 @@ public class DefaultMetricsService implements MetricsService {
         LOG.failedToInitializeReporter(metricsReporter.getName(), e);
       }
     }
+  }
+
+  private void registerJvmMetricSets() {
+    metrics.registerAll(new BufferPoolMetricSet(ManagementFactory.getPlatformMBeanServer()));
+    metrics.registerAll(new CachedThreadStatesGaugeSet(5, TimeUnit.MINUTES));
+    metrics.registerAll(new ClassLoadingGaugeSet());
+    metrics.registerAll(new GarbageCollectorMetricSet());
+    metrics.registerAll(new JvmAttributeGaugeSet());
+    metrics.registerAll(new MemoryUsageGaugeSet());
   }
 
   @Override
