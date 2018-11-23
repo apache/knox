@@ -23,6 +23,7 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import javax.xml.XMLConstants;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
@@ -52,7 +53,13 @@ class ServiceURLPropertyConfig {
     private static XPathExpression URL_PATTERN;
     private static XPathExpression PROPERTIES;
     static {
-        XPath xpath = XPathFactory.newInstance().newXPath();
+        XPathFactory xpathFactory = XPathFactory.newInstance();
+        try {
+            xpathFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
+        } catch (javax.xml.xpath.XPathFactoryConfigurationException ex) {
+            // ignore
+        }
+        XPath xpath = xpathFactory.newXPath();
         try {
             SERVICE_URL_PATTERN_MAPPINGS = xpath.compile("/service-discovery-url-mappings/service");
             URL_PATTERN                  = xpath.compile("url-pattern/text()");

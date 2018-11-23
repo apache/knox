@@ -36,6 +36,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.Text;
 
+import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLEventReader;
@@ -614,7 +615,18 @@ public abstract class XmlFilterReader extends Reader {
   }
 
   private static class XmlPathCompiler implements UrlRewriteFilterPathDescriptor.Compiler<XPathExpression> {
-    private static XPath XPATH = XPathFactory.newInstance().newXPath();
+    private static XPath XPATH;
+
+    static {
+        XPathFactory xpathFactory = XPathFactory.newInstance();
+        try {
+            xpathFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
+        } catch (javax.xml.xpath.XPathFactoryConfigurationException ex) {
+            // ignore
+        }
+        XPATH = xpathFactory.newXPath();
+    }
+
     @Override
     public XPathExpression compile( String expression, XPathExpression compiled ) {
       try {
