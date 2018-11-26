@@ -136,7 +136,7 @@ public class WhitelistUtils {
   private static String stripPort(String hostName) {
     String result = hostName;
 
-    int portIndex = hostName.indexOf(":");
+    int portIndex = hostName.indexOf(':');
     if (portIndex > 0) {
       result = hostName.substring(0, portIndex);
     }

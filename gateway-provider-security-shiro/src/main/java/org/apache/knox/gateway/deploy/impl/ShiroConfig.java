@@ -39,7 +39,7 @@ public class ShiroConfig {
         name = entry.getKey().substring(sectionDot + 1);
         value = entry.getValue().trim();
         if (value.startsWith("${ALIAS=") && value.endsWith("}")) {
-          String baseName = name.substring(0, name.lastIndexOf("."));
+          String baseName = name.substring(0, name.lastIndexOf('.'));
           addNameValueToSection(baseName + ".clusterName", clusterName, sectionName);
           addNameValueToSection(name, "S" + value.substring(1), sectionName);
         } else {

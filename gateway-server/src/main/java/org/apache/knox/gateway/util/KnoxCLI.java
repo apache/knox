@@ -1293,18 +1293,17 @@ public class KnoxCLI extends Configured implements Tool {
         String p1 = shiro.getParams().get("main.ldapRealm.userDnTemplate");
 
 //        We know everything between first "=" and "," will be part of the principal.
-        int eq = userDn.indexOf("=");
-        int com = userDn.indexOf(",");
+        int eq = userDn.indexOf('=');
+        int com = userDn.indexOf(',');
         if(eq != -1 && com > eq && com != -1) {
           result = userDn.substring(eq + 1, com);
         } else {
           result = "";
         }
+        return result;
       } catch (NoSuchTopologyException e) {
         out.println(e.toString());
-        result = userDn;
-      } finally {
-        return result;
+        return userDn;
       }
     }
 

@@ -153,7 +153,7 @@ public class HBaseZookeeperURLManager extends BaseZookeeperURLManager {
     buffer.append(scheme);
     buffer.append("://");
     // Strip off the host name
-    buffer.append(serverInfo.substring(0, serverInfo.indexOf(",")));
+    buffer.append(serverInfo.substring(0, serverInfo.indexOf(',')));
     buffer.append(":");
     buffer.append(PORT_NUMBER);
 

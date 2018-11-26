@@ -120,7 +120,7 @@ public class XForwardedHeaderRequestWrapper extends GatewayRequestWrapper {
     String value = request.getHeader( X_FORWARDED_PORT );
     if( value == null ) {
       String forwardedHost = getForwardedHost( request );
-      int separator = forwardedHost.indexOf( ":" );
+      int separator = forwardedHost.indexOf(':');
       if ( separator > 0 ) {
           value = forwardedHost.substring(separator + 1, forwardedHost.length());
       } else {

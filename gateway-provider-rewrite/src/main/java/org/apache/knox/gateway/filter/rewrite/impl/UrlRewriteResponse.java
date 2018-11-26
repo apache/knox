@@ -330,7 +330,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
       xForwardedScheme = request.getScheme();
     }
     if ( xForwardedHostname != null ) {
-      int separator = xForwardedHostname.indexOf( ":" );
+      int separator = xForwardedHostname.indexOf(':');
       if ( separator > 0 ) {
         //a specific port in the forwarded host wins
         xForwardedPort = xForwardedHostname.substring(separator + 1, xForwardedHostname.length());

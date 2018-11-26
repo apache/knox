@@ -192,7 +192,7 @@ public class CreateScanner {
       Header locationHeader = response().getFirstHeader( "Location" );
       if( locationHeader != null && locationHeader.getValue() != null && !locationHeader.getValue().isEmpty() ) {
         String location = locationHeader.getValue();
-        int position = location.lastIndexOf( "/" );
+        int position = location.lastIndexOf( '/' );
         if( position != -1 ) {
           return location.substring( position + 1 );
         }

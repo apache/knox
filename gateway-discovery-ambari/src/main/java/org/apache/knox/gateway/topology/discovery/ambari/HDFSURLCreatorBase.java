@@ -83,7 +83,7 @@ public abstract class HDFSURLCreatorBase implements ServiceURLCreator {
               if (coreSite != null) {
                 String defaultFS = coreSite.getProperties().get("fs.defaultFS");
                 if (defaultFS != null) {
-                  ns = defaultFS.substring(defaultFS.lastIndexOf("/") + 1);
+                  ns = defaultFS.substring(defaultFS.lastIndexOf('/') + 1);
                 }
               }
             }

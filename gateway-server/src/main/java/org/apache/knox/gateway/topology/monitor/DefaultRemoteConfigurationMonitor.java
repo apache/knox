@@ -237,7 +237,7 @@ class DefaultRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
 
         @Override
         public void childEvent(RemoteConfigurationRegistryClient client, Type type, String path) {
-            File localFile = new File(localDir, path.substring(path.lastIndexOf("/") + 1));
+            File localFile = new File(localDir, path.substring(path.lastIndexOf('/') + 1));
 
             switch (type) {
                 case REMOVED:
@@ -269,7 +269,7 @@ class DefaultRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
 
         @Override
         public void entryChanged(RemoteConfigurationRegistryClient client, String path, byte[] data) {
-            File localFile = new File(localDir, path.substring(path.lastIndexOf("/")));
+            File localFile = new File(localDir, path.substring(path.lastIndexOf('/')));
             if (data != null) {
                 try {
                     // If there is no corresponding local file, or the content is different from the existing local

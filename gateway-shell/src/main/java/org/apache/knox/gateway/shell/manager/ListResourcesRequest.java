@@ -62,7 +62,7 @@ class ListResourcesRequest extends AbstractRequest<BasicResponse> {
           JSONObject item = (JSONObject) items.get(i);
           String name = (String) item.get("name");
           if (name != null) {
-            result.add(name.substring(0, name.lastIndexOf(".")));
+            result.add(name.substring(0, name.lastIndexOf('.')));
           }
         }
       }

@@ -310,7 +310,7 @@ public abstract class HtmlFilterReaderBase extends Reader implements
         for( Attribute attribute : tag.getAttributes() ) {
           String name = attribute.getName();
           if( name.toLowerCase(Locale.ROOT).startsWith( "xmlns" ) ) {
-            int colon = name.indexOf( ":", 5 );
+            int colon = name.indexOf( ':', 5 );
             String prefix;
             if( colon <= 0 ) {
               prefix = "";
