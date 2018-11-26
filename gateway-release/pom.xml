@@ -62,13 +62,13 @@
                                 <goals><goal>run</goal></goals>
                                 <configuration>
                                     <tasks>
-                                        <checksum algorithm="MD5" fileext=".md5">
+                                        <checksum algorithm="SHA-256" fileext=".sha256">
                                             <fileset dir="../target/${project.version}">
                                                 <include name="*.zip" />
                                                 <include name="*.tar.gz" />
                                             </fileset>
                                         </checksum>
-                                        <checksum algorithm="SHA1" fileext=".sha1">
+                                        <checksum algorithm="SHA-512" fileext=".sha512">
                                             <fileset dir="../target/${project.version}">
                                                 <include name="*.zip" />
                                                 <include name="*.tar.gz" />
