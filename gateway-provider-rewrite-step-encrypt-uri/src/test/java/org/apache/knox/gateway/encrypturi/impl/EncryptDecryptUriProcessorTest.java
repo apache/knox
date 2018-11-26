@@ -26,7 +26,6 @@ import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteStepProcessor;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteStepStatus;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.CryptoService;
 import org.apache.knox.gateway.services.security.impl.DefaultCryptoService;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -83,8 +82,8 @@ public class EncryptDecryptUriProcessorTest {
     AliasService as = EasyMock.createNiceMock( AliasService.class );
     String secret = "asdf";
     EasyMock.expect( as.getPasswordFromAliasForCluster( clusterName, passwordAlias ) ).andReturn( secret.toCharArray() ).anyTimes();
-    CryptoService cryptoService = new DefaultCryptoService();
-    ((DefaultCryptoService)cryptoService).setAliasService( as );
+    DefaultCryptoService cryptoService = new DefaultCryptoService();
+    cryptoService.setAliasService( as );
     GatewayServices gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
     EasyMock.expect( gatewayServices.getService( GatewayServices.CRYPTO_SERVICE ) ).andReturn( cryptoService );
 

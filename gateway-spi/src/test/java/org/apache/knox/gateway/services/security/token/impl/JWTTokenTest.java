@@ -182,7 +182,7 @@ public class JWTTokenTest extends org.junit.Assert {
     assertTrue(token.getSignaturePayload().length > 0);
 
     // Verify the signature
-    JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey) publicKey);
+    JWSVerifier verifier = new RSASSAVerifier(publicKey);
     assertTrue(token.verify(verifier));
   }
 
@@ -206,7 +206,7 @@ public class JWTTokenTest extends org.junit.Assert {
     assertTrue(token.getSignaturePayload().length > 0);
 
     // Verify the signature
-    JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey) publicKey);
+    JWSVerifier verifier = new RSASSAVerifier(publicKey);
     assertTrue(token.verify(verifier));
   }
 

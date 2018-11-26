@@ -83,19 +83,19 @@ public class GatewayGlobalConfigTest {
 
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
   public void testDefaultTopologyName() {
-    GatewayConfig config = new GatewayConfigImpl();
+    GatewayConfigImpl config = new GatewayConfigImpl();
     assertThat( config.getDefaultTopologyName(), is( nullValue() ) );
 
-    ((GatewayConfigImpl)config).set("default.app.topology.name", "test-topo-name" );
+    config.set("default.app.topology.name", "test-topo-name" );
     assertThat( config.getDefaultTopologyName(), is( "test-topo-name" ) );
   }
 
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
   public void testDefaultAppRedirectPath() {
-    GatewayConfig config = new GatewayConfigImpl();
+    GatewayConfigImpl config = new GatewayConfigImpl();
     assertThat( config.getDefaultAppRedirectPath(), nullValue() );
 
-    ((GatewayConfigImpl)config).set("default.app.topology.name", "test-topo-name" );
+    config.set("default.app.topology.name", "test-topo-name" );
     assertThat( config.getDefaultAppRedirectPath(), is("/gateway/test-topo-name") );
   }
 

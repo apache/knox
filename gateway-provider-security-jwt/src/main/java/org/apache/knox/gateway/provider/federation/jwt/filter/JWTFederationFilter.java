@@ -82,7 +82,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     }
     else {
       // check for query param
-      wireToken = ((HttpServletRequest) request).getParameter(paramName);
+      wireToken = request.getParameter(paramName);
     }
 
     if (wireToken != null) {

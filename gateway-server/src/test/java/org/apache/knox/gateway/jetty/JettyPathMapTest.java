@@ -32,32 +32,32 @@ public class JettyPathMapTest {
 
     map = new PathMap();
     map.put( "/path", "/path" );
-    assertThat( (String)map.match("/path"), is("/path") );
+    assertThat(map.match("/path"), is("/path") );
 
     map = new PathMap();
     map.put( "/path", "/path" );
     map.put( "/path/", "/path/" );
-    assertThat( (String)map.match("/path"), is("/path") );
-    assertThat( (String)map.match("/path/"), is("/path/") );
+    assertThat(map.match("/path"), is("/path") );
+    assertThat(map.match("/path/"), is("/path/") );
 
     map = new PathMap();
     map.put( "/path/*", "/path/*" );
     map.put( "/path", "/path" );
     map.put( "/path/", "/path/" );
-    assertThat( (String)map.match("/path"), is("/path") );
-    assertThat( (String)map.match("/path/"), is("/path/") );
-    assertThat( (String)map.match("/path/sub"), is("/path/*") );
+    assertThat(map.match("/path"), is("/path") );
+    assertThat(map.match("/path/"), is("/path/") );
+    assertThat(map.match("/path/sub"), is("/path/*") );
 
     map = new PathMap();
     map.put( "/path", "/path" );
     map.put( "/path/", "/path/" );
     map.put( "/path/*", "/path/*" );
-    assertThat( (String)map.match( "/path/sub" ), is("/path/*") );
+    assertThat(map.match( "/path/sub" ), is("/path/*") );
 
     // Here the addition of the * path "overwrites" the exact matches.
     // Above this worked if the /path and /path/ were added after /path/*.
-    assertThat( (String)map.match("/path"), is("/path") );
-    assertThat( (String)map.match("/path/"), is("/path/") );
+    assertThat(map.match("/path"), is("/path") );
+    assertThat(map.match("/path/"), is("/path/") );
 
   }
 

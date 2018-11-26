@@ -35,11 +35,11 @@ public class GatewayForwardingServletTest {
   @Test
   public void testRedirectDefaults() throws ServletException, IOException {
     IMocksControl mockControl = EasyMock.createControl();
-    ServletConfig config = (ServletConfig)mockControl.createMock(ServletConfig.class);
-    ServletContext context = (ServletContext)mockControl.createMock(ServletContext.class);
-    HttpServletRequest request = (HttpServletRequest)mockControl.createMock(HttpServletRequest.class);
-    HttpServletResponse response = (HttpServletResponse)mockControl.createMock(HttpServletResponse.class);
-    RequestDispatcher dispatcher = (RequestDispatcher)mockControl.createMock(RequestDispatcher.class);
+    ServletConfig config = mockControl.createMock(ServletConfig.class);
+    ServletContext context = mockControl.createMock(ServletContext.class);
+    HttpServletRequest request = mockControl.createMock(HttpServletRequest.class);
+    HttpServletResponse response = mockControl.createMock(HttpServletResponse.class);
+    RequestDispatcher dispatcher = mockControl.createMock(RequestDispatcher.class);
     // setup expectations
     EasyMock.expect(config.getServletName()).andStubReturn("default");
     EasyMock.expect(config.getServletContext()).andStubReturn(context);
@@ -53,7 +53,7 @@ public class GatewayForwardingServletTest {
     dispatcher.forward(request, response);
     EasyMock.expectLastCall().once();
     // logging
-    context.log((String)EasyMock.anyObject());
+    context.log(EasyMock.anyObject());
     EasyMock.expectLastCall().anyTimes();
     // run the test
     mockControl.replay();

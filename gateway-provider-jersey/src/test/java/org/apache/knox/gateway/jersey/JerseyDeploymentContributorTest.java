@@ -83,11 +83,11 @@ public class JerseyDeploymentContributorTest {
     EasyMock.expect( context.getTopology() ).andReturn( topology ).anyTimes();
     EasyMock.expect( context.getGatewayDescriptor() ).andReturn( descriptor ).anyTimes();
     context.contributeFilter(
-        EasyMock.<Service> isA( Service.class ),
-        EasyMock.<ResourceDescriptor> isA( ResourceDescriptor.class ),
-        EasyMock.<String> isA( String.class ),
-        EasyMock.<String> isA( String.class ),
-        EasyMock.<List> isA( List.class ) );
+        EasyMock.isA( Service.class ),
+        EasyMock.isA( ResourceDescriptor.class ),
+        EasyMock.isA( String.class ),
+        EasyMock.isA( String.class ),
+        EasyMock.isA( List.class ) );
     EasyMock.expectLastCall().andDelegateTo(
         new MockDeploymentContext( context, providerContributor, provider ) ).anyTimes();
 

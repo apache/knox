@@ -107,13 +107,13 @@ public class AuditServiceTest {
       LoggingEvent event = iterator.next();
       checkLogEventContexts( event, cc, ac );
       
-      assertThat( (String)event.getMDC( AuditConstants.MDC_ACTION_KEY ), is( "action" + counter ) );
-      assertThat( (String)event.getMDC( AuditConstants.MDC_RESOURCE_NAME_KEY ), is( "resource" + counter ) );
-      assertThat( (String)event.getMDC( AuditConstants.MDC_RESOURCE_TYPE_KEY ), is( "resource type" + counter ) );
-      assertThat( (String)event.getMDC( AuditConstants.MDC_OUTCOME_KEY ), is( "outcome" + counter ) );
-      assertThat( (String)event.getMDC( AuditConstants.MDC_SERVICE_KEY ), is( AuditConstants.KNOX_SERVICE_NAME ) );
-      assertThat( (String)event.getMDC( AuditConstants.MDC_COMPONENT_KEY ), is( AuditConstants.KNOX_COMPONENT_NAME ) );
-      assertThat( (String)event.getRenderedMessage(), is( "message" + counter ) );
+      assertThat(event.getMDC( AuditConstants.MDC_ACTION_KEY ), is( "action" + counter ) );
+      assertThat(event.getMDC( AuditConstants.MDC_RESOURCE_NAME_KEY ), is( "resource" + counter ) );
+      assertThat(event.getMDC( AuditConstants.MDC_RESOURCE_TYPE_KEY ), is( "resource type" + counter ) );
+      assertThat(event.getMDC( AuditConstants.MDC_OUTCOME_KEY ), is( "outcome" + counter ) );
+      assertThat(event.getMDC( AuditConstants.MDC_SERVICE_KEY ), is( AuditConstants.KNOX_SERVICE_NAME ) );
+      assertThat(event.getMDC( AuditConstants.MDC_COMPONENT_KEY ), is( AuditConstants.KNOX_COMPONENT_NAME ) );
+      assertThat(event.getRenderedMessage(), is( "message" + counter ) );
 
       counter++;
     }

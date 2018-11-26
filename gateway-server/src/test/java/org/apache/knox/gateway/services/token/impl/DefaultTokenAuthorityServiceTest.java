@@ -25,10 +25,8 @@ import java.util.HashMap;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.services.security.impl.DefaultKeystoreService;
-import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 
@@ -64,16 +62,16 @@ public class DefaultTokenAuthorityServiceTest extends org.junit.Assert {
 
     EasyMock.replay(principal, config, ms, as);
 
-    KeystoreService ks = new DefaultKeystoreService();
-    ((DefaultKeystoreService)ks).setMasterService(ms);
+    DefaultKeystoreService ks = new DefaultKeystoreService();
+    ks.setMasterService(ms);
 
-    ((DefaultKeystoreService)ks).init(config, new HashMap<String, String>());
+    ks.init(config, new HashMap<String, String>());
 
-    JWTokenAuthority ta = new DefaultTokenAuthorityService();
-    ((DefaultTokenAuthorityService)ta).setAliasService(as);
-    ((DefaultTokenAuthorityService)ta).setKeystoreService(ks);
+    DefaultTokenAuthorityService ta = new DefaultTokenAuthorityService();
+    ta.setAliasService(as);
+    ta.setKeystoreService(ks);
 
-    ((DefaultTokenAuthorityService)ta).init(config, new HashMap<String, String>());
+    ta.init(config, new HashMap<String, String>());
 
     JWT token = ta.issueToken(principal, "RS256");
     assertEquals("KNOXSSO", token.getIssuer());
@@ -106,16 +104,16 @@ public class DefaultTokenAuthorityServiceTest extends org.junit.Assert {
 
     EasyMock.replay(principal, config, ms, as);
 
-    KeystoreService ks = new DefaultKeystoreService();
-    ((DefaultKeystoreService)ks).setMasterService(ms);
+    DefaultKeystoreService ks = new DefaultKeystoreService();
+    ks.setMasterService(ms);
 
-    ((DefaultKeystoreService)ks).init(config, new HashMap<String, String>());
+    ks.init(config, new HashMap<String, String>());
 
-    JWTokenAuthority ta = new DefaultTokenAuthorityService();
-    ((DefaultTokenAuthorityService)ta).setAliasService(as);
-    ((DefaultTokenAuthorityService)ta).setKeystoreService(ks);
+    DefaultTokenAuthorityService ta = new DefaultTokenAuthorityService();
+    ta.setAliasService(as);
+    ta.setKeystoreService(ks);
 
-    ((DefaultTokenAuthorityService)ta).init(config, new HashMap<String, String>());
+    ta.init(config, new HashMap<String, String>());
 
     JWT token = ta.issueToken(principal, "https://login.example.com", "RS256");
     assertEquals("KNOXSSO", token.getIssuer());
@@ -149,16 +147,16 @@ public class DefaultTokenAuthorityServiceTest extends org.junit.Assert {
 
     EasyMock.replay(principal, config, ms, as);
 
-    KeystoreService ks = new DefaultKeystoreService();
-    ((DefaultKeystoreService)ks).setMasterService(ms);
+    DefaultKeystoreService ks = new DefaultKeystoreService();
+    ks.setMasterService(ms);
 
-    ((DefaultKeystoreService)ks).init(config, new HashMap<String, String>());
+    ks.init(config, new HashMap<String, String>());
 
-    JWTokenAuthority ta = new DefaultTokenAuthorityService();
-    ((DefaultTokenAuthorityService)ta).setAliasService(as);
-    ((DefaultTokenAuthorityService)ta).setKeystoreService(ks);
+    DefaultTokenAuthorityService ta = new DefaultTokenAuthorityService();
+    ta.setAliasService(as);
+    ta.setKeystoreService(ks);
 
-    ((DefaultTokenAuthorityService)ta).init(config, new HashMap<String, String>());
+    ta.init(config, new HashMap<String, String>());
 
     JWT token = ta.issueToken(principal, null, "RS256");
     assertEquals("KNOXSSO", token.getIssuer());
@@ -191,16 +189,16 @@ public class DefaultTokenAuthorityServiceTest extends org.junit.Assert {
 
     EasyMock.replay(principal, config, ms, as);
 
-    KeystoreService ks = new DefaultKeystoreService();
-    ((DefaultKeystoreService)ks).setMasterService(ms);
+    DefaultKeystoreService ks = new DefaultKeystoreService();
+    ks.setMasterService(ms);
 
-    ((DefaultKeystoreService)ks).init(config, new HashMap<String, String>());
+    ks.init(config, new HashMap<String, String>());
 
-    JWTokenAuthority ta = new DefaultTokenAuthorityService();
-    ((DefaultTokenAuthorityService)ta).setAliasService(as);
-    ((DefaultTokenAuthorityService)ta).setKeystoreService(ks);
+    DefaultTokenAuthorityService ta = new DefaultTokenAuthorityService();
+    ta.setAliasService(as);
+    ta.setKeystoreService(ks);
 
-    ((DefaultTokenAuthorityService)ta).init(config, new HashMap<String, String>());
+    ta.init(config, new HashMap<String, String>());
 
     JWT token = ta.issueToken(principal, "RS512");
     assertEquals("KNOXSSO", token.getIssuer());
@@ -234,16 +232,16 @@ public class DefaultTokenAuthorityServiceTest extends org.junit.Assert {
 
     EasyMock.replay(principal, config, ms, as);
 
-    KeystoreService ks = new DefaultKeystoreService();
-    ((DefaultKeystoreService)ks).setMasterService(ms);
+    DefaultKeystoreService ks = new DefaultKeystoreService();
+    ks.setMasterService(ms);
 
-    ((DefaultKeystoreService)ks).init(config, new HashMap<String, String>());
+    ks.init(config, new HashMap<String, String>());
 
-    JWTokenAuthority ta = new DefaultTokenAuthorityService();
-    ((DefaultTokenAuthorityService)ta).setAliasService(as);
-    ((DefaultTokenAuthorityService)ta).setKeystoreService(ks);
+    DefaultTokenAuthorityService ta = new DefaultTokenAuthorityService();
+    ta.setAliasService(as);
+    ta.setKeystoreService(ks);
 
-    ((DefaultTokenAuthorityService)ta).init(config, new HashMap<String, String>());
+    ta.init(config, new HashMap<String, String>());
 
     try {
       ta.issueToken(principal, "none");

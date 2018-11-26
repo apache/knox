@@ -882,9 +882,7 @@ public class DefaultTopologyService
         if (!refs.contains(descriptorName)) {
           // Need to check if descriptor had previously referenced another provider config, so it can be removed
           for (List<String> descs : providerConfigReferences.values()) {
-            if (descs.contains(descriptorName)) {
-              descs.remove(descriptorName);
-            }
+            descs.remove(descriptorName);
           }
 
           // Add the current reference relationship

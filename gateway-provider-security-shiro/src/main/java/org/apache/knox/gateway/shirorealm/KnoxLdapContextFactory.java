@@ -89,7 +89,7 @@ public class KnoxLdapContextFactory extends JndiLdapContextFactory {
       String aliasName = systemPass;
       
       GatewayServices services = GatewayServer.getGatewayServices();
-      AliasService aliasService = (AliasService)services.getService(GatewayServices.ALIAS_SERVICE);
+      AliasService aliasService = services.getService(GatewayServices.ALIAS_SERVICE);
       
       String clusterName = getClusterName();
       //System.err.println("FACTORY systempass 30: " + systemPass);

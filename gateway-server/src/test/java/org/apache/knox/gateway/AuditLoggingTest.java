@@ -273,9 +273,9 @@ public class AuditLoggingTest {
     assertThat( ac, notNullValue() );
     assertThat( ac.getRemoteIp(), is( ADDRESS ) );
     assertThat( ac.getRemoteHostname(), is( HOST ) );
-    assertThat( (String) event.getMDC( AuditConstants.MDC_SERVICE_KEY ), is( AuditConstants.KNOX_SERVICE_NAME ) );
-    assertThat( (String) event.getMDC( AuditConstants.MDC_COMPONENT_KEY ), is( AuditConstants.KNOX_COMPONENT_NAME ) );
-    assertThat( (String) event.getLoggerName(), is( AuditConstants.DEFAULT_AUDITOR_NAME ) );
+    assertThat(event.getMDC( AuditConstants.MDC_SERVICE_KEY ), is( AuditConstants.KNOX_SERVICE_NAME ) );
+    assertThat(event.getMDC( AuditConstants.MDC_COMPONENT_KEY ), is( AuditConstants.KNOX_COMPONENT_NAME ) );
+    assertThat(event.getLoggerName(), is( AuditConstants.DEFAULT_AUDITOR_NAME ) );
     verifyValue( (String) event.getMDC( AuditConstants.MDC_RESOURCE_NAME_KEY ), resourceName );
     verifyValue( (String) event.getMDC( AuditConstants.MDC_RESOURCE_TYPE_KEY ), resourceType );
     verifyValue( (String) event.getMDC( AuditConstants.MDC_ACTION_KEY ), action );

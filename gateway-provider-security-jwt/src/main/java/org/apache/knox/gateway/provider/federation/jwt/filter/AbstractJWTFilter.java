@@ -104,7 +104,7 @@ public abstract class AbstractJWTFilter implements Filter {
     if (context != null) {
       GatewayServices services = (GatewayServices) context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
       if (services != null) {
-        authority = (JWTokenAuthority) services.getService(GatewayServices.TOKEN_SERVICE);
+        authority = services.getService(GatewayServices.TOKEN_SERVICE);
       }
     }
   }

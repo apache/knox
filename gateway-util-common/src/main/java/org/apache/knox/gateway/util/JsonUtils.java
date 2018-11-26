@@ -42,7 +42,7 @@ public class JsonUtils {
     
     try {
       // write JSON to a file
-      json = mapper.writeValueAsString((Object)map);
+      json = mapper.writeValueAsString(map);
     
     } catch ( JsonProcessingException e ) {
       LOG.failedToSerializeMapToJSON( map, e );

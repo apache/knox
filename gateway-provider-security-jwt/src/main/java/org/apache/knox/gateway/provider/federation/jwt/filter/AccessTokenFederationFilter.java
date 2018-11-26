@@ -52,7 +52,7 @@ public class AccessTokenFederationFilter implements Filter {
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
     GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    authority = (JWTokenAuthority) services.getService(GatewayServices.TOKEN_SERVICE);
+    authority = services.getService(GatewayServices.TOKEN_SERVICE);
   }
 
   @Override

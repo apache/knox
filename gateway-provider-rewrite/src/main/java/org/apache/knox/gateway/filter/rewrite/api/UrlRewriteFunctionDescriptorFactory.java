@@ -25,7 +25,7 @@ import java.util.Set;
 public abstract class UrlRewriteFunctionDescriptorFactory {
 
   private static Map<String,Class<? extends UrlRewriteFunctionDescriptor>> MAP
-      = (Map<String, Class<? extends UrlRewriteFunctionDescriptor>>)loadDescriptors();
+      = loadDescriptors();
 
   private UrlRewriteFunctionDescriptorFactory() {
   }

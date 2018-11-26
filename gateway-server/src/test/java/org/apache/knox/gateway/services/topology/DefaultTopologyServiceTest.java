@@ -206,7 +206,7 @@ public class DefaultTopologyServiceTest {
       TestTopologyListener topoListener = new TestTopologyListener();
       FileAlterationMonitor monitor = new FileAlterationMonitor(Long.MAX_VALUE);
 
-      TopologyService provider = new DefaultTopologyService();
+      DefaultTopologyService provider = new DefaultTopologyService();
       Map<String, String> c = new HashMap<>();
 
       GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
@@ -226,7 +226,7 @@ public class DefaultTopologyServiceTest {
               new DefaultTopologyService.DescriptorsMonitor(config, topologyDir, aliasService);
 
       // Listener to simulate the topologies directory monitor, to notice when a topology has been deleted
-      provider.addTopologyChangeListener(new TestTopologyDeleteListener((DefaultTopologyService)provider));
+      provider.addTopologyChangeListener(new TestTopologyDeleteListener(provider));
 
       // Write out the referenced provider config first
       File provCfgFile = createFile(sharedProvidersDir,

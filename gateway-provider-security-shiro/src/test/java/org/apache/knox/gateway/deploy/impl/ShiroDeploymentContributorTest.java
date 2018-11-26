@@ -21,7 +21,6 @@ import org.apache.knox.gateway.deploy.DeploymentContext;
 import org.apache.knox.gateway.deploy.ProviderDeploymentContributor;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.CryptoService;
 import org.apache.knox.gateway.services.security.impl.DefaultCryptoService;
 import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Topology;
@@ -78,8 +77,8 @@ public class ShiroDeploymentContributorTest {
     EasyMock.replay( context );
 
     AliasService as = EasyMock.createNiceMock( AliasService.class );
-    CryptoService cryptoService = new DefaultCryptoService();
-    ((DefaultCryptoService)cryptoService).setAliasService( as );
+    DefaultCryptoService cryptoService = new DefaultCryptoService();
+    cryptoService.setAliasService( as );
 
     GatewayServices gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
     EasyMock.expect( gatewayServices.getService( GatewayServices.CRYPTO_SERVICE ) ).andReturn( cryptoService ).anyTimes();

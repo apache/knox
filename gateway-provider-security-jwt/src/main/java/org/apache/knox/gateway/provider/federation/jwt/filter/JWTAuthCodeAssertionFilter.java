@@ -53,8 +53,8 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
 //    validity = Long.parseLong(validityStr);
 
     GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    authority = (JWTokenAuthority) services.getService(GatewayServices.TOKEN_SERVICE);
-    sr = (ServiceRegistry) services.getService(GatewayServices.SERVICE_REGISTRY_SERVICE);
+    authority = services.getService(GatewayServices.TOKEN_SERVICE);
+    sr = services.getService(GatewayServices.SERVICE_REGISTRY_SERVICE);
   }
 
   @Override

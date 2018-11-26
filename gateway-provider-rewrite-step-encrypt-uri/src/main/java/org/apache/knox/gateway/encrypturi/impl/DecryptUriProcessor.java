@@ -52,7 +52,7 @@ public class DecryptUriProcessor
   public void initialize( UrlRewriteEnvironment environment, DecryptUriDescriptor descriptor ) throws Exception {
     clusterName = environment.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE );
     GatewayServices services = environment.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    cryptoService = (CryptoService) services.getService(GatewayServices.CRYPTO_SERVICE);
+    cryptoService = services.getService(GatewayServices.CRYPTO_SERVICE);
     param = descriptor.getParam();
   }
 

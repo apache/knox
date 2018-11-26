@@ -78,12 +78,12 @@ public class DeploymentFactoryFuncTest {
   @Test( timeout = MEDIUM_TIMEOUT )
   public void testGenericProviderDeploymentContributor() throws ParserConfigurationException, SAXException, IOException, TransformerException {
     LOG_ENTER();
-    GatewayConfig config = new GatewayTestConfig();
+    GatewayTestConfig config = new GatewayTestConfig();
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
     gatewayDir.mkdirs();
 
-    ((GatewayTestConfig) config).setGatewayHomeDir( gatewayDir.getAbsolutePath() );
+    config.setGatewayHomeDir( gatewayDir.getAbsolutePath() );
 
     File deployDir = new File( config.getGatewayDeploymentDir() );
     deployDir.mkdirs();
@@ -150,11 +150,11 @@ public class DeploymentFactoryFuncTest {
   @Test( timeout = LONG_TIMEOUT )
   public void testInvalidGenericProviderDeploymentContributor() throws ParserConfigurationException, SAXException, IOException, TransformerException {
     LOG_ENTER();
-    GatewayConfig config = new GatewayTestConfig();
+    GatewayTestConfig config = new GatewayTestConfig();
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
     gatewayDir.mkdirs();
-    ((GatewayTestConfig) config).setGatewayHomeDir( gatewayDir.getAbsolutePath() );
+    config.setGatewayHomeDir( gatewayDir.getAbsolutePath() );
     File deployDir = new File( config.getGatewayDeploymentDir() );
     deployDir.mkdirs();
 
@@ -206,13 +206,13 @@ public class DeploymentFactoryFuncTest {
   @Test( timeout = MEDIUM_TIMEOUT )
   public void testSimpleTopology() throws IOException, SAXException, ParserConfigurationException, URISyntaxException, TransformerException {
     LOG_ENTER();
-    GatewayConfig config = new GatewayTestConfig();
+    GatewayTestConfig config = new GatewayTestConfig();
     //Testing without x-forwarded headers filter
-    ((GatewayTestConfig)config).setXForwardedEnabled(false);
+    config.setXForwardedEnabled(false);
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
     gatewayDir.mkdirs();
-    ((GatewayTestConfig) config).setGatewayHomeDir( gatewayDir.getAbsolutePath() );
+    config.setGatewayHomeDir( gatewayDir.getAbsolutePath() );
     File deployDir = new File( config.getGatewayDeploymentDir() );
     deployDir.mkdirs();
 
@@ -329,11 +329,11 @@ public class DeploymentFactoryFuncTest {
   @Test( timeout = LONG_TIMEOUT )
   public void testWebXmlGeneration() throws IOException, SAXException, ParserConfigurationException, URISyntaxException {
     LOG_ENTER();
-    GatewayConfig config = new GatewayTestConfig();
+    GatewayTestConfig config = new GatewayTestConfig();
     File targetDir = new File(System.getProperty("user.dir"), "target");
     File gatewayDir = new File(targetDir, "gateway-home-" + UUID.randomUUID());
     gatewayDir.mkdirs();
-    ((GatewayTestConfig) config).setGatewayHomeDir(gatewayDir.getAbsolutePath());
+    config.setGatewayHomeDir(gatewayDir.getAbsolutePath());
     File deployDir = new File(config.getGatewayDeploymentDir());
     deployDir.mkdirs();
 
@@ -409,11 +409,11 @@ public class DeploymentFactoryFuncTest {
   @Test( timeout = LONG_TIMEOUT )
   public void testDeploymentWithServiceParams() throws Exception {
     LOG_ENTER();
-    GatewayConfig config = new GatewayTestConfig();
+    GatewayTestConfig config = new GatewayTestConfig();
     File targetDir = new File(System.getProperty("user.dir"), "target");
     File gatewayDir = new File(targetDir, "gateway-home-" + UUID.randomUUID());
     gatewayDir.mkdirs();
-    ((GatewayTestConfig) config).setGatewayHomeDir(gatewayDir.getAbsolutePath());
+    config.setGatewayHomeDir(gatewayDir.getAbsolutePath());
     File deployDir = new File(config.getGatewayDeploymentDir());
     deployDir.mkdirs();
 
@@ -499,17 +499,17 @@ public class DeploymentFactoryFuncTest {
   @Test( timeout = MEDIUM_TIMEOUT )
   public void testDeploymentWithApplication() throws Exception {
     LOG_ENTER();
-    GatewayConfig config = new GatewayTestConfig();
+    GatewayTestConfig config = new GatewayTestConfig();
     File targetDir = new File(System.getProperty("user.dir"), "target");
     File gatewayDir = new File(targetDir, "gateway-home-" + UUID.randomUUID());
     gatewayDir.mkdirs();
-    ((GatewayTestConfig) config).setGatewayHomeDir(gatewayDir.getAbsolutePath());
+    config.setGatewayHomeDir(gatewayDir.getAbsolutePath());
     File deployDir = new File(config.getGatewayDeploymentDir());
     deployDir.mkdirs();
     URL serviceUrl = TestUtils.getResourceUrl( DeploymentFactoryFuncTest.class, "test-apps/minimal-test-app/service.xml" );
     File serviceFile = new File( serviceUrl.toURI() );
     File appsDir = serviceFile.getParentFile().getParentFile();
-    ((GatewayTestConfig)config).setGatewayApplicationsDir(appsDir.getAbsolutePath());
+    config.setGatewayApplicationsDir(appsDir.getAbsolutePath());
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String, String> options = new HashMap<>();
@@ -557,17 +557,17 @@ public class DeploymentFactoryFuncTest {
   @Test( timeout = MEDIUM_TIMEOUT )
   public void testDeploymentWithServicesAndApplications() throws Exception {
     LOG_ENTER();
-    GatewayConfig config = new GatewayTestConfig();
+    GatewayTestConfig config = new GatewayTestConfig();
     File targetDir = new File(System.getProperty("user.dir"), "target");
     File gatewayDir = new File(targetDir, "gateway-home-" + UUID.randomUUID());
     gatewayDir.mkdirs();
-    ((GatewayTestConfig) config).setGatewayHomeDir(gatewayDir.getAbsolutePath());
+    config.setGatewayHomeDir(gatewayDir.getAbsolutePath());
     File deployDir = new File(config.getGatewayDeploymentDir());
     deployDir.mkdirs();
     URL serviceUrl = TestUtils.getResourceUrl( DeploymentFactoryFuncTest.class, "test-apps/minimal-test-app/service.xml" );
     File serviceFile = new File( serviceUrl.toURI() );
     File appsDir = serviceFile.getParentFile().getParentFile();
-    ((GatewayTestConfig)config).setGatewayApplicationsDir(appsDir.getAbsolutePath());
+    config.setGatewayApplicationsDir(appsDir.getAbsolutePath());
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String, String> options = new HashMap<>();
@@ -643,12 +643,12 @@ public class DeploymentFactoryFuncTest {
   @Test( timeout = MEDIUM_TIMEOUT )
   public void testServiceAnonAuth() throws IOException, SAXException, ParserConfigurationException, URISyntaxException, TransformerException {
     LOG_ENTER();
-    final GatewayConfig config = new GatewayTestConfig();
-    ((GatewayTestConfig)config).setXForwardedEnabled(false);
+    final GatewayTestConfig config = new GatewayTestConfig();
+    config.setXForwardedEnabled(false);
     final File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     final File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
     gatewayDir.mkdirs();
-    ((GatewayTestConfig) config).setGatewayHomeDir( gatewayDir.getAbsolutePath() );
+    config.setGatewayHomeDir( gatewayDir.getAbsolutePath() );
     final File deployDir = new File( config.getGatewayDeploymentDir() );
     deployDir.mkdirs();
 

@@ -45,7 +45,7 @@ public class UrlRewriteServletEnvironmentTest {
     EasyMock.expect(  context.getAttribute( "test-attribute-name" ) ).andReturn( "test-attribute-value" ).anyTimes();
     EasyMock.replay( context );
     UrlRewriteServletEnvironment env = new UrlRewriteServletEnvironment( context );
-    assertThat( (String)env.getAttribute( "test-attribute-name" ), is( "test-attribute-value" ) );
+    assertThat(env.getAttribute( "test-attribute-name" ), is( "test-attribute-value" ) );
   }
 
   @Test

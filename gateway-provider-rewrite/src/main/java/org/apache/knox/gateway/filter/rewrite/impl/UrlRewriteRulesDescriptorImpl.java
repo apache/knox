@@ -88,21 +88,21 @@ public class UrlRewriteRulesDescriptorImpl implements UrlRewriteRulesDescriptor 
   @SuppressWarnings("unchecked")
   public <T extends UrlRewriteFunctionDescriptor<?>> T getFunction( String name ) {
     T descriptor = (T)funcMap.get( name );
-    return (T)descriptor;
+    return descriptor;
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public <T extends UrlRewriteFunctionDescriptor<?>> T addFunction( String name ) {
-    T descriptor = (T)newFunction( name );
+    T descriptor = newFunction( name );
     addFunction( descriptor );
-    return (T)descriptor;
+    return descriptor;
   }
 
   @SuppressWarnings("unchecked")
   protected <T extends UrlRewriteFunctionDescriptor<?>> T newFunction( String name ) {
-    T descriptor = (T)UrlRewriteFunctionDescriptorFactory.create( name );
-    return (T)descriptor;
+    T descriptor = UrlRewriteFunctionDescriptorFactory.create( name );
+    return descriptor;
   }
 
   protected void addFunction( UrlRewriteFunctionDescriptor descriptor ) {

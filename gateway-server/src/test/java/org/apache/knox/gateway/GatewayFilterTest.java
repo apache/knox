@@ -133,7 +133,7 @@ public class GatewayFilterTest {
       this.role = request.getAttribute( AbstractGatewayFilter.TARGET_SERVICE_ROLE );
       Topology topology = (Topology)request.getServletContext().getAttribute( "org.apache.knox.gateway.topology" );
       if (topology != null) {
-        this.defaultServicePath = (String) topology.getDefaultServicePath();
+        this.defaultServicePath = topology.getDefaultServicePath();
         url = new String(request.getRequestURL());
       }
     }
@@ -173,7 +173,7 @@ public class GatewayFilterTest {
     gateway.doFilter( request, response );
     gateway.destroy();
 
-    assertThat( (String)filter.role, is( "test-role" ) );
+    assertThat(filter.role, is( "test-role" ) );
 
   }
 
@@ -214,8 +214,8 @@ public class GatewayFilterTest {
     gateway.doFilter( request, response );
     gateway.destroy();
 
-    assertThat( (String)filter.defaultServicePath, is( "test-role" ) );
-    assertThat( (String)filter.url, is("http://host:8443/gateway/sandbox/test-role/test-path/test-resource"));
+    assertThat(filter.defaultServicePath, is( "test-role" ) );
+    assertThat(filter.url, is("http://host:8443/gateway/sandbox/test-role/test-path/test-resource"));
 
   }
 }

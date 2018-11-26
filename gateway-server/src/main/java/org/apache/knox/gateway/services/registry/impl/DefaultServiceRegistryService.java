@@ -128,7 +128,7 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
 
     try {
       // write JSON to a file
-      json = mapper.writeValueAsString((Object)registry);
+      json = mapper.writeValueAsString(registry);
 
     } catch ( JsonProcessingException e ) {
       e.printStackTrace(); //TODO: I18N

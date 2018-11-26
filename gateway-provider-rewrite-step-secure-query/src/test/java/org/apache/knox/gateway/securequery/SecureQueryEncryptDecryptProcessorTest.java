@@ -21,7 +21,6 @@ import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.CryptoService;
 import org.apache.knox.gateway.services.security.impl.DefaultCryptoService;
 import org.apache.knox.gateway.util.urltemplate.Params;
 import org.apache.knox.gateway.util.urltemplate.Parser;
@@ -53,8 +52,8 @@ public class SecureQueryEncryptDecryptProcessorTest {
     AliasService as = EasyMock.createNiceMock( AliasService.class );
     String secret = "sdkjfhsdkjfhsdfs";
     EasyMock.expect( as.getPasswordFromAliasForCluster("test-cluster-name", "encryptQueryString")).andReturn( secret.toCharArray() ).anyTimes();
-    CryptoService cryptoService = new DefaultCryptoService();
-    ((DefaultCryptoService)cryptoService).setAliasService(as);
+    DefaultCryptoService cryptoService = new DefaultCryptoService();
+    cryptoService.setAliasService(as);
     GatewayServices gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
     EasyMock.expect( gatewayServices.getService( GatewayServices.CRYPTO_SERVICE ) ).andReturn( cryptoService );
 
@@ -120,8 +119,8 @@ public class SecureQueryEncryptDecryptProcessorTest {
     AliasService as = EasyMock.createNiceMock( AliasService.class );
     String secret = "sdkjfhsdkjfhsdfs";
     EasyMock.expect( as.getPasswordFromAliasForCluster("test-cluster-name", "encryptQueryString")).andReturn( secret.toCharArray() ).anyTimes();
-    CryptoService cryptoService = new DefaultCryptoService();
-    ((DefaultCryptoService)cryptoService).setAliasService(as);
+    DefaultCryptoService cryptoService = new DefaultCryptoService();
+    cryptoService.setAliasService(as);
     GatewayServices gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
     EasyMock.expect( gatewayServices.getService( GatewayServices.CRYPTO_SERVICE ) ).andReturn( cryptoService );
 

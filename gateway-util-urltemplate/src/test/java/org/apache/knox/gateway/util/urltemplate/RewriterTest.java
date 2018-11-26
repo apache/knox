@@ -401,7 +401,7 @@ public class RewriterTest {
       if( request !=  null ) {
         String[] array = request.getParameterValues( name );
         if( array != null ) {
-          values = (List<String>)Arrays.asList( array );
+          values = Arrays.asList( array );
           return values;
         }
       }

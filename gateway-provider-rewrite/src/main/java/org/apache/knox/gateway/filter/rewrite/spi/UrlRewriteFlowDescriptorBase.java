@@ -108,9 +108,9 @@ public abstract class UrlRewriteFlowDescriptorBase<T> extends UrlRewriteStepDesc
   @SuppressWarnings( "unchecked" )
   @Override
   public <T extends UrlRewriteStepDescriptor<?>> T addStep( String type ) {
-    T step = (T)UrlRewriteStepDescriptorFactory.create( type );
+    T step = UrlRewriteStepDescriptorFactory.create( type );
     steps.add( step );
-    return (T)step;
+    return step;
   }
 
 }

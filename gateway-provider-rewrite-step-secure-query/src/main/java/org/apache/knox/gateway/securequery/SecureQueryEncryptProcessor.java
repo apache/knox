@@ -47,7 +47,7 @@ public class SecureQueryEncryptProcessor
   @Override
   public void initialize( UrlRewriteEnvironment environment, SecureQueryEncryptDescriptor descriptor ) throws Exception {
     encryptor = new ConfigurableEncryptor("encryptQueryString");
-    encryptor.init((GatewayConfig)environment.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE));
+    encryptor.init(environment.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE));
   }
 
   @Override

@@ -200,7 +200,7 @@ public class DefaultConfigurationInjector implements ConfigurationInjector {
     if( tags != null ) {
       for( Annotation tag : tags ) {
         if( tag != null && tag instanceof Alias ) {
-          Alias aliasTag = Alias.class.cast( tag );
+          Alias aliasTag = (Alias) tag;
           String aliasValue = aliasTag.value().trim();
           if( aliasValue.length() > 0 ) {
             name = aliasValue;

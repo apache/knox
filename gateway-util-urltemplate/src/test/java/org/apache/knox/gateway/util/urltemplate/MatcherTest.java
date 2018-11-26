@@ -830,7 +830,7 @@ public class MatcherTest {
     input = Parser.parseLiteral( "http://localhost:53221/gateway/cluster/webhdfs/v1/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase/dir?user.name=hdfs&op=MKDIRS" );
     match = stringMatcher.match( input );
     assertThat( match.getValue(), notNullValue() );
-    assertThat( (String)match.getValue(), is( "test-value-B" ) );
+    assertThat(match.getValue(), is( "test-value-B" ) );
 
   }
 
@@ -990,7 +990,7 @@ public class MatcherTest {
 
     match = matcher.match( input );
     assertThat( match, notNullValue() );
-    assertThat( (String)match.getValue(), is( "test-value" ) );
+    assertThat(match.getValue(), is( "test-value" ) );
 
     template = Parser.parseTemplate( "http://host:42/root/webhdfs/v1/{path=**}?{**}" );
     URI expandedUri = Expander.expand( template, match.getParams(), null );

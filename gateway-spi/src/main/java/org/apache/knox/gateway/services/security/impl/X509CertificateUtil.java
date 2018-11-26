@@ -143,7 +143,7 @@ public class X509CertificateUtil {
     Field v3IntField = certInfoObject0.getClass()
         .getDeclaredField("V3");
     v3IntField.setAccessible(true);
-    int fValue = (int) v3IntField.getInt(certInfoObject0);
+    int fValue = v3IntField.getInt(certInfoObject0);
     Object certificateVersionObject = certificateVersionConstr
         .newInstance(fValue);
     methodSET.invoke(certInfoObject, getSetField(certInfoObject, "VERSION"),

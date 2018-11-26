@@ -161,7 +161,7 @@ public class TokenResource {
             .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
     JWTokenAuthority ts = services.getService(GatewayServices.TOKEN_SERVICE);
-    Principal p = ((HttpServletRequest)request).getUserPrincipal();
+    Principal p = request.getUserPrincipal();
     long expires = getExpiry();
 
     try {
