@@ -1,377 +1,549 @@
 ------------------------------------------------------------------------------
+Release Notes - Apache Knox - Version 1.2.0
+------------------------------------------------------------------------------
+** New Feature
+    * [KNOX-1343] - Support Ganglia for Knox
+    * [KNOX-1421] - Enable OWASP Dependency Check
+    * [KNOX-1549] - KnoxSSO should support signing keys per topology
+
+** Improvement
+    * [KNOX-16] - Implement IdentityAsserterHttpServletRequestWrapper.ServletInputStreamWrapper methods for performance
+    * [KNOX-1011] - Add ldap.port system property to configure LDAP demo server port
+    * [KNOX-1112] - KnoxShell support for managing simple descriptors
+    * [KNOX-1291] - ssl.include|exclude.ciphers & ssl.exclude.protocols support comma or pipe separated lists
+    * [KNOX-1359] - Disable kerberos debugging by default
+    * [KNOX-1401] - Add HAL+JSON To the List of JSON Content Types
+    * [KNOX-1411] - WEBHBASE service discovery references incorrect property for the port
+    * [KNOX-1440] - WEBHDFS: retry should not be attempted for datanode write failures
+    * [KNOX-1441] - Enable spotbugs for static build checking
+    * [KNOX-1442] - Enable forbiddenapis for static build checking
+    * [KNOX-1443] - Add checkstyle to enforce coding style
+    * [KNOX-1444] - Upgrade to ASF POM version 21
+    * [KNOX-1448] - Maven pom dependency cleanup
+    * [KNOX-1460] - Zookeeper tests should call close() instead of stop()
+    * [KNOX-1461] - Remove JRE/JDK 1.7 check introduced by KNOX-769
+    * [KNOX-1464] - Remove explicit guava dependency from gateway-server InstrUtils
+    * [KNOX-1465] - Remove explicit guava dependency from gateway-provider-ha
+    * [KNOX-1466] - Remove explicit guava dependency from gateway-provider-rewrite-func-inbound-query-param
+    * [KNOX-1467] - Remove explicit guava dependency from gateway-provider-security-preauth
+    * [KNOX-1468] - Remove explicit guava dependency from gateway-service-nifi
+    * [KNOX-1474] - Bump apacheds dependency version to 2.0.0-AM24
+    * [KNOX-1475] - Bump shrinkwrap dependency versions
+    * [KNOX-1477] - Bump commons-* dependency versions
+    * [KNOX-1478] - Support running checkstyle from submodules
+    * [KNOX-1479] - Replace Mockito usage with EasyMock
+    * [KNOX-1484] - Bump version dependencies Oct 2018
+    * [KNOX-1501] - Upgrade hadoop to 3.1.1
+    * [KNOX-1511] - Enable forbiddenapis commons-io signatures
+    * [KNOX-1512] - Replace deprecated EasyMock new Capture() calls
+    * [KNOX-1516] - Upgrade Jetty to 9.4.12
+    * [KNOX-1518] - Large HDFS file downloads are incomplete when content is gzipped
+    * [KNOX-1521] - Implement UrlRewriteRequestStream methods for performance
+    * [KNOX-1522] - Add HA support for HadoopAuthProvider
+    * [KNOX-1528] - Remove hadoop-common dependency from gateway-spi module
+    * [KNOX-1530] - Improve Gzip Compression Handling Performance
+    * [KNOX-1537] - Cleanup gateway-group no value errors
+    * [KNOX-1538] - Remove TODO Auto-generated
+    * [KNOX-1540] - Use StandardCharsets where possible
+    * [KNOX-1544] - KnoxTokenCredentialCollector should not call System.exit()
+    * [KNOX-1545] - KnoxTokenCredentialCollector should expose the type of the collected token
+    * [KNOX-1546] - Fix javadoc errors and warnings
+    * [KNOX-1547] - Add Ability to set the Truststore Location and Password to KnoxShell
+    * [KNOX-1553] - Update documentation to reference org.apache.knox instead of org.apache.hadoop.gateway
+    * [KNOX-1554] - Allow Knox site to be built with JDK 11
+    * [KNOX-1555] - Update DOAP file
+
+** Bug
+    * [KNOX-720] - Knox DSL - Ensure that HTTP client is closed on shutdown
+    * [KNOX-1093] - KNOX Not Handling safemode state of one of the NameNode In HA state
+    * [KNOX-1098] - Livy proxyUser should be added when not present
+    * [KNOX-1152] - Guard Against Missing Subject in Identity Assertion
+    * [KNOX-1165] - Another unnamed CacheManager already exists in the same VM
+    * [KNOX-1207] - YARN V1 UI and MapReduce Job History UI - Rewrite rule bugs
+    * [KNOX-1218] - LDAP Group Lookup appears twice in User Guide TOC
+    * [KNOX-1221] - WebHDFS read/write performance limitations
+    * [KNOX-1222] - Discovery API requests fail against Docker Sandbox
+    * [KNOX-1247] - Knox Cloud Federation
+    * [KNOX-1337] - Cleanup AbstractGatewayDispatch
+    * [KNOX-1405] - Download page must link to KEYS and contain verification details
+    * [KNOX-1412] - Failure while executing a `curl` command using Content-Type: text/xml" "Content-Encoding: gzip"
+    * [KNOX-1415] - Upgrade Jetty to 9.2.25
+    * [KNOX-1416] - Upgrade Spring Framework to 4.3.17
+    * [KNOX-1417] - Upgrade Bouncy Castle Dependency from Pac4J
+    * [KNOX-1420] - Add app.css path for Zeppelin's style sheet
+    * [KNOX-1422] - Whitelisting not working as expected for knoxauth redirects
+    * [KNOX-1424] - knox renaming "app" to "/gateway/ui_ns1/zeppelin/app"
+    * [KNOX-1429] - HadoopAuthFilter avoid logging sensitive values
+    * [KNOX-1430] - Potential output stream handle leak when copyLarge files in streamResponse
+    * [KNOX-1433] - RMHaBaseDispatcher Class Cleanup - SafeModeException
+    * [KNOX-1434] - Visiting Knox Admin UI forces subsequent requests to other services redirect to HTTPS
+    * [KNOX-1436] - AbstractHdfsHaDispatch failoverRequest - Improve Failover Logging
+    * [KNOX-1445] - Ensure that gateway-adapter module classes have @Deprecated annotation
+    * [KNOX-1459] - Remove testng assertions
+    * [KNOX-1505] - Knox should close CuratorFramework clients when finished
+    * [KNOX-1519] - Fix 404s in the documentation
+    * [KNOX-1520] - markbook refers to wrong parent-pom version
+    * [KNOX-1523] - XML parsing cleanup
+    * [KNOX-1526] - Upgrade Jetty to 9.2.26
+    * [KNOX-1529] - gateway-shell-release doesn't include shaded jar
+    * [KNOX-1541] - Rename Hadoop class in KnoxShell to KnoxSession
+    * [KNOX-1556] -     * [Rewrite Rule] Apache Ambari Favicon and link to NOTICE.txt does not work when using Knox Gateway
+    * [KNOX-1557] - Knox service cannot be added to proxied Ambari (through Knox) because master password field is readonly
+    * [KNOX-1558] - KnoxToken service returns wrong content type and content length values
+    * [KNOX-1577] - Knox automatically derived dispatch whitelist doesn't seem to actually match the knox domain
+    * [KNOX-1596] - YARNUIV2 Remove policies from service.xml
+    * [KNOX-1602] - JsonFilterReader should handle strings, numbers, booleans, and null at root
+    * [KNOX-1612] - GatewayAdminTopologyFuncTest#testPutTopology ClassNotFoundException
+    * [KNOX-1616] - Fix portmapping with Jetty 9.4
+
+** Sub-task
+    * [KNOX-1449] - Ensure all pom.xml files have same header
+    * [KNOX-1450] - Remove redundant configurations from pom.xml
+    * [KNOX-1451] - Setup base checkstyle plugin
+    * [KNOX-1452] - Enable checkstyle no tabs in source file rule
+    * [KNOX-1453] - Enable checkstyle no unused imports rule
+    * [KNOX-1454] - Enable checkstyle no wildcard imports rule
+    * [KNOX-1455] - Enable checkstyle ASF header check rule
+    * [KNOX-1456] - Move dependency versions to top level pom properties
+    * [KNOX-1457] - Add mailing lists to top level pom
+    * [KNOX-1463] - Use maven-dependency-plugin to ensure all dependencies are declared
+    * [KNOX-1470] - Remove surefire-version and failsafe-version properties
+    * [KNOX-1471] - Remove unused genson dependency
+    * [KNOX-1472] - Remove explicit surefire plugin block in child poms
+    * [KNOX-1473] - Remove plugin versions that are from parent ASF pom
+    * [KNOX-1480] - Remove cobertura-maven-plugin
+    * [KNOX-1481] - Remove javancss-maven-plugin
+    * [KNOX-1482] - Migrate to maven-site-plugin reportSets
+    * [KNOX-1485] - Upgrade bcprov-jdk15on to 1.60
+    * [KNOX-1486] - Upgrade commons-lang3 to 3.8.1
+    * [KNOX-1487] - Upgrade easymock to 3.6
+    * [KNOX-1488] - Upgrade curator to 4.0.1
+    * [KNOX-1489] - Upgrade jericho-html to 3.4
+    * [KNOX-1490] - Upgrade buildnumber-maven-plugin to 1.4
+    * [KNOX-1491] - Upgrade jline to 2.14.6
+    * [KNOX-1492] - Upgrade jna to 4.5.2
+    * [KNOX-1493] - Upgrade joda-time to 2.10
+    * [KNOX-1494] - Upgrade groovy to 2.5.2
+    * [KNOX-1495] - Upgrade httpclient to 4.5.6 and httpcore to 4.4.10
+    * [KNOX-1496] - Upgrade maven-bundle-plugin to 4.0.0
+    * [KNOX-1497] - Upgrade jansi to 1.17.1
+    * [KNOX-1498] - Upgrade maven-enforcer-plugin to 3.0.0-M2
+    * [KNOX-1499] - Upgrade cors-filter to 2.6
+    * [KNOX-1500] - Upgrade rest-assured to 3.1.1
+    * [KNOX-1503] - Upgrade slf4j to 1.7.25
+    * [KNOX-1504] - Upgrade eclipselink to 2.7.3
+    * [KNOX-1506] - Upgrade protobuf-java to 3.6.1
+    * [KNOX-1507] - Upgrade okhttp to 2.7.5
+    * [KNOX-1508] - Upgrade taglibs-standard-spec and taglibs-standard-impl to 1.2.5
+    * [KNOX-1509] - Upgrade pac4j dependencies
+    * [KNOX-1510] - Upgrade nimbus-jose-jwt to 6.0.2
+    * [KNOX-1513] - Upgrade spring-core to 5.0.9.RELEASE
+    * [KNOX-1514] - Upgrade jackson to 2.9.7
+    * [KNOX-1515] - Upgrade shiro to 1.4.0 and ehcache to 2.6.11
+    * [KNOX-1531] - Remove gzip handler added by KNOX-732
+    * [KNOX-1532] - Only decompress/recompress when there are rewrite rules
+    * [KNOX-1533] - Disable httpclient transparent content decompression
+    * [KNOX-1534] - Avoid try/catch checking for gzip stream
+    * [KNOX-1535] - Remove custom gzip helper stream - use commons-compress
+    * [KNOX-1578] - JobHistory UI - Broken "ResourceManager" and "NodeManager" links
+    * [KNOX-1580] - YARN v1 UI - Scheduler - "Dump scheduler logs" link broken
+    * [KNOX-1581] - YARN v1 UI - Application - Node and logs links broken
+    * [KNOX-1587] - YARN v1 UI - Fix Spark history links
+
+** Test
+    * [KNOX-1548] - Improve ZooKeeperConfigurationMonitorTest to not use Thread.sleep()
+
+** Wish
+    * [KNOX-1435] - how to configure rewrite.xml and service.xml?
+
+** Task
+    * [KNOX-542] - Add replayBufferSize defaults to the sandbox topology
+    * [KNOX-543] - Add documentation and configuration examples to the user guide for replaybuffersize
+    * [KNOX-1402] - Upgrade to Apache parent pom version 20
+    * [KNOX-1407] - Please delete old releases from mirroring system
+    * [KNOX-1408] - Remove the Roadmap confluence wiki page
+    * [KNOX-1524] - Hive "select *" performance evaluation
+    * [KNOX-1525] - HBase "scan" performance evaluation
+    * [KNOX-1536] - Replace redundant types with the diamond operator
+    * [KNOX-1539] - Put the array declaration after the type
+    * [KNOX-1542] - Upgrade to EasyMock 4.0.1
+    * [KNOX-1543] - Update documentation for KNOX-1531
+    * [KNOX-1622] - Enable the secure processing feature on all XPathFactory instances
+
+------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 1.1.0
 ------------------------------------------------------------------------------
 ** New Feature
-    [KNOX-1040] - Initial new descriptor and provider config wizard support
-    [KNOX-1040] - Accommodate omission of cluster user in descriptor discovery config
-    [KNOX-1040] - Implemented the ability to add config elements to provider configurations and descriptors.
-    [KNOX-1040] - Added modification support: delete, discard changes, save changes
-    [KNOX-1040] - Separated the provider config selection modal into its own component.
-    [KNOX-1040] - Added visual indicator that a provider config has not been removed because it is referenced, and improved editable fields
-    [KNOX-1040] - Initial changes to support simple descriptors and provider configurations in the Admin UI.
+    * [KNOX-1040] - Initial new descriptor and provider config wizard support
+    * [KNOX-1040] - Accommodate omission of cluster user in descriptor discovery config
+    * [KNOX-1040] - Implemented the ability to add config elements to provider configurations and descriptors.
+    * [KNOX-1040] - Added modification support: delete, discard changes, save changes
+    * [KNOX-1040] - Separated the provider config selection modal into its own component.
+    * [KNOX-1040] - Added visual indicator that a provider config has not been removed because it is referenced, and improved editable fields
+    * [KNOX-1040] - Initial changes to support simple descriptors and provider configurations in the Admin UI.
 
 ** Improvement
-    [KNOX-1395] - Change Derived Whitelist logic to not use InetAddress of Localhost for getting Hostname
-    [KNOX-1394] - OOTB gateway-site.xml to Default to Demo Whitelist Scenario
-    [KNOX-1381] - Fix logging
-    [KNOX-1378] - Declare SSO params using KnoxSSO service option  knoxsso.expected.params
-    [KNOX-1379] - Default dispatch whitelist should not include localhost when the Knox host domain can be determined
-    [KNOX-1363] - Support service role-based whitelist for dispatches and redirects
-    [KNOX-1357] - Add configurable list of AutoDeploy topologies to deploy on server start
-    [KNOX-1350] - Complete centralization of manager.xml topology config in gateway-site.xml
-    [KNOX-1339] - (KIP-11 Federation)  Add support for header preauth dispatch
-    [KNOX-1350] - Centralize Group Lookup Config in gateway-site.xml
-    [KNOX-1338] - Add Config Property for Knox Admin Groups for AclsAuthz Provider Use
-    [KNOX-1326] - merge DATANODE rewrite rules into HDFSUI
-    [KNOX-1336] - Upgrade libpam4j to abstractj/1.9.1
-    [KNOX-1315] - Spark UI urls issue: Jobs, stdout/stderr and threadDump links (Guang Yang via lmccay)
-    [KNOX-1143] - Add MR job history ws rest api rewrite rule to jobhistoryui (Guang Yang via lmccay)
-    [KNOX-1089] - Upgrade Jetty
-    [KNOX-1329] - Upgrade the transitive springframework spring core to even newer version
-    [KNOX-1290] - Create gateway definition for Log Search - version 0.5.0 (Olivér Szabó via lmccay)
-    [KNOX-1329] - Upgrade the transitive springframework spring core from pac4j
-    [KNOX-1328] - Change Default Authentication to KnoxSSO for Admin UI
-    [KNOX-1320] - Upgrade JQuery in the KnoxAuth Application
-    [KNOX-1327] - Log REST invocation error exceptions encountered during service discovery at ERROR level
-    [KNOX-1322] - Support configuration property to forcibly treat topologies as read-only
-    [KNOX-1314] - SSOCookieProvider should be able to derive a default provider URL
-    [KNOX-1319] - Better logging when discovery fails to access service configurations
-    [KNOX-1318] - Update available Admin UI services to include NiFi
-    [KNOX-1317] - Ambari service discovery config handling of nested derived properties
-    [KNOX-1193] - NiFi service discovery support
-    [KNOX-1154] - Dump Kerberos settings upon startup. (Rick Kellogg via Phil Zampino)
-    [KNOX-1310] - The X-Content-Type-Options header should be set as 'nosniff'
-    [KNOX-1309] - Admin API resource names should be validated
-    [KNOX-1308] - Implement safeguards against XML entity injection/expansion in the Admin API
-    [KNOX-1227] - Add KnoxSSO and KnoxToken services to the new descriptor service options
-    [KNOX-1266] - Employ gateway-site config for default discovery address and cluster values
-    [KNOX-1275] - Add json-smart explicitly to gateway-spi (Saravanan Krishnamoorthy via lmccay)
-    [KNOX-1306] - Remove requirement for cluster when discovery address is specified in admin UI new descriptor wizard.
-    [KNOX-1193] - LOGSEARCH discovery support
-    [KNOX-1305] - Add postfix and infix rewrite functions
-    [KNOX-1236] - Support service discovery for YARNUIV2
-    [KNOX-1202] - Validate resource names
-    [KNOX-1300] - Add default provider configuration for demo LDAP to the distribution
-    [KNOX-1193] - Add service discovery support for Spark Thrift UI
-    [KNOX-1293] - Support for Ambari discovery of SPARK2 services
-    [KNOX-1294] - Upgrade Jackson-Databind to 2.9.5
-    [KNOX-1292] - Upgrade Groovy to 2.4.8
-    [KNOX-1289] - Deletion of generated topology deletes associated descriptor file
-    [KNOX-1135] - Add configuration property for allowing remote configuration to be read by unauthenticated clients
-    [KNOX-1281] - HA provider configuration wizard should require the service name property value
-    [KNOX-1279] - HaProvider wizard should include ability to specify ZooKeeper-related properties
-    [KNOX-1257] - WebAppSec provider configuration wizard
-    [KNOX-1276] - Improve HA provider configuration wizard
-    [KNOX-1269] - Generate services declared in descriptor without URLs or params, but with valid HaProvider ZK config
-    [KNOX-1267] - Add support for Ranger-related service discovery with HTTPS configurations
-    [KNOX-1268] - Add support for HDFS-related service discovery with HTTPS configurations
-    [KNOX-1258] - Add Anonymous authentication provider to provider config wizard options.
-    [KNOX-1259] - Removed height restriction on resource type and resource list tables
-    [KNOX-1263] - Admin UI provider config details should organize providers by role rather than name
-    [KNOX-1187] - Support for Distributed Alias Service
-    [KNOX-1182] - Removed lingering configuration, which is no longer used for RM-based services
-    [KNOX-1233] - Excluded lang-tag from the pac4j-oidc dependency
-    [KNOX-1243] - Normalize the required DNs that are Configured in KnoxToken Service
-    [KNOX-1220] - HostMap provider configuration wizard option in Admin UI
-    [KNOX-1212] - Support new YARN webui2 in Knox (Sunil Govindan via Phil Zampino)
-    [KNOX-1153] - Support for determining whether HA is enabled or not from the service's configuration
-    [KNOX-1215] - Hadoop Group Lookup Provider Config Wizard
-    [KNOX-1229] - Ambari service discovery REST invocations need reasonable timeout
-    [KNOX-1228] - Atlas HA ZooKeeper Config Discovery
-    [KNOX-1224] - Knox Proxy HADispatcher to support Atlas in HA (Nixon Rodrigues via Phil Zampino)
-    [KNOX-1219] - Eliminated duplicate useTwoWaySsl dispatch filter params
-    [KNOX-1216] - Admin UI and runtime validation for new descriptor provider configuration reference
-    [KNOX-1211] - Admin UI XSS/XSRF Protection
-    [KNOX-1202] - Added UI elements to indicate invalid param values
-    [KNOX-1202] - Descriptor and Provider Configuration Wizard Input Validation
-    [KNOX-1190] - Compress cookies set by Pac4J, in some cases the cookie size exceeds 4K and cause them not to set.
-    [KNOX-1200] - Update Apache parent pom version
-    [KNOX-1193] - Discovery support for SOLR, STORM and STORM-LOGVIEWER, and config for additional support
-    [KNOX-1198] - Support Ambari service discovery mappings override/augmentation with external config
-    [KNOX-1193] - Added discovery support for LIVYSERVER, SPARKHISTORYUI, JOBHISTORYUI, YARNUI, FALCON, OOZIEUI, HBASEUI, HDFSUI, DRUID-COORDINATOR-UI and DRUID-OVERLORD-UI
-    [KNOX-1194] - Safe loading and dumping of yaml, and filter empty-value properties from JSON output.
-    [KNOX-1176] - Update provider configuration references if new reference is invalid
-    [KNOX-1186] - Descriptors and Topology Generation Support for Service Versioning
-    [KNOX-1167] - Support HDFS Federation in Knox topology generation
-    [KNOX-1188] - Maintain provider parameter order in generated topologies
-    [KNOX-1181] - Add support for RANGER and RANGERUI service endpoint discovery via Ambari
-    [KNOX-1159] - Create ".sha1" files when releasing instead of ".sha"
-    [KNOX-1040] - Added ability to edit provider params, service params, and provider URLs.
-    [KNOX-1178] - Add test to ensure regex or support in RegexIdentityAssertionFilter
-    [KNOX-1169] - Clear Cluster Configuration Monitor Cache When No Relevant Descriptors Remain
-    [KNOX-1153] - Service-level overrides for HA provider configuration in generated topologies, and alternate provide config formats.
+    * [KNOX-1395] - Change Derived Whitelist logic to not use InetAddress of Localhost for getting Hostname
+    * [KNOX-1394] - OOTB gateway-site.xml to Default to Demo Whitelist Scenario
+    * [KNOX-1381] - Fix logging
+    * [KNOX-1378] - Declare SSO params using KnoxSSO service option  knoxsso.expected.params
+    * [KNOX-1379] - Default dispatch whitelist should not include localhost when the Knox host domain can be determined
+    * [KNOX-1363] - Support service role-based whitelist for dispatches and redirects
+    * [KNOX-1357] - Add configurable list of AutoDeploy topologies to deploy on server start
+    * [KNOX-1350] - Complete centralization of manager.xml topology config in gateway-site.xml
+    * [KNOX-1339] - (KIP-11 Federation)  Add support for header preauth dispatch
+    * [KNOX-1350] - Centralize Group Lookup Config in gateway-site.xml
+    * [KNOX-1338] - Add Config Property for Knox Admin Groups for AclsAuthz Provider Use
+    * [KNOX-1326] - merge DATANODE rewrite rules into HDFSUI
+    * [KNOX-1336] - Upgrade libpam4j to abstractj/1.9.1
+    * [KNOX-1315] - Spark UI urls issue: Jobs, stdout/stderr and threadDump links (Guang Yang via lmccay)
+    * [KNOX-1143] - Add MR job history ws rest api rewrite rule to jobhistoryui (Guang Yang via lmccay)
+    * [KNOX-1089] - Upgrade Jetty
+    * [KNOX-1329] - Upgrade the transitive springframework spring core to even newer version
+    * [KNOX-1290] - Create gateway definition for Log Search - version 0.5.0 (Olivér Szabó via lmccay)
+    * [KNOX-1329] - Upgrade the transitive springframework spring core from pac4j
+    * [KNOX-1328] - Change Default Authentication to KnoxSSO for Admin UI
+    * [KNOX-1320] - Upgrade JQuery in the KnoxAuth Application
+    * [KNOX-1327] - Log REST invocation error exceptions encountered during service discovery at ERROR level
+    * [KNOX-1322] - Support configuration property to forcibly treat topologies as read-only
+    * [KNOX-1314] - SSOCookieProvider should be able to derive a default provider URL
+    * [KNOX-1319] - Better logging when discovery fails to access service configurations
+    * [KNOX-1318] - Update available Admin UI services to include NiFi
+    * [KNOX-1317] - Ambari service discovery config handling of nested derived properties
+    * [KNOX-1193] - NiFi service discovery support
+    * [KNOX-1154] - Dump Kerberos settings upon startup. (Rick Kellogg via Phil Zampino)
+    * [KNOX-1310] - The X-Content-Type-Options header should be set as 'nosniff'
+    * [KNOX-1309] - Admin API resource names should be validated
+    * [KNOX-1308] - Implement safeguards against XML entity injection/expansion in the Admin API
+    * [KNOX-1227] - Add KnoxSSO and KnoxToken services to the new descriptor service options
+    * [KNOX-1266] - Employ gateway-site config for default discovery address and cluster values
+    * [KNOX-1275] - Add json-smart explicitly to gateway-spi (Saravanan Krishnamoorthy via lmccay)
+    * [KNOX-1306] - Remove requirement for cluster when discovery address is specified in admin UI new descriptor wizard.
+    * [KNOX-1193] - LOGSEARCH discovery support
+    * [KNOX-1305] - Add postfix and infix rewrite functions
+    * [KNOX-1236] - Support service discovery for YARNUIV2
+    * [KNOX-1202] - Validate resource names
+    * [KNOX-1300] - Add default provider configuration for demo LDAP to the distribution
+    * [KNOX-1193] - Add service discovery support for Spark Thrift UI
+    * [KNOX-1293] - Support for Ambari discovery of SPARK2 services
+    * [KNOX-1294] - Upgrade Jackson-Databind to 2.9.5
+    * [KNOX-1292] - Upgrade Groovy to 2.4.8
+    * [KNOX-1289] - Deletion of generated topology deletes associated descriptor file
+    * [KNOX-1135] - Add configuration property for allowing remote configuration to be read by unauthenticated clients
+    * [KNOX-1281] - HA provider configuration wizard should require the service name property value
+    * [KNOX-1279] - HaProvider wizard should include ability to specify ZooKeeper-related properties
+    * [KNOX-1257] - WebAppSec provider configuration wizard
+    * [KNOX-1276] - Improve HA provider configuration wizard
+    * [KNOX-1269] - Generate services declared in descriptor without URLs or params, but with valid HaProvider ZK config
+    * [KNOX-1267] - Add support for Ranger-related service discovery with HTTPS configurations
+    * [KNOX-1268] - Add support for HDFS-related service discovery with HTTPS configurations
+    * [KNOX-1258] - Add Anonymous authentication provider to provider config wizard options.
+    * [KNOX-1259] - Removed height restriction on resource type and resource list tables
+    * [KNOX-1263] - Admin UI provider config details should organize providers by role rather than name
+    * [KNOX-1187] - Support for Distributed Alias Service
+    * [KNOX-1182] - Removed lingering configuration, which is no longer used for RM-based services
+    * [KNOX-1233] - Excluded lang-tag from the pac4j-oidc dependency
+    * [KNOX-1243] - Normalize the required DNs that are Configured in KnoxToken Service
+    * [KNOX-1220] - HostMap provider configuration wizard option in Admin UI
+    * [KNOX-1212] - Support new YARN webui2 in Knox (Sunil Govindan via Phil Zampino)
+    * [KNOX-1153] - Support for determining whether HA is enabled or not from the service's configuration
+    * [KNOX-1215] - Hadoop Group Lookup Provider Config Wizard
+    * [KNOX-1229] - Ambari service discovery REST invocations need reasonable timeout
+    * [KNOX-1228] - Atlas HA ZooKeeper Config Discovery
+    * [KNOX-1224] - Knox Proxy HADispatcher to support Atlas in HA (Nixon Rodrigues via Phil Zampino)
+    * [KNOX-1219] - Eliminated duplicate useTwoWaySsl dispatch filter params
+    * [KNOX-1216] - Admin UI and runtime validation for new descriptor provider configuration reference
+    * [KNOX-1211] - Admin UI XSS/XSRF Protection
+    * [KNOX-1202] - Added UI elements to indicate invalid param values
+    * [KNOX-1202] - Descriptor and Provider Configuration Wizard Input Validation
+    * [KNOX-1190] - Compress cookies set by Pac4J, in some cases the cookie size exceeds 4K and cause them not to set.
+    * [KNOX-1200] - Update Apache parent pom version
+    * [KNOX-1193] - Discovery support for SOLR, STORM and STORM-LOGVIEWER, and config for additional support
+    * [KNOX-1198] - Support Ambari service discovery mappings override/augmentation with external config
+    * [KNOX-1193] - Added discovery support for LIVYSERVER, SPARKHISTORYUI, JOBHISTORYUI, YARNUI, FALCON, OOZIEUI, HBASEUI, HDFSUI, DRUID-COORDINATOR-UI and DRUID-OVERLORD-UI
+    * [KNOX-1194] - Safe loading and dumping of yaml, and filter empty-value properties from JSON output.
+    * [KNOX-1176] - Update provider configuration references if new reference is invalid
+    * [KNOX-1186] - Descriptors and Topology Generation Support for Service Versioning
+    * [KNOX-1167] - Support HDFS Federation in Knox topology generation
+    * [KNOX-1188] - Maintain provider parameter order in generated topologies
+    * [KNOX-1181] - Add support for RANGER and RANGERUI service endpoint discovery via Ambari
+    * [KNOX-1159] - Create ".sha1" files when releasing instead of ".sha"
+    * [KNOX-1040] - Added ability to edit provider params, service params, and provider URLs.
+    * [KNOX-1178] - Add test to ensure regex or support in RegexIdentityAssertionFilter
+    * [KNOX-1169] - Clear Cluster Configuration Monitor Cache When No Relevant Descriptors Remain
+    * [KNOX-1153] - Service-level overrides for HA provider configuration in generated topologies, and alternate provide config formats.
 
 ** Bug
-    [KNOX-1399] - Duplicate configuration for gateway.dispatch.whitelist in gateway-site.xml OOTB
-    [KNOX-1398] - WebHDFS and WebHBase APIs listed incorrectly as services that need whitelist enforcement
-	[KNOX-1397] - Admin UI Topologies List needs to Refresh on New or Deleted Topologies
-	[KNOX-1396] - Admin UI Provider Config wizard URL validation requires a port
-    [KNOX-1360] - Fix ambari broken images (Aleksandr Kovalenko via Sandeep More)
-    [KNOX-1358] - Create new version definition for SHS (Marco Gaido via lmccay)
-    [KNOX-1345] - Fix javadoc errors
-    [KNOX-1353] - SHS always showing link to incomplete applications (Marco Gaido via lmccay)
-    [KNOX-1356] - Fix X-Forwarded-Context header (Marco Gaido via Sandeep More)
-    [KNOX-1352] - Service Discovery is not honoring the enabled attribute of HA Provider configuration
-    [KNOX-1349] - Fix Knox versioning for service defs. (UnitTest to be followed in next commit)
-    [KNOX-1348] - Provider Configuration Wizard HA Provider Validation for ZooKeeper Ensemble is Wrong
-    [KNOX-1347] - X-Forwarded-Context header is not rewritten correctly
-    [KNOX-1346] - SNI Mismatch Failures due to Wrong Host Header
-    [KNOX-1344] - Atlas HA dispatch mishandling SSO redirection
-    [KNOX-1342] - Prevent Host Header from being sent to Atlas
-    [KNOX-1341] - Constrain cookies added to the HadoopAuthCookieStore
-    [KNOX-1340] - HDFSUI proxy to a host specified in query string (Bharat Viswanadham via Sandeep More)
-    [KNOX-1335] - Spark service discovery when SSL is configured
-    [KNOX-1333] - Admin UI needs to handle SSO cookie expiration
-    [KNOX-1149] - HBase High Availability Fails with Kerberos Secured Cluster
-    [KNOX-1330] - Fix favicon for Zeppelin (Prabhjyot Singh via Sandeep More)
-    [KNOX-1331] - Unable to update referenced (XML format) provider config from Admin UI
-    [KNOX-1166] - Upgrade HTTPClient due to Hostname Verification Bug
-    [KNOX-1326] - Fix the Datanode link on the Namenode page
-    [KNOX-1314] - SSOCookieProvider derive a default provider URL with configured gateway.path and fix handling of X-FORWARDED-HOST with port in it.
-    [KNOX-1324] - Remote Configuration Monitor should not log stacktrace when client is not configured
-    [KNOX-1323] - Reconcile WebAppSecurity provider X-Frame-Options and X-Content-Type-Options param names
-    [KNOX-1157] - Scoped rewrite rules are treated as global rules in some cases (Wei Han via Phil Zampino)
-    [KNOX-1313] - Contributing provider config wizards incorrectly produce config when validation fails
-    [KNOX-1310] - Handle custom param value for X-Content-Type-Options header
-    [KNOX-1312] - Zeppelin-related discovery is incorrectly configured
-    [KNOX-1311] - Ambari logos are not showing up in Ambari Web UI (Yusaku Sako via lmccay)
-    [KNOX-1244] - YARNUIV2 fix HA support (Sunil Govind via Sandeep More)
-    [KNOX-1274] - Update location headers to make sure SSO redirects are proper (Marco Gaido via Sandeep More)
-    [KNOX-1295] - X-Forwarded-Context contains not the full base path in SHS request (Atilla Csoma and Marco Gaido via lmccay)
-    [KNOX-1297] - HDFSUI requires its own HA Dispatch Provider
-    [KNOX-1296] - Fix logging for remote alias service
-    [KNOX-1114] - In case of port conflict log error and move on
-    [KNOX-1287] - Invalid federated namenode namespace declaration should not produce invalid URLs in topologies.
-    [KNOX-1288] - NPE during service discovery
-    [KNOX-1249] - Fix rewrite issues with YarnUIV2 (Sunil Govind via Sandeep More)
-    [KNOX-1283] - DefaultURLManager markFailed method throws NPE if urls is empty
-    [KNOX-1277] - make sure HDFS UI is rendered correctly without a forward slash (Bharat Viswanadham  via Sandeep More)
-    [KNOX-1282] - Update rewrite rules to reflect changes to content type (Bharat Viswanadham via Sandeep More)
-    [KNOX-1264] - Fix job link under the jobHistoryUI (Sunil Govind via Sandeep)
-    [KNOX-1278] - HaProvider wizard uses comma instead of semi-colon as delimiter
-    [KNOX-1271] - AtlasZookeeperURLManager not handling empty namespace config values correctly
-    [KNOX-1272] - ZEPPELINWS URLs are generated incorrectly
-    [KNOX-1253] - TopologyService incorrectly reports failure to delete file that has been successfully deleted.
-    [KNOX-1261] - Fix issue where listener is not decrypting the value before updating, fix  annoying error messages
-    [KNOX-1254] - Make sure Remote Alias Registry prefers remote over local
-    [KNOX-1256] - AclsAuthz provider wizard produces incorrect param
-    [KNOX-1251] - Fix NPE in RemoteAliasService#stop()
-    [KNOX-1246] - Update service config in Knox to support latest configurations for Ranger.(Vishal Suvagia via lmccay)
-    [KNOX-1248] - AtlasZookeeperURLManager handle missing namespace property from Atlas config with appropriate default value
-    [KNOX-1182] - For YARN HA, RESOURCEMANAGER service should have both active and standby endpoint URLs
-    [KNOX-1242] - Fix rewrite rules for HDFS UI] - Datanode UI link
-    [KNOX-1239] - HBaseZookeeperURLManager ignores configured ZooKeeper namespace
-    [KNOX-1238] - Fix Custom Truststore Settings for Gateway
-    [KNOX-1233] - Pac4j dependency causing intermittent compilation errors
-    [KNOX-1230] - Many Concurrent Requests to Knox causes URL Mangling
-    [KNOX-1231] - Atlas HA URL Manager must handle ZooKeeeper namespaces that begin with leading slash
-    [KNOX-1223] - Fix redirect rules for Zeppelin /api/ticket (Prabhjyot Singh  via Sandeep More)
-    [KNOX-1091] - Knox Audit Logging] - duplicate correlation ids (Kevin Risden via Sandeep More)
-    [KNOX-1210] - Update response code from 403 to 401 for token validation failures (for XHR request)
-    [KNOX-1210] - Fix token expiration for XHR request
-    [KNOX-1217] - PAM auth provider configuration wizard should allow for specifying the login module/service
-    [KNOX-1202] - Eliminate unintended persistence of UI-only provider configuration properties
-    [KNOX-1208] - Fix WEBHBASE ZooKeeper ensemble discovery when proxying HA HBase
-    [KNOX-1203] - Shiro-based provider configurations must be produced with correct param order from Admin UI
-    [KNOX-1200] - Fixing maven assembly errors
-    [KNOX-1201] - Disable DocTypes
-    [KNOX-1195] - Some misc code cleanups
-    [KNOX-1197] - Fix a bug where Anonymous auth is not picked up with federation provider
-    [KNOX-1199] - fix missing ASL header
-    [KNOX-1199] - Ambari View API for Tez View needs Double Quotes Encoded on Dispatch
-    [KNOX-1192] - Make sure config variables such as defaultUrl get picked up
-    [KNOX-1177] - Retighten the rewrite rule on oozieui to reduce false positives. Replace http with * in rule.
-    [KNOX-1177] - Retighten the rewrite rule on oozieui to reduce false positives
-    [KNOX-1108] - NiFiHaDispatch not failing over (Jeff Storck via lmccay)
-    [KNOX-1040] - Fixed refresh after descriptor saving, and added editable discovery fields to descriptor detail view
+    * [KNOX-1399] - Duplicate configuration for gateway.dispatch.whitelist in gateway-site.xml OOTB
+    * [KNOX-1398] - WebHDFS and WebHBase APIs listed incorrectly as services that need whitelist enforcement
+	  * [KNOX-1397] - Admin UI Topologies List needs to Refresh on New or Deleted Topologies
+	  * [KNOX-1396] - Admin UI Provider Config wizard URL validation requires a port
+    * [KNOX-1360] - Fix ambari broken images (Aleksandr Kovalenko via Sandeep More)
+    * [KNOX-1358] - Create new version definition for SHS (Marco Gaido via lmccay)
+    * [KNOX-1345] - Fix javadoc errors
+    * [KNOX-1353] - SHS always showing link to incomplete applications (Marco Gaido via lmccay)
+    * [KNOX-1356] - Fix X-Forwarded-Context header (Marco Gaido via Sandeep More)
+    * [KNOX-1352] - Service Discovery is not honoring the enabled attribute of HA Provider configuration
+    * [KNOX-1349] - Fix Knox versioning for service defs. (UnitTest to be followed in next commit)
+    * [KNOX-1348] - Provider Configuration Wizard HA Provider Validation for ZooKeeper Ensemble is Wrong
+    * [KNOX-1347] - X-Forwarded-Context header is not rewritten correctly
+    * [KNOX-1346] - SNI Mismatch Failures due to Wrong Host Header
+    * [KNOX-1344] - Atlas HA dispatch mishandling SSO redirection
+    * [KNOX-1342] - Prevent Host Header from being sent to Atlas
+    * [KNOX-1341] - Constrain cookies added to the HadoopAuthCookieStore
+    * [KNOX-1340] - HDFSUI proxy to a host specified in query string (Bharat Viswanadham via Sandeep More)
+    * [KNOX-1335] - Spark service discovery when SSL is configured
+    * [KNOX-1333] - Admin UI needs to handle SSO cookie expiration
+    * [KNOX-1149] - HBase High Availability Fails with Kerberos Secured Cluster
+    * [KNOX-1330] - Fix favicon for Zeppelin (Prabhjyot Singh via Sandeep More)
+    * [KNOX-1331] - Unable to update referenced (XML format) provider config from Admin UI
+    * [KNOX-1166] - Upgrade HTTPClient due to Hostname Verification Bug
+    * [KNOX-1326] - Fix the Datanode link on the Namenode page
+    * [KNOX-1314] - SSOCookieProvider derive a default provider URL with configured gateway.path and fix handling of X-FORWARDED-HOST with port in it.
+    * [KNOX-1324] - Remote Configuration Monitor should not log stacktrace when client is not configured
+    * [KNOX-1323] - Reconcile WebAppSecurity provider X-Frame-Options and X-Content-Type-Options param names
+    * [KNOX-1157] - Scoped rewrite rules are treated as global rules in some cases (Wei Han via Phil Zampino)
+    * [KNOX-1313] - Contributing provider config wizards incorrectly produce config when validation fails
+    * [KNOX-1310] - Handle custom param value for X-Content-Type-Options header
+    * [KNOX-1312] - Zeppelin-related discovery is incorrectly configured
+    * [KNOX-1311] - Ambari logos are not showing up in Ambari Web UI (Yusaku Sako via lmccay)
+    * [KNOX-1244] - YARNUIV2 fix HA support (Sunil Govind via Sandeep More)
+    * [KNOX-1274] - Update location headers to make sure SSO redirects are proper (Marco Gaido via Sandeep More)
+    * [KNOX-1295] - X-Forwarded-Context contains not the full base path in SHS request (Atilla Csoma and Marco Gaido via lmccay)
+    * [KNOX-1297] - HDFSUI requires its own HA Dispatch Provider
+    * [KNOX-1296] - Fix logging for remote alias service
+    * [KNOX-1114] - In case of port conflict log error and move on
+    * [KNOX-1287] - Invalid federated namenode namespace declaration should not produce invalid URLs in topologies.
+    * [KNOX-1288] - NPE during service discovery
+    * [KNOX-1249] - Fix rewrite issues with YarnUIV2 (Sunil Govind via Sandeep More)
+    * [KNOX-1283] - DefaultURLManager markFailed method throws NPE if urls is empty
+    * [KNOX-1277] - make sure HDFS UI is rendered correctly without a forward slash (Bharat Viswanadham  via Sandeep More)
+    * [KNOX-1282] - Update rewrite rules to reflect changes to content type (Bharat Viswanadham via Sandeep More)
+    * [KNOX-1264] - Fix job link under the jobHistoryUI (Sunil Govind via Sandeep)
+    * [KNOX-1278] - HaProvider wizard uses comma instead of semi-colon as delimiter
+    * [KNOX-1271] - AtlasZookeeperURLManager not handling empty namespace config values correctly
+    * [KNOX-1272] - ZEPPELINWS URLs are generated incorrectly
+    * [KNOX-1253] - TopologyService incorrectly reports failure to delete file that has been successfully deleted.
+    * [KNOX-1261] - Fix issue where listener is not decrypting the value before updating, fix  annoying error messages
+    * [KNOX-1254] - Make sure Remote Alias Registry prefers remote over local
+    * [KNOX-1256] - AclsAuthz provider wizard produces incorrect param
+    * [KNOX-1251] - Fix NPE in RemoteAliasService#stop()
+    * [KNOX-1246] - Update service config in Knox to support latest configurations for Ranger.(Vishal Suvagia via lmccay)
+    * [KNOX-1248] - AtlasZookeeperURLManager handle missing namespace property from Atlas config with appropriate default value
+    * [KNOX-1182] - For YARN HA, RESOURCEMANAGER service should have both active and standby endpoint URLs
+    * [KNOX-1242] - Fix rewrite rules for HDFS UI] - Datanode UI link
+    * [KNOX-1239] - HBaseZookeeperURLManager ignores configured ZooKeeper namespace
+    * [KNOX-1238] - Fix Custom Truststore Settings for Gateway
+    * [KNOX-1233] - Pac4j dependency causing intermittent compilation errors
+    * [KNOX-1230] - Many Concurrent Requests to Knox causes URL Mangling
+    * [KNOX-1231] - Atlas HA URL Manager must handle ZooKeeeper namespaces that begin with leading slash
+    * [KNOX-1223] - Fix redirect rules for Zeppelin /api/ticket (Prabhjyot Singh  via Sandeep More)
+    * [KNOX-1091] - Knox Audit Logging] - duplicate correlation ids (Kevin Risden via Sandeep More)
+    * [KNOX-1210] - Update response code from 403 to 401 for token validation failures (for XHR request)
+    * [KNOX-1210] - Fix token expiration for XHR request
+    * [KNOX-1217] - PAM auth provider configuration wizard should allow for specifying the login module/service
+    * [KNOX-1202] - Eliminate unintended persistence of UI-only provider configuration properties
+    * [KNOX-1208] - Fix WEBHBASE ZooKeeper ensemble discovery when proxying HA HBase
+    * [KNOX-1203] - Shiro-based provider configurations must be produced with correct param order from Admin UI
+    * [KNOX-1200] - Fixing maven assembly errors
+    * [KNOX-1201] - Disable DocTypes
+    * [KNOX-1195] - Some misc code cleanups
+    * [KNOX-1197] - Fix a bug where Anonymous auth is not picked up with federation provider
+    * [KNOX-1199] - fix missing ASL header
+    * [KNOX-1199] - Ambari View API for Tez View needs Double Quotes Encoded on Dispatch
+    * [KNOX-1192] - Make sure config variables such as defaultUrl get picked up
+    * [KNOX-1177] - Retighten the rewrite rule on oozieui to reduce false positives. Replace http with * in rule.
+    * [KNOX-1177] - Retighten the rewrite rule on oozieui to reduce false positives
+    * [KNOX-1108] - NiFiHaDispatch not failing over (Jeff Storck via lmccay)
+    * [KNOX-1040] - Fixed refresh after descriptor saving, and added editable discovery fields to descriptor detail view
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 1.0.0
 ------------------------------------------------------------------------------
 ** New Feature
 ** Improvement
-   * [KNOX-998]  - Rename class packages to org.apache.knox.gateway
-   * [KNOX-1161] - Update hadoop dependencies to Hadoop 3 (Colm O hEigeartaigh, reviewed by Sandeep More)
-   * [KNOX-1043] - Ambari Service Discovery Support for HA-Enabled Services
-   * [KNOX-1144] - Establish provider configuration reference relationships for existing descriptors at gateway startup
-   * [KNOX-1137] - KnoxCLI For Listing Provider Configurations and Descriptors in a Remote Configuration Registry
-   * [KNOX-1145] - Upgrade Jackson due to CVE-2017-7525
+    * [KNOX-998]  - Rename class packages to org.apache.knox.gateway
+    * [KNOX-1161] - Update hadoop dependencies to Hadoop 3 (Colm O hEigeartaigh, reviewed by Sandeep More)
+    * [KNOX-1043] - Ambari Service Discovery Support for HA-Enabled Services
+    * [KNOX-1144] - Establish provider configuration reference relationships for existing descriptors at gateway startup
+    * [KNOX-1137] - KnoxCLI For Listing Provider Configurations and Descriptors in a Remote Configuration Registry
+    * [KNOX-1145] - Upgrade Jackson due to CVE-2017-7525
 ** Bug
-   * [KNOX-1151] - Need Explicit curator-recipes dependency in pom
-   * [KNOX-1141] - Coverity Issues Reported For AmbariConfigurationMonitor
-   * [KNOX-1116] - Builds of src distributions result in unexpected result from gateway version API.
+    * [KNOX-1151] - Need Explicit curator-recipes dependency in pom
+    * [KNOX-1141] - Coverity Issues Reported For AmbariConfigurationMonitor
+    * [KNOX-1116] - Builds of src distributions result in unexpected result from gateway version API.
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.14.0
 ------------------------------------------------------------------------------
 ** New Feature
-   * [KNOX-1014] - Service Discovery and Topology Generation Framework (Phil Zampino via lmccay)
-   * [KNOX-1062] - Service-Level Parameter Support in Service Discovery and Topology Generation (Phil Zampino via lmccay)
-   * [KNOX-1077] - Knox should notice simple descriptors on startup (Phil Zampino via lmccay)
-   * [KNOX-1063] - Simple Descriptor discovery should notice YAML file with .yaml extension (Phil Zampino via lmccay)
-   * [KNOX-1105] - Provide indication that topologies were generated from simple descriptors (Phil Zampino via lmccay)
-   * [KNOX-1110] - Simple Descriptors Must Accommodate Application elements (Phil Zampino via lmccay)
-   * [KNOX-1039] - Added admin APIs for managing shared provider configurations and descriptors (Phil Zampino via Sandeep More)
-   * [KNOX-970] - Add NiFi HA dispatch to service def (Jeff Storck via lmccay)
-   * [KNOX-970] - Add support for proxying NiFi (Jeff Storck via lmccay)
-   * [KNOX-842] - Add support for Livy (Spark REST Service).
-   * [KNOX-1017] - Add support for enabling "Strict-Transport-Security" header in Knox responses (Latha Appanna via lmccay)
-   * [KNOX-1049] - Default Service or App Context for Topologies
-   * [KNOX-1041] - High Availability Support For Apache SOLR, HBase & Kafka (Rick Kellogg via Sandeep More)
-   * [KNOX-1046] - Add Client Cert Wanted Capability with Configurable Validation that Checks for It
-   * [KNOX-1072] - Add Client Cert Required Capability to KnoxToken
-   * [KNOX-1107] - Remote Configuration Registry Client Service (Phil Zampino via lmccay)
-   * [KNOX-1128] - Readonly protection for generated topologies in Knox Admin UI
-   * [KNOX-1013] - Monitor Ambari for Cluster Topology changes (Phil Zampino via lmccay)
-   * [KNOX-1136] - Provision Consistent Credentials For Generated Topologies (phil zampino via lmccay)
-   * [KNOX-1129] - Remote Configuration Monitor Should Define The Entries It Monitors If They're Not Yet Defined (Phil Zampino via lmccay)
-   * [KNOX-1125] - KNOXCLI Additions to Support Management of Knox config in remote registry (Phil Zampino via Sandeep More)
+    * [KNOX-1014] - Service Discovery and Topology Generation Framework (Phil Zampino via lmccay)
+    * [KNOX-1062] - Service-Level Parameter Support in Service Discovery and Topology Generation (Phil Zampino via lmccay)
+    * [KNOX-1077] - Knox should notice simple descriptors on startup (Phil Zampino via lmccay)
+    * [KNOX-1063] - Simple Descriptor discovery should notice YAML file with .yaml extension (Phil Zampino via lmccay)
+    * [KNOX-1105] - Provide indication that topologies were generated from simple descriptors (Phil Zampino via lmccay)
+    * [KNOX-1110] - Simple Descriptors Must Accommodate Application elements (Phil Zampino via lmccay)
+    * [KNOX-1039] - Added admin APIs for managing shared provider configurations and descriptors (Phil Zampino via Sandeep More)
+    * [KNOX-970] - Add NiFi HA dispatch to service def (Jeff Storck via lmccay)
+    * [KNOX-970] - Add support for proxying NiFi (Jeff Storck via lmccay)
+    * [KNOX-842] - Add support for Livy (Spark REST Service).
+    * [KNOX-1017] - Add support for enabling "Strict-Transport-Security" header in Knox responses (Latha Appanna via lmccay)
+    * [KNOX-1049] - Default Service or App Context for Topologies
+    * [KNOX-1041] - High Availability Support For Apache SOLR, HBase & Kafka (Rick Kellogg via Sandeep More)
+    * [KNOX-1046] - Add Client Cert Wanted Capability with Configurable Validation that Checks for It
+    * [KNOX-1072] - Add Client Cert Required Capability to KnoxToken
+    * [KNOX-1107] - Remote Configuration Registry Client Service (Phil Zampino via lmccay)
+    * [KNOX-1128] - Readonly protection for generated topologies in Knox Admin UI
+    * [KNOX-1013] - Monitor Ambari for Cluster Topology changes (Phil Zampino via lmccay)
+    * [KNOX-1136] - Provision Consistent Credentials For Generated Topologies (phil zampino via lmccay)
+    * [KNOX-1129] - Remote Configuration Monitor Should Define The Entries It Monitors If They're Not Yet Defined (Phil Zampino via lmccay)
+    * [KNOX-1125] - KNOXCLI Additions to Support Management of Knox config in remote registry (Phil Zampino via Sandeep More)
 ** Improvement
-   * [KNOX-921] - Httpclient max connections are always set to default values
-   * [KNOX-1106] - Tighten the rewrite rule on oozieui to reduce false positives (Wei Han via Sandeep More)
-   * [KNOX-1104] - Test to verify behavior of HaProvider service with only a single URL ( Phil Zampino via Sandeep More)
-   * [KNOX-1034] - Make Default identity-assertion provider actually be the default
-   * [KNOX-1078] - Add option to preserve original string when lookup fails in regex based identity assertion provider (Wei Han via Sandeep More)
-   * [KNOX-1049] - add unit test to gatewayfiltertest
-   * [KNOX-1076] - Update nimbus-jose-jwt to 4.41.2
-   * [KNOX-1049] - check for null topology to avoid NPE in tests
-   * [KNOX-1088] - Remove LDAP BaseDirectoryService*
-   * [KNOX-1073] - Upgrade PAC4J to a more recent version
-   * [KNOX-1001] - Knox Shell Sqoop.Request class is Package Private (Andrei Viaryshka via lmccay)
-   * [KNOX-1021] - Should handle empty string for endpoint token service audience list
-   * [KNOX-1082] - Add support to validate the "nbf" claim for JWTs
-   * [KNOX-1067] - Support different signature algorithms for JWTs
-   * [KNOX-1045] - Knox Token Service has a trailing whitespace for the token_type attribute
-   * [KNOX-1081] - Remove Picketlink Provider Module
-   * [KNOX-895] - Pass Headers and Cookies to websocket backend
-   * [KNOX-1064] - Externalize Hadoop Service Configuration Details and Service URL Creation (Phil Zampino via Sandeep More)
-   * [KNOX-1070] - Drop support for Java 7 (Rick Kellogg via Sandeep More)
-   * [KNOX-1075 and KNOX-1070] - Enforce minimum maven and Java version (Rick Kellogg via Sandeep More)
-   * [KNOX-1048] - Knoxshell samples missing hadoop-examples.jar
-   * [KNOX-1069] - KnoxSSO token audience config should trim values
-   * [KNOX-1055] - Spark page characters &amp; should be treated as a delimiter (Mars via Sandeep More)
-   * [KNOX-1074] - Workflow Manager view fails to load when using ambari through KNOX (Venkatasairam Lanka via lmccay)
-   * [KNOX-1071] - Replace java.util.Random with SecureRandom
-   * [KNOX-1014] - remove extraneous directory
-   * [KNOX-1065] - Add some unit tests for the DefaultTokenAuthorityService
-   * [KNOX-1060] - JWT.getExpires() returns null
-   * [KNOX-1058] - Fix JWTToken.parseToken
-   * [KNOX-1036] - Fix a number of issues relating to JWTokenAuthority
-   * [KNOX-1054] - Make DefaultURLManager thread-safe (Phil Zampino via Sandeep More)
-   * [KNOX-1052] - Add some tests for the Knox SSO Service
-   * [KNOX-1049] - Default Service or App Context for Topologies
-   * [KNOX-1042] - Fix test timeout (Phil Zampino via Sandeep More)
-   * [KNOX-1047] - Add some tests for the Knox Token Service
-   * [KNOX-1044] - Change Rest Assured "expect" to "then"
-   * [KNOX-1038] - Replace deprecated rest-assured "content" call with "body"
-   * [KNOX-1037] - Upgrade rest-assured dependency
-   * [KNOX-1035] - Move JWTTokenTest to gateway-spi module + add more tests
-   * [KNOX-1027] - Add support to configure the issuer for the JWT filters
-   * [KNOX-1028] - X-Frame-Options and other security headers are ineffective
-   * [KNOX-962] - Add signature validation tests for the JWT filters
-   * [KNOX-1024] - Add Kafka test to GatewayBasicFuncTest
-   * [KNOX-1020] - Minor code improvements
-   * [KNOX-1019] - Remove test-driver "hack" to copy services
-   * [KNOX-1018] - Remove junit.framework calls
-   * [KNOX-738] - Remove references to deprecated httpclient class DefaultHttpClient
-   * [KNOX-963] - Use GatewayTestDriver to configure LDAP in gateway-tests
-   * [KNOX-978] - Add a test for the SOLR REST API
-   * [KNOX-989] - Report metrics at service level (/webhdfs/v1) instead of url with args (/webhdfs/v1/?op=LISTSTATUS) (Mohammad Kamrul Islam via Sandeep More)
-   * [KNOX-993] - The samples README for knoxshell references the 0.5.0 userguide
-   * [KNOX-992] - Add README for the knoxshell distribution (Colm O hEigeartaigh and lmccay via lmccay)
-   * [KNOX-1119] - Pac4J OAuth/OpenID Principal Needs to be Configurable (Andreas Hildebrandt via lmccay)
-   * [KNOX-1120] - Pac4J Stop Using ConfigSingleton
-   * [KNOX-1128] - Readonly protection for generated topologies in Knox Admin UI
-   * [KNOX-1083] - HttpClient default timeout will be 20 sec
-   * [KNOX-1124] - Service Discovery Doesn't Work For Simple Descriptors With .yaml Extension (Phil Zampino  via Sandeep More)
-   * [KNOX-1117] - HostMap Provider configuration comment in topologies included with Knox has typos (Phil Zampino via Sandeep More)
-   * [KNOX-1119] - Add missing tests for valid and invalid id attributes
-   * [KNOX-1128] - Readonly protection for generated topologies in Knox Admin UI
+    * [KNOX-921] - Httpclient max connections are always set to default values
+    * [KNOX-1106] - Tighten the rewrite rule on oozieui to reduce false positives (Wei Han via Sandeep More)
+    * [KNOX-1104] - Test to verify behavior of HaProvider service with only a single URL ( Phil Zampino via Sandeep More)
+    * [KNOX-1034] - Make Default identity-assertion provider actually be the default
+    * [KNOX-1078] - Add option to preserve original string when lookup fails in regex based identity assertion provider (Wei Han via Sandeep More)
+    * [KNOX-1049] - add unit test to gatewayfiltertest
+    * [KNOX-1076] - Update nimbus-jose-jwt to 4.41.2
+    * [KNOX-1049] - check for null topology to avoid NPE in tests
+    * [KNOX-1088] - Remove LDAP BaseDirectoryService*
+    * [KNOX-1073] - Upgrade PAC4J to a more recent version
+    * [KNOX-1001] - Knox Shell Sqoop.Request class is Package Private (Andrei Viaryshka via lmccay)
+    * [KNOX-1021] - Should handle empty string for endpoint token service audience list
+    * [KNOX-1082] - Add support to validate the "nbf" claim for JWTs
+    * [KNOX-1067] - Support different signature algorithms for JWTs
+    * [KNOX-1045] - Knox Token Service has a trailing whitespace for the token_type attribute
+    * [KNOX-1081] - Remove Picketlink Provider Module
+    * [KNOX-895] - Pass Headers and Cookies to websocket backend
+    * [KNOX-1064] - Externalize Hadoop Service Configuration Details and Service URL Creation (Phil Zampino via Sandeep More)
+    * [KNOX-1070] - Drop support for Java 7 (Rick Kellogg via Sandeep More)
+    * [KNOX-1075 and KNOX-1070] - Enforce minimum maven and Java version (Rick Kellogg via Sandeep More)
+    * [KNOX-1048] - Knoxshell samples missing hadoop-examples.jar
+    * [KNOX-1069] - KnoxSSO token audience config should trim values
+    * [KNOX-1055] - Spark page characters &amp; should be treated as a delimiter (Mars via Sandeep More)
+    * [KNOX-1074] - Workflow Manager view fails to load when using ambari through KNOX (Venkatasairam Lanka via lmccay)
+    * [KNOX-1071] - Replace java.util.Random with SecureRandom
+    * [KNOX-1014] - remove extraneous directory
+    * [KNOX-1065] - Add some unit tests for the DefaultTokenAuthorityService
+    * [KNOX-1060] - JWT.getExpires() returns null
+    * [KNOX-1058] - Fix JWTToken.parseToken
+    * [KNOX-1036] - Fix a number of issues relating to JWTokenAuthority
+    * [KNOX-1054] - Make DefaultURLManager thread-safe (Phil Zampino via Sandeep More)
+    * [KNOX-1052] - Add some tests for the Knox SSO Service
+    * [KNOX-1049] - Default Service or App Context for Topologies
+    * [KNOX-1042] - Fix test timeout (Phil Zampino via Sandeep More)
+    * [KNOX-1047] - Add some tests for the Knox Token Service
+    * [KNOX-1044] - Change Rest Assured "expect" to "then"
+    * [KNOX-1038] - Replace deprecated rest-assured "content" call with "body"
+    * [KNOX-1037] - Upgrade rest-assured dependency
+    * [KNOX-1035] - Move JWTTokenTest to gateway-spi module + add more tests
+    * [KNOX-1027] - Add support to configure the issuer for the JWT filters
+    * [KNOX-1028] - X-Frame-Options and other security headers are ineffective
+    * [KNOX-962] - Add signature validation tests for the JWT filters
+    * [KNOX-1024] - Add Kafka test to GatewayBasicFuncTest
+    * [KNOX-1020] - Minor code improvements
+    * [KNOX-1019] - Remove test-driver "hack" to copy services
+    * [KNOX-1018] - Remove junit.framework calls
+    * [KNOX-738] - Remove references to deprecated httpclient class DefaultHttpClient
+    * [KNOX-963] - Use GatewayTestDriver to configure LDAP in gateway-tests
+    * [KNOX-978] - Add a test for the SOLR REST API
+    * [KNOX-989] - Report metrics at service level (/webhdfs/v1) instead of url with args (/webhdfs/v1/?op=LISTSTATUS) (Mohammad Kamrul Islam via Sandeep More)
+    * [KNOX-993] - The samples README for knoxshell references the 0.5.0 userguide
+    * [KNOX-992] - Add README for the knoxshell distribution (Colm O hEigeartaigh and lmccay via lmccay)
+    * [KNOX-1119] - Pac4J OAuth/OpenID Principal Needs to be Configurable (Andreas Hildebrandt via lmccay)
+    * [KNOX-1120] - Pac4J Stop Using ConfigSingleton
+    * [KNOX-1128] - Readonly protection for generated topologies in Knox Admin UI
+    * [KNOX-1083] - HttpClient default timeout will be 20 sec
+    * [KNOX-1124] - Service Discovery Doesn't Work For Simple Descriptors With .yaml Extension (Phil Zampino  via Sandeep More)
+    * [KNOX-1117] - HostMap Provider configuration comment in topologies included with Knox has typos (Phil Zampino via Sandeep More)
+    * [KNOX-1119] - Add missing tests for valid and invalid id attributes
+    * [KNOX-1128] - Readonly protection for generated topologies in Knox Admin UI
 ** Bug
-   * [KNOX-1003] - Fix the rewrite rules for Zeppelin 0.7.2 UI
-   * [KNOX-1004] - Failing (flaky) Knox unit tests
-   * [KNOX-1005] - WebHbase get rid of extra decoding
-   * [KNOX-1061] - KnoxSSO Redirects with Query Params in the OriginalUrl Broken
-   * [KNOX-1068] - Add support for HTTP Head request
-   * [KNOX-1079] - Regression: proxy for Atlas fails with j_spring_security_check during login (Madhan Neethiraj via lmccay)
-   * [KNOX-1022] - Configuring knox token ttl to higher value generates an access token which is not valid
-   * [KNOX-1118] - Remove POC Service Definition for AmbariUI
-   * [KNOX-1134] - Regression due to KNOX-1119
-   * [KNOX-1132] - Address Coverity Defects in gateway-service-remoteconfig (Phil Zampino via lmccay)
-   * [KNOX-1139] - Fix threapool size for UnitTests (Attila Csoma via Sandeep More)
+    * [KNOX-1003] - Fix the rewrite rules for Zeppelin 0.7.2 UI
+    * [KNOX-1004] - Failing (flaky) Knox unit tests
+    * [KNOX-1005] - WebHbase get rid of extra decoding
+    * [KNOX-1061] - KnoxSSO Redirects with Query Params in the OriginalUrl Broken
+    * [KNOX-1068] - Add support for HTTP Head request
+    * [KNOX-1079] - Regression: proxy for Atlas fails with j_spring_security_check during login (Madhan Neethiraj via lmccay)
+    * [KNOX-1022] - Configuring knox token ttl to higher value generates an access token which is not valid
+    * [KNOX-1118] - Remove POC Service Definition for AmbariUI
+    * [KNOX-1134] - Regression due to KNOX-1119
+    * [KNOX-1132] - Address Coverity Defects in gateway-service-remoteconfig (Phil Zampino via lmccay)
+    * [KNOX-1139] - Fix threapool size for UnitTests (Attila Csoma via Sandeep More)
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.13.0
 ------------------------------------------------------------------------------
 ** New Feature
-   * [KNOX-976] - Add Jupyter Kernel Gateway Service Definitions (Jesus Alvarez via lmccay)
-   * [KNOX-626] - NameNode UI through Knox has various tabs not working
-   * [KNOX-975] - Add NodeManager Service Definition
-   * [KNOX-982] - Datanode JMX REST Knox service
-   * [KNOX-974] - Update HDFS UI services
-   * [KNOX-973] - Update Yarn UI services
-   * [KNOX-786] - Spark Thriftserver UI support through Knox (Chandana Mirashi via lmccay)
-   * [KNOX-981] - Make Topology Instance Available in WebContext for Runtime Access
-   * [KNOX-788] - Apache Atlas Admin UI Support through Knox (Nixon Rodrigues via Sandeep More)
-   * [KNOX-789] - Apache Atlas REST API support (Nixon Rodrigues via Sandeep More)
-   * [KNOX-940] - Support REST access exposing metrics (Mohammad Kamrul Islam via Sandeep More)
-   * [KNOX-932] - Option to remove the server-name from HTTP-header response (Lawrence McCay IV via lmccay)
-   * [KNOX-768] - Apache Kafka REST API Support (Rick Kellogg via Sandeep More)
-   * [KNOX-751] - Need rewrite function to capture href information from single page host to rewrite output of node hosts (Jeffrey E Rodriguez via lmccay)
-   * [KNOX-928] - Support Default Topology Feature and some misc fixes
-   * [KNOX-928] - Topology Port Mapping Feature
-   * [KNOX-938] - JWTProvider to accept Query Param as well as Bearer Token
-   * [KNOX-390] - extended to include proxy provided headers such as X-Forwarded-For
-   * [KNOX-390] - Include client IP and HTTP verb in audit log
+    * [KNOX-976] - Add Jupyter Kernel Gateway Service Definitions (Jesus Alvarez via lmccay)
+    * [KNOX-626] - NameNode UI through Knox has various tabs not working
+    * [KNOX-975] - Add NodeManager Service Definition
+    * [KNOX-982] - Datanode JMX REST Knox service
+    * [KNOX-974] - Update HDFS UI services
+    * [KNOX-973] - Update Yarn UI services
+    * [KNOX-786] - Spark Thriftserver UI support through Knox (Chandana Mirashi via lmccay)
+    * [KNOX-981] - Make Topology Instance Available in WebContext for Runtime Access
+    * [KNOX-788] - Apache Atlas Admin UI Support through Knox (Nixon Rodrigues via Sandeep More)
+    * [KNOX-789] - Apache Atlas REST API support (Nixon Rodrigues via Sandeep More)
+    * [KNOX-940] - Support REST access exposing metrics (Mohammad Kamrul Islam via Sandeep More)
+    * [KNOX-932] - Option to remove the server-name from HTTP-header response (Lawrence McCay IV via lmccay)
+    * [KNOX-768] - Apache Kafka REST API Support (Rick Kellogg via Sandeep More)
+    * [KNOX-751] - Need rewrite function to capture href information from single page host to rewrite output of node hosts (Jeffrey E Rodriguez via lmccay)
+    * [KNOX-928] - Support Default Topology Feature and some misc fixes
+    * [KNOX-928] - Topology Port Mapping Feature
+    * [KNOX-938] - JWTProvider to accept Query Param as well as Bearer Token
+    * [KNOX-390] - extended to include proxy provided headers such as X-Forwarded-For
+    * [KNOX-390] - Include client IP and HTTP verb in audit log
 ** Improvement
-   * [KNOX-909] - Ambari rewrite update for SmartSense
-   * [KNOX-910] - Move from SHA-1 to SHA-256 (Jeffrey E Rodriguez via Sandeep More)
-   * [KNOX-917] - Fix Pig view in Ambari (Gaurav Nagar via Sandeep More)
-   * [KNOX-920] - Make avatica service use default policies
-   * [KNOX-923] - Add ClientData to KnoxToken Service to Include in JSON Response
-   * [KNOX-911] - Ability to scope cookies to a given Path (Attila Kanto via lmccay)
-   * [KNOX-892] - Fix FindBugs "Dodgy Code" issues (Colm O hEigeartaigh via lmccay)
-   * [KNOX-816] - Make private inner classes static (Colm O hEigeartaigh via lmccay)
-   * [KNOX-849] - Fix SimplePrincipalMapper and CommonIdentityAssertionFilter
-   * [KNOX-930] - ScopingCookies Feature Logging too Much
-   * [KNOX-939] - Missing Licenses Element in POM files
-   * [KNOX-937] - Remove redundant type information from Collections (Colm O hEigeartaigh via Sandeep More)
-   * [KNOX-944] - Make PBE Hashing, Iteration Count and Salt Configurable and Manageable
-   * [KNOX-942] - Remove extraneous spaces around '=' (Colm O hEigeartaigh via lmccay)
-   * [KNOX-948] - Refactor AbstractJWTFilter implementations (Colm O hEigeartaigh via lmccay)
-   * [KNOX-928] - minor fix for templating of ConcurrentHashMap usage
-   * [KNOX-952] - Add common tests for the two JWT filters (Colm O hEigeartaigh via lmccay)
-   * [KNOX-946] - Spelling (Colm O hEigeartaigh via Sandeep More)
-   * [KNOX-954] - Properly handle parsing errors for JWT tokens
-   * [KNOX-956] - Consolidate ldif files in gateway-tests  (Colm O hEigeartaigh via Sandeep More)
-   * [KNOX-957] - Remove hard-coded versions from gateway-test-release (Colm O hEigeartaigh via Sandeep More)
-   * [KNOX-947] - SSOCookieProvider to be configurable for signature verification key/PEM
-   * [KNOX-958] - Consolidate test config/drivers (Colm O hEigeartaigh via Sandeep More)
-   * [KNOX-759] - jansi dependency causes issues starting knox shell (Colm O hEigeartaigh via lmccay)
-   * [KNOX-964] - upgrade to httpclient 4.5.3 to avoid licensing issues HTTPCLIENT-1743/LEGAL-240 (Jeffrey E Rodriguez via lmccay)
-   * [KNOX-965] - SecureQueryDecryptProcessor decode call could return null thus it would get a NPE (Jeffrey E Rodriguez via lmccay)
-   * [KNOX-967] - Duplicate dependencies defined in root pom (Colm O hEigeartaigh via lmccay )
-   * [KNOX-776] - Rewrite rule handling for Websockets (Jesus Alvarez via Sandeep More)
-   * [KNOX-977] - Exclude extraneous bundle.map in admin-ui file from release
-   * [KNOX-789] - Add specific policy definition to Atlas (Nixon Rodrigues via lmccay)
-   * [KNOX-972] - Update Hbase UI service (Jeffrey E Rodriguez via lmccay)
-   * [KNOX-986] - JMX Metric Reporter and OutOfMemory Issues (Zsombor Gegesy via Sandeep More)
+    * [KNOX-909] - Ambari rewrite update for SmartSense
+    * [KNOX-910] - Move from SHA-1 to SHA-256 (Jeffrey E Rodriguez via Sandeep More)
+    * [KNOX-917] - Fix Pig view in Ambari (Gaurav Nagar via Sandeep More)
+    * [KNOX-920] - Make avatica service use default policies
+    * [KNOX-923] - Add ClientData to KnoxToken Service to Include in JSON Response
+    * [KNOX-911] - Ability to scope cookies to a given Path (Attila Kanto via lmccay)
+    * [KNOX-892] - Fix FindBugs "Dodgy Code" issues (Colm O hEigeartaigh via lmccay)
+    * [KNOX-816] - Make private inner classes static (Colm O hEigeartaigh via lmccay)
+    * [KNOX-849] - Fix SimplePrincipalMapper and CommonIdentityAssertionFilter
+    * [KNOX-930] - ScopingCookies Feature Logging too Much
+    * [KNOX-939] - Missing Licenses Element in POM files
+    * [KNOX-937] - Remove redundant type information from Collections (Colm O hEigeartaigh via Sandeep More)
+    * [KNOX-944] - Make PBE Hashing, Iteration Count and Salt Configurable and Manageable
+    * [KNOX-942] - Remove extraneous spaces around '=' (Colm O hEigeartaigh via lmccay)
+    * [KNOX-948] - Refactor AbstractJWTFilter implementations (Colm O hEigeartaigh via lmccay)
+    * [KNOX-928] - minor fix for templating of ConcurrentHashMap usage
+    * [KNOX-952] - Add common tests for the two JWT filters (Colm O hEigeartaigh via lmccay)
+    * [KNOX-946] - Spelling (Colm O hEigeartaigh via Sandeep More)
+    * [KNOX-954] - Properly handle parsing errors for JWT tokens
+    * [KNOX-956] - Consolidate ldif files in gateway-tests  (Colm O hEigeartaigh via Sandeep More)
+    * [KNOX-957] - Remove hard-coded versions from gateway-test-release (Colm O hEigeartaigh via Sandeep More)
+    * [KNOX-947] - SSOCookieProvider to be configurable for signature verification key/PEM
+    * [KNOX-958] - Consolidate test config/drivers (Colm O hEigeartaigh via Sandeep More)
+    * [KNOX-759] - jansi dependency causes issues starting knox shell (Colm O hEigeartaigh via lmccay)
+    * [KNOX-964] - upgrade to httpclient 4.5.3 to avoid licensing issues HTTPCLIENT-1743/LEGAL-240 (Jeffrey E Rodriguez via lmccay)
+    * [KNOX-965] - SecureQueryDecryptProcessor decode call could return null thus it would get a NPE (Jeffrey E Rodriguez via lmccay)
+    * [KNOX-967] - Duplicate dependencies defined in root pom (Colm O hEigeartaigh via lmccay )
+    * [KNOX-776] - Rewrite rule handling for Websockets (Jesus Alvarez via Sandeep More)
+    * [KNOX-977] - Exclude extraneous bundle.map in admin-ui file from release
+    * [KNOX-789] - Add specific policy definition to Atlas (Nixon Rodrigues via lmccay)
+    * [KNOX-972] - Update Hbase UI service (Jeffrey E Rodriguez via lmccay)
+    * [KNOX-986] - JMX Metric Reporter and OutOfMemory Issues (Zsombor Gegesy via Sandeep More)
 ** Bug
-   * [KNOX-908] - Update copyright in NOTICE file
-   * [KNOX-918] - Static Member for redirectToUrl in Shiro RedirectToFilter
-   * [KNOX-913] - Invalid login.jsp redirect for Ranger Admin UI
-   * [KNOX-936] - On websocket error properly close all the sessions and containers.
-   * [KNOX-933] - PicketLink Provider must set Secure and HTTPOnly flags on Cookie (Krishna Pandey via lmccay)
-   * [KNOX-950] - Fix a bug that prevents wss:// protocol from connection to websocket backend.
-   * [KNOX-960] - Fix build failures
-   * [KNOX-966] - NPE when Shiro is misconfigured (Rob Vesse via lmccay)
-   * [KNOX-754] - Revert KNOX-754 scope change to just the Location header"
-   * [KNOX-690] - Revert KNOX-690 fixing the encoding/decoding in the parser and template
-   * [KNOX-949] - WeBHDFS proxy replaces %20 encoded spaces in URL with + encoding
-   * [KNOX-995] - KnoxSSO Form IDP Issue with Firefox
-   * [KNOX-992] - Add README for the knoxshell distribution (Colm O hEigeartaigh and lmccay via lmccay)
-   * [KNOX-993] - The samples README for knoxshell references the 0.5.0 userguide
-   * [KNOX-994] - Introducing a new variable that enhances the function, needed for Zeppelin / fix
+    * [KNOX-908] - Update copyright in NOTICE file
+    * [KNOX-918] - Static Member for redirectToUrl in Shiro RedirectToFilter
+    * [KNOX-913] - Invalid login.jsp redirect for Ranger Admin UI
+    * [KNOX-936] - On websocket error properly close all the sessions and containers.
+    * [KNOX-933] - PicketLink Provider must set Secure and HTTPOnly flags on Cookie (Krishna Pandey via lmccay)
+    * [KNOX-950] - Fix a bug that prevents wss:// protocol from connection to websocket backend.
+    * [KNOX-960] - Fix build failures
+    * [KNOX-966] - NPE when Shiro is misconfigured (Rob Vesse via lmccay)
+    * [KNOX-754] - Revert KNOX-754 scope change to just the Location header"
+    * [KNOX-690] - Revert KNOX-690 fixing the encoding/decoding in the parser and template
+    * [KNOX-949] - WeBHDFS proxy replaces %20 encoded spaces in URL with + encoding
+    * [KNOX-995] - KnoxSSO Form IDP Issue with Firefox
+    * [KNOX-992] - Add README for the knoxshell distribution (Colm O hEigeartaigh and lmccay via lmccay)
+    * [KNOX-993] - The samples README for knoxshell references the 0.5.0 userguide
+    * [KNOX-994] - Introducing a new variable that enhances the function, needed for Zeppelin / fix
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 0.12.0
@@ -425,11 +597,11 @@ Release Notes - Apache Knox - Version 0.12.0
     * [KNOX-903] - KnoxShell allows self signed certs to be used without any checks
     * [KNOX-900] - In the WebsocketMultipleConnectionTest before sending data check whether the socket is active
     * [KNOX-897] - X-Forwarded-Port incorrectly defaults to the one configured for Knox if standard ports (80 and 443) are used (Attila Kanto via Sandeep More)
-	* [KNOX-901] - Finding free ports for namenode
-	* [KNOX-902] - Fix the hardcoded knoxsso topology name (Attila Kanto via Sandeep More)
-	* [KNOX-904] - Reverting back httpclient to 4.5.1 due to bug in 4.5.2
+	  * [KNOX-901] - Finding free ports for namenode
+	  * [KNOX-902] - Fix the hardcoded knoxsso topology name (Attila Kanto via Sandeep More)
+	  * [KNOX-904] - Reverting back httpclient to 4.5.1 due to bug in 4.5.2
     * [KNOX-905] - added httpclient properties to knoxshell log4j properties file
-	* [KNOX-906] - Log WARN of Removed Impersonation Params
+	  * [KNOX-906] - Log WARN of Removed Impersonation Params
     * [KNOX-907] - Ambari Hive 2.0 view fix
 
 ------------------------------------------------------------------------------
