@@ -129,7 +129,7 @@ public class WhitelistUtilsTest {
                 doTestGetDispatchWhitelist(createMockGatewayConfig(Collections.singletonList(serviceRole), WHITELIST),
                                            serviceRole);
     assertNotNull(whitelist);
-    assertTrue(whitelist.equals(WHITELIST));
+    assertEquals(whitelist, WHITELIST);
   }
 
   @Test

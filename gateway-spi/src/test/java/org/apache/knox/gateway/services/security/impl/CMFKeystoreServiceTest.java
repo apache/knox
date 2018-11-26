@@ -32,6 +32,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -109,7 +110,7 @@ public class CMFKeystoreServiceTest {
       ks.createCredentialStore();
       ks.addCredential(aliasName, "secretValue");
       char[] secret = ks.getCredential(aliasName);
-      assertTrue("Addition of Credentials failed", new String(secret).equals("secretValue"));
+      assertEquals("Addition of Credentials failed", "secretValue", new String(secret));
     } finally {
       credentialsStoreFile.deleteOnExit();
       keyStoreFile.deleteOnExit();

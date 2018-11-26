@@ -144,7 +144,7 @@ public class JWTTokenTest extends org.junit.Assert {
 
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
-    assertEquals(null, token.getAudience());
+    assertNull(token.getAudience());
     assertArrayEquals(null, token.getAudienceClaims());
   }
 

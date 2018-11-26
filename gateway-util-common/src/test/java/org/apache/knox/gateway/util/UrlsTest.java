@@ -34,17 +34,17 @@ public class UrlsTest {
   @Test
   public void testDomainNameCreation() throws Exception {
     // determine parent domain and wildcard the cookie domain with a dot prefix
-    Assert.assertTrue(Urls.getDomainName("http://www.local.com", null).equals(".local.com"));
-    Assert.assertTrue(Urls.getDomainName("http://ljm.local.com", null).equals(".local.com"));
+    assertEquals(".local.com", Urls.getDomainName("http://www.local.com", null));
+    assertEquals(".local.com", Urls.getDomainName("http://ljm.local.com", null));
 
     // test scenarios that will leverage the default cookie domain
-    Assert.assertEquals(Urls.getDomainName("http://local.home", null), null);
-    Assert.assertEquals(Urls.getDomainName("http://localhost", null), null); // chrome may not allow this
+    Assert.assertNull(Urls.getDomainName("http://local.home", null));
+    Assert.assertNull(Urls.getDomainName("http://localhost", null)); // chrome may not allow this
 
-    Assert.assertTrue(Urls.getDomainName("http://local.home.test.com", null).equals(".home.test.com"));
+    assertEquals(".home.test.com", Urls.getDomainName("http://local.home.test.com", null));
 
     // check the suffix config feature
-    Assert.assertTrue(Urls.getDomainName("http://local.home.test.com", ".test.com").equals(".test.com"));
+    assertEquals(".test.com", Urls.getDomainName("http://local.home.test.com", ".test.com"));
     Assert.assertEquals(".novalocal", Urls.getDomainName("http://34526yewt.novalocal", ".novalocal"));
 
     // make sure that even if the suffix doesn't start with a dot that the domain does
@@ -53,12 +53,12 @@ public class UrlsTest {
     Assert.assertEquals(".novalocal", Urls.getDomainName("http://34526yewt.novalocal", "novalocal"));
 
     // ip addresses can not be wildcarded - may be a completely different domain
-    Assert.assertEquals(Urls.getDomainName("http://127.0.0.1", null), null);
+    Assert.assertNull(Urls.getDomainName("http://127.0.0.1", null));
 
     /* Make sure we handle encoded characters properly here */
-    Assert.assertTrue(Urls.getDomainName("https://www.local.com:8443/gateway/manager/admin-ui?limit=25&query=hive_table+where+name%3D%22table_1%22", null).equals(".local.com"));
+    assertEquals(".local.com", Urls.getDomainName("https://www.local.com:8443/gateway/manager/admin-ui?limit=25&query=hive_table+where+name%3D%22table_1%22", null));
     /* Make sure we handle un-encoded characters safely */
-    Assert.assertTrue(Urls.getDomainName("https://www.local.com:8443/gateway/manager/admin-ui/?limit=25&query=\"table_1\"", null).equals(".local.com"));
+    assertEquals(".local.com", Urls.getDomainName("https://www.local.com:8443/gateway/manager/admin-ui/?limit=25&query=\"table_1\"", null));
 
   }
 

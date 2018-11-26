@@ -17,7 +17,9 @@
  */
 package org.apache.knox.gateway.filter;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.PrivilegedActionException;
@@ -119,7 +121,7 @@ public class AclsAuthzFilterTest {
         throw new ServletException(t);
       }
     }
-    assertEquals(true, accessGranted);
+    assertTrue(accessGranted);
   }
 
   @Test
@@ -176,7 +178,7 @@ public class AclsAuthzFilterTest {
         throw new ServletException(t);
       }
     }
-    assertEquals(false, accessGranted);
+    assertFalse(accessGranted);
   }
   
   @Test
@@ -233,7 +235,7 @@ public class AclsAuthzFilterTest {
         throw new ServletException(t);
       }
     }
-    assertEquals(true, accessGranted);
+    assertTrue(accessGranted);
   }
 
   @Test
@@ -290,7 +292,7 @@ public class AclsAuthzFilterTest {
         throw new ServletException(t);
       }
     }
-    assertEquals(false, accessGranted);
+    assertFalse(accessGranted);
   }
   
   @Test
@@ -347,7 +349,7 @@ public class AclsAuthzFilterTest {
         throw new ServletException(t);
       }
     }
-    assertEquals(true, accessGranted);
+    assertTrue(accessGranted);
   }
 
   @Test
@@ -404,7 +406,7 @@ public class AclsAuthzFilterTest {
         throw new ServletException(t);
       }
     }
-    assertEquals(true, accessGranted);
+    assertTrue(accessGranted);
   }
 
   @Test
@@ -461,6 +463,6 @@ public class AclsAuthzFilterTest {
         throw new ServletException(t);
       }
     }
-    assertEquals(true, accessGranted);
+    assertTrue(accessGranted);
   }
 }

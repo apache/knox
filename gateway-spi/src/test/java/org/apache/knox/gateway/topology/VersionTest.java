@@ -20,7 +20,6 @@ package org.apache.knox.gateway.topology;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class VersionTest {
 
@@ -46,6 +45,6 @@ public class VersionTest {
     assertEquals(6, version.getPatch());
     assertEquals("4.5.6", version.toString());
     Version other = new Version("4.5.6");
-    assertTrue(version.equals(other));
+    assertEquals(version, other);
   }
 }

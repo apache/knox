@@ -62,10 +62,10 @@ public class StrictTransportFilterTest {
       filter.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be false.",
           chain.doFilterCalled );
-      Assert.assertTrue("Options value incorrect should be max-age=31536000 but is: "
-          + options, "max-age=31536000".equals(options));
+      Assert.assertEquals("Options value incorrect should be max-age=31536000 but is: "
+                              + options, "max-age=31536000", options);
 
-      Assert.assertTrue("Strict-Transport-Security count not equal to 1.", headers.size() == 1);
+      Assert.assertEquals("Strict-Transport-Security count not equal to 1.", 1, headers.size());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
     }
@@ -91,10 +91,10 @@ public class StrictTransportFilterTest {
       filter.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be false.",
           chain.doFilterCalled );
-      Assert.assertTrue("Options value incorrect should be max-age=31536010; includeSubDomains but is: "
-          + options, "max-age=31536010; includeSubDomains".equals(options));
+      Assert.assertEquals("Options value incorrect should be max-age=31536010; includeSubDomains but is: "
+                              + options, "max-age=31536010; includeSubDomains", options);
 
-      Assert.assertTrue("Strict-Transport-Security count not equal to 1.", headers.size() == 1);
+      Assert.assertEquals("Strict-Transport-Security count not equal to 1.", 1, headers.size());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
     }

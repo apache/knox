@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 @Category( { ManualTests.class, MediumTests.class } )
 public class CryptoServiceTest {
@@ -201,7 +200,7 @@ public class CryptoServiceTest {
     String queryString = "url=http://localhost:50070/api/v1/blahblah";    
     
     EncryptionResult result = cs.encryptForCluster("Test", alias, queryString.getBytes("UTF8"));
-    assertTrue("Resulted cipertext length should be a multiple of 16", (result.cipher.length % 16) == 0);
+    assertEquals("Resulted cipertext length should be a multiple of 16", 0, (result.cipher.length % 16));
     byte[] decryptedQueryString = cs.decryptForCluster("Test", alias, result.cipher, result.iv, result.salt);
     assertEquals(queryString.getBytes("UTF8").length, decryptedQueryString.length);
   }

@@ -754,7 +754,7 @@ public class KnoxCLITest {
     assertEquals(0, rc);
     MasterService ms = cli.getGatewayServices().getService("MasterService");
     // assertTrue(ms.getClass().getName(), ms.getClass().getName().equals("kjdfhgjkhfdgjkh"));
-    assertTrue( new String( ms.getMasterSecret() ), "master".equals( new String( ms.getMasterSecret() ) ) );
+    assertEquals(new String(ms.getMasterSecret()), "master", new String(ms.getMasterSecret()));
     assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("Master secret has been persisted to disk."));
   }
 

@@ -228,7 +228,7 @@ public class RemoteConfigurationRegistryJAASConfigTest {
         assertNotNull(myContextEntries);
         assertEquals(1, myContextEntries.length);
         AppConfigurationEntry entry = myContextEntries[0];
-        assertTrue(entry.getLoginModuleName().equals(loginModule));
+      assertEquals(entry.getLoginModuleName(), loginModule);
         Map<String, ?> entryOpts = entry.getOptions();
         assertEquals(principal, entryOpts.get("username"));
         assertEquals(password, entryOpts.get("password"));

@@ -58,7 +58,7 @@ public class GatewayGlobalConfigTest {
     System.setProperty( GatewayConfigImpl.GATEWAY_HOME_VAR, getHomeDirName( "conf-demo/conf/gateway-default.xml" ) );
     GatewayConfig config = new GatewayConfigImpl();
     assertThat(config.getGatewayPort(), is( 8888 ) );
-    assertTrue( config.getExcludedSSLProtocols().get(0).equals("SSLv3"));
+    assertEquals("SSLv3", config.getExcludedSSLProtocols().get(0));
     //assertThat( config.getShiroConfigFile(), is( "full-shiro.ini") );
   }
 

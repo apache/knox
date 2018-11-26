@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -46,7 +47,7 @@ public class CMFMasterServiceTest {
     try {
       ms.setupMasterSecret(".", true);
       //System.out.println("MASTER: " + new String(ms.getMasterSecret()));
-      assertTrue(new String(ms.getMasterSecret()).equals("testmastersecret"));
+      assertEquals("testmastersecret", new String(ms.getMasterSecret()));
       File file = new File("ambari-master");
       assertTrue(file.exists());
       file.delete();

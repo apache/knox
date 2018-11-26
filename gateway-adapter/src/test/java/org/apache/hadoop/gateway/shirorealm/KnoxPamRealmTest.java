@@ -27,7 +27,7 @@ import org.apache.shiro.authc.UsernamePasswordToken;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
 public class KnoxPamRealmTest {
@@ -60,7 +60,7 @@ public class KnoxPamRealmTest {
     AuthenticationInfo authInfo = realm.doGetAuthenticationInfo(authToken);
 
     // verify success
-    assertTrue(authInfo.getCredentials() != null);
+    assertNotNull(authInfo.getCredentials());
   }
 
   public static void main(String[] args) throws Exception {
