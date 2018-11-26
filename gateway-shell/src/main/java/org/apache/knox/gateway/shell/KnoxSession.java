@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.shell;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.auth.AuthScope;
@@ -201,7 +200,6 @@ public class KnoxSession implements Closeable {
 
     discoverTruststoreDetails(clientContext);
 
-    InputStream is = null;
     try {
       ks = KeyStore.getInstance("JKS");
       File file = new File(clientContext.connection().truststoreLocation());
@@ -219,8 +217,9 @@ public class KnoxSession implements Closeable {
       }
 
       if (file.exists()) {
-        is = new FileInputStream(file);
-        ks.load(is, truststorePass.toCharArray());
+        try (InputStream is = new FileInputStream(file)) {
+          ks.load(is, truststorePass.toCharArray());
+        }
       }
       else {
         throw new KnoxShellException("Unable to find a truststore for secure login."
@@ -244,8 +243,6 @@ public class KnoxSession implements Closeable {
     } catch (IOException e) {
       throw new KnoxShellException("Unable to load truststore."
           + " May be related to password setting or truststore format.", e);
-    } finally {
-       IOUtils.closeQuietly(is);
     }
 
     return ks;

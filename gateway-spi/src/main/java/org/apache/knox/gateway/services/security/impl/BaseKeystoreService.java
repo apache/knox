@@ -29,6 +29,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.KeyStore;
@@ -50,18 +51,11 @@ public class BaseKeystoreService {
       NoSuchAlgorithmException {     
       
        final KeyStore  keyStore = KeyStore.getInstance(storeType);
-       if ( keyStoreFile.exists() )
-       {
-           final FileInputStream   input = new FileInputStream( keyStoreFile );
-           try {
+       if ( keyStoreFile.exists() ) {
+           try (FileInputStream input = new FileInputStream( keyStoreFile )) {
                keyStore.load( input, masterPassword );
            }
-           finally {
-               input.close();
-           }
-       }
-       else
-       {
+       } else {
            keyStore.load( null, masterPassword );
        }
       
@@ -84,17 +78,14 @@ public class BaseKeystoreService {
         }
       }
     }
-    FileOutputStream stream = new FileOutputStream( file );
-    return stream;
+    return new FileOutputStream( file );
   }
 
   protected void createKeystore(String filename, String keystoreType) throws KeystoreServiceException {
-    try {
-      FileOutputStream out = createKeyStoreFile( filename );
+    try (FileOutputStream out = createKeyStoreFile( filename )) {
       KeyStore ks = KeyStore.getInstance(keystoreType);  
       ks.load( null, null );  
       ks.store( out, masterService.getMasterSecret() );
-      out.close();
     } catch (KeyStoreException e) {
       LOG.failedToCreateKeystore( filename, keystoreType, e );
       throw new KeystoreServiceException(e);
@@ -114,33 +105,16 @@ public class BaseKeystoreService {
   }
 
   protected boolean isKeystoreAvailable(final File keyStoreFile, String storeType) throws KeyStoreException, IOException {
-    if ( keyStoreFile.exists() )
-    {
-      FileInputStream input = null;
-      try {
-        final KeyStore  keyStore = KeyStore.getInstance(storeType);
-        input = new FileInputStream( keyStoreFile );
+    if ( keyStoreFile.exists() ) {
+      try (InputStream input = new FileInputStream(keyStoreFile)){
+        final KeyStore keyStore = KeyStore.getInstance(storeType);
         keyStore.load( input, masterService.getMasterSecret() );
         return true;
-      } catch (NoSuchAlgorithmException e) {
+      } catch (NoSuchAlgorithmException | CertificateException e) {
         LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
-      } catch (CertificateException e) {
-        LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
-      } catch (IOException e) {
+      } catch (IOException | KeyStoreException e) {
         LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
         throw e;
-      } catch (KeyStoreException e) {
-        LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
-        throw e;
-      }
-      finally {
-          try {
-            if ( input != null ) {
-              input.close();
-            }
-          } catch (IOException e) {
-            LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
-          }
       }
     }
     return false;

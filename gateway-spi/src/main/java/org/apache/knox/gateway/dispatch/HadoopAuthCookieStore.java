@@ -19,6 +19,7 @@ package org.apache.knox.gateway.dispatch;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.Date;
 import java.util.Properties;
@@ -74,8 +75,8 @@ public class HadoopAuthCookieStore extends BasicCookieStore {
             String krb5Config = config.getKerberosLoginConfig();
             if (krb5Config != null && !krb5Config.isEmpty()) {
               Properties p = new Properties();
-              try {
-                p.load(new FileInputStream(krb5Config));
+              try (InputStream in = new FileInputStream(krb5Config)){
+                p.load(in);
                 String configuredPrincipal = p.getProperty("principal");
                 // Strip off enclosing quotes, if present
                 if (configuredPrincipal.startsWith("\"")) {

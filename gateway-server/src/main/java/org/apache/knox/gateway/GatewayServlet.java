@@ -214,8 +214,8 @@ public class GatewayServlet implements Servlet, Filter {
     try {
       GatewayFilter filter = null;
       if( stream != null ) {
-        try {
-          GatewayDescriptor descriptor = GatewayDescriptorFactory.load("xml", new InputStreamReader(stream, StandardCharsets.UTF_8));
+        try (InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)){
+          GatewayDescriptor descriptor = GatewayDescriptorFactory.load("xml", reader);
           filter = GatewayFactory.create( descriptor );
         } finally {
           stream.close();

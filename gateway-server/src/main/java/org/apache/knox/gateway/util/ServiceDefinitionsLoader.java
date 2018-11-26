@@ -58,8 +58,7 @@ public class ServiceDefinitionsLoader {
         Unmarshaller unmarshaller = context.createUnmarshaller();
 
         for ( File file : getFileList(servicesDir) ) {
-          try {
-            FileInputStream inputStream = new FileInputStream(file);
+          try (InputStream inputStream = new FileInputStream(file)) {
             ServiceDefinition definition = (ServiceDefinition) unmarshaller.unmarshal(inputStream);
             //look for rewrite rules as a sibling (for now)
             UrlRewriteRulesDescriptor rewriteRulesDescriptor = loadRewriteRules(file.getParentFile());
@@ -67,6 +66,8 @@ public class ServiceDefinitionsLoader {
             log.addedServiceDefinition(definition.getName(), definition.getRole(), definition.getVersion());
           } catch ( FileNotFoundException e ) {
             log.failedToFindServiceDefinitionFile(file.getAbsolutePath(), e);
+          } catch (IOException e) {
+            log.failedToLoadServiceDefinition(file.getAbsolutePath(), e);
           }
         }
       } catch ( JAXBException e ) {

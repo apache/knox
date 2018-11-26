@@ -32,6 +32,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.net.URI;
@@ -362,10 +363,8 @@ public class SimpleDescriptorHandler {
                                                       final Map<String, List<String>> serviceURLs,
                                                       final Map<String, Map<String, String>> serviceParams) {
         Map<String, File> result = new HashMap<>();
-
-        BufferedWriter fw = null;
         File topologyDescriptor = null;
-        try {
+        try (StringWriter sw = new StringWriter()) {
             // Handle the referenced provider configuration
             File providerConfigFile = null;
             ProviderConfiguration providerConfiguration = null;
@@ -410,8 +409,6 @@ public class SimpleDescriptorHandler {
             }
 
             // Generate the topology content
-            StringWriter sw = new StringWriter();
-
             sw.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
             sw.write("<!--==============================================-->\n");
             sw.write("<!-- DO NOT EDIT. This is an auto-generated file. -->\n");
@@ -577,20 +574,15 @@ public class SimpleDescriptorHandler {
             }
             topologyDescriptor = new File(destDirectory, topologyFilename + ".xml");
 
-            fw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(topologyDescriptor), StandardCharsets.UTF_8));
-            fw.write(sw.toString());
-            fw.flush();
+            try (OutputStream outputStream = new FileOutputStream(topologyDescriptor);
+                 OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
+                 BufferedWriter fw = new BufferedWriter(outputStreamWriter)) {
+              fw.write(sw.toString());
+              fw.flush();
+            }
         } catch (IOException e) {
             log.failedToGenerateTopologyFromSimpleDescriptor(topologyDescriptor.getName(), e);
             topologyDescriptor.delete();
-        } finally {
-            if (fw != null) {
-                try {
-                    fw.close();
-                } catch (IOException e) {
-                    // ignore
-                }
-            }
         }
 
         result.put(RESULT_TOPOLOGY, topologyDescriptor);

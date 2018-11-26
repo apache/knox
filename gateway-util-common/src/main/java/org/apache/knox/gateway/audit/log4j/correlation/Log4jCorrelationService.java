@@ -88,27 +88,12 @@ public class Log4jCorrelationService implements CorrelationService {
 
   @Override
   public CorrelationContext readExternalizedContext(byte[] externalizedContext) {
-    ByteArrayInputStream bais = new ByteArrayInputStream( externalizedContext );
-    ObjectInput oi = null;
-    CorrelationContext context = null;
-    try {
-      oi = new ObjectInputStream( bais );
-      context = (CorrelationContext) oi.readObject();
-    } catch ( IOException e ) {
+    try (ByteArrayInputStream bais = new ByteArrayInputStream( externalizedContext );
+         ObjectInput oi = new ObjectInputStream( bais )) {
+      return (CorrelationContext) oi.readObject();
+    } catch ( IOException | ClassNotFoundException e ) {
       throw new IllegalArgumentException( e );
-    } catch ( ClassNotFoundException e ) {
-      throw new IllegalArgumentException( e );
-    } finally {
-      try {
-        bais.close();
-        if ( oi != null) {
-          oi.close();
-        }
-      } catch ( IOException e ) {
-        throw new IllegalArgumentException( e );
-      }
     }
-    return context;
   }
 
   @Override

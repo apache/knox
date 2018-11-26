@@ -23,6 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,7 +52,9 @@ class AmbariDynamicServiceURLCreator implements ServiceURLCreator {
 
     AmbariDynamicServiceURLCreator(AmbariCluster cluster, File mappingConfiguration) throws IOException {
         this.cluster = cluster;
-        config = new ServiceURLPropertyConfig(new FileInputStream(mappingConfiguration));
+        try (InputStream inputStream = new FileInputStream(mappingConfiguration)) {
+          config = new ServiceURLPropertyConfig(inputStream);
+        }
     }
 
     AmbariDynamicServiceURLCreator(AmbariCluster cluster, String mappings) {

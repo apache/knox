@@ -22,7 +22,6 @@ import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
@@ -85,6 +84,7 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
@@ -92,7 +92,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -624,19 +623,11 @@ public class GatewayServer {
    * @return true if port in use else false
    */
   public static boolean isPortInUse(final int port) {
-
-    Socket socket = null;
-    try {
-      socket = new Socket("localhost", port);
+    try (Socket socket = new Socket("localhost", port)){
       return true;
-    } catch (final UnknownHostException e) {
-      return false;
     } catch (final IOException e) {
       return false;
-    } finally {
-      IOUtils.closeQuietly(socket);
     }
-
   }
 
   /**
@@ -734,8 +725,11 @@ public class GatewayServer {
           originalRoot.appendChild( importedNode );
         }
       }
-      
-      XmlUtils.writeXml( webXmlDoc, new OutputStreamWriter(new FileOutputStream(webXmlFile), StandardCharsets.UTF_8) );
+
+      try (OutputStream outputStream = new FileOutputStream(webXmlFile);
+           OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
+        XmlUtils.writeXml(webXmlDoc, outputStreamWriter);
+      }
     }
   }
 

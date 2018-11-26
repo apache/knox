@@ -116,9 +116,7 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
             Collection<File> persistedConfigs = FileUtils.listFiles(persistenceDir, new String[]{"conf"}, false);
             for (File persisted : persistedConfigs) {
                 Properties props = new Properties();
-                FileInputStream in = null;
-                try {
-                    in = new FileInputStream(persisted);
+                try (FileInputStream in = new FileInputStream(persisted)) {
                     props.load(in);
 
                     addDiscoveryConfig(props.getProperty(PROP_CLUSTER_NAME), new ServiceDiscoveryConfig() {
@@ -139,14 +137,6 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
                                                         });
                 } catch (IOException e) {
                     log.failedToLoadClusterMonitorServiceDiscoveryConfig(getType(), e);
-                } finally {
-                    if (in != null) {
-                        try {
-                            in.close();
-                        } catch (IOException e) {
-                            //
-                        }
-                    }
                 }
             }
         }
@@ -162,9 +152,7 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
             Collection<File> persistedConfigs = FileUtils.listFiles(persistenceDir, new String[]{"ver"}, false);
             for (File persisted : persistedConfigs) {
                 Properties props = new Properties();
-                FileInputStream in = null;
-                try {
-                    in = new FileInputStream(persisted);
+                try (FileInputStream in = new FileInputStream(persisted)) {
                     props.load(in);
 
                     String source = props.getProperty(PROP_CLUSTER_SOURCE);
@@ -179,17 +167,8 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
 
                     // Map the config versions to the cluster name
                     addClusterConfigVersions(source, clusterName, configVersions);
-
                 } catch (IOException e) {
                     log.failedToLoadClusterMonitorConfigVersions(getType(), e);
-                } finally {
-                    if (in != null) {
-                        try {
-                            in.close();
-                        } catch (IOException e) {
-                            //
-                        }
-                    }
                 }
             }
         }
@@ -231,21 +210,11 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
     }
 
     private void persist(Properties props, File dest) {
-        FileOutputStream out = null;
-        try {
-            out = new FileOutputStream(dest);
+        try (FileOutputStream out = new FileOutputStream(dest)) {
             props.store(out, PERSISTED_FILE_COMMENT);
             out.flush();
         } catch (Exception e) {
             log.failedToPersistClusterMonitorData(getType(), dest.getAbsolutePath(), e);
-        } finally {
-            if (out != null) {
-                try {
-                    out.close();
-                } catch (IOException e) {
-                    //
-                }
-            }
         }
     }
 
