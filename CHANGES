@@ -170,6 +170,7 @@ Release Notes - Apache Knox - Version 1.2.0
     * [KNOX-1542] - Upgrade to EasyMock 4.0.1
     * [KNOX-1543] - Update documentation for KNOX-1531
     * [KNOX-1622] - Enable the secure processing feature on all XPathFactory instances
+    * [KNOX-1637] - ant verify-stage should check knoxshell artifacts
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 1.1.0
