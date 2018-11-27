@@ -52,6 +52,7 @@ Release Notes - Apache Knox - Version 1.2.0
     * [KNOX-1553] - Update documentation to reference org.apache.knox instead of org.apache.hadoop.gateway
     * [KNOX-1554] - Allow Knox site to be built with JDK 11
     * [KNOX-1555] - Update DOAP file
+    * [KNOX-1630] - Generate sha256 and sha512 checksums instead of md5 and sha1
 
 ** Bug
     * [KNOX-720] - Knox DSL - Ensure that HTTP client is closed on shutdown
