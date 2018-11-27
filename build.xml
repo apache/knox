@@ -221,9 +221,9 @@ Release build file for the Apache Knox Gateway
             <arg value="--verify"/>
             <arg value="${gateway-artifact}-${gateway-version}.zip.asc"/>
         </exec>
-        <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}.zip" algorithm="SHA-256" verifyproperty="zip.sha256.ok"/>
+        <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}.zip" algorithm="SHA-256" fileext=".sha256" verifyproperty="zip.sha256.ok"/>
         <fail message="SHA-256 Invalid"><condition><isfalse value="${zip.sha256.ok}"/></condition></fail>
-        <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}.zip" algorithm="SHA-512" verifyproperty="zip.sha512.ok"/>
+        <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}.zip" algorithm="SHA-512" fileext=".sha512" verifyproperty="zip.sha512.ok"/>
         <fail message="SHA-512 Invalid"><condition><isfalse value="${zip.sha512.ok}"/></condition></fail>
 
         <echo>Verify ${gateway-artifact}-${gateway-version}-src.zip</echo>
@@ -231,9 +231,9 @@ Release build file for the Apache Knox Gateway
             <arg value="--verify"/>
             <arg value="${gateway-artifact}-${gateway-version}-src.zip.asc"/>
         </exec>
-        <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}-src.zip" algorithm="SHA-256" verifyproperty="src.sha256.ok"/>
+        <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}-src.zip" algorithm="SHA-256" fileext=".sha256" verifyproperty="src.sha256.ok"/>
         <fail message="SHA-256 Invalid"><condition><isfalse value="${src.sha256.ok}"/></condition></fail>
-        <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}-src.zip" algorithm="SHA-512" verifyproperty="src.sha512.ok"/>
+        <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}-src.zip" algorithm="SHA-512" fileext=".sha512" verifyproperty="src.sha512.ok"/>
         <fail message="SHA-512 Invalid"><condition><isfalse value="${src.sha512.ok}"/></condition></fail>
 
         <echo>Verify ${gateway-artifact}-${gateway-version}.tar.gz</echo>
@@ -241,10 +241,30 @@ Release build file for the Apache Knox Gateway
             <arg value="--verify"/>
             <arg value="${gateway-artifact}-${gateway-version}.tar.gz.asc"/>
         </exec>
-        <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}.tar.gz" algorithm="SHA-256" verifyproperty="tar.sha256.ok"/>
+        <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}.tar.gz" algorithm="SHA-256" fileext=".sha256" verifyproperty="tar.sha256.ok"/>
         <fail message="SHA-256 Invalid"><condition><isfalse value="${tar.sha256.ok}"/></condition></fail>
-        <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}.tar.gz" algorithm="SHA-512" verifyproperty="tar.sha512.ok"/>
+        <checksum file="${install.dir}/${gateway-artifact}-${gateway-version}.tar.gz" algorithm="SHA-512" fileext=".sha512" verifyproperty="tar.sha512.ok"/>
         <fail message="SHA-512 Invalid"><condition><isfalse value="${tar.sha512.ok}"/></condition></fail>
+
+        <echo>Verify ${knoxshell-artifact}-${gateway-version}.zip</echo>
+        <exec executable="gpg" dir="${install.dir}" failonerror="true">
+            <arg value="--verify"/>
+            <arg value="${knoxshell-artifact}-${gateway-version}.zip.asc"/>
+        </exec>
+        <checksum file="${install.dir}/${knoxshell-artifact}-${gateway-version}.zip" algorithm="SHA-256" fileext=".sha256" verifyproperty="knoxshell.zip.sha256.ok"/>
+        <fail message="SHA-256 Invalid"><condition><isfalse value="${knoxshell.zip.sha256.ok}"/></condition></fail>
+        <checksum file="${install.dir}/${knoxshell-artifact}-${gateway-version}.zip" algorithm="SHA-512" fileext=".sha512" verifyproperty="knoxshell.zip.sha512.ok"/>
+        <fail message="SHA-512 Invalid"><condition><isfalse value="${knoxshell.zip.sha512.ok}"/></condition></fail>
+
+        <echo>Verify ${knoxshell-artifact}-${gateway-version}.tar.gz</echo>
+        <exec executable="gpg" dir="${install.dir}" failonerror="true">
+            <arg value="--verify"/>
+            <arg value="${knoxshell-artifact}-${gateway-version}.tar.gz.asc"/>
+        </exec>
+        <checksum file="${install.dir}/${knoxshell-artifact}-${gateway-version}.tar.gz" algorithm="SHA-256" fileext=".sha256" verifyproperty="knoxshell.tar.sha256.ok"/>
+        <fail message="SHA-256 Invalid"><condition><isfalse value="${knoxshell.tar.sha256.ok}"/></condition></fail>
+        <checksum file="${install.dir}/${knoxshell-artifact}-${gateway-version}.tar.gz" algorithm="SHA-512" fileext=".sha512" verifyproperty="knoxshell.tar.sha512.ok"/>
+        <fail message="SHA-512 Invalid"><condition><isfalse value="${knoxshell.tar.sha512.ok}"/></condition></fail>
     </target>
 
     <target name="sign-candidate" depends="_init,_passphrase" description="Sign a downloaded created release.">
