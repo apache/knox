@@ -2,17 +2,17 @@
 Release Notes - Apache Knox - Version 1.2.0
 ------------------------------------------------------------------------------
 ** New Feature
-    * [KNOX-1343] - Support Ganglia for Knox
+    * [KNOX-1343] - Support Ganglia for Knox (Mert Hocanin via Kevin Risden)
     * [KNOX-1421] - Enable OWASP Dependency Check
     * [KNOX-1549] - KnoxSSO should support signing keys per topology
 
 ** Improvement
     * [KNOX-16] - Implement IdentityAsserterHttpServletRequestWrapper.ServletInputStreamWrapper methods for performance
-    * [KNOX-1011] - Add ldap.port system property to configure LDAP demo server port
+    * [KNOX-1011] - Add ldap.port system property to configure LDAP demo server port (Attila Csoma via Kevin Risden)
     * [KNOX-1112] - KnoxShell support for managing simple descriptors
     * [KNOX-1291] - ssl.include|exclude.ciphers & ssl.exclude.protocols support comma or pipe separated lists
     * [KNOX-1359] - Disable kerberos debugging by default
-    * [KNOX-1401] - Add HAL+JSON To the List of JSON Content Types
+    * [KNOX-1401] - Add HAL+JSON To the List of JSON Content Types (William Watson via Sandeep More)
     * [KNOX-1411] - WEBHBASE service discovery references incorrect property for the port
     * [KNOX-1440] - WEBHDFS: retry should not be attempted for datanode write failures
     * [KNOX-1441] - Enable spotbugs for static build checking
@@ -58,7 +58,7 @@ Release Notes - Apache Knox - Version 1.2.0
     * [KNOX-720] - Knox DSL - Ensure that HTTP client is closed on shutdown
     * [KNOX-1093] - KNOX Not Handling safemode state of one of the NameNode In HA state
     * [KNOX-1098] - Livy proxyUser should be added when not present
-    * [KNOX-1152] - Guard Against Missing Subject in Identity Assertion
+    * [KNOX-1152] - Guard Against Missing Subject in Identity Assertion (Rick Kellogg via Kevin Risden)
     * [KNOX-1165] - Another unnamed CacheManager already exists in the same VM
     * [KNOX-1207] - YARN V1 UI and MapReduce Job History UI - Rewrite rule bugs
     * [KNOX-1218] - LDAP Group Lookup appears twice in User Guide TOC
@@ -71,13 +71,13 @@ Release Notes - Apache Knox - Version 1.2.0
     * [KNOX-1415] - Upgrade Jetty to 9.2.25
     * [KNOX-1416] - Upgrade Spring Framework to 4.3.17
     * [KNOX-1417] - Upgrade Bouncy Castle Dependency from Pac4J
-    * [KNOX-1420] - Add app.css path for Zeppelin's style sheet
+    * [KNOX-1420] - Add app.css path for Zeppelin's style sheet (Prabhjyot Singh via Sandeep More)
     * [KNOX-1422] - Whitelisting not working as expected for knoxauth redirects
-    * [KNOX-1424] - knox renaming "app" to "/gateway/ui_ns1/zeppelin/app"
+    * [KNOX-1424] - knox renaming "app" to "/gateway/ui_ns1/zeppelin/app" (Sameer Shaikh via Sandeep More)
     * [KNOX-1429] - HadoopAuthFilter avoid logging sensitive values
-    * [KNOX-1430] - Potential output stream handle leak when copyLarge files in streamResponse
+    * [KNOX-1430] - Potential output stream handle leak when copyLarge files in streamResponse (Guang Yang via lmccay)
     * [KNOX-1433] - RMHaBaseDispatcher Class Cleanup - SafeModeException
-    * [KNOX-1434] - Visiting Knox Admin UI forces subsequent requests to other services redirect to HTTPS
+    * [KNOX-1434] - Visiting Knox Admin UI forces subsequent requests to other services redirect to HTTPS (Vipin Rathor via Sandeep More)
     * [KNOX-1436] - AbstractHdfsHaDispatch failoverRequest - Improve Failover Logging
     * [KNOX-1445] - Ensure that gateway-adapter module classes have @Deprecated annotation
     * [KNOX-1459] - Remove testng assertions
@@ -88,11 +88,11 @@ Release Notes - Apache Knox - Version 1.2.0
     * [KNOX-1526] - Upgrade Jetty to 9.2.26
     * [KNOX-1529] - gateway-shell-release doesn't include shaded jar
     * [KNOX-1541] - Rename Hadoop class in KnoxShell to KnoxSession
-    * [KNOX-1556] -     * [Rewrite Rule] Apache Ambari Favicon and link to NOTICE.txt does not work when using Knox Gateway
+    * [KNOX-1556] - [Rewrite Rule] Apache Ambari Favicon and link to NOTICE.txt does not work when using Knox Gateway
     * [KNOX-1557] - Knox service cannot be added to proxied Ambari (through Knox) because master password field is readonly
     * [KNOX-1558] - KnoxToken service returns wrong content type and content length values
-    * [KNOX-1577] - Knox automatically derived dispatch whitelist doesn't seem to actually match the knox domain
-    * [KNOX-1596] - YARNUIV2 Remove policies from service.xml
+    * [KNOX-1577] - Knox automatically derived dispatch whitelist doesn't seem to actually match the knox domain (Phil Zampino and Vipin Rathor via Kevin Risden)
+    * [KNOX-1596] - YARNUIV2 Remove policies from service.xml (Sunil Govindan via Kevin Risden)
     * [KNOX-1602] - JsonFilterReader should handle strings, numbers, booleans, and null at root
     * [KNOX-1612] - GatewayAdminTopologyFuncTest#testPutTopology ClassNotFoundException
     * [KNOX-1616] - Fix portmapping with Jetty 9.4
@@ -158,7 +158,7 @@ Release Notes - Apache Knox - Version 1.2.0
     * [KNOX-1435] - how to configure rewrite.xml and service.xml?
 
 ** Task
-    * [KNOX-542] - Add replayBufferSize defaults to the sandbox topology
+    * [KNOX-542] - Add replayBufferSize defaults to the sandbox topology (Matthew Sharp via Kevin Risden)
     * [KNOX-543] - Add documentation and configuration examples to the user guide for replaybuffersize
     * [KNOX-1402] - Upgrade to Apache parent pom version 20
     * [KNOX-1407] - Please delete old releases from mirroring system
