@@ -96,6 +96,7 @@ Release Notes - Apache Knox - Version 1.2.0
     * [KNOX-1602] - JsonFilterReader should handle strings, numbers, booleans, and null at root
     * [KNOX-1612] - GatewayAdminTopologyFuncTest#testPutTopology ClassNotFoundException
     * [KNOX-1616] - Fix portmapping with Jetty 9.4
+    * [KNOX-1639] - java.lang.IllegalStateException: No org.apache.tomcat.InstanceManager set in ServletContext
 
 ** Sub-task
     * [KNOX-1449] - Ensure all pom.xml files have same header
