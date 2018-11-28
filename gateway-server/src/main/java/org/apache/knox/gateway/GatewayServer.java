@@ -93,6 +93,8 @@ import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -696,7 +698,8 @@ public class GatewayServer {
     context.setTempDirectory( FileUtils.getFile( warFile, "META-INF", "temp" ) );
     context.setErrorHandler( createErrorHandler() );
     context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false");
-    context.setClassLoader(this.getClass().getClassLoader());
+    ClassLoader jspClassLoader = new URLClassLoader(new URL[0], this.getClass().getClassLoader());
+    context.setClassLoader(jspClassLoader);
     return context;
   }
 
