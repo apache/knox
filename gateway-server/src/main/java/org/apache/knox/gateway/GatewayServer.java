@@ -78,6 +78,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import javax.servlet.SessionCookieConfig;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.io.File;
@@ -118,6 +119,8 @@ public class GatewayServer {
   private static final GatewayMessages log = MessagesFactory.get(GatewayMessages.class);
   private static final Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
       AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
+
+  static final String KNOXSESSIONCOOKIENAME = "KNOXSESSIONID";
 
   private static GatewayServer server;
   private static GatewayServices services;
@@ -687,6 +690,8 @@ public class GatewayServer {
     String contextPath;
     contextPath = "/" + Urls.trimLeadingAndTrailingSlashJoin( config.getGatewayPath(), topoName, warPath );
     context.setContextPath( contextPath );
+    SessionCookieConfig sessionCookieConfig = context.getServletContext().getSessionCookieConfig();
+    sessionCookieConfig.setName(KNOXSESSIONCOOKIENAME);
     context.setWar( warFile.getAbsolutePath() );
     context.setAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE, topoName );
     context.setAttribute( "org.apache.knox.gateway.frontend.uri", getFrontendUri( context, config ) );
