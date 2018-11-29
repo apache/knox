@@ -318,7 +318,8 @@ public class GatewayBasicFuncTest {
         .statusCode( HttpStatus.SC_OK )
         .contentType( "application/json" )
         .body( "boolean", is( true ) )
-        .when().put( driver.getUrl( "WEBHDFS" ) + "/v1" + root + "/dir" ).getDetailedCookie( "JSESSIONID" );
+        .when().put( driver.getUrl( "WEBHDFS" ) + "/v1" + root + "/dir" )
+                        .getDetailedCookie( GatewayServer.KNOXSESSIONCOOKIENAME);
     assertThat( cookie.isSecured(), is( true ) );
     assertThat( cookie.isHttpOnly(), is( true ) );
     assertThat( cookie.getPath(), is( "/gateway/cluster" ) );
