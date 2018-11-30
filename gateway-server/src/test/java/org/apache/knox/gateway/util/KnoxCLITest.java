@@ -703,7 +703,7 @@ public class KnoxCLITest {
     KnoxCLI cli = new KnoxCLI();
     cli.setConf( config );
     String[] gwCreateArgs = {"create-cert", "--hostname", "hostname1", "--master", "master"};
-    int rc = 0;
+    int rc;
     rc = cli.run(gwCreateArgs);
     assertEquals(0, rc);
     assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("gateway-identity has been successfully " +
@@ -711,7 +711,6 @@ public class KnoxCLITest {
 
     outContent.reset();
     String[] gwCreateArgs2 = {"export-cert", "--type", "PEM"};
-    rc = 0;
     rc = cli.run(gwCreateArgs2);
     assertEquals(0, rc);
     assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("Certificate gateway-identity has been successfully exported to"));
@@ -720,33 +719,13 @@ public class KnoxCLITest {
     // case insensitive
     outContent.reset();
     String[] gwCreateArgs2_6 = {"export-cert", "--type", "pem"};
-    rc = 0;
     rc = cli.run(gwCreateArgs2_6);
     assertEquals(0, rc);
     assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("Certificate gateway-identity has been successfully exported to"));
     assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("gateway-identity.pem"));
 
-    // pkcs12
-    outContent.reset();
-    String[] gwCreateArgs2_7 = {"export-cert", "--type", "pkcs12"};
-    rc = 0;
-    rc = cli.run(gwCreateArgs2_7);
-    assertEquals(0, rc);
-    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("Certificate gateway-identity has been successfully exported to"));
-    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("gateway-identity.pkcs12"));
-
-    // jceks
-    outContent.reset();
-    String[] gwCreateArgs2_8 = {"export-cert", "--type", "jceks"};
-    rc = 0;
-    rc = cli.run(gwCreateArgs2_8);
-    assertEquals(0, rc);
-    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("Certificate gateway-identity has been successfully exported to"));
-    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("gateway-identity.jceks"));
-
     outContent.reset();
     String[] gwCreateArgs2_5 = {"export-cert"};
-    rc = 0;
     rc = cli.run(gwCreateArgs2_5);
     assertEquals(0, rc);
     assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("Certificate gateway-identity has been successfully exported to"));
@@ -754,15 +733,29 @@ public class KnoxCLITest {
 
     outContent.reset();
     String[] gwCreateArgs3 = {"export-cert", "--type", "JKS"};
-    rc = 0;
     rc = cli.run(gwCreateArgs3);
     assertEquals(0, rc);
     assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("Certificate gateway-identity has been successfully exported to"));
     assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("gateway-client-trust.jks"));
 
+    // pkcs12
+    outContent.reset();
+    String[] gwCreateArgs2_7 = {"export-cert", "--type", "pkcs12"};
+    rc = cli.run(gwCreateArgs2_7);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("Certificate gateway-identity has been successfully exported to"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("gateway-client-trust.pkcs12"));
+
+    // jceks
+    outContent.reset();
+    String[] gwCreateArgs2_8 = {"export-cert", "--type", "jceks"};
+    rc = cli.run(gwCreateArgs2_8);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("Certificate gateway-identity has been successfully exported to"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("gateway-client-trust.jceks"));
+
     outContent.reset();
     String[] gwCreateArgs4 = {"export-cert", "--type", "invalid"};
-    rc = 0;
     rc = cli.run(gwCreateArgs4);
     assertEquals(0, rc);
     assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("Invalid type for export file provided."));
