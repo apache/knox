@@ -39,9 +39,9 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.knox.gateway.i18n.GatewaySpiMessages;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 public class X509CertificateUtil {
 
@@ -283,9 +283,9 @@ public class X509CertificateUtil {
     }
   }
 
-  public static void writeCertificateToJKS(Certificate cert, final File file)
+  private static void writeCertificateToKeyStore(Certificate cert, final File file, String type)
       throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
-    KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+    KeyStore ks = KeyStore.getInstance(type);
 
     char[] password = "changeit".toCharArray();
     ks.load(null, password);
@@ -295,5 +295,21 @@ public class X509CertificateUtil {
       ks.store(fos, password);
     }
   }
+
+  public static void writeCertificateToJks(Certificate cert, final File file)
+      throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
+    writeCertificateToKeyStore(cert, file, "jks");
+  }
+
+  public static void writeCertificateToJceks(Certificate cert, final File file)
+      throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
+    writeCertificateToKeyStore(cert, file, "jceks");
+  }
+
+  public static void writeCertificateToPkcs12(Certificate cert, final File file)
+      throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
+    writeCertificateToKeyStore(cert, file, "pkcs12");
+  }
+
 }
 

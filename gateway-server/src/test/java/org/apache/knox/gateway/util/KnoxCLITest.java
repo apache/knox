@@ -717,6 +717,33 @@ public class KnoxCLITest {
     assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("Certificate gateway-identity has been successfully exported to"));
     assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("gateway-identity.pem"));
 
+    // case insensitive
+    outContent.reset();
+    String[] gwCreateArgs2_6 = {"export-cert", "--type", "pem"};
+    rc = 0;
+    rc = cli.run(gwCreateArgs2_6);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("Certificate gateway-identity has been successfully exported to"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("gateway-identity.pem"));
+
+    // pkcs12
+    outContent.reset();
+    String[] gwCreateArgs2_7 = {"export-cert", "--type", "pkcs12"};
+    rc = 0;
+    rc = cli.run(gwCreateArgs2_7);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("Certificate gateway-identity has been successfully exported to"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("gateway-identity.pkcs12"));
+
+    // jceks
+    outContent.reset();
+    String[] gwCreateArgs2_8 = {"export-cert", "--type", "jceks"};
+    rc = 0;
+    rc = cli.run(gwCreateArgs2_8);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("Certificate gateway-identity has been successfully exported to"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("gateway-identity.jceks"));
+
     outContent.reset();
     String[] gwCreateArgs2_5 = {"export-cert"};
     rc = 0;

@@ -181,29 +181,10 @@ public class KnoxCLI extends Configured implements Tool {
   }
 
   /**
-   * Parse the command line arguments and initialize the data
-   * <pre>
-   * % knoxcli version
-   * % knoxcli list-topologies
-   * % knoxcli master-create keyName [--size size] [--master mastersecret] [--generate]
-   * % knoxcli create-alias alias [--cluster clustername] [--generate] [--value v]
-   * % knoxcli list-alias [--cluster clustername]
-   * % knoxcli delete=alias alias [--cluster clustername]
-   * % knoxcli create-cert alias [--hostname h]
-   * % knoxcli redeploy [--cluster clustername]
-   * % knoxcli validate-topology [--cluster clustername] | [--path <path/to/file>]
-   * % knoxcli user-auth-test [--cluster clustername] [--u username] [--p password]
-   * % knoxcli system-user-auth-test [--cluster clustername] [--d]
-   * % knoxcli service-test [--u user] [--p password] [--cluster clustername] [--hostname name] [--port port]
-   * % knoxcli list-registry-clients
-   * % knoxcli get-registry-acl entryName --registry-client name
-   * % knoxcli list-provider-configs --registry-client
-   * % knoxcli upload-provider-config filePath --registry-client name [--entry-name entryName]
-   * % knoxcli list-descriptors --registry-client
-   * % knoxcli upload-descriptor filePath --registry-client name [--entry-name entryName]
-   * % knoxcli delete-provider-config providerConfig --registry-client name
-   * % knoxcli delete-descriptor descriptor --registry-client name
-   * </pre>
+   * Parse the command line arguments and initialize the data.
+   *
+   * See the usage information for the commands itself for information on which parameters they take.
+   *
    * @param args command line arguments
    * @return return exit code
    * @throws IOException exception on starting KnoxCLI
@@ -581,22 +562,21 @@ public class KnoxCLI extends Configured implements Tool {
    }
  }
 
- public class CertExportCommand extends Command {
+  public class CertExportCommand extends Command {
 
-   public static final String USAGE = "export-cert";
-   public static final String DESC = "The export-cert command exports the public certificate\n" +
-                                     "from the a gateway.jks keystore with the alias of gateway-identity.";
-   private static final String GATEWAY_CREDENTIAL_STORE_NAME = "__gateway";
-   private static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase";
-
-    public CertExportCommand() {
-    }
+    public static final String USAGE = "export-cert [--type PEM|JKS|JCEKS|PKCS12]";
+    public static final String DESC = "The export-cert command exports the public certificate\n" +
+                                      "from the a gateway.jks keystore with the alias of gateway-identity.\n" +
+                                      "It will be exported to `{GATEWAY_HOME}/data/security/keystores/` with a name of `gateway-client-trust.<type>`" +
+                                      "Using the --type option you can specify which keystore type you need (default: PEM)\n" +
+                                      "NOTE: The password for the JKS, JCEKS and PKCS12 types is `changeit`.\n" +
+                                      "It can be changed using: `keytool -storepasswd -storetype <type> -keystore gateway-client-trust.<type>`";
 
     private GatewayConfig getGatewayConfig() {
       GatewayConfig result;
       Configuration conf = getConf();
-      if( conf != null && conf instanceof GatewayConfig ) {
-        result = (GatewayConfig)conf;
+      if (conf instanceof GatewayConfig) {
+        result = (GatewayConfig) conf;
       } else {
         result = new GatewayConfigImpl();
       }
@@ -607,37 +587,36 @@ public class KnoxCLI extends Configured implements Tool {
     public void execute() throws Exception {
       KeystoreService ks = getKeystoreService();
 
-      AliasService as = getAliasService();
-
       if (ks != null) {
         try {
           if (!ks.isKeystoreForGatewayAvailable()) {
             out.println("No keystore has been created for the gateway. Please use the create-cert command or populate with a CA signed cert of your own.");
           }
-          char[] passphrase = as.getPasswordFromAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
-          if (passphrase == null) {
-            MasterService ms = services.getService("MasterService");
-            passphrase = ms.getMasterSecret();
-          }
+
           Certificate cert = ks.getKeystoreForGateway().getCertificate("gateway-identity");
           String keyStoreDir = getGatewayConfig().getGatewaySecurityDir() + File.separator + "keystores" + File.separator;
           File ksd = new File(keyStoreDir);
           if (!ksd.exists()) {
-            if( !ksd.mkdirs() ) {
+            if (!ksd.mkdirs()) {
               // certainly should not happen if the keystore is known to be available
               throw new ServiceLifecycleException("Unable to create keystores directory" + ksd.getAbsolutePath());
             }
           }
-          if ("PEM".equals(type) || type == null) {
+
+          if ("PEM".equalsIgnoreCase(type) || type == null) {
             X509CertificateUtil.writeCertificateToFile(cert, new File(keyStoreDir + "gateway-identity.pem"));
             out.println("Certificate gateway-identity has been successfully exported to: " + keyStoreDir + "gateway-identity.pem");
-          }
-          else if ("JKS".equals(type)) {
-            X509CertificateUtil.writeCertificateToJKS(cert, new File(keyStoreDir + "gateway-client-trust.jks"));
+          } else if ("JKS".equalsIgnoreCase(type)) {
+            X509CertificateUtil.writeCertificateToJks(cert, new File(keyStoreDir + "gateway-client-trust.jks"));
             out.println("Certificate gateway-identity has been successfully exported to: " + keyStoreDir + "gateway-client-trust.jks");
-          }
-          else {
-            out.println("Invalid type for export file provided. Export has not been done. Please use: [PEM|JKS] default value is PEM.");
+          } else if ("JCEKS".equalsIgnoreCase(type)) {
+            X509CertificateUtil.writeCertificateToJceks(cert, new File(keyStoreDir + "gateway-client-trust.jceks"));
+            out.println("Certificate gateway-identity has been successfully exported to: " + keyStoreDir + "gateway-client-trust.jceks");
+          } else if ("PKCS12".equalsIgnoreCase(type)) {
+            X509CertificateUtil.writeCertificateToPkcs12(cert, new File(keyStoreDir + "gateway-client-trust.pkcs12"));
+            out.println("Certificate gateway-identity has been successfully exported to: " + keyStoreDir + "gateway-client-trust.pkcs12");
+          } else {
+            out.println("Invalid type for export file provided. Export has not been done. Please use: [PEM|JKS|JCEKS|PKCS12] default value is PEM.");
           }
         } catch (KeystoreServiceException e) {
           throw new ServiceLifecycleException("Keystore was not loaded properly - the provided (or persisted) master secret may not match the password for the keystore.", e);
