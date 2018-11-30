@@ -18,14 +18,14 @@
 package org.apache.knox.gateway.util.urltemplate;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class MockParams implements Params {
 
-  private Map<String,List<String>> map = new HashMap<>();
+  private Map<String,List<String>> map = new LinkedHashMap<>();
 
   @Override
   public Set<String> getNames() {

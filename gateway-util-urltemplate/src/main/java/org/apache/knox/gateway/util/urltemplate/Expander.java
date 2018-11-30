@@ -24,7 +24,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -51,7 +51,7 @@ public class Expander {
     if( params == null ) {
       params = EMPTY_PARAMS;
     }
-    Set<String> names = new HashSet<>( params.getNames() );
+    Set<String> names = new LinkedHashSet<>( params.getNames() );
     expandScheme( template, names, params, evaluator, builder );
     expandAuthority( template, names, params, evaluator, builder );
     expandPath( template, names, params, evaluator, builder );

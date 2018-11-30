@@ -250,7 +250,7 @@ public class RewriterTest {
     assertThat( actualOutput, equalTo( expectOutput ) );
 
     actualInput = new URI( "/webhdfs/data/v1/test?user.name=hdfs&op=CREATE&overwrite=false&host=vm.home&port=50075" );
-    expectOutput = new URI( "http://vm.home:50075/webhdfs/v1/test?op=CREATE&user.name=hdfs&overwrite=false" );
+    expectOutput = new URI( "http://vm.home:50075/webhdfs/v1/test?user.name=hdfs&op=CREATE&overwrite=false" );
     sourcePattern = Parser.parseTemplate( "/webhdfs/data/v1/{path=**}?{host}&{port}&{**}" );
     targetPattern = Parser.parseTemplate( "http://{host}:{port}/webhdfs/v1/{path=**}?{**}" );
     actualOutput = Rewriter.rewrite( actualInput, sourcePattern, targetPattern, new TestResolver( config, request ), null );

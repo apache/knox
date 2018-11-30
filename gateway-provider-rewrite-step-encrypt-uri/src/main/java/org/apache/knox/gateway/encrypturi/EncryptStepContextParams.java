@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway.encrypturi;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -25,7 +25,7 @@ import java.util.Set;
 import org.apache.knox.gateway.util.urltemplate.Params;
 
 public class EncryptStepContextParams implements Params {
-  Map<String, List<String>> params = new HashMap<>();
+  Map<String, List<String>> params = new LinkedHashMap<>();
 
   public EncryptStepContextParams() {
   }

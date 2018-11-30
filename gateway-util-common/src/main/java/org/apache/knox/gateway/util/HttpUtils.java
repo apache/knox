@@ -22,7 +22,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -31,7 +31,7 @@ public class HttpUtils {
 
   public static Map<String, List<String>> splitQuery(String queryString)
       throws UnsupportedEncodingException {
-    final Map<String, List<String>> queryPairs = new HashMap<>();
+    final Map<String, List<String>> queryPairs = new LinkedHashMap<>();
     if (queryString == null || queryString.trim().isEmpty()) {
       return queryPairs;
     }
@@ -44,13 +44,13 @@ public class HttpUtils {
       }
       final String value = idx > 0 && pair.length() > idx + 1
           ? URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8.name()) : "";
-      queryPairs.get(key).add(value);
-    }
+        queryPairs.get(key).add(value);
+      }
     return queryPairs;
   }
 
   public static Map<String,String[]> parseQueryString( String queryString ) {
-    Map<String,String[]> map = new HashMap<>();
+    Map<String,String[]> map = new LinkedHashMap<>();
     if( queryString != null && !queryString.isEmpty() ) {
       StringTokenizer parser = new StringTokenizer( queryString, "&?;=", true );
       String name = null;
@@ -95,7 +95,7 @@ public class HttpUtils {
     return map;
   }
 
-  private static String urlDecodeUtf8( String s ) {
+  private static String urlDecodeUtf8(String s ) {
     if( s != null ) {
       try {
         s = URLDecoder.decode( s, StandardCharsets.UTF_8.name() );
@@ -118,5 +118,4 @@ public class HttpUtils {
     }
     map.put( name, values );
   }
-
 }

@@ -19,6 +19,8 @@ package org.apache.knox.gateway.util;
 
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -27,10 +29,8 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
 public class HttpUtilsTest {
-
   @Test
   public void testParseQueryString_BugKnox599() throws Exception {
-
     Map<String,List<String>> map;
 
     map = HttpUtils.splitQuery( null );
@@ -52,6 +52,7 @@ public class HttpUtilsTest {
     assertThat( map, notNullValue() );
     assertThat( map.size(), is( 2 ) );
     assertThat( map.containsKey( "test-name-one" ), is( true ) );
+    assertThat( map.keySet(), is(new LinkedHashSet<>(Arrays.asList("test-name-one", "test-name-two"))));
     assertThat( map.get( "test-name-one" ).size(), is( 1 ) );
     assertThat( map.get( "test-name-one" ).get(0), is( "test-value-one" ) );
     assertThat( map.containsKey( "test-name-two" ), is( true ) );
@@ -170,6 +171,7 @@ public class HttpUtilsTest {
     map = HttpUtils.splitQuery( "&=" );
     assertThat( map, notNullValue() );
     assertThat( map.size(), is( 2 ) );
+    assertThat( map.keySet(), is(new LinkedHashSet<>(Arrays.asList("", "="))));
     assertThat( map.containsKey( "" ), is( true ) );
     assertThat( map.get( "" ).size(), is( 1 ) );
     assertThat( map.get( "" ).get(0), is( "" ) );
@@ -209,5 +211,4 @@ public class HttpUtilsTest {
     assertThat( map.get( "qry" ).size(), is( 1 ) );
     assertThat( map.get( "qry" ).get(0), is( "Hadoop:service=NameNode,name=NameNodeInfo" ) );
   }
-
 }

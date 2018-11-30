@@ -28,7 +28,7 @@ import org.apache.knox.gateway.util.urltemplate.Params;
 import org.apache.knox.gateway.util.urltemplate.Resolver;
 import org.apache.knox.gateway.util.urltemplate.Template;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -98,8 +98,7 @@ public class UrlRewriteContextImpl implements UrlRewriteContext {
   }
 
   private class ContextParameters implements Params {
-
-    Map<String,List<String>> map = new HashMap<>();
+    Map<String,List<String>> map = new LinkedHashMap<>();
 
     @Override
     public Set<String> getNames() {

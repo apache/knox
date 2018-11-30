@@ -370,7 +370,7 @@ public class ExpanderTest {
     params.addValue( "name", "value" );
     params.addValue( "flag", "" );
     expanded = Expander.expand( template, params, null );
-    assertThat( expanded.toString(), equalTo( "http://hortonworks.com:8888/top/mid/bot/file?flag=&name=value" ) ) ;
+    assertThat( expanded.toString(), equalTo( "http://hortonworks.com:8888/top/mid/bot/file?name=value&flag=" ) ) ;
 
     text = "{scheme}://{host}:{port}/{path=**}?{**}";
     template = Parser.parseTemplate( text );
@@ -385,7 +385,7 @@ public class ExpanderTest {
     params.addValue( "name", "value" );
     params.addValue( "flag", null );
     expanded = Expander.expand( template, params, null );
-    assertThat( expanded.toString(), equalTo( "http://hortonworks.com:8888/top/mid/bot/file?flag&name=value" ) ) ;
+    assertThat( expanded.toString(), equalTo( "http://hortonworks.com:8888/top/mid/bot/file?name=value&flag" ) ) ;
 
     text = "{scheme}://{host}:{port}/{path=**}?{name=*}&{**}";
     template = Parser.parseTemplate( text );
