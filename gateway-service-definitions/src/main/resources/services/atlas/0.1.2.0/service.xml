@@ -39,6 +39,6 @@
 
     </routes>
 
-    <dispatch classname="org.apache.knox.gateway.dispatch.DefaultDispatch" ha-classname="org.apache.knox.gateway.ha.dispatch.AtlasHaDispatch" />
+    <dispatch classname="org.apache.knox.gateway.dispatch.DefaultDispatch" ha-classname="org.apache.knox.gateway.ha.dispatch.AtlasTrustedProxyHaDispatch" />
 
 </service>

@@ -22,5 +22,5 @@
         <route path="/atlas/api/**"/>
     </routes>
 
-    <dispatch classname="org.apache.knox.gateway.dispatch.DefaultDispatch" ha-classname="org.apache.knox.gateway.ha.dispatch.AtlasApiHaDispatch"/>
+    <dispatch classname="org.apache.knox.gateway.dispatch.DefaultDispatch" ha-classname="org.apache.knox.gateway.ha.dispatch.AtlasApiTrustedProxyHaDispatch"/>
 </service>
