@@ -20,14 +20,9 @@ package org.apache.knox.gateway;
 import org.apache.knox.gateway.i18n.messages.Message;
 import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
-import org.apache.knox.gateway.i18n.messages.StackTrace;
 
 @Messages(logger="org.apache.knox.gateway")
 public interface IdentityAsserterMessages {
-
-  @Message( level = MessageLevel.WARN, text = "Skipping unencodable parameter {0}={1}, {2}: {3}" )
-  void skippingUnencodableParameter( String name, String value, String encoding, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
-
   @Message( level = MessageLevel.ERROR, text = "Required subject/identity not available.  Check authentication/federation provider for proper configuration." )
   void subjectNotAvailable();
 }
