@@ -17,12 +17,17 @@
  */
 package org.apache.knox.gateway.shell;
 
+import com.sun.security.auth.callback.TextCallbackHandler;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
+import org.apache.http.auth.AuthSchemeProvider;
 import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.config.Registry;
@@ -35,6 +40,7 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.auth.BasicScheme;
+import org.apache.http.impl.auth.SPNegoSchemeFactory;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -45,6 +51,9 @@ import org.apache.http.ssl.SSLContexts;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.security.auth.Subject;
+import javax.security.auth.login.LoginContext;
+import javax.security.auth.login.LoginException;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -53,10 +62,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
+import java.security.PrivilegedAction;
 import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.Map;
@@ -67,6 +79,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import de.thetaphi.forbiddenapis.SuppressForbidden;
 
 public class KnoxSession implements Closeable {
 
@@ -75,6 +88,10 @@ public class KnoxSession implements Closeable {
   private static final String GATEWAY_CLIENT_TRUST = "gateway-client-trust.jks";
   private static final String KNOX_CLIENT_TRUSTSTORE_FILENAME = "KNOX_CLIENT_TRUSTSTORE_FILENAME";
   private static final String KNOX_CLIENT_TRUSTSTORE_DIR = "KNOX_CLIENT_TRUSTSTORE_DIR";
+  private static final String DEFAULT_JAAS_FILE = "/jaas.conf";
+  public static final String JGSS_LOGIN_MOUDLE = "com.sun.security.jgss.initiate";
+
+  private boolean isKerberos = false;
 
   String base;
   HttpHost host;
@@ -111,6 +128,46 @@ public class KnoxSession implements Closeable {
   public static KnoxSession loginInsecure(String url, String username, String password) throws URISyntaxException {
     return new KnoxSession(ClientContext.with(username, password, url)
             .connection().secure(false).end());
+  }
+
+  /**
+   * Support kerberos authentication.
+   *
+   * @param url Gateway url
+   * @param jaasConf jaas configuration (optional- can be null)
+   * @param krb5Conf kerberos configuration (optional - can be null)
+   * @param debug enable debug messages
+   * @return
+   * @throws URISyntaxException
+   * @since 1.3.0
+   */
+  public static KnoxSession kerberosLogin(final String url,
+      final String jaasConf,
+      final String krb5Conf,
+      final boolean debug)
+      throws URISyntaxException {
+
+    return new KnoxSession(ClientContext.with(url)
+        .kerberos()
+        .enable(true)
+        .jaasConf(jaasConf)
+        .krb5Conf(krb5Conf)
+        .debug(debug)
+        .end());
+  }
+
+  /**
+   * Support kerberos authentication.
+   * This method assumed kinit has already been called
+   * and the token is persisted on disk.
+   * @param url
+   * @return
+   * @throws URISyntaxException
+   * @since 1.3.0
+   */
+  public static KnoxSession kerberosLogin(final String url)
+      throws URISyntaxException {
+    return kerberosLogin(url, "", "", false);
   }
 
   protected KnoxSession() throws KnoxShellException, URISyntaxException {
@@ -173,24 +230,74 @@ public class KnoxSession implements Closeable {
     // Auth
     URI uri = URI.create(clientContext.url());
     host = new HttpHost(uri.getHost(), uri.getPort(), uri.getScheme());
-    
-    CredentialsProvider credentialsProvider = null; 
-    if (clientContext.username() != null && clientContext.password() != null) {
-      credentialsProvider = new BasicCredentialsProvider();
-      credentialsProvider.setCredentials(
-              new AuthScope(host.getHostName(), host.getPort()),
-              new UsernamePasswordCredentials(clientContext.username(), clientContext.password()));
-  
-      AuthCache authCache = new BasicAuthCache();
-      BasicScheme authScheme = new BasicScheme();
-      authCache.put(host, authScheme);
-      context = new BasicHttpContext();
-      context.setAttribute(org.apache.http.client.protocol.HttpClientContext.AUTH_CACHE, authCache);
+
+    /* kerberos auth */
+    if (clientContext.kerberos().enable()) {
+      isKerberos = true;
+      /* set up system properties */
+      if (!StringUtils.isBlank(clientContext.kerberos().krb5Conf())) {
+        System.setProperty("java.security.krb5.conf",
+            clientContext.kerberos().krb5Conf());
+      }
+
+      if (!StringUtils.isBlank(clientContext.kerberos().jaasConf())) {
+        System.setProperty("java.security.auth.login.config",
+            clientContext.kerberos().jaasConf());
+      } else {
+        final URL url = getClass().getResource(DEFAULT_JAAS_FILE);
+        System.setProperty("java.security.auth.login.config",
+            url.toExternalForm());
+      }
+
+      if (clientContext.kerberos().debug()) {
+        System.setProperty("sun.security.krb5.debug", "true");
+        System.setProperty("sun.security.jgss.debug", "true");
+      }
+
+      System.setProperty("javax.security.auth.useSubjectCredsOnly", "false");
+
+      final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+
+      credentialsProvider.setCredentials(AuthScope.ANY, new Credentials() {
+        @Override
+        public Principal getUserPrincipal() {
+          return null;
+        }
+
+        @Override
+        public String getPassword() {
+          return null;
+        }
+      });
+
+      final Registry<AuthSchemeProvider> authSchemeRegistry = RegistryBuilder.<AuthSchemeProvider>create()
+          .register(AuthSchemes.SPNEGO, new SPNegoSchemeFactory(true)).build();
+
+      return HttpClients.custom()
+          .setConnectionManager(connectionManager)
+          .setDefaultAuthSchemeRegistry(authSchemeRegistry)
+          .setDefaultCredentialsProvider(credentialsProvider)
+          .build();
+
+    } else {
+      CredentialsProvider credentialsProvider = null;
+      if (clientContext.username() != null && clientContext.password() != null) {
+        credentialsProvider = new BasicCredentialsProvider();
+        credentialsProvider.setCredentials(
+            new AuthScope(host.getHostName(), host.getPort()),
+            new UsernamePasswordCredentials(clientContext.username(), clientContext.password()));
+
+        AuthCache authCache = new BasicAuthCache();
+        BasicScheme authScheme = new BasicScheme();
+        authCache.put(host, authScheme);
+        context = new BasicHttpContext();
+        context.setAttribute(org.apache.http.client.protocol.HttpClientContext.AUTH_CACHE, authCache);
+      }
+      return HttpClients.custom()
+          .setConnectionManager(connectionManager)
+          .setDefaultCredentialsProvider(credentialsProvider)
+          .build();
     }
-    return HttpClients.custom()
-        .setConnectionManager(connectionManager)
-        .setDefaultCredentialsProvider(credentialsProvider)
-        .build();
 
   }
 
@@ -276,13 +383,42 @@ public class KnoxSession implements Closeable {
     return base;
   }
 
+  @SuppressForbidden
   public CloseableHttpResponse executeNow(HttpRequest request ) throws IOException {
-    CloseableHttpResponse response = client.execute( host, request, context );
-    if( response.getStatusLine().getStatusCode() < 400 ) {
-      return response;
+    /* check for kerberos */
+    if (isKerberos) {
+      LoginContext lc;
+      try {
+        lc = new LoginContext(JGSS_LOGIN_MOUDLE, new TextCallbackHandler());
+        lc.login();
+        return Subject.doAs(lc.getSubject(),
+            (PrivilegedAction<CloseableHttpResponse>) () -> {
+              CloseableHttpResponse response = null;
+              try {
+                response = client.execute(host, request, context);
+                if (response.getStatusLine().getStatusCode() < 400) {
+                  return response;
+                } else {
+                  throw new ErrorResponse(response);
+                }
+              } catch (final IOException e) {
+                throw new KnoxShellException(e.toString(), e);
+              }
+            });
+
+      } catch (final LoginException e) {
+        throw new KnoxShellException(e.toString(), e);
+      }
+
     } else {
-      throw new ErrorResponse( response );
+      CloseableHttpResponse response = client.execute( host, request, context );
+      if( response.getStatusLine().getStatusCode() < 400 ) {
+        return response;
+      } else {
+        throw new ErrorResponse( response );
+      }
     }
+
   }
 
   public <T> Future<T> executeLater( Callable<T> callable ) {

@@ -1699,6 +1699,11 @@
                 <artifactId>metrics-jmx</artifactId>
                 <version>${metrics.version}</version>
             </dependency>
+            <dependency>
+                <groupId>de.thetaphi</groupId>
+                <artifactId>forbiddenapis</artifactId>
+                <version>${forbiddenapis.version}</version>
+            </dependency>
 
             <!-- ********** ********** ********** ********** ********** ********** -->
             <!-- ********** Test Dependencies                           ********** -->

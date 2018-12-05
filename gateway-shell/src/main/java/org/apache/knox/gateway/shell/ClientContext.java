@@ -29,12 +29,14 @@ public class ClientContext {
   private final PoolContext poolContext;
   private final SocketContext socketContext;
   private final ConnectionContext connectionContext;
+  private final KerberosContext kerberos;
 
   private ClientContext() {
     configuration = new MapConfiguration(new HashMap<>());
     poolContext = new PoolContext(this);
     socketContext = new SocketContext(this);
     connectionContext = new ConnectionContext(this);
+    kerberos = new KerberosContext(this);
   }
 
   private static class Context {
@@ -186,6 +188,54 @@ public class ClientContext {
     }
   }
 
+  /**
+   * Context for Kerberos properties
+   * @since 1.3.0
+   */
+  public static class KerberosContext extends Context {
+
+    private KerberosContext(ClientContext clientContext) {
+      super(clientContext, "kerberos");
+    }
+
+    public KerberosContext jaasConf(final String path) {
+      configuration.addProperty("jaasConf", path);
+      return this;
+    }
+
+    public String jaasConf() {
+      return configuration.getString("jaasConf");
+    }
+
+    public KerberosContext krb5Conf(final String path) {
+      configuration.addProperty("krb5Conf", path);
+      return this;
+    }
+
+    public String krb5Conf() {
+      return configuration.getString("krb5Conf");
+    }
+
+    public KerberosContext enable(final boolean enable) {
+      configuration.addProperty("enable", enable);
+      return this;
+    }
+
+    public boolean enable() {
+      return configuration.getBoolean("enable", false);
+    }
+
+    public KerberosContext debug(final boolean debug) {
+      configuration.addProperty("debug", debug);
+      return this;
+    }
+
+    public boolean debug() {
+      return configuration.getBoolean("debug");
+    }
+
+  }
+
   public PoolContext pool() {
     return poolContext;
   }
@@ -196,6 +246,10 @@ public class ClientContext {
 
   public ConnectionContext connection() {
     return connectionContext;
+  }
+
+  public KerberosContext kerberos() {
+    return kerberos;
   }
 
   public static ClientContext with(final String username, final String password, final String url) {
