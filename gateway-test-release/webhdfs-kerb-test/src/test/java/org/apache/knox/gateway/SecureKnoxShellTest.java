@@ -43,7 +43,6 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.Locale;
 import java.util.Properties;
 
@@ -57,17 +56,7 @@ import static org.junit.Assert.assertTrue;
 public class SecureKnoxShellTest {
 
   private static final String SCRIPT = "SecureWebHdfsPutGet.groovy";
-  /**
-   * Referring {@link MiniKdc} as {@link Object} to prevent the class loader
-   * from trying to load it before @BeforeClass annotation is called. Need to
-   * play this game because {@link MiniKdc} is not compatible with Java 7 so if
-   * we detect Java 7 we quit the test.
-   * <p>
-   * As result we need to up cast this object to {@link MiniKdc} every place we
-   * use it.
-   *
-   */
-  private static Object kdc;
+  private static MiniKdc kdc;
   private static String userName;
   private static HdfsConfiguration configuration;
   private static int nameNodeHttpPort;
@@ -81,26 +70,12 @@ public class SecureKnoxShellTest {
   private static MiniDFSCluster miniDFSCluster;
   private static GatewayTestDriver driver = new GatewayTestDriver();
 
-  /**
-   * Test should run if java major version is greater or equal to this
-   * property.
-   *
-   * @since 0.10
-   */
-  private static int JAVA_MAJOR_VERSION_FOR_TEST = 8;
-
   public SecureKnoxShellTest() {
     super();
   }
 
   @BeforeClass
   public static void setupSuite() throws Exception {
-
-    /*
-     * Run the test only if the jre version matches the one we want, see
-     * KNOX-769
-     */
-    org.junit.Assume.assumeTrue(isJreVersionOK());
     baseDir = new File(
         KeyStoreTestUtil.getClasspathDir(SecureKnoxShellTest.class));
     ticketCache = new File(
@@ -126,7 +101,7 @@ public class SecureKnoxShellTest {
   private static void initKdc() throws Exception {
     final Properties kdcConf = MiniKdc.createConf();
     kdc = new MiniKdc(kdcConf, baseDir);
-    ((MiniKdc) kdc).start();
+    kdc.start();
 
     userName = UserGroupInformation
         .createUserForTesting("guest", new String[] { "users" }).getUserName();
@@ -134,26 +109,30 @@ public class SecureKnoxShellTest {
     keytab = keytabFile.getAbsolutePath();
     // Windows will not reverse name lookup "127.0.0.1" to "localhost".
     final String krbInstance = Path.WINDOWS ? "127.0.0.1" : "localhost";
-    ((MiniKdc) kdc).createPrincipal(keytabFile, userName + "/" + krbInstance,
+    kdc.createPrincipal(keytabFile, userName + "/" + krbInstance,
         "HTTP/" + krbInstance);
 
     hdfsPrincipal =
-        userName + "/" + krbInstance + "@" + ((MiniKdc) kdc).getRealm();
-    spnegoPrincipal = "HTTP/" + krbInstance + "@" + ((MiniKdc) kdc).getRealm();
+        userName + "/" + krbInstance + "@" + kdc.getRealm();
+    spnegoPrincipal = "HTTP/" + krbInstance + "@" + kdc.getRealm();
 
-    krb5conf = ((MiniKdc) kdc).getKrb5conf().getAbsolutePath();
+    krb5conf = kdc.getKrb5conf().getAbsolutePath();
 
   }
 
   @AfterClass
   public static void cleanupSuite() throws Exception {
-    /* No need to clean up if we did not start anything */
-    if (isJreVersionOK()) {
-      ((MiniKdc) kdc).stop();
-      Files.deleteIfExists(ticketCache.toPath());
+
+    if(kdc != null) {
+      kdc.stop();
+    }
+    if(miniDFSCluster != null) {
       miniDFSCluster.shutdown();
+    }
+    if(driver != null) {
       driver.cleanup();
     }
+
   }
 
   private static File setupJaasConf(File baseDir, String keyTabFile,
@@ -268,28 +247,6 @@ public class SecureKnoxShellTest {
         .configure(ClassLoader.getSystemResource("log4j.properties"));
   }
 
-  /**
-   * Check whether java version is >= {@link #JAVA_MAJOR_VERSION_FOR_TEST}
-   *
-   * @return
-   * @since 0.10
-   */
-  public static boolean isJreVersionOK() {
-
-    final String jreVersion = System.getProperty("java.version");
-    int majorVersion = Integer.parseInt(String.valueOf(jreVersion.charAt(2)));
-
-    if (majorVersion >= JAVA_MAJOR_VERSION_FOR_TEST) {
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Test Kerberos login using KnoxShell using keytab.
-   *
-   * @throws Exception
-   */
   @Test
   public void testCachedTicket() throws Exception {
     setupLogging();
@@ -299,8 +256,6 @@ public class SecureKnoxShellTest {
 
   /**
    * Do the heavy lifting here.
-   *
-   * @throws Exception
    */
   private void webhdfsPutGet() throws Exception {
     DistributedFileSystem fileSystem = miniDFSCluster.getFileSystem();

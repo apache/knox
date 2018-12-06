@@ -137,8 +137,8 @@ public class KnoxSession implements Closeable {
    * @param jaasConf jaas configuration (optional- can be null)
    * @param krb5Conf kerberos configuration (optional - can be null)
    * @param debug enable debug messages
-   * @return
-   * @throws URISyntaxException
+   * @return KnoxSession
+   * @throws URISyntaxException exception in case of malformed url
    * @since 1.3.0
    */
   public static KnoxSession kerberosLogin(final String url,
@@ -160,9 +160,9 @@ public class KnoxSession implements Closeable {
    * Support kerberos authentication.
    * This method assumed kinit has already been called
    * and the token is persisted on disk.
-   * @param url
-   * @return
-   * @throws URISyntaxException
+   * @param url Gateway url
+   * @return KnoxSession
+   * @throws URISyntaxException exception in case of malformed url
    * @since 1.3.0
    */
   public static KnoxSession kerberosLogin(final String url)
