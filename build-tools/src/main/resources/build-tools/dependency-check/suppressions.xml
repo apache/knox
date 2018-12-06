@@ -17,9 +17,19 @@ limitations under the License.
 -->
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.1.xsd">
     <suppress>
+        <notes><![CDATA[file name: javax.jws-api-.*.jar]]></notes>
+        <gav regex="true">^javax\.jws:javax\.jws-api:.*$</gav>
+        <cpe>cpe:/a:oracle:glassfish</cpe>
+    </suppress>
+    <suppress>
         <notes><![CDATA[file name: curator-.*.jar]]></notes>
         <gav regex="true">^org\.apache\.curator:curator-.*:.*$</gav>
         <cpe>cpe:/a:apache:zookeeper</cpe>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[file name: apacheds-all-2.0.0-M24.jar (shaded: org.apache.directory.api:api-util:1.0.0)]]></notes>
+        <gav regex="true">^org\.apache\.directory\.api:.*$</gav>
+        <cve>CVE-2015-3250</cve> <!-- Already past 1.0.0-M30 -->
     </suppress>
     <suppress>
         <notes><![CDATA[file name: gateway-.*.jar]]></notes>
@@ -33,6 +43,8 @@ limitations under the License.
         <cpe>cpe:/a:apache:nifi</cpe>
         <cpe>cpe:/a:apache:shiro</cpe>
         <cpe>cpe:/a:apache:storm</cpe>
+        <cpe>cpe:/a:content_project:content</cpe>
+        <cpe>cpe:/a:request_it:request_it</cpe>
     </suppress>
     <suppress>
         <notes><![CDATA[file name: hadoop-examples-.*.jar]]></notes>
@@ -49,6 +61,37 @@ limitations under the License.
         <notes><![CDATA[file name: groovy-.*.jar]]></notes>
         <gav regex="true">^org\.codehaus\.groovy:groovy-.*:.*$</gav>
         <cve>CVE-2016-6497</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[file name: jackson-jaxrs-.*.jar]]></notes>
+        <gav regex="true">^org\.codehaus\.jackson:jackson-jaxrs:.*$</gav>
+        <cpe>cpe:/a:content_project:content</cpe>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[file name: jettison-.*.jar]]></notes>
+        <gav regex="true">^org\.codehaus\.jettison:jettison:.*$</gav>
+        <cpe>cpe:/a:st_project:st</cpe>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[file name: eclipse persistence jars]]></notes>
+        <gav regex="true">^org\.eclipse\.persistence:.*$</gav>
+        <cpe>cpe:/a:git:git</cpe>
+        <cpe>cpe:/a:git_project:git</cpe>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[file name: ha-api-.*.jar]]></notes>
+        <gav regex="true">^org\.glassfish\.ha:ha-api:.*$</gav>
+        <cpe>cpe:/a:oracle:glassfish</cpe>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[org.glassfish.jaxb:xsom)]]></notes>
+        <gav regex="true">^org\.glassfish\.jaxb:xsom:.*$</gav>
+        <cpe>cpe:/a:oracle:glassfish</cpe>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[file name: pac4j-oidc-.*.jar]]></notes>
+        <gav regex="true">^org\.pac4j:pac4j-oidc:.*$</gav>
+        <cpe>cpe:/a:openid:openid</cpe>
     </suppress>
     <suppress>
         <notes><![CDATA[file name: xz-.*.jar]]></notes>
