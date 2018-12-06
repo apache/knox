@@ -136,7 +136,8 @@
         <maven.compiler.target>8</maven.compiler.target>
 
         <!-- Dependencies sorted alphabetically -->
-        <apacheds.version>2.0.0-M24</apacheds.version>
+        <apacheds.directory.api.version>1.0.2</apacheds.directory.api.version>
+        <apacheds.directory.server.version>2.0.0-M24</apacheds.directory.server.version>
         <apacheds-jdbm.version>2.0.0-M5</apacheds-jdbm.version>
         <ant-nodeps.version>1.8.1</ant-nodeps.version>
         <asm.version>7.0</asm.version>
@@ -200,6 +201,7 @@
         <maven-enforcer-plugin.version>3.0.0-M2</maven-enforcer-plugin.version>
         <maven-pmd-plugin.version>3.11.0</maven-pmd-plugin.version>
         <metrics.version>4.0.3</metrics.version>
+        <mina.version>2.0.19</mina.version>
         <nimbus-jose-jwt.version>6.5</nimbus-jose-jwt.version>
         <okhttp.version>2.7.5</okhttp.version>
         <pac4j.version>2.1.0</pac4j.version>
@@ -1501,21 +1503,64 @@
                 <artifactId>shrinkwrap-descriptors-impl-javaee</artifactId>
                 <version>${shrinkwrap.descriptors.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>org.apache.directory.server</groupId>
                 <artifactId>apacheds-jdbm</artifactId>
                 <version>${apacheds-jdbm.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>org.apache.directory.server</groupId>
-                <artifactId>apacheds-all</artifactId>
-                <version>${apacheds.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>ldapsdk</groupId>
-                        <artifactId>ldapsdk</artifactId>
-                    </exclusion>
-                </exclusions>
+                <artifactId>apacheds-core</artifactId>
+                <version>${apacheds.directory.server.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.directory.server</groupId>
+                <artifactId>apacheds-core-annotations</artifactId>
+                <version>${apacheds.directory.server.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.directory.server</groupId>
+                <artifactId>apacheds-core-api</artifactId>
+                <version>${apacheds.directory.server.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.directory.server</groupId>
+                <artifactId>apacheds-protocol-shared</artifactId>
+                <version>${apacheds.directory.server.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.directory.server</groupId>
+                <artifactId>apacheds-protocol-ldap</artifactId>
+                <version>${apacheds.directory.server.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.directory.api</groupId>
+                <artifactId>api-ldap-client-api</artifactId>
+                <version>${apacheds.directory.api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.directory.api</groupId>
+                <artifactId>api-ldap-codec-standalone</artifactId>
+                <version>${apacheds.directory.api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.directory.api</groupId>
+                <artifactId>api-ldap-model</artifactId>
+                <version>${apacheds.directory.api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.directory.api</groupId>
+                <artifactId>api-util</artifactId>
+                <version>${apacheds.directory.api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.mina</groupId>
+                <artifactId>mina-core</artifactId>
+                <version>${mina.version}</version>
             </dependency>
 
             <dependency>
