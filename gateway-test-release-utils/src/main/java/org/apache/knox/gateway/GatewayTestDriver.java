@@ -189,7 +189,9 @@ public class GatewayTestDriver {
     }
     services.clear();
 
-    ldap.stop( true );
+    if(ldap != null) {
+      ldap.stop(true);
+    }
   }
 
   public boolean isUseGateway() {
