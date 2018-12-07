@@ -132,7 +132,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public long getGatewayIdleTimeout() {
-    return 0l;
+    return 0L;
   }
 
   @Override

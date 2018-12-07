@@ -37,7 +37,7 @@ public class CSRFPreventionFilter implements Filter {
   private String  headerName = "X-XSRF-Header";
   private String  mti = "GET,OPTIONS,HEAD";
   private Set<String> methodsToIgnore = null;
-  
+
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
     String customHeader = filterConfig.getInitParameter(CUSTOM_HEADER_PARAM);
@@ -52,7 +52,7 @@ public class CSRFPreventionFilter implements Filter {
     methodsToIgnore = new HashSet<>();
     methodsToIgnore.addAll(Arrays.asList(methods));
   }
-  
+
   @Override
   public void doFilter(ServletRequest request, ServletResponse response,
       FilterChain chain) throws IOException, ServletException {
@@ -66,6 +66,5 @@ public class CSRFPreventionFilter implements Filter {
 
   @Override
   public void destroy() {
-    
   }
 }

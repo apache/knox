@@ -53,7 +53,7 @@ public class SecureQueryDeploymentContributorTest {
 
     Topology topology = new Topology();
     topology.setName("Sample");
-    
+
     DeploymentContext context = EasyMock.createNiceMock( DeploymentContext.class );
 //    EasyMock.expect( context.getDescriptor( "rewrite" ) ).andReturn( rewriteRules ).anyTimes();
     EasyMock.expect( context.getWebArchive() ).andReturn( webArchive ).anyTimes();
@@ -68,8 +68,8 @@ public class SecureQueryDeploymentContributorTest {
     EasyMock.expect( gatewayServices.getService( GatewayServices.CRYPTO_SERVICE ) ).andReturn( cryptoService ).anyTimes();
 
     UrlRewriteEnvironment encEnvironment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
-    EasyMock.expect( encEnvironment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();    
-    
+    EasyMock.expect( encEnvironment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();
+
     SecureQueryDeploymentContributor contributor = new SecureQueryDeploymentContributor();
     contributor.setAliasService(as);
 

@@ -30,21 +30,21 @@ import org.apache.knox.gateway.i18n.messages.Messages;
 public interface Pac4jMessages {
 
   @Message( level = MessageLevel.ERROR, text = "pac4j callback URL required")
-  public void ssoAuthenticationProviderUrlRequired();
+  void ssoAuthenticationProviderUrlRequired();
 
   @Message( level = MessageLevel.ERROR, text = "pac4j clientName parameter required")
-  public void clientNameParameterRequired();
+  void clientNameParameterRequired();
 
   @Message( level = MessageLevel.ERROR, text = "At least one pac4j client must be defined")
-  public void atLeastOnePac4jClientMustBeDefined();
+  void atLeastOnePac4jClientMustBeDefined();
 
   @Message( level = MessageLevel.ERROR, text = "Crypto service, alias service and cluster name required")
-  public void cryptoServiceAndAliasServiceAndClusterNameRequired();
+  void cryptoServiceAndAliasServiceAndClusterNameRequired();
 
   @Message( level = MessageLevel.ERROR, text = "Unable to generate a password for encryption")
-  public void unableToGenerateAPasswordForEncryption(Exception e);
+  void unableToGenerateAPasswordForEncryption(Exception e);
 
-  @Message( level = MessageLevel.INFO, text = 
+  @Message( level = MessageLevel.INFO, text =
       "No private key passphrase alias found. Defaulting to master. Exception encountered: {0}")
-  public void noPrivateKeyPasshraseProvisioned(Exception e);
+  void noPrivateKeyPasshraseProvisioned(Exception e);
 }

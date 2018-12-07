@@ -20,11 +20,9 @@ package org.apache.knox.gateway.filter.rewrite.api;
 import java.util.List;
 
 public interface UrlRewriteFilterGroupDescriptor extends UrlRewriteFilterPathDescriptor {
+  List<UrlRewriteFilterPathDescriptor> getSelectors();
 
-  public List<UrlRewriteFilterPathDescriptor> getSelectors();
-
-  public void addSelector( UrlRewriteFilterPathDescriptor selector );
+  void addSelector( UrlRewriteFilterPathDescriptor selector );
 
   UrlRewriteFilterApplyDescriptor addApply( String path, String rule );
-
 }

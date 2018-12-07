@@ -18,5 +18,5 @@
 package org.apache.knox.gateway.services.security;
 
 public interface MasterService {
-  public abstract char[] getMasterSecret();
+  char[] getMasterSecret();
 }

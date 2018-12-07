@@ -72,7 +72,7 @@ public class AtlasZookeeperURLManager extends DefaultURLManager {
             .connectString(zooKeeperEnsemble)
             .retryPolicy(new ExponentialBackoffRetry(1000, 3))
             .build()) {
-            
+
             zooKeeperClient.start();
             zooKeeperClient.blockUntilConnected(10, TimeUnit.SECONDS);
 

@@ -26,30 +26,30 @@ public interface SimpleDescriptorMessages {
 
     @Message(level = MessageLevel.ERROR,
             text = "Unable to complete service discovery for cluster {0}.")
-    void failedToDiscoverClusterServices(final String descriptorName);
+    void failedToDiscoverClusterServices(String descriptorName);
 
     @Message(level = MessageLevel.ERROR,
             text = "No valid URLs were discovered for {0} in the {1} cluster.")
-    void failedToDiscoverClusterServiceURLs(final String serviceName, final String clusterName);
+    void failedToDiscoverClusterServiceURLs(String serviceName, String clusterName);
 
     @Message(level = MessageLevel.ERROR,
             text = "Failed to resolve the referenced provider configuration {0}.")
-    void failedToResolveProviderConfigRef(final String providerConfigRef);
+    void failedToResolveProviderConfigRef(String providerConfigRef);
 
     @Message(level = MessageLevel.ERROR,
             text = "Failed to parse the referenced provider configuration {0}: {1}")
-    void failedToParseProviderConfig(final String providerConfigRef,
+    void failedToParseProviderConfig(String providerConfigRef,
                                      @StackTrace( level = MessageLevel.DEBUG ) Exception e);
 
     @Message(level = MessageLevel.ERROR,
             text = "URL validation failed for {0} URL {1} : {2}")
-    void serviceURLValidationFailed(final String serviceName,
-                                    final String url,
+    void serviceURLValidationFailed(String serviceName,
+                                    String url,
                                     @StackTrace( level = MessageLevel.DEBUG ) Exception e);
 
     @Message(level = MessageLevel.ERROR,
             text = "Error generating topology {0} from simple descriptor: {1}")
-    void failedToGenerateTopologyFromSimpleDescriptor(final String topologyFile,
+    void failedToGenerateTopologyFromSimpleDescriptor(String topologyFile,
                                                       @StackTrace( level = MessageLevel.DEBUG ) Exception e);
 
     @Message(level = MessageLevel.ERROR,

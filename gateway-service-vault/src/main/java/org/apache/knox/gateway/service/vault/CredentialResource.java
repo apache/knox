@@ -41,9 +41,9 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Path( "/vault/credentials" )
 public class CredentialResource {
-  @Context 
+  @Context
   private HttpServletRequest request;
-  
+
   @GET
   @Path("{alias}")
   @Produces({APPLICATION_JSON, APPLICATION_XML})
@@ -103,17 +103,17 @@ public class CredentialResource {
     }
     return null;
   }
-  
+
   public static class CredentialValue {
     private String alias;
     private String credential;
-    
+
     public CredentialValue(String alias, String credential) {
       super();
       this.alias = alias;
       this.credential = credential;
     }
-    
+
     public String getAlias() {
       return alias;
     }

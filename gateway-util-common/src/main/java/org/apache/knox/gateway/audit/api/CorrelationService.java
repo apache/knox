@@ -27,7 +27,7 @@ public interface CorrelationService {
   /**
    * The recommended protocol header name used to transmit the correlation context over the network.
    */
-  static final String PROTOCOL_HEADER = "X-Correlation-Context";
+  String PROTOCOL_HEADER = "X-Correlation-Context";
 
   /**
    * Creates a new correlation context.  The context is attached and empty.
@@ -59,7 +59,7 @@ public interface CorrelationService {
    * @return The now detached correlation context.  May be null.
    */
   CorrelationContext detachContext();
-  
+
   /**
    * Executes the callable within the provided correlation context.
    * The provided context is attached and detached around the invocation of the callable.
@@ -70,27 +70,27 @@ public interface CorrelationService {
    * @throws Exception Thrown if thrown by the callable's call method.
    */
   <T> T execute( CorrelationContext context, Callable<T> callable ) throws Exception;
-  
+
   /**
    * Attaches the externalized correlation context
    * @param externalizedContext The externalized correlation context
    * @return An attached instance of correlation context that was restored form externalized context
    */
   CorrelationContext attachExternalizedContext( byte[] externalizedContext );
-  
+
   /**
    * Detaches the existing attached correlation context and returns it in externalized form.
    * @return The detached externalized context
    */
   byte[] detachExternalizedContext();
-  
+
   /**
    * Restores correlation context from externalized form.
    * @param externalizedContext The externalized correlation context. May not be null.
    * @return the correlation context that is not attached yet
    */
   CorrelationContext readExternalizedContext( byte[] externalizedContext );
-  
+
   /**
    * Returns externalized correlation context without detaching it from execution scope.
    * @return The externalized correlation context

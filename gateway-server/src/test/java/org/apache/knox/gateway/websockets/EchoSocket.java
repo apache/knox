@@ -26,8 +26,7 @@ import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 
 /**
- * 
- * A simple Echo socket 
+ * A simple Echo socket
  */
 public class EchoSocket extends WebSocketAdapter {
 

@@ -336,7 +336,7 @@ public class AmbariServiceDiscoveryTest {
      */
     private static final class TestAmbariServiceDiscovery extends AmbariServiceDiscovery {
 
-        final static String CLUSTER_PLACEHOLDER = TestRESTInvoker.CLUSTER_PLACEHOLDER;
+        static final String CLUSTER_PLACEHOLDER = TestRESTInvoker.CLUSTER_PLACEHOLDER;
 
         TestAmbariServiceDiscovery(String clusterName) {
             super(new TestRESTInvoker(clusterName));
@@ -360,8 +360,7 @@ public class AmbariServiceDiscoveryTest {
     }
 
     private static final class TestRESTInvoker extends RESTInvoker {
-
-        final static String CLUSTER_PLACEHOLDER = "CLUSTER_NAME";
+        static final String CLUSTER_PLACEHOLDER = "CLUSTER_NAME";
 
         private Map<String, JSONObject> cannedResponses = new HashMap<>();
 

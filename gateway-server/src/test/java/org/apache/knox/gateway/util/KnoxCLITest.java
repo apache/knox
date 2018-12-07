@@ -455,14 +455,14 @@ public class KnoxCLITest {
         "created."));
 
     outContent.reset();
-    String[] args2 = {"list-alias", "--master", 
+    String[] args2 = {"list-alias", "--master",
         "master"};
     rc = cli.run(args2);
     assertEquals(0, rc);
     assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("alias1"));
 
     outContent.reset();
-    String[] args4 = {"delete-alias", "alias1", "--master", 
+    String[] args4 = {"delete-alias", "alias1", "--master",
       "master"};
     rc = cli.run(args4);
     assertEquals(0, rc);
@@ -474,7 +474,7 @@ public class KnoxCLITest {
     assertEquals(0, rc);
     assertFalse(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("alias1"));
   }
-  
+
   @Test
   public void testListAndDeleteOfAliasForInvalidClusterName() throws Exception {
     outContent.reset();
@@ -620,7 +620,7 @@ public class KnoxCLITest {
     AliasService as = cli.getGatewayServices().getService(GatewayServices.ALIAS_SERVICE);
 
     outContent.reset();
-    String[] clusterCreateArgs = {"create-alias", "alias2", "--value", "testvalue1", "--cluster", "test", 
+    String[] clusterCreateArgs = {"create-alias", "alias2", "--value", "testvalue1", "--cluster", "test",
         "--master", "master"};
     cli = new KnoxCLI();
     cli.setConf( config );
@@ -656,7 +656,7 @@ public class KnoxCLITest {
     assertEquals(0, rc);
     assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("alias1 has been successfully " +
         "deleted."));
-    
+
     outContent.reset();
     String[] args5 = {"delete-alias", "alias2", "--cluster", "test", "--master", "master"};
     cli = new KnoxCLI();

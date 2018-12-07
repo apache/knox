@@ -21,7 +21,7 @@ import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 
 public interface PreAuthValidator {
-  public abstract boolean validate(HttpServletRequest httpRequest, FilterConfig filterConfig) throws
+  boolean validate(HttpServletRequest httpRequest, FilterConfig filterConfig) throws
       PreAuthValidationException;
 
   /**
@@ -29,5 +29,5 @@ public interface PreAuthValidator {
    *
    * @return name of validator
    */
-  public abstract String getName();
+  String getName();
 }

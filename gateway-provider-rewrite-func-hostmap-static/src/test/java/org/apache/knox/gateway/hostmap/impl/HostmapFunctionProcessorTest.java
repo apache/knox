@@ -67,15 +67,14 @@ public class HostmapFunctionProcessorTest {
 
     HostMapper hm = EasyMock.createNiceMock(HostMapper.class);
     EasyMock.expect( hm.resolveInboundHostName("test-inbound-host")).andReturn( "test-inbound-rewritten-host" ).anyTimes();
-    
+
     HostMapperService hms = EasyMock.createNiceMock( HostMapperService.class );
 
     GatewayServices gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
     EasyMock.expect( gatewayServices.getService( GatewayServices.HOST_MAPPING_SERVICE ) ).andReturn( hms ).anyTimes();
 
-
     UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
-    EasyMock.expect( environment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();    
+    EasyMock.expect( environment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();
     EasyMock.expect( environment.resolve( "cluster.name" ) ).andReturn( Arrays.asList( "test-cluster-name" ) ).anyTimes();
     EasyMock.expect( environment.getResource( "/WEB-INF/hostmap.txt" ) ).andReturn( configUrl ).anyTimes();
     Resolver resolver = EasyMock.createNiceMock( Resolver.class );

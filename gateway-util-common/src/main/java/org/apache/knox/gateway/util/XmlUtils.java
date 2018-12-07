@@ -50,7 +50,7 @@ public class XmlUtils {
     DocumentBuilder b = f.newDocumentBuilder();
     return b.parse( input );
   }
-  
+
   public static Document readXml( InputSource source ) throws ParserConfigurationException, IOException, SAXException {
     DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
     f.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
@@ -63,13 +63,13 @@ public class XmlUtils {
     Transformer t = XmlUtils.getTransformer( false, true, 4, false );
     writeXml( document, writer, t );
   }
-  
+
   public static void writeXml( Document document, Writer writer, Transformer transformer ) throws TransformerException {
     DOMSource s = new DOMSource( document );
     StreamResult r = new StreamResult( writer );
     transformer.transform( s, r );
   }
-  
+
   public static Transformer getTransformer( boolean standalone, boolean indent, int indentNumber,
                                             boolean omitXmlDeclaration) throws TransformerException {
     TransformerFactory f = TransformerFactory.newInstance();
@@ -77,7 +77,7 @@ public class XmlUtils {
     if ( indent ) {
       f.setAttribute( "indent-number", indentNumber );
     }
-    
+
     Transformer t = f.newTransformer();
     if ( standalone ) {
       t.setOutputProperty( OutputKeys.STANDALONE, "yes" );
@@ -89,14 +89,14 @@ public class XmlUtils {
     if ( omitXmlDeclaration ) {
       t.setOutputProperty( OutputKeys.OMIT_XML_DECLARATION, "yes" );
     }
-    
+
     return t;
   }
 
   public static Document createDocument() throws ParserConfigurationException {
     return createDocument(true);
   }
-  
+
   public static Document createDocument(boolean standalone) throws ParserConfigurationException {
     DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
     f.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);

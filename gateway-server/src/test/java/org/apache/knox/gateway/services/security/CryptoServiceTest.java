@@ -28,6 +28,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
 import java.util.HashMap;
 import java.util.List;
@@ -37,9 +38,9 @@ import static org.junit.Assert.assertEquals;
 
 @Category( { ManualTests.class, MediumTests.class } )
 public class CryptoServiceTest {
-  static CryptoService cs = null;
-  static AliasService as = null;
-  
+  private static CryptoService cs = null;
+  private static AliasService as = null;
+
   @BeforeClass
   public static void setupSuite() throws Exception {
     as = new AliasService() {
@@ -125,11 +126,11 @@ public class CryptoServiceTest {
     ConfigurableEncryptor aes0 = new ConfigurableEncryptor("password");
     aes0.init(config);
     cs.init(config, new HashMap<String,String>());
-    EncryptionResult result0 = cs.encryptForCluster("Test", "encrypt_url", queryString.getBytes("UTF8"));
+    EncryptionResult result0 = cs.encryptForCluster("Test", "encrypt_url", queryString.getBytes(StandardCharsets.UTF_8));
     byte[] decrypted0 = cs.decryptForCluster("Test", "encrypt_url", result0.cipher, result0.iv, result0.salt);
-    assertEquals(queryString, new String(decrypted0, "UTF8"));
-    assertEquals(queryString.getBytes("UTF8").length, decrypted0.length);
-    assertEquals(queryString.getBytes("UTF8").length, new String(decrypted0, "UTF8").toCharArray().length);
+    assertEquals(queryString, new String(decrypted0, StandardCharsets.UTF_8));
+    assertEquals(queryString.getBytes(StandardCharsets.UTF_8).length, decrypted0.length);
+    assertEquals(queryString.getBytes(StandardCharsets.UTF_8).length, new String(decrypted0, StandardCharsets.UTF_8).toCharArray().length);
   }
 
   @Test
@@ -148,11 +149,11 @@ public class CryptoServiceTest {
     ConfigurableEncryptor aes0 = new ConfigurableEncryptor("password");
     aes0.init(config);
     cs.init(config, new HashMap<String,String>());
-    EncryptionResult result0 = cs.encryptForCluster("Test", "encrypt_url", queryString.getBytes("UTF8"));
+    EncryptionResult result0 = cs.encryptForCluster("Test", "encrypt_url", queryString.getBytes(StandardCharsets.UTF_8));
     byte[] decrypted0 = cs.decryptForCluster("Test", "encrypt_url", result0.cipher, result0.iv, result0.salt);
-    assertEquals(queryString, new String(decrypted0, "UTF8"));
-    assertEquals(queryString.getBytes("UTF8").length, decrypted0.length);
-    assertEquals(queryString.getBytes("UTF8").length, new String(decrypted0, "UTF8").toCharArray().length);
+    assertEquals(queryString, new String(decrypted0, StandardCharsets.UTF_8));
+    assertEquals(queryString.getBytes(StandardCharsets.UTF_8).length, decrypted0.length);
+    assertEquals(queryString.getBytes(StandardCharsets.UTF_8).length, new String(decrypted0, StandardCharsets.UTF_8).toCharArray().length);
   }
 
   @Test
@@ -169,39 +170,39 @@ public class CryptoServiceTest {
     // password to create key - same Encryptor
     ConfigurableEncryptor aes = new ConfigurableEncryptor("Test");
     aes.init(config);
-    EncryptionResult result = aes.encrypt("larry".getBytes("UTF8"));
+    EncryptionResult result = aes.encrypt("larry".getBytes(StandardCharsets.UTF_8));
     byte[] decrypted = aes.decrypt(result.salt, result.iv, result.cipher);
-    assertEquals(new String(decrypted, "UTF8"), "larry");
+    assertEquals(new String(decrypted, StandardCharsets.UTF_8), "larry");
 
     // password to create key - different Encryptor
     ConfigurableEncryptor aes2 = new ConfigurableEncryptor("Test");
     aes2.init(config);
     decrypted = aes2.decrypt(result.salt, result.iv, result.cipher);
-    assertEquals(new String(decrypted, "UTF8"), "larry");
+    assertEquals(new String(decrypted, StandardCharsets.UTF_8), "larry");
 
     // password to create key resolved from alias - same Encryptor
     ConfigurableEncryptor aes3 = new ConfigurableEncryptor(new String(as.getPasswordFromAliasForCluster("test", "encrypt_url")));
     aes3.init(config);
-    result = aes3.encrypt("larry".getBytes("UTF8"));
+    result = aes3.encrypt("larry".getBytes(StandardCharsets.UTF_8));
     decrypted = aes3.decrypt(result.salt, result.iv, result.cipher);
-    assertEquals(new String(decrypted, "UTF8"), "larry");
+    assertEquals(new String(decrypted, StandardCharsets.UTF_8), "larry");
 
     // password to create key resolved from alias - different Encryptor
     ConfigurableEncryptor aes4 = new ConfigurableEncryptor(new String(as.getPasswordFromAliasForCluster("test", "encrypt_url")));
     aes4.init(config);
     decrypted = aes4.decrypt(result.salt, result.iv, result.cipher);
-    assertEquals(new String(decrypted, "UTF8"), "larry");
+    assertEquals(new String(decrypted, StandardCharsets.UTF_8), "larry");
   }
 
   @Test
   //@Ignore
   public void testEncryptionOfQueryStrings() throws Exception {
     String alias = "encrypt-url";
-    String queryString = "url=http://localhost:50070/api/v1/blahblah";    
-    
-    EncryptionResult result = cs.encryptForCluster("Test", alias, queryString.getBytes("UTF8"));
+    String queryString = "url=http://localhost:50070/api/v1/blahblah";
+
+    EncryptionResult result = cs.encryptForCluster("Test", alias, queryString.getBytes(StandardCharsets.UTF_8));
     assertEquals("Resulted cipertext length should be a multiple of 16", 0, (result.cipher.length % 16));
     byte[] decryptedQueryString = cs.decryptForCluster("Test", alias, result.cipher, result.iv, result.salt);
-    assertEquals(queryString.getBytes("UTF8").length, decryptedQueryString.length);
+    assertEquals(queryString.getBytes(StandardCharsets.UTF_8).length, decryptedQueryString.length);
   }
 }

@@ -56,14 +56,13 @@ public class AclsAuthorizationFilter implements Filter {
   private ArrayList<String> adminGroups = new ArrayList<>();;
   private ArrayList<String> adminUsers = new ArrayList<>();;
 
-  
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
     String adminGroups = filterConfig.getInitParameter("knox.admin.groups");
     if (adminGroups != null) {
       parseAdminGroupConfig(adminGroups);
     }
-    
+
     String adminUsers = filterConfig.getInitParameter("knox.admin.users");
     if (adminUsers != null) {
       parseAdminUserConfig(adminUsers);
@@ -118,8 +117,8 @@ public class AclsAuthorizationFilter implements Filter {
   protected boolean enforceAclAuthorizationPolicy(ServletRequest request,
       ServletResponse response, FilterChain chain) {
     HttpServletRequest req = (HttpServletRequest) request;
-    
-    // before enforcing acls check whether there are no acls defined 
+
+    // before enforcing acls check whether there are no acls defined
     // which would mean that there are no restrictions
     if (parser.users.size() == 0 && parser.groups.size() == 0 && parser.ipv.getIPAddresses().size() == 0) {
       return true;
@@ -128,7 +127,7 @@ public class AclsAuthorizationFilter implements Filter {
     boolean userAccess = false;
     boolean groupAccess = false;
     boolean ipAddrAccess = false;
-    
+
     Subject subject = Subject.getSubject(AccessController.getContext());
     Principal primaryPrincipal = (Principal)subject.getPrincipals(PrimaryPrincipal.class).toArray()[0];
     log.primaryPrincipal(primaryPrincipal.getName());
@@ -160,7 +159,7 @@ public class AclsAuthorizationFilter implements Filter {
     log.remoteIPAddress(req.getRemoteAddr());
     ipAddrAccess = checkRemoteIpAcls(req.getRemoteAddr());
     log.remoteIPAddressHasAccess(ipAddrAccess);
-    
+
     if ("OR".equals(aclProcessingMode)) {
       // need to interpret '*' as excluded for OR semantics
       // to make sense and not grant access to everyone by mistake.
@@ -169,7 +168,7 @@ public class AclsAuthorizationFilter implements Filter {
       if (parser.anyUser) userAccess = false;
       if (parser.anyGroup) groupAccess = false;
       if (parser.ipv.allowsAnyIP()) ipAddrAccess = false;
-      
+
       return (userAccess || groupAccess || ipAddrAccess);
     }
     else if ("AND".equals(aclProcessingMode)) {

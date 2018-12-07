@@ -20,16 +20,15 @@ package org.apache.knox.gateway.services.security;
 import org.apache.knox.gateway.services.Service;
 
 public interface CryptoService extends Service {
-  
-  public void createAndStoreEncryptionKeyForCluster(String clusterName, String alias);
-  
-  public EncryptionResult encryptForCluster(String clusterName, String alias, byte[] clear);
+  void createAndStoreEncryptionKeyForCluster(String clusterName, String alias);
 
-  public byte[] decryptForCluster(String clusterName, String alias, String cipherText);
+  EncryptionResult encryptForCluster(String clusterName, String alias, byte[] clear);
 
-  public byte[] decryptForCluster(String clusterName, String alias, byte[] cipherText, byte[] iv, byte[] salt);
+  byte[] decryptForCluster(String clusterName, String alias, String cipherText);
 
-  public boolean verify(String algorithm, String alias, String payloadToSign, byte[] signaturePayload);
+  byte[] decryptForCluster(String clusterName, String alias, byte[] cipherText, byte[] iv, byte[] salt);
 
-  public byte[] sign(String algorithm, String alias, String payloadToSign);
+  boolean verify(String algorithm, String alias, String payloadToSign, byte[] signaturePayload);
+
+  byte[] sign(String algorithm, String alias, String payloadToSign);
 }

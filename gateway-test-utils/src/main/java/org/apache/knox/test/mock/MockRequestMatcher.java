@@ -210,7 +210,7 @@ public class MockRequestMatcher {
           request.getPathInfo(), is( pathInfo ) );
     }
     if( requestURL != null ) {
-      assertThat( 
+      assertThat(
           "Request " + request.getMethod() + " " + request.getRequestURL() +
               " does not have the expected requestURL",
           request.getRequestURL().toString(), is( requestURL ) );

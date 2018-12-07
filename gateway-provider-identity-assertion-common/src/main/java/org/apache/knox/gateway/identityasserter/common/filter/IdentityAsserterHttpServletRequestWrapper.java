@@ -50,7 +50,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
 
   private static final String PRINCIPAL_PARAM = "user.name";
   private static final String DOAS_PRINCIPAL_PARAM = "doAs";
-  
+
   private String username;
 
   public IdentityAsserterHttpServletRequestWrapper( HttpServletRequest request, String principal ) {
@@ -70,7 +70,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
     }
     return super.getParameter(name);
   }
-  
+
   @Override
   public Map<String, String[]> getParameterMap() {
     Map<String, String[]> map = null;
@@ -145,7 +145,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
       else {
         params = HttpUtils.splitQuery( qString );
       }
-    }  
+    }
     return params;
   }
 

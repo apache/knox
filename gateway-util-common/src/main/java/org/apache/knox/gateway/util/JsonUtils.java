@@ -31,31 +31,28 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-
 public class JsonUtils {
-  
   private static final GatewayUtilCommonMessages LOG = MessagesFactory.get( GatewayUtilCommonMessages.class );
 
   public static String renderAsJsonString(Map<String, Object> map) {
     String json = null;
     ObjectMapper mapper = new ObjectMapper();
-    
+
     try {
       // write JSON to a file
       json = mapper.writeValueAsString(map);
-    
     } catch ( JsonProcessingException e ) {
       LOG.failedToSerializeMapToJSON( map, e );
     }
     return json;
   }
-  
+
   public static Map<String, String> getMapFromJsonString(String json) {
     Map<String, String> map = null;
-    JsonFactory factory = new JsonFactory(); 
-    ObjectMapper mapper = new ObjectMapper(factory); 
-    TypeReference<HashMap<String,String>> typeRef 
-          = new TypeReference<HashMap<String,String>>() {}; 
+    JsonFactory factory = new JsonFactory();
+    ObjectMapper mapper = new ObjectMapper(factory);
+    TypeReference<HashMap<String,String>> typeRef
+          = new TypeReference<HashMap<String,String>>() {};
     try {
       map = mapper.readValue(json, typeRef);
     } catch (JsonParseException e) {
@@ -64,7 +61,7 @@ public class JsonUtils {
       LOG.failedToGetMapFromJsonString( json, e );
     } catch (IOException e) {
       LOG.failedToGetMapFromJsonString( json, e );
-    } 
+    }
     return map;
-  }   
+  }
 }

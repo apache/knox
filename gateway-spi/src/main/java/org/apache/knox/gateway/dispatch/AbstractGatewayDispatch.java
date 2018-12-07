@@ -43,7 +43,7 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
       REQUEST_EXCLUDE_HEADERS.add("Content-Length");
       REQUEST_EXCLUDE_HEADERS.add("Transfer-Encoding");
   }
-  
+
   protected  HttpClient client;
 
   @Override
@@ -69,12 +69,12 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
   }
 
   @Override
-  synchronized public HttpClient getHttpClient() {
+  public synchronized HttpClient getHttpClient() {
     return client;
   }
 
   @Override
-  synchronized public void setHttpClient(HttpClient client) {
+  public synchronized void setHttpClient(HttpClient client) {
     this.client = client;
   }
 
@@ -128,7 +128,7 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
       throws IOException, URISyntaxException {
     response.sendError( HttpServletResponse.SC_METHOD_NOT_ALLOWED );
   }
-  
+
   public void copyRequestHeaderFields(HttpUriRequest outboundRequest,
       HttpServletRequest inboundRequest) {
     Enumeration<String> headerNames = inboundRequest.getHeaderNames();

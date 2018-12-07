@@ -40,37 +40,30 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class BadBackendTest {
-  
   /* Proxy */
   private static Server proxy;
   private static ServerConnector proxyConnector;
   private static URI proxyUri;
-  
+
   private static final String BAD_BACKEND = "ws://localhost:666";
-  
-  public BadBackendTest() {
-    super();
-  }
-  
+
   @BeforeClass
   public static void startServer() throws Exception {
     startProxy();
-
   }
 
   @AfterClass
   public static  void stopServer() throws Exception {
     proxy.stop();
-    
   }
-  
+
   /*
    * Test for a message within limit.
    */
   @Test(timeout = 8000)
   public void testBadBackEnd() throws IOException, Exception {
     final String message = "Echo";
-    
+
     WebSocketContainer container = ContainerProvider.getWebSocketContainer();
 
     WebsocketClient client = new WebsocketClient();
@@ -80,11 +73,10 @@ public class BadBackendTest {
 
     client.awaitClose(CloseReason.CloseCodes.UNEXPECTED_CONDITION.getCode(), 1000,
         TimeUnit.MILLISECONDS);
-    
-    Assert.assertThat(client.close.getCloseCode().getCode(), CoreMatchers.is(CloseReason.CloseCodes.UNEXPECTED_CONDITION.getCode()));
 
+    Assert.assertThat(client.close.getCloseCode().getCode(), CoreMatchers.is(CloseReason.CloseCodes.UNEXPECTED_CONDITION.getCode()));
   }
-  
+
   private static void startProxy() throws Exception {
     proxy = new Server();
     proxyConnector = new ServerConnector(proxy);
@@ -108,8 +100,5 @@ public class BadBackendTest {
     }
     int port = proxyConnector.getLocalPort();
     proxyUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/", host, port));
-    
   }
-
-
 }

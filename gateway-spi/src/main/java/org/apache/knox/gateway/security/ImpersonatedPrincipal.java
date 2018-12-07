@@ -21,11 +21,11 @@ import java.security.Principal;
 
 public class ImpersonatedPrincipal implements Principal {
   private String name = null;
-  
+
   public ImpersonatedPrincipal(String name) {
     this.name = name;
   }
-  
+
   @Override
   public String getName() {
     return name;

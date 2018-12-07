@@ -30,19 +30,19 @@ public interface GatewaySpiMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Failed to execute filter: {0}" )
   void failedToExecuteFilter( @StackTrace( level = MessageLevel.DEBUG ) Throwable t );
-  
+
   @Message( level = MessageLevel.ERROR, text = "Failed to encrypt passphrase: {0}" )
   void failedToEncryptPassphrase( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
   @Message( level = MessageLevel.ERROR, text = "Failed to generate secret key from password: {0}" )
   void failedToGenerateKeyFromPassword( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
-  
+
   @Message( level = MessageLevel.ERROR, text = "Failed to create keystore [filename={0}, type={1}]: {2}" )
   void failedToCreateKeystore( String fileName, String keyStoreType, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
-  
+
   @Message( level = MessageLevel.ERROR, text = "Failed to load keystore [filename={0}, type={1}]: {2}" )
   void failedToLoadKeystore( String fileName, String keyStoreType, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
-  
+
   @Message( level = MessageLevel.ERROR, text = "Failed to add credential: {1}" )
   void failedToAddCredential( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
@@ -51,7 +51,7 @@ public interface GatewaySpiMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Failed to get credential: {1}" )
   void failedToGetCredential(@StackTrace( level = MessageLevel.DEBUG ) Exception e);
-  
+
   @Message( level = MessageLevel.ERROR, text = "Failed to persist master secret: {0}" )
   void failedToPersistMasterSecret( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
@@ -83,15 +83,15 @@ public interface GatewaySpiMessages {
   void failedToGenerateCertificate( @StackTrace( level = MessageLevel.ERROR ) Exception e );
 
   @Message(level = MessageLevel.ERROR, text = "Failed to read configuration: {0}")
-  void failedToReadConfigurationFile(final String filePath, @StackTrace(level = MessageLevel.DEBUG) Exception e );
+  void failedToReadConfigurationFile(String filePath, @StackTrace(level = MessageLevel.DEBUG) Exception e );
 
   @Message(level = MessageLevel.ERROR, text = "Invalid resource URI {0} : {1}")
-  void invalidResourceURI(final String uri, final String reason, @StackTrace(level = MessageLevel.DEBUG) Exception e );
+  void invalidResourceURI(String uri, String reason, @StackTrace(level = MessageLevel.DEBUG) Exception e );
 
   @Message(level = MessageLevel.ERROR, text = "Invalid resource name: {0}")
-  void invalidResourceName(final String resourceName);
+  void invalidResourceName(String resourceName);
 
   @Message( level = MessageLevel.ERROR, text = "Topology {0} cannot be manually overwritten because it was generated from a simple descriptor." )
-  void disallowedOverwritingGeneratedTopology(final String topologyName);
+  void disallowedOverwritingGeneratedTopology(String topologyName);
 
 }

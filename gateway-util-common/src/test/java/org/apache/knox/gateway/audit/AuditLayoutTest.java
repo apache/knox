@@ -48,7 +48,7 @@ public class AuditLayoutTest {
       .getCorrelationService();
   private static Auditor auditor = auditService.getAuditor( "audit.forward", AuditConstants.KNOX_COMPONENT_NAME, AuditConstants.KNOX_SERVICE_NAME );
   private static AuditLayout layout = new AuditLayout();
-  
+
   private static final String USERNAME = "username";
   private static final String PROXYUSERNAME = "proxy_username";
   private static final String SYSTEMUSERNAME = "system_username";
@@ -102,13 +102,13 @@ public class AuditLayoutTest {
     auditContext.setRemoteHostname( HOST_NAME );
     auditContext.setRemoteIp( HOST_ADDRESS );
     auditContext.setTargetServiceName( TARGET_SERVICE );
-    
+
     CorrelationContext correlationContext = correlationService.createContext();
     correlationContext.setRequestId( REQUEST_ID );
     correlationContext.setParentRequestId( PARENT_REQUEST_ID );
     correlationContext.setRootRequestId( ROOT_REQUEST_ID );
     auditor.audit( ACTION, RESOURCE_NAME, RESOURCE_TYPE, OUTCOME, MESSAGE );
-    
+
     assertThat( CollectAppender.queue.size(), is( 1 ) );
     LoggingEvent event = CollectAppender.queue.iterator().next();
     SimpleDateFormat format = new SimpleDateFormat( "yy/MM/dd HH:mm:ss", Locale.getDefault() );
@@ -121,7 +121,6 @@ public class AuditLayoutTest {
         RESOURCE_TYPE, RESOURCE_NAME, OUTCOME, MESSAGE, AuditLayout.LINE_SEP );
     String auditOutput = layout.format( event );
     assertThat( auditOutput, is( expectedOutput ) );
-    
   }
 
   @Test
@@ -138,7 +137,6 @@ public class AuditLayoutTest {
         EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, ACTION, RESOURCE_TYPE, RESOURCE_NAME, OUTCOME, MESSAGE, AuditLayout.LINE_SEP );
     String auditOutput = layout.format( event );
     assertThat( auditOutput, is( expectedOutput ) );
-    
   }
 
   @Test
@@ -156,5 +154,4 @@ public class AuditLayoutTest {
     String auditOutput = layout.format( event );
     assertThat( auditOutput, is( expectedOutput ) );
   }
-
 }

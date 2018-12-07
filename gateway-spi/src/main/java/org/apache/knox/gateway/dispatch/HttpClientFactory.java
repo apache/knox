@@ -22,6 +22,5 @@ import org.apache.http.client.HttpClient;
 import javax.servlet.FilterConfig;
 
 public interface HttpClientFactory {
-
-  public HttpClient createHttpClient( FilterConfig filterConfig );
+  HttpClient createHttpClient( FilterConfig filterConfig );
 }

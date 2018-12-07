@@ -718,22 +718,22 @@ public class HtmlFilterReaderBaseTest {
       assertThat( step.flow(), is( UrlRewriteStepFlow.OR ) );
     }
   }
-  
+
   @Test
   public void testTagNameLetterCase() throws Exception {
     String inputXml = "<Root/>";
     StringReader inputReader = new StringReader( inputXml );
-    
+
     HtmlFilterReaderBase filterReader = new NoopXmlFilterReader( inputReader );
     String outputXml = new String( IOUtils.toCharArray( filterReader ) );
     assertThat( the( outputXml ), hasXPath( "/Root" ) );
   }
-  
+
   @Test
   public void testXmlWithHtmlTagNames() throws Exception {
     String inputXml = "<root><br><table name=\"table1\"></table><table name=\"table2\"></table></br></root>";
     StringReader inputReader = new StringReader( inputXml );
-    
+
     HtmlFilterReaderBase filterReader = new NoopXmlFilterReader( inputReader );
     String outputXml = new String( IOUtils.toCharArray( filterReader ) );
     assertThat( the( outputXml ), hasXPath( "/root/br/table[1]/@name", equalTo( "table1" ) ) );

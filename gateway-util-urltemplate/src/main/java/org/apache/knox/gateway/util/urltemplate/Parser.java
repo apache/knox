@@ -81,22 +81,22 @@ public class Parser {
   private static Pattern PATTERN = Pattern.compile( "^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?" );
 
   @Deprecated
-  public static final Template parse( String template ) throws URISyntaxException {
+  public static Template parse( String template ) throws URISyntaxException {
     return Parser.parseTemplate( template );
   }
 
-  public static final Template parseTemplate( final String template ) throws URISyntaxException {
+  public static Template parseTemplate( final String template ) throws URISyntaxException {
     Builder builder = new Builder( template );
     return parseInternal( builder );
   }
 
-  public static final Template parseLiteral( final String literal ) throws URISyntaxException {
+  public static Template parseLiteral( final String literal ) throws URISyntaxException {
     Builder builder = new Builder( literal );
     builder.setLiteral( true );
     return parseInternal( builder );
   }
 
-  private static final Template parseInternal( final Builder builder ) throws URISyntaxException {
+  private static Template parseInternal( final Builder builder ) throws URISyntaxException {
     String original = builder.getOriginal();
     builder.setHasScheme( false );
     builder.setHasAuthority( false ); // Assume no until found otherwise.  If true, will cause // in output URL.
@@ -119,7 +119,7 @@ public class Parser {
     return builder.build();
   }
 
-  private static final void fixNakedAuthority( final Builder builder ) {
+  private static void fixNakedAuthority( final Builder builder ) {
     if( builder.getHasScheme() &&
         !builder.getHasAuthority() &&
         !builder.getIsAbsolute() &&
@@ -136,7 +136,7 @@ public class Parser {
     }
   }
 
-  private static final Token makeTokenSingular( Token token ) {
+  private static Token makeTokenSingular( Token token ) {
     final String effectivePattern = token.getEffectivePattern();
     if( Segment.GLOB_PATTERN.equals( effectivePattern ) ) {
       token = new Token( token.getParameterName(), token.getOriginalPattern(), Segment.STAR_PATTERN, token.isLiteral() );
@@ -213,7 +213,7 @@ public class Parser {
     }
   }
 
-  private static final void consumePathToken( final Builder builder, final String token ) {
+  private static void consumePathToken( final Builder builder, final String token ) {
     if( token != null ) {
       final StringTokenizer tokenizer = new StringTokenizer( token, "/" );
       while( tokenizer.hasMoreTokens() ) {
@@ -222,7 +222,7 @@ public class Parser {
     }
   }
 
-  private static final void consumePathSegment( final Builder builder, final String token ) {
+  private static void consumePathSegment( final Builder builder, final String token ) {
     if( token != null ) {
       final Token t = parseTemplateToken( builder, token, Segment.GLOB_PATTERN );
       builder.addPath( t );

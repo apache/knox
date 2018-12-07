@@ -919,7 +919,7 @@ public class UrlRewriteServletFilterTest {
 
     assertThat(content,  is(expectedCustomHeader));
   }
-  
+
   /*
    * See KNOX-791
    */
@@ -958,7 +958,6 @@ public class UrlRewriteServletFilterTest {
     String content = response.getContent();
     assertThat(content, is(rewrittenResponseHtml));
   }
-  
 
   private static class SetupFilter implements Filter {
     @Override

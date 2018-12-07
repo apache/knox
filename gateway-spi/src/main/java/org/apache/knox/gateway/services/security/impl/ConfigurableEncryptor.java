@@ -37,10 +37,10 @@ import org.apache.knox.gateway.services.security.EncryptionResult;
 
 public class ConfigurableEncryptor {
   private static final GatewaySpiMessages LOG = MessagesFactory.get( GatewaySpiMessages.class );
-  
+
   private static final int ITERATION_COUNT = 65536;
   private static final int KEY_LENGTH = 128;
-  
+
   private char[] passPhrase = null;
   private String alg = "AES";
   private String pbeAlg = "PBKDF2WithHmacSHA1";
@@ -48,7 +48,7 @@ public class ConfigurableEncryptor {
   private int saltSize = 8;
   private int iterationCount = ITERATION_COUNT;
   private int keyLength = KEY_LENGTH;
- 
+
   public ConfigurableEncryptor(String passPhrase) {
     this.passPhrase = passPhrase.toCharArray();
   }
@@ -94,7 +94,7 @@ public class ConfigurableEncryptor {
     } catch (InvalidKeySpecException e) {
       LOG.failedToGenerateKeyFromPassword( e );
     }
-    
+
     return key;
   }
 
@@ -121,7 +121,7 @@ public class ConfigurableEncryptor {
   public byte[] decrypt(byte[] salt, byte[] iv, byte[] encrypt) throws Exception {
     SecretKey tmp = getKeyFromPassword(new String(passPhrase), salt);
     SecretKey secret = new SecretKeySpec(tmp.getEncoded(), alg);
-    
+
     Cipher dcipher = Cipher.getInstance(transformation);
     dcipher.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(iv));
     return dcipher.doFinal(encrypt);

@@ -276,7 +276,7 @@ public class X509CertificateUtil {
        throws CertificateEncodingException, IOException {
     byte[] bytes = cert.getEncoded();
     Base64 encoder = new Base64( 76, "\n".getBytes( StandardCharsets.US_ASCII ) );
-    try( final FileOutputStream out = new FileOutputStream( file ) ) {
+    try( FileOutputStream out = new FileOutputStream( file ) ) {
       out.write( "-----BEGIN CERTIFICATE-----\n".getBytes( StandardCharsets.US_ASCII ) );
       out.write( encoder.encodeToString( bytes ).getBytes( StandardCharsets.US_ASCII ) );
       out.write( "-----END CERTIFICATE-----\n".getBytes( StandardCharsets.US_ASCII ) );

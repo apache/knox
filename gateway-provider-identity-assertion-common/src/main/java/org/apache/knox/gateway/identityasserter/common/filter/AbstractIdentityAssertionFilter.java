@@ -61,9 +61,6 @@ public abstract class AbstractIdentityAssertionFilter extends
         AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
         AuditConstants.KNOX_COMPONENT_NAME );
 
-  /**
-   * 
-   */
   public AbstractIdentityAssertionFilter() {
     super();
   }
@@ -94,12 +91,12 @@ public abstract class AbstractIdentityAssertionFilter extends
         Subject subject = null;
         Principal impersonationPrincipal = null;
         Principal primaryPrincipal = null;
-        
-        // get the current subject and determine whether we need another doAs with 
+
+        // get the current subject and determine whether we need another doAs with
         // an impersonatedPrincipal and/or mapped group principals
         boolean impersonationNeeded = false;
         boolean groupsMapped = false;
-        
+
         // look up the current Java Subject and assosciated group principals
         Subject currentSubject = Subject.getSubject(AccessController.getContext());
         if (currentSubject == null) {
@@ -108,13 +105,13 @@ public abstract class AbstractIdentityAssertionFilter extends
         }
 
         Set<?> currentGroups = currentSubject.getPrincipals(GroupPrincipal.class);
-        
+
         primaryPrincipal = (PrimaryPrincipal) currentSubject.getPrincipals(PrimaryPrincipal.class).toArray()[0];
         if (primaryPrincipal != null) {
           if (!primaryPrincipal.getName().equals(mappedPrincipalName)) {
             impersonationNeeded = true;
             auditService.getContext().setProxyUsername( mappedPrincipalName );
-            auditor.audit( Action.IDENTITY_MAPPING, primaryPrincipal.getName(), 
+            auditor.audit( Action.IDENTITY_MAPPING, primaryPrincipal.getName(),
                 ResourceType.PRINCIPAL, ActionOutcome.SUCCESS, RES.effectiveUser(mappedPrincipalName) );
           }
         }
@@ -125,20 +122,20 @@ public abstract class AbstractIdentityAssertionFilter extends
           // TODO: log as appropriate
           primaryPrincipal = new PrimaryPrincipal(((HttpServletRequest) request).getUserPrincipal().getName());
         }
-        
+
         groupsMapped = groups != null || !currentGroups.isEmpty();
-        
+
         if (impersonationNeeded || groupsMapped) {
           // gonna need a new subject and doAs
           subject = new Subject();
           Set<Principal> principals = subject.getPrincipals();
           principals.add(primaryPrincipal);
-          
+
           // map group principals from current Subject into newly created Subject
           for (Object obj : currentGroups) {
             principals.add((Principal)obj);
           }
-          
+
           if (impersonationNeeded) {
             impersonationPrincipal = new ImpersonatedPrincipal(mappedPrincipalName);
             subject.getPrincipals().add(impersonationPrincipal);
@@ -182,7 +179,7 @@ public abstract class AbstractIdentityAssertionFilter extends
 
   private void addMappedGroupsToSubject(String mappedPrincipalName, String[] groups, Subject subject) {
     if (groups != null) {
-      auditor.audit( Action.IDENTITY_MAPPING, mappedPrincipalName, ResourceType.PRINCIPAL, 
+      auditor.audit( Action.IDENTITY_MAPPING, mappedPrincipalName, ResourceType.PRINCIPAL,
           ActionOutcome.SUCCESS, RES.groupsList( Arrays.toString( groups ) ) );
 
       for (int i = 0; i < groups.length; i++) {

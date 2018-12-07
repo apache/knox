@@ -24,9 +24,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class ShiroConfig {
-  
+
   private Map<String, Map<String, String>> sections = new LinkedHashMap<>();
- 
+
   public ShiroConfig(Provider provider, String clusterName) {
     Map<String, String> params = provider.getParams();
     String name = null;
@@ -57,7 +57,7 @@ public class ShiroConfig {
     }
     section.put(name, value);
   }
-  
+
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();

@@ -355,7 +355,6 @@ public class HaProviderDeploymentContributorTest {
 
    /**
     * Validate the service ha config.
-    * 
     * @param config              The HaServiceConfig to validate
     * @param isEnabled           The expected enabled param value
     * @param failoverSleep       The expected failoverSleep param value

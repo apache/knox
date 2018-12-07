@@ -56,7 +56,7 @@ public class Log4jMessageLogger implements MessageLogger {
     logger.callAppenders( event );
   }
 
-  private static final ThrowableInformation toThrownInformation( final Throwable thrown ) {
+  private static ThrowableInformation toThrownInformation( final Throwable thrown ) {
     ThrowableInformation info = null;
     if( thrown != null ) {
       info = new ThrowableInformation( thrown );
@@ -64,7 +64,7 @@ public class Log4jMessageLogger implements MessageLogger {
     return info;
   }
 
-  private static final LocationInfo toLocationInfo( final StackTraceElement caller ) {
+  private static LocationInfo toLocationInfo( final StackTraceElement caller ) {
     LocationInfo info = null;
     if( caller != null ) {
         info = new LocationInfo( caller.getFileName(), caller.getClassName(), caller.getMethodName(), Integer.toString(caller.getLineNumber()) );
@@ -72,7 +72,7 @@ public class Log4jMessageLogger implements MessageLogger {
     return info;
   }
 
-  private static final Level toLevel( final MessageLevel level ) {
+  private static Level toLevel( final MessageLevel level ) {
     switch( level ) {
       case FATAL: return Level.FATAL;
       case ERROR: return Level.ERROR;

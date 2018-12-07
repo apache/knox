@@ -58,7 +58,7 @@ public class SecureQueryEncryptDecryptProcessorTest {
     EasyMock.expect( gatewayServices.getService( GatewayServices.CRYPTO_SERVICE ) ).andReturn( cryptoService );
 
     UrlRewriteEnvironment encEnvironment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
-    EasyMock.expect( encEnvironment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();    
+    EasyMock.expect( encEnvironment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();
     EasyMock.expect( encEnvironment.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( "test-cluster-name" ).anyTimes();
     UrlRewriteContext encContext = EasyMock.createNiceMock( UrlRewriteContext.class );
     EasyMock.expect( encContext.getCurrentUrl() ).andReturn( origTemplate );
@@ -85,7 +85,7 @@ public class SecureQueryEncryptDecryptProcessorTest {
     EasyMock.expect( as.getPasswordFromAliasForCluster("test-cluster-name", "encryptQueryString")).andReturn( secret.toCharArray() ).anyTimes();
 
     UrlRewriteEnvironment decEnvironment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
-    EasyMock.expect( decEnvironment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();    
+    EasyMock.expect( decEnvironment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();
     EasyMock.expect( decEnvironment.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( "test-cluster-name" ).anyTimes();
     Params decParams = EasyMock.createNiceMock( Params.class );
     EasyMock.expect( decParams.resolve( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( Arrays.asList("test-cluster-name") ).anyTimes();

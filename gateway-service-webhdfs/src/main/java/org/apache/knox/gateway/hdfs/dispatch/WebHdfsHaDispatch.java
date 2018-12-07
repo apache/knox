@@ -25,7 +25,7 @@ public class WebHdfsHaDispatch extends AbstractHdfsHaDispatch {
   public WebHdfsHaDispatch() throws ServletException {
     super();
   }
-  
+
   @Override
   protected String getResourceRole() {
     return RESOURCE_ROLE;

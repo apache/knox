@@ -128,7 +128,7 @@ public class GatewayForwardingServlet extends HttpServlet{
     }
   }
 
-  private static final String getRequestPath( final HttpServletRequest request ) {
+  private static String getRequestPath( final HttpServletRequest request ) {
     final String path = request.getPathInfo();
     if( path == null ) {
       return "";
@@ -137,7 +137,7 @@ public class GatewayForwardingServlet extends HttpServlet{
     }
   }
 
-  private static final String getRequestLine( final HttpServletRequest request ) {
+  private static String getRequestLine( final HttpServletRequest request ) {
     final String path = getRequestPath( request );
     final String query = request.getQueryString();
     if( query == null ) {

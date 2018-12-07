@@ -47,7 +47,7 @@ public class AuditServiceTest {
   private static AuditService auditService = AuditServiceFactory.getAuditService();
   private static CorrelationService correlationService = CorrelationServiceFactory.getCorrelationService();
   private static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor( "audit.forward", AuditConstants.KNOX_COMPONENT_NAME, AuditConstants.KNOX_SERVICE_NAME );
-  
+
   private String username = "user";
   private String proxyUsername = "proxyuser";
   private String remoteIp = "127.0.0.1";
@@ -78,35 +78,35 @@ public class AuditServiceTest {
   @Test
   public void testMultipleRequestEvents() {
     int iterations = 1000;
-    
+
     AuditContext ac = auditService.createContext();
     ac.setUsername( username );
     ac.setProxyUsername( proxyUsername );
     ac.setRemoteIp( remoteIp );
     ac.setRemoteHostname( remoteHostname );
     ac.setTargetServiceName( targetServiceName );
-    
+
     CorrelationContext cc = correlationService.createContext();
     cc.setRequestId( UUID.randomUUID().toString() );
     cc.setParentRequestId( UUID.randomUUID().toString() );
     cc.setRootRequestId( UUID.randomUUID().toString() );
-    
+
     CollectAppender.queue.clear();
     for( int i = 0; i < iterations; i++ ) {
       auditor.audit( "action" + i, "resource" + i, "resource type" + i, "outcome" + i, "message" + i );
     }
-    
+
     auditService.detachContext();
     correlationService.detachContext();
     assertThat( CollectAppender.queue.size(), is( iterations ) );
-    
+
     //Verify events number and audit/correlation parameters in each event
     Iterator<LoggingEvent> iterator = CollectAppender.queue.iterator();
     int counter = 0;
     while(iterator.hasNext()) {
       LoggingEvent event = iterator.next();
       checkLogEventContexts( event, cc, ac );
-      
+
       assertThat(event.getMDC( AuditConstants.MDC_ACTION_KEY ), is( "action" + counter ) );
       assertThat(event.getMDC( AuditConstants.MDC_RESOURCE_NAME_KEY ), is( "resource" + counter ) );
       assertThat(event.getMDC( AuditConstants.MDC_RESOURCE_TYPE_KEY ), is( "resource type" + counter ) );
@@ -119,7 +119,6 @@ public class AuditServiceTest {
     }
     assertThat( auditService.getContext(), nullValue() );
     assertThat( correlationService.getContext(), nullValue() );
-    
   }
 
   @Test
@@ -130,45 +129,45 @@ public class AuditServiceTest {
     ac.setRemoteIp( remoteIp );
     ac.setRemoteHostname( remoteHostname );
     ac.setTargetServiceName( targetServiceName );
-    
+
     CorrelationContext cc = correlationService.createContext();
     cc.setRequestId( UUID.randomUUID().toString() );
     cc.setParentRequestId( UUID.randomUUID().toString() );
     cc.setRootRequestId( UUID.randomUUID().toString() );
 
     auditor.audit( "action", "resource", "resource type", "outcome", "message" );
-    
+
     auditService.detachContext();
     correlationService.detachContext();
-    
+
     assertThat( CollectAppender.queue.size(), is( 1 ) );
     LoggingEvent event = CollectAppender.queue.iterator().next();
     checkLogEventContexts( event, cc, ac );
-    
+
     CollectAppender.queue.clear();
-    
+
     ac = auditService.createContext();
     ac.setUsername( username + "1" );
     ac.setProxyUsername( proxyUsername + "1" );
     ac.setRemoteIp( remoteIp + "1" );
     ac.setRemoteHostname( remoteHostname + "1" );
     ac.setTargetServiceName( targetServiceName + "1" );
-    
+
     cc = correlationService.createContext();
     cc.setRequestId( UUID.randomUUID().toString() );
     cc.setParentRequestId( UUID.randomUUID().toString() );
     cc.setRootRequestId( UUID.randomUUID().toString() );
-    
+
     auditor.audit( "action", "resource", "resource type", "outcome", "message" );
-    
+
     auditService.detachContext();
     correlationService.detachContext();
-    
+
     assertThat( CollectAppender.queue.size(), is( 1 ) );
     event = CollectAppender.queue.iterator().next();
     checkLogEventContexts( event, cc, ac );
   }
-  
+
   private void checkLogEventContexts( LoggingEvent event, CorrelationContext expectedCorrelationContext, AuditContext expectedAuditContext ) {
     AuditContext context = (AuditContext) event.getMDC( Log4jAuditService.MDC_AUDIT_CONTEXT_KEY );
     assertThat( context.getUsername(), is( expectedAuditContext.getUsername() ) );
@@ -177,11 +176,10 @@ public class AuditServiceTest {
     assertThat( context.getRemoteIp(), is( expectedAuditContext.getRemoteIp() ) );
     assertThat( context.getRemoteHostname(), is( expectedAuditContext.getRemoteHostname() ) );
     assertThat( context.getTargetServiceName(), is( expectedAuditContext.getTargetServiceName() ) );
-         
+
     CorrelationContext correlationContext = (CorrelationContext)event.getMDC( Log4jCorrelationService.MDC_CORRELATION_CONTEXT_KEY );
     assertThat( correlationContext.getRequestId(), is( expectedCorrelationContext.getRequestId() ) );
     assertThat( correlationContext.getRootRequestId(), is( expectedCorrelationContext.getRootRequestId() ) );
     assertThat( correlationContext.getParentRequestId(), is( expectedCorrelationContext.getParentRequestId() ) );
   }
-
 }

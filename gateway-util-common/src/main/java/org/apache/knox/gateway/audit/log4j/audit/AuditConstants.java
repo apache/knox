@@ -21,14 +21,14 @@ public class AuditConstants {
   //resource
   public static final String MDC_RESOURCE_TYPE_KEY = "resource_type";
   public static final String MDC_RESOURCE_NAME_KEY = "resource_name";
-  
+
   //Action details
   public static final String MDC_ACTION_KEY = "action";
   public static final String MDC_OUTCOME_KEY = "outcome";
-  
+
   public static final String MDC_SERVICE_KEY = "service_name";
   public static final String MDC_COMPONENT_KEY = "component_name";
-  
+
   public static final String DEFAULT_AUDITOR_NAME = "audit";
   public static final String KNOX_SERVICE_NAME = "knox";
   public static final String KNOX_COMPONENT_NAME = "knox";

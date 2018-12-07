@@ -16,12 +16,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <jobAttempts>
-	<jobAttempt>
-		<nodeHttpAddress>localhost:50060</nodeHttpAddress>
-		<nodeId>localhost:45454</nodeId>
-		<id>1</id>
-		<startTime>1401199817106</startTime>
-		<containerId>container_1399541193872_0035_01_000001</containerId>
-		<logsLink>http://localhost:50060/node/containerlogs/container_1399541193872_0035_01_000001/hdfs</logsLink>
-	</jobAttempt>
+    <jobAttempt>
+        <nodeHttpAddress>localhost:50060</nodeHttpAddress>
+        <nodeId>localhost:45454</nodeId>
+        <id>1</id>
+        <startTime>1401199817106</startTime>
+        <containerId>container_1399541193872_0035_01_000001</containerId>
+        <logsLink>http://localhost:50060/node/containerlogs/container_1399541193872_0035_01_000001/hdfs</logsLink>
+    </jobAttempt>
 </jobAttempts>

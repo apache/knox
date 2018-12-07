@@ -22,8 +22,8 @@ import java.util.ServiceLoader;
 
 public class Credentials {
   ArrayList<CredentialCollector> collectors = new ArrayList<>();
-  
-  public Credentials add(String collectorType, String prompt, String name) 
+
+  public Credentials add(String collectorType, String prompt, String name)
     throws CredentialCollectionException {
     CredentialCollector collector = loadCredentialCollector(collectorType, prompt, name);
     if (collector == null) {
@@ -50,7 +50,7 @@ public class Credentials {
     }
     return null;
   }
-  
+
   private CredentialCollector loadCredentialCollector(String type, String prompt, String name) {
     ServiceLoader<CredentialCollector> collectorsList = ServiceLoader.load(CredentialCollector.class);
     for (CredentialCollector collector : collectorsList) {

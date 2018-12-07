@@ -182,7 +182,7 @@ public class DefaultCryptoService implements CryptoService {
 
   // The assumption here is that lock contention will be less of a performance issue than the cost of object creation.
   // We have seen via profiling that AESEncryptor instantiation is very expensive.
-  private final ConfigurableEncryptor getEncryptor( final String clusterName, final char[] password ) {
+  private ConfigurableEncryptor getEncryptor( final String clusterName, final char[] password ) {
     synchronized( encryptorCache ) {
       ConfigurableEncryptor encryptor = encryptorCache.get( clusterName );
       if( encryptor == null ) {

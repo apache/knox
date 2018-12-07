@@ -29,7 +29,7 @@ import org.junit.Test;
 /**
  * Test Hadoop {@link Groups} class. Basically to make sure that the
  * interface we depend on does not change.
- * 
+ *
  * @since 0.11.0
  */
 public class HadoopGroupsTest {

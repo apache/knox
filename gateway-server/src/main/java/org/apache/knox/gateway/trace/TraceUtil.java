@@ -29,7 +29,7 @@ public class TraceUtil {
 
   private static CorrelationService cs = CorrelationServiceFactory.getCorrelationService();
 
-  static final void appendCorrelationContext( final StringBuilder sb ) {
+  static void appendCorrelationContext(final StringBuilder sb ) {
     CorrelationContext cc = cs.getContext();
     if( cc == null ) {
       sb.append( "||" );
@@ -42,13 +42,13 @@ public class TraceUtil {
     }
   }
 
-  private static final void append( final StringBuilder sb, final String s ) {
+  private static void append( final StringBuilder sb, final String s ) {
     if( s != null ) {
       sb.append( s );
     }
   }
 
-  static final Set<Integer> parseIntegerSet( String str ) {
+  static Set<Integer> parseIntegerSet(String str ) {
     Set<Integer> set = new HashSet<>();
     if( str != null && !str.trim().isEmpty() ) {
       StringTokenizer parser = new StringTokenizer( str.trim(), ",", false );
@@ -59,7 +59,7 @@ public class TraceUtil {
     return set;
   }
 
-  private static final void addParsedIntegerToSet( Set<Integer> set, String str ) {
+  private static void addParsedIntegerToSet( Set<Integer> set, String str ) {
     if( str != null && !str.trim().isEmpty() ) {
       try {
         set.add( Integer.valueOf( str.trim() ) );

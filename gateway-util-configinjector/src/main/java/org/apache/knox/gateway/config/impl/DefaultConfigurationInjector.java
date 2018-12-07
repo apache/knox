@@ -69,7 +69,7 @@ public class DefaultConfigurationInjector implements ConfigurationInjector {
       if( value == null ) {
         Optional optional = field.getAnnotation( Optional.class );
         if( optional == null ) {
-          throw new ConfigurationException( String.format( Locale.ROOT, 
+          throw new ConfigurationException( String.format( Locale.ROOT,
               "Failed to find configuration for %s bound to %s of %s via %s",
               bind, name, target.getClass().getName(), adapter.getClass().getName() ) );
         }
@@ -107,7 +107,7 @@ public class DefaultConfigurationInjector implements ConfigurationInjector {
             String strValue = defTag.value();
             argValue = convertValue( target, argName, strValue, argTypes[i] );
           } else {
-            throw new ConfigurationException( String.format( Locale.ROOT, 
+            throw new ConfigurationException( String.format( Locale.ROOT,
                 "Failed to find configuration for %s as %s of %s via %s",
                 bndName, argName, target.getClass().getName(), adapter.getClass().getName() ) );
           }

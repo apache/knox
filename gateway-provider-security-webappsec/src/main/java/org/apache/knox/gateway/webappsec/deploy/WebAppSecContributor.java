@@ -74,7 +74,7 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
                                Service                     service,
                                ResourceDescriptor          resource,
                                List<FilterParamDescriptor> params) {
-    
+
     Provider webappsec = context.getTopology().getProvider(ROLE, NAME);
     if (webappsec != null && webappsec.isEnabled()) {
       Map<String,String> map = provider.getParams();

@@ -20,6 +20,5 @@ package org.apache.knox.gateway.filter.rewrite.api;
 public interface UrlRewriteFilterBufferDescriptor
     extends UrlRewriteFilterPathDescriptor, UrlRewriteFilterGroupDescriptor {
 
-  public UrlRewriteFilterDetectDescriptor addDetect( String path, String value );
-
+  UrlRewriteFilterDetectDescriptor addDetect( String path, String value );
 }

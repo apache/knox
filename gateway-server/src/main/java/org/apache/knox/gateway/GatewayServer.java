@@ -396,7 +396,7 @@ public class GatewayServer {
     }
 
     long idleTimeout = config.getGatewayIdleTimeout();
-    if (idleTimeout > 0l) {
+    if (idleTimeout > 0L) {
       connector.setIdleTimeout(idleTimeout);
     }
 

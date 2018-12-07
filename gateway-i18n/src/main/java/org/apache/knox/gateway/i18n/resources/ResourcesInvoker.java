@@ -106,7 +106,7 @@ public class ResourcesInvoker implements InvocationHandler {
     return prefix + suffix;
   }
 
-  private static final String createDefaultPatternSuffix( final int size ) {
+  private static String createDefaultPatternSuffix( final int size ) {
     StringBuilder builder = new StringBuilder( 1 + size*7 );
     builder.append( "(" );
     for( int i=0; i<size; i++ ) {
@@ -120,7 +120,7 @@ public class ResourcesInvoker implements InvocationHandler {
 
   }
 
-  private static final String calcBundleName( final Class<?> clazz ) {
+  private static String calcBundleName( final Class<?> clazz ) {
     String bundle = null;
     final Resources anno = clazz.getAnnotation( Resources.class );
     if( anno != null ) {

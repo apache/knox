@@ -29,8 +29,7 @@ import java.util.concurrent.Callable;
 class Queue {
 
   public static class Request extends AbstractRequest<Response> {
-
-    public Request( KnoxSession session ) {
+    Request( KnoxSession session ) {
       super( session );
     }
 
@@ -45,15 +44,11 @@ class Queue {
         }
       };
     }
-
   }
 
   public static class Response extends BasicResponse {
-
     protected Response( HttpResponse response ) {
       super( response );
     }
-
   }
-
 }

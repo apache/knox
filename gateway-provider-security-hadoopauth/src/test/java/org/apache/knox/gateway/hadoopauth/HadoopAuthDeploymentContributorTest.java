@@ -93,7 +93,7 @@ public class HadoopAuthDeploymentContributorTest {
 
     GatewayDescriptor gatewayDescriptor = new GatewayDescriptorImpl();
     ResourceDescriptor resource = gatewayDescriptor.createResource();
-    
+
     AliasService as = EasyMock.createNiceMock( AliasService.class );
     EasyMock.expect(as.getAliasesForCluster(context.getTopology().getName()))
         .andReturn(Collections.singletonList(aliasKey)).anyTimes();

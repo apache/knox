@@ -16,15 +16,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <node>
-	<rack>/default-rack</rack>
-	<state>RUNNING</state>
-	<id>localhost:45454</id>
-	<nodeHostName>localhost</nodeHostName>
-	<nodeHTTPAddress>localhost:50060</nodeHTTPAddress>
-	<lastHealthUpdate>1401197651742</lastHealthUpdate>
-	<version>2.4.0.2.1.1.0-390</version>
-	<healthReport></healthReport>
-	<numContainers>0</numContainers>
-	<usedMemoryMB>0</usedMemoryMB>
-	<availMemoryMB>8192</availMemoryMB>
+    <rack>/default-rack</rack>
+    <state>RUNNING</state>
+    <id>localhost:45454</id>
+    <nodeHostName>localhost</nodeHostName>
+    <nodeHTTPAddress>localhost:50060</nodeHTTPAddress>
+    <lastHealthUpdate>1401197651742</lastHealthUpdate>
+    <version>2.4.0.2.1.1.0-390</version>
+    <healthReport></healthReport>
+    <numContainers>0</numContainers>
+    <usedMemoryMB>0</usedMemoryMB>
+    <availMemoryMB>8192</availMemoryMB>
 </node>

@@ -16,24 +16,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <appStatInfo>
-	<statItem>
-		<state>FAILED</state>
-		<type>mapreduce</type>
-		<count>2</count>
-	</statItem>
-	<statItem>
-		<state>FINISHED</state>
-		<type>mapreduce</type>
-		<count>31</count>
-	</statItem>
-	<statItem>
-		<state>RUNNING</state>
-		<type>mapreduce</type>
-		<count>1</count>
-	</statItem>
-	<statItem>
-		<state>ACCEPTED</state>
-		<type>mapreduce</type>
-		<count>0</count>
-	</statItem>
+    <statItem>
+        <state>FAILED</state>
+        <type>mapreduce</type>
+        <count>2</count>
+    </statItem>
+    <statItem>
+        <state>FINISHED</state>
+        <type>mapreduce</type>
+        <count>31</count>
+    </statItem>
+    <statItem>
+        <state>RUNNING</state>
+        <type>mapreduce</type>
+        <count>1</count>
+    </statItem>
+    <statItem>
+        <state>ACCEPTED</state>
+        <type>mapreduce</type>
+        <count>0</count>
+    </statItem>
 </appStatInfo>

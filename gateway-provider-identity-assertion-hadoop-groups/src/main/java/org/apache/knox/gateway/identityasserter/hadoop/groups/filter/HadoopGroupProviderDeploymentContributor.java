@@ -34,7 +34,7 @@ import java.util.Map.Entry;
 /**
  * A provider deployment contributor for looking up authenticated user groups as
  * seen by Hadoop implementation.
- * 
+ *
  * @since 0.11.0
  */
 
@@ -70,13 +70,13 @@ public class HadoopGroupProviderDeploymentContributor
       if (!prefix.endsWith(".")) {
           prefix += ".";
       }
-      Map<String, String> groupMappingParams = 
+      Map<String, String> groupMappingParams =
               ((Configuration)context.getGatewayConfig()).getPropsWithPrefix(prefix);
       if (groupMappingParams != null) {
         params = createParamList(resource, params, groupMappingParams);
       }
     }
-  
+
     if (params == null || params.isEmpty()) {
         params = buildFilterInitParms(provider, resource, params);
     }

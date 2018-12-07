@@ -47,9 +47,7 @@ public class BaseKeystoreService {
   protected String keyStoreDir;
 
   private static KeyStore loadKeyStore(final File keyStoreFile, final char[] masterPassword, String storeType)
-      throws CertificateException, IOException, KeyStoreException,
-      NoSuchAlgorithmException {     
-      
+      throws CertificateException, IOException, KeyStoreException, NoSuchAlgorithmException {
        final KeyStore  keyStore = KeyStore.getInstance(storeType);
        if ( keyStoreFile.exists() ) {
            try (FileInputStream input = new FileInputStream( keyStoreFile )) {
@@ -58,7 +56,7 @@ public class BaseKeystoreService {
        } else {
            keyStore.load( null, masterPassword );
        }
-      
+
        return keyStore;
       }
 
@@ -83,8 +81,8 @@ public class BaseKeystoreService {
 
   protected void createKeystore(String filename, String keystoreType) throws KeystoreServiceException {
     try (FileOutputStream out = createKeyStoreFile( filename )) {
-      KeyStore ks = KeyStore.getInstance(keystoreType);  
-      ks.load( null, null );  
+      KeyStore ks = KeyStore.getInstance(keystoreType);
+      ks.load( null, null );
       ks.store( out, masterService.getMasterSecret() );
     } catch (KeyStoreException e) {
       LOG.failedToCreateKeystore( filename, keystoreType, e );
@@ -185,7 +183,7 @@ public class BaseKeystoreService {
   protected void writeCertificateToFile( Certificate cert, final File file ) throws CertificateEncodingException, IOException {
     byte[] bytes = cert.getEncoded();
     Base64 encoder = new Base64( 76, "\n".getBytes( StandardCharsets.US_ASCII ) );
-    try( final FileOutputStream out = new FileOutputStream( file ) ) {
+    try( FileOutputStream out = new FileOutputStream( file ) ) {
       out.write( "-----BEGIN CERTIFICATE-----\n".getBytes( StandardCharsets.US_ASCII ) );
       out.write( encoder.encodeToString( bytes ).getBytes( StandardCharsets.US_ASCII ) );
       out.write( "-----END CERTIFICATE-----\n".getBytes( StandardCharsets.US_ASCII ) );
@@ -195,7 +193,7 @@ public class BaseKeystoreService {
   protected void writeKeystoreToFile(final KeyStore keyStore, final File file)
       throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
      // TODO: backup the keystore on disk before attempting a write and restore on failure
-     try( final FileOutputStream out = new FileOutputStream(file) ) {
+     try( FileOutputStream out = new FileOutputStream(file) ) {
          keyStore.store( out, masterService.getMasterSecret() );
      }
   }

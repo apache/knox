@@ -848,8 +848,8 @@ function Sizzle( selector, context, results, seed ) {
 /**
  * Create key-value caches of limited size
  * @returns {function(string, object)} Returns the Object data after storing it on itself with
- *	property name the (space-suffixed) string and (if the cache is larger than Expr.cacheLength)
- *	deleting the oldest entry
+ * property name the (space-suffixed) string and (if the cache is larger than Expr.cacheLength)
+ * deleting the oldest entry
  */
 function createCache() {
         var keys = [];
@@ -3203,23 +3203,24 @@ function createOptions( options ) {
 /*
  * Create a callback list using the following parameters:
  *
- *	options: an optional list of space-separated options that will change how
- *			the callback list behaves or a more traditional option object
+ * options: an optional list of space-separated options that will change how
+ *          the callback list behaves or a more traditional option object
  *
  * By default a callback list will act like an event callback list and can be
  * "fired" multiple times.
  *
  * Possible options:
  *
- *	once:			will ensure the callback list can only be fired once (like a Deferred)
  *
- *	memory:			will keep track of previous values and will call any callback added
- *					after the list has been fired right away with the latest "memorized"
- *					values (like a Deferred)
+ *  once:           will ensure the callback list can only be fired once (like a Deferred)
  *
- *	unique:			will ensure a callback can only be added once (no duplicate in the list)
+ *  memory:         will keep track of previous values and will call any callback added
+ *                  after the list has been fired right away with the latest "memorized"
+ *                  values (like a Deferred)
  *
- *	stopOnFalse:	interrupt callings when a callback returns false
+ *  unique:         will ensure a callback can only be added once (no duplicate in the list)
+ *
+ *  stopOnFalse:    interrupt callings when a callback returns false
  *
  */
 jQuery.Callbacks = function( options ) {
@@ -4157,15 +4158,15 @@ var dataUser = new Data();
 
 
 
-//	Implementation Summary
+//  Implementation Summary
 //
-//	1. Enforce API surface and semantic compatibility with 1.9.x branch
-//	2. Improve the module's maintainability by reducing the storage
-//		paths to a single mechanism.
-//	3. Use the same single mechanism to support "private" and "user" data.
-//	4. _Never_ expose "private" data to user code (TODO: Drop _data, _removeData)
-//	5. Avoid exposing implementation details on user objects (eg. expando properties)
-//	6. Provide a clear path for implementation upgrade to WeakMap in 2014
+//  1. Enforce API surface and semantic compatibility with 1.9.x branch
+//  2. Improve the module's maintainability by reducing the storage
+//     paths to a single mechanism.
+//  3. Use the same single mechanism to support "private" and "user" data.
+//  4. _Never_ expose "private" data to user code (TODO: Drop _data, _removeData)
+//  5. Avoid exposing implementation details on user objects (eg. expando properties)
+//  6. Provide a clear path for implementation upgrade to WeakMap in 2014
 
 var rbrace = /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,
         rmultiDash = /[A-Z]/g;

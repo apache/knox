@@ -52,7 +52,7 @@ import java.lang.reflect.InvocationTargetException;
 public class XmlUrlRewriteRulesExporter implements UrlRewriteRulesExporter, XmlRewriteRulesTags {
 
   private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
-  
+
   @Override
   public String getFormat() {
     return "xml";

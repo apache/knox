@@ -27,7 +27,7 @@ public interface ServerInfoService extends Service {
    * @return build version
    */
   String getBuildVersion();
-  
+
   /**
    * Get the build hash for the server instance
    * @return build hash

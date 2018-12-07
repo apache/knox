@@ -88,7 +88,7 @@ public class MessageFailureTest {
 
     client.awaitClose(CloseReason.CloseCodes.TOO_BIG.getCode(), 1000,
         TimeUnit.MILLISECONDS);
-    
+
     Assert.assertThat(client.close.getCloseCode().getCode(), CoreMatchers.is(CloseReason.CloseCodes.TOO_BIG.getCode()));
   }
 
@@ -161,21 +161,16 @@ public class MessageFailureTest {
     }
     int port = proxyConnector.getLocalPort();
     proxyUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/", host, port));
-    
   }
-
 }
 
 /**
  * A Mock websocket handler that just Echos messages
  */
-class BigEchoSocketHandler extends WebSocketHandler
-    implements WebSocketCreator {
+class BigEchoSocketHandler extends WebSocketHandler implements WebSocketCreator {
+  private final WebSocketAdapter socket;
 
-  // final EchoSocket socket = new EchoSocket();
-  final WebSocketAdapter socket;
-
-  public BigEchoSocketHandler(final WebSocketAdapter socket) {
+  BigEchoSocketHandler(final WebSocketAdapter socket) {
     this.socket = socket;
   }
 

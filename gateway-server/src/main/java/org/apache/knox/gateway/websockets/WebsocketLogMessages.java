@@ -24,10 +24,9 @@ import org.apache.knox.gateway.i18n.messages.StackTrace;
 
 /**
  * Logging for Websocket
- * 
+ *
  * @since 0.10
  */
-
 @Messages(logger = "org.apache.knox.gateway.websockets")
 public interface WebsocketLogMessages {
 
@@ -41,20 +40,20 @@ public interface WebsocketLogMessages {
   void connectionFailed(@StackTrace(level = MessageLevel.ERROR) Exception e);
 
   @Message(level = MessageLevel.ERROR, text = "Error: {0}")
-  void onError(final String message);
+  void onError(String message);
 
   @Message(level = MessageLevel.ERROR, text = "Bad or malformed url: {0}")
   void badUrlError(@StackTrace(level = MessageLevel.ERROR) Exception e);
 
   @Message(level = MessageLevel.DEBUG,
       text = "Websocket connection to backend server {0} opened")
-  void onConnectionOpen(final String backend);
+  void onConnectionOpen(String backend);
 
   @Message(level = MessageLevel.DEBUG, text = "Message: {0}")
-  void logMessage(final String message);
+  void logMessage(String message);
 
   @Message(level = MessageLevel.DEBUG,
       text = "Websocket connection to backend server {0} closed")
-  void onConnectionClose(final String backend);
+  void onConnectionClose(String backend);
 
 }

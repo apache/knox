@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Test to simulate unexpected connection drop. Here we establish a connection
  * and then try to simulate an error.
- * 
+ *
  * @since 0.10
  *
  */
@@ -148,9 +148,8 @@ public class ConnectionDroppedTest {
 }
 
 /**
- * 
  * Simulate a bad socket.
- * 
+ *
  * @since 0.10
  */
 class BadSocket extends WebSocketAdapter {

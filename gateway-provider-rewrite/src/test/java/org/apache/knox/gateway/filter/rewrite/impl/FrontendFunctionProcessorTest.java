@@ -158,7 +158,7 @@ public class FrontendFunctionProcessorTest {
       }
     }
     rewriteFilter.setFilter( new UrlRewriteServletFilter() );
-    
+
     interactions = new ArrayDeque<>();
 
     ServletHolder servlet = server.addServlet( MockServlet.class, "/" );
@@ -258,7 +258,7 @@ public class FrontendFunctionProcessorTest {
   private static class SetupFilter implements Filter {
     private Subject subject;
 
-    public SetupFilter( String userName ) {
+    SetupFilter( String userName ) {
       subject = new Subject();
       subject.getPrincipals().add( new BasicUserPrincipal( userName ) );
     }

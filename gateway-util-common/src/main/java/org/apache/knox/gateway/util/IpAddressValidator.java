@@ -24,17 +24,16 @@ import java.util.Collections;
  * Validate a given IP Address against a list of comma separated list of addresses.
  */
 public class IpAddressValidator {
-  
   /**
-   * The parsed list of ip addresses 
+   * The parsed list of ip addresses
    */
   private ArrayList<String> ipaddr = new ArrayList<>();
-  
+
   /**
    * IP addresses from the ipaddr list that contain a wildcard character '*'
    */
   private ArrayList<String> wildCardIPs = new ArrayList<>();
-  
+
   /**
    * Optimization based on empty IP address list or an explicit '*' wildcard
    */
@@ -49,7 +48,7 @@ public class IpAddressValidator {
       anyIP = true;
       return;
     }
-    
+
     parseIpAddesses(commaSeparatedIpAddresses);
   }
 
@@ -68,14 +67,14 @@ public class IpAddressValidator {
       }
     }
   }
-  
+
   public boolean validateIpAddress(String addr) {
     boolean valid = false;
     if (addr == null) {
       // LJM TODO: log as possible programming error
       return false;
     }
-    
+
     if (anyIP) {
       valid = true;
     }
@@ -101,7 +100,7 @@ public class IpAddressValidator {
   public boolean allowsAnyIP() {
     return anyIP;
   }
-  
+
   public ArrayList<String> getIPAddresses() {
     return ipaddr;
   }

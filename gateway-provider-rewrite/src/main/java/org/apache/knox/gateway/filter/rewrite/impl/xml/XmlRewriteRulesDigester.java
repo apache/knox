@@ -220,8 +220,7 @@ public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlR
 //    }
 //  }
 
-  private static abstract class FactoryRule extends Rule {
-
+  private abstract static class FactoryRule extends Rule {
     protected abstract Object create( String namespace, String name, Attributes attributes );
 
     @Override
@@ -233,7 +232,5 @@ public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlR
     public void end( String namespace, String name ) throws Exception {
       getDigester().pop();
     }
-
   }
-
 }

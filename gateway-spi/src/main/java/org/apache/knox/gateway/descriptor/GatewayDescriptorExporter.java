@@ -21,9 +21,7 @@ import java.io.IOException;
 import java.io.Writer;
 
 public interface GatewayDescriptorExporter {
+  String getFormat();
 
-  public String getFormat();
-
-  public void store( GatewayDescriptor descriptor, Writer writer ) throws IOException;
-
+  void store( GatewayDescriptor descriptor, Writer writer ) throws IOException;
 }

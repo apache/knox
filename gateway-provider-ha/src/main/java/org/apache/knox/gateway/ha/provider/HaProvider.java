@@ -21,47 +21,47 @@ import java.util.List;
 
 public interface HaProvider {
 
-   public HaDescriptor getHaDescriptor();
+  HaDescriptor getHaDescriptor();
 
-   /**
-    * Add a service name (role) as a HA service with the URLs that it is configured for
-    *
-    * @param serviceName the name of the service
-    * @param urls        the list of urls that can be used for that service
-    */
-   public void addHaService(String serviceName, List<String> urls);
+  /**
+   * Add a service name (role) as a HA service with the URLs that it is configured for
+   *
+   * @param serviceName the name of the service
+   * @param urls        the list of urls that can be used for that service
+   */
+  void addHaService(String serviceName, List<String> urls);
 
-   /**
-    * Returns whether the service is enabled for HA
-    *
-    * @param serviceName the name of the service
-    * @return true if the service is enabled; false otherwise
-    */
-   public boolean isHaEnabled(String serviceName);
+  /**
+   * Returns whether the service is enabled for HA
+   *
+   * @param serviceName the name of the service
+   * @return true if the service is enabled; false otherwise
+   */
+  boolean isHaEnabled(String serviceName);
 
-   /**
-    * Returns the current URL that is known to be active for the service
-    *
-    * @param serviceName the name of the service
-    * @return the URL as a string or null if the service name is not found
-    */
-   public String getActiveURL(String serviceName);
+  /**
+   * Returns the current URL that is known to be active for the service
+   *
+   * @param serviceName the name of the service
+   * @return the URL as a string or null if the service name is not found
+   */
+  String getActiveURL(String serviceName);
 
-   /**
-    * Sets a given URL that is known to be active for the service
-    *
-    * @param serviceName the name of the service
-    * @param url the active url
-    */
-   public void setActiveURL(String serviceName, String url);
+  /**
+   * Sets a given URL that is known to be active for the service
+   *
+   * @param serviceName the name of the service
+   * @param url         the active url
+   */
+  void setActiveURL(String serviceName, String url);
 
-   /**
-    * Mark the URL for the service as one that has failed. This method puts changes the active URL to
-    * the next available URL for the service.
-    *
-    * @param serviceName the name of the service
-    * @param url         the URL that has failed in some way
-    */
-   public void markFailedURL(String serviceName, String url);
+  /**
+   * Mark the URL for the service as one that has failed. This method puts changes the active URL to
+   * the next available URL for the service.
+   *
+   * @param serviceName the name of the service
+   * @param url         the URL that has failed in some way
+   */
+  void markFailedURL(String serviceName, String url);
 
 }

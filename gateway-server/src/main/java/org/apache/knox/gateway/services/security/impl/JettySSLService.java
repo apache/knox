@@ -77,7 +77,6 @@ public class JettySSLService implements SSLService {
     this.ks = ks;
   }
 
-  
   @Override
   public void init(GatewayConfig config, Map<String, String> options)
       throws ServiceLifecycleException {
@@ -149,7 +148,7 @@ public class JettySSLService implements SSLService {
         Date notBefore = ((X509Certificate) cert).getNotBefore();
         Date notAfter = ((X509Certificate) cert).getNotAfter();
         log.certificateValidityPeriod(notBefore, notAfter);
-        
+
         // let's not even start if the current date is not within the validity period for the SSL cert
         try {
           ((X509Certificate)cert).checkValidity();
@@ -158,12 +157,10 @@ public class JettySSLService implements SSLService {
         } catch (CertificateNotYetValidException e) {
           throw new ServiceLifecycleException("Gateway SSL Certificate is not yet valid. Server will not start.", e);
         }
-      }
-      else {
+      } else {
         throw new ServiceLifecycleException("Public certificate for the gateway cannot be found with the alias gateway-identity. Plase check the identity certificate alias.");
       }
-    }
-    else {
+    } else {
       throw new ServiceLifecycleException("Public certificate for the gateway is not of the expected type of X509Certificate. Something is wrong with the gateway keystore.");
     }
   }
@@ -233,7 +230,7 @@ public class JettySSLService implements SSLService {
     }
     return sslContextFactory;
   }
-  
+
   @Override
   public void start() throws ServiceLifecycleException {
   }

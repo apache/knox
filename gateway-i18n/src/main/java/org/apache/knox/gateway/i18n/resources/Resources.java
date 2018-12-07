@@ -25,6 +25,6 @@ import java.lang.annotation.Target;
 @Retention( RetentionPolicy.RUNTIME )
 @Target( ElementType.TYPE )
 public @interface Resources {
-  static final String DEFAULT_BUNDLE = "";
+  String DEFAULT_BUNDLE = "";
   String bundle() default DEFAULT_BUNDLE;
 }

@@ -65,7 +65,7 @@ public class GatewayFilter implements Filter {
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse ) throws IOException, ServletException {
     }
   };
-  
+
   private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
   private static final GatewayResources RES = ResourcesFactory.get( GatewayResources.class );
   private static AuditService auditService = AuditServiceFactory.getAuditService();
@@ -161,7 +161,7 @@ public class GatewayFilter implements Filter {
     auditor.audit(
         Action.ACCESS, contextWithPathAndQuery, ResourceType.URI,
         ActionOutcome.UNAVAILABLE, RES.requestMethod(((HttpServletRequest)servletRequest).getMethod()));
-    
+
     if( match != null ) {
       Chain chain = match.getValue();
       servletRequest.setAttribute( AbstractGatewayFilter.TARGET_SERVICE_ROLE, chain.getResourceRole() );
@@ -186,7 +186,7 @@ public class GatewayFilter implements Filter {
       // Make sure to destroy the correlationContext to prevent threading issues
       CorrelationServiceFactory.getCorrelationService().detachContext();
     }
-    
+
     //KAM[ Don't do this or the Jetty default servlet will overwrite any response setup by the filter.
     // filterChain.doFilter( servletRequest, servletResponse );
     //]
@@ -253,7 +253,7 @@ public class GatewayFilter implements Filter {
   private class Chain implements FilterChain {
 
     private List<Holder> chain;
-    private String resourceRole; 
+    private String resourceRole;
 
     private Chain() {
       this.chain = new ArrayList<>();
@@ -406,7 +406,7 @@ public class GatewayFilter implements Filter {
       }
       return instance;
     }
-    
+
     private String getResourceRole() {
       return resourceRole;
     }
@@ -422,7 +422,7 @@ public class GatewayFilter implements Filter {
     private String newURL;
     private String contextpath;
 
-    public ForwardedRequest(final HttpServletRequest request,
+    ForwardedRequest(final HttpServletRequest request,
         final String contextpath, final String newURL) {
       super(request);
       this.newURL = newURL;

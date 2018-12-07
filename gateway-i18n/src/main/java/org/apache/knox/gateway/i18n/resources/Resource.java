@@ -25,6 +25,6 @@ import java.lang.annotation.Target;
 @Retention( RetentionPolicy.RUNTIME )
 @Target( ElementType.METHOD )
 public @interface Resource {
-  static final String DEFAULT_TEXT = "{}";
+  String DEFAULT_TEXT = "{}";
   String text() default DEFAULT_TEXT;
 }

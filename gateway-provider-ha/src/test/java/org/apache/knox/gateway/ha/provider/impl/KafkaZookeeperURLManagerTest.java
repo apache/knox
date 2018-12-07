@@ -36,7 +36,7 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * Simple unit tests for KafkaZookeeperURLManager.
- * 
+ *
  * @see KafkaZookeeperURLManager
  */
 public class KafkaZookeeperURLManagerTest {
@@ -64,7 +64,7 @@ public class KafkaZookeeperURLManagerTest {
       cluster.close();
     }
   }
-  
+
   @Test
   public void testHBaseZookeeperURLManagerLoading() {
     HaServiceConfig config = new DefaultHaServiceConfig("KAFKA");

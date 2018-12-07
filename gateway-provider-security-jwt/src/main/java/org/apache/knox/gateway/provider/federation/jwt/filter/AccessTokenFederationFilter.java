@@ -46,9 +46,9 @@ import java.util.Set;
 public class AccessTokenFederationFilter implements Filter {
   private static JWTMessages log = MessagesFactory.get( JWTMessages.class );
   private static final String BEARER = "Bearer ";
-  
+
   private JWTokenAuthority authority;
-  
+
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
     GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
@@ -115,7 +115,7 @@ public class AccessTokenFederationFilter implements Filter {
     ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
     return;
   }
-  
+
   private void continueWithEstablishedSecurityContext(Subject subject, final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
     try {
       Subject.doAs(
@@ -142,7 +142,7 @@ public class AccessTokenFederationFilter implements Filter {
       }
     }
   }
-  
+
   private Subject createSubjectFromToken(JWTToken token) {
     final String principal = token.getPrincipal();
 
@@ -150,16 +150,15 @@ public class AccessTokenFederationFilter implements Filter {
     Set<Principal> principals = new HashSet<>();
     Principal p = new PrimaryPrincipal(principal);
     principals.add(p);
-    
-//        The newly constructed Sets check whether this Subject has been set read-only 
-//        before permitting subsequent modifications. The newly created Sets also prevent 
-//        illegal modifications by ensuring that callers have sufficient permissions.
-//
-//        To modify the Principals Set, the caller must have AuthPermission("modifyPrincipals"). 
-//        To modify the public credential Set, the caller must have AuthPermission("modifyPublicCredentials"). 
-//        To modify the private credential Set, the caller must have AuthPermission("modifyPrivateCredentials").
-    javax.security.auth.Subject subject = new javax.security.auth.Subject(true, principals, emptySet, emptySet);
-    return subject;
+
+    // The newly constructed Sets check whether this Subject has been set read-only
+    // before permitting subsequent modifications. The newly created Sets also prevent
+    // illegal modifications by ensuring that callers have sufficient permissions.
+    //
+    // To modify the Principals Set, the caller must have AuthPermission("modifyPrincipals").
+    // To modify the public credential Set, the caller must have AuthPermission("modifyPublicCredentials").
+    // To modify the private credential Set, the caller must have AuthPermission("modifyPrivateCredentials").
+    return new javax.security.auth.Subject(true, principals, emptySet, emptySet);
   }
 
 }

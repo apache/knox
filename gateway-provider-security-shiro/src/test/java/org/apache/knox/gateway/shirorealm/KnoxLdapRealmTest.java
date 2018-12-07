@@ -25,42 +25,42 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 public class KnoxLdapRealmTest {
-  
+
   @Test
   public void setGetSearchBase() {
     KnoxLdapRealm realm = new KnoxLdapRealm();
     realm.setSearchBase("dc=hadoop,dc=apache,dc=org");
     assertEquals(realm.getSearchBase(), "dc=hadoop,dc=apache,dc=org");
   }
-  
+
   @Test
   public void setGetGroupObjectClass() {
     KnoxLdapRealm realm = new KnoxLdapRealm();
     realm.setGroupObjectClass("groupOfMembers");
     assertEquals(realm.getGroupObjectClass(), "groupOfMembers");
-  }  
-  
+  }
+
   @Test
   public void setGetUniqueMemberAttribute() {
     KnoxLdapRealm realm = new KnoxLdapRealm();
     realm.setMemberAttribute("member");
     assertEquals(realm.getMemberAttribute(), "member");
   }
-  
+
   @Test
   public void setGetUserSearchAttributeName() {
     KnoxLdapRealm realm = new KnoxLdapRealm();
     realm.setUserSearchAttributeName("uid");
     assertEquals(realm.getUserSearchAttributeName(), "uid");
   }
-  
+
   @Test
   public void setGetUserObjectClass() {
     KnoxLdapRealm realm = new KnoxLdapRealm();
     realm.setUserObjectClass("inetuser");
     assertEquals(realm.getUserObjectClass(), "inetuser");
   }
-  
+
   @Test
   public void setGetUserSearchBase() {
     KnoxLdapRealm realm = new KnoxLdapRealm();
@@ -68,7 +68,7 @@ public class KnoxLdapRealmTest {
     realm.setUserSearchBase("dc=knox,dc=example,dc=com");
     assertEquals(realm.getUserSearchBase(), "dc=knox,dc=example,dc=com");
   }
-  
+
   @Test
   public void setGetGroupSearchBase() {
     KnoxLdapRealm realm = new KnoxLdapRealm();
@@ -76,31 +76,30 @@ public class KnoxLdapRealmTest {
     realm.setGroupSearchBase("dc=knox,dc=example,dc=com");
     assertEquals(realm.getGroupSearchBase(), "dc=knox,dc=example,dc=com");
   }
-  
+
   @Test
   public void verifyDefaultUserSearchAttributeName() {
     KnoxLdapRealm realm = new KnoxLdapRealm();
     assertNull(realm.getUserSearchAttributeName());
   }
-  
+
   @Test
   public void verifyDefaultGetUserObjectClass() {
     KnoxLdapRealm realm = new KnoxLdapRealm();
     assertEquals(realm.getUserObjectClass(), "person");
   }
-  
+
   @Test
   public void verifyDefaultUserSearchBase() {
     KnoxLdapRealm realm = new KnoxLdapRealm();
     realm.setSearchBase("dc=knox,dc=example,dc=com");
     assertEquals(realm.getUserSearchBase(), "dc=knox,dc=example,dc=com");
   }
-  
+
   @Test
   public void verifyDefaultGroupSearchBase() {
     KnoxLdapRealm realm = new KnoxLdapRealm();
     realm.setSearchBase("dc=knox,dc=example,dc=com");
     assertEquals(realm.getGroupSearchBase(), "dc=knox,dc=example,dc=com");
   }
-  
 }

@@ -36,21 +36,21 @@ import org.apache.shiro.realm.ldap.JndiLdapContextFactory;
  * An extension of {@link JndiLdapContextFactory} that allows a different authentication mechanism
  * for system-level authentications (as used by authorization lookups, for example)
  * compared to regular authentication.
- * 
+ *
  * <p>
  * See {@link KnoxLdapRealm} for typical configuration within <tt>shiro.ini</tt>.
  */
 public class KnoxLdapContextFactory extends JndiLdapContextFactory {
 
     private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
-  
+
     private String systemAuthenticationMechanism = "simple";
     private String clusterName = "";
 
     public KnoxLdapContextFactory() {
       setAuthenticationMechanism("simple");
     }
-    
+
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     protected LdapContext createLdapContext(Hashtable env) throws NamingException {
@@ -63,34 +63,33 @@ public class KnoxLdapContextFactory extends JndiLdapContextFactory {
     public String getSystemAuthenticationMechanism() {
         return systemAuthenticationMechanism != null? systemAuthenticationMechanism: getAuthenticationMechanism();
     }
-    
+
     public void setSystemAuthenticationMechanism(String systemAuthenticationMechanism) {
         this.systemAuthenticationMechanism = systemAuthenticationMechanism;
     }
-    
+
     @Override
     public void setSystemPassword(String systemPass) {
-     
       if ( systemPass == null ) {
         return;
       }
-      
+
       systemPass = systemPass.trim();
       if (systemPass.length() == 0) {
         return;
       }
-      
+
       if (!systemPass.startsWith("S{ALIAS=")) {
         super.setSystemPassword( systemPass );
         return;
       }
-      
+
       systemPass= systemPass.substring( "S{ALIAS=".length(), systemPass.length() - 1 );
       String aliasName = systemPass;
-      
+
       GatewayServices services = GatewayServer.getGatewayServices();
       AliasService aliasService = services.getService(GatewayServices.ALIAS_SERVICE);
-      
+
       String clusterName = getClusterName();
       //System.err.println("FACTORY systempass 30: " + systemPass);
       //System.err.println("FACTORY clustername 40: " + clusterName);
@@ -111,7 +110,7 @@ public class KnoxLdapContextFactory extends JndiLdapContextFactory {
         LOG.aliasValueNotFound(clusterName, aliasName);
       }
     }
-    
+
     public String getClusterName() {
       return clusterName;
     }
@@ -121,5 +120,4 @@ public class KnoxLdapContextFactory extends JndiLdapContextFactory {
         this.clusterName = clusterName.trim();
       }
     }
-    
 }

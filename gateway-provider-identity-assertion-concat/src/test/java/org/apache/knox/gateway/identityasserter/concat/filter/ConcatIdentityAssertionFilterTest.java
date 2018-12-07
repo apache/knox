@@ -45,17 +45,17 @@ public class ConcatIdentityAssertionFilterTest {
 
     ConcatIdentityAssertionFilter filter = new ConcatIdentityAssertionFilter();
     Subject subject = new Subject();
-    
+
     subject.getPrincipals().add(new PrimaryPrincipal("larry"));
     subject.getPrincipals().add(new GroupPrincipal("users"));
     subject.getPrincipals().add(new GroupPrincipal("admin"));
-    
+
     filter.init(config);
     String username = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
     String[] groups = filter.mapGroupPrincipals(username, subject);
     assertEquals(username, "larry");
     assertNull(groups); // means for the caller to use the existing subject groups
-    
+
     config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     context = EasyMock.createNiceMock(ServletContext.class);

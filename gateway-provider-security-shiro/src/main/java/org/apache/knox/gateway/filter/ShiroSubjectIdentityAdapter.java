@@ -44,13 +44,11 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 
 public class ShiroSubjectIdentityAdapter implements Filter {
-  
   private static final String SUBJECT_USER_GROUPS = "subject.userGroups";
   private static AuditService auditService = AuditServiceFactory.getAuditService();
   private static Auditor auditor = auditService.getAuditor(
       AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
       AuditConstants.KNOX_COMPONENT_NAME );
-  
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
@@ -63,9 +61,8 @@ public class ShiroSubjectIdentityAdapter implements Filter {
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
-    
     Subject subject = SecurityUtils.getSubject();
-    
+
     // trigger call to shiro authorization realm
     // we use shiro authorization realm to look up groups
     subject.hasRole("authenticatedUser");
@@ -73,12 +70,12 @@ public class ShiroSubjectIdentityAdapter implements Filter {
     CallableChain callableChain = new CallableChain(request, response, chain);
     SecurityUtils.getSubject().execute(callableChain);
   }
-  
+
   private static class CallableChain implements Callable<Void> {
     private FilterChain chain = null;
     ServletRequest request = null;
     ServletResponse response = null;
-    
+
     CallableChain(ServletRequest request, ServletResponse response, FilterChain chain) {
       this.request = request;
       this.response = response;
@@ -114,7 +111,7 @@ public class ShiroSubjectIdentityAdapter implements Filter {
       if (SecurityUtils.getSubject().getSession().getAttribute(SUBJECT_USER_GROUPS) != null) {
         userGroups = (Set<String>)SecurityUtils.getSubject().getSession().getAttribute(SUBJECT_USER_GROUPS);
       } else { // KnoxLdapRealm case
-        if(  shiroSubject.getPrincipal() instanceof String ) { 
+        if(  shiroSubject.getPrincipal() instanceof String ) {
            userGroups = new HashSet<>(shiroSubject.getPrincipals().asSet());
            userGroups.remove(principal);
         } else { // KnoxPamRealm case
@@ -133,20 +130,18 @@ public class ShiroSubjectIdentityAdapter implements Filter {
         principals.add(gp);
       }
       auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS, "Groups: " + userGroups );
-      
-//      The newly constructed Sets check whether this Subject has been set read-only 
-//      before permitting subsequent modifications. The newly created Sets also prevent 
-//      illegal modifications by ensuring that callers have sufficient permissions.
-//
-//      To modify the Principals Set, the caller must have AuthPermission("modifyPrincipals"). 
-//      To modify the public credential Set, the caller must have AuthPermission("modifyPublicCredentials"). 
-//      To modify the private credential Set, the caller must have AuthPermission("modifyPrivateCredentials").
+
+      // The newly constructed Sets check whether this Subject has been set read-only
+      // before permitting subsequent modifications. The newly created Sets also prevent
+      // illegal modifications by ensuring that callers have sufficient permissions.
+      //
+      // To modify the Principals Set, the caller must have AuthPermission("modifyPrincipals").
+      // To modify the public credential Set, the caller must have AuthPermission("modifyPublicCredentials").
+      // To modify the private credential Set, the caller must have AuthPermission("modifyPrivateCredentials").
       javax.security.auth.Subject subject = new javax.security.auth.Subject(true, principals, emptySet, emptySet);
       javax.security.auth.Subject.doAs( subject, action );
-      
+
       return null;
     }
-    
   }
-
 }

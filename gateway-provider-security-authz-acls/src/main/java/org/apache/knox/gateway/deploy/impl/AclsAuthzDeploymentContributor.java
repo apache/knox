@@ -54,14 +54,14 @@ public class AclsAuthzDeploymentContributor extends ProviderDeploymentContributo
   }
 
   @Override
-  public void contributeFilter( DeploymentContext context, Provider provider, Service service, 
+  public void contributeFilter( DeploymentContext context, Provider provider, Service service,
       ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
     if (params == null) {
       params = new ArrayList<>();
     }
     // add resource role to params so that we can determine the acls to enforce at runtime
     params.add( resource.createFilterParam().name( "resource.role" ).value(resource.role() ) );
-    
+
     // the following are used within the AclsAuthz provider to replace
     // placeholders within the acls KNOX_ADMIN_GROUPS and KNOX_ADMIN_USERS
     String adminGroups = context.getGatewayConfig().getKnoxAdminGroups();

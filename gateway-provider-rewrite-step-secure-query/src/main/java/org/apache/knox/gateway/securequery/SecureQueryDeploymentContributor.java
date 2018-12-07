@@ -48,7 +48,7 @@ public class SecureQueryDeploymentContributor
   public String getName() {
     return PROVIDER_IMPL_NAME;
   }
-  
+
   public void setAliasService(AliasService as) {
     this.as = as;
   }
@@ -58,7 +58,7 @@ public class SecureQueryDeploymentContributor
     super.initializeContribution(context);
 
     String clusterName = context.getTopology().getName();
-    
+
     // we don't want to overwrite an existing alias from a previous topology deployment
     // so we can't just blindly generateAlias here.
     // this version of getPassword will generate a value for it only if missing

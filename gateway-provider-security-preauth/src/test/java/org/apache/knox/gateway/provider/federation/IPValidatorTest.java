@@ -37,7 +37,7 @@ public class IPValidatorTest extends org.junit.Assert {
   @Test
   public void testIPAddressPositive() throws PreAuthValidationException {
     IPValidator ipv = new IPValidator();
-    
+
     final FilterConfig filterConfig = EasyMock.createMock(FilterConfig.class);
     EasyMock.expect(filterConfig.getInitParameter(IPValidator.IP_ADDRESSES_PARAM)).andReturn("5.4.3.2,10.1.23.42");
     EasyMock.replay(filterConfig);

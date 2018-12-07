@@ -65,8 +65,8 @@ public interface CorrelationContext {
   void setRootRequestId( String rootRequestId );
 
   /**
-   * Would be used to indicate that the context can be cleaned and reused.  
-   * This is only important if the service would like to maintain a pool of available "empty" context 
+   * Would be used to indicate that the context can be cleaned and reused.
+   * This is only important if the service would like to maintain a pool of available "empty" context
    * that can be reused to limit memory allocation and garbage collection.
    */
   void destroy();

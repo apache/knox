@@ -28,13 +28,13 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation of URLManager intended for query of Zookeeper for active HBase RegionServer hosts.
- *  
+ *
  * The assumption is that the HBase REST Server will be installed on the same host.  For safety
  * reasons, the REST Server is pinged for access before inclusion in the list of returned hosts.
- * 
+ *
  * In the event of a failure via markFailed, Zookeeper is queried again for active
  * host information.
- * 
+ *
  * When configuring the HAProvider in the topology, the zookeeperEnsemble
  * attribute must be set to a comma delimited list of the host and port number,
  * i.e. host1:2181,host2:2181.

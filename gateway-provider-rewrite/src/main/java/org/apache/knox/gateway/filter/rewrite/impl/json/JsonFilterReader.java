@@ -64,8 +64,7 @@ class JsonFilterReader extends Reader {
   private UrlRewriteFilterBufferDescriptor bufferingConfig;
   private UrlRewriteFilterGroupDescriptor config;
 
-
-  public JsonFilterReader( Reader reader, UrlRewriteFilterContentDescriptor config ) throws IOException {
+  JsonFilterReader( Reader reader, UrlRewriteFilterContentDescriptor config ) throws IOException {
     this.reader = reader;
     factory = new JsonFactory();
     mapper = new ObjectMapper();

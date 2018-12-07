@@ -33,7 +33,7 @@ public interface SpiGatewayMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "Dispatch request: {0} {1}" )
   void dispatchRequest( String method, URI uri );
-  
+
   @Message( level = MessageLevel.WARN, text = "Connection exception dispatching request: {0} {1}" )
   void dispatchServiceConnectionException( URI uri, @StackTrace(level=MessageLevel.WARN) Exception e );
 
@@ -45,7 +45,7 @@ public interface SpiGatewayMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "Successful Knox->Hadoop SPNegotiation authentication for URL: {0}" )
   void successfulSPNegoAuthn(String uri);
-  
+
   @Message( level = MessageLevel.ERROR, text = "Failed Knox->Hadoop SPNegotiation authentication for URL: {0}" )
   void failedSPNegoAuthn(String uri);
 
@@ -81,11 +81,11 @@ public interface SpiGatewayMessages {
 
   @Message( level = MessageLevel.INFO,
             text = "Applying a derived dispatch whitelist because none is configured in gateway-site: {0}" )
-  void derivedDispatchWhitelist(final String derivedWhitelist);
+  void derivedDispatchWhitelist(String derivedWhitelist);
 
   @Message( level=MessageLevel.ERROR,
              text = "Unable to reliably determine the Knox domain for the default whitelist. Defaulting to allow requests only to {0}. Please consider explicitly configuring the whitelist via the gateway.dispatch.whitelist property in gateway-site" )
-  void unableToDetermineKnoxDomainForDefaultWhitelist(final String permittedHostName);
+  void unableToDetermineKnoxDomainForDefaultWhitelist(String permittedHostName);
 
   @Message( level = MessageLevel.ERROR,
             text = "The dispatch to {0} was disallowed because it fails the dispatch whitelist validation. See documentation for dispatch whitelisting." )

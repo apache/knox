@@ -45,7 +45,7 @@ public interface JWT {
 
   String getAudience();
 
-  public String[] getAudienceClaims();
+  String[] getAudienceClaims();
 
   String getExpires();
 

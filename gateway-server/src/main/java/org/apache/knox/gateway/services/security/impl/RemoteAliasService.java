@@ -264,7 +264,7 @@ public class RemoteAliasService implements AliasService {
       }
 
       if (remoteClient.getEntryData(aliasEntryPath) == null) {
-        throw new IllegalStateException(String.format(Locale.ROOT, 
+        throw new IllegalStateException(String.format(Locale.ROOT,
             "Failed to store alias %s for cluster %s in remote registry", alias,
             clusterName));
       }
@@ -290,7 +290,7 @@ public class RemoteAliasService implements AliasService {
         remoteClient.deleteEntry(aliasEntryPath);
 
         if (remoteClient.entryExists(aliasEntryPath)) {
-          throw new IllegalStateException(String.format(Locale.ROOT, 
+          throw new IllegalStateException(String.format(Locale.ROOT,
               "Failed to delete alias %s for cluster %s in remote registry",
               alias, clusterName));
         }
@@ -559,7 +559,7 @@ public class RemoteAliasService implements AliasService {
 
     final RemoteAliasService remoteAliasService;
 
-    public RemoteAliasChildListener (final RemoteAliasService remoteAliasService ) {
+    RemoteAliasChildListener (final RemoteAliasService remoteAliasService ) {
       this.remoteAliasService = remoteAliasService;
     }
 
@@ -627,7 +627,7 @@ public class RemoteAliasService implements AliasService {
     final String alias;
     final RemoteAliasService remoteAliasService;
 
-    public RemoteAliasEntryListener(final String cluster, final String alias, final RemoteAliasService remoteAliasService) {
+    RemoteAliasEntryListener(final String cluster, final String alias, final RemoteAliasService remoteAliasService) {
       this.cluster = cluster;
       this.alias = alias;
       this.remoteAliasService = remoteAliasService;

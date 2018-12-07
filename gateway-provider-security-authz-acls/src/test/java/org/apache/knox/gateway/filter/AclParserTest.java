@@ -89,7 +89,6 @@ public class AclParserTest {
     assertFalse(p.ipv.allowsAnyIP());
     assertTrue(p.ipv.getIPAddresses().contains("127.0.0.1"));
   }
-    
 
   @Test
   public void testValidMultiValuedAcls() throws Exception {
@@ -130,10 +129,10 @@ public class AclParserTest {
     assertFalse(p.ipv.allowsAnyIP());
     assertTrue(p.ipv.getIPAddresses().contains("127.0.0.1"));
     assertTrue(p.ipv.getIPAddresses().contains("127.0.0.2"));
-    assertFalse(p.ipv.getIPAddresses().contains("127.0.0.3"));  
+    assertFalse(p.ipv.getIPAddresses().contains("127.0.0.3"));
   }
-  
-  @Test 
+
+  @Test
   public void testNullACL() throws Exception {
     AclParser p = new AclParser();
     try {
@@ -144,7 +143,7 @@ public class AclParserTest {
       fail("NULL acl should NOT have thrown InvalidACLException.");
     }
   }
-  
+
   @Test
   public void testInvalidAcls() throws Exception {
     AclParser p = new AclParser();
@@ -164,7 +163,7 @@ public class AclParserTest {
     catch (InvalidACLException sle) {
       // expected
     }
-  
+
     p = new AclParser();
     try {
       p.parseAcls("test", ";;");

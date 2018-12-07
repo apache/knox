@@ -75,7 +75,6 @@ public class SimplePrincipalMapper implements PrincipalMapper {
     if (p == null) {
       return principalName;
     }
-    
     return p[0];
   }
 
@@ -83,18 +82,17 @@ public class SimplePrincipalMapper implements PrincipalMapper {
   public String[] mapGroupPrincipal(String principalName) {
     String[] groups = null;
     String[] wildCardGroups = null;
-    
+
     if (groupMappings != null) {
       groups = groupMappings.get(principalName);
       wildCardGroups = groupMappings.get("*");
       if (groups != null && wildCardGroups != null) {
-        groups = concat(groups, wildCardGroups); 
+        groups = concat(groups, wildCardGroups);
       }
       else if (wildCardGroups != null) {
         return wildCardGroups;
       }
     }
-    
     return groups;
   }
 

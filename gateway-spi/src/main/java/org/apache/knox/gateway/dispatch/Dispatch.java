@@ -52,7 +52,7 @@ public interface Dispatch {
 
   void doOptions( URI url, HttpServletRequest request, HttpServletResponse response )
       throws IOException, ServletException, URISyntaxException;
-  
+
   void doHead( URI url, HttpServletRequest request, HttpServletResponse response )
       throws IOException, ServletException, URISyntaxException;
 

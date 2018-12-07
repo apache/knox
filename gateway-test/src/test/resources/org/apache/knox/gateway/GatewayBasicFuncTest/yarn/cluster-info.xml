@@ -16,19 +16,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <clusterInfo>
-	<id>1399541193872</id>
-	<startedOn>1399541193872</startedOn>
-	<state>STARTED</state>
-	<haState>ACTIVE</haState>
-	<resourceManagerVersion>2.4.0.2.1.1.0-390</resourceManagerVersion>
-	<resourceManagerBuildVersion>2.4.0.2.1.1.0-390 from
-		68ceccf06a4441273e81a5ec856d41fc7e11c792 by jenkins source checksum
-		a06aa69de28a8ebc9ddba56f20d6d73d</resourceManagerBuildVersion>
-	<resourceManagerVersionBuiltOn>2014-04-23T16:39Z
-	</resourceManagerVersionBuiltOn>
-	<hadoopVersion>2.4.0.2.1.1.0-390</hadoopVersion>
-	<hadoopBuildVersion>2.4.0.2.1.1.0-390 from
-		68ceccf06a4441273e81a5ec856d41fc7e11c792 by jenkins source checksum
-		9e788148daa5dd7934eb468e57e037b5</hadoopBuildVersion>
-	<hadoopVersionBuiltOn>2014-04-23T16:32Z</hadoopVersionBuiltOn>
+    <id>1399541193872</id>
+    <startedOn>1399541193872</startedOn>
+    <state>STARTED</state>
+    <haState>ACTIVE</haState>
+    <resourceManagerVersion>2.4.0.2.1.1.0-390</resourceManagerVersion>
+    <resourceManagerBuildVersion>2.4.0.2.1.1.0-390 from
+        68ceccf06a4441273e81a5ec856d41fc7e11c792 by jenkins source checksum
+        a06aa69de28a8ebc9ddba56f20d6d73d</resourceManagerBuildVersion>
+    <resourceManagerVersionBuiltOn>2014-04-23T16:39Z
+    </resourceManagerVersionBuiltOn>
+    <hadoopVersion>2.4.0.2.1.1.0-390</hadoopVersion>
+    <hadoopBuildVersion>2.4.0.2.1.1.0-390 from
+        68ceccf06a4441273e81a5ec856d41fc7e11c792 by jenkins source checksum
+        9e788148daa5dd7934eb468e57e037b5</hadoopBuildVersion>
+    <hadoopVersionBuiltOn>2014-04-23T16:32Z</hadoopVersionBuiltOn>
 </clusterInfo>

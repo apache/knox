@@ -49,7 +49,7 @@ public abstract class AbstractRequest<T> {
     addHeaders(request, session.getHeaders());
     return session.executeNow( request );
   }
-  
+
   private void addHeaders(HttpRequest request, Map<String, String> headers) {
     for(Entry<String, String> header : headers.entrySet()) {
       request.setHeader(header.getKey(), header.getValue());
@@ -72,7 +72,7 @@ public abstract class AbstractRequest<T> {
     }
   }
 
-  abstract protected Callable<T> callable();
+  protected abstract Callable<T> callable();
 
   public T now() throws KnoxShellException {
     try {

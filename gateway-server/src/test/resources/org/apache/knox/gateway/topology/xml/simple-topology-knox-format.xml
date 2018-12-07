@@ -47,16 +47,16 @@
            </param>
         </provider>
         <provider>
-        	<role>identity-assertion</role>
-        	<enabled>true</enabled>
-        	<name>Default</name>
-     	    <param>
+            <role>identity-assertion</role>
+            <enabled>true</enabled>
+            <name>Default</name>
+            <param>
             <name>name</name>
             <value>user.name</value>
           </param>
           <param>
-          	<name>principal.mapping</name>
-          	<value>hdfs=lmccay;kminder=admin</value>
+            <name>principal.mapping</name>
+            <value>hdfs=lmccay;kminder=admin</value>
           </param>
         </provider>
     </gateway>

@@ -63,14 +63,14 @@ public abstract class AbstractHdfsHaDispatch extends HdfsHttpClientDispatch {
   public HaProvider getHaProvider() {
     return haProvider;
   }
-  
+
   abstract String getResourceRole();
 
   @Configure
   public void setHaProvider(HaProvider haProvider) {
     this.haProvider = haProvider;
   }
-  
+
   @Override
   protected void executeRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) throws IOException {
       HttpResponse inboundResponse = null;

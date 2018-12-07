@@ -51,7 +51,7 @@ public class Pac4jFederationProviderContributor extends
   public String getName() {
     return NAME;
   }
-  
+
   @Override
   public void initializeContribution(DeploymentContext context) {
     super.initializeContribution(context);

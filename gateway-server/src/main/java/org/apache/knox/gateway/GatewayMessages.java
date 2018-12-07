@@ -183,7 +183,7 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "Dispatch request: {0} {1}" )
   void dispatchRequest( String method, URI uri );
-  
+
   @Message( level = MessageLevel.WARN, text = "Connection exception dispatching request: {0} {1}" )
   void dispatchServiceConnectionException( URI uri, @StackTrace(level=MessageLevel.WARN) Exception e );
 
@@ -252,7 +252,7 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Failed to encrypt password for cluster {0}: {1}")
   void failedToEncryptPasswordForCluster( String clusterName, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
-  
+
   @Message( level = MessageLevel.ERROR, text = "Failed to create keystore [filename={0}, type={1}]: {2}" )
   void failedToCreateKeystore( String fileName, String keyStoreType, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
@@ -264,7 +264,7 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Failed to add credential for cluster {0}: {1}" )
   void failedToAddCredentialForCluster( String clusterName, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
-  
+
   @Message( level = MessageLevel.ERROR, text = "Failed to get key for Gateway {0}: {1}" )
   void failedToGetKeyForGateway( String alias, @StackTrace( level=MessageLevel.DEBUG ) Exception e );
 
@@ -294,10 +294,10 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Failed to get map from Json string {0}: {1}" )
   void failedToGetMapFromJsonString( String json, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
-  
+
   @Message( level = MessageLevel.DEBUG, text = "Successful Knox->Hadoop SPNegotiation authentication for URL: {0}" )
   void successfulSPNegoAuthn(String uri);
-  
+
   @Message( level = MessageLevel.ERROR, text = "Failed Knox->Hadoop SPNegotiation authentication for URL: {0}" )
   void failedSPNegoAuthn(String uri);
 
@@ -333,10 +333,10 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.WARN, text = "Failed to match path {0}" )
   void failedToMatchPath( String path );
-  
+
   @Message( level = MessageLevel.ERROR, text = "Failed to get system ldap connection: {0}" )
   void failedToGetSystemLdapConnection( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
-  
+
   @Message( level = MessageLevel.WARN, text = "Value not found for cluster:{0}, alias: {1}" )
   void aliasValueNotFound( String cluster, String alias );
 
@@ -438,55 +438,55 @@ public interface GatewayMessages {
 
   @Message(level = MessageLevel.INFO,
            text = "Topology port mapping feature enabled: {0}")
-  void gatewayTopologyPortMappingEnabled(final boolean enabled);
+  void gatewayTopologyPortMappingEnabled(boolean enabled);
 
   @Message(level = MessageLevel.DEBUG,
            text = "Creating a connector for topology {0} listening on port {1}.")
-  void createJettyConnector(final String topology, final int port);
+  void createJettyConnector(String topology, int port);
 
   @Message(level = MessageLevel.DEBUG,
            text = "Creating a handler for topology {0}.")
-  void createJettyHandler(final String topology);
+  void createJettyHandler(String topology);
 
   @Message(level = MessageLevel.INFO,
            text = "Updating request context from {0} to {1}")
-  void topologyPortMappingAddContext(final String oldTarget,
-      final String newTarget);
+  void topologyPortMappingAddContext(String oldTarget,
+      String newTarget);
 
   @Message(level = MessageLevel.DEBUG,
            text = "Updating request target from {0} to {1}")
-  void topologyPortMappingUpdateRequest(final String oldTarget,
-      final String newTarget);
+  void topologyPortMappingUpdateRequest(String oldTarget,
+      String newTarget);
 
   @Message(level = MessageLevel.ERROR,
            text = "Port {0} configured for Topology - {1} is already in use.")
-  void portAlreadyInUse(final int port, final String topology);
+  void portAlreadyInUse(int port, String topology);
 
   @Message(level = MessageLevel.ERROR,
            text = "Port {0} is already in use.")
-  void portAlreadyInUse(final int port);
+  void portAlreadyInUse(int port);
 
   @Message(level = MessageLevel.INFO,
            text = "Started gateway, topology \"{0}\" listening on port \"{1}\".")
-  void startedGateway(final String topology, final int port);
+  void startedGateway(String topology, int port);
 
   @Message(level = MessageLevel.ERROR,
            text = "Topology \"{0}\" failed to start listening on port \"{1}\".")
-  void startedGatewayPortConflict(final String topology, final int port);
+  void startedGatewayPortConflict(String topology, int port);
 
   @Message(level = MessageLevel.ERROR,
            text =
                " Could not find topology \"{0}\" mapped to port \"{1}\" configured in gateway-config.xml. "
                    + "This invalid topology mapping will be ignored by the gateway. "
                    + "Gateway restart will be required if in the future \"{0}\" topology is added.")
-  void topologyPortMappingCannotFindTopology(final String topology, final int port);
+  void topologyPortMappingCannotFindTopology(String topology, int port);
 
 
   @Message( level = MessageLevel.WARN, text = "There is no registry client defined for remote configuration monitoring." )
   void missingClientConfigurationForRemoteMonitoring();
 
   @Message( level = MessageLevel.WARN, text = "Could not resolve a remote configuration registry client for {0}." )
-  void unresolvedClientConfigurationForRemoteMonitoring(final String clientName);
+  void unresolvedClientConfigurationForRemoteMonitoring(String clientName);
 
   @Message( level = MessageLevel.INFO, text = "Monitoring simple descriptors in directory: {0}" )
   void monitoringDescriptorChangesInDirectory(String descriptorsDir);
@@ -495,15 +495,15 @@ public interface GatewayMessages {
   void monitoringProviderConfigChangesInDirectory(String sharedProviderDir);
 
   @Message( level = MessageLevel.ERROR, text = "Error registering listener for remote configuration path {0} : {1}" )
-  void errorAddingRemoteConfigurationListenerForPath(final String path,
+  void errorAddingRemoteConfigurationListenerForPath(String path,
                                                      @StackTrace( level = MessageLevel.DEBUG ) Exception e);
 
   @Message( level = MessageLevel.ERROR, text = "Error unregistering listener for remote configuration path {0} : {1}" )
-  void errorRemovingRemoteConfigurationListenerForPath(final String path,
+  void errorRemovingRemoteConfigurationListenerForPath(String path,
                                                        @StackTrace( level = MessageLevel.DEBUG ) Exception e);
 
   @Message( level = MessageLevel.ERROR, text = "Error downloading remote configuration {0} : {1}" )
-  void errorDownloadingRemoteConfiguration(final String path,
+  void errorDownloadingRemoteConfiguration(String path,
                                            @StackTrace( level = MessageLevel.DEBUG ) Exception e);
 
   @Message( level = MessageLevel.INFO, text = "Prevented deletion of shared provider configuration because there are referencing descriptors: {0}" )
@@ -513,36 +513,36 @@ public interface GatewayMessages {
   void generatedTopologyForDescriptorChange(String topologyName, String descriptorName);
 
   @Message( level = MessageLevel.WARN, text = "An error occurred while attempting to initialize the remote configuration monitor: {0}" )
-  void remoteConfigurationMonitorInitFailure(final String errorMessage,
+  void remoteConfigurationMonitorInitFailure(String errorMessage,
                                              @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
   @Message( level = MessageLevel.WARN, text = "An error occurred while attempting to start the remote configuration monitor {0} : {1}" )
-  void remoteConfigurationMonitorStartFailure(final String monitorType, final String errorMessage);
+  void remoteConfigurationMonitorStartFailure(String monitorType, String errorMessage);
 
   @Message( level = MessageLevel.INFO, text = "Starting remote configuration monitor for source {0} ..." )
-  void startingRemoteConfigurationMonitor(final String address);
+  void startingRemoteConfigurationMonitor(String address);
 
   @Message( level = MessageLevel.INFO, text = "Monitoring remote configuration source {0}" )
-  void monitoringRemoteConfigurationSource(final String address);
+  void monitoringRemoteConfigurationSource(String address);
 
   @Message( level = MessageLevel.INFO, text = "Remote configuration monitor downloaded {0} configuration file {1}" )
-  void downloadedRemoteConfigFile(final String type, final String configFileName);
+  void downloadedRemoteConfigFile(String type, String configFileName);
 
   @Message( level = MessageLevel.INFO, text = "Remote configuration monitor deleted {0} configuration file {1} based on remote change." )
-  void deletedRemoteConfigFile(final String type, final String configFileName);
+  void deletedRemoteConfigFile(String type, String configFileName);
 
   @Message( level = MessageLevel.ERROR, text = "Failed to delete remote {0} file {1}." )
-  void failedToDeletedRemoteConfigFile(final String type, final String configFileName);
+  void failedToDeletedRemoteConfigFile(String type, String configFileName);
 
   @Message( level = MessageLevel.ERROR, text = "An error occurred while processing {0} : {1}" )
-  void simpleDescriptorHandlingError(final String simpleDesc,
+  void simpleDescriptorHandlingError(String simpleDesc,
                                      @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.DEBUG, text = "Successfully wrote configuration: {0}")
-  void wroteConfigurationFile(final String filePath);
+  void wroteConfigurationFile(String filePath);
 
   @Message(level = MessageLevel.ERROR, text = "Failed to write configuration: {0}")
-  void failedToWriteConfigurationFile(final String filePath,
+  void failedToWriteConfigurationFile(String filePath,
                                       @StackTrace(level = MessageLevel.DEBUG) Exception e );
 
   @Message( level = MessageLevel.INFO, text = "Deleting topology {0} because the associated descriptor {1} was deleted." )
@@ -567,47 +567,47 @@ public interface GatewayMessages {
 
   @Message(level = MessageLevel.INFO,
            text = "A cluster configuration change was noticed for {1} @ {0}")
-  void noticedClusterConfigurationChange(final String source, final String clusterName);
+  void noticedClusterConfigurationChange(String source, String clusterName);
 
 
   @Message(level = MessageLevel.INFO,
            text = "Triggering topology regeneration for descriptor {2} because of change to the {1} @ {0} configuration.")
-  void triggeringTopologyRegeneration(final String source, final String clusterName, final String affected);
+  void triggeringTopologyRegeneration(String source, String clusterName, String affected);
 
 
   @Message(level = MessageLevel.ERROR,
            text = "Encountered an error while responding to {1} @ {0} configuration change: {2}")
-  void errorRespondingToConfigChange(final String source,
-                                     final String clusterName,
+  void errorRespondingToConfigChange(String source,
+                                     String clusterName,
                                      @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.INFO,
            text = "Adding alias {1} for cluster {0} locally (local keystore) ")
-  void addAliasLocally(final String cluster, final String alias);
+  void addAliasLocally(String cluster, String alias);
 
   @Message(level = MessageLevel.ERROR,
            text = "Error adding alias {1} for cluster {0} locally (local keystore), cause: {2} ")
-  void errorAddingAliasLocally(final String cluster, final String alias, final String cause);
+  void errorAddingAliasLocally(String cluster, String alias, String cause);
 
   @Message(level = MessageLevel.INFO,
            text = "Remove alias {1} for cluster {0} locally (local keystore) ")
-  void removeAliasLocally(final String cluster, final String alias);
+  void removeAliasLocally(String cluster, String alias);
 
   @Message(level = MessageLevel.ERROR,
            text = "Error removing alias {1} for cluster {0} locally (local keystore), cause: {2} ")
-  void errorRemovingAliasLocally(final String cluster, final String alias, final String cause);
+  void errorRemovingAliasLocally(String cluster, String alias, String cause);
 
   @Message(level = MessageLevel.INFO,
            text = "Adding remote listener for path {0} ")
-  void addRemoteListener(final String path);
+  void addRemoteListener(String path);
 
   @Message(level = MessageLevel.ERROR,
            text = "Error adding remote listener for path {0}, cause: {1} ")
-  void errorAddingRemoteListener(final String path, final String cause);
+  void errorAddingRemoteListener(String path, String cause);
 
   @Message(level = MessageLevel.ERROR,
            text = "Error removing remote listener for path {0}, cause: {1} ")
-  void errorRemovingRemoteListener(final String path, final String cause);
+  void errorRemovingRemoteListener(String path, String cause);
 
   @Message(level = MessageLevel.INFO,
            text = "Remote Alias Service disabled")

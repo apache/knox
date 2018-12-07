@@ -30,11 +30,11 @@ import org.apache.log4j.spi.LoggingEvent;
  * date time root_request_id|parent_request_id|request_id|channel|target_service|username|proxy_username|system_username|action|resource_type|resource_name|outcome|message
  */
 public class AuditLayout extends DateLayout {
-  
+
   private static final String DATE_FORMAT = "yy/MM/dd HH:mm:ss";
   private static final String SEPARATOR = "|";
   private StringBuffer sb = new StringBuffer();
-  
+
   @Override
   public void activateOptions() {
     setDateFormat( DATE_FORMAT );
@@ -68,7 +68,7 @@ public class AuditLayout extends DateLayout {
   public boolean ignoresThrowable() {
     return true;
   }
-  
+
   private void appendParameter( String parameter ) {
     if ( parameter != null ) {
       sb.append( parameter );

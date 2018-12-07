@@ -206,7 +206,7 @@ public class JerseyDeploymentContributorTest {
     ProviderDeploymentContributor providerContributor;
     Provider provider;
 
-    public MockDeploymentContext(
+    MockDeploymentContext(
         DeploymentContext context,
         ProviderDeploymentContributor providerContributor,
         Provider provider ) {

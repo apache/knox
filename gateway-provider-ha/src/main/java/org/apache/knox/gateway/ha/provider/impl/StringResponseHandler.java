@@ -32,7 +32,7 @@ public class StringResponseHandler implements ResponseHandler<String>
 {
   @Override
   public String handleResponse(HttpResponse response)
-  throws ClientProtocolException, IOException 
+  throws ClientProtocolException, IOException
   {
     int status = response.getStatusLine().getStatusCode();
 

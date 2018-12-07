@@ -16,33 +16,33 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <job>
-	<startTime>1401199825397</startTime>
-	<finishTime>0</finishTime>
-	<elapsedTime>10493588</elapsedTime>
-	<id>job_1399541193872_0035</id>
-	<name>Sleep job</name>
-	<user>hdfs</user>
-	<state>RUNNING</state>
-	<mapsTotal>1</mapsTotal>
-	<mapsCompleted>1</mapsCompleted>
-	<reducesTotal>1</reducesTotal>
-	<reducesCompleted>0</reducesCompleted>
-	<mapProgress>100.0</mapProgress>
-	<reduceProgress>86.803696</reduceProgress>
-	<mapsPending>0</mapsPending>
-	<mapsRunning>0</mapsRunning>
-	<reducesPending>0</reducesPending>
-	<reducesRunning>1</reducesRunning>
-	<uberized>false</uberized>
-	<diagnostics></diagnostics>
-	<newReduceAttempts>0</newReduceAttempts>
-	<runningReduceAttempts>1</runningReduceAttempts>
-	<failedReduceAttempts>0</failedReduceAttempts>
-	<killedReduceAttempts>0</killedReduceAttempts>
-	<successfulReduceAttempts>0</successfulReduceAttempts>
-	<newMapAttempts>0</newMapAttempts>
-	<runningMapAttempts>0</runningMapAttempts>
-	<failedMapAttempts>0</failedMapAttempts>
-	<killedMapAttempts>0</killedMapAttempts>
-	<successfulMapAttempts>1</successfulMapAttempts>
+    <startTime>1401199825397</startTime>
+    <finishTime>0</finishTime>
+    <elapsedTime>10493588</elapsedTime>
+    <id>job_1399541193872_0035</id>
+    <name>Sleep job</name>
+    <user>hdfs</user>
+    <state>RUNNING</state>
+    <mapsTotal>1</mapsTotal>
+    <mapsCompleted>1</mapsCompleted>
+    <reducesTotal>1</reducesTotal>
+    <reducesCompleted>0</reducesCompleted>
+    <mapProgress>100.0</mapProgress>
+    <reduceProgress>86.803696</reduceProgress>
+    <mapsPending>0</mapsPending>
+    <mapsRunning>0</mapsRunning>
+    <reducesPending>0</reducesPending>
+    <reducesRunning>1</reducesRunning>
+    <uberized>false</uberized>
+    <diagnostics></diagnostics>
+    <newReduceAttempts>0</newReduceAttempts>
+    <runningReduceAttempts>1</runningReduceAttempts>
+    <failedReduceAttempts>0</failedReduceAttempts>
+    <killedReduceAttempts>0</killedReduceAttempts>
+    <successfulReduceAttempts>0</successfulReduceAttempts>
+    <newMapAttempts>0</newMapAttempts>
+    <runningMapAttempts>0</runningMapAttempts>
+    <failedMapAttempts>0</failedMapAttempts>
+    <killedMapAttempts>0</killedMapAttempts>
+    <successfulMapAttempts>1</successfulMapAttempts>
 </job>

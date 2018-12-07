@@ -106,7 +106,7 @@ public class ServiceRegistryFunctionsTest {
       }
     }
     rewriteFilter.setFilter( new UrlRewriteServletFilter() );
-    
+
     interactions = new ArrayDeque<>();
 
     ServletHolder servlet = server.addServlet( MockServlet.class, "/" );
@@ -186,7 +186,7 @@ public class ServiceRegistryFunctionsTest {
   private static class SetupFilter implements Filter {
     private Subject subject;
 
-    public SetupFilter( String userName ) {
+    SetupFilter( String userName ) {
       subject = new Subject();
       subject.getPrincipals().add( new BasicUserPrincipal( userName ) );
     }

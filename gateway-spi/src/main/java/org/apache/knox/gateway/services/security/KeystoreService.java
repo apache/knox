@@ -25,7 +25,7 @@ public interface KeystoreService {
   void createKeystoreForGateway() throws KeystoreServiceException;
 
   void addSelfSignedCertForGateway(String alias, char[] passphrase) throws KeystoreServiceException;
-  
+
   void addSelfSignedCertForGateway(String alias, char[] passphrase, String hostname) throws KeystoreServiceException;
 
   KeyStore getKeystoreForGateway() throws KeystoreServiceException;

@@ -30,9 +30,9 @@ import org.apache.knox.gateway.audit.api.CorrelationService;
 import org.apache.log4j.MDC;
 
 public class Log4jCorrelationService implements CorrelationService {
-  
+
   public static final String MDC_CORRELATION_CONTEXT_KEY = "correlation_context";
-  
+
   @Override
   public CorrelationContext createContext() {
     CorrelationContext context = getContext();
@@ -61,7 +61,7 @@ public class Log4jCorrelationService implements CorrelationService {
     MDC.remove( MDC_CORRELATION_CONTEXT_KEY );
     return context;
   }
-  
+
   @Override
   public <T> T execute( CorrelationContext context, Callable<T> callable ) throws Exception {
     try {
@@ -108,6 +108,5 @@ public class Log4jCorrelationService implements CorrelationService {
     }
     return baos.toByteArray();
   }
-  
 }
 

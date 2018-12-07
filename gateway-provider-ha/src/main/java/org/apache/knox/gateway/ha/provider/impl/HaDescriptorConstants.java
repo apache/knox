@@ -28,25 +28,23 @@ package org.apache.knox.gateway.ha.provider.impl;
  * </pre>
  */
 public interface HaDescriptorConstants {
+   String ROOT_ELEMENT = "ha";
 
-   public static final String ROOT_ELEMENT = "ha";
+   String SERVICE_ELEMENT = "service";
 
-   public static final String SERVICE_ELEMENT = "service";
+   String SERVICE_NAME_ATTRIBUTE = "name";
 
-   public static final String SERVICE_NAME_ATTRIBUTE = "name";
+   String MAX_FAILOVER_ATTEMPTS = "maxFailoverAttempts";
 
-   public static final String MAX_FAILOVER_ATTEMPTS = "maxFailoverAttempts";
+   String FAILOVER_SLEEP = "failoverSleep";
 
-   public static final String FAILOVER_SLEEP = "failoverSleep";
+   String MAX_RETRY_ATTEMPTS = "maxRetryAttempts";
 
-   public static final String MAX_RETRY_ATTEMPTS = "maxRetryAttempts";
+   String RETRY_SLEEP = "retrySleep";
 
-   public static final String RETRY_SLEEP = "retrySleep";
+   String ENABLED_ATTRIBUTE = "enabled";
 
-   public static final String ENABLED_ATTRIBUTE = "enabled";
+   String ZOOKEEPER_ENSEMBLE = "zookeeperEnsemble";
 
-   public static final String ZOOKEEPER_ENSEMBLE = "zookeeperEnsemble";
-
-   public static final String ZOOKEEPER_NAMESPACE = "zookeeperNamespace";
-
+   String ZOOKEEPER_NAMESPACE = "zookeeperNamespace";
 }

@@ -95,5 +95,14 @@ limitations under the License.
         </module>
         <module name="IllegalImport"/>
         <module name="AvoidStarImport"/>
+
+        <module name="UpperEll"/>
+        <module name="ModifierOrder"/>
+        <module name="RedundantModifier"/>
+        <module name="Regexp">
+            <property name="format" value="[ \t]+$"/>
+            <property name="illegalPattern" value="true"/>
+            <property name="message" value="Trailing whitespace"/>
+        </module>
     </module>
 </module>

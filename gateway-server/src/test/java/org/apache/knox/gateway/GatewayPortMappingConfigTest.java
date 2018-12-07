@@ -141,7 +141,7 @@ public class GatewayPortMappingConfigTest {
       throws IOException, NoSuchFieldException, IllegalAccessException {
     /* Check port conflict with default port */
     exception.expect(IOException.class);
-    exception.expectMessage(String.format(Locale.ROOT, 
+    exception.expectMessage(String.format(Locale.ROOT,
         " Port %d used by topology %s is used by other topology, ports for topologies (if defined) have to be unique. ",
         huronPort, "eerie"));
 

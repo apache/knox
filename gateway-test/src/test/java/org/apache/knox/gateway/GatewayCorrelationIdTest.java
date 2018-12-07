@@ -207,7 +207,7 @@ public class GatewayCorrelationIdTest {
 
     // There should be a unique correlation id for each request
     assertThat(requestIds.size(), is(numberTotalRequests));
-    
+
     LOG_EXIT();
   }
 }

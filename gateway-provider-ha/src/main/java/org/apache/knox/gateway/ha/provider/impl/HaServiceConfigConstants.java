@@ -18,33 +18,31 @@
 package org.apache.knox.gateway.ha.provider.impl;
 
 public interface HaServiceConfigConstants {
+   String CONFIG_PAIRS_DELIMITER = ";";
 
-   public static final String CONFIG_PAIRS_DELIMITER = ";";
+   String CONFIG_PAIR_DELIMITER = "=";
 
-   public static final String CONFIG_PAIR_DELIMITER = "=";
+   String CONFIG_PARAM_MAX_FAILOVER_ATTEMPTS = "maxFailoverAttempts";
 
-   public static final String CONFIG_PARAM_MAX_FAILOVER_ATTEMPTS = "maxFailoverAttempts";
+   String CONFIG_PARAM_FAILOVER_SLEEP = "failoverSleep";
 
-   public static final String CONFIG_PARAM_FAILOVER_SLEEP = "failoverSleep";
+   String CONFIG_PARAM_MAX_RETRY_ATTEMPTS = "maxRetryAttempts";
 
-   public static final String CONFIG_PARAM_MAX_RETRY_ATTEMPTS = "maxRetryAttempts";
+   String CONFIG_PARAM_RETRY_SLEEP = "retrySleep";
 
-   public static final String CONFIG_PARAM_RETRY_SLEEP = "retrySleep";
+   String CONFIG_PARAM_ENABLED = "enabled";
 
-   public static final String CONFIG_PARAM_ENABLED = "enabled";
+   String CONFIG_PARAM_ZOOKEEPER_ENSEMBLE = "zookeeperEnsemble";
 
-   public static final String CONFIG_PARAM_ZOOKEEPER_ENSEMBLE = "zookeeperEnsemble";
+   String CONFIG_PARAM_ZOOKEEPER_NAMESPACE = "zookeeperNamespace";
 
-   public static final String CONFIG_PARAM_ZOOKEEPER_NAMESPACE = "zookeeperNamespace";
+   int DEFAULT_MAX_FAILOVER_ATTEMPTS = 3;
 
-   public static final int DEFAULT_MAX_FAILOVER_ATTEMPTS = 3;
+   int DEFAULT_FAILOVER_SLEEP = 1000;
 
-   public static final int DEFAULT_FAILOVER_SLEEP = 1000;
+   int DEFAULT_MAX_RETRY_ATTEMPTS = 3;
 
-   public static final int DEFAULT_MAX_RETRY_ATTEMPTS = 3;
+   int DEFAULT_RETRY_SLEEP = 1000;
 
-   public static final int DEFAULT_RETRY_SLEEP = 1000;
-
-   public static final boolean DEFAULT_ENABLED = true;
-
+   boolean DEFAULT_ENABLED = true;
 }

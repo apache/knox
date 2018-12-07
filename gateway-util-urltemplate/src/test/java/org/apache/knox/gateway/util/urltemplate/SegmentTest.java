@@ -127,19 +127,8 @@ public class SegmentTest {
   }
 
   private class TestSegment extends Segment {
-
-    public TestSegment( String paramName, String valuePattern, boolean literal ) {
+    TestSegment( String paramName, String valuePattern, boolean literal ) {
       super( new Token( paramName, valuePattern, literal ) );
     }
-
   }
-
-//  private class InvalidSegment extends Segment {
-//
-//    public InvalidSegment( String paramName, String valuePattern ) {
-//      super( paramName, valuePattern );
-//    }
-//
-//  }
-
 }

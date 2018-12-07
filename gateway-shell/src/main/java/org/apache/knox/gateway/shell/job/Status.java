@@ -32,7 +32,7 @@ class Status {
 
     private String jobId;
 
-    public Request( KnoxSession session ) {
+    Request( KnoxSession session ) {
       super( session );
     }
 
@@ -52,15 +52,11 @@ class Status {
         }
       };
     }
-
   }
 
   public static class Response extends BasicResponse {
-
     protected Response( HttpResponse response ) {
       super( response );
     }
-
   }
-
 }

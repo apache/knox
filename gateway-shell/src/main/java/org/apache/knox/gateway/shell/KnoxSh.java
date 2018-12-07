@@ -45,7 +45,7 @@ import java.util.TimeZone;
 public class KnoxSh {
 
   private static final String USAGE_PREFIX = "KnoxSh {cmd} [options]";
-  final static private String COMMANDS =
+  private static final String COMMANDS =
       "   [--help]\n" +
       "   [" + KnoxInit.USAGE + "]\n" +
       "   [" + KnoxDestroy.USAGE + "]\n" +
@@ -169,20 +169,20 @@ public class KnoxSh {
 
       String username = credentials.get("user").string();
       String pass = credentials.get("pass").string();
-      
+
       KnoxSession session = null;
       Get.Response response = null;
       try {
         session = KnoxSession.login(gateway, username, pass);
-  
+
         response = Token.get( session ).now();
         String text = response.getString();
         Map<String, String> json = JsonUtils.getMapFromJsonString(text);
-  
+
         //println "Access Token: " + json.access_token
         System.out.println("knoxinit successful!");
         displayTokenDetails(json);
-        
+
         File tokenfile = new File(System.getProperty("user.home"), ".knoxtokencache");
         try( FileOutputStream fos = new FileOutputStream(tokenfile) ) {
           fos.write(text.getBytes(StandardCharsets.UTF_8));
@@ -236,7 +236,7 @@ public class KnoxSh {
           File.separator + ".knoxtokencache";
       if (new File(tokenFilePath).exists()) {
         String tokenfile = readFile(tokenFilePath);
-  
+
         if (tokenfile != null) {
           Map<String, String> json = JsonUtils.getMapFromJsonString(tokenfile);
           displayTokenDetails(json);

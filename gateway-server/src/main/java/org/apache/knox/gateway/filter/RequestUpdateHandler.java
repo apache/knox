@@ -105,7 +105,7 @@ public class RequestUpdateHandler extends ScopedHandler {
     private String newURL;
     private String contextpath;
 
-    public ForwardedRequest(final HttpServletRequest request,
+    ForwardedRequest(final HttpServletRequest request,
         final String contextpath, final String newURL) {
       super(request);
       this.newURL = newURL;

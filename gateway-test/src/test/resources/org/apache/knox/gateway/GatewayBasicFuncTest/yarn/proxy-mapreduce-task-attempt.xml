@@ -16,22 +16,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <taskAttempt>
-	<startTime>1401273289105</startTime>
-	<finishTime>0</finishTime>
-	<elapsedTime>0</elapsedTime>
-	<progress>68.680374</progress>
-	<id>attempt_1399541193872_0036_r_000000_0</id>
-	<rack>/default-rack</rack>
-	<state>RUNNING</state>
-	<status>Sleeping... (109200400) ms left &gt; reduce</status>
-	<nodeHttpAddress>hdp.example.com:50060</nodeHttpAddress>
-	<diagnostics></diagnostics>
-	<type>REDUCE</type>
-	<assignedContainerId>container_1399541193872_0036_01_000003
-	</assignedContainerId>
-	<shuffleFinishTime>1401273296009</shuffleFinishTime>
-	<mergeFinishTime>1401273296736</mergeFinishTime>
-	<elapsedShuffleTime>6904</elapsedShuffleTime>
-	<elapsedMergeTime>727</elapsedMergeTime>
-	<elapsedReduceTime>0</elapsedReduceTime>
+    <startTime>1401273289105</startTime>
+    <finishTime>0</finishTime>
+    <elapsedTime>0</elapsedTime>
+    <progress>68.680374</progress>
+    <id>attempt_1399541193872_0036_r_000000_0</id>
+    <rack>/default-rack</rack>
+    <state>RUNNING</state>
+    <status>Sleeping... (109200400) ms left &gt; reduce</status>
+    <nodeHttpAddress>hdp.example.com:50060</nodeHttpAddress>
+    <diagnostics></diagnostics>
+    <type>REDUCE</type>
+    <assignedContainerId>container_1399541193872_0036_01_000003
+    </assignedContainerId>
+    <shuffleFinishTime>1401273296009</shuffleFinishTime>
+    <mergeFinishTime>1401273296736</mergeFinishTime>
+    <elapsedShuffleTime>6904</elapsedShuffleTime>
+    <elapsedMergeTime>727</elapsedMergeTime>
+    <elapsedReduceTime>0</elapsedReduceTime>
 </taskAttempt>

@@ -46,7 +46,7 @@ public interface Auditor {
    * @param message An arbitrary message to record with the audit event.  May be null.
    */
   void audit( String action, String resourceName, String resourceType, String outcome, String message );
-  
+
   /**
    * Records a single audit event using context information associated with the current thread.
    *
@@ -57,18 +57,17 @@ public interface Auditor {
    */
   void audit( String action, String resourceName, String resourceType, String outcome );
 
-
   /**
    * The service name established when the Auditor was acquired.
    * Every event logged by auditor instance will contain data about service that generated event.
-   * 
+   *
    * @return The service name established when the Auditor was acquired.
    */
   String getServiceName();
 
   /**
    * The component name established when the Auditor was acquired.
-   * 
+   *
    * @return The component name established when the Auditor was acquired.
    */
   String getComponentName();
@@ -78,7 +77,7 @@ public interface Auditor {
    * As an example, authentication/authorization operations may be logged to separate security log.
    * Or actions on some resources shouldn't be logged into central storage.
    * Auditor name provide an ability to logically group audit events, configure theirs filtration and  persistence
-   * 
+   *
    * @return The auditor name established when the Auditor was acquired.
    */
   String getAuditorName();

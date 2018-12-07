@@ -24,20 +24,18 @@ import org.apache.knox.gateway.i18n.messages.StackTrace;
 
 /**
  * Messages for provider - HadoopGroupProvider
- * 
+ *
  * @since 0.11
  */
-
 @Messages(logger="org.apache.knox.gateway")
 public interface HadoopGroupProviderMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Error getting groups for principal {0}" )
-  void errorGettingUserGroups(final String principal , @StackTrace( level = MessageLevel.DEBUG ) Exception e );
-  
+  void errorGettingUserGroups(String principal , @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
   @Message( level = MessageLevel.INFO, text = "No groups for principal {0} found" )
-  void noGroupsFound(final String principal);
-  
+  void noGroupsFound(String principal);
+
   @Message( level = MessageLevel.DEBUG, text = "Found groups for principal {0} : {1}" )
-  void groupsFound(final String principal, final String groups );
-  
+  void groupsFound(String principal, String groups );
 }

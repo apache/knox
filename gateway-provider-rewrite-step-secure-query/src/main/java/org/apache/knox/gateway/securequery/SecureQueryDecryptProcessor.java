@@ -111,8 +111,8 @@ public class SecureQueryDecryptProcessor implements
     byte[] clear = null;
     try {
       clear = encryptor.decrypt(
-          result.salt, 
-          result.iv, 
+          result.salt,
+          result.iv,
           result.cipher);
     } catch (Exception e) {
       log.unableToDecryptValue(e);

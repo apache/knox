@@ -37,11 +37,11 @@ import java.security.AccessController;
 
 public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilter {
   private IdentityAsserterMessages LOG = MessagesFactory.get(IdentityAsserterMessages.class);
-  
+
   private static final String GROUP_PRINCIPAL_MAPPING = "group.principal.mapping";
   private static final String PRINCIPAL_MAPPING = "principal.mapping";
   private SimplePrincipalMapper mapper = new SimplePrincipalMapper();
-  
+
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
     String principalMapping = filterConfig.getInitParameter(PRINCIPAL_MAPPING);
@@ -109,7 +109,7 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     // from request methods
     IdentityAsserterHttpServletRequestWrapper wrapper =
         new IdentityAsserterHttpServletRequestWrapper(
-        (HttpServletRequest)request, 
+        (HttpServletRequest)request,
         mappedPrincipalName);
     return wrapper;
   }

@@ -26,7 +26,6 @@ import java.util.Set;
  * General utility methods for interrogating the standard java Subject
  */
 public class SubjectUtils {
-  
   public static Subject getCurrentSubject() {
     return Subject.getSubject( AccessController.getContext() );
   }
@@ -47,16 +46,12 @@ public class SubjectUtils {
       name = p.getName();
       break;
     }
-    
+
     return name;
   }
-  
+
   public static boolean isImpersonating(Subject subject) {
-    boolean impersonating = false;
-    
-    impersonating = (subject.getPrincipals(ImpersonatedPrincipal.class).size() > 0);
-    
-    return impersonating;
+    return (subject.getPrincipals(ImpersonatedPrincipal.class).size() > 0);
   }
 
   public static String getImpersonatedPrincipalName(Subject subject) {
@@ -66,18 +61,16 @@ public class SubjectUtils {
     if (!impPrincipals.isEmpty()) {
       return ((Principal)impPrincipals.toArray()[0]).getName();
     }
-    
+
     return name;
   }
-  
+
   public static String getEffectivePrincipalName(Subject subject) {
-    String name = null;
-    
-    name = getImpersonatedPrincipalName(subject);
+    String name = getImpersonatedPrincipalName(subject);
     if (name == null) {
       name = getPrimaryPrincipalName(subject);
     }
-    
+
     return name;
   }
 

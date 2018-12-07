@@ -25,7 +25,7 @@ public class GroupPrincipal implements Principal {
   public GroupPrincipal(String name) {
     this.name = name;
   }
-  
+
   @Override
   public String getName() {
     return name;

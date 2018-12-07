@@ -37,7 +37,7 @@ import static org.junit.Assert.fail;
 
 /**
  * Simple unit tests for HBaseZookeeperURLManager.
- * 
+ *
  * @see HBaseZookeeperURLManager
  */
 public class HBaseZookeeperURLManagerTest {

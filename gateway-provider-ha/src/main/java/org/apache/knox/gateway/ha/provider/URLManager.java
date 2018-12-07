@@ -20,18 +20,17 @@ package org.apache.knox.gateway.ha.provider;
 import java.util.List;
 
 public interface URLManager {
+  boolean supportsConfig(HaServiceConfig config);
 
-  public boolean supportsConfig(HaServiceConfig config);
+  void setConfig(HaServiceConfig config);
 
-  public void setConfig(HaServiceConfig config);
+  String getActiveURL();
 
-  public String getActiveURL();
+  void setActiveURL(String url);
 
-  public void setActiveURL(String url);
+  List<String> getURLs();
 
-  public List<String> getURLs();
+  void setURLs(List<String> urls);
 
-  public void setURLs(List<String> urls);
-
-  public void markFailed(String url);
+  void markFailed(String url);
 }

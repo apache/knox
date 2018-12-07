@@ -19,7 +19,7 @@
     <routes>
         <route path="/thrift/jobs">
             <rewrite apply="THRIFTSERVERUI/thrift/root/filter/OUT" to="response.body"/>
-        </route>			
+        </route>
         <route path="/thrift/">
             <rewrite apply="THRIFTSERVERUI/thrift/outbound/headers" to="response.headers"/>
         </route>

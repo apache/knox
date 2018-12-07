@@ -393,11 +393,11 @@ public class UrlRewriteProcessorTest {
 
   /**
    * Turn a string containing URL parameters, e.g.
-   * 
+   *
    * <pre>
    * a=b&c=d&e=f
    * </pre>
-   * 
+   *
    * into a map such as
    * <table>
    * <tr>
@@ -413,7 +413,7 @@ public class UrlRewriteProcessorTest {
    * <td>d</td>
    * </tr>
    * </table>
-   * 
+   *
    * @param urlParameters the URL parameter string. Expected to contain something of the form
    *        "a=b&c=d" etc (i.e. Key=Value separated by &).
    * @return a map, with the key-values pairs representing the URL parameters.
@@ -426,6 +426,4 @@ public class UrlRewriteProcessorTest {
     }
     return map;
   }
-
-  
 }

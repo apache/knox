@@ -52,7 +52,7 @@ public class ResponseCookieFilter extends AbstractGatewayFilter {
 
   // inner class wraps response to prevent adding of not allowed headers
   private static class ResponseWrapper extends HttpServletResponseWrapper {
-    public ResponseWrapper( HttpServletResponse response ) {
+    ResponseWrapper( HttpServletResponse response ) {
       super( response );
     }
 

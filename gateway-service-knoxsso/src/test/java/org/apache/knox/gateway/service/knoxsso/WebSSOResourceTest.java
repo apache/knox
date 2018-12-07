@@ -548,7 +548,7 @@ public class WebSSOResourceTest {
 
     GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
-    
+
     JWTokenAuthority authority = new TestJWTokenAuthority(gatewayPublicKey, gatewayPrivateKey);
     EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
 

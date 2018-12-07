@@ -42,7 +42,7 @@ public class HttpUtils {
       if (!queryPairs.containsKey(key)) {
         queryPairs.put(key, new ArrayList<String>());
       }
-      final String value = idx > 0 && pair.length() > idx + 1 
+      final String value = idx > 0 && pair.length() > idx + 1
           ? URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8.name()) : "";
       queryPairs.get(key).add(value);
     }
@@ -95,7 +95,7 @@ public class HttpUtils {
     return map;
   }
 
-  private static final String urlDecodeUtf8( String s ) {
+  private static String urlDecodeUtf8( String s ) {
     if( s != null ) {
       try {
         s = URLDecoder.decode( s, StandardCharsets.UTF_8.name() );
@@ -106,7 +106,7 @@ public class HttpUtils {
     return s;
   }
 
-  static final void addQueryStringParam( final Map<String,String[]> map, String name, String value ) {
+  static void addQueryStringParam(final Map<String,String[]> map, String name, String value ) {
     name = urlDecodeUtf8( name );
     value = urlDecodeUtf8( value );
     String[] values = map.get( name );

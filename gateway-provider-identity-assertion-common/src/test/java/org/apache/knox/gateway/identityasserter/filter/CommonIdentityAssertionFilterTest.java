@@ -51,7 +51,7 @@ public class CommonIdentityAssertionFilterTest {
   private String username = null;
   private String[] mappedGroups = null;
   private Filter filter = null;
-  
+
   @Before
   public void setup() {
     filter = new CommonIdentityAssertionFilter() {
@@ -94,7 +94,7 @@ public class CommonIdentityAssertionFilterTest {
           throws IOException, ServletException {
       }
     };
-    
+
     Subject subject = new Subject();
     subject.getPrincipals().add(new PrimaryPrincipal("larry"));
     subject.getPrincipals().add(new GroupPrincipal("users"));

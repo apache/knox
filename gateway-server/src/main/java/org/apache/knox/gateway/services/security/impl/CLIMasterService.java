@@ -52,5 +52,4 @@ public class CLIMasterService extends CMFMasterService implements MasterService,
   @Override
   public void stop() throws ServiceLifecycleException {
   }
-  
 }

@@ -16,25 +16,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <app>
-	<id>application_1399541193872_0018</id>
-	<user>hdfs</user>
-	<name>Sleep job</name>
-	<queue>default</queue>
-	<state>FINISHED</state>
-	<finalStatus>SUCCEEDED</finalStatus>
-	<progress>100.0</progress>
-	<trackingUI>History</trackingUI>
-	<trackingUrl>http://localhost:8088/proxy/application_1399541193872_0018/jobhistory/job/job_1399541193872_0018</trackingUrl>
-	<diagnostics></diagnostics>
-	<clusterId>1399541193872</clusterId>
-	<applicationType>MAPREDUCE</applicationType>
-	<applicationTags></applicationTags>
-	<startedTime>1399903578539</startedTime>
-	<finishedTime>1399904819572</finishedTime>
-	<elapsedTime>1241033</elapsedTime>
-	<amContainerLogs>http://localhost:50060/node/containerlogs/container_1399541193872_0018_01_000001/hdfs</amContainerLogs>
-	<amHostHttpAddress>localhost:50060</amHostHttpAddress>
-	<allocatedMB>0</allocatedMB>
-	<allocatedVCores>0</allocatedVCores>
-	<runningContainers>0</runningContainers>
+    <id>application_1399541193872_0018</id>
+    <user>hdfs</user>
+    <name>Sleep job</name>
+    <queue>default</queue>
+    <state>FINISHED</state>
+    <finalStatus>SUCCEEDED</finalStatus>
+    <progress>100.0</progress>
+    <trackingUI>History</trackingUI>
+    <trackingUrl>http://localhost:8088/proxy/application_1399541193872_0018/jobhistory/job/job_1399541193872_0018</trackingUrl>
+    <diagnostics></diagnostics>
+    <clusterId>1399541193872</clusterId>
+    <applicationType>MAPREDUCE</applicationType>
+    <applicationTags></applicationTags>
+    <startedTime>1399903578539</startedTime>
+    <finishedTime>1399904819572</finishedTime>
+    <elapsedTime>1241033</elapsedTime>
+    <amContainerLogs>http://localhost:50060/node/containerlogs/container_1399541193872_0018_01_000001/hdfs</amContainerLogs>
+    <amHostHttpAddress>localhost:50060</amHostHttpAddress>
+    <allocatedMB>0</allocatedMB>
+    <allocatedVCores>0</allocatedVCores>
+    <runningContainers>0</runningContainers>
 </app>

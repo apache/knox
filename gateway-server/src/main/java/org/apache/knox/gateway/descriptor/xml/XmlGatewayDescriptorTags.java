@@ -18,17 +18,15 @@
 package org.apache.knox.gateway.descriptor.xml;
 
 interface XmlGatewayDescriptorTags {
-
-  static final String GATEWAY = "gateway";
-  static final String RESOURCE = "resource";
-  static final String RESOURCE_ROLE = "role";
-  static final String RESOURCE_PATTERN = "pattern";
-  static final String FILTER = "filter";
-  static final String FILTER_NAME = "name";
-  static final String FILTER_ROLE = "role";
-  static final String FILTER_IMPL = "class";
-  static final String FILTER_PARAM = "param";
-  static final String FILTER_PARAM_NAME = "name";
-  static final String FILTER_PARAM_VALUE = "value";
-
+  String GATEWAY = "gateway";
+  String RESOURCE = "resource";
+  String RESOURCE_ROLE = "role";
+  String RESOURCE_PATTERN = "pattern";
+  String FILTER = "filter";
+  String FILTER_NAME = "name";
+  String FILTER_ROLE = "role";
+  String FILTER_IMPL = "class";
+  String FILTER_PARAM = "param";
+  String FILTER_PARAM_NAME = "name";
+  String FILTER_PARAM_VALUE = "value";
 }

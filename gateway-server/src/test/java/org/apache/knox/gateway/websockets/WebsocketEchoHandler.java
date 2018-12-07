@@ -28,20 +28,16 @@ import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
  *
  */
 public class WebsocketEchoHandler extends WebSocketHandler implements WebSocketCreator {
+  private final EchoSocket socket = new EchoSocket();
 
-  final EchoSocket socket = new EchoSocket();
-  
   @Override
-  public void configure(WebSocketServletFactory factory)
-  {
+  public void configure(WebSocketServletFactory factory) {
       factory.getPolicy().setMaxTextMessageSize(2 * 1024 * 1024);
       factory.setCreator(this);
   }
 
   @Override
-  public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp)
-  {
+  public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp) {
       return socket;
   }
-  
 }

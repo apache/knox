@@ -32,7 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 
 /**
- * This filter protects proxied webapps from protocol downgrade attacks 
+ * This filter protects proxied webapps from protocol downgrade attacks
  * and cookie hijacking.
  */
 public class StrictTransportFilter implements Filter {
@@ -93,7 +93,7 @@ public class StrictTransportFilter implements Filter {
         }
         return headerValue;
     }
-    
+
     @Override
     public Collection<String> getHeaderNames() {
         List<String> names = (List<String>) super.getHeaderNames();

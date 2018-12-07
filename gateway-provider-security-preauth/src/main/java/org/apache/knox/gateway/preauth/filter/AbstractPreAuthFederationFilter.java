@@ -53,9 +53,6 @@ public abstract class AbstractPreAuthFederationFilter implements Filter {
       AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
       AuditConstants.KNOX_COMPONENT_NAME );
 
-  /**
-   * 
-   */
   public AbstractPreAuthFederationFilter() {
     super();
   }
@@ -85,13 +82,11 @@ public abstract class AbstractPreAuthFederationFilter implements Filter {
         String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
         auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
         doAs(httpRequest, response, chain, subject);
-      }
-      else {
+      } else {
         // TODO: log preauthenticated SSO validation failure
         ((HttpServletResponse)response).sendError(HttpServletResponse.SC_FORBIDDEN, "SSO Validation Failure.");
       }
-    } 
-    else {
+    } else {
       ((HttpServletResponse)response).sendError(HttpServletResponse.SC_FORBIDDEN, "Missing Required Header for PreAuth SSO Federation");
     }
   }
@@ -128,7 +123,7 @@ public abstract class AbstractPreAuthFederationFilter implements Filter {
     }
   }
 
-  abstract protected String getPrimaryPrincipal(HttpServletRequest httpRequest);
+  protected abstract String getPrimaryPrincipal(HttpServletRequest httpRequest);
 
-  abstract protected void addGroupPrincipals(HttpServletRequest request, Set<Principal> principals);
+  protected abstract void addGroupPrincipals(HttpServletRequest request, Set<Principal> principals);
 }

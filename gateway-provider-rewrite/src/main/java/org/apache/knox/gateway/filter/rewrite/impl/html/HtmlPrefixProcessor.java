@@ -45,7 +45,7 @@ import java.util.List;
  * <div ng-include src=\"'http://localhost:8443/sandbox/service/components/navbar/navbar.html?v=1498928142479'\"></div>
  * }
  * </pre>
- * 
+ *
  * The rewrite rule could then contain the $prefix function that would delegate
  * to the frontend function.
  *

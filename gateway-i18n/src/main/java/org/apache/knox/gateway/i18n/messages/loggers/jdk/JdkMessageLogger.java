@@ -33,13 +33,13 @@ final class JdkMessageLogger implements MessageLogger {
   }
 
   @Override
-  public final boolean isLoggable( final MessageLevel level ) {
+  public boolean isLoggable( final MessageLevel level ) {
     return logger.isLoggable( toLevel( level ) );
   }
 
   //TODO: Handle message ID.
   @Override
-  public final void log( final StackTraceElement caller, final MessageLevel level, final String id, final String message, final Throwable thrown ) {
+  public void log( final StackTraceElement caller, final MessageLevel level, final String id, final String message, final Throwable thrown ) {
     LogRecord record = new LogRecord( toLevel( level ), message );
     record.setSourceClassName( caller.getClassName() );
     record.setSourceMethodName( caller.getMethodName() );
@@ -49,7 +49,7 @@ final class JdkMessageLogger implements MessageLogger {
     logger.log( record );
   }
 
-  private static final Level toLevel( final MessageLevel level ) {
+  private static Level toLevel( final MessageLevel level ) {
     switch( level ) {
       case FATAL: return Level.SEVERE;
       case ERROR: return Level.SEVERE;

@@ -25,8 +25,8 @@ import java.lang.annotation.Target;
 @Retention( RetentionPolicy.RUNTIME )
 @Target( ElementType.METHOD )
 public @interface Message {
-  static final String DEFAULT_TEXT = "{}";
-  static final int DEFAULT_CODE = -1;
+  String DEFAULT_TEXT = "{}";
+  int DEFAULT_CODE = -1;
   MessageLevel level() default MessageLevel.INFO;
   int code() default DEFAULT_CODE;
   String text() default DEFAULT_TEXT;

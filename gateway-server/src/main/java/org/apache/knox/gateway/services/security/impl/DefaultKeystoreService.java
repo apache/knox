@@ -124,8 +124,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
     try {
       String filename = getKeystorePath();
       createKeystore(filename, "JKS");
-    } 
-    finally {
+    } finally {
       writeLock.unlock();
     }
   }
@@ -157,7 +156,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
     } else {
       keyStoreFile = new File(keyStoreDir + GATEWAY_KEYSTORE);
     }
-      
+
     // make sure the keystore exists
     if (!keyStoreFile.exists()) {
       throw new KeystoreServiceException("Configured signing keystore does not exist.");
@@ -183,14 +182,14 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
   }
 
   @Override
-  public void addSelfSignedCertForGateway(String alias, char[] passphrase, String hostname) 
+  public void addSelfSignedCertForGateway(String alias, char[] passphrase, String hostname)
       throws KeystoreServiceException {
     writeLock.lock();
     try {
       KeyPairGenerator keyPairGenerator;
       try {
         keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        keyPairGenerator.initialize(1024);  
+        keyPairGenerator.initialize(1024);
         KeyPair KPair = keyPairGenerator.generateKeyPair();
         if (hostname == null) {
           hostname = System.getProperty(CERT_GEN_MODE, CERT_GEN_MODE_LOCALHOST);
@@ -204,12 +203,12 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
           String dn = buildDistinguishedName(hostname);
           cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, "SHA1withRSA");
         }
-  
+
         KeyStore privateKS = getKeystoreForGateway();
-        privateKS.setKeyEntry(alias, KPair.getPrivate(),  
-            passphrase,  
-            new java.security.cert.Certificate[]{cert});  
-        
+        privateKS.setKeyEntry(alias, KPair.getPrivate(),
+            passphrase,
+            new java.security.cert.Certificate[]{cert});
+
         writeKeystoreToFile(privateKS, new File( keyStoreDir + GATEWAY_KEYSTORE  ));
         //writeCertificateToFile( cert, new File( keyStoreDir + alias + ".pem" ) );
       } catch (GeneralSecurityException | IOException e) {
@@ -226,10 +225,9 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
     MessageFormat headerFormatter = new MessageFormat(dnTemplate, Locale.ROOT);
     String[] paramArray = new String[1];
     paramArray[0] = hostname;
-    String dn = headerFormatter.format(paramArray);
-    return dn;
+    return headerFormatter.format(paramArray);
   }
-  
+
   @Override
   public void createCredentialStoreForCluster(String clusterName) throws KeystoreServiceException {
     String filename = keyStoreDir + clusterName + CREDENTIALS_SUFFIX;
@@ -308,7 +306,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
     finally {
       readLock.unlock();
     }
-  }  
+  }
 
   @Override
   public Key getSigningKey(String alias, char[] passphrase) throws KeystoreServiceException {
@@ -382,7 +380,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
   }
 
   @Override
-  public char[] getCredentialForCluster(String clusterName, String alias) 
+  public char[] getCredentialForCluster(String clusterName, String alias)
       throws KeystoreServiceException {
     char[] credential = null;
     readLock.lock();

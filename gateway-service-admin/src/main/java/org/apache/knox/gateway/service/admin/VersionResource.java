@@ -37,7 +37,7 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Path( "/api/v1" )
 public class VersionResource {
-  @Context 
+  @Context
   private HttpServletRequest request;
 
   @GET
@@ -68,7 +68,7 @@ public class VersionResource {
     private String version;
     @XmlElement(name="hash")
     private String hash;
-    
+
     public ServerVersion(String version, String hash) {
       super();
       this.version = version;
@@ -76,7 +76,7 @@ public class VersionResource {
     }
 
     public ServerVersion() { }
-    
+
     public String getVersion() {
       return version;
     }

@@ -16,23 +16,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <clusterMetrics>
-	<appsSubmitted>28</appsSubmitted>
-	<appsCompleted>28</appsCompleted>
-	<appsPending>0</appsPending>
-	<appsRunning>0</appsRunning>
-	<appsFailed>0</appsFailed>
-	<appsKilled>0</appsKilled>
-	<reservedMB>0</reservedMB>
-	<availableMB>8192</availableMB>
-	<allocatedMB>0</allocatedMB>
-	<containersAllocated>0</containersAllocated>
-	<containersReserved>0</containersReserved>
-	<containersPending>0</containersPending>
-	<totalMB>8192</totalMB>
-	<totalNodes>1</totalNodes>
-	<lostNodes>0</lostNodes>
-	<unhealthyNodes>0</unhealthyNodes>
-	<decommissionedNodes>0</decommissionedNodes>
-	<rebootedNodes>0</rebootedNodes>
-	<activeNodes>1</activeNodes>
+    <appsSubmitted>28</appsSubmitted>
+    <appsCompleted>28</appsCompleted>
+    <appsPending>0</appsPending>
+    <appsRunning>0</appsRunning>
+    <appsFailed>0</appsFailed>
+    <appsKilled>0</appsKilled>
+    <reservedMB>0</reservedMB>
+    <availableMB>8192</availableMB>
+    <allocatedMB>0</allocatedMB>
+    <containersAllocated>0</containersAllocated>
+    <containersReserved>0</containersReserved>
+    <containersPending>0</containersPending>
+    <totalMB>8192</totalMB>
+    <totalNodes>1</totalNodes>
+    <lostNodes>0</lostNodes>
+    <unhealthyNodes>0</unhealthyNodes>
+    <decommissionedNodes>0</decommissionedNodes>
+    <rebootedNodes>0</rebootedNodes>
+    <activeNodes>1</activeNodes>
 </clusterMetrics>

@@ -70,7 +70,7 @@ public class CLIGatewayServices implements GatewayServices {
     ks.setMasterService(ms);
     ks.init(config, options);
     services.put(KEYSTORE_SERVICE, ks);
-    
+
     DefaultAliasService defaultAlias = new DefaultAliasService();
     defaultAlias.setKeystoreService(ks);
     defaultAlias.init(config, options);
@@ -97,7 +97,7 @@ public class CLIGatewayServices implements GatewayServices {
     tops.init(  config, options  );
     services.put(TOPOLOGY_SERVICE, tops);
   }
-  
+
   @Override
   public void start() throws ServiceLifecycleException {
     ms.start();

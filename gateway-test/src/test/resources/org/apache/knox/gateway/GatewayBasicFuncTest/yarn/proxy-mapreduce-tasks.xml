@@ -16,27 +16,27 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <tasks>
-	<task>
-		<startTime>1401273271711</startTime>
-		<finishTime>1401273284990</finishTime>
-		<elapsedTime>13279</elapsedTime>
-		<progress>100.0</progress>
-		<id>task_1399541193872_0036_m_000000</id>
-		<state>SUCCEEDED</state>
-		<type>MAP</type>
-		<successfulAttempt>attempt_1399541193872_0036_m_000000_0
-		</successfulAttempt>
-		<status>Sleeping... (20) ms left</status>
-	</task>
-	<task>
-		<startTime>1401273289105</startTime>
-		<finishTime>0</finishTime>
-		<elapsedTime>269880</elapsedTime>
-		<progress>67.33751</progress>
-		<id>task_1399541193872_0036_r_000000</id>
-		<state>RUNNING</state>
-		<type>REDUCE</type>
-		<successfulAttempt></successfulAttempt>
-		<status>Sleeping... (119742300) ms left &gt; reduce</status>
-	</task>
+    <task>
+        <startTime>1401273271711</startTime>
+        <finishTime>1401273284990</finishTime>
+        <elapsedTime>13279</elapsedTime>
+        <progress>100.0</progress>
+        <id>task_1399541193872_0036_m_000000</id>
+        <state>SUCCEEDED</state>
+        <type>MAP</type>
+        <successfulAttempt>attempt_1399541193872_0036_m_000000_0
+        </successfulAttempt>
+        <status>Sleeping... (20) ms left</status>
+    </task>
+    <task>
+        <startTime>1401273289105</startTime>
+        <finishTime>0</finishTime>
+        <elapsedTime>269880</elapsedTime>
+        <progress>67.33751</progress>
+        <id>task_1399541193872_0036_r_000000</id>
+        <state>RUNNING</state>
+        <type>REDUCE</type>
+        <successfulAttempt></successfulAttempt>
+        <status>Sleeping... (119742300) ms left &gt; reduce</status>
+    </task>
 </tasks>

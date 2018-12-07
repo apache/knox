@@ -25,9 +25,6 @@ public abstract class AbstractCredentialCollector implements CredentialCollector
   protected String value;
   private String name;
 
-  /**
-   * 
-   */
   public AbstractCredentialCollector() {
     super();
   }

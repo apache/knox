@@ -38,9 +38,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class XFrameOptionsFilterTest {
-  /**
-   * 
-   */
   private static final String X_FRAME_OPTIONS = "X-Frame-Options";
   String options = null;
   Collection<String> headerNames = null;
@@ -135,7 +132,7 @@ public class XFrameOptionsFilterTest {
   class TestFilterConfig implements FilterConfig {
     Properties props = null;
 
-    public TestFilterConfig(Properties props) {
+    TestFilterConfig(Properties props) {
       this.props = props;
     }
 
@@ -158,7 +155,6 @@ public class XFrameOptionsFilterTest {
     public Enumeration<String> getInitParameterNames() {
       return null;
     }
-    
   }
 
   class TestFilterChain implements FilterChain {
@@ -172,7 +168,5 @@ public class XFrameOptionsFilterTest {
       headerNames = ((HttpServletResponse)response).getHeaderNames();
       headers = ((HttpServletResponse)response).getHeaders(X_FRAME_OPTIONS);
     }
-    
   }
-
 }

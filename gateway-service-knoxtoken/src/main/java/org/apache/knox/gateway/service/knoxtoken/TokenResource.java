@@ -212,7 +212,7 @@ public class TokenResource {
   }
 
   private long getExpiry() {
-    long expiry = 0l;
+    long expiry;
     if (tokenTTL == -1) {
       expiry = -1;
     }

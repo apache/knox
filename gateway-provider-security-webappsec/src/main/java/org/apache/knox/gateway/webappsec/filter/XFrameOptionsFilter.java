@@ -77,7 +77,7 @@ public class XFrameOptionsFilter implements Filter {
         super.setHeader(name, value);
       }
     }
-    
+
     public XFrameOptionsResponseWrapper(HttpServletResponse response) {
         super(response);
     }

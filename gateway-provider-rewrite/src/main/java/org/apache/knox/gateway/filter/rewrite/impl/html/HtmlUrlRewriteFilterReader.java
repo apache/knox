@@ -33,7 +33,7 @@ import java.net.URISyntaxException;
 public class HtmlUrlRewriteFilterReader extends HtmlFilterReader {
 
   private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
-  
+
   private Resolver resolver;
   private UrlRewriter rewriter;
   private UrlRewriter.Direction direction;

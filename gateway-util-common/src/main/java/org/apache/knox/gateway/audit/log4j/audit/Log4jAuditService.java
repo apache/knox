@@ -69,7 +69,7 @@ public class Log4jAuditService implements AuditService {
       detachContext();
     }
   }
-  
+
   @Override
   public synchronized Auditor getAuditor( String auditorName, String componentName, String serviceName ) {
     String key = auditorName + componentName + serviceName;

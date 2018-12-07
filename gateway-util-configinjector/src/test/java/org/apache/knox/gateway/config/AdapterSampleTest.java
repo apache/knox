@@ -35,7 +35,7 @@ public class AdapterSampleTest {
 
   private static class Adapter implements ConfigurationAdapter {
     private Map<String, Object> config;
-    public Adapter( Map<String, Object> config ) {
+    Adapter( Map<String, Object> config ) {
       this.config = config;
     }
     @Override

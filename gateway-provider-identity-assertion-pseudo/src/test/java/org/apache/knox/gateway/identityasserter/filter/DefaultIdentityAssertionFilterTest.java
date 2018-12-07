@@ -47,17 +47,17 @@ public class DefaultIdentityAssertionFilterTest {
 
     IdentityAsserterFilter filter = new IdentityAsserterFilter();
     Subject subject = new Subject();
-    
+
     subject.getPrincipals().add(new PrimaryPrincipal("lmccay"));
     subject.getPrincipals().add(new GroupPrincipal("users"));
     subject.getPrincipals().add(new GroupPrincipal("admin"));
-    
+
     filter.init(config);
     String username = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
     String[] groups = filter.mapGroupPrincipals(username, subject);
     assertEquals("lmccay", username);
     assertNull(groups); // means for the caller to use the existing subject groups
-    
+
     config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "lmccay,kminder=hdfs;newuser=mapred" ).anyTimes();
     EasyMock.expect(config.getInitParameter("group.principal.mapping") ).andReturn( "kminder=group1;lmccay=mrgroup,mrducks" ).anyTimes();
@@ -73,11 +73,11 @@ public class DefaultIdentityAssertionFilterTest {
     assertFalse("group1 WAS found in groups: " + Arrays.toString(mappedGroups), groupFoundIn("group1", mappedGroups));
 
     subject = new Subject();
-    
+
     subject.getPrincipals().add(new PrimaryPrincipal("kminder"));
     subject.getPrincipals().add(new GroupPrincipal("users"));
     subject.getPrincipals().add(new GroupPrincipal("admin"));
-    
+
     config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "lmccay,kminder=hdfs;newuser=mapred" ).anyTimes();
     EasyMock.expect(config.getInitParameter("group.principal.mapping") ).andReturn( "kminder=group1;lmccay=mrgroup,mrducks" ).anyTimes();
@@ -116,18 +116,18 @@ public class DefaultIdentityAssertionFilterTest {
 
     IdentityAsserterFilter filter = new IdentityAsserterFilter();
     Subject subject = new Subject();
-    
+
     subject.getPrincipals().add(new PrimaryPrincipal("lmccay"));
     subject.getPrincipals().add(new GroupPrincipal("users"));
     subject.getPrincipals().add(new GroupPrincipal("admin"));
-    
+
     filter.init(config);
     String username = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
     String[] groups = filter.mapGroupPrincipals(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName(), subject);
-//    String[] groups = filter.mapGroupPrincipals(username, subject);
+
     assertEquals("lmccay", username);
     assertNull(groups); // means for the caller to use the existing subject groups
-    
+
     config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     context = EasyMock.createNiceMock(ServletContext.class);
@@ -145,11 +145,11 @@ public class DefaultIdentityAssertionFilterTest {
     assertFalse("group1 WAS found in groups: " + Arrays.toString(groups), groupFoundIn("group1", groups));
 
     subject = new Subject();
-    
+
     subject.getPrincipals().add(new PrimaryPrincipal("kminder"));
     subject.getPrincipals().add(new GroupPrincipal("users"));
     subject.getPrincipals().add(new GroupPrincipal("admin"));
-    
+
     config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     context = EasyMock.createNiceMock(ServletContext.class);
@@ -162,5 +162,4 @@ public class DefaultIdentityAssertionFilterTest {
     username = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
     assertEquals("hdfs", username);
   }
-
 }

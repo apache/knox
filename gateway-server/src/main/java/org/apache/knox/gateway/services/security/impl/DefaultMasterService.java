@@ -55,5 +55,4 @@ public class DefaultMasterService extends CMFMasterService implements MasterServ
   @Override
   public void stop() throws ServiceLifecycleException {
   }
-  
 }

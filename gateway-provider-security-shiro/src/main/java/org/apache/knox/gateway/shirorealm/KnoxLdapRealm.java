@@ -80,13 +80,13 @@ import java.util.regex.Pattern;
  * Implementation of {@link org.apache.shiro.realm.ldap.JndiLdapRealm} that also
  * returns each user's groups.
  * This implementation is heavily based on org.apache.isis.security.shiro.IsisLdapRealm.
- * 
+ *
  * This implementation saves looked up ldap groups in Shiro Session to make them
  * easy to be looked up outside of this object
- * 
+ *
  * <p>
  * Sample config for <tt>shiro.ini</tt>:
- * 
+ *
  * <pre>
  * [main]
  * ldapRealm=KnoxLdapRealm
@@ -114,15 +114,15 @@ import java.util.regex.Pattern;
  *    HKG_USERS: user_role,\
  *    GLOBAL_ADMIN: admin_role,\
  *    DEMOS: self-install_role
- * 
+ *
  * ldapRealm.permissionsByRole=\
  *    user_role = *:ToDoItemsJdo:*:*,\
  *                *:ToDoItem:*:*; \
  *    self-install_role = *:ToDoItemsFixturesService:install:* ; \
  *    admin_role = *
- * 
+ *
  * securityManager.realms = $ldapRealm
- * 
+ *
  * </pre>
  */
 public class KnoxLdapRealm extends JndiLdapRealm {
@@ -157,7 +157,6 @@ public class KnoxLdapRealm extends JndiLdapRealm {
           OBJECT_SCOPE.setSearchScope( SearchControls.OBJECT_SCOPE );
       }
 
- 
     private String searchBase;
     private String userSearchBase;
     private String principalRegex = DEFAULT_PRINCIPAL_REGEX;
@@ -170,18 +169,18 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     private String groupSearchBase;
 
     private String groupObjectClass = "groupOfNames";
-    
+
     //  typical value: member, uniqueMember, meberUrl
     private String memberAttribute = "member";
 
     private String groupIdAttribute = "cn";
-    
+
     private String memberAttributeValuePrefix = "uid={0}";
     private String memberAttributeValueSuffix = "";
-    
+
     private final Map<String,String> rolesByGroup = new LinkedHashMap<>();
     private final Map<String,List<String>> permissionsByRole = new LinkedHashMap<>();
-    
+
     private boolean authorizationEnabled;
 
     private String userSearchAttributeName;
@@ -211,7 +210,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
 
   /**
      * Get groups from LDAP.
-     * 
+     *
      * @param principals
      *            the principals of the Subject whose AuthenticationInfo should
      *            be queried from the LDAP server.
@@ -223,7 +222,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
      *             if any LDAP errors occur during the search.
      */
     @Override
-    protected AuthorizationInfo queryForAuthorizationInfo(final PrincipalCollection principals, 
+    protected AuthorizationInfo queryForAuthorizationInfo(final PrincipalCollection principals,
         final LdapContextFactory ldapContextFactory) throws NamingException {
       if (!isAuthorizationEnabled()) {
         return null;
@@ -340,7 +339,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
       LdapName userLdapDn = new LdapName(userDn);
       Attribute attribute = group.getAttributes().get(getGroupIdAttribute());
       String groupName = attribute.get().toString();
-      
+
       attributeEnum = group
           .getAttributes().getAll();
       while (attributeEnum.hasMore()) {
@@ -421,7 +420,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     }
 
     public String getUserSearchBase() {
-      return  (userSearchBase != null && !userSearchBase.isEmpty()) ? 
+      return (userSearchBase != null && !userSearchBase.isEmpty()) ?
           userSearchBase : searchBase;
     }
 
@@ -430,7 +429,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     }
 
     public String getGroupSearchBase() {
-      return (groupSearchBase != null && !groupSearchBase.isEmpty()) ? 
+      return (groupSearchBase != null && !groupSearchBase.isEmpty()) ?
           groupSearchBase : searchBase;
     }
 
@@ -441,7 +440,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     public String getGroupObjectClass() {
       return groupObjectClass;
     }
-    
+
     public void setGroupObjectClass(String groupObjectClassAttribute) {
         this.groupObjectClass = groupObjectClassAttribute;
     }
@@ -449,19 +448,19 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     public String getMemberAttribute() {
       return memberAttribute;
     }
-    
+
     public void setMemberAttribute(String memberAttribute) {
         this.memberAttribute = memberAttribute;
     }
-    
+
     public String getGroupIdAttribute() {
       return groupIdAttribute;
     }
-    
+
     public void setGroupIdAttribute(String groupIdAttribute) {
         this.groupIdAttribute = groupIdAttribute;
     }
-    
+
     public void setMemberAttributeValueTemplate(String template) {
         if (!StringUtils.hasText(template)) {
             String msg = "User DN template cannot be null or empty.";
@@ -487,7 +486,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     public void setPermissionsByRole(String permissionsByRoleStr) {
         permissionsByRole.putAll(parsePermissionByRoleString(permissionsByRoleStr));
     }
-    
+
     public boolean isAuthorizationEnabled() {
       return authorizationEnabled;
     }
@@ -510,14 +509,14 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     public String getUserObjectClass() {
       return userObjectClass;
     }
-    
+
     public void setUserObjectClass(String userObjectClass) {
         this.userObjectClass = userObjectClass;
     }
 
     private Map<String, List<String>> parsePermissionByRoleString(String permissionsByRoleStr) {
       Map<String,List<String>> perms = new HashMap<>();
-   
+
       // split by semicolon ; then by eq = then by  comma ,
       StringTokenizer stSem = new StringTokenizer(permissionsByRoleStr, ";");
       while (stSem.hasMoreTokens()) {
@@ -753,7 +752,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
       return new SimpleAuthenticationInfo(token.getPrincipal(), credentialsHash.toHex(), credentialsHash.getSalt(), getName());
     }
 
-  private static final String expandTemplate( final String template, final Matcher input ) {
+  private static String expandTemplate( final String template, final Matcher input ) {
     String output = template;
     Matcher matcher = TEMPLATE_PATTERN.matcher( output );
     while( matcher.find() ) {

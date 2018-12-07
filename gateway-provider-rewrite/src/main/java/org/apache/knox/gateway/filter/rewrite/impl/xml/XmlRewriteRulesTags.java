@@ -36,23 +36,14 @@ package org.apache.knox.gateway.filter.rewrite.impl.xml;
  * </pre>
  */
 public interface XmlRewriteRulesTags {
+  String ROOT = "rules";
+  String FUNCTIONS = "functions";
+  String RULE = "rule";
 
-  static final String ROOT = "rules";
-
-  static final String FUNCTIONS = "functions";
-
-  static final String RULE = "rule";
-
-//  static final String MATCH = "match";
-//  static final String CHECK = "check";
-//  static final String CONTROL = "control";
-//  static final String ACTION = "action";
-
-  static final String FILTER = "filter";
-  static final String CONTENT = "content";
-  static final String SCOPE = "scope";
-  static final String BUFFER = "buffer";
-  static final String DETECT = "detect";
-  static final String APPLY = "apply";
-
+  String FILTER = "filter";
+  String CONTENT = "content";
+  String SCOPE = "scope";
+  String BUFFER = "buffer";
+  String DETECT = "detect";
+  String APPLY = "apply";
 }

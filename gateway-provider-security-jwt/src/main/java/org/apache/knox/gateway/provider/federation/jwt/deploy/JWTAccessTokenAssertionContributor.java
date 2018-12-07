@@ -55,7 +55,7 @@ public class JWTAccessTokenAssertionContributor extends
       ResourceDescriptor resource, List<FilterParamDescriptor> params) {
     resource.addFilter().name( getName() ).role( getRole() ).impl( FILTER_CLASSNAME ).params( params );
   }
-  
+
   public void setCryptoService(CryptoService crypto) {
     this.crypto = crypto;
   }

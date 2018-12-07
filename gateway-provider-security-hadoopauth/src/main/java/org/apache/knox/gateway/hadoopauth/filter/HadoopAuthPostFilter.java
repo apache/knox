@@ -58,7 +58,7 @@ public class HadoopAuthPostFilter implements Filter {
   @Override
   public void destroy() {
   }
-  
+
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
@@ -72,38 +72,33 @@ public class HadoopAuthPostFilter implements Filter {
         String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
         auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
         doAs(httpRequest, response, chain, subject);
-    } 
-    else {
+    } else {
       ((HttpServletResponse)response).sendError(HttpServletResponse.SC_FORBIDDEN, "User not authenticated");
     }
   }
 
   private void doAs(final ServletRequest request, final ServletResponse response, final FilterChain chain, Subject subject)
       throws IOException, ServletException {
-      try {
-        Subject.doAs(
-            subject,
-            new PrivilegedExceptionAction<Object>() {
-              @Override
-              public Object run() throws Exception {
-                chain.doFilter(request, response);
-                return null;
-              }
+    try {
+      Subject.doAs(
+          subject,
+          new PrivilegedExceptionAction<Object>() {
+            @Override
+            public Object run() throws Exception {
+              chain.doFilter(request, response);
+              return null;
             }
-            );
-      }
-      catch (PrivilegedActionException e) {
-        Throwable t = e.getCause();
-        if (t instanceof IOException) {
-          throw (IOException) t;
-        }
-        else if (t instanceof ServletException) {
-          throw (ServletException) t;
-        }
-        else {
-          throw new ServletException(t);
-        }
+          }
+      );
+    } catch (PrivilegedActionException e) {
+      Throwable t = e.getCause();
+      if (t instanceof IOException) {
+        throw (IOException) t;
+      } else if (t instanceof ServletException) {
+        throw (ServletException) t;
+      } else {
+        throw new ServletException(t);
       }
     }
-  
+  }
 }

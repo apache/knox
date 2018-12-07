@@ -26,18 +26,18 @@ public interface AmbariServiceDiscoveryMessages {
 
     @Message(level = MessageLevel.ERROR,
              text = "Failed to persist data for cluster configuration monitor {0} {1}: {2}")
-    void failedToPersistClusterMonitorData(final String monitor,
-                                           final String filename,
+    void failedToPersistClusterMonitorData(String monitor,
+                                           String filename,
                                            @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
     @Message(level = MessageLevel.ERROR,
              text = "Failed to load persisted service discovery configuration for cluster monitor {0} : {1}")
-    void failedToLoadClusterMonitorServiceDiscoveryConfig(final String monitor,
+    void failedToLoadClusterMonitorServiceDiscoveryConfig(String monitor,
                                                           @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
     @Message(level = MessageLevel.ERROR,
             text = "Failed to load persisted cluster configuration version data for cluster monitor {0} : {1}")
-    void failedToLoadClusterMonitorConfigVersions(final String monitor,
+    void failedToLoadClusterMonitorConfigVersions(String monitor,
                                                   @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
     @Message(level = MessageLevel.ERROR,
@@ -54,24 +54,24 @@ public interface AmbariServiceDiscoveryMessages {
 
     @Message(level = MessageLevel.ERROR,
              text = "Failed to load service discovery URL definition configuration {0}: {1}")
-    void failedToLoadServiceDiscoveryURLDefConfiguration(final String configuration,
+    void failedToLoadServiceDiscoveryURLDefConfiguration(String configuration,
                                                          @StackTrace(level = MessageLevel.ERROR) Exception e);
 
     @Message(level = MessageLevel.ERROR,
              text = "Encountered an error during cluster ({0}) discovery: {1}")
-    void clusterDiscoveryError(final String clusterName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+    void clusterDiscoveryError(String clusterName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
     @Message(level = MessageLevel.ERROR,
         text = "Failed to access the service configurations for cluster ({0}) discovery")
-    void failedToAccessServiceConfigs(final String clusterName);
+    void failedToAccessServiceConfigs(String clusterName);
 
     @Message(level = MessageLevel.ERROR,
              text = "REST invocation {0} timed out")
-    void restInvocationTimedOut(final String url, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+    void restInvocationTimedOut(String url, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
     @Message(level = MessageLevel.ERROR,
              text = "REST invocation {0} failed: {1}")
-    void restInvocationError(final String url, @StackTrace(level = MessageLevel.ERROR) Exception e);
+    void restInvocationError(String url, @StackTrace(level = MessageLevel.ERROR) Exception e);
 
     @Message(level = MessageLevel.ERROR,
             text = "No address for Ambari service discovery has been configured.")
@@ -83,92 +83,74 @@ public interface AmbariServiceDiscoveryMessages {
 
     @Message(level = MessageLevel.ERROR,
             text = "Encountered an error attempting to determine the value for alias {0} : {1}")
-    void aliasServiceError(final String alias, final String error);
-
+    void aliasServiceError(String alias, String error);
 
     @Message(level = MessageLevel.ERROR,
              text = "Encountered an error attempting to determine the user for alias {0} : {1}")
-    void aliasServiceUserError(final String alias, final String error);
-
+    void aliasServiceUserError(String alias, String error);
 
     @Message(level = MessageLevel.ERROR,
              text = "Encountered an error attempting to determine the password for alias {0} : {1}")
-    void aliasServicePasswordError(final String alias, final String error);
-
+    void aliasServicePasswordError(String alias, String error);
 
     @Message(level = MessageLevel.ERROR,
              text = "No user configured for Ambari service discovery.")
     void aliasServiceUserNotFound();
 
-
     @Message(level = MessageLevel.ERROR,
              text = "No password configured for Ambari service discovery.")
     void aliasServicePasswordNotFound();
 
-
     @Message(level = MessageLevel.ERROR,
              text = "Unexpected REST invocation response code for {0} : {1}")
-    void unexpectedRestResponseStatusCode(final String url, int responseStatusCode);
-
+    void unexpectedRestResponseStatusCode(String url, int responseStatusCode);
 
     @Message(level = MessageLevel.ERROR,
              text = "REST invocation {0} yielded a response without any JSON.")
-    void noJSON(final String url);
-
+    void noJSON(String url);
 
     @Message(level = MessageLevel.TRACE,
              text = "REST invocation result: {0}")
-    void debugJSON(final String json);
-
+    void debugJSON(String json);
 
     @Message(level = MessageLevel.DEBUG,
              text = "Loaded component configuration mappings: {0}")
-    void loadedComponentConfigMappings(final String mappings);
-
+    void loadedComponentConfigMappings(String mappings);
 
     @Message(level = MessageLevel.ERROR,
              text = "Failed to load component configuration property mappings {0}: {1}")
-    void failedToLoadComponentConfigMappings(final String mappings,
+    void failedToLoadComponentConfigMappings(String mappings,
                                              @StackTrace(level = MessageLevel.DEBUG) Exception e);
-
 
     @Message(level = MessageLevel.TRACE,
              text = "Discovered: Service: {0}, Host: {1}")
-    void discoveredServiceHost(final String serviceName, final String hostName);
-
+    void discoveredServiceHost(String serviceName, String hostName);
 
     @Message(level = MessageLevel.DEBUG,
              text = "Querying the cluster for the {0} configuration ({1}) property: {2}")
-    void lookingUpServiceConfigProperty(final String serviceName, final String configType, final String propertyName);
-
+    void lookingUpServiceConfigProperty(String serviceName, String configType, String propertyName);
 
     @Message(level = MessageLevel.DEBUG,
              text = "Querying the cluster for the {0} component configuration property: {1}")
-    void lookingUpComponentConfigProperty(final String componentName, final String propertyName);
-
+    void lookingUpComponentConfigProperty(String componentName, String propertyName);
 
     @Message(level = MessageLevel.DEBUG,
              text = "Querying the cluster for the {0} component's hosts")
-    void lookingUpComponentHosts(final String componentName);
-
+    void lookingUpComponentHosts(String componentName);
 
     @Message(level = MessageLevel.DEBUG,
             text = "Handling a derived service URL mapping property for the {0} service: type = {1}, name = {2}")
-    void handlingDerivedProperty(final String serviceName, final String propertyType, final String propertyName);
-
+    void handlingDerivedProperty(String serviceName, String propertyType, String propertyName);
 
     @Message(level = MessageLevel.DEBUG,
              text = "Determined the service URL mapping property {0} value: {1}")
-    void determinedPropertyValue(final String propertyName, final String propertyValue);
-
+    void determinedPropertyValue(String propertyName, String propertyValue);
 
     @Message(level = MessageLevel.INFO,
              text = "Started Ambari cluster configuration monitor (checking every {0} seconds)")
-    void startedAmbariConfigMonitor(final long pollingInterval);
-
+    void startedAmbariConfigMonitor(long pollingInterval);
 
     @Message(level = MessageLevel.WARN,
              text = "The declared nameservice {0} is not defined in the HDFS configuration.")
-    void undefinedHDFSNameService(final String nameservice);
-
+    void undefinedHDFSNameService(String nameservice);
 }

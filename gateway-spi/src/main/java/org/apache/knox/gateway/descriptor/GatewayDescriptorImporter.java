@@ -21,9 +21,7 @@ import java.io.IOException;
 import java.io.Reader;
 
 public interface GatewayDescriptorImporter {
-
-  public String getFormat();
+  String getFormat();
 
   GatewayDescriptor load( Reader reader ) throws IOException;
-
 }

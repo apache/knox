@@ -42,7 +42,7 @@ public class CMFKeystoreService extends BaseKeystoreService {
   private static final String CREDENTIALS_SUFFIX = "-credentials.jceks";
 
   private String serviceName = null;
-  
+
   public CMFKeystoreService(String keystoreDir, String serviceName)
       throws ServiceLifecycleException {
     this.serviceName = serviceName;
@@ -62,21 +62,21 @@ public class CMFKeystoreService extends BaseKeystoreService {
     final File  keyStoreFile = new File( keyStoreDir + serviceName  );
     return getKeystore(keyStoreFile, "JKS");
   }
-  
+
   public void addSelfSignedCert(String alias, char[] passphrase)
       throws KeystoreServiceException {
     KeyPairGenerator keyPairGenerator;
     try {
       keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-      keyPairGenerator.initialize(1024);  
+      keyPairGenerator.initialize(1024);
       KeyPair KPair = keyPairGenerator.generateKeyPair();
       X509Certificate cert = X509CertificateUtil.generateCertificate(TEST_CERT_DN, KPair, 365, "SHA1withRSA");
 
       KeyStore privateKS = getKeystore();
       if (privateKS != null) {
-        privateKS.setKeyEntry(alias, KPair.getPrivate(),  
-          passphrase,  
-          new java.security.cert.Certificate[]{cert});  
+        privateKS.setKeyEntry(alias, KPair.getPrivate(),
+          passphrase,
+          new java.security.cert.Certificate[]{cert});
         writeKeystoreToFile(privateKS, new File( keyStoreDir + serviceName  ));
       } else {
         throw new IOException("Unable to open gateway keystore.");
@@ -85,7 +85,7 @@ public class CMFKeystoreService extends BaseKeystoreService {
       LOG.failedToAddSeflSignedCertForGateway(alias, e);
     }
   }
-  
+
   public void createCredentialStore() throws KeystoreServiceException {
     String filename = keyStoreDir + serviceName + CREDENTIALS_SUFFIX;
     createKeystore(filename, "JCEKS");
@@ -120,8 +120,8 @@ public class CMFKeystoreService extends BaseKeystoreService {
       }
     }
     return key;
-  }  
-  
+  }
+
   public KeyStore getCredentialStore() throws KeystoreServiceException {
     final File  keyStoreFile = new File( keyStoreDir + serviceName + CREDENTIALS_SUFFIX  );
     return getKeystore(keyStoreFile, "JCEKS");

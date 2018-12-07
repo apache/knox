@@ -48,7 +48,7 @@ public abstract class ServiceDeploymentContributorBase extends DeploymentContrib
     final Provider provider = getProviderByRole(context, role);
     return (provider != null);
   }
-  
+
   protected Provider getProviderByRole(DeploymentContext context, String role) {
     Provider p = null;
     Collection<Provider> providers = context.getTopology().getProviders();
@@ -60,7 +60,7 @@ public abstract class ServiceDeploymentContributorBase extends DeploymentContrib
     }
     return p;
   }
-  
+
   protected void addWebAppSecFilters( DeploymentContext context, Service service, ResourceDescriptor resource ) {
     if (topologyContainsProviderType(context, "webappsec")) {
       context.contributeFilter( service, resource, "webappsec", null, null );

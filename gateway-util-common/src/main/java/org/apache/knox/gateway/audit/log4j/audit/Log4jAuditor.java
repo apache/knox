@@ -94,7 +94,7 @@ public class Log4jAuditor implements Auditor {
   public void audit( String action, String resourceName, String resourceType, String outcome, String message ) {
     auditLog( action, resourceName, resourceType, outcome, message );
   }
-  
+
   @Override
   public void audit( String action, String resourceName, String resourceType, String outcome ) {
     auditLog( action, resourceName, resourceType, outcome, null );
@@ -108,9 +108,9 @@ public class Log4jAuditor implements Auditor {
       MDC.put( AuditConstants.MDC_OUTCOME_KEY, outcome );
       MDC.put( AuditConstants.MDC_SERVICE_KEY, serviceName );
       MDC.put( AuditConstants.MDC_COMPONENT_KEY, componentName );
-      
+
       logger.info( message );
-      
+
       MDC.remove( AuditConstants.MDC_ACTION_KEY );
       MDC.remove( AuditConstants.MDC_RESOURCE_NAME_KEY );
       MDC.remove( AuditConstants.MDC_RESOURCE_TYPE_KEY );

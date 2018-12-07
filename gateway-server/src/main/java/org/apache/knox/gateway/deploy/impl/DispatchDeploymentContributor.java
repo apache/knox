@@ -32,7 +32,7 @@ import java.util.Map;
 
 public class DispatchDeploymentContributor extends
     ProviderDeploymentContributorBase {
-  
+
   private static final String DISPATCH_IMPL_PARAM = "dispatch-impl";
 
   @Override

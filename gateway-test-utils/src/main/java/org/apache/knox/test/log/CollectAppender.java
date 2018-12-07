@@ -30,7 +30,7 @@ public class CollectAppender extends AppenderSkeleton {
   }
 
   public static final BlockingQueue<LoggingEvent> queue = new LinkedBlockingQueue<>();
-  
+
   @Override
   protected void append( LoggingEvent event ) {
     event.getProperties();

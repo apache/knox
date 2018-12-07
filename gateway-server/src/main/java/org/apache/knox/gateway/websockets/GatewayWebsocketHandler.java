@@ -63,7 +63,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
   static final String REGEX_SPLIT_CONTEXT = "^((?:[^/]*/){2}[^/]*)";
 
-  final static String REGEX_SPLIT_SERVICE_PATH = "^((?:[^/]*/){3}[^/]*)";
+  static final String REGEX_SPLIT_SERVICE_PATH = "^((?:[^/]*/){3}[^/]*)";
 
   private static final int POOL_SIZE = 10;
 

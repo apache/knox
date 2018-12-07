@@ -16,9 +16,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <info>
-	<appId>application_1399541193872_0035</appId>
-	<name>Sleep job</name>
-	<user>hdfs</user>
-	<startedOn>1401199817106</startedOn>
-	<elapsedTime>113773</elapsedTime>
+    <appId>application_1399541193872_0035</appId>
+    <name>Sleep job</name>
+    <user>hdfs</user>
+    <startedOn>1401199817106</startedOn>
+    <elapsedTime>113773</elapsedTime>
 </info>

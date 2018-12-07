@@ -202,7 +202,7 @@ public class UsernameFunctionProcessorTest {
   private static class SetupFilter implements Filter {
     private Subject subject;
 
-    public SetupFilter( String userName ) {
+    SetupFilter( String userName ) {
       subject = new Subject();
       subject.getPrincipals().add( new BasicUserPrincipal( userName ) );
     }

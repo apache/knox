@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 class Java {
-  
   public static class Request extends AbstractRequest<Response> {
 
     String jar;
@@ -43,7 +42,7 @@ class Java {
     String output;
     List<NameValuePair> params = new ArrayList<>();
 
-    public Request( KnoxSession session ) {
+    Request( KnoxSession session ) {
       super( session );
     }
 
@@ -93,8 +92,7 @@ class Java {
   }
 
   public static class Response extends BasicResponse {
-
-    public Response( HttpResponse response ) {
+    Response( HttpResponse response ) {
       super( response );
     }
 

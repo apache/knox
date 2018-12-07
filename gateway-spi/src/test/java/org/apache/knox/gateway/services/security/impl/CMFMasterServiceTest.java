@@ -41,7 +41,7 @@ public class CMFMasterServiceTest {
   public void setup() {
     ms = new TestCMFMasterService("ambari");
   }
-  
+
   @Test
   public void testMasterService() {
     try {

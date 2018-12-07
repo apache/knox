@@ -59,7 +59,7 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
     return message;
   }
 
-  private final String getCode( final Method method ) {
+  private String getCode( final Method method ) {
     String code = null;
     Message anno = method.getAnnotation( Message.class );
     if( anno != null ) {
@@ -72,7 +72,7 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
     return code;
   }
 
-  private static final StackTrace getStackTraceAnno( final Method method, final int param ) {
+  private static StackTrace getStackTraceAnno( final Method method, final int param ) {
     final Annotation[] annos = method.getParameterAnnotations()[ param ];
     for( Annotation anno: annos ) {
       if( anno instanceof StackTrace ) {
@@ -82,7 +82,7 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
     return null;
   }
 
-  private static final Throwable findLoggableThrowable( final MessageLogger logger, final Method method, final Object[] args ) {
+  private static Throwable findLoggableThrowable( final MessageLogger logger, final Method method, final Object[] args ) {
     Throwable throwable = null;
     if( args != null ) {
       for( int i=0; i<args.length; i++ ) {
@@ -111,7 +111,7 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
     return pattern;
   }
 
-  private static final MessageLevel getLevel( final Method method ) {
+  private static MessageLevel getLevel( final Method method ) {
     MessageLevel level;
     Message anno = method.getAnnotation( Message.class );
     if( anno == null ) {
@@ -144,7 +144,7 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
     return bundle;
   }
 
-  private static final String calcLoggerName( final Class<?> clazz, final Messages anno ) {
+  private static String calcLoggerName( final Class<?> clazz, final Messages anno ) {
     String logger = null;
     if( anno != null ) {
       logger = anno.logger();
@@ -163,7 +163,7 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
     return bundle;
   }
 
-  private static final MessageLogger getLogger( final Class<?> clazz, final Messages anno, final MessageLoggerFactory loggers ) {
+  private static MessageLogger getLogger( final Class<?> clazz, final Messages anno, final MessageLoggerFactory loggers ) {
     return loggers.getLogger( calcLoggerName( clazz, anno ) );
   }
 

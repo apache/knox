@@ -18,36 +18,35 @@
 package org.apache.knox.gateway.ha.provider;
 
 public interface HaServiceConfig {
+  void setServiceName(String name);
 
-   public void setServiceName(String name);
+  String getServiceName();
 
-   public String getServiceName();
+  boolean isEnabled();
 
-   public boolean isEnabled();
+  void setEnabled(boolean enabled);
 
-   public void setEnabled(boolean enabled);
+  void setMaxFailoverAttempts(int limit);
 
-   public void setMaxFailoverAttempts(int limit);
+  int getMaxFailoverAttempts();
 
-   public int getMaxFailoverAttempts();
+  void setFailoverSleep(int sleep);
 
-   public void setFailoverSleep(int sleep);
+  int getFailoverSleep();
 
-   public int getFailoverSleep();
+  void setMaxRetryAttempts(int limit);
 
-   public void setMaxRetryAttempts(int limit);
+  int getMaxRetryAttempts();
 
-   public int getMaxRetryAttempts();
+  void setRetrySleep(int sleep);
 
-   public void setRetrySleep(int sleep);
+  int getRetrySleep();
 
-   public int getRetrySleep();
+  String getZookeeperEnsemble();
 
-   public String getZookeeperEnsemble();
+  void setZookeeperEnsemble(String zookeeperEnsemble);
 
-   public void setZookeeperEnsemble(String zookeeperEnsemble);
+  String getZookeeperNamespace();
 
-   public String getZookeeperNamespace();
-
-   public void setZookeeperNamespace(String zookeeperNamespace);
+  void setZookeeperNamespace(String zookeeperNamespace);
 }

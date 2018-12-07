@@ -31,7 +31,6 @@ import org.easymock.IMocksControl;
 import org.junit.Test;
 
 public class GatewayForwardingServletTest {
-  
   @Test
   public void testRedirectDefaults() throws ServletException, IOException {
     IMocksControl mockControl = EasyMock.createControl();
@@ -62,5 +61,4 @@ public class GatewayForwardingServletTest {
     servlet.service(request, response);
     mockControl.verify();
   }
-
 }

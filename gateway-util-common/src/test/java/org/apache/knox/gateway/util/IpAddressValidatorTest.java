@@ -19,16 +19,15 @@ package org.apache.knox.gateway.util;
 
 import org.junit.Test;
 
-
 public class IpAddressValidatorTest extends org.junit.Assert {
   String test = "127.0.0.1,193.*,192.168.1.*,0:0:0:0:0:0:0:1,0:0:0:0:0:0:*";
   String testWeirdConfig = ",127.0.0.1,,193.*,192.168.1.*,29*";
   String testNullConfig = null;
-  
+
   @Test
   public void testExplicitIpAddress() throws Exception {
     IpAddressValidator ipv = new IpAddressValidator(test);
-    
+
     assertTrue("Should have validated 127.0.0.1", ipv.validateIpAddress("127.0.0.1"));
     assertFalse("Should not have validated 127.0.0.2", ipv.validateIpAddress("127.0.0.2"));
 
@@ -36,11 +35,11 @@ public class IpAddressValidatorTest extends org.junit.Assert {
     assertFalse("Should not have validated 1:0:0:0:0:0:0:1", ipv.validateIpAddress("1:0:0:0:0:0:0:1"));
 
     ipv = new IpAddressValidator(testWeirdConfig);
-    
+
     assertTrue("Should have validated 127.0.0.1", ipv.validateIpAddress("127.0.0.1"));
     assertFalse("Should not have validated 127.0.0.2", ipv.validateIpAddress("127.0.0.2"));
   }
-  
+
   @Test
   public void testNullConfig() throws Exception {
     IpAddressValidator ipv = new IpAddressValidator(testNullConfig);
@@ -48,7 +47,7 @@ public class IpAddressValidatorTest extends org.junit.Assert {
     // null config indicatest that all IPs are accepted
     assertTrue("Should have validated 127.0.0.1", ipv.validateIpAddress("127.0.0.1"));
   }
-  
+
   @Test
   public void testNullRemoteIP() throws Exception {
     IpAddressValidator ipv = new IpAddressValidator(testNullConfig);
@@ -59,7 +58,7 @@ public class IpAddressValidatorTest extends org.junit.Assert {
   @Test
   public void testWildcardIpAddress() throws Exception {
     IpAddressValidator ipv = new IpAddressValidator(test);
-    
+
     assertTrue("Should have validated 192.168.1.1", ipv.validateIpAddress("192.168.1.1"));
     assertFalse("Should not have validated 192.168.2.1", ipv.validateIpAddress("192.168.2.1"));
 
@@ -70,7 +69,7 @@ public class IpAddressValidatorTest extends org.junit.Assert {
     assertFalse("Should not have validated 194.168.2.1", ipv.validateIpAddress("194.168.2.1"));
 
     ipv = new IpAddressValidator(testWeirdConfig);
-    
+
     assertTrue("Should have validated 293.168.1.1", ipv.validateIpAddress("293.168.1.1"));
   }
 

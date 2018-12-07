@@ -404,12 +404,11 @@ public abstract class XmlFilterReader extends Reader {
     if( localName == null ) {
       qname = new QName( node.getNodeName() );
     } else {
-      if ( node.getPrefix() == null ) { 
+      if ( node.getPrefix() == null ) {
         qname = new QName( node.getNamespaceURI(), localName );
       } else {
         qname = new QName( node.getNamespaceURI(), localName, node.getPrefix() );
       }
-      
     }
     return qname;
   }
@@ -539,7 +538,7 @@ public abstract class XmlFilterReader extends Reader {
         writer.write( "]]>" );
       } else {
         writer.write( StringEscapeUtils.escapeXml( value ) );
-      }  
+      }
     }
   }
 
@@ -648,7 +647,7 @@ public abstract class XmlFilterReader extends Reader {
     }
   }
 
-  private static final void writeBufferedElement( Node node, Writer writer ) throws IOException {
+  private static void writeBufferedElement( Node node, Writer writer ) throws IOException {
     try {
       Transformer t = XmlUtils.getTransformer( false, false, 0, true );
       t.transform( new DOMSource( node ), new StreamResult( writer ) );

@@ -136,14 +136,14 @@ public class CMFMasterService {
     try {
       ArrayList<String> lines = new ArrayList<>();
       lines.add(MASTER_PERSISTENCE_TAG);
-      
+
       String line = Base64.encodeBase64String((
-          Base64.encodeBase64String(atom.salt) + "::" + 
-          Base64.encodeBase64String(atom.iv) + "::" + 
+          Base64.encodeBase64String(atom.salt) + "::" +
+          Base64.encodeBase64String(atom.iv) + "::" +
           Base64.encodeBase64String(atom.cipher)).getBytes(StandardCharsets.UTF_8));
       lines.add(line);
       FileUtils.writeLines(masterFile, StandardCharsets.UTF_8.name(), lines);
-      
+
       // restrict os permissions to only the user running this process
       chmod("600", masterFile);
     } catch (IOException e) {
@@ -184,11 +184,11 @@ public class CMFMasterService {
       // TODO: look into the following for Windows: Runtime.getRuntime().exec("attrib -r myFile");
       if (isUnixEnv()) {
           //args and file should never be null.
-          if (args == null || file == null) 
+          if (args == null || file == null)
             throw new IllegalArgumentException("nullArg");
-          if (!file.exists()) 
+          if (!file.exists())
             throw new IOException("fileNotFound");
-  
+
           // " +" regular expression for 1 or more spaces
           final String[] argsString = args.split(" +");
           List<String> cmdList = new ArrayList<>();

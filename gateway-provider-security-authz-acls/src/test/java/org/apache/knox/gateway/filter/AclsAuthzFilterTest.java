@@ -44,7 +44,7 @@ import org.junit.Test;
 public class AclsAuthzFilterTest {
   private boolean accessGranted = false;
   private Filter filter = null;
-  
+
   @Before
   public void setup() {
     filter = new AclsAuthorizationFilter() {
@@ -57,7 +57,7 @@ public class AclsAuthzFilterTest {
           chain.doFilter(request, response);
         }
       }
-      
+
       @Override
       protected boolean enforceAclAuthorizationPolicy(ServletRequest request,
                                                       ServletResponse response, FilterChain chain) {
@@ -66,7 +66,7 @@ public class AclsAuthzFilterTest {
       }
     };
   }
-  
+
   @Test
   public void testKnoxAdminGroupsValid() throws ServletException, IOException,
       URISyntaxException {
@@ -91,9 +91,9 @@ public class AclsAuthzFilterTest {
           throws IOException, ServletException {
       }
     };
-    
+
     filter.init(config);
-    
+
     Subject subject = new Subject();
     subject.getPrincipals().add(new PrimaryPrincipal("larry"));
     subject.getPrincipals().add(new GroupPrincipal("users"));
@@ -148,9 +148,9 @@ public class AclsAuthzFilterTest {
           throws IOException, ServletException {
       }
     };
-    
+
     filter.init(config);
-    
+
     Subject subject = new Subject();
     subject.getPrincipals().add(new PrimaryPrincipal("larry"));
     subject.getPrincipals().add(new GroupPrincipal("users"));
@@ -180,7 +180,7 @@ public class AclsAuthzFilterTest {
     }
     assertFalse(accessGranted);
   }
-  
+
   @Test
   public void testKnoxAdminUsersValid() throws ServletException, IOException,
       URISyntaxException {
@@ -205,9 +205,9 @@ public class AclsAuthzFilterTest {
           throws IOException, ServletException {
       }
     };
-    
+
     filter.init(config);
-    
+
     Subject subject = new Subject();
     subject.getPrincipals().add(new PrimaryPrincipal("adminuser"));
     subject.getPrincipals().add(new GroupPrincipal("users"));
@@ -262,9 +262,9 @@ public class AclsAuthzFilterTest {
           throws IOException, ServletException {
       }
     };
-    
+
     filter.init(config);
-    
+
     Subject subject = new Subject();
     subject.getPrincipals().add(new PrimaryPrincipal("larry"));
     subject.getPrincipals().add(new GroupPrincipal("users"));
@@ -294,7 +294,7 @@ public class AclsAuthzFilterTest {
     }
     assertFalse(accessGranted);
   }
-  
+
   @Test
   public void testKnoxAdminUsersInvalidButACLUsersValid() throws ServletException, IOException,
       URISyntaxException {
@@ -319,9 +319,9 @@ public class AclsAuthzFilterTest {
           throws IOException, ServletException {
       }
     };
-    
+
     filter.init(config);
-    
+
     Subject subject = new Subject();
     subject.getPrincipals().add(new PrimaryPrincipal("larry"));
     subject.getPrincipals().add(new GroupPrincipal("users"));
@@ -376,9 +376,9 @@ public class AclsAuthzFilterTest {
           throws IOException, ServletException {
       }
     };
-    
+
     filter.init(config);
-    
+
     Subject subject = new Subject();
     subject.getPrincipals().add(new PrimaryPrincipal("larry"));
     subject.getPrincipals().add(new GroupPrincipal("users"));
@@ -433,9 +433,9 @@ public class AclsAuthzFilterTest {
           throws IOException, ServletException {
       }
     };
-    
+
     filter.init(config);
-    
+
     Subject subject = new Subject();
     subject.getPrincipals().add(new PrimaryPrincipal("larry"));
     subject.getPrincipals().add(new GroupPrincipal("users"));

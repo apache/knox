@@ -21,12 +21,10 @@ import java.util.regex.Pattern;
 
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterPathDescriptor;
 
-
 public interface UrlRewriteFilterReader {
+  String filterValueString( String name, String value, String rule );
 
-  public String filterValueString( String name, String value, String rule );
-
-  public static class RegexCompiler implements UrlRewriteFilterPathDescriptor.Compiler<Pattern> {
+  class RegexCompiler implements UrlRewriteFilterPathDescriptor.Compiler<Pattern> {
     @Override
     public Pattern compile( String expression, Pattern compiled ) {
       if( compiled != null ) {

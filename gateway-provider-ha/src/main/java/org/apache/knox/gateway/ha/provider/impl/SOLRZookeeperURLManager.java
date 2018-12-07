@@ -27,10 +27,10 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Implementation of URLManager intended for query of Zookeeper for active SOLR Cloud hosts. 
+ * Implementation of URLManager intended for query of Zookeeper for active SOLR Cloud hosts.
  * In the event of a failure via markFailed, Zookeeper is queried again for active
  * host information.
- * 
+ *
  * When configuring the HAProvider in the topology, the zookeeperEnsemble
  * attribute must be set to a comma delimited list of the host and port number,
  * i.e. host1:2181,host2:2181.

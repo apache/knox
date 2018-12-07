@@ -29,39 +29,38 @@ public interface MessageEventCallback {
    * A generic callback, can be left un-implemented
    * @param message message
    */
-  void doCallback(final String message);
-  
+  void doCallback(String message);
+
   /**
    * Callback when connection is established.
    * @param session session
    */
-  void onConnectionOpen(final Object session);
-  
+  void onConnectionOpen(Object session);
+
   /**
    * Callback when connection is closed.
    * @param reason Reason for the connection close
    */
-  void onConnectionClose(final CloseReason reason);
-  
+  void onConnectionClose(CloseReason reason);
+
   /**
    * Callback when there is an error in connection.
    * @param cause cause to throw on error
    */
-  void onError(final Throwable cause);
-  
+  void onError(Throwable cause);
+
   /**
    * Callback when a text message is received.
    * @param message message
    * @param session session
    */
-  void onMessageText(final String message, final Object session);
-  
+  void onMessageText(String message, Object session);
+
   /**
    * Callback when a binary message is received.
    * @param message message
    * @param last last
    * @param session session
    */
-  void onMessageBinary(final byte[]  message, final boolean last, final Object session);
-  
+  void onMessageBinary(byte[]  message, boolean last, Object session);
 }

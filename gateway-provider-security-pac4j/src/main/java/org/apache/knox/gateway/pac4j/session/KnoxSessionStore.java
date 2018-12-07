@@ -153,12 +153,10 @@ public class KnoxSessionStore implements SessionStore {
      * @since 1.1.0
      */
     private static byte[] compress(final byte[] data) throws IOException {
-
-        try (final ByteArrayOutputStream byteStream = new ByteArrayOutputStream(
-            data.length);
-            final GZIPOutputStream gzip = new GZIPOutputStream(byteStream)) {
-            gzip.write(data);
-            gzip.close();
+        try (ByteArrayOutputStream byteStream = new ByteArrayOutputStream(data.length)) {
+            try(GZIPOutputStream gzip = new GZIPOutputStream(byteStream)) {
+              gzip.write(data);
+            }
             return byteStream.toByteArray();
         }
     }
@@ -172,14 +170,11 @@ public class KnoxSessionStore implements SessionStore {
      * @since 1.1.0
      */
     private static byte[] unCompress(final byte[] data) throws IOException {
-
-        try (final ByteArrayInputStream inputStream = new ByteArrayInputStream(
-            data);
-            final GZIPInputStream gzip = new GZIPInputStream(inputStream)) {
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
+            GZIPInputStream gzip = new GZIPInputStream(inputStream)) {
             return IOUtils.toByteArray(gzip);
         }
     }
-
 
     @Override
     public SessionStore buildFromTrackableSession(WebContext arg0, Object arg1) {

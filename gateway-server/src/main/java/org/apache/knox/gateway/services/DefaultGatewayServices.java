@@ -102,14 +102,14 @@ public class DefaultGatewayServices implements GatewayServices {
     crypto.setAliasService(alias);
     crypto.init(config, options);
     services.put(CRYPTO_SERVICE, crypto);
-    
+
     DefaultTokenAuthorityService ts = new DefaultTokenAuthorityService();
     ts.setAliasService(alias);
     ts.setKeystoreService(ks);
     ts.init(config, options);
     // prolly should not allow the token service to be looked up?
     services.put(TOKEN_SERVICE, ts);
-    
+
     JettySSLService ssl = new JettySSLService();
     ssl.setAliasService(alias);
     ssl.setKeystoreService(ks);

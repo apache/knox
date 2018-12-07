@@ -291,7 +291,7 @@ public class JsonPath {
       return oldMatches;
     }
 
-    private static final void addAllChildren( Match parent, List<Match> matches, JsonNode node ) {
+    private static void addAllChildren( Match parent, List<Match> matches, JsonNode node ) {
       Match match;
       switch( node.getNodeType() ) {
         case OBJECT:

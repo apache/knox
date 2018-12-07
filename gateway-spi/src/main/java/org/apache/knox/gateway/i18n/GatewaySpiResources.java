@@ -24,7 +24,7 @@ import org.apache.knox.gateway.i18n.resources.Resources;
 public interface GatewaySpiResources {
   @Resource(text = "Groups: {0}")
   String groupsList( String groups );
-  
+
   @Resource(text = "Effective User: {0}")
   String effectiveUser( String user );
 }

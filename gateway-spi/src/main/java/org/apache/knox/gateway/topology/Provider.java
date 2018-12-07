@@ -31,7 +31,7 @@ public class Provider {
 
   public Provider() {
   }
-  
+
   public String getName() {
     return name;
   }

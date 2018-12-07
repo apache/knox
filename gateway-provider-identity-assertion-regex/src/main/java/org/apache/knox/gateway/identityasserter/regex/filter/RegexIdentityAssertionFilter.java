@@ -35,7 +35,7 @@ public class RegexIdentityAssertionFilter extends
   private String output = null;
   private Map<String,String> dict;
   RegexTemplate template;
-  
+
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
     super.init(filterConfig);

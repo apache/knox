@@ -34,10 +34,9 @@ public class HadoopGroupProviderDeploymentContributorTest {
 
   @Test
   public void testServiceLoader() throws Exception {
-    
     ServiceLoader<ProviderDeploymentContributor> loader = ServiceLoader
         .load(ProviderDeploymentContributor.class);
-    
+
     Iterator<ProviderDeploymentContributor> iterator = loader.iterator();
     assertThat("Service iterator empty.", iterator.hasNext());
     while (iterator.hasNext()) {

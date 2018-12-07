@@ -73,7 +73,7 @@ public class GatewayFilterTest {
     EasyMock.replay( request );
     EasyMock.replay( context );
     EasyMock.replay( gatewayConfig );
-    
+
     HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
     EasyMock.replay( response );
 

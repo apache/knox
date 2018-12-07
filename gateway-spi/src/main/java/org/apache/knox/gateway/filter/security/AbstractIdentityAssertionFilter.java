@@ -67,7 +67,5 @@ public abstract class AbstractIdentityAssertionFilter extends AbstractIdentityAs
   }
 
   @Override
-  public void destroy() {
-    
-  }
+  public void destroy() {}
 }

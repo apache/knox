@@ -20,15 +20,13 @@ package org.apache.knox.gateway.ha.provider;
 import java.util.List;
 
 public interface HaDescriptor {
+   void addServiceConfig(HaServiceConfig serviceConfig);
 
-   public void addServiceConfig(HaServiceConfig serviceConfig);
+   HaServiceConfig getServiceConfig(String serviceName);
 
-   public HaServiceConfig getServiceConfig(String serviceName);
+   List<String> getServiceNames();
 
-   public List<String> getServiceNames();
+   List<String> getEnabledServiceNames();
 
-   public List<String> getEnabledServiceNames();
-
-   public List<HaServiceConfig> getServiceConfigs();
-
+   List<HaServiceConfig> getServiceConfigs();
 }

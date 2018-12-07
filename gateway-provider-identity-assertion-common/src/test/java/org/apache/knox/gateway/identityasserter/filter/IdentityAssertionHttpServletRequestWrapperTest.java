@@ -111,7 +111,7 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     request.setCharacterEncoding( StandardCharsets.UTF_8.name() );
     request.setContentType( "application/x-www-form-urlencoded" );
     request.setMethod("POST");
-    
+
     IdentityAsserterHttpServletRequestWrapper wrapper
         = new IdentityAsserterHttpServletRequestWrapper( request, "output-user" );
 

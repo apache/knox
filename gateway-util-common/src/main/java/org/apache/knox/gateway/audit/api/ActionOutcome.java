@@ -23,7 +23,6 @@ package org.apache.knox.gateway.audit.api;
  * following: "Success", "success", "SUCCESS", "Succeed" Action outcomes doesn't
  * restricted to this list and any constants from component's source code may be
  * used.
- * 
  */
 public abstract class ActionOutcome {
   private ActionOutcome() {

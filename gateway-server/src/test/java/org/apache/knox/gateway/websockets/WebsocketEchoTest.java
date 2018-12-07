@@ -72,11 +72,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * address of the Websocket server.
  * <li>A mock client is setup to connect to gateway.
  * </ul>
- * 
+ *
  * The test is to confirm whether the message is sent all the way to the backend
  * Websocket server through Knox and back.
- * 
- * 
+ *
  * @since 0.10
  */
 public class WebsocketEchoTest {

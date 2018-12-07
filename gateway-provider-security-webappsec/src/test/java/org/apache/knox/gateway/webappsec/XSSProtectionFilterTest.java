@@ -95,7 +95,7 @@ public class XSSProtectionFilterTest {
   private static class TestFilterConfig implements FilterConfig {
     Properties props = null;
 
-    public TestFilterConfig(Properties props) {
+    TestFilterConfig(Properties props) {
       this.props = props;
     }
 

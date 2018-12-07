@@ -39,7 +39,7 @@ public class SoutMessageLogger implements MessageLogger {
     return true;
   }
 
-  private static final String getFormat( final String id ) {
+  private static String getFormat( final String id ) {
     return( id == null ) ? FORMAT_WITHOUT_ID : FORMAT_WITH_ID;
   }
 

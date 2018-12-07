@@ -46,9 +46,9 @@ import org.apache.http.impl.client.HttpClientBuilder;
  * Base implementation of URLManager intended for query of Zookeeper active hosts. In
  * the event of a failure via markFailed, Zookeeper is queried again for active
  * host information.
- * 
+ *
  * When configuring the HAProvider in the topology, the zookeeperEnsemble attribute must be set to a
- * comma delimited list of the host and port number, i.e. host1:2181,host2:2181. 
+ * comma delimited list of the host and port number, i.e. host1:2181,host2:2181.
  */
 public abstract class BaseZookeeperURLManager implements URLManager {
   protected static final HaMessages LOG = MessagesFactory.get(HaMessages.class);

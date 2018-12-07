@@ -42,9 +42,9 @@ import javax.servlet.ServletException;
  * hadoop.auth.config.kerberos.keytab=/etc/knox/conf/knox.service.keytab (default: null)
  */
 
-public class HadoopAuthFilter extends 
+public class HadoopAuthFilter extends
     org.apache.hadoop.security.authentication.server.AuthenticationFilter {
-  
+
   @Override
   protected Properties getConfiguration(String configPrefix, FilterConfig filterConfig) throws ServletException {
     Properties props = new Properties();

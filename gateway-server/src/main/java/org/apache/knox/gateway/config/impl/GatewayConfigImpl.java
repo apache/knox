@@ -156,14 +156,14 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   // These config property names are not inline with the convention of using the
   // GATEWAY_CONFIG_FILE_PREFIX as is done by those above. These are left for
-  // backward compatibility. 
+  // backward compatibility.
   // LET'S NOT CONTINUE THIS PATTERN BUT LEAVE THEM FOR NOW.
   private static final String SSL_ENABLED = "ssl.enabled";
   private static final String SSL_EXCLUDE_PROTOCOLS = "ssl.exclude.protocols";
   private static final String SSL_INCLUDE_CIPHERS = "ssl.include.ciphers";
   private static final String SSL_EXCLUDE_CIPHERS = "ssl.exclude.ciphers";
   // END BACKWARD COMPATIBLE BLOCK
-  
+
   public static final String DEFAULT_HTTP_PORT = "8888";
   public static final String DEFAULT_HTTP_PATH = "gateway";
   public static final String DEFAULT_DEPLOYMENT_DIR = "deployments";
@@ -453,7 +453,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public boolean isSSLEnabled() {
     String enabled = get( SSL_ENABLED, "true" );
-    
+
     return "true".equals(enabled);
   }
 
@@ -473,7 +473,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     String kerberosDebugEnabled = get( KRB5_DEBUG, "false" );
     return "true".equals(kerberosDebugEnabled);
   }
-  
+
   @Override
   public String getKerberosLoginConfig() {
     return get( KRB5_LOGIN_CONFIG );
@@ -648,7 +648,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public long getGatewayIdleTimeout() {
-    return getLong(GATEWAY_IDLE_TIMEOUT, 300000l);
+    return getLong(GATEWAY_IDLE_TIMEOUT, 300000L);
   }
 
   @Override
@@ -854,7 +854,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public int getClusterMonitorPollingInterval(String type) {
     return getInt(CLUSTER_CONFIG_MONITOR_PREFIX + type.toLowerCase(Locale.ROOT) + CLUSTER_CONFIG_MONITOR_INTERVAL_SUFFIX, -1);
   }
-  
+
   @Override
   public boolean isClusterMonitorEnabled(String type) {
     return getBoolean(CLUSTER_CONFIG_MONITOR_PREFIX + type.toLowerCase(Locale.ROOT) + CLUSTER_CONFIG_MONITOR_ENABLED_SUFFIX, true);

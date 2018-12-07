@@ -1674,131 +1674,131 @@ body.login {
   box-shadow: none;
 }
 .label-yellow{
-	background-color: #f3a139;
+    background-color: #f3a139;
 }
 .label-inverse {
 background-color: #444444;
 }
 .alert {
-	border:none;
+    border:none;
 }
 tr.disable-policy td {
-	background-color: #F0F0F0;
+    background-color: #F0F0F0;
 }
 
 .policy-disabled .formHeader,
 .policy-disabled .control-label {
-	color:#aaa;
+    color:#aaa;
 }
 
 td.html-cell.renderable:last-child {
-	text-align:center;
+    text-align:center;
 }
 
 .policy-manager span.policy-title {
-	font-size: 20px;
-	line-height: 32px;
-	text-transform: uppercase;
-	color: #707070;
+    font-size: 20px;
+    line-height: 32px;
+    text-transform: uppercase;
+    color: #707070;
 }
 .policy-manager table thead tr th:first-child {
-	background-color: #d8d8d8;
+    background-color: #d8d8d8;
 }
 .policy-manager table thead tr th:first-child a {
-	color: #707070;
+    color: #707070;
 }
 .label-green{
-	background-color: #3ea211;
+    background-color: #3ea211;
 }
 .connection-error-font {
-	font-size: 11px;
-	font-family: monospace;
+    font-size: 11px;
+    font-family: monospace;
 }
 /**************/
 .policy-form .field-name{
-	float: left;
-	margin-bottom: 0 !important;
+    float: left;
+    margin-bottom: 0 !important;
 }
 .policy-form .field-isEnabled{
 margin-left: 413px;
 margin-bottom: 12px !important;
 }
 .policy-form .field-isEnabled .controls{
-	margin-left:30px;
+    margin-left:30px;
 }
 .margin-bottom-5{
 margin-bottom: 5px;
 }
 
 .popover-content {
-	/*overflow-y: auto;
-	max-height: 250px;*/
-	padding-right: 25px;
+    /*overflow-y: auto;
+    max-height: 250px;*/
+    padding-right: 25px;
 }
 .margin-bottom-57 {
-	margin-bottom:57px;
+    margin-bottom:57px;
 }
 .table .table {
-	width:auto;
+    width:auto;
 }
 .width-25{
-	width:25%;
+    width:25%;
 }
 .margin-left-0{
-	margin-left:0%!important;
+    margin-left:0%!important;
 }
 
 .policy-manager .row-fluid [class*="span"]:first-child {
-	margin-left: 1%;
+    margin-left: 1%;
 }
 .policy-manager .row-fluid [class*="span"] {
-	margin-left: 1%;
-	margin-right: 1%;
+    margin-left: 1%;
+    margin-right: 1%;
 }
 .policy-manager .row-fluid [class*="span"]:nth-child(3n+4) {
-	clear: both;
+    clear: both;
 }
 .field-isEnabled + div {
    clear:both;
 }
 .include-toggle{
-	margin-left: 264px;
-	margin-top: -29px;
+    margin-left: 264px;
+    margin-top: -29px;
 }
 .recursive-toggle{
-	margin-left: 363px;
-	margin-top: -20px;
+    margin-left: 363px;
+    margin-top: -20px;
 }
 .recursive-toggle-path {
 margin-left: 347px;
 margin-top: -29px;
 }
 .policy-form .help-inline {
-	position: relative;
-	top: 10px;
+    position: relative;
+    top: 10px;
 }
 .hideResource{
-	display:none;
+    display:none;
 }
 .btn-mini {
-	padding: 0px 8px;
-	font-size: 11.05px;
+    padding: 0px 8px;
+    font-size: 11.05px;
 }
 .label-ranger {
-	background-color: #3C9C11;
+    background-color: #3C9C11;
 }
 .sameLevelDropdown{
-	margin-right: 31px;
-	margin-left: -130px;
-	width: 100px;
-	height: 29px;
-	font-family: Tahoma;
-	font-size: 14px;
-	border-radius: 10px;
-	border: 2px #cccccc solid;
+    margin-right: 31px;
+    margin-left: -130px;
+    width: 100px;
+    height: 29px;
+    font-family: Tahoma;
+    font-size: 14px;
+    border-radius: 10px;
+    border: 2px #cccccc solid;
 }
 .margin-left-5{
-	margin-left:5px;
+    margin-left:5px;
 }
 .tr-inactive {
   background-color: #F5F5F5;
@@ -1816,24 +1816,24 @@ td.select-row-cell {
   text-align: center;
 }
 .ranger-notifications {
-	right: 33px!important;
-	top: 41px!important;
+    right: 33px!important;
+    top: 41px!important;
 }table.table-permission.visible-border tr td:last-child {
   border: 1px solid #dddddd;
   padding-left: 0;
 }
 .set-height-groups{
-	width: 100%;
-	height: 100px;
-	overflow-x: hidden;	
+    width: 100%;
+    height: 100px;
+    overflow-x: hidden;
 }
 .float-left-margin-2{
-	float: left;
-	margin: 2px;
+    float: left;
+    margin: 2px;
 }
 
 #r_topNav .dropdown-menu {
-	margin:0;
+    margin:0;
 }
 
 .table-policy-condition th,
@@ -1872,15 +1872,15 @@ input[type="radio"], input[type="checkbox"] {margin-top: 0;}
   margin-top: 6px;
 }
 .tag-fixed-popover {
-	top: 50px !important;
-	left: 55% !important;
-	margin-left: -350px !important;
-	max-width: 700px !important;
-	max-height: 500px;
-	overflow-y: auto;
+    top: 50px !important;
+    left: 55% !important;
+    margin-left: -350px !important;
+    max-width: 700px !important;
+    max-height: 500px;
+    overflow-y: auto;
 }
 .tag-fixed-popover-wrapper {
-	position: fixed !important;
+    position: fixed !important;
     top: 0 !important;
     bottom: 0 !important;
     right: 0 !important;
@@ -1889,8 +1889,8 @@ input[type="radio"], input[type="checkbox"] {margin-top: 0;}
     background-color: rgba(0,0,0,0.5);
 }
 .table-policy-condition label {
-	font-size: 12px;
-	text-align: left;
+    font-size: 12px;
+    text-align: left;
 }
 .table-policy-condition tr[data-id=storm] td label {
     min-width: 170px;
@@ -1900,7 +1900,7 @@ input[type="radio"], input[type="checkbox"] {margin-top: 0;}
     min-width: 170px;
 } */
 .pause-play-close{
-	margin-left: -5px;
+    margin-left: -5px;
     margin-top: -2px;
     font-size: 11px;
 }

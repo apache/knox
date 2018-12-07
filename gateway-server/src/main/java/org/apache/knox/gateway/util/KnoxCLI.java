@@ -88,7 +88,7 @@ import java.util.UUID;
 public class KnoxCLI extends Configured implements Tool {
 
   private static final String USAGE_PREFIX = "KnoxCLI {cmd} [options]";
-  static final private String COMMANDS =
+  private static final String COMMANDS =
       "   [--help]\n" +
       "   [" + VersionCommand.USAGE + "]\n" +
       "   [" + MasterCreateCommand.USAGE + "]\n" +
@@ -1176,7 +1176,7 @@ public class KnoxCLI extends Configured implements Tool {
 
             if(errors > 0) {
               out.println(userSearchAttributeName + " or " + userObjectClass + " or " + searchBase + " or " + userSearchBase + " was found in the topology");
-              out.println("If any one of the above params is present then " + userSearchAttributeName + 
+              out.println("If any one of the above params is present then " + userSearchAttributeName +
                   " and " + userObjectClass + " must both be present and either " + searchBase + " or " + userSearchBase + " must also be present.");
             }
             errs += errors;

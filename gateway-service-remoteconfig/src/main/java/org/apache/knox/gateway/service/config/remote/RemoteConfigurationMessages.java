@@ -30,17 +30,16 @@ public interface RemoteConfigurationMessages {
     void multipleRemoteRegistryConfigurations();
 
     @Message(level = MessageLevel.ERROR, text = "Failed to resolve the credential alias {0}")
-    void unresolvedCredentialAlias(final String alias);
+    void unresolvedCredentialAlias(String alias);
 
     @Message(level = MessageLevel.ERROR, text = "An error occurred interacting with the remote configuration registry : {0}")
     void errorInteractingWithRemoteConfigRegistry(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 
     @Message(level = MessageLevel.ERROR, text = "An error occurred handling the ACL for remote configuration {0} : {1}")
-    void errorHandlingRemoteConfigACL(final String path,
+    void errorHandlingRemoteConfigACL(String path,
                                       @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
     @Message(level = MessageLevel.ERROR, text = "An error occurred setting the ACL for remote configuration {0} : {1}")
-    void errorSettingEntryACL(final String path,
+    void errorSettingEntryACL(String path,
                               @StackTrace(level = MessageLevel.DEBUG) Exception e);
-
 }

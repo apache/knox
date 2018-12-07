@@ -190,7 +190,6 @@ public class CappedBufferHttpEntityTest {
     } catch( IOException e ) {
      // Expected.
    }
- 
   }
 
   @Test
@@ -555,7 +554,7 @@ public class CappedBufferHttpEntityTest {
     replay = new CappedBufferHttpEntity( basic, 5 );
 
     stream = replay.getContent();
-    try {    
+    try {
       text = blockRead( stream, StandardCharsets.UTF_8, 7, 2 );
       fail( "Expected IOException" );
     } catch ( IOException e ) {
@@ -658,7 +657,6 @@ public class CappedBufferHttpEntityTest {
     } catch (IOException e) {
       // expected
     }
- 
   }
 
   @Test

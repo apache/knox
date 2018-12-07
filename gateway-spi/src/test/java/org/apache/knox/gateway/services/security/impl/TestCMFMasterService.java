@@ -32,6 +32,4 @@ public class TestCMFMasterService extends CMFMasterService {
   @Override
   protected void displayWarning(boolean persisting) {
   }
-  
-  
 }

@@ -38,7 +38,7 @@ public class AclParser {
     groups = new ArrayList<>();
     ipv = new IpAddressValidator(null);
   }
-  
+
   public void parseAcls(String resourceRole, String acls) throws InvalidACLException {
     if (acls != null) {
       String[] parts = acls.split(";");
@@ -49,7 +49,7 @@ public class AclParser {
         log.aclsFoundForResource(resourceRole);
       }
       parseUserAcls(parts);
-      
+
       parseGroupAcls(parts);
 
       parseIpAddressAcls(parts);

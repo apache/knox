@@ -39,7 +39,7 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * Simple unit tests for SOLRZookeeperURLManager.
- * 
+ *
  * @see SOLRZookeeperURLManager
  */
 public class SOLRZookeeperURLManagerTest {
@@ -84,20 +84,19 @@ public class SOLRZookeeperURLManagerTest {
 
     // Order of URLS is not deterministic out of Zookeeper
     // So we just check for expected values
-    
     TreeSet<String> expected = new TreeSet<>();
 
     expected.add("http://host1:8983/solr");
     expected.add("http://host2:8983/solr");
     expected.add("http://host3:8983/solr");
-    
+
     for(String url : urls) {
       assertTrue(expected.contains(url));
       expected.remove(url);
     }
-    
+
     assertEquals(0,expected.size());
-    
+
     // Unable to test markFailed because the SOLRZookeeperURLManager always does a refresh on Zookeeper contents.
   }
 

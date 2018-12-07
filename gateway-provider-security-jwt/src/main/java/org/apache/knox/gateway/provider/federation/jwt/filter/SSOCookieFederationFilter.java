@@ -211,13 +211,13 @@ private String gatewayPath;
       host = request.getHeader(X_FORWARDED_HOST);
       port = Integer.parseInt(request.getHeader(X_FORWARDED_PORT));
     }
-    StringBuffer sb = new StringBuffer(scheme);
+    StringBuilder sb = new StringBuilder(scheme);
     sb.append("://").append(host);
     if (!host.contains(":")) {
       sb.append(":").append(port);
     }
     sb.append("/").append(gatewayPath).append("/knoxsso/api/v1/websso");
-    
+
     return sb.toString();
   }
 

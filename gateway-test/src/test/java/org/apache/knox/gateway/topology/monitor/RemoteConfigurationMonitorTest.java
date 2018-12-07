@@ -486,7 +486,7 @@ public class RemoteConfigurationMonitorTest {
 
         try {
             cm.start();
-            
+
             // Test auth violation
             clientService.get(configMonitorName).createEntry("/auth_test/child_node/test1");
             assertNull("Creation should have been prevented since write access is not granted to the test client.",

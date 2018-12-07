@@ -33,9 +33,9 @@ public interface AuditContext {
   String getSystemUsername();
 
   void setSystemUsername( String systemUsername );
-   
+
   String getTargetServiceName();
-  
+
   void setTargetServiceName( String targetServiceName );
 
   String getRemoteIp();

@@ -55,7 +55,7 @@ public class PrincipalMapperTest {
     assertEquals("users", mapper.mapGroupPrincipal("hdfs")[0]);
     assertEquals("users", mapper.mapGroupPrincipal("lmccay")[0]);
   }
-  
+
   @Test
   public void testSimplePrincipalMappingWithWildcardAndExplicitGroups() {
     String principalMapping = "";

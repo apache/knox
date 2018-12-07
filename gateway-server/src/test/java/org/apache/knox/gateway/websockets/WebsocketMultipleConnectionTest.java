@@ -372,7 +372,7 @@ public class WebsocketMultipleConnectionTest {
     }
   }
 
-  private static abstract class WebsocketClient extends Endpoint
+  private abstract static class WebsocketClient extends Endpoint
       implements MessageHandler.Whole<String> {
     @Override
     public void onOpen(Session session, EndpointConfig config) {

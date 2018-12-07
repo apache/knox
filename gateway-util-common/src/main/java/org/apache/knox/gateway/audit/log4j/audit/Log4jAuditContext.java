@@ -61,12 +61,12 @@ public class Log4jAuditContext implements Serializable, AuditContext {
   public void setSystemUsername( String systemUsername ) {
     this.systemUsername = systemUsername;
   }
-  
+
   @Override
   public String getTargetServiceName() {
     return targetServiceName;
   }
-  
+
   @Override
   public void setTargetServiceName( String targetServiceName ) {
     this.targetServiceName = targetServiceName;
@@ -81,7 +81,7 @@ public class Log4jAuditContext implements Serializable, AuditContext {
   public void setRemoteIp( String remoteIp ) {
     this.remoteIp = remoteIp;
   }
-  
+
   @Override
   public String getRemoteHostname() {
     return remoteHostname;
@@ -107,7 +107,6 @@ public class Log4jAuditContext implements Serializable, AuditContext {
   }
 
   @Override
-  public void destroy() {   
+  public void destroy() {
   }
-
 }

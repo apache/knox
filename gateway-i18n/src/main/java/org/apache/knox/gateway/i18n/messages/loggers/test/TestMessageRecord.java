@@ -36,7 +36,7 @@ public class TestMessageRecord {
     this.message = message;
     this.throwable = throwable;
   }
-  
+
   public TestMessageLogger getLogger() {
     return logger;
   }
