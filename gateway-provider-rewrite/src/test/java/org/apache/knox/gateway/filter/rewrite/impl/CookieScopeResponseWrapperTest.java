@@ -19,14 +19,13 @@ package org.apache.knox.gateway.filter.rewrite.impl;
 
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.easymock.EasyMockSupport;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import javax.servlet.http.HttpServletResponse;
 
-public class CookieScopeResponseWrapperTest extends EasyMockSupport {
+public class CookieScopeResponseWrapperTest {
 
   private HttpServletResponse mock;
 
@@ -88,4 +87,30 @@ public class CookieScopeResponseWrapperTest extends EasyMockSupport {
     Assert.assertEquals("SESSIONID=jn0zexg59r1jo1n66hd7tg5anl; Path=/not-touched/; HttpOnly;", captureValue.getValue());
   }
 
+  @Test
+  public void testWithPathAndTopologyName() {
+    CookieScopeResponseWrapper underTest = new CookieScopeResponseWrapper(mock, "some/path", "dp-proxy");
+    underTest.addHeader("Set-Cookie", "SESSIONID=jn0zexg59r1jo1n66hd7tg5anl; Path=/; HttpOnly;");
+
+    Assert.assertEquals("Set-Cookie", captureKey.getValue());
+    Assert.assertEquals("SESSIONID=jn0zexg59r1jo1n66hd7tg5anl; Path=/some/path/dp-proxy/; HttpOnly;", captureValue.getValue());
+  }
+
+  @Test
+  public void gatewayPathIsInvalid() {
+      CookieScopeResponseWrapper underTest = new CookieScopeResponseWrapper(mock, "/", "dp-proxy");
+      underTest.addHeader("Set-Cookie", "SESSIONID=jn0zexg59r1jo1n66hd7tg5anl; Path=/; HttpOnly;");
+
+      Assert.assertEquals("Set-Cookie", captureKey.getValue());
+      Assert.assertEquals("SESSIONID=jn0zexg59r1jo1n66hd7tg5anl; Path=/dp-proxy/; HttpOnly;", captureValue.getValue());
+  }
+
+  @Test
+  public void topologyNameIsInvalid() {
+      CookieScopeResponseWrapper underTest = new CookieScopeResponseWrapper(mock, "some/path", "");
+      underTest.addHeader("Set-Cookie", "SESSIONID=jn0zexg59r1jo1n66hd7tg5anl; Path=/; HttpOnly;");
+
+      Assert.assertEquals("Set-Cookie", captureKey.getValue());
+      Assert.assertEquals("SESSIONID=jn0zexg59r1jo1n66hd7tg5anl; Path=/some/path/; HttpOnly;", captureValue.getValue());
+  }
 }

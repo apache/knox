@@ -132,6 +132,7 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
     if (context.getGatewayConfig().isCookieScopingToPathEnabled()) {
       FilterDescriptor filter = resource.addFilter().name(COOKIE_SCOPING_FILTER_NAME).role(COOKIE_SCOPING_FILTER_ROLE).impl(CookieScopeServletFilter.class);
       filter.param().name(GatewayConfigImpl.HTTP_PATH).value(context.getGatewayConfig().getGatewayPath());
+      filter.param().name("topologyName").value(context.getTopology().getName());
     }
     List<Policy> policyBindings = binding.getPolicies();
     if ( policyBindings == null ) {

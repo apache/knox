@@ -25,16 +25,21 @@ import java.io.OutputStream;
 import java.util.Locale;
 
 public class CookieScopeResponseWrapper extends GatewayResponseWrapper {
-
     private static final String SET_COOKIE = "Set-Cookie";
-
     private static final String COOKIE_PATH = "Path=/";
 
     private final String scopePath;
 
     public CookieScopeResponseWrapper(HttpServletResponse response, String gatewayPath) {
         super(response);
-        this.scopePath = COOKIE_PATH + gatewayPath + "/";
+        this.scopePath = COOKIE_PATH + generateIfValidSegment(gatewayPath);
+    }
+
+    public CookieScopeResponseWrapper(HttpServletResponse response, String gatewayPath,
+                                      String topologyName) {
+        super(response);
+        this.scopePath = COOKIE_PATH + generateIfValidSegment(gatewayPath) +
+                             generateIfValidSegment(topologyName);
     }
 
     @Override
@@ -56,5 +61,12 @@ public class CookieScopeResponseWrapper extends GatewayResponseWrapper {
     @Override
     public OutputStream getRawOutputStream() throws IOException {
         return getResponse().getOutputStream();
+    }
+
+    private String generateIfValidSegment(String pathSegment){
+        if(pathSegment == null || pathSegment.isEmpty() || "/".equals(pathSegment)){
+            return "";
+        }
+        return pathSegment + "/";
     }
 }

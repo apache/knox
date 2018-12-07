@@ -31,17 +31,19 @@ import org.apache.knox.gateway.filter.rewrite.impl.CookieScopeResponseWrapper;
 public class CookieScopeServletFilter extends AbstractGatewayFilter {
 
   private String gatewayPath;
+  private String topologyName;
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
     super.init( filterConfig );
     gatewayPath = filterConfig.getInitParameter("gateway.path");
+    topologyName = filterConfig.getInitParameter("topologyName");
   }
 
   @Override
   protected void doFilter( HttpServletRequest request, HttpServletResponse response, FilterChain chain )
       throws IOException, ServletException {
-    chain.doFilter( request, new CookieScopeResponseWrapper(response, gatewayPath));
+    chain.doFilter(request, new CookieScopeResponseWrapper(response, gatewayPath, topologyName));
   }
 
 }
