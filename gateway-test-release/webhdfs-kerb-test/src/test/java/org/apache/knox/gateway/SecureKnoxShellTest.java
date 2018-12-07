@@ -25,6 +25,7 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.apache.hadoop.http.HttpConfig;
 import org.apache.hadoop.minikdc.MiniKdc;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.ssl.KeyStoreTestUtil;
@@ -46,6 +47,23 @@ import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Properties;
 
+import static org.apache.hadoop.fs.CommonConfigurationKeysPublic.IPC_CLIENT_CONNECT_MAX_RETRIES_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_BLOCK_ACCESS_TOKEN_ENABLE_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_CLIENT_HTTPS_KEYSTORE_RESOURCE_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_DATANODE_HTTPS_ADDRESS_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_DATANODE_KERBEROS_PRINCIPAL_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_DATANODE_KEYTAB_FILE_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_DATA_ENCRYPTION_ALGORITHM_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_HTTP_POLICY_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_JOURNALNODE_HTTPS_ADDRESS_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_JOURNALNODE_KERBEROS_INTERNAL_SPNEGO_PRINCIPAL_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_JOURNALNODE_KERBEROS_PRINCIPAL_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_JOURNALNODE_KEYTAB_FILE_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_NAMENODE_HTTPS_ADDRESS_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_NAMENODE_KERBEROS_PRINCIPAL_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_NAMENODE_KEYTAB_FILE_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_SERVER_HTTPS_KEYSTORE_RESOURCE_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_WEB_AUTHENTICATION_KERBEROS_PRINCIPAL_KEY;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -89,16 +107,17 @@ public class SecureKnoxShellTest {
     System.setProperty(MiniDFSCluster.PROP_TEST_BUILD_DATA,
         baseDir.getAbsolutePath());
 
+    initKdc();
     miniDFSCluster = new MiniDFSCluster.Builder(configuration)
         .nameNodePort(TestUtils.findFreePort())
         .nameNodeHttpPort(nameNodeHttpPort).numDataNodes(2).format(true)
         .racks(null).build();
 
-    initKdc();
     setupKnox(keytab, hdfsPrincipal);
   }
 
   private static void initKdc() throws Exception {
+
     final Properties kdcConf = MiniKdc.createConf();
     kdc = new MiniKdc(kdcConf, baseDir);
     kdc.start();
@@ -116,8 +135,35 @@ public class SecureKnoxShellTest {
         userName + "/" + krbInstance + "@" + kdc.getRealm();
     spnegoPrincipal = "HTTP/" + krbInstance + "@" + kdc.getRealm();
 
-    krb5conf = kdc.getKrb5conf().getAbsolutePath();
+    configuration.set(DFS_NAMENODE_KERBEROS_PRINCIPAL_KEY, hdfsPrincipal);
+    configuration.set(DFS_NAMENODE_KEYTAB_FILE_KEY, keytab);
+    configuration.set(DFS_DATANODE_KERBEROS_PRINCIPAL_KEY, hdfsPrincipal);
+    configuration.set(DFS_DATANODE_KEYTAB_FILE_KEY, keytab);
+    configuration.set(DFS_WEB_AUTHENTICATION_KERBEROS_PRINCIPAL_KEY, spnegoPrincipal);
+    configuration.set(DFS_JOURNALNODE_KEYTAB_FILE_KEY, keytab);
+    configuration.set(DFS_JOURNALNODE_KERBEROS_PRINCIPAL_KEY, hdfsPrincipal);
+    configuration.set(DFS_JOURNALNODE_KERBEROS_INTERNAL_SPNEGO_PRINCIPAL_KEY, spnegoPrincipal);
+    configuration.setBoolean(DFS_BLOCK_ACCESS_TOKEN_ENABLE_KEY, true);
+    configuration.set(DFS_DATA_ENCRYPTION_ALGORITHM_KEY, "authentication");
+    configuration.set(DFS_HTTP_POLICY_KEY, HttpConfig.Policy.HTTP_AND_HTTPS.name());
+    configuration.set(DFS_NAMENODE_HTTPS_ADDRESS_KEY, "localhost:0");
+    configuration.set(DFS_DATANODE_HTTPS_ADDRESS_KEY, "localhost:0");
+    configuration.set(DFS_JOURNALNODE_HTTPS_ADDRESS_KEY, "localhost:0");
+    configuration.setInt(IPC_CLIENT_CONNECT_MAX_RETRIES_KEY, 10);
+    configuration.set("hadoop.proxyuser." + userName + ".hosts", "*");
+    configuration.set("hadoop.proxyuser." + userName + ".groups", "*");
+    configuration.setBoolean("dfs.permissions", true);
 
+    String keystoresDir = baseDir.getAbsolutePath();
+    File sslClientConfFile = new File(keystoresDir + "/ssl-client.xml");
+    File sslServerConfFile = new File(keystoresDir + "/ssl-server.xml");
+    KeyStoreTestUtil.setupSSLConfig(keystoresDir, keystoresDir, configuration, false);
+    configuration.set(DFS_CLIENT_HTTPS_KEYSTORE_RESOURCE_KEY,
+        sslClientConfFile.getName());
+    configuration.set(DFS_SERVER_HTTPS_KEYSTORE_RESOURCE_KEY,
+        sslServerConfFile.getName());
+
+    krb5conf = kdc.getKrb5conf().getAbsolutePath();
   }
 
   @AfterClass
