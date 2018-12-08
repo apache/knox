@@ -71,7 +71,7 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
   @Override
   public void doFilter(ServletRequest request, ServletResponse response,
       FilterChain chain) throws IOException, ServletException {
-    String jsonResponse = null;
+    String jsonResponse;
 
     String header = ((HttpServletRequest) request).getHeader("Authorization");
     if (header != null && header.startsWith(BEARER)) {
@@ -147,7 +147,7 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
         return principalName;
       }
     };
-    JWT token = null;
+    JWT token;
     try {
       token = authority.issueToken(p, serviceName, "RS256", expires);
       // Coverity CID 1327961

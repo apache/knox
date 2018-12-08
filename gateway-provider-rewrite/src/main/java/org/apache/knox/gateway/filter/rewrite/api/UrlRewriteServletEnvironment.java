@@ -20,7 +20,7 @@ package org.apache.knox.gateway.filter.rewrite.api;
 import javax.servlet.ServletContext;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class UrlRewriteServletEnvironment implements UrlRewriteEnvironment {
@@ -33,14 +33,12 @@ public class UrlRewriteServletEnvironment implements UrlRewriteEnvironment {
 
   @Override
   public URL getResource( String name ) throws MalformedURLException {
-    URL url = context.getResource( name );
-    return url;
+    return context.getResource( name );
   }
 
   @Override
   public <T> T getAttribute( String name ) {
-    T attribute = (T)context.getAttribute( name );
-    return attribute;
+    return (T)context.getAttribute( name );
   }
 
   @Override
@@ -48,7 +46,7 @@ public class UrlRewriteServletEnvironment implements UrlRewriteEnvironment {
     List<String> values = null;
     String value = context.getInitParameter( name );
     if( value != null ) {
-      values = Arrays.asList( value );
+      values = Collections.singletonList(value);
     }
     return values;
   }

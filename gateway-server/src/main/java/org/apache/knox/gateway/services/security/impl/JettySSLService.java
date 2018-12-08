@@ -102,7 +102,7 @@ public class JettySSLService implements SSLService {
       if (!ks.isKeystoreForGatewayAvailable()) {
         log.creatingKeyStoreForGateway();
         ks.createKeystoreForGateway();
-        char[] passphrase = null;
+        char[] passphrase;
         try {
           passphrase = as.getGatewayIdentityPassphrase();
         } catch (AliasServiceException e) {
@@ -185,7 +185,7 @@ public class JettySSLService implements SSLService {
     }
     sslContextFactory.setKeyManagerPassword(new String(keypass));
 
-    String truststorePassword = null;
+    String truststorePassword;
     if (clientAuthNeeded || clientAuthWanted) {
       if (truststorePath != null) {
         char[] truststorePwd = null;
@@ -220,13 +220,13 @@ public class JettySSLService implements SSLService {
     }
     sslContextFactory.setTrustAll( trustAllCerts );
     if (sslIncludeCiphers != null && !sslIncludeCiphers.isEmpty()) {
-      sslContextFactory.setIncludeCipherSuites( sslIncludeCiphers.toArray(new String[sslIncludeCiphers.size()]) );
+      sslContextFactory.setIncludeCipherSuites( sslIncludeCiphers.toArray(new String[0]) );
     }
     if (sslExcludeCiphers != null && !sslExcludeCiphers.isEmpty()) {
-      sslContextFactory.setExcludeCipherSuites( sslExcludeCiphers.toArray(new String[sslExcludeCiphers.size()]) );
+      sslContextFactory.setExcludeCipherSuites( sslExcludeCiphers.toArray(new String[0]) );
     }
     if (sslExcludeProtocols != null && !sslExcludeProtocols.isEmpty()) {
-      sslContextFactory.setExcludeProtocols( sslExcludeProtocols.toArray(new String[sslExcludeProtocols.size()]) );
+      sslContextFactory.setExcludeProtocols( sslExcludeProtocols.toArray(new String[0]) );
     }
     return sslContextFactory;
   }
@@ -241,16 +241,9 @@ public class JettySSLService implements SSLService {
 
   private static KeyStore loadKeyStore( String fileName, String storeType, char[] storePass ) throws CertificateException, NoSuchAlgorithmException, IOException, KeyStoreException {
     KeyStore keystore = KeyStore.getInstance(storeType);
-    //Coverity CID 1352655
-    InputStream is = new FileInputStream(fileName);
-    try {
-      keystore.load( is, storePass );
-    } finally {
-      if( is != null ) {
-        is.close();
-      }
+    try (InputStream is = new FileInputStream(fileName)) {
+      keystore.load(is, storePass);
     }
     return keystore;
   }
-
 }

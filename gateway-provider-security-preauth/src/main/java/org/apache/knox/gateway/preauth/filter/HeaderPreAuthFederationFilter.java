@@ -56,8 +56,8 @@ public class HeaderPreAuthFederationFilter extends AbstractPreAuthFederationFilt
       String headers = request.getHeader(groupHeaderName);
       if (headers != null) {
         String[] groups = headers.split(",");
-        for (int i = 0; i < groups.length; i++) {
-          principals.add(new GroupPrincipal(groups[i]));
+        for (String group : groups) {
+          principals.add(new GroupPrincipal(group));
         }
       }
     }

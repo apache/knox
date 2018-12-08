@@ -41,7 +41,7 @@ public class CMFKeystoreService extends BaseKeystoreService {
   private static final String TEST_CERT_DN = "CN=hadoop,OU=Test,O=Hadoop,L=Test,ST=Test,C=US";
   private static final String CREDENTIALS_SUFFIX = "-credentials.jceks";
 
-  private String serviceName = null;
+  private String serviceName;
 
   public CMFKeystoreService(String keystoreDir, String serviceName)
       throws ServiceLifecycleException {

@@ -82,7 +82,7 @@ public class XSSProtectionFilter implements Filter {
 
     @Override
     public String getHeader(String name) {
-      String headerValue = null;
+      String headerValue;
       if (name.equals(X_XSS_PROTECTION)) {
         headerValue = option;
       }

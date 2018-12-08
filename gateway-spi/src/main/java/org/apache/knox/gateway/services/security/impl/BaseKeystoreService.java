@@ -26,7 +26,6 @@ import org.apache.knox.gateway.services.security.MasterService;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -84,19 +83,7 @@ public class BaseKeystoreService {
       KeyStore ks = KeyStore.getInstance(keystoreType);
       ks.load( null, null );
       ks.store( out, masterService.getMasterSecret() );
-    } catch (KeyStoreException e) {
-      LOG.failedToCreateKeystore( filename, keystoreType, e );
-      throw new KeystoreServiceException(e);
-    } catch (NoSuchAlgorithmException e) {
-      LOG.failedToCreateKeystore( filename, keystoreType, e );
-      throw new KeystoreServiceException(e);
-    } catch (CertificateException e) {
-      LOG.failedToCreateKeystore( filename, keystoreType, e );
-      throw new KeystoreServiceException(e);
-    } catch (FileNotFoundException e) {
-      LOG.failedToCreateKeystore( filename, keystoreType, e );
-      throw new KeystoreServiceException(e);
-    } catch (IOException e) {
+    } catch (NoSuchAlgorithmException | CertificateException | KeyStoreException | IOException e) {
       LOG.failedToCreateKeystore( filename, keystoreType, e );
       throw new KeystoreServiceException(e);
     }
@@ -119,19 +106,10 @@ public class BaseKeystoreService {
   }
 
   protected KeyStore getKeystore(final File keyStoreFile, String storeType) throws KeystoreServiceException {
-    KeyStore credStore = null;
+    KeyStore credStore;
     try {
       credStore = loadKeyStore( keyStoreFile, masterService.getMasterSecret(), storeType);
-    } catch (CertificateException e) {
-      LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
-      throw new KeystoreServiceException(e);
-    } catch (KeyStoreException e) {
-      LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
-      throw new KeystoreServiceException(e);
-    } catch (NoSuchAlgorithmException e) {
-      LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
-      throw new KeystoreServiceException(e);
-    } catch (IOException e) {
+    } catch (CertificateException | IOException | NoSuchAlgorithmException | KeyStoreException e) {
       LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
       throw new KeystoreServiceException(e);
     }
@@ -169,11 +147,7 @@ public class BaseKeystoreService {
     if (ks != null) {
       try {
         credential = new String(ks.getKey(alias, masterService.getMasterSecret()).getEncoded(), StandardCharsets.UTF_8).toCharArray();
-      } catch (UnrecoverableKeyException e) {
-        LOG.failedToGetCredential(e);
-      } catch (KeyStoreException e) {
-        LOG.failedToGetCredential(e);
-      } catch (NoSuchAlgorithmException e) {
+      } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
         LOG.failedToGetCredential(e);
       }
     }

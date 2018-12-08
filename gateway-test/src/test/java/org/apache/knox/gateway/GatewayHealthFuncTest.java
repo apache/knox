@@ -131,7 +131,7 @@ public class GatewayHealthFuncTest {
   }
 
   private static XMLTag createTopology() {
-    XMLTag xml = XMLDoc.newDocument(true)
+    return XMLDoc.newDocument(true)
         .addRoot("topology")
         .addTag("gateway")
         .addTag("provider")
@@ -162,7 +162,6 @@ public class GatewayHealthFuncTest {
         .addTag("service")
         .addTag("role").addText("HEALTH")
         .gotoRoot();
-    return xml;
   }
 
   @Test(timeout = TestUtils.MEDIUM_TIMEOUT)
@@ -197,7 +196,7 @@ public class GatewayHealthFuncTest {
     //String version = JsonPath.from(body).getString("version");
     Map<String, String> hm = JsonPath.from(body).getMap("");
     Assert.assertTrue(hm.size() >= 6);
-    Assert.assertTrue(hm.keySet().containsAll(new HashSet<String>(Arrays.asList(new String[]{"timers", "histograms",
+    Assert.assertTrue(hm.keySet().containsAll(new HashSet<>(Arrays.asList(new String[]{"timers", "histograms",
         "counters", "gauges", "version", "meters"}))));
     TestUtils.LOG_EXIT();
   }

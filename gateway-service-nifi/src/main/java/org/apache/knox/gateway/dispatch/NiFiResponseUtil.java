@@ -45,7 +45,7 @@ class NiFiResponseUtil {
         } catch (URISyntaxException e) {
           throw new RuntimeException("Unable to parse URI from Location header", e);
         }
-        URIBuilder inboundRequestUriBuilder = null;
+        URIBuilder inboundRequestUriBuilder;
         try {
           inboundRequestUriBuilder = new URIBuilder(inboundRequest.getRequestURI());
         } catch (URISyntaxException e) {

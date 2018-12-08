@@ -74,17 +74,14 @@ public class JsonPath {
 
     @Override
     public String toString() {
-      StringBuilder s = new StringBuilder();
-      s.append( "JsonPath{" );
-      s.append( "parent=" ); s.append( getParent() );
-      s.append( ",segment=" ); s.append( getSegment() );
-      s.append( ",node=" ); s.append( getNode() );
-      s.append( ",field=" ); s.append( getField() );
-      s.append( ",index=" ); s.append( getIndex() );
-      s.append( "}" );
-      return s.toString();
+      return "JsonPath{" +
+                 "parent=" + getParent() +
+                 ",segment=" + getSegment() +
+                 ",node=" + getNode() +
+                 ",field=" + getField() +
+                 ",index=" + getIndex() +
+                 "}";
     }
-
   }
 
   public static class Expression {
@@ -115,7 +112,7 @@ public class JsonPath {
       Segment segment;
       StringTokenizer parser = new StringTokenizer( expression, "$.[]()@?:,", true );
       String currToken = null;
-      String prevToken = null;
+      String prevToken;
       while( parser.hasMoreTokens() ) {
         prevToken = currToken;
         if( insideBrackets ) {
@@ -372,13 +369,11 @@ public class JsonPath {
 
     @Override
     public String toString() {
-      StringBuilder s = new StringBuilder();
-      s.append( "JsonPath.Segment{" );
-      s.append( "type=" ); s.append( getType() );
-      s.append( ",field=" ); s.append( getField() );
-      s.append( ",index=" ); s.append( getIndex() );
-      s.append( "}" );
-      return s.toString();
+      return "JsonPath.Segment{" +
+                 "type=" + getType() +
+                 ",field=" + getField() +
+                 ",index=" + getIndex() +
+                 "}";
     }
   }
 

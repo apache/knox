@@ -184,20 +184,20 @@ public class Parser {
         hostPort = split( userAddr[ 1 ], ':' );
       }
       if( usernamePassword != null ) {
-        if( usernamePassword[ 0 ].length() > 0 ) {
+        if(!usernamePassword[0].isEmpty()) {
           paramPattern = makeTokenSingular( parseTemplateToken( builder, usernamePassword[ 0 ], Segment.STAR_PATTERN ) );
           builder.setUsername( paramPattern );
         }
-        if( usernamePassword.length > 1 && usernamePassword[ 1 ].length() > 0 ) {
+        if( usernamePassword.length > 1 && !usernamePassword[1].isEmpty()) {
           paramPattern = makeTokenSingular( parseTemplateToken( builder, usernamePassword[ 1 ], Segment.STAR_PATTERN ) );
           builder.setPassword( paramPattern );
         }
       }
-      if( hostPort[ 0 ].length() > 0 ) {
+      if(!hostPort[0].isEmpty()) {
         paramPattern = makeTokenSingular( parseTemplateToken( builder, hostPort[ 0 ], Segment.STAR_PATTERN ) );
         builder.setHost( paramPattern );
       }
-      if( hostPort.length > 1 && hostPort[ 1 ].length() > 0 ) {
+      if( hostPort.length > 1 && !hostPort[1].isEmpty()) {
         paramPattern = makeTokenSingular( parseTemplateToken( builder, hostPort[ 1 ], Segment.STAR_PATTERN ) );
         builder.setPort( paramPattern );
       }
@@ -250,7 +250,7 @@ public class Parser {
   }
 
   private static void consumeQuerySegment( final Builder builder, String token ) {
-    if( token != null && token.length() > 0 ) {
+    if( token != null && !token.isEmpty()) {
       // Shorthand format {queryParam} == queryParam={queryParam=*}
       if( TEMPLATE_OPEN_MARKUP == token.charAt( 0 ) ) {
         Token paramPattern = parseTemplateToken( builder, token, Segment.GLOB_PATTERN );
@@ -287,13 +287,13 @@ public class Parser {
   }
 
   private static void consumeFragmentToken( final Builder builder, String token ) {
-    if( token != null && token.length() > 0 ) {
+    if( token != null && !token.isEmpty()) {
       Token t = parseTemplateToken( builder, token, Segment.STAR_PATTERN );
       builder.setFragment( t );
     }
   }
 
-  static final Token parseTemplateToken( final Builder builder, final String s, final String defaultEffectivePattern ) {
+  static Token parseTemplateToken(final Builder builder, final String s, final String defaultEffectivePattern ) {
     String paramName, actualPattern, effectivePattern;
     final int l = s.length();
     // If the token isn't the empty string, then
@@ -330,8 +330,7 @@ public class Parser {
       actualPattern = s;
       effectivePattern = actualPattern;
     }
-    final Token token = new Token( paramName, actualPattern, effectivePattern, builder.isLiteral() );
-    return token;
+    return new Token( paramName, actualPattern, effectivePattern, builder.isLiteral() );
   }
 
   // Using this because String.split is very inefficient.

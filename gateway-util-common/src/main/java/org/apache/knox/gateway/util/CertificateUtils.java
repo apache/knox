@@ -41,7 +41,7 @@ public class CertificateUtils {
    */
   public static RSAPublicKey parseRSAPublicKey(String pem) throws ServletException {
     String fullPem = PEM_HEADER + pem + PEM_FOOTER;
-    PublicKey key = null;
+    PublicKey key;
     try {
       CertificateFactory fact = CertificateFactory.getInstance("X.509");
       ByteArrayInputStream is = new ByteArrayInputStream(
@@ -50,7 +50,7 @@ public class CertificateUtils {
       X509Certificate cer = (X509Certificate) fact.generateCertificate(is);
       key = cer.getPublicKey();
     } catch (CertificateException ce) {
-      String message = null;
+      String message;
       if (pem.startsWith(PEM_HEADER)) {
         message = "CertificateException - be sure not to include PEM header "
             + "and footer in the PEM configuration element.";

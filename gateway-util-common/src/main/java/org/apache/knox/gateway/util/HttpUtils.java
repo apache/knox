@@ -40,7 +40,7 @@ public class HttpUtils {
       final int idx = pair.indexOf('=');
       final String key = idx > 0 ? URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8.name()) : pair;
       if (!queryPairs.containsKey(key)) {
-        queryPairs.put(key, new ArrayList<String>());
+        queryPairs.put(key, new ArrayList<>());
       }
       final String value = idx > 0 && pair.length() > idx + 1
           ? URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8.name()) : "";

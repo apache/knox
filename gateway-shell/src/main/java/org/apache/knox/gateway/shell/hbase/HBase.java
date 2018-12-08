@@ -30,8 +30,7 @@ public class HBase {
   }
 
   public static HBase session( KnoxSession session ) {
-    HBase hbase = new HBase( session );
-    return hbase;
+    return new HBase( session );
   }
 
   public SystemVersion.Request systemVersion() {

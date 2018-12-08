@@ -40,8 +40,8 @@ class ListTopologiesRequest extends ListResourcesRequest {
       if (topologies != null) {
         JSONArray items = (JSONArray) topologies.get("topology");
         if (items != null) {
-          for (int i = 0; i < items.size(); i++) {
-            JSONObject item = (JSONObject) items.get(i);
+          for (Object item1 : items) {
+            JSONObject item = (JSONObject) item1;
             String name = (String) item.get("name");
             if (name != null) {
               result.add(name);

@@ -94,7 +94,7 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
   public String[] mapGroupPrincipals(final String mappedPrincipalName,
                                      final Subject subject) {
     /* return the groups as seen by Hadoop */
-    String[] groups = null;
+    String[] groups;
     try {
       final List<String> groupList = hadoopGroups
           .getGroups(mappedPrincipalName);

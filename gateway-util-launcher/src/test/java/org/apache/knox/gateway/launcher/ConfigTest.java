@@ -60,8 +60,8 @@ public class ConfigTest {
 
   @Test
   public void testSave() throws Exception {
-    Config c = null;
-    StringWriter w = null;
+    Config c;
+    StringWriter w;
 
     c = new Config();
     c.save( null );

@@ -71,8 +71,7 @@ public class ServiceRegistryFunctionsTest {
 
   private static URL getTestResource( String name ) {
     name = ServiceRegistryFunctionsTest.class.getName().replaceAll( "\\.", "/" ) + "/" + name;
-    URL url = ClassLoader.getSystemResource( name );
-    return url;
+    return ClassLoader.getSystemResource( name );
   }
 
   public void setUp( String username, Map<String,String> initParams ) throws Exception {

@@ -86,8 +86,7 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
       str.append('?');
       str.append(query);
     }
-    URI url = URI.create(str.toString());
-    return url;
+    return URI.create(str.toString());
   }
 
   @Override

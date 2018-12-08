@@ -85,7 +85,7 @@ public class XContentTypeOptionsFilter implements Filter {
 
     @Override
     public String getHeader(String name) {
-      String headerValue = null;
+      String headerValue;
       if (name.equals(X_CONTENT_TYPE_OPTIONS_HEADER)) {
         headerValue = option;
       }

@@ -77,19 +77,7 @@ public class Launcher {
 
   private static URL findLauncherJar() throws IOException {
     URL jarUrl;
-    try {
-      jarUrl = Launcher.class.getProtectionDomain().getCodeSource().getLocation();
-    } catch( SecurityException e ) {
-      throw e;
-//      URL classUrl = Launcher.class.getResource( Launcher.class.getSimpleName() + ".class" );
-//      if( classUrl != null ) {
-//        URLConnection urlConnection = classUrl.openConnection();
-//        if( urlConnection instanceof JarURLConnection ) {
-//          JarURLConnection jarUrlConnection = (JarURLConnection)urlConnection;
-//          jarUrl = jarUrlConnection.getJarFileURL();
-//        }
-//      }
-    }
+    jarUrl = Launcher.class.getProtectionDomain().getCodeSource().getLocation();
     //System.out.println( "main.lib=" + url );
     return jarUrl;
   }
@@ -128,11 +116,8 @@ public class Launcher {
   private static void createExternalConfig( File file, Properties config, URL src ) throws IOException {
     try {
       if( file.createNewFile() ){
-        OutputStream output = new FileOutputStream( file );
-        try {
-          config.store( output, "Created from " + src );
-        } finally {
-          output.close();
+        try (OutputStream output = new FileOutputStream(file)) {
+          config.store(output, "Created from " + src);
         }
       }
     } catch ( IOException e ) {
@@ -154,11 +139,8 @@ public class Launcher {
 
   private static Properties loadProperties( Properties properties, URL url ) throws IOException {
     if( url != null ) {
-      InputStream stream = url.openStream();
-      try {
-        properties.load( stream );
-      } finally {
-        stream.close();
+      try (InputStream stream = url.openStream()) {
+        properties.load(stream);
       }
     }
     return properties;
@@ -176,5 +158,4 @@ public class Launcher {
     int i = fullName.lastIndexOf( '.' );
     return i < 0 ? fullName : fullName.substring( 0, i );
   }
-
 }

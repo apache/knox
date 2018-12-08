@@ -32,7 +32,7 @@ import org.easymock.EasyMock;
 import org.junit.Test;
 import org.junit.Assert;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -88,7 +88,7 @@ public class SecureQueryEncryptDecryptProcessorTest {
     EasyMock.expect( decEnvironment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();
     EasyMock.expect( decEnvironment.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( "test-cluster-name" ).anyTimes();
     Params decParams = EasyMock.createNiceMock( Params.class );
-    EasyMock.expect( decParams.resolve( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( Arrays.asList("test-cluster-name") ).anyTimes();
+    EasyMock.expect( decParams.resolve( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn(Collections.singletonList("test-cluster-name")).anyTimes();
     UrlRewriteContext decContext = EasyMock.createNiceMock( UrlRewriteContext.class );
     EasyMock.expect( decContext.getCurrentUrl() ).andReturn( encTemplate.getValue() );
     EasyMock.expect( decContext.getParameters() ).andReturn( decParams );
@@ -155,7 +155,7 @@ public class SecureQueryEncryptDecryptProcessorTest {
     EasyMock.expect( decEnvironment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();
     EasyMock.expect( decEnvironment.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( "test-cluster-name" ).anyTimes();
     Params decParams = EasyMock.createNiceMock( Params.class );
-    EasyMock.expect( decParams.resolve( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn( Arrays.asList("test-cluster-name") ).anyTimes();
+    EasyMock.expect( decParams.resolve( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE ) ).andReturn(Collections.singletonList("test-cluster-name")).anyTimes();
     UrlRewriteContext decContext = EasyMock.createNiceMock( UrlRewriteContext.class );
     EasyMock.expect( decContext.getCurrentUrl() ).andReturn( encTemplate.getValue() );
     EasyMock.expect( decContext.getParameters() ).andReturn( decParams );

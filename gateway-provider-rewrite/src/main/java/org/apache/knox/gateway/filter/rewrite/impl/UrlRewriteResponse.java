@@ -153,7 +153,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
         getRewriteFilterConfig(rewriter.getConfig(), bodyFilterName, mimeType);
     if (filterContentConfig != null) {
       String asType = filterContentConfig.asType();
-      if ( asType != null && asType.trim().length() > 0 ) {
+      if ( asType != null && !asType.trim().isEmpty()) {
         mimeType = MimeTypes.create(asType, getCharacterEncoding());
       }
     }
@@ -215,15 +215,15 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
   @SuppressWarnings( "unchecked" )
   public List<String> resolve( String name ) {
     if( name.startsWith( REQUEST_PARAM_PREFIX ) ) {
-      return Arrays.asList( getRequestParam( name.substring( REQUEST_PARAM_PREFIX.length() ) ) );
+      return Collections.singletonList(getRequestParam(name.substring(REQUEST_PARAM_PREFIX.length())));
     } else if ( name.startsWith( GATEWAY_PARAM_PREFIX ) ) {
-      return Arrays.asList( getGatewayParam( name.substring( GATEWAY_PARAM_PREFIX.length() ) ) );
+      return Collections.singletonList(getGatewayParam(name.substring(GATEWAY_PARAM_PREFIX.length())));
     } else if ( name.startsWith( CLUSTER_PARAM_PREFIX ) ) {
-      return Arrays.asList( getClusterParam( name.substring( GATEWAY_PARAM_PREFIX.length() ) ) );
+      return Collections.singletonList(getClusterParam(name.substring(GATEWAY_PARAM_PREFIX.length())));
     } else if ( name.startsWith( INBOUND_QUERY_PARAM_PREFIX ) ) {
       return getInboundQueryParam(name.substring(INBOUND_QUERY_PARAM_PREFIX.length()));
     } else {
-      return Arrays.asList( config.getInitParameter( name ) );
+      return Collections.singletonList(config.getInitParameter(name));
     }
   }
 

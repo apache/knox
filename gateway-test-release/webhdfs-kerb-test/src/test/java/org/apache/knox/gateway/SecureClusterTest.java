@@ -257,7 +257,7 @@ public class SecureClusterTest {
    * @return A populated XML structure for a topology file.
    */
   private static XMLTag createTopology() {
-    XMLTag xml = XMLDoc.newDocument(true)
+    return XMLDoc.newDocument(true)
         .addRoot("topology")
         .addTag("gateway")
         .addTag("provider")
@@ -302,6 +302,5 @@ public class SecureClusterTest {
         .addTag("role").addText("WEBHDFS")
         .addTag("url").addText("http://localhost:" + nameNodeHttpPort + "/webhdfs/").gotoParent()
         .gotoRoot();
-    return xml;
   }
 }

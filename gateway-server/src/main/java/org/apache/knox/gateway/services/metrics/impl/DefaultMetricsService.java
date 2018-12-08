@@ -38,7 +38,6 @@ import org.apache.knox.gateway.services.metrics.MetricsService;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
@@ -79,21 +78,18 @@ public class DefaultMetricsService implements MetricsService {
 
   private void loadInstrumentationProviders() {
     ServiceLoader<InstrumentationProviderDescriptor> descriptors = ServiceLoader.load(InstrumentationProviderDescriptor.class);
-    Iterator<InstrumentationProviderDescriptor> descriptorIterator = descriptors.iterator();
-    while ( descriptorIterator.hasNext() ) {
-      instrumentationProviders.putAll(descriptorIterator.next().providesInstrumentation());
+    for (InstrumentationProviderDescriptor descriptor : descriptors) {
+      instrumentationProviders.putAll(descriptor.providesInstrumentation());
     }
   }
 
   private void loadAndInitReporters(GatewayConfig config) {
     ServiceLoader<MetricsReporter> reporters = ServiceLoader.load(MetricsReporter.class);
-    Iterator<MetricsReporter> reportersIterator = reporters.iterator();
-    while ( reportersIterator.hasNext() ) {
-      MetricsReporter metricsReporter = reportersIterator.next();
+    for (MetricsReporter metricsReporter : reporters) {
       try {
         metricsReporter.init(config);
         metricsReporters.add(metricsReporter);
-      } catch ( MetricsReporterException e ) {
+      } catch (MetricsReporterException e) {
         LOG.failedToInitializeReporter(metricsReporter.getName(), e);
       }
     }

@@ -25,7 +25,7 @@ import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteFunctionProcessorFa
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -79,7 +79,7 @@ public class HtmlImportFunctionProcessor implements UrlRewriteFunctionProcessor<
       parameters = parameters.subList(1, parameters.size());
     }
     List<String> frontendValues = frontend.resolve(context, parameters);
-    StringBuffer buffer = new StringBuffer(IMPORT_LITERAL);
+    StringBuilder buffer = new StringBuilder(IMPORT_LITERAL);
     buffer.append(" ");
     buffer.append(prefix);
     if ( frontendValues != null && !frontendValues.isEmpty() ) {
@@ -87,7 +87,7 @@ public class HtmlImportFunctionProcessor implements UrlRewriteFunctionProcessor<
         buffer.append(value);
       }
     }
-    return Arrays.asList(buffer.toString());
+    return Collections.singletonList(buffer.toString());
   }
 
   @Override

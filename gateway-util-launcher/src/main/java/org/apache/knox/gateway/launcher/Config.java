@@ -49,7 +49,7 @@ public class Config {
       String line = input.readLine();
       while( line != null ) {
         line = line.trim();
-        if( line.length() == 0 ) {
+        if(line.isEmpty()) {
           // Ignore blank lines.
         } else if( line.startsWith( COMMENT_PREFIX ) ) {
           // Ignore comments.
@@ -84,7 +84,7 @@ public class Config {
       PrintWriter output = new PrintWriter( writer );
       Map<String,String> map = sections.get( DEFAULT_NAME );
       if( map != null ) {
-        empty &= ( map.size() == 0 );
+        empty &= (map.isEmpty());
         saveMap( output, map );
       }
       for( Map.Entry<String,Map<String,String>> entry : sections.entrySet() ) {

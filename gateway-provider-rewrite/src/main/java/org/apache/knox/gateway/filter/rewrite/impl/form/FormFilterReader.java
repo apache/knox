@@ -79,7 +79,7 @@ public class FormFilterReader extends Reader {
   private void processPair() throws IOException {
     FormPair pair = parser.getCurrentPair();
     String name = pair.getName();
-    String value = pair.getValue();
+    String value;
     String rule = UrlRewriteUtil.pickFirstRuleWithEqualsIgnoreCasePathMatch( config, name );
     try {
       value = filterValue( name, pair.getValue(), rule );

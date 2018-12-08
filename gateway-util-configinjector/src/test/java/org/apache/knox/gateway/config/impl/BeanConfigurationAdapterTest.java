@@ -27,7 +27,7 @@ public class BeanConfigurationAdapterTest {
   public static class Bean {
     public String getValue() {
       return "beanValue";
-    };
+    }
   }
 
   @Test

@@ -43,8 +43,7 @@ public class XmlGatewayDescriptorImporter implements GatewayDescriptorImporter {
     Digester digester = loader.newDigester( new ExtendedBaseRules() );
     digester.setValidating( false );
     try {
-      GatewayDescriptor descriptor = digester.parse( reader );
-      return descriptor;
+      return digester.parse( reader );
     } catch( SAXException e ) {
       throw new IOException( e );
     }

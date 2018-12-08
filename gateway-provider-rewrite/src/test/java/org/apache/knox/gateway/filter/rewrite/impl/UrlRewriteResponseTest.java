@@ -144,7 +144,7 @@ public class UrlRewriteResponseTest {
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File inputFile = new File( targetDir, "input.test" );
     File outputFile = new File( targetDir, "output.test" );
-    OutputStream outStream = null, output = null;
+    OutputStream outStream, output;
     InputStream inStream = null, input = null;
     try {
       outStream = isGzip ? new GZIPOutputStream( new FileOutputStream( inputFile ) ) : new FileOutputStream( inputFile );

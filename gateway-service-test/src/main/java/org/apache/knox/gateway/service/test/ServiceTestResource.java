@@ -167,8 +167,7 @@ public class ServiceTestResource {
     GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
     String path = config.getGatewayPath();
 
-    String topologyName = ctxPath.replace(path, "").replace("/", "");
-    return topologyName;
+    return ctxPath.replace(path, "").replace("/", "");
   }
 
   public Topology getTopology(@PathParam("id") String id) {

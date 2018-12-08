@@ -110,11 +110,8 @@ public class MetricsResource {
       response.setHeader("Cache-Control", "must-revalidate,no-cache,no-store");
       response.setStatus(HttpServletResponse.SC_OK);
 
-      final OutputStream output = response.getOutputStream();
-      try {
+      try (OutputStream output = response.getOutputStream()) {
         getWriter(request).writeValue(output, registry);
-      } finally {
-        output.close();
       }
     } catch (IOException ioe) {
       log.logException("metrics", ioe);

@@ -85,7 +85,7 @@ public class ResourcesInvoker implements InvocationHandler {
     return pattern;
   }
 
-  protected static final String getDefaultPattern( final Method method ) {
+  protected static String getDefaultPattern(final Method method ) {
     final String prefix = method.getName();
     String suffix;
     final int params = method.getParameterTypes().length;

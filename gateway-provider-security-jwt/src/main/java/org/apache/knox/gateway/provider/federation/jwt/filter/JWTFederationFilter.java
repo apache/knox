@@ -75,7 +75,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
     String header = ((HttpServletRequest) request).getHeader("Authorization");
-    String wireToken = null;
+    String wireToken;
     if (header != null && header.startsWith(BEARER)) {
       // what follows the bearer designator should be the JWT token being used to request or as an access token
       wireToken = header.substring(BEARER.length());

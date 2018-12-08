@@ -81,7 +81,7 @@ public class DefaultAliasService implements AliasService {
   @Override
   public char[] getPasswordFromAliasForCluster(String clusterName, String alias, boolean generate)
       throws AliasServiceException {
-    char[] credential = null;
+    char[] credential;
     try {
       credential = keystoreService.getCredentialForCluster(clusterName, alias);
       if (credential == null) {
@@ -164,11 +164,9 @@ public class DefaultAliasService implements AliasService {
     Certificate cert = null;
     try {
       cert = this.keystoreService.getKeystoreForGateway().getCertificate(alias);
-    } catch (KeyStoreException e) {
+    } catch (KeyStoreException | KeystoreServiceException e) {
       LOG.unableToRetrieveCertificateForGateway(e);
       // should we throw an exception?
-    } catch (KeystoreServiceException e) {
-      LOG.unableToRetrieveCertificateForGateway(e);
     }
     return cert;
   }
@@ -180,7 +178,7 @@ public class DefaultAliasService implements AliasService {
     try {
       keyStore = keystoreService.getCredentialStoreForCluster(clusterName);
       if (keyStore != null) {
-        String alias = null;
+        String alias;
         try {
           Enumeration<String> e = keyStore.aliases();
           while (e.hasMoreElements()) {

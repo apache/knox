@@ -497,9 +497,8 @@ public class KnoxCLI extends Configured implements Tool {
     }
 
     protected Service getService(String serviceName) {
-      Service service = null;
 
-      return service;
+      return null;
     }
 
     public abstract void execute() throws Exception;
@@ -507,18 +506,15 @@ public class KnoxCLI extends Configured implements Tool {
     public abstract String getUsage();
 
     protected AliasService getAliasService() {
-      AliasService as = services.getService(GatewayServices.ALIAS_SERVICE);
-      return as;
+      return services.getService(GatewayServices.ALIAS_SERVICE);
     }
 
     protected KeystoreService getKeystoreService() {
-      KeystoreService ks = services.getService(GatewayServices.KEYSTORE_SERVICE);
-      return ks;
+      return services.getService(GatewayServices.KEYSTORE_SERVICE);
     }
 
     protected TopologyService getTopologyService()  {
-      TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
-      return ts;
+      return services.getService(GatewayServices.TOPOLOGY_SERVICE);
     }
 
     protected RemoteConfigurationRegistryClientService getRemoteConfigRegistryClientService() {
@@ -707,7 +703,7 @@ public class KnoxCLI extends Configured implements Tool {
                                        + "the --value option or --generate (will create a random secret\n"
                                        + "for you) or user will be prompt to provide password.";
 
-  private String name = null;
+  private String name;
 
    public AliasCreateCommand(String alias) {
      name = alias;
@@ -774,7 +770,7 @@ public class KnoxCLI extends Configured implements Tool {
                                     "indicated alias from the --cluster specific\n" +
                                     "credential store or the gateway credential store.";
 
-  private String name = null;
+  private String name;
 
    public AliasDeleteCommand(String alias) {
      name = alias;
@@ -1087,7 +1083,8 @@ public class KnoxCLI extends Configured implements Tool {
     }
 
     protected class MissingUsernameException extends Exception {
-      public MissingUsernameException() {};
+      public MissingUsernameException() {}
+
       public MissingUsernameException(String message) { super(message); }
     }
 
@@ -1244,12 +1241,8 @@ public class KnoxCLI extends Configured implements Tool {
 
     protected boolean authenticateUser(String config, UsernamePasswordToken token) throws ConfigurationException {
       Ini ini = new Ini();
-      try {
-        ini.loadFromPath(config);
-        return authenticateUser(ini, token);
-      } catch (ConfigurationException e) {
-        throw e;
-      }
+      ini.loadFromPath(config);
+      return authenticateUser(ini, token);
     }
 
     /**
@@ -1258,7 +1251,7 @@ public class KnoxCLI extends Configured implements Tool {
      * @return - returns the principal found in the userDn after "uid="
      */
     protected String getPrincipal(String userDn){
-      String result = "";
+      String result;
 
 //      Need to determine whether we are using AD or LDAP?
 //      LDAP userDn usually starts with "uid="
@@ -1313,9 +1306,7 @@ public class KnoxCLI extends Configured implements Tool {
         username = getSystemUsername(t);
         password = getSystemPassword(t);
         result = authenticateUser(ini, new UsernamePasswordToken(username, password));
-      } catch (MissingUsernameException | NoSuchProviderException | MissingPasswordException e) {
-        out.println(e.toString());
-      } catch (NullPointerException e) {
+      } catch (MissingUsernameException | NoSuchProviderException | MissingPasswordException | NullPointerException e) {
         out.println(e.toString());
       }
       return result;
@@ -1328,12 +1319,11 @@ public class KnoxCLI extends Configured implements Tool {
      */
     private String getSystemUsername(Topology t) throws MissingUsernameException, NoSuchProviderException {
       final String SYSTEM_USERNAME = "main.ldapRealm.contextFactory.systemUsername";
-      String user = null;
+      String user;
       Provider shiroProvider = t.getProvider("authentication", "ShiroProvider");
       if(shiroProvider != null){
         Map<String, String> params = shiroProvider.getParams();
-        String userDn = params.get(SYSTEM_USERNAME);
-        user = userDn;
+        user = params.get(SYSTEM_USERNAME);
       } else {
         throw new NoSuchProviderException("ShiroProvider", "authentication", t.getName());
       }
@@ -1347,7 +1337,7 @@ public class KnoxCLI extends Configured implements Tool {
      */
     private char[] getSystemPassword(Topology t) throws NoSuchProviderException, MissingPasswordException{
       final String SYSTEM_PASSWORD = "main.ldapRealm.contextFactory.systemPassword";
-      String pass = null;
+      String pass;
       Provider shiro = t.getProvider("authentication", "ShiroProvider");
       if(shiro != null){
         Map<String, String> params = shiro.getParams();
@@ -1650,7 +1640,7 @@ public class KnoxCLI extends Configured implements Tool {
     private int attempts = 0;
 
     @Override
-    public String getUsage() { return USAGE + ":\n\n" + DESC; };
+    public String getUsage() { return USAGE + ":\n\n" + DESC; }
 
     @Override
     public void execute() {
@@ -1899,7 +1889,7 @@ public class KnoxCLI extends Configured implements Tool {
    */
   public abstract class RemoteRegistryUploadCommand extends RemoteRegistryCommand {
     private File sourceFile = null;
-    protected String filename = null;
+    protected String filename;
 
     protected RemoteRegistryUploadCommand(String sourceFileName) {
       this.filename = sourceFileName;
@@ -1998,7 +1988,7 @@ public class KnoxCLI extends Configured implements Tool {
     static final String USAGE = "get-registry-acl entry --registry-client name";
     static final String DESC = "Presents the ACL settings for the specified remote registry entry.\n";
 
-    private String entry = null;
+    private String entry;
 
     RemoteRegistryGetACLCommand(String entry) {
       this.entry = entry;
@@ -2028,7 +2018,7 @@ public class KnoxCLI extends Configured implements Tool {
    * Base class for remote config registry delete commands
    */
   public abstract class RemoteRegistryDeleteCommand extends RemoteRegistryCommand {
-    protected String entryName = null;
+    protected String entryName;
 
     protected RemoteRegistryDeleteCommand(String entryName) {
       this.entryName = entryName;

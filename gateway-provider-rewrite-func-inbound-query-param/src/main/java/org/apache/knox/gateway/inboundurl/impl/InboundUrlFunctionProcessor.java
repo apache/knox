@@ -44,7 +44,7 @@ public class InboundUrlFunctionProcessor
 
   @Override
   public List<String> resolve( UrlRewriteContext context, List<String> parameters ) throws Exception {
-      if( parameters == null || parameters.size() == 0 ) {
+      if( parameters == null || parameters.isEmpty()) {
         return Collections.emptyList();
       } else {
         switch( context.getDirection() ) {

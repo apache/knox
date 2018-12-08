@@ -152,7 +152,7 @@ public class Pac4jDispatcherFilter implements Filter {
       final PropertiesConfigFactory propertiesConfigFactory = new PropertiesConfigFactory(pac4jCallbackUrl, properties);
       config = propertiesConfigFactory.build();
       final List<Client> clients = config.getClients().getClients();
-      if (clients == null || clients.size() == 0) {
+      if (clients == null || clients.isEmpty()) {
         log.atLeastOnePac4jClientMustBeDefined();
         throw new ServletException("At least one pac4j client must be defined.");
       }

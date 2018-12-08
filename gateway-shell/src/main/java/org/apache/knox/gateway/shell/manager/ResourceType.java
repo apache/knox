@@ -22,7 +22,7 @@ public class ResourceType {
   public static final ResourceType Descriptor = new ResourceType("descriptors");
   public static final ResourceType Topology = new ResourceType("topologies");
 
-  private String name = null;
+  private String name;
 
   private ResourceType(String type) {
     this.name = type;

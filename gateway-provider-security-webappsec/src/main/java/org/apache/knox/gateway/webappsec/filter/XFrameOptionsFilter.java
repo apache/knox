@@ -84,7 +84,7 @@ public class XFrameOptionsFilter implements Filter {
 
     @Override
     public String getHeader(String name) {
-        String headerValue = null;
+        String headerValue;
         if (name.equals(X_FRAME_OPTIONS)) {
             headerValue = option;
         }

@@ -25,10 +25,8 @@ import org.apache.knox.gateway.i18n.GatewayUtilCommonMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JsonUtils {
@@ -55,10 +53,6 @@ public class JsonUtils {
           = new TypeReference<HashMap<String,String>>() {};
     try {
       map = mapper.readValue(json, typeRef);
-    } catch (JsonParseException e) {
-      LOG.failedToGetMapFromJsonString( json, e );
-    } catch (JsonMappingException e) {
-      LOG.failedToGetMapFromJsonString( json, e );
     } catch (IOException e) {
       LOG.failedToGetMapFromJsonString( json, e );
     }

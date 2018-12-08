@@ -101,7 +101,7 @@ public class StrictTransportFilterTest {
   }
 
   class TestFilterConfig implements FilterConfig {
-    Properties props = null;
+    Properties props;
 
     TestFilterConfig(Properties props) {
       this.props = props;

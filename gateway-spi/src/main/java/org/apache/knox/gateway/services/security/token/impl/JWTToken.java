@@ -36,7 +36,7 @@ import com.nimbusds.jwt.SignedJWT;
 public class JWTToken implements JWT {
   private static JWTProviderMessages log = MessagesFactory.get( JWTProviderMessages.class );
 
-  SignedJWT jwt = null;
+  SignedJWT jwt;
 
   private JWTToken(String header, String claims, String signature) throws ParseException {
     jwt = new SignedJWT(new Base64URL(header), new Base64URL(claims), new Base64URL(signature));
@@ -64,7 +64,7 @@ public class JWTToken implements JWT {
       }
       audiences.add(claimsArray[2]);
     }
-    JWTClaimsSet claims = null;
+    JWTClaimsSet claims;
     JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder()
     .issuer(claimsArray[0])
     .subject(claimsArray[1])
@@ -87,7 +87,7 @@ public class JWTToken implements JWT {
   @Override
   public String getClaims() {
     String c = null;
-    JWTClaimsSet claims = null;
+    JWTClaimsSet claims;
     try {
       claims = jwt.getJWTClaimsSet();
       c = claims.toJSONObject().toJSONString();
@@ -154,7 +154,7 @@ public class JWTToken implements JWT {
 
   @Override
   public String getAudience() {
-    String[] claim = null;
+    String[] claim;
     String c = null;
 
     claim = getAudienceClaims();

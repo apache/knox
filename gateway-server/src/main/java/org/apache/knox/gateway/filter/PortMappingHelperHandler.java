@@ -64,7 +64,7 @@ public class PortMappingHelperHandler extends HandlerWrapper {
 
       for(final Map.Entry<String, Integer> entry: config.getGatewayPortMappings().entrySet()) {
 
-        if(entry.getValue().intValue() == config.getGatewayPort()) {
+        if(entry.getValue() == config.getGatewayPort()) {
           defaultTopologyRedirectContext = "/" + config.getGatewayPath() + "/" + entry.getKey();
           break;
         }

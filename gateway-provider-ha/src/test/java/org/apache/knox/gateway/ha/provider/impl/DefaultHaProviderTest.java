@@ -39,6 +39,7 @@ public class DefaultHaProviderTest {
          new DefaultHaProvider(null);
          fail("provider construction should have failed with null descriptor");
       } catch (IllegalArgumentException e) {
+        // Expected exception
       }
       HaDescriptor descriptor = new DefaultHaDescriptor();
       HaProvider provider = new DefaultHaProvider(descriptor);

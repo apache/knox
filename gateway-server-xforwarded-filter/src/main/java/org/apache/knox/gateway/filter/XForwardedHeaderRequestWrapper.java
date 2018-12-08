@@ -19,7 +19,6 @@ package org.apache.knox.gateway.filter;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -73,7 +72,7 @@ public class XForwardedHeaderRequestWrapper extends GatewayRequestWrapper {
     Enumeration<String> values;
     String value = proxyHeaders.get( name );
     if( value != null ) {
-      values = Collections.enumeration(Arrays.asList(value));
+      values = Collections.enumeration(Collections.singletonList(value));
     } else {
       values = super.getHeaders( name );
     }

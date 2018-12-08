@@ -32,7 +32,7 @@ import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
@@ -146,8 +146,8 @@ public class ServiceMappedAddressFunctionProcessorTest {
     ServiceMappedAddressFunctionProcessor func = new ServiceMappedAddressFunctionProcessor();
     func.initialize( env, desc );
 
-    assertThat( func.resolve( ctx, Arrays.asList( "test-service" ) ), contains( "test-internal-host:777" ) );
-    assertThat( func.resolve( ctx, Arrays.asList( "invalid-test-service" ) ), contains( "invalid-test-service" ) );
+    assertThat( func.resolve( ctx, Collections.singletonList("test-service")), contains( "test-internal-host:777" ) );
+    assertThat( func.resolve( ctx, Collections.singletonList("invalid-test-service")), contains( "invalid-test-service" ) );
     assertThat( func.resolve( ctx, null ), nullValue() );
 
     func.destroy();

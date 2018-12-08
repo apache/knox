@@ -89,8 +89,7 @@ public class FrontendFunctionProcessor implements UrlRewriteFunctionProcessor<Fr
     if( resolver == null ) {
       throw new IllegalArgumentException( RES.invalidFrontendFunctionParameter( parameter ) );
     }
-    List<String> results = resolver.resolve( context, parameters );
-    return results;
+    return resolver.resolve( context, parameters );
   }
 
   private static class ParamResolver implements UrlRewriteResolver {

@@ -185,7 +185,7 @@ public class Template {
 
   private void buildSegmentValue( StringBuilder b, Segment s, Segment.Value v ) {
     String paramName = s.getParamName();
-    if( paramName != null && paramName.length() > 0 ) {
+    if( paramName != null && !paramName.isEmpty()) {
       b.append( "{" );
       b.append( s.getParamName() );
       String actualPattern = v.getToken().originalPattern;
@@ -212,7 +212,7 @@ public class Template {
       }
       String paramName = segment.getParamName();
       Segment.Value firstValue = segment.getFirstValue();
-      if( paramName != null && paramName.length() > 0 ) {
+      if( paramName != null && !paramName.isEmpty()) {
         b.append( "{" );
         b.append( segment.getParamName() );
         String pattern = firstValue.getOriginalPattern();
@@ -281,7 +281,7 @@ public class Template {
     String paramName = segment.getParamName();
     String queryName = segment.getQueryName();
     String valuePattern = value.getOriginalPattern();
-    if( paramName != null && paramName.length() > 0 ) {
+    if( paramName != null && !paramName.isEmpty()) {
       if( !Segment.GLOB_PATTERN.equals( queryName ) && !Segment.STAR_PATTERN.equals( queryName ) ) {
         b.append( segment.getQueryName() );
         b.append( "=" );
@@ -313,7 +313,7 @@ public class Template {
 
   @Override
   public String toString() {
-    String s = null;
+    String s;
     StringBuilder b = new StringBuilder();
     buildScheme( b );
     buildAuthority( b );
@@ -331,7 +331,7 @@ public class Template {
       hc = toString().hashCode();
       hash = hc;
     }
-    return hc.intValue();
+    return hc;
   }
 
   @Override

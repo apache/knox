@@ -104,7 +104,7 @@ class ServiceURLPropertyConfig {
             for (int i=0; i < serviceNodes.getLength(); i++) {
                 Node serviceNode = serviceNodes.item(i);
                 String serviceName = serviceNode.getAttributes().getNamedItem(ATTR_NAME).getNodeValue();
-                properties.put(serviceName, new HashMap<String, Property>());
+                properties.put(serviceName, new HashMap<>());
 
                 Node urlPatternNode = (Node) URL_PATTERN.evaluate(serviceNode, XPathConstants.NODE);
                 if (urlPatternNode != null) {
@@ -252,7 +252,7 @@ class ServiceURLPropertyConfig {
         String service;
         String serviceConfig;
         String value;
-        ConditionalValueHandler conditionHandler = null;
+        ConditionalValueHandler conditionHandler;
 
         private Property(String type,
                          String propertyName,

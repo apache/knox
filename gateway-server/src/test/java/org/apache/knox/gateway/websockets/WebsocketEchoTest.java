@@ -346,11 +346,10 @@ public class WebsocketEchoTest {
   }
 
   private static XMLTag createKnoxTopology(final String backend) {
-    XMLTag xml = XMLDoc.newDocument(true).addRoot("topology").addTag("service")
+    // System.out.println( "GATEWAY=" + xml.toString() );
+    return XMLDoc.newDocument(true).addRoot("topology").addTag("service")
         .addTag("role").addText("WEBSOCKET").addTag("url").addText(backend)
         .gotoParent().gotoRoot();
-    // System.out.println( "GATEWAY=" + xml.toString() );
-    return xml;
   }
 
   private static class TestTopologyListener implements TopologyListener {

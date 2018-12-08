@@ -90,7 +90,8 @@ public class GatewayLdapDynamicGroupFuncTest {
   }
 
   private static XMLTag createTopology() {
-    XMLTag xml = XMLDoc.newDocument( true )
+    // System.out.println( "GATEWAY=" + xml.toString() );
+    return XMLDoc.newDocument( true )
         .addRoot( "topology" )
         .addTag( "gateway" )
 
@@ -165,8 +166,6 @@ public class GatewayLdapDynamicGroupFuncTest {
         .addTag( "service" )
         .addTag( "role" ).addText( "test-service-role" )
         .gotoRoot();
-         // System.out.println( "GATEWAY=" + xml.toString() );
-    return xml;
   }
 
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )

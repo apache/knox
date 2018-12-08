@@ -232,7 +232,7 @@ public class SecureKnoxShellTest {
    * @return A populated XML structure for a topology file.
    */
   private static XMLTag createSecureTopology() {
-    XMLTag xml = XMLDoc.newDocument(true).addRoot("topology").addTag("gateway")
+    return XMLDoc.newDocument(true).addRoot("topology").addTag("gateway")
         .addTag("provider").addTag("role").addText("authentication")
         .addTag("name").addText("HadoopAuth").addTag("enabled").addText("true")
 
@@ -283,9 +283,6 @@ public class SecureKnoxShellTest {
         .addTag("service").addTag("role").addText("WEBHDFS").addTag("url")
         .addText("http://localhost:" + nameNodeHttpPort + "/webhdfs/")
         .gotoParent().gotoRoot();
-
-    //System.out.println( "GATEWAY=" + xml.toString() );
-    return xml;
   }
 
   private static void setupLogging() {
@@ -341,8 +338,7 @@ public class SecureKnoxShellTest {
     String filePath =
         this.getClass().getCanonicalName().replaceAll("\\.", "/") + "/"
             + resource;
-    URL url = ClassLoader.getSystemResource(filePath);
-    return url;
+    return ClassLoader.getSystemResource(filePath);
   }
 
 }

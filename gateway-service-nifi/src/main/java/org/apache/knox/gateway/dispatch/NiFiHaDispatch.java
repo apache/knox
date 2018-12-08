@@ -87,7 +87,7 @@ public class NiFiHaDispatch extends DefaultHaDispatch {
   }
 
   /**
-   * Overriden due to {@link DefaultDispatch#getInboundResponseContentType(HttpEntity) having private access, and the method is used by
+   * Overriden due to DefaultDispatch#getInboundResponseContentType(HttpEntity) having private access, and the method is used by
    * {@link #writeOutboundResponse(HttpUriRequest, HttpServletRequest, HttpServletResponse, HttpResponse)}}
    */
   private String getInboundResponseContentType( final HttpEntity entity ) {

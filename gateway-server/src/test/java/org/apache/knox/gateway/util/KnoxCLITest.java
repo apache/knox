@@ -395,7 +395,6 @@ public class KnoxCLITest {
     outContent.reset();
 
     final String descriptorName = "my-topology.json";
-    final String descriptorContent = testDescriptorContentJSON;
 
     final File testRoot = TestUtils.createTempDir(this.getClass().getName());
     try {
@@ -406,7 +405,7 @@ public class KnoxCLITest {
                              "--registry-client", "test_client",
                              "--master", "master"};
 
-      FileUtils.writeStringToFile(testDescriptor, descriptorContent, StandardCharsets.UTF_8);
+      FileUtils.writeStringToFile(testDescriptor, testDescriptorContentJSON, StandardCharsets.UTF_8);
 
       KnoxCLI cli = new KnoxCLI();
       Configuration config = new GatewayConfigImpl();
@@ -446,7 +445,7 @@ public class KnoxCLITest {
   public void testSuccessfulAliasLifecycle() throws Exception {
     outContent.reset();
     String[] args1 = {"create-alias", "alias1", "--value", "testvalue1", "--master", "master"};
-    int rc = 0;
+    int rc;
     KnoxCLI cli = new KnoxCLI();
     cli.setConf(new GatewayConfigImpl());
     rc = cli.run(args1);
@@ -481,7 +480,7 @@ public class KnoxCLITest {
     String[] args1 =
         { "create-alias", "alias1", "--cluster", "cluster1", "--value", "testvalue1", "--master",
             "master" };
-    int rc = 0;
+    int rc;
     KnoxCLI cli = new KnoxCLI();
     cli.setConf(new GatewayConfigImpl());
     rc = cli.run(args1);
@@ -512,7 +511,7 @@ public class KnoxCLITest {
     KnoxCLI cli = new KnoxCLI();
     cli.setConf(new GatewayConfigImpl());
     try {
-      int rc = 0;
+      int rc;
       outContent.reset();
       String[] args1 =
           { "create-alias", "alias1", "--cluster", "cluster1", "--value", "testvalue1", "--master",
@@ -537,7 +536,7 @@ public class KnoxCLITest {
     KnoxCLI cli = new KnoxCLI();
     cli.setConf(new GatewayConfigImpl());
     try {
-      int rc = 0;
+      int rc;
       outContent.reset();
       String[] args1 = { "create-alias", "alias1", "--value", "testvalue1", "--master", "master" };
       cli.run(args1);
@@ -572,7 +571,7 @@ public class KnoxCLITest {
     String[] args1 =
         { "create-alias", "alias1", "--cluster", "cluster1", "--value", "testvalue1", "--master",
             "master" };
-    int rc = 0;
+    int rc;
     KnoxCLI cli = new KnoxCLI();
     cli.setConf(new GatewayConfigImpl());
     rc = cli.run(args1);
@@ -609,7 +608,7 @@ public class KnoxCLITest {
 
     outContent.reset();
     String[] gwCreateArgs = {"create-alias", "alias1", "--value", "testvalue1", "--master", "master"};
-    int rc = 0;
+    int rc;
     KnoxCLI cli = new KnoxCLI();
     cli.setConf( config );
     rc = cli.run(gwCreateArgs);
@@ -687,7 +686,7 @@ public class KnoxCLITest {
     KnoxCLI cli = new KnoxCLI();
     cli.setConf( config );
     String[] gwCreateArgs = {"create-cert", "--hostname", "hostname1", "--master", "master"};
-    int rc = 0;
+    int rc;
     rc = cli.run(gwCreateArgs);
     assertEquals(0, rc);
     assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("gateway-identity has been successfully " +
@@ -767,7 +766,7 @@ public class KnoxCLITest {
     FileUtils.deleteQuietly( new File( config.getGatewaySecurityDir() ) );
     outContent.reset();
     String[] args = {"create-master", "--master", "master"};
-    int rc = 0;
+    int rc;
     KnoxCLI cli = new KnoxCLI();
     cli.setConf( config );
     rc = cli.run(args);
@@ -781,7 +780,7 @@ public class KnoxCLITest {
   @Test
   public void testCreateMasterGenerate() throws Exception {
     String[] args = {"create-master", "--generate" };
-    int rc = 0;
+    int rc;
     GatewayConfigImpl config = new GatewayConfigImpl();
     File masterFile = new File( config.getGatewaySecurityDir(), "master" );
 
@@ -833,7 +832,7 @@ public class KnoxCLITest {
     KnoxCLI cli = new KnoxCLI();
     cli.setConf(config);
     MasterService ms;
-    int rc = 0;
+    int rc;
     outContent.reset();
 
     String[] args = { "create-master", "--master", "test-master-1" };
@@ -889,7 +888,7 @@ public class KnoxCLITest {
   }
 
   private static XMLTag createBadTopology() {
-    XMLTag xml = XMLDoc.newDocument(true)
+    return XMLDoc.newDocument(true)
         .addRoot( "topology" )
         .addTag( "gateway" )
 
@@ -921,11 +920,10 @@ public class KnoxCLITest {
         .addTag( "service" )
         .addTag( "role" ).addText( "test-service-role" )
         .gotoRoot();
-    return xml;
   }
 
   private static XMLTag createGoodTopology() {
-    XMLTag xml = XMLDoc.newDocument( true )
+    return XMLDoc.newDocument( true )
         .addRoot( "topology" )
         .addTag( "gateway" )
 
@@ -957,7 +955,6 @@ public class KnoxCLITest {
         .addTag( "service" )
         .addTag( "role" ).addText( "test-service-role" )
         .gotoRoot();
-    return xml;
   }
 
   private File writeTestTopology( String name, XMLTag xml ) throws IOException {

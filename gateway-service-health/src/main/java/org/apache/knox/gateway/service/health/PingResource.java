@@ -71,17 +71,11 @@ public class PingResource {
     response.setStatus(HttpServletResponse.SC_OK);
     response.setHeader(CACHE_CONTROL, NO_CACHE);
     response.setContentType(CONTENT_TYPE);
-    PrintWriter writer = null;
-    try {
-      writer = response.getWriter();
+    try (PrintWriter writer = response.getWriter()) {
       writer.println(getPingContent());
     } catch (IOException ioe) {
       log.logException("ping", ioe);
       return Response.serverError().entity(String.format(Locale.ROOT, "Failed to reply correctly due to : %s ", ioe)).build();
-    } finally {
-      if (writer != null) {
-        writer.close();
-      }
     }
     return Response.ok().build();
   }

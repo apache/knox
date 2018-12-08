@@ -74,7 +74,7 @@ public class UrlRewriteRulesDescriptorImpl implements UrlRewriteRulesDescriptor 
   public void addRule( UrlRewriteRuleDescriptor rule ) {
     ruleList.add( rule );
     String name = rule.name();
-    if( name != null && name.length() > 0 ) {
+    if( name != null && !name.isEmpty()) {
       ruleMap.put( rule.name(), rule );
     }
   }
@@ -87,8 +87,7 @@ public class UrlRewriteRulesDescriptorImpl implements UrlRewriteRulesDescriptor 
   @Override
   @SuppressWarnings("unchecked")
   public <T extends UrlRewriteFunctionDescriptor<?>> T getFunction( String name ) {
-    T descriptor = (T)funcMap.get( name );
-    return descriptor;
+    return (T)funcMap.get( name );
   }
 
   @Override
@@ -101,8 +100,7 @@ public class UrlRewriteRulesDescriptorImpl implements UrlRewriteRulesDescriptor 
 
   @SuppressWarnings("unchecked")
   protected <T extends UrlRewriteFunctionDescriptor<?>> T newFunction( String name ) {
-    T descriptor = UrlRewriteFunctionDescriptorFactory.create( name );
-    return descriptor;
+    return UrlRewriteFunctionDescriptorFactory.create( name );
   }
 
   protected void addFunction( UrlRewriteFunctionDescriptor descriptor ) {

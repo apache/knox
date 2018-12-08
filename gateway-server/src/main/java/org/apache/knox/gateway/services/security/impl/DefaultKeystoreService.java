@@ -194,7 +194,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
         if (hostname == null) {
           hostname = System.getProperty(CERT_GEN_MODE, CERT_GEN_MODE_LOCALHOST);
         }
-        X509Certificate cert = null;
+        X509Certificate cert;
         if(hostname.equals(CERT_GEN_MODE_HOSTNAME)) {
           String dn = buildDistinguishedName(InetAddress.getLocalHost().getHostName());
           cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, "SHA1withRSA");
@@ -242,15 +242,13 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
 
   @Override
   public boolean isCredentialStoreForClusterAvailable(String clusterName) throws KeystoreServiceException {
-    boolean rc = false;
+    boolean rc;
     final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
     readLock.lock();
     try {
       try {
         rc = isKeystoreAvailable(keyStoreFile, "JCEKS");
-      } catch (KeyStoreException e) {
-        throw new KeystoreServiceException(e);
-      } catch (IOException e) {
+      } catch (KeyStoreException | IOException e) {
         throw new KeystoreServiceException(e);
       }
       return rc;
@@ -262,15 +260,13 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
 
   @Override
   public boolean isKeystoreForGatewayAvailable() throws KeystoreServiceException {
-    boolean rc = false;
+    boolean rc;
     final File  keyStoreFile = new File( keyStoreDir + GATEWAY_KEYSTORE  );
     readLock.lock();
     try {
       try {
         rc = isKeystoreAvailable(keyStoreFile, "JKS");
-      } catch (KeyStoreException e) {
-        throw new KeystoreServiceException(e);
-      } catch (IOException e) {
+      } catch (KeyStoreException | IOException e) {
         throw new KeystoreServiceException(e);
       }
       return rc;
@@ -293,11 +289,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
       if (ks != null) {
         try {
           key = ks.getKey(alias, passphrase);
-        } catch (UnrecoverableKeyException e) {
-          LOG.failedToGetKeyForGateway( alias, e );
-        } catch (KeyStoreException e) {
-          LOG.failedToGetKeyForGateway( alias, e );
-        } catch (NoSuchAlgorithmException e) {
+        } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
           LOG.failedToGetKeyForGateway( alias, e );
         }
       }
@@ -326,11 +318,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
       if (ks != null) {
         try {
           key = ks.getKey(alias, passphrase);
-        } catch (UnrecoverableKeyException e) {
-          LOG.failedToGetKeyForGateway( alias, e );
-        } catch (KeyStoreException e) {
-          LOG.failedToGetKeyForGateway( alias, e );
-        } catch (NoSuchAlgorithmException e) {
+        } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
           LOG.failedToGetKeyForGateway( alias, e );
         }
       }
@@ -365,13 +353,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
       final File  keyStoreFile = new File( keyStoreDir + clusterName + CREDENTIALS_SUFFIX  );
       try {
         writeKeystoreToFile(ks, keyStoreFile);
-      } catch (KeyStoreException e) {
-        LOG.failedToAddCredentialForCluster( clusterName, e );
-      } catch (NoSuchAlgorithmException e) {
-        LOG.failedToAddCredentialForCluster( clusterName, e );
-      } catch (CertificateException e) {
-        LOG.failedToAddCredentialForCluster( clusterName, e );
-      } catch (IOException e) {
+      } catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException e) {
         LOG.failedToAddCredentialForCluster( clusterName, e );
       }
     } finally {
@@ -382,7 +364,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
   @Override
   public char[] getCredentialForCluster(String clusterName, String alias)
       throws KeystoreServiceException {
-    char[] credential = null;
+    char[] credential;
     readLock.lock();
     try {
       credential = checkCache(clusterName, alias);
@@ -398,11 +380,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
               credential = credentialString.toCharArray();
               addToCache(clusterName, alias, credentialString);
             }
-          } catch (UnrecoverableKeyException e) {
-            LOG.failedToGetCredentialForCluster( clusterName, e );
-          } catch (KeyStoreException e) {
-            LOG.failedToGetCredentialForCluster( clusterName, e );
-          } catch (NoSuchAlgorithmException e) {
+          } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
             LOG.failedToGetCredentialForCluster( clusterName, e );
           }
 
@@ -425,13 +403,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
       removeCredential(alias, ks);
       try {
         writeKeystoreToFile(ks, keyStoreFile);
-      } catch (KeyStoreException e) {
-        LOG.failedToRemoveCredentialForCluster(clusterName, e);
-      } catch (NoSuchAlgorithmException e) {
-        LOG.failedToRemoveCredentialForCluster(clusterName, e);
-      } catch (CertificateException e) {
-        LOG.failedToRemoveCredentialForCluster(clusterName, e);
-      } catch (IOException e) {
+      } catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException e) {
         LOG.failedToRemoveCredentialForCluster(clusterName, e);
       }
     }
@@ -445,7 +417,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
    */
   private char[] checkCache(String clusterName, String alias) {
     char[] c = null;
-    String cred = null;
+    String cred;
     Map<String, String> clusterCache = cache.get(clusterName);
     if (clusterCache == null) {
       return null;

@@ -147,9 +147,7 @@ class AmbariCluster implements ServiceDiscovery.Cluster {
 
     @Override
     public List<String> getServiceURLs(String serviceName, Map<String, String> serviceParams) {
-        List<String> urls = new ArrayList<>();
-        urls.addAll(urlFactory.create(serviceName, serviceParams));
-        return urls;
+        return new ArrayList<>(urlFactory.create(serviceName, serviceParams));
     }
 
     @Override
@@ -253,7 +251,7 @@ class AmbariCluster implements ServiceDiscovery.Cluster {
         }
 
         private String applyPortToEnsemble(String ensemble, String port) {
-            String updatedEnsemble = "";
+            StringBuilder updatedEnsemble = new StringBuilder();
 
             String[] hosts = ensemble.split(",");
             int index = 0;
@@ -262,13 +260,13 @@ class AmbariCluster implements ServiceDiscovery.Cluster {
                 if (portIndex > 0) {
                     host = host.substring(0, portIndex);
                 }
-                updatedEnsemble += host + ":" + port;
+                updatedEnsemble.append(host).append(":").append(port);
                 if (++index < hosts.length) {
-                    updatedEnsemble += ",";
+                    updatedEnsemble.append(",");
                 }
             }
 
-            return updatedEnsemble;
+            return updatedEnsemble.toString();
         }
     }
 }

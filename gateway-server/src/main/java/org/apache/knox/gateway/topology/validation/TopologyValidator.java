@@ -117,7 +117,7 @@ public class TopologyValidator {
     StringBuilder out = new StringBuilder();
     out.append("");
     for(String s : getTopologyErrors()){
-      out.append(s + "\n");
+      out.append(s).append("\n");
     }
     return out.toString();
   }

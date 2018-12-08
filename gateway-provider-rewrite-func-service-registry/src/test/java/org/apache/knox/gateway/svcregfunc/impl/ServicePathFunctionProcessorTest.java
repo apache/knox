@@ -29,7 +29,7 @@ import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
@@ -134,7 +134,7 @@ public class ServicePathFunctionProcessorTest {
     func.initialize( env, desc );
 
 //    assertThat( func.resolve( ctx, "test-service" ), is( "/test-path" ) );
-    assertThat( func.resolve( ctx, Arrays.asList( "invalid-test-service" ) ), contains( "invalid-test-service" ) );
+    assertThat( func.resolve( ctx, Collections.singletonList("invalid-test-service")), contains( "invalid-test-service" ) );
 //    assertThat( func.resolve( ctx, null ), nullValue() );
 
     func.destroy();

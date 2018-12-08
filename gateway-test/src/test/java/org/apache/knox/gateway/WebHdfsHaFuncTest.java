@@ -96,7 +96,8 @@ public class WebHdfsHaFuncTest {
     * @return A populated XML structure for a topology file.
     */
    private static XMLTag createTopology() {
-      XMLTag xml = XMLDoc.newDocument(true)
+     //     System.out.println( "GATEWAY=" + xml.toString() );
+      return XMLDoc.newDocument(true)
             .addRoot("topology")
             .addTag("gateway")
             .addTag("provider")
@@ -149,8 +150,6 @@ public class WebHdfsHaFuncTest {
             .addTag("url").addText("http://localhost:" + masterServer.getPort() + "/webhdfs")
             .addTag("url").addText("http://localhost:" + standbyServer.getPort() + "/webhdfs").gotoParent()
             .gotoRoot();
-//     System.out.println( "GATEWAY=" + xml.toString() );
-      return xml;
    }
 
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )

@@ -34,37 +34,35 @@ public class RemoteRegistryConfigTestUtils {
     public static final String PROPERTY_USE_TICKET_CACHE = "useTicketCache";
 
     public static String createRemoteConfigRegistriesXML(Collection<Map<String, String>> configProperties) {
-        String result = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-                        "<remote-configuration-registries>\n";
+        StringBuilder result = new StringBuilder("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+                                                     "<remote-configuration-registries>\n");
 
         for (Map<String, String> props : configProperties) {
             String authType = props.get(PROPERTY_AUTH_TYPE);
             if ("Kerberos".equalsIgnoreCase(authType)) {
-                result +=
-                   createRemoteConfigRegistryXMLWithKerberosAuth(props.get(PROPERTY_TYPE),
-                                                                 props.get(PROPERTY_NAME),
-                                                                 props.get(PROPERTY_ADDRESS),
-                                                                 props.get(PROPERTY_PRINCIPAL),
-                                                                 props.get(PROPERTY_KEYTAB),
-                                                                 Boolean.valueOf(props.get(PROPERTY_USE_KEYTAB)),
-                                                                 Boolean.valueOf(props.get(PROPERTY_USE_TICKET_CACHE)));
+                result.append(createRemoteConfigRegistryXMLWithKerberosAuth(props.get(PROPERTY_TYPE),
+                    props.get(PROPERTY_NAME),
+                    props.get(PROPERTY_ADDRESS),
+                    props.get(PROPERTY_PRINCIPAL),
+                    props.get(PROPERTY_KEYTAB),
+                    Boolean.valueOf(props.get(PROPERTY_USE_KEYTAB)),
+                    Boolean.valueOf(props.get(PROPERTY_USE_TICKET_CACHE))));
             } else if ("Digest".equalsIgnoreCase(authType)) {
-                result +=
-                    createRemoteConfigRegistryXMLWithDigestAuth(props.get(PROPERTY_TYPE),
-                                                                props.get(PROPERTY_NAME),
-                                                                props.get(PROPERTY_ADDRESS),
-                                                                props.get(PROPERTY_PRINCIPAL),
-                                                                props.get(PROPERTY_CRED_ALIAS));
+                result.append(createRemoteConfigRegistryXMLWithDigestAuth(props.get(PROPERTY_TYPE),
+                    props.get(PROPERTY_NAME),
+                    props.get(PROPERTY_ADDRESS),
+                    props.get(PROPERTY_PRINCIPAL),
+                    props.get(PROPERTY_CRED_ALIAS)));
             } else {
-                result += createRemoteConfigRegistryXMLNoAuth(props.get(PROPERTY_TYPE),
-                                                              props.get(PROPERTY_NAME),
-                                                              props.get(PROPERTY_ADDRESS));
+                result.append(createRemoteConfigRegistryXMLNoAuth(props.get(PROPERTY_TYPE),
+                    props.get(PROPERTY_NAME),
+                    props.get(PROPERTY_ADDRESS)));
             }
         }
 
-        result += "</remote-configuration-registries>\n";
+        result.append("</remote-configuration-registries>\n");
 
-        return result;
+        return result.toString();
     }
 
     public static String createRemoteConfigRegistryXMLWithKerberosAuth(String type,
@@ -82,8 +80,8 @@ public class RemoteRegistryConfigTestUtils {
                "    <auth-type>" + "Kerberos" + "</auth-type>\n" +
                "    <principal>" + principal + "</principal>\n" +
                "    <keytab>" + keyTab + "</keytab>\n" +
-               "    <use-keytab>" + String.valueOf(userKeyTab) + "</use-keytab>\n" +
-               "    <use-ticket-cache>" + String.valueOf(useTicketCache) + "</use-ticket-cache>\n" +
+               "    <use-keytab>" + userKeyTab + "</use-keytab>\n" +
+               "    <use-ticket-cache>" + useTicketCache + "</use-ticket-cache>\n" +
                "  </remote-configuration-registry>\n";
     }
 

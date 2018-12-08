@@ -54,10 +54,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayDeque;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Queue;
 import java.util.ServiceLoader;
@@ -77,8 +76,7 @@ public class UsernameFunctionProcessorTest {
 
   private static URL getTestResource( String name ) {
     name = UsernameFunctionProcessorTest.class.getName().replaceAll( "\\.", "/" ) + "/" + name;
-    URL url = ClassLoader.getSystemResource( name );
-    return url;
+    return ClassLoader.getSystemResource( name );
   }
 
   public void setUp( String username, Map<String,String> initParams ) throws Exception {
@@ -139,7 +137,7 @@ public class UsernameFunctionProcessorTest {
   public void testResolve() throws Exception {
     final UsernameFunctionProcessor processor = new UsernameFunctionProcessor();
     assertThat( processor.resolve( null, null ), nullValue() );
-    assertThat( processor.resolve( null, Arrays.asList( "test-input" ) ), contains( "test-input" ) );
+    assertThat( processor.resolve( null, Collections.singletonList("test-input")), contains( "test-input" ) );
     Subject subject = new Subject();
     subject.getPrincipals().add( new PrimaryPrincipal( "test-username" ) );
     subject.setReadOnly();
@@ -147,7 +145,7 @@ public class UsernameFunctionProcessorTest {
       @Override
       public Object run() throws Exception {
         assertThat( processor.resolve( null, null ), contains( "test-username" ) );
-        assertThat( processor.resolve( null, Arrays.asList( "test-ignored" ) ), contains( "test-username" ) );
+        assertThat( processor.resolve( null, Collections.singletonList("test-ignored")), contains( "test-username" ) );
         return null;
       }
     } );
@@ -156,10 +154,8 @@ public class UsernameFunctionProcessorTest {
   @Test
   public void testServiceLoader() throws Exception {
     ServiceLoader loader = ServiceLoader.load( UrlRewriteFunctionProcessor.class );
-    Iterator iterator = loader.iterator();
-    while( iterator.hasNext() ) {
-      Object object = iterator.next();
-      if( object instanceof UsernameFunctionProcessor ) {
+    for (Object object : loader) {
+      if (object instanceof UsernameFunctionProcessor) {
         return;
       }
     }

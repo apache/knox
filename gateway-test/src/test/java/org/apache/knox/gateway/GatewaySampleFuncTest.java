@@ -117,7 +117,8 @@ public class GatewaySampleFuncTest {
   }
 
   private static XMLTag createTopology() {
-    XMLTag xml = XMLDoc.newDocument( true )
+    // System.out.println( "GATEWAY=" + xml.toString() );
+    return XMLDoc.newDocument( true )
         .addRoot( "topology" )
         .addTag( "gateway" )
         .addTag( "provider" )
@@ -148,8 +149,6 @@ public class GatewaySampleFuncTest {
         .addTag( "service" )
         .addTag( "role" ).addText( "test-service-role" )
         .gotoRoot();
-    // System.out.println( "GATEWAY=" + xml.toString() );
-    return xml;
   }
 
   //@Test

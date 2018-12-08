@@ -66,6 +66,7 @@ public class JsonPathTest {
         JsonPath.compile( path );
         fail( "Expected IllegalArgumentException" );
       } catch( IllegalArgumentException e ) {
+        // Expected exception
       }
     }
 

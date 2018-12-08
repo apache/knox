@@ -107,13 +107,11 @@ public class Version implements Comparable<Version> {
 
   @Override
   public String toString() {
-    StringBuffer buffer = new StringBuffer();
-    buffer.append(major);
-    buffer.append(".");
-    buffer.append(minor);
-    buffer.append(".");
-    buffer.append(patch);
-    return buffer.toString();
+    return major +
+                        "." +
+                        minor +
+                        "." +
+                        patch;
   }
 
   @Override

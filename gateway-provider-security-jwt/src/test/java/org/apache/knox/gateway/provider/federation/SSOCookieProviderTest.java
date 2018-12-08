@@ -214,7 +214,7 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
   @Override
   protected String getVerificationPemProperty() {
     return SSOCookieFederationFilter.SSO_VERIFICATION_PEM;
-  };
+  }
 
   private static class TestSSOCookieFederationProvider extends SSOCookieFederationFilter {
     public String testConstructLoginURL(HttpServletRequest req) {
@@ -224,6 +224,6 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
     public void setTokenService(JWTokenAuthority ts) {
       authority = ts;
     }
-  };
+  }
 
 }

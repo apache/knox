@@ -94,16 +94,14 @@ public class Log4jAuditContext implements Serializable, AuditContext {
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append( "[" );
-    sb.append( "username=" ).append( username );
-    sb.append( ", proxy_username=" ).append( proxyUsername );
-    sb.append( ", system_username=" ).append( systemUsername );
-    sb.append( ", targetServiceName=" ).append( targetServiceName );
-    sb.append( ", remoteIp=" ).append( remoteIp );
-    sb.append( ", remoteHostname=" ).append( remoteHostname );
-    sb.append( "]" );
-    return sb.toString();
+    return "[" +
+               "username=" + username +
+               ", proxy_username=" + proxyUsername +
+               ", system_username=" + systemUsername +
+               ", targetServiceName=" + targetServiceName +
+               ", remoteIp=" + remoteIp +
+               ", remoteHostname=" + remoteHostname +
+               "]";
   }
 
   @Override

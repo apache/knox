@@ -80,8 +80,8 @@ public class TokenResource {
     String audiences = context.getInitParameter(TOKEN_AUDIENCES_PARAM);
     if (audiences != null) {
       String[] auds = audiences.split(",");
-      for (int i = 0; i < auds.length; i++) {
-        targetAudiences.add(auds[i].trim());
+      for (String aud : auds) {
+        targetAudiences.add(aud.trim());
       }
     }
 
@@ -91,8 +91,8 @@ public class TokenResource {
     String principals = context.getInitParameter(TOKEN_ALLOWED_PRINCIPALS);
     if (principals != null) {
       String[] dns = principals.split(";");
-      for (int i = 0; i < dns.length; i++) {
-        allowedDNs.add(dns[i].replaceAll("\\s+",""));
+      for (String dn : dns) {
+        allowedDNs.add(dn.replaceAll("\\s+", ""));
       }
     }
 
@@ -165,7 +165,7 @@ public class TokenResource {
     long expires = getExpiry();
 
     try {
-      JWT token = null;
+      JWT token;
       if (targetAudiences.isEmpty()) {
         token = ts.issueToken(p, signatureAlgorithm, expires);
       } else {
@@ -202,9 +202,9 @@ public class TokenResource {
 
   void addClientDataToMap(String[] tokenClientData,
       Map<String,Object> map) {
-    String[] kv = null;
-    for (int i = 0; i < tokenClientData.length; i++) {
-      kv = tokenClientData[i].split("=");
+    String[] kv;
+    for (String tokenClientDatum : tokenClientData) {
+      kv = tokenClientDatum.split("=");
       if (kv.length == 2) {
         map.put(kv[0], kv[1]);
       }

@@ -19,7 +19,7 @@ package org.apache.knox.gateway.encrypturi.impl;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.util.Collections;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.knox.gateway.encrypturi.EncryptStepContextParams;
@@ -66,7 +66,7 @@ public class EncryptUriProcessor
       if( resolvedTemplate != null && !resolvedTemplate.isEmpty() ) {
         String endcoedUrl = encode( resolvedTemplate );
         EncryptStepContextParams params = new EncryptStepContextParams();
-        params.addParam( param, Arrays.asList( endcoedUrl ) );
+        params.addParam( param, Collections.singletonList(endcoedUrl));
         context.addParameters( params );
         return UrlRewriteStepStatus.SUCCESS;
       }

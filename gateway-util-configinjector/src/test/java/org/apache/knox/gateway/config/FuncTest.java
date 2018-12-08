@@ -40,7 +40,7 @@ public class FuncTest {
     int intMember = 1;
 
     @Configure
-    Integer integerMember = Integer.valueOf( 1 );
+    Integer integerMember = 1;
 
     @Configure
     public void setStringProp( String s ) {
@@ -96,7 +96,7 @@ public class FuncTest {
 
     assertThat( testBean.stringMember, is( "stringValue" ) );
     assertThat( testBean.intMember, is( 2 ) );
-    assertThat( testBean.integerMember, is( Integer.valueOf(2) ) );
+    assertThat( testBean.integerMember, is(2) );
     assertThat( testBean.stringPropField, is( "stringValue" ) );
     assertThat( testBean.stringPropFieldAlt, is( "stringValue" ) );
     assertThat( testBean.stringPropFieldAltArg, is( "stringValue" ) );
@@ -125,7 +125,7 @@ public class FuncTest {
 
     assertThat( testBean.stringMember, is( "stringValue" ) );
     assertThat( testBean.intMember, is( 2 ) );
-    assertThat( testBean.integerMember, is( Integer.valueOf(2) ) );
+    assertThat( testBean.integerMember, is(2) );
     assertThat( testBean.stringPropField, is( "stringValue" ) );
     assertThat( testBean.stringPropFieldAlt, is( "stringValue" ) );
     assertThat( testBean.stringPropFieldAltArg, is( "stringValue" ) );
@@ -169,7 +169,7 @@ public class FuncTest {
 
     assertThat( testBean.stringMember, is( "stringValue" ) );
     assertThat( testBean.intMember, is( 2 ) );
-    assertThat( testBean.integerMember, is( Integer.valueOf(2) ) );
+    assertThat( testBean.integerMember, is(2) );
     assertThat( testBean.stringPropField, is( "stringValue" ) );
     assertThat( testBean.stringPropFieldAlt, is( "stringValue" ) );
     assertThat( testBean.stringPropFieldAltArg, is( "stringValue" ) );
@@ -184,12 +184,12 @@ public class FuncTest {
     Map<Object,Object> testConfig = new HashMap<>();
     testConfig.put( "stringMember", "stringValue" );
     testConfig.put( "intMember", 42 );
-    testConfig.put( "integerMember", Integer.valueOf(42) );
+    testConfig.put( "integerMember", 42);
     testConfig.put( "stringProp", "stringValue" );
     testConfig.put( "altStringProp", "stringValue" );
     testConfig.put( "altArgStringProp", "stringValue" );
     testConfig.put( "multiArg1", "stringValue" );
-    testConfig.put( "multiArg2", Integer.valueOf(42) );
+    testConfig.put( "multiArg2", 42);
     testConfig.put( "multiArg3", "42" );
 
     TestBean testBean = new TestBean();
@@ -198,7 +198,7 @@ public class FuncTest {
 
     assertThat( testBean.stringMember, is( "stringValue" ) );
     assertThat( testBean.intMember, is( 42 ) );
-    assertThat( testBean.integerMember, is( Integer.valueOf(42) ) );
+    assertThat( testBean.integerMember, is(42) );
     assertThat( testBean.stringPropField, is( "stringValue" ) );
     assertThat( testBean.stringPropFieldAlt, is( "stringValue" ) );
     assertThat( testBean.stringPropFieldAltArg, is( "stringValue" ) );

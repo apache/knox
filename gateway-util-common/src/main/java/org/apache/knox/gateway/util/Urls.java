@@ -131,9 +131,7 @@ public class Urls {
     URLCodec codec = new URLCodec();
     try {
       return codec.decode( str, StandardCharsets.UTF_8.name() );
-    } catch( UnsupportedEncodingException e ) {
-      throw new IllegalArgumentException( e );
-    } catch( DecoderException e ) {
+    } catch( UnsupportedEncodingException | DecoderException e ) {
       throw new IllegalArgumentException( e );
     }
   }
@@ -154,14 +152,14 @@ public class Urls {
     StringBuilder s = new StringBuilder();
     if( parts != null ) {
       String p = "";
-      String n = "";
-      for( int i=0; i<parts.length; i++ ) {
-        n = trimLeadingAndTrailingSlash( parts[i] );
-        if( !n.isEmpty() ) {
-          if( !p.isEmpty() ) {
-            s.append( '/' );
+      String n;
+      for (String part : parts) {
+        n = trimLeadingAndTrailingSlash(part);
+        if (!n.isEmpty()) {
+          if (!p.isEmpty()) {
+            s.append('/');
           }
-          s.append( n );
+          s.append(n);
           p = n;
         }
       }

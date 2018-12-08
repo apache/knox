@@ -31,8 +31,7 @@ class Function {
 
   static List<String> evaluate( String statement, Resolver resolver, Evaluator evaluator ) {
     Function function = new Function( statement );
-    List<String> results = function.evaluate( resolver, evaluator );
-    return results;
+    return function.evaluate( resolver, evaluator );
   }
 
   Function( String statement ) {

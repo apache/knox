@@ -107,11 +107,9 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
       ServletRequest request, String mappedPrincipalName) {
     // wrap the request so that the proper principal is returned
     // from request methods
-    IdentityAsserterHttpServletRequestWrapper wrapper =
-        new IdentityAsserterHttpServletRequestWrapper(
-        (HttpServletRequest)request,
+    return new IdentityAsserterHttpServletRequestWrapper(
+        (HttpServletRequest) request,
         mappedPrincipalName);
-    return wrapper;
   }
 
   protected String[] mapGroupPrincipalsBase(String mappedPrincipalName, Subject subject) {

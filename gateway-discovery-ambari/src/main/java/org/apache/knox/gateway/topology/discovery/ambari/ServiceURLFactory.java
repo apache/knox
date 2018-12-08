@@ -29,7 +29,7 @@ public class ServiceURLFactory {
 
   private Map<String, ServiceURLCreator> urlCreators = new HashMap<>();
 
-  private ServiceURLCreator defaultURLCreator = null;
+  private ServiceURLCreator defaultURLCreator;
 
 
   private ServiceURLFactory(AmbariCluster cluster) {
@@ -69,16 +69,13 @@ public class ServiceURLFactory {
    * @return A List of service URL strings; the list may be empty.
    */
   public List<String> create(String service, Map<String, String> serviceParams) {
-    List<String> urls = new ArrayList<>();
 
     ServiceURLCreator creator = urlCreators.get(service);
     if (creator == null) {
       creator = defaultURLCreator;
     }
 
-    urls.addAll(creator.create(service, serviceParams));
-
-    return urls;
+    return new ArrayList<>(creator.create(service, serviceParams));
   }
 
 }

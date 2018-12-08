@@ -190,7 +190,7 @@ public class GatewayPortMappingFuncTest {
    * @return A populated XML structure for a topology file.
    */
   public static XMLTag createTopology(final String role, final String ldapURL, final int gatewayPort ) {
-    XMLTag xml = XMLDoc.newDocument(true)
+    return XMLDoc.newDocument(true)
         .addRoot("topology")
         .addTag("gateway")
         .addTag("provider")
@@ -242,7 +242,6 @@ public class GatewayPortMappingFuncTest {
         .addTag("role").addText(role)
         .addTag("url").addText("http://localhost:" + gatewayPort + "/webhdfs")
         .gotoRoot();
-    return xml;
   }
 
   /**

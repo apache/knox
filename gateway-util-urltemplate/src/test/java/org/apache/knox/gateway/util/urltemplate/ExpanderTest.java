@@ -24,7 +24,7 @@ import org.junit.experimental.categories.Category;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -421,7 +421,7 @@ public class ExpanderTest {
     evaluator = new Evaluator() {
       @Override
       public List<String> evaluate( String function, List<String> parameters ) {
-        return Arrays.asList( "https://webhcatTestHost.com:50111/templeton" );
+        return Collections.singletonList("https://webhcatTestHost.com:50111/templeton");
       }
     };
 
@@ -453,7 +453,7 @@ public class ExpanderTest {
     evaluator = new Evaluator() {
       @Override
       public List<String> evaluate( String function, List<String> parameters ) {
-        return Arrays.asList( "https://gateway-host:9443/gateway/default" );
+        return Collections.singletonList("https://gateway-host:9443/gateway/default");
       }
     };
 
@@ -475,7 +475,7 @@ public class ExpanderTest {
     evaluator = new Evaluator() {
       @Override
       public List<String> evaluate( String function, List<String> parameters ) {
-        return Arrays.asList( "https://gateway-host:9443/gateway/default" );
+        return Collections.singletonList("https://gateway-host:9443/gateway/default");
       }
     };
 

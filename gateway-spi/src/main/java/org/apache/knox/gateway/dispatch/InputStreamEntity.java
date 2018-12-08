@@ -121,29 +121,26 @@ public class InputStreamEntity extends AbstractHttpEntity {
   @Override
   public void writeTo(final OutputStream outstream ) throws IOException {
     Args.notNull( outstream, "Output stream" );
-    final InputStream instream = this.content;
-    try {
-      final byte[] buffer = new byte[ OUTPUT_BUFFER_SIZE ];
+    try (InputStream instream = this.content) {
+      final byte[] buffer = new byte[OUTPUT_BUFFER_SIZE];
       int l;
-      if( this.length < 0 ) {
+      if (this.length < 0) {
         // consume until EOF
-        while( ( l = instream.read( buffer ) ) != -1 ) {
-          outstream.write( buffer, 0, l );
+        while ((l = instream.read(buffer)) != -1) {
+          outstream.write(buffer, 0, l);
         }
       } else {
         // consume no more than length
         long remaining = this.length;
-        while( remaining > 0 ) {
-          l = instream.read( buffer, 0, (int)Math.min( OUTPUT_BUFFER_SIZE, remaining ) );
-          if( l == -1 ) {
+        while (remaining > 0) {
+          l = instream.read(buffer, 0, (int) Math.min(OUTPUT_BUFFER_SIZE, remaining));
+          if (l == -1) {
             break;
           }
-          outstream.write( buffer, 0, l );
+          outstream.write(buffer, 0, l);
           remaining -= l;
         }
       }
-    } finally {
-      instream.close();
     }
   }
 

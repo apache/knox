@@ -73,13 +73,11 @@ public class Log4jCorrelationContext implements Externalizable, CorrelationConte
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append( "[" );
-    sb.append( "request_id=" ).append( requestId );
-    sb.append( ", parent_request_id=" ).append( parentRequestId );
-    sb.append( ", root_request_id=" ).append( rootRequestId );
-    sb.append( "]" );
-    return sb.toString();
+    return "[" +
+               "request_id=" + requestId +
+               ", parent_request_id=" + parentRequestId +
+               ", root_request_id=" + rootRequestId +
+               "]";
   }
 
   @Override

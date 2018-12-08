@@ -237,8 +237,7 @@ public class Matcher<V> {
         }
       }
     }
-    Match match = createMatch( bestMatchSegment, bestPath, bestQuery, input );
-    return match;
+    return createMatch( bestMatchSegment, bestPath, bestQuery, input );
   }
 
   private QueryNode pickBestQueryMatch( Template input, PathNode pathNode ) {
@@ -307,7 +306,7 @@ public class Matcher<V> {
         Query extra = bestQuery.template.getExtra();
         if( extra != null ) {
           String paramName = extra.getParamName();
-          if( paramName != null && paramName.length() > 0 ) {
+          if( paramName != null && !paramName.isEmpty()) {
             for( Query query: input.getQuery().values() ) {
               String queryName = query.getQueryName();
               if( matchParams.resolve( queryName ) == null ) {
@@ -334,7 +333,7 @@ public class Matcher<V> {
   private void extractSegmentParams( Segment extractSegment, Segment inputSegment, MatchParams params ) {
     if( extractSegment != null && inputSegment != null ) {
       String paramName = extractSegment.getParamName();
-      if( paramName.length() > 0 ) {
+      if(!paramName.isEmpty()) {
         for( Segment.Value value: inputSegment.getValues() ) {
           params.insertValue( paramName, value.getEffectivePattern() );
         }

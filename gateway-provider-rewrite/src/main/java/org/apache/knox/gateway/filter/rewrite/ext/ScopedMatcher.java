@@ -65,7 +65,7 @@ public class ScopedMatcher extends Matcher<UrlRewriteRuleProcessorHolder> {
         matches.add(match);
       }
     }
-    if (matches.size() == 0) {
+    if (matches.isEmpty()) {
       return null;
     }
     if (matches.size() == 1) {
@@ -115,7 +115,7 @@ public class ScopedMatcher extends Matcher<UrlRewriteRuleProcessorHolder> {
   private Matcher<UrlRewriteRuleProcessorHolder> getMatcher(Template template, UrlRewriteRuleProcessorHolder holder) {
     String scope = holder.getScope();
     if (!matchers.containsKey(scope)) {
-      matchers.put(scope, new Matcher<UrlRewriteRuleProcessorHolder>());
+      matchers.put(scope, new Matcher<>());
     }
 
     return matchers.get(scope);

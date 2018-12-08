@@ -60,7 +60,7 @@ public class KnoxSh {
   private String gateway = null;
 
   public int run(String[] args) throws Exception {
-    int exitCode = 0;
+    int exitCode;
     try {
       exitCode = init(args);
       if (exitCode != 0) {
@@ -171,7 +171,7 @@ public class KnoxSh {
       String pass = credentials.get("pass").string();
 
       KnoxSession session = null;
-      Get.Response response = null;
+      Get.Response response;
       try {
         session = KnoxSession.login(gateway, username, pass);
 
@@ -273,23 +273,16 @@ public class KnoxSh {
   }
 
   private String readFile(String file) throws IOException {
-    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
-    String line = null;
-    String content = null;
-    StringBuilder  stringBuilder = new StringBuilder();
-    String ls = System.getProperty("line.separator");
-
-    try {
-        while((line = reader.readLine()) != null) {
-            stringBuilder.append(line);
-            stringBuilder.append(ls);
-        }
-
-        content = stringBuilder.toString();
-    } finally {
-        reader.close();
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+      String line;
+      StringBuilder stringBuilder = new StringBuilder();
+      String ls = System.getProperty("line.separator");
+      while ((line = reader.readLine()) != null) {
+        stringBuilder.append(line);
+        stringBuilder.append(ls);
+      }
+      return stringBuilder.toString();
     }
-    return content;
 }
 
   /**

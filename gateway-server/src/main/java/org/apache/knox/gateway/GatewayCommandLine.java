@@ -37,8 +37,7 @@ public class GatewayCommandLine {
 
   public static CommandLine parse( String[] args ) throws ParseException {
     CommandLineParser parser = new PosixParser();
-    CommandLine commandLine = parser.parse( createCommandLine(), args );
-    return commandLine;
+    return parser.parse( createCommandLine(), args );
   }
 
   public static void printUsage() {

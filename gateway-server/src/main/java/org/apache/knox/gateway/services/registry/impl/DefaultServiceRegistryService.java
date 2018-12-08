@@ -18,10 +18,8 @@
 package org.apache.knox.gateway.services.registry.impl;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
@@ -147,7 +145,7 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
 
   @Override
   public List<String> lookupServiceURLs( String clusterName, String serviceName ) {
-    RegEntry entry = null;
+    RegEntry entry;
     HashMap<String, RegEntry> clusterServices = registry.get(clusterName);
     if (clusterServices != null) {
       entry = clusterServices.get(serviceName);
@@ -166,10 +164,6 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
           = new TypeReference<Registry>() {};
     try {
       map = mapper.readValue(json, typeRef);
-    } catch (JsonParseException e) {
-      LOG.failedToGetMapFromJsonString( json, e );
-    } catch (JsonMappingException e) {
-      LOG.failedToGetMapFromJsonString( json, e );
     } catch (IOException e) {
       LOG.failedToGetMapFromJsonString( json, e );
     }

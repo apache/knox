@@ -192,7 +192,8 @@ public class GatewayBasicFuncTest {
    * @return A populated XML structure for a topology file.
    */
   private static XMLTag createTopology() {
-    XMLTag xml = XMLDoc.newDocument( true )
+    //     System.out.println( "GATEWAY=" + xml.toString() );
+    return XMLDoc.newDocument( true )
         .addRoot( "topology" )
           .addTag( "gateway" )
             .addTag( "provider" )
@@ -278,8 +279,6 @@ public class GatewayBasicFuncTest {
         .addTag("service")
         .addTag("role").addText("SERVICE-TEST")
         .gotoRoot();
-//     System.out.println( "GATEWAY=" + xml.toString() );
-    return xml;
   }
 
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
@@ -1036,7 +1035,7 @@ public class GatewayBasicFuncTest {
 
     String success = "SUCCEEDED";
     String status = "UNKNOWN";
-    long delay = 1000 * 1; // 1 second.
+    long delay = 1000; // 1 second.
     long limit = 1000 * 60; // 60 seconds.
     long start = System.currentTimeMillis();
     while( System.currentTimeMillis() <= start+limit ) {
@@ -2191,7 +2190,7 @@ public class GatewayBasicFuncTest {
     String path = "/v1/cluster/apps/";
     String resource = "/yarn/apps";
     String gatewayPath = driver.getUrl( "RESOURCEMANAGER" ) + path;
-    String gatewayPathQuery = driver.isUseGateway() ? "" : "?user.name=" + username;
+    StringBuilder gatewayPathQuery = new StringBuilder(driver.isUseGateway() ? "" : "?user.name=" + username);
     InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
     String gatewayHostName = gatewayAddress.getHostName();
     String gatewayAddrName = InetAddress.getByName( gatewayHostName ).getHostAddress();
@@ -2213,12 +2212,12 @@ public class GatewayBasicFuncTest {
     if ( params != null ) {
       for (Entry<String, String> param : params.entrySet()) {
         mockRequestMatcher.queryParam( param.getKey(), param.getValue() );
-        if (gatewayPathQuery.isEmpty()) {
-          gatewayPathQuery += "?";
+        if (gatewayPathQuery.length() == 0) {
+          gatewayPathQuery.append("?");
         } else {
-          gatewayPathQuery += "&";
+          gatewayPathQuery.append("&");
         }
-        gatewayPathQuery += param.getKey() + "=" + param.getValue();
+        gatewayPathQuery.append(param.getKey()).append("=").append(param.getValue());
       }
     }
 
@@ -2537,7 +2536,7 @@ public class GatewayBasicFuncTest {
     String nodeResource = "/yarn/node";
     String nodeId = "localhost:45454";
     String gatewayPath = driver.getUrl( "RESOURCEMANAGER" ) + path;
-    String gatewayPathQuery = driver.isUseGateway() ? "" : "?user.name=" + username;
+    StringBuilder gatewayPathQuery = new StringBuilder(driver.isUseGateway() ? "" : "?user.name=" + username);
 
 
     MockRequestMatcher mockRequestMatcher = driver.getMock( "RESOURCEMANAGER" ).expect().method( "GET" )
@@ -2546,12 +2545,12 @@ public class GatewayBasicFuncTest {
     if ( params != null ) {
       for (Entry<String, String> param : params.entrySet()) {
         mockRequestMatcher.queryParam( param.getKey(), param.getValue() );
-        if (gatewayPathQuery.isEmpty()) {
-          gatewayPathQuery += "?";
+        if (gatewayPathQuery.length() == 0) {
+          gatewayPathQuery.append("?");
         } else {
-          gatewayPathQuery += "&";
+          gatewayPathQuery.append("&");
         }
-        gatewayPathQuery += param.getKey() + "=" + param.getValue();
+        gatewayPathQuery.append(param.getKey()).append("=").append(param.getValue());
       }
     }
 
@@ -2660,7 +2659,7 @@ public class GatewayBasicFuncTest {
         .statusCode( HttpStatus.SC_NOT_FOUND ).when()
         .get( encryptedTrackingUrl );
 
-    String resource = null;
+    String resource;
 
     path = "/proxy/application_1399541193872_0033/ws/v1/mapreduce/info";
     resource = "yarn/proxy-mapreduce-info";
@@ -4146,8 +4145,7 @@ public class GatewayBasicFuncTest {
         .body( "boolean", CoreMatchers.equalTo(true) )
         .when()
         .put( driver.getUrl("WEBHDFS") + "/v1" + dir + ( driver.isUseGateway() ? "" : "?user.name=" + user ) );
-    String location = response.getHeader( "Location" );
-    return location;
+    return response.getHeader( "Location" );
   }
 
   private String createDir( String user, String password, String group, String dir, String permsOctal, int nnStatus, int chownStatus ) {
@@ -4413,8 +4411,7 @@ public class GatewayBasicFuncTest {
 //          .statusCode( status )
 //          .when().post( getUrl( "OOZIE" ) + "/v1/jobs" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
       //System.out.println( "JSON=" + json );
-    String id = JsonPath.from(json).getString( "id" );
-    return id;
+    return JsonPath.from(json).getString( "id" );
   }
 
   /* GET /oozie/v1/jobs?filter=user%3Dbansalm&offset=1&len=50 (body JSON; contains URL)
@@ -4492,8 +4489,7 @@ public class GatewayBasicFuncTest {
     HttpResponse response = client.execute( targetHost, request, context );
     assertThat( response.getStatusLine().getStatusCode(), Matchers.is(status) );
     String json = EntityUtils.toString( response.getEntity() );
-    String jobStatus = JsonPath.from(json).getString( "status" );
-    return jobStatus;
+    return JsonPath.from(json).getString( "status" );
   }
 
   /* GET /oozie/v1/job/0000000-130214094519989-oozie-oozi-W?show=definition

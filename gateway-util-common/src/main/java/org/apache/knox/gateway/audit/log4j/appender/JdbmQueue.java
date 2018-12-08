@@ -74,7 +74,7 @@ public class JdbmQueue<E> {
         s = getStat();
       }
       s.nextDequeue++;
-      Long key = Long.valueOf( s.nextDequeue );
+      Long key = s.nextDequeue;
       @SuppressWarnings("unchecked")
       E e = (E)data.get( key );
       data.remove( key );
@@ -98,9 +98,7 @@ public class JdbmQueue<E> {
         db.commit();
         committed = true;
       }
-    } catch( RuntimeException e ) {
-      throw e;
-    } catch( IOException e ) {
+    } catch( RuntimeException | IOException e ) {
       throw e;
     } catch( Throwable t ) {
       throw new RuntimeException( t );

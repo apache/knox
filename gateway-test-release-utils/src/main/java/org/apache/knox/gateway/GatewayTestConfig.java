@@ -36,8 +36,8 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   /* Websocket defaults */
   public static final boolean DEFAULT_WEBSOCKET_FEATURE_ENABLED = false;
-  public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE = Integer.MAX_VALUE;;
-  public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_SIZE = Integer.MAX_VALUE;;
+  public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE = Integer.MAX_VALUE;
+  public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_SIZE = Integer.MAX_VALUE;
   public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_BUFFER_SIZE = 32768;
   public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_BUFFER_SIZE = 32768;
   public static final int DEFAULT_WEBSOCKET_INPUT_BUFFER_SIZE = 4096;

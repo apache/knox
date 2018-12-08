@@ -149,7 +149,7 @@ public class AmbariConfigurationMonitorTest {
 //            System.out.println("Cluster config changed: " + cname + " @ " + src);
             // Record the notification
             Integer notificationCount  = changeNotifications.computeIfAbsent(src, s -> new HashMap<>())
-                                                            .computeIfAbsent(cname, c -> Integer.valueOf(0));
+                                                            .computeIfAbsent(cname, c -> 0);
             changeNotifications.get(src).put(cname, (notificationCount+=1));
 
             // Update the config version

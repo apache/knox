@@ -302,7 +302,7 @@ public class KnoxSession implements Closeable {
   }
 
   private KeyStore getTrustStore(ClientContext clientContext) throws GeneralSecurityException {
-    KeyStore ks = null;
+    KeyStore ks;
     String truststorePass = null;
 
     discoverTruststoreDetails(clientContext);
@@ -356,8 +356,8 @@ public class KnoxSession implements Closeable {
   }
 
   protected void discoverTruststoreDetails(ClientContext clientContext) {
-    String truststoreDir = null;
-    String truststoreFileName = null;
+    String truststoreDir;
+    String truststoreFileName;
     if (clientContext.connection().truststoreLocation() != null &&
         clientContext.connection().truststorePass() != null) {
       return;
@@ -393,7 +393,7 @@ public class KnoxSession implements Closeable {
         lc.login();
         return Subject.doAs(lc.getSubject(),
             (PrivilegedAction<CloseableHttpResponse>) () -> {
-              CloseableHttpResponse response = null;
+              CloseableHttpResponse response;
               try {
                 response = client.execute(host, request, context);
                 if (response.getStatusLine().getStatusCode() < 400) {

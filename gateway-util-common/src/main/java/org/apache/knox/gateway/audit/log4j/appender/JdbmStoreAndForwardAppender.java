@@ -82,9 +82,7 @@ public class JdbmStoreAndForwardAppender extends AppenderSkeleton {
       queue.stop();
       forwarder.join();
       queue.close();
-    } catch( InterruptedException e ) {
-      throw new RuntimeException( e );
-    } catch( IOException e ) {
+    } catch( InterruptedException | IOException e ) {
       throw new RuntimeException( e );
     }
   }

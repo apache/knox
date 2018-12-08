@@ -76,7 +76,7 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
 
     PollingConfigAnalyzer internalMonitor;
 
-    GatewayConfig gatewayConfig = null;
+    GatewayConfig gatewayConfig;
 
     static String getType() {
         return TYPE;
@@ -407,8 +407,7 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
         configVersionsLock.readLock().lock();
         try {
             for (Entry<String, Map<String, Map<String, String>>> ambariClusterConfigVersion : ambariClusterConfigVersions.entrySet()) {
-                List<String> clusterNames = new ArrayList<>();
-                clusterNames.addAll(ambariClusterConfigVersion.getValue().keySet());
+              List<String> clusterNames = new ArrayList<>(ambariClusterConfigVersion.getValue().keySet());
                 result.put(ambariClusterConfigVersion.getKey(), clusterNames);
             }
         } finally {
@@ -469,7 +468,7 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
         private static final int DEFAULT_POLLING_INTERVAL = 60;
 
         // Polling interval in seconds
-        private int interval = DEFAULT_POLLING_INTERVAL;
+        private int interval;
 
         private AmbariConfigurationMonitor delegate;
 

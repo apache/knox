@@ -52,9 +52,7 @@ public class XmlGatewayDescriptorExporter implements GatewayDescriptorExporter, 
 
       XmlUtils.writeXml( document, writer );
 
-    } catch( ParserConfigurationException e ) {
-      throw new IOException( e );
-    } catch( TransformerException e ) {
+    } catch( ParserConfigurationException | TransformerException e ) {
       throw new IOException( e );
     }
   }

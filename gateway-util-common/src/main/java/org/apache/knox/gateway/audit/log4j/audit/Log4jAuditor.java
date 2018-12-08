@@ -148,14 +148,14 @@ public class Log4jAuditor implements Auditor {
           !original.getQuery().isEmpty()) {
 
         final String[] query = original.getQuery().split("&");
-        final StringBuffer newQuery = new StringBuffer();
+        final StringBuilder newQuery = new StringBuilder();
 
         for(int i = 0; i < query.length; i++ ) {
 
           for(final String s: maskedParams) {
             /* mask "knoxtoken" param */
             if(query[i].contains(s+"=")) {
-              newQuery.append(s+"=***************");
+              newQuery.append(s).append("=***************");
             } else {
               newQuery.append(query[i]);
             }

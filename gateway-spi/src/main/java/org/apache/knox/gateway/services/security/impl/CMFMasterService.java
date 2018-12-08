@@ -40,7 +40,7 @@ public class CMFMasterService {
   private static final String MASTER_PASSPHRASE = "masterpassphrase";
   private static final String MASTER_PERSISTENCE_TAG = "#1.0# " + TimeStamp.getCurrentTime().toDateString();
   protected char[] master = null;
-  protected String serviceName = null;
+  protected String serviceName;
   private ConfigurableEncryptor encryptor = new ConfigurableEncryptor(MASTER_PASSPHRASE);
 
   public CMFMasterService(String serviceName) {
@@ -170,14 +170,11 @@ public class CMFMasterService {
         this.master = new String(encryptor.decrypt(Base64.decodeBase64(parts[0]),
             Base64.decodeBase64(parts[1]), Base64.decodeBase64(parts[2])),
             StandardCharsets.UTF_8).toCharArray();
-      } catch (IOException e) {
-        LOG.failedToInitializeFromPersistentMaster(masterFile.getName(), e);
-        throw e;
       } catch (Exception e) {
         LOG.failedToInitializeFromPersistentMaster(masterFile.getName(), e);
         throw e;
       }
-    }
+  }
 
   private void chmod(String args, File file) throws IOException {
       // TODO: move to Java 7 NIO support to add windows as well

@@ -50,7 +50,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -91,7 +91,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
     Template urlTemplate;
     //KNOX-439[
     //StringBuffer urlString = super.getRequestURL();
-    StringBuffer urlString = new StringBuffer( 128 );
+    StringBuilder urlString = new StringBuilder( 128 );
     urlString.append( getScheme() );
     urlString.append( "://" );
     urlString.append( getServerName() );
@@ -185,7 +185,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
 
   @Override
   public String getHeader( String name ) {
-    String value = null;
+    String value;
     if (name.equalsIgnoreCase("Host")) {
       String uri = getRequestURI();
       try {
@@ -217,7 +217,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
 
   @Override
   public List<String> resolve( String name ) {
-    return Arrays.asList( config.getInitParameter( name ) );
+    return Collections.singletonList(config.getInitParameter(name));
   }
 
   private class EnumerationRewriter implements Enumeration<String> {
@@ -265,7 +265,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
       UrlRewriteFilterContentDescriptor filterContentConfig = getRewriteFilterConfig( bodyFilterName, mimeType );
       if (filterContentConfig != null) {
         String asType = filterContentConfig.asType();
-        if ( asType != null && asType.trim().length() > 0 ) {
+        if ( asType != null && !asType.trim().isEmpty()) {
           mimeType = MimeTypes.create(asType, getCharacterEncoding());
         }
       }

@@ -44,7 +44,7 @@ public class DefaultCryptoService implements CryptoService {
   private AliasService as = null;
   private KeystoreService ks = null;
   private HashMap<String,ConfigurableEncryptor> encryptorCache =
-      new HashMap<String,ConfigurableEncryptor>();
+      new HashMap<>();
   private GatewayConfig config = null;
 
   public void setKeystoreService(KeystoreService ks) {
@@ -94,10 +94,6 @@ public class DefaultCryptoService implements CryptoService {
     if (password != null) {
       try {
         return getEncryptor(clusterName,password).encrypt( clear );
-      } catch (NoSuchAlgorithmException e1) {
-        LOG.failedToEncryptPasswordForCluster( clusterName, e1 );
-      } catch (InvalidKeyException e) {
-        LOG.failedToEncryptPasswordForCluster( clusterName, e );
       } catch (Exception e) {
         LOG.failedToEncryptPasswordForCluster( clusterName, e );
       }
@@ -113,8 +109,8 @@ public class DefaultCryptoService implements CryptoService {
   @Override
   public byte[] decryptForCluster(String clusterName, String alias, byte[] cipherText, byte[] iv, byte[] salt) {
     try {
-      char[] password = null;
-      ConfigurableEncryptor encryptor = null;
+      char[] password;
+      ConfigurableEncryptor encryptor;
         password = as.getPasswordFromAliasForCluster(clusterName, alias);
         if (password != null) {
           encryptor = getEncryptor(clusterName,password );
@@ -141,15 +137,7 @@ public class DefaultCryptoService implements CryptoService {
       sig.initVerify(ks.getKeystoreForGateway().getCertificate(alias).getPublicKey());
       sig.update(signed.getBytes(StandardCharsets.UTF_8));
       verified = sig.verify(signature);
-    } catch (SignatureException e) {
-      LOG.failedToVerifySignature( e );
-    } catch (NoSuchAlgorithmException e) {
-      LOG.failedToVerifySignature( e );
-    } catch (InvalidKeyException e) {
-      LOG.failedToVerifySignature( e );
-    } catch (KeyStoreException e) {
-      LOG.failedToVerifySignature( e );
-    } catch (KeystoreServiceException e) {
+    } catch (SignatureException | KeystoreServiceException | KeyStoreException | InvalidKeyException | NoSuchAlgorithmException e) {
       LOG.failedToVerifySignature( e );
     }
     LOG.signatureVerified( verified );
@@ -159,22 +147,14 @@ public class DefaultCryptoService implements CryptoService {
   @Override
   public byte[] sign(String algorithm, String alias, String payloadToSign) {
     try {
-      char[] passphrase = null;
+      char[] passphrase;
       passphrase = as.getGatewayIdentityPassphrase();
       PrivateKey privateKey = (PrivateKey) ks.getKeyForGateway(alias, passphrase);
       Signature signature = Signature.getInstance(algorithm);
       signature.initSign(privateKey);
       signature.update(payloadToSign.getBytes(StandardCharsets.UTF_8));
       return signature.sign();
-    } catch (NoSuchAlgorithmException e) {
-      LOG.failedToSignData( e );
-    } catch (InvalidKeyException e) {
-      LOG.failedToSignData( e );
-    } catch (SignatureException e) {
-      LOG.failedToSignData( e );
-    } catch (KeystoreServiceException e) {
-      LOG.failedToSignData( e );
-    } catch (AliasServiceException e) {
+    } catch (NoSuchAlgorithmException | AliasServiceException | KeystoreServiceException | SignatureException | InvalidKeyException e) {
       LOG.failedToSignData( e );
     }
     return null;

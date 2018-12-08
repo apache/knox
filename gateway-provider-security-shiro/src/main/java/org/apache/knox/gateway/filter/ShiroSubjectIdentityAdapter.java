@@ -72,9 +72,9 @@ public class ShiroSubjectIdentityAdapter implements Filter {
   }
 
   private static class CallableChain implements Callable<Void> {
-    private FilterChain chain = null;
-    ServletRequest request = null;
-    ServletResponse response = null;
+    private FilterChain chain;
+    ServletRequest request;
+    ServletResponse response;
 
     CallableChain(ServletRequest request, ServletResponse response, FilterChain chain) {
       this.request = request;
@@ -106,7 +106,7 @@ public class ShiroSubjectIdentityAdapter implements Filter {
       String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
       auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
 
-      Set<String> userGroups = null;
+      Set<String> userGroups;
       // map ldap groups saved in session to Java Subject GroupPrincipal(s)
       if (SecurityUtils.getSubject().getSession().getAttribute(SUBJECT_USER_GROUPS) != null) {
         userGroups = (Set<String>)SecurityUtils.getSubject().getSession().getAttribute(SUBJECT_USER_GROUPS);

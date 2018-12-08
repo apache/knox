@@ -168,7 +168,7 @@ public class GatewayPortMappingDisableFeatureTest {
    * @return A populated XML structure for a topology file.
    */
   private static XMLTag createTopology(final String role) {
-    XMLTag xml = XMLDoc.newDocument(true)
+    return XMLDoc.newDocument(true)
         .addRoot("topology")
         .addTag("gateway")
         .addTag("provider")
@@ -220,7 +220,6 @@ public class GatewayPortMappingDisableFeatureTest {
         .addTag("role").addText(role)
         .addTag("url").addText("http://localhost:" + masterServer.getPort() + "/webhdfs")
         .gotoRoot();
-    return xml;
   }
 
   /**

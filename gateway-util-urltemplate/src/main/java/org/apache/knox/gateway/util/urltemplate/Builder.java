@@ -330,8 +330,7 @@ public class Builder {
   public Builder addQuery( String queryName, String paramName, String valuePattern, boolean literal ) {
     if( Segment.STAR_PATTERN.equals( queryName ) || Segment.GLOB_PATTERN.equals( queryName ) ) {
       if( extra == null ) {
-        Query segment = new Query( queryName, paramName, valuePattern, literal );
-        extra = segment;
+        extra = new Query( queryName, paramName, valuePattern, literal );
       } else {
         // Can't have two extras: ?{*}&{**}
         //TODO throw new URISyntaxException()? because
@@ -355,8 +354,7 @@ public class Builder {
   Builder addQuery( String queryName, Token token ) {
     if( Segment.STAR_PATTERN.equals( queryName ) || Segment.GLOB_PATTERN.equals( queryName ) ) {
       if( extra == null ) {
-        Query segment = new Query( queryName, token );
-        extra = segment;
+        extra = new Query( queryName, token );
       } else {
         // Can't have two extras: ?{*}&{**}
         //TODO throw new URISyntaxException()? because

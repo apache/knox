@@ -26,7 +26,7 @@ import java.util.List;
 
 public class TestMessageLogger implements MessageLogger {
 
-  public final List<TestMessageRecord> records = Collections.synchronizedList( new ArrayList<TestMessageRecord>() );
+  public final List<TestMessageRecord> records = Collections.synchronizedList(new ArrayList<>() );
 
   public final String name;
 

@@ -31,7 +31,7 @@ import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
@@ -93,8 +93,8 @@ public class EncryptDecryptUriProcessorTest {
     UrlRewriteContext encContext = EasyMock.createNiceMock( UrlRewriteContext.class );
 
     EncryptStepContextParams hostPortParams = new EncryptStepContextParams();
-    hostPortParams.addParam( "host", Arrays.asList( "host.yarn.com" ) );
-    hostPortParams.addParam( "port", Arrays.asList( "8088" ) );
+    hostPortParams.addParam( "host", Collections.singletonList("host.yarn.com"));
+    hostPortParams.addParam( "port", Collections.singletonList("8088"));
     EasyMock.expect( encContext.getParameters() ).andReturn( hostPortParams );
 
 
@@ -131,8 +131,8 @@ public class EncryptDecryptUriProcessorTest {
     UrlRewriteContext decContext = EasyMock.createNiceMock( UrlRewriteContext.class );
 
     EncryptStepContextParams encryptedParams = new EncryptStepContextParams();
-    encryptedParams.addParam( decParam, Arrays.asList( encryptedAdrress ) ); //Value was encrypted by EncryptUriProcessor
-    encryptedParams.addParam( "foo1", Arrays.asList( "test" ) );
+    encryptedParams.addParam( decParam, Collections.singletonList(encryptedAdrress)); //Value was encrypted by EncryptUriProcessor
+    encryptedParams.addParam( "foo1", Collections.singletonList("test"));
     EasyMock.expect( decContext.getParameters() ).andReturn( encryptedParams );
 
     Capture<EncryptStepContextParams> decodedValue = Capture.newInstance();

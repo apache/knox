@@ -292,7 +292,7 @@ public class GatewayTestDriver {
   }
 
   public InputStream getResourceStream( String resource ) throws IOException {
-    InputStream stream = null;
+    InputStream stream;
     if( resource.startsWith( "file:/" ) ) {
       try {
         stream = FileUtils.openInputStream( new File( new URI( resource ) ) );

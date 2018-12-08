@@ -19,7 +19,6 @@ package org.apache.knox.gateway.util;
 
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import javax.security.auth.x500.X500Principal;
 
@@ -52,13 +51,11 @@ public class X500PrincipalParser
     ArrayList retList = new ArrayList();
     String searchPart = attributeID + attrTerminator;
 
-    for(Iterator iter = rdnNameArray.iterator(); iter.hasNext();)
-    {
-      ArrayList nameList = (ArrayList)iter.next();
-      String namePart = (String)nameList.get(0);
+    for (Object o : rdnNameArray) {
+      ArrayList nameList = (ArrayList) o;
+      String namePart = (String) nameList.get(0);
 
-      if(namePart.startsWith(searchPart))
-      {
+      if (namePart.startsWith(searchPart)) {
         // Return the string starting after the ID string and the = sign that follows it.
         retList.add(namePart.toString().substring(searchPart.length()));
       }
@@ -125,17 +122,15 @@ public class X500PrincipalParser
     String retNamePart = null;
     String searchPart = attributeID + attrTerminator;
 
-    for(Iterator iter = rdnNameArray.iterator(); iter.hasNext();)
-    {
-      ArrayList nameList = (ArrayList)iter.next();
-      String namePart = (String)nameList.get(0);
+    for (Object o : rdnNameArray) {
+      ArrayList nameList = (ArrayList) o;
+      String namePart = (String) nameList.get(0);
 
-      if(namePart.startsWith(searchPart))
-      {
+      if (namePart.startsWith(searchPart)) {
         // Return the string starting after the ID string and the = sign that follows it.
         retNamePart = namePart.toString().substring(searchPart.length());
         // By definition the first one is most significant
-        if(significance == MOSTSIGNIFICANT)
+        if (significance == MOSTSIGNIFICANT)
           break;
       }
     }

@@ -75,7 +75,7 @@ public class KnoxLdapContextFactory extends JndiLdapContextFactory {
       }
 
       systemPass = systemPass.trim();
-      if (systemPass.length() == 0) {
+      if (systemPass.isEmpty()) {
         return;
       }
 

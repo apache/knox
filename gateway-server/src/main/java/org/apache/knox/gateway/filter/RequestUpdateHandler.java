@@ -46,7 +46,7 @@ public class RequestUpdateHandler extends ScopedHandler {
   private static final GatewayMessages LOG = MessagesFactory
       .get(GatewayMessages.class);
 
-  private String redirectContext = null;
+  private String redirectContext;
 
   public RequestUpdateHandler(final GatewayConfig config,
       final String topologyName, final GatewayServices services) {

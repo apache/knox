@@ -128,14 +128,7 @@ public class DefaultTopologyService
       try {
         topology = loadTopologyAttempt(file);
         break;
-      } catch (IOException e) {
-        if (System.currentTimeMillis() - start < TIMEOUT) {
-          log.failedToLoadTopologyRetrying(file.getAbsolutePath(), Long.toString(DELAY), e);
-          Thread.sleep(DELAY);
-        } else {
-          throw e;
-        }
-      } catch (SAXException e) {
+      } catch (IOException | SAXException e) {
         if (System.currentTimeMillis() - start < TIMEOUT) {
           log.failedToLoadTopologyRetrying(file.getAbsolutePath(), Long.toString(DELAY), e);
           Thread.sleep(DELAY);
@@ -281,16 +274,6 @@ public class DefaultTopologyService
                       ActionOutcome.FAILURE);
               log.failedToLoadTopology(file.getAbsolutePath());
             }
-          } catch (IOException e) {
-            // Maybe it makes sense to throw exception
-            auditor.audit(Action.LOAD, file.getAbsolutePath(), ResourceType.TOPOLOGY,
-                    ActionOutcome.FAILURE);
-            log.failedToLoadTopology(file.getAbsolutePath(), e);
-          } catch (SAXException e) {
-            // Maybe it makes sense to throw exception
-            auditor.audit(Action.LOAD, file.getAbsolutePath(), ResourceType.TOPOLOGY,
-                    ActionOutcome.FAILURE);
-            log.failedToLoadTopology(file.getAbsolutePath(), e);
           } catch (Exception e) {
             // Maybe it makes sense to throw exception
             auditor.audit(Action.LOAD, file.getAbsolutePath(), ResourceType.TOPOLOGY,
@@ -337,15 +320,9 @@ public class DefaultTopologyService
       }
 
 
-    } catch (JAXBException e) {
+    } catch (JAXBException | SAXException | IOException e) {
       auditor.audit(Action.DEPLOY, t.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
       log.failedToDeployTopology(t.getName(), e);
-    } catch (IOException io) {
-      auditor.audit(Action.DEPLOY, t.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
-      log.failedToDeployTopology(t.getName(), io);
-    } catch (SAXException sx){
-      auditor.audit(Action.DEPLOY, t.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
-      log.failedToDeployTopology(t.getName(), sx);
     }
     reloadTopologies();
   }
@@ -875,7 +852,7 @@ public class DefaultTopologyService
         String providerConfig =
                       FilenameUtils.normalize(result.get(SimpleDescriptorHandler.RESULT_REFERENCE).getAbsolutePath());
         if (!providerConfigReferences.containsKey(providerConfig)) {
-          providerConfigReferences.put(providerConfig, new ArrayList<String>());
+          providerConfigReferences.put(providerConfig, new ArrayList<>());
         }
         List<String> refs = providerConfigReferences.get(providerConfig);
         String descriptorName = FilenameUtils.normalize(file.getAbsolutePath());
@@ -986,8 +963,8 @@ public class DefaultTopologyService
    */
   private static class TopologyDiscoveryTrigger implements ClusterConfigurationMonitor.ConfigurationChangeListener {
 
-    private TopologyService topologyService = null;
-    private ClusterConfigurationMonitorService ccms = null;
+    private TopologyService topologyService;
+    private ClusterConfigurationMonitorService ccms;
 
     TopologyDiscoveryTrigger(TopologyService topologyService, ClusterConfigurationMonitorService ccms) {
       this.topologyService = topologyService;

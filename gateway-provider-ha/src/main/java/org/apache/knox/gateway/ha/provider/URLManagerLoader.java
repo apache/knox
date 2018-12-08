@@ -19,7 +19,6 @@ package org.apache.knox.gateway.ha.provider;
 
 import org.apache.knox.gateway.ha.provider.impl.DefaultURLManager;
 
-import java.util.Iterator;
 import java.util.ServiceLoader;
 
 public class URLManagerLoader {
@@ -28,10 +27,8 @@ public class URLManagerLoader {
     if (config != null) {
       ServiceLoader<URLManager> loader = ServiceLoader.load(URLManager.class);
       if ( loader != null ) {
-        Iterator<URLManager> iterator = loader.iterator();
-        while ( iterator.hasNext() ) {
-          URLManager urlManager = iterator.next();
-          if ( urlManager.supportsConfig(config) ) {
+        for (URLManager urlManager : loader) {
+          if (urlManager.supportsConfig(config)) {
             urlManager.setConfig(config);
             return urlManager;
           }

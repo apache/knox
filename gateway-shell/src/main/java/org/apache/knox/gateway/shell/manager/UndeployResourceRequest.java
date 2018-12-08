@@ -26,8 +26,8 @@ import java.util.concurrent.Callable;
 
 class UndeployResourceRequest extends AbstractRequest<BasicResponse> {
 
-  private ResourceType resourceType = null;
-  private String resourceName = null;
+  private ResourceType resourceType;
+  private String resourceName;
 
 
   UndeployResourceRequest(KnoxSession session, ResourceType type, String name) {

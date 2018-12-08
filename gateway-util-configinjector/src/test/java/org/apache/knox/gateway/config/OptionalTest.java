@@ -33,7 +33,7 @@ public class OptionalTest {
   class SetterTarget {
     private int num = -1;
     @Configure
-    public void setNum( @Default("-1") int n ) { this.num = n; };
+    public void setNum( @Default("-1") int n ) { this.num = n; }
   }
 
   @Test

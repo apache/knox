@@ -505,9 +505,9 @@ public class GatewayServer {
     } else {
       /* check for port conflict */
       final Connector[] connectors = jetty.getConnectors();
-      for (int i = 0; i < connectors.length; i++) {
-        if (connectors[i] instanceof ServerConnector
-            && ((ServerConnector) connectors[i]).getPort() == port) {
+      for (Connector connector : connectors) {
+        if (connector instanceof ServerConnector
+                && ((ServerConnector) connector).getPort() == port) {
           log.portAlreadyInUse(port, topologyName);
           throw new IOException(String.format(Locale.ROOT,
               " Port %d used by topology %s is used by other topology, ports for topologies (if defined) have to be unique. ",
@@ -950,8 +950,7 @@ public class GatewayServer {
   }
 
   private File calculateDeploymentDir( Topology topology ) {
-    File dir = new File( calculateAbsoluteDeploymentsDir(), calculateDeploymentName( topology ) );
-    return dir;
+    return new File( calculateAbsoluteDeploymentsDir(), calculateDeploymentName( topology ) );
   }
 
   private String calculateDeploymentExtension( Topology topology ) {
@@ -959,8 +958,7 @@ public class GatewayServer {
   }
 
   private String calculateDeploymentName( Topology topology ) {
-    String name = topology.getName() + calculateDeploymentExtension( topology ) + Long.toHexString( topology.getTimestamp() );
-    return name;
+    return topology.getName() + calculateDeploymentExtension( topology ) + Long.toHexString( topology.getTimestamp() );
   }
 
   private static void checkAddressAvailability( InetSocketAddress address ) throws IOException {

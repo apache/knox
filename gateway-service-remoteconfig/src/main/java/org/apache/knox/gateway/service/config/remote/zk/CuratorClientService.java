@@ -70,10 +70,8 @@ class CuratorClientService implements ZooKeeperClientService {
     @Override
     public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
 
-        List<RemoteConfigurationRegistryConfig> registryConfigs = new ArrayList<>();
-
-        // Load the remote registry configurations
-        registryConfigs.addAll(RemoteConfigurationRegistriesAccessor.getRemoteRegistryConfigurations(config));
+      // Load the remote registry configurations
+      List<RemoteConfigurationRegistryConfig> registryConfigs = new ArrayList<>(RemoteConfigurationRegistriesAccessor.getRemoteRegistryConfigurations(config));
 
         // Configure registry authentication
         RemoteConfigurationRegistryJAASConfig.configure(registryConfigs, aliasService);

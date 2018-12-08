@@ -56,7 +56,7 @@ public class HS2ZookeeperURLManager extends DefaultURLManager {
     }
     String zookeeperEnsemble = config.getZookeeperEnsemble();
     String zookeeperNamespace = config.getZookeeperNamespace();
-    if ( zookeeperEnsemble != null && zookeeperNamespace != null && zookeeperEnsemble.trim().length() > 0 && zookeeperNamespace.trim().length() > 0) {
+    if ( zookeeperEnsemble != null && zookeeperNamespace != null && !zookeeperEnsemble.trim().isEmpty() && !zookeeperNamespace.trim().isEmpty()) {
       return true;
     }
     return false;
@@ -116,15 +116,13 @@ public class HS2ZookeeperURLManager extends DefaultURLManager {
         }
       }
     }
-    StringBuffer buffer = new StringBuffer();
-    buffer.append(scheme);
-    buffer.append("://");
-    buffer.append(host);
-    buffer.append(":");
-    buffer.append(port);
-    buffer.append("/");
-    buffer.append(httpPath);
-    return buffer.toString();
+    return scheme +
+               "://" +
+               host +
+               ":" +
+               port +
+               "/" +
+               httpPath;
   }
 
   @Override

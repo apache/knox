@@ -34,9 +34,7 @@ public abstract class UrlRewriteStepDescriptorFactory {
     try {
       Class<? extends UrlRewriteStepDescriptor> descriptorClass = MAP.get( type );
       return (T)descriptorClass.newInstance();
-    } catch( InstantiationException e ) {
-      throw new IllegalArgumentException( type );
-    } catch( IllegalAccessException e ) {
+    } catch( InstantiationException | IllegalAccessException e ) {
       throw new IllegalArgumentException( type );
     }
   }

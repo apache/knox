@@ -580,7 +580,7 @@ public abstract class AbstractJWTFilterTest  {
       handler.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled);
       Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
-      Assert.assertTrue("No PrimaryPrincipal", principals.size() > 0);
+      Assert.assertTrue("No PrimaryPrincipal", !principals.isEmpty());
       Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -726,7 +726,7 @@ public abstract class AbstractJWTFilterTest  {
   }
 
   protected static class TestFilterConfig implements FilterConfig {
-    Properties props = null;
+    Properties props;
 
     public TestFilterConfig(Properties props) {
       this.props = props;

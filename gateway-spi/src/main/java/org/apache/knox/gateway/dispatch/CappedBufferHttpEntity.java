@@ -123,7 +123,7 @@ public class CappedBufferHttpEntity extends HttpEntityWrapper {
 
     @Override
     public int read(byte[] buffer, int offset, int limit ) throws IOException {
-      int count = -1;
+      int count;
       // If we can read from the buffer do so.
       if( replayReadIndex < replayWriteIndex ) {
         count = replayWriteIndex - replayReadIndex;

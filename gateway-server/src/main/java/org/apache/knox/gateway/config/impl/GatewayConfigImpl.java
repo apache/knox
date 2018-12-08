@@ -266,7 +266,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public String getGatewayDataDir() {
     String systemValue =
         System.getProperty(GATEWAY_DATA_HOME_VAR, System.getenv(GATEWAY_DATA_HOME_VAR));
-    String dataDir = null;
+    String dataDir;
     if (systemValue != null) {
       dataDir = systemValue;
     } else {
@@ -928,15 +928,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public List<String> getAutoDeployTopologyNames() {
-    List<String> topologyNames = new ArrayList<>();
 
     String value = get(AUTO_DEPLOY_TOPOLOGIES);
     if (value == null) {
       value = DEFAULT_AUTO_DEPLOY_TOPOLOGIES;
     }
-    topologyNames.addAll(Arrays.asList(value.trim().split("\\s*,\\s*")));
 
-    return topologyNames;
+    return new ArrayList<>(Arrays.asList(value.trim().split("\\s*,\\s*")));
   }
 
   @Override

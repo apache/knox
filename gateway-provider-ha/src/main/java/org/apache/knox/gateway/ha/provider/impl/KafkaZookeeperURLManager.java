@@ -82,7 +82,7 @@ public class KafkaZookeeperURLManager extends BaseZookeeperURLManager {
   @Override
   protected String getServiceName() {
     return "KAFKA";
-  };
+  }
 
   // -------------------------------------------------------------------------------------
   // Private methods
@@ -131,7 +131,7 @@ public class KafkaZookeeperURLManager extends BaseZookeeperURLManager {
   private String constructURL(String serverInfo) throws ParseException {
     String scheme = "http";
 
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
 
     buffer.append(scheme);
     buffer.append("://");

@@ -306,34 +306,34 @@ public class HaProviderDeploymentContributorTest {
 
       builder.append(HaServiceConfigConstants.CONFIG_PARAM_ENABLED);
       builder.append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER);
-      builder.append(String.valueOf(enabled));
+      builder.append(enabled);
 
       if (maxRetryAttempts > -1) {
          builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER);
          builder.append(HaServiceConfigConstants.CONFIG_PARAM_MAX_RETRY_ATTEMPTS);
          builder.append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER);
-         builder.append(String.valueOf(maxRetryAttempts));
+         builder.append(maxRetryAttempts);
       }
 
       if (retrySleep > -1) {
          builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER);
          builder.append(HaServiceConfigConstants.CONFIG_PARAM_RETRY_SLEEP);
          builder.append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER);
-         builder.append(String.valueOf(retrySleep));
+         builder.append(retrySleep);
       }
 
       if (maxFailoverAttempts > -1) {
          builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER);
          builder.append(HaServiceConfigConstants.CONFIG_PARAM_MAX_FAILOVER_ATTEMPTS);
          builder.append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER);
-         builder.append(String.valueOf(maxFailoverAttempts));
+         builder.append(maxFailoverAttempts);
       }
 
       if (failoverSleep > -1) {
          builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER);
          builder.append(HaServiceConfigConstants.CONFIG_PARAM_FAILOVER_SLEEP);
          builder.append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER);
-         builder.append(String.valueOf(failoverSleep));
+         builder.append(failoverSleep);
       }
 
       if (zooKeeperNamespace != null) {

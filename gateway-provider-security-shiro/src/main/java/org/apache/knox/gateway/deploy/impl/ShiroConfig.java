@@ -29,9 +29,9 @@ public class ShiroConfig {
 
   public ShiroConfig(Provider provider, String clusterName) {
     Map<String, String> params = provider.getParams();
-    String name = null;
-    String sectionName = null;
-    String value = null;
+    String name;
+    String sectionName;
+    String value;
     for(Entry<String, String> entry : params.entrySet()) {
       int sectionDot = entry.getKey().indexOf('.');
       if (sectionDot > 0) {

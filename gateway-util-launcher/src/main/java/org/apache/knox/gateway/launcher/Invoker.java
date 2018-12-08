@@ -56,13 +56,11 @@ class Invoker {
   }
 
   private static Class loadMainClass( ClassLoader loader, String className ) throws ClassNotFoundException {
-    Class mainClass = loader.loadClass( className );
-    return mainClass;
+    return loader.loadClass( className );
   }
 
   private static Method findMainMethod( Class mainClass, String methodName ) throws NoSuchMethodException {
-    Method method = mainClass.getMethod( methodName, STRING_ARRAY_CLASS );
-    return method;
+    return mainClass.getMethod( methodName, STRING_ARRAY_CLASS );
   }
 
   private static void invokeMainMethod( ClassLoader loader, Method method, String[] args ) throws InvocationTargetException, IllegalAccessException {

@@ -100,7 +100,7 @@ private String gatewayPath;
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
-    String wireToken = null;
+    String wireToken;
     HttpServletRequest req = (HttpServletRequest) request;
 
     String loginURL = constructLoginURL(req);
@@ -185,10 +185,9 @@ private String gatewayPath;
     if (authenticationProviderUrl.contains("?")) {
       delimiter = "&";
     }
-    String loginURL = authenticationProviderUrl + delimiter
+    return authenticationProviderUrl + delimiter
         + ORIGINAL_URL_QUERY_PARAM
         + request.getRequestURL().append(getOriginalQueryString(request));
-    return loginURL;
   }
 
   /**
@@ -198,9 +197,9 @@ private String gatewayPath;
    * @return url that is based on KnoxSSO endpoint
    */
   public String deriveDefaultAuthenticationProviderUrl(HttpServletRequest request) {
-    String scheme = null;
-    String host = null;
-    int port = 0;
+    String scheme;
+    String host;
+    int port;
     if (!beingProxied(request)) {
       scheme = request.getScheme();
       host = request.getServerName();

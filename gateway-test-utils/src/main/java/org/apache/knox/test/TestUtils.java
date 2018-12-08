@@ -81,14 +81,12 @@ public class TestUtils {
 
   public static InputStream getResourceStream( String name ) throws IOException {
     URL url = ClassLoader.getSystemResource( name );
-    InputStream stream = url.openStream();
-    return stream;
+    return url.openStream();
   }
 
   public static InputStream getResourceStream( Class clazz, String name ) throws IOException {
     URL url = getResourceUrl( clazz, name );
-    InputStream stream = url.openStream();
-    return stream;
+    return url.openStream();
   }
 
   public static Reader getResourceReader( String name, Charset charset ) throws IOException {

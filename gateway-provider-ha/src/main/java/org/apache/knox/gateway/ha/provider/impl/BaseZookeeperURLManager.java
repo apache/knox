@@ -72,7 +72,7 @@ public abstract class BaseZookeeperURLManager implements URLManager {
     }
 
     String zookeeperEnsemble = config.getZookeeperEnsemble();
-    return zookeeperEnsemble != null && (zookeeperEnsemble.trim().length() > 0);
+    return zookeeperEnsemble != null && (!zookeeperEnsemble.trim().isEmpty());
   }
 
   @Override
@@ -198,7 +198,7 @@ public abstract class BaseZookeeperURLManager implements URLManager {
    * @return Apache HttpClient
    */
   private CloseableHttpClient buildHttpClient() {
-    CloseableHttpClient client = null;
+    CloseableHttpClient client;
 
     // Construct a HttpClient with short term timeout
     RequestConfig.Builder requestBuilder = RequestConfig.custom()

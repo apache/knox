@@ -68,7 +68,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
 
   @Override
   public HttpClient createHttpClient(FilterConfig filterConfig) {
-    HttpClientBuilder builder = null;
+    HttpClientBuilder builder;
     GatewayConfig gatewayConfig = (GatewayConfig) filterConfig.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
     GatewayServices services = (GatewayServices) filterConfig.getServletContext()
         .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);

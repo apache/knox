@@ -43,7 +43,7 @@ public class UrlRewriteServletContextListener implements ServletContextListener 
 
   @Override
   public void contextInitialized( ServletContextEvent event ) {
-    UrlRewriteRulesDescriptor descriptor = null;
+    UrlRewriteRulesDescriptor descriptor;
     try {
       URL url = locateDescriptor( event.getServletContext() );
       descriptor = loadDescriptor( url );

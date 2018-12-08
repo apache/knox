@@ -128,7 +128,7 @@ public class DefaultConfigurationInjector implements ConfigurationInjector {
   }
 
   private Object convertValue( Object target, String name, Object strValue, Class<?> type ) {
-    Object objValue = null;
+    Object objValue;
     try {
       objValue = DEFAULT_CONVERTER.convert( strValue, type );
     } catch( Exception e ) {
@@ -170,7 +170,7 @@ public class DefaultConfigurationInjector implements ConfigurationInjector {
     String name = implied;
     if( explicit != null ) {
       String tagValue = explicit.value().trim();
-      if( tagValue.length() > 0 ) {
+      if(!tagValue.isEmpty()) {
         name = tagValue;
       }
     }
@@ -178,7 +178,7 @@ public class DefaultConfigurationInjector implements ConfigurationInjector {
   }
 
   private static String getBindName( Object target, String name, ConfigurationBinding binding ) {
-    String bind = null;
+    String bind;
     try {
       bind = binding.getConfigurationName( name );
     } catch( Exception e ) {
@@ -202,7 +202,7 @@ public class DefaultConfigurationInjector implements ConfigurationInjector {
         if( tag != null && tag instanceof Alias ) {
           Alias aliasTag = (Alias) tag;
           String aliasValue = aliasTag.value().trim();
-          if( aliasValue.length() > 0 ) {
+          if(!aliasValue.isEmpty()) {
             name = aliasValue;
             break;
           }

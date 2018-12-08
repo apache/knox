@@ -88,14 +88,14 @@ public abstract class AbstractIdentityAssertionFilter extends
   protected void continueChainAsPrincipal(HttpServletRequestWrapper request, ServletResponse response,
       FilterChain chain, String mappedPrincipalName, String[] groups) throws IOException,
       ServletException {
-        Subject subject = null;
-        Principal impersonationPrincipal = null;
-        Principal primaryPrincipal = null;
+        Subject subject;
+        Principal impersonationPrincipal;
+        Principal primaryPrincipal;
 
         // get the current subject and determine whether we need another doAs with
         // an impersonatedPrincipal and/or mapped group principals
         boolean impersonationNeeded = false;
-        boolean groupsMapped = false;
+        boolean groupsMapped;
 
         // look up the current Java Subject and assosciated group principals
         Subject currentSubject = Subject.getSubject(AccessController.getContext());
@@ -182,8 +182,8 @@ public abstract class AbstractIdentityAssertionFilter extends
       auditor.audit( Action.IDENTITY_MAPPING, mappedPrincipalName, ResourceType.PRINCIPAL,
           ActionOutcome.SUCCESS, RES.groupsList( Arrays.toString( groups ) ) );
 
-      for (int i = 0; i < groups.length; i++) {
-        subject.getPrincipals().add(new GroupPrincipal(groups[i]));
+      for (String group : groups) {
+        subject.getPrincipals().add(new GroupPrincipal(group));
       }
     }
   }

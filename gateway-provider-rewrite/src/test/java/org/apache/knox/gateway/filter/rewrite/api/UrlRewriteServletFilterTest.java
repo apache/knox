@@ -267,7 +267,7 @@ public class UrlRewriteServletFilterTest {
   public void testInboundXmlBodyRewrite() throws Exception {
     setUp( null );
     String input = "<root attribute=\"http://mock-host:1/test-input-path\">http://mock-host:1/test-input-path</root>";
-    String output = null;
+    String output;
     if(System.getProperty("java.vendor").contains("IBM")){
       output = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><root attribute=\"http://mock-host:1/test-output-path-1\">http://mock-host:1/test-output-path-1</root>";
     }else {

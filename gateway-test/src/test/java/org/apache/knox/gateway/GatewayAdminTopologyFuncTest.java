@@ -157,7 +157,8 @@ public class GatewayAdminTopologyFuncTest {
   }
 
   private static XMLTag createNormalTopology() {
-    XMLTag xml = XMLDoc.newDocument( true )
+    //     System.out.println( "GATEWAY=" + xml.toString() );
+    return XMLDoc.newDocument( true )
         .addRoot( "topology" )
         .addTag( "gateway" )
         .addTag( "provider" )
@@ -202,12 +203,11 @@ public class GatewayAdminTopologyFuncTest {
         .addTag( "role" ).addText( "WEBHDFS" )
         .addTag( "url" ).addText( "http://localhost:50070/webhdfs/v1" ).gotoParent()
         .gotoRoot();
-//     System.out.println( "GATEWAY=" + xml.toString() );
-    return xml;
   }
 
   private static XMLTag createKnoxTopology() {
-    XMLTag xml = XMLDoc.newDocument( true )
+    // System.out.println( "GATEWAY=" + xml.toString() );
+    return XMLDoc.newDocument( true )
         .addRoot( "topology" )
         .addTag( "gateway" )
         .addTag( "provider" )
@@ -244,12 +244,11 @@ public class GatewayAdminTopologyFuncTest {
         .addTag( "service" )
         .addTag( "role" ).addText( "KNOX" )
         .gotoRoot();
-    // System.out.println( "GATEWAY=" + xml.toString() );
-    return xml;
   }
 
   private static XMLTag createProviderConfiguration() {
-    XMLTag xml = XMLDoc.newDocument( true )
+    // System.out.println( "GATEWAY=" + xml.toString() );
+    return XMLDoc.newDocument( true )
             .addRoot( "gateway" )
             .addTag( "provider" )
             .addTag( "role" ).addText( "authentication" )
@@ -282,8 +281,6 @@ public class GatewayAdminTopologyFuncTest {
             .addTag( "enabled" ).addText( "true" )
             .addTag( "name" ).addText( "Default" ).gotoParent()
             .gotoRoot();
-    // System.out.println( "GATEWAY=" + xml.toString() );
-    return xml;
   }
 
   private static String createDescriptor(String clusterName) {

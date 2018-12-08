@@ -125,9 +125,7 @@ public abstract class XmlFilterReader extends Reader {
         try {
           XMLEvent event = parser.nextEvent();
           processEvent( event );
-        } catch( IOException e ) {
-          throw e;
-        } catch( RuntimeException e ) {
+        } catch( IOException | RuntimeException e ) {
           throw e;
         } catch ( Exception e ) {
           throw new RuntimeException( e );
@@ -370,7 +368,7 @@ public abstract class XmlFilterReader extends Reader {
         Object node = path.evaluate( level.scopeNode, XPathConstants.NODE );
         if( node != null ) {
           UrlRewriteFilterDetectDescriptor detect = (UrlRewriteFilterDetectDescriptor)selector;
-          String value = null;
+          String value;
           if( node instanceof Element ) {
             Element element = (Element)node;
             value = element.getTextContent();

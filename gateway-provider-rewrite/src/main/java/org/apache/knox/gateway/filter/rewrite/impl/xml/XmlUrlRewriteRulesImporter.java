@@ -43,8 +43,7 @@ public class XmlUrlRewriteRulesImporter implements UrlRewriteRulesImporter {
     Digester digester = loader.newDigester( new ExtendedBaseRules() );
     digester.setValidating( false );
     try {
-      UrlRewriteRulesDescriptor rules = digester.parse( reader );
-      return rules;
+      return digester.parse( reader );
     } catch( SAXException e ) {
       throw new IOException( e );
     }

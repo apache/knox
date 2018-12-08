@@ -21,7 +21,6 @@ import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFunctionDescriptor;
 import org.apache.knox.gateway.identityasserter.common.function.UsernameFunctionDescriptor;
 import org.junit.Test;
 
-import java.util.Iterator;
 import java.util.ServiceLoader;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -39,10 +38,8 @@ public class UsernameFunctionDescriptorTest {
   @Test
   public void testServiceLoader() throws Exception {
     ServiceLoader loader = ServiceLoader.load( UrlRewriteFunctionDescriptor.class );
-    Iterator iterator = loader.iterator();
-    while( iterator.hasNext() ) {
-      Object object = iterator.next();
-      if( object instanceof UsernameFunctionDescriptor ) {
+    for (Object object : loader) {
+      if (object instanceof UsernameFunctionDescriptor) {
         return;
       }
     }

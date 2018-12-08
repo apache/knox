@@ -41,7 +41,7 @@ public class ConfigurableEncryptor {
   private static final int ITERATION_COUNT = 65536;
   private static final int KEY_LENGTH = 128;
 
-  private char[] passPhrase = null;
+  private char[] passPhrase;
   private String alg = "AES";
   private String pbeAlg = "PBKDF2WithHmacSHA1";
   private String transformation = "AES/CBC/PKCS5Padding";
@@ -89,9 +89,7 @@ public class ConfigurableEncryptor {
       factory = SecretKeyFactory.getInstance(pbeAlg);
       KeySpec spec = new PBEKeySpec(passPhrase.toCharArray(), salt, iterationCount, keyLength);
       key = factory.generateSecret(spec);
-    } catch (NoSuchAlgorithmException e) {
-      LOG.failedToGenerateKeyFromPassword( e );
-    } catch (InvalidKeySpecException e) {
+    } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
       LOG.failedToGenerateKeyFromPassword( e );
     }
 
@@ -112,10 +110,9 @@ public class ConfigurableEncryptor {
     SecretKey secret = new SecretKeySpec(tmp.getEncoded(), alg);
     Cipher ecipher = Cipher.getInstance(transformation);
     ecipher.init(Cipher.ENCRYPT_MODE, secret);
-    EncryptionResult atom = new EncryptionResult(salt,
+    return new EncryptionResult(salt,
         ecipher.getParameters().getParameterSpec(IvParameterSpec.class).getIV(),
         ecipher.doFinal(plain));
-    return atom;
   }
 
   public byte[] decrypt(byte[] salt, byte[] iv, byte[] encrypt) throws Exception {

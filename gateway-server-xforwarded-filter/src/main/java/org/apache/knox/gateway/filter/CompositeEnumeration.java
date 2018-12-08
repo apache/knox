@@ -25,6 +25,7 @@ public class CompositeEnumeration<T> implements Enumeration<T> {
   private int index = 0;
   private Enumeration<T>[] array;
 
+  @SafeVarargs
   public CompositeEnumeration(Enumeration<T>... enumerations) {
     if( enumerations == null ) {
       throw new IllegalArgumentException( "enumerations==null" );

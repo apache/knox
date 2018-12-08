@@ -91,7 +91,7 @@ public class ProviderConfigurationParser {
 
 
   static ProviderConfiguration parseXML(InputStream in) throws Exception {
-    XMLProviderConfiguration providerConfig = null;
+    XMLProviderConfiguration providerConfig;
 
     JAXBContext jaxbContext = JAXBContext.newInstance(XMLProviderConfiguration.class);
     Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
@@ -108,8 +108,7 @@ public class ProviderConfigurationParser {
 
   static ProviderConfiguration parseJSON(InputStream in) throws IOException {
     final ObjectMapper mapper = new ObjectMapper();
-    JSONProviderConfiguration providerConfig = mapper.readValue(in, JSONProviderConfiguration.class);
-    return providerConfig;
+    return mapper.readValue(in, JSONProviderConfiguration.class);
   }
 
 
@@ -119,8 +118,7 @@ public class ProviderConfigurationParser {
 
   static ProviderConfiguration parseYAML(InputStream in) throws IOException {
     final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-    JSONProviderConfiguration providerConfig = mapper.readValue(in, JSONProviderConfiguration.class);
-    return providerConfig;
+    return mapper.readValue(in, JSONProviderConfiguration.class);
   }
 
 

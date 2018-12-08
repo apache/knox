@@ -563,7 +563,7 @@ public class DefaultTopologyServiceTest {
         "ldapGroupRealm.contextFactory.systemAuthenticationMechanism"
     };
 
-    Param param = null;
+    Param param;
     for (String name : names) {
       param = new Param();
       param.setName(name);

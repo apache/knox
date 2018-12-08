@@ -78,7 +78,7 @@ public class HBaseZookeeperURLManager extends BaseZookeeperURLManager {
   @Override
   protected String getServiceName() {
     return "WEBHBASE";
-  };
+  }
 
   @Override
   protected String getZookeeperNamespace() {
@@ -149,14 +149,11 @@ public class HBaseZookeeperURLManager extends BaseZookeeperURLManager {
   private String constructURL(String serverInfo) {
     String scheme = "http";
 
-    StringBuffer buffer = new StringBuffer();
-    buffer.append(scheme);
-    buffer.append("://");
     // Strip off the host name
-    buffer.append(serverInfo.substring(0, serverInfo.indexOf(',')));
-    buffer.append(":");
-    buffer.append(PORT_NUMBER);
-
-    return buffer.toString();
+    return scheme +
+               "://" +
+               serverInfo.substring(0, serverInfo.indexOf(',')) +
+               ":" +
+               PORT_NUMBER;
   }
 }

@@ -53,7 +53,7 @@ public class PromptUtils {
   }
 
   public static UsernamePassword challengeUserNamePassword(String prompt1, String prompt2) {
-    UsernamePassword response = null;
+    UsernamePassword response;
     Console c = System.console();
     if (c == null) {
       System.err.println("No console.");
@@ -68,7 +68,7 @@ public class PromptUtils {
   }
 
   public static char[] challengeForPassword(String prompt) {
-    char[] response = null;
+    char[] response;
     Console c = System.console();
     if (c == null) {
       System.err.println("No console.");

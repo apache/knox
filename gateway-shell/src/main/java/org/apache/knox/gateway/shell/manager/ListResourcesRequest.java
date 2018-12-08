@@ -31,7 +31,7 @@ import java.util.concurrent.Callable;
 
 class ListResourcesRequest extends AbstractRequest<BasicResponse> {
 
-  private ResourceType resourceType = null;
+  private ResourceType resourceType;
 
   ListResourcesRequest(KnoxSession session, ResourceType resourceType) {
     super(session);
@@ -58,8 +58,8 @@ class ListResourcesRequest extends AbstractRequest<BasicResponse> {
     if (json != null) {
       JSONArray items = (JSONArray) json.get("items");
       if (items != null) {
-        for (int i = 0; i < items.size(); i++) {
-          JSONObject item = (JSONObject) items.get(i);
+        for (Object item1 : items) {
+          JSONObject item = (JSONObject) item1;
           String name = (String) item.get("name");
           if (name != null) {
             result.add(name.substring(0, name.lastIndexOf('.')));

@@ -80,13 +80,12 @@ public class GatewayServlet implements Servlet, Filter {
   }
 
   public synchronized void setFilter( GatewayFilter filter ) throws ServletException {
-    Filter prev = filter;
     if( filterConfig != null ) {
       filter.init( filterConfig );
     }
     this.filter = filter;
-    if( prev != null && filterConfig != null ) {
-      prev.destroy();
+    if( filter != null && filterConfig != null ) {
+      ((Filter) filter).destroy();
     }
   }
 
@@ -100,10 +99,7 @@ public class GatewayServlet implements Servlet, Filter {
       if( filter != null ) {
         filter.init( filterConfig );
       }
-    } catch( ServletException e ) {
-      LOG.failedToInitializeServletInstace( e );
-      throw e;
-    } catch( RuntimeException e ) {
+    } catch( ServletException | RuntimeException e ) {
       LOG.failedToInitializeServletInstace( e );
       throw e;
     }
@@ -118,10 +114,7 @@ public class GatewayServlet implements Servlet, Filter {
       if( filter != null ) {
         filter.init( filterConfig );
       }
-    } catch( ServletException e ) {
-      LOG.failedToInitializeServletInstace( e );
-      throw e;
-    } catch( RuntimeException e ) {
+    } catch( ServletException | RuntimeException e ) {
       LOG.failedToInitializeServletInstace( e );
       throw e;
     }
@@ -140,13 +133,7 @@ public class GatewayServlet implements Servlet, Filter {
       if( f != null ) {
         try {
           f.doFilter( servletRequest, servletResponse, null );
-        } catch( IOException e ) {
-          LOG.failedToExecuteFilter( e );
-          throw e;
-        } catch( ServletException e ) {
-          LOG.failedToExecuteFilter( e );
-          throw e;
-        } catch( RuntimeException e ) {
+        } catch( IOException | RuntimeException | ServletException e ) {
           LOG.failedToExecuteFilter( e );
           throw e;
         }
@@ -176,13 +163,7 @@ public class GatewayServlet implements Servlet, Filter {
             chain.doFilter( servletRequest, servletResponse );
           }
 
-        } catch( IOException e ) {
-          LOG.failedToExecuteFilter( e );
-          throw e;
-        } catch( ServletException e ) {
-          LOG.failedToExecuteFilter( e );
-          throw e;
-        } catch( RuntimeException e ) {
+        } catch( IOException | RuntimeException | ServletException e ) {
           LOG.failedToExecuteFilter( e );
           throw e;
         }
@@ -233,9 +214,7 @@ public class GatewayServlet implements Servlet, Filter {
         }
       }
       return filter;
-    } catch( IOException e ) {
-      throw new ServletException( e );
-    } catch( URISyntaxException e ) {
+    } catch( IOException | URISyntaxException e ) {
       throw new ServletException( e );
     }
   }

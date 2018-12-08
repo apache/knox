@@ -79,7 +79,7 @@ class RemoteConfigurationRegistryJAASConfig extends Configuration {
 
     @Override
     public AppConfigurationEntry[] getAppConfigurationEntry(String name) {
-        AppConfigurationEntry[] result = null;
+        AppConfigurationEntry[] result;
 
         // First, try the delegate's context entries
         result = delegate.getAppConfigurationEntry(name);
@@ -92,7 +92,7 @@ class RemoteConfigurationRegistryJAASConfig extends Configuration {
     }
 
     private AppConfigurationEntry[] createEntries(RemoteConfigurationRegistryConfig config) {
-        AppConfigurationEntry[] result = null;
+        AppConfigurationEntry[] result;
 
         AppConfigurationEntry entry = createEntry(config);
         if (entry != null) {

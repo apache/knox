@@ -141,9 +141,8 @@ public class GatewayFilter implements Filter {
               int index = origUrl.indexOf(path);
               url = origUrl.substring(0, index) + "/" + defaultServicePath + path;
             }
-            String contextPath = defaultServicePath;
             servletRequest = new ForwardedRequest((HttpServletRequest) servletRequest,
-                contextPath,
+                defaultServicePath,
                 url);
           } catch (URISyntaxException e) {
             throw new ServletException( e );

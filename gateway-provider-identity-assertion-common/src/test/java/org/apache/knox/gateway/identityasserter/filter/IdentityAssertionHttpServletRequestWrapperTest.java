@@ -257,7 +257,7 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     assertThat( s, is( "null-values" ) );
 
     m = new HashMap<>();
-    m.put( "no-values", new ArrayList<String>(0) );
+    m.put( "no-values", new ArrayList<>(0) );
     s = IdentityAsserterHttpServletRequestWrapper.urlEncode( m, StandardCharsets.UTF_8.name() );
     assertThat( s, is( "no-values" ) );
 

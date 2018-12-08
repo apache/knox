@@ -131,7 +131,8 @@ public class KnoxCliSysBindTest {
   }
 
   private static XMLTag createBadTopology(){
-    XMLTag xml = XMLDoc.newDocument(true)
+    // System.out.println( "GATEWAY=" + xml.toString() );
+    return XMLDoc.newDocument(true)
         .addRoot("topology")
         .addTag( "gateway" )
         .addTag("provider")
@@ -164,13 +165,12 @@ public class KnoxCliSysBindTest {
         .addTag( "service")
         .addTag("role").addText( "KNOX" )
         .gotoRoot();
-    // System.out.println( "GATEWAY=" + xml.toString() );
-    return xml;
   }
 
   private static XMLTag createTopology(String username, String password) {
 
-    XMLTag xml = XMLDoc.newDocument(true)
+    // System.out.println( "GATEWAY=" + xml.toString() );
+    return XMLDoc.newDocument(true)
         .addRoot("topology")
         .addTag("gateway")
         .addTag("provider")
@@ -224,8 +224,6 @@ public class KnoxCliSysBindTest {
         .addTag( "service" )
         .addTag( "role" ).addText( "test-service-role" )
         .gotoRoot();
-    // System.out.println( "GATEWAY=" + xml.toString() );
-    return xml;
   }
 
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )

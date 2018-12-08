@@ -52,19 +52,19 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
       int failoverSleep = DEFAULT_FAILOVER_SLEEP;
       int maxRetryAttempts = DEFAULT_MAX_RETRY_ATTEMPTS;
       int retrySleep = DEFAULT_RETRY_SLEEP;
-      if (enabledValue != null && enabledValue.trim().length() > 0) {
+      if (enabledValue != null && !enabledValue.trim().isEmpty()) {
          enabled = Boolean.parseBoolean(enabledValue);
       }
-      if (maxFailoverAttemptsValue != null && maxFailoverAttemptsValue.trim().length() > 0) {
+      if (maxFailoverAttemptsValue != null && !maxFailoverAttemptsValue.trim().isEmpty()) {
          maxFailoverAttempts = Integer.parseInt(maxFailoverAttemptsValue);
       }
-      if (failoverSleepValue != null && failoverSleepValue.trim().length() > 0) {
+      if (failoverSleepValue != null && !failoverSleepValue.trim().isEmpty()) {
          failoverSleep = Integer.parseInt(failoverSleepValue);
       }
-      if (maxRetryAttemptsValue != null && maxRetryAttemptsValue.trim().length() > 0) {
+      if (maxRetryAttemptsValue != null && !maxRetryAttemptsValue.trim().isEmpty()) {
          maxRetryAttempts = Integer.parseInt(maxRetryAttemptsValue);
       }
-      if (retrySleepValue != null && retrySleepValue.trim().length() > 0) {
+      if (retrySleepValue != null && !retrySleepValue.trim().isEmpty()) {
          retrySleep = Integer.parseInt(retrySleepValue);
       }
       DefaultHaServiceConfig serviceConfig = new DefaultHaServiceConfig(serviceName);

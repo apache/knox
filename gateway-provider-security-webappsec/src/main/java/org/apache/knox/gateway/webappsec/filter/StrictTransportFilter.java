@@ -84,7 +84,7 @@ public class StrictTransportFilter implements Filter {
 
     @Override
     public String getHeader(String name) {
-        String headerValue = null;
+        String headerValue;
         if (name.equals(STRICT_TRANSPORT)) {
             headerValue = option;
         }

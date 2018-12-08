@@ -73,7 +73,7 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
     SessionConfigType<WebAppDescriptor> sessionConfig = context.getWebAppDescriptor().createSessionConfig();
     Map<String, String> params = provider.getParams();
     String sts = params.get( SESSION_TIMEOUT );
-    if( sts != null && sts.trim().length() != 0 ) {
+    if( sts != null && !sts.trim().isEmpty()) {
       st = Integer.parseInt( sts.trim() );
     }
     if( st <= 0 ) {

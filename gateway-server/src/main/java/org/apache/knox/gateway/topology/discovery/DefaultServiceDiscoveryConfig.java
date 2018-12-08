@@ -17,7 +17,7 @@
 package org.apache.knox.gateway.topology.discovery;
 
 public class DefaultServiceDiscoveryConfig implements ServiceDiscoveryConfig {
-    private String address  = null;
+    private String address;
     private String user     = null;
     private String pwdAlias = null;
 

@@ -93,8 +93,8 @@ public class DefaultIdentityAssertionFilterTest {
 
   private boolean groupFoundIn(String expected, String[] mappedGroups) {
     if (mappedGroups == null) return false;
-    for(int i = 0; i < mappedGroups.length; i++) {
-      if (mappedGroups[i].equals(expected)) {
+    for (String mappedGroup : mappedGroups) {
+      if (mappedGroup.equals(expected)) {
         return true;
       }
     }

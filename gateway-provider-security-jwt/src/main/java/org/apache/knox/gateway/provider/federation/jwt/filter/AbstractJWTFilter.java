@@ -229,8 +229,7 @@ public abstract class AbstractJWTFilter implements Filter {
     // To modify the Principals Set, the caller must have AuthPermission("modifyPrincipals").
     // To modify the public credential Set, the caller must have AuthPermission("modifyPublicCredentials").
     // To modify the private credential Set, the caller must have AuthPermission("modifyPrivateCredentials").
-    javax.security.auth.Subject subject = new javax.security.auth.Subject(true, principals, emptySet, emptySet);
-    return subject;
+    return new Subject(true, principals, emptySet, emptySet);
   }
 
   protected boolean validateToken(HttpServletRequest request, HttpServletResponse response,

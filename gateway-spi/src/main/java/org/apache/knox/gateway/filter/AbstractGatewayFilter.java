@@ -56,10 +56,7 @@ public abstract class AbstractGatewayFilter implements Filter {
       throws IOException, ServletException {
     try {
       doFilter( (HttpServletRequest)request, (HttpServletResponse)response, chain );
-    } catch( IOException e ) {
-      LOG.failedToExecuteFilter( e );
-      throw e;
-    } catch( ServletException e ) {
+    } catch( IOException | ServletException e ) {
       LOG.failedToExecuteFilter( e );
       throw e;
     } catch( Throwable t ) {

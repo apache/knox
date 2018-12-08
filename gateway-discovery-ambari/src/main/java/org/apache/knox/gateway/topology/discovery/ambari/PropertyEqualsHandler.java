@@ -19,11 +19,11 @@ package org.apache.knox.gateway.topology.discovery.ambari;
 
 class PropertyEqualsHandler implements ConditionalValueHandler {
 
-    private String serviceName                        = null;
-    private String propertyName                       = null;
-    private String propertyValue                      = null;
-    private ConditionalValueHandler affirmativeResult = null;
-    private ConditionalValueHandler negativeResult    = null;
+    private String serviceName;
+    private String propertyName;
+    private String propertyValue;
+    private ConditionalValueHandler affirmativeResult;
+    private ConditionalValueHandler negativeResult;
 
     PropertyEqualsHandler(String                  serviceName,
                           String                  propertyName,

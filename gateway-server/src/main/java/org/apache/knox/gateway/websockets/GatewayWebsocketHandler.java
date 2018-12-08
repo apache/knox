@@ -183,7 +183,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
     String backendURL = urlFromServiceDefinition(serviceDefs,
         serviceRegistryService, entry, path);
 
-    StringBuffer backend = new StringBuffer();
+    StringBuilder backend = new StringBuilder();
     try {
 
       /* if we do not find websocket URL we default to HTTP */
@@ -227,14 +227,12 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
     final String[] contexts = path.split("/");
 
-    final String serviceURL = serviceRegistry.lookupServiceURL(contexts[2],
-        entry.getName().toUpperCase(Locale.ROOT));
-
     /*
      * we have a match, if ws:// is present it is returned else http:// is
      * returned
      */
-    return serviceURL;
+    return serviceRegistry.lookupServiceURL(contexts[2],
+        entry.getName().toUpperCase(Locale.ROOT));
 
   }
 

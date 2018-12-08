@@ -28,7 +28,6 @@ import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteStepStatus;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class UrlRewriteStepProcessorHolder implements UrlRewriteStepProcessor {
@@ -72,12 +71,10 @@ public class UrlRewriteStepProcessorHolder implements UrlRewriteStepProcessor {
       UrlRewriteFlowDescriptor flowDescriptor = (UrlRewriteFlowDescriptor)descriptor;
       List<UrlRewriteStepDescriptor> stepList = flowDescriptor.steps();
       if( stepList != null && !stepList.isEmpty() ) {
-        Iterator<UrlRewriteStepDescriptor> stepIterator = stepList.iterator();
-        while( stepIterator.hasNext() ) {
-          UrlRewriteStepDescriptor stepDescriptor = stepIterator.next();
+        for (UrlRewriteStepDescriptor stepDescriptor : stepList) {
           UrlRewriteStepProcessorHolder stepProcessor = new UrlRewriteStepProcessorHolder();
-          stepProcessor.initialize( environment, stepDescriptor );
-          childProcessors.add( stepProcessor );
+          stepProcessor.initialize(environment, stepDescriptor);
+          childProcessors.add(stepProcessor);
         }
       }
     }

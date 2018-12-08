@@ -74,7 +74,7 @@ public class KnoxSessionStore implements SessionStore {
     }
 
     private Serializable uncompressDecryptBase64(final String v) {
-        if (v != null && v.length() > 0) {
+        if (v != null && !v.isEmpty()) {
             byte[] bytes = Base64.decodeBase64(v);
             EncryptionResult result = EncryptionResult.fromByteArray(bytes);
             byte[] clear = cryptoService.decryptForCluster(this.clusterName,

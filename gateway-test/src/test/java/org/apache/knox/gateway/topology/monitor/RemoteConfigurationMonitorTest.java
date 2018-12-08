@@ -404,7 +404,7 @@ public class RemoteConfigurationMonitorTest {
         RemoteConfigurationMonitor cm = RemoteConfigurationMonitorFactory.get(gc);
         assertNotNull("Failed to load RemoteConfigurationMonitor", cm);
 
-        List<ACL> acls = Arrays.asList(ANY_AUTHENTICATED_USER_ALL);
+        List<ACL> acls = Collections.singletonList(ANY_AUTHENTICATED_USER_ALL);
         client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(acls).forPath(PATH_KNOX);
         client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(acls).forPath(PATH_KNOX_CONFIG);
         client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(acls).forPath(PATH_KNOX_PROVIDERS);

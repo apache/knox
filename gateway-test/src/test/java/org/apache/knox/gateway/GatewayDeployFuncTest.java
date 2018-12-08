@@ -130,7 +130,7 @@ public class GatewayDeployFuncTest {
   }
 
   private static XMLTag createTopology() {
-    XMLTag xml = XMLDoc.newDocument( true )
+    return XMLDoc.newDocument( true )
         .addRoot( "topology" )
         .addTag( "gateway" )
 
@@ -162,7 +162,6 @@ public class GatewayDeployFuncTest {
         .addTag( "service" )
         .addTag( "role" ).addText( "test-service-role" )
         .gotoRoot();
-    return xml;
   }
 
   //@Test

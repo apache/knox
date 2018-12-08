@@ -266,7 +266,7 @@ public class TopologiesResource {
     }
 
     if (providerConfigFile != null) {
-      byte[] content = null;
+      byte[] content;
       try {
         content = FileUtils.readFileToByteArray(providerConfigFile);
         response = ok().entity(content).build();
@@ -461,7 +461,7 @@ public class TopologiesResource {
     if (descriptorFile != null) {
       String mediaType = APPLICATION_JSON;
 
-      byte[] content = null;
+      byte[] content;
       try {
         if ("yml".equals(FilenameUtils.getExtension(descriptorFile.getName()))) {
           mediaType = TEXT_PLAIN;

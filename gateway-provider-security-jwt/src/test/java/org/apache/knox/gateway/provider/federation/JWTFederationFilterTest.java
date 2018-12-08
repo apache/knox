@@ -64,6 +64,6 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
     @Override
     protected String getVerificationPemProperty() {
       return TestJWTFederationFilter.TOKEN_VERIFICATION_PEM;
-    };
+    }
 
 }

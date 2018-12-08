@@ -105,16 +105,14 @@ public class PropertiesFileServiceDiscoveryTest {
 
     private void printServiceURLs(ServiceDiscovery.Cluster cluster, String...services) {
         for (String name : services) {
-            String value = "";
+            StringBuilder value = new StringBuilder();
             List<String> urls = cluster.getServiceURLs(name);
             if (urls != null && !urls.isEmpty()) {
                 for (String url : urls) {
-                    value += url + " ";
+                    value.append(url).append(" ");
                 }
             }
-            System.out.println(String.format(Locale.ROOT, "%18s: %s", name, value));
+            System.out.println(String.format(Locale.ROOT, "%18s: %s", name, value.toString()));
         }
     }
-
-
 }

@@ -112,7 +112,8 @@ public class GatewayUIFuncTest {
    * @return A populated XML structure for a topology file.
    */
   private static XMLTag createTopology() {
-    XMLTag xml = XMLDoc.newDocument( true )
+    //System.out.println( "GATEWAY=" + xml.toString() );
+    return XMLDoc.newDocument( true )
         .addRoot( "topology" )
           .addTag( "gateway" )
             .addTag( "provider" )
@@ -149,8 +150,6 @@ public class GatewayUIFuncTest {
           .addTag( "service" )
             .addTag( "role" ).addText( "OOZIEUI" )
             .addTag( "url" ).addText( driver.getRealUrl( "OOZIEUI" ) ).gotoParent();
-    //System.out.println( "GATEWAY=" + xml.toString() );
-    return xml;
   }
 
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )

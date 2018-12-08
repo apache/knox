@@ -125,7 +125,7 @@ public class CryptoServiceTest {
     String queryString = "url=http://localhost:50070/api/v1/blahblah";
     ConfigurableEncryptor aes0 = new ConfigurableEncryptor("password");
     aes0.init(config);
-    cs.init(config, new HashMap<String,String>());
+    cs.init(config, new HashMap<>());
     EncryptionResult result0 = cs.encryptForCluster("Test", "encrypt_url", queryString.getBytes(StandardCharsets.UTF_8));
     byte[] decrypted0 = cs.decryptForCluster("Test", "encrypt_url", result0.cipher, result0.iv, result0.salt);
     assertEquals(queryString, new String(decrypted0, StandardCharsets.UTF_8));
@@ -148,7 +148,7 @@ public class CryptoServiceTest {
     String queryString = "url=http://localhost:50070/api/v1/blahblah";
     ConfigurableEncryptor aes0 = new ConfigurableEncryptor("password");
     aes0.init(config);
-    cs.init(config, new HashMap<String,String>());
+    cs.init(config, new HashMap<>());
     EncryptionResult result0 = cs.encryptForCluster("Test", "encrypt_url", queryString.getBytes(StandardCharsets.UTF_8));
     byte[] decrypted0 = cs.decryptForCluster("Test", "encrypt_url", result0.cipher, result0.iv, result0.salt);
     assertEquals(queryString, new String(decrypted0, StandardCharsets.UTF_8));

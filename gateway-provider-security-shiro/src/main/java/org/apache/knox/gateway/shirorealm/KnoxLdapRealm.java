@@ -572,7 +572,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     }
     // search for the filter, substituting base with userDn
     // search for base_dn=userDn, scope=base, filter=filter
-    LdapContext systemLdapCtx = null;
+    LdapContext systemLdapCtx;
     systemLdapCtx = ldapContextFactory.getSystemLdapContext();
     NamingEnumeration<SearchResult> searchResultEnum = null;
     try {
@@ -607,8 +607,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
       principalRegex = DEFAULT_PRINCIPAL_REGEX;
     } else {
       regex = regex.trim();
-      Pattern pattern = Pattern.compile( regex );
-      principalPattern = pattern;
+      principalPattern = Pattern.compile( regex );
       principalRegex = regex;
     }
   }
@@ -694,7 +693,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
 
       // Create the searchBase and searchFilter from config.
       String searchBase = expandTemplate( getUserSearchBase(), matchedPrincipal );
-      String searchFilter = null;
+      String searchFilter;
       if ( userSearchFilter == null ) {
         if ( userSearchAttributeName == null ) {
           searchFilter = String.format( Locale.ROOT, "(objectclass=%1$s)", getUserObjectClass() );

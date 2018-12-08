@@ -19,10 +19,10 @@ package org.apache.knox.gateway.util.urltemplate;
 
 final class Token {
 
-  String parameterName = null;
-  String originalPattern = null;
-  String effectivePattern = null;
-  boolean literal = false;
+  String parameterName;
+  String originalPattern;
+  String effectivePattern;
+  boolean literal;
 
   Token( String parameterName, String originalPattern, String effectivePattern, boolean literal ) {
     this.parameterName = parameterName;

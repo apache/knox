@@ -39,8 +39,7 @@ public class GatewayGlobalConfigTest {
     URL url = ClassLoader.getSystemResource( resource );
     String fileName = url.getFile();
     File file = new File( fileName );
-    String dirName = file.getParentFile().getParent();
-    return dirName;
+    return file.getParentFile().getParent();
   }
 
   @Test

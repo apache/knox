@@ -42,8 +42,7 @@ public class UrlRewriteServletContextListenerTest {
 
   private static URL getTestResource( String name ) {
     name = UrlRewriteServletFilterTest.class.getName().replaceAll( "\\.", "/" ) + "/" + name;
-    URL url = ClassLoader.getSystemResource( name );
-    return url;
+    return ClassLoader.getSystemResource( name );
   }
 
   @Before

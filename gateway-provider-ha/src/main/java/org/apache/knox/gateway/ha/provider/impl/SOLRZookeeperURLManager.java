@@ -62,7 +62,7 @@ public class SOLRZookeeperURLManager extends BaseZookeeperURLManager {
   @Override
   protected String getServiceName() {
     return "SOLR";
-  };
+  }
 
   // -------------------------------------------------------------------------------------
   // Private methods
@@ -106,10 +106,8 @@ public class SOLRZookeeperURLManager extends BaseZookeeperURLManager {
   private String constructURL(String serverInfo) {
     String scheme = "http";
 
-    StringBuffer buffer = new StringBuffer();
-    buffer.append(scheme);
-    buffer.append("://");
-    buffer.append(serverInfo.replace("_", "/"));
-    return buffer.toString();
+    return scheme +
+               "://" +
+               serverInfo.replace("_", "/");
   }
 }

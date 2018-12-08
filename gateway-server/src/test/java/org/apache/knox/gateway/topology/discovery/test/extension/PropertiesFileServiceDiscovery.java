@@ -156,9 +156,9 @@ class PropertiesFileServiceDiscovery implements ServiceDiscovery {
         }
 
         private static class ZooKeeperConfigImpl implements ZooKeeperConfig {
-            private boolean isEnabled = false;
-            private String  ensemble  = null;
-            private String  namespace = null;
+            private boolean isEnabled;
+            private String  ensemble;
+            private String  namespace;
 
             ZooKeeperConfigImpl(boolean enabled, String ensemble, String namespace) {
                 this.isEnabled = enabled;

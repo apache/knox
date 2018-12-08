@@ -53,8 +53,8 @@ public class AclsAuthorizationFilter implements Filter {
   private String resourceRole = null;
   private String aclProcessingMode = null;
   private AclParser parser = new AclParser();
-  private ArrayList<String> adminGroups = new ArrayList<>();;
-  private ArrayList<String> adminUsers = new ArrayList<>();;
+  private ArrayList<String> adminGroups = new ArrayList<>();
+  private ArrayList<String> adminUsers = new ArrayList<>();
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
@@ -120,13 +120,13 @@ public class AclsAuthorizationFilter implements Filter {
 
     // before enforcing acls check whether there are no acls defined
     // which would mean that there are no restrictions
-    if (parser.users.size() == 0 && parser.groups.size() == 0 && parser.ipv.getIPAddresses().size() == 0) {
+    if (parser.users.isEmpty() && parser.groups.isEmpty() && parser.ipv.getIPAddresses().isEmpty()) {
       return true;
     }
 
-    boolean userAccess = false;
+    boolean userAccess;
     boolean groupAccess = false;
-    boolean ipAddrAccess = false;
+    boolean ipAddrAccess;
 
     Subject subject = Subject.getSubject(AccessController.getContext());
     Principal primaryPrincipal = (Principal)subject.getPrincipals(PrimaryPrincipal.class).toArray()[0];
@@ -178,7 +178,7 @@ public class AclsAuthorizationFilter implements Filter {
   }
 
   private boolean checkRemoteIpAcls(String remoteAddr) {
-    boolean allowed = false;
+    boolean allowed;
     if (remoteAddr == null) {
       return false;
     }
@@ -207,7 +207,7 @@ public class AclsAuthorizationFilter implements Filter {
   }
 
   boolean checkGroupAcls(Object[] userGroups) {
-    boolean allowed = false;
+    boolean allowed;
     if (userGroups == null) {
       return false;
     }
@@ -225,8 +225,8 @@ public class AclsAuthorizationFilter implements Filter {
 
   private boolean hasAllowedPrincipal(List<String> allowed, Object[] userGroups) {
     boolean rc = false;
-    for (int i = 0; i < userGroups.length; i++) {
-      if (allowed.contains(((Principal)userGroups[i]).getName())) {
+    for (Object userGroup : userGroups) {
+      if (allowed.contains(((Principal) userGroup).getName())) {
         rc = true;
         break;
       }

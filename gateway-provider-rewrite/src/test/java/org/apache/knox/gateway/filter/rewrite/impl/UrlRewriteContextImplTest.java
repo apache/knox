@@ -27,7 +27,7 @@ import org.apache.knox.gateway.util.urltemplate.Template;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,10 +42,10 @@ public class UrlRewriteContextImplTest {
   public void testResolve() throws Exception {
 
     UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
-    EasyMock.expect( environment.resolve( "test-env-param-name" ) ).andReturn( Arrays.asList( "test-env-param-value" ) ).anyTimes();
+    EasyMock.expect( environment.resolve( "test-env-param-name" ) ).andReturn(Collections.singletonList("test-env-param-value")).anyTimes();
 
     Resolver resolver = EasyMock.createNiceMock( Resolver.class );
-    EasyMock.expect( resolver.resolve( "test-ctx-param-name" ) ).andReturn( Arrays.asList( "test-ctx-param-value" ) );
+    EasyMock.expect( resolver.resolve( "test-ctx-param-name" ) ).andReturn(Collections.singletonList("test-ctx-param-value"));
 
     EasyMock.replay( environment, resolver );
 

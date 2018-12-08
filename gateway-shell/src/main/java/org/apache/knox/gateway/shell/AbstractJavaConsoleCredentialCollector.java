@@ -32,14 +32,13 @@ public abstract class AbstractJavaConsoleCredentialCollector extends AbstractCre
       System.exit(1);
     }
 
-    String username = c.readLine(prompt);
-    value = username;
+    value = c.readLine(prompt);
 
     return value;
   }
 
   protected String collectHiddenCredential(String prompt) {
-    char[] response = null;
+    char[] response;
     Console c = System.console();
     if (c == null) {
       System.err.println("No console.");

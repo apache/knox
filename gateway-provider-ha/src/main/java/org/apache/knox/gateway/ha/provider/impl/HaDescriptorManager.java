@@ -68,10 +68,7 @@ public class HaDescriptorManager implements HaDescriptorConstants {
 
          Transformer t = XmlUtils.getTransformer( true, true, 2, false );
          XmlUtils.writeXml( document, writer, t );
-      } catch (ParserConfigurationException e) {
-         LOG.failedToWriteHaDescriptor(e);
-         throw new IOException(e);
-      } catch (TransformerException e) {
+      } catch (ParserConfigurationException | TransformerException e) {
          LOG.failedToWriteHaDescriptor(e);
          throw new IOException(e);
       }
@@ -96,14 +93,11 @@ public class HaDescriptorManager implements HaDescriptorConstants {
                descriptor.addServiceConfig(config);
             }
          }
-      } catch (ParserConfigurationException e) {
-         LOG.failedToLoadHaDescriptor(e);
-         throw new IOException(e);
-      } catch (SAXException e) {
+      } catch (ParserConfigurationException | SAXException e) {
          LOG.failedToLoadHaDescriptor(e);
          throw new IOException(e);
       }
-      return descriptor;
+     return descriptor;
    }
 
 }

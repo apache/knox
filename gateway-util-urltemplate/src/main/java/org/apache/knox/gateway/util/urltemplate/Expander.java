@@ -25,7 +25,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -167,37 +166,35 @@ public class Expander {
   private static void expandExplicitQuery( Template template, Set<String> names, Params params, Evaluator evaluator, StringBuilder builder, AtomicInteger index ) {
     Collection<Query> query = template.getQuery().values();
     if( !query.isEmpty() ) {
-      Iterator<Query> iterator = query.iterator();
-      while( iterator.hasNext() ) {
+      for (Query query1 : query) {
         int i = index.incrementAndGet();
-        if( i == 1 ) {
-          builder.append( "?" );
+        if (i == 1) {
+          builder.append("?");
         } else {
-          builder.append( "&" );
+          builder.append("&");
         }
-        Query segment = iterator.next();
-        String queryName = segment.getQueryName();
-        String paramName = segment.getParamName();
-        Function function = new Function( paramName );
-        names.remove( function.getParameterName() );
-        for( Segment.Value value: segment.getValues() ) {
-          switch( value.getType() ) {
-            case( Segment.STATIC ):
-              builder.append( queryName );
-              String pattern = value.getOriginalPattern();
-              if( pattern != null ) {
-                builder.append( "=" );
-                builder.append( pattern );
-              }
-              break;
-            case( Segment.DEFAULT ):
-            case( Segment.GLOB ):
-            case( Segment.STAR ):
-            case( Segment.REGEX ):
-              List<String> values = function.evaluate( params, evaluator );
-              expandQueryValues( segment, queryName, values, builder );
-              break;
-            default:
+        String queryName = query1.getQueryName();
+        String paramName = query1.getParamName();
+        Function function = new Function(paramName);
+        names.remove(function.getParameterName());
+        for (Segment.Value value : query1.getValues()) {
+          switch (value.getType()) {
+          case (Segment.STATIC):
+            builder.append(queryName);
+            String pattern = value.getOriginalPattern();
+            if (pattern != null) {
+              builder.append("=");
+              builder.append(pattern);
+            }
+            break;
+          case (Segment.DEFAULT):
+          case (Segment.GLOB):
+          case (Segment.STAR):
+          case (Segment.REGEX):
+            List<String> values = function.evaluate(params, evaluator);
+            expandQueryValues(query1, queryName, values, builder);
+            break;
+          default:
           }
         }
       }
@@ -234,7 +231,7 @@ public class Expander {
 
   private static void expandQueryValues( Query segment, String queryName, List<String> values, StringBuilder builder ) {
     String value;
-    if( values == null || values.size() == 0 ) {
+    if( values == null || values.isEmpty()) {
       builder.append( queryName );
     } else {
       int type = segment.getFirstValue().getType();

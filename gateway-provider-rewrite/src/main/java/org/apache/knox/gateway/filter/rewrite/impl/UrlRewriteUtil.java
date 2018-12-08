@@ -60,7 +60,7 @@ public class UrlRewriteUtil {
 
   public static String filterJavaScript( String inputValue, UrlRewriteFilterContentDescriptor config,
       UrlRewriteFilterReader filterReader, UrlRewriteFilterPathDescriptor.Compiler<Pattern> regexCompiler ) {
-    StringBuffer tbuff = new StringBuffer();
+    StringBuilder tbuff = new StringBuilder();
     StringBuffer sbuff = new StringBuffer();
     sbuff.append( inputValue );
     if( config != null && !config.getSelectors().isEmpty() ) {

@@ -24,7 +24,7 @@ import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteFunctionProcessorFa
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -90,15 +90,15 @@ public class HtmlInfixProcessor
 
     final List<String> frontendValues = frontend.resolve(context, parameters);
 
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     buffer.append(prefix);
-    if (frontendValues != null && frontendValues.size() > 0) {
+    if (frontendValues != null && !frontendValues.isEmpty()) {
       for (final String value : frontendValues) {
         buffer.append(value);
       }
     }
     buffer.append(postfix);
 
-    return Arrays.asList(buffer.toString());
+    return Collections.singletonList(buffer.toString());
   }
 }

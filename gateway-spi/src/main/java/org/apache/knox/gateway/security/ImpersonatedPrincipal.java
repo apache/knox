@@ -20,7 +20,7 @@ package org.apache.knox.gateway.security;
 import java.security.Principal;
 
 public class ImpersonatedPrincipal implements Principal {
-  private String name = null;
+  private String name;
 
   public ImpersonatedPrincipal(String name) {
     this.name = name;

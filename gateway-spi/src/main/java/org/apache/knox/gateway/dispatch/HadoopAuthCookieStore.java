@@ -36,7 +36,7 @@ public class HadoopAuthCookieStore extends BasicCookieStore {
 
   private static SpiGatewayMessages LOG = MessagesFactory.get( SpiGatewayMessages.class );
 
-  private GatewayConfig gatewayConfig = null;
+  private GatewayConfig gatewayConfig;
 
 
   HadoopAuthCookieStore(GatewayConfig config) {

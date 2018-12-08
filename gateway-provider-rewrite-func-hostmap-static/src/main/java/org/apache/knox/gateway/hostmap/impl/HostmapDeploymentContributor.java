@@ -82,8 +82,7 @@ public class HostmapDeploymentContributor
     }
     writer.close();
     String string = buffer.toString();
-    Asset asset = new StringAsset( string );
-    return asset;
+    return new StringAsset( string );
   }
 
   @Override

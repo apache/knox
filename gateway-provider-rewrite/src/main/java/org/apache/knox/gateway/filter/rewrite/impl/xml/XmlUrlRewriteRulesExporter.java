@@ -91,17 +91,9 @@ public class XmlUrlRewriteRulesExporter implements UrlRewriteRulesExporter, XmlR
 
       XmlUtils.writeXml( document, writer );
 
-    } catch( ParserConfigurationException e ) {
+    } catch( ParserConfigurationException | TransformerException e ) {
       throw new IOException( e );
-    } catch( TransformerException e ) {
-      throw new IOException( e );
-    } catch( InvocationTargetException e ) {
-      LOG.failedToWriteRulesDescriptor( e );
-    } catch( NoSuchMethodException e ) {
-      LOG.failedToWriteRulesDescriptor( e );
-    } catch( IntrospectionException e ) {
-      LOG.failedToWriteRulesDescriptor( e );
-    } catch( IllegalAccessException e ) {
+    } catch( InvocationTargetException | IllegalAccessException | IntrospectionException | NoSuchMethodException e ) {
       LOG.failedToWriteRulesDescriptor( e );
     }
   }

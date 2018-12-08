@@ -33,6 +33,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -84,9 +85,7 @@ public class MockRequestMatcher {
       this.methods = new HashSet<>();
     }
     if( methods != null ) {
-      for( String method: methods ) {
-        this.methods.add( method );
-      }
+      Collections.addAll(this.methods, methods);
     }
     return this;
   }

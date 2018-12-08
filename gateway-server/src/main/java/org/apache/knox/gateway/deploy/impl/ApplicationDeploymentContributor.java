@@ -112,9 +112,7 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
       File rewriteFile = new File( appDir, REWRITE_RULES_FILE_NAME );
       serviceDefinition = loadServiceDefinition( application, serviceFile );
       serviceRules = loadRewriteRules( application, rewriteFile );
-    } catch ( IOException e ) {
-      throw new DeploymentException( "Failed to deploy application: " + application.getName(), e );
-    } catch ( JAXBException e ){
+    } catch ( IOException | JAXBException e ) {
       throw new DeploymentException( "Failed to deploy application: " + application.getName(), e );
     }
   }

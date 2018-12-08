@@ -19,7 +19,7 @@ package org.apache.knox.gateway.security;
 
 public class UsernamePassword {
   private String username;
-  private char[] password = null;
+  private char[] password;
 
   public UsernamePassword(String username, char[] password) {
     super();

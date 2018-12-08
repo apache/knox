@@ -23,14 +23,14 @@ import java.util.Map;
 
 class AmbariComponent {
 
-    private String clusterName = null;
-    private String serviceName = null;
-    private String name        = null;
-    private String version     = null;
+    private String clusterName;
+    private String serviceName;
+    private String name;
+    private String version;
 
     private List<String> hostNames = new ArrayList<>();
 
-    private Map<String, String> properties = null;
+    private Map<String, String> properties;
 
     AmbariComponent(String              name,
                     String              version,

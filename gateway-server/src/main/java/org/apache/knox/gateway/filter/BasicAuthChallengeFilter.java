@@ -70,7 +70,7 @@ public class BasicAuthChallengeFilter extends AbstractGatewayFilter {
         if( parts.length == 2 ) {
           String username = parts[0];
           String password = parts[1];
-          if( username.length() > 0 && password.length() > 0 ) {
+          if(!username.isEmpty() && !password.isEmpty()) {
             credentials = new UsernamePasswordCredentials( username, password );
           }
         }

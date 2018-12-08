@@ -103,10 +103,10 @@ public class RewriterTest {
   @Test
   public void testServiceRegistryHostmapUserCase() throws Exception {
     Resolver resolver = EasyMock.createNiceMock( Resolver.class );
-    EasyMock.expect( resolver.resolve( "internal-host" ) ).andReturn( Arrays.asList( "internal-host" ) ).anyTimes();
+    EasyMock.expect( resolver.resolve( "internal-host" ) ).andReturn(Collections.singletonList("internal-host")).anyTimes();
 
     Evaluator evaluator = EasyMock.createNiceMock( Evaluator.class );
-    EasyMock.expect( evaluator.evaluate( "hostmap", Arrays.asList( "internal-host" ) ) ).andReturn( Arrays.asList( "external-host" ) ).anyTimes();
+    EasyMock.expect( evaluator.evaluate( "hostmap", Collections.singletonList("internal-host")) ).andReturn(Collections.singletonList("external-host")).anyTimes();
 
     EasyMock.replay( resolver, evaluator );
 

@@ -33,9 +33,9 @@ import java.util.concurrent.Callable;
 
 class DeployResourceRequest extends AbstractRequest<BasicResponse> {
 
-  private ResourceType resourceType     = null;
-  private String       resourceName     = null;
-  private String       resourceFileName = null;
+  private ResourceType resourceType;
+  private String       resourceName;
+  private String       resourceFileName;
 
 
   DeployResourceRequest(KnoxSession session, ResourceType type, String name, String resourceFileName) {

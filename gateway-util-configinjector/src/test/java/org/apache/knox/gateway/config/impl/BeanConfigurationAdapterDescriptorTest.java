@@ -21,7 +21,6 @@ import org.apache.knox.gateway.config.ConfigurationAdapter;
 import org.apache.knox.gateway.config.spi.ConfigurationAdapterDescriptor;
 import org.junit.Test;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.ServiceLoader;
 
@@ -34,9 +33,8 @@ public class BeanConfigurationAdapterDescriptorTest {
   @Test
   public void testServiceLoader() {
     ServiceLoader<ConfigurationAdapterDescriptor> loader = ServiceLoader.load( ConfigurationAdapterDescriptor.class );
-    Iterator<ConfigurationAdapterDescriptor> i = loader.iterator();
-    while( i.hasNext() ) {
-      if( i.next() instanceof BeanConfigurationAdapterDescriptor ) {
+    for (ConfigurationAdapterDescriptor configurationAdapterDescriptor : loader) {
+      if (configurationAdapterDescriptor instanceof BeanConfigurationAdapterDescriptor) {
         return;
       }
     }

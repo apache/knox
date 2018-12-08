@@ -59,8 +59,7 @@ public class UrlRewriteProcessorTest {
 
   private static InputStream getTestResourceStream( String name ) throws IOException {
     URL url = getTestResourceUrl( name );
-    InputStream stream = url.openStream();
-    return stream;
+    return url.openStream();
   }
 
   private static Reader getTestResourceReader( String name ) throws IOException {

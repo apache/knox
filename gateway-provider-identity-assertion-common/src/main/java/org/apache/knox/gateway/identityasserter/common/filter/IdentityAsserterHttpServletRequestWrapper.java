@@ -129,9 +129,9 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
 
   private Map<String, List<String>> getParams( String qString )
       throws UnsupportedEncodingException {
-    Map<String, List<String>> params = null;
+    Map<String, List<String>> params;
     if (getMethod().equals("GET")) {
-      if (qString != null && qString.length() > 0) {
+      if (qString != null && !qString.isEmpty()) {
         params = HttpUtils.splitQuery( qString );
       }
       else {
@@ -139,7 +139,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
       }
     }
     else {
-      if (qString == null || qString.length() == 0) {
+      if (qString == null || qString.isEmpty()) {
         return null;
       }
       else {
@@ -259,7 +259,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
     StringBuilder sb = new StringBuilder();
     for( Map.Entry<String,List<String>> entry : map.entrySet() ) {
       String name = entry.getKey();
-      if( name != null && name.length() > 0 ) {
+      if( name != null && !name.isEmpty()) {
         List<String> values = entry.getValue();
         if( values == null || values.isEmpty() ) {
           sb.append( entry.getKey() );

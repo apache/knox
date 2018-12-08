@@ -51,7 +51,7 @@ public class SubjectUtils {
   }
 
   public static boolean isImpersonating(Subject subject) {
-    return (subject.getPrincipals(ImpersonatedPrincipal.class).size() > 0);
+    return (!subject.getPrincipals(ImpersonatedPrincipal.class).isEmpty());
   }
 
   public static String getImpersonatedPrincipalName(Subject subject) {

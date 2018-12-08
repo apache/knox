@@ -213,13 +213,10 @@ public abstract class DeploymentFactory {
       marshaller.marshal( topology, writer );
       writer.close();
       xml = writer.toString();
-    } catch (IOException e) {
-      throw new DeploymentException( "Failed to marshall topology.", e );
-    } catch (JAXBException e) {
+    } catch (IOException | JAXBException e) {
       throw new DeploymentException( "Failed to marshall topology.", e );
     }
-    StringAsset asset = new StringAsset( xml );
-    return asset;
+    return new StringAsset( xml );
   }
 
   private static DeploymentContext createDeploymentContext(
@@ -231,9 +228,8 @@ public abstract class DeploymentFactory {
     WebArchive webArchive = ShrinkWrap.create( WebArchive.class, archivePath );
     WebAppDescriptor webAppDesc = Descriptors.create( WebAppDescriptor.class );
     GatewayDescriptor gateway = GatewayDescriptorFactory.create();
-    DeploymentContext context = new DeploymentContextImpl(
+    return new DeploymentContextImpl(
         config, topology, gateway, webArchive, webAppDesc, providers );
-    return context;
   }
 
   // Scan through the providers in the topology.  Collect any named providers in their roles list.
@@ -445,7 +441,7 @@ public abstract class DeploymentFactory {
 
   private static void injectServices(Object contributor) {
     if (gatewayServices != null) {
-      Statement stmt = null;
+      Statement stmt;
       for(String serviceName : gatewayServices.getServiceNames()) {
 
         try {
@@ -550,7 +546,7 @@ public abstract class DeploymentFactory {
     ServiceDeploymentContributor contributor = null;
     Map<String,Map<Version, ServiceDeploymentContributor>> nameMap = SERVICE_CONTRIBUTOR_MAP.get( role );
     if( nameMap != null && !nameMap.isEmpty()) {
-      Map<Version, ServiceDeploymentContributor> versionMap = null;
+      Map<Version, ServiceDeploymentContributor> versionMap;
       if ( name == null ) {
         versionMap = nameMap.values().iterator().next();
       } else {
@@ -746,25 +742,23 @@ public abstract class DeploymentFactory {
         = new HashMap<>();
 
     ServiceLoader<ProviderDeploymentContributor> loader = ServiceLoader.load( ProviderDeploymentContributor.class );
-    Iterator<ProviderDeploymentContributor> contributors = loader.iterator();
-    while( contributors.hasNext() ) {
-      ProviderDeploymentContributor contributor = contributors.next();
-      if( contributor.getName() == null ) {
-        log.ignoringProviderContributorWithMissingName( contributor.getClass().getName() );
-        continue;
-      }
-      if( contributor.getRole() == null ) {
-        log.ignoringProviderContributorWithMissingRole( contributor.getClass().getName() );
-        continue;
-      }
-      set.add( contributor );
-      Map nameMap = roleMap.get( contributor.getRole() );
-      if( nameMap == null ) {
-        nameMap = new HashMap<>();
-        roleMap.put( contributor.getRole(), nameMap );
-      }
-      nameMap.put( contributor.getName(), contributor );
-    }
+     for (ProviderDeploymentContributor contributor : loader) {
+       if (contributor.getName() == null) {
+         log.ignoringProviderContributorWithMissingName(contributor.getClass().getName());
+         continue;
+       }
+       if (contributor.getRole() == null) {
+         log.ignoringProviderContributorWithMissingRole(contributor.getClass().getName());
+         continue;
+       }
+       set.add(contributor);
+       Map nameMap = roleMap.get(contributor.getRole());
+       if (nameMap == null) {
+         nameMap = new HashMap<>();
+         roleMap.put(contributor.getRole(), nameMap);
+       }
+       nameMap.put(contributor.getName(), contributor);
+     }
     PROVIDER_CONTRIBUTORS = set;
     PROVIDER_CONTRIBUTOR_MAP = roleMap;
   }
