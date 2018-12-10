@@ -695,6 +695,7 @@
                     <rulesets>
                         <ruleset>build-tools/pmd/pmd-ruleset.xml</ruleset>
                     </rulesets>
+                    <targetJdk>1.8</targetJdk>
                 </configuration>
             </plugin>
         </plugins>
