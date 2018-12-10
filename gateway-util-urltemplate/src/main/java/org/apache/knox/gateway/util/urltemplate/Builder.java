@@ -38,7 +38,7 @@ public class Builder {
   private boolean isDirectory;
   private List<Path> path;
   private boolean hasQuery;
-  private LinkedHashMap<String,Query> query;
+  private Map<String,Query> query;
   private Query extra;
   private boolean hasFragment;
   private Fragment fragment;
@@ -153,8 +153,8 @@ public class Builder {
     return copy;
   }
 
-  private LinkedHashMap<String, Query> copyQuery( Map<String, Query> orig ) {
-    LinkedHashMap<String,Query> copy = new LinkedHashMap<>();
+  private Map<String, Query> copyQuery( Map<String, Query> orig ) {
+    Map<String,Query> copy = new LinkedHashMap<>();
     if( orig != null ) {
       for( Map.Entry<String,Query> entry : orig.entrySet() ) {
         copy.put( entry.getKey(), new Query( entry.getValue() ) );

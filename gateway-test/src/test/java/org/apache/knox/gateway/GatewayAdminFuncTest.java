@@ -56,7 +56,7 @@ public class GatewayAdminFuncTest {
   @BeforeClass
   public static void setupSuite() throws Exception {
     TestUtils.LOG_ENTER();
-    //appenders = NoOpAppender.setUp();
+    //appenders = NoOpAppender.setUpAndReturnOriginalAppenders();
     driver.setupLdap(0);
     setupGateway();
     TestUtils.LOG_EXIT();
@@ -68,7 +68,7 @@ public class GatewayAdminFuncTest {
     gateway.stop();
     driver.cleanup();
     //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
-    //NoOpAppender.tearDown( appenders );
+    //NoOpAppender.resetOriginalAppenders( appenders );
     TestUtils.LOG_EXIT();
   }
 

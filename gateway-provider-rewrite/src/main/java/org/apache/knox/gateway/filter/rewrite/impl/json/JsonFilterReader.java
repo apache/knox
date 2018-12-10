@@ -621,7 +621,7 @@ class JsonFilterReader extends Reader {
     JsonNode node;
     JsonNode scopeNode;
     UrlRewriteFilterGroupDescriptor scopeConfig;
-    private Level( String field, JsonNode node, JsonNode scopeNode, UrlRewriteFilterGroupDescriptor scopeConfig ) {
+    Level( String field, JsonNode node, JsonNode scopeNode, UrlRewriteFilterGroupDescriptor scopeConfig ) {
       this.field = field;
       this.node = node;
       this.scopeNode = scopeNode;

@@ -19,11 +19,12 @@ package org.apache.knox.gateway.security.principal;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.StringTokenizer;
 
 public class SimplePrincipalMapper implements PrincipalMapper {
-  public HashMap<String, String[]> principalMappings;
-  public HashMap<String, String[]> groupMappings;
+  public Map<String, String[]> principalMappings;
+  public Map<String, String[]> groupMappings;
 
   public SimplePrincipalMapper() {
   }
@@ -36,7 +37,7 @@ public class SimplePrincipalMapper implements PrincipalMapper {
     }
   }
 
-  private HashMap<String, String[]> parseMapping(String mappings)
+  private Map<String, String[]> parseMapping(String mappings)
       throws PrincipalMappingException {
     if (mappings == null) {
       return null;

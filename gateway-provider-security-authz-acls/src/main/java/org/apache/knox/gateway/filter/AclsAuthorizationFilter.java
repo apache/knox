@@ -53,8 +53,8 @@ public class AclsAuthorizationFilter implements Filter {
   private String resourceRole;
   private String aclProcessingMode;
   private AclParser parser = new AclParser();
-  private ArrayList<String> adminGroups = new ArrayList<>();
-  private ArrayList<String> adminUsers = new ArrayList<>();
+  private List<String> adminGroups = new ArrayList<>();
+  private List<String> adminUsers = new ArrayList<>();
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {

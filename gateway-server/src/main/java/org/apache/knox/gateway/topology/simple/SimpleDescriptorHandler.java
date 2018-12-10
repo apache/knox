@@ -481,11 +481,11 @@ public class SimpleDescriptorHandler {
                         Map<String,String> parsedServiceHaParams = parseHaProviderParam(serviceHaParams);
                         String enabledValue = parsedServiceHaParams.get("enabled");
                         if (enabledValue != null) {
-                            if (enabledValue.equalsIgnoreCase("auto")) {
+                            if ("auto".equalsIgnoreCase(enabledValue)) {
                                 isServiceHaEnabledAuto = true;
                                 isServiceHaEnabled = (zkConf != null && zkConf.isEnabled());
                             } else {
-                                isServiceHaEnabled = enabledValue.equalsIgnoreCase("true");
+                                isServiceHaEnabled = "true".equalsIgnoreCase(enabledValue);
                             }
                         }
                     }

@@ -93,7 +93,7 @@ public class GatewayAdminTopologyFuncTest {
 
   @BeforeClass
   public static void setupSuite() throws Exception {
-    //appenders = NoOpAppender.setUp();
+    //appenders = NoOpAppender.setUpAndReturnOriginalAppenders();
     driver.setupLdap(0);
     setupGateway(new GatewayTestConfig());
   }
@@ -103,7 +103,7 @@ public class GatewayAdminTopologyFuncTest {
     gateway.stop();
     driver.cleanup();
     //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
-    //NoOpAppender.tearDown( appenders );
+    //NoOpAppender.resetOriginalAppenders( appenders );
   }
 
   public static void setupGateway(GatewayTestConfig testConfig) throws Exception {

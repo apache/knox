@@ -74,7 +74,7 @@ public class KnoxCliLdapFuncTestPositive {
     driver.cleanup();
 
     //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
-    //NoOpAppender.tearDown( appenders );
+    //NoOpAppender.resetOriginalAppenders( appenders );
     LOG_EXIT();
   }
 
@@ -246,11 +246,11 @@ public class KnoxCliLdapFuncTestPositive {
     username = "bad-name";
     password = "bad-password";
     String[] args2 = {"user-auth-test", "--master", "knox", "--cluster", "test-cluster", "--u", username, "--p", password};
-    Enumeration<Appender> before = NoOpAppender.setUp();
+    Enumeration<Appender> before = NoOpAppender.setUpAndReturnOriginalAppenders();
     try {
       cli.run( args2 );
     } finally {
-      NoOpAppender.tearDown( before );
+      NoOpAppender.resetOriginalAppenders( before );
     }
     assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("LDAP authentication failed"));
 

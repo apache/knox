@@ -20,9 +20,25 @@ limitations under the License.
          name="Maven PMD Plugin Ruleset"
          xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 http://pmd.sourceforge.net/ruleset_2_0_0.xsd">
     <description>Ruleset</description>
-    <!--<rule ref="category/java/bestpractices.xml">-->
-        <!--<exclude name="ConstantsInInterface" />-->
-    <!--</rule>-->
+    <rule ref="category/java/bestpractices.xml">
+        <exclude name="AbstractClassWithoutAbstractMethod" />
+        <exclude name="AccessorMethodGeneration" />
+        <exclude name="ArrayIsStoredDirectly" />
+        <exclude name="AvoidPrintStackTrace" />
+        <exclude name="AvoidReassigningParameters" />
+        <exclude name="AvoidStringBufferField" />
+        <exclude name="AvoidUsingHardCodedIP" />
+        <exclude name="ConstantsInInterface" />
+        <exclude name="GuardLogStatement" />
+        <exclude name="MethodReturnsInternalArray" />
+        <exclude name="OneDeclarationPerLine" />
+        <exclude name="PreserveStackTrace" />
+        <exclude name="ReplaceEnumerationWithIterator" />
+        <exclude name="ReplaceHashtableWithMap" />
+        <exclude name="SwitchStmtsShouldHaveDefault" />
+        <exclude name="SystemPrintln" />
+        <exclude name="UseVarargs" />
+    </rule>
     <!--<rule ref="category/java/codestyle.xml" />-->
     <!--<rule ref="category/java/design.xml" />-->
     <!--<rule ref="category/java/documentation.xml" />-->

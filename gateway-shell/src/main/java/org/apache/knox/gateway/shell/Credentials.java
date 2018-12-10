@@ -18,14 +18,15 @@
 package org.apache.knox.gateway.shell;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.ServiceLoader;
 
 public class Credentials {
-  ArrayList<CredentialCollector> collectors = new ArrayList<>();
+  List<CredentialCollector> collectors = new ArrayList<>();
 
   public Credentials add(String collectorType, String prompt, String name)
     throws CredentialCollectionException {
-    CredentialCollector collector = loadCredentialCollector(collectorType, prompt, name);
+    CredentialCollector collector = loadCredentialCollector(collectorType);
     if (collector == null) {
       throw new CredentialCollectionException("Invalid Collector Requested. Type: " + collectorType + " Name: " + name);
     }
@@ -51,7 +52,7 @@ public class Credentials {
     return null;
   }
 
-  private CredentialCollector loadCredentialCollector(String type, String prompt, String name) {
+  private CredentialCollector loadCredentialCollector(String type) {
     ServiceLoader<CredentialCollector> collectorsList = ServiceLoader.load(CredentialCollector.class);
     for (CredentialCollector collector : collectorsList) {
       if (collector.type().equals(type)) {

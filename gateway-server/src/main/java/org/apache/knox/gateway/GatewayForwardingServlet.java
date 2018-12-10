@@ -23,7 +23,6 @@ import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
 
 import javax.servlet.RequestDispatcher;
@@ -42,7 +41,6 @@ public class GatewayForwardingServlet extends HttpServlet{
   private static final String AUDIT_ACTION = "forward";
 
   private static final GatewayResources RES = ResourcesFactory.get( GatewayResources.class );
-  private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
 
   private static AuditService auditService = AuditServiceFactory.getAuditService();
   private static Auditor auditor = AuditServiceFactory.getAuditService()

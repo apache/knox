@@ -31,9 +31,6 @@ import org.apache.knox.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteFilterReader;
 import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteUtil;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.util.XmlUtils;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 import javax.xml.namespace.QName;
 import javax.xml.parsers.ParserConfigurationException;
@@ -56,7 +53,6 @@ public abstract class HtmlFilterReaderBase extends Reader implements
 
   private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
 
-  private Document document;
   private Stack<Level> stack;
   private Reader reader;
   private StreamedSource parser;
@@ -69,7 +65,6 @@ public abstract class HtmlFilterReaderBase extends Reader implements
 
   protected HtmlFilterReaderBase( Reader reader ) throws IOException, ParserConfigurationException {
     this.reader = reader;
-    document = XmlUtils.createDocument( false );
     stack = new Stack<>();
     parser = new StreamedSource( reader );
     iterator = parser.iterator();
@@ -148,7 +143,6 @@ public abstract class HtmlFilterReaderBase extends Reader implements
 
   private void processStartTag( StartTag tag ) {
     if( "<".equals( tag.getTagType().getStartDelimiter() ) ) {
-      Element e = document.createElement( tag.getNameSegment().toString() );
       stack.push( new Level( tag ) );
       writer.write( "<" );
       writer.write( tag.getNameSegment().toString() );
@@ -244,23 +238,12 @@ public abstract class HtmlFilterReaderBase extends Reader implements
     stack.clear();
   }
 
-  private String getNamespace( String prefix ) {
-    String namespace = null;
-    for( Level level : stack ) {
-      namespace = level.getNamespace( prefix );
-      if( namespace != null ) {
-        break;
-      }
-    }
-    return namespace;
-  }
-
   private static class Level {
     private StartTag tag;
     private QName name;
     private Map<String,String> namespaces;
 
-    private Level( StartTag tag ) {
+    Level( StartTag tag ) {
       this.tag = tag;
       this.name = null;
       this.namespaces = null;

@@ -53,7 +53,7 @@ public class SparkThriftServerUIServiceURLCreator extends SparkCommonServiceURLC
 
       if (comp != null) {
         String transportMode = comp.getConfigProperty("hive.server2.transport.mode");
-        if (transportMode.equalsIgnoreCase("http")) {
+        if ("http".equalsIgnoreCase(transportMode)) {
           String endpoint = comp.getConfigProperty("hive.server2.http.endpoint");
           for (String url : urls) {
             thriftURLs.add(url + (endpoint != null ? "/" + endpoint : ""));
@@ -64,5 +64,4 @@ public class SparkThriftServerUIServiceURLCreator extends SparkCommonServiceURLC
 
     return thriftURLs;
   }
-
 }

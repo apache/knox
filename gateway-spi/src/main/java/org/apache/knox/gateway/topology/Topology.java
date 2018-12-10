@@ -19,7 +19,6 @@ package org.apache.knox.gateway.topology;
 
 import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.collections.map.MultiKeyMap;
-import org.apache.knox.gateway.service.definition.CustomDispatch;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -41,7 +40,6 @@ public class Topology {
   private MultiKeyMap serviceMap;
   private List<Application> applications = new ArrayList<>();
   private Map<String,Application> applicationMap = new HashMap<>();
-  private CustomDispatch dispatch;
 
   public Topology() {
     serviceMap = MultiKeyMap.decorate(new HashedMap());

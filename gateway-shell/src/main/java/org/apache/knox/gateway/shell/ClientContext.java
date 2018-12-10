@@ -43,7 +43,7 @@ public class ClientContext {
     private final ClientContext clientContext;
     protected final Configuration configuration;
 
-    private Context(ClientContext clientContext, String prefix) {
+    Context(ClientContext clientContext, String prefix) {
       this.clientContext = clientContext;
       this.configuration = new SubsetConfiguration(clientContext.configuration, prefix);
     }
@@ -54,8 +54,7 @@ public class ClientContext {
   }
 
   public static class PoolContext extends Context {
-
-    private PoolContext(ClientContext clientContext) {
+    PoolContext(ClientContext clientContext) {
       super(clientContext, "pool");
     }
 
@@ -79,8 +78,7 @@ public class ClientContext {
   }
 
   public static class SocketContext extends Context {
-
-    private SocketContext(ClientContext clientContext) {
+    SocketContext(ClientContext clientContext) {
       super(clientContext, "socket");
     }
 
@@ -131,8 +129,7 @@ public class ClientContext {
   }
 
   public static class ConnectionContext extends Context {
-
-    private ConnectionContext(ClientContext clientContext) {
+    ConnectionContext(ClientContext clientContext) {
       super(clientContext, "connection");
     }
 
@@ -193,8 +190,7 @@ public class ClientContext {
    * @since 1.3.0
    */
   public static class KerberosContext extends Context {
-
-    private KerberosContext(ClientContext clientContext) {
+    KerberosContext(ClientContext clientContext) {
       super(clientContext, "kerberos");
     }
 

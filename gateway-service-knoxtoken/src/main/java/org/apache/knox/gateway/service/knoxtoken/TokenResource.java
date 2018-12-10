@@ -64,7 +64,7 @@ public class TokenResource {
   private List<String> targetAudiences = new ArrayList<>();
   private String tokenTargetUrl;
   private Map<String,Object> tokenClientDataMap;
-  private ArrayList<String> allowedDNs = new ArrayList<>();
+  private List<String> allowedDNs = new ArrayList<>();
   private boolean clientCertRequired;
   private String signatureAlgorithm = "RS256";
 

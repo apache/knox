@@ -104,7 +104,7 @@ public class ServiceTestResource {
           List<String> urls = getServiceTestURLs(config, s.getRole(), topology);
 
           //          Make sure we handle a case where no URLs are found.
-          if (urls.size() <= 0) {
+          if (urls.isEmpty()) {
             ServiceTest test = new ServiceTest(s);
             test.setMessage("This service did not contain any test URLs");
           }

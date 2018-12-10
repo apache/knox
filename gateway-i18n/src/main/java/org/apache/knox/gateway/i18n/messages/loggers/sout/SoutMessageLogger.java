@@ -28,12 +28,6 @@ public class SoutMessageLogger implements MessageLogger {
   private static final String FORMAT_WITHOUT_ID = "{0}: {2}";
   private static final String FORMAT_WITH_ID = "{0}: {2} [{1}]";
 
-  private final String name;
-
-  SoutMessageLogger( String name ) {
-    this.name = name;
-  }
-
   @Override
   public boolean isLoggable( MessageLevel level ) {
     return true;
@@ -51,5 +45,4 @@ public class SoutMessageLogger implements MessageLogger {
       thrown.printStackTrace();
     }
   }
-
 }

@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 abstract class Segment {
-
   static final String ANONYMOUS_PARAM = "";
   static final String DEFAULT_PATTERN = "";
   static final String STAR_PATTERN = "*";
@@ -41,30 +40,14 @@ abstract class Segment {
   public static final int GLOB = 5;
   public static final int UNKNOWN = 6;
 
-//  private String paramName; // ?queryName={paramName=value}
   private Token token;
   private Map<String,Value> values;
-
-//  protected Segment( String paramName, String valuePattern ) {
-//    this.paramName = paramName;
-//    this.values = new LinkedHashMap<>();
-//    this.values.put( valuePattern, new Value( valuePattern ) );
-//  }
 
   protected Segment( Token token ) {
     this.token = token;
     this.values = new LinkedHashMap<>();
     this.values.put( token.effectivePattern, new Value( token ) );
   }
-
-//  protected Segment( Segment that ) {
-//    this.paramName = that.paramName;
-//    this.values = new LinkedHashMap<>();
-//    for( Value thatValue : that.getValues() ) {
-//      Value thisValue = new Value( thatValue );
-//      this.values.put( thisValue.getPattern(), thisValue );
-//    }
-//  }
 
   protected Token getToken() {
     return token;
@@ -128,11 +111,6 @@ abstract class Segment {
     values.put( token.effectivePattern, value );
   }
 
-//  void addValue( String valuePattern ) {
-//    Value value = new Value( valuePattern );
-//    values.put( valuePattern, value );
-//  }
-
   @Override
   public String toString() {
     StringBuilder s = new StringBuilder();
@@ -161,7 +139,7 @@ abstract class Segment {
     private Token token;
     private Pattern regex;
 
-    private Value( Token token ) {
+    Value( Token token ) {
       this.token = token;
       this.regex = null;
       String effectivePattern = token.effectivePattern;
@@ -179,29 +157,6 @@ abstract class Segment {
       } else {
         this.type = STATIC;
       }
-    }
-
-//    private Value( String pattern ) {
-//      this.pattern = pattern;
-//      this.regex = null;
-//      if( DEFAULT_PATTERN.equals( pattern ) ) {
-//        this.type = DEFAULT;
-//      } else if( STAR_PATTERN.equals( pattern ) ) {
-//        this.type = STAR;
-//      } else if( GLOB_PATTERN.equals( pattern ) ) {
-//        type = GLOB;
-//      } else if ( pattern != null && pattern.contains( STAR_PATTERN ) ) {
-//        this.type = REGEX;
-//        this.regex = compileRegex( pattern );
-//      } else {
-//        this.type = STATIC;
-//      }
-//    }
-
-    private Value( Value that ) {
-      this.type = that.type;
-      this.token = that.token;
-      this.regex = that.regex;
     }
 
     Token getToken() {
@@ -356,21 +311,4 @@ abstract class Segment {
     segment = createRegex( segment );
     return Pattern.compile( segment );
   }
-
-//  private static String escapeSpecialRegExChar( String input, char c ) {
-//    int i = input.indexOf( c );
-//    if( i >= 0 ) {
-//      int inputLength = input.length();
-//      StringBuilder output = new StringBuilder( inputLength + 1 );
-//      output.append( input, 0, i );
-//      output.append( '\\' );
-//      if( i < inputLength ) {
-//        output.append( input, i, inputLength );
-//      }
-//      input = output.toString();
-//    }
-//    return input;
-//  }
-
-  // Escape
 }

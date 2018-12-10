@@ -21,8 +21,10 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class XForwardedHeaderRequestWrapper extends GatewayRequestWrapper {
 
@@ -38,7 +40,7 @@ public class XForwardedHeaderRequestWrapper extends GatewayRequestWrapper {
   private static final String X_FORWARDED_SERVER_LOWER = X_FORWARDED_SERVER.toLowerCase(Locale.ROOT);
   private static final String X_FORWARDED_CONTEXT = "X-Forwarded-Context";
   private static final String X_FORWARDED_CONTEXT_LOWER = X_FORWARDED_CONTEXT.toLowerCase(Locale.ROOT);
-  private static final ArrayList<String> headerNames = new ArrayList<>();
+  private static final List<String> headerNames = new ArrayList<>();
 
   static {
     headerNames.add(X_FORWARDED_FOR);
@@ -49,7 +51,7 @@ public class XForwardedHeaderRequestWrapper extends GatewayRequestWrapper {
     headerNames.add(X_FORWARDED_CONTEXT);
   }
 
-  Hashtable<String,String> proxyHeaders = new Hashtable<>();
+  Map<String,String> proxyHeaders = new HashMap<>();
 
   public XForwardedHeaderRequestWrapper(HttpServletRequest request) {
     super( request );

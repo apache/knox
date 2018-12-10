@@ -38,6 +38,7 @@ import org.apache.knox.gateway.services.metrics.MetricsService;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
@@ -51,7 +52,7 @@ public class DefaultMetricsService implements MetricsService {
 
   private Map<Class<?>, InstrumentationProvider> instrumentationProviders;
 
-  private ArrayList<MetricsReporter> metricsReporters;
+  private List<MetricsReporter> metricsReporters;
 
   private MetricsContext context;
 
@@ -156,7 +157,7 @@ public class DefaultMetricsService implements MetricsService {
     return instrumentationProviders;
   }
 
-  public ArrayList<MetricsReporter> getMetricsReporters() {
+  public List<MetricsReporter> getMetricsReporters() {
     return metricsReporters;
   }
 

@@ -255,7 +255,7 @@ public class GatewayServlet implements Servlet, Filter {
 
     private ServletConfig config;
 
-    private FilterConfigAdapter( ServletConfig config ) {
+    FilterConfigAdapter( ServletConfig config ) {
       this.config = config;
     }
 

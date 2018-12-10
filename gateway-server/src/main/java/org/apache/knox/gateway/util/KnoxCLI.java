@@ -83,6 +83,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
 
 public class KnoxCLI extends Configured implements Tool {
@@ -1109,7 +1110,6 @@ public class KnoxCLI extends Configured implements Tool {
       String authorizationEnabled = mainLdapRealm + ".authorizationEnabled";
       String userSearchAttributeName = mainLdapRealm + ".userSearchAttributeName";
       String userObjectClass = mainLdapRealm + ".userObjectClass";
-      String authenticationMechanism = mainLdapRealm + ".authenticationMechanism"; // Should not be used up to v0.6.0)
       String searchBase = mainLdapRealm + ".searchBase";
       String groupSearchBase = mainLdapRealm + ".groupSearchBase";
       String userSearchBase = mainLdapRealm + ".userSearchBase";
@@ -1243,40 +1243,6 @@ public class KnoxCLI extends Configured implements Tool {
       Ini ini = new Ini();
       ini.loadFromPath(config);
       return authenticateUser(ini, token);
-    }
-
-    /**
-     *
-     * @param userDn - fully qualified userDn used for LDAP authentication
-     * @return - returns the principal found in the userDn after "uid="
-     */
-    protected String getPrincipal(String userDn){
-      String result;
-
-//      Need to determine whether we are using AD or LDAP?
-//      LDAP userDn usually starts with "uid="
-//      AD userDn usually starts with cn/CN
-//      Find the userDN template
-
-      try {
-        Topology t = getTopology(cluster);
-        Provider shiro = t.getProvider("authentication", "ShiroProvider");
-
-        String p1 = shiro.getParams().get("main.ldapRealm.userDnTemplate");
-
-//        We know everything between first "=" and "," will be part of the principal.
-        int eq = userDn.indexOf('=');
-        int com = userDn.indexOf(',');
-        if(eq != -1 && com > eq && com != -1) {
-          result = userDn.substring(eq + 1, com);
-        } else {
-          result = "";
-        }
-        return result;
-      } catch (NoSuchTopologyException e) {
-        out.println(e.toString());
-        return userDn;
-      }
     }
 
     /**
@@ -1508,7 +1474,7 @@ public class KnoxCLI extends Configured implements Tool {
         "If a username and password argument are not supplied, the terminal will prompt you for one.";
 
     private static final String  SUBJECT_USER_GROUPS = "subject.userGroups";
-    private HashSet<String> groupSet = new HashSet<>();
+    private Set<String> groupSet = new HashSet<>();
 
     @Override
     public String getUsage() {
@@ -1558,15 +1524,15 @@ public class KnoxCLI extends Configured implements Tool {
       }
     }
 
-    private HashSet<String> getGroups(Topology t, UsernamePasswordToken token){
-      HashSet<String> groups = null;
+    private Set<String> getGroups(Topology t, UsernamePasswordToken token){
+      Set<String> groups = null;
       try {
         Subject subject = getSubject(getConfig(t));
         if(!subject.isAuthenticated()) {
           subject.login(token);
         }
         subject.hasRole(""); //Populate subject groups
-        groups = (HashSet) subject.getSession().getAttribute(SUBJECT_USER_GROUPS);
+        groups = (Set) subject.getSession().getAttribute(SUBJECT_USER_GROUPS);
         subject.logout();
       } catch (AuthenticationException e) {
         out.println("Error retrieving groups");

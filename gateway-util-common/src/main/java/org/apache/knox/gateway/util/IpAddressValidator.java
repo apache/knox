@@ -19,6 +19,7 @@ package org.apache.knox.gateway.util;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Validate a given IP Address against a list of comma separated list of addresses.
@@ -27,12 +28,12 @@ public class IpAddressValidator {
   /**
    * The parsed list of ip addresses
    */
-  private ArrayList<String> ipaddr = new ArrayList<>();
+  private List<String> ipaddr = new ArrayList<>();
 
   /**
    * IP addresses from the ipaddr list that contain a wildcard character '*'
    */
-  private ArrayList<String> wildCardIPs = new ArrayList<>();
+  private List<String> wildCardIPs = new ArrayList<>();
 
   /**
    * Optimization based on empty IP address list or an explicit '*' wildcard
@@ -101,7 +102,7 @@ public class IpAddressValidator {
     return anyIP;
   }
 
-  public ArrayList<String> getIPAddresses() {
+  public List<String> getIPAddresses() {
     return ipaddr;
   }
 }

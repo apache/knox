@@ -20,12 +20,10 @@ package org.apache.knox.gateway.websockets;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.service.definition.ServiceDefinition;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.registry.ServiceDefEntry;
 import org.apache.knox.gateway.services.registry.ServiceDefinitionRegistry;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
-import org.apache.knox.gateway.util.ServiceDefinitionsLoader;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
@@ -33,14 +31,12 @@ import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 
 import javax.websocket.ClientEndpointConfig;
-import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -174,14 +170,8 @@ public class GatewayWebsocketHandler extends WebSocketHandler
     /* Filter out /cluster/topology/service to get endpoint */
     String[] pathService = path.split(REGEX_SPLIT_SERVICE_PATH);
 
-    final File servicesDir = new File(config.getGatewayServicesDir());
-
-    final Set<ServiceDefinition> serviceDefs = ServiceDefinitionsLoader
-        .getServiceDefinitions(servicesDir);
-
     /* URL used to connect to websocket backend */
-    String backendURL = urlFromServiceDefinition(serviceDefs,
-        serviceRegistryService, entry, path);
+    String backendURL = urlFromServiceDefinition(serviceRegistryService, entry, path);
 
     StringBuilder backend = new StringBuilder();
     try {
@@ -221,7 +211,6 @@ public class GatewayWebsocketHandler extends WebSocketHandler
   }
 
   private static String urlFromServiceDefinition(
-      final Set<ServiceDefinition> serviceDefs,
       final ServiceRegistry serviceRegistry, final ServiceDefEntry entry,
       final String path) {
 
@@ -233,7 +222,5 @@ public class GatewayWebsocketHandler extends WebSocketHandler
      */
     return serviceRegistry.lookupServiceURL(contexts[2],
         entry.getName().toUpperCase(Locale.ROOT));
-
   }
-
 }

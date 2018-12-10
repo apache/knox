@@ -26,7 +26,7 @@ import java.util.Map;
 
 public class InstrGatewayFilterProviderDescriptor implements InstrumentationProviderDescriptor {
 
-  private HashMap<Class<?>, InstrumentationProvider> providers;
+  private Map<Class<?>, InstrumentationProvider> providers;
 
   public InstrGatewayFilterProviderDescriptor() {
     providers = new HashMap<>();

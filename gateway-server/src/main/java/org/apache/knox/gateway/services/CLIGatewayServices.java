@@ -17,12 +17,10 @@
  */
 package org.apache.knox.gateway.services;
 
-import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.deploy.DeploymentContext;
 import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
 import org.apache.knox.gateway.descriptor.ResourceDescriptor;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.config.remote.RemoteConfigurationRegistryClientServiceFactory;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
 import org.apache.knox.gateway.services.security.impl.RemoteAliasService;
@@ -39,9 +37,6 @@ import java.util.List;
 import java.util.Map;
 
 public class CLIGatewayServices implements GatewayServices {
-
-  private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
-
   private Map<String,Service> services = new HashMap<>();
   private CLIMasterService ms;
   private DefaultKeystoreService ks;

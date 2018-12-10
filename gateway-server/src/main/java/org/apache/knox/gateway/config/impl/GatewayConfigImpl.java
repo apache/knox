@@ -252,10 +252,6 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return get(GATEWAY_HOME_VAR, System.getProperty(GATEWAY_HOME_VAR, System.getenv(GATEWAY_HOME_VAR)));
   }
 
-  private void setGatewayHomeDir( String dir ) {
-    set( GATEWAY_HOME_VAR, dir );
-  }
-
   @Override
   public String getGatewayConfDir() {
     String value = getVar( GATEWAY_CONF_HOME_VAR, getGatewayHomeDir() + File.separator + "conf"  );

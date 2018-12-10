@@ -73,7 +73,7 @@ public class Rewriter {
     private Params params;
     private Resolver[] resolvers;
 
-    private RewriteParams( Params params, Resolver... resolvers ) {
+    RewriteParams( Params params, Resolver... resolvers ) {
       this.params = params;
       this.resolvers = resolvers;
     }

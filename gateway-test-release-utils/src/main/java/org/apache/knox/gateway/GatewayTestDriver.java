@@ -269,7 +269,7 @@ public class GatewayTestDriver {
     String gatewayPath;
     boolean mock;
     MockServer server;
-    private Service( String role, String realUrl, String gatewayPath, boolean mock ) throws Exception {
+    Service( String role, String realUrl, String gatewayPath, boolean mock ) throws Exception {
       this.role = role;
       this.realUrl = new URI( realUrl );
       this.gatewayPath = gatewayPath;

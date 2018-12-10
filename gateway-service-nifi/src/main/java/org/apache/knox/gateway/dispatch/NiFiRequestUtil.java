@@ -78,7 +78,7 @@ class NiFiRequestUtil {
       proxiedEntitesChainHeader = "";
     }
     outboundRequest.setHeader(NiFiHeaders.X_PROXIED_ENTITIES_CHAIN, proxiedEntitesChainHeader +
-        String.format(Locale.ROOT, "<%s>", effectivePrincipalName.equalsIgnoreCase("anonymous") ? "" : effectivePrincipalName));
+        String.format(Locale.ROOT, "<%s>", "anonymous".equalsIgnoreCase(effectivePrincipalName) ? "" : effectivePrincipalName));
 
     // Make sure headers named "Cookie" are removed from the request to NiFi, since NiFi does not use cookies.
     Header[] cookieHeaders = outboundRequest.getHeaders("Cookie");

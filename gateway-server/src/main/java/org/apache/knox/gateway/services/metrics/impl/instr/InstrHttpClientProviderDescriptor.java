@@ -27,7 +27,7 @@ import java.util.Map;
 public class InstrHttpClientProviderDescriptor implements
     InstrumentationProviderDescriptor {
 
-  private HashMap<Class<?>, InstrumentationProvider> providers;
+  private Map<Class<?>, InstrumentationProvider> providers;
 
   public InstrHttpClientProviderDescriptor() {
     providers = new HashMap<>();

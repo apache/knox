@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.svcregfunc.impl;
 
-import org.apache.knox.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 import org.apache.knox.gateway.svcregfunc.api.ServiceUrlFunctionDescriptor;
@@ -39,7 +38,6 @@ public class ServiceUrlFunctionProcessor
   public List<String> resolve( UrlRewriteContext context, List<String> parameters ) throws Exception {
     List<String> results = null;
     if( parameters != null ) {
-      UrlRewriter.Direction direction = context.getDirection();
       results = new ArrayList<>( parameters.size() );
       for( String parameter : parameters ) {
         parameter = resolve( parameter );

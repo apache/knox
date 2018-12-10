@@ -73,16 +73,10 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
 
   @Override
   public Map<String, String[]> getParameterMap() {
-    Map<String, String[]> map = null;
-    try {
-      map = convertValuesToStringArrays(getParams());
-    } catch (UnsupportedEncodingException e) {
-      log.unableToGetParamsFromQueryString(e);
-    }
-    return map;
+    return convertValuesToStringArrays();
   }
 
-  private Map<String, String[]> convertValuesToStringArrays(Map<String, List<String>> params) {
+  private Map<String, String[]> convertValuesToStringArrays() {
     Map<String, String[]> arrayMap = new HashMap<>();
     String name;
     Enumeration<String> names = getParameterNames();
@@ -288,7 +282,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
 
     private InputStream stream;
 
-    private ServletInputStreamWrapper( InputStream stream ) {
+    ServletInputStreamWrapper( InputStream stream ) {
       this.stream = stream;
     }
 

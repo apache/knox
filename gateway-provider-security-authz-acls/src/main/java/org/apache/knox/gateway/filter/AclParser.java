@@ -19,6 +19,7 @@ package org.apache.knox.gateway.filter;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.util.IpAddressValidator;
@@ -26,8 +27,8 @@ import org.apache.knox.gateway.util.IpAddressValidator;
 public class AclParser {
   private static AclsAuthorizationMessages log = MessagesFactory.get( AclsAuthorizationMessages.class );
 
-  public ArrayList<String> users;
-  public ArrayList<String> groups;
+  public List<String> users;
+  public List<String> groups;
   public boolean anyUser = true;
   public boolean anyGroup = true;
   public IpAddressValidator ipv;

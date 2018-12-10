@@ -28,14 +28,14 @@ import java.util.Enumeration;
 
 public class NoOpAppender implements Appender {
 
-  public static Enumeration<Appender> setUp() {
+  public static Enumeration<Appender> setUpAndReturnOriginalAppenders() {
     Enumeration<Appender> appenders = (Enumeration<Appender>)Logger.getRootLogger().getAllAppenders();
     Logger.getRootLogger().removeAllAppenders();
     Logger.getRootLogger().addAppender( new NoOpAppender() );
     return appenders;
   }
 
-  public static void tearDown( Enumeration<Appender> appenders ) {
+  public static void resetOriginalAppenders(Enumeration<Appender> appenders ) {
     if( appenders != null ) {
       while( appenders.hasMoreElements() ) {
         Logger.getRootLogger().addAppender( appenders.nextElement() );

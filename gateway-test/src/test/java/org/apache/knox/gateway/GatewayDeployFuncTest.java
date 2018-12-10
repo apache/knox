@@ -73,7 +73,7 @@ public class GatewayDeployFuncTest {
   @BeforeClass
   public static void setupSuite() throws Exception {
     LOG_ENTER();
-    //appenders = NoOpAppender.setUp();
+    //appenders = NoOpAppender.setUpAndReturnOriginalAppenders();
     driver.setupLdap(0);
     LOG_EXIT();
   }
@@ -83,7 +83,7 @@ public class GatewayDeployFuncTest {
     LOG_ENTER();
     driver.cleanup();
     //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
-    //NoOpAppender.tearDown( appenders );
+    //NoOpAppender.resetOriginalAppenders( appenders );
     LOG_EXIT();
   }
 

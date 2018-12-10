@@ -342,7 +342,6 @@ public class Matcher<V> {
   }
 
   private class Status {
-
     List<MatchSegment> candidates = new ArrayList<>();
     List<MatchSegment> matches = new ArrayList<>();
     List<MatchSegment> temp;
@@ -363,7 +362,7 @@ public class Matcher<V> {
     private Segment templateSegment;
     private Segment inputSegment;
 
-    private MatchSegment( MatchSegment parent, PathNode node, Segment templateSegment, Segment inputSegment ) {
+    MatchSegment( MatchSegment parent, PathNode node, Segment templateSegment, Segment inputSegment ) {
       this.parentMatch = parent;
       this.pathNode = node;
       this.templateSegment = templateSegment;
@@ -412,7 +411,7 @@ public class Matcher<V> {
     private Params params;
     //TODO private Params extra;
 
-    private Match( Template template, V value ) {
+    Match( Template template, V value ) {
       this.template = template;
       this.value = value;
     }
@@ -437,7 +436,7 @@ public class Matcher<V> {
     Map<Segment,PathNode> children;
     Set<QueryNode> queries;
 
-    private PathNode( PathNode parent, Segment segment ) {
+    PathNode( PathNode parent, Segment segment ) {
       super( null, null );
       this.depth = ( parent == null ) ? 0 : parent.depth+1;
       this.segment = segment;
@@ -500,22 +499,18 @@ public class Matcher<V> {
   }
 
   private class QueryNode extends Node {
-
-    private QueryNode( Template template, V value ) {
+    QueryNode( Template template, V value ) {
       super( template, value );
     }
-
   }
 
   private class Node {
-
     Template template;
     V value;
 
-    private Node( Template template, V value ) {
+    Node( Template template, V value ) {
       this.template = template;
       this.value = value;
     }
   }
-
 }

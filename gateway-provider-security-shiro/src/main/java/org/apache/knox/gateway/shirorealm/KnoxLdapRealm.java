@@ -560,13 +560,13 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     LdapName searchBaseDn = new LdapName(searchBaseString);
 
     // do scope test
-    if (searchScope.equalsIgnoreCase("base")) {
+    if ("base".equalsIgnoreCase(searchScope)) {
       return false;
     }
     if (!userLdapDn.toString().endsWith(searchBaseDn.toString())) {
       return false;
     }
-    if (searchScope.equalsIgnoreCase("one")
+    if ("one".equalsIgnoreCase(searchScope)
         && (userLdapDn.size() != searchBaseDn.size() - 1)) {
       return false;
     }
@@ -578,7 +578,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     try {
       searchResultEnum = systemLdapCtx
         .search(userLdapDn, searchFilter,
-            searchScope.equalsIgnoreCase("sub") ? SUBTREE_SCOPE
+            "sub".equalsIgnoreCase(searchScope) ? SUBTREE_SCOPE
                 : ONELEVEL_SCOPE);
       if (searchResultEnum.hasMore()) {
         return true;

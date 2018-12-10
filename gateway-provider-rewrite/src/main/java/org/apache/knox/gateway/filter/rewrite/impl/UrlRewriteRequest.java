@@ -67,7 +67,6 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
   private String bodyFilterName;
   private String headersFilterName;
   private UrlRewriteFilterContentDescriptor headersFilterConfig;
-  private String cookiesFilterName;
 
   /**
    * Constructs a request object wrapping the given request.
@@ -84,7 +83,6 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
     this.bodyFilterName = config.getInitParameter( UrlRewriteServletFilter.REQUEST_BODY_FILTER_PARAM );
     this.headersFilterName = config.getInitParameter( UrlRewriteServletFilter.REQUEST_HEADERS_FILTER_PARAM );
     this.headersFilterConfig = getRewriteFilterConfig( headersFilterName, UrlRewriteServletFilter.HEADERS_MIME_TYPE );
-    this.cookiesFilterName = config.getInitParameter( UrlRewriteServletFilter.REQUEST_COOKIES_FILTER_PARAM );
   }
 
   Template getSourceUrl() {
@@ -182,7 +180,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
   @Override
   public String getHeader( String name ) {
     String value;
-    if (name.equalsIgnoreCase("Host")) {
+    if ("Host".equalsIgnoreCase(name)) {
       String uri = getRequestURI();
       try {
         URL url = new URL(uri);
@@ -222,7 +220,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
     private Enumeration<String> delegate;
     private String rule;
 
-    private EnumerationRewriter( UrlRewriter rewriter, Enumeration<String> delegate, String rule ) {
+    EnumerationRewriter( UrlRewriter rewriter, Enumeration<String> delegate, String rule ) {
       this.rewriter = rewriter;
       this.delegate = delegate;
       this.rule = rule;

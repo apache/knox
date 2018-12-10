@@ -18,7 +18,6 @@
 package org.apache.knox.gateway.util.urltemplate;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -56,7 +55,7 @@ public class Template {
       List<Path> path,
       boolean isAbsolute,
       boolean isDirectory,
-      LinkedHashMap<String,Query> query,
+      Map<String,Query> query,
       Query extra,
       boolean hasQuery,
       Fragment fragment,

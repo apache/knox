@@ -92,7 +92,7 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
     return definition;
   }
 
-  private static UrlRewriteRulesDescriptor loadRewriteRules( Application application, File file ) throws IOException {
+  private static UrlRewriteRulesDescriptor loadRewriteRules( File file ) throws IOException {
     UrlRewriteRulesDescriptor rules;
     if( !file.exists() ) {
       rules = UrlRewriteRulesDescriptorFactory.load( "xml", new StringReader( "<rules/>" ) );
@@ -113,7 +113,7 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
       File serviceFile = new File( appDir, SERVICE_DEFINITION_FILE_NAME );
       File rewriteFile = new File( appDir, REWRITE_RULES_FILE_NAME );
       serviceDefinition = loadServiceDefinition( application, serviceFile );
-      serviceRules = loadRewriteRules( application, rewriteFile );
+      serviceRules = loadRewriteRules( rewriteFile );
     } catch ( IOException | JAXBException e ) {
       throw new DeploymentException( "Failed to deploy application: " + application.getName(), e );
     }
@@ -136,11 +136,11 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
 
   @Override
   public void contributeService(DeploymentContext context, Service service) throws Exception {
-    contributeRewriteRules(context, service);
+    contributeRewriteRules(context);
     contributeResources(context, service);
   }
 
-  private void contributeRewriteRules(DeploymentContext context, Service service) {
+  private void contributeRewriteRules(DeploymentContext context) {
     if ( serviceRules != null ) {
       UrlRewriteRulesDescriptor clusterRules = context.getDescriptor("rewrite");
       // Coverity CID 1352312

@@ -73,7 +73,7 @@ public class KnoxCliSysBindTest {
     driver.cleanup();
 
     //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
-    //NoOpAppender.tearDown( appenders );
+    //NoOpAppender.resetOriginalAppenders( appenders );
     LOG_EXIT();
   }
 
@@ -252,11 +252,11 @@ public class KnoxCliSysBindTest {
     String[] args3 = { "system-user-auth-test", "--master", "knox", "--cluster", "test-cluster-3", "--d" };
     cli = new KnoxCLI();
     cli.setConf(config);
-    Enumeration<Appender> before = NoOpAppender.setUp();
+    Enumeration<Appender> before = NoOpAppender.setUpAndReturnOriginalAppenders();
     try {
       cli.run( args3 );
     } finally {
-      NoOpAppender.tearDown( before );
+      NoOpAppender.resetOriginalAppenders( before );
     }
     assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("LDAP authentication failed"));
     assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("Unable to successfully bind to LDAP server with topology credentials"));

@@ -20,8 +20,6 @@ package org.apache.knox.gateway.identityasserter.common.function;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
-import org.apache.knox.gateway.i18n.GatewaySpiMessages;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.SubjectUtils;
 
 import javax.security.auth.Subject;
@@ -31,9 +29,6 @@ import java.util.List;
 public class UsernameFunctionProcessor
     implements UrlRewriteFunctionProcessor<UsernameFunctionDescriptor> {
 
-  private static final GatewaySpiMessages LOG = MessagesFactory.get( GatewaySpiMessages.class );
-//  private PrincipalMapper mapper = null;
-
   @Override
   public String name() {
     return UsernameFunctionDescriptor.FUNCTION_NAME;
@@ -41,12 +36,6 @@ public class UsernameFunctionProcessor
 
   @Override
   public void initialize( UrlRewriteEnvironment environment, UsernameFunctionDescriptor descriptor ) throws Exception {
-//    if( environment != null ) {
-//      GatewayServices services = environment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE );
-//      if( services != null ) {
-//        mapper = (PrincipalMapper)services.getService( "PrincipalMapperService" /*GatewayServices.PRINCIPAL_MAPPER_SERVICE*/ );
-//      }
-//    }
   }
 
   @Override
@@ -67,6 +56,4 @@ public class UsernameFunctionProcessor
     }
     return results;
   }
-
 }
-

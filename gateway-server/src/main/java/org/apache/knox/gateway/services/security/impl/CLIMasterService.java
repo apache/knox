@@ -18,17 +18,13 @@
 package org.apache.knox.gateway.services.security.impl;
 
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.services.Service;
-import org.apache.knox.gateway.GatewayMessages;
 
 import java.util.Map;
 
 public class CLIMasterService extends CMFMasterService implements MasterService, Service {
-  private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
-
   public CLIMasterService() {
     super("gateway");
   }

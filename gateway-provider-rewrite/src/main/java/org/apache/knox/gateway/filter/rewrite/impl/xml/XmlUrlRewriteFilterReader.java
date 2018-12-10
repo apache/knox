@@ -49,7 +49,7 @@ public class XmlUrlRewriteFilterReader extends XmlFilterReader {
   }
 
   //TODO: Need to limit which values are attempted to be filtered by the name.
-  private String filterValueString( String name, String value, String rule ) {
+  private String filterValueString( String value, String rule ) {
     try {
       Template input = Parser.parseLiteral( value );
       if( input != null ) {
@@ -70,11 +70,11 @@ public class XmlUrlRewriteFilterReader extends XmlFilterReader {
 
   @Override
   protected String filterAttribute( QName elementName, QName attributeName, String attributeValue, String ruleName ) {
-    return filterValueString( attributeName.getLocalPart(), attributeValue, ruleName );
+    return filterValueString( attributeValue, ruleName );
   }
 
   @Override
   protected String filterText( QName elementName, String text, String ruleName ) {
-    return filterValueString( elementName.getLocalPart(), text, ruleName );
+    return filterValueString( text, ruleName );
   }
 }

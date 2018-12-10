@@ -96,7 +96,7 @@ public class FrontendFunctionProcessor implements UrlRewriteFunctionProcessor<Fr
 
     private String paramName;
 
-    private ParamResolver( String paramName ) {
+    ParamResolver( String paramName ) {
       this.paramName = paramName;
     }
 
@@ -104,14 +104,13 @@ public class FrontendFunctionProcessor implements UrlRewriteFunctionProcessor<Fr
     public List<String> resolve( UrlRewriteContext context, List<String> parameter ) throws Exception {
       return context.getParameters().resolve( paramName );
     }
-
   }
 
   private static class FixedResolver implements UrlRewriteResolver {
 
     private List<String> fixedValues;
 
-    private FixedResolver( String... fixedValues ) {
+    FixedResolver( String... fixedValues ) {
       this.fixedValues = Arrays.asList( fixedValues );
     }
 
@@ -119,7 +118,5 @@ public class FrontendFunctionProcessor implements UrlRewriteFunctionProcessor<Fr
     public List<String> resolve( UrlRewriteContext context, List<String> parameter ) throws Exception {
       return fixedValues;
     }
-
   }
-
 }

@@ -191,14 +191,14 @@ public class DeploymentFactoryFuncTest {
     provider.addParam( param );
     topology.addProvider( provider );
 
-    Enumeration<Appender> appenders = NoOpAppender.setUp();
+    Enumeration<Appender> appenders = NoOpAppender.setUpAndReturnOriginalAppenders();
     try {
       DeploymentFactory.createDeployment( config, topology );
       fail( "Should have throws IllegalArgumentException" );
     } catch ( DeploymentException e ) {
       // Expected.
     } finally {
-      NoOpAppender.tearDown( appenders );
+      NoOpAppender.resetOriginalAppenders( appenders );
     }
     LOG_EXIT();
   }

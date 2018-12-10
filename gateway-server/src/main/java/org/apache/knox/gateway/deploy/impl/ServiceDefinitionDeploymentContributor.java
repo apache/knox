@@ -89,11 +89,11 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
 
   @Override
   public void contributeService(DeploymentContext context, Service service) throws Exception {
-    contributeRewriteRules(context, service);
+    contributeRewriteRules(context);
     contributeResources(context, service);
   }
 
-  private void contributeRewriteRules(DeploymentContext context, Service service) {
+  private void contributeRewriteRules(DeploymentContext context) {
     if ( serviceRules != null ) {
       UrlRewriteRulesDescriptor clusterRules = context.getDescriptor("rewrite");
       clusterRules.addRules(serviceRules);
@@ -160,7 +160,7 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
         context.contributeFilter(service, resource, role, policyBinding.getName(), null);
       }
       /* handle the case where topology has federation provider but service defines Anonymous authentication see KNOX-1197 */
-      else if (role.equalsIgnoreCase("authentication") && topologyContainsProviderType(context, "federation")) {
+      else if ("authentication".equalsIgnoreCase(role) && topologyContainsProviderType(context, "federation")) {
         context.contributeFilter(service, resource, role, policyBinding.getName(), null);
       }
     }

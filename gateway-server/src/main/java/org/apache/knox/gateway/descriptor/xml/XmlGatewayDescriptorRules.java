@@ -25,12 +25,10 @@ import org.apache.commons.digester3.binder.AbstractRulesModule;
 import org.xml.sax.Attributes;
 
 public class XmlGatewayDescriptorRules extends AbstractRulesModule implements XmlGatewayDescriptorTags {
-
   private static final Object[] NO_PARAMS = new Object[0];
 
   @Override
   protected void configure() {
-
     forPattern( GATEWAY ).addRule( new FactoryCreateRule( XmlGatewayDescriptorFactory.class ) );
     forPattern( GATEWAY + "/" + RESOURCE ).addRule( new AddNextRule( "addResource" ) );
     forPattern( GATEWAY + "/" + RESOURCE + "/" + RESOURCE_ROLE ).callMethod( "role" ).usingElementBodyAsArgument();
@@ -45,10 +43,9 @@ public class XmlGatewayDescriptorRules extends AbstractRulesModule implements Xm
   }
 
   private static class AddNextRule extends Rule {
-
     private String method;
 
-    private AddNextRule( String method ) {
+    AddNextRule( String method ) {
       this.method = method;
     }
 
@@ -62,7 +59,5 @@ public class XmlGatewayDescriptorRules extends AbstractRulesModule implements Xm
     public void end( String namespace, String name ) {
       getDigester().pop();
     }
-
   }
-
 }

@@ -106,7 +106,6 @@ public class RemoteAliasService implements AliasService {
   private RemoteConfigurationRegistryClientService registryClientService;
   private MasterService ms;
   private GatewayConfig config;
-  private Map<String, String> options;
 
   /* create an instance */
   public RemoteAliasService() {
@@ -404,7 +403,6 @@ public class RemoteAliasService implements AliasService {
   public void init(final GatewayConfig config,
       final Map<String, String> options) throws ServiceLifecycleException {
     this.config = config;
-    this.options = options;
 
     /* setup and initialize encryptor for encryption and decryption of passwords */
     encryptor = new ConfigurableEncryptor(new String(ms.getMasterSecret()));

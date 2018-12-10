@@ -183,7 +183,7 @@ public class UrlRewriteServletFilterTest {
 //  @Ignore( "Need to figure out how to handle cookies since domain and path are separate." )
 //  @Test
 //  public void testRequestCookieRewrite() throws Exception {
-//    setUp( null );
+//    setUpAndReturnOriginalAppenders( null );
 //    // Setup the server side request/response interaction.
 //    interaction.expect()
 //        .method( "GET" )
@@ -210,7 +210,7 @@ public class UrlRewriteServletFilterTest {
 //  @Ignore( "Need to figure out how to handle cookies since domain and path are separate." )
 //  @Test
 //  public void testResponseCookieRewrite() throws Exception {
-//    setUp( null );
+//    setUpAndReturnOriginalAppenders( null );
 //    // Setup the server side request/response interaction.
 //    interaction.expect()
 //        .method( "GET" )
@@ -526,7 +526,7 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testRequestXmlBodyRewriteWithFilterInitParamForInvalidFilterConfig() throws Exception {
-    Enumeration<Appender> realAppenders = NoOpAppender.setUp();
+    Enumeration<Appender> realAppenders = NoOpAppender.setUpAndReturnOriginalAppenders();
     try {
 
       Map<String,String> initParams = new HashMap<>();
@@ -559,7 +559,7 @@ public class UrlRewriteServletFilterTest {
       // Test the results.
       assertThat( response.getStatus(), is( 500 ) );
     } finally {
-      NoOpAppender.tearDown( realAppenders );
+      NoOpAppender.resetOriginalAppenders( realAppenders );
     }
   }
 

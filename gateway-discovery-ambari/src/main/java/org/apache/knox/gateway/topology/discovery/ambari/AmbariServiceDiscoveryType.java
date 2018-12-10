@@ -20,9 +20,6 @@ import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryType;
 
 public class AmbariServiceDiscoveryType implements ServiceDiscoveryType {
-
-    private static final String IMPL = AmbariServiceDiscovery.class.getCanonicalName();
-
     @Override
     public String getType() {
         return AmbariServiceDiscovery.TYPE;

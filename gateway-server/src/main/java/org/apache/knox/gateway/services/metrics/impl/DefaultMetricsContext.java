@@ -21,12 +21,13 @@ import org.apache.knox.gateway.services.metrics.MetricsContext;
 import org.apache.knox.gateway.services.metrics.MetricsService;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class DefaultMetricsContext implements MetricsContext {
 
   private MetricsService metricsService;
 
-  private HashMap<String, Object> properties = new HashMap<>();
+  private Map<String, Object> properties = new HashMap<>();
 
   public DefaultMetricsContext(MetricsService metricsService) {
     this.metricsService = metricsService;

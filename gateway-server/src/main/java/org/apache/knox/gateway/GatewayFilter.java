@@ -226,11 +226,6 @@ public class GatewayFilter implements Filter {
     addHolder( holder );
   }
 
-//  public void addFilter( String path, String name, Class<RegexDirFilter> clazz, Map<String,String> params ) throws URISyntaxException {
-//    Holder holder = new Holder( path, name, clazz, params );
-//    addHolder( holder );
-//  }
-
   public void addFilter( String path, String name, String clazz, Map<String,String> params, String resourceRole ) throws URISyntaxException {
     Holder holder = new Holder( path, name, clazz, params, resourceRole );
     addHolder( holder );
@@ -253,11 +248,11 @@ public class GatewayFilter implements Filter {
     private List<Holder> chain;
     private String resourceRole;
 
-    private Chain() {
+    Chain() {
       this.chain = new ArrayList<>();
     }
 
-    private Chain( List<Holder> chain ) {
+    Chain( List<Holder> chain ) {
       this.chain = chain;
     }
 
@@ -289,7 +284,6 @@ public class GatewayFilter implements Filter {
   }
 
   private class Holder implements Filter, FilterConfig {
-//    private String path;
     private Template template;
     private String name;
     private Map<String,String> params;
@@ -298,8 +292,7 @@ public class GatewayFilter implements Filter {
     private String type;
     private String resourceRole;
 
-    private Holder( String path, String name, Filter filter, Map<String,String> params, String resourceRole ) throws URISyntaxException {
-//      this.path = path;
+    Holder( String path, String name, Filter filter, Map<String,String> params, String resourceRole ) throws URISyntaxException {
       this.template = Parser.parseTemplate( path );
       this.name = name;
       this.params = params;
@@ -309,18 +302,7 @@ public class GatewayFilter implements Filter {
       this.resourceRole = resourceRole;
     }
 
-//    private Holder( String path, String name, Class<RegexDirFilter> clazz, Map<String,String> params ) throws URISyntaxException {
-//      this.path = path;
-//      this.template = Parser.parse( path );
-//      this.name = name;
-//      this.params = params;
-//      this.instance = null;
-//      this.clazz = clazz;
-//      this.type = clazz.getCanonicalName();
-//    }
-
-    private Holder( String path, String name, String clazz, Map<String,String> params, String resourceRole ) throws URISyntaxException {
-//      this.path = path;
+    Holder( String path, String name, String clazz, Map<String,String> params, String resourceRole ) throws URISyntaxException {
       this.template = Parser.parseTemplate( path );
       this.name = name;
       this.params = params;

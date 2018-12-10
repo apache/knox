@@ -65,7 +65,7 @@ public class DefaultConfigurationInjector implements ConfigurationInjector {
       Alias alias = field.getAnnotation( Alias.class );
       String name = getConfigName( field, alias );
       String bind = getBindName( target, name, binding );
-      Object value = retrieveValue( target, bind, name, field.getType(), adapter, binding );
+      Object value = retrieveValue( target, bind, name, field.getType(), adapter );
       if( value == null ) {
         Optional optional = field.getAnnotation( Optional.class );
         if( optional == null ) {
@@ -100,7 +100,7 @@ public class DefaultConfigurationInjector implements ConfigurationInjector {
       for( int i=0; i<argTypes.length; i++ ) {
         String argName = getConfigName( methodName, argTags[i] );
         String bndName = getBindName( target, argName, binding );
-        Object argValue = retrieveValue( target, bndName, argName, argTypes[i], adapter, binding );
+        Object argValue = retrieveValue( target, bndName, argName, argTypes[i], adapter );
         if( argValue == null ) {
           Default defTag = findAnnotation( argTags[i], Default.class );
           if( defTag != null ) {
@@ -139,7 +139,7 @@ public class DefaultConfigurationInjector implements ConfigurationInjector {
     return objValue;
   }
 
-  private Object retrieveValue( Object target, String bind, String name, Class<?> type, ConfigurationAdapter adapter, ConfigurationBinding binding ) {
+  private Object retrieveValue( Object target, String bind, String name, Class<?> type, ConfigurationAdapter adapter) {
     Object value;
     try {
       value = adapter.getConfigurationValue( bind );

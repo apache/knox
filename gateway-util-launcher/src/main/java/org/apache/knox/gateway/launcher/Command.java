@@ -140,7 +140,7 @@ class Command {
 
     private Pattern pattern;
 
-    private WildcardFilenameFilter( String filter ) {
+    WildcardFilenameFilter( String filter ) {
       filter = filter.replace( ".", SAFE );
       filter = filter.replace( "*", ".*" );
       filter = filter.replace( SAFE, "\\." );

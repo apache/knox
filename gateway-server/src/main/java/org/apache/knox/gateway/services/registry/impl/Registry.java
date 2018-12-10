@@ -18,8 +18,9 @@
 package org.apache.knox.gateway.services.registry.impl;
 
 import java.util.HashMap;
+import java.util.Map;
 
-class Registry extends HashMap<String,HashMap<String,RegEntry>> {
+class Registry extends HashMap<String, Map<String,RegEntry>> {
   private static final long serialVersionUID = 1L;
 
   Registry() {

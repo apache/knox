@@ -95,7 +95,7 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
     // part one is the code and part two is the signature
     boolean verified = crypto.verify("SHA256withRSA", "gateway-identity", parts[0], Base64.decodeBase64(parts[1]));
     if (verified) {
-      HashMap<String,RegEntry> clusterServices = registry.get(clusterName);
+      Map<String,RegEntry> clusterServices = registry.get(clusterName);
       if (clusterServices == null) {
         synchronized(this) {
           clusterServices = new HashMap<>();
@@ -120,7 +120,7 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
     return rc;
   }
 
-  private String renderAsJsonString(HashMap<String,HashMap<String,RegEntry>> registry) {
+  private String renderAsJsonString(Map<String,Map<String,RegEntry>> registry) {
     String json = null;
     ObjectMapper mapper = new ObjectMapper();
 
@@ -146,7 +146,7 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
   @Override
   public List<String> lookupServiceURLs( String clusterName, String serviceName ) {
     RegEntry entry;
-    HashMap<String, RegEntry> clusterServices = registry.get(clusterName);
+    Map<String, RegEntry> clusterServices = registry.get(clusterName);
     if (clusterServices != null) {
       entry = clusterServices.get(serviceName);
       if( entry != null ) {
@@ -156,7 +156,7 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
     return null;
   }
 
-  private HashMap<String, HashMap<String,RegEntry>> getMapFromJsonString(String json) {
+  private Map<String, Map<String,RegEntry>> getMapFromJsonString(String json) {
     Registry map = null;
     JsonFactory factory = new JsonFactory();
     ObjectMapper mapper = new ObjectMapper(factory);

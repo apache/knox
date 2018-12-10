@@ -26,9 +26,9 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -43,7 +43,7 @@ public class HS2ZookeeperURLManager extends DefaultURLManager {
 
   private String zooKeeperNamespace;
 
-  private HashSet<String> failedSet;
+  private Set<String> failedSet;
 
   public HS2ZookeeperURLManager() {
     failedSet = new LinkedHashSet<>();

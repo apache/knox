@@ -36,7 +36,7 @@ public class JsonPath {
     private String field;
     private int index;
 
-    private Match( Match parent, Segment segment, JsonNode node, String field, int index ) {
+    Match( Match parent, Segment segment, JsonNode node, String field, int index ) {
       this.parent = parent;
       this.segment = segment;
       this.node = node;
@@ -44,11 +44,11 @@ public class JsonPath {
       this.index = index;
     }
 
-    private Match( Match parent, Segment segment, JsonNode node, String field ) {
+    Match( Match parent, Segment segment, JsonNode node, String field ) {
       this( parent, segment, node, field, -1 );
     }
 
-    private Match( Match parent, Segment segment, JsonNode node, int index ) {
+    Match( Match parent, Segment segment, JsonNode node, int index ) {
       this( parent, segment, node, null, index );
     }
 
@@ -85,10 +85,9 @@ public class JsonPath {
   }
 
   public static class Expression {
-
     private List<Segment> segments;
 
-    private Expression( String expression ) {
+    Expression( String expression ) {
       if( expression == null || !expression.startsWith( "$" ) ) {
         throw new IllegalArgumentException( expression );
       }
@@ -337,19 +336,19 @@ public class JsonPath {
     private String field;
     private int index;
 
-    private Segment( Type type ) {
+    Segment( Type type ) {
       this.type = type;
       this.field = null;
       this.index = -1;
     }
 
-    private Segment( String field ) {
+    Segment( String field ) {
       this.type = Type.FIELD;
       this.field = field;
       this.index = -1;
     }
 
-    private Segment( int index ) {
+    Segment( int index ) {
       this.type = Type.INDEX;
       this.field = null;
       this.index = index;
@@ -380,5 +379,4 @@ public class JsonPath {
   public static Expression compile( String expression ) {
     return new Expression( expression );
   }
-
 }

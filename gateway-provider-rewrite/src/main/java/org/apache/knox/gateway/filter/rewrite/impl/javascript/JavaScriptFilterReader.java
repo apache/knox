@@ -19,10 +19,8 @@ package org.apache.knox.gateway.filter.rewrite.impl.javascript;
 
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterPathDescriptor;
-import org.apache.knox.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteFilterReader;
 import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteUtil;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -33,8 +31,6 @@ import java.util.regex.Pattern;
 public abstract class JavaScriptFilterReader extends Reader implements UrlRewriteFilterReader {
 
   private static final UrlRewriteFilterPathDescriptor.Compiler<Pattern> REGEX_COMPILER = new RegexCompiler();
-
-  private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
 
   private BufferedReader reader;
   private int offset;

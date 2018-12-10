@@ -36,12 +36,12 @@ public class PropertyTopologyBuilderTest {
 
   @BeforeClass
   public static void setup() {
-    realAppenders = NoOpAppender.setUp();
+    realAppenders = NoOpAppender.setUpAndReturnOriginalAppenders();
   }
 
   @AfterClass
   public static void teardown() {
-    NoOpAppender.tearDown( realAppenders );
+    NoOpAppender.resetOriginalAppenders( realAppenders );
   }
 
   @Test( expected = IllegalArgumentException.class )

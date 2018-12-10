@@ -43,7 +43,7 @@ public class SoutMessageLoggerFactory implements MessageLoggerFactory {
   public MessageLogger getLogger( String name ) {
     MessageLogger logger = LOGGERS.get( name );
     if( logger == null ) {
-      logger = new SoutMessageLogger( name );
+      logger = new SoutMessageLogger();
       LOGGERS.put( name, logger );
     }
     return logger;

@@ -43,8 +43,7 @@ public class DefaultCryptoService implements CryptoService {
 
   private AliasService as;
   private KeystoreService ks;
-  private HashMap<String,ConfigurableEncryptor> encryptorCache =
-      new HashMap<>();
+  private Map<String,ConfigurableEncryptor> encryptorCache = new HashMap<>();
   private GatewayConfig config;
 
   public void setKeystoreService(KeystoreService ks) {

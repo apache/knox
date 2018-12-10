@@ -344,7 +344,7 @@ class CuratorClientService implements ZooKeeperClientService {
 
         private final List<ACL> saslACL;
 
-        private SASLOwnerACLProvider() {
+        SASLOwnerACLProvider() {
             this.saslACL = ZooDefs.Ids.CREATOR_ALL_ACL; // All permissions for any authenticated user
         }
 
@@ -359,9 +359,7 @@ class CuratorClientService implements ZooKeeperClientService {
         }
     }
 
-
     private static final class ChildEntryListenerAdapter implements PathChildrenCacheListener {
-
         private RemoteConfigurationRegistryClient client;
         private ChildEntryListener delegate;
 

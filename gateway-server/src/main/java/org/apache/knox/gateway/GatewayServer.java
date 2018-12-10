@@ -310,25 +310,21 @@ public class GatewayServer {
       services.start();
       DeploymentFactory.setGatewayServices(services);
       server.start();
-      // Coverity CID 1352654
-      URI uri = server.jetty.getURI();
 
       // Logging for topology <-> port
-      InetSocketAddress[] addresses = new InetSocketAddress[server.jetty
-          .getConnectors().length];
-      for (int i = 0, n = addresses.length; i < n; i++) {
-        NetworkConnector connector = (NetworkConnector) server.jetty
-            .getConnectors()[i];
-        if (connector != null) {
-          for(ConnectionFactory x  : connector.getConnectionFactories()) {
-            if(x instanceof HttpConnectionFactory) {
-                ((HttpConnectionFactory)x).getHttpConfiguration().setSendServerVersion(config.isGatewayServerHeaderEnabled());
+      Connector[] connectors = server.jetty.getConnectors();
+      for (Connector connector : connectors) {
+        NetworkConnector networkConnector = (NetworkConnector) connector;
+        if (networkConnector != null) {
+          for (ConnectionFactory x : networkConnector.getConnectionFactories()) {
+            if (x instanceof HttpConnectionFactory) {
+              ((HttpConnectionFactory) x).getHttpConfiguration().setSendServerVersion(config.isGatewayServerHeaderEnabled());
             }
           }
-          if (connector.getName() == null) {
-            log.startedGateway(connector.getLocalPort());
+          if (networkConnector.getName() == null) {
+            log.startedGateway(networkConnector.getLocalPort());
           } else {
-            log.startedGateway(connector.getName(), connector.getLocalPort());
+            log.startedGateway(networkConnector.getName(), networkConnector.getLocalPort());
           }
         }
       }
@@ -338,10 +334,6 @@ public class GatewayServer {
   }
 
   public GatewayServer( GatewayConfig config ) {
-    this(config, null);
-  }
-
-  public GatewayServer( GatewayConfig config, Properties options ) {
       this.config = config;
       this.listener = new InternalTopologyListener();
   }
@@ -748,10 +740,10 @@ public class GatewayServer {
         for( Application application : applications ) {
           List<String> urls = application.getUrls();
           if( urls == null || urls.isEmpty() ) {
-            internalDeployApplication( topology, topoDir, application, application.getName() );
+            internalDeployApplication( topoDir, application, application.getName() );
           } else {
             for( String url : urls ) {
-              internalDeployApplication( topology, topoDir, application, url );
+              internalDeployApplication( topoDir, application, url );
             }
           }
         }
@@ -759,7 +751,7 @@ public class GatewayServer {
     }
   }
 
-  private synchronized void internalDeployApplication( Topology topology, File topoDir, Application application, String url ) throws IOException, ZipException, TransformerException, SAXException, ParserConfigurationException {
+  private synchronized void internalDeployApplication( File topoDir, Application application, String url ) throws IOException, ZipException, TransformerException, SAXException, ParserConfigurationException {
     File appsDir = new File( config.getGatewayApplicationsDir() );
     File appDir = new File( appsDir, application.getName() );
     File[] implFiles = appDir.listFiles( new RegexFilenameFilter( "app|app\\..*" ) );
@@ -774,7 +766,7 @@ public class GatewayServer {
     createArchiveTempDir( warDir );
   }
 
-  private synchronized void internalActivateTopology( Topology topology, File topoDir ) throws IOException, ZipException, ParserConfigurationException, TransformerException, SAXException {
+  private synchronized void internalActivateTopology( Topology topology, File topoDir ) {
     log.activatingTopology( topology.getName() );
     File[] files = topoDir.listFiles( new RegexFilenameFilter( "%.*" ) );
     if( files != null ) {
@@ -784,7 +776,7 @@ public class GatewayServer {
     }
   }
 
-  private synchronized void internalActivateArchive( Topology topology, File warDir ) throws IOException, ZipException, ParserConfigurationException, TransformerException, SAXException {
+  private synchronized void internalActivateArchive( Topology topology, File warDir ) {
     log.activatingTopologyArchive( topology.getName(), warDir.getName() );
     try {
       WebAppContext newContext = createWebAppContext( topology, warDir, Urls.decode( warDir.getName() ) );
@@ -844,7 +836,6 @@ public class GatewayServer {
       }
     }
     deactivate.clear();
-
   }
 
   // Using an inner class to hide the handleTopologyEvent method from consumers of GatewayServer.
@@ -918,7 +909,6 @@ public class GatewayServer {
         log.failedToDeployTopology( topology.getName(), e );
       }
     }
-
   }
 
   private File createArchiveTempDir( File warDir ) {
@@ -953,12 +943,12 @@ public class GatewayServer {
     return new File( calculateAbsoluteDeploymentsDir(), calculateDeploymentName( topology ) );
   }
 
-  private String calculateDeploymentExtension( Topology topology ) {
+  private String calculateDeploymentExtension() {
     return ".topo.";
   }
 
   private String calculateDeploymentName( Topology topology ) {
-    return topology.getName() + calculateDeploymentExtension( topology ) + Long.toHexString( topology.getTimestamp() );
+    return topology.getName() + calculateDeploymentExtension() + Long.toHexString( topology.getTimestamp() );
   }
 
   private static void checkAddressAvailability( InetSocketAddress address ) throws IOException {
@@ -1001,23 +991,13 @@ public class GatewayServer {
   }
 
   private static class FileModificationTimeDescendingComparator implements Comparator<File>, Serializable {
-    /**
-     *
-     */
     private static final long serialVersionUID = -2269785204848916823L;
 
     @Override
     public int compare( File left, File right ) {
       long leftTime = ( left == null ? Long.MIN_VALUE : left.lastModified() );
       long rightTime = ( right == null ? Long.MIN_VALUE : right.lastModified() );
-      if( leftTime > rightTime ) {
-        return -1;
-      } else if ( leftTime < rightTime ) {
-        return 1;
-      } else {
-        return 0;
-      }
+      return Long.compare(rightTime, leftTime);
     }
   }
-
 }

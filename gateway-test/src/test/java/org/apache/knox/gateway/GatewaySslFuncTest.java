@@ -101,7 +101,7 @@ public class GatewaySslFuncTest {
   @BeforeClass
   public static void setupSuite() throws Exception {
     LOG_ENTER();
-    //appenders = NoOpAppender.setUp();
+    //appenders = NoOpAppender.setUpAndReturnOriginalAppenders();
     driver.setupLdap(0);
     setupGateway();
     LOG_EXIT();
@@ -113,7 +113,7 @@ public class GatewaySslFuncTest {
     gateway.stop();
     driver.cleanup();
     FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
-    //NoOpAppender.tearDown( appenders );
+    //NoOpAppender.resetOriginalAppenders( appenders );
     LOG_EXIT();
   }
 

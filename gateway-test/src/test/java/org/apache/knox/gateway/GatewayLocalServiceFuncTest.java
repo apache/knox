@@ -62,7 +62,7 @@ public class GatewayLocalServiceFuncTest {
   @BeforeClass
   public static void setupSuite() throws Exception {
     LOG_ENTER();
-    appenders = NoOpAppender.setUp();
+    appenders = NoOpAppender.setUpAndReturnOriginalAppenders();
     driver.setupLdap(0);
     setupGateway();
     LOG_EXIT();
@@ -75,7 +75,7 @@ public class GatewayLocalServiceFuncTest {
     driver.cleanup();
     FileUtils.deleteQuietly( new File( config.getGatewayConfDir() ) );
     FileUtils.deleteQuietly( new File( config.getGatewayDataDir() ) );
-    NoOpAppender.tearDown( appenders );
+    NoOpAppender.resetOriginalAppenders( appenders );
     LOG_EXIT();
   }
 

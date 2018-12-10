@@ -17,13 +17,12 @@
  */
 package org.apache.knox.gateway.util;
 
-
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.security.auth.x500.X500Principal;
 
-public class X500PrincipalParser
-{
+public class X500PrincipalParser {
   public static final int LEASTSIGNIFICANT = 0;
   public static final int MOSTSIGNIFICANT = 1;
 
@@ -37,23 +36,20 @@ public class X500PrincipalParser
   public static final String attrEMAIL = "EMAILADDRESS";
   public static final String attrUID = "UID";
 
-  ArrayList rdnNameArray = new ArrayList();
+  private List<List<String>> rdnNameArray = new ArrayList<>();
 
   private static final String attrTerminator = "=";
 
-  public X500PrincipalParser(X500Principal principal)
-  {
+  public X500PrincipalParser(X500Principal principal) {
     parseDN(principal.getName(X500Principal.RFC2253));
   }
 
-  public ArrayList getAllValues(String attributeID)
-  {
-    ArrayList retList = new ArrayList();
+  public List<Object> getAllValues(String attributeID) {
+    List<Object> retList = new ArrayList<>();
     String searchPart = attributeID + attrTerminator;
 
-    for (Object o : rdnNameArray) {
-      ArrayList nameList = (ArrayList) o;
-      String namePart = (String) nameList.get(0);
+    for (List<String> nameList : rdnNameArray) {
+      String namePart = nameList.get(0);
 
       if (namePart.startsWith(searchPart)) {
         // Return the string starting after the ID string and the = sign that follows it.
@@ -62,63 +58,49 @@ public class X500PrincipalParser
     }
 
     return retList;
-
   }
 
-  public String getC()
-  {
+  public String getC() {
     return findPart(attrC);
   }
 
-  public String getCN()
-  {
+  public String getCN() {
     return findPart(attrCN);
   }
 
-  public String getEMAILDDRESS()
-  {
+  public String getEMAILDDRESS() {
     return findPart(attrEMAIL);
   }
 
-  public String getL()
-  {
+  public String getL() {
     return findPart(attrL);
   }
 
-  public String getO()
-  {
+  public String getO() {
     return findPart(attrO);
-
   }
 
-  public String getOU()
-  {
+  public String getOU() {
     return findPart(attrOU);
-
   }
 
-  public String getST()
-  {
+  public String getST() {
     return findPart(attrST);
   }
 
-  public String getSTREET()
-  {
+  public String getSTREET() {
     return findPart(attrSTREET);
   }
 
-  public String getUID()
-  {
+  public String getUID() {
     return findPart(attrUID);
   }
 
-  private String findPart(String attributeID)
-  {
+  private String findPart(String attributeID) {
     return findSignificantPart(attributeID, MOSTSIGNIFICANT);
   }
 
-  private String findSignificantPart(String attributeID, int significance)
-  {
+  private String findSignificantPart(String attributeID, int significance) {
     String retNamePart = null;
     String searchPart = attributeID + attrTerminator;
 
@@ -138,19 +120,16 @@ public class X500PrincipalParser
     return retNamePart;
   }
 
-  private void parseDN(String dn) throws IllegalArgumentException
-  {
+  private void parseDN(String dn) throws IllegalArgumentException {
     int startIndex = 0;
     char c = '\0';
-    ArrayList nameValues = new ArrayList();
+    List<String> nameValues = new ArrayList<>();
 
     rdnNameArray.clear();
 
-    while(startIndex < dn.length())
-    {
+    while(startIndex < dn.length()) {
       int endIndex;
-      for(endIndex = startIndex; endIndex < dn.length(); endIndex++)
-      {
+      for(endIndex = startIndex; endIndex < dn.length(); endIndex++) {
         c = dn.charAt(endIndex);
         if(c == ',' || c == '+')
           break;
@@ -160,25 +139,23 @@ public class X500PrincipalParser
         }
       }
 
-      if(endIndex > dn.length())
+      if(endIndex > dn.length()) {
         throw new IllegalArgumentException("unterminated escape " + dn);
+      }
 
       nameValues.add(dn.substring(startIndex, endIndex));
 
-      if(c != '+')
-      {
+      if(c != '+') {
         rdnNameArray.add(nameValues);
         if(endIndex != dn.length())
-          nameValues = new ArrayList();
+          nameValues = new ArrayList<>();
         else
           nameValues = null;
       }
       startIndex = endIndex + 1;
     }
-    if(nameValues != null)
-    {
+    if(nameValues != null) {
       throw new IllegalArgumentException("improperly terminated DN " + dn);
     }
   }
-
 }

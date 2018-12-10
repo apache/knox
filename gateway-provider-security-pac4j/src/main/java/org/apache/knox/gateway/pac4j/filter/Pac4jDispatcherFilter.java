@@ -46,7 +46,6 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -218,7 +217,6 @@ public class Pac4jDispatcherFilter implements Filter {
   public void doFilter( ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
 
     final HttpServletRequest request = (HttpServletRequest) servletRequest;
-    final HttpServletResponse response = (HttpServletResponse) servletResponse;
     request.setAttribute(PAC4J_CONFIG, securityFilter.getConfig());
 //    final J2EContext context = new J2EContext(request, response, securityFilter.getConfig().getSessionStore());
 

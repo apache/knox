@@ -25,9 +25,7 @@ import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterDetectDescript
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterGroupDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterPathDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterScopeDescriptor;
-import org.apache.knox.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.knox.gateway.filter.rewrite.i18n.UrlRewriteResources;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
 import org.apache.knox.gateway.util.XmlUtils;
 import org.w3c.dom.Attr;
@@ -73,7 +71,6 @@ public abstract class XmlFilterReader extends Reader {
 
   private static final String DEFAULT_XML_VERSION = "1.0";
 
-  private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
   private static final UrlRewriteFilterPathDescriptor.Compiler<XPathExpression> XPATH_COMPILER = new XmlPathCompiler();
   private static final UrlRewriteFilterPathDescriptor.Compiler<Pattern> REGEX_COMPILER = new RegexCompiler();
 
@@ -192,7 +189,7 @@ public abstract class XmlFilterReader extends Reader {
     String s;
 
     document = XmlUtils.createDocument( false );
-    pushLevel( null, event, document, document, config );
+    pushLevel( null, document, document, config );
 
     writer.write( "<?xml" );
 
@@ -234,7 +231,7 @@ public abstract class XmlFilterReader extends Reader {
     // If already buffering just continue to do so.
     // Note: Don't currently support nested buffer or scope descriptors.
     if( currentlyBuffering() ) {
-      pushLevel( parent, event, element, parent.scopeNode, parent.scopeConfig );
+      pushLevel( parent, element, parent.scopeNode, parent.scopeConfig );
       bufferAttributes( event, element );
     // Else not currently buffering
     } else {
@@ -243,22 +240,22 @@ public abstract class XmlFilterReader extends Reader {
       if( descriptor != null ) {
         // If this is a buffer descriptor then switch to buffering and buffer the attributes.
         if( descriptor instanceof UrlRewriteFilterBufferDescriptor ) {
-          pushLevel( parent, event, element, element, (UrlRewriteFilterBufferDescriptor)descriptor );
+          pushLevel( parent, element, element, (UrlRewriteFilterBufferDescriptor)descriptor );
           bufferAttributes( event, element );
         // Otherwise if this is a scope descriptor then change the scope and stream the attributes.
         } else if( descriptor instanceof UrlRewriteFilterScopeDescriptor ) {
-          pushLevel( parent, event, element, element, (UrlRewriteFilterScopeDescriptor)descriptor );
+          pushLevel( parent, element, element, (UrlRewriteFilterScopeDescriptor)descriptor );
           streamElement( event, element );
         // Else found an unexpected matching path.
         } else {
           // This is likely because there is an <apply> targeted at the text of an element.
           // That "convenience" config will be taken care of in the streamElement() processing.
-          pushLevel( parent, event, element, parent.scopeNode, parent.scopeConfig );
+          pushLevel( parent, element, parent.scopeNode, parent.scopeConfig );
           streamElement( event, element );
         }
       // If there is no matching path descriptor then continue streaming.
       } else {
-        pushLevel( parent, event, element, parent.scopeNode, parent.scopeConfig );
+        pushLevel( parent, element, parent.scopeNode, parent.scopeConfig );
         streamElement( event, element );
       }
     }
@@ -586,23 +583,19 @@ public abstract class XmlFilterReader extends Reader {
     return stack.peek().buffered;
   }
 
-  private Level pushLevel( Level parent, XMLEvent event, Node node, Node scopeNode, UrlRewriteFilterGroupDescriptor scopeConfig ) {
-    Level level = new Level( parent, event, node, scopeNode, scopeConfig );
+  private Level pushLevel( Level parent, Node node, Node scopeNode, UrlRewriteFilterGroupDescriptor scopeConfig ) {
+    Level level = new Level( parent, node, scopeNode, scopeConfig );
     stack.push( level );
     return level;
   }
 
   private static class Level {
-//    private Level parent;
-//    private XMLEvent event;
     private Node node;
     private UrlRewriteFilterGroupDescriptor scopeConfig;
     private Node scopeNode;
     private boolean buffered;
 
-    private Level( Level parent, XMLEvent event, Node node, Node scopeNode, UrlRewriteFilterGroupDescriptor scopeConfig ) {
-//      this.parent = parent;
-//      this.event = event;
+    Level( Level parent, Node node, Node scopeNode, UrlRewriteFilterGroupDescriptor scopeConfig ) {
       this.node = node;
       this.scopeConfig = scopeConfig;
       this.scopeNode = scopeNode;

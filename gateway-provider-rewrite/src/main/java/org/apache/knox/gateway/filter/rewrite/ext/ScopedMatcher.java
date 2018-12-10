@@ -24,6 +24,7 @@ import org.apache.knox.gateway.util.urltemplate.Template;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A simple extension to the matcher that takes into account scopes for rules along with the templates themselves.
@@ -34,7 +35,7 @@ public class ScopedMatcher extends Matcher<UrlRewriteRuleProcessorHolder> {
 
   public static final String GLOBAL_SCOPE = "GLOBAL";
 
-  private HashMap<String, Matcher<UrlRewriteRuleProcessorHolder>> matchers;
+  private Map<String, Matcher<UrlRewriteRuleProcessorHolder>> matchers;
 
   public ScopedMatcher() {
     super();
@@ -48,7 +49,7 @@ public class ScopedMatcher extends Matcher<UrlRewriteRuleProcessorHolder> {
 
   @Override
   public void add(Template template, UrlRewriteRuleProcessorHolder value) {
-    Matcher<UrlRewriteRuleProcessorHolder> matcher = getMatcher(template, value);
+    Matcher<UrlRewriteRuleProcessorHolder> matcher = getMatcher(value);
     matcher.add( template, value );
   }
 
@@ -108,11 +109,10 @@ public class ScopedMatcher extends Matcher<UrlRewriteRuleProcessorHolder> {
    * Returns a matcher for a given template and processor holder. This method takes into account different scopes in
    * addition to template values. If a matcher exists for a template but the scope is different, a new matcher is
    * created and returned.
-   * @param template the template for which a matcher is needed
    * @param holder the rule holder that goes along with the template.
    * @return a matcher
    */
-  private Matcher<UrlRewriteRuleProcessorHolder> getMatcher(Template template, UrlRewriteRuleProcessorHolder holder) {
+  private Matcher<UrlRewriteRuleProcessorHolder> getMatcher(UrlRewriteRuleProcessorHolder holder) {
     String scope = holder.getScope();
     if (!matchers.containsKey(scope)) {
       matchers.put(scope, new Matcher<>());
