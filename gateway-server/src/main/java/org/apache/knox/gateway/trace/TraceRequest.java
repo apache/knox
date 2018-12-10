@@ -27,9 +27,8 @@ import java.util.Enumeration;
 import java.util.Locale;
 
 class TraceRequest extends HttpServletRequestWrapper {
-
-  private static Logger log = Logger.getLogger( TraceHandler.HTTP_REQUEST_LOGGER );
-  private static Logger headLog = Logger.getLogger( TraceHandler.HTTP_REQUEST_HEADER_LOGGER );
+  private static final Logger log = Logger.getLogger( TraceHandler.HTTP_REQUEST_LOGGER );
+  private static final Logger headLog = Logger.getLogger( TraceHandler.HTTP_REQUEST_HEADER_LOGGER );
 
   private ServletInputStream input;
 

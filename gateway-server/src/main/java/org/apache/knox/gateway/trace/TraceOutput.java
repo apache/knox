@@ -25,9 +25,8 @@ import java.io.IOException;
 import java.util.Locale;
 
 class TraceOutput extends SynchronousServletOutputStreamAdapter {
-
-  private static Logger log = Logger.getLogger( TraceHandler.HTTP_RESPONSE_LOGGER );
-  private static Logger bodyLog = Logger.getLogger( TraceHandler.HTTP_RESPONSE_BODY_LOGGER );
+  private static final Logger log = Logger.getLogger( TraceHandler.HTTP_RESPONSE_LOGGER );
+  private static final Logger bodyLog = Logger.getLogger( TraceHandler.HTTP_RESPONSE_BODY_LOGGER );
 
   private ServletOutputStream delegate;
 

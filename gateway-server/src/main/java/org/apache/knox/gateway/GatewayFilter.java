@@ -218,7 +218,7 @@ public class GatewayFilter implements Filter {
       chain.setResourceRole( holder.getResourceRole() );
       chains.add( holder.template, chain );
     }
-    chain.chain.add( holder );
+    chain.chainList.add( holder );
   }
 
   public void addFilter( String path, String name, Filter filter, Map<String,String> params, String resourceRole ) throws URISyntaxException {
@@ -244,30 +244,29 @@ public class GatewayFilter implements Filter {
   }
 
   private class Chain implements FilterChain {
-
-    private List<Holder> chain;
+    private List<Holder> chainList;
     private String resourceRole;
 
     Chain() {
-      this.chain = new ArrayList<>();
+      this.chainList = new ArrayList<>();
     }
 
-    Chain( List<Holder> chain ) {
-      this.chain = chain;
+    Chain( List<Holder> chainList) {
+      this.chainList = chainList;
     }
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse ) throws IOException, ServletException {
-      if( chain != null && !chain.isEmpty() ) {
-        final Filter filter = chain.get( 0 );
+      if( chainList != null && !chainList.isEmpty() ) {
+        final Filter filter = chainList.get( 0 );
         final FilterChain chain = subChain();
         filter.doFilter( servletRequest, servletResponse, chain );
       }
     }
 
     private FilterChain subChain() {
-      if( chain != null && chain.size() > 1 ) {
-        return new Chain( chain.subList( 1, chain.size() ) );
+      if( chainList != null && chainList.size() > 1 ) {
+        return new Chain( chainList.subList( 1, chainList.size() ) );
       } else {
         return EMPTY_CHAIN;
       }
@@ -280,7 +279,6 @@ public class GatewayFilter implements Filter {
     private void setResourceRole( String resourceRole ) {
       this.resourceRole = resourceRole;
     }
-
   }
 
   private class Holder implements Filter, FilterConfig {

@@ -200,7 +200,7 @@ class JsonFilterReader extends Reader {
     Level child;
     Level parent;
     child = stack.pop();
-    if( bufferingLevel == child ) {
+    if( child.equals(bufferingLevel) ) {
       filterBufferedNode( child );
       mapper.writeTree( generator, child.node );
       bufferingLevel = null;
@@ -264,7 +264,7 @@ class JsonFilterReader extends Reader {
     Level child;
     Level parent;
     child = stack.pop();
-    if( bufferingLevel == child ) {
+    if( child.equals(bufferingLevel) ) {
       filterBufferedNode( child );
       mapper.writeTree( generator, child.node );
       bufferingLevel = null;

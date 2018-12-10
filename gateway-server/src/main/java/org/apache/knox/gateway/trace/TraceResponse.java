@@ -28,9 +28,8 @@ import java.util.Locale;
 import java.util.Set;
 
 class TraceResponse extends HttpServletResponseWrapper {
-
-  private static Logger log = Logger.getLogger( TraceHandler.HTTP_RESPONSE_LOGGER );
-  private static Logger headLog = Logger.getLogger( TraceHandler.HTTP_RESPONSE_HEADER_LOGGER );
+  private static final Logger log = Logger.getLogger( TraceHandler.HTTP_RESPONSE_LOGGER );
+  private static final Logger headLog = Logger.getLogger( TraceHandler.HTTP_RESPONSE_HEADER_LOGGER );
 
   private ServletOutputStream output;
   private Set<Integer> filter;
@@ -73,7 +72,6 @@ class TraceResponse extends HttpServletResponseWrapper {
       }
     }
   }
-
 }
 
 

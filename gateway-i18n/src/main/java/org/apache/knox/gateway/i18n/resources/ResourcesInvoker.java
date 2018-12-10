@@ -143,7 +143,7 @@ public class ResourcesInvoker implements InvocationHandler {
   protected final ResourceBundle findBundle() {
     final Locale locale = Locale.getDefault();
     ResourceBundle bundle = bundles.get( locale );
-    if( bundle == MISSING_BUNDLE ) {
+    if( MISSING_BUNDLE.equals(bundle) ) {
       bundle = null;
     } else if ( bundle == null ) {
       try {

@@ -44,8 +44,7 @@ import java.util.Queue;
  * The whole idea was modeled after how the REST testing framework REST-assured and aims to be a server side equivalent.
  */
 public class MockServer {
-
-  private Logger log = LoggerFactory.getLogger( this.getClass() );
+  private static final Logger log = LoggerFactory.getLogger( MockServer.class );
 
   private String name;
   private Server jetty;

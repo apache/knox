@@ -125,7 +125,7 @@ public abstract class DeploymentFactory {
             List<Application> dups = findApplicationsByUrl( topology, url );
             if( dups != null ) {
               for( Application dup : dups ) {
-                if( dup != app ) {
+                if( dup != app ) { //NOPMD - check for exact same object
                   throw new DeploymentException( "Topology " + topology.getName() + " contains applications " + app.getName() + " and " + dup.getName() + " with the same url: " + url );
                 }
               }
@@ -182,7 +182,7 @@ public abstract class DeploymentFactory {
     DeploymentContext context = createDeploymentContext( config, "/", topology, providers );
     initialize( context, providers, services, null );
     contribute( context, providers, services, null );
-    finalize( context, providers, services, null );
+    finish( context, providers, services, null );
     return context.getWebArchive();
   }
 
@@ -195,7 +195,7 @@ public abstract class DeploymentFactory {
     DeploymentContext context = createDeploymentContext( config, appPath, topology, providers );
     initialize( context, providers, null, application );
     contribute( context, providers, null, application );
-    finalize( context, providers, null, application );
+    finish( context, providers, null, application );
     return context.getWebArchive();
   }
 
@@ -563,7 +563,7 @@ public abstract class DeploymentFactory {
     return contributor;
   }
 
-  private static void finalize(
+  private static void finish(
       DeploymentContext context,
       Map<String,List<ProviderDeploymentContributor>> providers,
       Map<String,List<ServiceDeploymentContributor>> services,
@@ -622,7 +622,7 @@ public abstract class DeploymentFactory {
           } catch( Exception e ) {
             // Maybe it makes sense to throw exception
             log.failedToFinalizeContribution( e );
-            throw new DeploymentException( "Failed to finalize contribution.", e );
+            throw new DeploymentException( "Failed to finish contribution.", e );
           }
         }
       }
@@ -639,7 +639,7 @@ public abstract class DeploymentFactory {
           } catch( Exception e ) {
             // Maybe it makes sense to throw exception
             log.failedToFinalizeContribution( e );
-            throw new DeploymentException( "Failed to finalize contribution.", e );
+            throw new DeploymentException( "Failed to finish contribution.", e );
           }
         }
       }

@@ -846,11 +846,11 @@ public class DefaultTopologyService
         // When a simple descriptor has been created or modified, generate the new topology descriptor
         Map<String, File> result = SimpleDescriptorHandler.handle(gatewayConfig, file, topologiesDir, aliasService);
         log.generatedTopologyForDescriptorChange(result.get(SimpleDescriptorHandler.RESULT_TOPOLOGY).getName(),
-                                                 file.getName());
+            file.getName());
 
         // Add the provider config reference relationship for handling updates to the provider config
         String providerConfig =
-                      FilenameUtils.normalize(result.get(SimpleDescriptorHandler.RESULT_REFERENCE).getAbsolutePath());
+            FilenameUtils.normalize(result.get(SimpleDescriptorHandler.RESULT_REFERENCE).getAbsolutePath());
         if (!providerConfigReferences.containsKey(providerConfig)) {
           providerConfigReferences.put(providerConfig, new ArrayList<>());
         }
@@ -866,20 +866,18 @@ public class DefaultTopologyService
           refs.add(descriptorName);
           log.addedProviderConfigurationReference(descriptorName, providerConfig);
         }
-      } catch (Exception e) {
+      } catch (IllegalArgumentException e) {
         log.simpleDescriptorHandlingError(file.getName(), e);
 
         // If the referenced provider configuration is invalid, remove any existing reference relationships for the
         // referencing descriptor.
-        if (e instanceof IllegalArgumentException) {
-          String descriptorName = FilenameUtils.normalize(file.getAbsolutePath());
-          // Need to check if descriptor had previously referenced another provider config, so it can be removed
-          for (List<String> descs : providerConfigReferences.values()) {
-            if (descs.contains(descriptorName)) {
-              descs.remove(descriptorName);
-            }
-          }
+        String descriptorName = FilenameUtils.normalize(file.getAbsolutePath());
+        // Need to check if descriptor had previously referenced another provider config, so it can be removed
+        for (List<String> descs : providerConfigReferences.values()) {
+          descs.remove(descriptorName);
         }
+      } catch (Exception e) {
+        log.simpleDescriptorHandlingError(file.getName(), e);
       }
     }
 

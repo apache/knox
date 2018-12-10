@@ -24,7 +24,7 @@ import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 
 public class AccessHandler extends AbstractLifeCycle implements RequestLog {
-  private static Logger log = Logger.getLogger( "org.apache.knox.gateway.access" );
+  private static final Logger log = Logger.getLogger( "org.apache.knox.gateway.access" );
 
   @Override
   public void log( Request request, Response response ) {

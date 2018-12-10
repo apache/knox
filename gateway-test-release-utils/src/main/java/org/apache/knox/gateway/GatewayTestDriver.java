@@ -62,8 +62,7 @@ import com.mycila.xmltool.XMLTag;
  * 4) Provides methods to access test resources.
  */
 public class GatewayTestDriver {
-
-  private static Logger log = LoggerFactory.getLogger( GatewayTestDriver.class );
+  private static final Logger log = LoggerFactory.getLogger( GatewayTestDriver.class );
 
   public Class<?> resourceBaseClass;
   public Map<String,Service> services = new HashMap<>();

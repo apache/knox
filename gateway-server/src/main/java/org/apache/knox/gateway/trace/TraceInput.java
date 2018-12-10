@@ -25,9 +25,8 @@ import java.io.IOException;
 import java.util.Locale;
 
 class TraceInput extends SynchronousServletInputStreamAdapter {
-
-  private static Logger log = Logger.getLogger( TraceHandler.HTTP_REQUEST_LOGGER );
-  private static Logger bodyLog = Logger.getLogger( TraceHandler.HTTP_REQUEST_BODY_LOGGER );
+  private static final Logger log = Logger.getLogger( TraceHandler.HTTP_REQUEST_LOGGER );
+  private static final Logger bodyLog = Logger.getLogger( TraceHandler.HTTP_REQUEST_BODY_LOGGER );
 
   private ServletInputStream delegate;
 
@@ -68,5 +67,4 @@ class TraceInput extends SynchronousServletInputStreamAdapter {
       }
     }
   }
-
 }
