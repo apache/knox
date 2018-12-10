@@ -50,8 +50,8 @@ public class DefaultHaDispatchTest {
     HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
     descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", "2", "1000", null, null));
     HaProvider provider = new DefaultHaProvider(descriptor);
-    URI uri1 = new URI( "http://unreachable-host" );
-    URI uri2 = new URI( "http://reachable-host" );
+    URI uri1 = new URI( "http://unreachable-host.invalid" );
+    URI uri2 = new URI( "http://reachable-host.invalid" );
     ArrayList<String> urlList = new ArrayList<>();
     urlList.add(uri1.toString());
     urlList.add(uri2.toString());
@@ -81,7 +81,7 @@ public class DefaultHaDispatchTest {
         return new SynchronousServletOutputStreamAdapter() {
           @Override
           public void write( int b ) throws IOException {
-            throw new IOException( "unreachable-host" );
+            throw new IOException( "unreachable-host.invalid" );
           }
         };
       }

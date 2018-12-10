@@ -228,7 +228,7 @@ public class AuditLoggingTest {
   @Test
   public void testHttpClientOutboundException() throws IOException,
       URISyntaxException {
-    String uri = "http://outbound-host:port/path";
+    String uri = "http://outbound-host.invalid:port/path";
 
     HttpServletRequest inboundRequest = EasyMock.createNiceMock( HttpServletRequest.class );
     EasyMock.expect( inboundRequest.getHeaderNames() ).andReturn( Collections.enumeration(new ArrayList<>() ) ).anyTimes();

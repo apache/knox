@@ -62,7 +62,7 @@ public class DefaultDispatchTest {
   @Test
   public void testJiraKnox58() throws URISyntaxException, IOException {
 
-    URI uri = new URI( "http://unreachable-host" );
+    URI uri = new URI( "http://unreachable-host.invalid" );
     BasicHttpParams params = new BasicHttpParams();
 
     HttpUriRequest outboundRequest = EasyMock.createNiceMock( HttpUriRequest.class );
@@ -84,7 +84,7 @@ public class DefaultDispatchTest {
         return new SynchronousServletOutputStreamAdapter() {
           @Override
           public void write( int b ) throws IOException {
-            throw new IOException( "unreachable-host" );
+            throw new IOException( "unreachable-host.invalid" );
           }
         };
       }
@@ -100,7 +100,7 @@ public class DefaultDispatchTest {
       dispatch.executeRequest( outboundRequest, inboundRequest, outboundResponse );
       fail( "Should have thrown IOException" );
     } catch( IOException e ) {
-      assertThat( e.getMessage(), not( containsString( "unreachable-host" ) ) );
+      assertThat( e.getMessage(), not( containsString( "unreachable-host.invalid" ) ) );
       assertThat( e, not( instanceOf( UnknownHostException.class ) ) ) ;
       assertThat( "Message needs meaningful content.", e.getMessage().trim().length(), greaterThan( 12 ) );
     }
