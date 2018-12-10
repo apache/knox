@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.filter.rewrite.impl;
 
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.filter.GatewayResponseWrapper;
 import org.apache.knox.gateway.filter.ResponseStreamer;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
@@ -153,7 +154,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
         getRewriteFilterConfig(rewriter.getConfig(), bodyFilterName, mimeType);
     if (filterContentConfig != null) {
       String asType = filterContentConfig.asType();
-      if ( asType != null && !asType.trim().isEmpty()) {
+      if ( asType != null && !StringUtils.isBlank(asType)) {
         mimeType = MimeTypes.create(asType, getCharacterEncoding());
       }
     }

@@ -161,7 +161,7 @@ public class Log4jAuditor implements Auditor {
             }
           }
           if (i < (query.length -1) ) {
-            newQuery.append("&");
+            newQuery.append('&');
           }
         }
 

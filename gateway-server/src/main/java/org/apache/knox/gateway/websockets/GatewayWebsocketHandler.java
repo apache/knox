@@ -195,8 +195,8 @@ public class GatewayWebsocketHandler extends WebSocketHandler
                 || serviceUrl.getProtocol().equals("wss")) ? serviceUrl.getProtocol()
                 : "ws";
         backend.append(protocol).append("://");
-        backend.append(serviceUrl.getHost()).append(":");
-        backend.append(serviceUrl.getPort()).append("/");
+        backend.append(serviceUrl.getHost()).append(':');
+        backend.append(serviceUrl.getPort()).append('/');
         backend.append(serviceUrl.getPath());
       }
       else {

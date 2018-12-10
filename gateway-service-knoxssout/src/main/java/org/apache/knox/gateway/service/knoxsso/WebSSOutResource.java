@@ -46,7 +46,7 @@ public class WebSSOutResource {
 
   static final String RESOURCE_PATH = "/api/v1/webssout";
 
-  private String cookieName = null;
+  private String cookieName;
 
   @Context
   HttpServletRequest request;

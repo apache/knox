@@ -17,10 +17,10 @@
 package org.apache.knox.gateway.util;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
+import java.nio.file.Files;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -40,7 +40,7 @@ import org.xml.sax.SAXException;
 public class XmlUtils {
 
   public static Document readXml( File file ) throws ParserConfigurationException, IOException, SAXException {
-    return readXml( new FileInputStream( file ));
+    return readXml(Files.newInputStream(file.toPath()));
   }
 
   public static Document readXml( InputStream input ) throws ParserConfigurationException, IOException, SAXException {
@@ -84,7 +84,7 @@ public class XmlUtils {
     }
     if ( indent ) {
       t.setOutputProperty( OutputKeys.INDENT, "yes" );
-      t.setOutputProperty( "{xml.apache.org/xslt}indent-amount", "" + indentNumber );
+      t.setOutputProperty( "{xml.apache.org/xslt}indent-amount", String.valueOf(indentNumber) );
     }
     if ( omitXmlDeclaration ) {
       t.setOutputProperty( OutputKeys.OMIT_XML_DECLARATION, "yes" );

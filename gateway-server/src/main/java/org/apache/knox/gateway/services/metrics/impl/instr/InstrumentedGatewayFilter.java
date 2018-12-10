@@ -85,12 +85,12 @@ public class InstrumentedGatewayFilter extends GatewayFilter {
 
   private Timer timer(ServletRequest request) {
     StringBuilder builder = new StringBuilder();
-    builder.append("client.");
-    builder.append(request.getServletContext().getContextPath());
+    builder.append("client.")
+        .append(request.getServletContext().getContextPath());
     if (request instanceof HttpServletRequest) {
       HttpServletRequest httpServletRequest = (HttpServletRequest) request;
       builder.append(InstrUtils.getResourcePath(httpServletRequest.getPathInfo()));
-      builder.append(".");
+      builder.append('.');
       builder.append(httpServletRequest.getMethod());
       builder.append("-requests");
     }

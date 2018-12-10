@@ -41,7 +41,7 @@ class Put {
     private String text;
     private String file;
     private String to;
-    private boolean overwrite = false;
+    private boolean overwrite;
     private int permission = 755;
     private Integer blocksize;
     private Integer buffersize;

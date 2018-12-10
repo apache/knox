@@ -23,10 +23,10 @@ import org.apache.knox.gateway.util.JsonUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -57,7 +57,7 @@ public class KnoxSh {
   public PrintStream err = System.err;
 
   private Command command;
-  private String gateway = null;
+  private String gateway;
 
   public int run(String[] args) throws Exception {
     int exitCode;
@@ -184,7 +184,7 @@ public class KnoxSh {
         displayTokenDetails(json);
 
         File tokenfile = new File(System.getProperty("user.home"), ".knoxtokencache");
-        try( FileOutputStream fos = new FileOutputStream(tokenfile) ) {
+        try( OutputStream fos = Files.newOutputStream(tokenfile.toPath()) ) {
           fos.write(text.getBytes(StandardCharsets.UTF_8));
           Set<PosixFilePermission> perms = new HashSet<>();
           //add owners permission only
@@ -273,7 +273,9 @@ public class KnoxSh {
   }
 
   private String readFile(String file) throws IOException {
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+    try (InputStream inputStream = Files.newInputStream(Paths.get(file));
+         InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+         BufferedReader reader = new BufferedReader(inputStreamReader)) {
       String line;
       StringBuilder stringBuilder = new StringBuilder();
       String ls = System.getProperty("line.separator");
@@ -283,7 +285,7 @@ public class KnoxSh {
       }
       return stringBuilder.toString();
     }
-}
+  }
 
   /**
    * @param args command line arguments

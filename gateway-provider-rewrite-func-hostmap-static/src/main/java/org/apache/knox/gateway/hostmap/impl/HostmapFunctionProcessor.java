@@ -37,7 +37,7 @@ public class HostmapFunctionProcessor
   public static final String DESCRIPTOR_DEFAULT_LOCATION = "/WEB-INF/" + DESCRIPTOR_DEFAULT_FILE_NAME;
 
   private HostMapperService hostMapperService;
-  private HostMapper hostMapper = null;
+  private HostMapper hostMapper;
   private String clusterName;
 
   @Override

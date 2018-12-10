@@ -32,15 +32,12 @@ import java.util.concurrent.TimeUnit;
 
 public class AtlasZookeeperURLManager extends DefaultURLManager {
     private static final String DEFAULT_ZOOKEEPER_NAMESPACE = "/apache_atlas";
-
     private static final String APACHE_ATLAS_ACTIVE_SERVER_INFO = "/active_server_info";
 
     private static final HaMessages LOG = MessagesFactory.get(HaMessages.class);
 
     private String zooKeeperEnsemble;
-
     private String zooKeeperNamespace;
-
 
     @Override
     public boolean supportsConfig(HaServiceConfig config) {
@@ -66,7 +63,6 @@ public class AtlasZookeeperURLManager extends DefaultURLManager {
     }
 
     public List<String> lookupURLs() {
-
         List<String> serverHosts = new ArrayList<>();
         try (CuratorFramework zooKeeperClient = CuratorFrameworkFactory.builder()
             .connectString(zooKeeperEnsemble)
@@ -87,8 +83,6 @@ public class AtlasZookeeperURLManager extends DefaultURLManager {
         }
         return serverHosts;
     }
-
-
 
     @Override
     public synchronized void markFailed(String url) {

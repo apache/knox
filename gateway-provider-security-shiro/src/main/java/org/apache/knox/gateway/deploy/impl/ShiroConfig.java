@@ -62,9 +62,9 @@ public class ShiroConfig {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     for(Entry<String, Map<String, String>> section : sections.entrySet()) {
-      sb.append("[").append(section.getKey()).append("]\n");
+      sb.append('[').append(section.getKey()).append("]\n");
       for(Entry<String, String> entry : section.getValue().entrySet()) {
-        sb.append(entry.getKey()).append("=").append(entry.getValue()).append("\n");
+        sb.append(entry.getKey()).append('=').append(entry.getValue()).append('\n');
       }
     }
     return sb.toString();

@@ -50,9 +50,9 @@ public class ProxyInboundClientTest {
   private static URI serverUri;
   private static Handler handler;
 
-  String recievedMessage = null;
+  String recievedMessage;
 
-  byte[] recievedBinaryMessage = null;
+  byte[] recievedBinaryMessage;
 
 
   /* create an instance */

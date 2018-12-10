@@ -25,11 +25,11 @@ import org.apache.knox.gateway.services.security.MasterService;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -49,7 +49,7 @@ public class BaseKeystoreService {
       throws CertificateException, IOException, KeyStoreException, NoSuchAlgorithmException {
        final KeyStore  keyStore = KeyStore.getInstance(storeType);
        if ( keyStoreFile.exists() ) {
-           try (FileInputStream input = new FileInputStream( keyStoreFile )) {
+           try (InputStream input = Files.newInputStream(keyStoreFile.toPath())) {
                keyStore.load( input, masterPassword );
            }
        } else {
@@ -59,7 +59,7 @@ public class BaseKeystoreService {
        return keyStore;
       }
 
-  private static FileOutputStream createKeyStoreFile( String fileName ) throws IOException {
+  private static OutputStream createKeyStoreFile(String fileName ) throws IOException {
     File file = new File( fileName );
     if( file.exists() ) {
       if( file.isDirectory() ) {
@@ -75,11 +75,11 @@ public class BaseKeystoreService {
         }
       }
     }
-    return new FileOutputStream( file );
+    return Files.newOutputStream( file.toPath() );
   }
 
   protected void createKeystore(String filename, String keystoreType) throws KeystoreServiceException {
-    try (FileOutputStream out = createKeyStoreFile( filename )) {
+    try (OutputStream out = createKeyStoreFile( filename )) {
       KeyStore ks = KeyStore.getInstance(keystoreType);
       ks.load( null, null );
       ks.store( out, masterService.getMasterSecret() );
@@ -91,7 +91,7 @@ public class BaseKeystoreService {
 
   protected boolean isKeystoreAvailable(final File keyStoreFile, String storeType) throws KeyStoreException, IOException {
     if ( keyStoreFile.exists() ) {
-      try (InputStream input = new FileInputStream(keyStoreFile)){
+      try (InputStream input = Files.newInputStream(keyStoreFile.toPath())){
         final KeyStore keyStore = KeyStore.getInstance(storeType);
         keyStore.load( input, masterService.getMasterSecret() );
         return true;
@@ -157,7 +157,7 @@ public class BaseKeystoreService {
   protected void writeCertificateToFile( Certificate cert, final File file ) throws CertificateEncodingException, IOException {
     byte[] bytes = cert.getEncoded();
     Base64 encoder = new Base64( 76, "\n".getBytes( StandardCharsets.US_ASCII ) );
-    try( FileOutputStream out = new FileOutputStream( file ) ) {
+    try( OutputStream out = Files.newOutputStream( file.toPath() ) ) {
       out.write( "-----BEGIN CERTIFICATE-----\n".getBytes( StandardCharsets.US_ASCII ) );
       out.write( encoder.encodeToString( bytes ).getBytes( StandardCharsets.US_ASCII ) );
       out.write( "-----END CERTIFICATE-----\n".getBytes( StandardCharsets.US_ASCII ) );
@@ -167,7 +167,7 @@ public class BaseKeystoreService {
   protected void writeKeystoreToFile(final KeyStore keyStore, final File file)
       throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
      // TODO: backup the keystore on disk before attempting a write and restore on failure
-     try( FileOutputStream out = new FileOutputStream(file) ) {
+     try( OutputStream out = Files.newOutputStream(file.toPath()) ) {
          keyStore.store( out, masterService.getMasterSecret() );
      }
   }

@@ -171,7 +171,7 @@ public class Template {
           b.append( ':' );
           buildSegmentValue( b, password, password.getFirstValue() );
         }
-        b.append( "@" );
+        b.append( '@' );
       }
       if( host != null ) {
         buildSegmentValue( b, host, host.getFirstValue() );
@@ -186,7 +186,7 @@ public class Template {
   private void buildSegmentValue( StringBuilder b, Segment s, Segment.Value v ) {
     String paramName = s.getParamName();
     if( paramName != null && !paramName.isEmpty()) {
-      b.append( "{" );
+      b.append( '{' );
       b.append( s.getParamName() );
       String actualPattern = v.getToken().originalPattern;
       if( ( actualPattern != null ) && ( v.getType() != Segment.DEFAULT ) )  {
@@ -213,7 +213,7 @@ public class Template {
       String paramName = segment.getParamName();
       Segment.Value firstValue = segment.getFirstValue();
       if( paramName != null && !paramName.isEmpty()) {
-        b.append( "{" );
+        b.append( '{' );
         b.append( segment.getParamName() );
         String pattern = firstValue.getOriginalPattern();
         if( pattern != null && !pattern.isEmpty() ) {
@@ -284,9 +284,9 @@ public class Template {
     if( paramName != null && !paramName.isEmpty()) {
       if( !Segment.GLOB_PATTERN.equals( queryName ) && !Segment.STAR_PATTERN.equals( queryName ) ) {
         b.append( segment.getQueryName() );
-        b.append( "=" );
+        b.append( '=' );
       }
-      b.append( "{" );
+      b.append( '{' );
       b.append( segment.getParamName() );
       if( valuePattern != null ) {
         b.append( '=' );
@@ -296,7 +296,7 @@ public class Template {
     } else {
       b.append( queryName );
       if( valuePattern != null ) {
-        b.append( "=" );
+        b.append( '=' );
         b.append( valuePattern );
       }
     }

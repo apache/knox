@@ -28,13 +28,13 @@ public abstract class SparkCommonServiceURLCreator implements ServiceURLCreator 
 
   private static final String URL_TEMPLATE = "%s://%s:%s";
 
-  protected AmbariCluster cluster = null;
+  protected AmbariCluster cluster;
 
-  String primaryComponentName = null;
+  String primaryComponentName;
 
-  String secondaryComponentName = null;
+  String secondaryComponentName;
 
-  String portConfigProperty = null;
+  String portConfigProperty;
 
   @Override
   public void init(AmbariCluster cluster) {

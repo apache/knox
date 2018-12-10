@@ -30,7 +30,7 @@ public class AdapterSampleTest {
 
   private static class Target {
     @Configure
-    private String username = null;
+    private String username;
   }
 
   private static class Adapter implements ConfigurationAdapter {

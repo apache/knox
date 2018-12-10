@@ -22,8 +22,8 @@ import java.util.HashMap;
 import java.util.StringTokenizer;
 
 public class SimplePrincipalMapper implements PrincipalMapper {
-  public HashMap<String, String[]> principalMappings = null;
-  public HashMap<String, String[]> groupMappings = null;
+  public HashMap<String, String[]> principalMappings;
+  public HashMap<String, String[]> groupMappings;
 
   public SimplePrincipalMapper() {
   }

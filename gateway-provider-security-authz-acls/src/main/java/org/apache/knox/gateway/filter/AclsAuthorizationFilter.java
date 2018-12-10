@@ -50,8 +50,8 @@ public class AclsAuthorizationFilter implements Filter {
   private static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor( AuditConstants.DEFAULT_AUDITOR_NAME,
           AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
 
-  private String resourceRole = null;
-  private String aclProcessingMode = null;
+  private String resourceRole;
+  private String aclProcessingMode;
   private AclParser parser = new AclParser();
   private ArrayList<String> adminGroups = new ArrayList<>();
   private ArrayList<String> adminUsers = new ArrayList<>();

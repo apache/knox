@@ -22,7 +22,7 @@ import org.junit.Test;
 public class IpAddressValidatorTest extends org.junit.Assert {
   String test = "127.0.0.1,193.*,192.168.1.*,0:0:0:0:0:0:0:1,0:0:0:0:0:0:*";
   String testWeirdConfig = ",127.0.0.1,,193.*,192.168.1.*,29*";
-  String testNullConfig = null;
+  String testNullConfig;
 
   @Test
   public void testExplicitIpAddress() throws Exception {

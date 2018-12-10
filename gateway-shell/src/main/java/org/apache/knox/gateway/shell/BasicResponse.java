@@ -28,7 +28,7 @@ import java.io.InputStream;
 public class BasicResponse implements Closeable {
 
   private HttpResponse response;
-  private boolean consumed = false;
+  private boolean consumed;
   private String string;
   private InputStream stream;
   private byte[] bytes;

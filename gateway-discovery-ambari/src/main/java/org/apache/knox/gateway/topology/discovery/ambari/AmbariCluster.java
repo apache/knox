@@ -20,8 +20,9 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -69,7 +70,7 @@ class AmbariCluster implements ServiceDiscovery.Cluster {
 
             if (overridesPath != null) {
                 Properties overrides = new Properties();
-                try (InputStream in = new FileInputStream(overridesPath)) {
+                try (InputStream in = Files.newInputStream(Paths.get(overridesPath))) {
                     overrides.load(in);
                     for (String name : overrides.stringPropertyNames()) {
                         zooKeeperHAConfigMappings.setProperty(name, overrides.getProperty(name));
@@ -260,9 +261,9 @@ class AmbariCluster implements ServiceDiscovery.Cluster {
                 if (portIndex > 0) {
                     host = host.substring(0, portIndex);
                 }
-                updatedEnsemble.append(host).append(":").append(port);
+                updatedEnsemble.append(host).append(':').append(port);
                 if (++index < hosts.length) {
-                    updatedEnsemble.append(",");
+                    updatedEnsemble.append(',');
                 }
             }
 

@@ -20,7 +20,7 @@ package org.apache.knox.gateway.services.metrics.impl.reporters;
 import org.apache.knox.gateway.services.metrics.MetricsReporter;
 
 public abstract class AbstractMetricsReporter implements MetricsReporter {
-  private boolean enabled = false;
+  private boolean enabled;
 
   @Override
   public boolean isEnabled() {

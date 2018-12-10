@@ -41,11 +41,11 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 public class DefaultCryptoService implements CryptoService {
   private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
 
-  private AliasService as = null;
-  private KeystoreService ks = null;
+  private AliasService as;
+  private KeystoreService ks;
   private HashMap<String,ConfigurableEncryptor> encryptorCache =
       new HashMap<>();
-  private GatewayConfig config = null;
+  private GatewayConfig config;
 
   public void setKeystoreService(KeystoreService ks) {
     this.ks = ks;

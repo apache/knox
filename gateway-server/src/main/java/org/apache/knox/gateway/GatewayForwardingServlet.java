@@ -49,7 +49,7 @@ public class GatewayForwardingServlet extends HttpServlet{
           .getAuditor( AuditConstants.DEFAULT_AUDITOR_NAME,
                   AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
 
-  private String redirectToContext = null;
+  private String redirectToContext;
 
   @Override
   protected void doHead(HttpServletRequest req, HttpServletResponse resp)

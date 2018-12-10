@@ -24,7 +24,7 @@ class ErrorResponse extends RuntimeException {
   HttpResponse response;
 
   ErrorResponse( HttpResponse response ) {
-    super( "" + response.getStatusLine() );
+    super(String.valueOf(response.getStatusLine()));
     this.response = response;
   }
 

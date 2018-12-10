@@ -38,7 +38,7 @@ import static org.junit.Assert.assertTrue;
 
 public class ProviderConfigurationParserTest {
 
-  private static File tmpDir = null;
+  private static File tmpDir;
 
   @BeforeClass
   public static void createTempDir() {

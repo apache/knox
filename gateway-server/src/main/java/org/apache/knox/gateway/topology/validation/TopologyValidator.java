@@ -37,7 +37,7 @@ import org.xml.sax.SAXParseException;
 
 public class TopologyValidator {
 
-  private Collection<String> errors = null;
+  private Collection<String> errors;
   private final String filePath;
 
   public TopologyValidator(Topology t){
@@ -104,7 +104,6 @@ public class TopologyValidator {
   }
 
   public Collection<String> getTopologyErrors(){
-
     if(errors != null){
       return errors;
     }else{
@@ -115,11 +114,9 @@ public class TopologyValidator {
 
   public String getErrorString(){
     StringBuilder out = new StringBuilder();
-    out.append("");
     for(String s : getTopologyErrors()){
-      out.append(s).append("\n");
+      out.append(s).append('\n');
     }
     return out.toString();
   }
-
 }

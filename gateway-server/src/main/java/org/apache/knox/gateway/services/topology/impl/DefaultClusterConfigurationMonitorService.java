@@ -30,7 +30,7 @@ import java.util.ServiceLoader;
 
 public class DefaultClusterConfigurationMonitorService implements ClusterConfigurationMonitorService {
 
-    private AliasService aliasService = null;
+    private AliasService aliasService;
 
     private Map<String, ClusterConfigurationMonitor> monitors = new HashMap<>();
 

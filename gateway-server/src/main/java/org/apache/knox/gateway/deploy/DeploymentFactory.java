@@ -69,7 +69,7 @@ public abstract class DeploymentFactory {
   private static final String SERVLET_NAME_SUFFIX = "-knox-gateway-servlet";
   private static final String FILTER_NAME_SUFFIX = "-knox-gateway-filter";
   private static final GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
-  private static GatewayServices gatewayServices = null;
+  private static GatewayServices gatewayServices;
 
   private static Map<String,Map<String,Map<Version, ServiceDeploymentContributor>>> SERVICE_CONTRIBUTOR_MAP;
   static {

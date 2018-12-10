@@ -24,30 +24,28 @@ import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 
 public class AccessHandler extends AbstractLifeCycle implements RequestLog {
-
   private static Logger log = Logger.getLogger( "org.apache.knox.gateway.access" );
 
   @Override
   public void log( Request request, Response response ) {
     if( log.isTraceEnabled() ) {
       StringBuilder sb = new StringBuilder();
-      TraceUtil.appendCorrelationContext( sb );
-      sb.append( "|" );
-      sb.append( request.getRemoteAddr() );
-      sb.append( "|" );
-      sb.append( request.getMethod() );
-      sb.append( "|" );
-      sb.append( request.getHttpURI() );
-      sb.append( "|" );
-      sb.append( request.getContentLength() );
-      sb.append( "|" );
-      sb.append( response.getStatus() );
-      sb.append( "|" );
-      sb.append( response.getContentCount() );
-      sb.append( "|" );
-      sb.append( System.currentTimeMillis() - request.getTimeStamp() );
-      log.trace( sb );
+      TraceUtil.appendCorrelationContext(sb);
+      sb.append('|')
+          .append(request.getRemoteAddr())
+          .append('|')
+          .append(request.getMethod())
+          .append('|')
+          .append(request.getHttpURI())
+          .append('|')
+          .append(request.getContentLength())
+          .append('|')
+          .append(response.getStatus())
+          .append('|')
+          .append(response.getContentCount())
+          .append('|')
+          .append(System.currentTimeMillis() - request.getTimeStamp());
+      log.trace(sb);
     }
   }
-
 }

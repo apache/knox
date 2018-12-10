@@ -37,7 +37,7 @@ public class ServiceMappedAddressFunctionProcessor
     extends ServiceRegistryFunctionProcessorBase<ServiceMappedAddressFunctionDescriptor>
     implements UrlRewriteFunctionProcessor<ServiceMappedAddressFunctionDescriptor> {
 
-  private HostMapper hostmap = null;
+  private HostMapper hostmap;
 
   @Override
   public String name() {

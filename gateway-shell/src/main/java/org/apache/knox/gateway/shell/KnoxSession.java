@@ -56,13 +56,13 @@ import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -91,7 +91,7 @@ public class KnoxSession implements Closeable {
   private static final String DEFAULT_JAAS_FILE = "/jaas.conf";
   public static final String JGSS_LOGIN_MOUDLE = "com.sun.security.jgss.initiate";
 
-  private boolean isKerberos = false;
+  private boolean isKerberos;
 
   String base;
   HttpHost host;
@@ -324,7 +324,7 @@ public class KnoxSession implements Closeable {
       }
 
       if (file.exists()) {
-        try (InputStream is = new FileInputStream(file)) {
+        try (InputStream is = Files.newInputStream(file.toPath())) {
           ks.load(is, truststorePass.toCharArray());
         }
       }

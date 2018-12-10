@@ -113,16 +113,16 @@ public class UrlConnectionDispatch extends AbstractGatewayFilter {
     StringBuilder paramStr = new StringBuilder();
     Enumeration paramNames = request.getParameterNames();
     if( paramNames.hasMoreElements() ) {
-      paramStr.append( "?" );
+      paramStr.append('?');
     }
     while( paramNames.hasMoreElements() ) {
       String paramName = (String)paramNames.nextElement();
       String paramValue = request.getParameter( paramName );
       paramStr.append( paramName );
-      paramStr.append( "=" );
+      paramStr.append('=');
       paramStr.append( URLEncoder.encode( paramValue, StandardCharsets.UTF_8.name() ) );
       if( paramNames.hasMoreElements() ) {
-        paramStr.append( "&" );
+        paramStr.append('&');
       }
     }
     String urlStr = targetUri.toString() + paramStr.toString();

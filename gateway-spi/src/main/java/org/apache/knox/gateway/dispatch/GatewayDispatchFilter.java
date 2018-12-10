@@ -49,7 +49,7 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
 
   private final Object lock = new Object();
 
-  private String whitelist = null;
+  private String whitelist;
 
   private Dispatch dispatch;
 

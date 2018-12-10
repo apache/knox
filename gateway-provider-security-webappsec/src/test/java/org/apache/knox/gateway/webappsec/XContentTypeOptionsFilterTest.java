@@ -38,8 +38,8 @@ import static org.junit.Assert.fail;
 
 public class XContentTypeOptionsFilterTest {
 
-  private String options = null;
-  private Collection<String> headers = null;
+  private String options;
+  private Collection<String> headers;
 
   @Test
   public void testDefaultOptionsValue() throws Exception {
@@ -126,7 +126,7 @@ public class XContentTypeOptionsFilterTest {
   }
 
   class TestFilterChain implements FilterChain {
-    boolean doFilterCalled = false;
+    boolean doFilterCalled;
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response) {

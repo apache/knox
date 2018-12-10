@@ -55,17 +55,16 @@ class TraceRequest extends HttpServletRequestWrapper {
   private void traceRequestDetails() {
     StringBuilder sb = new StringBuilder();
     TraceUtil.appendCorrelationContext( sb );
-    sb.append( "|Request=" );
-    sb.append( getMethod() );
-    sb.append( " " );
-    sb.append( getRequestURI() );
+    sb.append("|Request=")
+        .append(getMethod())
+        .append(' ')
+        .append(getRequestURI());
     String qs = getQueryString();
     if( qs != null ) {
-      sb.append( "?" );
-      sb.append( qs );
+      sb.append('?').append(qs);
     }
-    appendHeaders( sb );
-    log.trace( sb.toString() );
+    appendHeaders(sb);
+    log.trace(sb.toString());
   }
 
   private void appendHeaders( StringBuilder sb ) {
@@ -81,5 +80,4 @@ class TraceRequest extends HttpServletRequestWrapper {
       }
     }
   }
-
 }

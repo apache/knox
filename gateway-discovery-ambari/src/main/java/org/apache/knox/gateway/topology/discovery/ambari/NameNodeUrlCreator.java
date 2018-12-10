@@ -31,7 +31,7 @@ public class NameNodeUrlCreator implements ServiceURLCreator {
 
   private AmbariServiceDiscoveryMessages log = MessagesFactory.get(AmbariServiceDiscoveryMessages.class);
 
-  private AmbariCluster cluster = null;
+  private AmbariCluster cluster;
 
   @Override
   public void init(AmbariCluster cluster) {

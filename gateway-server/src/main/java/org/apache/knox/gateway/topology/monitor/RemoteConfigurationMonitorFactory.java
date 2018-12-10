@@ -29,7 +29,7 @@ public class RemoteConfigurationMonitorFactory {
 
     private static final GatewayMessages log = MessagesFactory.get(GatewayMessages.class);
 
-    private static RemoteConfigurationRegistryClientService remoteConfigRegistryClientService = null;
+    private static RemoteConfigurationRegistryClientService remoteConfigRegistryClientService;
 
     public static void setClientService(RemoteConfigurationRegistryClientService clientService) {
         remoteConfigRegistryClientService = clientService;

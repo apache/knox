@@ -21,9 +21,9 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -31,6 +31,7 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -145,9 +146,9 @@ public class GatewayTestDriver {
     deployDir.mkdirs();
 
     File descriptor = new File( topoDir, cluster + ".xml" );
-    FileOutputStream stream = new FileOutputStream( descriptor );
-    topology.toStream( stream );
-    stream.close();
+    try(OutputStream stream = Files.newOutputStream(descriptor.toPath())) {
+        topology.toStream( stream );
+    }
 
     this.srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<>();

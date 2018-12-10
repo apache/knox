@@ -85,9 +85,9 @@ public class Pac4jDispatcherFilter implements Filter {
   private CallbackFilter callbackFilter;
 
   private SecurityFilter securityFilter;
-  private MasterService masterService = null;
-  private KeystoreService keystoreService = null;
-  private AliasService aliasService = null;
+  private MasterService masterService;
+  private KeystoreService keystoreService;
+  private AliasService aliasService;
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {

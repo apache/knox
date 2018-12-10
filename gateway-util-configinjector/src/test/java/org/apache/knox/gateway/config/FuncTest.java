@@ -72,7 +72,7 @@ public class FuncTest {
     }
     String multiArgStringField = "default";
     Integer multiArgIntegerField = 0;
-    int multiArgIntField = 0;
+    int multiArgIntField;
 
   }
 

@@ -64,7 +64,7 @@ public class SslSocketTest {
 
   public class SslServer implements Runnable {
 
-    private boolean ready = false;
+    private boolean ready;
 
     public boolean waitUntilReady() throws InterruptedException {
       synchronized( this ) {

@@ -92,17 +92,13 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
     //KNOX-439[
     //StringBuffer urlString = super.getRequestURL();
     StringBuilder urlString = new StringBuilder( 128 );
-    urlString.append( getScheme() );
-    urlString.append( "://" );
-    urlString.append( getServerName() );
-    urlString.append( ":" );
-    urlString.append( getServerPort() );
-    urlString.append( super.getRequestURI() );
+    urlString.append(getScheme()).append("://")
+        .append(getServerName()).append(':').append(getServerPort())
+        .append(super.getRequestURI());
     //]
     String queryString = super.getQueryString();
     if( queryString != null ) {
-      urlString.append( '?' );
-      urlString.append( queryString );
+      urlString.append( '?' ).append( queryString );
     }
     try {
       urlTemplate = Parser.parseLiteral( urlString.toString() );

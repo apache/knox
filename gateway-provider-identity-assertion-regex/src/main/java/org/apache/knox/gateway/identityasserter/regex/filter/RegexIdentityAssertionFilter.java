@@ -31,8 +31,8 @@ import java.util.TreeMap;
 public class RegexIdentityAssertionFilter extends
     CommonIdentityAssertionFilter {
 
-  private String input = null;
-  private String output = null;
+  private String input;
+  private String output;
   private Map<String,String> dict;
   RegexTemplate template;
 

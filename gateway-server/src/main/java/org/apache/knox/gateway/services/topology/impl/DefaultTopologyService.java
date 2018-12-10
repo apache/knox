@@ -114,7 +114,7 @@ public class DefaultTopologyService
   private volatile Map<File, Topology> topologies;
   private AliasService aliasService;
 
-  private RemoteConfigurationMonitor remoteMonitor = null;
+  private RemoteConfigurationMonitor remoteMonitor;
 
   private GatewayConfig config;
 

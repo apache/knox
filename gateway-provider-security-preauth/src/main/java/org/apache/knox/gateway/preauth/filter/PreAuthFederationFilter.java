@@ -31,7 +31,7 @@ import javax.servlet.http.HttpServletResponse;
 
 public class PreAuthFederationFilter implements Filter {
   private static final String CUSTOM_HEADER_PARAM = "preauth.customHeader";
-  private List<PreAuthValidator> validators = null;
+  private List<PreAuthValidator> validators;
   private FilterConfig filterConfig;
   private String headerName = "SM_USER";
 

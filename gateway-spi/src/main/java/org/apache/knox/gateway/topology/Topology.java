@@ -32,7 +32,7 @@ public class Topology {
 
   private URI uri;
   private String name;
-  private String defaultServicePath = null;
+  private String defaultServicePath;
   private long timestamp;
   private boolean isGenerated;
   public List<Provider> providerList = new ArrayList<>();
@@ -41,7 +41,7 @@ public class Topology {
   private MultiKeyMap serviceMap;
   private List<Application> applications = new ArrayList<>();
   private Map<String,Application> applicationMap = new HashMap<>();
-  private CustomDispatch dispatch = null;
+  private CustomDispatch dispatch;
 
   public Topology() {
     serviceMap = MultiKeyMap.decorate(new HashedMap());

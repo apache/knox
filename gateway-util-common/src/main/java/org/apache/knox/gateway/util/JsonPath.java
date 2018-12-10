@@ -312,18 +312,18 @@ public class JsonPath {
 
     @Override
     public String toString() {
-      StringBuilder s = new StringBuilder();
+      StringBuilder s = new StringBuilder(32);
       s.append( "JsonPath.Expression{" );
       for( int i=0, n=segments.size(); i<n; i++ ) {
         if( i > 0 ) {
-          s.append( "," );
+          s.append(',');
         }
         s.append( "segment[" );
         s.append( i );
         s.append( "]=" );
         s.append( segments.get( i ) );
       }
-      s.append( "]" );
+      s.append(']');
       return s.toString();
     }
 

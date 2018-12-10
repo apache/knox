@@ -54,18 +54,18 @@ public class MockRequestMatcher {
 
   private String from;
   private MockResponseProvider response;
-  private Set<String> methods = null;
-  private String pathInfo = null;
-  private String requestURL = null;
-  Map<String,Matcher> headers = null;
-  Set<Cookie> cookies = null;
-  private Map<String,Object> attributes = null;
-  private Map<String,String> queryParams = null;
-  private String contentType = null;
-  private String characterEncoding = null;
-  private Integer contentLength = null;
-  private byte[] entity = null;
-  private Map<String,String[]> formParams = null;
+  private Set<String> methods;
+  private String pathInfo;
+  private String requestURL;
+  Map<String,Matcher> headers;
+  Set<Cookie> cookies;
+  private Map<String,Object> attributes;
+  private Map<String,String> queryParams;
+  private String contentType;
+  private String characterEncoding;
+  private Integer contentLength;
+  private byte[] entity;
+  private Map<String,String[]> formParams;
 
   public MockRequestMatcher( MockResponseProvider response ) {
     this.response = response;

@@ -41,7 +41,7 @@ public class SecureQueryDecryptProcessor implements
   private static SecureQueryMessages log = MessagesFactory.get( SecureQueryMessages.class );
   private static final String ENCRYPTED_PARAMETER_NAME = "_";
 
-  private ConfigurableEncryptor encryptor = null;
+  private ConfigurableEncryptor encryptor;
 
   @Override
   public String getType() {

@@ -22,7 +22,7 @@ import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditService;
 public abstract class AuditServiceFactory {
 
   // The global audit service instance.
-  private static AuditService auditService = null;
+  private static AuditService auditService;
 
   // To prevent instantiation.
   private AuditServiceFactory() {

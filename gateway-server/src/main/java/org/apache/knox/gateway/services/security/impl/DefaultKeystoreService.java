@@ -62,11 +62,11 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
   private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
   private static GatewayResources RES = ResourcesFactory.get( GatewayResources.class );
 
-  private String signingKeystoreName = null;
-  private String signingKeyAlias = null;
+  private String signingKeystoreName;
+  private String signingKeyAlias;
   private Map<String, Map<String, String>> cache = new ConcurrentHashMap<>();
-  private Lock readLock = null;
-  private Lock writeLock = null;
+  private Lock readLock;
+  private Lock writeLock;
 
   @Override
   public void init(GatewayConfig config, Map<String, String> options)

@@ -72,10 +72,10 @@ public abstract class AbstractJWTFilterTest  {
   private static final String SERVICE_URL = "https://localhost:8888/resource";
   private static final String dnTemplate = "CN={0},OU=Test,O=Hadoop,L=Test,ST=Test,C=US";
 
-  protected AbstractJWTFilter handler = null;
-  protected static RSAPublicKey publicKey = null;
-  protected static RSAPrivateKey privateKey = null;
-  protected static String pem = null;
+  protected AbstractJWTFilter handler;
+  protected static RSAPublicKey publicKey;
+  protected static RSAPrivateKey privateKey;
+  protected static String pem;
 
   protected abstract void setTokenOnRequest(HttpServletRequest request, SignedJWT jwt);
   protected abstract void setGarbledTokenOnRequest(HttpServletRequest request, SignedJWT jwt);
@@ -819,8 +819,8 @@ public abstract class AbstractJWTFilterTest  {
   }
 
   protected static class TestFilterChain implements FilterChain {
-    boolean doFilterCalled = false;
-    Subject subject = null;
+    boolean doFilterCalled;
+    Subject subject;
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response) {

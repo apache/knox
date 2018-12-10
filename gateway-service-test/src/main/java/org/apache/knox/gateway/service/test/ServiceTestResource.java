@@ -20,10 +20,10 @@ package org.apache.knox.gateway.service.test;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.conn.ssl.SSLContexts;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContexts;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.topology.TopologyService;
@@ -218,43 +218,43 @@ public class ServiceTestResource {
     final String X_Forwarded_Port = X_Forwarded + "Port";
     final String X_Forwarded_Server = X_Forwarded + "Server";
 
-    String baseURL = "";
+    StringBuilder baseURL = new StringBuilder();
 
 //    Get Protocol
     if(req.getHeader(X_Forwarded_Proto) != null){
-      baseURL += req.getHeader(X_Forwarded_Proto) + "://";
+      baseURL.append(req.getHeader(X_Forwarded_Proto)).append("://");
     } else {
-      baseURL += req.getProtocol() + "://";
+      baseURL.append(req.getProtocol()).append("://");
     }
 
 //    Handle Server/Host and Port Here
     if (req.getHeader(X_Forwarded_Host) != null && req.getHeader(X_Forwarded_Port) != null){
 //        Double check to see if host has port
       if(req.getHeader(X_Forwarded_Host).contains(req.getHeader(X_Forwarded_Port))){
-        baseURL += req.getHeader(X_Forwarded_Host);
+        baseURL.append(req.getHeader(X_Forwarded_Host));
       } else {
 //        If there's no port, add the host and port together;
-        baseURL += req.getHeader(X_Forwarded_Host) + ":" + req.getHeader(X_Forwarded_Port);
+        baseURL.append(req.getHeader(X_Forwarded_Host)).append(':').append(req.getHeader(X_Forwarded_Port));
       }
     } else if(req.getHeader(X_Forwarded_Server) != null && req.getHeader(X_Forwarded_Port) != null){
 //      Tack on the server and port if they're available. Try host if server not available
-      baseURL += req.getHeader(X_Forwarded_Server) + ":" + req.getHeader(X_Forwarded_Port);
+      baseURL.append(req.getHeader(X_Forwarded_Server)).append(':').append(req.getHeader(X_Forwarded_Port));
     } else if(req.getHeader(X_Forwarded_Port) != null) {
 //      if we at least have a port, we can use it.
-      baseURL += req.getServerName() + ":" + req.getHeader(X_Forwarded_Port);
+      baseURL.append(req.getServerName()).append(':').append(req.getHeader(X_Forwarded_Port));
     } else {
 //      Resort to request members
-      baseURL += req.getServerName() + ":" + req.getLocalPort();
+      baseURL.append(req.getServerName()).append(':').append(req.getLocalPort());
     }
 
 //    Handle Server context
     if( req.getHeader(X_Forwarded_Context) != null ) {
-      baseURL += req.getHeader( X_Forwarded_Context );
+      baseURL.append(req.getHeader( X_Forwarded_Context ));
     } else {
-      baseURL += req.getContextPath();
+      baseURL.append(req.getContextPath());
     }
 
-    return baseURL;
+    return baseURL.toString();
   }
 
   String buildURI(Topology topology, GatewayConfig config, HttpServletRequest req){
@@ -270,10 +270,7 @@ public class ServiceTestResource {
     }else{
       gatewayPath = "gateway";
     }
-    uri += "/" + gatewayPath;
-
-    uri += "/" + topology.getName();
-    return uri;
+    return uri + "/" + gatewayPath + "/" + topology.getName();
   }
 
   @XmlAccessorType(XmlAccessType.NONE)
@@ -340,7 +337,6 @@ public class ServiceTestResource {
     }
 
     public void setMessage(String msg) {
-
       if(httpCode != -1) {
         message = buildMessage(httpCode);
       } else {
@@ -353,38 +349,25 @@ public class ServiceTestResource {
     }
 
     static String buildMessage(int code) {
-
-      String message = "";
-
       switch (code) {
-
         case 200:
-          message += "Request sucessful.";
-          break;
+          return "Request successful.";
         case 400:
-          message += "Could not properly intepret HTTP request.";
-          break;
+          return "Could not properly interpret HTTP request.";
         case 401:
-          message += "User was not authorized. Try using credentials with access to all services. " +
-              "Ensure LDAP server is running.";
-          break;
+          return "User was not authorized. Try using credentials with access to all services. " +
+                     "Ensure LDAP server is running.";
         case 403:
-          message += "Access to this resource is forbidden. It seems we might have made a bad request.";
-          break;
+          return "Access to this resource is forbidden. It seems we might have made a bad request.";
         case 404:
-          message += "The page could not be found. Are the URLs for the topology services correct?";
-          break;
+          return "The page could not be found. Are the URLs for the topology services correct?";
         case 500:
-          message += "The server encountered an error. Are all of the cluster's services running? \n" +
+          return "The server encountered an error. Are all of the cluster's services running? \n" +
               "Can a connection be established without Knox?";
-          break;
-
+        default:
+          return "";
       }
-      return message;
-
     }
-
-
   }
 
   @XmlAccessorType(XmlAccessType.FIELD)
@@ -414,8 +397,5 @@ public class ServiceTestResource {
     public void setMessages(List<String> messages){
       this.messages = messages;
     }
-
   }
-
-
 }

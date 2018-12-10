@@ -29,7 +29,7 @@ import java.util.ServiceLoader;
 public class ConfigurationInjectorBuilder {
 
   private static ConfigurationBinding DEFAULT_BINDING = new DefaultConfigurationBinding();
-  private static ConfigurationInjector INSTANCE = null;
+  private static ConfigurationInjector INSTANCE;
 
   private static synchronized ConfigurationInjector getInjector() {
     if( INSTANCE == null ) {
@@ -57,9 +57,9 @@ public class ConfigurationInjectorBuilder {
     return injector;
   }
 
-  private Object target = null;
-  private ConfigurationAdapter source = null;
-  private ConfigurationBinding binding = null;
+  private Object target;
+  private ConfigurationAdapter source;
+  private ConfigurationBinding binding;
 
   public static ConfigurationInjectorBuilder configuration() {
     return new ConfigurationInjectorBuilder();

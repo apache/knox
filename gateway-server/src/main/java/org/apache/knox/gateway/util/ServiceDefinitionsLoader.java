@@ -32,13 +32,13 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -58,7 +58,7 @@ public class ServiceDefinitionsLoader {
         Unmarshaller unmarshaller = context.createUnmarshaller();
 
         for ( File file : getFileList(servicesDir) ) {
-          try (InputStream inputStream = new FileInputStream(file)) {
+          try (InputStream inputStream = Files.newInputStream(file.toPath())) {
             ServiceDefinition definition = (ServiceDefinition) unmarshaller.unmarshal(inputStream);
             //look for rewrite rules as a sibling (for now)
             UrlRewriteRulesDescriptor rewriteRulesDescriptor = loadRewriteRules(file.getParentFile());
@@ -119,7 +119,7 @@ public class ServiceDefinitionsLoader {
   public static UrlRewriteRulesDescriptor loadRewriteRules(File servicesDir) {
     File rewriteFile = new File(servicesDir, REWRITE_FILE);
     if ( rewriteFile.exists() ) {
-      try (InputStream stream = new FileInputStream(rewriteFile);
+      try (InputStream stream = Files.newInputStream(rewriteFile.toPath());
            Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
         return UrlRewriteRulesDescriptorFactory.load("xml", reader);
       } catch ( FileNotFoundException e ) {

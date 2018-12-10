@@ -64,7 +64,7 @@ class CuratorClientService implements ZooKeeperClientService {
 
     private Map<String, RemoteConfigurationRegistryClient> clients = new HashMap<>();
 
-    private AliasService aliasService = null;
+    private AliasService aliasService;
 
 
     @Override

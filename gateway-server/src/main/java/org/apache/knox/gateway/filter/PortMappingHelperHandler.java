@@ -49,7 +49,7 @@ public class PortMappingHelperHandler extends HandlerWrapper {
 
   final GatewayConfig config;
 
-  private String defaultTopologyRedirectContext = null;
+  private String defaultTopologyRedirectContext;
 
   public PortMappingHelperHandler(final GatewayConfig config) {
 

@@ -25,9 +25,9 @@ class Function {
 
   private enum State { UNKNOWN, FUNCTION, VARIABLE, LITERAL }
 
-  private String funcName = null;
-  private String paramName = null;
-  private List<String> paramValue = null;
+  private String funcName;
+  private String paramName;
+  private List<String> paramValue;
 
   static List<String> evaluate( String statement, Resolver resolver, Evaluator evaluator ) {
     Function function = new Function( statement );

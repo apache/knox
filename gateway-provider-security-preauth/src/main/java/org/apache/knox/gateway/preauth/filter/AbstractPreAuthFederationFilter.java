@@ -46,7 +46,7 @@ import org.apache.knox.gateway.security.PrimaryPrincipal;
 
 public abstract class AbstractPreAuthFederationFilter implements Filter {
 
-  private List<PreAuthValidator> validators = null;
+  private List<PreAuthValidator> validators;
   private FilterConfig filterConfig;
   private static AuditService auditService = AuditServiceFactory.getAuditService();
   private static Auditor auditor = auditService.getAuditor(

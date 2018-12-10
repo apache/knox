@@ -28,9 +28,9 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -86,7 +86,7 @@ public class ProviderConfigurationParser {
 
 
   static ProviderConfiguration parseXML(File file) throws Exception {
-    return parseXML(new FileInputStream(file));
+    return parseXML(Files.newInputStream(file.toPath()));
   }
 
 
@@ -102,7 +102,7 @@ public class ProviderConfigurationParser {
 
 
   static ProviderConfiguration parseJSON(File file) throws IOException {
-    return parseJSON(new FileInputStream(file));
+    return parseJSON(Files.newInputStream(file.toPath()));
   }
 
 
@@ -113,7 +113,7 @@ public class ProviderConfigurationParser {
 
 
   static ProviderConfiguration parseYAML(File file) throws IOException {
-    return parseYAML(new FileInputStream(file));
+    return parseYAML(Files.newInputStream(file.toPath()));
   }
 
   static ProviderConfiguration parseYAML(InputStream in) throws IOException {

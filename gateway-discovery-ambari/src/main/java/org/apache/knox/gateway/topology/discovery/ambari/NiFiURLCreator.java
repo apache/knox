@@ -36,7 +36,7 @@ public class NiFiURLCreator implements ServiceURLCreator {
   static final String SSL_PORT_PROPERTY = "nifi.node.ssl.port";
 
 
-  private AmbariCluster cluster = null;
+  private AmbariCluster cluster;
 
   @Override
   public String getTargetService() {

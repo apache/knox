@@ -49,7 +49,7 @@ class SimpleDescriptorImpl implements SimpleDescriptor {
     @JsonProperty("applications")
     private List<ApplicationImpl> applications;
 
-    private String name = null;
+    private String name;
 
     void setName(String name) {
         this.name = name;

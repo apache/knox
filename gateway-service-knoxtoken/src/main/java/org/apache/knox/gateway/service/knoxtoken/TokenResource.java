@@ -62,10 +62,10 @@ public class TokenResource {
   private static TokenServiceMessages log = MessagesFactory.get( TokenServiceMessages.class );
   private long tokenTTL = TOKEN_TTL_DEFAULT;
   private List<String> targetAudiences = new ArrayList<>();
-  private String tokenTargetUrl = null;
-  private Map<String,Object> tokenClientDataMap = null;
+  private String tokenTargetUrl;
+  private Map<String,Object> tokenClientDataMap;
   private ArrayList<String> allowedDNs = new ArrayList<>();
-  private boolean clientCertRequired = false;
+  private boolean clientCertRequired;
   private String signatureAlgorithm = "RS256";
 
   @Context

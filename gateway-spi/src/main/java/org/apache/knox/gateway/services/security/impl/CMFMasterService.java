@@ -39,7 +39,7 @@ public class CMFMasterService {
 
   private static final String MASTER_PASSPHRASE = "masterpassphrase";
   private static final String MASTER_PERSISTENCE_TAG = "#1.0# " + TimeStamp.getCurrentTime().toDateString();
-  protected char[] master = null;
+  protected char[] master;
   protected String serviceName;
   private ConfigurableEncryptor encryptor = new ConfigurableEncryptor(MASTER_PASSPHRASE);
 

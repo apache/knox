@@ -39,9 +39,9 @@ import org.junit.Test;
 
 public class StrictTransportFilterTest {
   private static final String STRICT_TRANSPORT = "Strict-Transport-Security";
-  String options = null;
-  Collection<String> headerNames = null;
-  Collection<String> headers = null;
+  String options;
+  Collection<String> headerNames;
+  Collection<String> headers;
 
   @Test
   public void testDefaultOptionsValue() throws Exception {
@@ -129,7 +129,7 @@ public class StrictTransportFilterTest {
   }
 
   class TestFilterChain implements FilterChain {
-    boolean doFilterCalled = false;
+    boolean doFilterCalled;
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response)

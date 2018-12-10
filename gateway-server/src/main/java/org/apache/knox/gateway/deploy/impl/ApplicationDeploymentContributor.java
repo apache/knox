@@ -41,13 +41,14 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -84,7 +85,7 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
     } else {
       JAXBContext context = JAXBContext.newInstance( ServiceDefinition.class );
       Unmarshaller unmarshaller = context.createUnmarshaller();
-      try( FileInputStream inputStream = new FileInputStream( file ) ) {
+      try(InputStream inputStream = Files.newInputStream(file.toPath()) ) {
           definition = (ServiceDefinition) unmarshaller.unmarshal( inputStream );
       }
     }
@@ -96,9 +97,10 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
     if( !file.exists() ) {
       rules = UrlRewriteRulesDescriptorFactory.load( "xml", new StringReader( "<rules/>" ) );
     } else {
-      InputStreamReader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8);
-      rules = UrlRewriteRulesDescriptorFactory.load( "xml", reader );
-      reader.close();
+      try(InputStream inputStream = Files.newInputStream(file.toPath());
+          InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+        rules = UrlRewriteRulesDescriptorFactory.load("xml", reader);
+      }
     }
     return rules;
   }

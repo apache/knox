@@ -48,9 +48,9 @@ import static org.junit.Assert.assertTrue;
  */
 public class CommonIdentityAssertionFilterTest {
 
-  private String username = null;
-  private String[] mappedGroups = null;
-  private Filter filter = null;
+  private String username;
+  private String[] mappedGroups;
+  private Filter filter;
 
   @Before
   public void setup() {

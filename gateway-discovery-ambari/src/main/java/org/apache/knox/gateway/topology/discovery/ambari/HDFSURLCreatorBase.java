@@ -44,7 +44,7 @@ public abstract class HDFSURLCreatorBase implements ServiceURLCreator {
 
   protected AmbariServiceDiscoveryMessages log = MessagesFactory.get(AmbariServiceDiscoveryMessages.class);
 
-  private AmbariCluster cluster = null;
+  private AmbariCluster cluster;
 
 
   @Override

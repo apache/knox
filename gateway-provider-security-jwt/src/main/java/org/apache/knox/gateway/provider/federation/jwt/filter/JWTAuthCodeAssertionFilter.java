@@ -39,7 +39,7 @@ import org.apache.knox.gateway.util.JsonUtils;
 public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter {
   private static final String BEARER = "Bearer ";
 
-  private JWTokenAuthority authority = null;
+  private JWTokenAuthority authority;
 
   private ServiceRegistry sr;
 

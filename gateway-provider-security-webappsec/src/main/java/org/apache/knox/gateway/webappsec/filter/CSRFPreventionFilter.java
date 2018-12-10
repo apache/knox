@@ -36,7 +36,7 @@ public class CSRFPreventionFilter implements Filter {
   private static final String CUSTOM_METHODS_TO_IGNORE_PARAM = "csrf.methodstoignore";
   private String  headerName = "X-XSRF-Header";
   private String  mti = "GET,OPTIONS,HEAD";
-  private Set<String> methodsToIgnore = null;
+  private Set<String> methodsToIgnore;
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {

@@ -30,8 +30,8 @@ class Mkdir {
 
   public static class Request extends AbstractRequest<Response> {
 
-    String dir = null;
-    String perm = null;
+    String dir;
+    String perm;
 
     Request( KnoxSession session ) {
       super( session );

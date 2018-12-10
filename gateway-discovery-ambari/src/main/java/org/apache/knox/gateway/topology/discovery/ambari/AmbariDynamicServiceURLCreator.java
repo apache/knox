@@ -21,10 +21,10 @@ import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,7 +39,7 @@ class AmbariDynamicServiceURLCreator implements ServiceURLCreator {
 
     private AmbariServiceDiscoveryMessages log = MessagesFactory.get(AmbariServiceDiscoveryMessages.class);
 
-    private AmbariCluster cluster = null;
+    private AmbariCluster cluster;
     private ServiceURLPropertyConfig config;
 
     AmbariDynamicServiceURLCreator() {
@@ -52,7 +52,7 @@ class AmbariDynamicServiceURLCreator implements ServiceURLCreator {
 
     AmbariDynamicServiceURLCreator(AmbariCluster cluster, File mappingConfiguration) throws IOException {
         this.cluster = cluster;
-        try (InputStream inputStream = new FileInputStream(mappingConfiguration)) {
+        try (InputStream inputStream = Files.newInputStream(mappingConfiguration.toPath())) {
           config = new ServiceURLPropertyConfig(inputStream);
         }
     }

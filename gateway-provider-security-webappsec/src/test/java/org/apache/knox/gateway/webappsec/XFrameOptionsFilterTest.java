@@ -39,9 +39,9 @@ import org.junit.Test;
 
 public class XFrameOptionsFilterTest {
   private static final String X_FRAME_OPTIONS = "X-Frame-Options";
-  String options = null;
-  Collection<String> headerNames = null;
-  Collection<String> headers = null;
+  String options;
+  Collection<String> headerNames;
+  Collection<String> headers;
 
   @Test
   public void testDefaultOptionsValue() throws Exception {
@@ -158,7 +158,7 @@ public class XFrameOptionsFilterTest {
   }
 
   class TestFilterChain implements FilterChain {
-    boolean doFilterCalled = false;
+    boolean doFilterCalled;
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response)

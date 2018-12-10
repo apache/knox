@@ -80,8 +80,7 @@ public class HtmlImportFunctionProcessor implements UrlRewriteFunctionProcessor<
     }
     List<String> frontendValues = frontend.resolve(context, parameters);
     StringBuilder buffer = new StringBuilder(IMPORT_LITERAL);
-    buffer.append(" ");
-    buffer.append(prefix);
+    buffer.append(' ').append(prefix);
     if ( frontendValues != null && !frontendValues.isEmpty() ) {
       for ( String value : frontendValues ) {
         buffer.append(value);

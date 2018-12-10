@@ -28,7 +28,7 @@ import java.io.IOException;
 public class RedirectToUrlFilter extends AbstractGatewayFilter {
   public static final String REDIRECT_TO_URL = "redirectToUrl";
 
-  protected String redirectUrl = null;
+  protected String redirectUrl;
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {

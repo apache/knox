@@ -51,7 +51,7 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
   private static final String BEARER = "Bearer ";
   private static JWTMessages log = MessagesFactory.get( JWTMessages.class );
   private long validity;
-  private JWTokenAuthority authority = null;
+  private JWTokenAuthority authority;
   private ServiceRegistry sr;
 
   @Override

@@ -18,14 +18,15 @@
 package org.apache.knox.gateway.services.security.impl;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -276,7 +277,7 @@ public class X509CertificateUtil {
        throws CertificateEncodingException, IOException {
     byte[] bytes = cert.getEncoded();
     Base64 encoder = new Base64( 76, "\n".getBytes( StandardCharsets.US_ASCII ) );
-    try( FileOutputStream out = new FileOutputStream( file ) ) {
+    try(OutputStream out = Files.newOutputStream(file.toPath()) ) {
       out.write( "-----BEGIN CERTIFICATE-----\n".getBytes( StandardCharsets.US_ASCII ) );
       out.write( encoder.encodeToString( bytes ).getBytes( StandardCharsets.US_ASCII ) );
       out.write( "-----END CERTIFICATE-----\n".getBytes( StandardCharsets.US_ASCII ) );
@@ -291,7 +292,7 @@ public class X509CertificateUtil {
     ks.load(null, password);
     ks.setCertificateEntry("gateway-identity", cert);
     /* Coverity Scan CID 1361992 */
-    try (FileOutputStream fos = new FileOutputStream(file)) {
+    try (OutputStream fos = Files.newOutputStream(file.toPath())) {
       ks.store(fos, password);
     }
   }

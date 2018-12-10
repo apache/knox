@@ -33,16 +33,16 @@ import java.util.Set;
 
 public class MockResponseProvider {
 
-  Integer errorCode = null;
-  String errorMsg = null;
-  Integer statusCode = null;
-  String redirectUrl = null;
-  Map<String,String> headers = null;
-  Set<Cookie> cookies = null;
-  byte[] entity = null;
-  String contentType = null;
-  String characterEncoding = null;
-  Integer contentLength = null;
+  Integer errorCode;
+  String errorMsg;
+  Integer statusCode;
+  String redirectUrl;
+  Map<String,String> headers;
+  Set<Cookie> cookies;
+  byte[] entity;
+  String contentType;
+  String characterEncoding;
+  Integer contentLength;
 
   public MockResponseProvider status( int statusCode ) {
     this.statusCode = statusCode;

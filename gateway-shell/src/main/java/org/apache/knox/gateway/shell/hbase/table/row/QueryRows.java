@@ -90,17 +90,17 @@ public class QueryRows {
           int index = 0;
           for( Column column : columns ) {
             if( index++ > 0 ) {
-              columnsURIPart.append( "," );
+              columnsURIPart.append(',');
             }
             columnsURIPart.append( column.toURIPart() );
           }
-          columnsURIPart.append( "/" );
+          columnsURIPart.append('/');
 
           StringBuilder timesURIPart = new StringBuilder();
           if( startTime != null && endTime != null ) {
-            timesURIPart.append( startTime ).append( "," ).append( endTime );
+            timesURIPart.append( startTime ).append(',').append( endTime );
           } else if( startTime != null ) {
-            timesURIPart.append( startTime ).append( "," ).append( Long.MAX_VALUE );
+            timesURIPart.append( startTime ).append(',').append( Long.MAX_VALUE );
           } else if( endTime != null ) {
             timesURIPart.append( endTime );
           }

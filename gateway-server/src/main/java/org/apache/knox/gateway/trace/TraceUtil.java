@@ -35,9 +35,9 @@ public class TraceUtil {
       sb.append( "||" );
     } else {
       append( sb, cc.getRootRequestId() );
-      sb.append( "|" );
+      sb.append('|');
       append( sb, cc.getParentRequestId() );
-      sb.append( "|" );
+      sb.append('|');
       append( sb, cc.getRequestId() );
     }
   }

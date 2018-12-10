@@ -24,9 +24,10 @@ import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -36,7 +37,6 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 
 class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
 
@@ -116,7 +116,7 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
             Collection<File> persistedConfigs = FileUtils.listFiles(persistenceDir, new String[]{"conf"}, false);
             for (File persisted : persistedConfigs) {
                 Properties props = new Properties();
-                try (FileInputStream in = new FileInputStream(persisted)) {
+                try (InputStream in = Files.newInputStream(persisted.toPath())) {
                     props.load(in);
 
                     addDiscoveryConfig(props.getProperty(PROP_CLUSTER_NAME), new ServiceDiscoveryConfig() {
@@ -152,7 +152,7 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
             Collection<File> persistedConfigs = FileUtils.listFiles(persistenceDir, new String[]{"ver"}, false);
             for (File persisted : persistedConfigs) {
                 Properties props = new Properties();
-                try (FileInputStream in = new FileInputStream(persisted)) {
+                try (InputStream in = Files.newInputStream(persisted.toPath())) {
                     props.load(in);
 
                     String source = props.getProperty(PROP_CLUSTER_SOURCE);
@@ -210,7 +210,7 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
     }
 
     private void persist(Properties props, File dest) {
-        try (FileOutputStream out = new FileOutputStream(dest)) {
+        try (OutputStream out = Files.newOutputStream(dest.toPath())) {
             props.store(out, PERSISTED_FILE_COMMENT);
             out.flush();
         } catch (Exception e) {
@@ -472,7 +472,7 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
 
         private AmbariConfigurationMonitor delegate;
 
-        private boolean isActive = false;
+        private boolean isActive;
 
         PollingConfigAnalyzer(AmbariConfigurationMonitor delegate) {
             this.delegate = delegate;

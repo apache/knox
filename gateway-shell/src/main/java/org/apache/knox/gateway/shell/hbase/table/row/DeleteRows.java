@@ -70,7 +70,7 @@ public class DeleteRows {
           if( column != null ) {
             columnsURIPart.append( column.toURIPart() );
           }
-          columnsURIPart.append( "/" );
+          columnsURIPart.append('/');
 
           String timeURIPart = "";
           if( time != null ) {

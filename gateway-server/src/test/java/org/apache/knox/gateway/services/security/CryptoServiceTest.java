@@ -38,8 +38,8 @@ import static org.junit.Assert.assertEquals;
 
 @Category( { ManualTests.class, MediumTests.class } )
 public class CryptoServiceTest {
-  private static CryptoService cs = null;
-  private static AliasService as = null;
+  private static CryptoService cs;
+  private static AliasService as;
 
   @BeforeClass
   public static void setupSuite() throws Exception {

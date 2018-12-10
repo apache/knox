@@ -162,7 +162,7 @@ public class KnoxLdapRealm extends JndiLdapRealm {
     private String principalRegex = DEFAULT_PRINCIPAL_REGEX;
     private Pattern principalPattern = Pattern.compile( DEFAULT_PRINCIPAL_REGEX );
     private String userDnTemplate = "{0}";
-    private String userSearchFilter = null;
+    private String userSearchFilter;
     private String userSearchAttributeTemplate = "{0}";
     private String userSearchScope = "subtree";
 

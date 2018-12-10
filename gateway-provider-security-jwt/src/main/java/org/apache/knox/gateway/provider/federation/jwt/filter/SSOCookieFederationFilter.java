@@ -213,9 +213,9 @@ private String gatewayPath;
     StringBuilder sb = new StringBuilder(scheme);
     sb.append("://").append(host);
     if (!host.contains(":")) {
-      sb.append(":").append(port);
+      sb.append(':').append(port);
     }
-    sb.append("/").append(gatewayPath).append("/knoxsso/api/v1/websso");
+    sb.append('/').append(gatewayPath).append("/knoxsso/api/v1/websso");
 
     return sb.toString();
   }

@@ -17,9 +17,10 @@
  */
 package org.apache.knox.gateway.services.security.impl;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -55,9 +56,9 @@ public class JettySSLService implements SSLService {
   private MasterService ms;
   private KeystoreService ks;
   private AliasService as;
-  private List<String> sslIncludeCiphers = null;
-  private List<String> sslExcludeCiphers = null;
-  private List<String> sslExcludeProtocols = null;
+  private List<String> sslIncludeCiphers;
+  private List<String> sslExcludeCiphers;
+  private List<String> sslExcludeProtocols;
   private boolean clientAuthNeeded;
   private boolean trustAllCerts;
   private String truststorePath;
@@ -241,7 +242,7 @@ public class JettySSLService implements SSLService {
 
   private static KeyStore loadKeyStore( String fileName, String storeType, char[] storePass ) throws CertificateException, NoSuchAlgorithmException, IOException, KeyStoreException {
     KeyStore keystore = KeyStore.getInstance(storeType);
-    try (InputStream is = new FileInputStream(fileName)) {
+    try (InputStream is = Files.newInputStream(Paths.get(fileName))) {
       keystore.load(is, storePass);
     }
     return keystore;

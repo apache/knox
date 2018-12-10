@@ -40,14 +40,14 @@ import org.eclipse.jetty.util.BlockingArrayQueue;
 @ClientEndpoint
 public class WebsocketClient {
 
-  private Session session = null;
-  public CloseReason close = null;
+  private Session session;
+  public CloseReason close;
   public MessageQueue messageQueue = new MessageQueue();
   public LinkedList<Throwable> errors = new LinkedList<>();
   public CountDownLatch closeLatch = new CountDownLatch(1);
 
-  public boolean onError = false;
-  public String errorMessage = null;
+  public boolean onError;
+  public String errorMessage;
 
   @OnClose
   public void onWebSocketClose(CloseReason reason) {

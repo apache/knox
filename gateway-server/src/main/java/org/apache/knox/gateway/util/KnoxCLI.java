@@ -119,24 +119,24 @@ public class KnoxCLI extends Configured implements Tool {
 
   private static GatewayServices services = new CLIGatewayServices();
   private Command command;
-  private String value = null;
-  private String cluster = null;
-  private String path = null;
+  private String value;
+  private String cluster;
+  private String path;
   private String generate = "false";
-  private String hostname = null;
-  private String port = null;
-  private boolean force = false;
-  private boolean debug = false;
-  private String user = null;
-  private String pass = null;
-  private boolean groups = false;
+  private String hostname;
+  private String port;
+  private boolean force;
+  private boolean debug;
+  private String user;
+  private String pass;
+  private boolean groups;
 
-  private String remoteRegistryClient = null;
-  private String remoteRegistryEntryName = null;
+  private String remoteRegistryClient;
+  private String remoteRegistryEntryName;
 
   // For testing only
-  private String master = null;
-  private String type = null;
+  private String master;
+  private String type;
 
   @Override
   public int run(String[] args) throws Exception {
@@ -1056,8 +1056,8 @@ public class KnoxCLI extends Configured implements Tool {
 
     public static final String USAGE = "ldap-command";
     public static final String DESC = "This is an internal command. It should not be used.";
-    protected String username = null;
-    protected char[] password = null;
+    protected String username;
+    protected char[] password;
     protected static final String debugMessage = "For more information use --d for debug output.";
     protected Topology topology;
 
@@ -1637,7 +1637,7 @@ public class KnoxCLI extends Configured implements Tool {
                         "Errors are reported and suggestions to resolve any problems are returned. JSON formatted.\n";
 
     private boolean ssl = true;
-    private int attempts = 0;
+    private int attempts;
 
     @Override
     public String getUsage() { return USAGE + ":\n\n" + DESC; }
@@ -1888,7 +1888,7 @@ public class KnoxCLI extends Configured implements Tool {
    * Base class for remote config registry upload commands
    */
   public abstract class RemoteRegistryUploadCommand extends RemoteRegistryCommand {
-    private File sourceFile = null;
+    private File sourceFile;
     protected String filename;
 
     protected RemoteRegistryUploadCommand(String sourceFileName) {

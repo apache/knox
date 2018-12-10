@@ -270,7 +270,7 @@ public class GatewayDispatchFilterTest {
   }
 
   private static class TestHttpServletResponse extends MockHttpServletResponse {
-    int status = 0;
+    int status;
 
     @Override
     public void sendError(int i) throws IOException {

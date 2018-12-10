@@ -65,7 +65,7 @@ public abstract class HtmlFilterReaderBase extends Reader implements
   private int offset;
   private StringWriter writer;
   private StringBuffer buffer;
-  private UrlRewriteFilterContentDescriptor config = null;
+  private UrlRewriteFilterContentDescriptor config;
 
   protected HtmlFilterReaderBase( Reader reader ) throws IOException, ParserConfigurationException {
     this.reader = reader;

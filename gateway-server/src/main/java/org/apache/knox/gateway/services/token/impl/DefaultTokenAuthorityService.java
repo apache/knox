@@ -51,9 +51,9 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
 
   private static final String SIGNING_KEY_PASSPHRASE = "signing.key.passphrase";
   private static final Set<String> SUPPORTED_SIG_ALGS = new HashSet<>();
-  private AliasService as = null;
-  private KeystoreService ks = null;
-  String signingKeyAlias = null;
+  private AliasService as;
+  private KeystoreService ks;
+  String signingKeyAlias;
 
   static {
       // Only standard RSA signature algorithms are accepted

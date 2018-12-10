@@ -133,15 +133,11 @@ public class KafkaZookeeperURLManager extends BaseZookeeperURLManager {
 
     StringBuilder buffer = new StringBuilder();
 
-    buffer.append(scheme);
-    buffer.append("://");
+    buffer.append(scheme).append("://");
 
     JSONParser parser = new JSONParser(JSONParser.DEFAULT_PERMISSIVE_MODE);
     JSONObject obj = (JSONObject) parser.parse(serverInfo);
-    buffer.append(obj.get("host"));
-
-    buffer.append(":");
-    buffer.append(PORT_NUMBER);
+    buffer.append(obj.get("host")).append(':').append(PORT_NUMBER);
 
     return buffer.toString();
   }

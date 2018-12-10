@@ -108,14 +108,14 @@ public class ResourcesInvoker implements InvocationHandler {
 
   private static String createDefaultPatternSuffix( final int size ) {
     StringBuilder builder = new StringBuilder( 1 + size*7 );
-    builder.append( "(" );
+    builder.append('(');
     for( int i=0; i<size; i++ ) {
-      if( i>0 ) {
-        builder.append( "," );
+      if(i > 0) {
+        builder.append(',');
       }
-      builder.append( "\"{" ).append( i ).append( "}\"" );
+      builder.append("\"{").append(i).append("}\"");
     }
-    builder.append( ")" );
+    builder.append(')');
     return builder.toString();
 
   }

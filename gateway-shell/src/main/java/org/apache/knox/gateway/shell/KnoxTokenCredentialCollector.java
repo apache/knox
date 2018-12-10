@@ -35,9 +35,9 @@ public class KnoxTokenCredentialCollector extends AbstractCredentialCollector {
 
   private static final String KNOXTOKENCACHE = ".knoxtokencache";
 
-  private String targetUrl = null;
+  private String targetUrl;
 
-  private String tokenType = null;
+  private String tokenType;
 
   @Override
   public void collect() throws CredentialCollectionException {

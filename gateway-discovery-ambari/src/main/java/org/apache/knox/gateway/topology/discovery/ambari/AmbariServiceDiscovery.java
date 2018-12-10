@@ -29,9 +29,10 @@ import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -78,7 +79,7 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
     // This is used to update the monitor when new cluster configuration details are discovered.
     private AmbariConfigurationMonitor configChangeMonitor;
 
-    private boolean isInitialized = false;
+    private boolean isInitialized;
 
     //
     static void initializeComponentConfigMappings(){
@@ -111,7 +112,7 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
             // If there is an overrides configuration file specified either way, then apply it
             if (overridesPath != null) {
                 Properties overrides = new Properties();
-                try (InputStream in = new FileInputStream(overridesPath)) {
+                try (InputStream in = Files.newInputStream(Paths.get(overridesPath))) {
                     overrides.load(in);
                     for (String name : overrides.stringPropertyNames()) {
                         componentServiceConfigs.put(name, overrides.getProperty(name));

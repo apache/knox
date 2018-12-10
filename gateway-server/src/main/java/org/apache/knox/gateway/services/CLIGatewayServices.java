@@ -43,8 +43,8 @@ public class CLIGatewayServices implements GatewayServices {
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
   private Map<String,Service> services = new HashMap<>();
-  private CLIMasterService ms = null;
-  private DefaultKeystoreService ks = null;
+  private CLIMasterService ms;
+  private DefaultKeystoreService ks;
 
   public CLIGatewayServices() {
     super();

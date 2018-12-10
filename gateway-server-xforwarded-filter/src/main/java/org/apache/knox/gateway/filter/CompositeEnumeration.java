@@ -22,7 +22,7 @@ import java.util.NoSuchElementException;
 
 public class CompositeEnumeration<T> implements Enumeration<T> {
 
-  private int index = 0;
+  private int index;
   private Enumeration<T>[] array;
 
   @SafeVarargs

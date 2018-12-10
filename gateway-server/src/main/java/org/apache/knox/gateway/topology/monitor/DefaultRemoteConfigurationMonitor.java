@@ -103,7 +103,7 @@ class DefaultRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
         };
     }
 
-    private RemoteConfigurationRegistryClient client = null;
+    private RemoteConfigurationRegistryClient client;
 
     private File providersDir;
     private File descriptorsDir;

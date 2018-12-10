@@ -31,7 +31,7 @@ import java.util.ServiceLoader;
 
 public class ConfigurationAdapterFactory {
 
-  private static Map<Class<?>, Class<? extends ConfigurationAdapter>> ADAPTERS = null;
+  private static Map<Class<?>, Class<? extends ConfigurationAdapter>> ADAPTERS;
 
   private static synchronized Map<Class<?>, Class<? extends ConfigurationAdapter>> getAdapters() {
     if( ADAPTERS == null ) {

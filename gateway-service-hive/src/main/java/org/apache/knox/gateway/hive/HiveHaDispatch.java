@@ -25,7 +25,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 
 public class HiveHaDispatch extends DefaultHaDispatch {
 
-  private boolean basicAuthPreemptive = false;
+  private boolean basicAuthPreemptive;
 
   public HiveHaDispatch() {
     setServiceRole("HIVE");

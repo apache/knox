@@ -23,8 +23,8 @@ import javax.servlet.ServletException;
 import org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
 
 public class ConcatIdentityAssertionFilter extends CommonIdentityAssertionFilter {
-  private String prefix = null;
-  private String suffix = null;
+  private String prefix;
+  private String suffix;
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {

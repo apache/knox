@@ -143,15 +143,15 @@ abstract class Segment {
     } else if( values.isEmpty() ) {
       s.append( "empty" );
     } else {
-      s.append( "[" );
+      s.append('[');
       Iterator i = values.iterator();
       while( i.hasNext() ) {
         s.append( i.next() );
         if( i.hasNext() ) {
-          s.append( "," );
+          s.append(',');
         }
       }
-      s.append( "]" );
+      s.append(']');
     }
     return s.toString();
   }

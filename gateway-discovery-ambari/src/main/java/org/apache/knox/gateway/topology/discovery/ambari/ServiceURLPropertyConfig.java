@@ -30,9 +30,9 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -87,7 +87,7 @@ class ServiceURLPropertyConfig {
      * The default service URL pattern to property mapping configuration will be used.
      */
     ServiceURLPropertyConfig(File mappingConfigurationFile) throws Exception {
-        this(new FileInputStream(mappingConfigurationFile));
+        this(Files.newInputStream(mappingConfigurationFile.toPath()));
     }
 
     /**

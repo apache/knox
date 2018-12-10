@@ -553,10 +553,7 @@ public class TopologiesResource {
     }else{
       gatewayPath = "gateway";
     }
-    uri += "/" + gatewayPath;
-
-    uri += "/" + topology.getName();
-    return uri;
+    return uri + "/" + gatewayPath + "/" + topology.getName();
   }
 
   String buildHref(HttpServletRequest req) {
@@ -564,20 +561,20 @@ public class TopologiesResource {
   }
 
   String buildHref(String id, HttpServletRequest req) {
-    String href = buildXForwardBaseURL(req);
+    StringBuilder href = new StringBuilder(buildXForwardBaseURL(req));
     // Make sure that the pathInfo doesn't have any '/' chars at the end.
     String pathInfo = req.getPathInfo();
     while(pathInfo.endsWith("/")) {
       pathInfo = pathInfo.substring(0, pathInfo.length() - 1);
     }
 
-    href += pathInfo;
+    href.append(pathInfo);
 
     if (id != null) {
-      href += "/" + id;
+      href.append('/').append(id);
     }
 
-    return href;
+    return href.toString();
   }
 
    String buildHref(org.apache.knox.gateway.topology.Topology t, HttpServletRequest req) {
@@ -598,43 +595,43 @@ public class TopologiesResource {
     final String X_Forwarded_Port = X_Forwarded + "Port";
     final String X_Forwarded_Server = X_Forwarded + "Server";
 
-    String baseURL = "";
+    StringBuilder baseURL = new StringBuilder();
 
     // Get Protocol
     if(req.getHeader(X_Forwarded_Proto) != null){
-      baseURL += req.getHeader(X_Forwarded_Proto) + "://";
+      baseURL.append(req.getHeader(X_Forwarded_Proto)).append("://");
     } else {
-      baseURL += req.getProtocol() + "://";
+      baseURL.append(req.getProtocol()).append("://");
     }
 
     // Handle Server/Host and Port Here
     if (req.getHeader(X_Forwarded_Host) != null && req.getHeader(X_Forwarded_Port) != null){
       // Double check to see if host has port
       if(req.getHeader(X_Forwarded_Host).contains(req.getHeader(X_Forwarded_Port))){
-        baseURL += req.getHeader(X_Forwarded_Host);
+        baseURL.append(req.getHeader(X_Forwarded_Host));
       } else {
         // If there's no port, add the host and port together;
-        baseURL += req.getHeader(X_Forwarded_Host) + ":" + req.getHeader(X_Forwarded_Port);
+        baseURL.append(req.getHeader(X_Forwarded_Host)).append(':').append(req.getHeader(X_Forwarded_Port));
       }
     } else if(req.getHeader(X_Forwarded_Server) != null && req.getHeader(X_Forwarded_Port) != null){
       // Tack on the server and port if they're available. Try host if server not available
-      baseURL += req.getHeader(X_Forwarded_Server) + ":" + req.getHeader(X_Forwarded_Port);
+      baseURL.append(req.getHeader(X_Forwarded_Server)).append(':').append(req.getHeader(X_Forwarded_Port));
     } else if(req.getHeader(X_Forwarded_Port) != null) {
       // if we at least have a port, we can use it.
-      baseURL += req.getServerName() + ":" + req.getHeader(X_Forwarded_Port);
+      baseURL.append(req.getServerName()).append(':').append(req.getHeader(X_Forwarded_Port));
     } else {
       // Resort to request members
-      baseURL += req.getServerName() + ":" + req.getLocalPort();
+      baseURL.append(req.getServerName()).append(':').append(req.getLocalPort());
     }
 
     // Handle Server context
     if( req.getHeader(X_Forwarded_Context) != null ) {
-      baseURL += req.getHeader( X_Forwarded_Context );
+      baseURL.append(req.getHeader( X_Forwarded_Context ));
     } else {
-      baseURL += req.getContextPath();
+      baseURL.append(req.getContextPath());
     }
 
-    return baseURL;
+    return baseURL.toString();
   }
 
 

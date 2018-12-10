@@ -57,8 +57,8 @@ class TraceResponse extends HttpServletResponseWrapper {
   private void traceResponseDetails() {
     StringBuilder sb = new StringBuilder();
     TraceUtil.appendCorrelationContext( sb );
-    sb.append( "|Response=" );
-    sb.append( getStatus() );
+    sb.append( "|Response=" )
+        .append( getStatus() );
     appendHeaders( sb );
     log.trace( sb.toString() );
   }

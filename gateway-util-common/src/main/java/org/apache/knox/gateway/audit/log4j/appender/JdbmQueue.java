@@ -160,8 +160,8 @@ public class JdbmQueue<E> {
   private static final class Stat implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private long lastEnqueue = 0;
-    private long nextDequeue = 0;
+    private long lastEnqueue;
+    private long nextDequeue;
     private long size() {
       return lastEnqueue - nextDequeue;
     }

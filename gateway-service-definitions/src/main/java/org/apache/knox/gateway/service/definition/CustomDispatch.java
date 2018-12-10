@@ -33,7 +33,7 @@ public class CustomDispatch {
 
   private String httpClientFactory;
 
-  private boolean useTwoWaySsl = false;
+  private boolean useTwoWaySsl;
 
   @XmlAttribute(name = "contributor-name")
   public String getContributorName() {

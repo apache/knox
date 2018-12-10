@@ -23,7 +23,7 @@ import org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationService;
 public abstract class CorrelationServiceFactory {
 
   // The global correlation service instance.
-  private static CorrelationService correlationService = null;
+  private static CorrelationService correlationService;
 
   // To prevent instantiation.
   private CorrelationServiceFactory() {

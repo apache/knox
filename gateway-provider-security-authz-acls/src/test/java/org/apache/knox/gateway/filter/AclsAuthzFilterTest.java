@@ -42,8 +42,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class AclsAuthzFilterTest {
-  private boolean accessGranted = false;
-  private Filter filter = null;
+  private boolean accessGranted;
+  private Filter filter;
 
   @Before
   public void setup() {

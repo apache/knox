@@ -30,7 +30,7 @@ public class HeaderPreAuthFederationFilter extends AbstractPreAuthFederationFilt
   static final String CUSTOM_HEADER_PARAM = "preauth.custom.header";
   static final String CUSTOM_GROUP_HEADER_PARAM = "preauth.custom.group.header";
   String headerName = "SM_USER";
-  String groupHeaderName = null;
+  String groupHeaderName;
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {

@@ -266,12 +266,12 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
         } else {
           for (String value : values) {
             if (sb.length() > 0) {
-              sb.append("&");
+              sb.append('&');
             }
             try {
               sb.append(urlEncode(name, encoding));
               if (value != null) {
-                sb.append("=");
+                sb.append('=');
                 sb.append(urlEncode(value, encoding));
               }
             } catch (IllegalArgumentException e) {

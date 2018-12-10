@@ -70,7 +70,7 @@ public class Expander {
     Segment segment = template.getScheme();
     if( segment != null ) {
       expandSingleValue( template.getScheme(), names, params, evaluator, builder );
-      builder.append( ":" );
+      builder.append(':');
     }
   }
 
@@ -85,17 +85,17 @@ public class Expander {
       Segment port = template.getPort();
       expandSingleValue( username, names, params, evaluator, builder );
       if( password != null ) {
-        builder.append( ":" );
+        builder.append(':');
         expandSingleValue( password, names, params, evaluator, builder );
       }
       if( username != null || password != null ) {
-        builder.append( "@" );
+        builder.append('@');
       }
       if( host != null ) {
         expandSingleValue( host, names, params, evaluator, builder );
       }
       if( port != null ) {
-        builder.append( ":" );
+        builder.append(':');
         expandSingleValue( port, names, params, evaluator, builder );
       }
     }
@@ -103,12 +103,12 @@ public class Expander {
 
   private static void expandPath( Template template, Set<String> names, Params params, Evaluator evaluator, StringBuilder builder ) {
     if( template.isAbsolute() ) {
-      builder.append( "/" );
+      builder.append('/');
     }
     List<Path> path = template.getPath();
     for( int i=0, n=path.size(); i<n; i++ ) {
       if( i > 0 ) {
-        builder.append( "/" );
+        builder.append('/');
       }
       Path segment = path.get( i );
       String name = segment.getParamName();
@@ -130,7 +130,7 @@ public class Expander {
       }
     }
     if( template.isDirectory() && !path.isEmpty() ) {
-      builder.append( "/" );
+      builder.append('/');
     }
   }
 
@@ -141,7 +141,7 @@ public class Expander {
       if( type == Segment.GLOB || type == Segment.DEFAULT ) {
         for( int i=0, n=values.size(); i<n; i++ ) {
           if( i > 0 ) {
-            builder.append( "/" );
+            builder.append( '/' );
           }
           builder.append( values.get( i ) );
         }
@@ -169,9 +169,9 @@ public class Expander {
       for (Query query1 : query) {
         int i = index.incrementAndGet();
         if (i == 1) {
-          builder.append("?");
+          builder.append('?');
         } else {
-          builder.append("&");
+          builder.append('&');
         }
         String queryName = query1.getQueryName();
         String paramName = query1.getParamName();
@@ -183,7 +183,7 @@ public class Expander {
             builder.append(queryName);
             String pattern = value.getOriginalPattern();
             if (pattern != null) {
-              builder.append("=");
+              builder.append('=');
               builder.append(pattern);
             }
             break;
@@ -214,13 +214,13 @@ public class Expander {
           for( String value: values ) {
             int i = index.incrementAndGet();
             if( i == 1 ) {
-              builder.append( "?" );
+              builder.append('?');
             } else {
-              builder.append( "&" );
+              builder.append('&');
             }
             appendQueryPart(name, builder);
             if( value != null ) {
-              builder.append( "=" );
+              builder.append('=');
               appendQueryPart(value, builder);
             }
           }
@@ -238,12 +238,12 @@ public class Expander {
       if( type == Segment.GLOB || type == Segment.DEFAULT ) {
         for( int i=0, n=values.size(); i<n; i++ ) {
           if( i > 0 ) {
-            builder.append( "&" );
+            builder.append('&');
           }
           appendQueryPart(queryName, builder);
           value = values.get( i );
           if( value != null ) {
-            builder.append( "=" );
+            builder.append('=');
             appendQueryPart(value, builder);
           }
         }
@@ -251,7 +251,7 @@ public class Expander {
         appendQueryPart(queryName, builder);
         value = values.get( 0 );
         if( value != null ) {
-          builder.append( "=" );
+          builder.append('=');
           appendQueryPart(value, builder);
         }
       }
@@ -268,7 +268,7 @@ public class Expander {
 
   private static void expandFragment( Template template, Set<String> names, Params params, Evaluator evaluator, StringBuilder builder ) {
     if( template.hasFragment() ) {
-      builder.append( "#" );
+      builder.append('#');
     }
     expandSingleValue( template.getFragment(), names, params, evaluator, builder );
   }

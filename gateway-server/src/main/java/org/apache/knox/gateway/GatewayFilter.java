@@ -134,10 +134,9 @@ public class GatewayFilter implements Filter {
             match = chains.match(Parser.parseLiteral(newPathWithQuery));
             String origUrl = ((HttpServletRequest) servletRequest).getRequestURL().toString();
             String url = origUrl;
-            if (path.equals("/")) {
+            if (path == null || path.equals("/")) {
               url += defaultServicePath;
-            }
-            else {
+            } else {
               int index = origUrl.indexOf(path);
               url = origUrl.substring(0, index) + "/" + defaultServicePath + path;
             }

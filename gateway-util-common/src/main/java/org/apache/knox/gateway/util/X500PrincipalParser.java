@@ -57,7 +57,7 @@ public class X500PrincipalParser
 
       if (namePart.startsWith(searchPart)) {
         // Return the string starting after the ID string and the = sign that follows it.
-        retList.add(namePart.toString().substring(searchPart.length()));
+        retList.add(namePart.substring(searchPart.length()));
       }
     }
 
@@ -128,7 +128,7 @@ public class X500PrincipalParser
 
       if (namePart.startsWith(searchPart)) {
         // Return the string starting after the ID string and the = sign that follows it.
-        retNamePart = namePart.toString().substring(searchPart.length());
+        retNamePart = namePart.substring(searchPart.length());
         // By definition the first one is most significant
         if (significance == MOSTSIGNIFICANT)
           break;

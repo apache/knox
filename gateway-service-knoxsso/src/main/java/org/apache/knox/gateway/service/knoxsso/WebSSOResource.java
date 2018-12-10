@@ -85,17 +85,17 @@ public class WebSSOResource {
   private static final long TOKEN_TTL_DEFAULT = 30000L;
   static final String RESOURCE_PATH = "/api/v1/websso";
   private static KnoxSSOMessages log = MessagesFactory.get( KnoxSSOMessages.class );
-  private String cookieName = null;
+  private String cookieName;
   private boolean secureOnly = true;
   private int maxAge = -1;
   private long tokenTTL = TOKEN_TTL_DEFAULT;
-  private String whitelist = null;
-  private String domainSuffix = null;
+  private String whitelist;
+  private String domainSuffix;
   private List<String> targetAudiences = new ArrayList<>();
-  private boolean enableSession = false;
+  private boolean enableSession;
   private String signatureAlgorithm = "RS256";
   private List<String> ssoExpectedparams = new ArrayList<>();
-  private String clusterName = null;
+  private String clusterName;
 
   @Context
   HttpServletRequest request;
@@ -300,20 +300,20 @@ public class WebSSOResource {
           && !ssoExpectedparams.contains(entry.getKey())) {
 
         if(first) {
-          buf.append("?");
+          buf.append('?');
           first = false;
         }
 
-        buf.append("&").append(entry.getKey());
+        buf.append('&').append(entry.getKey());
         String[] values = entry.getValue();
         if (values.length > 0 && values[0] != null) {
-          buf.append("=");
+          buf.append('=');
         }
         for (int i = 0; i < values.length; i++) {
           if (values[0] != null) {
             buf.append(values[i]);
             if (i < values.length-1) {
-              buf.append("&").append(entry.getKey()).append("=");
+              buf.append('&').append(entry.getKey()).append('=');
             }
           }
         }

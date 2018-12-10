@@ -41,8 +41,8 @@ class  RMHaBaseDispatcher extends DefaultDispatch {
     private static final RMMessages LOG = MessagesFactory.get(RMMessages.class);
     private int maxFailoverAttempts = HaServiceConfigConstants.DEFAULT_MAX_FAILOVER_ATTEMPTS;
     private int failoverSleep = HaServiceConfigConstants.DEFAULT_FAILOVER_SLEEP;
-    private String resourceRole = null;
-    private HttpResponse inboundResponse = null;
+    private String resourceRole;
+    private HttpResponse inboundResponse;
 
     /**
      *

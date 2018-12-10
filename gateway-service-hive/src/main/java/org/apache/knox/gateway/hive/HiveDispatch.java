@@ -27,7 +27,7 @@ import org.apache.http.client.methods.HttpUriRequest;
  * default HttpClientDispatch.
  */
 public class HiveDispatch extends DefaultDispatch {
-  private boolean basicAuthPreemptive = false;
+  private boolean basicAuthPreemptive;
 
   @Override
   public void init() {

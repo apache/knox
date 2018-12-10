@@ -35,7 +35,7 @@ import static org.junit.Assert.fail;
 */
 @Category( { UnitTests.class, FastTests.class } )
 public class CMFMasterServiceTest {
-  TestCMFMasterService ms = null;
+  TestCMFMasterService ms;
 
   @Before
   public void setup() {

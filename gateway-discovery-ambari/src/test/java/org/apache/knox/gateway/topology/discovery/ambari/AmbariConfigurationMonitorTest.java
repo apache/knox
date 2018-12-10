@@ -40,7 +40,7 @@ import static org.junit.Assert.assertTrue;
 
 public class AmbariConfigurationMonitorTest {
 
-    private File dataDir = null;
+    private File dataDir;
 
     @Before
     public void setup() throws Exception {

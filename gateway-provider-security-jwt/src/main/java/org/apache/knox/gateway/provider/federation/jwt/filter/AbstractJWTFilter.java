@@ -83,7 +83,7 @@ public abstract class AbstractJWTFilter implements Filter {
 
   protected List<String> audiences;
   protected JWTokenAuthority authority;
-  protected RSAPublicKey publicKey = null;
+  protected RSAPublicKey publicKey;
   private String expectedIssuer;
   private String expectedSigAlg;
 

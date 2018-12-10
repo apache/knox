@@ -81,7 +81,6 @@ import javax.servlet.SessionCookieConfig;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -96,6 +95,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
@@ -734,7 +734,7 @@ public class GatewayServer {
         }
       }
 
-      try (OutputStream outputStream = new FileOutputStream(webXmlFile);
+      try (OutputStream outputStream = Files.newOutputStream(webXmlFile.toPath());
            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
         XmlUtils.writeXml(webXmlDoc, outputStreamWriter);
       }
