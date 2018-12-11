@@ -17,12 +17,12 @@
  */
 package org.apache.knox.gateway.ha.provider.impl;
 
+import java.io.IOException;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.dispatch.KnoxSpnegoAuthSchemeFactory;
 import org.apache.knox.gateway.ha.provider.HaServiceConfig;
@@ -161,10 +161,7 @@ public abstract class BaseZookeeperURLManager implements URLManager {
    */
   protected List<String> validateHosts(List<String> hosts, String suffix, String acceptHeader) {
     List<String> result = new ArrayList<>();
-
-    CloseableHttpClient client = buildHttpClient();
-
-    try {
+    try (CloseableHttpClient client = buildHttpClient()) {
       for(String host: hosts) {
         try {
           HttpGet get = new HttpGet(host + suffix);
@@ -179,14 +176,12 @@ public abstract class BaseZookeeperURLManager implements URLManager {
           if (response != null) {
             result.add(host);
           }
-        } catch (Exception ex) {
-          // ignore host
+        } catch (IOException e) {
+          // ignore host exception
         }
       }
-    } catch (Exception e) {
+    } catch (IOException e) {
       // Ignore errors
-    } finally {
-      IOUtils.closeQuietly(client);
     }
 
     return result;

@@ -31,9 +31,9 @@ public class KnoxSpnegoAuthSchemeFactory extends SPNegoSchemeFactory {
     super();
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public AuthScheme newInstance(final HttpParams params ) {
     return new KnoxSpnegoAuthScheme( isStripPort() );
   }
-
 }

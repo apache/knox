@@ -30,6 +30,7 @@ import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
+@SuppressWarnings("deprecation")
 public class KnoxPamRealmTest {
   @Test
   public void setService() {

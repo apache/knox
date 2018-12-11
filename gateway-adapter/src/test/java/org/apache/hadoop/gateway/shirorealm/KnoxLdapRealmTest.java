@@ -24,8 +24,8 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+@SuppressWarnings("deprecation")
 public class KnoxLdapRealmTest {
-
   @Test
   public void setGetSearchBase() {
     KnoxLdapRealm realm = new KnoxLdapRealm();
@@ -102,5 +102,4 @@ public class KnoxLdapRealmTest {
     realm.setSearchBase("dc=knox,dc=example,dc=com");
     assertEquals(realm.getGroupSearchBase(), "dc=knox,dc=example,dc=com");
   }
-
 }

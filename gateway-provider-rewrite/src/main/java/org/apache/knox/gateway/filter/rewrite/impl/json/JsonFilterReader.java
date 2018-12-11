@@ -175,7 +175,7 @@ class JsonFilterReader extends Reader {
             ((ArrayNode)parent.node ).add( child.node );
             break;
           case START_OBJECT:
-            ((ObjectNode)parent.node ).put( child.field, child.node );
+            ((ObjectNode)parent.node ).set( child.field, child.node );
             break;
           default:
             throw new IllegalStateException();
@@ -240,7 +240,7 @@ class JsonFilterReader extends Reader {
             ((ArrayNode)parent.node ).add( child.node );
             break;
           case START_OBJECT:
-            ((ObjectNode)parent.node ).put( child.field, child.node );
+            ((ObjectNode)parent.node ).set( child.field, child.node );
             break;
           default:
             throw new IllegalStateException();

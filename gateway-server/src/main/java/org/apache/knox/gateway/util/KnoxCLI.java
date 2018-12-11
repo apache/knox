@@ -26,10 +26,10 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.ssl.SSLContexts;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContexts;
 import org.apache.knox.gateway.GatewayCommandLine;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
@@ -1322,6 +1322,7 @@ public class KnoxCLI extends Configured implements Tool {
     protected Subject getSubject(Ini config) throws BadSubjectException {
       try {
         ThreadContext.unbindSubject();
+        @SuppressWarnings("deprecation")
         Factory factory = new IniSecurityManagerFactory(config);
         org.apache.shiro.mgt.SecurityManager securityManager = (org.apache.shiro.mgt.SecurityManager) factory.getInstance();
         SecurityUtils.setSecurityManager(securityManager);
@@ -1667,7 +1668,7 @@ public class KnoxCLI extends Configured implements Tool {
       if(ctx == null) {
         client = HttpClients.createDefault();
       } else {
-        client = HttpClients.custom().setSslcontext(ctx).build();
+        client = HttpClients.custom().setSSLContext(ctx).build();
       }
 
       HttpGet request;

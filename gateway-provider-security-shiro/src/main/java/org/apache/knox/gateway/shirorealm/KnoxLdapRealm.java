@@ -40,7 +40,7 @@ import org.apache.shiro.crypto.hash.DefaultHashService;
 import org.apache.shiro.crypto.hash.Hash;
 import org.apache.shiro.crypto.hash.HashRequest;
 import org.apache.shiro.crypto.hash.HashService;
-import org.apache.shiro.realm.ldap.JndiLdapRealm;
+import org.apache.shiro.realm.ldap.DefaultLdapRealm;
 import org.apache.shiro.realm.ldap.LdapContextFactory;
 import org.apache.shiro.realm.ldap.LdapUtils;
 import org.apache.shiro.subject.MutablePrincipalCollection;
@@ -77,7 +77,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Implementation of {@link org.apache.shiro.realm.ldap.JndiLdapRealm} that also
+ * Implementation of {@link org.apache.shiro.realm.ldap.DefaultLdapRealm} that also
  * returns each user's groups.
  * This implementation is heavily based on org.apache.isis.security.shiro.IsisLdapRealm.
  *
@@ -125,7 +125,7 @@ import java.util.regex.Pattern;
  *
  * </pre>
  */
-public class KnoxLdapRealm extends JndiLdapRealm {
+public class KnoxLdapRealm extends DefaultLdapRealm {
 
     private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
     KnoxShiroMessages ShiroLog = MessagesFactory.get( KnoxShiroMessages.class );

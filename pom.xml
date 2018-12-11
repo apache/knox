@@ -154,6 +154,7 @@
         <commons-lang.version>2.6</commons-lang.version>
         <commons-lang3.version>3.8.1</commons-lang3.version>
         <commons-net.version>3.6</commons-net.version>
+        <commons-text.version>1.6</commons-text.version>
         <cors-filter.version>2.6</cors-filter.version>
         <curator.version>4.0.1</curator.version>
         <curator-test.version>2.13.0</curator-test.version>
@@ -1468,6 +1469,11 @@
                 <groupId>commons-net</groupId>
                 <artifactId>commons-net</artifactId>
                 <version>${commons-net.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-text</artifactId>
+                <version>${commons-text.version}</version>
             </dependency>
 
             <dependency>

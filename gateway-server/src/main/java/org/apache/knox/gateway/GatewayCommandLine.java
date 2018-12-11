@@ -19,11 +19,11 @@ package org.apache.knox.gateway;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.PosixParser;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
 
 import java.io.OutputStreamWriter;
@@ -36,7 +36,7 @@ import static org.apache.commons.cli.HelpFormatter.DEFAULT_LEFT_PAD;
 public class GatewayCommandLine {
 
   public static CommandLine parse( String[] args ) throws ParseException {
-    CommandLineParser parser = new PosixParser();
+    CommandLineParser parser = new DefaultParser();
     return parser.parse( createCommandLine(), args );
   }
 

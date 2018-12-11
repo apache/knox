@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.hive;
 
+import org.apache.http.auth.AuthenticationException;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -31,8 +32,11 @@ public class HiveDispatchUtils {
     if ( principal != null ) {
       UsernamePasswordCredentials credentials =
           new UsernamePasswordCredentials(principal, PASSWORD_PLACEHOLDER);
-      request.addHeader(BasicScheme.authenticate(credentials, "US-ASCII", false));
+      try {
+        request.addHeader(new BasicScheme().authenticate(credentials, request, null));
+      } catch (AuthenticationException e) {
+        // impossible
+      }
     }
   }
-
 }

@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway.filter.rewrite.impl.xml;
 
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterApplyDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterBufferDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
@@ -533,7 +533,7 @@ public abstract class XmlFilterReader extends Reader {
         writer.write( value );
         writer.write( "]]>" );
       } else {
-        writer.write( StringEscapeUtils.escapeXml( value ) );
+        writer.write( StringEscapeUtils.escapeXml11( value ) );
       }
     }
   }

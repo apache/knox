@@ -34,6 +34,7 @@ import static org.junit.Assert.assertThat;
 @Category( { UnitTests.class, FastTests.class } )
 public class HBaseDispatchTest {
 
+  @SuppressWarnings("deprecation")
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
   public void testGetDispatchUrl() throws Exception {
     HttpServletRequest request;
@@ -82,7 +83,5 @@ public class HBaseDispatchTest {
     EasyMock.replay( request );
     uri = dispatch.getDispatchUrl( request );
     assertThat( uri.toASCIIString(), is( "http://test-host:42/test,path?test%26name=test%3Dvalue" ) );
-
   }
-
 }

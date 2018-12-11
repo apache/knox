@@ -91,6 +91,7 @@ public class CappedBufferHttpEntity extends HttpEntityWrapper {
     IOUtils.copy( getContent(), stream );
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void consumeContent() throws IOException {
     throw new UnsupportedOperationException();
