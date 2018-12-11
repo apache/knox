@@ -47,36 +47,40 @@ public class Sl4jMessageLogger implements MessageLogger {
     switch( messageLevel ) {
       case FATAL:
       case ERROR:
-        if( thrown == null )
-          logger.error( messageText );
-        else
-          logger.error( messageText, thrown );
+        if( thrown == null ) {
+          logger.error(messageText);
+        } else {
+          logger.error(messageText, thrown);
+        }
         break;
       case WARN:
-        if( thrown == null )
-          logger.warn( messageText );
-        else
-          logger.warn( messageText, thrown );
+        if( thrown == null ) {
+          logger.warn(messageText);
+        } else {
+          logger.warn(messageText, thrown);
+        }
         break;
       case INFO:
-        if( thrown == null )
-          logger.info( messageText );
-        else
-          logger.info( messageText, thrown );
+        if( thrown == null ) {
+          logger.info(messageText);
+        } else {
+          logger.info(messageText, thrown);
+        }
         break;
       case DEBUG:
-        if( thrown == null )
-          logger.debug( messageText );
-        else
-          logger.debug( messageText, thrown );
+        if( thrown == null ) {
+          logger.debug(messageText);
+        } else {
+          logger.debug(messageText, thrown);
+        }
         break;
       case TRACE:
-        if( thrown == null )
-          logger.trace( messageText );
-        else
-          logger.trace( messageText, thrown );
+        if( thrown == null ) {
+          logger.trace(messageText);
+        } else {
+          logger.trace(messageText, thrown);
+        }
         break;
     }
   }
-
 }

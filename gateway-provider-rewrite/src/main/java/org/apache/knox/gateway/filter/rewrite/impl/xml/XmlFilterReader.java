@@ -155,8 +155,9 @@ public abstract class XmlFilterReader extends Reader {
         processEndDocument();
         break;
       case XMLEvent.START_ELEMENT:
-        if( parser.peek().getEventType() == XMLEvent.END_ELEMENT )
+        if( parser.peek().getEventType() == XMLEvent.END_ELEMENT ) {
           isEmptyElement = true;
+        }
         processStartElement( event.asStartElement());
         break;
       case XMLEvent.END_ELEMENT:

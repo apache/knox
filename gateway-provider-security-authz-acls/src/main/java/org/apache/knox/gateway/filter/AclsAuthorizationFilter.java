@@ -165,9 +165,15 @@ public class AclsAuthorizationFilter implements Filter {
       // to make sense and not grant access to everyone by mistake.
       // exclusion in OR is equivalent to denied
       // so, let's set each one that contains '*' to false.
-      if (parser.anyUser) userAccess = false;
-      if (parser.anyGroup) groupAccess = false;
-      if (parser.ipv.allowsAnyIP()) ipAddrAccess = false;
+      if (parser.anyUser) {
+        userAccess = false;
+      }
+      if (parser.anyGroup) {
+        groupAccess = false;
+      }
+      if (parser.ipv.allowsAnyIP()) {
+        ipAddrAccess = false;
+      }
 
       return (userAccess || groupAccess || ipAddrAccess);
     }

@@ -50,22 +50,15 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
   public void init() {
   }
 
-  protected void writeResponse(HttpServletRequest request, HttpServletResponse response, InputStream stream )
+  protected void writeResponse(HttpServletRequest request, HttpServletResponse response, InputStream stream)
       throws IOException {
-//    ResponseStreamer streamer =
-//        (ResponseStreamer)request.getAttribute( RESPONSE_STREAMER_ATTRIBUTE_NAME );
-//    if( streamer != null ) {
-//      streamer.streamResponse( stream, response.getOutputStream() );
-//    } else {
-      if( response instanceof GatewayResponse ) {
-        ((GatewayResponse)response).streamResponse( stream );
-      } else {
-        OutputStream output = response.getOutputStream();
-        IOUtils.copy(stream, output);
-        //KNOX-685: output.flush();
-        output.close();
-      }
-//    }
+    if (response instanceof GatewayResponse) {
+      ((GatewayResponse) response).streamResponse(stream);
+    } else {
+      OutputStream output = response.getOutputStream();
+      IOUtils.copy(stream, output);
+      output.close();
+    }
   }
 
   @Override
@@ -167,5 +160,4 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
       greaterThan = str.indexOf(">", greaterThan+1);
     }
   }
-
 }

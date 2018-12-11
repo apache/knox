@@ -23,6 +23,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -148,10 +149,9 @@ public class MockResponseProvider {
     }
     response.flushBuffer();
     if( entity != null ) {
-      response.getOutputStream().write( entity );
-      //KNOX-685: response.getOutputStream().flush();
-      response.getOutputStream().close();
+      try(OutputStream outputStream = response.getOutputStream()) {
+          outputStream.write(entity);
+      }
     }
   }
-
 }

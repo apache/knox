@@ -38,7 +38,9 @@ public class PrincipalCredentials implements Credentials, Serializable {
 
   public PrincipalCredentials( Principal principal ) {
     super();
-    if( principal == null ) throw new IllegalArgumentException( "principal==null" );
+    if( principal == null ) {
+      throw new IllegalArgumentException( "principal==null" );
+    }
     this.principal = principal;
   }
 
@@ -59,12 +61,12 @@ public class PrincipalCredentials implements Credentials, Serializable {
 
   @Override
   public boolean equals( Object object ) {
-    if( this == object ) return true;
+    if( this == object ) {
+      return true;
+    }
     if( object instanceof PrincipalCredentials ) {
       PrincipalCredentials that = (PrincipalCredentials)object;
-      if( this.principal.equals( that.principal ) ) {
-        return true;
-      }
+      return this.principal.equals(that.principal);
     }
     return false;
   }
@@ -73,6 +75,4 @@ public class PrincipalCredentials implements Credentials, Serializable {
   public String toString() {
     return this.principal.toString();
   }
-
 }
-

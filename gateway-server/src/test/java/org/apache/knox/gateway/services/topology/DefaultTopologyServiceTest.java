@@ -72,12 +72,11 @@ public class DefaultTopologyServiceTest {
     if (!file.exists()) {
       FileUtils.touch(file);
     }
-    InputStream input = ClassLoader.getSystemResourceAsStream(resource);
-    OutputStream output = FileUtils.openOutputStream(file);
-    IOUtils.copy(input, output);
-    //KNOX-685: output.flush();
-    input.close();
-    output.close();
+    try(InputStream input = ClassLoader.getSystemResourceAsStream(resource);
+        OutputStream output = FileUtils.openOutputStream(file)) {
+      assertNotNull(input);
+      IOUtils.copy(input, output);
+    }
     file.setLastModified(timestamp);
     assertTrue("Failed to create test file " + file.getAbsolutePath(), file.exists());
     assertTrue("Failed to populate test file " + file.getAbsolutePath(), file.length() > 0);

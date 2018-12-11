@@ -128,20 +128,14 @@ public class UrlConnectionDispatch extends AbstractGatewayFilter {
     String urlStr = targetUri.toString() + paramStr.toString();
     try {
       URL clientUrl = new URL( urlStr );
-      //System.out.println( "Resolved query: " + clientUrl );
       AuthenticatedURL.Token token = new AuthenticatedURL.Token();
       KerberosAuthenticator authenticator = new KerberosAuthenticator();
       auditor.audit( Action.DISPATCH, urlStr, ResourceType.URI, ActionOutcome.UNAVAILABLE );
       HttpURLConnection conn = new AuthenticatedURL( authenticator ).openConnection( clientUrl, token );
-      //System.out.println( "STATUS=" + conn.getResponseCode() );
       InputStream input = conn.getInputStream();
       if( input != null ) {
-        OutputStream output = response.getOutputStream();
-        try {
+        try(OutputStream output = response.getOutputStream()) {
           IOUtils.copy( input, output );
-        } finally {
-          //KNOX-685: output.flush();
-          input.close();
         }
       }
       auditor.audit( Action.DISPATCH, urlStr, ResourceType.URI, ActionOutcome.SUCCESS );
@@ -154,7 +148,5 @@ public class UrlConnectionDispatch extends AbstractGatewayFilter {
       LOG.failedToEstablishConnectionToUrl( urlStr, e );
       auditor.audit( Action.DISPATCH, urlStr, ResourceType.URI, ActionOutcome.FAILURE, RES.responseStatus( HttpServletResponse.SC_NOT_FOUND ) );
     }
-
   }
-
 }

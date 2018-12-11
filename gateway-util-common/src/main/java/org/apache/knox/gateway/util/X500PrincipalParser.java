@@ -112,8 +112,9 @@ public class X500PrincipalParser {
         // Return the string starting after the ID string and the = sign that follows it.
         retNamePart = namePart.substring(searchPart.length());
         // By definition the first one is most significant
-        if (significance == MOSTSIGNIFICANT)
+        if (significance == MOSTSIGNIFICANT) {
           break;
+        }
       }
     }
 
@@ -131,10 +132,10 @@ public class X500PrincipalParser {
       int endIndex;
       for(endIndex = startIndex; endIndex < dn.length(); endIndex++) {
         c = dn.charAt(endIndex);
-        if(c == ',' || c == '+')
+        if(c == ',' || c == '+') {
           break;
-        if(c == '\\')
-        {
+        }
+        if(c == '\\') {
           endIndex++; // skip the escaped char
         }
       }
@@ -147,10 +148,11 @@ public class X500PrincipalParser {
 
       if(c != '+') {
         rdnNameArray.add(nameValues);
-        if(endIndex != dn.length())
+        if(endIndex != dn.length()) {
           nameValues = new ArrayList<>();
-        else
+        } else {
           nameValues = null;
+        }
       }
       startIndex = endIndex + 1;
     }

@@ -89,31 +89,26 @@ public class AccessTokenFederationFilter implements Filter {
           else {
             log.failedToValidateAudience();
             sendUnauthorized(response);
-            return; // break the chain
           }
         }
         else {
           log.tokenHasExpired();
           sendUnauthorized(response);
-          return; // break the chain
         }
       }
       else {
         log.failedToVerifyTokenSignature();
         sendUnauthorized(response);
-        return; // break the chain
       }
     }
     else {
       log.missingBearerToken();
       sendUnauthorized(response);
-      return; // break the chain
     }
   }
 
   private void sendUnauthorized(ServletResponse response) throws IOException {
     ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
-    return;
   }
 
   private void continueWithEstablishedSecurityContext(Subject subject, final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
@@ -160,5 +155,4 @@ public class AccessTokenFederationFilter implements Filter {
     // To modify the private credential Set, the caller must have AuthPermission("modifyPrivateCredentials").
     return new javax.security.auth.Subject(true, principals, emptySet, emptySet);
   }
-
 }

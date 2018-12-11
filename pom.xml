@@ -628,6 +628,7 @@
                         <ruleset>build-tools/pmd/pmd-ruleset.xml</ruleset>
                     </rulesets>
                     <printFailingErrors>true</printFailingErrors>
+                    <linkXRef>false</linkXRef>
                     <targetJdk>1.8</targetJdk>
                 </configuration>
                 <executions>
@@ -695,6 +696,7 @@
                     <rulesets>
                         <ruleset>build-tools/pmd/pmd-ruleset.xml</ruleset>
                     </rulesets>
+                    <linkXRef>false</linkXRef>
                     <targetJdk>1.8</targetJdk>
                 </configuration>
             </plugin>

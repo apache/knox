@@ -181,10 +181,12 @@ public class CMFMasterService {
       // TODO: look into the following for Windows: Runtime.getRuntime().exec("attrib -r myFile");
       if (isUnixEnv()) {
           //args and file should never be null.
-          if (args == null || file == null)
+          if (args == null || file == null) {
             throw new IllegalArgumentException("nullArg");
-          if (!file.exists())
+          }
+          if (!file.exists()) {
             throw new IOException("fileNotFound");
+          }
 
           // " +" regular expression for 1 or more spaces
           final String[] argsString = args.split(" +");
@@ -199,5 +201,4 @@ public class CMFMasterService {
   private boolean isUnixEnv() {
     return (File.separatorChar == '/');
   }
-
 }

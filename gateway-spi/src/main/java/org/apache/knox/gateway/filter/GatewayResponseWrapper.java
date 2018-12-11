@@ -61,8 +61,6 @@ public abstract class GatewayResponseWrapper extends HttpServletResponseWrapper 
   @Override
   public void streamResponse( InputStream input, OutputStream output ) throws IOException {
     IOUtils.copy(input, output);
-    //KNOX-685: output.flush();
     output.close();
   }
-
 }

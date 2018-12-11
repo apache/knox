@@ -57,41 +57,38 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
 
   @Override
   public void doFilter(ServletRequest request, ServletResponse response,
-      FilterChain chain) throws IOException, ServletException {
-
-      Subject subject = Subject.getSubject(AccessController.getContext());
-      String principalName = getPrincipalName(subject);
-      principalName = mapper.mapUserPrincipal(principalName);
-      JWT authCode;
-      try {
-        authCode = authority.issueToken(subject, "RS256");
-        // get the url for the token service
-        String url = null;
-        if (sr != null) {
-          url = sr.lookupServiceURL("token", "TGS");
-        }
-
-        HashMap<String, Object> map = new HashMap<>();
-        // TODO: populate map from JWT authorization code
-        // Coverity CID 1327960
-        if( authCode != null ) {
-          map.put( "iss", authCode.getIssuer() );
-          map.put( "sub", authCode.getPrincipal() );
-          map.put( "aud", authCode.getAudience() );
-          map.put( "exp", authCode.getExpires() );
-          map.put( "code", authCode.toString() );
-        }
-        if (url != null) {
-          map.put("tke", url);
-        }
-
-        String jsonResponse = JsonUtils.renderAsJsonString(map);
-
-        response.getWriter().write(jsonResponse);
-        //KNOX-685: response.getWriter().flush();
-      } catch (TokenServiceException e) {
-        e.printStackTrace();
+                       FilterChain chain) throws IOException {
+    Subject subject = Subject.getSubject(AccessController.getContext());
+    String principalName = getPrincipalName(subject);
+    principalName = mapper.mapUserPrincipal(principalName);
+    JWT authCode;
+    try {
+      authCode = authority.issueToken(subject, "RS256");
+      // get the url for the token service
+      String url = null;
+      if (sr != null) {
+        url = sr.lookupServiceURL("token", "TGS");
       }
-      return; // break filter chain
+
+      HashMap<String, Object> map = new HashMap<>();
+      // TODO: populate map from JWT authorization code
+      // Coverity CID 1327960
+      if (authCode != null) {
+        map.put("iss", authCode.getIssuer());
+        map.put("sub", authCode.getPrincipal());
+        map.put("aud", authCode.getAudience());
+        map.put("exp", authCode.getExpires());
+        map.put("code", authCode.toString());
+      }
+      if (url != null) {
+        map.put("tke", url);
+      }
+
+      String jsonResponse = JsonUtils.renderAsJsonString(map);
+
+      response.getWriter().write(jsonResponse);
+    } catch (TokenServiceException e) {
+      e.printStackTrace();
+    }
   }
 }

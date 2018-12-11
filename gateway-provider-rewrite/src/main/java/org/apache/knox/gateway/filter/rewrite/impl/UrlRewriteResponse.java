@@ -276,9 +276,9 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
 
   private List <String> getInboundQueryParam(String name ){
      List <String> inboundHosts = null;
-     if( this.request!=null )
-       inboundHosts =
-         Arrays.asList( this.request.getParameterValues(name));
+     if( this.request != null ) {
+       inboundHosts = Arrays.asList(this.request.getParameterValues(name));
+     }
      return inboundHosts;
   }
 

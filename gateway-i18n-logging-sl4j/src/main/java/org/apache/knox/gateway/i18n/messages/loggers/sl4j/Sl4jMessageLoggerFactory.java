@@ -22,10 +22,8 @@ import org.apache.knox.gateway.i18n.messages.MessageLoggerFactory;
 import org.slf4j.LoggerFactory;
 
 public class Sl4jMessageLoggerFactory implements MessageLoggerFactory {
-
   @Override
   public MessageLogger getLogger( String name ) {
     return new Sl4jMessageLogger( LoggerFactory.getLogger( name ) );
   }
-
 }

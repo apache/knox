@@ -39,9 +39,22 @@ limitations under the License.
         <exclude name="SystemPrintln" />
         <exclude name="UseVarargs" />
     </rule>
+
     <!--<rule ref="category/java/codestyle.xml" />-->
+    <rule ref="category/java/codestyle.xml/AvoidProtectedFieldInFinalClass" />
+    <rule ref="category/java/codestyle.xml/ControlStatementBraces" />
+    <rule ref="category/java/codestyle.xml/DontImportJavaLang" />
+    <rule ref="category/java/codestyle.xml/DuplicateImports" />
+    <rule ref="category/java/codestyle.xml/ExtendsObject" />
+    <rule ref="category/java/codestyle.xml/ForLoopShouldBeWhileLoop" />
+    <rule ref="category/java/codestyle.xml/NoPackage" />
+    <rule ref="category/java/codestyle.xml/PackageCase" />
+    <rule ref="category/java/codestyle.xml/UnnecessaryModifier" />
+    <rule ref="category/java/codestyle.xml/UnnecessaryReturn" />
+
     <!--<rule ref="category/java/design.xml" />-->
     <!--<rule ref="category/java/documentation.xml" />-->
+
     <rule ref="category/java/errorprone.xml">
         <exclude name="AssignmentInOperand" />
         <exclude name="AssignmentToNonFinalStatic" />

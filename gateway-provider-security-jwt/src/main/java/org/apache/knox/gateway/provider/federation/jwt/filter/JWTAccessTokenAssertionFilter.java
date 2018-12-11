@@ -125,15 +125,12 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
       jsonResponse = JsonUtils.renderAsJsonString(map);
 
       response.getWriter().write(jsonResponse);
-      //KNOX-685: response.getWriter().flush();
-      return; // break filter chain
     }
     else {
       // no token provided in header
       // something is really wrong since the JWTFederationFilter should have verified its existence already
       // TODO: may have to check cookie and url as well before sending error
       ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
-      return; //break filter chain
     }
   }
 
@@ -141,7 +138,6 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
     String accessToken = null;
 
     Principal p = new Principal() {
-
       @Override
       public String getName() {
         return principalName;
@@ -160,5 +156,4 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
 
     return accessToken;
   }
-
 }
