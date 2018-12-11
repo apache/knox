@@ -211,9 +211,8 @@ public abstract class DeploymentFactory {
       Marshaller marshaller = jaxbContext.createMarshaller();
       marshaller.setProperty( Marshaller.JAXB_FORMATTED_OUTPUT, true );
       marshaller.marshal( topology, writer );
-      writer.close();
       xml = writer.toString();
-    } catch (IOException | JAXBException e) {
+    } catch (JAXBException e) {
       throw new DeploymentException( "Failed to marshall topology.", e );
     }
     return new StringAsset( xml );

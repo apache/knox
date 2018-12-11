@@ -1357,12 +1357,11 @@ public class KnoxCLI extends Configured implements Tool {
         Console c = System.console();
         if( c != null) {
           this.username = c.readLine("Username: ");
-        }else{
-          try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
+        } else {
+          try(InputStreamReader inputStreamReader = new InputStreamReader(System.in, StandardCharsets.UTF_8);
+              BufferedReader reader = new BufferedReader(inputStreamReader)) {
             out.println("Username: ");
             this.username = reader.readLine();
-            reader.close();
           } catch (IOException e){
             out.println(e.toString());
             this.username = "";
@@ -1375,8 +1374,8 @@ public class KnoxCLI extends Configured implements Tool {
         if( c != null) {
           this.password = c.readPassword("Password: ");
         }else{
-          try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
+          try(InputStreamReader inputStreamReader = new InputStreamReader(System.in, StandardCharsets.UTF_8);
+              BufferedReader reader = new BufferedReader(inputStreamReader)) {
             out.println("Password: ");
             String pw = reader.readLine();
             if(pw != null){
@@ -1384,7 +1383,6 @@ public class KnoxCLI extends Configured implements Tool {
             } else {
               this.password = new char[0];
             }
-            reader.close();
           } catch (IOException e){
             out.println(e.toString());
             this.password = new char[0];
@@ -1678,14 +1676,13 @@ public class KnoxCLI extends Configured implements Tool {
         request = new HttpGet(httpServiceTestURL);
       }
 
-
       request.setHeader("Authorization", authString);
       request.setHeader("Accept", MediaType.APPLICATION_JSON.getMediaType());
       try {
         out.println(request.toString());
-        CloseableHttpResponse response = client.execute(request);
+        try(CloseableHttpResponse response = client.execute(request)) {
 
-        switch (response.getStatusLine().getStatusCode()) {
+          switch (response.getStatusLine().getStatusCode()) {
 
           case 200:
             response.getEntity().writeTo(out);
@@ -1703,11 +1700,9 @@ public class KnoxCLI extends Configured implements Tool {
             out.println(response.getStatusLine().toString());
             response.getEntity().writeTo(out);
             break;
+          }
         }
-
-        response.close();
         request.releaseConnection();
-
       } catch (ClientProtocolException e) {
         out.println(e.toString());
         if (debug) {
@@ -1729,7 +1724,6 @@ public class KnoxCLI extends Configured implements Tool {
           out.println(e.toString());
         }
       }
-
     }
 
     public void retryRequest(){
@@ -2046,14 +2040,10 @@ public class KnoxCLI extends Configured implements Tool {
 
   private static Properties loadBuildProperties() {
     Properties properties = new Properties();
-    InputStream inputStream = KnoxCLI.class.getClassLoader().getResourceAsStream( "build.properties" );
-    if( inputStream != null ) {
-      try {
-        properties.load( inputStream );
-        inputStream.close();
-      } catch( IOException e ) {
-        // Ignore.
-      }
+    try(InputStream inputStream = KnoxCLI.class.getClassLoader().getResourceAsStream( "build.properties" )) {
+      properties.load(inputStream);
+    } catch( IOException e ) {
+      // Ignore.
     }
     return properties;
   }

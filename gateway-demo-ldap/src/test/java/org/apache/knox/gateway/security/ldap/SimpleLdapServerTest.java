@@ -57,17 +57,11 @@ public class SimpleLdapServerTest {
 
   @Test
   public void testBind() throws LdapException, IOException {
-    LdapConnection connection;
-
-    connection = new LdapNetworkConnection( "localhost", port );
-    try {
+    try(LdapConnection connection = new LdapNetworkConnection( "localhost", port )) {
       connection.bind( "uid=guest,ou=people,dc=hadoop,dc=apache,dc=org", "guest-password" );
-    } finally {
-      connection.close();
     }
 
-    connection = new LdapNetworkConnection( "localhost", port );
-    try {
+    try(LdapConnection connection = new LdapNetworkConnection( "localhost", port )) {
       connection.bind( "uid=nobody,ou=people,dc=hadoop,dc=apache,dc=org", "guest-password" );
       fail( "Expected LdapAuthenticationException" );
     } catch ( LdapAuthenticationException e ) {
@@ -75,12 +69,9 @@ public class SimpleLdapServerTest {
       assertEquals("INVALID_CREDENTIALS: Bind failed: ERR_229 " +
                        "Cannot authenticate user uid=nobody,ou=people,dc=hadoop,dc=apache,dc=org",
           e.getMessage());
-    } finally {
-      connection.close();
     }
 
-    connection = new LdapNetworkConnection( "localhost", port );
-    try {
+    try(LdapConnection connection = new LdapNetworkConnection( "localhost", port )) {
       connection.bind( "uid=guest,ou=people,dc=hadoop,dc=apache,dc=org", "wrong-password" );
       fail( "Expected LdapAuthenticationException" );
     } catch ( LdapAuthenticationException e ) {
@@ -88,8 +79,6 @@ public class SimpleLdapServerTest {
       assertEquals("INVALID_CREDENTIALS: Bind failed: ERR_229 " +
                        "Cannot authenticate user uid=guest,ou=people,dc=hadoop,dc=apache,dc=org",
           e.getMessage());
-    } finally {
-      connection.close();
     }
   }
 }

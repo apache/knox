@@ -40,15 +40,14 @@ public class UrlRewriteResponseStream extends
   }
 
   @Override
-  public void write( int b ) throws IOException {
+  public void write( int b ) {
     buffer.write( b );
   }
 
   @Override
   public void close() throws IOException {
-    InputStream stream = new ByteArrayInputStream( buffer.toByteArray() );
-    response.streamResponse( stream ) ;
-    stream.close();
+    try(InputStream stream = new ByteArrayInputStream(buffer.toByteArray())) {
+      response.streamResponse(stream);
+    }
   }
-
 }

@@ -98,15 +98,14 @@ public class Log4jCorrelationService implements CorrelationService {
 
   @Override
   public byte[] getExternalizedContext() {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    try {
-    ObjectOutputStream oos = new ObjectOutputStream( baos );
-    oos.writeObject( getContext() );
-    oos.close();
+    try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+      try(ObjectOutputStream oos = new ObjectOutputStream( baos )) {
+        oos.writeObject( getContext() );
+      }
+      return baos.toByteArray();
     } catch ( IOException e ) {
       throw new RuntimeException( e );
     }
-    return baos.toByteArray();
   }
 }
 

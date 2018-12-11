@@ -19,8 +19,6 @@ package org.apache.knox.gateway.ha.provider;
 
 import org.apache.knox.gateway.ha.provider.impl.DefaultHaProvider;
 import org.apache.knox.gateway.ha.provider.impl.HaDescriptorManager;
-import org.apache.knox.gateway.ha.provider.impl.i18n.HaMessages;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
 
@@ -38,8 +36,6 @@ public class HaServletContextListener implements ServletContextListener {
    public static final String DESCRIPTOR_LOCATION_INIT_PARAM_NAME = "haDescriptorLocation";
    public static final String DESCRIPTOR_DEFAULT_FILE_NAME = "ha.xml";
    public static final String DESCRIPTOR_DEFAULT_LOCATION = "/WEB-INF/" + DESCRIPTOR_DEFAULT_FILE_NAME;
-
-   private static final HaMessages LOG = MessagesFactory.get(HaMessages.class);
 
    @Override
    public void contextInitialized(ServletContextEvent event) {
@@ -94,13 +90,8 @@ public class HaServletContextListener implements ServletContextListener {
    }
 
    private static HaDescriptor loadDescriptor(URL url) throws IOException {
-      InputStream stream = url.openStream();
-      HaDescriptor descriptor = HaDescriptorManager.load(stream);
-      try {
-         stream.close();
-      } catch (IOException e) {
-         LOG.failedToLoadHaDescriptor(e);
+      try(InputStream stream = url.openStream()) {
+        return HaDescriptorManager.load(stream);
       }
-      return descriptor;
    }
 }

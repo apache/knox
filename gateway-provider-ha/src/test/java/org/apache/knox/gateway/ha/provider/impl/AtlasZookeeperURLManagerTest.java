@@ -50,19 +50,19 @@ public class AtlasZookeeperURLManagerTest {
         cluster = new TestingCluster(3);
         cluster.start();
 
-        CuratorFramework zooKeeperClient =
+        try(CuratorFramework zooKeeperClient =
                 CuratorFrameworkFactory.builder().connectString(cluster.getConnectString())
                                                  .retryPolicy(new ExponentialBackoffRetry(1000, 3))
-                                                 .build();
+                                                 .build()) {
 
-        zooKeeperClient.start();
-        assertTrue(zooKeeperClient.blockUntilConnected(10, TimeUnit.SECONDS));
+          zooKeeperClient.start();
+          assertTrue(zooKeeperClient.blockUntilConnected(10, TimeUnit.SECONDS));
 
-        zooKeeperClient.create().forPath("/apache_atlas");
-        zooKeeperClient.create().forPath("/apache_atlas/active_server_info");
-        zooKeeperClient.setData().forPath("/apache_atlas/active_server_info",
-                                          atlasNode1.getBytes(StandardCharsets.UTF_8));
-        zooKeeperClient.close();
+          zooKeeperClient.create().forPath("/apache_atlas");
+          zooKeeperClient.create().forPath("/apache_atlas/active_server_info");
+          zooKeeperClient.setData().forPath("/apache_atlas/active_server_info",
+              atlasNode1.getBytes(StandardCharsets.UTF_8));
+        }
         setAtlasActiveHostURLInZookeeper(atlasNode1);
 
         manager = new AtlasZookeeperURLManager();

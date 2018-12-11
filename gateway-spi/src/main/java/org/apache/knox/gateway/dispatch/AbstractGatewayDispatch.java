@@ -55,9 +55,9 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
     if (response instanceof GatewayResponse) {
       ((GatewayResponse) response).streamResponse(stream);
     } else {
-      OutputStream output = response.getOutputStream();
-      IOUtils.copy(stream, output);
-      output.close();
+      try(OutputStream output = response.getOutputStream()) {
+        IOUtils.copy(stream, output);
+      }
     }
   }
 

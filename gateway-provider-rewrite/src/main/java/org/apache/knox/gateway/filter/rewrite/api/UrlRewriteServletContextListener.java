@@ -21,9 +21,6 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
-import org.apache.knox.gateway.filter.rewrite.i18n.UrlRewriteMessages;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -38,7 +35,6 @@ public class UrlRewriteServletContextListener implements ServletContextListener 
   public static final String DESCRIPTOR_LOCATION_INIT_PARAM_NAME = "rewriteDescriptorLocation";
   public static final String DESCRIPTOR_DEFAULT_FILE_NAME = "rewrite.xml";
   public static final String DESCRIPTOR_DEFAULT_LOCATION = "/WEB-INF/" + DESCRIPTOR_DEFAULT_FILE_NAME;
-  private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
 
   @Override
   public void contextInitialized( ServletContextEvent event ) {
@@ -89,15 +85,9 @@ public class UrlRewriteServletContextListener implements ServletContextListener 
   }
 
   private static UrlRewriteRulesDescriptor loadDescriptor( URL url ) throws IOException {
-    InputStream stream = url.openStream();
-    Reader reader = new InputStreamReader( stream, StandardCharsets.UTF_8 );
-    UrlRewriteRulesDescriptor descriptor = UrlRewriteRulesDescriptorFactory.load( "xml", reader );
-    try {
-      reader.close();
-    } catch( IOException closeException ) {
-      LOG.failedToLoadRewriteRulesDescriptor( closeException );
+    try (InputStream stream = url.openStream();
+         Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)){
+      return UrlRewriteRulesDescriptorFactory.load( "xml", reader );
     }
-    return descriptor;
   }
-
 }

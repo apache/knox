@@ -72,15 +72,15 @@ public class HostmapDeploymentContributor
 
   private Asset createAsset( Provider provider ) {
     StringWriter buffer = new StringWriter();
-    PrintWriter writer = new PrintWriter( buffer );
-    for( Map.Entry<String, String> entry : provider.getParams().entrySet() ) {
-      String externalHosts = entry.getKey();
-      String internalHosts = entry.getValue();
-      writer.print( externalHosts );
-      writer.print( "=" );
-      writer.println( internalHosts );
+    try(PrintWriter writer = new PrintWriter( buffer )) {
+      for (Map.Entry<String, String> entry : provider.getParams().entrySet()) {
+        String externalHosts = entry.getKey();
+        String internalHosts = entry.getValue();
+        writer.print(externalHosts);
+        writer.print("=");
+        writer.println(internalHosts);
+      }
     }
-    writer.close();
     String string = buffer.toString();
     return new StringAsset( string );
   }

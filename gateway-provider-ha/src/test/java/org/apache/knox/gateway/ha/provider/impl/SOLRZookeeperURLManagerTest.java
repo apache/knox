@@ -51,17 +51,17 @@ public class SOLRZookeeperURLManagerTest {
     cluster = new TestingCluster(3);
     cluster.start();
 
-    CuratorFramework zooKeeperClient =
+    try(CuratorFramework zooKeeperClient =
         CuratorFrameworkFactory.builder().connectString(cluster.getConnectString())
-            .retryPolicy(new ExponentialBackoffRetry(1000, 3)).build();
+            .retryPolicy(new ExponentialBackoffRetry(1000, 3)).build()) {
 
-    zooKeeperClient.start();
-    assertTrue(zooKeeperClient.blockUntilConnected(10, TimeUnit.SECONDS));
-    zooKeeperClient.create().forPath("/live_nodes");
-    zooKeeperClient.create().forPath("/live_nodes/host1:8983_solr");
-    zooKeeperClient.create().forPath("/live_nodes/host2:8983_solr");
-    zooKeeperClient.create().forPath("/live_nodes/host3:8983_solr");
-    zooKeeperClient.close();
+      zooKeeperClient.start();
+      assertTrue(zooKeeperClient.blockUntilConnected(10, TimeUnit.SECONDS));
+      zooKeeperClient.create().forPath("/live_nodes");
+      zooKeeperClient.create().forPath("/live_nodes/host1:8983_solr");
+      zooKeeperClient.create().forPath("/live_nodes/host2:8983_solr");
+      zooKeeperClient.create().forPath("/live_nodes/host3:8983_solr");
+    }
     manager = new SOLRZookeeperURLManager();
     HaServiceConfig config = new DefaultHaServiceConfig("SOLR");
     config.setEnabled(true);

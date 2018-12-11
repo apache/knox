@@ -121,13 +121,12 @@ public class ServiceTestResource {
 
             try {
               req.setURI(new URIBuilder(url).build());
-              CloseableHttpResponse res = client.execute(req);
-              String contentLength = "Content-Length:" + res.getEntity().getContentLength();
-              String contentType = (res.getEntity().getContentType() != null) ? res.getEntity().getContentType().toString() : "No-contenttype";
-              test.setResponseContent(contentLength + "," + contentType);
-              test.setHttpCode(res.getStatusLine().getStatusCode());
-              res.close();
-
+              try(CloseableHttpResponse res = client.execute(req)) {
+                String contentLength = "Content-Length:" + res.getEntity().getContentLength();
+                String contentType = (res.getEntity().getContentType() != null) ? res.getEntity().getContentType().toString() : "No-contenttype";
+                test.setResponseContent(contentLength + "," + contentType);
+                test.setHttpCode(res.getStatusLine().getStatusCode());
+              }
             } catch (IOException e) {
               messages.add("Exception: " + e.getMessage());
               test.setMessage(e.getMessage());

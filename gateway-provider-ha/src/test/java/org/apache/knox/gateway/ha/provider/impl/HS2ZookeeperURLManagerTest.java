@@ -46,26 +46,26 @@ public class HS2ZookeeperURLManagerTest {
     cluster = new TestingCluster(3);
     cluster.start();
 
-    CuratorFramework zooKeeperClient =
+    try(CuratorFramework zooKeeperClient =
         CuratorFrameworkFactory.builder().connectString(cluster.getConnectString())
-            .retryPolicy(new ExponentialBackoffRetry(1000, 3)).build();
+            .retryPolicy(new ExponentialBackoffRetry(1000, 3)).build()) {
 
-    String host1 = "hive.server2.authentication=NONE;hive.server2.transport.mode=http;hive.server2.thrift.http.path=cliservice;" +
-        "hive.server2.thrift.http.port=10001;hive.server2.thrift.bind.host=host1;hive.server2.use.SSL=true";
-    String host2 = "hive.server2.authentication=NONE;hive.server2.transport.mode=http;hive.server2.thrift.http.path=foobar;" +
-        "hive.server2.thrift.http.port=10002;hive.server2.thrift.bind.host=host2;hive.server2.use.SSL=false";
-    String host3 = "hive.server2.authentication=NONE;hive.server2.transport.mode=http;hive.server2.thrift.http.path=cliservice;" +
-        "hive.server2.thrift.http.port=10003;hive.server2.thrift.bind.host=host3;hive.server2.use.SSL=false";
-    String host4 = "hive.server2.authentication=NONE;hive.server2.transport.mode=http;hive.server2.thrift.http.path=cliservice;" +
-        "hive.server2.thrift.http.port=10004;hive.server2.thrift.bind.host=host4;hive.server2.use.SSL=true";
-    zooKeeperClient.start();
-    assertTrue(zooKeeperClient.blockUntilConnected(10, TimeUnit.SECONDS));
-    zooKeeperClient.create().forPath("/hiveServer2");
-    zooKeeperClient.create().forPath("/hiveServer2/host1", host1.getBytes(StandardCharsets.UTF_8));
-    zooKeeperClient.create().forPath("/hiveServer2/host2", host2.getBytes(StandardCharsets.UTF_8));
-    zooKeeperClient.create().forPath("/hiveServer2/host3", host3.getBytes(StandardCharsets.UTF_8));
-    zooKeeperClient.create().forPath("/hiveServer2/host4", host4.getBytes(StandardCharsets.UTF_8));
-    zooKeeperClient.close();
+      String host1 = "hive.server2.authentication=NONE;hive.server2.transport.mode=http;hive.server2.thrift.http.path=cliservice;" +
+                         "hive.server2.thrift.http.port=10001;hive.server2.thrift.bind.host=host1;hive.server2.use.SSL=true";
+      String host2 = "hive.server2.authentication=NONE;hive.server2.transport.mode=http;hive.server2.thrift.http.path=foobar;" +
+                         "hive.server2.thrift.http.port=10002;hive.server2.thrift.bind.host=host2;hive.server2.use.SSL=false";
+      String host3 = "hive.server2.authentication=NONE;hive.server2.transport.mode=http;hive.server2.thrift.http.path=cliservice;" +
+                         "hive.server2.thrift.http.port=10003;hive.server2.thrift.bind.host=host3;hive.server2.use.SSL=false";
+      String host4 = "hive.server2.authentication=NONE;hive.server2.transport.mode=http;hive.server2.thrift.http.path=cliservice;" +
+                         "hive.server2.thrift.http.port=10004;hive.server2.thrift.bind.host=host4;hive.server2.use.SSL=true";
+      zooKeeperClient.start();
+      assertTrue(zooKeeperClient.blockUntilConnected(10, TimeUnit.SECONDS));
+      zooKeeperClient.create().forPath("/hiveServer2");
+      zooKeeperClient.create().forPath("/hiveServer2/host1", host1.getBytes(StandardCharsets.UTF_8));
+      zooKeeperClient.create().forPath("/hiveServer2/host2", host2.getBytes(StandardCharsets.UTF_8));
+      zooKeeperClient.create().forPath("/hiveServer2/host3", host3.getBytes(StandardCharsets.UTF_8));
+      zooKeeperClient.create().forPath("/hiveServer2/host4", host4.getBytes(StandardCharsets.UTF_8));
+    }
     manager = new HS2ZookeeperURLManager();
     HaServiceConfig config = new DefaultHaServiceConfig("HIVE");
     config.setEnabled(true);
