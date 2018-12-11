@@ -64,7 +64,7 @@ public class GatewayServlet implements Servlet, Filter {
           AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
 
   private FilterConfigAdapter filterConfig;
-  private volatile GatewayFilter filter;
+  private GatewayFilter filter;
 
   public GatewayServlet( GatewayFilter filter ) {
     this.filterConfig = null;

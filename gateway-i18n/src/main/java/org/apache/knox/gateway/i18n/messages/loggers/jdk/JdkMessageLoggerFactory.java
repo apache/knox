@@ -23,10 +23,8 @@ import org.apache.knox.gateway.i18n.messages.MessageLoggerFactory;
 import java.util.logging.Logger;
 
 public class JdkMessageLoggerFactory implements MessageLoggerFactory {
-
   @Override
   public MessageLogger getLogger( String name ) {
     return new JdkMessageLogger( Logger.getLogger( name ) );
   }
-
 }

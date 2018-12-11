@@ -49,7 +49,7 @@ public class MessagesFactory {
     MessageLoggerFactory factory;
     ServiceLoader<MessageLoggerFactory> loader = ServiceLoader.load( MessageLoggerFactory.class );
     Iterator<MessageLoggerFactory> factories = loader.iterator();
-    if( factories != null && factories.hasNext() ) {
+    if(factories.hasNext()) {
       factory = loader.iterator().next();
     } else {
       factory = new JdkMessageLoggerFactory();

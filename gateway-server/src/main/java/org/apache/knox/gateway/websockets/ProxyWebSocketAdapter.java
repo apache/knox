@@ -42,9 +42,7 @@ import org.eclipse.jetty.websocket.api.WebSocketAdapter;
  * @since 0.10
  */
 public class ProxyWebSocketAdapter extends WebSocketAdapter {
-
-  private static final WebsocketLogMessages LOG = MessagesFactory
-      .get(WebsocketLogMessages.class);
+  private static final WebsocketLogMessages LOG = MessagesFactory.get(WebsocketLogMessages.class);
 
   /* URI for the backend */
   private final URI backend;
@@ -78,7 +76,6 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
 
   @Override
   public void onWebSocketConnect(final Session frontEndSession) {
-
     /*
      * Let's connect to the backend, this is where the Backend-to-frontend
      * plumbing takes place
@@ -109,9 +106,7 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
   }
 
   @Override
-  public void onWebSocketBinary(final byte[] payload, final int offset,
-      final int length) {
-
+  public void onWebSocketBinary(final byte[] payload, final int offset, final int length) {
     if (isNotConnected()) {
       return;
     }
@@ -122,7 +117,6 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
 
   @Override
   public void onWebSocketText(final String message) {
-
     if (isNotConnected()) {
       return;
     }
@@ -136,23 +130,13 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
     } catch (IOException e) {
       LOG.connectionFailed(e);
     }
-
   }
 
   @Override
   public void onWebSocketClose(int statusCode, String reason) {
     super.onWebSocketClose(statusCode, reason);
-
-    /* do the cleaning business in seperate thread so we don't block */
-    pool.execute(new Runnable() {
-      @Override
-      public void run() {
-        closeQuietly();
-      }
-    });
-
+    cleanup();
     LOG.onConnectionClose(backend.toString());
-
   }
 
   @Override
@@ -176,32 +160,21 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
       if(frontendSession != null && !frontendSession.isOpen()) {
         frontendSession.close(StatusCode.SERVER_ERROR, t.getMessage());
       }
-
-      /* do the cleaning business in seperate thread so we don't block */
-      pool.execute(new Runnable() {
-        @Override
-        public void run() {
-          closeQuietly();
-        }
-      });
-
+      cleanup();
     }
   }
 
   private MessageEventCallback getMessageCallback() {
-
     return new MessageEventCallback() {
 
       @Override
       public void doCallback(String message) {
         /* do nothing */
-
       }
 
       @Override
       public void onConnectionOpen(Object session) {
         /* do nothing */
-
       }
 
       @Override
@@ -210,17 +183,8 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
           frontendSession.close(reason.getCloseCode().getCode(),
               reason.getReasonPhrase());
         } finally {
-
-          /* do the cleaning business in seperate thread so we don't block */
-          pool.execute(new Runnable() {
-            @Override
-            public void run() {
-              closeQuietly();
-            }
-          });
-
+          cleanup();
         }
-
       }
 
       @Override
@@ -259,8 +223,18 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
 
   }
 
-  private void closeQuietly() {
+  @SuppressWarnings("PMD.DoNotUseThreads")
+  private void cleanup() {
+    /* do the cleaning business in separate thread so we don't block */
+    pool.execute(new Runnable() {
+      @Override
+      public void run() {
+        closeQuietly();
+      }
+    });
+  }
 
+  private void closeQuietly() {
     try {
       if(backendSession != null && !backendSession.isOpen()) {
         backendSession.close();
@@ -280,7 +254,5 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
     if(frontendSession != null && !frontendSession.isOpen()) {
       frontendSession.close();
     }
-
   }
-
 }

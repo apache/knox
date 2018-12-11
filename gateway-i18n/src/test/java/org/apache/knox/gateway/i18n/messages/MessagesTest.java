@@ -45,7 +45,5 @@ public class MessagesTest {
 
     assertThat( record.getCaller().getClassName(), is( this.getClass().getName() ) );
     assertThat( record.getCaller().getMethodName(), is( "testFirst" ) );
-
   }
-
 }

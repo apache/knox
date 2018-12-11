@@ -24,19 +24,14 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class SoutMessageLoggerFactory implements MessageLoggerFactory {
-
-  private static SoutMessageLoggerFactory INSTANCE;
+  private static final SoutMessageLoggerFactory INSTANCE = new SoutMessageLoggerFactory();
   private static final Map<String,MessageLogger> LOGGERS = new ConcurrentHashMap<>();
 
   public static SoutMessageLoggerFactory getFactory() {
-    if( INSTANCE == null ) {
-      INSTANCE = new SoutMessageLoggerFactory();
-    }
     return INSTANCE;
   }
 
   public SoutMessageLoggerFactory() {
-    INSTANCE = this;
   }
 
   @Override
@@ -48,5 +43,4 @@ public class SoutMessageLoggerFactory implements MessageLoggerFactory {
     }
     return logger;
   }
-
 }

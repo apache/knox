@@ -19,11 +19,9 @@ package org.apache.knox.gateway.audit.api;
 
 import org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationService;
 
-
 public abstract class CorrelationServiceFactory {
-
   // The global correlation service instance.
-  private static CorrelationService correlationService;
+  private static final CorrelationService correlationService = new Log4jCorrelationService();
 
   // To prevent instantiation.
   private CorrelationServiceFactory() {
@@ -34,11 +32,6 @@ public abstract class CorrelationServiceFactory {
    * @return The default correlation service implementation.  Will not be null.
    */
   public static CorrelationService getCorrelationService() {
-    // Race condition acceptable and will only result in multiple service instantiations.
-    if( correlationService == null ) {
-      correlationService = new Log4jCorrelationService();
-    }
     return correlationService;
   }
-
 }

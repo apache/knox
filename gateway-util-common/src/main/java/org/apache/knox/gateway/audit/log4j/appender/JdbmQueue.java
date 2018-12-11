@@ -54,7 +54,7 @@ public class JdbmQueue<E> {
       data.put( stat.lastEnqueue, e );
       db.commit();
       committed = true;
-      notify();
+      notifyAll();
     } finally {
       if( !committed ) {
         db.rollback();

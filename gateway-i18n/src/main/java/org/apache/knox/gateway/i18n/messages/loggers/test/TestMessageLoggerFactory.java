@@ -24,19 +24,14 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TestMessageLoggerFactory implements MessageLoggerFactory {
-
-  private static TestMessageLoggerFactory INSTANCE;
+  private static final TestMessageLoggerFactory INSTANCE = new TestMessageLoggerFactory();
   private static final Map<String,MessageLogger> LOGGERS = new ConcurrentHashMap<>();
 
   public static TestMessageLoggerFactory getFactory() {
-    if( INSTANCE == null ) {
-      INSTANCE = new TestMessageLoggerFactory();
-    }
     return INSTANCE;
   }
 
   public TestMessageLoggerFactory() {
-    INSTANCE = this;
   }
 
   @Override
@@ -48,5 +43,4 @@ public class TestMessageLoggerFactory implements MessageLoggerFactory {
     }
     return logger;
   }
-
 }

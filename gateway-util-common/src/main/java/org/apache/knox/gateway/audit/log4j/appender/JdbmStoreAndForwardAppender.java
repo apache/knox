@@ -28,7 +28,7 @@ import org.apache.log4j.spi.LoggingEvent;
 public class JdbmStoreAndForwardAppender extends AppenderSkeleton {
 
   private File file;
-  private Thread forwarder;
+  private Thread forwarder; //NOPMD - Expected use of threading
   private JdbmQueue<LoggingEvent> queue;
   private Logger forward;
   private boolean fetchLocationInfo = true;
@@ -87,8 +87,8 @@ public class JdbmStoreAndForwardAppender extends AppenderSkeleton {
     }
   }
 
+  @SuppressWarnings("PMD.DoNotUseThreads")
   private class Forwarder extends Thread {
-
     @Override
     public void run() {
       final AtomicBoolean done = new AtomicBoolean( false );
@@ -118,5 +118,4 @@ public class JdbmStoreAndForwardAppender extends AppenderSkeleton {
       }
     }
   }
-
 }

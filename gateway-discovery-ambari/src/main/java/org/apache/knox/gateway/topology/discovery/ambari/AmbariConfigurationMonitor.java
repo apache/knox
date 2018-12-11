@@ -39,7 +39,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
-
     private static final String TYPE = "Ambari";
 
     private static final String CLUSTERS_DATA_DIR_NAME = "clusters";
@@ -53,7 +52,6 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
     private static final String PROP_CLUSTER_ALIAS  = PROP_CLUSTER_PREFIX + "pwd.alias";
 
     static final String INTERVAL_PROPERTY_NAME = "org.apache.knox.gateway.topology.discovery.ambari.monitor.interval";
-
 
     private static final AmbariServiceDiscoveryMessages log = MessagesFactory.get(AmbariServiceDiscoveryMessages.class);
 
@@ -263,6 +261,7 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
         }
     }
 
+    @SuppressWarnings("PMD.DoNotUseThreads")
     @Override
     public void start() {
         (new Thread(internalMonitor, "AmbariConfigurationMonitor")).start();
@@ -294,7 +293,6 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
         clusterMonitorConfigurations.computeIfAbsent(config.getAddress(), k -> new HashMap<>()).put(clusterName, config);
     }
 
-
     /**
      * Get the service discovery configuration associated with the specified Ambari instance and cluster.
      *
@@ -310,7 +308,6 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
         }
         return config;
     }
-
 
     /**
      * Add cluster configuration data to the monitor, which it will use when determining if configuration has changed.
@@ -341,7 +338,6 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
         persistClusterVersionData(discoveryConfig.getAddress(), clusterName, configVersions);
         addClusterConfigVersions(discoveryConfig.getAddress(), clusterName, configVersions);
     }
-
 
     /**
      * Remove the configuration record for the specified Ambari instance and cluster name.
@@ -395,7 +391,6 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
         return result;
     }
 
-
     /**
      * Get all the clusters the monitor knows about.
      *
@@ -415,9 +410,7 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
         }
 
         return result;
-
     }
-
 
     /**
      * Notify registered change listeners.
@@ -430,7 +423,6 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
             listener.onConfigurationChange(source, clusterName);
         }
     }
-
 
     /**
      * Request the current active configuration version info from Ambari.
@@ -458,11 +450,11 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
         return configVersions;
     }
 
-
     /**
      * The thread that polls Ambari for configuration details for clusters associated with discovered topologies,
      * compares them with the current recorded values, and notifies any listeners when differences are discovered.
      */
+    @SuppressWarnings("PMD.DoNotUseThreads")
     static final class PollingConfigAnalyzer implements Runnable {
 
         private static final int DEFAULT_POLLING_INTERVAL = 60;
@@ -534,5 +526,4 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
             }
         }
     }
-
 }

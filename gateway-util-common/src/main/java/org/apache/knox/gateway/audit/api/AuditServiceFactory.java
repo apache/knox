@@ -20,9 +20,8 @@ package org.apache.knox.gateway.audit.api;
 import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditService;
 
 public abstract class AuditServiceFactory {
-
   // The global audit service instance.
-  private static AuditService auditService;
+  private static final AuditService auditService = new Log4jAuditService();
 
   // To prevent instantiation.
   private AuditServiceFactory() {
@@ -33,11 +32,6 @@ public abstract class AuditServiceFactory {
    * @return The default audit service implementation.  Will not be null.
    */
   public static AuditService getAuditService() {
-    // Race condition acceptable and will only result in multiple service instantiations.
-    if( auditService == null ) {
-      auditService = new Log4jAuditService();
-    }
     return auditService;
   }
-
 }

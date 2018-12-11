@@ -111,7 +111,7 @@ public class DefaultTopologyService
   private DescriptorsMonitor descriptorsMonitor;
 
   private Set<TopologyListener> listeners;
-  private volatile Map<File, Topology> topologies;
+  private Map<File, Topology> topologies;
   private AliasService aliasService;
 
   private RemoteConfigurationMonitor remoteMonitor;
