@@ -62,7 +62,6 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     IdentityAsserterHttpServletRequestWrapper wrapper
         = new IdentityAsserterHttpServletRequestWrapper( request, "output-user" );
 
-    String outputBody = IOUtils.toString( wrapper.getInputStream(), wrapper.getCharacterEncoding() );
     String output = wrapper.getQueryString();
     assertThat( output, containsString( "user.name=output-user" ) );
   }
@@ -79,7 +78,6 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     IdentityAsserterHttpServletRequestWrapper wrapper
         = new IdentityAsserterHttpServletRequestWrapper( request, "output-user" );
 
-    String outputBody = IOUtils.toString( wrapper.getInputStream(), wrapper.getCharacterEncoding() );
     String output = wrapper.getQueryString();
     assertThat( output, containsString( "user.name=output-user" ) );
   }
@@ -97,7 +95,6 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     IdentityAsserterHttpServletRequestWrapper wrapper
         = new IdentityAsserterHttpServletRequestWrapper( request, "output-user" );
 
-    String outputBody = IOUtils.toString( wrapper.getInputStream(), wrapper.getCharacterEncoding() );
     String output = wrapper.getQueryString();
     assertThat( output, containsString( "user.name=output-user" ) );
   }
@@ -115,7 +112,6 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     IdentityAsserterHttpServletRequestWrapper wrapper
         = new IdentityAsserterHttpServletRequestWrapper( request, "output-user" );
 
-    String outputBody = IOUtils.toString( wrapper.getInputStream(), wrapper.getCharacterEncoding() );
     String output = wrapper.getQueryString();
     assertThat( output, containsString( "user.name=output-user" ) );
     assertThat( output, not( containsString( "input-user" ) ) );
@@ -275,5 +271,4 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
     s = IdentityAsserterHttpServletRequestWrapper.urlEncode( m, StandardCharsets.UTF_8.name() );
     assertThat( s, is( "two-values=value1&two-values=value2" ) );
   }
-
 }

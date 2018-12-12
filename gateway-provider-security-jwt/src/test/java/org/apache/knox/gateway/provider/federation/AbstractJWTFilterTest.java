@@ -90,7 +90,7 @@ public abstract class AbstractJWTFilterTest  {
   }
 
   @BeforeClass
-  public static void generateKeys() throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
     kpg.initialize(2048);
     KeyPair KPair = kpg.generateKeyPair();
@@ -105,7 +105,7 @@ public abstract class AbstractJWTFilterTest  {
   }
 
   @After
-  public void teardown() {
+  public void tearDown() {
     handler.destroy();
   }
 

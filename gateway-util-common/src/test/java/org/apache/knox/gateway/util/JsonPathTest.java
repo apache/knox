@@ -35,6 +35,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 public class JsonPathTest {
@@ -67,9 +68,9 @@ public class JsonPathTest {
         fail( "Expected IllegalArgumentException" );
       } catch( IllegalArgumentException e ) {
         // Expected exception
+        assertNotNull(e);
       }
     }
-
   }
 
   @Test
@@ -91,9 +92,9 @@ public class JsonPathTest {
         fail( "Expected IllegalArgumentException for " + path );
       } catch( IllegalArgumentException e ) {
         // Expected.
+        assertNotNull(e);
       }
     }
-
   }
 
   @Test
@@ -475,12 +476,9 @@ public class JsonPathTest {
   @Test
   public void testEvaluateArrays() throws IOException {
     String json;
-    JsonPath.Segment seg;
     List<JsonPath.Match> matches;
     JsonPath.Match match;
-    JsonPath.Match parent;
     JsonNode root;
-    JsonNode node;
     JsonPath.Expression expression;
 
     JsonFactory factory = new JsonFactory();
@@ -535,11 +533,8 @@ public class JsonPathTest {
   @Test
   public void testGlobMatching() throws IOException {
     String json;
-    JsonPath.Segment seg;
     List<JsonPath.Match> matches;
-    JsonPath.Match parent;
     JsonNode root;
-    JsonNode node;
     JsonPath.Expression expression;
     Set<String> matchValues;
 
@@ -575,7 +570,5 @@ public class JsonPathTest {
     assertThat( matchValues, hasItem( "value-C" ) );
     assertThat( matchValues, hasItem( "value-D" ) );
     assertThat( matchValues, hasItem( "value-E" ) );
-
   }
-
 }

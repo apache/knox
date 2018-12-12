@@ -55,12 +55,12 @@ public class AuditServiceTest {
   private String targetServiceName = "service";
 
   @Before
-  public void setup() {
-    cleanup();
+  public void setUp() {
+    tearDown();
   }
 
   @After
-  public void cleanup() {
+  public void tearDown() {
     CollectAppender.queue.clear();
     LogManager.shutdown();
     String absolutePath = "target/audit";

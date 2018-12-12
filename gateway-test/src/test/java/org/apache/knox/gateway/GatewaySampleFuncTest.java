@@ -24,7 +24,6 @@ import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.test.TestUtils;
 import org.apache.http.HttpStatus;
-import org.apache.log4j.Appender;
 import org.hamcrest.MatcherAssert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -33,9 +32,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Enumeration;
+import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -47,10 +45,8 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
 public class GatewaySampleFuncTest {
+  private static final Logger LOG = LoggerFactory.getLogger( GatewaySampleFuncTest.class );
 
-  private static Logger LOG = LoggerFactory.getLogger( GatewaySampleFuncTest.class );
-
-  public static Enumeration<Appender> appenders;
   public static GatewayConfig config;
   public static GatewayServer gateway;
   public static String gatewayUrl;
@@ -58,26 +54,22 @@ public class GatewaySampleFuncTest {
   private static GatewayTestDriver driver = new GatewayTestDriver();
 
   @BeforeClass
-  public static void setupSuite() throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     LOG_ENTER();
-    //appenders = NoOpAppender.setUpAndReturnOriginalAppenders();
     driver.setupLdap(0);
     setupGateway();
     LOG_EXIT();
   }
 
   @AfterClass
-  public static void cleanupSuite() throws Exception {
+  public static void tearDownAfterClass() throws Exception {
     LOG_ENTER();
     gateway.stop();
     driver.cleanup();
-    //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
-    //NoOpAppender.resetOriginalAppenders( appenders );
     LOG_EXIT();
   }
 
   public static void setupGateway() throws Exception {
-
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
     gatewayDir.mkdirs();
@@ -93,9 +85,9 @@ public class GatewaySampleFuncTest {
     deployDir.mkdirs();
 
     File descriptor = new File( topoDir, "test-cluster.xml" );
-    FileOutputStream stream = new FileOutputStream( descriptor );
-    createTopology().toStream( stream );
-    stream.close();
+    try(OutputStream stream = Files.newOutputStream(descriptor.toPath())) {
+      createTopology().toStream(stream);
+    }
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<>();
@@ -117,7 +109,6 @@ public class GatewaySampleFuncTest {
   }
 
   private static XMLTag createTopology() {
-    // System.out.println( "GATEWAY=" + xml.toString() );
     return XMLDoc.newDocument( true )
         .addRoot( "topology" )
         .addTag( "gateway" )
@@ -151,13 +142,8 @@ public class GatewaySampleFuncTest {
         .gotoRoot();
   }
 
-  //@Test
-  public void waitForManualTesting() throws IOException {
-    System.in.read();
-  }
-
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
-  public void testTestService() throws ClassNotFoundException {
+  public void testTestService() {
     LOG_ENTER();
     String username = "guest";
     String password = "guest-password";
@@ -173,5 +159,4 @@ public class GatewaySampleFuncTest {
         .when().get( serviceUrl );
     LOG_EXIT();
   }
-
 }

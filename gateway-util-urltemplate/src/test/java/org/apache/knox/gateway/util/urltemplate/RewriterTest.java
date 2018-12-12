@@ -369,7 +369,7 @@ public class RewriterTest {
     final Map<String, String> parameter_pairs = new LinkedHashMap<>();
     final String[] pairs = url.getQuery().split("&");
     for (String pair : pairs) {
-       final int idx = pair.indexOf("=");
+       final int idx = pair.indexOf('=');
        final String key = idx > 0 ? URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8.name()) : pair;
        final String value = idx > 0 && pair.length() > idx + 1 ? URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8.name()) : "";
        parameter_pairs.put(key, value);
@@ -382,7 +382,7 @@ public class RewriterTest {
     private FilterConfig config;
     private HttpServletRequest request;
 
-    private TestResolver( FilterConfig config, HttpServletRequest request ) {
+    TestResolver( FilterConfig config, HttpServletRequest request ) {
       this.config = config;
       this.request = request;
     }

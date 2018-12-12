@@ -21,8 +21,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.monitor.FileAlterationListener;
-import org.apache.commons.io.monitor.FileAlterationMonitor;
-import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.topology.impl.DefaultTopologyService;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -62,7 +60,6 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class DefaultTopologyServiceTest {
-
   private File createDir() throws IOException {
     return TestUtils.createTempDir(this.getClass().getSimpleName() + "-");
   }
@@ -101,7 +98,6 @@ public class DefaultTopologyServiceTest {
       createFile(topologyDir, "one.xml", "org/apache/knox/gateway/topology/file/topology-one.xml", time);
 
       TestTopologyListener topoListener = new TestTopologyListener();
-      FileAlterationMonitor monitor = new FileAlterationMonitor(Long.MAX_VALUE);
 
       TopologyService provider = new DefaultTopologyService();
       Map<String, String> c = new HashMap<>();
@@ -203,7 +199,6 @@ public class DefaultTopologyServiceTest {
 
     try {
       TestTopologyListener topoListener = new TestTopologyListener();
-      FileAlterationMonitor monitor = new FileAlterationMonitor(Long.MAX_VALUE);
 
       DefaultTopologyService provider = new DefaultTopologyService();
       Map<String, String> c = new HashMap<>();
@@ -322,7 +317,6 @@ public class DefaultTopologyServiceTest {
 
     try {
       TestTopologyListener topoListener = new TestTopologyListener();
-      FileAlterationMonitor monitor = new FileAlterationMonitor(Long.MAX_VALUE);
 
       TopologyService ts = new DefaultTopologyService();
       Map<String, String> c = new HashMap<>();
@@ -415,7 +409,6 @@ public class DefaultTopologyServiceTest {
 
     try {
       TestTopologyListener topoListener = new TestTopologyListener();
-      FileAlterationMonitor monitor = new FileAlterationMonitor(Long.MAX_VALUE);
 
       TopologyService ts = new DefaultTopologyService();
       Map<String, String> c = new HashMap<>();
@@ -544,12 +537,6 @@ public class DefaultTopologyServiceTest {
     }
   }
 
-  private void kickMonitor(FileAlterationMonitor monitor) {
-    for (FileAlterationObserver observer : monitor.getObservers()) {
-      observer.checkAndNotify();
-    }
-  }
-
   @Test
   public void testProviderParamsOrderIsPreserved() {
 
@@ -580,14 +567,12 @@ public class DefaultTopologyServiceTest {
   }
 
   private class TestTopologyListener implements TopologyListener {
-
-    ArrayList<List<TopologyEvent>> events = new ArrayList<>();
+    List<List<TopologyEvent>> events = new ArrayList<>();
 
     @Override
     public void handleTopologyEvent(List<TopologyEvent> events) {
       this.events.add(events);
     }
-
   }
 
   private class TestTopologyDeleteListener implements TopologyListener {

@@ -45,10 +45,11 @@ import javax.websocket.CloseReason;
 import javax.websocket.ContainerProvider;
 import javax.websocket.WebSocketContainer;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -95,12 +96,12 @@ public class BadUrlTest {
   }
 
   @BeforeClass
-  public static void startServers() throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     startGatewayServer();
   }
 
   @AfterClass
-  public static void stopServers() {
+  public static void tearDownAfterClass() {
     try {
       gatewayServer.stop();
     } catch (final Exception e) {
@@ -173,9 +174,9 @@ public class BadUrlTest {
     URL serviceUrl = ClassLoader.getSystemResource("websocket-services");
 
     final File descriptor = new File(topoDir, "websocket.xml");
-    final FileOutputStream stream = new FileOutputStream(descriptor);
-    createKnoxTopology(backend).toStream(stream);
-    stream.close();
+    try(OutputStream stream = Files.newOutputStream(descriptor.toPath())) {
+      createKnoxTopology(backend).toStream(stream);
+    }
 
     final TestTopologyListener topoListener = new TestTopologyListener();
 
@@ -271,8 +272,7 @@ public class BadUrlTest {
   }
 
   private static class TestTopologyListener implements TopologyListener {
-
-    public ArrayList<List<TopologyEvent>> events = new ArrayList<>();
+    public List<List<TopologyEvent>> events = new ArrayList<>();
 
     @Override
     public void handleTopologyEvent(List<TopologyEvent> events) {

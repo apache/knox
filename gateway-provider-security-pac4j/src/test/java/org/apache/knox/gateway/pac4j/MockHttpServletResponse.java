@@ -32,7 +32,6 @@ import java.util.Map;
 public class MockHttpServletResponse extends HttpServletResponseWrapper {
 
     private List<Cookie> cookies = new ArrayList<>();
-    private String location;
     private int status;
     private Map<String, String> headers = new HashMap<>();
 

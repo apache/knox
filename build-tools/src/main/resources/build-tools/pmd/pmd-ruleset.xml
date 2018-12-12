@@ -30,6 +30,9 @@ limitations under the License.
         <exclude name="AvoidUsingHardCodedIP" />
         <exclude name="ConstantsInInterface" />
         <exclude name="GuardLogStatement" />
+        <exclude name="JUnitAssertionsShouldIncludeMessage" />
+        <exclude name="JUnitTestContainsTooManyAsserts" />
+        <exclude name="JUnitTestsShouldIncludeAssert" />
         <exclude name="MethodReturnsInternalArray" />
         <exclude name="OneDeclarationPerLine" />
         <exclude name="PreserveStackTrace" />

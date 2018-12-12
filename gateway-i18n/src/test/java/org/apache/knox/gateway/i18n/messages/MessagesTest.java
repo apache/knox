@@ -31,10 +31,9 @@ import static org.junit.Assert.assertThat;
 
 @Category( { UnitTests.class, FastTests.class } )
 public class MessagesTest {
-
   @Test
   public void testFirst() {
-    MessagesTestSubject log = MessagesFactory.get( MessagesTestSubject.class );
+    MessagesSubject log = MessagesFactory.get( MessagesSubject.class );
 
     log.withFullAnnotationAndParameter( 7 );
 

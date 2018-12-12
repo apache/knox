@@ -30,12 +30,11 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -144,26 +143,22 @@ public class UrlRewriteResponseTest {
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File inputFile = new File( targetDir, "input.test" );
     File outputFile = new File( targetDir, "output.test" );
-    OutputStream outStream, output;
-    InputStream inStream = null, input = null;
-    try {
-      outStream = isGzip ? new GZIPOutputStream( new FileOutputStream( inputFile ) ) : new FileOutputStream( inputFile );
-      outStream.write( content.getBytes(StandardCharsets.UTF_8) );
-      outStream.close();
+    try (OutputStream outputStream = Files.newOutputStream(inputFile.toPath())) {
+      try(OutputStream outStream = isGzip ? new GZIPOutputStream( outputStream ) : outputStream) {
+        outStream.write(content.getBytes(StandardCharsets.UTF_8));
+      }
 
-      input = new FileInputStream( inputFile );
-      output = new FileOutputStream( outputFile );
-      rewriteResponse.streamResponse( input, output );
+      try(InputStream input = Files.newInputStream(inputFile.toPath());
+          OutputStream output = Files.newOutputStream(outputFile.toPath())){
 
-      inStream = isGzip ? new GZIPInputStream( new FileInputStream( outputFile ) ) : new FileInputStream( outputFile );
-      assertThat( String.valueOf( IOUtils.toCharArray( inStream, StandardCharsets.UTF_8 ) ), is( content ) );
+        rewriteResponse.streamResponse(input, output);
+      }
+
+      try(InputStream inputStream = Files.newInputStream(outputFile.toPath());
+          InputStream inStream = isGzip ? new GZIPInputStream(inputStream) : inputStream) {
+        assertThat(String.valueOf(IOUtils.toCharArray(inStream, StandardCharsets.UTF_8)), is(content));
+      }
     } finally {
-      if ( inStream != null ) {
-        inStream.close();
-      }
-      if ( input != null ) {
-        input.close();
-      }
       inputFile.delete();
       outputFile.delete();
     }

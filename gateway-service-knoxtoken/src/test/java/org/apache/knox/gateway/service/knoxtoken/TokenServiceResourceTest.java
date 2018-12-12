@@ -62,7 +62,7 @@ public class TokenServiceResourceTest {
   private static RSAPrivateKey privateKey;
 
   @BeforeClass
-  public static void setup() throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
     kpg.initialize(2048);
     KeyPair KPair = kpg.generateKeyPair();
@@ -616,9 +616,9 @@ public class TokenServiceResourceTest {
       value = value.substring(1);
     }
     if (value.contains("\"")) {
-      return value.substring(0, value.indexOf("\""));
+      return value.substring(0, value.indexOf('\"'));
     } else if (value.contains(",")) {
-      return value.substring(0, value.indexOf(","));
+      return value.substring(0, value.indexOf(','));
     } else {
       return value.substring(0, value.length() - 1);
     }

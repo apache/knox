@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 package org.apache.knox.gateway;
+
 import org.apache.knox.test.category.ReleaseTest;
 import org.junit.experimental.categories.Category;
 
@@ -46,10 +47,8 @@ import static org.junit.Assert.assertNotNull;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
-
 @Category(ReleaseTest.class)
 public class ShellTest {
-
   private static MiniDFSCluster miniDFSCluster;
   private static HdfsConfiguration configuration;
   private static int nameNodeHttpPort;
@@ -59,7 +58,7 @@ public class ShellTest {
   private static File baseDir;
 
   @BeforeClass
-  public static void setupSuite() throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     nameNodeHttpPort = TestUtils.findFreePort();
     configuration = new HdfsConfiguration();
     baseDir = new File(KeyStoreTestUtil.getClasspathDir(ShellTest.class));
@@ -72,12 +71,12 @@ public class ShellTest {
         .racks(null)
         .build();
     userName = UserGroupInformation.createUserForTesting("guest", new String[] {"users"}).getUserName();
+    assertNotNull(userName);
 
     setupKnox();
   }
 
   private static void setupKnox() throws Exception {
-    //knox setup
     System.setProperty("gateway.hadoop.kerberos.secured", "false");
     GatewayTestConfig config = new GatewayTestConfig();
     config.setGatewayPath( "gateway" );
@@ -88,7 +87,7 @@ public class ShellTest {
   }
 
   @AfterClass
-  public static void cleanupSuite() throws Exception {
+  public static void tearDownAfterClass() throws Exception {
     miniDFSCluster.shutdown();
     driver.cleanup();
   }

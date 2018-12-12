@@ -71,12 +71,12 @@ public class AuditLayoutTest {
   }
 
   @Before
-  public void setup() {
-    cleanup();
+  public void setUp() {
+    tearDown();
   }
 
   @After
-  public void cleanup() {
+  public void tearDown() {
     CollectAppender.queue.clear();
     auditService.detachContext();
     correlationService.detachContext();

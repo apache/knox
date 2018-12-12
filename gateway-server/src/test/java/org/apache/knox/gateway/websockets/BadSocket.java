@@ -17,18 +17,24 @@
  */
 package org.apache.knox.gateway.websockets;
 
-import java.io.IOException;
-
 import org.eclipse.jetty.io.RuntimeIOException;
 import org.eclipse.jetty.util.BufferUtil;
 import org.eclipse.jetty.websocket.api.BatchMode;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
+import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 
+import java.io.IOException;
+
 /**
- * A simple Echo socket
+ * Simulate a bad socket.
+ *
+ * @since 0.10
  */
-public class EchoSocket extends WebSocketAdapter {
+class BadSocket extends WebSocketAdapter {
+  @Override
+  public void onWebSocketConnect(final Session session) {
+  }
 
   @Override
   public void onWebSocketBinary(byte[] payload, int offset, int len) {
@@ -57,15 +63,7 @@ public class EchoSocket extends WebSocketAdapter {
     if (isNotConnected()) {
       return;
     }
-
-    try {
-      RemoteEndpoint remote = getRemote();
-      remote.sendString(message, null);
-      if (remote.getBatchMode() == BatchMode.ON) {
-        remote.flush();
-      }
-    } catch (IOException x) {
-      throw new RuntimeIOException(x);
-    }
+    // Throw an exception on purpose
+    throw new RuntimeException("Simulating bad connection ...");
   }
 }

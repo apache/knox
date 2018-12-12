@@ -31,23 +31,21 @@ import static org.junit.Assert.assertThat;
 
 @Category( { UnitTests.class, FastTests.class } )
 public class ResourcesTest {
-
   private Locale locale;
 
   @Before
-  public void setup() {
+  public void setUp() {
     locale = Locale.getDefault();
   }
 
   @After
-  public void cleanup() {
+  public void tearDown() {
     Locale.setDefault( locale );
   }
 
   @Test
   public void testResourceFormatting() {
-
-    ResourcesTestFormattingSubject res = ResourcesFactory.get( ResourcesTestFormattingSubject.class );
+    ResourcesFormattingSubject res = ResourcesFactory.get( ResourcesFormattingSubject.class );
 
     assertThat(
         res.withoutAnnotationsOrParameters(),
@@ -84,8 +82,7 @@ public class ResourcesTest {
 
   @Test
   public void testResourceLocales() {
-
-    ResourcesTestLocaleSubject res = ResourcesFactory.get( ResourcesTestLocaleSubject.class );
+    ResourcesLocaleSubject res = ResourcesFactory.get( ResourcesLocaleSubject.class );
 
     Locale.setDefault( Locale.CHINESE ); // Change to something that we won't have test bundles for.
     assertThat( res.testResource( "queryParam" ), equalTo( "default=[queryParam]" ) );
@@ -98,21 +95,16 @@ public class ResourcesTest {
 
     Locale.setDefault( Locale.UK );
     assertThat( res.testResource( "queryParam" ), equalTo( "uk=[queryParam]" ) );
-
   }
 
   @Test
   public void testNamedBundle() {
-
-    ResourcesTestNamedSubject res = ResourcesFactory.get( ResourcesTestNamedSubject.class );
+    ResourcesNamedSubject res = ResourcesFactory.get( ResourcesNamedSubject.class );
 
     Locale.setDefault( Locale.CHINESE ); // Change to something that we won't have test bundles for.
     assertThat( res.testResource( "queryParam" ), equalTo( "default=[queryParam]" ) );
 
     Locale.setDefault( Locale.CANADA );
     assertThat( res.testResource( "queryParam" ), equalTo( "ca=[queryParam]" ) );
-
   }
-
-
 }

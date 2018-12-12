@@ -94,7 +94,6 @@ public class RemoteConfigurationRegistryClientServiceTest {
         final String REGISTRY_CLIENT_NAME_2 = "zkclient2";
         final String PRINCIPAL = null;
         final String PWD = null;
-        final String CRED_ALIAS = null;
 
         // Configure and start a secure ZK cluster
         try (TestingCluster zkCluster = setupAndStartSecureTestZooKeeper(PRINCIPAL, PWD)) {

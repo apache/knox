@@ -33,11 +33,12 @@ import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.containsString;
@@ -60,7 +61,7 @@ public class KnoxCLITest {
   private final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
 
   @Before
-  public void setup() throws Exception {
+  public void setUp() throws Exception {
     System.setOut(new PrintStream(outContent, false, StandardCharsets.UTF_8.name()));
     System.setErr(new PrintStream(errContent, false, StandardCharsets.UTF_8.name()));
   }
@@ -965,9 +966,9 @@ public class KnoxCLITest {
     config.setConfDir( new File(topoURL.getFile()).getParentFile().getParent() );
 
     File tempFile = new File( config.getGatewayTopologyDir(), name + ".xml." + UUID.randomUUID() );
-    FileOutputStream stream = new FileOutputStream( tempFile );
-    xml.toStream( stream );
-    stream.close();
+    try(OutputStream stream = Files.newOutputStream(tempFile.toPath())) {
+      xml.toStream(stream);
+    }
     File descriptor = new File( config.getGatewayTopologyDir(), name + ".xml" );
     tempFile.renameTo( descriptor );
     return descriptor;
@@ -1015,7 +1016,9 @@ public class KnoxCLITest {
   public void testValidateTopologyOutput() throws Exception {
 
     File bad = writeTestTopology( "test-cluster-bad", createBadTopology() );
+    assertNotNull(bad);
     File good = writeTestTopology( "test-cluster-good", createGoodTopology() );
+    assertNotNull(good);
 
     GatewayConfigMock config = new GatewayConfigMock();
     URL topoURL = ClassLoader.getSystemResource("conf-demo/conf/topologies/admin.xml");

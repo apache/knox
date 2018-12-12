@@ -45,15 +45,11 @@ import static org.hamcrest.Matchers.instanceOf;
  * @since 0.14.0
  */
 public class ProxyInboundClientTest {
-
   private static Server server;
   private static URI serverUri;
-  private static Handler handler;
 
-  String recievedMessage;
-
-  byte[] recievedBinaryMessage;
-
+  private String receivedMessage;
+  private byte[] receivedBinaryMessage;
 
   /* create an instance */
   public ProxyInboundClientTest() {
@@ -61,13 +57,12 @@ public class ProxyInboundClientTest {
   }
 
   @BeforeClass
-  public static void startWSServer() throws Exception
-  {
+  public static void setUpBeforeClass() throws Exception {
     server = new Server();
     ServerConnector connector = new ServerConnector(server);
     server.addConnector(connector);
 
-    handler = new WebsocketEchoHandler();
+    Handler handler = new WebsocketEchoHandler();
 
     ContextHandler context = new ContextHandler();
     context.setContextPath("/");
@@ -77,8 +72,7 @@ public class ProxyInboundClientTest {
     server.start();
 
     String host = connector.getHost();
-    if (host == null)
-    {
+    if (host == null) {
       host = "localhost";
     }
     int port = connector.getLocalPort();
@@ -86,14 +80,10 @@ public class ProxyInboundClientTest {
   }
 
   @AfterClass
-  public static void stopServer()
-  {
-    try
-    {
+  public static void tearDownAfterClass() {
+    try {
       server.stop();
-    }
-    catch (Exception e)
-    {
+    } catch (Exception e) {
       e.printStackTrace(System.err);
     }
   }
@@ -101,23 +91,18 @@ public class ProxyInboundClientTest {
   //@Test(timeout = 3000)
   @Test
   public void testClientInstance() throws IOException, DeploymentException {
-
     final String textMessage = "Echo";
-    final ByteBuffer binarymessage = ByteBuffer.wrap(textMessage.getBytes(StandardCharsets.UTF_8));
 
     final AtomicBoolean isTestComplete = new AtomicBoolean(false);
 
     final WebSocketContainer container = ContainerProvider.getWebSocketContainer();
     final ProxyInboundClient client = new ProxyInboundClient( new MessageEventCallback() {
-
       @Override
       public void doCallback(String message) {
-
       }
 
       @Override
       public void onConnectionOpen(Object session) {
-
       }
 
       @Override
@@ -132,16 +117,14 @@ public class ProxyInboundClientTest {
 
       @Override
       public void onMessageText(String message, Object session) {
-        recievedMessage = message;
+        receivedMessage = message;
         isTestComplete.set(true);
       }
 
       @Override
-      public void onMessageBinary(byte[] message, boolean last,
-          Object session) {
-
+      public void onMessageBinary(byte[] message, boolean last, Object session) {
       }
-    } );
+    });
 
     Assert.assertThat(client, instanceOf(javax.websocket.Endpoint.class));
 
@@ -149,16 +132,15 @@ public class ProxyInboundClientTest {
 
     session.getBasicRemote().sendText(textMessage);
 
-    while(!isTestComplete.get()) {
+    while(!isTestComplete.get()) { // NOPMD
       /* just wait for the test to finish */
     }
 
-    Assert.assertEquals("The received text message is not the same as the sent", textMessage, recievedMessage);
+    Assert.assertEquals("The received text message is not the same as the sent", textMessage, receivedMessage);
   }
 
   @Test(timeout = 3000)
   public void testBinarymessage() throws IOException, DeploymentException {
-
     final String textMessage = "Echo";
     final ByteBuffer binarymessage = ByteBuffer.wrap(textMessage.getBytes(StandardCharsets.UTF_8));
 
@@ -166,15 +148,12 @@ public class ProxyInboundClientTest {
 
     final WebSocketContainer container = ContainerProvider.getWebSocketContainer();
     final ProxyInboundClient client = new ProxyInboundClient( new MessageEventCallback() {
-
       @Override
       public void doCallback(String message) {
-
       }
 
       @Override
       public void onConnectionOpen(Object session) {
-
       }
 
       @Override
@@ -189,17 +168,16 @@ public class ProxyInboundClientTest {
 
       @Override
       public void onMessageText(String message, Object session) {
-        recievedMessage = message;
+        receivedMessage = message;
         isTestComplete.set(true);
       }
 
       @Override
-      public void onMessageBinary(byte[] message, boolean last,
-          Object session) {
-        recievedBinaryMessage = message;
+      public void onMessageBinary(byte[] message, boolean last, Object session) {
+        receivedBinaryMessage = message;
         isTestComplete.set(true);
       }
-    } );
+    });
 
     Assert.assertThat(client, instanceOf(javax.websocket.Endpoint.class));
 
@@ -207,31 +185,27 @@ public class ProxyInboundClientTest {
 
     session.getBasicRemote().sendBinary(binarymessage);
 
-    while(!isTestComplete.get()) {
+    while(!isTestComplete.get()) { // NOPMD
       /* just wait for the test to finish */
     }
 
-    Assert.assertEquals("Binary message does not match", textMessage, new String(recievedBinaryMessage, StandardCharsets.UTF_8));
+    Assert.assertEquals("Binary message does not match", textMessage, new String(receivedBinaryMessage, StandardCharsets.UTF_8));
   }
 
   @Test(timeout = 3000)
   public void testTextMaxBufferLimit() throws IOException, DeploymentException {
-
     final String longMessage = RandomStringUtils.random(100000);
 
     final AtomicBoolean isTestComplete = new AtomicBoolean(false);
 
     final WebSocketContainer container = ContainerProvider.getWebSocketContainer();
     final ProxyInboundClient client = new ProxyInboundClient( new MessageEventCallback() {
-
       @Override
       public void doCallback(String message) {
-
       }
 
       @Override
       public void onConnectionOpen(Object session) {
-
       }
 
       @Override
@@ -246,16 +220,14 @@ public class ProxyInboundClientTest {
 
       @Override
       public void onMessageText(String message, Object session) {
-        recievedMessage = message;
+        receivedMessage = message;
         isTestComplete.set(true);
       }
 
       @Override
-      public void onMessageBinary(byte[] message, boolean last,
-          Object session) {
-
+      public void onMessageBinary(byte[] message, boolean last, Object session) {
       }
-    } );
+    });
 
     Assert.assertThat(client, instanceOf(javax.websocket.Endpoint.class));
 
@@ -263,14 +235,10 @@ public class ProxyInboundClientTest {
 
     session.getBasicRemote().sendText(longMessage);
 
-    while(!isTestComplete.get()) {
+    while(!isTestComplete.get()) { // NOPMD
       /* just wait for the test to finish */
     }
 
-    Assert.assertEquals(longMessage, recievedMessage);
-
+    Assert.assertEquals(longMessage, receivedMessage);
   }
-
-
-
 }

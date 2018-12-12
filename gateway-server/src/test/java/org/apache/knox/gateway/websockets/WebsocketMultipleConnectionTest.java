@@ -47,12 +47,13 @@ import javax.websocket.MessageHandler;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -138,7 +139,7 @@ public class WebsocketMultipleConnectionTest {
 
     MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
 
-    System.gc();
+    System.gc(); // NOPMD
     final long heapt1 = memoryMXBean.getHeapMemoryUsage().getUsed();
     final long nonHeapt1 = memoryMXBean.getNonHeapMemoryUsage().getUsed();
 
@@ -165,7 +166,7 @@ public class WebsocketMultipleConnectionTest {
 
     latch.await(5 * MAX_CONNECTIONS, TimeUnit.MILLISECONDS);
 
-    System.gc();
+    System.gc(); // NOPMD
 
     final long heapUsed = memoryMXBean.getHeapMemoryUsage().getUsed() - heapt1;
     final long nonHeapUsed = memoryMXBean.getNonHeapMemoryUsage().getUsed()
@@ -256,9 +257,9 @@ public class WebsocketMultipleConnectionTest {
     URL serviceUrl = ClassLoader.getSystemResource("websocket-services");
 
     final File descriptor = new File(topoDir, "websocket.xml");
-    final FileOutputStream stream = new FileOutputStream(descriptor);
-    createKnoxTopology(backend).toStream(stream);
-    stream.close();
+    try(OutputStream stream = Files.newOutputStream(descriptor.toPath())) {
+      createKnoxTopology(backend).toStream(stream);
+    }
 
     final TestTopologyListener topoListener = new TestTopologyListener();
 
@@ -350,8 +351,7 @@ public class WebsocketMultipleConnectionTest {
   }
 
   private static class TestTopologyListener implements TopologyListener {
-
-    public ArrayList<List<TopologyEvent>> events = new ArrayList<>();
+    public List<List<TopologyEvent>> events = new ArrayList<>();
 
     @Override
     public void handleTopologyEvent(List<TopologyEvent> events) {

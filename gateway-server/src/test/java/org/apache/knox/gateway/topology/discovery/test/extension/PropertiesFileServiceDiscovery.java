@@ -23,8 +23,10 @@ import org.apache.knox.gateway.topology.discovery.GatewayService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -50,8 +52,8 @@ class PropertiesFileServiceDiscovery implements ServiceDiscovery {
         Map<String, ServiceDiscovery.Cluster> result = new HashMap<>();
 
         Properties p = new Properties();
-        try {
-            p.load(new FileInputStream(discoveryConfig.getAddress()));
+        try (InputStream inputStream = Files.newInputStream(Paths.get(discoveryConfig.getAddress()))){
+            p.load(inputStream);
 
             Map<String, Map<String, Map<String, String>>> clusterProperties = new HashMap<>();
             Map<String, Map<String, List<String>>> clusterURLs = new HashMap<>();
@@ -68,7 +70,7 @@ class PropertiesFileServiceDiscovery implements ServiceDiscovery {
                     }
                     String serviceName = parts[1];
                     String property    = parts[2];
-                    if (property.equals("url")) {
+                    if ("url".equals(property)) {
                         String serviceURL = p.getProperty(propertyKey);
                         Map<String, List<String>> serviceURLs = clusterURLs.get(clusterName);
                         if (!serviceURLs.containsKey(serviceName)) {
@@ -80,7 +82,7 @@ class PropertiesFileServiceDiscovery implements ServiceDiscovery {
                         for (String url : svcURLs) {
                           serviceURLs.get(serviceName).add(url);
                         }
-                    } else if (!property.equalsIgnoreCase("name")) { // ZooKeeper config properties
+                    } else if (!"name".equalsIgnoreCase(property)) { // ZooKeeper config properties
                         Map<String, Map<String, String>> props = clusterProperties.get(clusterName);
                         if (!props.containsKey(serviceName)) {
                             props.put(serviceName, new HashMap<>());

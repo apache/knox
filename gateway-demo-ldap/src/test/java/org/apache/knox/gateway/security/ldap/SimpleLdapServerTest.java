@@ -30,17 +30,17 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class SimpleLdapServerTest {
-
   private static int port;
   private static File ldifFile;
   private static TcpTransport ldapTransport;
   private static SimpleLdapDirectoryServer ldap;
 
   @BeforeClass
-  public static void setup() throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     ldifFile = new File( ClassLoader.getSystemResource( "users.ldif" ).toURI() );
     ldapTransport = new TcpTransport( 0 );
     ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", ldifFile, ldapTransport );
@@ -49,7 +49,7 @@ public class SimpleLdapServerTest {
   }
 
   @AfterClass
-  public static void cleanup() throws Exception {
+  public static void tearDownAfterClass() throws Exception {
     if( ldap != null ) {
       ldap.stop( true );
     }
@@ -72,6 +72,9 @@ public class SimpleLdapServerTest {
       fail( "Expected LdapAuthenticationException" );
     } catch ( LdapAuthenticationException e ) {
       // Expected
+      assertEquals("INVALID_CREDENTIALS: Bind failed: ERR_229 " +
+                       "Cannot authenticate user uid=nobody,ou=people,dc=hadoop,dc=apache,dc=org",
+          e.getMessage());
     } finally {
       connection.close();
     }
@@ -82,10 +85,11 @@ public class SimpleLdapServerTest {
       fail( "Expected LdapAuthenticationException" );
     } catch ( LdapAuthenticationException e ) {
       // Expected
+      assertEquals("INVALID_CREDENTIALS: Bind failed: ERR_229 " +
+                       "Cannot authenticate user uid=guest,ou=people,dc=hadoop,dc=apache,dc=org",
+          e.getMessage());
     } finally {
       connection.close();
     }
-
   }
-
 }

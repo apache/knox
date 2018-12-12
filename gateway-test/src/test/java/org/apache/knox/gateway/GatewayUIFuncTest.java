@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import com.mycila.xmltool.XMLDoc;
@@ -31,8 +30,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.restassured.RestAssured.given;
 import static org.apache.knox.test.TestUtils.LOG_ENTER;
@@ -40,17 +37,6 @@ import static org.apache.knox.test.TestUtils.LOG_EXIT;
 
 @Category( { VerifyTest.class, MediumTests.class } )
 public class GatewayUIFuncTest {
-  // Uncomment to cause the test to hang after the gateway instance is setup.
-  // This will allow the gateway instance to be hit directly via some external client.
-//  @Test
-//  public void hang() throws IOException {
-//    System.out.println( "Server on port " + driver.gateway.getAddresses()[0].getPort() );
-//    System.out.println();
-//    System.in.read();
-//  }
-
-  private static Logger log = LoggerFactory.getLogger( GatewayUIFuncTest.class );
-
   private static GatewayTestDriver driver = new GatewayTestDriver();
 
   // Controls the host name to which the gateway dispatch requests.  This may be the name of a sandbox VM
@@ -69,10 +55,6 @@ public class GatewayUIFuncTest {
   // This is frequently used during debugging to keep the GATEWAY_HOME around for inspection.
   private static final boolean CLEANUP_TEST = true;
 
-//  private static final boolean USE_GATEWAY = false;
-//  private static final boolean USE_MOCK_SERVICES = false;
-//  private static final boolean CLEANUP_TEST = false;
-
   /**
    * Creates a deployment of a gateway instance that all test methods will share.  This method also creates a
    * registry of sorts for all of the services that will be used by the test methods.
@@ -81,8 +63,7 @@ public class GatewayUIFuncTest {
    * @throws Exception Thrown if any failure occurs.
    */
   @BeforeClass
-  public static void setupSuite() throws Exception {
-    //Log.setLog( new NoOpLogger() );
+  public static void setUpBeforeClass() throws Exception {
     LOG_ENTER();
     GatewayTestConfig config = new GatewayTestConfig();
     driver.setResourceBase(GatewayUIFuncTest.class);
@@ -93,7 +74,7 @@ public class GatewayUIFuncTest {
   }
 
   @AfterClass
-  public static void cleanupSuite() throws Exception {
+  public static void tearDownAfterClass() throws Exception {
     LOG_ENTER();
     if( CLEANUP_TEST ) {
       driver.cleanup();
@@ -112,7 +93,6 @@ public class GatewayUIFuncTest {
    * @return A populated XML structure for a topology file.
    */
   private static XMLTag createTopology() {
-    //System.out.println( "GATEWAY=" + xml.toString() );
     return XMLDoc.newDocument( true )
         .addRoot( "topology" )
           .addTag( "gateway" )
@@ -153,12 +133,11 @@ public class GatewayUIFuncTest {
   }
 
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
-  public void testOozieUIRoutesAndRewriteRules() throws IOException {
+  public void testOozieUIRoutesAndRewriteRules() {
     LOG_ENTER();
     String username = "guest";
     String password = "guest-password";
     String path;
-    String url = driver.getUrl( "OOZIEUI" );
 
     path = "/oozie-console.css";
     driver.getMock("OOZIEUI")
@@ -290,5 +269,4 @@ public class GatewayUIFuncTest {
     driver.assertComplete();
     LOG_EXIT();
   }
-
 }

@@ -31,9 +31,10 @@ import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,8 +46,6 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertThat;
 
 public class KnoxCliSysBindTest {
-
-  public static Enumeration<Appender> appenders;
   public static GatewayTestConfig config;
   public static GatewayServer gateway;
   public static String gatewayUrl;
@@ -58,7 +57,7 @@ public class KnoxCliSysBindTest {
   private static final String uuid = UUID.randomUUID().toString();
 
   @BeforeClass
-  public static void setupSuite() throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     LOG_ENTER();
     System.setOut(new PrintStream(outContent, false, StandardCharsets.UTF_8.name()));
     System.setErr(new PrintStream(errContent, false, StandardCharsets.UTF_8.name()));
@@ -68,17 +67,13 @@ public class KnoxCliSysBindTest {
   }
 
   @AfterClass
-  public static void cleanupSuite() throws Exception {
+  public static void tearDownAfterClass() throws Exception {
     LOG_ENTER();
     driver.cleanup();
-
-    //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
-    //NoOpAppender.resetOriginalAppenders( appenders );
     LOG_EXIT();
   }
 
   public static void setupGateway() throws Exception {
-
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + uuid );
     gatewayDir.mkdirs();
@@ -118,20 +113,16 @@ public class KnoxCliSysBindTest {
       descriptor = new File(topoDir, name);
     }
 
-    FileOutputStream stream = new FileOutputStream( descriptor, false );
-
-    if(goodTopology) {
-      createTopology(user, pass).toStream( stream );
-    } else {
-      createBadTopology().toStream( stream );
+    try(OutputStream stream = Files.newOutputStream(descriptor.toPath())) {
+      if (goodTopology) {
+        createTopology(user, pass).toStream(stream);
+      } else {
+        createBadTopology().toStream(stream);
+      }
     }
-
-    stream.close();
-
   }
 
   private static XMLTag createBadTopology(){
-    // System.out.println( "GATEWAY=" + xml.toString() );
     return XMLDoc.newDocument(true)
         .addRoot("topology")
         .addTag( "gateway" )
@@ -168,8 +159,6 @@ public class KnoxCliSysBindTest {
   }
 
   private static XMLTag createTopology(String username, String password) {
-
-    // System.out.println( "GATEWAY=" + xml.toString() );
     return XMLDoc.newDocument(true)
         .addRoot("topology")
         .addTag("gateway")
@@ -246,7 +235,6 @@ public class KnoxCliSysBindTest {
     cli.run(args2);
     assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("System LDAP Bind successful"));
 
-
     //    Test 3: Make sure authentication is successful
     outContent.reset();
     String[] args3 = { "system-user-auth-test", "--master", "knox", "--cluster", "test-cluster-3", "--d" };
@@ -270,7 +258,6 @@ public class KnoxCliSysBindTest {
     assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("Warn: main.ldapRealm.contextFactory.systemUsername is not present"));
     assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("Warn: main.ldapRealm.contextFactory.systemPassword is not present"));
 
-
     //    Test 5: Assert that we get a username/password not present error is printed
     outContent.reset();
     String[] args5 = { "system-user-auth-test", "--master", "knox", "--cluster", "not-a-cluster" };
@@ -281,6 +268,4 @@ public class KnoxCliSysBindTest {
 
     LOG_EXIT();
   }
-
-
 }

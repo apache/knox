@@ -43,12 +43,11 @@ import static org.junit.Assert.assertTrue;
  * @see SOLRZookeeperURLManager
  */
 public class SOLRZookeeperURLManagerTest {
-
   private TestingCluster cluster;
   private SOLRZookeeperURLManager manager;
 
   @Before
-  public void setup() throws Exception {
+  public void setUp() throws Exception {
     cluster = new TestingCluster(3);
     cluster.start();
 
@@ -71,7 +70,7 @@ public class SOLRZookeeperURLManagerTest {
   }
 
   @After
-  public void teardown() throws IOException {
+  public void tearDown() throws IOException {
     if(cluster != null) {
       cluster.close();
     }

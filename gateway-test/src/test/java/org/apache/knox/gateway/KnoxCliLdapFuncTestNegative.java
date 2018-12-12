@@ -31,9 +31,10 @@ import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,8 +47,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 
 public class KnoxCliLdapFuncTestNegative {
-
-  public static Enumeration<Appender> appenders;
   public static GatewayTestConfig config;
   public static GatewayServer gateway;
   public static String gatewayUrl;
@@ -59,7 +58,7 @@ public class KnoxCliLdapFuncTestNegative {
   private static final String uuid = UUID.randomUUID().toString();
 
   @BeforeClass
-  public static void setupSuite() throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     LOG_ENTER();
     System.setOut(new PrintStream(outContent, false, StandardCharsets.UTF_8.name()));
     System.setErr(new PrintStream(errContent, false, StandardCharsets.UTF_8.name()));
@@ -69,17 +68,13 @@ public class KnoxCliLdapFuncTestNegative {
   }
 
   @AfterClass
-  public static void cleanupSuite() throws Exception {
+  public static void tearDownAfterClass() throws Exception {
     LOG_ENTER();
     driver.cleanup();
-
-    //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
-    //NoOpAppender.resetOriginalAppenders( appenders );
     LOG_EXIT();
   }
 
   public static void setupGateway() throws Exception {
-
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + uuid );
     gatewayDir.mkdirs();
@@ -116,14 +111,13 @@ public class KnoxCliLdapFuncTestNegative {
       descriptor = new File(topoDir, name);
     }
 
-    FileOutputStream stream = new FileOutputStream( descriptor, false );
-    if(goodTopology){
-      createTopology().toStream( stream );
-    } else {
-      createBadTopology().toStream( stream );
+    try(OutputStream stream = Files.newOutputStream(descriptor.toPath())) {
+      if (goodTopology) {
+        createTopology().toStream(stream);
+      } else {
+        createBadTopology().toStream(stream);
+      }
     }
-    stream.close();
-
   }
 
   private static XMLTag createBadTopology(){
@@ -168,8 +162,6 @@ public class KnoxCliLdapFuncTestNegative {
   }
 
   private static XMLTag createTopology() {
-
-    // System.out.println( "GATEWAY=" + xml.toString() );
     return XMLDoc.newDocument(true)
         .addRoot("topology")
         .addTag("gateway" )
@@ -289,5 +281,4 @@ public class KnoxCliLdapFuncTestNegative {
 
     LOG_EXIT();
   }
-
 }

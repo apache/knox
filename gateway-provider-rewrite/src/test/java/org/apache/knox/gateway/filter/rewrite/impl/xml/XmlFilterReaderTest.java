@@ -65,6 +65,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.xmlmatchers.XmlMatchers.hasXPath;
 import static org.xmlmatchers.transform.XmlConverters.the;
@@ -147,6 +148,7 @@ public class XmlFilterReaderTest {
     UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
     UrlRewriteFilterBufferDescriptor scopeConfig = contentConfig.addBuffer( "/root" );
+    assertNotNull(scopeConfig);
 
     String input = "<root/>";
     //System.out.println( "INPUT=" + input );
@@ -211,6 +213,7 @@ public class XmlFilterReaderTest {
     UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
     UrlRewriteFilterBufferDescriptor scopeConfig = contentConfig.addBuffer( "/root" );
+    assertNotNull(scopeConfig);
 
     String inputXml = "<root>text</root>";
     StringReader inputReader = new StringReader( inputXml );
@@ -226,6 +229,7 @@ public class XmlFilterReaderTest {
     UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
     UrlRewriteFilterBufferDescriptor scopeConfig = contentConfig.addBuffer( "/root" );
+    assertNotNull(scopeConfig);
 
     String inputXml = "<root name='value'/>";
     StringReader inputReader = new StringReader( inputXml );
@@ -587,7 +591,6 @@ public class XmlFilterReaderTest {
       Reader reader;
       UrlRewriteRulesDescriptor config;
       UrlRewriteRuleDescriptor rule;
-      List<UrlRewriteStepDescriptor> steps;
       UrlRewriteCheckDescriptorExt step;
 
       reader = new StringReader( "<rules><rule><check></check></rule></rules>" );
@@ -660,7 +663,6 @@ public class XmlFilterReaderTest {
       Reader reader;
       UrlRewriteRulesDescriptor config;
       UrlRewriteRuleDescriptor rule;
-      List<UrlRewriteStepDescriptor> steps;
 
       reader = new StringReader( "<rules><rule><control></control></rule></rules>" );
       config = digester.parse( reader );
@@ -720,6 +722,7 @@ public class XmlFilterReaderTest {
     UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
     UrlRewriteFilterApplyDescriptor applyConfig = contentConfig.addApply( "/properties/property/value/text()", "test-rule-2" );
+    assertNotNull(applyConfig);
 
     //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
 
@@ -747,6 +750,7 @@ public class XmlFilterReaderTest {
     UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
     UrlRewriteFilterApplyDescriptor applyConfig = contentConfig.addApply( "/properties/property/value", "test-rule-2" );
+    assertNotNull(applyConfig);
 
     //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
 
@@ -774,6 +778,7 @@ public class XmlFilterReaderTest {
     UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
     UrlRewriteFilterApplyDescriptor applyConfig = contentConfig.addApply( "/properties/property/@value", "test-rule-2" );
+    assertNotNull(applyConfig);
 
     //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
 
@@ -802,6 +807,7 @@ public class XmlFilterReaderTest {
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
     UrlRewriteFilterBufferDescriptor bufferconfig = contentConfig.addBuffer( "/properties/property" );
     UrlRewriteFilterApplyDescriptor applyConfig = bufferconfig.addApply( "@value", "test-rule-2" );
+    assertNotNull(applyConfig);
 
     //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
 
@@ -831,6 +837,7 @@ public class XmlFilterReaderTest {
     UrlRewriteFilterBufferDescriptor bufferConfig = contentConfig.addBuffer( "/properties/property" );
     UrlRewriteFilterDetectDescriptor detectConfig = bufferConfig.addDetect( "name", "test-name-2" );
     UrlRewriteFilterApplyDescriptor applyConfig = detectConfig.addApply( "value", "test-rule-2" );
+    assertNotNull(applyConfig);
 
     //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
 
@@ -860,6 +867,7 @@ public class XmlFilterReaderTest {
     UrlRewriteFilterBufferDescriptor bufferConfig = contentConfig.addBuffer( "/properties/property" );
     UrlRewriteFilterDetectDescriptor detectConfig = bufferConfig.addDetect( "@name", "test-name-2" );
     UrlRewriteFilterApplyDescriptor applyConfig = detectConfig.addApply( "@value", "test-rule-2" );
+    assertNotNull(applyConfig);
 
     //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
 

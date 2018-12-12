@@ -25,7 +25,6 @@ import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -62,7 +61,6 @@ import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.log4j.Appender;
 import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -82,11 +80,9 @@ import static org.xmlmatchers.xpath.HasXPath.hasXPath;
 
 @Category( ReleaseTest.class )
 public class GatewaySslFuncTest {
+  private static final Logger LOG = LoggerFactory.getLogger( GatewaySslFuncTest.class );
+  private static final Class<?> DAT = GatewaySslFuncTest.class;
 
-  private static Logger LOG = LoggerFactory.getLogger( GatewaySslFuncTest.class );
-  private static Class<?> DAT = GatewaySslFuncTest.class;
-
-  private static Enumeration<Appender> appenders;
   private static GatewayTestConfig config;
   private static DefaultGatewayServices services;
   private static GatewayServer gateway;
@@ -99,21 +95,19 @@ public class GatewaySslFuncTest {
   private static GatewayTestDriver driver = new GatewayTestDriver();
 
   @BeforeClass
-  public static void setupSuite() throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     LOG_ENTER();
-    //appenders = NoOpAppender.setUpAndReturnOriginalAppenders();
     driver.setupLdap(0);
     setupGateway();
     LOG_EXIT();
   }
 
   @AfterClass
-  public static void cleanupSuite() throws Exception {
+  public static void tearDownAfterClass() throws Exception {
     LOG_ENTER();
     gateway.stop();
     driver.cleanup();
     FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
-    //NoOpAppender.resetOriginalAppenders( appenders );
     LOG_EXIT();
   }
 
@@ -126,7 +120,6 @@ public class GatewaySslFuncTest {
   }
 
   public static void setupGateway() throws Exception {
-
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
     gatewayDir.mkdirs();
@@ -279,7 +272,6 @@ public class GatewaySslFuncTest {
   }
 
   public static class TrustAllCerts implements X509TrustManager {
-
     @Override
     public void checkClientTrusted(X509Certificate[] x509Certificates, String s ) throws CertificateException {
       // Trust all certificates.
@@ -302,5 +294,4 @@ public class GatewaySslFuncTest {
     sslContext.init( null, new TrustManager[]{ new TrustAllCerts() }, new SecureRandom() );
     return sslContext;
   }
-
 }

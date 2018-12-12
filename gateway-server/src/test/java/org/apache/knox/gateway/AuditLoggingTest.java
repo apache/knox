@@ -30,7 +30,6 @@ import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditService;
 import org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationService;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.dispatch.DefaultDispatch;
-import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
 import org.apache.knox.test.log.CollectAppender;
 import org.apache.log4j.spi.LoggingEvent;
 import org.easymock.EasyMock;
@@ -76,16 +75,14 @@ public class AuditLoggingTest {
   private static final String ADDRESS = "address";
   private static final String HOST = "host";
 
-  private static final GatewayResources RES = ResourcesFactory.get( GatewayResources.class );
-
   @Before
-  public void loggingSetup() {
+  public void setUp() {
     AuditServiceFactory.getAuditService().createContext();
     CollectAppender.queue.clear();
   }
 
   @After
-  public void reset() {
+  public void tearDown() {
     AuditServiceFactory.getAuditService().detachContext();
   }
 
@@ -291,11 +288,4 @@ public class AuditLoggingTest {
       assertThat( actual, is( expected ) );
     }
   }
-
-  private String getRequestId( LoggingEvent event ) {
-    CorrelationContext cc = (CorrelationContext) event
-        .getMDC( Log4jCorrelationService.MDC_CORRELATION_CONTEXT_KEY );
-    return cc == null ? null : cc.getRequestId();
-  }
-
 }

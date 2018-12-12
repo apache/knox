@@ -40,6 +40,7 @@ public class DefaultHaProviderTest {
          fail("provider construction should have failed with null descriptor");
       } catch (IllegalArgumentException e) {
         // Expected exception
+        assertEquals("Descriptor can not be null", e.getMessage());
       }
       HaDescriptor descriptor = new DefaultHaDescriptor();
       HaProvider provider = new DefaultHaProvider(descriptor);

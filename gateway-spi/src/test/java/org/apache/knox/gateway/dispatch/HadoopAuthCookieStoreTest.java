@@ -24,8 +24,9 @@ import org.easymock.EasyMock;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -166,10 +167,10 @@ public class HadoopAuthCookieStoreTest {
     File result = null;
     try {
       File f = File.createTempFile(filename, ".conf");
-      FileOutputStream out = new FileOutputStream(f);
-      out.write(contents.getBytes(StandardCharsets.UTF_8));
-      out.flush();
-      out.close();
+      try(OutputStream out = Files.newOutputStream(f.toPath())) {
+        out.write(contents.getBytes(StandardCharsets.UTF_8));
+        out.flush();
+      }
       result = f;
     } catch (Exception e) {
       //

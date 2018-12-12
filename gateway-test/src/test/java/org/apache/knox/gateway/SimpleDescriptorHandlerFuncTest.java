@@ -46,11 +46,10 @@ import java.util.Map;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.capture;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 public class SimpleDescriptorHandlerFuncTest {
-
-
   private static final String TEST_PROVIDER_CONFIG =
       "    <gateway>\n" +
           "        <provider>\n" +
@@ -212,6 +211,7 @@ public class SimpleDescriptorHandlerFuncTest {
 
       // Start a GatewayService with the GatewayServices mock
       GatewayServer server = GatewayServer.startGateway(config, gatewayServices);
+      assertNotNull(server);
 
       // Invoke the simple descriptor handler, which will also create the credential store
       // (because it doesn't exist) and the encryptQueryString alias
@@ -238,7 +238,6 @@ public class SimpleDescriptorHandlerFuncTest {
       }
     }
   }
-
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////
   // Test classes for effectively "skipping" service discovery for this test.
@@ -274,5 +273,4 @@ public class SimpleDescriptorHandlerFuncTest {
       return null;
     }
   }
-
 }

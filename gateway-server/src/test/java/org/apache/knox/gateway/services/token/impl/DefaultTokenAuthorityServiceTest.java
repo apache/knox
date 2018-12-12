@@ -40,7 +40,6 @@ public class DefaultTokenAuthorityServiceTest extends org.junit.Assert {
 
   @Test
   public void testTokenCreation() throws Exception {
-
     Principal principal = EasyMock.createNiceMock(Principal.class);
     EasyMock.expect(principal.getName()).andReturn("john.doe@example.com");
 
@@ -82,7 +81,6 @@ public class DefaultTokenAuthorityServiceTest extends org.junit.Assert {
 
   @Test
   public void testTokenCreationAudience() throws Exception {
-
     Principal principal = EasyMock.createNiceMock(Principal.class);
     EasyMock.expect(principal.getName()).andReturn("john.doe@example.com");
 
@@ -125,7 +123,6 @@ public class DefaultTokenAuthorityServiceTest extends org.junit.Assert {
 
   @Test
   public void testTokenCreationNullAudience() throws Exception {
-
     Principal principal = EasyMock.createNiceMock(Principal.class);
     EasyMock.expect(principal.getName()).andReturn("john.doe@example.com");
 
@@ -167,7 +164,6 @@ public class DefaultTokenAuthorityServiceTest extends org.junit.Assert {
 
   @Test
   public void testTokenCreationSignatureAlgorithm() throws Exception {
-
     Principal principal = EasyMock.createNiceMock(Principal.class);
     EasyMock.expect(principal.getName()).andReturn("john.doe@example.com");
 
@@ -208,9 +204,8 @@ public class DefaultTokenAuthorityServiceTest extends org.junit.Assert {
     assertTrue(ta.verifyToken(token));
   }
 
-  @Test
+  @Test (expected = TokenServiceException.class)
   public void testTokenCreationBadSignatureAlgorithm() throws Exception {
-
     Principal principal = EasyMock.createNiceMock(Principal.class);
     EasyMock.expect(principal.getName()).andReturn("john.doe@example.com");
 
@@ -242,13 +237,7 @@ public class DefaultTokenAuthorityServiceTest extends org.junit.Assert {
     ta.setKeystoreService(ks);
 
     ta.init(config, new HashMap<>());
-
-    try {
-      ta.issueToken(principal, "none");
-      fail("Failure expected on a bad signature algorithm");
-    } catch (TokenServiceException ex) {
-        // expected
-    }
+    ta.issueToken(principal, "none");
   }
 
   @Test

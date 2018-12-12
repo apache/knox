@@ -23,11 +23,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 
@@ -41,7 +42,7 @@ public class ProviderConfigurationParserTest {
   private static File tmpDir;
 
   @BeforeClass
-  public static void createTempDir() {
+  public static void setUpBeforeClass() {
     try {
       tmpDir = TestUtils.createTempDir(ProviderConfigurationParser.class.getName());
     } catch (IOException e) {
@@ -50,7 +51,7 @@ public class ProviderConfigurationParserTest {
   }
 
   @AfterClass
-  public static void removeTempDir() {
+  public static void tearDownAfterClass() {
     if (tmpDir != null) {
       FileUtils.deleteQuietly(tmpDir);
     }
@@ -291,7 +292,6 @@ public class ProviderConfigurationParserTest {
     }
   }
 
-
   /**
    * Parse the specified configuration, and return the parse result for validation by the caller.
    *
@@ -305,10 +305,11 @@ public class ProviderConfigurationParserTest {
 
     File testConfig = new File(tmpDir, fileName);
 
-    Writer fw = new OutputStreamWriter(new FileOutputStream(testConfig), StandardCharsets.UTF_8);
-    fw.write(config);
-    fw.flush();
-    fw.close();
+    try (OutputStream outputStream = Files.newOutputStream(testConfig.toPath());
+         Writer fw = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
+      fw.write(config);
+      fw.flush();
+    }
 
     try {
       pc = ProviderConfigurationParser.parse(testConfig.getAbsolutePath());
@@ -318,6 +319,4 @@ public class ProviderConfigurationParserTest {
 
     return pc;
   }
-
-
 }

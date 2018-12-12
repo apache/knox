@@ -33,8 +33,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -43,10 +44,8 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
 public class GatewayAdminFuncTest {
+  private static final Logger LOG = LoggerFactory.getLogger( GatewayAdminFuncTest.class );
 
-  private static Logger LOG = LoggerFactory.getLogger( GatewayAdminFuncTest.class );
-
-  //public static Enumeration<Appender> appenders;
   public static GatewayConfig config;
   public static GatewayServer gateway;
   public static String gatewayUrl;
@@ -54,21 +53,18 @@ public class GatewayAdminFuncTest {
   private static GatewayTestDriver driver = new GatewayTestDriver();
 
   @BeforeClass
-  public static void setupSuite() throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     TestUtils.LOG_ENTER();
-    //appenders = NoOpAppender.setUpAndReturnOriginalAppenders();
     driver.setupLdap(0);
     setupGateway();
     TestUtils.LOG_EXIT();
   }
 
   @AfterClass
-  public static void cleanupSuite() throws Exception {
+  public static void tearDownAfterClass() throws Exception {
     TestUtils.LOG_ENTER();
     gateway.stop();
     driver.cleanup();
-    //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
-    //NoOpAppender.resetOriginalAppenders( appenders );
     TestUtils.LOG_EXIT();
   }
 
@@ -89,9 +85,9 @@ public class GatewayAdminFuncTest {
     deployDir.mkdirs();
 
     File descriptor = new File( topoDir, "test-cluster.xml" );
-    FileOutputStream stream = new FileOutputStream( descriptor );
-    createTopology().toStream( stream );
-    stream.close();
+    try(OutputStream stream = Files.newOutputStream(descriptor.toPath())) {
+      createTopology().toStream( stream );
+    }
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<>();
@@ -171,5 +167,4 @@ public class GatewayAdminFuncTest {
 
     TestUtils.LOG_EXIT();
   }
-
 }

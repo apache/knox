@@ -67,7 +67,6 @@ import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 import static org.junit.Assert.fail;
 
 public class UsernameFunctionProcessorTest {
-
   private ServletTester server;
   private HttpTester.Request request;
   private HttpTester.Response response;
@@ -79,7 +78,7 @@ public class UsernameFunctionProcessorTest {
     return ClassLoader.getSystemResource( name );
   }
 
-  public void setUp( String username, Map<String,String> initParams ) throws Exception {
+  private void testSetup(String username, Map<String,String> initParams ) throws Exception {
     String descriptorUrl = getTestResource( "rewrite.xml" ).toExternalForm();
 
     Log.setLog( new NoOpLogger() );
@@ -166,7 +165,7 @@ public class UsernameFunctionProcessorTest {
   public void testRequestUrlRewriteOfUsernameViaRewriteRule() throws Exception {
     Map<String,String> initParams = new HashMap<>();
     initParams.put( "request.url", "test-rule-username" );
-    setUp( "test-user", initParams );
+    testSetup( "test-user", initParams );
 
     String input = "<root/>";
     String expect = "<root/>";
@@ -213,7 +212,7 @@ public class UsernameFunctionProcessorTest {
       StringBuffer sourceUrl = httpRequest.getRequestURL();
       String queryString = httpRequest.getQueryString();
       if( queryString != null ) {
-        sourceUrl.append( "?" );
+        sourceUrl.append( '?' );
         sourceUrl.append( queryString );
       }
       try {
@@ -240,5 +239,4 @@ public class UsernameFunctionProcessorTest {
     public void destroy() {
     }
   }
-
 }

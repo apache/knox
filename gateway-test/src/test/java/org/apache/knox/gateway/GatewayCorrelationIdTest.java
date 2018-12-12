@@ -36,8 +36,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -57,8 +58,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class GatewayCorrelationIdTest {
-
-  private static Logger LOG = LoggerFactory.getLogger( GatewayCorrelationIdTest.class );
+  private static final Logger LOG = LoggerFactory.getLogger( GatewayCorrelationIdTest.class );
 
   public static GatewayConfig config;
   public static GatewayServer gateway;
@@ -67,7 +67,7 @@ public class GatewayCorrelationIdTest {
   private static GatewayTestDriver driver = new GatewayTestDriver();
 
   @BeforeClass
-  public static void setupSuite() throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     LOG_ENTER();
     URL resource = GatewayCorrelationIdTest.class.getClassLoader().getResource("users-dynamic.ldif");
     assert resource != null;
@@ -78,7 +78,7 @@ public class GatewayCorrelationIdTest {
   }
 
   @AfterClass
-  public static void cleanupSuite() throws Exception {
+  public static void tearDownAfterClass() throws Exception {
     LOG_ENTER();
     gateway.stop();
     driver.cleanup();
@@ -102,9 +102,9 @@ public class GatewayCorrelationIdTest {
     deployDir.mkdirs();
 
     File descriptor = new File( topoDir, "test-cluster.xml" );
-    FileOutputStream stream = new FileOutputStream( descriptor );
-    createTopology().toStream( stream );
-    stream.close();
+    try(OutputStream stream = Files.newOutputStream(descriptor.toPath())) {
+      createTopology().toStream(stream);
+    }
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<>();

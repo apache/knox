@@ -20,12 +20,6 @@ package org.apache.knox.gateway.websockets;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.websocket.api.WebSocketAdapter;
-import org.eclipse.jetty.websocket.server.WebSocketHandler;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
-import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
-import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -41,11 +35,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Dummy Test for max message size.
- *
+ * Test for max message size.
  */
 public class MessageFailureTest {
-
   private static Server backend;
   private static ServerConnector connector;
   private static URI serverUri;
@@ -60,13 +52,13 @@ public class MessageFailureTest {
   }
 
   @BeforeClass
-  public static void startServer() throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     startBackend();
     startProxy();
   }
 
   @AfterClass
-  public static  void stopServer() throws Exception {
+  public static void tearDownAfterClass() throws Exception {
     /* ORDER MATTERS ! */
     proxy.stop();
     backend.stop();
@@ -109,7 +101,6 @@ public class MessageFailureTest {
     client.messageQueue.awaitMessages(1, 1000, TimeUnit.MILLISECONDS);
 
     Assert.assertThat(client.messageQueue.get(0), CoreMatchers.is("Echo"));
-
   }
 
   private static void startBackend() throws Exception {
@@ -135,7 +126,6 @@ public class MessageFailureTest {
     }
     int port = connector.getLocalPort();
     serverUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/", host, port));
-
   }
 
   private static void startProxy() throws Exception {
@@ -162,29 +152,4 @@ public class MessageFailureTest {
     int port = proxyConnector.getLocalPort();
     proxyUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/", host, port));
   }
-}
-
-/**
- * A Mock websocket handler that just Echos messages
- */
-class BigEchoSocketHandler extends WebSocketHandler implements WebSocketCreator {
-  private final WebSocketAdapter socket;
-
-  BigEchoSocketHandler(final WebSocketAdapter socket) {
-    this.socket = socket;
-  }
-
-  @Override
-  public void configure(WebSocketServletFactory factory) {
-    factory.getPolicy().setMaxTextMessageSize(10);
-    factory.getPolicy().setMaxBinaryMessageSize(10);
-    factory.setCreator(this);
-  }
-
-  @Override
-  public Object createWebSocket(ServletUpgradeRequest req,
-      ServletUpgradeResponse resp) {
-    return socket;
-  }
-
 }

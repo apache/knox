@@ -72,7 +72,7 @@ public class UrlRewriteServletFilterTest {
     return ClassLoader.getSystemResource( name );
   }
 
-  public void setUp( Map<String,String> initParams ) throws Exception {
+  private void testSetUp(Map<String,String> initParams ) throws Exception {
     String descriptorUrl = getTestResource( "rewrite.xml" ).toExternalForm();
 
     server = new ServletTester();
@@ -112,7 +112,7 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testInboundRequestUrlRewrite() throws Exception {
-    setUp( null );
+    testSetUp( null );
     // Setup the server side request/response interaction.
     interaction.expect()
         .method( "GET" )
@@ -134,7 +134,7 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testInboundHeaderRewrite() throws Exception {
-    setUp( null );
+    testSetUp( null );
     // Setup the server side request/response interaction.
     interaction.expect()
         .method( "GET" )
@@ -158,7 +158,7 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testOutboundHeaderRewrite() throws Exception {
-    setUp( null );
+    testSetUp( null );
     // Setup the server side request/response interaction.
     interaction.expect()
         .method( "GET" )
@@ -236,7 +236,7 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testInboundJsonBodyRewrite() throws Exception {
-    setUp( null );
+    testSetUp( null );
 
     String inputJson = "{\"url\":\"http://mock-host:1/test-input-path\"}";
     String outputJson = "{\"url\":\"http://mock-host:1/test-output-path-1\"}";
@@ -265,7 +265,7 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testInboundXmlBodyRewrite() throws Exception {
-    setUp( null );
+    testSetUp( null );
     String input = "<root attribute=\"http://mock-host:1/test-input-path\">http://mock-host:1/test-input-path</root>";
     String output;
     if(System.getProperty("java.vendor").contains("IBM")){
@@ -298,7 +298,7 @@ public class UrlRewriteServletFilterTest {
   // MatcherAssert.assertThat( XmlConverters.the( outputHtml ), XmlMatchers.hasXPath( "/html" ) );
   @Test
   public void testOutboundJsonBodyRewrite() throws Exception {
-    setUp( null );
+    testSetUp( null );
 
     String input = "{\"url\":\"http://mock-host:1/test-input-path\"}";
     String expect = "{\"url\":\"http://mock-host:1/test-output-path-1\"}";
@@ -327,7 +327,7 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testOutboundHtmlBodyRewrite() throws Exception {
-    setUp( null );
+    testSetUp( null );
 
     String input = "<html><head></head><body><a href=\"http://mock-host:1/test-input-path\">link text</a></body></html>";
     String output = "<html><head></head><body><a href=\"http://mock-host:1/test-output-path-1\">link text</a></body></html>";
@@ -356,7 +356,7 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testInboundHtmlFormRewrite() throws Exception {
-    setUp( null );
+    testSetUp( null );
 
     String input = "Name=Jonathan+Doe&Age=23&Formula=a+%2B+b+%3D%3D+13%25%21&url=http%3A%2F%2Fmock-host%3A1%2Ftest-input-path";
     String expect = "Name=Jonathan+Doe&Age=23&Formula=a+%2B+b+%3D%3D+13%25%21&url=http%3A%2F%2Fmock-host%3A1%2Ftest-output-path-1";
@@ -387,7 +387,7 @@ public class UrlRewriteServletFilterTest {
   public void testRequestUrlRewriteWithFilterInitParam() throws Exception {
     Map<String,String> initParams = new HashMap<>();
     initParams.put( "request.url", "test-rule-2" );
-    setUp( initParams );
+    testSetUp( initParams );
 
     String input = "<root/>";
     String expect = "<root/>";
@@ -420,7 +420,7 @@ public class UrlRewriteServletFilterTest {
   public void testRequestHeaderRewriteWithFilterInitParam() throws Exception {
     Map<String,String> initParams = new HashMap<>();
     initParams.put( "request.headers", "test-filter-2" );
-    setUp( initParams );
+    testSetUp( initParams );
 
     String input = "<root/>";
     String expect = "<root/>";
@@ -463,7 +463,7 @@ public class UrlRewriteServletFilterTest {
     //initParams.put( "url, "" );
     initParams.put( "request.body", "test-filter-2" );
     //initParams.put( "response", "" );
-    setUp( initParams );
+    testSetUp( initParams );
 
     String inputJson = "{\"url\":\"http://mock-host:42/test-input-path-1\"}";
     String expectJson = "{\"url\":\"http://mock-host:42/test-output-path-2\"}";
@@ -495,7 +495,7 @@ public class UrlRewriteServletFilterTest {
   public void testRequestXmlBodyRewriteWithFilterInitParam() throws Exception {
     Map<String,String> initParams = new HashMap<>();
     initParams.put( "request.body", "test-filter-2" );
-    setUp( initParams );
+    testSetUp( initParams );
 
     String input = "<root url='http://mock-host:42/test-input-path-1'><url>http://mock-host:42/test-input-path-1</url></root>";
     String expect = "<root url='http://mock-host:42/test-output-path-2'><url>http://mock-host:42/test-output-path-2</url></root>";
@@ -531,7 +531,7 @@ public class UrlRewriteServletFilterTest {
 
       Map<String,String> initParams = new HashMap<>();
       initParams.put( "request.body", "test-filter-3" );
-      setUp( initParams );
+      testSetUp( initParams );
 
       String input = "<root url='http://mock-host:42/test-input-path-1'><url>http://mock-host:42/test-input-path-2</url></root>";
       String expect = "<root url='http://mock-host:42/test-input-path-2'><url>http://mock-host:42/test-input-path-2</url></root>";
@@ -567,7 +567,7 @@ public class UrlRewriteServletFilterTest {
   public void testRequestFormBodyRewriteWithFilterInitParam() throws Exception {
     Map<String,String> initParams = new HashMap<>();
     initParams.put( "request.body", "test-filter-2" );
-    setUp( initParams );
+    testSetUp( initParams );
 
     String input = "Name=Jonathan+Doe&Age=23&Formula=a+%2B+b+%3D%3D+13%25%21&url=http%3A%2F%2Fmock-host%3A1%2Ftest-input-path";
     String expect = "Name=Jonathan+Doe&Age=23&Formula=a+%2B+b+%3D%3D+13%25%21&url=http%3A%2F%2Fmock-host%3A1%2Ftest-output-path-2";
@@ -599,7 +599,7 @@ public class UrlRewriteServletFilterTest {
   public void testResponseHeaderRewriteWithFilterInitParam() throws Exception {
     Map<String,String> initParams = new HashMap<>();
     initParams.put( "response.headers", "test-filter-2" );
-    setUp( initParams );
+    testSetUp( initParams );
 
     String output = "<root url='http://mock-host:42/test-input-path-2'><url>http://mock-host:42/test-input-path-3</url></root>";
 
@@ -643,7 +643,7 @@ public class UrlRewriteServletFilterTest {
     //initParams.put( "url, "" );
     initParams.put( "response.body", "test-filter-2" );
     //initParams.put( "response", "" );
-    setUp( initParams );
+    testSetUp( initParams );
 
     String responseJson = "{\"url\":\"http://mock-host:42/test-input-path-1\"}";
 
@@ -676,7 +676,7 @@ public class UrlRewriteServletFilterTest {
     //initParams.put( "url, "" );
     initParams.put( "response.body", "test-filter-4" );
     //initParams.put( "response", "" );
-    setUp( initParams );
+    testSetUp( initParams );
 
     String responseHtml = "<!DOCTYPE html>\n" +
         "<html>\n" +
@@ -725,7 +725,7 @@ public class UrlRewriteServletFilterTest {
   public void testResponseXmlBodyRewriteWithFilterInitParam() throws Exception {
     Map<String,String> initParams = new HashMap<>();
     initParams.put( "response.body", "test-filter-2" );
-    setUp( initParams );
+    testSetUp( initParams );
 
     String output = "<root url='http://mock-host:42/test-input-path-1'><url>http://mock-host:42/test-input-path-1</url></root>";
 
@@ -761,7 +761,7 @@ public class UrlRewriteServletFilterTest {
     //initParams.put( "url, "" );
     initParams.put( "response.body", "test-filter-5" );
     //initParams.put( "response", "" );
-    setUp( initParams );
+    testSetUp( initParams );
 
     String responseHtml = "<html>" +
                           "  <head>" +
@@ -811,7 +811,7 @@ public class UrlRewriteServletFilterTest {
   public void testResponseHtmlBodyRewritePrefixFunctionTestPrefix() throws Exception {
 
     Map<String,String> initParams = new HashMap<>();
-    setUp( initParams );
+    testSetUp( initParams );
 
     String responseHtml = "<html><div src=\"'components/navbar/navbar.html?v=1496201914075\"></div></html>";
     String responseHtmlOne = "<html><div src=\"'http://0.0.0.0:0/zeppelin/components/navbar/navbar.html?v=1496201914075\"></div></html>";
@@ -850,7 +850,7 @@ public class UrlRewriteServletFilterTest {
 
     Map<String,String> initParams = new HashMap<>();
     initParams.put( "response.headers", "test-filter-6" );
-    setUp( initParams );
+    testSetUp( initParams );
 
     String locationHeader = "https://localhost:8443/gateway/knoxsso/api/v1/websso?originalUrl=http://localhost:20070/index.html&doAs=anonymous";
     String responseHtml = "<html>Hello There !</html>";
@@ -890,7 +890,7 @@ public class UrlRewriteServletFilterTest {
 
     Map<String,String> initParams = new HashMap<>();
     initParams.put( "response.headers", "test-filter-6" );
-    setUp( initParams );
+    testSetUp( initParams );
 
     String customHeader = "https://localhost:8443/gateway/sandbox/?query=http://localhost:20070";
     String responseHtml = "<html>Hello There !</html>";
@@ -927,7 +927,7 @@ public class UrlRewriteServletFilterTest {
   public void testResponseHtmlAttributeEscaping() throws Exception {
     final Map<String, String> initParams = new HashMap<>();
     initParams.put("response.body", "test-filter-4");
-    setUp(initParams);
+    testSetUp(initParams);
 
     final String responseHtml = "<!DOCTYPE html>\n" + "<html>\n" + "  <head>\n"
         + "    <meta charset=\"UTF-8\">\n"
@@ -970,8 +970,7 @@ public class UrlRewriteServletFilterTest {
       StringBuffer sourceUrl = httpRequest.getRequestURL();
       String queryString = httpRequest.getQueryString();
       if( queryString != null ) {
-        sourceUrl.append( "?" );
-        sourceUrl.append( queryString );
+        sourceUrl.append('?').append( queryString );
       }
       try {
         request.setAttribute(

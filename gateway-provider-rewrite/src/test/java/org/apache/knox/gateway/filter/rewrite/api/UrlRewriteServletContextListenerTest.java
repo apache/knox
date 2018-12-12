@@ -21,7 +21,6 @@ import org.apache.knox.test.mock.MockInteraction;
 import org.apache.knox.test.mock.MockServlet;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.http.HttpTester;
 import org.eclipse.jetty.servlet.ServletTester;
 import org.junit.After;
 import org.junit.Before;
@@ -33,12 +32,8 @@ import java.util.EnumSet;
 import java.util.Queue;
 
 public class UrlRewriteServletContextListenerTest {
-
   private ServletTester server;
-  private HttpTester.Request request;
-  private HttpTester.Response response;
   private Queue<MockInteraction> interactions;
-  private MockInteraction interaction;
 
   private static URL getTestResource( String name ) {
     name = UrlRewriteServletFilterTest.class.getName().replaceAll( "\\.", "/" ) + "/" + name;
@@ -67,10 +62,6 @@ public class UrlRewriteServletContextListenerTest {
         getTestResource( "rewrite.xml" ).toExternalForm() );
 
     server.start();
-
-    interaction = new MockInteraction();
-    request = HttpTester.newRequest();
-    response = null;
   }
 
   @After

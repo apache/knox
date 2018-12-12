@@ -148,8 +148,7 @@ public class GatewayBasicFuncTest {
    * @throws Exception Thrown if any failure occurs.
    */
   @BeforeClass
-  public static void setupSuite() throws Exception {
-    //Log.setLog( new NoOpLogger() );
+  public static void setUpBeforeClass() throws Exception {
     LOG_ENTER();
     GatewayTestConfig config = new GatewayTestConfig();
     driver.setResourceBase(GatewayBasicFuncTest.class);
@@ -173,7 +172,7 @@ public class GatewayBasicFuncTest {
   }
 
   @AfterClass
-  public static void cleanupSuite() throws Exception {
+  public static void tearDownAfterClass() throws Exception {
     LOG_ENTER();
     if( CLEANUP_TEST ) {
       driver.cleanup();
@@ -182,7 +181,7 @@ public class GatewayBasicFuncTest {
   }
 
   @After
-  public void cleanupTest() {
+  public void tearDown() {
     driver.reset();
   }
 
@@ -2190,7 +2189,10 @@ public class GatewayBasicFuncTest {
     String path = "/v1/cluster/apps/";
     String resource = "/yarn/apps";
     String gatewayPath = driver.getUrl( "RESOURCEMANAGER" ) + path;
-    StringBuilder gatewayPathQuery = new StringBuilder(driver.isUseGateway() ? "" : "?user.name=" + username);
+    StringBuilder gatewayPathQuery = new StringBuilder();
+    if(!driver.isUseGateway()) {
+      gatewayPathQuery.append("?user.name=").append(username);
+    }
     InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
     String gatewayHostName = gatewayAddress.getHostName();
     String gatewayAddrName = InetAddress.getByName( gatewayHostName ).getHostAddress();
@@ -2213,11 +2215,11 @@ public class GatewayBasicFuncTest {
       for (Entry<String, String> param : params.entrySet()) {
         mockRequestMatcher.queryParam( param.getKey(), param.getValue() );
         if (gatewayPathQuery.length() == 0) {
-          gatewayPathQuery.append("?");
+          gatewayPathQuery.append('?');
         } else {
-          gatewayPathQuery.append("&");
+          gatewayPathQuery.append('&');
         }
-        gatewayPathQuery.append(param.getKey()).append("=").append(param.getValue());
+        gatewayPathQuery.append(param.getKey()).append('=').append(param.getValue());
       }
     }
 
@@ -2536,8 +2538,10 @@ public class GatewayBasicFuncTest {
     String nodeResource = "/yarn/node";
     String nodeId = "localhost:45454";
     String gatewayPath = driver.getUrl( "RESOURCEMANAGER" ) + path;
-    StringBuilder gatewayPathQuery = new StringBuilder(driver.isUseGateway() ? "" : "?user.name=" + username);
-
+    StringBuilder gatewayPathQuery = new StringBuilder();
+    if(!driver.isUseGateway()) {
+      gatewayPathQuery.append("?user.name=").append(username);
+    }
 
     MockRequestMatcher mockRequestMatcher = driver.getMock( "RESOURCEMANAGER" ).expect().method( "GET" )
         .pathInfo( path ).queryParam( "user.name", username );
@@ -2546,11 +2550,11 @@ public class GatewayBasicFuncTest {
       for (Entry<String, String> param : params.entrySet()) {
         mockRequestMatcher.queryParam( param.getKey(), param.getValue() );
         if (gatewayPathQuery.length() == 0) {
-          gatewayPathQuery.append("?");
+          gatewayPathQuery.append('?');
         } else {
-          gatewayPathQuery.append("&");
+          gatewayPathQuery.append('&');
         }
-        gatewayPathQuery.append(param.getKey()).append("=").append(param.getValue());
+        gatewayPathQuery.append(param.getKey()).append('=').append(param.getValue());
       }
     }
 
@@ -4276,24 +4280,6 @@ public class GatewayBasicFuncTest {
         .when().get( driver.getUrl( "WEBHCAT" ) + "/v1/jobs/{job}" + ( driver.isUseGateway() ? "" : "?user.name=" + user ) ).asString();
     log.debug( "STATUS=" + status );
     driver.assertComplete();
-  }
-
-  /* GET /oozie/versions
-  HTTP/1.1 200 OK
-  Content-Type: application/json;charset=UTF-8
-  Content-Length: 5
-  Server: Apache-Coyote/1.1
-  Date: Thu, 14 Feb 2013 15:47:51 GMT
-  See: oozie-versions.json
-  */
-  private void oozieGetVersions( String user, String password ) throws IOException {
-    given()
-        .auth().preemptive().basic( user, password )
-        .header( "X-XSRF-Header", "jksdhfkhdsf" )
-        .then()
-        .statusCode( 200 )
-        .body( "", Matchers.hasItems(0, 1) )
-        .when().get( driver.getUrl( "OOZIE" ) + "/versions" + ( driver.isUseGateway() ? "" : "?user.name=" + user ) ).asString();
   }
 
   /* GET /oozie/v1/admin/status

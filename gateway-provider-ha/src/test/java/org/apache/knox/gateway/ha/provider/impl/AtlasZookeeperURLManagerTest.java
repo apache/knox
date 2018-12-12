@@ -46,7 +46,7 @@ public class AtlasZookeeperURLManagerTest {
     private static String atlasNode2 = "http://atlas.node2:21000";
 
     @Before
-    public void setup() throws Exception {
+    public void setUp() throws Exception {
         cluster = new TestingCluster(3);
         cluster.start();
 
@@ -74,7 +74,7 @@ public class AtlasZookeeperURLManagerTest {
     }
 
     @After
-    public void teardown() throws IOException {
+    public void tearDown() throws IOException {
         if(cluster != null) {
             cluster.close();
         }

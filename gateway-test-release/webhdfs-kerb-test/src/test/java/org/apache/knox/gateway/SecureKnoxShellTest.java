@@ -38,12 +38,13 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Locale;
 import java.util.Properties;
 
@@ -72,7 +73,6 @@ import static org.junit.Assert.assertTrue;
  */
 @Category(ReleaseTest.class)
 public class SecureKnoxShellTest {
-
   private static final String SCRIPT = "SecureWebHdfsPutGet.groovy";
   private static MiniKdc kdc;
   private static String userName;
@@ -83,22 +83,14 @@ public class SecureKnoxShellTest {
   private static String hdfsPrincipal;
   private static String spnegoPrincipal;
   private static String keytab;
-  private static File ticketCache;
 
   private static MiniDFSCluster miniDFSCluster;
   private static GatewayTestDriver driver = new GatewayTestDriver();
 
-  public SecureKnoxShellTest() {
-    super();
-  }
-
   @BeforeClass
-  public static void setupSuite() throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     baseDir = new File(
         KeyStoreTestUtil.getClasspathDir(SecureKnoxShellTest.class));
-    ticketCache = new File(
-        KeyStoreTestUtil.getClasspathDir(SecureKnoxShellTest.class)
-            + "/ticketCache");
 
     nameNodeHttpPort = TestUtils.findFreePort();
     configuration = new HdfsConfiguration();
@@ -117,7 +109,6 @@ public class SecureKnoxShellTest {
   }
 
   private static void initKdc() throws Exception {
-
     final Properties kdcConf = MiniKdc.createConf();
     kdc = new MiniKdc(kdcConf, baseDir);
     kdc.start();
@@ -167,8 +158,7 @@ public class SecureKnoxShellTest {
   }
 
   @AfterClass
-  public static void cleanupSuite() throws Exception {
-
+  public static void tearDownAfterClass() throws Exception {
     if(kdc != null) {
       kdc.stop();
     }
@@ -178,7 +168,6 @@ public class SecureKnoxShellTest {
     if(driver != null) {
       driver.cleanup();
     }
-
   }
 
   private static File setupJaasConf(File baseDir, String keyTabFile,
@@ -190,16 +179,16 @@ public class SecureKnoxShellTest {
       file.delete();
       file.createNewFile();
     }
-    final Writer writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
-    String content = String.format(Locale.ROOT, "com.sun.security.jgss.initiate {\n"
-        + "com.sun.security.auth.module.Krb5LoginModule required\n"
-        + "renewTGT=true\n" + "doNotPrompt=true\n" + "useKeyTab=true\n"
-        + "keyTab=\"%s\"\n" + "principal=\"%s\"\n" + "isInitiator=true\n"
-        + "storeKey=true\n" + "useTicketCache=true\n" +
-        //"ticketCache=\"%s\"\n" +
-        "debug=false\n" + "client=true;\n" + "};\n", keyTabFile, principal);
-    writer.write(content);
-    writer.close();
+    try(OutputStream outputStream = Files.newOutputStream(file.toPath());
+        Writer writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
+      String content = String.format(Locale.ROOT, "com.sun.security.jgss.initiate {\n"
+                                                      + "com.sun.security.auth.module.Krb5LoginModule required\n"
+                                                      + "renewTGT=true\n" + "doNotPrompt=true\n" + "useKeyTab=true\n"
+                                                      + "keyTab=\"%s\"\n" + "principal=\"%s\"\n" + "isInitiator=true\n"
+                                                      + "storeKey=true\n" + "useTicketCache=true\n" +
+                                                      "debug=false\n" + "client=true;\n" + "};\n", keyTabFile, principal);
+      writer.write(content);
+    }
     return file;
   }
 
@@ -208,8 +197,7 @@ public class SecureKnoxShellTest {
 
     File jaasConf = setupJaasConf(baseDir, keytab, hdfsPrincipal);
 
-    System.setProperty("java.security.krb5.conf",
-        ((MiniKdc) kdc).getKrb5conf().getAbsolutePath());
+    System.setProperty("java.security.krb5.conf", kdc.getKrb5conf().getAbsolutePath());
     System.setProperty("java.security.auth.login.config",
         jaasConf.getAbsolutePath());
     System.setProperty("javax.security.auth.useSubjectCredsOnly", "false");
@@ -317,7 +305,6 @@ public class SecureKnoxShellTest {
 
     URL readme = driver.getResourceUrl("README");
     File file = new File(readme.toURI());
-    //System.out.println(file.exists());
     binding.setProperty("file", file.getAbsolutePath());
 
     final GroovyShell shell = new GroovyShell(binding);
@@ -326,11 +313,9 @@ public class SecureKnoxShellTest {
 
     String status = (String) binding.getProperty("status");
     assertNotNull(status);
-    //System.out.println(status);
 
     String fetchedFile = (String) binding.getProperty("fetchedFile");
     assertNotNull(fetchedFile);
-    //`(fetchedFile);
     assertTrue(fetchedFile.contains("README"));
   }
 
@@ -340,5 +325,4 @@ public class SecureKnoxShellTest {
             + resource;
     return ClassLoader.getSystemResource(filePath);
   }
-
 }

@@ -17,28 +17,8 @@
  */
 package org.apache.knox.gateway.i18n.resources;
 
-@Resources( bundle="some.bundle.name" )
-public interface ResourcesTestFormattingSubject {
-
-  @Resource(text="{0}")
-  String withAnnotationWithSimplePatternOneParam( int x );
-
-  @Resource(text="before{0}after")
-  String withAnnotationWithPatternOneParam( int x );
-
-  @Resource
-  String withAnnotationWithoutPatternOneParam( int x );
-
-  String withoutAnnotationsOrParameters();
-
-  String withoutAnnotationsWithOneParam( int x );
-
-  String withoutAnnotationsWithElevenParams( String p1, String p2, String p3, String p4, String p5, String p6, String p7, String p8, String p9, String p10, String p11 );
-
-  @Resource(text="{0},{1}")
-  String withMoreFormatParamsThanMethodParams( int x );
-
-  @Resource(text="{0}")
-  String withLessFormatParamsThanMethodParams( int x, int y );
-
+@Resources
+public interface ResourcesLocaleSubject {
+  @Resource(text="default=[{0}]")
+  String testResource( String param );
 }

@@ -46,12 +46,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class GatewayFilterTest {
 
   @Before
-  public void setup() {
+  public void setUp() {
     AuditServiceFactory.getAuditService().createContext();
   }
 
   @After
-  public void reset() {
+  public void tearDown() {
     AuditServiceFactory.getAuditService().detachContext();
   }
 

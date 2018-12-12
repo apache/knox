@@ -19,16 +19,13 @@ package org.apache.knox.gateway.deploy;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
@@ -49,8 +46,6 @@ import org.apache.knox.gateway.util.XmlUtils;
 import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.log.NoOpAppender;
 import org.apache.log4j.Appender;
-import org.jboss.shrinkwrap.api.Archive;
-import org.jboss.shrinkwrap.api.ArchivePath;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
@@ -67,6 +62,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.xml.HasXPath.hasXPath;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 public class DeploymentFactoryFuncTest {
@@ -76,7 +73,7 @@ public class DeploymentFactoryFuncTest {
   private static final long LONG_TIMEOUT = 10 * MEDIUM_TIMEOUT;
 
   @Test( timeout = MEDIUM_TIMEOUT )
-  public void testGenericProviderDeploymentContributor() throws ParserConfigurationException, SAXException, IOException, TransformerException {
+  public void testGenericProviderDeploymentContributor() throws ParserConfigurationException, SAXException, IOException {
     LOG_ENTER();
     GatewayTestConfig config = new GatewayTestConfig();
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
@@ -125,7 +122,6 @@ public class DeploymentFactoryFuncTest {
     EnterpriseArchive war = DeploymentFactory.createDeployment( config, topology );
 
     Document gateway = XmlUtils.readXml( war.get( "%2F/WEB-INF/gateway.xml" ).getAsset().openStream() );
-    //dump( gateway );
 
     //by default the first filter will be the X-Forwarded header filter
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/role", equalTo( "xforwardedheaders" ) ) );
@@ -148,7 +144,7 @@ public class DeploymentFactoryFuncTest {
   }
 
   @Test( timeout = LONG_TIMEOUT )
-  public void testInvalidGenericProviderDeploymentContributor() throws ParserConfigurationException, SAXException, IOException, TransformerException {
+  public void testInvalidGenericProviderDeploymentContributor() {
     LOG_ENTER();
     GatewayTestConfig config = new GatewayTestConfig();
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
@@ -180,12 +176,7 @@ public class DeploymentFactoryFuncTest {
     provider.setRole( "authentication" );
     provider.setName( "generic" );
     provider.setEnabled( true );
-    Param param; // = new ProviderParam();
-    // Missing filter param.
-    //param.setName( "filter" );
-    //param.setValue( "org.opensource.ExistingFilter" );
-    //provider.addParam( param );
-    param = new Param();
+    Param param = new Param();
     param.setName( "test-param-name" );
     param.setValue( "test-param-value" );
     provider.addParam( param );
@@ -197,6 +188,10 @@ public class DeploymentFactoryFuncTest {
       fail( "Should have throws IllegalArgumentException" );
     } catch ( DeploymentException e ) {
       // Expected.
+      assertEquals("Failed to contribute provider. Role: authentication Name: generic. " +
+                       "Please check the topology for errors in name and role and that " +
+                       "the provider is on the classpath.",
+          e.getMessage());
     } finally {
       NoOpAppender.resetOriginalAppenders( appenders );
     }
@@ -204,7 +199,7 @@ public class DeploymentFactoryFuncTest {
   }
 
   @Test( timeout = MEDIUM_TIMEOUT )
-  public void testSimpleTopology() throws IOException, SAXException, ParserConfigurationException, URISyntaxException, TransformerException {
+  public void testSimpleTopology() throws IOException, SAXException, ParserConfigurationException {
     LOG_ENTER();
     GatewayTestConfig config = new GatewayTestConfig();
     //Testing without x-forwarded headers filter
@@ -327,7 +322,7 @@ public class DeploymentFactoryFuncTest {
 
 
   @Test( timeout = LONG_TIMEOUT )
-  public void testWebXmlGeneration() throws IOException, SAXException, ParserConfigurationException, URISyntaxException {
+  public void testWebXmlGeneration() throws IOException, SAXException, ParserConfigurationException {
     LOG_ENTER();
     GatewayTestConfig config = new GatewayTestConfig();
     File targetDir = new File(System.getProperty("user.dir"), "target");
@@ -435,7 +430,7 @@ public class DeploymentFactoryFuncTest {
 
     service = new Service();
     service.setRole( "HIVE" );
-    service.setUrls( Arrays.asList( new String[]{ "http://hive-host:50001/" } ) );
+    service.setUrls(Collections.singletonList("http://hive-host:50001/"));
     param = new Param();
     param.setName( "someparam" );
     param.setValue( "somevalue" );
@@ -444,7 +439,7 @@ public class DeploymentFactoryFuncTest {
 
     service = new Service();
     service.setRole( "WEBHBASE" );
-    service.setUrls( Arrays.asList( new String[]{ "http://hbase-host:50002/" } ) );
+    service.setUrls(Collections.singletonList("http://hbase-host:50002/"));
     param = new Param();
     param.setName( "replayBufferSize" );
     param.setValue( "33" );
@@ -453,7 +448,7 @@ public class DeploymentFactoryFuncTest {
 
     service = new Service();
     service.setRole( "OOZIE" );
-    service.setUrls( Arrays.asList( new String[]{ "http://hbase-host:50003/" } ) );
+    service.setUrls(Collections.singletonList("http://hbase-host:50003/"));
     param = new Param();
     param.setName( "otherparam" );
     param.setValue( "65" );
@@ -462,7 +457,6 @@ public class DeploymentFactoryFuncTest {
 
     EnterpriseArchive war = DeploymentFactory.createDeployment( config, topology );
     Document doc = XmlUtils.readXml( war.get( "%2F/WEB-INF/gateway.xml" ).getAsset().openStream() );
-    //    dump( doc );
 
     Node resourceNode, filterNode, paramNode;
     String value;
@@ -542,7 +536,6 @@ public class DeploymentFactoryFuncTest {
 
     doc = XmlUtils.readXml( archive.get( "%2Fminimal-test-app-path/WEB-INF/gateway.xml" ).getAsset().openStream() );
     assertThat( doc, notNullValue() );
-    //dump( doc );
     assertThat( doc, hasXPath("/gateway/resource/pattern", equalTo("/**?**")));
     assertThat( doc, hasXPath("/gateway/resource/filter[1]/role", equalTo("xforwardedheaders")));
     assertThat( doc, hasXPath("/gateway/resource/filter[1]/name", equalTo("XForwardedHeaderFilter")));
@@ -641,7 +634,7 @@ public class DeploymentFactoryFuncTest {
    * add AnonymousFilter to the filter chain.
    */
   @Test( timeout = MEDIUM_TIMEOUT )
-  public void testServiceAnonAuth() throws IOException, SAXException, ParserConfigurationException, URISyntaxException, TransformerException {
+  public void testServiceAnonAuth() throws IOException, SAXException, ParserConfigurationException {
     LOG_ENTER();
     final GatewayTestConfig config = new GatewayTestConfig();
     config.setXForwardedEnabled(false);
@@ -714,7 +707,9 @@ public class DeploymentFactoryFuncTest {
     final EnterpriseArchive war2 = DeploymentFactory.createDeployment( config, federationTopology );
 
     final Document web = XmlUtils.readXml( war.get( "%2F/WEB-INF/web.xml" ).getAsset().openStream() );
+    assertNotNull(web);
     final Document web2 = XmlUtils.readXml( war2.get( "%2F/WEB-INF/web.xml" ).getAsset().openStream() );
+    assertNotNull(web2);
 
     /* Make sure AnonymousAuthFilter is added to the chain */
     final Document gateway = XmlUtils.readXml( war.get( "%2F/WEB-INF/gateway.xml" ).getAsset().openStream() );
@@ -745,10 +740,8 @@ public class DeploymentFactoryFuncTest {
     assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[5]/role", equalTo( "dispatch" ) ) );
     assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[5]/class", equalTo( "org.apache.knox.gateway.dispatch.GatewayDispatchFilter" ) ) );
 
-
     LOG_EXIT();
   }
-
 
   private Node node( Node scope, String expression ) throws XPathExpressionException {
     return (Node)XPathFactory.newInstance().newXPath().compile( expression ).evaluate( scope, XPathConstants.NODE );
@@ -757,22 +750,4 @@ public class DeploymentFactoryFuncTest {
   private String value( Node scope, String expression ) throws XPathExpressionException {
     return XPathFactory.newInstance().newXPath().compile( expression ).evaluate( scope );
   }
-
-  private static void dump( org.jboss.shrinkwrap.api.Node node, String prefix ) {
-    System.out.println( prefix + ": " + node.getPath() );
-    Set<org.jboss.shrinkwrap.api.Node> children = node.getChildren();
-    if( children != null && !children.isEmpty() ) {
-      for( org.jboss.shrinkwrap.api.Node child : children ) {
-        dump( child, prefix + "    " );
-      }
-    }
-  }
-
-  private static void dump( Archive archive ) {
-    Map<ArchivePath,org.jboss.shrinkwrap.api.Node> content = archive.getContent();
-    for( Map.Entry<ArchivePath,org.jboss.shrinkwrap.api.Node> entry : content.entrySet() ) {
-      dump( entry.getValue(), "    " );
-    }
-  }
-
 }

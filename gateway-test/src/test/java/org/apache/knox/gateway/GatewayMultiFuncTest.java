@@ -19,7 +19,6 @@ package org.apache.knox.gateway;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
 import org.apache.http.auth.AuthScope;
@@ -41,7 +40,6 @@ import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.category.ReleaseTest;
 import org.apache.knox.test.mock.MockServer;
-import org.apache.log4j.Appender;
 import org.hamcrest.MatcherAssert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -53,7 +51,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -72,42 +69,36 @@ import static org.xmlmatchers.transform.XmlConverters.the;
 
 @Category(ReleaseTest.class)
 public class GatewayMultiFuncTest {
+  private static final Logger LOG = LoggerFactory.getLogger( GatewayMultiFuncTest.class );
+  private static final Class<?> DAT = GatewayMultiFuncTest.class;
 
-  private static Logger LOG = LoggerFactory.getLogger( GatewayMultiFuncTest.class );
-  private static Class<?> DAT = GatewayMultiFuncTest.class;
-
-  private static Enumeration<Appender> appenders;
   private static GatewayTestConfig config;
   private static DefaultGatewayServices services;
   private static GatewayServer gateway;
   private static int gatewayPort;
   private static String gatewayUrl;
-  private static TcpTransport ldapTransport;
   private static Properties params;
   private static TopologyService topos;
   private static GatewayTestDriver driver = new GatewayTestDriver();
 
   @BeforeClass
-  public static void setupSuite() throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     LOG_ENTER();
-    //appenders = NoOpAppender.setUpAndReturnOriginalAppenders();
     driver.setupLdap(0);
     setupGateway();
     LOG_EXIT();
   }
 
   @AfterClass
-  public static void cleanupSuite() throws Exception {
+  public static void tearDownAfterClass() throws Exception {
     LOG_ENTER();
     gateway.stop();
     driver.cleanup();
     FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
-    //NoOpAppender.resetOriginalAppenders( appenders );
     LOG_EXIT();
   }
 
   public static void setupGateway() throws Exception {
-
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
     gatewayDir.mkdirs();
@@ -436,7 +427,6 @@ public class GatewayMultiFuncTest {
 
     LOG_EXIT();
   }
-
 }
 
 

@@ -49,7 +49,6 @@ public class DefaultRemoteConfigurationRegistriesTest {
         doTestPropertiesRemoteConfigurationRegistries(testProperties);
     }
 
-
     /*
      * Test a single registry configuration with kerberos auth configuration.
      */
@@ -144,9 +143,9 @@ public class DefaultRemoteConfigurationRegistriesTest {
             Enumeration names = props.propertyNames();
             while (names.hasMoreElements()) {
                 String propertyName = (String) names.nextElement();
-                propertyValueString.append(propertyName).append("=").append(props.get(propertyName));
+                propertyValueString.append(propertyName).append('=').append(props.get(propertyName));
                 if (names.hasMoreElements()) {
-                    propertyValueString.append(";");
+                    propertyValueString.append(';');
                 }
             }
             EasyMock.expect(gc.getRemoteRegistryConfiguration(registryName))
@@ -181,5 +180,4 @@ public class DefaultRemoteConfigurationRegistriesTest {
         assertEquals(Boolean.valueOf((String)expected.get(GatewayConfig.REMOTE_CONFIG_REGISTRY_USE_KEYTAB)), registryConfig.isUseKeyTab());
         assertEquals(Boolean.valueOf((String)expected.get(GatewayConfig.REMOTE_CONFIG_REGISTRY_USE_TICKET_CACHE)), registryConfig.isUseTicketCache());
     }
-
 }

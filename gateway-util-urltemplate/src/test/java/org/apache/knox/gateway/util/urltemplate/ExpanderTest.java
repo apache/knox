@@ -310,9 +310,12 @@ public class ExpanderTest {
     assertThat( expandedString, equalTo( "schemeA://host/{path=*]?query=queryA" ) );
     try {
       expandedUri = Expander.expand( template, params, null );
+      assertNotNull(expandedUri);
       fail( "Should have thrown exception" );
     } catch( URISyntaxException e ) {
       // Expected.
+      assertThat("Illegal character in path at index 15: schemeA://host/{path=*]?query=queryA",
+          is(e.getMessage()));
     }
 
     template = Parser.parseTemplate( "{scheme}://host/{path=**}?{query=**}" );

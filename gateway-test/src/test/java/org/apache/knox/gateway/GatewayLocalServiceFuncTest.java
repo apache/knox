@@ -35,7 +35,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,8 +50,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
 public class GatewayLocalServiceFuncTest {
-
-  private static Logger LOG = LoggerFactory.getLogger( GatewayTestDriver.class );
+  private static final Logger LOG = LoggerFactory.getLogger( GatewayTestDriver.class );
 
   public static Enumeration<Appender> appenders;
   public static GatewayConfig config;
@@ -60,7 +60,7 @@ public class GatewayLocalServiceFuncTest {
   private static GatewayTestDriver driver = new GatewayTestDriver();
 
   @BeforeClass
-  public static void setupSuite() throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     LOG_ENTER();
     appenders = NoOpAppender.setUpAndReturnOriginalAppenders();
     driver.setupLdap(0);
@@ -69,7 +69,7 @@ public class GatewayLocalServiceFuncTest {
   }
 
   @AfterClass
-  public static void cleanupSuite() throws Exception {
+  public static void tearDownAfterClass() throws Exception {
     LOG_ENTER();
     gateway.stop();
     driver.cleanup();
@@ -80,7 +80,6 @@ public class GatewayLocalServiceFuncTest {
   }
 
   public static void setupGateway() throws Exception {
-
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
     gatewayDir.mkdirs();
@@ -96,9 +95,9 @@ public class GatewayLocalServiceFuncTest {
     deployDir.mkdirs();
 
     File descriptor = new File( topoDir, "cluster.xml" );
-    FileOutputStream stream = new FileOutputStream( descriptor );
-    createTopology().toStream( stream );
-    stream.close();
+    try(OutputStream stream = Files.newOutputStream(descriptor.toPath())) {
+      createTopology().toStream(stream);
+    }
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<>();
@@ -178,5 +177,4 @@ public class GatewayLocalServiceFuncTest {
         .when().get( serviceUrl );
     LOG_EXIT();
   }
-
 }

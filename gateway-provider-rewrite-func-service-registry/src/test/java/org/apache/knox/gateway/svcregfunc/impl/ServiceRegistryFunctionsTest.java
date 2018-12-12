@@ -60,9 +60,7 @@ import java.util.Queue;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
-
 public class ServiceRegistryFunctionsTest {
-
   private ServletTester server;
   private HttpTester.Request request;
   private HttpTester.Response response;
@@ -74,7 +72,7 @@ public class ServiceRegistryFunctionsTest {
     return ClassLoader.getSystemResource( name );
   }
 
-  public void setUp( String username, Map<String,String> initParams ) throws Exception {
+  private void testSetup(String username, Map<String,String> initParams ) throws Exception {
     ServiceRegistry mockServiceRegistry = EasyMock.createNiceMock( ServiceRegistry.class );
     EasyMock.expect( mockServiceRegistry.lookupServiceURL( "test-cluster", "NAMENODE" ) ).andReturn( "test-nn-scheme://test-nn-host:411" ).anyTimes();
     EasyMock.expect( mockServiceRegistry.lookupServiceURL( "test-cluster", "JOBTRACKER" ) ).andReturn( "test-jt-scheme://test-jt-host:511" ).anyTimes();
@@ -122,7 +120,7 @@ public class ServiceRegistryFunctionsTest {
   public void testServiceRegistryFunctionsOnXmlRequestBody() throws Exception {
     Map<String,String> initParams = new HashMap<>();
     initParams.put( "request.body", "oozie-conf" );
-    setUp( "test-user", initParams );
+    testSetup( "test-user", initParams );
 
     String input = TestUtils.getResourceString( ServiceRegistryFunctionsTest.class, "test-input-body.xml", StandardCharsets.UTF_8 );
     String expect = TestUtils.getResourceString( ServiceRegistryFunctionsTest.class, "test-expect-body.xml", StandardCharsets.UTF_8 );
@@ -154,7 +152,7 @@ public class ServiceRegistryFunctionsTest {
   public void testServiceRegistryFunctionsOnJsonRequestBody() throws Exception {
     Map<String,String> initParams = new HashMap<>();
     initParams.put( "request.body", "oozie-conf" );
-    setUp( "test-user", initParams );
+    testSetup( "test-user", initParams );
 
     String input = TestUtils.getResourceString( ServiceRegistryFunctionsTest.class, "test-input-body.json", StandardCharsets.UTF_8 );
     String expect = TestUtils.getResourceString( ServiceRegistryFunctionsTest.class, "test-expect-body.json", StandardCharsets.UTF_8 );
@@ -200,7 +198,7 @@ public class ServiceRegistryFunctionsTest {
       StringBuffer sourceUrl = httpRequest.getRequestURL();
       String queryString = httpRequest.getQueryString();
       if( queryString != null ) {
-        sourceUrl.append( "?" );
+        sourceUrl.append( '?' );
         sourceUrl.append( queryString );
       }
       try {
@@ -227,5 +225,4 @@ public class ServiceRegistryFunctionsTest {
     public void destroy() {
     }
   }
-
 }

@@ -236,6 +236,7 @@ public class FuncTest {
   @Test
   public void testMissingRequiredFieldConfiguration() {
     class RequiredFieldTarget {
+      @SuppressWarnings("unused")
       @Configure
       private String required;
     }

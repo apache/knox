@@ -36,10 +36,10 @@ import org.xml.sax.SAXException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.xml.HasXPath.hasXPath;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class DeploymentFactoryTest {
-
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
   public void testEmptyTopology() throws IOException, SAXException, ParserConfigurationException, TransformerException {
     GatewayConfig config = new GatewayConfigImpl();
@@ -90,6 +90,9 @@ public class DeploymentFactoryTest {
       fail( "Expected DeploymentException" );
     } catch ( DeploymentException e ) {
       // Expected.
+      assertEquals("Topology test-topology contains both services and " +
+                       "an application test-application with a root url.",
+          e.getMessage());
     }
 
     topology = new Topology();
@@ -107,6 +110,9 @@ public class DeploymentFactoryTest {
       fail( "Expected DeploymentException" );
     } catch ( DeploymentException e ) {
       // Expected.
+      assertEquals("Topology test-topology contains both services and an " +
+                       "application test-application with a root url.",
+          e.getMessage());
     }
 
     topology = new Topology();
@@ -124,6 +130,9 @@ public class DeploymentFactoryTest {
       fail( "Expected DeploymentException" );
     } catch ( DeploymentException e ) {
       // Expected.
+      assertEquals("Topology test-topology contains both services and an " +
+                       "application test-application with a root url.",
+          e.getMessage());
     }
 
     topology = new Topology();
@@ -142,8 +151,10 @@ public class DeploymentFactoryTest {
       fail( "Expected DeploymentException" );
     } catch ( DeploymentException e ) {
       // Expected.
+      assertEquals("Topology test-topology contains both services and an " +
+                       "application test-application with a root url.",
+          e.getMessage());
     }
-
   }
 
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
@@ -233,6 +244,10 @@ public class DeploymentFactoryTest {
       fail( "Expected DeploymentException" );
     } catch ( DeploymentException e ) {
       // Expected.
+      assertEquals("Topology test-topology contains applications " +
+                       "test-application-1 and test-application-2 with the " +
+                       "same url: /test-application-dup",
+          e.getMessage());
     }
 
     topology = new Topology();
@@ -250,6 +265,9 @@ public class DeploymentFactoryTest {
       fail( "Expected DeploymentException" );
     } catch ( DeploymentException e ) {
       // Expected.
+      assertEquals("Topology test-topology contains applications " +
+                       "test-application-1 and test-application-2 with the same url: /",
+          e.getMessage());
     }
 
     topology = new Topology();
@@ -267,6 +285,9 @@ public class DeploymentFactoryTest {
       fail( "Expected DeploymentException" );
     } catch ( DeploymentException e ) {
       // Expected.
+      assertEquals("Topology test-topology contains applications " +
+                       "test-application-1 and test-application-2 with the same url: ",
+          e.getMessage());
     }
 
     topology = new Topology();
@@ -283,6 +304,10 @@ public class DeploymentFactoryTest {
       fail( "Expected DeploymentException" );
     } catch ( DeploymentException e ) {
       // Expected.
+      assertEquals("Topology test-topology contains applications " +
+                       "test-application-1 and test-application-2 with the " +
+                       "same url: test-application-1",
+          e.getMessage());
     }
 
     topology = new Topology();
@@ -298,6 +323,10 @@ public class DeploymentFactoryTest {
       fail( "Expected DeploymentException" );
     } catch ( DeploymentException e ) {
       // Expected.
+      assertEquals("Topology test-topology contains applications " +
+                       "test-application-1 and test-application-1 with the " +
+                       "same url: test-application-1",
+          e.getMessage());
     }
 
     topology = new Topology();
@@ -317,8 +346,10 @@ public class DeploymentFactoryTest {
       fail( "Expected DeploymentException" );
     } catch ( DeploymentException e ) {
       // Expected.
+      assertEquals("Topology test-topology contains applications " +
+                       "test-application-1 and test-application-2 with the " +
+                       "same url: /test-application-3",
+          e.getMessage());
     }
-
   }
-
 }

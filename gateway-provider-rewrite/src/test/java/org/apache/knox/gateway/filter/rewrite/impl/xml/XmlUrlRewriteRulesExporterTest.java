@@ -25,6 +25,7 @@ import org.apache.knox.gateway.filter.rewrite.ext.UrlRewriteActionRewriteDescrip
 import org.apache.knox.gateway.filter.rewrite.ext.UrlRewriteCheckDescriptor;
 import org.apache.knox.gateway.filter.rewrite.ext.UrlRewriteControlDescriptor;
 import org.apache.knox.gateway.filter.rewrite.ext.UrlRewriteMatchDescriptor;
+import org.junit.Assert;
 import org.junit.Test;
 import org.xmlmatchers.XmlMatchers;
 import org.xmlmatchers.transform.XmlConverters;
@@ -57,7 +58,6 @@ public class XmlUrlRewriteRulesExporterTest {
     UrlRewriteRulesDescriptorFactory.store( rules, "xml", writer );
 
     String str = writer.toString();
-    //System.out.println( str );
     Source xml = XmlConverters.the( str );
     assertThat( xml, XmlMatchers.hasXPath( "/rules" ) );
     assertThat( xml, XmlMatchers.hasXPath( "/rules/rule" ) );
@@ -77,7 +77,6 @@ public class XmlUrlRewriteRulesExporterTest {
     UrlRewriteRulesDescriptorFactory.store( rules, "xml", writer );
 
     String str = writer.toString();
-    //System.out.println( str );
     Source xml = XmlConverters.the( str );
     assertThat( xml, XmlMatchers.hasXPath( "/rules" ) );
     assertThat( xml, XmlMatchers.hasXPath( "/rules/rule" ) );
@@ -102,7 +101,6 @@ public class XmlUrlRewriteRulesExporterTest {
     UrlRewriteRulesDescriptorFactory.store( rules, "xml", writer );
 
     String str = writer.toString();
-    //System.out.println( str );
     Source xml = XmlConverters.the( str );
     assertThat( xml, XmlMatchers.hasXPath( "/rules" ) );
     assertThat( xml, XmlMatchers.hasXPath( "/rules/rule" ) );
@@ -124,7 +122,6 @@ public class XmlUrlRewriteRulesExporterTest {
     UrlRewriteRulesDescriptorFactory.store( rules, "xml", writer );
 
     String str = writer.toString();
-    //System.out.println( str );
     Source xml = XmlConverters.the( str );
     assertThat( xml, XmlMatchers.hasXPath( "/rules" ) );
     assertThat( xml, XmlMatchers.hasXPath( "/rules/rule" ) );
@@ -148,7 +145,6 @@ public class XmlUrlRewriteRulesExporterTest {
     UrlRewriteRulesDescriptorFactory.store( rules, "xml", writer );
 
     String str = writer.toString();
-    //System.out.println( str );
     Source xml = XmlConverters.the( str );
     assertThat( xml, XmlMatchers.hasXPath( "/rules" ) );
     assertThat( xml, XmlMatchers.hasXPath( "/rules/rule" ) );
@@ -169,26 +165,38 @@ public class XmlUrlRewriteRulesExporterTest {
     UrlRewriteCheckDescriptor matchCheck = match.addStep( "check" );
     UrlRewriteControlDescriptor matchControl = match.addStep( "control" );
     UrlRewriteActionDescriptor matchRewrite = match.addStep( "rewrite" );
+    Assert.assertNotNull(matchMatch);
+    Assert.assertNotNull(matchCheck);
+    Assert.assertNotNull(matchControl);
+    Assert.assertNotNull(matchRewrite);
 
     UrlRewriteCheckDescriptor check = rule.addStep( "check" );
     UrlRewriteMatchDescriptor checkMatch = check.addStep( "match" );
     UrlRewriteCheckDescriptor checkCheck = check.addStep( "check" );
     UrlRewriteControlDescriptor checkControl = check.addStep( "control" );
     UrlRewriteActionDescriptor checkRewrite = check.addStep( "rewrite" );
+    Assert.assertNotNull(checkMatch);
+    Assert.assertNotNull(checkCheck);
+    Assert.assertNotNull(checkControl);
+    Assert.assertNotNull(checkRewrite);
 
     UrlRewriteControlDescriptor control = rule.addStep( "control" );
     UrlRewriteMatchDescriptor controlMatch = control.addStep( "match" );
     UrlRewriteCheckDescriptor controlCheck = control.addStep( "check" );
     UrlRewriteControlDescriptor controlControl = control.addStep( "control" );
     UrlRewriteActionDescriptor controlRewrite = control.addStep( "rewrite" );
+    Assert.assertNotNull(controlMatch);
+    Assert.assertNotNull(controlCheck);
+    Assert.assertNotNull(controlControl);
+    Assert.assertNotNull(controlRewrite);
 
     UrlRewriteActionDescriptor rewrite = rule.addStep( "rewrite" );
+    Assert.assertNotNull(rewrite);
 
     StringWriter writer = new StringWriter();
     UrlRewriteRulesDescriptorFactory.store( rules, "xml", writer );
 
     String str = writer.toString();
-    //System.out.println( str );
     Source xml = XmlConverters.the( str );
     assertThat( xml, XmlMatchers.hasXPath( "/rules" ) );
     assertThat( xml, XmlMatchers.hasXPath( "/rules/rule" ) );
@@ -211,5 +219,4 @@ public class XmlUrlRewriteRulesExporterTest {
     assertThat( xml, XmlMatchers.hasXPath( "/rules/rule/control/rewrite" ) );
     assertThat( xml, XmlMatchers.hasXPath( "/rules/rule/rewrite" ) );
   }
-
 }

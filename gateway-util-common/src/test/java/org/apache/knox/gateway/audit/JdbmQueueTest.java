@@ -26,10 +26,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -40,19 +37,18 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 
 public class JdbmQueueTest {
-
   private File file;
   private JdbmQueue<String> queue;
 
   @Before
-  public void setup() throws IOException {
+  public void setUp() throws IOException {
     file = new File( "target/JdbmQueueTest" );
-    cleanup();
+    tearDown();
     queue = new JdbmQueue<>( file );
   }
 
   @After
-  public void cleanup() throws IOException {
+  public void tearDown() throws IOException {
     if( queue != null ) {
       queue.close();
       queue = null;
@@ -95,75 +91,6 @@ public class JdbmQueueTest {
     } );
     assertThat( counter.get(), is( 1 ) );
   }
-
-//  @Ignore
-//  @Test
-//  public void testPerformanceAndStorageFootprint() throws IOException, InterruptedException {
-//    System.out.println( "Running " + Thread.currentThread().getStackTrace()[1].getClassName() + "#" + Thread.currentThread().getStackTrace()[1].getMethodName() );
-//
-//    String fill = createFillString( 100 );
-//    File dbFile = new File( file.getAbsolutePath() + ".db" );
-//    File lgFile = new File( file.getAbsolutePath() + ".lg" );
-//
-//    String s = null;
-//    long writeCount = 0;
-//    long writeTime = 0;
-//    long before;
-//
-//    int iterations = 10000;
-//
-//    for( int i=0; i<iterations; i++ ) {
-//      s = UUID.randomUUID().toString() + ":" + fill;
-//      before = System.currentTimeMillis();
-//      queue.enqueue( s );
-//      writeTime += ( System.currentTimeMillis() - before );
-//      writeCount++;
-//    }
-//
-//    System.out.println( String.format( "Line: len=%d", s.length() ) );
-//    System.out.println( String.format( "Perf: avg=%.4fs, tot=%.2fs, cnt=%d", ( (double)writeTime / (double)writeCount / 1000.0 ),  (double)writeTime/1000.0, writeCount ) );
-//    System.out.println( String.format(
-//        "File: db=%s, lg=%s, tot=%s, per=%s",
-//        humanReadableSize( dbFile.length() ),
-//        humanReadableSize( lgFile.length() ),
-//        humanReadableSize( dbFile.length() + lgFile.length() ),
-//        humanReadableSize( ( ( dbFile.length() + lgFile.length() ) / writeCount ) ) ) );
-//  }
-
-//  @Ignore
-//  @Test
-//  public void testFileGrowth() throws IOException, InterruptedException {
-//    System.out.println( "Running " + Thread.currentThread().getStackTrace()[1].getClassName() + "#" + Thread.currentThread().getStackTrace()[1].getMethodName() );
-//
-//    String fill = createFillString( 100 );
-//    File dbFile = new File( file.getAbsolutePath() + ".db" );
-//    File lgFile = new File( file.getAbsolutePath() + ".lg" );
-//
-//    String s = null;
-//    long writeCount = 0;
-//    long writeTime = 0;
-//    long before;
-//
-//    int iterations = 10000;
-//
-//    for( int i=0; i<iterations; i++ ) {
-//      s = UUID.randomUUID().toString() + ":" + fill;
-//      before = System.currentTimeMillis();
-//      queue.enqueue( s );
-//      assertThat( queue.dequeue(), is( s ) );
-//      writeTime += ( System.currentTimeMillis() - before );
-//      writeCount++;
-//    }
-//
-//    System.out.println( String.format( "Line: len=%d", s.length() ) );
-//    System.out.println( String.format( "Perf: avg=%.4fs, tot=%.2fs, cnt=%d", ( (double)writeTime / (double)writeCount / 1000.0 ),  (double)writeTime/1000.0, writeCount ) );
-//    System.out.println( String.format(
-//        "File: db=%s, lg=%s, tot=%s, per=%s",
-//        humanReadableSize( dbFile.length() ),
-//        humanReadableSize( lgFile.length() ),
-//        humanReadableSize( dbFile.length() + lgFile.length() ),
-//        humanReadableSize( ( ( dbFile.length() + lgFile.length() ) / writeCount ) ) ) );
-//  }
 
   @Test( timeout = 120000 )
   public void testConcurrentConsumer() throws InterruptedException, IOException {
@@ -209,6 +136,7 @@ public class JdbmQueueTest {
     assertThat( consumed, hasSize( iterations * 2 ) );
   }
 
+  @SuppressWarnings("PMD.DoNotUseThreads")
   public class Producer extends Thread {
     public int iterations;
     public Producer( int iterations ) {
@@ -226,6 +154,7 @@ public class JdbmQueueTest {
     }
   }
 
+  @SuppressWarnings("PMD.DoNotUseThreads")
   public class Consumer extends Thread {
     public Set<String> consumed;
     public Consumer( Set<String> consumed ) {
@@ -251,6 +180,7 @@ public class JdbmQueueTest {
     }
   }
 
+  @SuppressWarnings("PMD.DoNotUseThreads")
   public class Processor extends Thread {
     public Set<String> consumed;
     public Processor( Set<String> consumed ) {
@@ -281,22 +211,4 @@ public class JdbmQueueTest {
       }
     }
   }
-
-  public static String humanReadableSize( long size ) {
-    if(size <= 0) return "0";
-    final String[] units = new String[] { "B", "KB", "MB", "GB", "TB" };
-    int digitGroups = (int) (Math.log10(size)/Math.log10(1024));
-    return new DecimalFormat("#,##0.#", DecimalFormatSymbols.getInstance(Locale.getDefault()))
-        .format(size/Math.pow(1024, digitGroups)) + " " + units[digitGroups];
-  }
-
-  public static String createFillString( int size ) {
-    StringBuilder s = new StringBuilder();
-    for( int i=0; i<size; i++ ) {
-      s.append( UUID.randomUUID().toString() );
-      s.append( "+" );
-    }
-    return s.toString();
-  }
-
 }

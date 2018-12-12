@@ -124,6 +124,9 @@ public class PreAuthServiceTest extends org.junit.Assert {
       fail("Should throw exception due to invalid validator");
     } catch (Exception e) {
       //Expected
+      assertEquals("Unable to find validator with name 'preauth.default.validation,  " +
+                       "NOT_EXISTED_VALIDATOR'",
+          e.getMessage());
     }
   }
 }

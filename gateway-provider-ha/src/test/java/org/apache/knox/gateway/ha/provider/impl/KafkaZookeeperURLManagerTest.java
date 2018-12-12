@@ -43,7 +43,7 @@ public class KafkaZookeeperURLManagerTest {
   private TestingCluster cluster;
 
   @Before
-  public void setup() throws Exception {
+  public void setUp() throws Exception {
     cluster = new TestingCluster(3);
     cluster.start();
 
@@ -59,7 +59,7 @@ public class KafkaZookeeperURLManagerTest {
   }
 
   @After
-  public void teardown() throws IOException {
+  public void tearDown() throws IOException {
     if(cluster != null) {
       cluster.close();
     }

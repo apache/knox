@@ -79,7 +79,7 @@ public class WebSSOResourceTest {
   private static RSAPrivateKey gatewayPrivateKey;
 
   @BeforeClass
-  public static void setup() throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
     kpg.initialize(2048);
     KeyPair keyPair = kpg.generateKeyPair();

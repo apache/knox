@@ -21,17 +21,16 @@ import org.easymock.EasyMock;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-
 
 public class PropertiesFileServiceDiscoveryTest {
 
@@ -57,7 +56,6 @@ public class PropertiesFileServiceDiscoveryTest {
         }
     }
 
-
     @Test
     public void testPropertiesFileServiceDiscovery() throws Exception {
         ServiceDiscovery sd = ServiceDiscoveryFactory.get("PROPERTIES_FILE");
@@ -68,8 +66,8 @@ public class PropertiesFileServiceDiscoveryTest {
 
         String discoveryAddress = this.getClass().getName() + "__test-discovery-source.properties";
         File discoverySource = new File(discoveryAddress);
-        try {
-            config.store(new FileOutputStream(discoverySource), "Test discovery source for PropertiesFileServiceDiscovery");
+        try (OutputStream outputStream = Files.newOutputStream(discoverySource.toPath())){
+            config.store(outputStream, "Test discovery source for PropertiesFileServiceDiscovery");
 
             ServiceDiscovery.Cluster c =
                     sd.discover(gc, new DefaultServiceDiscoveryConfig(discoverySource.getAbsolutePath()), "mycluster");
@@ -99,20 +97,6 @@ public class PropertiesFileServiceDiscoveryTest {
             assertEquals(clusterProperties.get("mycluster.HIVE.namespace"), zkConf.getNamespace());
         } finally {
             discoverySource.delete();
-        }
-    }
-
-
-    private void printServiceURLs(ServiceDiscovery.Cluster cluster, String...services) {
-        for (String name : services) {
-            StringBuilder value = new StringBuilder();
-            List<String> urls = cluster.getServiceURLs(name);
-            if (urls != null && !urls.isEmpty()) {
-                for (String url : urls) {
-                    value.append(url).append(" ");
-                }
-            }
-            System.out.println(String.format(Locale.ROOT, "%18s: %s", name, value.toString()));
         }
     }
 }

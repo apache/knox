@@ -27,6 +27,7 @@ import org.apache.shiro.authc.UsernamePasswordToken;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
@@ -36,7 +37,7 @@ public class KnoxPamRealmTest {
   public void setService() {
     KnoxPamRealm realm = new KnoxPamRealm();
     realm.setService("knox-pam-os-service");
-    //assertEquals(realm.getService(), "knox-pam-os-service");
+    assertEquals(realm.getService(), "knox-pam-os-service");
   }
 
   @Test

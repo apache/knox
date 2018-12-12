@@ -124,7 +124,7 @@ public class HeaderPreAuthFederationFilterTest extends org.junit.Assert {
 
 
   public static class DummyValidator implements PreAuthValidator {
-    static String NAME = "DummyValidator";
+    static final String NAME = "DummyValidator";
 
     public DummyValidator() {
 
@@ -133,7 +133,7 @@ public class HeaderPreAuthFederationFilterTest extends org.junit.Assert {
     @Override
     public boolean validate(HttpServletRequest httpRequest, FilterConfig filterConfig) {
       String token = httpRequest.getHeader("CUSTOM_TOKEN");
-      return token.equalsIgnoreCase("HelloWorld");
+      return "HelloWorld".equalsIgnoreCase(token);
     }
 
     @Override
@@ -141,5 +141,4 @@ public class HeaderPreAuthFederationFilterTest extends org.junit.Assert {
       return NAME;
     }
   }
-
 }

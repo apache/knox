@@ -39,11 +39,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class AmbariConfigurationMonitorTest {
-
     private File dataDir;
 
     @Before
-    public void setup() throws Exception {
+    public void setUp() throws Exception {
         File targetDir = new File( System.getProperty("user.dir"), "target");
         File tempDir = new File(targetDir, this.getClass().getName() + "__data__" + UUID.randomUUID());
         FileUtils.forceMkdir(tempDir);
@@ -332,5 +331,4 @@ public class AmbariConfigurationMonitorTest {
             return null;
         }
     }
-
 }

@@ -34,8 +34,8 @@ public class RemoteRegistryConfigTestUtils {
     public static final String PROPERTY_USE_TICKET_CACHE = "useTicketCache";
 
     public static String createRemoteConfigRegistriesXML(Collection<Map<String, String>> configProperties) {
-        StringBuilder result = new StringBuilder("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-                                                     "<remote-configuration-registries>\n");
+        StringBuilder result = new StringBuilder(128);
+        result.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<remote-configuration-registries>\n");
 
         for (Map<String, String> props : configProperties) {
             String authType = props.get(PROPERTY_AUTH_TYPE);

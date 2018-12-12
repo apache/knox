@@ -43,7 +43,7 @@ public class JWTTokenTest extends org.junit.Assert {
   private static RSAPrivateKey privateKey;
 
   @BeforeClass
-  public static void setup() throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
     kpg.initialize(2048);
 
@@ -225,14 +225,16 @@ public class JWTTokenTest extends org.junit.Assert {
 
   @Test
   public void testUnsignedToken() throws Exception {
-      String unsignedToken = "eyJhbGciOiJub25lIn0.eyJzdWIiOiJhbGljZSIsImp0aSI6ImY2YmNj"
-          + "MDVjLWI4MTktNGM0Mi1iMGMyLWJlYmY1MDE4YWFiZiJ9.";
+    String unsignedToken = "eyJhbGciOiJub25lIn0.eyJzdWIiOiJhbGljZSIsImp0aSI6ImY2YmNj"
+                               + "MDVjLWI4MTktNGM0Mi1iMGMyLWJlYmY1MDE4YWFiZiJ9.";
 
-      try {
-          new JWTToken(unsignedToken);
-          fail("Failure expected on an unsigned token");
-      } catch (ParseException ex) {
-          // expected
-      }
+    try {
+      new JWTToken(unsignedToken);
+      fail("Failure expected on an unsigned token");
+    } catch (ParseException ex) {
+      // expected
+      assertEquals("Invalid JWS header: The algorithm \"alg\" header parameter must be for signatures",
+          ex.getMessage());
+    }
   }
 }

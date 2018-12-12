@@ -38,7 +38,7 @@ public class CMFMasterServiceTest {
   TestCMFMasterService ms;
 
   @Before
-  public void setup() {
+  public void setUp() {
     ms = new TestCMFMasterService("ambari");
   }
 

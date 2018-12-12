@@ -40,6 +40,8 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.CoreMatchers.sameInstance;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.xmlmatchers.XmlMatchers.hasXPath;
@@ -47,7 +49,7 @@ import static org.xmlmatchers.XmlMatchers.hasXPath;
 public class UrlRewriteRulesDescriptorFactoryTest {
 
   @Test
-  public void testCreate() throws Exception {
+  public void testCreate() {
     UrlRewriteRulesDescriptor descriptor = UrlRewriteRulesDescriptorFactory.create();
     assertThat( descriptor, notNullValue() );
     assertThat( descriptor.getRules(), notNullValue() );
@@ -62,6 +64,7 @@ public class UrlRewriteRulesDescriptorFactoryTest {
     assertThat( descriptor.getRule( "first" ), sameInstance( rule ) );
 
     rule = descriptor.addRule( "second" );
+    assertNotNull(rule);
     assertThat( descriptor.getRules().size(), is( 2 ) );
   }
 
@@ -94,7 +97,7 @@ public class UrlRewriteRulesDescriptorFactoryTest {
   }
 
   @Test
-  public void testLoadEmptyFile() throws IOException {
+  public void testLoadEmptyFile() {
     Logger logger = org.apache.log4j.LogManager.getLogger( "org.apache.commons.digester3.Digester" );
     Level level = logger.getLevel();
     try {
@@ -103,6 +106,9 @@ public class UrlRewriteRulesDescriptorFactoryTest {
       fail( "Should have thrown an IOException." );
     } catch ( IOException e ) {
       // Expected.
+      assertEquals("org.xml.sax.SAXParseException; lineNumber: 16; " +
+                       "columnNumber: 4; Premature end of file.",
+          e.getMessage());
     } catch ( Throwable t ) {
       fail( "Should have thrown an IOException." );
     } finally {
@@ -111,7 +117,7 @@ public class UrlRewriteRulesDescriptorFactoryTest {
   }
 
   @Test
-  public void testLoadInvalidFile() throws IOException {
+  public void testLoadInvalidFile() {
     Logger logger = org.apache.log4j.LogManager.getLogger( "org.apache.commons.digester3.Digester" );
     Level level = logger.getLevel();
     try {
@@ -120,6 +126,9 @@ public class UrlRewriteRulesDescriptorFactoryTest {
       fail( "Should have thrown an IOException." );
     } catch ( IOException e ) {
       // Expected.
+      assertEquals("org.xml.sax.SAXParseException; lineNumber: 18; columnNumber: 2; " +
+                       "The markup in the document preceding the root element must be well-formed.",
+          e.getMessage());
     } catch ( Throwable t ) {
       fail( "Should have thrown an IOException." );
     } finally {
@@ -247,7 +256,5 @@ public class UrlRewriteRulesDescriptorFactoryTest {
     assertThat( xml, hasXPath( "/rules/filter/content/buffer/detect/apply" ) );
     assertThat( xml, hasXPath( "/rules/filter/content/buffer/detect/apply/@path", equalTo( "test-apply-path-4" ) ) );
     assertThat( xml, hasXPath( "/rules/filter/content/buffer/detect/apply/@rule", equalTo( "test-apply-rule-4" ) ) );
-
   }
-
 }

@@ -19,6 +19,7 @@ package org.apache.knox.gateway.websockets;
 
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -43,7 +44,7 @@ public class WebsocketClient {
   private Session session;
   public CloseReason close;
   public MessageQueue messageQueue = new MessageQueue();
-  public LinkedList<Throwable> errors = new LinkedList<>();
+  public List<Throwable> errors = new LinkedList<>();
   public CountDownLatch closeLatch = new CountDownLatch(1);
 
   public boolean onError;

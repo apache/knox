@@ -19,7 +19,6 @@ package org.apache.knox.gateway.provider.federation;
 
 import static org.junit.Assert.fail;
 
-import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.util.Properties;
 import java.util.Date;
@@ -45,7 +44,7 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
   private static final String SERVICE_URL = "https://localhost:8888/resource";
 
   @Before
-  public void setup() throws Exception, NoSuchAlgorithmException {
+  public void setUp() {
     handler = new TestSSOCookieFederationProvider();
     ((TestSSOCookieFederationProvider) handler).setTokenService(new TestJWTokenAuthority(publicKey));
   }
@@ -100,7 +99,7 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
   }
 
   @Test
-  public void testNoProviderURLJWT() throws Exception {
+  public void testNoProviderURLJWT() {
     try {
       Properties props = getProperties();
       props.remove("sso.authentication.provider.url");
@@ -123,7 +122,7 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
     EasyMock.expect(request.getQueryString()).andReturn("name=value");
     EasyMock.replay(request);
 
-    String loginURL = ((TestSSOCookieFederationProvider)handler).testConstructLoginURL(request);
+    String loginURL = ((TestSSOCookieFederationProvider)handler).constructLoginURL(request);
     Assert.assertNotNull("loginURL should not be null.", loginURL);
     Assert.assertEquals("https://localhost:8443/authserver?originalUrl=" + SERVICE_URL + "?name=value", loginURL);
   }
@@ -139,7 +138,7 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
     EasyMock.expect(request.getQueryString()).andReturn(null);
     EasyMock.replay(request);
 
-    String loginURL = ((TestSSOCookieFederationProvider)handler).testConstructLoginURL(request);
+    String loginURL = ((TestSSOCookieFederationProvider)handler).constructLoginURL(request);
     Assert.assertNotNull("LoginURL should not be null.", loginURL);
     Assert.assertEquals("https://localhost:8443/authserver?originalUrl=" + SERVICE_URL, loginURL);
   }
@@ -162,7 +161,7 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
     Assert.assertNotNull("LoginURL should not be null.", providerURL);
     Assert.assertEquals(providerURL, "https://localhost:8443/gateway/knoxsso/api/v1/websso");
 
-    String loginURL = ((TestSSOCookieFederationProvider) handler).testConstructLoginURL(request);
+    String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
     Assert.assertNotNull("LoginURL should not be null.", loginURL);
     Assert.assertEquals(loginURL, "https://localhost:8443/gateway/knoxsso/api/v1/websso?originalUrl=" + SERVICE_URL);
   }
@@ -184,7 +183,7 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
     Assert.assertNotNull("LoginURL should not be null.", providerURL);
     Assert.assertEquals(providerURL, "https://remotehost:8443/gateway/knoxsso/api/v1/websso");
 
-    String loginURL = ((TestSSOCookieFederationProvider) handler).testConstructLoginURL(request);
+    String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
     Assert.assertNotNull("LoginURL should not be null.", loginURL);
     Assert.assertEquals(loginURL, "https://remotehost:8443/gateway/knoxsso/api/v1/websso?originalUrl=" + SERVICE_URL);
   }
@@ -206,7 +205,7 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
     Assert.assertNotNull("LoginURL should not be null.", providerURL);
     Assert.assertEquals(providerURL, "https://remotehost:8443/notgateway/knoxsso/api/v1/websso");
 
-    String loginURL = ((TestSSOCookieFederationProvider) handler).testConstructLoginURL(request);
+    String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
     Assert.assertNotNull("LoginURL should not be null.", loginURL);
     Assert.assertEquals(loginURL, "https://remotehost:8443/notgateway/knoxsso/api/v1/websso?originalUrl=" + SERVICE_URL);
   }
@@ -217,13 +216,13 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
   }
 
   private static class TestSSOCookieFederationProvider extends SSOCookieFederationFilter {
-    public String testConstructLoginURL(HttpServletRequest req) {
-      return constructLoginURL(req);
+    @Override
+    public String constructLoginURL(HttpServletRequest req) {
+      return super.constructLoginURL(req);
     }
 
-    public void setTokenService(JWTokenAuthority ts) {
+    void setTokenService(JWTokenAuthority ts) {
       authority = ts;
     }
   }
-
 }

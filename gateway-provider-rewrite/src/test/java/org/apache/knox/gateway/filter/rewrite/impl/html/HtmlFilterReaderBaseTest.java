@@ -618,7 +618,6 @@ public class HtmlFilterReaderBaseTest {
       Reader reader;
       UrlRewriteRulesDescriptor config;
       UrlRewriteRuleDescriptor rule;
-      List<UrlRewriteStepDescriptor> steps;
       UrlRewriteCheckDescriptorExt step;
 
       reader = new StringReader( "<rules><rule><check></check></rule></rules>" );
@@ -691,7 +690,6 @@ public class HtmlFilterReaderBaseTest {
       Reader reader;
       UrlRewriteRulesDescriptor config;
       UrlRewriteRuleDescriptor rule;
-      List<UrlRewriteStepDescriptor> steps;
 
       reader = new StringReader( "<rules><rule><control></control></rule></rules>" );
       config = digester.parse( reader );
@@ -739,27 +737,4 @@ public class HtmlFilterReaderBaseTest {
     assertThat( the( outputXml ), hasXPath( "/root/br/table[1]/@name", equalTo( "table1" ) ) );
     assertThat( the( outputXml ), hasXPath( "/root/br/table[2]/@name", equalTo( "table2" ) ) );
   }
-
-  private class TestXmlFilterReader extends HtmlFilterReaderBase {
-
-    protected TestXmlFilterReader( Reader reader, UrlRewriteFilterContentDescriptor contentConfig ) throws IOException, ParserConfigurationException {
-      super( reader );
-    }
-
-    @Override
-    protected String filterAttribute( QName elementName, QName attributeName, String attributeValue, String ruleName ) {
-      return "attr:" + ruleName + "{" + attributeValue + "}";
-    }
-
-    @Override
-    protected String filterText( QName elementName, String text, String ruleName ) {
-      return "text:" + ruleName + "{" + text + "}";
-    }
-
-    @Override
-    public String filterValueString( String name, String value, String ruleName ) {
-      return value;
-    }
-  }
-
 }

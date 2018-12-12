@@ -154,6 +154,7 @@ public class RemoteConfigurationRegistryJAASConfigTest {
         try {
             RemoteConfigurationRegistryJAASConfig jaasConfig =
                                             RemoteConfigurationRegistryJAASConfig.configure(registryConfigs, null);
+            assertNotNull(jaasConfig);
             fail("Expected IllegalArgumentException because the AliasService is not available.");
         } catch (IllegalArgumentException e) {
             // Expected

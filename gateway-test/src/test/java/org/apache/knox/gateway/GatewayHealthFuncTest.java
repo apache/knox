@@ -37,8 +37,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -50,8 +51,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
 public class GatewayHealthFuncTest {
-
-  private static Logger LOG = LoggerFactory.getLogger(GatewayAdminFuncTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(GatewayAdminFuncTest.class);
 
   public static GatewayConfig config;
   public static GatewayServer gateway;
@@ -61,7 +61,7 @@ public class GatewayHealthFuncTest {
   public static TcpTransport ldapTransport;
 
   @BeforeClass
-  public static void setupSuite() throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     TestUtils.LOG_ENTER();
     setupLdap();
     setupGateway();
@@ -69,7 +69,7 @@ public class GatewayHealthFuncTest {
   }
 
   @AfterClass
-  public static void cleanupSuite() throws Exception {
+  public static void tearDownAfterClass() throws Exception {
     TestUtils.LOG_ENTER();
     gateway.stop();
     ldap.stop(true);
@@ -108,9 +108,9 @@ public class GatewayHealthFuncTest {
     deployDir.mkdirs();
 
     File descriptor = new File(topoDir, "test-cluster.xml");
-    FileOutputStream stream = new FileOutputStream(descriptor);
-    createTopology().toStream(stream);
-    stream.close();
+    try(OutputStream stream = Files.newOutputStream(descriptor.toPath())) {
+      createTopology().toStream(stream);
+    }
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String, String> options = new HashMap<>();

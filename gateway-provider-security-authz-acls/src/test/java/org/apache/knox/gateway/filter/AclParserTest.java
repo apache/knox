@@ -19,6 +19,7 @@ package org.apache.knox.gateway.filter;
 
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -29,7 +30,7 @@ import static org.junit.Assert.fail;
  */
 public class AclParserTest {
   @Test
-  public void testValidAcls() throws Exception {
+  public void testValidAcls() {
     AclParser p = new AclParser();
     p.parseAcls("test", "guest;*;*");
     assertTrue(p.users.contains("guest"));
@@ -91,7 +92,7 @@ public class AclParserTest {
   }
 
   @Test
-  public void testValidMultiValuedAcls() throws Exception {
+  public void testValidMultiValuedAcls() {
     AclParser p = new AclParser();
     p.parseAcls("test", "*;admins;127.0.0.1,127.0.0.2");
     assertFalse(p.users.contains("guest"));
@@ -133,81 +134,78 @@ public class AclParserTest {
   }
 
   @Test
-  public void testNullACL() throws Exception {
+  public void testNullACL() {
     AclParser p = new AclParser();
     try {
       p.parseAcls("test", null);
-    }
-    catch (InvalidACLException sle) {
-      // expected
+    } catch (InvalidACLException sle) {
       fail("NULL acl should NOT have thrown InvalidACLException.");
     }
   }
 
   @Test
-  public void testInvalidAcls() throws Exception {
+  public void testInvalidAcls() {
     AclParser p = new AclParser();
     try {
       p.parseAcls("test", "guest");
       fail("Invalid acl should have thrown InvalidACLException.");
-    }
-    catch (InvalidACLException sle) {
+    } catch (InvalidACLException sle) {
       // expected
+      assertEquals("Invalid ACLs specified for requested resource: test", sle.getMessage());
     }
 
     p = new AclParser();
     try {
       p.parseAcls("test", "guest;;");
       fail("Invalid acl should have thrown InvalidACLException.");
-    }
-    catch (InvalidACLException sle) {
+    } catch (InvalidACLException sle) {
       // expected
+      assertEquals("Invalid ACLs specified for requested resource: test", sle.getMessage());
     }
 
     p = new AclParser();
     try {
       p.parseAcls("test", ";;");
       fail("Invalid acl should have thrown InvalidACLException.");
-    }
-    catch (InvalidACLException sle) {
+    } catch (InvalidACLException sle) {
       // expected
+      assertEquals("Invalid ACLs specified for requested resource: test", sle.getMessage());
     }
 
     p = new AclParser();
     try {
       p.parseAcls("test", ";");
       fail("Invalid acl should have thrown InvalidACLException.");
-    }
-    catch (InvalidACLException sle) {
+    } catch (InvalidACLException sle) {
       // expected
+      assertEquals("Invalid ACLs specified for requested resource: test", sle.getMessage());
     }
 
     p = new AclParser();
     try {
       p.parseAcls("test", "guest;");
       fail("Invalid acl should have thrown InvalidACLException.");
-    }
-    catch (InvalidACLException sle) {
+    } catch (InvalidACLException sle) {
       // expected
+      assertEquals("Invalid ACLs specified for requested resource: test", sle.getMessage());
     }
 
     p = new AclParser();
     try {
       p.parseAcls("test", ";admins");
       fail("Invalid acl should have thrown InvalidACLException.");
-    }
-    catch (InvalidACLException sle) {
+    } catch (InvalidACLException sle) {
       // expected
+      assertEquals("Invalid ACLs specified for requested resource: test", sle.getMessage());
     }
 
     p = new AclParser();
     try {
       p.parseAcls("test", "");
       fail("Invalid acl should have thrown InvalidACLException.");
-    }
-    catch (InvalidACLException sle) {
+    } catch (InvalidACLException sle) {
       // expected
+      assertEquals("Invalid ACLs specified for requested resource: test", sle.getMessage());
     }
   }
-
 }

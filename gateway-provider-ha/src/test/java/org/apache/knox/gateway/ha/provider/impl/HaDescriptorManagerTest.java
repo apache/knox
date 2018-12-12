@@ -35,7 +35,6 @@ import static org.xmlmatchers.XmlMatchers.hasXPath;
 import static org.xmlmatchers.transform.XmlConverters.the;
 
 public class HaDescriptorManagerTest {
-
    @Test
    public void testDescriptorLoad() throws IOException {
       String xml = "<ha><service name='foo' maxFailoverAttempts='42' failoverSleep='4000' maxRetryAttempts='2' retrySleep='2213' enabled='false'/>" +
@@ -80,7 +79,6 @@ public class HaDescriptorManagerTest {
       descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("bar", "true", "3", "5000", "5", "8000", null, null));
       StringWriter writer = new StringWriter();
       HaDescriptorManager.store(descriptor, writer);
-      String descriptorXml = writer.toString();
       String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
             "<ha>\n" +
             "  <service enabled=\"false\" failoverSleep=\"1000\" maxFailoverAttempts=\"42\" maxRetryAttempts=\"3\" name=\"foo\" retrySleep=\"3000\" zookeeperEnsemble=\"foo:2181,bar:2181\" zookeeperNamespace=\"hiveserver2\"/>\n" +
@@ -89,6 +87,4 @@ public class HaDescriptorManagerTest {
       assertThat( the( xml ), hasXPath( "/ha/service[@enabled='false' and @failoverSleep='1000' and @maxFailoverAttempts='42' and @maxRetryAttempts='3' and @name='foo' and @retrySleep='3000' and @zookeeperEnsemble='foo:2181,bar:2181' and @zookeeperNamespace='hiveserver2']" ) );
       assertThat( the( xml ), hasXPath( "/ha/service[@enabled='true' and @failoverSleep='5000' and @maxFailoverAttempts='3' and @maxRetryAttempts='5' and @name='bar' and @retrySleep='8000']" ) );
    }
-
-
 }

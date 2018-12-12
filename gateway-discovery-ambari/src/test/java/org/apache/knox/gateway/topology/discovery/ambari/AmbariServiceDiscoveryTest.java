@@ -27,9 +27,9 @@ import org.easymock.EasyMock;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -68,10 +68,7 @@ public class AmbariServiceDiscoveryTest {
         assertEquals(clusterName, cluster.getName());
         assertTrue(AmbariCluster.class.isAssignableFrom(cluster.getClass()));
         assertEquals(6, ((AmbariCluster) cluster).getComponents().size());
-
-//        printServiceURLs(cluster);
     }
-
 
     @Test
     public void testSingleClusterDiscoveryWithDefaultAddress() throws Exception {
@@ -95,7 +92,6 @@ public class AmbariServiceDiscoveryTest {
         assertTrue(AmbariCluster.class.isAssignableFrom(cluster.getClass()));
         assertEquals(6, ((AmbariCluster) cluster).getComponents().size());
     }
-
 
     @Test
     public void testSingleClusterDiscoveryWithDefaultClusterName() throws Exception {
@@ -121,7 +117,6 @@ public class AmbariServiceDiscoveryTest {
         assertEquals(6, ((AmbariCluster) cluster).getComponents().size());
     }
 
-
     @Test
     public void testSingleClusterDiscoveryWithDefaultAddressAndClusterName() throws Exception {
         final String discoveryAddress = "http://ambarihost:8080";
@@ -145,7 +140,6 @@ public class AmbariServiceDiscoveryTest {
         assertEquals(6, ((AmbariCluster) cluster).getComponents().size());
     }
 
-
     @Test
     public void testSingleClusterDiscoveryWithMissingAddressAndClusterName() throws Exception {
         final String clusterName = "testCluster";
@@ -166,7 +160,6 @@ public class AmbariServiceDiscoveryTest {
         assertNull(cluster);
     }
 
-
     @Test
     public void testSingleClusterDiscoveryWithMissingAddress() throws Exception {
         final String clusterName = "testCluster";
@@ -183,7 +176,6 @@ public class AmbariServiceDiscoveryTest {
         ServiceDiscovery.Cluster cluster = sd.discover(gc, sdc, clusterName);
         assertNull(cluster);
     }
-
 
     @Test
     public void testSingleClusterDiscoveryWithMissingClusterName() throws Exception {
@@ -203,7 +195,6 @@ public class AmbariServiceDiscoveryTest {
         ServiceDiscovery.Cluster cluster = sd.discover(gc, sdc, null);
         assertNull(cluster);
     }
-
 
     @Test
     public void testBulkClusterDiscovery() throws Exception {
@@ -227,10 +218,7 @@ public class AmbariServiceDiscoveryTest {
         assertEquals(clusterName, cluster.getName());
         assertTrue(AmbariCluster.class.isAssignableFrom(cluster.getClass()));
         assertEquals(6, ((AmbariCluster) cluster).getComponents().size());
-
-//        printServiceURLs(cluster, "NAMENODE", "WEBHCAT", "OOZIE", "RESOURCEMANAGER");
     }
-
 
     @Test
     public void testClusterDiscoveryWithExternalComponentConfigAugmentation() throws Exception {
@@ -244,7 +232,7 @@ public class AmbariServiceDiscoveryTest {
         Properties compConfOverrideProps = new Properties();
         compConfOverrideProps.setProperty("DISCOVERY_TEST", "test-site");
         File compConfOverrides = File.createTempFile(getClass().getName()+"component-conf-overrides", ".properties");
-        compConfOverrideProps.store(new FileOutputStream(compConfOverrides), "Test Config Overrides");
+        compConfOverrideProps.store(Files.newOutputStream(compConfOverrides.toPath()), "Test Config Overrides");
         System.setProperty(AmbariServiceDiscovery.COMPONENT_CONFIG_MAPPING_SYSTEM_PROPERTY,
                            compConfOverrides.getAbsolutePath());
 
@@ -301,35 +289,6 @@ public class AmbariServiceDiscoveryTest {
         }
     }
 
-
-    private static void printServiceURLs(ServiceDiscovery.Cluster cluster) {
-        final String[] services = new String[]{"NAMENODE",
-                                               "JOBTRACKER",
-                                               "WEBHDFS",
-                                               "WEBHCAT",
-                                               "OOZIE",
-                                               "WEBHBASE",
-                                               "HIVE",
-                                               "RESOURCEMANAGER"};
-        printServiceURLs(cluster, services);
-    }
-
-
-    private static void printServiceURLs(ServiceDiscovery.Cluster cluster, String...services) {
-        for (String name : services) {
-            StringBuilder sb = new StringBuilder();
-            List<String> urls = cluster.getServiceURLs(name);
-            if (urls != null && !urls.isEmpty()) {
-                for (String url : urls) {
-                    sb.append(url);
-                    sb.append(" ");
-                }
-            }
-            System.out.println(String.format(Locale.ROOT, "%18s: %s", name, sb.toString()));
-        }
-    }
-
-
     /**
      * ServiceDiscovery implementation derived from AmbariServiceDiscovery, so the invokeREST method can be overridden
      * to eliminate the need to perform actual HTTP interactions with a real Ambari endpoint.
@@ -356,7 +315,6 @@ public class AmbariServiceDiscoveryTest {
                 //
             }
         }
-
     }
 
     private static final class TestRESTInvoker extends RESTInvoker {
@@ -385,7 +343,6 @@ public class AmbariServiceDiscoveryTest {
             return cannedResponses.get(url.substring(url.indexOf("/api")));
         }
     }
-
 
     ////////////////////////////////////////////////////////////////////////
     //  JSON response templates, based on actual response content excerpts
@@ -746,7 +703,7 @@ public class AmbariServiceDiscoveryTest {
     "      },\n" +
     "      \"components\" : [\n" +
     "        {\n" +
-    "          \"href\" : \"http://c6401.ambari.apache.org:8080/api/v1/clusters/"+TestAmbariServiceDiscovery.CLUSTER_PLACEHOLDER+""+TestAmbariServiceDiscovery.CLUSTER_PLACEHOLDER+"/services/ZOOKEEPER/components/ZOOKEEPER_SERVER\",\n" +
+    "          \"href\" : \"http://c6401.ambari.apache.org:8080/api/v1/clusters/"+TestAmbariServiceDiscovery.CLUSTER_PLACEHOLDER+TestAmbariServiceDiscovery.CLUSTER_PLACEHOLDER+"/services/ZOOKEEPER/components/ZOOKEEPER_SERVER\",\n" +
     "          \"ServiceComponentInfo\" : {\n" +
     "            \"cluster_name\" : \""+TestAmbariServiceDiscovery.CLUSTER_PLACEHOLDER+"\",\n" +
     "            \"component_name\" : \"ZOOKEEPER_SERVER\",\n" +
@@ -1151,6 +1108,4 @@ public class AmbariServiceDiscoveryTest {
     "    }\n" +
     "  ]\n" +
     "}";
-
-
 }

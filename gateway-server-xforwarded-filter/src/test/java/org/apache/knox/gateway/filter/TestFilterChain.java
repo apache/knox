@@ -28,7 +28,9 @@ import java.util.Stack;
 public class TestFilterChain extends Stack<Filter> implements FilterChain {
   @Override
   public void doFilter( ServletRequest request, ServletResponse response ) throws IOException, ServletException {
-    if( !isEmpty() ) pop().doFilter( request, response, this );
+    if( !isEmpty() ) {
+      pop().doFilter( request, response, this );
+    }
   }
 }
 

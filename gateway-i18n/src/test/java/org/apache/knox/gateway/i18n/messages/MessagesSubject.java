@@ -15,13 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.provider.federation;
+package org.apache.knox.gateway.i18n.messages;
 
-import org.junit.Test;
-
-public class PreAuthSSOTest extends org.junit.Assert {
-  @Test
-  public void testPreAuth() throws Exception {
-    assertTrue(true);
-  }
+@Messages( bundle="some.bundle.name", logger="some.logger.name", codes="ID:{0}" )
+public interface MessagesSubject {
+  @Message(level= MessageLevel.ERROR, code=3, text="p0={0}" )
+  void withFullAnnotationAndParameter( int x );
 }

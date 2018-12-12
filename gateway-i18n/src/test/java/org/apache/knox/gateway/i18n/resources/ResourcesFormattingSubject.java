@@ -15,26 +15,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.i18n.messages;
+package org.apache.knox.gateway.i18n.resources;
 
-@Messages( bundle="some.bundle.name", logger="some.logger.name", codes="ID:{0}" )
-public interface MessagesTestSubject {
+@Resources( bundle="some.bundle.name" )
+public interface ResourcesFormattingSubject {
+  @Resource(text="{0}")
+  String withAnnotationWithSimplePatternOneParam( int x );
 
-  @Message(level= MessageLevel.ERROR, code=3, text="p0={0}" )
-  void withFullAnnotationAndParameter( int x );
+  @Resource(text="before{0}after")
+  String withAnnotationWithPatternOneParam( int x );
 
-  @Message(level= MessageLevel.INFO, code=42, text="str={0}, t={1}" )
-  void withEverything( String str, @StackTrace(level= MessageLevel.INFO) Throwable t );
+  @Resource
+  String withAnnotationWithoutPatternOneParam( int x );
 
-  @Message
-  void withoutParams();
+  String withoutAnnotationsOrParameters();
 
-  void withoutAnnotations( int x );
+  String withoutAnnotationsWithOneParam( int x );
 
-  @Message
-  void withoutStackTrace( Throwable t );
+  String withoutAnnotationsWithElevenParams( String p1, String p2, String p3, String p4, String p5, String p6, String p7, String p8, String p9, String p10, String p11 );
 
-  @Message
-  void withMismatchedText();
+  @Resource(text="{0},{1}")
+  String withMoreFormatParamsThanMethodParams( int x );
 
+  @Resource(text="{0}")
+  String withLessFormatParamsThanMethodParams( int x, int y );
 }

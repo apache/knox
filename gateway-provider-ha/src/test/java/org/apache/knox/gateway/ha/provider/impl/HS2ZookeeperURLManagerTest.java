@@ -38,12 +38,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class HS2ZookeeperURLManagerTest {
-
   private TestingCluster cluster;
   private HS2ZookeeperURLManager manager;
 
   @Before
-  public void setup() throws Exception {
+  public void setUp() throws Exception {
     cluster = new TestingCluster(3);
     cluster.start();
 
@@ -77,7 +76,7 @@ public class HS2ZookeeperURLManagerTest {
   }
 
   @After
-  public void teardown() throws IOException {
+  public void tearDown() throws IOException {
     if(cluster != null) {
       cluster.close();
     }
@@ -133,6 +132,4 @@ public class HS2ZookeeperURLManagerTest {
     Assert.assertNotNull(manager);
     assertTrue(manager instanceof HS2ZookeeperURLManager);
   }
-
-
 }

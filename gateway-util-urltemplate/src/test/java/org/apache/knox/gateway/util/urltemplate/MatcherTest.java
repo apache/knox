@@ -795,7 +795,6 @@ public class MatcherTest {
   public void testMultipleDoubleStarPathMatching() throws URISyntaxException {
     Template template;
     Template input;
-    Matcher<?> matcher;
     Matcher<String> stringMatcher;
     Matcher<?>.Match match;
 
@@ -1004,5 +1003,4 @@ public class MatcherTest {
     assertThat( expandedStr, containsString( "createparent=true" ) );
     assertThat( expandedStr, containsString( "&" ) );
   }
-
 }

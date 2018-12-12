@@ -17,15 +17,9 @@
  */
 package org.apache.knox.gateway.websockets;
 
-import org.eclipse.jetty.io.RuntimeIOException;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.util.BufferUtil;
-import org.eclipse.jetty.websocket.api.BatchMode;
-import org.eclipse.jetty.websocket.api.RemoteEndpoint;
-import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -46,7 +40,6 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class ConnectionDroppedTest {
-
   private static Server backend;
   private static ServerConnector connector;
   private static URI serverUri;
@@ -61,13 +54,13 @@ public class ConnectionDroppedTest {
   }
 
   @BeforeClass
-  public static void startServer() throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     startBackend();
     startProxy();
   }
 
   @AfterClass
-  public static void stopServer() throws Exception {
+  public static void tearDownAfterClass() throws Exception {
     /* ORDER MATTERS ! */
     proxy.stop();
     backend.stop();
@@ -116,7 +109,6 @@ public class ConnectionDroppedTest {
     }
     int port = connector.getLocalPort();
     serverUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/", host, port));
-
   }
 
   private static void startProxy() throws Exception {
@@ -142,51 +134,5 @@ public class ConnectionDroppedTest {
     }
     int port = proxyConnector.getLocalPort();
     proxyUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/", host, port));
-
   }
-
-}
-
-/**
- * Simulate a bad socket.
- *
- * @since 0.10
- */
-class BadSocket extends WebSocketAdapter {
-
-  private Session session;
-
-  @Override
-  public void onWebSocketConnect(final Session session) {
-    this.session = session;
-  }
-
-  @Override
-  public void onWebSocketBinary(byte[] payload, int offset, int len) {
-    if (isNotConnected())
-      return;
-
-    try {
-      RemoteEndpoint remote = getRemote();
-      remote.sendBytes(BufferUtil.toBuffer(payload, offset, len), null);
-      if (remote.getBatchMode() == BatchMode.ON)
-        remote.flush();
-    } catch (IOException x) {
-      throw new RuntimeIOException(x);
-    }
-  }
-
-  @Override
-  public void onWebSocketError(Throwable cause) {
-    throw new RuntimeException(cause);
-  }
-
-  @Override
-  public void onWebSocketText(String message) {
-    if (isNotConnected())
-      return;
-    // Throw an exception on purpose
-    throw new RuntimeException("Simulating bad connection ...");
-  }
-
 }

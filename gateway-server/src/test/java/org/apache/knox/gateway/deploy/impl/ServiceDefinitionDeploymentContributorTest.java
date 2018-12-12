@@ -138,8 +138,8 @@ public class ServiceDefinitionDeploymentContributorTest {
     sddc.contributeService(context, service);
 
     List<ResourceDescriptor> resources = gd.resources();
-    assertEquals(1, gd.resources().size());
-    ResourceDescriptor res = gd.resources().get(0);
+    assertEquals(1, resources.size());
+    ResourceDescriptor res = resources.get(0);
     assertNotNull(res);
     List<FilterDescriptor> filterList = res.filters();
     assertEquals(1, filterList.size());
@@ -254,8 +254,8 @@ public class ServiceDefinitionDeploymentContributorTest {
     sddc.contributeService(context, service);
 
     List<ResourceDescriptor> resources = gd.resources();
-    assertEquals(1, gd.resources().size());
-    ResourceDescriptor res = gd.resources().get(0);
+    assertEquals(1, resources.size());
+    ResourceDescriptor res = resources.get(0);
     assertNotNull(res);
     List<FilterDescriptor> filterList = res.filters();
     assertEquals(1, filterList.size());

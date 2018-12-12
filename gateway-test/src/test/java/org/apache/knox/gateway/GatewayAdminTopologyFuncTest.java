@@ -18,15 +18,14 @@
 package org.apache.knox.gateway;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.OutputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +51,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.knox.test.TestUtils;
 import org.apache.http.HttpStatus;
-import org.apache.log4j.Appender;
 import org.hamcrest.MatcherAssert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -81,10 +79,8 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 public class GatewayAdminTopologyFuncTest {
+  private static final Logger LOG = LoggerFactory.getLogger( GatewayAdminTopologyFuncTest.class );
 
-  private static Logger LOG = LoggerFactory.getLogger( GatewayAdminTopologyFuncTest.class );
-
-  public static Enumeration<Appender> appenders;
   public static GatewayConfig config;
   public static GatewayServer gateway;
   public static String gatewayUrl;
@@ -92,22 +88,18 @@ public class GatewayAdminTopologyFuncTest {
   private static GatewayTestDriver driver = new GatewayTestDriver();
 
   @BeforeClass
-  public static void setupSuite() throws Exception {
-    //appenders = NoOpAppender.setUpAndReturnOriginalAppenders();
+  public static void setUpBeforeClass() throws Exception {
     driver.setupLdap(0);
     setupGateway(new GatewayTestConfig());
   }
 
   @AfterClass
-  public static void cleanupSuite() throws Exception {
+  public static void tearDownAfterClass() throws Exception {
     gateway.stop();
     driver.cleanup();
-    //FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
-    //NoOpAppender.resetOriginalAppenders( appenders );
   }
 
   public static void setupGateway(GatewayTestConfig testConfig) throws Exception {
-
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
     gatewayDir.mkdirs();
@@ -128,14 +120,14 @@ public class GatewayAdminTopologyFuncTest {
     descriptorsDir.mkdirs();
 
     File descriptor = new File( topoDir, "admin.xml" );
-    FileOutputStream stream = new FileOutputStream( descriptor );
-    createKnoxTopology().toStream( stream );
-    stream.close();
+    try(OutputStream stream = Files.newOutputStream(descriptor.toPath())) {
+      createKnoxTopology().toStream(stream);
+    }
 
     File descriptor2 = new File( topoDir, "test-cluster.xml" );
-    FileOutputStream stream2 = new FileOutputStream( descriptor2 );
-    createNormalTopology().toStream( stream2 );
-    stream.close();
+    try(OutputStream stream = Files.newOutputStream(descriptor2.toPath())) {
+      createNormalTopology().toStream(stream);
+    }
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<>();
@@ -292,47 +284,40 @@ public class GatewayAdminTopologyFuncTest {
   }
 
   private static String createDescriptor(String clusterName, String providerConfigRef, boolean discovery) {
-    StringBuilder sb = new StringBuilder();
+    StringBuilder sb = new StringBuilder(1024);
     if (providerConfigRef == null) {
       providerConfigRef = "sandbox-providers";
     }
 
     sb.append("{\n");
     if (discovery) {
-      sb.append("  \"discovery-type\":\"AMBARI\",\n");
-      sb.append("  \"discovery-address\":\"http://c6401.ambari.apache.org:8080\",\n");
-      sb.append("  \"discovery-user\":\"ambariuser\",\n");
-      sb.append("  \"discovery-pwd-alias\":\"ambari.discovery.password\",\n");
+      sb.append("\"discovery-type\":\"AMBARI\",\n" +
+                    "\"discovery-address\":\"http://c6401.ambari.apache.org:8080\",\n" +
+                    "\"discovery-user\":\"ambariuser\",\n" +
+                    "\"discovery-pwd-alias\":\"ambari.discovery.password\",\n");
     }
-    sb.append("  \"provider-config-ref\":\"");
-    sb.append(providerConfigRef);
-    sb.append("\",\n");
-    sb.append("  \"cluster\":\"");
-    sb.append(clusterName);
-    sb.append("\",\n");
-    sb.append("  \"services\":[\n");
-    sb.append("    {\"name\":\"NAMENODE\"},\n");
-    sb.append("    {\"name\":\"JOBTRACKER\"},\n");
-    sb.append("    {\"name\":\"WEBHDFS\"},\n");
-    sb.append("    {\"name\":\"WEBHCAT\"},\n");
-    sb.append("    {\"name\":\"OOZIE\"},\n");
-    sb.append("    {\"name\":\"WEBHBASE\"},\n");
-    sb.append("    {\"name\":\"HIVE\"},\n");
-    sb.append("    {\"name\":\"RESOURCEMANAGER\"},\n");
-    sb.append("    {\"name\":\"AMBARI\", \"urls\":[\"http://c6401.ambari.apache.org:8080\"]}\n");
-    sb.append("  ]\n");
-    sb.append("}\n");
+    sb.append("\"provider-config-ref\":\"")
+        .append(providerConfigRef)
+        .append("\",\n\"cluster\":\"")
+        .append(clusterName)
+        .append("\",\n" +
+                  "\"services\":[\n" +
+                  "{\"name\":\"NAMENODE\"},\n" +
+                  "{\"name\":\"JOBTRACKER\"},\n" +
+                  "{\"name\":\"WEBHDFS\"},\n" +
+                  "{\"name\":\"WEBHCAT\"},\n" +
+                  "{\"name\":\"OOZIE\"},\n" +
+                  "{\"name\":\"WEBHBASE\"},\n" +
+                  "{\"name\":\"HIVE\"},\n" +
+                  "{\"name\":\"RESOURCEMANAGER\"},\n" +
+                  "{\"name\":\"AMBARI\", \"urls\":[\"http://c6401.ambari.apache.org:8080\"]}\n" +
+                  "]\n}\n");
 
     return sb.toString();
   }
 
-  //@Test
-  public void waitForManualTesting() throws IOException {
-    System.in.read();
-  }
-
   @Test( timeout = TestUtils.LONG_TIMEOUT )
-  public void testTopologyCollection() throws ClassNotFoundException {
+  public void testTopologyCollection() {
     LOG_ENTER();
 
     String username = "admin";
@@ -1161,9 +1146,9 @@ public class GatewayAdminTopologyFuncTest {
 
     // Manually write a file to the shared-providers directory
     File providerConfig = new File(sharedProvidersDir, configFileNames.get(0));
-    FileOutputStream stream = new FileOutputStream(providerConfig);
-    createProviderConfiguration().toStream(stream);
-    stream.close();
+    try(OutputStream stream = Files.newOutputStream(providerConfig.toPath())) {
+      createProviderConfiguration().toStream(stream);
+    }
 
     // Request a listing of all the provider configs
     responseBody = given()
@@ -1180,9 +1165,9 @@ public class GatewayAdminTopologyFuncTest {
 
     // Manually write another file to the shared-providers directory
     File anotherProviderConfig = new File(sharedProvidersDir, configFileNames.get(1));
-    stream = new FileOutputStream(anotherProviderConfig);
-    createProviderConfiguration().toStream(stream);
-    stream.close();
+    try(OutputStream stream = Files.newOutputStream(anotherProviderConfig.toPath())) {
+      createProviderConfiguration().toStream(stream);
+    }
 
     // Request a listing of all the provider configs
     responseBody = given()
@@ -1326,15 +1311,15 @@ public class GatewayAdminTopologyFuncTest {
 
     // Manually add two provider config files to the shared-providers directory
     File providerConfigOneFile = new File(sharedProvidersDir, "deleteme-one-config.xml");
-    FileOutputStream stream = new FileOutputStream(providerConfigOneFile);
-    createProviderConfiguration().toStream(stream);
-    stream.close();
+    try(OutputStream stream = Files.newOutputStream(providerConfigOneFile.toPath())) {
+      createProviderConfiguration().toStream(stream);
+    }
     assertTrue(providerConfigOneFile.exists());
 
     File providerConfigTwoFile = new File(sharedProvidersDir, "deleteme-two-config.xml");
-    stream = new FileOutputStream(providerConfigTwoFile);
-    createProviderConfiguration().toStream(stream);
-    stream.close();
+    try(OutputStream stream = Files.newOutputStream(providerConfigTwoFile.toPath())) {
+      createProviderConfiguration().toStream(stream);
+    }
     assertTrue(providerConfigTwoFile.exists());
 
     // Request a listing of all the provider configs
@@ -1404,15 +1389,15 @@ public class GatewayAdminTopologyFuncTest {
 
     // Manually add two provider config files to the shared-providers directory
     File providerConfigOneFile = new File(sharedProvidersDir, "deleteme-one-config.xml");
-    FileOutputStream stream = new FileOutputStream(providerConfigOneFile);
-    createProviderConfiguration().toStream(stream);
-    stream.close();
+    try(OutputStream stream = Files.newOutputStream(providerConfigOneFile.toPath())) {
+      createProviderConfiguration().toStream(stream);
+    }
     assertTrue(providerConfigOneFile.exists());
 
     File providerConfigTwoFile = new File(sharedProvidersDir, "deleteme-two-config.xml");
-    stream = new FileOutputStream(providerConfigTwoFile);
-    createProviderConfiguration().toStream(stream);
-    stream.close();
+    try(OutputStream stream = Files.newOutputStream(providerConfigTwoFile.toPath())) {
+      createProviderConfiguration().toStream(stream);
+    }
     assertTrue(providerConfigTwoFile.exists());
 
     // Request a listing of all the provider configs
@@ -1537,15 +1522,15 @@ public class GatewayAdminTopologyFuncTest {
 
     // Manually add two provider config files to the shared-providers directory
     File providerConfigOneFile = new File(sharedProvidersDir, "force-deleteme-one-config.xml");
-    FileOutputStream stream = new FileOutputStream(providerConfigOneFile);
-    createProviderConfiguration().toStream(stream);
-    stream.close();
+    try(OutputStream stream = Files.newOutputStream(providerConfigOneFile.toPath())) {
+      createProviderConfiguration().toStream(stream);
+    }
     assertTrue(providerConfigOneFile.exists());
 
     File providerConfigTwoFile = new File(sharedProvidersDir, "force-deleteme-two-config.xml");
-    stream = new FileOutputStream(providerConfigTwoFile);
-    createProviderConfiguration().toStream(stream);
-    stream.close();
+    try(OutputStream stream = Files.newOutputStream(providerConfigTwoFile.toPath())) {
+      createProviderConfiguration().toStream(stream);
+    }
     assertTrue(providerConfigTwoFile.exists());
 
     // Request a listing of all the provider configs

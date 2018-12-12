@@ -38,10 +38,11 @@ import javax.xml.xpath.XPathFactory;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -155,8 +156,8 @@ public class SimpleDescriptorHandlerTest {
         DISCOVERY_PROPERTIES.setProperty(clusterName + ".HIVE.url", "http://hivehostname:10001/clipath");
         DISCOVERY_PROPERTIES.setProperty(clusterName + ".RESOURCEMANAGER.url", "http://remanhost:8088/ws");
 
-        try {
-            DISCOVERY_PROPERTIES.store(new FileOutputStream(discoveryConfig), null);
+        try (OutputStream outputStream = Files.newOutputStream(discoveryConfig.toPath())){
+            DISCOVERY_PROPERTIES.store(outputStream, null);
         } catch (FileNotFoundException e) {
             fail(e.getMessage());
         }
@@ -338,9 +339,11 @@ public class SimpleDescriptorHandlerTest {
         serviceDiscoverySourceProps.setProperty(CLUSTER_NAME + ".HIVE.url",            "{SCHEME}://localhost:10000/");
         serviceDiscoverySourceProps.setProperty(CLUSTER_NAME + ".RESOURCEMANAGER.url", DEFAULT_VALID_SERVICE_URL);
         serviceDiscoverySourceProps.setProperty(CLUSTER_NAME + ".AMBARIUI.url",        DEFAULT_VALID_SERVICE_URL);
+
         File serviceDiscoverySource = File.createTempFile("service-discovery", ".properties");
-        serviceDiscoverySourceProps.store(new FileOutputStream(serviceDiscoverySource),
-                                          "Test Service Discovery Source");
+        try (OutputStream outputStream = Files.newOutputStream(serviceDiscoverySource.toPath())) {
+          serviceDiscoverySourceProps.store(outputStream, "Test Service Discovery Source");
+        }
 
         // Prepare a mock SimpleDescriptor
         final String type = "PROPERTIES_FILE";
@@ -457,13 +460,11 @@ public class SimpleDescriptorHandlerTest {
         }
     }
 
-
     /*
      * KNOX-1216
      */
-    @Test
+    @Test (expected = IllegalArgumentException.class)
     public void testMissingProviderConfigReference() throws Exception {
-
         // Prepare a mock SimpleDescriptor
         final Map<String, List<String>> serviceURLs = new HashMap<>();
         serviceURLs.put("NAMENODE", null);
@@ -499,19 +500,8 @@ public class SimpleDescriptorHandlerTest {
         EasyMock.expect(testDescriptor.getServices()).andReturn(serviceMocks).anyTimes();
         EasyMock.replay(testDescriptor);
 
-        try {
-            // Invoke the simple descriptor handler
-            SimpleDescriptorHandler.handle(gc, testDescriptor, destDir, destDir);
-            fail("Expected an IllegalArgumentException because the provider configuration reference is missing.");
-        } catch (IllegalArgumentException e) {
-            // Expected
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail("Unexpected exception for missing provider configuration reference: " +
-                 e.getClass().getName() + " : " + e.getMessage());
-        }
+        SimpleDescriptorHandler.handle(gc, testDescriptor, destDir, destDir);
     }
-
 
     /*
      * KNOX-1153
@@ -557,8 +547,8 @@ public class SimpleDescriptorHandlerTest {
         DISCOVERY_PROPERTIES.setProperty(clusterName + ".ATLAS-API.ensemble", ATLAS_HA_ENSEMBLE);
         DISCOVERY_PROPERTIES.setProperty(clusterName + ".ATLAS-API.url", "http://atlasapihost:2222");
 
-        try {
-            DISCOVERY_PROPERTIES.store(new FileOutputStream(discoveryConfig), null);
+        try (OutputStream outputStream = Files.newOutputStream(discoveryConfig.toPath())){
+            DISCOVERY_PROPERTIES.store(outputStream, null);
         } catch (FileNotFoundException e) {
             fail(e.getMessage());
         }

@@ -40,10 +40,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -93,7 +94,7 @@ public class RemoteConfigurationMonitorTest {
     private static CuratorFramework client;
 
     @BeforeClass
-    public static void setupSuite() throws Exception {
+    public static void setUpBeforeClass() throws Exception {
         testTmp = TestUtils.createTempDir(RemoteConfigurationMonitorTest.class.getName());
         File confDir = TestUtils.createTempDir(testTmp + "/conf");
         providersDir = TestUtils.createTempDir(confDir + "/shared-providers");
@@ -101,7 +102,7 @@ public class RemoteConfigurationMonitorTest {
     }
 
     @AfterClass
-    public static void tearDownSuite() throws Exception {
+    public static void tearDownAfterClass() throws Exception {
         // Delete the working dir
         testTmp.delete();
     }
@@ -136,17 +137,18 @@ public class RemoteConfigurationMonitorTest {
      */
     private static File setupDigestSaslConfig(String username, String password) throws Exception {
         File saslConfigFile = new File(testTmp, "server-jaas.conf");
-        Writer fw = new OutputStreamWriter(new FileOutputStream(saslConfigFile), StandardCharsets.UTF_8);
-        fw.write("Server {\n" +
-                "    org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
-                "    user_" + username + " =\"" + password + "\";\n" +
-                "};\n" +
-                "Client {\n" +
-                "    org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
-                "    username=\"" + username + "\"\n" +
-                "    password=\"" + password + "\";\n" +
-                "};\n");
-        fw.close();
+        try(OutputStream outputStream = Files.newOutputStream(saslConfigFile.toPath());
+            Writer fw = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
+          fw.write("Server {\n" +
+                       "    org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
+                       "    user_" + username + " =\"" + password + "\";\n" +
+                       "};\n" +
+                       "Client {\n" +
+                       "    org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
+                       "    username=\"" + username + "\"\n" +
+                       "    password=\"" + password + "\";\n" +
+                       "};\n");
+        }
         return saslConfigFile;
     }
 
@@ -683,5 +685,4 @@ public class RemoteConfigurationMonitorTest {
                     "    {\"name\":\"RESOURCEMANAGER\"}\n" +
                     "  ]\n" +
                     "}\n";
-
 }

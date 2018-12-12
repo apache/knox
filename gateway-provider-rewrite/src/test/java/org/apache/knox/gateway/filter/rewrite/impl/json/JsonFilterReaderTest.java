@@ -40,6 +40,7 @@ import java.util.Random;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 public class JsonFilterReaderTest {
@@ -53,6 +54,7 @@ public class JsonFilterReaderTest {
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/json" );
     UrlRewriteFilterBufferDescriptor bufferConfig = contentConfig.addBuffer( "$.apps.app[*]" );
     UrlRewriteFilterApplyDescriptor applyConfig = bufferConfig.addApply( "$.id", "test-rule" );
+    assertNotNull(applyConfig);
 
     JsonFilterReader filter = new JsonFilterReader( new StringReader( input ), contentConfig );
     String output = IOUtils.toString( filter );
@@ -161,6 +163,7 @@ public class JsonFilterReaderTest {
     UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter=1" );
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/json" );
     UrlRewriteFilterApplyDescriptor applyConfig = contentConfig.addApply( "$['test-str']", "test-rule" );
+    assertNotNull(applyConfig);
 
     JsonFilterReader filter = new TestJsonFilterReader( new StringReader( input ), contentConfig );
     String output = IOUtils.toString( filter );
@@ -261,6 +264,7 @@ public class JsonFilterReaderTest {
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/json" );
     UrlRewriteFilterBufferDescriptor bufferConfig = contentConfig.addBuffer( "$" );
     UrlRewriteFilterApplyDescriptor applyConfig = bufferConfig.addApply( "$['name<test-str>']", "test-rule" );
+    assertNotNull(applyConfig);
     //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
 
     JsonFilterReader filter = new TestJsonFilterReader( new StringReader( input ), contentConfig );
@@ -284,6 +288,7 @@ public class JsonFilterReaderTest {
     UrlRewriteFilterBufferDescriptor bufferConfig = contentConfig.addBuffer( "$.name<properties>.*.name<property>" );
     UrlRewriteFilterDetectDescriptor detectConfig = bufferConfig.addDetect( "$.name<property-name>", "test-name-2" );
     UrlRewriteFilterApplyDescriptor applyConfig = detectConfig.addApply( "$.name<property-value>", "test-rule-2" );
+    assertNotNull(applyConfig);
 
     //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
 
@@ -312,6 +317,7 @@ public class JsonFilterReaderTest {
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/json" );
     UrlRewriteFilterBufferDescriptor bufferConfig = contentConfig.addBuffer( "$.name<properties>.*.name<property>" );
     UrlRewriteFilterApplyDescriptor applyConfig = bufferConfig.addApply( "$.name<property-value>", "test-rule" );
+    assertNotNull(applyConfig);
 
     //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
 
@@ -340,6 +346,7 @@ public class JsonFilterReaderTest {
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/json" );
     UrlRewriteFilterBufferDescriptor bufferConfig = contentConfig.addBuffer( "$.name<properties>" );
     UrlRewriteFilterApplyDescriptor applyConfig = bufferConfig.addApply( "$.*.name<property>.name<property-value>", "test-rule" );
+    assertNotNull(applyConfig);
 
     //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
 
@@ -395,10 +402,4 @@ public class JsonFilterReaderTest {
     output = IOUtils.toString( filter );
     assertThat( output, is( "{\"test-name\":\"\\b\"}" ) );
   }
-
-//  private void dump( ObjectMapper mapper, JsonGenerator generator, JsonNode node ) throws IOException {
-//    mapper.writeTree( generator, node );
-//    System.out.println();
-//  }
-
 }

@@ -79,8 +79,9 @@ public class InboundUrlFunctionProcessorTest {
         proc = (InboundUrlFunctionProcessor) object ;
       }
     }
-    if( proc == null )
-      fail( "Failed to find " + InboundUrlFunctionProcessor.class.getName() + " via service loader." );
+    if( proc == null ) {
+      fail("Failed to find " + InboundUrlFunctionProcessor.class.getName() + " via service loader.");
+    }
 
     Map<String,UrlRewriteFunctionProcessor> functions = new HashMap<>();
     UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
@@ -115,7 +116,6 @@ public class InboundUrlFunctionProcessorTest {
 
     return new UrlRewriteResponse( config, request, response );
   }
-
 
   @Test
   public void testQueryParam() throws Exception {

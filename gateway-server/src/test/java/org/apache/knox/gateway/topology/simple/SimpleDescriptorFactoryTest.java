@@ -19,10 +19,13 @@ package org.apache.knox.gateway.topology.simple;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,7 +36,6 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-
 
 public class SimpleDescriptorFactoryTest {
 
@@ -541,9 +543,9 @@ public class SimpleDescriptorFactoryTest {
                            Map<String, Map<String, String>> serviceParams,
                            Map<String, List<String>>        apps,
                            Map<String, Map<String, String>> appParams) throws Exception {
-        File f = new File(path);
-
-        Writer fw = new OutputStreamWriter(new FileOutputStream(f), StandardCharsets.UTF_8);
+      Path pathObject = Paths.get(path);
+      try (OutputStream outputStream = Files.newOutputStream(pathObject);
+           Writer fw = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
         fw.write("{" + "\n");
         fw.write("\"discovery-type\":\"" + discoveryType + "\",\n");
         fw.write("\"discovery-address\":\"" + discoveryAddress + "\",\n");
@@ -552,22 +554,21 @@ public class SimpleDescriptorFactoryTest {
         fw.write("\"cluster\":\"" + clusterName + "\"");
 
         if (services != null && !services.isEmpty()) {
-            fw.write(",\n\"services\":[\n");
-            writeServiceOrApplicationJSON(fw, services, serviceParams, serviceVersions);
-            fw.write("]\n");
+          fw.write(",\n\"services\":[\n");
+          writeServiceOrApplicationJSON(fw, services, serviceParams, serviceVersions);
+          fw.write("]\n");
         }
 
         if (apps != null && !apps.isEmpty()) {
-            fw.write(",\n\"applications\":[\n");
-            writeServiceOrApplicationJSON(fw, apps, appParams, null);
-            fw.write("]\n");
+          fw.write(",\n\"applications\":[\n");
+          writeServiceOrApplicationJSON(fw, apps, appParams, null);
+          fw.write("]\n");
         }
 
         fw.write("}\n");
         fw.flush();
-        fw.close();
-
-        return f;
+      }
+      return pathObject.toFile();
     }
 
     private void writeServiceOrApplicationJSON(Writer fw,
@@ -637,30 +638,29 @@ public class SimpleDescriptorFactoryTest {
                            Map<String, List<String>>        apps,
                            Map<String, Map<String, String>> appParams) throws Exception {
 
-        File f = new File(path);
-
-        Writer fw = new OutputStreamWriter(new FileOutputStream(f), StandardCharsets.UTF_8);
+      Path pathObject = Paths.get(path);
+      try (OutputStream outputStream = Files.newOutputStream(pathObject);
+           Writer fw = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
         fw.write("---" + "\n");
         fw.write("discovery-type: " + discoveryType + "\n");
         fw.write("discovery-address: " + discoveryAddress + "\n");
         fw.write("discovery-user: " + discoveryUser + "\n");
         fw.write("provider-config-ref: " + providerConfig + "\n");
-        fw.write("cluster: " + clusterName+ "\n");
+        fw.write("cluster: " + clusterName + "\n");
 
         if (services != null && !services.isEmpty()) {
-            fw.write("services:\n");
-            writeServiceOrApplicationYAML(fw, services, serviceParams, serviceVersions);
+          fw.write("services:\n");
+          writeServiceOrApplicationYAML(fw, services, serviceParams, serviceVersions);
         }
 
         if (apps != null && !apps.isEmpty()) {
-            fw.write("applications:\n");
-            writeServiceOrApplicationYAML(fw, apps, appParams, null);
+          fw.write("applications:\n");
+          writeServiceOrApplicationYAML(fw, apps, appParams, null);
         }
 
         fw.flush();
-        fw.close();
-
-        return f;
+      }
+      return pathObject.toFile();
     }
 
     private void writeServiceOrApplicationYAML(Writer                           fw,

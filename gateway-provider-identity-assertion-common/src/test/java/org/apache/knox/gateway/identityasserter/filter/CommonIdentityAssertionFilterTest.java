@@ -34,7 +34,6 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Locale;
@@ -47,13 +46,12 @@ import static org.junit.Assert.assertTrue;
  *
  */
 public class CommonIdentityAssertionFilterTest {
-
   private String username;
   private String[] mappedGroups;
   private Filter filter;
 
   @Before
-  public void setup() {
+  public void setUp() {
     filter = new CommonIdentityAssertionFilter() {
       @Override
       public String mapUserPrincipal(String principalName) {
@@ -76,9 +74,7 @@ public class CommonIdentityAssertionFilterTest {
   }
 
   @Test
-  public void testSimpleFilter() throws ServletException, IOException,
-      URISyntaxException {
-
+  public void testSimpleFilter() throws ServletException, IOException {
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.replay( config );
 
@@ -127,5 +123,4 @@ public class CommonIdentityAssertionFilterTest {
     assertTrue(mappedGroups[0].equals("USERS") || mappedGroups[0].equals("ADMIN"));
     assertTrue(mappedGroups[1], mappedGroups[1].equals("USERS") || mappedGroups[1].equals("ADMIN"));
   }
-
 }

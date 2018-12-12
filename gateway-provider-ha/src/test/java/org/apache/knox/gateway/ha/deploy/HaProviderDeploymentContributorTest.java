@@ -304,50 +304,50 @@ public class HaProviderDeploymentContributorTest {
                                                  String  zooKeeperEnsemble) {
       StringBuilder builder = new StringBuilder();
 
-      builder.append(HaServiceConfigConstants.CONFIG_PARAM_ENABLED);
-      builder.append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER);
-      builder.append(enabled);
+      builder.append(HaServiceConfigConstants.CONFIG_PARAM_ENABLED)
+          .append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER)
+          .append(enabled);
 
       if (maxRetryAttempts > -1) {
-         builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER);
-         builder.append(HaServiceConfigConstants.CONFIG_PARAM_MAX_RETRY_ATTEMPTS);
-         builder.append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER);
-         builder.append(maxRetryAttempts);
+         builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER)
+             .append(HaServiceConfigConstants.CONFIG_PARAM_MAX_RETRY_ATTEMPTS)
+             .append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER)
+             .append(maxRetryAttempts);
       }
 
       if (retrySleep > -1) {
-         builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER);
-         builder.append(HaServiceConfigConstants.CONFIG_PARAM_RETRY_SLEEP);
-         builder.append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER);
-         builder.append(retrySleep);
+         builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER)
+             .append(HaServiceConfigConstants.CONFIG_PARAM_RETRY_SLEEP)
+             .append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER)
+             .append(retrySleep);
       }
 
       if (maxFailoverAttempts > -1) {
-         builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER);
-         builder.append(HaServiceConfigConstants.CONFIG_PARAM_MAX_FAILOVER_ATTEMPTS);
-         builder.append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER);
-         builder.append(maxFailoverAttempts);
+         builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER)
+             .append(HaServiceConfigConstants.CONFIG_PARAM_MAX_FAILOVER_ATTEMPTS)
+             .append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER)
+             .append(maxFailoverAttempts);
       }
 
       if (failoverSleep > -1) {
-         builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER);
-         builder.append(HaServiceConfigConstants.CONFIG_PARAM_FAILOVER_SLEEP);
-         builder.append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER);
-         builder.append(failoverSleep);
+         builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER)
+             .append(HaServiceConfigConstants.CONFIG_PARAM_FAILOVER_SLEEP)
+             .append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER)
+             .append(failoverSleep);
       }
 
       if (zooKeeperNamespace != null) {
-         builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER);
-         builder.append(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_NAMESPACE);
-         builder.append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER);
-         builder.append(zooKeeperNamespace);
+         builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER)
+             .append(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_NAMESPACE)
+             .append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER)
+             .append(zooKeeperNamespace);
       }
 
       if (zooKeeperEnsemble != null) {
-         builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER);
-         builder.append(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_ENSEMBLE);
-         builder.append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER);
-         builder.append(zooKeeperEnsemble);
+         builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER)
+             .append(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_ENSEMBLE)
+             .append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER)
+             .append(zooKeeperEnsemble);
       }
 
       return builder.toString();
@@ -451,6 +451,5 @@ public class HaProviderDeploymentContributorTest {
       public <T> T getDescriptor(String name) {
          return (T)descriptors.get(name);
       }
-
    }
 }

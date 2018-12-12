@@ -26,7 +26,6 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -184,13 +183,6 @@ public class WhitelistUtilsTest {
     EasyMock.replay(request);
 
     String result = null;
-//    if (serverName != null && !serverName.isEmpty() && !isLocalhostServerName(serverName) && xForwardedHost == null) {
-//      try {
-//        result = doTestDeriveDomainBasedWhitelist(serverName);
-//      } catch (Exception e) {
-//        e.printStackTrace();
-//      }
-//    } else if (xForwardedHost != null && !xForwardedHost.isEmpty()) {
     if (xForwardedHost != null && !xForwardedHost.isEmpty()) {
       try {
         Method method = WhitelistUtils.class.getDeclaredMethod("deriveDefaultDispatchWhitelist", HttpServletRequest.class);
@@ -218,10 +210,6 @@ public class WhitelistUtilsTest {
     return (String) defineWhitelistMethod.invoke(null, domain);
   }
 
-  private static boolean isLocalhostServerName(final String serverName) {
-    return LOCALHOST_NAMES.contains(serverName.toLowerCase(Locale.ROOT));
-  }
-
   private static GatewayConfig createMockGatewayConfig(final List<String> serviceRoles, final String whitelist) {
     GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(config.getDispatchWhitelistServices()).andReturn(serviceRoles).anyTimes();
@@ -230,5 +218,4 @@ public class WhitelistUtilsTest {
 
     return config;
   }
-
 }

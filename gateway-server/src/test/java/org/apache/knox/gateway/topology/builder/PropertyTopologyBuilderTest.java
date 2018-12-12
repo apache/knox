@@ -35,12 +35,12 @@ public class PropertyTopologyBuilderTest {
   private static Enumeration<Appender> realAppenders;
 
   @BeforeClass
-  public static void setup() {
+  public static void setUpBeforeClass() {
     realAppenders = NoOpAppender.setUpAndReturnOriginalAppenders();
   }
 
   @AfterClass
-  public static void teardown() {
+  public static void tearDownAfterClass() {
     NoOpAppender.resetOriginalAppenders( realAppenders );
   }
 

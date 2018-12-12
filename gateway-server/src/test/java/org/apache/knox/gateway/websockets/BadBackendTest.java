@@ -37,7 +37,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Test a case where the backend is down.
- *
  */
 public class BadBackendTest {
   /* Proxy */

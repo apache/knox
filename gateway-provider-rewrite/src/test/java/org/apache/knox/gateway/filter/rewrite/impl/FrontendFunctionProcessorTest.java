@@ -123,7 +123,7 @@ public class FrontendFunctionProcessorTest {
     processor.resolve( null, null );
   }
 
-  public void setUp( String username, Map<String, String> initParams, Attributes attributes ) throws Exception {
+  private void testSetup(String username, Map<String, String> initParams, Attributes attributes) throws Exception {
     ServiceRegistry mockServiceRegistry = EasyMock.createNiceMock( ServiceRegistry.class );
     EasyMock.expect( mockServiceRegistry.lookupServiceURL( "test-cluster", "NAMENODE" ) ).andReturn( "test-nn-scheme://test-nn-host:411" ).anyTimes();
     EasyMock.expect( mockServiceRegistry.lookupServiceURL( "test-cluster", "JOBTRACKER" ) ).andReturn( "test-jt-scheme://test-jt-host:511" ).anyTimes();
@@ -175,7 +175,7 @@ public class FrontendFunctionProcessorTest {
   public void testFrontendFunctionsOnJsonRequestBody() throws Exception {
     Map<String,String> initParams = new HashMap<>();
     initParams.put( "response.body", "test-filter" );
-    setUp( "test-user", initParams, null );
+    testSetup( "test-user", initParams, null );
 
     String input = TestUtils.getResourceString( FrontendFunctionProcessorTest.class, "test-input-body.json", StandardCharsets.UTF_8 );
 
@@ -221,7 +221,7 @@ public class FrontendFunctionProcessorTest {
     Attributes attributes = new AttributesMap(  );
     attributes.setAttribute( FrontendFunctionDescriptor.FRONTEND_URI_ATTRIBUTE, new URI( "mock-frontend-scheme://mock-frontend-host:777/mock-frontend-path" ) );
 
-    setUp( "test-user", initParams, attributes );
+    testSetup( "test-user", initParams, attributes );
 
     String input = TestUtils.getResourceString( FrontendFunctionProcessorTest.class, "test-input-body.json", StandardCharsets.UTF_8 );
 
@@ -273,7 +273,7 @@ public class FrontendFunctionProcessorTest {
       StringBuffer sourceUrl = httpRequest.getRequestURL();
       String queryString = httpRequest.getQueryString();
       if( queryString != null ) {
-        sourceUrl.append( "?" );
+        sourceUrl.append( '?' );
         sourceUrl.append( queryString );
       }
       try {
@@ -300,5 +300,4 @@ public class FrontendFunctionProcessorTest {
     public void destroy() {
     }
   }
-
 }

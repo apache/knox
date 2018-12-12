@@ -17,10 +17,8 @@
  */
 package org.apache.knox.gateway.i18n.resources;
 
-@Resources
-public interface ResourcesTestLocaleSubject {
-
+@Resources( bundle="org.apache.knox.gateway.i18n.resources.NamedBundle" )
+public interface ResourcesNamedSubject {
   @Resource(text="default=[{0}]")
   String testResource( String param );
-
 }

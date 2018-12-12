@@ -26,13 +26,10 @@ import java.util.NoSuchElementException;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
 
 public class CompositeEnumerationTest {
-
   @Test
   public void testBasics() {
-
     String[] a = new String[]{ "1", "2" };
     Enumeration<String> ea = Collections.enumeration( Arrays.asList( a ) );
 
@@ -46,7 +43,6 @@ public class CompositeEnumerationTest {
     assertThat( ce.nextElement(), is( "3" ) );
     assertThat( ce.nextElement(), is( "4" ) );
     assertThat( ce.hasMoreElements(), is( false ) );
-
   }
 
   @Test
@@ -66,7 +62,6 @@ public class CompositeEnumerationTest {
 
   @Test
   public void testEmptyEnumerations() {
-
     String[] a = new String[]{ "1", "2" };
     String[] b = new String[]{ "3", "4" };
     String[] c = new String[]{};
@@ -91,27 +86,15 @@ public class CompositeEnumerationTest {
     assertThat( ce.hasMoreElements(), is( false ) );
   }
 
-  @Test
+  @Test (expected = NoSuchElementException.class)
   public void testEmpty() {
     CompositeEnumeration<String> ce = new CompositeEnumeration<>();
     assertThat( ce.hasMoreElements(), is( false ) );
-
-    try {
-      ce.nextElement();
-      fail( "Should have throws NoSuchElementExcpetion" );
-    } catch( NoSuchElementException e ) {
-      // Expected.
-    }
+    ce.nextElement();
   }
 
-  @Test
+  @Test (expected = IllegalArgumentException.class)
   public void testNulls() {
-    try {
-      CompositeEnumeration<String> ce = new CompositeEnumeration<>( null );
-      fail( "Expected IllegalArgumentException" );
-    } catch( IllegalArgumentException e ) {
-      // Expected.
-    }
+    new CompositeEnumeration<>( null );
   }
-
 }

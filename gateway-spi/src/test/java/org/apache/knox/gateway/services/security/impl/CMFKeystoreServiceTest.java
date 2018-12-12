@@ -49,7 +49,7 @@ public class CMFKeystoreServiceTest {
   File certificateFile = new File("ambari");
 
   @Before
-  public void setup() {
+  public void setUp() {
     try {
       ks = new CMFKeystoreService(".", "ambari");
       ks.setMasterService(new MasterService() {

@@ -20,11 +20,7 @@ package org.apache.knox.gateway;
 import java.io.File;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
@@ -37,7 +33,6 @@ import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.mock.MockServer;
 import org.apache.http.HttpStatus;
-import org.apache.log4j.Appender;
 import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -61,11 +56,9 @@ import static org.xmlmatchers.xpath.HasXPath.hasXPath;
 import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
 
 public class GatewayAppFuncTest {
+  private static final Logger LOG = LoggerFactory.getLogger( GatewayAppFuncTest.class );
+  private static final Class<?> DAT = GatewayAppFuncTest.class;
 
-  private static Logger LOG = LoggerFactory.getLogger( GatewayAppFuncTest.class );
-  private static Class<?> DAT = GatewayAppFuncTest.class;
-
-  private static Enumeration<Appender> appenders;
   private static GatewayTestConfig config;
   private static DefaultGatewayServices services;
   private static GatewayServer gateway;
@@ -78,21 +71,19 @@ public class GatewayAppFuncTest {
   private static GatewayTestDriver driver = new GatewayTestDriver();
 
   @BeforeClass
-  public static void setupSuite() throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     LOG_ENTER();
-    //appenders = NoOpAppender.setUpAndReturnOriginalAppenders();
     driver.setupLdap(0);
     setupGateway();
     LOG_EXIT();
   }
 
   @AfterClass
-  public static void cleanupSuite() throws Exception {
+  public static void tearDownAfterClass() throws Exception {
     LOG_ENTER();
     gateway.stop();
     driver.cleanup();
     FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
-    //NoOpAppender.resetOriginalAppenders( appenders );
     LOG_EXIT();
   }
 
@@ -105,7 +96,6 @@ public class GatewayAppFuncTest {
   }
 
   public static void setupGateway() throws Exception {
-
     File targetDir = new File( System.getProperty( "user.dir" ), "target" );
     File gatewayDir = new File( targetDir, "gateway-home-" + UUID.randomUUID() );
     gatewayDir.mkdirs();
@@ -128,7 +118,6 @@ public class GatewayAppFuncTest {
 
     File deployDir = new File( config.getGatewayDeploymentDir() );
     deployDir.mkdirs();
-
 
     setupMockServers();
     startGatewayServer();
@@ -657,14 +646,4 @@ public class GatewayAppFuncTest {
 
     LOG_EXIT();
   }
-
-  public static Collection<String> toNames( File[] files ) {
-    List<String> names = new ArrayList<>( files.length );
-    for( File file : files ) {
-      names.add( file.getAbsolutePath() );
-    }
-    return names;
-
-  }
-
 }

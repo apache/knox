@@ -48,13 +48,13 @@ public class HBaseZookeeperURLManagerTest {
   private TestingCluster cluster;
 
   @Before
-  public void setup() throws Exception {
+  public void setUp() throws Exception {
     cluster = new TestingCluster(3);
     cluster.start();
   }
 
   @After
-  public void teardown() throws IOException {
+  public void tearDown() throws IOException {
     if(cluster != null) {
       cluster.close();
     }

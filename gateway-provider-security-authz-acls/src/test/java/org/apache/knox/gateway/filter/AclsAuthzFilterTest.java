@@ -21,7 +21,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 
@@ -46,13 +45,12 @@ public class AclsAuthzFilterTest {
   private Filter filter;
 
   @Before
-  public void setup() {
+  public void setUp() {
     filter = new AclsAuthorizationFilter() {
       @Override
       public void doFilter(ServletRequest request, ServletResponse response,
                            FilterChain chain) throws IOException, ServletException {
         boolean accessGranted = enforceAclAuthorizationPolicy(request, response, chain);
-        String sourceUrl = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
         if (accessGranted) {
           chain.doFilter(request, response);
         }
@@ -68,9 +66,7 @@ public class AclsAuthzFilterTest {
   }
 
   @Test
-  public void testKnoxAdminGroupsValid() throws ServletException, IOException,
-      URISyntaxException {
-
+  public void testKnoxAdminGroupsValid() throws ServletException, IOException {
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect(config.getInitParameter("knox.admin.users")).andReturn(null);
     EasyMock.expect(config.getInitParameter("knox.admin.groups")).andReturn("admin");
@@ -125,9 +121,7 @@ public class AclsAuthzFilterTest {
   }
 
   @Test
-  public void testKnoxAdminGroupsInvalid() throws ServletException, IOException,
-      URISyntaxException {
-
+  public void testKnoxAdminGroupsInvalid() throws ServletException, IOException {
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect(config.getInitParameter("knox.admin.users")).andReturn(null);
     EasyMock.expect(config.getInitParameter("knox.admin.groups")).andReturn("admin");
@@ -144,8 +138,7 @@ public class AclsAuthzFilterTest {
 
     final FilterChain chain = new FilterChain() {
       @Override
-      public void doFilter(ServletRequest request, ServletResponse response)
-          throws IOException, ServletException {
+      public void doFilter(ServletRequest request, ServletResponse response) {
       }
     };
 
@@ -182,9 +175,7 @@ public class AclsAuthzFilterTest {
   }
 
   @Test
-  public void testKnoxAdminUsersValid() throws ServletException, IOException,
-      URISyntaxException {
-
+  public void testKnoxAdminUsersValid() throws ServletException, IOException {
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect(config.getInitParameter("knox.admin.users")).andReturn("adminuser");
     EasyMock.expect(config.getInitParameter("knox.admin.groups")).andReturn(null);
@@ -201,8 +192,7 @@ public class AclsAuthzFilterTest {
 
     final FilterChain chain = new FilterChain() {
       @Override
-      public void doFilter(ServletRequest request, ServletResponse response)
-          throws IOException, ServletException {
+      public void doFilter(ServletRequest request, ServletResponse response) {
       }
     };
 
@@ -239,9 +229,7 @@ public class AclsAuthzFilterTest {
   }
 
   @Test
-  public void testKnoxAdminUsersInvalid() throws ServletException, IOException,
-      URISyntaxException {
-
+  public void testKnoxAdminUsersInvalid() throws ServletException, IOException {
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect(config.getInitParameter("knox.admin.users")).andReturn("adminuser");
     EasyMock.expect(config.getInitParameter("knox.admin.groups")).andReturn(null);
@@ -258,8 +246,7 @@ public class AclsAuthzFilterTest {
 
     final FilterChain chain = new FilterChain() {
       @Override
-      public void doFilter(ServletRequest request, ServletResponse response)
-          throws IOException, ServletException {
+      public void doFilter(ServletRequest request, ServletResponse response) {
       }
     };
 
@@ -296,9 +283,7 @@ public class AclsAuthzFilterTest {
   }
 
   @Test
-  public void testKnoxAdminUsersInvalidButACLUsersValid() throws ServletException, IOException,
-      URISyntaxException {
-
+  public void testKnoxAdminUsersInvalidButACLUsersValid() throws ServletException, IOException {
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect(config.getInitParameter("knox.admin.users")).andReturn("adminuser");
     EasyMock.expect(config.getInitParameter("knox.admin.groups")).andReturn(null);
@@ -353,9 +338,7 @@ public class AclsAuthzFilterTest {
   }
 
   @Test
-  public void testKnoxAdminUsersInvalidButACLGroupValid() throws ServletException, IOException,
-      URISyntaxException {
-
+  public void testKnoxAdminUsersInvalidButACLGroupValid() throws ServletException, IOException {
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect(config.getInitParameter("knox.admin.users")).andReturn("adminuser");
     EasyMock.expect(config.getInitParameter("knox.admin.groups")).andReturn(null);
@@ -372,8 +355,7 @@ public class AclsAuthzFilterTest {
 
     final FilterChain chain = new FilterChain() {
       @Override
-      public void doFilter(ServletRequest request, ServletResponse response)
-          throws IOException, ServletException {
+      public void doFilter(ServletRequest request, ServletResponse response) {
       }
     };
 
@@ -410,9 +392,7 @@ public class AclsAuthzFilterTest {
   }
 
   @Test
-  public void testKnoxAdminUsersInvalidButKnoxAdminGroupValid() throws ServletException, IOException,
-      URISyntaxException {
-
+  public void testKnoxAdminUsersInvalidButKnoxAdminGroupValid() throws ServletException, IOException {
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect(config.getInitParameter("knox.admin.users")).andReturn("adminuser");
     EasyMock.expect(config.getInitParameter("knox.admin.groups")).andReturn("admingroup");
@@ -429,8 +409,7 @@ public class AclsAuthzFilterTest {
 
     final FilterChain chain = new FilterChain() {
       @Override
-      public void doFilter(ServletRequest request, ServletResponse response)
-          throws IOException, ServletException {
+      public void doFilter(ServletRequest request, ServletResponse response) {
       }
     };
 

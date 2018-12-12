@@ -48,11 +48,12 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.security.Principal;
 import java.util.Locale;
 import java.util.Properties;
@@ -90,7 +91,7 @@ public class SecureClusterTest {
   private static File baseDir;
 
   @BeforeClass
-  public static void setupSuite() throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     nameNodeHttpPort = TestUtils.findFreePort();
     configuration = new HdfsConfiguration();
     baseDir = new File(KeyStoreTestUtil.getClasspathDir(SecureClusterTest.class));
@@ -175,7 +176,7 @@ public class SecureClusterTest {
   }
 
   @AfterClass
-  public static void cleanupSuite() throws Exception {
+  public static void tearDownAfterClass() throws Exception {
     if(kdc != null) {
       kdc.stop();
     }
@@ -232,22 +233,23 @@ public class SecureClusterTest {
       file.delete();
       file.createNewFile();
     }
-    Writer writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
-    String content = String.format(Locale.ROOT,
-        "com.sun.security.jgss.initiate {\n" +
-            "com.sun.security.auth.module.Krb5LoginModule required\n" +
-            "renewTGT=true\n" +
-            "doNotPrompt=true\n" +
-            "useKeyTab=true\n" +
-            "keyTab=\"%s\"\n" +
-            "principal=\"%s\"\n" +
-            "isInitiator=true\n" +
-            "storeKey=true\n" +
-            "useTicketCache=true\n" +
-            "client=true;\n" +
-            "};\n", keyTabFile, principal);
-    writer.write(content);
-    writer.close();
+    try(OutputStream outputStream = Files.newOutputStream(file.toPath());
+        Writer writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
+      String content = String.format(Locale.ROOT,
+          "com.sun.security.jgss.initiate {\n" +
+              "com.sun.security.auth.module.Krb5LoginModule required\n" +
+              "renewTGT=true\n" +
+              "doNotPrompt=true\n" +
+              "useKeyTab=true\n" +
+              "keyTab=\"%s\"\n" +
+              "principal=\"%s\"\n" +
+              "isInitiator=true\n" +
+              "storeKey=true\n" +
+              "useTicketCache=true\n" +
+              "client=true;\n" +
+              "};\n", keyTabFile, principal);
+      writer.write(content);
+    }
     return file;
   }
 
