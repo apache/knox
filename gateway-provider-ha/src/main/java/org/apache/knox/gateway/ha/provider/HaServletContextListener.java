@@ -27,7 +27,6 @@ import org.apache.knox.gateway.services.registry.ServiceRegistry;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -35,17 +34,12 @@ import java.net.URL;
 import java.util.List;
 
 public class HaServletContextListener implements ServletContextListener {
-
    public static final String PROVIDER_ATTRIBUTE_NAME = "haProvider";
-
    public static final String DESCRIPTOR_LOCATION_INIT_PARAM_NAME = "haDescriptorLocation";
-
    public static final String DESCRIPTOR_DEFAULT_FILE_NAME = "ha.xml";
-
    public static final String DESCRIPTOR_DEFAULT_LOCATION = "/WEB-INF/" + DESCRIPTOR_DEFAULT_FILE_NAME;
 
    private static final HaMessages LOG = MessagesFactory.get(HaMessages.class);
-
 
    @Override
    public void contextInitialized(ServletContextEvent event) {
@@ -96,9 +90,6 @@ public class HaServletContextListener implements ServletContextListener {
       if (url == null) {
          url = new URL(param);
       }
-      if (url == null) {
-         throw new FileNotFoundException(param);
-      }
       return url;
    }
 
@@ -112,5 +103,4 @@ public class HaServletContextListener implements ServletContextListener {
       }
       return descriptor;
    }
-
 }

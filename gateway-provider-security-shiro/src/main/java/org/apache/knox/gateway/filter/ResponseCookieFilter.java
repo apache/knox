@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.knox.gateway.filter;
 
 import javax.servlet.FilterChain;
@@ -33,7 +32,7 @@ import java.util.List;
 public class ResponseCookieFilter extends AbstractGatewayFilter {
   public static final String RESTRICTED_COOKIES = "restrictedCookies";
 
-  protected static List<String> restrictedCookies = new ArrayList<>();
+  private List<String> restrictedCookies = new ArrayList<>();
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
@@ -51,7 +50,7 @@ public class ResponseCookieFilter extends AbstractGatewayFilter {
   }
 
   // inner class wraps response to prevent adding of not allowed headers
-  private static class ResponseWrapper extends HttpServletResponseWrapper {
+  private class ResponseWrapper extends HttpServletResponseWrapper {
     ResponseWrapper( HttpServletResponse response ) {
       super( response );
     }

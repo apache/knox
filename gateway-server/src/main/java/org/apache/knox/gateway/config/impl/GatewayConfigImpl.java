@@ -89,7 +89,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final String DEFAULT_APPLICATIONS_DIR = "applications";
 
-  public static final String[] GATEWAY_CONFIG_FILENAMES = {
+  private static final String[] GATEWAY_CONFIG_FILENAMES = {
       GATEWAY_CONFIG_DIR_PREFIX + "/" + GATEWAY_CONFIG_FILE_PREFIX + "-default.xml",
       GATEWAY_CONFIG_DIR_PREFIX + "/" + GATEWAY_CONFIG_FILE_PREFIX + "-site.xml"
   };
@@ -228,7 +228,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   static final String DISPATCH_HOST_WHITELIST          = GATEWAY_CONFIG_FILE_PREFIX + ".dispatch.whitelist";
   static final String DISPATCH_HOST_WHITELIST_SERVICES = DISPATCH_HOST_WHITELIST + ".services";
 
-  private static List<String> DEFAULT_GLOBAL_RULES_SERVICES;
+  private List<String> DEFAULT_GLOBAL_RULES_SERVICES;
 
   public GatewayConfigImpl() {
     init();
@@ -310,15 +310,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   private void setDefaultGlobalRulesServices() {
-    DEFAULT_GLOBAL_RULES_SERVICES = new ArrayList<>();
-    DEFAULT_GLOBAL_RULES_SERVICES.add("NAMENODE");
-    DEFAULT_GLOBAL_RULES_SERVICES.add("JOBTRACKER");
-    DEFAULT_GLOBAL_RULES_SERVICES.add("WEBHDFS");
-    DEFAULT_GLOBAL_RULES_SERVICES.add("WEBHCAT");
-    DEFAULT_GLOBAL_RULES_SERVICES.add("OOZIE");
-    DEFAULT_GLOBAL_RULES_SERVICES.add("WEBHBASE");
-    DEFAULT_GLOBAL_RULES_SERVICES.add("HIVE");
-    DEFAULT_GLOBAL_RULES_SERVICES.add("RESOURCEMANAGER");
+    DEFAULT_GLOBAL_RULES_SERVICES = Arrays.asList(
+        "NAMENODE", "JOBTRACKER", "WEBHDFS", "WEBHCAT",
+        "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER");
   }
 
   private void initGatewayHomeDir( URL lastFileUrl ) {

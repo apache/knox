@@ -87,9 +87,7 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
     String clusterName = context.getTopology().getName();
     ShiroConfig config = new ShiroConfig( provider, clusterName );
     String configStr = config.toString();
-    if( config != null ) {
-      context.getWebArchive().addAsWebInfResource( new StringAsset( configStr ), SHRIO_CONFIG_FILE_NAME );
-    }
+    context.getWebArchive().addAsWebInfResource( new StringAsset( configStr ), SHRIO_CONFIG_FILE_NAME );
   }
 
   @Override

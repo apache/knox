@@ -156,10 +156,10 @@ class AmbariDynamicServiceURLCreator implements ServiceURLCreator {
                             }
                         }
                     }
-                }
 
-                log.determinedPropertyValue(configProperty.getName(), propertyValue);
-                placeholderValues.put(configProperty.getName(), propertyValue);
+                    log.determinedPropertyValue(configProperty.getName(), propertyValue);
+                    placeholderValues.put(configProperty.getName(), propertyValue);
+                }
             }
 
             // For patterns with a placeholder value for the hostname (e.g., multiple URL scenarios)

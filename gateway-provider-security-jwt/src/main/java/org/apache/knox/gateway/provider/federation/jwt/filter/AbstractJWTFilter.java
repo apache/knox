@@ -140,7 +140,7 @@ public abstract class AbstractJWTFilter implements Filter {
     // the cookie validity - otherwise ensure that the current time is before
     // the designated expiration time
     Date expires = jwtToken.getExpiresDate();
-    return (expires == null || expires != null && new Date().before(expires));
+    return expires == null || new Date().before(expires);
   }
 
   /**

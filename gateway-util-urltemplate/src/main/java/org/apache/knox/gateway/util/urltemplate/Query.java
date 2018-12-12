@@ -50,4 +50,18 @@ public class Query extends Segment {
     return matches;
   }
 
+  @Override
+  public boolean equals(Object obj) {
+    if( obj instanceof Query ) {
+      Query that = (Query)obj;
+      return super.equals(that) && that.getQueryName().equals(getQueryName());
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    return 31 * result + getQueryName().hashCode();
+  }
 }

@@ -32,8 +32,6 @@ import org.apache.knox.gateway.services.ServerInfoService;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.Response.ok;
-import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Path( "/api/v1" )
 public class VersionResource {
@@ -45,11 +43,7 @@ public class VersionResource {
   @Path( "version" )
   public Response getVersion() {
     ServerVersion version = getServerVersion();
-    if (version != null) {
-        return ok(version).build();
-    } else {
-        return status(NOT_FOUND).build();
-    }
+    return ok(version).build();
   }
 
   private ServerVersion getServerVersion() {

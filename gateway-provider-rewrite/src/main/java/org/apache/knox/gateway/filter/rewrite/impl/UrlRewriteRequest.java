@@ -110,17 +110,12 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
 
   // Note: Source url was added to the request attributes by the GatewayFilter doFilter method.
   Template getTargetUrl() {
-    boolean rewriteRequestUrl = true;
     Template targetUrl;
-    if( rewriteRequestUrl ) {
-      targetUrl = (Template)getAttribute( AbstractGatewayFilter.TARGET_REQUEST_URL_ATTRIBUTE_NAME );
-      if( targetUrl == null ) {
-        Template sourceUrl = getSourceUrl();
-        targetUrl = rewriter.rewrite( this, sourceUrl, UrlRewriter.Direction.IN, urlRuleName );
-        setAttribute( AbstractGatewayFilter.TARGET_REQUEST_URL_ATTRIBUTE_NAME, targetUrl );
-      }
-    } else {
-      targetUrl = (Template)getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_URL_ATTRIBUTE_NAME );
+    targetUrl = (Template)getAttribute( AbstractGatewayFilter.TARGET_REQUEST_URL_ATTRIBUTE_NAME );
+    if( targetUrl == null ) {
+      Template sourceUrl = getSourceUrl();
+      targetUrl = rewriter.rewrite( this, sourceUrl, UrlRewriter.Direction.IN, urlRuleName );
+      setAttribute( AbstractGatewayFilter.TARGET_REQUEST_URL_ATTRIBUTE_NAME, targetUrl );
     }
     return targetUrl;
   }

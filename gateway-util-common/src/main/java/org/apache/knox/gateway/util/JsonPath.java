@@ -133,6 +133,9 @@ public class JsonPath {
             if( expectChild ) {
               if( ".".equals( prevToken ) ) {
                 segment = new Segment( Segment.Type.GLOB );
+                if(list == null) {
+                  throw new IllegalArgumentException( expression );
+                }
                 list.add( segment );
                 expectChild = true;
                 foundChild = false;
@@ -190,6 +193,9 @@ public class JsonPath {
                 }
                 segment = new Segment( currToken );
               }
+            }
+            if(list == null) {
+              throw new IllegalArgumentException( expression );
             }
             list.add( segment );
             expectChild = false;

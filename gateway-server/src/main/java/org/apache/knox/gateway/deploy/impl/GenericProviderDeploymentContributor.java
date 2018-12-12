@@ -52,13 +52,11 @@ public class GenericProviderDeploymentContributor extends
       ResourceDescriptor resource,
       List<FilterParamDescriptor> params ) {
     String filterClassName = getFilterClassName( provider.getParams() );
-    if( filterClassName != null ) {
-      FilterDescriptor filter = resource.addFilter();
-      filter.name( getName() );
-      filter.role( provider.getRole() );
-      filter.impl( filterClassName );
-      filter.params( getFilterInitParams( filter, provider.getParams(), params ) );
-    }
+    FilterDescriptor filter = resource.addFilter();
+    filter.name( getName() );
+    filter.role( provider.getRole() );
+    filter.impl( filterClassName );
+    filter.params( getFilterInitParams( filter, provider.getParams(), params ) );
   }
 
   private String getFilterClassName( Map<String,String> params ) {

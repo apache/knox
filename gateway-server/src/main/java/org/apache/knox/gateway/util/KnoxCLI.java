@@ -850,11 +850,6 @@ public class KnoxCLI extends Configured implements Tool {
                "This command requires write permissions on the master secret file: " +
                    file.getAbsolutePath() );
            valid = false;
-         } else if( !file.canWrite() ) {
-           out.println(
-               "This command requires write permissions on the master secret file: " +
-                   file.getAbsolutePath() );
-           valid = false;
          } else {
            valid = file.delete();
            if( !valid ) {

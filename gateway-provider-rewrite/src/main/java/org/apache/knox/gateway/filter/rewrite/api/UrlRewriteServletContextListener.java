@@ -24,7 +24,6 @@ import javax.servlet.ServletContextListener;
 import org.apache.knox.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -85,9 +84,6 @@ public class UrlRewriteServletContextListener implements ServletContextListener 
     }
     if( url == null ) {
       url = new URL( param );
-    }
-    if( url == null ) {
-      throw new FileNotFoundException( param );
     }
     return url;
   }

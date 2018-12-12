@@ -519,7 +519,7 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
                 }
 
                 try {
-                    Thread.sleep(interval * 1000);
+                    Thread.sleep(interval * 1000L);
                 } catch (InterruptedException e) {
                     // Ignore
                 }
