@@ -136,11 +136,12 @@
         <maven.compiler.target>8</maven.compiler.target>
 
         <!-- Dependencies sorted alphabetically -->
-        <apacheds.directory.api.version>1.0.2</apacheds.directory.api.version>
-        <apacheds.directory.server.version>2.0.0-M24</apacheds.directory.server.version>
+        <apacheds.directory.api.version>2.0.0.AM2</apacheds.directory.api.version>
+        <apacheds.directory.server.version>2.0.0.AM25</apacheds.directory.server.version>
         <apacheds-jdbm.version>2.0.0-M5</apacheds-jdbm.version>
         <ant-nodeps.version>1.8.1</ant-nodeps.version>
         <asm.version>7.0</asm.version>
+        <bcprov-jdk15on.version>1.60</bcprov-jdk15on.version>
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
         <cglib.version>3.2.10</cglib.version>
         <checkstyle.version>8.15</checkstyle.version>
@@ -1045,12 +1046,6 @@
                 <groupId>com.nimbusds</groupId>
                 <artifactId>nimbus-jose-jwt</artifactId>
                 <version>${nimbus-jose-jwt.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.bouncycastle</groupId>
-                        <artifactId>bcprov-jdk15on</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>net.minidev</groupId>
@@ -1666,6 +1661,12 @@
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-demo-ldap-launcher</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk15on</artifactId>
+                <version>${bcprov-jdk15on.version}</version>
             </dependency>
             
             <dependency>
