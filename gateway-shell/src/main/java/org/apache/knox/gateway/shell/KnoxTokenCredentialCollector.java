@@ -48,13 +48,15 @@ public class KnoxTokenCredentialCollector extends AbstractCredentialCollector {
       List<String> lines;
       try {
         lines = Files.readAllLines(path, StandardCharsets.UTF_8);
-        Map<String, String> attrs = JsonUtils.getMapFromJsonString(lines.get(0));
-        value = attrs.get("access_token");
-        targetUrl = attrs.get("target_url");
-        tokenType = attrs.get("token_type");
-        Date expires = new Date(Long.parseLong(attrs.get("expires_in")));
-        if (expires.before(new Date())) {
-          throw new CredentialCollectionException("Cached knox token has expired. Please relogin through knoxinit.");
+        if (!lines.isEmpty()) {
+          Map<String, String> attrs = JsonUtils.getMapFromJsonString(lines.get(0));
+          value = attrs.get("access_token");
+          targetUrl = attrs.get("target_url");
+          tokenType = attrs.get("token_type");
+          Date expires = new Date(Long.parseLong(attrs.get("expires_in")));
+          if (expires.before(new Date())) {
+            throw new CredentialCollectionException("Cached knox token has expired. Please relogin through knoxinit.");
+          }
         }
       } catch (IOException e) {
         throw new CredentialCollectionException("Cached knox token cannot be read. Please login through knoxinit.", e);
