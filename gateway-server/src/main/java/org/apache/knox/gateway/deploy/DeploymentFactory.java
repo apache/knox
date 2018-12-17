@@ -347,7 +347,7 @@ public abstract class DeploymentFactory {
           urls.add( "/" + name );
         }
         for( String url : urls ) {
-          if( url == null || url.isEmpty() || url.equals( "/" ) ) {
+          if( url == null || url.isEmpty() || "/".equals(url) ) {
             if( !topology.getServices().isEmpty() ) {
               throw new DeploymentException( String.format(Locale.ROOT,
                   "Topologies with services cannot contain an application (%s) with a root url.", name ) );

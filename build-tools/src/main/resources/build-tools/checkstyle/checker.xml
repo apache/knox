@@ -66,10 +66,12 @@ limitations under the License.
         <module name="EqualsHashCode"/>
         <!-- Enforce array type style -->
         <module name="ArrayTypeStyle"/>
+        <!-- Constant on left of equals -->
+        <module name="EqualsAvoidNullCheck"/>
         <!-- Disallow unnecessary instantiation of Boolean, String -->
-        <!--<module name="IllegalInstantiation">
-            <property name="classes" value="java.lang.Boolean, java.lang.String"/>
-        </module>-->
+        <module name="IllegalInstantiation">
+            <property name="classes" value="java.lang.Boolean"/>
+        </module>
         <!-- Switch statements should be complete and with independent cases -->
         <!--<module name="FallThrough"/>-->
         <module name="SimplifyBooleanExpression"/>

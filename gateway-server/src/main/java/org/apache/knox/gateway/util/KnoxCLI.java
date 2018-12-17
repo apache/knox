@@ -208,7 +208,7 @@ public class KnoxCLI extends Configured implements Tool {
           alias = args[++i];
         }
         command = new AliasDeleteCommand(alias);
-        if (alias == null || alias.equals("--help")) {
+        if (alias == null || "--help".equals(alias)) {
           printKnoxShellUsage();
           return -1;
         }
@@ -218,7 +218,7 @@ public class KnoxCLI extends Configured implements Tool {
           alias = args[++i];
         }
         command = new AliasCreateCommand(alias);
-        if (alias == null || alias.equals("--help")) {
+        if (alias == null || "--help".equals(alias)) {
           printKnoxShellUsage();
           return -1;
         }
