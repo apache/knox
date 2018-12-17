@@ -173,7 +173,7 @@
         <hamcrest-json.version>0.2</hamcrest-json.version>
         <httpclient.version>4.5.6</httpclient.version>
         <httpcore.version>4.4.10</httpcore.version>
-        <jackson.version>2.9.7</jackson.version>
+        <jackson.version>2.9.8</jackson.version>
         <jacoco-maven-plugin.version>0.8.2</jacoco-maven-plugin.version>
         <jansi.version>1.17.1</jansi.version>
         <javax.activation.version>1.2.0</javax.activation.version>
