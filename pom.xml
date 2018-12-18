@@ -212,7 +212,7 @@
         <shrinkwrap.version>1.2.6</shrinkwrap.version>
         <shrinkwrap.descriptors.version>2.0.0</shrinkwrap.descriptors.version>
         <slf4j.version>1.7.25</slf4j.version>
-        <spotbugs.version>3.1.9</spotbugs.version>
+        <spotbugs.version>3.1.10</spotbugs.version>
         <spotbugs-maven-plugin.version>3.1.9</spotbugs-maven-plugin.version>
         <taglibs-standard.version>1.2.5</taglibs-standard.version>
         <velocity.version>1.7</velocity.version>
