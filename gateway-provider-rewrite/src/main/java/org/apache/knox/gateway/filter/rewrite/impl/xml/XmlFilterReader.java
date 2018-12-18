@@ -52,11 +52,11 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
+import javax.xml.xpath.XPathFactoryConfigurationException;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
@@ -66,7 +66,6 @@ import java.util.Stack;
 import java.util.regex.Pattern;
 
 public abstract class XmlFilterReader extends Reader {
-
   private static final UrlRewriteResources RES = ResourcesFactory.get( UrlRewriteResources.class );
 
   private static final String DEFAULT_XML_VERSION = "1.0";
@@ -95,12 +94,12 @@ public abstract class XmlFilterReader extends Reader {
     stack = new Stack<>();
     isEmptyElement = false;
     factory = XMLInputFactory.newFactory();
-    //KNOX-620 factory.setProperty( XMLConstants.ACCESS_EXTERNAL_DTD, "false" );
-    //KNOX-620 factory.setProperty( XMLConstants.ACCESS_EXTERNAL_SCHEMA, "false" );
+    //KNOX-620 factory.setProperty( XMLConstants.ACCESS_EXTERNAL_DTD, Boolean.FALSE );
+    //KNOX-620 factory.setProperty( XMLConstants.ACCESS_EXTERNAL_SCHEMA, Boolean.FALSE );
     /* This disables DTDs entirely for that factory */
-    factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+    factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
     /* disable external entities */
-    factory.setProperty("javax.xml.stream.isSupportingExternalEntities", false);
+    factory.setProperty("javax.xml.stream.isSupportingExternalEntities", Boolean.FALSE);
 
     factory.setProperty( "javax.xml.stream.isReplacingEntityReferences", Boolean.FALSE );
     factory.setProperty("http://java.sun.com/xml/stream/"
@@ -186,7 +185,6 @@ public abstract class XmlFilterReader extends Reader {
   }
 
   private void processStartDocument( StartDocument event ) throws ParserConfigurationException {
-    //System.out.println( "SD=" + event );
     String s;
 
     document = XmlUtils.createDocument( false );
@@ -222,8 +220,6 @@ public abstract class XmlFilterReader extends Reader {
   }
 
   private void processStartElement( StartElement event ) throws XPathExpressionException {
-    //System.out.println( "SE=" + event );
-
     // Create a new "empty" element and add it to the document.
     Element element = bufferElement( event );
     Level parent = stack.peek();
@@ -263,7 +259,6 @@ public abstract class XmlFilterReader extends Reader {
   }
 
   private void processEndElement( EndElement event ) throws XPathExpressionException, IOException {
-    //System.out.println( "EE=" + event );
     boolean buffering = currentlyBuffering();
     Level child = stack.pop();
     if( buffering ) {
@@ -489,8 +484,6 @@ public abstract class XmlFilterReader extends Reader {
       }
     }
 
-    //dump( document );
-
     if( prefix == null || prefix.isEmpty() ) {
       writer.write( " " );
       writer.write( name.getLocalPart() );
@@ -506,8 +499,7 @@ public abstract class XmlFilterReader extends Reader {
     element.removeAttributeNode( node );
   }
 
-  private void processCharacters( Characters event ) throws XPathExpressionException {
-    //System.out.println( "T[" + event.isCData() + "," + event.isWhiteSpace() + "," + event.isIgnorableWhiteSpace() + "]=" + event );
+  private void processCharacters( Characters event ) {
     Level level = stack.peek();
     Node node = stack.peek().node;
     if( event.isCData() ) {
@@ -539,7 +531,6 @@ public abstract class XmlFilterReader extends Reader {
   }
 
   private void processComment( Comment event ) {
-    //System.out.println( "C=" + event );
     if( currentlyBuffering() ) {
       stack.peek().node.appendChild( document.createComment( event.getText() ) );
     } else {
@@ -600,30 +591,38 @@ public abstract class XmlFilterReader extends Reader {
       this.node = node;
       this.scopeConfig = scopeConfig;
       this.scopeNode = scopeNode;
-      this.buffered = ( ( parent != null ) && parent.buffered ) ||
-                      ( ( scopeConfig != null ) && ( scopeConfig instanceof UrlRewriteFilterBufferDescriptor ) );
+      this.buffered = ( parent != null && parent.buffered ) ||
+                      (scopeConfig instanceof UrlRewriteFilterBufferDescriptor);
     }
   }
 
   private static class XmlPathCompiler implements UrlRewriteFilterPathDescriptor.Compiler<XPathExpression> {
-    private static XPath XPATH;
+    private static final XPathFactory xpathFactory = getXpathFactory();
 
-    static {
-        XPathFactory xpathFactory = XPathFactory.newInstance();
-        try {
-            xpathFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
-        } catch (javax.xml.xpath.XPathFactoryConfigurationException ex) {
-            // ignore
-        }
-        XPATH = xpathFactory.newXPath();
+    private static synchronized XPathFactory getXpathFactory() {
+      XPathFactory xPathFactory = XPathFactory.newInstance();
+      try {
+        xPathFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
+      } catch (XPathFactoryConfigurationException ex) {
+        // ignore
+      }
+      return xPathFactory;
+    }
+
+    private synchronized XPathExpression getXPathExpression(String expression) {
+      try {
+        return xpathFactory.newXPath().compile(expression);
+      } catch (XPathExpressionException e) {
+        throw new IllegalArgumentException(e);
+      }
     }
 
     @Override
     public XPathExpression compile( String expression, XPathExpression compiled ) {
-      try {
-        return XPATH.compile( expression );
-      } catch( XPathExpressionException e ) {
-        throw new IllegalArgumentException( e );
+      if(compiled != null) {
+        return compiled;
+      } else {
+        return getXPathExpression(expression);
       }
     }
   }
@@ -631,7 +630,7 @@ public abstract class XmlFilterReader extends Reader {
   private static class RegexCompiler implements UrlRewriteFilterPathDescriptor.Compiler<Pattern> {
     @Override
     public Pattern compile( String expression, Pattern compiled ) {
-      if( compiled != null ) {
+      if(compiled != null) {
         return compiled;
       } else {
         return Pattern.compile( expression );
@@ -647,5 +646,4 @@ public abstract class XmlFilterReader extends Reader {
       throw new IOException( e );
     }
   }
-
 }
