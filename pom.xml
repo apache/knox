@@ -160,7 +160,7 @@
         <cors-filter.version>2.6</cors-filter.version>
         <curator.version>4.0.1</curator.version>
         <curator-test.version>2.13.0</curator-test.version>
-        <dependency-check-maven.version>4.0.0</dependency-check-maven.version>
+        <dependency-check-maven.version>4.0.1</dependency-check-maven.version>
         <easymock.version>4.0.2</easymock.version>
         <eclipselink.version>2.7.3</eclipselink.version>
         <ehcache.version>2.6.11</ehcache.version>
