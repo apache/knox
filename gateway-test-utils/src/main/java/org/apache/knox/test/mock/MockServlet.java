@@ -29,11 +29,10 @@ import org.apache.log4j.Logger;
 import static org.junit.Assert.fail;
 
 public class MockServlet extends HttpServlet {
+  private static final Logger LOG = Logger.getLogger(MockServlet.class);
 
-  private static final Logger LOG = Logger.getLogger(MockServlet.class.getName());
-
-  public String name;
-  public Queue<MockInteraction> interactions;
+  private final String name;
+  private final Queue<MockInteraction> interactions;
 
   public MockServlet( String name, Queue<MockInteraction> interactions ) {
     this.name = name;
@@ -57,5 +56,4 @@ public class MockServlet extends HttpServlet {
       throw new ServletException( e );
     }
   }
-
 }
