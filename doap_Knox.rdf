@@ -21,12 +21,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
-  <Project rdf:about="http://knox.apache.org">
+  <Project rdf:about="https://knox.apache.org">
     <created>2014-06-12</created>
-    <license rdf:resource="http://www.apache.org/licenses/LICENSE-2.0"/>
+    <license rdf:resource="https://www.apache.org/licenses/LICENSE-2.0"/>
     <name>Apache Knox</name>
-    <homepage rdf:resource="http://knox.apache.org" />
-    <asfext:pmc rdf:resource="http://knox.apache.org" />
+    <homepage rdf:resource="https://knox.apache.org" />
+    <asfext:pmc rdf:resource="https://knox.apache.org" />
     <shortdesc>A REST API Gateway for Hadoop Services</shortdesc>
     <description>The Apache Knox Gateway is a REST API Gateway for interacting with Hadoop clusters.
 
@@ -48,11 +48,11 @@ the Knox Gateway provides the enterprise with a solution that:
 Integrates well with enterprise identity management solutions
 Protects the details of the Hadoop cluster deployment (hosts and ports are hidden from endusers)
 Simplifies the number of services that clients need to interact with</description>
-    <bug-database rdf:resource="http://issues.apache.org/jira/browse/KNOX" />
-    <mailing-list rdf:resource="http://knox.apache.org/mail-lists.html" />
-    <download-page rdf:resource="https://cwiki.apache.org/confluence/display/KNOX/Release+1.1.0" />
+    <bug-database rdf:resource="https://issues.apache.org/jira/browse/KNOX" />
+    <mailing-list rdf:resource="https://knox.apache.org/mail-lists.html" />
+    <download-page rdf:resource="https://cwiki.apache.org/confluence/display/KNOX/Release+1.2.0" />
     <programming-language>Java</programming-language>
-    <category rdf:resource="http://projects.apache.org/category/big-data" />
+    <category rdf:resource="https://projects.apache.org/category/big-data" />
     <repository>
       <GitRepository>
         <location rdf:resource="https://git-wip-us.apache.org/repos/asf/knox.git"/>
@@ -64,6 +64,13 @@ Simplifies the number of services that clients need to interact with</descriptio
           <foaf:mbox rdf:resource="mailto:dev@knox.apache.org"/>
       </foaf:Person>
     </maintainer>
+    <release>
+      <Version>
+        <name>Apache Knox Gateway 1.2.0</name>
+        <created>2018/12/18</created>
+        <revision>1.2.0</revision>
+      </Version>
+    </release>
     <release>
       <Version>
         <name>Apache Knox Gateway 1.1.0</name>
