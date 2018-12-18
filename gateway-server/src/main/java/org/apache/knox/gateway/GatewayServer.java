@@ -809,29 +809,29 @@ public class GatewayServer {
     }
 
     // Find all the deployed contexts we need to deactivate.
-    List<WebAppContext> deactivate = new ArrayList<>();
     if( deployments != null ) {
+      List<WebAppContext> deactivate = new ArrayList<>();
       for( WebAppContext app : deployments.values() ) {
         String appPath = app.getContextPath();
         if( appPath.equals( topoPath ) || appPath.startsWith( topoPathSlash ) ) {
           deactivate.add( app );
         }
       }
-    }
 
-    // Deactivate the required deployed contexts.
-    for( WebAppContext context : deactivate ) {
-      String contextPath = context.getContextPath();
-      deployments.remove( contextPath );
-      contexts.removeHandler( context );
-      try {
-        context.stop();
-      } catch( Exception e ) {
-        auditor.audit(Action.UNDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
-        log.failedToUndeployTopology( topology.getName(), e );
+      // Deactivate the required deployed contexts.
+      for( WebAppContext context : deactivate ) {
+        String contextPath = context.getContextPath();
+        deployments.remove( contextPath );
+        contexts.removeHandler( context );
+        try {
+          context.stop();
+        } catch( Exception e ) {
+          auditor.audit(Action.UNDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
+          log.failedToUndeployTopology( topology.getName(), e );
+        }
       }
+      deactivate.clear();
     }
-    deactivate.clear();
   }
 
   // Using an inner class to hide the handleTopologyEvent method from consumers of GatewayServer.
