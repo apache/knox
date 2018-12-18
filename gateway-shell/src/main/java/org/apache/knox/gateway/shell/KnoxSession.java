@@ -314,11 +314,11 @@ public class KnoxSession implements Closeable {
         truststorePass = clientContext.connection().truststorePass();
       } else {
         String truststore = System.getProperty("javax.net.ssl.trustStore");
+        truststorePass = System.getProperty("javax.net.ssl.trustStorePassword", "changeit");
         if (truststore == null) {
           String truststoreDir = System.getProperty("java.home");
           truststore = truststoreDir + File.separator + "lib" + File.separator
               + "security" + File.separator + "cacerts";
-          truststorePass = System.getProperty("javax.net.ssl.trustStorePassword", "changeit");
         }
         file = new File(truststore);
       }
