@@ -35,9 +35,9 @@
     <url>https://knox.apache.org/</url>
 
     <scm>
-        <connection>scm:git:git://git.apache.org/knox.git</connection>
-        <developerConnection>scm:git:git://git.apache.org/knox.git</developerConnection>
-        <url>http://git-wip-us.apache.org/repos/asf/knox.git</url>
+        <connection>scm:git:https://gitbox.apache.org/repos/asf/knox.git</connection>
+        <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/knox.git</developerConnection>
+        <url>https://gitbox.apache.org/repos/asf/knox.git</url>
     </scm>
 
     <mailingLists>

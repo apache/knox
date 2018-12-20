@@ -8,8 +8,8 @@ https://dist.apache.org/repos/dist/dev/${gateway-project}/${gateway-project}-${g
 
 The release candidate is a zip archive of the sources in:
 
-https://git-wip-us.apache.org/repos/asf/knox.git
-Branch v${gateway-version} (git checkout -b v{gateway-version})
+https://https://gitbox.apache.org/repos/asf/knox.git
+Branch v${gateway-version} (git checkout -b v${gateway-version})
 
 The KEYS file for signature validation is available at: https://dist.apache.org/repos/dist/release/knox/KEYS
 
