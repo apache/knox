@@ -31,8 +31,14 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 
-public class PreAuthServiceTest extends org.junit.Assert {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+public class PreAuthServiceTest {
   @Test
   public void testValidatorMap() {
     Map<String, PreAuthValidator> valMap = PreAuthService.getValidatorMap();
@@ -125,8 +131,7 @@ public class PreAuthServiceTest extends org.junit.Assert {
     } catch (Exception e) {
       //Expected
       assertEquals("Unable to find validator with name 'preauth.default.validation,  " +
-                       "NOT_EXISTED_VALIDATOR'",
-          e.getMessage());
+                       "NOT_EXISTED_VALIDATOR'", e.getMessage());
     }
   }
 }

@@ -35,7 +35,14 @@ import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 
-public class JWTTokenTest extends org.junit.Assert {
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+public class JWTTokenTest {
   private static final String JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE0MTY5MjkxMDksImp0aSI6ImFhN2Y4ZDBhOTVjIiwic2NvcGVzIjpbInJlcG8iLCJwdWJsaWNfcmVwbyJdfQ.XCEwpBGvOLma4TCoh36FU7XhUbcskygS81HE1uHLf0E";
   private static final String HEADER = "{\"typ\":\"JWT\",\"alg\":\"HS256\"}";
 
@@ -56,7 +63,6 @@ public class JWTTokenTest extends org.junit.Assert {
   public void testTokenParsing() throws Exception {
     JWTToken token = JWTToken.parseToken(JWT_TOKEN);
     assertEquals(token.getHeader(), HEADER);
-
     assertEquals(token.getClaim("jti"), "aa7f8d0a95c");
   }
 

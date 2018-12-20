@@ -31,8 +31,11 @@ import javax.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
-public class HeaderPreAuthFederationFilterTest extends org.junit.Assert {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
+public class HeaderPreAuthFederationFilterTest {
   @Test
   public void testDefaultValidator() throws ServletException {
     HeaderPreAuthFederationFilter hpaff = new HeaderPreAuthFederationFilter();
@@ -122,12 +125,10 @@ public class HeaderPreAuthFederationFilterTest extends org.junit.Assert {
 
   }
 
-
   public static class DummyValidator implements PreAuthValidator {
     static final String NAME = "DummyValidator";
 
     public DummyValidator() {
-
     }
 
     @Override

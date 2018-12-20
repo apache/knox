@@ -25,14 +25,16 @@ import org.junit.Test;
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 
-public class IPValidatorTest extends org.junit.Assert {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
+public class IPValidatorTest {
   @Test
   public void testName() {
     IPValidator ipv = new IPValidator();
     assertEquals(ipv.getName(), IPValidator.IP_VALIDATION_METHOD_VALUE);
   }
-
 
   @Test
   public void testIPAddressPositive() throws PreAuthValidationException {
@@ -63,6 +65,4 @@ public class IPValidatorTest extends org.junit.Assert {
 
     assertFalse(ipv.validate(request, filterConfig));
   }
-
-
 }

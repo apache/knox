@@ -33,11 +33,14 @@ import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 /**
  * Some unit tests for the DefaultTokenAuthorityService.
  */
-public class DefaultTokenAuthorityServiceTest extends org.junit.Assert {
-
+public class DefaultTokenAuthorityServiceTest {
   @Test
   public void testTokenCreation() throws Exception {
     Principal principal = EasyMock.createNiceMock(Principal.class);

@@ -24,7 +24,10 @@ import org.junit.Test;
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 
-public class DefaultValidatorTest extends org.junit.Assert {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+public class DefaultValidatorTest {
   @Test
   public void testDefault() throws Exception {
     final FilterConfig filterConfig = EasyMock.createMock(FilterConfig.class);

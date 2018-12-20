@@ -19,10 +19,13 @@ package org.apache.knox.gateway.util;
 
 import org.junit.Test;
 
-public class IpAddressValidatorTest extends org.junit.Assert {
-  String test = "127.0.0.1,193.*,192.168.1.*,0:0:0:0:0:0:0:1,0:0:0:0:0:0:*";
-  String testWeirdConfig = ",127.0.0.1,,193.*,192.168.1.*,29*";
-  String testNullConfig;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+public class IpAddressValidatorTest {
+  private static final String test = "127.0.0.1,193.*,192.168.1.*,0:0:0:0:0:0:0:1,0:0:0:0:0:0:*";
+  private static final String testWeirdConfig = ",127.0.0.1,,193.*,192.168.1.*,29*";
+  private static final String testNullConfig = null;
 
   @Test
   public void testExplicitIpAddress() throws Exception {
@@ -72,5 +75,4 @@ public class IpAddressValidatorTest extends org.junit.Assert {
 
     assertTrue("Should have validated 293.168.1.1", ipv.validateIpAddress("293.168.1.1"));
   }
-
 }

@@ -18,21 +18,24 @@
 package org.apache.knox.gateway.util;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.Test;
 
 
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
 
-public class JsonUtilsTest extends org.junit.Assert {
-  String expiresIn = "\"expires_in\":\"1364487943100\"";
-  String tokenType = "\"token_type\":\"Bearer\"";
-  String accessToken = "\"access_token\":\"ksdfh3489tyiodhfjk\"";
-  String test = '{' + expiresIn + "," + tokenType + "," + accessToken + '}';
+public class JsonUtilsTest {
+  private String expiresIn = "\"expires_in\":\"1364487943100\"";
+  private String tokenType = "\"token_type\":\"Bearer\"";
+  private String accessToken = "\"access_token\":\"ksdfh3489tyiodhfjk\"";
+  private String test = '{' + expiresIn + "," + tokenType + "," + accessToken + '}';
 
   @Test
-  public void testRenderAsJson() throws Exception {
-    HashMap map = new HashMap();
+  public void testRenderAsJson() {
+    Map<String, Object> map = new HashMap<>();
     map.put("access_token", "ksdfh3489tyiodhfjk");
     map.put("token_type", "Bearer");
     map.put( "expires_in", "1364487943100" );
@@ -45,11 +48,10 @@ public class JsonUtilsTest extends org.junit.Assert {
   }
 
   @Test
-  public void testGetMapFromString() throws Exception {
+  public void testGetMapFromString() {
     HashMap map = (HashMap) JsonUtils.getMapFromJsonString(test);
     assertEquals("ksdfh3489tyiodhfjk", map.get("access_token"));
     assertEquals("Bearer", map.get("token_type"));
     assertEquals("1364487943100", map.get("expires_in"));
   }
-
 }
