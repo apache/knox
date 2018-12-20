@@ -1,12 +1,14 @@
 {
-  "compileOnSave": false,
   "compilerOptions": {
+    "baseUrl": "admin-ui",
     "declaration": false,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "module": "commonjs",
+    "lib": ["es2017", "dom"],
+    "mapRoot": "./",
+    "module": "es6",
     "moduleResolution": "node",
-    "outDir": "../dist/out-tsc-e2e",
+    "outDir": "../dist/out-tsc",
     "sourceMap": true,
     "target": "es5",
     "typeRoots": [
