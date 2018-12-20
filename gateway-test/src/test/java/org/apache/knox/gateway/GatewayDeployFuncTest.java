@@ -27,7 +27,6 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.category.ReleaseTest;
 import org.apache.http.HttpStatus;
-import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -53,8 +52,8 @@ import static org.apache.knox.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
-import static org.junit.Assert.assertThat;
 
 @Category(ReleaseTest.class)
 public class GatewayDeployFuncTest {
@@ -109,7 +108,7 @@ public class GatewayDeployFuncTest {
       e.printStackTrace(); // I18N not required.
     }
     gateway = GatewayServer.startGateway( testConfig, srvcs );
-    MatcherAssert.assertThat( "Failed to start gateway.", gateway, notNullValue() );
+    assertThat( "Failed to start gateway.", gateway, notNullValue() );
 
     LOG.info( "Gateway port = " + gateway.getAddresses()[ 0 ].getPort() );
 

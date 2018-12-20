@@ -21,8 +21,8 @@ import java.net.URL;
 import org.apache.knox.test.TestUtils;
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 
 public class TopologyValidatorTest {
 
@@ -42,7 +42,5 @@ public class TopologyValidatorTest {
     url = TestUtils.getResourceUrl( TopologyValidatorTest.class, "topology-valid-with-name.xml" );
     validator = new TopologyValidator( url );
     assertThat( validator.getErrorString(), validator.validateTopology(), is( true ) );
-
   }
-
 }

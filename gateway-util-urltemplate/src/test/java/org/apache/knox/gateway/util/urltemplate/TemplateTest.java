@@ -27,8 +27,8 @@ import java.net.URISyntaxException;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNot.not;
-import static org.junit.Assert.assertThat;
 
 @Category( { UnitTests.class, FastTests.class } )
 public class TemplateTest {

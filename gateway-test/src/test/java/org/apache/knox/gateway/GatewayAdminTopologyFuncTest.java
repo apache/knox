@@ -51,7 +51,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.knox.test.TestUtils;
 import org.apache.http.HttpStatus;
-import org.hamcrest.MatcherAssert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -70,12 +69,12 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.xml.HasXPath.hasXPath;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 public class GatewayAdminTopologyFuncTest {
@@ -140,7 +139,7 @@ public class GatewayAdminTopologyFuncTest {
       e.printStackTrace(); // I18N not required.
     }
     gateway = GatewayServer.startGateway( testConfig, srvcs );
-    MatcherAssert.assertThat( "Failed to start gateway.", gateway, notNullValue() );
+    assertThat( "Failed to start gateway.", gateway, notNullValue() );
 
     LOG.info( "Gateway port = " + gateway.getAddresses()[ 0 ].getPort() );
 

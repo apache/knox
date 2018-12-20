@@ -33,7 +33,6 @@ import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.mock.MockServer;
 import org.apache.http.HttpStatus;
-import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -46,11 +45,11 @@ import static org.apache.knox.test.TestUtils.LOG_ENTER;
 import static org.apache.knox.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayWithSize;
 import static org.hamcrest.Matchers.hasItemInArray;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
-import static org.junit.Assert.assertThat;
 import static org.xmlmatchers.transform.XmlConverters.the;
 import static org.xmlmatchers.xpath.HasXPath.hasXPath;
 import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
@@ -140,7 +139,7 @@ public class GatewayAppFuncTest {
     topos = services.getService(GatewayServices.TOPOLOGY_SERVICE);
 
     gateway = GatewayServer.startGateway( config, services );
-    MatcherAssert.assertThat( "Failed to start gateway.", gateway, notNullValue() );
+    assertThat( "Failed to start gateway.", gateway, notNullValue() );
 
     gatewayPort = gateway.getAddresses()[0].getPort();
     gatewayUrl = "http://localhost:" + gatewayPort + "/" + config.getGatewayPath();

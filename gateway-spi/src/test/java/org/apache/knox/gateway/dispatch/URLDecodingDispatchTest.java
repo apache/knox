@@ -24,7 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Test NoURLEncodingDispatch dispatch.
@@ -32,7 +32,6 @@ import static org.junit.Assert.assertThat;
  * @since 1.1.0
  */
 public class URLDecodingDispatchTest {
-
   HttpServletRequest request;
   Dispatch dispatch = new URLDecodingDispatch();
 
@@ -59,5 +58,4 @@ public class URLDecodingDispatchTest {
     assertThat(uri.toASCIIString(),
         is("https://localhost:8443/gateway/sandbox/datanode/datanode.html?host=http://localhost:9864"));
   }
-
 }

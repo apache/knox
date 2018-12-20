@@ -57,7 +57,6 @@ import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
-import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -96,10 +95,10 @@ import static org.hamcrest.CoreMatchers.either;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.startsWith;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.text.IsEmptyString.isEmptyString;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.xmlmatchers.XmlMatchers.isEquivalentTo;
 import static org.xmlmatchers.transform.XmlConverters.the;
@@ -359,13 +358,13 @@ public class GatewayBasicFuncTest {
     //System.out.println( location );
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );
     if( driver.isUseGateway() ) {
-      MatcherAssert.assertThat( location, anyOf(
+      assertThat( location, anyOf(
           startsWith( "http://" + gatewayHostName + ":" + gatewayAddress.getPort() + "/" ),
           startsWith( "http://" + gatewayAddrName + ":" + gatewayAddress.getPort() + "/" ) ) );
-      MatcherAssert.assertThat( location, containsString( "?_=" ) );
+      assertThat( location, containsString( "?_=" ) );
     }
-    MatcherAssert.assertThat(location, not(containsString("host=")));
-    MatcherAssert.assertThat(location, not(containsString("port=")));
+    assertThat(location, not(containsString("host=")));
+    assertThat(location, not(containsString("port=")));
     LOG_EXIT();
   }
 
@@ -400,7 +399,7 @@ public class GatewayBasicFuncTest {
     //System.out.println( location );
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );
     if( driver.isUseGateway() ) {
-      MatcherAssert.assertThat( location, containsString("/dir/file%E3%83%AC%E3%83%9D%E3%83%BC") );
+      assertThat( location, containsString("/dir/file%E3%83%AC%E3%83%9D%E3%83%BC") );
     }
     LOG_EXIT();
   }
@@ -645,13 +644,13 @@ public class GatewayBasicFuncTest {
     String location = response.getHeader( "Location" );
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );
     if( driver.isUseGateway() ) {
-      MatcherAssert.assertThat( location, anyOf(
+      assertThat( location, anyOf(
           startsWith( "http://" + gatewayHostName + ":" + gatewayAddress.getPort() + "/" ),
           startsWith( "http://" + gatewayAddrName + ":" + gatewayAddress.getPort() + "/" ) ) );
-      MatcherAssert.assertThat( location, containsString( "?_=" ) );
+      assertThat( location, containsString( "?_=" ) );
     }
-    MatcherAssert.assertThat( location, not( containsString( "host=" ) ) );
-    MatcherAssert.assertThat( location, not( containsString( "port=" ) ) );
+    assertThat( location, not( containsString( "host=" ) ) );
+    assertThat( location, not( containsString( "port=" ) ) );
     response = given()
         //.log().all()
         .auth().preemptive().basic( username, password )
@@ -665,7 +664,7 @@ public class GatewayBasicFuncTest {
     location = response.getHeader( "Location" );
     log.debug( "Created location: " + location );
     if( driver.isUseGateway() ) {
-      MatcherAssert.assertThat( location, anyOf(
+      assertThat( location, anyOf(
           startsWith( "http://" + gatewayHostName + ":" + gatewayAddress.getPort() + "/" ),
           startsWith( "http://" + gatewayAddrName + ":" + gatewayAddress.getPort() + "/" ) ) );
     }
@@ -1048,7 +1047,7 @@ public class GatewayBasicFuncTest {
       }
     }
     //System.out.println( "Status is " + status + " after " + ((System.currentTimeMillis()-start)/1000) + " seconds." );
-    MatcherAssert.assertThat( status, is( success ) );
+    assertThat( status, is( success ) );
 
     if( CLEANUP_TEST ) {
       // Cleanup anything that might have been leftover because the test failed previously.
@@ -1484,8 +1483,7 @@ public class GatewayBasicFuncTest {
     .contentType( ContentType.XML )
     .when().get( driver.getUrl( "WEBHBASE" ) );
 
-    MatcherAssert
-        .assertThat(
+    assertThat(
             the( response.getBody().asString() ),
             isEquivalentTo( the( driver.getResourceString( resourceName + ".xml" ) ) ) );
     driver.assertComplete();
@@ -1509,8 +1507,7 @@ public class GatewayBasicFuncTest {
     .contentType( ContentType.JSON )
     .when().get( driver.getUrl( "WEBHBASE" ) );
 
-    MatcherAssert
-    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json") ) );
+    assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json") ) );
     driver.assertComplete();
 
     driver.getMock( "WEBHBASE" )
@@ -1634,8 +1631,7 @@ public class GatewayBasicFuncTest {
     .contentType( ContentType.XML )
     .when().get( driver.getUrl( "WEBHBASE" ) + path );
 
-    MatcherAssert
-        .assertThat(
+    assertThat(
             the(response.getBody().asString()),
             isEquivalentTo(the(driver.getResourceString(resourceName + ".xml"))));
     driver.assertComplete();
@@ -1659,8 +1655,7 @@ public class GatewayBasicFuncTest {
     .contentType( ContentType.JSON )
     .when().get( driver.getUrl( "WEBHBASE" ) + path );
 
-    MatcherAssert
-    .assertThat(response.getBody().asString(), sameJSONAs(driver.getResourceString(resourceName + ".json")));
+    assertThat(response.getBody().asString(), sameJSONAs(driver.getResourceString(resourceName + ".json")));
     driver.assertComplete();
 
     driver.getMock( "WEBHBASE" )
@@ -1922,8 +1917,7 @@ public class GatewayBasicFuncTest {
     .contentType( ContentType.XML )
     .when().get( driver.getUrl( "WEBHBASE" ) + allRowsPath );
 
-    MatcherAssert
-    .assertThat(
+    assertThat(
         the(response.getBody().asString()),
         isEquivalentTo(the(driver.getResourceString(resourceName + ".xml"))));
     driver.assertComplete();
@@ -1947,8 +1941,7 @@ public class GatewayBasicFuncTest {
     .contentType( ContentType.XML )
     .when().get( driver.getUrl( "WEBHBASE" ) + rowsStartsWithPath );
 
-    MatcherAssert
-    .assertThat(
+    assertThat(
         the(response.getBody().asString()),
         isEquivalentTo(the(driver.getResourceString(resourceName + ".xml"))));
     driver.assertComplete();
@@ -1972,8 +1965,7 @@ public class GatewayBasicFuncTest {
     .contentType( ContentType.JSON )
     .when().get( driver.getUrl( "WEBHBASE" ) + rowsWithKeyPath );
 
-    MatcherAssert
-    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json") ) );
+    assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json") ) );
     driver.assertComplete();
 
     driver.getMock( "WEBHBASE" )
@@ -1995,8 +1987,7 @@ public class GatewayBasicFuncTest {
     .contentType( ContentType.JSON )
     .when().get( driver.getUrl( "WEBHBASE" ) + rowsWithKeyAndColumnPath );
 
-    MatcherAssert
-    .assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json") ) );
+    assertThat( response.getBody().asString(), sameJSONAs( driver.getResourceString( resourceName + ".json") ) );
     driver.assertComplete();
     LOG_EXIT();
   }
@@ -2052,8 +2043,7 @@ public class GatewayBasicFuncTest {
     .contentType( ContentType.XML )
     .when().get( driver.getUrl( "WEBHBASE" ) + scannerPath + "/" + scannerId );
 
-    MatcherAssert
-    .assertThat(
+    assertThat(
         the(response.getBody().asString()),
         isEquivalentTo(the(driver.getResourceString(tableDataResourceName + ".xml"))));
     driver.assertComplete();
@@ -2450,12 +2440,11 @@ public class GatewayBasicFuncTest {
 
     switch( contentType ) {
     case JSON:
-      MatcherAssert.assertThat( response.getBody().asString(),
+      assertThat( response.getBody().asString(),
           sameJSONAs( driver.getResourceString( resource ) ) );
       break;
     case XML:
-      MatcherAssert
-      .assertThat( the( response.getBody().asString() ),
+      assertThat( the( response.getBody().asString() ),
           isEquivalentTo( the( driver.getResourceString( resource ) ) ) );
       break;
     default:
@@ -2807,12 +2796,11 @@ public class GatewayBasicFuncTest {
     if ( contentMatchers == null || contentMatchers.isEmpty() ) {
       switch( contentType ) {
       case JSON:
-        MatcherAssert.assertThat( response.getBody().asString(),
+        assertThat( response.getBody().asString(),
             sameJSONAs( driver.getResourceString( resource ) ) );
         break;
       case XML:
-        MatcherAssert
-        .assertThat( the( response.getBody().asString() ),
+        assertThat( the( response.getBody().asString() ),
             isEquivalentTo(the(driver.getResourceString(resource))) );
         break;
       default:
@@ -3057,7 +3045,7 @@ public class GatewayBasicFuncTest {
         .statusCode(HttpStatus.SC_OK)
         .when().get( gatewayPath );
 
-    MatcherAssert.assertThat(response.getBody().asString(),
+    assertThat(response.getBody().asString(),
         sameJSONAs(driver.getResourceString(resourceName)));
     driver.assertComplete();
     LOG_EXIT();
@@ -3119,12 +3107,11 @@ public class GatewayBasicFuncTest {
 
     switch( contentType ) {
       case JSON:
-        MatcherAssert.assertThat( response.getBody().asString(),
+        assertThat( response.getBody().asString(),
             sameJSONAs( driver.getResourceString( resourceName ) ) );
         break;
       case XML:
-        MatcherAssert
-            .assertThat( the( response.getBody().asString() ),
+        assertThat( the( response.getBody().asString() ),
                 isEquivalentTo( the( driver.getResourceString( resourceName ) ) ) );
         break;
       default:
@@ -3185,12 +3172,11 @@ public class GatewayBasicFuncTest {
 
     switch( contentType ) {
       case JSON:
-        MatcherAssert.assertThat( response.getBody().asString(),
+        assertThat( response.getBody().asString(),
             sameJSONAs( driver.getResourceString( responseResource ) ) );
         break;
       case XML:
-        MatcherAssert
-            .assertThat( the( response.getBody().asString() ),
+        assertThat( the( response.getBody().asString() ),
                 isEquivalentTo( the( driver.getResourceString( responseResource ) ) ) );
         break;
       default:
@@ -3248,10 +3234,10 @@ public class GatewayBasicFuncTest {
         .when().get( gatewayPath );
 
     String link = response.getBody().jsonPath().getString("spouts[0].errorWorkerLogLink");
-    MatcherAssert.assertThat(link, anyOf(
+    assertThat(link, anyOf(
         startsWith("http://" + gatewayHostName + ":" + gatewayAddress.getPort() + "/"),
         startsWith("http://" + gatewayAddrName + ":" + gatewayAddress.getPort() + "/")));
-    MatcherAssert.assertThat( link, containsString("/storm/logviewer") );
+    assertThat( link, containsString("/storm/logviewer") );
 
     driver.assertComplete();
 
@@ -3280,10 +3266,10 @@ public class GatewayBasicFuncTest {
 
 
     link = response.getBody().jsonPath().getString("executorStats[0].workerLogLink");
-    MatcherAssert.assertThat(link, anyOf(
+    assertThat(link, anyOf(
         startsWith("http://" + gatewayHostName + ":" + gatewayAddress.getPort() + "/"),
         startsWith("http://" + gatewayAddrName + ":" + gatewayAddress.getPort() + "/")));
-    MatcherAssert.assertThat( link, containsString("/storm/logviewer") );
+    assertThat( link, containsString("/storm/logviewer") );
 
     driver.assertComplete();
 
@@ -3327,7 +3313,7 @@ public class GatewayBasicFuncTest {
         .contentType( ContentType.JSON.toString() )
         .when().get( gatewayPath );
 
-    MatcherAssert.assertThat(response.getBody().asString(),
+    assertThat(response.getBody().asString(),
         sameJSONAs(driver.getResourceString(resourceName)));
     driver.assertComplete();
   }
@@ -3402,10 +3388,10 @@ public class GatewayBasicFuncTest {
         .when().get( gatewayPath );
 
     String link = response.getBody().jsonPath().getString("spouts[0].errorWorkerLogLink");
-    MatcherAssert.assertThat(link, anyOf(
+    assertThat(link, anyOf(
         startsWith("http://" + gatewayHostName + ":" + gatewayPort + "/"),
         startsWith("http://" + gatewayAddrName + ":" + gatewayPort + "/")));
-    MatcherAssert.assertThat( link, containsString("/storm/logviewer") );
+    assertThat( link, containsString("/storm/logviewer") );
     driver.assertComplete();
     LOG_EXIT();
   }
@@ -3459,9 +3445,9 @@ public class GatewayBasicFuncTest {
         .when().get(gatewayPath);
 
     String link = response.getBody().jsonPath().getString("spouts[0].errorWorkerLogLink");
-    MatcherAssert.assertThat(link, is(
+    assertThat(link, is(
         startsWith(scheme + "://" + host + ":" + port + "/")));
-    MatcherAssert.assertThat( link, containsString("/storm/logviewer") );
+    assertThat( link, containsString("/storm/logviewer") );
 
     driver.assertComplete();
 
@@ -3501,9 +3487,9 @@ public class GatewayBasicFuncTest {
 
 
     link = response.getBody().jsonPath().getString("executorStats[0].workerLogLink");
-    MatcherAssert.assertThat(link, is(
+    assertThat(link, is(
         startsWith(scheme + "://" + host + ":" + port + "/")));
-    MatcherAssert.assertThat( link, containsString("/storm/logviewer") );
+    assertThat( link, containsString("/storm/logviewer") );
     driver.assertComplete();
 
     //Test header rewrite using webhdfs
@@ -3543,11 +3529,11 @@ public class GatewayBasicFuncTest {
     //System.out.println( location );
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );
     if( driver.isUseGateway() ) {
-      MatcherAssert.assertThat( location, is(startsWith(scheme + "://" + host + ":" + port + "/")));
-      MatcherAssert.assertThat( location, containsString( "?_=" ) );
+      assertThat( location, is(startsWith(scheme + "://" + host + ":" + port + "/")));
+      assertThat( location, containsString( "?_=" ) );
     }
-    MatcherAssert.assertThat(location, not(containsString("host=")));
-    MatcherAssert.assertThat(location, not(containsString("port=")));
+    assertThat(location, not(containsString("host=")));
+    assertThat(location, not(containsString("port=")));
     LOG_EXIT();
   }
 

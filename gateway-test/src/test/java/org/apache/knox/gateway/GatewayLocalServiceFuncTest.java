@@ -27,7 +27,6 @@ import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.log.NoOpAppender;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Appender;
-import org.hamcrest.MatcherAssert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -47,7 +46,7 @@ import static org.apache.knox.test.TestUtils.LOG_ENTER;
 import static org.apache.knox.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class GatewayLocalServiceFuncTest {
   private static final Logger LOG = LoggerFactory.getLogger( GatewayTestDriver.class );
@@ -109,7 +108,7 @@ public class GatewayLocalServiceFuncTest {
       e.printStackTrace(); // I18N not required.
     }
     gateway = GatewayServer.startGateway( testConfig, srvcs );
-    MatcherAssert.assertThat( "Failed to start gateway.", gateway, notNullValue() );
+    assertThat( "Failed to start gateway.", gateway, notNullValue() );
 
     LOG.info( "Gateway port = " + gateway.getAddresses()[ 0 ].getPort() );
 

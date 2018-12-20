@@ -18,7 +18,7 @@
 package org.apache.knox.gateway.dispatch;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.URI;
 import javax.servlet.http.HttpServletRequest;

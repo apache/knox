@@ -27,7 +27,6 @@ import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.Version;
 import org.apache.knox.gateway.topology.builder.TopologyBuilder;
 import org.apache.knox.test.TestUtils;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.SAXException;
@@ -39,25 +38,20 @@ import java.net.URL;
 import java.util.Collection;
 
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 
 public class TopologyRulesModuleTest {
-
   private static DigesterLoader loader;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     loader = newLoader( new KnoxFormatXmlTopologyRules(), new AmbariFormatXmlTopologyRules() );
-  }
-
-  @After
-  public void tearDown() throws Exception {
   }
 
   @Test
@@ -284,5 +278,4 @@ public class TopologyRulesModuleTest {
     assertThat( dispatch.getHttpClientFactory(), is("testHttpClientFactory") );
     assertThat( dispatch.getUseTwoWaySsl(), is(true) );
   }
-
 }

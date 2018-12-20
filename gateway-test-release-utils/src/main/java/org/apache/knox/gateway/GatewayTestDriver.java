@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway;
 
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 
 import java.io.File;
@@ -46,7 +46,6 @@ import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.test.mock.MockServer;
 import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -164,7 +163,7 @@ public class GatewayTestDriver {
 
   public void start() throws Exception {
     gateway = GatewayServer.startGateway( config, srvcs );
-    MatcherAssert.assertThat( "Failed to start gateway.", gateway, CoreMatchers.notNullValue() );
+    assertThat( "Failed to start gateway.", gateway, CoreMatchers.notNullValue() );
     log.info( "Gateway port = " + gateway.getAddresses()[ 0 ].getPort() );
   }
 
@@ -351,6 +350,4 @@ public class GatewayTestDriver {
       service.server.reset();
     }
   }
-
-
 }
