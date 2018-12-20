@@ -105,7 +105,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
       }
       builder.setSSLSocketFactory(new SSLConnectionSocketFactory(sslcontext));
     }
-    if ( "true".equals(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED)) ) {
+    if (Boolean.parseBoolean(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
       CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
       credentialsProvider.setCredentials(AuthScope.ANY, new UseJaasCredentials());
 

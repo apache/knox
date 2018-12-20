@@ -163,7 +163,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
       List<String> principalParamNames = getImpersonationParamNames();
       params = scrubOfExistingPrincipalParams(params, principalParamNames);
 
-      if ("true".equals(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
+      if (Boolean.parseBoolean(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
         params.put(DOAS_PRINCIPAL_PARAM, al);
       } else {
         params.put(PRINCIPAL_PARAM, al);

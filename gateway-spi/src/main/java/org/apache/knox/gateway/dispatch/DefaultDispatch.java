@@ -121,7 +121,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
 
     try {
       auditor.audit( Action.DISPATCH, outboundRequest.getURI().toString(), ResourceType.URI, ActionOutcome.UNAVAILABLE, RES.requestMethod( outboundRequest.getMethod() ) );
-      if( !"true".equals( System.getProperty( GatewayConfig.HADOOP_KERBEROS_SECURED ) ) ) {
+      if( !Boolean.parseBoolean(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
         // Hadoop cluster not Kerberos enabled
         addCredentialsToRequest( outboundRequest );
       }

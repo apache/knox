@@ -86,7 +86,7 @@ public class TokenResource {
     }
 
     String clientCert = context.getInitParameter(TOKEN_CLIENT_CERT_REQUIRED);
-    clientCertRequired = "true".equals(clientCert);
+    clientCertRequired = Boolean.parseBoolean(clientCert);
 
     String principals = context.getInitParameter(TOKEN_ALLOWED_PRINCIPALS);
     if (principals != null) {

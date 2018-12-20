@@ -85,7 +85,7 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
       Map<String, String> providerParams = provider.getParams();
       // CORS support
       String corsEnabled = map.get(CORS_ENABLED);
-      if (corsEnabled != null && "true".equals(corsEnabled)) {
+      if (Boolean.parseBoolean(corsEnabled)) {
         provisionConfig(resource, providerParams, params, "cors.");
         resource.addFilter().name(getName() + CORS_SUFFIX)
                             .role(getRole())
@@ -96,7 +96,7 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
       // CRSF
       params = new ArrayList<>();
       String csrfEnabled = map.get(CSRF_ENABLED);
-      if (csrfEnabled != null && "true".equals(csrfEnabled)) {
+      if (Boolean.parseBoolean(csrfEnabled)) {
         provisionConfig(resource, providerParams, params, "csrf.");
         resource.addFilter().name(getName() + CSRF_SUFFIX)
                             .role(getRole())
@@ -107,7 +107,7 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
       // X-Frame-Options - clickjacking protection
       params = new ArrayList<>();
       String xframeOptionsEnabled = map.get(XFRAME_OPTIONS_ENABLED);
-      if (xframeOptionsEnabled != null && "true".equals(xframeOptionsEnabled)) {
+      if (Boolean.parseBoolean(xframeOptionsEnabled)) {
         provisionConfig(resource, providerParams, params, "xframe.");
         resource.addFilter().name(getName() + XFRAME_OPTIONS_SUFFIX)
                             .role(getRole())
@@ -118,7 +118,7 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
       // X-Content-Type-Options - MIME type sniffing protection
       params = new ArrayList<>();
       String xContentTypeOptionsEnabled = map.get(XCONTENT_TYPE_OPTIONS_ENABLED);
-      if (xContentTypeOptionsEnabled != null && "true".equals(xContentTypeOptionsEnabled)) {
+      if (Boolean.parseBoolean(xContentTypeOptionsEnabled)) {
         provisionConfig(resource, providerParams, params, "xcontent-type.");
         resource.addFilter().name(getName() + XCONTENT_TYPE_OPTIONS_SUFFIX)
                             .role(getRole())
@@ -129,7 +129,7 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
       // X-XSS-Protection - browser xss protection
       params = new ArrayList<>();
       String xssProtectionEnabled = map.get(XSS_PROTECTION_ENABLED);
-      if (xssProtectionEnabled != null && "true".equals(xssProtectionEnabled)) {
+      if (Boolean.parseBoolean(xssProtectionEnabled)) {
         provisionConfig(resource, providerParams, params, "xss.");
         resource.addFilter().name(getName() + XSS_PROTECTION_SUFFIX)
                             .role(getRole())
@@ -140,7 +140,7 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
       // HTTP Strict-Transport-Security
       params = new ArrayList<>();
       String strictTranportEnabled = map.get(STRICT_TRANSPORT_ENABLED);
-      if (strictTranportEnabled != null && "true".equals(strictTranportEnabled)) {
+      if (Boolean.parseBoolean(strictTranportEnabled)) {
         provisionConfig(resource, providerParams, params, "strict.");
         resource.addFilter().name(getName() + STRICT_TRANSPORT_SUFFIX)
                             .role(getRole())

@@ -442,15 +442,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isSSLEnabled() {
-    String enabled = get( SSL_ENABLED, "true" );
-
-    return "true".equals(enabled);
+    return Boolean.parseBoolean(get( SSL_ENABLED, "true" ));
   }
 
   @Override
   public boolean isHadoopKerberosSecured() {
-    String hadoopKerberosSecured = get( HADOOP_KERBEROS_SECURED, "false" );
-    return "true".equals(hadoopKerberosSecured);
+    return Boolean.parseBoolean(get( HADOOP_KERBEROS_SECURED, "false" ));
   }
 
   @Override
@@ -460,8 +457,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isKerberosDebugEnabled() {
-    String kerberosDebugEnabled = get( KRB5_DEBUG, "false" );
-    return "true".equals(kerberosDebugEnabled);
+    return Boolean.parseBoolean(get( KRB5_DEBUG, "false" ));
   }
 
   @Override
@@ -522,14 +518,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isClientAuthNeeded() {
-    String clientAuthNeeded = get( CLIENT_AUTH_NEEDED, "false" );
-    return "true".equals(clientAuthNeeded);
+    return Boolean.parseBoolean(get( CLIENT_AUTH_NEEDED, "false" ));
   }
 
   @Override
   public boolean isClientAuthWanted() {
-    String clientAuthWanted = get( CLIENT_AUTH_WANTED, "false" );
-    return "true".equals(clientAuthWanted);
+    return Boolean.parseBoolean(get( CLIENT_AUTH_WANTED, "false" ));
   }
 
   @Override
@@ -539,8 +533,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public boolean getTrustAllCerts() {
-    String trustAllCerts = get( TRUST_ALL_CERTS, "false" );
-    return "true".equals(trustAllCerts);
+    return Boolean.parseBoolean(get( TRUST_ALL_CERTS, "false" ));
   }
 
   @Override
@@ -555,8 +548,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isXForwardedEnabled() {
-    String xForwardedEnabled = get( XFORWARDED_ENABLED, "true" );
-    return "true".equals(xForwardedEnabled);
+    return Boolean.parseBoolean(get( XFORWARDED_ENABLED, "true" ));
   }
 
   @Override
@@ -679,20 +671,17 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isMetricsEnabled() {
-    String metricsEnabled = get( METRICS_ENABLED, "false" );
-    return "true".equals(metricsEnabled);
+    return Boolean.parseBoolean(get( METRICS_ENABLED, "false" ));
   }
 
   @Override
   public boolean isJmxMetricsReportingEnabled() {
-    String enabled = get( JMX_METRICS_REPORTING_ENABLED, "false" );
-    return "true".equals(enabled);
+    return Boolean.parseBoolean(get( JMX_METRICS_REPORTING_ENABLED, "false" ));
   }
 
   @Override
   public boolean isGraphiteMetricsReportingEnabled() {
-    String enabled = get( GRAPHITE_METRICS_REPORTING_ENABLED, "false" );
-    return "true".equals(enabled);
+    return Boolean.parseBoolean(get( GRAPHITE_METRICS_REPORTING_ENABLED, "false" ));
   }
 
   @Override
