@@ -121,7 +121,6 @@ public class KnoxCliLdapFuncTestNegative {
   }
 
   private static XMLTag createBadTopology(){
-    // System.out.println( "GATEWAY=" + xml.toString() );
     return XMLDoc.newDocument(true)
         .addRoot("topology")
         .addTag("gateway")

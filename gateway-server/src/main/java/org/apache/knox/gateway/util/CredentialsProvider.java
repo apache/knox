@@ -40,11 +40,9 @@ public class CredentialsProvider implements CallbackHandler {
       if( callback instanceof NameCallback ) {
         String username = credentials.getUserPrincipal().getName();
         ((NameCallback)callback).setName( username );
-        //System.out.println( "Provided username: " + username );
       } else if ( callback instanceof PasswordCallback ) {
         String password = credentials.getPassword();
         ((PasswordCallback)callback).setPassword( password.toCharArray() );
-        //System.out.println( "Provided password: " + password );
       }
     }
   }

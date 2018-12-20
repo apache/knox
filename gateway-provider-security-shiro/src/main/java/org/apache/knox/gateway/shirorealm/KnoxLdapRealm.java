@@ -312,10 +312,8 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
         } while (cookie != null);
       } catch (SizeLimitExceededException e) {
         LOG.sizeLimitExceededOnlyRetrieved(numResults);
-//        System.out.println("Only retrieved first " + numResults + " groups due to SizeLimitExceededException.");
       } catch(IOException e) {
         LOG.unableToSetupPagedResults();
-//        System.out.println("Unabled to setup paged results");
       }
 
       // save role names and group names in session so that they can be easily looked up outside of this object

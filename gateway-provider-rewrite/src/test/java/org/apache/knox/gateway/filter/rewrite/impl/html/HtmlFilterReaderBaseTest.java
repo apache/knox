@@ -171,7 +171,6 @@ public class HtmlFilterReaderBaseTest {
     HtmlFilterReaderBase filterReader = new NoopXmlFilterReader( inputReader );
     String outputHtml = new String( IOUtils.toCharArray( filterReader ) );
 
-    //System.out.println( outputHtml );
     SimpleNamespaceContext ns = new SimpleNamespaceContext();
     ns.bind( "ns", "http://hortonworks.com/xml/ns" );
     assertThat( the( outputHtml ), hasXPath( "/ns:root", ns ) );
@@ -183,7 +182,6 @@ public class HtmlFilterReaderBaseTest {
     StringReader inputReader = new StringReader( inputXml );
     HtmlFilterReaderBase filterReader = new NoopXmlFilterReader( inputReader );
     String outputHtml = new String( IOUtils.toCharArray( filterReader ) );
-    //System.out.println( outputHtml );
     assertThat( the( outputHtml ), hasXPath( "/root/text()", equalTo( "text" ) ) );
   }
 
@@ -193,7 +191,6 @@ public class HtmlFilterReaderBaseTest {
     StringReader inputReader = new StringReader( inputXml );
     HtmlFilterReaderBase filterReader = new NoopXmlFilterReader( inputReader );
     String outputHtml = new String( IOUtils.toCharArray( filterReader ) );
-    //System.out.println( outputHtml );
     assertThat( the( outputHtml ), hasXPath( "/root/@name", equalTo( "value" ) ) );
   }
 
@@ -223,7 +220,6 @@ public class HtmlFilterReaderBaseTest {
     StringReader inputReader = new StringReader( inputXml );
     HtmlFilterReaderBase filterReader = new MapXmlFilterReader( inputReader, map );
     String outputHtml = new String( IOUtils.toCharArray( filterReader ) );
-    //System.out.println( outputHtml );
     assertThat( the( outputHtml ), hasXPath( "/root/text()", equalTo( "output-text" ) ) );
   }
 
@@ -235,7 +231,6 @@ public class HtmlFilterReaderBaseTest {
     StringReader inputReader = new StringReader( inputXml );
     HtmlFilterReaderBase filterReader = new MapXmlFilterReader( inputReader, map );
     String outputHtml = new String( IOUtils.toCharArray( filterReader ) );
-    //System.out.println( outputHtml );
     assertThat( the( outputHtml ), hasXPath( "/root/@attribute", equalTo( "output-text" ) ) );
   }
 
@@ -269,13 +264,10 @@ public class HtmlFilterReaderBaseTest {
             "  </ns2:child2>\n" +
             "  root-input3\n" +
             "</ns1:root>";
-    //System.out.println( inputXml );
 
     StringReader inputReader = new StringReader( inputXml );
     HtmlFilterReaderBase filterReader = new MapXmlFilterReader( inputReader, map );
     String outputXml = new String( IOUtils.toCharArray( filterReader ) );
-    //System.out.println( outputXml );
-    //System.out.flush();
 
     SimpleNamespaceContext ns = new SimpleNamespaceContext();
     ns.bind( "n1", "http://hortonworks.com/xml/ns1" );

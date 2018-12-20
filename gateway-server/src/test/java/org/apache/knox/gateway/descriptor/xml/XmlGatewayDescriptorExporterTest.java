@@ -97,7 +97,6 @@ public class XmlGatewayDescriptorExporterTest {
     CharArrayWriter writer = new CharArrayWriter();
     GatewayDescriptorFactory.store( descriptor, "xml", writer );
     String xml = writer.toString();
-    //System.out.println( xml );
 
     InputSource source = new InputSource( new StringReader( xml ) );
     Document doc = XmlUtils.readXml( source );

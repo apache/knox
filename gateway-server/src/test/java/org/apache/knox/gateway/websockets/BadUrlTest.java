@@ -265,7 +265,6 @@ public class BadUrlTest {
    * Intentionally add bad URL
    */
   private static XMLTag createKnoxTopology(final String backend) {
-    // System.out.println( "GATEWAY=" + xml.toString() );
     return XMLDoc.newDocument(true).addRoot("topology").addTag("service")
         .addTag("role").addText("WEBSOCKET").addTag("url").addText(backend)
         .gotoParent().gotoRoot();

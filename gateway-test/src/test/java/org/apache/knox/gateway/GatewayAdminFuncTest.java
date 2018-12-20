@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
 import java.io.File;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.HashMap;
@@ -108,7 +107,6 @@ public class GatewayAdminFuncTest {
   }
 
   private static XMLTag createTopology() {
-    // System.out.println( "GATEWAY=" + xml.toString() );
     return XMLDoc.newDocument( true )
         .addRoot( "topology" )
         .addTag( "gateway" )
@@ -140,12 +138,6 @@ public class GatewayAdminFuncTest {
         .addTag( "service" )
         .addTag( "role" ).addText( "KNOX" )
         .gotoRoot();
-  }
-
-  //@Test
-  public void waitForManualTesting() throws IOException {
-    System.out.println( clusterUrl );
-    System.in.read();
   }
 
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )

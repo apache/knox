@@ -75,11 +75,8 @@ public class Launcher {
     command.run();
   }
 
-  private static URL findLauncherJar() throws IOException {
-    URL jarUrl;
-    jarUrl = Launcher.class.getProtectionDomain().getCodeSource().getLocation();
-    //System.out.println( "main.lib=" + url );
-    return jarUrl;
+  private static URL findLauncherJar() {
+    return Launcher.class.getProtectionDomain().getCodeSource().getLocation();
   }
 
   static String calcLauncherName( URL launcherJarUrl ) {
@@ -105,7 +102,6 @@ public class Launcher {
     } else {
       dir = libFile.getParentFile();
     }
-    //System.out.println( "main.dir=" + dir.getAbsolutePath() );
     return dir;
   }
 

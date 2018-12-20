@@ -128,14 +128,10 @@ class Command {
         }
       }
     }
-//    for( URL url : urls ) {
-//      System.out.println( url );
-//    }
     return urls;
   }
 
   private static class WildcardFilenameFilter implements FilenameFilter {
-
     private static String SAFE = new String( new char[]{ (char)0 } );
 
     private Pattern pattern;
@@ -152,5 +148,4 @@ class Command {
       return pattern.matcher( name ).matches();
     }
   }
-
 }

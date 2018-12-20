@@ -82,7 +82,6 @@ public class HostmapFunctionProcessor
         }
         result.add( parameter );
       }
-//    System.out.println( "HOSTMAP: " + parameter + "->" + value );
     }
     return result;
   }

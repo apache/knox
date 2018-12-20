@@ -145,7 +145,6 @@ public class AmbariConfigurationMonitorTest {
 
         final Map<String, Map<String, Integer>> changeNotifications = new HashMap<>();
         monitor.addListener((src, cname) -> {
-//            System.out.println("Cluster config changed: " + cname + " @ " + src);
             // Record the notification
             Integer notificationCount  = changeNotifications.computeIfAbsent(src, s -> new HashMap<>())
                                                             .computeIfAbsent(cname, c -> 0);
@@ -156,16 +155,12 @@ public class AmbariConfigurationMonitorTest {
             if (changeIndex < updateConfigurations.get(src).get(cname).size()) {
                 List<AmbariCluster.ServiceConfiguration> changes = updateConfigurations.get(src).get(cname).get(changeIndex);
 
-//                System.out.println("Applying config update " + changeIndex + " to " + cname + " @ " + src + " ...");
                 for (AmbariCluster.ServiceConfiguration change : changes) {
                     monitor.updateConfigState(src, cname, change.getType(), change.getVersion());
-//                    System.out.println("    Updated " + change.getType() + " to version " + change.getVersion());
                 }
 
                 // Increment the change index
                 configChangeIndex.get(src).replace(cname, changeIndex + 1);
-
-//                System.out.println("Monitor config updated for " + cname + " @ " + src + " : " + changeIndex );
             }
         });
 

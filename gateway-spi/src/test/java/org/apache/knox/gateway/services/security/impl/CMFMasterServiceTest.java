@@ -30,9 +30,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-/**
-*
-*/
 @Category( { UnitTests.class, FastTests.class } )
 public class CMFMasterServiceTest {
   TestCMFMasterService ms;
@@ -46,11 +43,10 @@ public class CMFMasterServiceTest {
   public void testMasterService() {
     try {
       ms.setupMasterSecret(".", true);
-      //System.out.println("MASTER: " + new String(ms.getMasterSecret()));
       assertEquals("testmastersecret", new String(ms.getMasterSecret()));
       File file = new File("ambari-master");
       assertTrue(file.exists());
-      file.delete();
+      assertTrue(file.delete());
     } catch (ServiceLifecycleException e) {
       e.printStackTrace();
       fail();

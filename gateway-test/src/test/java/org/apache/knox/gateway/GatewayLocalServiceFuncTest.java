@@ -117,7 +117,6 @@ public class GatewayLocalServiceFuncTest {
   }
 
   private static XMLTag createTopology() {
-    // System.out.println( "GATEWAY=" + xml.toString() );
     return XMLDoc.newDocument( true )
         .addRoot( "topology" )
         .addTag( "gateway" )

@@ -151,11 +151,9 @@ public class XmlFilterReaderTest {
     assertNotNull(scopeConfig);
 
     String input = "<root/>";
-    //System.out.println( "INPUT=" + input );
     StringReader inputReader = new StringReader( input );
     XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader, contentConfig );
     String output = new String( IOUtils.toCharArray( filterReader ) );
-    //System.out.println( "OUTPUT=" + output );
     assertThat( the( output ), hasXPath( "/root" ) );
   }
 
@@ -181,7 +179,6 @@ public class XmlFilterReaderTest {
     XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader, null );
     String outputHtml = new String( IOUtils.toCharArray( filterReader ) );
 
-    //System.out.println( outputHtml );
     SimpleNamespaceContext ns = new SimpleNamespaceContext();
     ns.bind( "ns", "http://hortonworks.com/xml/ns" );
     assertThat( the( outputHtml ), hasXPath( "/ns:root", ns ) );
@@ -193,7 +190,6 @@ public class XmlFilterReaderTest {
     StringReader inputReader = new StringReader( inputXml );
     XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader, null );
     String outputXml = new String( IOUtils.toCharArray( filterReader ) );
-    //System.out.println( "OUTPUT=" + outputXml );
     assertThat( the( outputXml ), hasXPath( "/root/text()", equalTo( "text" ) ) );
   }
 
@@ -203,7 +199,6 @@ public class XmlFilterReaderTest {
     StringReader inputReader = new StringReader( inputXml );
     XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader, null );
     String outputXml = new String( IOUtils.toCharArray( filterReader ) );
-    //System.out.println( outputHtml );
     assertThat( the( outputXml ), hasXPath( "/root/@name", equalTo( "value" ) ) );
   }
 
@@ -219,7 +214,6 @@ public class XmlFilterReaderTest {
     StringReader inputReader = new StringReader( inputXml );
     XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader, contentConfig );
     String outputHtml = new String( IOUtils.toCharArray( filterReader ) );
-    //System.out.println( outputHtml );
     assertThat( the( outputHtml ), hasXPath( "/root/text()", equalTo( "text" ) ) );
   }
 
@@ -235,7 +229,6 @@ public class XmlFilterReaderTest {
     StringReader inputReader = new StringReader( inputXml );
     XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader, contentConfig );
     String outputHtml = new String( IOUtils.toCharArray( filterReader ) );
-    //System.out.println( outputHtml );
     assertThat( the( outputHtml ), hasXPath( "/root/@name", equalTo( "value" ) ) );
   }
 
@@ -247,7 +240,6 @@ public class XmlFilterReaderTest {
     StringReader inputReader = new StringReader( inputXml );
     XmlFilterReader filterReader = new MapXmlFilterReader( inputReader, map );
     String outputHtml = new String( IOUtils.toCharArray( filterReader ) );
-    //System.out.println( outputHtml );
     assertThat( the( outputHtml ), hasXPath( "/root/text()", equalTo( "output-text" ) ) );
   }
 
@@ -259,7 +251,6 @@ public class XmlFilterReaderTest {
     StringReader inputReader = new StringReader( inputXml );
     XmlFilterReader filterReader = new MapXmlFilterReader( inputReader, map );
     String outputHtml = new String( IOUtils.toCharArray( filterReader ) );
-    //System.out.println( outputHtml );
     assertThat( the( outputHtml ), hasXPath( "/root/@attribute", equalTo( "output-text" ) ) );
   }
 
@@ -293,13 +284,10 @@ public class XmlFilterReaderTest {
             "  </ns2:child2>\n" +
             "  root-input3\n" +
             "</ns1:root>";
-    //System.out.println( inputXml );
 
     StringReader inputReader = new StringReader( inputXml );
     XmlFilterReader filterReader = new MapXmlFilterReader( inputReader, map );
     String outputXml = new String( IOUtils.toCharArray( filterReader ) );
-    //System.out.println( outputXml );
-    //System.out.flush();
 
     SimpleNamespaceContext ns = new SimpleNamespaceContext();
     ns.bind( "n1", "http://hortonworks.com/xml/ns1" );
@@ -716,20 +704,14 @@ public class XmlFilterReaderTest {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties-elements.xml" );
     String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
-    //System.out.println( "INPUT=" + input );
-
     UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
     UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
     UrlRewriteFilterApplyDescriptor applyConfig = contentConfig.addApply( "/properties/property/value/text()", "test-rule-2" );
     assertNotNull(applyConfig);
 
-    //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
-
     XmlFilterReader filter = new TestXmlFilterReader( new StringReader( input ), contentConfig );
     String output = IOUtils.toString( filter );
-
-    //System.out.println( "OUTPUT=" + output );
 
     assertThat( the( output ), hasXPath( "/properties/property[1]/name/text()", equalTo( "test-name-1" ) ) );
     assertThat( the( output ), hasXPath( "/properties/property[1]/value/text()", equalTo( "text:test-rule-2{test-value-1}" ) ) );
@@ -744,20 +726,14 @@ public class XmlFilterReaderTest {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties-elements.xml" );
     String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
-    //System.out.println( "INPUT=" + input );
-
     UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
     UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
     UrlRewriteFilterApplyDescriptor applyConfig = contentConfig.addApply( "/properties/property/value", "test-rule-2" );
     assertNotNull(applyConfig);
 
-    //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
-
     XmlFilterReader filter = new TestXmlFilterReader( new StringReader( input ), contentConfig );
     String output = IOUtils.toString( filter );
-
-    //System.out.println( "OUTPUT=" + output );
 
     assertThat( the( output ), hasXPath( "/properties/property[1]/name/text()", equalTo( "test-name-1" ) ) );
     assertThat( the( output ), hasXPath( "/properties/property[1]/value/text()", equalTo( "text:test-rule-2{test-value-1}" ) ) );
@@ -772,20 +748,14 @@ public class XmlFilterReaderTest {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties-attributes.xml" );
     String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
-    //System.out.println( "INPUT=" + input );
-
     UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
     UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
     UrlRewriteFilterApplyDescriptor applyConfig = contentConfig.addApply( "/properties/property/@value", "test-rule-2" );
     assertNotNull(applyConfig);
 
-    //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
-
     XmlFilterReader filter = new TestXmlFilterReader( new StringReader( input ), contentConfig );
     String output = IOUtils.toString( filter );
-
-    //System.out.println( "OUTPUT=" + output );
 
     assertThat( the( output ), hasXPath( "/properties/property[1]/@name", equalTo( "test-name-1" ) ) );
     assertThat( the( output ), hasXPath( "/properties/property[1]/@value", equalTo( "attr:test-rule-2{test-value-1}" ) ) );
@@ -800,8 +770,6 @@ public class XmlFilterReaderTest {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties-attributes.xml" );
     String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
-    //System.out.println( "INPUT=" + input );
-
     UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
     UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
@@ -809,12 +777,8 @@ public class XmlFilterReaderTest {
     UrlRewriteFilterApplyDescriptor applyConfig = bufferconfig.addApply( "@value", "test-rule-2" );
     assertNotNull(applyConfig);
 
-    //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
-
     XmlFilterReader filter = new TestXmlFilterReader( new StringReader( input ), contentConfig );
     String output = IOUtils.toString( filter );
-
-    //System.out.println( "OUTPUT=" + output );
 
     assertThat( the( output ), hasXPath( "/properties/property[1]/@name", equalTo( "test-name-1" ) ) );
     assertThat( the( output ), hasXPath( "/properties/property[1]/@value", equalTo( "attr:test-rule-2{test-value-1}" ) ) );
@@ -829,8 +793,6 @@ public class XmlFilterReaderTest {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties-elements.xml" );
     String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
-    //System.out.println( "INPUT=" + input );
-
     UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
     UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
@@ -839,12 +801,8 @@ public class XmlFilterReaderTest {
     UrlRewriteFilterApplyDescriptor applyConfig = detectConfig.addApply( "value", "test-rule-2" );
     assertNotNull(applyConfig);
 
-    //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
-
     XmlFilterReader filter = new TestXmlFilterReader( new StringReader( input ), contentConfig );
     String output = IOUtils.toString( filter );
-
-    //System.out.println( "OUTPUT=" + output );
 
     assertThat( the( output ), hasXPath( "/properties/property[1]/name/text()", equalTo( "test-name-1" ) ) );
     assertThat( the( output ), hasXPath( "/properties/property[1]/value/text()", equalTo( "test-value-1" ) ) );
@@ -859,8 +817,6 @@ public class XmlFilterReaderTest {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties-attributes.xml" );
     String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
-    //System.out.println( "INPUT=" + input );
-
     UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
     UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/xml" );
@@ -869,12 +825,8 @@ public class XmlFilterReaderTest {
     UrlRewriteFilterApplyDescriptor applyConfig = detectConfig.addApply( "@value", "test-rule-2" );
     assertNotNull(applyConfig);
 
-    //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
-
     XmlFilterReader filter = new TestXmlFilterReader( new StringReader( input ), contentConfig );
     String output = IOUtils.toString( filter );
-
-    //System.out.println( "OUTPUT=" + output );
 
     assertThat( the( output ), hasXPath( "/properties/property[1]/@name", equalTo( "test-name-1" ) ) );
     assertThat( the( output ), hasXPath( "/properties/property[1]/@value", equalTo( "test-value-1" ) ) );
@@ -888,14 +840,10 @@ public class XmlFilterReaderTest {
   public void testInvalidConfigShouldThrowException() throws Exception {
     String input = "<root url='http://mock-host:42/test-input-path-1'><url>http://mock-host:42/test-input-path-2</url></root>";
 
-    //System.out.println( "INPUT=" + input );
-
     UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
     UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "*/xml" );
     contentConfig.addApply( "$.url", "test-rule" );
-
-    //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
 
     try {
       XmlFilterReader filter = new TestXmlFilterReader( new StringReader( input ), contentConfig );
@@ -985,10 +933,8 @@ public class XmlFilterReaderTest {
     StringReader inputReader = new StringReader( inputXml );
     XmlFilterReader filterReader = new NoopXmlFilterReader( inputReader, null );
     String outputXml = new String( IOUtils.toCharArray( filterReader ) );
-    //System.out.println( "OUTPUT=" + outputXml );
     assertThat( the( outputXml ), hasXPath( "/tag/text()", equalTo( "${oozieTemplateMarkup}" ) ) );
   }
-
 
   private class TestXmlFilterReader extends XmlFilterReader {
 
@@ -1005,7 +951,5 @@ public class XmlFilterReaderTest {
     protected String filterText( QName elementName, String text, String ruleName ) {
       return "text:" + ruleName + "{" + text + "}";
     }
-
   }
-
 }

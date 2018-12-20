@@ -49,8 +49,6 @@ import javax.websocket.WebSocketContainer;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
@@ -137,24 +135,13 @@ public class WebsocketMultipleConnectionTest {
 
     Session[] sessions = new Session[MAX_CONNECTIONS];
 
-    MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
-
-    System.gc(); // NOPMD
-    final long heapt1 = memoryMXBean.getHeapMemoryUsage().getUsed();
-    final long nonHeapt1 = memoryMXBean.getNonHeapMemoryUsage().getUsed();
-
     for (int i = 0; i < MAX_CONNECTIONS; i++) {
-
       sessions[i] = container.connectToServer(new WebsocketClient() {
-
         @Override
         public void onMessage(String message) {
           latch.countDown();
-
         }
-
       }, new URI(serverUri.toString() + "gateway/websocket/ws"));
-
     }
 
     for (int i = 0; i < MAX_CONNECTIONS; i++) {
@@ -165,15 +152,6 @@ public class WebsocketMultipleConnectionTest {
     }
 
     latch.await(5 * MAX_CONNECTIONS, TimeUnit.MILLISECONDS);
-
-    System.gc(); // NOPMD
-
-    final long heapUsed = memoryMXBean.getHeapMemoryUsage().getUsed() - heapt1;
-    final long nonHeapUsed = memoryMXBean.getNonHeapMemoryUsage().getUsed()
-        - nonHeapt1;
-
-    System.out.println("heapUsed = " + heapUsed);
-    System.out.println("nonHeapUsed = " + nonHeapUsed);
 
     /* 90 KB per connection */
     /*
@@ -344,7 +322,6 @@ public class WebsocketMultipleConnectionTest {
   }
 
   private static XMLTag createKnoxTopology(final String backend) {
-    // System.out.println( "GATEWAY=" + xml.toString() );
     return XMLDoc.newDocument(true).addRoot("topology").addTag("service")
         .addTag("role").addText("WEBSOCKET").addTag("url").addText(backend)
         .gotoParent().gotoRoot();
@@ -360,11 +337,8 @@ public class WebsocketMultipleConnectionTest {
       synchronized (this) {
         for (TopologyEvent event : events) {
           if (!event.getType().equals(TopologyEvent.Type.DELETED)) {
-
             /* for this test we only care about this part */
-            DeploymentFactory.createDeployment(gatewayConfig,
-                event.getTopology());
-
+            DeploymentFactory.createDeployment(gatewayConfig, event.getTopology());
           }
         }
       }

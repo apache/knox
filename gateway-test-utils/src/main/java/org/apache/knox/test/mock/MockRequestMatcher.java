@@ -299,8 +299,6 @@ public class MockRequestMatcher {
         String expect = new String( entity, ( expectEncoding == null ? StandardCharsets.UTF_8.name() : expectEncoding ) );
         String actualEncoding = request.getCharacterEncoding();
         String actual = IOUtils.toString( request.getInputStream(), actualEncoding == null ? StandardCharsets.UTF_8.name() : actualEncoding );
-//        System.out.println( "EXPECT=" + expect );
-//        System.out.println( "ACTUAL=" + actual );
         assertThat( actual, sameJSONAs( expect ) );
       } else if( characterEncoding == null || request.getCharacterEncoding() == null ) {
         byte[] bytes = IOUtils.toByteArray( request.getInputStream() );

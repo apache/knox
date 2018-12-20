@@ -649,11 +649,5 @@ class JsonFilterReader extends Reader {
       }
     }
   }
-
-//  private void dump() throws IOException {
-//    mapper.writeTree( factory.createGenerator( System.out ), stack.get( 0 ).node );
-//    System.out.println();
-//  }
-
 }
 

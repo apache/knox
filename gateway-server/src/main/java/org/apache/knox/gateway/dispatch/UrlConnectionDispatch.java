@@ -102,13 +102,6 @@ public class UrlConnectionDispatch extends AbstractGatewayFilter {
 //    Pattern sourceRegex = UrlRewriter.compileUrlRegex( sourcePattern );
 //    Matcher matcher = sourceRegex.matcher( sourcePathInfo );
 //    String targetUrl = MessageFormat.format( targetPattern, Regex.toGroupArray( matcher ) );
-//    System.out.println( "Source URI: " + expect.getRequestURI() );
-//    System.out.println( "Source URL: " + expect.getRequestURL() );
-//    System.out.println( "Source Query: " + expect.getQueryString() );
-//    System.out.println( "Source pathInfo: " + sourcePathInfo );
-//    System.out.println( "Source pattern: " + sourcePattern );
-//    System.out.println( "Target pattern: " + targetPattern );
-//    System.out.println( "Resolved target: " + targetUrl );
 
     StringBuilder paramStr = new StringBuilder();
     Enumeration paramNames = request.getParameterNames();

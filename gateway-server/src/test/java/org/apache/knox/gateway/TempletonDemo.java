@@ -27,12 +27,10 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
-import org.apache.log4j.helpers.Loader;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,8 +45,6 @@ public class TempletonDemo {
 
   @Test
   public void demoGateway() throws IOException {
-    URL url = Loader.getResource( "log4j.properties" );
-    System.out.println( url );
     demo( "http://localhost:8888/gateway/cluster/templeton/v1/mapreduce/jar" );
   }
 
@@ -68,5 +64,4 @@ public class TempletonDemo {
     HttpResponse response = client.execute( request );
     System.out.println( EntityUtils.toString( response.getEntity() ) );
   }
-
 }

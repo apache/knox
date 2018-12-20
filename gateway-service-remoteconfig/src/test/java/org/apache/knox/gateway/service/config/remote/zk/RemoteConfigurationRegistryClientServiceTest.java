@@ -340,15 +340,9 @@ public class RemoteConfigurationRegistryClientServiceTest {
         assertNotNull(client);
         List<String> descriptors = client.listChildEntries("/knox/config/descriptors");
         assertNotNull(descriptors);
-        for (String descriptor : descriptors) {
-            System.out.println("Descriptor: " + descriptor);
-        }
 
         List<String> providerConfigs = client.listChildEntries("/knox/config/shared-providers");
         assertNotNull(providerConfigs);
-        for (String providerConfig : providerConfigs) {
-            System.out.println("Provider config: " + providerConfig);
-        }
 
         List<String> someotherConfig = client.listChildEntries("/someotherconfig");
         if (isSecureTest) {

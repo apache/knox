@@ -107,7 +107,6 @@ public class JsonFilterReaderTest {
     StringReader inputReader = new StringReader( inputJson );
     JsonFilterReader filterReader = new TestJsonFilterReader( inputReader, null );
     String outputJson = new String( IOUtils.toCharArray( filterReader ) );
-    //System.out.println( "JSON=" + outputJson );
 
     JsonAssert.with( outputJson ).assertThat( "name<test-name>", is( "value:null<test-value>" ) );
   }
@@ -118,7 +117,6 @@ public class JsonFilterReaderTest {
     StringReader inputReader = new StringReader( inputJson );
     JsonFilterReader filterReader = new TestJsonFilterReader( inputReader, null );
     String outputJson = new String( IOUtils.toCharArray( filterReader ) );
-    //System.out.println( "JSON=" + outputJson );
     JsonAssert.with( outputJson ).assertThat( "$.[0]", is( "value:null<test-value-1>" ) );
     JsonAssert.with( outputJson ).assertThat( "$.[1]", is( "value:null<test-value-2>" ) );
     JsonAssert.with( outputJson ).assertThat( "$.[2]", is( "value:null<test-value-3>" ) );
@@ -127,7 +125,6 @@ public class JsonFilterReaderTest {
     inputReader = new StringReader( inputJson );
     filterReader = new TestJsonFilterReader( inputReader, null );
     outputJson = new String( IOUtils.toCharArray( filterReader ) );
-    //System.out.println( "JSON=" + outputJson );
     JsonAssert.with( outputJson ).assertThat( "$.[0]", is( 777 ) );
     JsonAssert.with( outputJson ).assertThat( "$.[1]", is( 42 ) );
   }
@@ -157,8 +154,6 @@ public class JsonFilterReaderTest {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "simple-values.json" );
     String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
-    //System.out.println( "INPUT=" + input );
-
     UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
     UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter=1" );
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/json" );
@@ -168,8 +163,6 @@ public class JsonFilterReaderTest {
     JsonFilterReader filter = new TestJsonFilterReader( new StringReader( input ), contentConfig );
     String output = IOUtils.toString( filter );
 
-    //System.out.println( "OUTPUT=" + output );
-
     JsonAssert.with( output ).assertThat( "name<test-str>", is( "value:null<text>" ) );
   }
 
@@ -177,8 +170,6 @@ public class JsonFilterReaderTest {
   public void testNamesWithDots() throws IOException {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "dotted-field-name.json" );
     String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
-
-    //System.out.println( "INPUT=" + input );
 
     UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
     UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "test-filter" );
@@ -192,8 +183,6 @@ public class JsonFilterReaderTest {
     JsonFilterReader filter = new TestJsonFilterReader( new StringReader( input ), contentConfig );
     String output = IOUtils.toString( filter );
 
-    //System.out.println( "OUTPUT=" + output );
-
     JsonAssert.with( output ).assertThat( "$['name<testField>']", is( "value:test-rule<testField value>" ) );
     JsonAssert.with( output ).assertThat( "$['name<test_field>']", is( "value:test-rule<test_field value>" ) );
     JsonAssert.with( output ).assertThat( "$['name<test-field>']", is( "value:test-rule<test-field value>" ) );
@@ -206,25 +195,15 @@ public class JsonFilterReaderTest {
 //    String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 //
 //    Object o;
-//
 //    o = JsonPath.read( "$", input, JsonNode.class );
 //    assertThat( o, instanceOf( ObjectNode.class ) );
 //    assertThat( o.toString(), startsWith( "{" ) );
-//    System.out.println( o.getClass() + "=" + o );
-//
 //    o = JsonPath.read( "$['test-str']", input, JsonNode.class );
-//    System.out.println( o.getClass() + "=" + o );
-//
 //    o = JsonPath.read( "$['test-obj-multi']", input, JsonNode.class );
-//    System.out.println( o.getClass() + "=" + o );
-//
 //    o = JsonPath.read( "$['val']", (JsonNode)o, JsonNode.class );
-//    System.out.println( o.getClass() + "=" + o );
-//
 //    JsonPath p = JsonPath.compile( "$['test-obj-multi']['val']" );
 //    o = JsonPath.read( "$['test-obj-multi']['val']", input, JsonNode.class );
 //    JsonNode pp = ((JsonNode)o).findParent("val");
-//    System.out.println( "$['test-obj-multi']['val']=" + o.getClass() + "=" + o );
 //
 //  }
 //
@@ -234,22 +213,11 @@ public class JsonFilterReaderTest {
 //    String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 //
 //    Object o;
-//
 //    o = JsonPath.read( "$", input, JsonNode.class );
-//    System.out.println( o.getClass() + "=" + o );
-//
 //    o = JsonPath.read( "$[0]", input, JsonNode.class );
-//    System.out.println( o.getClass() + "=" + o );
-//
 //    o = JsonPath.read( "$[*]", input, JsonNode.class );
-//    System.out.println( "$[*]=" + o.getClass() + "=" + o );
-//
 //    o = JsonPath.read( "$['obj1-fld1']", (JsonNode)o, JsonNode.class );
-//    System.out.println( o.getClass() + "=" + o );
-//
 //    o = JsonPath.read( "$[0]['obj1-fld1']", input, JsonNode.class );
-//    System.out.println( o.getClass() + "=" + o );
-//
 //  }
 
   @Test
@@ -257,20 +225,15 @@ public class JsonFilterReaderTest {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "simple-values.json" );
     String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
-    //System.out.println( "INPUT=" + input );
-
     UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
     UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/json" );
     UrlRewriteFilterBufferDescriptor bufferConfig = contentConfig.addBuffer( "$" );
     UrlRewriteFilterApplyDescriptor applyConfig = bufferConfig.addApply( "$['name<test-str>']", "test-rule" );
     assertNotNull(applyConfig);
-    //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
 
     JsonFilterReader filter = new TestJsonFilterReader( new StringReader( input ), contentConfig );
     String output = IOUtils.toString( filter );
-
-    //System.out.println( "OUTPUT=" + output );
 
     JsonAssert.with( output ).assertThat( "name<test-str>", is( "value:test-rule<text>" ) );
   }
@@ -280,8 +243,6 @@ public class JsonFilterReaderTest {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties.json" );
     String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
-    //System.out.println( "INPUT=" + input );
-
     UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
     UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/json" );
@@ -290,12 +251,8 @@ public class JsonFilterReaderTest {
     UrlRewriteFilterApplyDescriptor applyConfig = detectConfig.addApply( "$.name<property-value>", "test-rule-2" );
     assertNotNull(applyConfig);
 
-    //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
-
     JsonFilterReader filter = new TestJsonFilterReader( new StringReader( input ), contentConfig );
     String output = IOUtils.toString( filter );
-
-    //System.out.println( "OUTPUT=" + output );
 
     JsonAssert.with( output ).assertThat( "name<properties>[0].name<property>.name<property-name>", is( "test-name-1" ) );
     JsonAssert.with( output ).assertThat( "name<properties>[0].name<property>.name<property-value>", is( "test-value-1" ) );
@@ -310,8 +267,6 @@ public class JsonFilterReaderTest {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties.json" );
     String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
-    //System.out.println( "INPUT=" + input );
-
     UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
     UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/json" );
@@ -319,12 +274,8 @@ public class JsonFilterReaderTest {
     UrlRewriteFilterApplyDescriptor applyConfig = bufferConfig.addApply( "$.name<property-value>", "test-rule" );
     assertNotNull(applyConfig);
 
-    //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
-
     JsonFilterReader filter = new TestJsonFilterReader( new StringReader( input ), contentConfig );
     String output = IOUtils.toString( filter );
-
-    //System.out.println( "OUTPUT=" + output );
 
     JsonAssert.with( output ).assertThat( "name<properties>[0].name<property>.name<property-name>", is( "test-name-1" ) );
     JsonAssert.with( output ).assertThat( "name<properties>[0].name<property>.name<property-value>", is( "value:test-rule<test-value-1>" ) );
@@ -339,8 +290,6 @@ public class JsonFilterReaderTest {
     InputStream stream = TestUtils.getResourceStream( this.getClass(), "properties.json" );
     String input = IOUtils.toString( stream, StandardCharsets.UTF_8 );
 
-    //System.out.println( "INPUT=" + input );
-
     UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
     UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "text/json" );
@@ -348,12 +297,8 @@ public class JsonFilterReaderTest {
     UrlRewriteFilterApplyDescriptor applyConfig = bufferConfig.addApply( "$.*.name<property>.name<property-value>", "test-rule" );
     assertNotNull(applyConfig);
 
-    //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
-
     JsonFilterReader filter = new TestJsonFilterReader( new StringReader( input ), contentConfig );
     String output = IOUtils.toString( filter );
-
-    //System.out.println( "OUTPUT=" + output );
 
     JsonAssert.with( output ).assertThat( "name<properties>[0].name<property>.name<property-name>", is( "test-name-1" ) );
     JsonAssert.with( output ).assertThat( "name<properties>[0].name<property>.name<property-value>", is( "value:test-rule<test-value-1>" ) );
@@ -367,14 +312,10 @@ public class JsonFilterReaderTest {
   public void testInvalidConfigShouldThrowException() throws Exception {
     String input = "{\"test-name\":\"test-value\"}";
 
-    //System.out.println( "INPUT=" + input );
-
     UrlRewriteRulesDescriptor rulesConfig = UrlRewriteRulesDescriptorFactory.create();
     UrlRewriteFilterDescriptor filterConfig = rulesConfig.addFilter( "filter-1" );
     UrlRewriteFilterContentDescriptor contentConfig = filterConfig.addContent( "*/json" );
     contentConfig.addApply( "/root/@url", "test-rule" );
-
-    //UrlRewriteRulesDescriptorFactory.store( rulesConfig, "xml", new PrintWriter( System.out ) );
 
     try {
       JsonFilterReader filter = new TestJsonFilterReader( new StringReader( input ), contentConfig );

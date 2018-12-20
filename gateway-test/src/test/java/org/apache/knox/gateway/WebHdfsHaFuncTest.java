@@ -96,7 +96,6 @@ public class WebHdfsHaFuncTest {
     * @return A populated XML structure for a topology file.
     */
    private static XMLTag createTopology() {
-     //     System.out.println( "GATEWAY=" + xml.toString() );
       return XMLDoc.newDocument(true)
             .addRoot("topology")
             .addTag("gateway")

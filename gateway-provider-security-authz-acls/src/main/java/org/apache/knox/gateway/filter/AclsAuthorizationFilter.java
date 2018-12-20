@@ -143,7 +143,6 @@ public class AclsAuthorizationFilter implements Filter {
     }
     Object[] groups = subject.getPrincipals(GroupPrincipal.class).toArray();
     if (groups.length > 0) {
-//      System.out.println("GroupPrincipal: " + ((Principal)groups[0]).getName());
       groupAccess = checkGroupAcls(groups);
       log.groupPrincipalHasAccess(groupAccess);
     }

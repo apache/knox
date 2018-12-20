@@ -493,7 +493,6 @@ public class KnoxCLITest {
     String[] args2 = { "list-alias", "--cluster", "Invalidcluster1", "--master", "master" };
     rc = cli.run(args2);
     assertEquals(0, rc);
-    System.out.println(outContent.toString(StandardCharsets.UTF_8.name()));
     assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
       outContent.toString(StandardCharsets.UTF_8.name()).contains("Invalid cluster name provided: Invalidcluster1"));
 
@@ -584,7 +583,6 @@ public class KnoxCLITest {
     String[] args2 = { "list-alias", "--cluster", "cluster1", "--master", "master" };
     rc = cli.run(args2);
     assertEquals(0, rc);
-    System.out.println(outContent.toString(StandardCharsets.UTF_8.name()));
     assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("alias1"));
 
     outContent.reset();

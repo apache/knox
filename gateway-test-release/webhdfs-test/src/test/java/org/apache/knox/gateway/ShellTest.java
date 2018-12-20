@@ -108,16 +108,13 @@ public class ShellTest {
     binding.setProperty("gateway", driver.getClusterUrl());
     URL readme = driver.getResourceUrl("README");
     File file = new File(readme.toURI());
-    System.out.println(file.exists());
     binding.setProperty("file", file.getAbsolutePath());
     GroovyShell shell = new GroovyShell(binding);
     shell.evaluate(driver.getResourceUrl(script).toURI());
     String status = (String) binding.getProperty("status");
     assertNotNull(status);
-    System.out.println(status);
     String fetchedFile = (String) binding.getProperty("fetchedFile");
     assertNotNull(fetchedFile);
-    System.out.println(fetchedFile);
     assertThat(fetchedFile, containsString("README"));
   }
 

@@ -106,15 +106,6 @@ import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
 
 @Category( { VerifyTest.class, MediumTests.class } )
 public class GatewayBasicFuncTest {
-  // Uncomment to cause the test to hang after the gateway instance is setup.
-  // This will allow the gateway instance to be hit directly via some external client.
-//  @Test
-//  public void hang() throws IOException {
-//    System.out.println( "Server on port " + driver.gateway.getAddresses()[0].getPort() );
-//    System.out.println();
-//    System.in.read();
-//  }
-
   private static Logger log = LoggerFactory.getLogger( GatewayBasicFuncTest.class );
 
   private static GatewayTestDriver driver = new GatewayTestDriver();
@@ -190,7 +181,6 @@ public class GatewayBasicFuncTest {
    * @return A populated XML structure for a topology file.
    */
   private static XMLTag createTopology() {
-    //     System.out.println( "GATEWAY=" + xml.toString() );
     return XMLDoc.newDocument( true )
         .addRoot( "topology" )
           .addTag( "gateway" )
@@ -355,7 +345,6 @@ public class GatewayBasicFuncTest {
         .statusCode( HttpStatus.SC_TEMPORARY_REDIRECT )
         .when().put( driver.getUrl("WEBHDFS") + "/v1" + root + "/dir/file" );
     String location = response.getHeader( "Location" );
-    //System.out.println( location );
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );
     if( driver.isUseGateway() ) {
       assertThat( location, anyOf(
@@ -396,7 +385,6 @@ public class GatewayBasicFuncTest {
         .when().put( driver.getUrl("WEBHDFS") + "/v1" + root + "/dir/fileレポー" );
 //        .when().put( driver.getUrl("WEBHDFS") + "/v1" + root + "/dir/file%E3%83%AC%E3%83%9D%E3%83%BC" );
     String location = response.getHeader( "Location" );
-    //System.out.println( location );
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );
     if( driver.isUseGateway() ) {
       assertThat( location, containsString("/dir/file%E3%83%AC%E3%83%9D%E3%83%BC") );
@@ -1018,18 +1006,14 @@ public class GatewayBasicFuncTest {
     context.put( "inputDir", root + "/input" );
     context.put( "outputDir", root + "/output" );
 
-    //URL url = TestUtils.getResourceUrl( GatewayBasicFuncTest.class, "oozie-jobs-submit-request.xml" );
-    //String name = url.toExternalForm();
     String name = TestUtils.getResourceName( this.getClass(), "oozie-jobs-submit-request.xml" );
     Template template = velocity.getTemplate( name );
     StringWriter sw = new StringWriter();
     template.merge( context, sw );
     String request = sw.toString();
-    //System.out.println( "REQUEST=" + request );
 
     /* Submit the job via Oozie. */
     String id = oozieSubmitJob( user, pass, request, 201 );
-    //System.out.println( "ID=" + id );
 
     String success = "SUCCEEDED";
     String status = "UNKNOWN";
@@ -1038,15 +1022,12 @@ public class GatewayBasicFuncTest {
     long start = System.currentTimeMillis();
     while( System.currentTimeMillis() <= start+limit ) {
       status = oozieQueryJobStatus( user, pass, id, 200 );
-      //System.out.println( "Status=" + status );
       if( success.equalsIgnoreCase( status ) ) {
         break;
       } else {
-        //System.out.println( "Status=" + status );
         Thread.sleep( delay );
       }
     }
-    //System.out.println( "Status is " + status + " after " + ((System.currentTimeMillis()-start)/1000) + " seconds." );
     assertThat( status, is( success ) );
 
     if( CLEANUP_TEST ) {
@@ -3526,7 +3507,6 @@ public class GatewayBasicFuncTest {
         .statusCode( HttpStatus.SC_TEMPORARY_REDIRECT )
         .when().put( driver.getUrl("WEBHDFS") + "/v1" + root + "/dir/file" );
     String location = response.getHeader( "Location" );
-    //System.out.println( location );
     log.debug( "Redirect location: " + response.getHeader( "Location" ) );
     if( driver.isUseGateway() ) {
       assertThat( location, is(startsWith(scheme + "://" + host + ":" + port + "/")));
@@ -3808,7 +3788,7 @@ public class GatewayBasicFuncTest {
       setupResource("FALCON", "/api/metadata/lineage/edges/all");
 
     } catch (Exception e) {
-      System.out.println(e.getMessage());
+      e.printStackTrace();
     }
   }
 
@@ -4341,8 +4321,6 @@ public class GatewayBasicFuncTest {
         .status( HttpStatus.SC_CREATED )
         .content( driver.getResourceBytes( "oozie-jobs-submit-response.json" ) )
         .contentType( "application/json" );
-    //System.out.println( "REQUEST LENGTH = " + request.length() );
-
     URL url = new URL( driver.getUrl( "OOZIE" ) + "/v1/jobs?action=start" + ( driver.isUseGateway() ? "" : "&user.name=" + user ) );
     HttpHost targetHost = new HttpHost( url.getHost(), url.getPort(), url.getProtocol() );
     HttpClientBuilder builder = HttpClientBuilder.create();
@@ -4382,7 +4360,6 @@ public class GatewayBasicFuncTest {
 //          .log().all()
 //          .statusCode( status )
 //          .when().post( getUrl( "OOZIE" ) + "/v1/jobs" + ( isUseGateway() ? "" : "?user.name=" + user ) ).asString();
-      //System.out.println( "JSON=" + json );
     return JsonPath.from(json).getString( "id" );
   }
 

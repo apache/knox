@@ -148,7 +148,6 @@ public class GatewayAdminTopologyFuncTest {
   }
 
   private static XMLTag createNormalTopology() {
-    //     System.out.println( "GATEWAY=" + xml.toString() );
     return XMLDoc.newDocument( true )
         .addRoot( "topology" )
         .addTag( "gateway" )
@@ -197,7 +196,6 @@ public class GatewayAdminTopologyFuncTest {
   }
 
   private static XMLTag createKnoxTopology() {
-    // System.out.println( "GATEWAY=" + xml.toString() );
     return XMLDoc.newDocument( true )
         .addRoot( "topology" )
         .addTag( "gateway" )
@@ -238,7 +236,6 @@ public class GatewayAdminTopologyFuncTest {
   }
 
   private static XMLTag createProviderConfiguration() {
-    // System.out.println( "GATEWAY=" + xml.toString() );
     return XMLDoc.newDocument( true )
             .addRoot( "gateway" )
             .addTag( "provider" )
