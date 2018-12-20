@@ -1,14 +1,12 @@
 {
   "name": "ng-knox-ui",
-  "version": "0.0.0",
-  "license": "MIT",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
   "scripts": {
     "start": "ng serve",
     "build": "ng build",
-    "lint": "tslint \"src/**/*.ts\"",
-    "test": "ng test",
-    "pree2e": "webdriver-manager update",
-    "e2e": "protractor"
+    "build-prod": "ng build --prod",
+    "lint": "tslint \"admin-ui/**/*.ts\""
   },
   "private": true,
   "dependencies": {
@@ -40,16 +38,6 @@
     "@types/node": "~6.0.60",
     "codelyzer": "^4.1.0",
     "bootstrap": "^3.3.7",
-    "jasmine-core": "~2.6.2",
-    "jasmine-spec-reporter": "~4.1.0",
-    "karma": "~1.7.0",
-    "karma-chrome-launcher": "~2.1.1",
-    "karma-cli": "~1.0.1",
-    "karma-coverage-istanbul-reporter": "^1.2.1",
-    "karma-jasmine": "~1.1.0",
-    "karma-jasmine-html-reporter": "^0.2.2",
-    "karma-remap-istanbul": "^0.2.1",
-    "protractor": "~5.1.2",
     "ts-node": "~3.2.0",
     "tslint": "~5.7.0",
     "typescript": "~2.4.2",

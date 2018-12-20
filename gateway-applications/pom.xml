@@ -28,4 +28,41 @@
     <artifactId>gateway-applications</artifactId>
     <name>gateway-applications</name>
     <description>The applications delivered with Knox.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-admin-ui</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>unpack</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.apache.knox</groupId>
+                                    <artifactId>gateway-admin-ui</artifactId>
+                                    <type>jar</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.outputDirectory}/applications</outputDirectory>
+                                    <includes>admin-ui/**</includes>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

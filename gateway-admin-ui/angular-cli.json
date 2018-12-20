@@ -5,8 +5,8 @@
   },
   "apps": [
     {
-      "root": "src",
-      "outDir": "dist",
+      "root": "admin-ui",
+      "outDir": "target/classes/admin-ui/app",
       "assets": [
         "assets",
         "favicon.ico"
@@ -21,10 +21,10 @@
         "styles.css"
       ],
       "scripts": [
-		  "../node_modules/ace-builds/src-min/ace.js",
-		  "../node_modules/ace-builds/src-min/theme-monokai.js"
+        "../node_modules/ace-builds/src-min/ace.js",
+        "../node_modules/ace-builds/src-min/theme-monokai.js"
       ],
-	    "environmentSource": "environments/environment.ts",
+      "environmentSource": "environments/environment.ts",
       "environments": {
         "dev": "environments/environment.ts",
         "prod": "environments/environment.prod.ts"

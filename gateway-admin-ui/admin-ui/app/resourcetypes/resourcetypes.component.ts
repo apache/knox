@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 import { Component, Injectable, OnInit } from '@angular/core';
-import { ResourceTypesService } from '../resourcetypes/resourcetypes.service';
+import { ResourceTypesService } from './resourcetypes.service';
 
 @Component({
     selector: 'app-resourcetypes',

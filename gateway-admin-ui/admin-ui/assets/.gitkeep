@@ -15,32 +15,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-
-.classpath
-.project
-.settings
-dependency-reduced-pom.xml
-.idea/
-.iml/
-*.iml
-*.ipr
-*.iws
-atlassian-ide-plugin.xml
-.DS_Store
-target
-install
-patch
-candidate
-org.apache.knox.gateway.security.EmbeddedApacheDirectoryServer/
-velocity.log
-*.pyc
-*.py~
-*.patch
-
-# other IDEs and editors
-.vscode
-.c9/
-*.launch
-
-#System Files
-Thumbs.db

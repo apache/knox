@@ -122,6 +122,7 @@
         <module>gateway-service-vault</module>
         <module>gateway-service-test</module>
         <module>gateway-test-release</module>
+        <module>gateway-admin-ui</module>
         <module>gateway-applications</module>
         <module>gateway-shell-samples</module>
         <module>gateway-shell-release</module>
@@ -353,8 +354,10 @@
                         <exclude>**/applications/**/assets/**</exclude>
                         <exclude>**/applications/**/*.bundle.*</exclude>
                         <exclude>**/node_modules/**</exclude>
-                        <exclude>**/dist/**</exclude>
-                        <exclude>gateway-admin-ui/**</exclude>
+                        <exclude>**/admin-ui/**/*.json</exclude>
+                        <exclude>**/admin-ui/**/*.js</exclude>
+                        <exclude>**/admin-ui/**/*.css</exclude>
+                        <exclude>**/admin-ui/**/*.html</exclude>
                         <exclude>atlassian-ide-plugin.xml</exclude>
                     </excludes>
                 </configuration>
@@ -1009,6 +1012,11 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-applications</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-admin-ui</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
