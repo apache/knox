@@ -55,7 +55,7 @@ Simplifies the number of services that clients need to interact with</descriptio
     <category rdf:resource="https://projects.apache.org/category/big-data" />
     <repository>
       <GitRepository>
-        <location rdf:resource="https://git-wip-us.apache.org/repos/asf/knox.git"/>
+        <location rdf:resource="https://gitbox.apache.org/repos/asf/knox.git"/>
       </GitRepository>
     </repository>
     <maintainer>
