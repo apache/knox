@@ -32,6 +32,12 @@ limitations under the License.
         <cve>CVE-2015-3250</cve> <!-- Already past 1.0.0-M30 -->
     </suppress>
     <suppress>
+        <notes><![CDATA[file name: apacheds-.*.jar]]></notes>
+        <gav regex="true">^org\.apache\.directory\.server:apacheds-.*$</gav>
+        <cpe>cpe:/a:apache:apache_http_server</cpe>
+        <cpe>cpe:/a:net-ldap_project:net-ldap</cpe>
+    </suppress>
+    <suppress>
         <notes><![CDATA[file name: gateway-.*.jar]]></notes>
         <gav regex="true">^org\.apache\.knox:gateway-.*:.*$</gav>
         <cpe>cpe:/a:apache:ambari</cpe>
@@ -92,6 +98,11 @@ limitations under the License.
         <notes><![CDATA[file name: pac4j-oidc-.*.jar]]></notes>
         <gav regex="true">^org\.pac4j:pac4j-oidc:.*$</gav>
         <cpe>cpe:/a:openid:openid</cpe>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[slf4j-ext and EventData not used]]></notes>
+        <gav regex="true">^org\.slf4j:.*$</gav>
+        <cve>CVE-2018-8088</cve>
     </suppress>
     <suppress>
         <notes><![CDATA[file name: xz-.*.jar]]></notes>
