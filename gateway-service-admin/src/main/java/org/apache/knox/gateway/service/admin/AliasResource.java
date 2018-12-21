@@ -18,7 +18,6 @@
 package org.apache.knox.gateway.service.admin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
@@ -62,10 +61,6 @@ public class AliasResource {
   @Context
   private HttpServletRequest request;
 
-  public AliasResource() {
-    super();
-  }
-
   /**
    * Create alias with PUT
    * @param topology topology/cluster name
@@ -97,7 +92,7 @@ public class AliasResource {
       final @PathParam("alias") String alias,
       final @FormParam("value") String value) {
 
-    if (StringUtils.isBlank(value)) {
+    if (value == null || value.isEmpty()) {
       return status(BAD_REQUEST).
           entity("Alias value cannot be null or blank").
           type(MediaType.APPLICATION_JSON_TYPE).build();
