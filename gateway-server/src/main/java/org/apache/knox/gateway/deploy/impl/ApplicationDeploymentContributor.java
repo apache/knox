@@ -56,6 +56,15 @@ import java.util.Locale;
 import java.util.Map;
 
 public class ApplicationDeploymentContributor extends ServiceDeploymentContributorBase {
+  private static final JAXBContext jaxbContext = getJAXBContext();
+
+  private static JAXBContext getJAXBContext() {
+    try {
+      return JAXBContext.newInstance( ServiceDefinition.class );
+    } catch (JAXBException e) {
+      throw new IllegalStateException(e);
+    }
+  }
 
   private static final String SERVICE_DEFINITION_FILE_NAME = "service.xml";
   private static final String REWRITE_RULES_FILE_NAME = "rewrite.xml";
@@ -83,8 +92,7 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
       routes.add( route );
       definition.setRoutes( routes );
     } else {
-      JAXBContext context = JAXBContext.newInstance( ServiceDefinition.class );
-      Unmarshaller unmarshaller = context.createUnmarshaller();
+      Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
       try(InputStream inputStream = Files.newInputStream(file.toPath()) ) {
           definition = (ServiceDefinition) unmarshaller.unmarshal( inputStream );
       }

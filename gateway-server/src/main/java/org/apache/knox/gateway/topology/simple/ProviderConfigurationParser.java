@@ -22,6 +22,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.commons.io.FilenameUtils;
 
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -39,6 +40,16 @@ import java.util.List;
 import java.util.Map;
 
 public class ProviderConfigurationParser {
+
+  private static final JAXBContext jaxbContext = getJAXBContext();
+
+  private static JAXBContext getJAXBContext() {
+    try {
+      return JAXBContext.newInstance(XMLProviderConfiguration.class);
+    } catch (JAXBException e) {
+      throw new IllegalStateException(e);
+    }
+  }
 
   private static final String EXT_XML  = "xml";
   private static final String EXT_JSON = "json";
@@ -92,8 +103,6 @@ public class ProviderConfigurationParser {
 
   static ProviderConfiguration parseXML(InputStream in) throws Exception {
     XMLProviderConfiguration providerConfig;
-
-    JAXBContext jaxbContext = JAXBContext.newInstance(XMLProviderConfiguration.class);
     Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
     providerConfig = (XMLProviderConfiguration) jaxbUnmarshaller.unmarshal(in);
 

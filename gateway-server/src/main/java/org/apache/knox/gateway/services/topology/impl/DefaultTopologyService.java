@@ -15,9 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.knox.gateway.services.topology.impl;
-
 
 import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.binder.DigesterLoader;
@@ -86,10 +84,24 @@ import java.util.Set;
 
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 
-
 public class DefaultTopologyService
     extends FileAlterationListenerAdaptor
     implements TopologyService, TopologyMonitor, TopologyProvider, FileFilter, FileAlterationListener {
+
+  private static final JAXBContext jaxbContext = getJAXBContext();
+
+  private static JAXBContext getJAXBContext() {
+    String pkgName = Topology.class.getPackage().getName();
+    String bindingFile = pkgName.replace(".", "/") + "/topology_binding-xml.xml";
+
+    Map<String, Object> properties = new HashMap<>(1);
+    properties.put(JAXBContextProperties.OXM_METADATA_SOURCE, bindingFile);
+    try {
+      return JAXBContext.newInstance(pkgName, Topology.class.getClassLoader(), properties);
+    } catch (JAXBException e) {
+      throw new IllegalStateException(e);
+    }
+  }
 
   private static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(
     AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
@@ -295,14 +307,7 @@ public class DefaultTopologyService
 
     try {
       File temp = new File(topologiesDirectory.getAbsolutePath() + "/" + t.getName() + ".xml.temp");
-      Package topologyPkg = Topology.class.getPackage();
-      String pkgName = topologyPkg.getName();
-      String bindingFile = pkgName.replace(".", "/") + "/topology_binding-xml.xml";
-
-      Map<String, Object> properties = new HashMap<>(1);
-      properties.put(JAXBContextProperties.OXM_METADATA_SOURCE, bindingFile);
-      JAXBContext jc = JAXBContext.newInstance(pkgName, Topology.class.getClassLoader(), properties);
-      Marshaller mr = jc.createMarshaller();
+      Marshaller mr = jaxbContext.createMarshaller();
 
       mr.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
       mr.marshal(t, temp);

@@ -30,8 +30,8 @@ import java.io.Reader;
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 
 public class XmlUrlRewriteRulesImporter implements UrlRewriteRulesImporter {
-
-  private static DigesterLoader loader = newLoader( new XmlRewriteRulesDigester() );
+  private static final DigesterLoader loader = newLoader( new XmlRewriteRulesDigester() );
+  private static final Digester digester = loader.newDigester( new ExtendedBaseRules() );
 
   @Override
   public String getFormat() {
@@ -40,12 +40,13 @@ public class XmlUrlRewriteRulesImporter implements UrlRewriteRulesImporter {
 
   @Override
   public UrlRewriteRulesDescriptor load( Reader reader ) throws IOException {
-    Digester digester = loader.newDigester( new ExtendedBaseRules() );
-    digester.setValidating( false );
-    try {
-      return digester.parse( reader );
-    } catch( SAXException e ) {
-      throw new IOException( e );
+    synchronized (digester) {
+      digester.setValidating(false);
+      try {
+        return digester.parse(reader);
+      } catch (SAXException e) {
+        throw new IOException(e);
+      }
     }
   }
 }

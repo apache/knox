@@ -44,6 +44,16 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ServiceDefinitionsLoader {
+  private static final JAXBContext jaxbContext = getJAXBContext();
+
+  private static JAXBContext getJAXBContext() {
+    try {
+      return JAXBContext.newInstance(ServiceDefinition.class);
+    } catch (JAXBException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
   private static final GatewayMessages log = MessagesFactory.get(GatewayMessages.class);
 
   private static final String SERVICE_FILE_NAME = "service";
@@ -54,8 +64,7 @@ public class ServiceDefinitionsLoader {
     Set<ServiceDeploymentContributor> contributors = new HashSet<>();
     if ( servicesDir.exists() && servicesDir.isDirectory() ) {
       try {
-        JAXBContext context = JAXBContext.newInstance(ServiceDefinition.class);
-        Unmarshaller unmarshaller = context.createUnmarshaller();
+        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 
         for ( File file : getFileList(servicesDir) ) {
           try (InputStream inputStream = Files.newInputStream(file.toPath())) {
@@ -80,8 +89,7 @@ public class ServiceDefinitionsLoader {
   public static Set<ServiceDefinition> getServiceDefinitions(File servicesDir) {
     Set<ServiceDefinition> definitions = new HashSet<>();
     try {
-      JAXBContext context = JAXBContext.newInstance(ServiceDefinition.class);
-      Unmarshaller unmarshaller = context.createUnmarshaller();
+      Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 
       for (File f : getFileList(servicesDir)){
         ServiceDefinition definition = (ServiceDefinition) unmarshaller.unmarshal(f);
