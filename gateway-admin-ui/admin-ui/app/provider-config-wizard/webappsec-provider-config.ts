@@ -15,27 +15,25 @@
  * limitations under the License.
  */
 
-import {DisplayBindingProviderConfig} from "./display-binding-provider-config";
+import {DisplayBindingProviderConfig} from './display-binding-provider-config';
 
 export class WebAppSecurityProviderConfig extends DisplayBindingProviderConfig {
+    public static TYPE = 'WebAppSec';
 
-  public static TYPE: string = 'WebAppSec';
+    constructor() {
+        super();
+        this.setType(WebAppSecurityProviderConfig.TYPE);
+        this.enabled = 'true';
+        this.name = WebAppSecurityProviderConfig.TYPE;
+        this.role = 'webappsec';
+        this.params = new Map<string, string>();
+    }
 
-  constructor() {
-    super();
-    this.setType(WebAppSecurityProviderConfig.TYPE);
-    this.enabled = 'true';
-    this.name = WebAppSecurityProviderConfig.TYPE;
-    this.role = 'webappsec';
-    this.params = new Map<string, string>();
-  }
+    getDisplayPropertyNames(): string[] {
+        return [];
+    }
 
-  getDisplayPropertyNames(): string[] {
-    return [];
-  }
-
-  getDisplayNamePropertyBinding(name: string): string {
-    return null;
-  }
-
+    getDisplayNamePropertyBinding(name: string): string {
+        return null;
+    }
 }

@@ -15,50 +15,46 @@
  * limitations under the License.
  */
 
-import {ValidationUtils} from "../utils/validation-utils";
-import {WebAppSecurityContributor} from "./webappsec-contributor";
+import {ValidationUtils} from '../utils/validation-utils';
+import {WebAppSecurityContributor} from './webappsec-contributor';
 
 export class STSProviderConfig extends WebAppSecurityContributor {
+    public static STS = 'Strict-Transport-Security Header';
 
-  public static TYPE: string = 'cors';
+    private static displayPropertyNames = [STSProviderConfig.STS];
+    private static displayPropertyNameBindings: Map<string, string> =
+        new Map([[STSProviderConfig.STS, 'strict.transport']] as [string, string][]);
 
-  public static STS: string = 'Strict-Transport-Security Header';
-
-  private static displayPropertyNames = [ STSProviderConfig.STS ];
-
-  private static displayPropertyNameBindings: Map<string, string> =
-    new Map([ [STSProviderConfig.STS, 'strict.transport'] ] as [string, string][]);
-
-  constructor() {
-    super();
-    // Set the default values
-    this.setParam('strict.transport.enabled', 'true');
-    this.setParam(STSProviderConfig.displayPropertyNameBindings.get(STSProviderConfig.STS), 'max-age=31536000');
-  }
-
-  getDisplayPropertyNames(): string[] {
-    return STSProviderConfig.displayPropertyNames;
-  }
-
-  getDisplayNamePropertyBinding(name: string): string {
-    return STSProviderConfig.displayPropertyNameBindings.get(name);
-  }
-
-  isValidParamValue(paramName: string): boolean {
-    let isValid: boolean = true;
-
-    let value = this.getParam(this.getDisplayNamePropertyBinding(paramName));
-    if (value) {
-      switch (paramName) {
-        case STSProviderConfig.STS:
-          isValid = ValidationUtils.isValidString(value);
-          break;
-        default:
-      }
+    constructor() {
+        super();
+        // Set the default values
+        this.setParam('strict.transport.enabled', 'true');
+        this.setParam(STSProviderConfig.displayPropertyNameBindings.get(STSProviderConfig.STS), 'max-age=31536000');
     }
 
-    return isValid;
-  }
+    getDisplayPropertyNames(): string[] {
+        return STSProviderConfig.displayPropertyNames;
+    }
+
+    getDisplayNamePropertyBinding(name: string): string {
+        return STSProviderConfig.displayPropertyNameBindings.get(name);
+    }
+
+    isValidParamValue(paramName: string): boolean {
+        let isValid = true;
+
+        let value = this.getParam(this.getDisplayNamePropertyBinding(paramName));
+        if (value) {
+            switch (paramName) {
+                case STSProviderConfig.STS:
+                    isValid = ValidationUtils.isValidString(value);
+                    break;
+                default:
+            }
+        }
+
+        return isValid;
+    }
 
 
 }

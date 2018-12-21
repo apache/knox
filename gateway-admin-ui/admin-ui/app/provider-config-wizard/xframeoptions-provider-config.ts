@@ -15,52 +15,48 @@
  * limitations under the License.
  */
 
-import {WebAppSecurityContributor} from "./webappsec-contributor";
+import {WebAppSecurityContributor} from './webappsec-contributor';
 
 export class XFrameOptionsProviderConfig extends WebAppSecurityContributor {
+    public static VALUE = 'X-Frame-Options Header'; // DENY, SAMEORIGIN, ALLOW-FROM
 
-  public static TYPE: string = 'cors';
+    private static SUPPORTED_VALUES: string[] = ['DENY', 'SAMEORIGIN', 'ALLOW-FROM'];
 
-  public static VALUE: string = 'X-Frame-Options Header'; // DENY, SAMEORIGIN, ALLOW-FROM
+    private static displayPropertyNames = [XFrameOptionsProviderConfig.VALUE];
 
-  private static SUPPORTED_VALUES: string[] = ['DENY', 'SAMEORIGIN', 'ALLOW-FROM'];
+    private static displayPropertyNameBindings: Map<string, string> =
+        new Map([[XFrameOptionsProviderConfig.VALUE, 'xframe.options']] as [string, string][]);
 
-  private static displayPropertyNames = [ XFrameOptionsProviderConfig.VALUE ];
-
-  private static displayPropertyNameBindings: Map<string, string> =
-    new Map([ [XFrameOptionsProviderConfig.VALUE, 'xframe.options'] ] as [string, string][]);
-
-  constructor() {
-    super();
-    // Set the default values
-    this.setParam('xframe.options.enabled', 'true');
-    this.setParam(XFrameOptionsProviderConfig.displayPropertyNameBindings.get(XFrameOptionsProviderConfig.VALUE), 'DENY');
-  }
-
-  getDisplayPropertyNames(): string[] {
-    return XFrameOptionsProviderConfig.displayPropertyNames;
-  }
-
-  getDisplayNamePropertyBinding(name: string): string {
-    return XFrameOptionsProviderConfig.displayPropertyNameBindings.get(name);
-  }
-
-  isValidParamValue(paramName: string): boolean {
-    let isValid: boolean = true;
-
-    let value = this.getParam(this.getDisplayNamePropertyBinding(paramName));
-    if (value) {
-      switch (paramName) {
-        case XFrameOptionsProviderConfig.VALUE:
-            value = value.trim().toUpperCase();
-            isValid = XFrameOptionsProviderConfig.SUPPORTED_VALUES.includes(value);
-          break;
-        default:
-      }
+    constructor() {
+        super();
+        // Set the default values
+        this.setParam('xframe.options.enabled', 'true');
+        this.setParam(XFrameOptionsProviderConfig.displayPropertyNameBindings.get(XFrameOptionsProviderConfig.VALUE), 'DENY');
     }
 
-    return isValid;
-  }
+    getDisplayPropertyNames(): string[] {
+        return XFrameOptionsProviderConfig.displayPropertyNames;
+    }
 
+    getDisplayNamePropertyBinding(name: string): string {
+        return XFrameOptionsProviderConfig.displayPropertyNameBindings.get(name);
+    }
+
+    isValidParamValue(paramName: string): boolean {
+        let isValid = true;
+
+        let value = this.getParam(this.getDisplayNamePropertyBinding(paramName));
+        if (value) {
+            switch (paramName) {
+                case XFrameOptionsProviderConfig.VALUE:
+                    value = value.trim().toUpperCase();
+                    isValid = XFrameOptionsProviderConfig.SUPPORTED_VALUES.includes(value);
+                    break;
+                default:
+            }
+        }
+
+        return isValid;
+    }
 }
 

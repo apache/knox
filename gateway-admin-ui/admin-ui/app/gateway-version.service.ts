@@ -14,35 +14,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Injectable }    from '@angular/core';
-import { HttpHeaders, HttpClient } from '@angular/common/http';
+import {Injectable} from '@angular/core';
+import {HttpClient, HttpHeaders} from '@angular/common/http';
 
 import 'rxjs/add/operator/toPromise';
 
-import { GatewayVersion } from './gateway-version';
+import {GatewayVersion} from './gateway-version';
 
 @Injectable()
 export class GatewayVersionService {
 
     private apiUrl = '/gateway/manager/api/v1/version';
 
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient) {
+    }
 
     getVersion(): Promise<GatewayVersion> {
         let headers = new HttpHeaders();
         headers = this.addHeaders(headers);
-        return this.http.get(this.apiUrl, { headers: headers } )
-                        .toPromise()
-                        .then(response => {
-                            return response['ServerVersion'] as GatewayVersion;
-                        })
-                        .catch(this.handleError);
+        return this.http.get(this.apiUrl, {headers: headers})
+            .toPromise()
+            .then(response => {
+                return response['ServerVersion'] as GatewayVersion;
+            })
+            .catch(this.handleError);
     }
 
     addHeaders(headers: HttpHeaders) {
         return headers.append('Accept', 'application/json')
-                      .append('Content-Type', 'application/json')
-                      .append('X-XSRF-Header', 'admin-ui');
+            .append('Content-Type', 'application/json')
+            .append('X-XSRF-Header', 'admin-ui');
     }
 
     private handleError(error: any): Promise<any> {

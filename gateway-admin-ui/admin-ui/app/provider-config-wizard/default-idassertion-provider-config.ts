@@ -15,64 +15,64 @@
  * limitations under the License.
  */
 
-import {IdentityAssertionProviderConfig} from "./identity-assertion-provider-config";
-import {ValidationUtils} from "../utils/validation-utils";
+import {IdentityAssertionProviderConfig} from './identity-assertion-provider-config';
+import {ValidationUtils} from '../utils/validation-utils';
 
 export class DefaultIdAssertionProviderConfig extends IdentityAssertionProviderConfig {
 
-  private static PRINCIPAL_MAPPING       = 'Principal Mapping';
-  private static GROUP_PRINCIPAL_MAPPING = 'Group Principal Mapping';
+    private static PRINCIPAL_MAPPING = 'Principal Mapping';
+    private static GROUP_PRINCIPAL_MAPPING = 'Group Principal Mapping';
 
-  private static displayPropertyNames = [ DefaultIdAssertionProviderConfig.PRINCIPAL_MAPPING,
-                                          DefaultIdAssertionProviderConfig.GROUP_PRINCIPAL_MAPPING
-                                        ];
+    private static displayPropertyNames = [DefaultIdAssertionProviderConfig.PRINCIPAL_MAPPING,
+        DefaultIdAssertionProviderConfig.GROUP_PRINCIPAL_MAPPING
+    ];
 
-  private static displayPropertyNameBindings: Map<string, string> =
-    new Map([
-      [DefaultIdAssertionProviderConfig.PRINCIPAL_MAPPING,       'principal.mapping'],
-      [DefaultIdAssertionProviderConfig.GROUP_PRINCIPAL_MAPPING, 'group.principal.mapping']
-    ]);
+    private static displayPropertyNameBindings: Map<string, string> =
+        new Map([
+            [DefaultIdAssertionProviderConfig.PRINCIPAL_MAPPING, 'principal.mapping'],
+            [DefaultIdAssertionProviderConfig.GROUP_PRINCIPAL_MAPPING, 'group.principal.mapping']
+        ]);
 
-  constructor() {
-    console.debug('new DefaultIdAssertionProviderConfig()');
-    super('Default');
-  }
-
-  getDisplayPropertyNames(): string[] {
-    return DefaultIdAssertionProviderConfig.displayPropertyNames;
-  }
-
-  getDisplayNamePropertyBinding(name: string) {
-    return DefaultIdAssertionProviderConfig.displayPropertyNameBindings.get(name);
-  }
-
-  isValidParamValue(paramName: string): boolean {
-    let isValid: boolean;
-
-    switch (paramName) {
-      case DefaultIdAssertionProviderConfig.PRINCIPAL_MAPPING:
-      case DefaultIdAssertionProviderConfig.GROUP_PRINCIPAL_MAPPING:
-        isValid = this.isValidPrincipalMapping(paramName);
-        break;
-      default:
-        isValid = true;
+    constructor() {
+        console.debug('new DefaultIdAssertionProviderConfig()');
+        super('Default');
     }
 
-    return isValid;
-  }
-
-  private isValidPrincipalMapping(param: string) {
-    let isValid: boolean = true;
-
-    let mapping = this.getParam(this.getDisplayNamePropertyBinding(param));
-    if (mapping) {
-      isValid = ValidationUtils.isValidPrincipalMapping(mapping);
-      if (!isValid) {
-        console.debug(param + ' value is not a valid principal mapping.')
-      }
+    getDisplayPropertyNames(): string[] {
+        return DefaultIdAssertionProviderConfig.displayPropertyNames;
     }
 
-    return isValid;
-  }
+    getDisplayNamePropertyBinding(name: string) {
+        return DefaultIdAssertionProviderConfig.displayPropertyNameBindings.get(name);
+    }
+
+    isValidParamValue(paramName: string): boolean {
+        let isValid: boolean;
+
+        switch (paramName) {
+            case DefaultIdAssertionProviderConfig.PRINCIPAL_MAPPING:
+            case DefaultIdAssertionProviderConfig.GROUP_PRINCIPAL_MAPPING:
+                isValid = this.isValidPrincipalMapping(paramName);
+                break;
+            default:
+                isValid = true;
+        }
+
+        return isValid;
+    }
+
+    private isValidPrincipalMapping(param: string) {
+        let isValid = true;
+
+        let mapping = this.getParam(this.getDisplayNamePropertyBinding(param));
+        if (mapping) {
+            isValid = ValidationUtils.isValidPrincipalMapping(mapping);
+            if (!isValid) {
+                console.debug(param + ' value is not a valid principal mapping.');
+            }
+        }
+
+        return isValid;
+    }
 
 }

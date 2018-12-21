@@ -15,41 +15,41 @@
  * limitations under the License.
  */
 
-import {AuthenticationProviderConfig} from "./authentication-provider-config";
+import {AuthenticationProviderConfig} from './authentication-provider-config';
 
 export class PreAuthSSOProviderConfig extends AuthenticationProviderConfig {
 
-  static VALIDATION_METHOD  = 'Validation Method';
-  static IP_ADDRESSES       = 'Addresses';
-  static CUSTOM_HEADER      = 'Custom Header';
-  static CUSTOM_GRP_HEADER  = 'Custom Group Header';
+    static VALIDATION_METHOD = 'Validation Method';
+    static IP_ADDRESSES = 'Addresses';
+    static CUSTOM_HEADER = 'Custom Header';
+    static CUSTOM_GRP_HEADER = 'Custom Group Header';
 
-  private static displayPropertyNames = [ PreAuthSSOProviderConfig.VALIDATION_METHOD,
-                                          PreAuthSSOProviderConfig.IP_ADDRESSES,
-                                          PreAuthSSOProviderConfig.CUSTOM_HEADER,
-                                          PreAuthSSOProviderConfig.CUSTOM_GRP_HEADER
-                                        ];
+    private static displayPropertyNames = [PreAuthSSOProviderConfig.VALIDATION_METHOD,
+        PreAuthSSOProviderConfig.IP_ADDRESSES,
+        PreAuthSSOProviderConfig.CUSTOM_HEADER,
+        PreAuthSSOProviderConfig.CUSTOM_GRP_HEADER
+    ];
 
-  private static displayPropertyNameBindings: Map<string, string> =
-                                        new Map([
-                                          [PreAuthSSOProviderConfig.VALIDATION_METHOD, 'preauth.validation.method'],
-                                          [PreAuthSSOProviderConfig.IP_ADDRESSES,      'preauth.ip.addresses'],
-                                          [PreAuthSSOProviderConfig.CUSTOM_HEADER,     'preauth.custom.header'],
-                                          [PreAuthSSOProviderConfig.CUSTOM_GRP_HEADER, 'preauth.custom.group.header']
-                                        ]);
+    private static displayPropertyNameBindings: Map<string, string> =
+        new Map([
+            [PreAuthSSOProviderConfig.VALIDATION_METHOD, 'preauth.validation.method'],
+            [PreAuthSSOProviderConfig.IP_ADDRESSES, 'preauth.ip.addresses'],
+            [PreAuthSSOProviderConfig.CUSTOM_HEADER, 'preauth.custom.header'],
+            [PreAuthSSOProviderConfig.CUSTOM_GRP_HEADER, 'preauth.custom.group.header']
+        ]);
 
 
-  constructor() {
-    console.debug('new PreAuthSSOProviderConfig()');
-    super('HeaderPreAuth', AuthenticationProviderConfig.FEDERATION_ROLE);
-  }
+    constructor() {
+        console.debug('new PreAuthSSOProviderConfig()');
+        super('HeaderPreAuth', AuthenticationProviderConfig.FEDERATION_ROLE);
+    }
 
-  getDisplayPropertyNames(): string[] {
-    return PreAuthSSOProviderConfig.displayPropertyNames;
-  }
+    getDisplayPropertyNames(): string[] {
+        return PreAuthSSOProviderConfig.displayPropertyNames;
+    }
 
-  getDisplayNamePropertyBinding(name: string) {
-    return PreAuthSSOProviderConfig.displayPropertyNameBindings.get(name);
-  }
+    getDisplayNamePropertyBinding(name: string) {
+        return PreAuthSSOProviderConfig.displayPropertyNameBindings.get(name);
+    }
 
 }

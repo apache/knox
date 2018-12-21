@@ -15,58 +15,58 @@
  * limitations under the License.
  */
 
-import {DisplayBindingProviderConfig} from "./display-binding-provider-config";
+import {DisplayBindingProviderConfig} from './display-binding-provider-config';
 
 export class ACLsAuthznProviderConfig extends DisplayBindingProviderConfig {
 
-  private static MODE_VALUES: string[] = [ 'OR', 'AND' ];
+    private static MODE_VALUES: string[] = ['OR', 'AND'];
 
-  private static DEFAULT_MODE: string = 'Default Mode';
+    private static DEFAULT_MODE = 'Default Mode';
 
-  private static displayPropertyNames: string[] = [ ACLsAuthznProviderConfig.DEFAULT_MODE ];
+    private static displayPropertyNames: string[] = [ACLsAuthznProviderConfig.DEFAULT_MODE];
 
-  private static displayPropertyNameBindings: Map<string, string> =
-                    new Map([ [ACLsAuthznProviderConfig.DEFAULT_MODE, 'acl.mode'] ]);
+    private static displayPropertyNameBindings: Map<string, string> =
+        new Map([[ACLsAuthznProviderConfig.DEFAULT_MODE, 'acl.mode']]);
 
-  constructor() {
-    super();
-    this.role    = 'authorization';
-    this.name    = 'AclsAuthz';
-    this.enabled = 'true';
-    this.params  = new Map<string, string>();
-  }
-
-  getDisplayPropertyNames(): string[] {
-    return ACLsAuthznProviderConfig.displayPropertyNames;
-  }
-
-  getDisplayNamePropertyBinding(name: string) {
-    return ACLsAuthznProviderConfig.displayPropertyNameBindings.get(name);
-  }
-
-  isValidParamValue(paramName: string): boolean {
-    let isValid: boolean;
-
-    switch (paramName) {
-      case ACLsAuthznProviderConfig.DEFAULT_MODE:
-        isValid = this.isValidMode();
-        break;
-      default:
-        isValid = true;
+    constructor() {
+        super();
+        this.role = 'authorization';
+        this.name = 'AclsAuthz';
+        this.enabled = 'true';
+        this.params = new Map<string, string>();
     }
 
-    return isValid;
-  }
-
-  private isValidMode(): boolean {
-    let isValid: boolean = true;
-
-    let defaultMode = this.getParam(this.getDisplayNamePropertyBinding(ACLsAuthznProviderConfig.DEFAULT_MODE));
-    if (defaultMode) {
-      isValid = (ACLsAuthznProviderConfig.MODE_VALUES.indexOf(defaultMode.toUpperCase()) > -1);
+    getDisplayPropertyNames(): string[] {
+        return ACLsAuthznProviderConfig.displayPropertyNames;
     }
 
-    return isValid;
-  }
+    getDisplayNamePropertyBinding(name: string) {
+        return ACLsAuthznProviderConfig.displayPropertyNameBindings.get(name);
+    }
+
+    isValidParamValue(paramName: string): boolean {
+        let isValid: boolean;
+
+        switch (paramName) {
+            case ACLsAuthznProviderConfig.DEFAULT_MODE:
+                isValid = this.isValidMode();
+                break;
+            default:
+                isValid = true;
+        }
+
+        return isValid;
+    }
+
+    private isValidMode(): boolean {
+        let isValid = true;
+
+        let defaultMode = this.getParam(this.getDisplayNamePropertyBinding(ACLsAuthznProviderConfig.DEFAULT_MODE));
+        if (defaultMode) {
+            isValid = (ACLsAuthznProviderConfig.MODE_VALUES.indexOf(defaultMode.toUpperCase()) > -1);
+        }
+
+        return isValid;
+    }
 
 }

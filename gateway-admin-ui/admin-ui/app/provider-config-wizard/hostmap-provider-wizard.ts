@@ -14,35 +14,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import {CategoryWizard} from "./category-wizard";
-import {ProviderConfig} from "../resource-detail/provider-config";
-
+import {CategoryWizard} from './category-wizard';
+import {ProviderConfig} from '../resource-detail/provider-config';
 
 export class HostMapProviderWizard extends CategoryWizard {
+    private stepCount = 2;
 
-  private stepCount: number = 2;
+    getTypes(): string[] {
+        return [];
+    }
 
-  getTypes(): string[] {
-    return [];
-  }
+    getSteps(): number {
+        return this.stepCount;
+    }
 
-  getSteps(): number {
-    return this.stepCount;
-  }
+    onChange() {
+        // Nothing to do
+    }
 
-  onChange() {
-    // Nothing to do
-  }
-
-  getProviderConfig(): ProviderConfig {
-    this.providerConfig = new ProviderConfig();
-    this.providerConfig.role = 'hostmap';
-    this.providerConfig.name = 'static';
-    this.providerConfig.enabled = 'true';
-    this.providerConfig.params = new Map<string, string>();
-    return this.providerConfig;
-  }
-
+    getProviderConfig(): ProviderConfig {
+        this.providerConfig = new ProviderConfig();
+        this.providerConfig.role = 'hostmap';
+        this.providerConfig.name = 'static';
+        this.providerConfig.enabled = 'true';
+        this.providerConfig.params = new Map<string, string>();
+        return this.providerConfig;
+    }
 }
 

@@ -15,19 +15,17 @@
  * limitations under the License.
  */
 
-import {DisplayBindingProviderConfig} from "./display-binding-provider-config";
+import {DisplayBindingProviderConfig} from './display-binding-provider-config';
 
 export abstract class AuthenticationProviderConfig extends DisplayBindingProviderConfig {
+    static AUTHENTICATION_ROLE = 'authentication';
+    static FEDERATION_ROLE = 'federation';
 
-  static AUTHENTICATION_ROLE: string = 'authentication';
-  static FEDERATION_ROLE: string     = 'federation';
-
-  constructor(name: string, role?: string) {
-    super();
-    this.role = role ? role : AuthenticationProviderConfig.AUTHENTICATION_ROLE;
-    this.name = name;
-    this.enabled = 'true'; // enable by default
-    this.params = new Map<string, string>();
-  }
-
+    constructor(name: string, role?: string) {
+        super();
+        this.role = role ? role : AuthenticationProviderConfig.AUTHENTICATION_ROLE;
+        this.name = name;
+        this.enabled = 'true'; // enable by default
+        this.params = new Map<string, string>();
+    }
 }

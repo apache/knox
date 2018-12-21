@@ -15,60 +15,58 @@
  * limitations under the License.
  */
 
-import {ValidationUtils} from "../utils/validation-utils";
-import {WebAppSecurityContributor} from "./webappsec-contributor";
+import {ValidationUtils} from '../utils/validation-utils';
+import {WebAppSecurityContributor} from './webappsec-contributor';
 
 export class CSRFProviderConfig extends WebAppSecurityContributor {
+    public static CUSTOM_HEADER = 'Custom Header';
+    public static METHODS_TO_IGNORE = 'Methods to Ignore';
 
-  public static CUSTOM_HEADER: string     = 'Custom Header';
-  public static METHODS_TO_IGNORE: string = 'Methods to Ignore';
+    private static displayPropertyNames = [CSRFProviderConfig.CUSTOM_HEADER,
+        CSRFProviderConfig.METHODS_TO_IGNORE
+    ];
 
-  private static displayPropertyNames = [ CSRFProviderConfig.CUSTOM_HEADER,
-                                          CSRFProviderConfig.METHODS_TO_IGNORE
-                                        ];
-
-  private static displayPropertyNameBindings: Map<string, string> =
-    new Map([
-      [CSRFProviderConfig.CUSTOM_HEADER,    'csrf.customHeader'],
-      [CSRFProviderConfig.METHODS_TO_IGNORE, 'csrf.methodsToIgnore']
-    ] as [string, string][]);
+    private static displayPropertyNameBindings: Map<string, string> =
+        new Map([
+            [CSRFProviderConfig.CUSTOM_HEADER, 'csrf.customHeader'],
+            [CSRFProviderConfig.METHODS_TO_IGNORE, 'csrf.methodsToIgnore']
+        ] as [string, string][]);
 
 
-  constructor() {
-    super();
-    this.setParam('csrf.enabled', 'true');
-    this.setParam(CSRFProviderConfig.displayPropertyNameBindings.get(CSRFProviderConfig.CUSTOM_HEADER), 'X-XSRF-Header');
-    this.setParam(CSRFProviderConfig.displayPropertyNameBindings.get(CSRFProviderConfig.METHODS_TO_IGNORE), 'GET,OPTIONS,HEAD');
-  }
-
-  getDisplayPropertyNames(): string[] {
-    return CSRFProviderConfig.displayPropertyNames;
-  }
-
-  getDisplayNamePropertyBinding(name: string): string {
-    return CSRFProviderConfig.displayPropertyNameBindings.get(name);
-  }
-
-  isValidParamValue(paramName: string): boolean {
-    let isValid: boolean = true;
-
-    let value = this.getParam(this.getDisplayNamePropertyBinding(paramName));
-    if (value) {
-      switch (paramName) {
-        case CSRFProviderConfig.CUSTOM_HEADER:
-          isValid = ValidationUtils.isValidString(value);
-          break;
-        case CSRFProviderConfig.METHODS_TO_IGNORE:
-          let methodList: string[] = value.split(',');
-          for (let method of methodList) {
-            isValid = isValid && ValidationUtils.isValidHTTPMethod(method.trim().toUpperCase());
-          }
-          break;
-        default:
-      }
+    constructor() {
+        super();
+        this.setParam('csrf.enabled', 'true');
+        this.setParam(CSRFProviderConfig.displayPropertyNameBindings.get(CSRFProviderConfig.CUSTOM_HEADER), 'X-XSRF-Header');
+        this.setParam(CSRFProviderConfig.displayPropertyNameBindings.get(CSRFProviderConfig.METHODS_TO_IGNORE), 'GET,OPTIONS,HEAD');
     }
-    return isValid;
-  }
 
+    getDisplayPropertyNames(): string[] {
+        return CSRFProviderConfig.displayPropertyNames;
+    }
+
+    getDisplayNamePropertyBinding(name: string): string {
+        return CSRFProviderConfig.displayPropertyNameBindings.get(name);
+    }
+
+    isValidParamValue(paramName: string): boolean {
+        let isValid = true;
+
+        let value = this.getParam(this.getDisplayNamePropertyBinding(paramName));
+        if (value) {
+            switch (paramName) {
+                case CSRFProviderConfig.CUSTOM_HEADER:
+                    isValid = ValidationUtils.isValidString(value);
+                    break;
+                case CSRFProviderConfig.METHODS_TO_IGNORE:
+                    let methodList: string[] = value.split(',');
+                    for (let method of methodList) {
+                        isValid = isValid && ValidationUtils.isValidHTTPMethod(method.trim().toUpperCase());
+                    }
+                    break;
+                default:
+            }
+        }
+        return isValid;
+    }
 }
 

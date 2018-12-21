@@ -16,17 +16,17 @@
  */
 
 
-import {ProviderConfig} from "../resource-detail/provider-config";
+import {ProviderConfig} from '../resource-detail/provider-config';
 
 export interface ProviderContributorWizard {
 
-  // Returns the type of provider to which the implementation contributes
-  getProviderRole() : string;
+    // Returns the type of provider to which the implementation contributes
+    getProviderRole(): string;
 
-  // Contribute the wizard state to the specified provider
-  contribute(providerConfig: ProviderConfig);
+    // Contribute the wizard state to the specified provider
+    contribute(providerConfig: ProviderConfig);
 
-  // Create a new ProviderConfig of the type to which the implementation can contribute
-  createNewProviderConfig(): ProviderConfig;
+    // Create a new ProviderConfig of the type to which the implementation can contribute
+    createNewProviderConfig(): ProviderConfig;
 
 }

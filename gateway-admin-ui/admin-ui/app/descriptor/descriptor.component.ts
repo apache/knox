@@ -14,18 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 
 @Component({
-  selector: 'app-descriptor',
-  templateUrl: './descriptor.component.html',
-  styleUrls: ['./descriptor.component.css']
+    selector: 'app-descriptor',
+    templateUrl: './descriptor.component.html',
+    styleUrls: ['./descriptor.component.css']
 })
 export class DescriptorComponent implements OnInit {
 
-  constructor() { }
+    constructor() {
+    }
 
-  ngOnInit() {
-  }
+    ngOnInit() {
+    }
 
 }

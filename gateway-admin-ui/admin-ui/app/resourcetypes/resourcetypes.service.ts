@@ -14,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Injectable, OnInit } from '@angular/core';
-import { Subject } from 'rxjs/Subject';
+import {Injectable} from '@angular/core';
+import {Subject} from 'rxjs/Subject';
 
 @Injectable()
 export class ResourceTypesService {
@@ -32,7 +32,6 @@ export class ResourceTypesService {
     }
 
     selectResourceType(resType: string) {
-      //console.debug('ResourceTypeService --> selectResourceType() --> ' + resType);
-      this.selectedResourceTypeSource.next(resType);
+        this.selectedResourceTypeSource.next(resType);
     }
 }

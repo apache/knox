@@ -15,64 +15,64 @@
  * limitations under the License.
  */
 
-import {IdentityAssertionProviderConfig} from "./identity-assertion-provider-config";
+import {IdentityAssertionProviderConfig} from './identity-assertion-provider-config';
 
 export class SwitchCaseAssertionProviderConfig extends IdentityAssertionProviderConfig {
 
-  private static CASE_VALUES: string[] = [ 'upper', 'lower' ];
+    private static CASE_VALUES: string[] = ['upper', 'lower'];
 
-  private static PRINCIPAL_CASE       = 'Principal Case';
-  private static GROUP_PRINCIPAL_CASE = 'Group Principal Case';
+    private static PRINCIPAL_CASE = 'Principal Case';
+    private static GROUP_PRINCIPAL_CASE = 'Group Principal Case';
 
-  private static displayPropertyNames = [ SwitchCaseAssertionProviderConfig.PRINCIPAL_CASE,
-                                          SwitchCaseAssertionProviderConfig.GROUP_PRINCIPAL_CASE
-                                        ];
+    private static displayPropertyNames = [SwitchCaseAssertionProviderConfig.PRINCIPAL_CASE,
+        SwitchCaseAssertionProviderConfig.GROUP_PRINCIPAL_CASE
+    ];
 
-  private static displayPropertyNameBindings: Map<string, string> =
-                                    new Map([
-                                      [SwitchCaseAssertionProviderConfig.PRINCIPAL_CASE,       'principal.case'],
-                                      [SwitchCaseAssertionProviderConfig.GROUP_PRINCIPAL_CASE, 'group.principal.case']
-                                    ]);
+    private static displayPropertyNameBindings: Map<string, string> =
+        new Map([
+            [SwitchCaseAssertionProviderConfig.PRINCIPAL_CASE, 'principal.case'],
+            [SwitchCaseAssertionProviderConfig.GROUP_PRINCIPAL_CASE, 'group.principal.case']
+        ]);
 
-  constructor() {
-    super('SwitchCase');
-  }
-
-  getDisplayPropertyNames(): string[] {
-    return SwitchCaseAssertionProviderConfig.displayPropertyNames;
-  }
-
-  getDisplayNamePropertyBinding(name: string) {
-    return SwitchCaseAssertionProviderConfig.displayPropertyNameBindings.get(name);
-  }
-
-  isValidParamValue(paramName: string): boolean {
-    let isValid: boolean;
-
-    switch (paramName) {
-      case SwitchCaseAssertionProviderConfig.PRINCIPAL_CASE:
-      case SwitchCaseAssertionProviderConfig.GROUP_PRINCIPAL_CASE:
-        isValid = this.isValidCase(paramName);
-        break;
-      default:
-        isValid = true;
+    constructor() {
+        super('SwitchCase');
     }
 
-    return isValid;
-  }
-
-  private isValidCase(param: string): boolean {
-    let isValid: boolean = true;
-
-    let value = this.getParam(this.getDisplayNamePropertyBinding(param));
-    if (value) {
-      isValid = (SwitchCaseAssertionProviderConfig.CASE_VALUES.indexOf(value.toLowerCase()) > -1);
-      if (!isValid) {
-        console.debug(param + ' value is not a valid case: ' + SwitchCaseAssertionProviderConfig.CASE_VALUES.toString());
-      }
+    getDisplayPropertyNames(): string[] {
+        return SwitchCaseAssertionProviderConfig.displayPropertyNames;
     }
 
-    return isValid;
-  }
+    getDisplayNamePropertyBinding(name: string) {
+        return SwitchCaseAssertionProviderConfig.displayPropertyNameBindings.get(name);
+    }
+
+    isValidParamValue(paramName: string): boolean {
+        let isValid: boolean;
+
+        switch (paramName) {
+            case SwitchCaseAssertionProviderConfig.PRINCIPAL_CASE:
+            case SwitchCaseAssertionProviderConfig.GROUP_PRINCIPAL_CASE:
+                isValid = this.isValidCase(paramName);
+                break;
+            default:
+                isValid = true;
+        }
+
+        return isValid;
+    }
+
+    private isValidCase(param: string): boolean {
+        let isValid = true;
+
+        let value = this.getParam(this.getDisplayNamePropertyBinding(param));
+        if (value) {
+            isValid = (SwitchCaseAssertionProviderConfig.CASE_VALUES.indexOf(value.toLowerCase()) > -1);
+            if (!isValid) {
+                console.debug(param + ' value is not a valid case: ' + SwitchCaseAssertionProviderConfig.CASE_VALUES.toString());
+            }
+        }
+
+        return isValid;
+    }
 
 }

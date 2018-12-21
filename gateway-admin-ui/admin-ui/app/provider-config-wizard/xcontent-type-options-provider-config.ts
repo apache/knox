@@ -15,50 +15,50 @@
  * limitations under the License.
  */
 
-import {WebAppSecurityContributor} from "./webappsec-contributor";
+import {WebAppSecurityContributor} from './webappsec-contributor';
 
 export class XContentTypeOptionsProviderConfig extends WebAppSecurityContributor {
 
-  public static VALUE: string = 'X-Content-Type-Options Header';
+    public static VALUE = 'X-Content-Type-Options Header';
 
-  private static SUPPORTED_VALUES: string[] = ['nosniff'];
+    private static SUPPORTED_VALUES: string[] = ['nosniff'];
 
-  private static displayPropertyNames = [ XContentTypeOptionsProviderConfig.VALUE ];
+    private static displayPropertyNames = [XContentTypeOptionsProviderConfig.VALUE];
 
-  private static displayPropertyNameBindings: Map<string, string> =
-    new Map([ [XContentTypeOptionsProviderConfig.VALUE, 'xcontent-type.options'] ] as [string, string][]);
+    private static displayPropertyNameBindings: Map<string, string> =
+        new Map([[XContentTypeOptionsProviderConfig.VALUE, 'xcontent-type.options']] as [string, string][]);
 
-  constructor() {
-    super();
-    // Set the default values
-    this.setParam('xcontent-type.options.enabled', 'true');
-    this.setParam(XContentTypeOptionsProviderConfig.displayPropertyNameBindings.get(XContentTypeOptionsProviderConfig.VALUE),
-                  'nosniff');
-  }
-
-  getDisplayPropertyNames(): string[] {
-    return XContentTypeOptionsProviderConfig.displayPropertyNames;
-  }
-
-  getDisplayNamePropertyBinding(name: string): string {
-    return XContentTypeOptionsProviderConfig.displayPropertyNameBindings.get(name);
-  }
-
-  isValidParamValue(paramName: string): boolean {
-    let isValid: boolean = true;
-
-    let value = this.getParam(this.getDisplayNamePropertyBinding(paramName));
-    if (value) {
-      switch (paramName) {
-        case XContentTypeOptionsProviderConfig.VALUE:
-          value = value.trim().toLowerCase();
-          isValid = XContentTypeOptionsProviderConfig.SUPPORTED_VALUES.includes(value);
-          break;
-        default:
-      }
+    constructor() {
+        super();
+        // Set the default values
+        this.setParam('xcontent-type.options.enabled', 'true');
+        this.setParam(XContentTypeOptionsProviderConfig.displayPropertyNameBindings.get(XContentTypeOptionsProviderConfig.VALUE),
+            'nosniff');
     }
 
-    return isValid;
-  }
+    getDisplayPropertyNames(): string[] {
+        return XContentTypeOptionsProviderConfig.displayPropertyNames;
+    }
+
+    getDisplayNamePropertyBinding(name: string): string {
+        return XContentTypeOptionsProviderConfig.displayPropertyNameBindings.get(name);
+    }
+
+    isValidParamValue(paramName: string): boolean {
+        let isValid = true;
+
+        let value = this.getParam(this.getDisplayNamePropertyBinding(paramName));
+        if (value) {
+            switch (paramName) {
+                case XContentTypeOptionsProviderConfig.VALUE:
+                    value = value.trim().toLowerCase();
+                    isValid = XContentTypeOptionsProviderConfig.SUPPORTED_VALUES.includes(value);
+                    break;
+                default:
+            }
+        }
+
+        return isValid;
+    }
 
 }

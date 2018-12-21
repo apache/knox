@@ -14,48 +14,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import {CategoryWizard} from "./category-wizard";
-import {ACLsAuthznProviderConfig} from "./acls-authzn-provider-config";
-import {DisplayBindingProviderConfig} from "./display-binding-provider-config";
+import {CategoryWizard} from './category-wizard';
+import {ACLsAuthznProviderConfig} from './acls-authzn-provider-config';
+import {DisplayBindingProviderConfig} from './display-binding-provider-config';
 
 export class AuthorizationWizard extends CategoryWizard {
+    // Authorization provider types
+    private static AUTHZN_ACLS = 'Access Control Lists';
 
-  private stepCount: number = 4;
+    private static authznTypes: string[] = [AuthorizationWizard.AUTHZN_ACLS];
 
+    private static typeConfigMap: Map<string, typeof DisplayBindingProviderConfig> =
+        new Map([
+            [AuthorizationWizard.AUTHZN_ACLS, ACLsAuthznProviderConfig]
+        ] as [string, typeof DisplayBindingProviderConfig][]);
 
-  // Authorization provider types
-  private static AUTHZN_ACLS: string = 'Access Control Lists';
+    private stepCount = 4;
 
-  private static authznTypes: string[] = [ AuthorizationWizard.AUTHZN_ACLS ];
-
-  private static typeConfigMap: Map<string, typeof DisplayBindingProviderConfig> =
-                          new Map([
-                                  [AuthorizationWizard.AUTHZN_ACLS, ACLsAuthznProviderConfig]
-                                ] as [string, typeof DisplayBindingProviderConfig][]);
-
-  getTypes(): string[] {
-    return AuthorizationWizard.authznTypes;
-  }
-
-  getSteps(): number {
-    return this.stepCount;
-  }
-
-  onChange() {
-    let configType = AuthorizationWizard.typeConfigMap.get(this.selectedType);
-    if (configType) {
-      this.providerConfig = Object.create(configType.prototype) as DisplayBindingProviderConfig;
-      this.providerConfig.constructor.apply(this.providerConfig);
-      (this.providerConfig as DisplayBindingProviderConfig).setType(this.selectedType);
-    } else {
-      console.debug('AuthorizationWizard --> No provider configuration type mapped for ' + this.selectedType);
-      this.providerConfig = null;
+    getTypes(): string[] {
+        return AuthorizationWizard.authznTypes;
     }
-  }
 
-  getProviderConfig(): DisplayBindingProviderConfig {
-    return (this.providerConfig as DisplayBindingProviderConfig);
-  }
+    getSteps(): number {
+        return this.stepCount;
+    }
 
+    onChange() {
+        let configType = AuthorizationWizard.typeConfigMap.get(this.selectedType);
+        if (configType) {
+            this.providerConfig = Object.create(configType.prototype) as DisplayBindingProviderConfig;
+            this.providerConfig.constructor.apply(this.providerConfig);
+            (this.providerConfig as DisplayBindingProviderConfig).setType(this.selectedType);
+        } else {
+            console.debug('AuthorizationWizard --> No provider configuration type mapped for ' + this.selectedType);
+            this.providerConfig = null;
+        }
+    }
+
+    getProviderConfig(): DisplayBindingProviderConfig {
+        return (this.providerConfig as DisplayBindingProviderConfig);
+    }
 }

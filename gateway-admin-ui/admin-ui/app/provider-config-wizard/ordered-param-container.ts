@@ -18,10 +18,10 @@
 // ProviderConfig implementations, for which parameter order is important, should implement this interface
 export interface OrderedParamContainer {
 
-  // Get the param names in the correct order
-  getOrderedParamNames(): string[];
+    // Get the param names in the correct order
+    getOrderedParamNames(): string[];
 
-  // Ensure the specified set of params is ordered correctly
-  orderParams(params: Map<string, string>): Map<string, string>;
+    // Ensure the specified set of params is ordered correctly
+    orderParams(params: Map<string, string>): Map<string, string>;
 
 }

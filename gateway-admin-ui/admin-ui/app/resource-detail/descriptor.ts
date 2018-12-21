@@ -14,8 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Service} from "../resource/service";
-
+import {Service} from '../resource/service';
 
 export class Descriptor {
     discoveryAddress: string;
@@ -25,25 +24,24 @@ export class Descriptor {
     providerConfig: string;
     services: Service[];
 
-    private dirty: boolean = false;
+    private dirty = false;
 
-    getServiceParamNames(service: Service): string[] {
-      if (!service.params) {
-        service.params = {};
-      }
-      return Object.getOwnPropertyNames(service.params);
+    static getServiceParamNames(service: Service): string[] {
+        if (!service.params) {
+            service.params = {};
+        }
+        return Object.getOwnPropertyNames(service.params);
     }
 
-    getServiceParamValue(service: Service, name: string): string {
-       return service.params[name];
+    static getServiceParamValue(service: Service, name: string): string {
+        return service.params[name];
     }
 
     setProviderConfig(providerConfigRef: string) {
-      //console.debug('Descriptor --> setProviderConfig() --> ' + providerConfigRef);
-      if (providerConfigRef !== this.providerConfig) {
-        this.providerConfig = providerConfigRef;
-        this.setDirty();
-      }
+        if (providerConfigRef !== this.providerConfig) {
+            this.providerConfig = providerConfigRef;
+            this.setDirty();
+        }
     }
 
     addService(name: string) {
@@ -75,10 +73,10 @@ export class Descriptor {
     }
 
     onVersionChanged(service: Service) {
-      if (!service.version || service.version.length == 0) {
-        delete service.version;
-      }
-      this.setDirty();
+        if (!service.version || service.version.length === 0) {
+            delete service.version;
+        }
+        this.setDirty();
     }
 
     setDirty() {
@@ -88,5 +86,4 @@ export class Descriptor {
     public isDirty(): boolean {
         return this.dirty;
     }
-
 }

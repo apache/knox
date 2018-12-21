@@ -73,7 +73,6 @@
                             <arguments>install</arguments>
                         </configuration>
                     </execution>
-                    <!--
                     <execution>
                         <id>npm run lint</id>
                         <goals>
@@ -83,7 +82,6 @@
                             <arguments>run lint</arguments>
                         </configuration>
                     </execution>
-                    -->
                     <execution>
                         <id>npm run build-prod</id>
                         <goals>

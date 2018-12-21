@@ -15,29 +15,29 @@
  * limitations under the License.
  */
 
-import {AuthenticationProviderConfig} from "./authentication-provider-config";
+import {AuthenticationProviderConfig} from './authentication-provider-config';
 
 export class JWTProviderConfig extends AuthenticationProviderConfig {
 
-  static KNOXTOKEN_AUDIENCES  = 'KnoxToken Audiences';
+    static KNOXTOKEN_AUDIENCES = 'KnoxToken Audiences';
 
-  private static displayPropertyNames = [ JWTProviderConfig.KNOXTOKEN_AUDIENCES ];
+    private static displayPropertyNames = [JWTProviderConfig.KNOXTOKEN_AUDIENCES];
 
-  private static displayPropertyNameBindings: Map<string, string> =
-    new Map([ [JWTProviderConfig.KNOXTOKEN_AUDIENCES, 'knox.token.audiences'] ]);
+    private static displayPropertyNameBindings: Map<string, string> =
+        new Map([[JWTProviderConfig.KNOXTOKEN_AUDIENCES, 'knox.token.audiences']]);
 
 
-  constructor() {
-    console.debug('new JWTProviderConfig()');
-    super('JWTProvider', AuthenticationProviderConfig.FEDERATION_ROLE);
-  }
+    constructor() {
+        console.debug('new JWTProviderConfig()');
+        super('JWTProvider', AuthenticationProviderConfig.FEDERATION_ROLE);
+    }
 
-  getDisplayPropertyNames(): string[] {
-    return JWTProviderConfig.displayPropertyNames;
-  }
+    getDisplayPropertyNames(): string[] {
+        return JWTProviderConfig.displayPropertyNames;
+    }
 
-  getDisplayNamePropertyBinding(name: string) {
-    return JWTProviderConfig.displayPropertyNameBindings.get(name);
-  }
+    getDisplayNamePropertyBinding(name: string) {
+        return JWTProviderConfig.displayPropertyNameBindings.get(name);
+    }
 
 }

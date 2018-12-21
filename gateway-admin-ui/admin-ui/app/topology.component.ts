@@ -14,43 +14,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
-import { Topology } from './topology';
-import { TopologyService } from './topology.service';
-import { Subscription }   from 'rxjs/Subscription';
+import {Component, OnInit} from '@angular/core';
+import {Topology} from './topology';
+import {TopologyService} from './topology.service';
 
 
 @Component({
-    selector: 'topology',
+    selector: 'app-topology',
     template: `
         <div class="table-responsive" style="max-height: 400px; width:100%; overflow: auto;">
             <table class="table table-striped table-hover">
-              <thead>
+                <thead>
                 <tr>
-                  <th>Topology Name</th>
-                  <th>Timestamp</th>
+                    <th>Topology Name</th>
+                    <th>Timestamp</th>
                 </tr>
-              </thead>
-         <tbody>
-         <tr *ngFor="let topology of topologies"
-          [class.selected]="topology === selectedTopology"
-        (click)="onSelect(topology)">
-         <td>{{topology.name}}</td> 
-         <td>{{topology.timestamp | date:'medium'}}</td> 
-         </tr>
-        </tbody>
-        </table>
+                </thead>
+                <tbody>
+                <tr *ngFor="let topology of topologies"
+                    [class.selected]="topology === selectedTopology"
+                    (click)="onSelect(topology)">
+                    <td>{{topology.name}}</td>
+                    <td>{{topology.timestamp | date:'medium'}}</td>
+                </tr>
+                </tbody>
+            </table>
         </div>
-       `
+    `
 })
 export class TopologyComponent implements OnInit {
 
-    value :any;
+    value: any;
     topologies: Topology[];
     selectedTopology: Topology;
 
 
-    constructor(private topologyService : TopologyService) {
+    constructor(private topologyService: TopologyService) {
     }
 
     getTopologies(): void {

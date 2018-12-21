@@ -19,7 +19,7 @@ import {GatewayVersion} from './gateway-version';
 import {GatewayVersionService} from './gateway-version.service';
 
 @Component({
-    selector: 'gateway-version',
+    selector: 'app-gateway-version',
     template: `
         <div *ngIf="gatewayVersion">
             <span class="small"><cite>Version</cite> {{this.gatewayVersion.version}}</span>

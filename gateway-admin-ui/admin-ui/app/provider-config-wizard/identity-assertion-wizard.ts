@@ -15,62 +15,60 @@
  * limitations under the License.
  */
 
-import {CategoryWizard} from "./category-wizard";
-import {ProviderConfig} from "../resource-detail/provider-config";
-import {IdentityAssertionProviderConfig} from "./identity-assertion-provider-config";
-import {DefaultIdAssertionProviderConfig} from "./default-idassertion-provider-config";
-import {ConcatAssertionProviderConfig} from "./concat-idassertion-provider-config";
-import {SwitchCaseAssertionProviderConfig} from "./switchcase-idassertion-provider-config";
-import {RegexAssertionProviderConfig} from "./regex-idassertion-provider-config";
-import {GroupLookupAssertionProviderConfig} from "./grouplookup-id-assertion-provider-config";
+import {CategoryWizard} from './category-wizard';
+import {ProviderConfig} from '../resource-detail/provider-config';
+import {IdentityAssertionProviderConfig} from './identity-assertion-provider-config';
+import {DefaultIdAssertionProviderConfig} from './default-idassertion-provider-config';
+import {ConcatAssertionProviderConfig} from './concat-idassertion-provider-config';
+import {SwitchCaseAssertionProviderConfig} from './switchcase-idassertion-provider-config';
+import {RegexAssertionProviderConfig} from './regex-idassertion-provider-config';
+import {GroupLookupAssertionProviderConfig} from './grouplookup-id-assertion-provider-config';
 
 export class IdentityAssertionWizard extends CategoryWizard {
+    private static DEFAULT = 'Default';
+    private static CONCAT = 'Concatenation';
+    private static SWITCHCASE = 'SwitchCase';
+    private static REGEXP = 'Regular Expression';
+    private static GROUP_LOOKUP = 'Hadoop Group Lookup (LDAP)';
 
-  private stepCount: number = 4;
+    private static assertionTypes: string[] = [IdentityAssertionWizard.DEFAULT,
+        IdentityAssertionWizard.CONCAT,
+        IdentityAssertionWizard.SWITCHCASE,
+        IdentityAssertionWizard.REGEXP,
+        IdentityAssertionWizard.GROUP_LOOKUP
+    ];
 
-  private static DEFAULT: string      = 'Default';
-  private static CONCAT: string       = 'Concatenation';
-  private static SWITCHCASE: string   = 'SwitchCase';
-  private static REGEXP: string       = 'Regular Expression';
-  private static GROUP_LOOKUP: string = 'Hadoop Group Lookup (LDAP)';
+    private static typeConfigMap: Map<string, typeof IdentityAssertionProviderConfig> =
+        new Map([[IdentityAssertionWizard.DEFAULT, DefaultIdAssertionProviderConfig],
+            [IdentityAssertionWizard.CONCAT, ConcatAssertionProviderConfig],
+            [IdentityAssertionWizard.SWITCHCASE, SwitchCaseAssertionProviderConfig],
+            [IdentityAssertionWizard.REGEXP, RegexAssertionProviderConfig],
+            [IdentityAssertionWizard.GROUP_LOOKUP, GroupLookupAssertionProviderConfig],
+        ] as [string, typeof IdentityAssertionProviderConfig][]);
 
-  private static assertionTypes: string[] = [ IdentityAssertionWizard.DEFAULT,
-                                              IdentityAssertionWizard.CONCAT,
-                                              IdentityAssertionWizard.SWITCHCASE,
-                                              IdentityAssertionWizard.REGEXP,
-                                              IdentityAssertionWizard.GROUP_LOOKUP
-                                            ];
+    private stepCount = 4;
 
-  private static typeConfigMap: Map<string, typeof IdentityAssertionProviderConfig> =
-                        new Map([ [IdentityAssertionWizard.DEFAULT,      DefaultIdAssertionProviderConfig],
-                                  [IdentityAssertionWizard.CONCAT,       ConcatAssertionProviderConfig],
-                                  [IdentityAssertionWizard.SWITCHCASE,   SwitchCaseAssertionProviderConfig],
-                                  [IdentityAssertionWizard.REGEXP,       RegexAssertionProviderConfig],
-                                  [IdentityAssertionWizard.GROUP_LOOKUP, GroupLookupAssertionProviderConfig],
-                                ] as [string, typeof IdentityAssertionProviderConfig][]);
-
-  getTypes(): string[] {
-    return IdentityAssertionWizard.assertionTypes;
-  }
-
-  getSteps(): number {
-    return this.stepCount;
-  }
-
-  onChange() {
-    let configType = IdentityAssertionWizard.typeConfigMap.get(this.selectedType);
-    if (configType) {
-      this.providerConfig = Object.create(configType.prototype) as IdentityAssertionProviderConfig;
-      this.providerConfig.constructor.apply(this.providerConfig);
-      (this.providerConfig as IdentityAssertionProviderConfig).setType(this.selectedType);
-    } else {
-      console.debug('IdentityAssertionWizard --> No provider configuration type mapped for ' + this.selectedType);
-      this.providerConfig = null;
+    getTypes(): string[] {
+        return IdentityAssertionWizard.assertionTypes;
     }
-  }
 
-  getProviderConfig(): ProviderConfig {
-    return (this.providerConfig as IdentityAssertionProviderConfig);
-  }
+    getSteps(): number {
+        return this.stepCount;
+    }
 
+    onChange() {
+        let configType = IdentityAssertionWizard.typeConfigMap.get(this.selectedType);
+        if (configType) {
+            this.providerConfig = Object.create(configType.prototype) as IdentityAssertionProviderConfig;
+            this.providerConfig.constructor.apply(this.providerConfig);
+            (this.providerConfig as IdentityAssertionProviderConfig).setType(this.selectedType);
+        } else {
+            console.debug('IdentityAssertionWizard --> No provider configuration type mapped for ' + this.selectedType);
+            this.providerConfig = null;
+        }
+    }
+
+    getProviderConfig(): ProviderConfig {
+        return (this.providerConfig as IdentityAssertionProviderConfig);
+    }
 }

@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 
-import {DisplayBindingProviderConfig} from "./display-binding-provider-config";
+import {DisplayBindingProviderConfig} from './display-binding-provider-config';
 
 export abstract class WebAppSecurityContributor extends DisplayBindingProviderConfig {
 
-  constructor() {
-    super();
-    this.params = new Map<string, string>();
-  }
+    constructor() {
+        super();
+        this.params = new Map<string, string>();
+    }
 
 }
 

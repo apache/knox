@@ -15,33 +15,33 @@
  * limitations under the License.
  */
 
-import {IdentityAssertionProviderConfig} from "./identity-assertion-provider-config";
+import {IdentityAssertionProviderConfig} from './identity-assertion-provider-config';
 
 export class ConcatAssertionProviderConfig extends IdentityAssertionProviderConfig {
 
-  static PREFIX = 'Prefix';
-  static SUFFIX = 'Suffix';
+    static PREFIX = 'Prefix';
+    static SUFFIX = 'Suffix';
 
-  private static displayPropertyNames = [ ConcatAssertionProviderConfig.PREFIX,
-                                          ConcatAssertionProviderConfig.SUFFIX
-                                        ];
+    private static displayPropertyNames = [ConcatAssertionProviderConfig.PREFIX,
+        ConcatAssertionProviderConfig.SUFFIX
+    ];
 
-  private static displayPropertyNameBindings: Map<string, string> =
-                                        new Map([
-                                          [ConcatAssertionProviderConfig.PREFIX, 'concat.prefix'],
-                                          [ConcatAssertionProviderConfig.SUFFIX, 'concat.suffix']
-                                        ]);
+    private static displayPropertyNameBindings: Map<string, string> =
+        new Map([
+            [ConcatAssertionProviderConfig.PREFIX, 'concat.prefix'],
+            [ConcatAssertionProviderConfig.SUFFIX, 'concat.suffix']
+        ]);
 
-  constructor() {
-    super('Concat');
-  }
+    constructor() {
+        super('Concat');
+    }
 
-  getDisplayPropertyNames(): string[] {
-    return ConcatAssertionProviderConfig.displayPropertyNames;
-  }
+    getDisplayPropertyNames(): string[] {
+        return ConcatAssertionProviderConfig.displayPropertyNames;
+    }
 
-  getDisplayNamePropertyBinding(name: string) {
-    return ConcatAssertionProviderConfig.displayPropertyNameBindings.get(name);
-  }
+    getDisplayNamePropertyBinding(name: string) {
+        return ConcatAssertionProviderConfig.displayPropertyNameBindings.get(name);
+    }
 
 }

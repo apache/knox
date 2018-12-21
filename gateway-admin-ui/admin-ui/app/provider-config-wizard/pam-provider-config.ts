@@ -15,91 +15,91 @@
  * limitations under the License.
  */
 
-import {AuthenticationProviderConfig} from "./authentication-provider-config";
-import {OrderedParamContainer} from "./ordered-param-container";
-import {ValidationUtils} from "../utils/validation-utils";
+import {AuthenticationProviderConfig} from './authentication-provider-config';
+import {OrderedParamContainer} from './ordered-param-container';
+import {ValidationUtils} from '../utils/validation-utils';
 
 export class PAMProviderConfig extends AuthenticationProviderConfig implements OrderedParamContainer {
 
-  static SESSION_TIMEOUT  = 'Session Timeout';
-  static REALM            = 'Realm';
-  static SERVICE          = 'Service';
-  static AUTH_CHAIN       = 'Authentication Chain';
+    static SESSION_TIMEOUT = 'Session Timeout';
+    static REALM = 'Realm';
+    static SERVICE = 'Service';
+    static AUTH_CHAIN = 'Authentication Chain';
 
-  private static displayPropertyNames = [ PAMProviderConfig.SESSION_TIMEOUT,
-                                          PAMProviderConfig.SERVICE ];
+    private static displayPropertyNames = [PAMProviderConfig.SESSION_TIMEOUT,
+        PAMProviderConfig.SERVICE];
 
-  private static displayPropertyNameBindings: Map<string, string> =
-                            new Map([
-                              [PAMProviderConfig.SESSION_TIMEOUT, 'sessionTimeout'],
-                              [PAMProviderConfig.REALM,           'main.pamRealm'],
-                              [PAMProviderConfig.SERVICE,         'main.pamRealm.service'],
-                              [PAMProviderConfig.AUTH_CHAIN,      'urls./**']
-                            ]);
+    private static displayPropertyNameBindings: Map<string, string> =
+        new Map([
+            [PAMProviderConfig.SESSION_TIMEOUT, 'sessionTimeout'],
+            [PAMProviderConfig.REALM, 'main.pamRealm'],
+            [PAMProviderConfig.SERVICE, 'main.pamRealm.service'],
+            [PAMProviderConfig.AUTH_CHAIN, 'urls./**']
+        ]);
 
-  private static paramsOrder: string[] =
-                            [ PAMProviderConfig.displayPropertyNameBindings.get(PAMProviderConfig.SESSION_TIMEOUT),
-                              PAMProviderConfig.displayPropertyNameBindings.get(PAMProviderConfig.REALM),
-                              PAMProviderConfig.displayPropertyNameBindings.get(PAMProviderConfig.SERVICE),
-                              PAMProviderConfig.displayPropertyNameBindings.get(PAMProviderConfig.AUTH_CHAIN)
-                            ];
+    private static paramsOrder: string[] =
+        [PAMProviderConfig.displayPropertyNameBindings.get(PAMProviderConfig.SESSION_TIMEOUT),
+            PAMProviderConfig.displayPropertyNameBindings.get(PAMProviderConfig.REALM),
+            PAMProviderConfig.displayPropertyNameBindings.get(PAMProviderConfig.SERVICE),
+            PAMProviderConfig.displayPropertyNameBindings.get(PAMProviderConfig.AUTH_CHAIN)
+        ];
 
-  constructor() {
-    super('ShiroProvider');
-    this.setParam(this.getDisplayNamePropertyBinding(PAMProviderConfig.REALM),
-                  'org.apache.knox.gateway.shirorealm.KnoxPamRealm');
-    this.setParam(this.getDisplayNamePropertyBinding(PAMProviderConfig.SERVICE), 'login');
-    this.setParam(this.getDisplayNamePropertyBinding(PAMProviderConfig.AUTH_CHAIN), 'authcBasic');
-  }
-
-  getDisplayPropertyNames(): string[] {
-    return PAMProviderConfig.displayPropertyNames;
-  }
-
-  getDisplayNamePropertyBinding(name: string) {
-    return PAMProviderConfig.displayPropertyNameBindings.get(name);
-  }
-
-  getOrderedParamNames(): string[] {
-    return PAMProviderConfig.paramsOrder;
-  }
-
-  orderParams(params: Map<string, string>): Map<string, string> {
-    let result = new Map<string, string>();
-
-    for (let name of this.getOrderedParamNames()) {
-      let value = params[name];
-      if (value) {
-        result[name] = value;
-      }
+    constructor() {
+        super('ShiroProvider');
+        this.setParam(this.getDisplayNamePropertyBinding(PAMProviderConfig.REALM),
+            'org.apache.knox.gateway.shirorealm.KnoxPamRealm');
+        this.setParam(this.getDisplayNamePropertyBinding(PAMProviderConfig.SERVICE), 'login');
+        this.setParam(this.getDisplayNamePropertyBinding(PAMProviderConfig.AUTH_CHAIN), 'authcBasic');
     }
 
-    return result;
-  }
-
-  isValidParamValue(paramName: string): boolean {
-    let isValid: boolean;
-
-    switch (paramName) {
-      case PAMProviderConfig.SESSION_TIMEOUT:
-        isValid = this.isValidTimeout();
-        break;
-      default:
-        isValid = true;
+    getDisplayPropertyNames(): string[] {
+        return PAMProviderConfig.displayPropertyNames;
     }
 
-    return isValid;
-  }
-
-  private isValidTimeout(): boolean {
-    let isValid: boolean = true;
-
-    let timeout = this.getParam(this.getDisplayNamePropertyBinding(PAMProviderConfig.SESSION_TIMEOUT));
-    if (timeout) {
-      isValid = ValidationUtils.isValidNumber(timeout);
+    getDisplayNamePropertyBinding(name: string) {
+        return PAMProviderConfig.displayPropertyNameBindings.get(name);
     }
 
-    return isValid;
-  }
+    getOrderedParamNames(): string[] {
+        return PAMProviderConfig.paramsOrder;
+    }
+
+    orderParams(params: Map<string, string>): Map<string, string> {
+        let result = new Map<string, string>();
+
+        for (let name of this.getOrderedParamNames()) {
+            let value = params[name];
+            if (value) {
+                result[name] = value;
+            }
+        }
+
+        return result;
+    }
+
+    isValidParamValue(paramName: string): boolean {
+        let isValid: boolean;
+
+        switch (paramName) {
+            case PAMProviderConfig.SESSION_TIMEOUT:
+                isValid = this.isValidTimeout();
+                break;
+            default:
+                isValid = true;
+        }
+
+        return isValid;
+    }
+
+    private isValidTimeout(): boolean {
+        let isValid = true;
+
+        let timeout = this.getParam(this.getDisplayNamePropertyBinding(PAMProviderConfig.SESSION_TIMEOUT));
+        if (timeout) {
+            isValid = ValidationUtils.isValidNumber(timeout);
+        }
+
+        return isValid;
+    }
 
 }

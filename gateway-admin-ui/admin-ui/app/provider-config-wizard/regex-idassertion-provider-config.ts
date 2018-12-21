@@ -15,68 +15,66 @@
  * limitations under the License.
  */
 
-import {IdentityAssertionProviderConfig} from "./identity-assertion-provider-config";
-import {ValidationUtils} from "../utils/validation-utils";
+import {IdentityAssertionProviderConfig} from './identity-assertion-provider-config';
+import {ValidationUtils} from '../utils/validation-utils';
 
 export class RegexAssertionProviderConfig extends IdentityAssertionProviderConfig {
+    private static INPUT = 'Input';
+    private static OUTPUT = 'Output';
+    private static LOOKUP = 'Lookup';
+    private static ORIG_ON_FAIL = 'Use Original Lookup on Failure';
 
-  private static INPUT        = 'Input';
-  private static OUTPUT       = 'Output';
-  private static LOOKUP       = "Lookup";
-  private static ORIG_ON_FAIL = "Use Original Lookup on Failure";
+    private static displayPropertyNames = [RegexAssertionProviderConfig.INPUT,
+        RegexAssertionProviderConfig.OUTPUT,
+        RegexAssertionProviderConfig.LOOKUP,
+        RegexAssertionProviderConfig.ORIG_ON_FAIL
+    ];
 
-  private static displayPropertyNames = [ RegexAssertionProviderConfig.INPUT,
-                                          RegexAssertionProviderConfig.OUTPUT,
-                                          RegexAssertionProviderConfig.LOOKUP,
-                                          RegexAssertionProviderConfig.ORIG_ON_FAIL
-                                        ];
+    private static displayPropertyNameBindings: Map<string, string> =
+        new Map([
+            [RegexAssertionProviderConfig.INPUT, 'input'],
+            [RegexAssertionProviderConfig.OUTPUT, 'output'],
+            [RegexAssertionProviderConfig.LOOKUP, 'lookup'],
+            [RegexAssertionProviderConfig.ORIG_ON_FAIL, 'use.original.on.lookup.failure']
+        ]);
 
-  private static displayPropertyNameBindings: Map<string, string> =
-                                        new Map([
-                                          [RegexAssertionProviderConfig.INPUT,        'input'],
-                                          [RegexAssertionProviderConfig.OUTPUT,       'output'],
-                                          [RegexAssertionProviderConfig.LOOKUP,       'lookup'],
-                                          [RegexAssertionProviderConfig.ORIG_ON_FAIL, 'use.original.on.lookup.failure']
-                                        ]);
-
-  constructor() {
-    super('Regex');
-  }
-
-  getDisplayPropertyNames(): string[] {
-    return RegexAssertionProviderConfig.displayPropertyNames;
-  }
-
-  getDisplayNamePropertyBinding(name: string) {
-    return RegexAssertionProviderConfig.displayPropertyNameBindings.get(name);
-  }
-
-  isValidParamValue(paramName: string): boolean {
-    let isValid: boolean;
-
-    switch (paramName) {
-      case RegexAssertionProviderConfig.ORIG_ON_FAIL:
-        isValid = this.isValidUseOriginal();
-        break;
-      default:
-        isValid = true;
+    constructor() {
+        super('Regex');
     }
 
-    return isValid;
-  }
-
-  private isValidUseOriginal(): boolean {
-    let isValid: boolean = true;
-
-    let useOrig = this.getParam(this.getDisplayNamePropertyBinding(RegexAssertionProviderConfig.ORIG_ON_FAIL));
-    if (useOrig) {
-      isValid = ValidationUtils.isValidBoolean(useOrig);
-      if (!isValid) {
-        console.debug(RegexAssertionProviderConfig.ORIG_ON_FAIL + ' value is not a valid boolean.')
-      }
+    getDisplayPropertyNames(): string[] {
+        return RegexAssertionProviderConfig.displayPropertyNames;
     }
 
-    return isValid;
-  }
+    getDisplayNamePropertyBinding(name: string) {
+        return RegexAssertionProviderConfig.displayPropertyNameBindings.get(name);
+    }
 
+    isValidParamValue(paramName: string): boolean {
+        let isValid: boolean;
+
+        switch (paramName) {
+            case RegexAssertionProviderConfig.ORIG_ON_FAIL:
+                isValid = this.isValidUseOriginal();
+                break;
+            default:
+                isValid = true;
+        }
+
+        return isValid;
+    }
+
+    private isValidUseOriginal(): boolean {
+        let isValid = true;
+
+        let useOrig = this.getParam(this.getDisplayNamePropertyBinding(RegexAssertionProviderConfig.ORIG_ON_FAIL));
+        if (useOrig) {
+            isValid = ValidationUtils.isValidBoolean(useOrig);
+            if (!isValid) {
+                console.debug(RegexAssertionProviderConfig.ORIG_ON_FAIL + ' value is not a valid boolean.');
+            }
+        }
+
+        return isValid;
+    }
 }

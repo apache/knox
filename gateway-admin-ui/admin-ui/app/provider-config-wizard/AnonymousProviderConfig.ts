@@ -15,23 +15,23 @@
  * limitations under the License.
  */
 
-import {AuthenticationProviderConfig} from "./authentication-provider-config";
+import {AuthenticationProviderConfig} from './authentication-provider-config';
 
 
 export class AnonymousProviderConfig extends AuthenticationProviderConfig {
 
-  private displayBindingPropertyNames: string[] = [];
+    private displayBindingPropertyNames: string[] = [];
 
-  constructor() {
-    super('Anonymous');
-  }
+    constructor() {
+        super('Anonymous');
+    }
 
-  getDisplayPropertyNames(): string[] {
-    return this.displayBindingPropertyNames;
-  }
+    getDisplayPropertyNames(): string[] {
+        return this.displayBindingPropertyNames;
+    }
 
-  getDisplayNamePropertyBinding(name: string): string {
-    return null;
-  }
+    getDisplayNamePropertyBinding(name: string): string {
+        return null;
+    }
 
 }

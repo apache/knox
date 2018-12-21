@@ -15,29 +15,29 @@
  * limitations under the License.
  */
 
-import {ProviderConfig} from "../resource-detail/provider-config";
+import {ProviderConfig} from '../resource-detail/provider-config';
 
 export abstract class CategoryWizard {
 
-  selectedType: string;
+    selectedType: string;
 
-  providerConfig: ProviderConfig;
+    providerConfig: ProviderConfig;
 
-  reset() {
-    this.providerConfig = null;
-    this.selectedType   = null;
-  }
+    reset() {
+        this.providerConfig = null;
+        this.selectedType = null;
+    }
 
-  getSelectedType(): string {
-    return this.selectedType;
-  };
+    getSelectedType(): string {
+        return this.selectedType;
+    }
 
-  abstract getTypes(): string[];
+    abstract getTypes(): string[];
 
-  abstract getSteps(): number;
+    abstract getSteps(): number;
 
-  abstract onChange();
+    abstract onChange();
 
-  abstract getProviderConfig(): ProviderConfig;
+    abstract getProviderConfig(): ProviderConfig;
 
 }
