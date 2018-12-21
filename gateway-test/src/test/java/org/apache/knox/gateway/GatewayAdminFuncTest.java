@@ -41,6 +41,7 @@ import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.is;
 
 public class GatewayAdminFuncTest {
   private static final Logger LOG = LoggerFactory.getLogger( GatewayAdminFuncTest.class );
@@ -158,5 +159,82 @@ public class GatewayAdminFuncTest {
         .when().get( serviceUrl );
 
     TestUtils.LOG_EXIT();
+  }
+
+  @Test(timeout = TestUtils.MEDIUM_TIMEOUT)
+  public void testAliasAPI() {
+    String username = "guest";
+    String password = "guest-password";
+
+    String addAliasUrl = clusterUrl + "/api/v1/aliases/test-cluster/myalias";
+    String putAliasUrl = clusterUrl + "/api/v1/aliases/test-cluster/putalias";
+    String getAliasUrl = clusterUrl + "/api/v1/aliases/test-cluster";
+    String deleteAliasUrl = clusterUrl + "/api/v1/aliases/test-cluster/myalias";
+
+    /* Test POST Alias */
+    given().auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_JSON).param("value", "mysecret")
+        .then().statusCode(HttpStatus.SC_CREATED).body(
+        is("{ \"created\" : { \"topology\": \"test-cluster\", \"alias\": \"myalias\" } }"))
+        .when().post(addAliasUrl);
+
+    /* Test PUT Alias */
+    given().auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_JSON).body("mysecret").then()
+        .statusCode(HttpStatus.SC_CREATED).body(
+        is("{ \"created\" : { \"topology\": \"test-cluster\", \"alias\": \"putalias\" } }"))
+        .when().put(putAliasUrl);
+
+    /* Test GET Alias */
+    given().auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_JSON).then()
+        .statusCode(HttpStatus.SC_OK).body(
+        is("{\"topology\":\"test-cluster\",\"aliases\":[\"putalias\",\"myalias\",\"encryptquerystring\"]}"))
+        .when().get(getAliasUrl);
+
+    /* Test DELETE Alias */
+    given().auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_JSON).then()
+        .statusCode(HttpStatus.SC_OK).body(
+        is("{ \"deleted\" : { \"topology\": \"test-cluster\", \"alias\": \"myalias\" } }"))
+        .when().delete(deleteAliasUrl);
+
+    /* Test delete/get Alias */
+    given().auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_JSON).then()
+        .statusCode(HttpStatus.SC_OK).body(
+        is("{\"topology\":\"test-cluster\",\"aliases\":[\"putalias\",\"encryptquerystring\"]}"))
+        .when().get(getAliasUrl);
+  }
+
+  @Test(timeout = TestUtils.MEDIUM_TIMEOUT)
+  public void testAliasAPIFail() {
+    String username = "guest";
+    String password = "guest-password";
+
+    String addAliasUrl = clusterUrl + "/api/v1/aliases/test-cluster/myalias";
+    String putAliasUrl = clusterUrl + "/api/v1/aliases/test-cluster/putalias";
+    String getAliasUrl = clusterUrl + "/api/v1/aliases/no-cluster";
+
+    /* Test POST fail */
+    given().auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_JSON).then()
+        .statusCode(HttpStatus.SC_BAD_REQUEST)
+        .body(is("Alias value cannot be null or blank")).when()
+        .post(addAliasUrl);
+
+    /* Test PUT fail */
+    given().auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_JSON).then()
+        .statusCode(HttpStatus.SC_BAD_REQUEST)
+        .body(is("Alias value cannot be null or blank")).when()
+        .put(putAliasUrl);
+
+    /* Test GET  */
+    given().auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_JSON).then()
+        .statusCode(HttpStatus.SC_OK)
+        .body(is("{\"topology\":\"no-cluster\",\"aliases\":[]}")).when()
+        .get(getAliasUrl);
   }
 }
