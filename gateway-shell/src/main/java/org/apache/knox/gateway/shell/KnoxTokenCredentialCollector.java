@@ -39,31 +39,52 @@ public class KnoxTokenCredentialCollector extends AbstractCredentialCollector {
 
   private String tokenType;
 
+  private String endpointPublicCertPem;
+
+  private long expiresIn;
+
+  /* (non-Javadoc)
+   * @see CredentialCollector#collect()
+   */
   @Override
   public void collect() throws CredentialCollectionException {
+    try {
+      String knoxtoken = getCachedKnoxToken();
+      if (knoxtoken != null) {
+        Map<String, String> attrs = JsonUtils.getMapFromJsonString(knoxtoken);
+        value = attrs.get("access_token");
+        targetUrl = attrs.get("target_url");
+        tokenType = attrs.get("token_type");
+        endpointPublicCertPem = attrs.get("endpoint_public_cert");
+        expiresIn = Long.parseLong(attrs.get("expires_in"));
+        if (expiresIn > 0) {
+          Date expires = new Date(expiresIn);
+          if (expires.before(new Date())) {
+            throw new CredentialCollectionException("Cached knox token has expired. Please relogin through knoxinit.");
+          }
+        }
+      } else {
+        throw new CredentialCollectionException("Cached knox token cannot be found. Please login through knoxinit.");
+      }
+    } catch (IOException e) {
+      throw new CredentialCollectionException("Cached knox token cannot be read. Please login through knoxinit.", e);
+    }
+  }
+
+  protected String getCachedKnoxToken() throws IOException {
+    String line = null;
     String userDir = System.getProperty("user.home");
     File knoxtoken = new File(userDir, KNOXTOKENCACHE);
     if (knoxtoken.exists()) {
       Path path = Paths.get(knoxtoken.toURI());
       List<String> lines;
-      try {
-        lines = Files.readAllLines(path, StandardCharsets.UTF_8);
-        if (!lines.isEmpty()) {
-          Map<String, String> attrs = JsonUtils.getMapFromJsonString(lines.get(0));
-          value = attrs.get("access_token");
-          targetUrl = attrs.get("target_url");
-          tokenType = attrs.get("token_type");
-          Date expires = new Date(Long.parseLong(attrs.get("expires_in")));
-          if (expires.before(new Date())) {
-            throw new CredentialCollectionException("Cached knox token has expired. Please relogin through knoxinit.");
-          }
-        }
-      } catch (IOException e) {
-        throw new CredentialCollectionException("Cached knox token cannot be read. Please login through knoxinit.", e);
+      lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+      if (!lines.isEmpty()) {
+        line = lines.get(0);
       }
-    } else {
-      throw new CredentialCollectionException("Cached knox token cannot be found. Please login through knoxinit.");
     }
+
+    return line;
   }
 
   public String getTargetUrl() {
@@ -74,6 +95,17 @@ public class KnoxTokenCredentialCollector extends AbstractCredentialCollector {
     return tokenType;
   }
 
+  public String getEndpointClientCertPEM() {
+    return endpointPublicCertPem;
+  }
+
+  public long getExpiresIn() {
+    return expiresIn;
+  }
+
+  /* (non-Javadoc)
+   * @see CredentialCollector#name()
+   */
   @Override
   public String type() {
     return COLLECTOR_TYPE;

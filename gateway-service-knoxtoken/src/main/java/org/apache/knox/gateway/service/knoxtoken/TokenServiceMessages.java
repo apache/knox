@@ -63,4 +63,7 @@ public interface TokenServiceMessages {
   @Message( level = MessageLevel.ERROR, text = "The original URL: {0} for redirecting back after authentication is " +
       "not valid according to the configured whitelist: {1}. See documentation for KnoxSSO Whitelisting.")
   void whiteListMatchFail(String original, String whitelist);
+
+  @Message( level = MessageLevel.WARN, text = "Unable to acquire cert for endpoint clients - assume trust will be provisioned separately: {0}.")
+  void unableToAcquireCertForEndpointClients(@StackTrace( level = MessageLevel.DEBUG ) Exception e);
 }

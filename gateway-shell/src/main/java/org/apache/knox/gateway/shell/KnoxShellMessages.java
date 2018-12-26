@@ -17,19 +17,15 @@
  */
 package org.apache.knox.gateway.shell;
 
-import org.apache.http.HttpResponse;
+import java.io.IOException;
 
-class ErrorResponse extends RuntimeException {
+import org.apache.knox.gateway.i18n.messages.Message;
+import org.apache.knox.gateway.i18n.messages.MessageLevel;
+import org.apache.knox.gateway.i18n.messages.Messages;
+import org.apache.knox.gateway.i18n.messages.StackTrace;
 
-  HttpResponse response;
-
-  ErrorResponse(String text, HttpResponse response) {
-    super(text + response.getStatusLine());
-    this.response = response;
-  }
-
-  public HttpResponse getReponse() {
-    return response;
-  }
-
+@Messages(logger="org.apache.knox.gateway.shell")
+public interface KnoxShellMessages {
+  @Message( level = MessageLevel.WARN, text = "Unable to load provided PEM encoded trusted cert - falling through for other truststores: {0}" )
+  void unableToLoadProvidedPEMEncodedTrustedCert(@StackTrace( level = MessageLevel.DEBUG ) IOException e);
 }

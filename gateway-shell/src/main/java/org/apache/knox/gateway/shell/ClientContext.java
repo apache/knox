@@ -31,7 +31,7 @@ public class ClientContext {
   private final ConnectionContext connectionContext;
   private final KerberosContext kerberos;
 
-  private ClientContext() {
+  public ClientContext() {
     configuration = new MapConfiguration(new HashMap<>());
     poolContext = new PoolContext(this);
     socketContext = new SocketContext(this);
@@ -43,7 +43,7 @@ public class ClientContext {
     private final ClientContext clientContext;
     protected final Configuration configuration;
 
-    Context(ClientContext clientContext, String prefix) {
+    private Context(ClientContext clientContext, String prefix) {
       this.clientContext = clientContext;
       this.configuration = new SubsetConfiguration(clientContext.configuration, prefix);
     }
@@ -54,6 +54,7 @@ public class ClientContext {
   }
 
   public static class PoolContext extends Context {
+
     PoolContext(ClientContext clientContext) {
       super(clientContext, "pool");
     }
@@ -78,6 +79,7 @@ public class ClientContext {
   }
 
   public static class SocketContext extends Context {
+
     SocketContext(ClientContext clientContext) {
       super(clientContext, "socket");
     }
@@ -129,6 +131,7 @@ public class ClientContext {
   }
 
   public static class ConnectionContext extends Context {
+
     ConnectionContext(ClientContext clientContext) {
       super(clientContext, "connection");
     }
@@ -176,12 +179,21 @@ public class ClientContext {
       return this;
     }
 
+    public ConnectionContext withPublicCertPem(final String endpointPublicCertPem) {
+          configuration.addProperty("endpointPublicCertPem", endpointPublicCertPem);
+          return this;
+    }
+
     public String truststoreLocation() {
       return configuration.getString("truststoreLocation");
     }
 
     public String truststorePass() {
       return configuration.getString("truststorePass");
+    }
+
+    public String endpointPublicCertPem() {
+      return configuration.getString("endpointPublicCertPem");
     }
   }
 
@@ -190,6 +202,7 @@ public class ClientContext {
    * @since 1.3.0
    */
   public static class KerberosContext extends Context {
+
     KerberosContext(ClientContext clientContext) {
       super(clientContext, "kerberos");
     }

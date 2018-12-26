@@ -22,13 +22,25 @@ import java.util.List;
 import java.util.ServiceLoader;
 
 public class Credentials {
-  List<CredentialCollector> collectors = new ArrayList<>();
+  List<CredentialCollector> collectors = new ArrayList<CredentialCollector>();
 
   public Credentials add(String collectorType, String prompt, String name)
     throws CredentialCollectionException {
     CredentialCollector collector = loadCredentialCollector(collectorType);
     if (collector == null) {
       throw new CredentialCollectionException("Invalid Collector Requested. Type: " + collectorType + " Name: " + name);
+    }
+    collector.setPrompt(prompt);
+    collector.setName(name);
+    collectors.add(collector);
+
+    return this;
+  }
+
+  public Credentials add(CredentialCollector collector, String prompt, String name)
+      throws CredentialCollectionException {
+    if (collector == null) {
+      throw new CredentialCollectionException("Null CredentialCollector cannot be added.");
     }
     collector.setPrompt(prompt);
     collector.setName(name);

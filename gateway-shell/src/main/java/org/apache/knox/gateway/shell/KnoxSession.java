@@ -18,6 +18,9 @@
 package org.apache.knox.gateway.shell;
 
 import com.sun.security.auth.callback.TextCallbackHandler;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
@@ -48,12 +51,15 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.ssl.SSLContexts;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
+
+import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -70,6 +76,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -90,7 +98,10 @@ public class KnoxSession implements Closeable {
   private static final String KNOX_CLIENT_TRUSTSTORE_DIR = "KNOX_CLIENT_TRUSTSTORE_DIR";
   private static final String DEFAULT_JAAS_FILE = "/jaas.conf";
   public static final String JGSS_LOGIN_MOUDLE = "com.sun.security.jgss.initiate";
+  public static final String END_CERTIFICATE = "-----END CERTIFICATE-----\n";
+  public static final String BEGIN_CERTIFICATE = "-----BEGIN CERTIFICATE-----\n";
 
+  private static final KnoxShellMessages LOG = MessagesFactory.get(KnoxShellMessages.class);
   private boolean isKerberos;
 
   String base;
@@ -114,6 +125,18 @@ public class KnoxSession implements Closeable {
     return instance;
   }
 
+  public static KnoxSession login( String             url,
+                                   Map<String,String> headers,
+                                   String             truststoreLocation,
+                                   String             truststorePass  ) throws URISyntaxException {
+    KnoxSession instance = new KnoxSession(ClientContext.with(url)
+                                                        .connection()
+                                                        .withTruststore(truststoreLocation, truststorePass)
+                                                        .end());
+    instance.setHeaders(headers);
+    return instance;
+  }
+
   public static KnoxSession login( String url, String username, String password ) throws URISyntaxException {
     return new KnoxSession(ClientContext.with(username, password, url));
   }
@@ -122,12 +145,11 @@ public class KnoxSession implements Closeable {
       String truststoreLocation, String truststorePass ) throws URISyntaxException {
 
     return new KnoxSession(ClientContext.with(username, password, url)
-            .connection().withTruststore(truststoreLocation, truststorePass).end());
+        .connection().withTruststore(truststoreLocation, truststorePass).end());
   }
 
-  public static KnoxSession loginInsecure(String url, String username, String password) throws URISyntaxException {
-    return new KnoxSession(ClientContext.with(username, password, url)
-            .connection().secure(false).end());
+  public static KnoxSession login(ClientContext context) throws URISyntaxException {
+    return new KnoxSession(context);
   }
 
   /**
@@ -170,10 +192,15 @@ public class KnoxSession implements Closeable {
     return kerberosLogin(url, "", "", false);
   }
 
+  public static KnoxSession loginInsecure(String url, String username, String password) throws URISyntaxException {
+    return new KnoxSession(ClientContext.with(username, password, url)
+        .connection().secure(false).end());
+  }
+
   protected KnoxSession() throws KnoxShellException, URISyntaxException {
   }
 
-  public KnoxSession( ClientContext clientContext) throws KnoxShellException, URISyntaxException {
+  public KnoxSession( final ClientContext clientContext) throws KnoxShellException, URISyntaxException {
     this.executor = Executors.newCachedThreadPool();
     this.base = clientContext.url();
 
@@ -194,19 +221,19 @@ public class KnoxSession implements Closeable {
     } else {
       trustStrategy = TrustSelfSignedStrategy.INSTANCE;
       System.out.println("**************** WARNING ******************\n"
-              + "This is an insecure client instance and may\n"
-              + "leave the interactions subject to a man in\n"
-              + "the middle attack. Please use the login()\n"
-              + "method instead of loginInsecure() for any\n"
-              + "sensitive or production usecases.\n"
-              + "*******************************************");
+          + "This is an insecure client instance and may\n"
+          + "leave the interactions subject to a man in\n"
+          + "the middle attack. Please use the login()\n"
+          + "method instead of loginInsecure() for any\n"
+          + "sensitive or production usecases.\n"
+          + "*******************************************");
     }
 
     KeyStore trustStore = getTrustStore(clientContext);
     SSLContext sslContext = SSLContexts.custom().loadTrustMaterial(trustStore, trustStrategy).build();
     Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
-            .register("http", PlainConnectionSocketFactory.getSocketFactory())
-            .register("https", new SSLConnectionSocketFactory(sslContext, hostnameVerifier)).build();
+        .register("http", PlainConnectionSocketFactory.getSocketFactory())
+        .register("https", new SSLConnectionSocketFactory(sslContext, hostnameVerifier)).build();
 
     // Pool
     PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(registry);
@@ -214,17 +241,17 @@ public class KnoxSession implements Closeable {
     connectionManager.setDefaultMaxPerRoute(clientContext.pool().defaultMaxPerRoute());
 
     ConnectionConfig connectionConfig = ConnectionConfig.custom()
-            .setBufferSize(clientContext.connection().bufferSize())
-            .build();
+        .setBufferSize(clientContext.connection().bufferSize())
+        .build();
     connectionManager.setDefaultConnectionConfig(connectionConfig);
 
     SocketConfig socketConfig = SocketConfig.custom()
-            .setSoKeepAlive(clientContext.socket().keepalive())
-            .setSoLinger(clientContext.socket().linger())
-            .setSoReuseAddress(clientContext.socket().reuseAddress())
-            .setSoTimeout(clientContext.socket().timeout())
-            .setTcpNoDelay(clientContext.socket().tcpNoDelay())
-            .build();
+        .setSoKeepAlive(clientContext.socket().keepalive())
+        .setSoLinger(clientContext.socket().linger())
+        .setSoReuseAddress(clientContext.socket().reuseAddress())
+        .setSoTimeout(clientContext.socket().timeout())
+        .setTcpNoDelay(clientContext.socket().tcpNoDelay())
+        .build();
     connectionManager.setDefaultSocketConfig(socketConfig);
 
     // Auth
@@ -273,25 +300,24 @@ public class KnoxSession implements Closeable {
       final Registry<AuthSchemeProvider> authSchemeRegistry = RegistryBuilder.<AuthSchemeProvider>create()
           .register(AuthSchemes.SPNEGO, new SPNegoSchemeFactory(true)).build();
 
-      return HttpClients.custom()
-          .setConnectionManager(connectionManager)
+      return HttpClients.custom().setConnectionManager(connectionManager)
           .setDefaultAuthSchemeRegistry(authSchemeRegistry)
-          .setDefaultCredentialsProvider(credentialsProvider)
-          .build();
-
+          .setDefaultCredentialsProvider(credentialsProvider).build();
     } else {
+      AuthCache authCache = new BasicAuthCache();
+      BasicScheme authScheme = new BasicScheme();
+      authCache.put(host, authScheme);
+      context = new BasicHttpContext();
+      context.setAttribute(org.apache.http.client.protocol.HttpClientContext.AUTH_CACHE,
+          authCache);
+
       CredentialsProvider credentialsProvider = null;
       if (clientContext.username() != null && clientContext.password() != null) {
         credentialsProvider = new BasicCredentialsProvider();
-        credentialsProvider.setCredentials(
-            new AuthScope(host.getHostName(), host.getPort()),
-            new UsernamePasswordCredentials(clientContext.username(), clientContext.password()));
-
-        AuthCache authCache = new BasicAuthCache();
-        BasicScheme authScheme = new BasicScheme();
-        authCache.put(host, authScheme);
-        context = new BasicHttpContext();
-        context.setAttribute(org.apache.http.client.protocol.HttpClientContext.AUTH_CACHE, authCache);
+        credentialsProvider
+            .setCredentials(new AuthScope(host.getHostName(), host.getPort()),
+                new UsernamePasswordCredentials(clientContext.username(),
+                    clientContext.password()));
       }
       return HttpClients.custom()
           .setConnectionManager(connectionManager)
@@ -301,12 +327,39 @@ public class KnoxSession implements Closeable {
 
   }
 
+  protected X509Certificate generateCertificateFromBytes(byte[] certBytes) throws CertificateException {
+    CertificateFactory factory = CertificateFactory.getInstance("X.509");
+    return (X509Certificate)factory.generateCertificate(new ByteArrayInputStream(certBytes));
+  }
+
   private KeyStore getTrustStore(ClientContext clientContext) throws GeneralSecurityException {
     KeyStore ks;
     String truststorePass = null;
 
+    // if a PEM file was provided create a keystore from that and use
+    // it as the truststore
+    String pem = clientContext.connection().endpointPublicCertPem();
+    if (pem != null) {
+      // strip delimiters
+      if (pem.contains("BEGIN")) {
+        pem = pem.substring(BEGIN_CERTIFICATE.length()-1,
+            pem.indexOf(END_CERTIFICATE.substring(0, END_CERTIFICATE.length()-1)));
+      }
+      try {
+        byte[] bytes = Base64.decodeBase64(pem);
+        KeyStore keystore = KeyStore.getInstance("JKS");
+        keystore.load(null);
+        keystore.setCertificateEntry("knox-gateway", generateCertificateFromBytes(bytes));
+
+        return keystore;
+      } catch (IOException e) {
+        LOG.unableToLoadProvidedPEMEncodedTrustedCert(e);
+      }
+    }
+
     discoverTruststoreDetails(clientContext);
 
+    InputStream is = null;
     try {
       ks = KeyStore.getInstance("JKS");
       File file = new File(clientContext.connection().truststoreLocation());
@@ -324,14 +377,13 @@ public class KnoxSession implements Closeable {
       }
 
       if (file.exists()) {
-        try (InputStream is = Files.newInputStream(file.toPath())) {
-          ks.load(is, truststorePass.toCharArray());
-        }
+        is = Files.newInputStream(file.toPath());
+        ks.load(is, truststorePass.toCharArray());
       }
       else {
         throw new KnoxShellException("Unable to find a truststore for secure login."
             + "Please import the gateway-identity certificate into the JVM"
-          + " truststore or set the truststore location ENV variables.");
+            + " truststore or set the truststore location ENV variables.");
       }
     } catch (KeyStoreException e) {
       throw new KnoxShellException("Unable to create keystore of expected type.", e);
@@ -350,14 +402,16 @@ public class KnoxSession implements Closeable {
     } catch (IOException e) {
       throw new KnoxShellException("Unable to load truststore."
           + " May be related to password setting or truststore format.", e);
+    } finally {
+      IOUtils.closeQuietly(is);
     }
 
     return ks;
   }
 
   protected void discoverTruststoreDetails(ClientContext clientContext) {
-    String truststoreDir;
-    String truststoreFileName;
+    String truststoreDir = null;
+    String truststoreFileName = null;
     if (clientContext.connection().truststoreLocation() != null &&
         clientContext.connection().truststorePass() != null) {
       return;
@@ -399,7 +453,8 @@ public class KnoxSession implements Closeable {
                 if (response.getStatusLine().getStatusCode() < 400) {
                   return response;
                 } else {
-                  throw new ErrorResponse(response);
+                  throw new ErrorResponse(
+                      request.getRequestLine().getUri() + ": ", response);
                 }
               } catch (final IOException e) {
                 throw new KnoxShellException(e.toString(), e);
@@ -411,11 +466,13 @@ public class KnoxSession implements Closeable {
       }
 
     } else {
-      CloseableHttpResponse response = client.execute( host, request, context );
-      if( response.getStatusLine().getStatusCode() < 400 ) {
+
+      CloseableHttpResponse response = client.execute(host, request, context);
+      if (response.getStatusLine().getStatusCode() < 400) {
         return response;
       } else {
-        throw new ErrorResponse( response );
+        throw new ErrorResponse(request.getRequestLine().getUri() + ": ",
+            response);
       }
     }
 
@@ -475,5 +532,12 @@ public class KnoxSession implements Closeable {
     } catch (InterruptedException e) {
       throw new KnoxShellException("Can not shutdown underlying resources", e);
     }
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder(
+        "KnoxSession{base='").append(base).append("\'}");
+    return sb.toString();
   }
 }
