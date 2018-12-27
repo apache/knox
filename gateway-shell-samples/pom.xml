@@ -28,12 +28,4 @@
     <artifactId>gateway-shell-samples</artifactId>
     <name>gateway-shell-samples</name>
     <description>Sample scripts to demonstrate various shell capabilities</description>
-
-    <dependencies>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
 </project>
