@@ -634,6 +634,7 @@
                     <rulesets>
                         <ruleset>build-tools/pmd/pmd-ruleset.xml</ruleset>
                     </rulesets>
+                    <analysisCache>true</analysisCache>
                     <printFailingErrors>true</printFailingErrors>
                     <includeTests>true</includeTests>
                     <linkXRef>false</linkXRef>
