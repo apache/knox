@@ -35,6 +35,7 @@ limitations under the License.
         <notes><![CDATA[file name: apacheds-.*.jar]]></notes>
         <gav regex="true">^org\.apache\.directory\.server:apacheds-.*$</gav>
         <cpe>cpe:/a:apache:apache_http_server</cpe>
+        <cpe>cpe:/a:apache:http_server</cpe>
         <cpe>cpe:/a:net-ldap_project:net-ldap</cpe>
     </suppress>
     <suppress>
@@ -50,6 +51,7 @@ limitations under the License.
         <cpe>cpe:/a:apache:shiro</cpe>
         <cpe>cpe:/a:apache:storm</cpe>
         <cpe>cpe:/a:content_project:content</cpe>
+        <cpe>cpe:/a:jwt_project:jwt</cpe>
         <cpe>cpe:/a:request_it:request_it</cpe>
     </suppress>
     <suppress>
@@ -93,11 +95,6 @@ limitations under the License.
         <notes><![CDATA[org.glassfish.jaxb:xsom)]]></notes>
         <gav regex="true">^org\.glassfish\.jaxb:xsom:.*$</gav>
         <cpe>cpe:/a:oracle:glassfish</cpe>
-    </suppress>
-    <suppress>
-        <notes><![CDATA[file name: pac4j-oidc-.*.jar]]></notes>
-        <gav regex="true">^org\.pac4j:pac4j-oidc:.*$</gav>
-        <cpe>cpe:/a:openid:openid</cpe>
     </suppress>
     <suppress>
         <notes><![CDATA[slf4j-ext and EventData not used]]></notes>
