@@ -140,6 +140,7 @@
         <apacheds.directory.api.version>2.0.0.AM2</apacheds.directory.api.version>
         <apacheds.directory.server.version>2.0.0.AM25</apacheds.directory.server.version>
         <apacheds-jdbm.version>2.0.0-M5</apacheds-jdbm.version>
+        <apache-rat-plugin.version>0.13</apache-rat-plugin.version>
         <ant-nodeps.version>1.8.1</ant-nodeps.version>
         <asm.version>7.0</asm.version>
         <bcprov-jdk15on.version>1.60</bcprov-jdk15on.version>
@@ -308,6 +309,7 @@
             <plugin>
                 <groupId>org.apache.rat</groupId>
                 <artifactId>apache-rat-plugin</artifactId>
+                <version>${apache-rat-plugin.version}</version>
                 <executions>
                     <execution>
                         <phase>verify</phase>
