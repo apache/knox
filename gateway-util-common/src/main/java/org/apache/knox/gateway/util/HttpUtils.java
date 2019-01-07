@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 public class HttpUtils {
-
   public static Map<String, List<String>> splitQuery(String queryString)
       throws UnsupportedEncodingException {
     final Map<String, List<String>> queryPairs = new LinkedHashMap<>();
@@ -42,10 +41,10 @@ public class HttpUtils {
       if (!queryPairs.containsKey(key)) {
         queryPairs.put(key, new ArrayList<>());
       }
-      final String value = idx > 0 && pair.length() > idx + 1
-          ? URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8.name()) : "";
-        queryPairs.get(key).add(value);
-      }
+      final String value = idx > 0 && pair.length() > idx
+          ? URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8.name()) : null;
+      queryPairs.get(key).add(value);
+    }
     return queryPairs;
   }
 

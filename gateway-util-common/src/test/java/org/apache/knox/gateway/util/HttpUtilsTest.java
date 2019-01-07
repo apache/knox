@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -126,28 +127,28 @@ public class HttpUtilsTest {
     assertThat( map.size(), is( 1 ) );
     assertThat( map.containsKey( "test-name" ), is( true ) );
     assertThat( map.get( "test-name" ).size(), is( 1 ) );
-    assertThat( map.get( "test-name" ).get(0), is("") );
+    assertThat( map.get( "test-name" ).get(0), nullValue() );
 
     map = HttpUtils.splitQuery( "=test-value" );
     assertThat( map, notNullValue() );
     assertThat( map.size(), is( 1 ) );
     assertThat( map.containsKey( "=test-value" ), is( true ) );
     assertThat( map.get( "=test-value" ).size(), is( 1 ) );
-    assertThat( map.get( "=test-value" ).get(0), is( "" ) );
+    assertThat( map.get( "=test-value" ).get(0), nullValue() );
 
     map = HttpUtils.splitQuery( "=" );
     assertThat( map, notNullValue() );
     assertThat( map.size(), is( 1 ) );
     assertThat( map.containsKey( "=" ), is( true ) );
     assertThat( map.get( "=" ).size(), is( 1 ) );
-    assertThat( map.get( "=" ).get(0), is( "" ) );
+    assertThat( map.get( "=" ).get(0), nullValue() );
 
     map = HttpUtils.splitQuery( "==" );
     assertThat( map, notNullValue() );
     assertThat( map.size(), is( 1 ) );
     assertThat( map.containsKey( "==" ), is( true ) );
     assertThat( map.get( "==" ).size(), is( 1 ) );
-    assertThat( map.get( "==" ).get(0), is( "" ) );
+    assertThat( map.get( "==" ).get(0), nullValue() );
 
     map = HttpUtils.splitQuery( "&" );
     assertThat( map, notNullValue() );
@@ -159,14 +160,14 @@ public class HttpUtilsTest {
     assertThat( map.size(), is( 1 ) );
     assertThat( map.containsKey( "?" ), is( true ) );
     assertThat( map.get( "?" ).size(), is( 1 ) );
-    assertThat( map.get( "?" ).get(0), is("") );
+    assertThat( map.get( "?" ).get(0), nullValue() );
 
     map = HttpUtils.splitQuery( ";" );
     assertThat( map, notNullValue() );
     assertThat( map.size(), is( 1 ) );
     assertThat( map.containsKey( ";" ), is( true ) );
     assertThat( map.get( ";" ).size(), is( 1 ) );
-    assertThat( map.get( ";" ).get(0), is("") );
+    assertThat( map.get( ";" ).get(0), nullValue() );
 
     map = HttpUtils.splitQuery( "&=" );
     assertThat( map, notNullValue() );
@@ -174,17 +175,17 @@ public class HttpUtilsTest {
     assertThat( map.keySet(), is(new LinkedHashSet<>(Arrays.asList("", "="))));
     assertThat( map.containsKey( "" ), is( true ) );
     assertThat( map.get( "" ).size(), is( 1 ) );
-    assertThat( map.get( "" ).get(0), is( "" ) );
+    assertThat( map.get( "" ).get(0), nullValue() );
     assertThat( map.containsKey( "=" ), is( true ) );
     assertThat( map.get( "=" ).size(), is( 1 ) );
-    assertThat( map.get( "=" ).get(0), is("") );
+    assertThat( map.get( "=" ).get(0), nullValue() );
 
     map = HttpUtils.splitQuery( "=&" );
     assertThat( map, notNullValue() );
     assertThat( map.size(), is( 1 ) );
     assertThat( map.containsKey( "=" ), is( true ) );
     assertThat( map.get( "=" ).size(), is( 1 ) );
-    assertThat( map.get( "=" ).get(0), is( "" ) );
+    assertThat( map.get( "=" ).get(0), nullValue() );
 
     map = HttpUtils.splitQuery( "&&" );
     assertThat( map, notNullValue() );
