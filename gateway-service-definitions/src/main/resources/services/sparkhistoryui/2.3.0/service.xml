@@ -15,7 +15,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 -->
-<service role="SPARKHISTORYUI" name="sparkhistory" version="1.4.0">
+<service role="SPARKHISTORYUI" name="sparkhistory" version="2.3.0">
     <routes>
         <route path="/sparkhistory/">
             <rewrite apply="SPARKHISTORYUI/sparkhistory/outbound/rqheaders" to="request.headers"/>
