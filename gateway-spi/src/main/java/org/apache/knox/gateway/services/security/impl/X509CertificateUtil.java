@@ -25,8 +25,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -40,14 +40,12 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.knox.gateway.i18n.GatewaySpiMessages;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 public class X509CertificateUtil {
 
-  public static final String END_CERTIFICATE = "-----END CERTIFICATE-----\n";
-  public static final String BEGIN_CERTIFICATE = "-----BEGIN CERTIFICATE-----\n";
   private static GatewaySpiMessages LOG = MessagesFactory.get(GatewaySpiMessages.class);
 
   /**
@@ -58,8 +56,7 @@ public class X509CertificateUtil {
    * @param algorithm the signing algorithm, eg "SHA1withRSA"
    * @return self-signed X.509 certificate
    */
-  public static X509Certificate generateCertificate(String dn, KeyPair pair,
-      int days, String algorithm) throws GeneralSecurityException, IOException {
+  public static X509Certificate generateCertificate(String dn, KeyPair pair, int days, String algorithm) {
 
   PrivateKey privkey = pair.getPrivate();
   Object x509CertImplObject = null;
@@ -279,11 +276,11 @@ public class X509CertificateUtil {
   public static void writeCertificateToFile(Certificate cert, final File file)
        throws CertificateEncodingException, IOException {
     byte[] bytes = cert.getEncoded();
-    Base64 encoder = new Base64( 76, "\n".getBytes( "ASCII" ) );
+    Base64 encoder = new Base64( 76, "\n".getBytes( StandardCharsets.US_ASCII ) );
     try(OutputStream out = Files.newOutputStream(file.toPath()) ) {
-      out.write( BEGIN_CERTIFICATE.getBytes( "ASCII" ) );
-      out.write( encoder.encodeToString( bytes ).getBytes( "ASCII" ) );
-      out.write( END_CERTIFICATE.getBytes( "ASCII" ) );
+      out.write( "-----BEGIN CERTIFICATE-----\n".getBytes( StandardCharsets.US_ASCII ) );
+      out.write( encoder.encodeToString( bytes ).getBytes( StandardCharsets.US_ASCII ) );
+      out.write( "-----END CERTIFICATE-----\n".getBytes( StandardCharsets.US_ASCII ) );
     }
   }
 
