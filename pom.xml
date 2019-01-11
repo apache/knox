@@ -129,6 +129,7 @@
         <module>gateway-test-release-utils</module>
         <module>gateway-service-nifi</module>
         <module>gateway-docker</module>
+        <module>gateway-service-hashicorp-vault</module>
     </modules>
 
     <properties>
@@ -220,7 +221,9 @@
         <spotbugs.version>3.1.11</spotbugs.version>
         <spotbugs-maven-plugin.version>3.1.11</spotbugs-maven-plugin.version>
         <spring-core.version>5.1.5.RELEASE</spring-core.version>
+        <spring-vault.version>2.1.2.RELEASE</spring-vault.version>
         <taglibs-standard.version>1.2.5</taglibs-standard.version>
+        <testcontainers.version>1.10.6</testcontainers.version>
         <velocity.version>1.7</velocity.version>
         <xmltool.version>3.3</xmltool.version>
         <xml-matchers.version>0.10</xml-matchers.version>
@@ -1062,6 +1065,11 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-shell-samples</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-service-hashicorp-vault</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -1918,6 +1926,30 @@
             </dependency>
 
             <dependency>
+                <groupId>org.springframework.vault</groupId>
+                <artifactId>spring-vault-dependencies</artifactId>
+                <version>${spring-vault.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context</artifactId>
+                <version>${spring-core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-beans</artifactId>
+                <version>${spring-core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-web</artifactId>
+                <version>${spring-core.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>de.thetaphi</groupId>
                 <artifactId>forbiddenapis</artifactId>
                 <version>${forbiddenapis.version}</version>
@@ -2023,6 +2055,19 @@
                 <groupId>org.apache.curator</groupId>
                 <artifactId>curator-test</artifactId>
                 <version>${curator-test.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers</artifactId>
+                <version>${testcontainers.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>vault</artifactId>
+                <version>${testcontainers.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>

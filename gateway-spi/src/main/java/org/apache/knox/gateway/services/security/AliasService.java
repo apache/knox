@@ -23,6 +23,7 @@ import java.util.List;
 import org.apache.knox.gateway.services.Service;
 
 public interface AliasService extends Service {
+  String NO_CLUSTER_NAME = "__gateway";
 
   List<String> getAliasesForCluster(String clusterName)
       throws AliasServiceException;

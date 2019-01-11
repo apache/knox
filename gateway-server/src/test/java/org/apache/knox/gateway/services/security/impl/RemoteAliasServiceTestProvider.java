@@ -84,7 +84,7 @@ public class RemoteAliasServiceTestProvider implements RemoteAliasServiceProvide
 
     @Override
     public char[] getPasswordFromAliasForGateway(String alias) {
-      return getPasswordFromAliasForCluster(RemoteAliasService.DEFAULT_CLUSTER_NAME, alias);
+      return getPasswordFromAliasForCluster(NO_CLUSTER_NAME, alias);
     }
 
     @Override
@@ -109,7 +109,7 @@ public class RemoteAliasServiceTestProvider implements RemoteAliasServiceProvide
 
     @Override
     public void generateAliasForGateway(String alias) {
-      generateAliasForCluster(RemoteAliasService.DEFAULT_CLUSTER_NAME, alias);
+      generateAliasForCluster(NO_CLUSTER_NAME, alias);
     }
 
     @Override

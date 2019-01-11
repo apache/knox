@@ -54,12 +54,13 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static org.apache.knox.gateway.services.security.AliasService.NO_CLUSTER_NAME;
+
 public class DefaultKeystoreService extends BaseKeystoreService implements
     KeystoreService, Service {
 
   private static final String dnTemplate = "CN={0},OU=Test,O=Hadoop,L=Test,ST=Test,C=US";
   private static final String CREDENTIALS_SUFFIX = "-credentials.jceks";
-  private static final String NO_CLUSTER_NAME = "__gateway";
   private static final String CERT_GEN_MODE = "hadoop.gateway.cert.gen.mode";
   private static final String CERT_GEN_MODE_LOCALHOST = "localhost";
   private static final String CERT_GEN_MODE_HOSTNAME = "hostname";

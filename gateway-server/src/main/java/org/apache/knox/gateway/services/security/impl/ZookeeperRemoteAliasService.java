@@ -40,8 +40,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import static org.apache.knox.gateway.services.security.impl.RemoteAliasService.DEFAULT_CLUSTER_NAME;
-
 /**
  * An {@link AliasService} implementation based on zookeeper remote service registry.
  */
@@ -155,7 +153,7 @@ public class ZookeeperRemoteAliasService implements AliasService {
     ensureEntry(PATH_KNOX_SECURITY, remoteClient);
     ensureEntry(PATH_KNOX_ALIAS_STORE_TOPOLOGY, remoteClient);
     ensureEntry(
-        PATH_KNOX_ALIAS_STORE_TOPOLOGY + PATH_SEPARATOR + DEFAULT_CLUSTER_NAME,
+        PATH_KNOX_ALIAS_STORE_TOPOLOGY + PATH_SEPARATOR + NO_CLUSTER_NAME,
         remoteClient);
   }
 
@@ -280,7 +278,7 @@ public class ZookeeperRemoteAliasService implements AliasService {
   @Override
   public char[] getPasswordFromAliasForGateway(String alias)
       throws AliasServiceException {
-    return getPasswordFromAliasForCluster(DEFAULT_CLUSTER_NAME, alias);
+    return getPasswordFromAliasForCluster(NO_CLUSTER_NAME, alias);
   }
 
   @Override
@@ -305,7 +303,7 @@ public class ZookeeperRemoteAliasService implements AliasService {
 
   @Override
   public void generateAliasForGateway(final String alias) throws AliasServiceException {
-    generateAliasForCluster(DEFAULT_CLUSTER_NAME, alias);
+    generateAliasForCluster(NO_CLUSTER_NAME, alias);
   }
 
   @Override
@@ -411,7 +409,7 @@ public class ZookeeperRemoteAliasService implements AliasService {
     ensureEntry(PATH_KNOX_SECURITY, remoteClient);
     ensureEntry(PATH_KNOX_ALIAS_STORE_TOPOLOGY, remoteClient);
     ensureEntry(
-        PATH_KNOX_ALIAS_STORE_TOPOLOGY + PATH_SEPARATOR + DEFAULT_CLUSTER_NAME,
+        PATH_KNOX_ALIAS_STORE_TOPOLOGY + PATH_SEPARATOR + NO_CLUSTER_NAME,
         remoteClient);
   }
 

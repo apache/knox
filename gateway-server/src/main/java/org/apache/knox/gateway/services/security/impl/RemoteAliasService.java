@@ -47,7 +47,6 @@ import java.util.ServiceLoader;
  * @since 1.1.0
  */
 public class RemoteAliasService implements AliasService {
-  public static final String DEFAULT_CLUSTER_NAME = "__gateway";
   public static final String REMOTE_ALIAS_SERVICE_TYPE = "type";
 
   private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
@@ -173,7 +172,7 @@ public class RemoteAliasService implements AliasService {
   @Override
   public char[] getPasswordFromAliasForGateway(String alias)
       throws AliasServiceException {
-    return getPasswordFromAliasForCluster(DEFAULT_CLUSTER_NAME, alias);
+    return getPasswordFromAliasForCluster(NO_CLUSTER_NAME, alias);
   }
 
   @Override
@@ -235,7 +234,7 @@ public class RemoteAliasService implements AliasService {
   @Override
   public void generateAliasForGateway(final String alias)
       throws AliasServiceException {
-    generateAliasForCluster(DEFAULT_CLUSTER_NAME, alias);
+    generateAliasForCluster(NO_CLUSTER_NAME, alias);
   }
 
   @Override

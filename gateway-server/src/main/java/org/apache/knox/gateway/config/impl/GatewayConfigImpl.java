@@ -229,7 +229,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   static final String DISPATCH_HOST_WHITELIST_SERVICES = DISPATCH_HOST_WHITELIST + ".services";
 
   static final String REMOTE_ALIAS_SERVICE_CONFIG_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".remote.alias.service.config.prefix";
-  static final String REMOTE_ALIAS_SERVICE_CONFIG_PREFIX_DEFAULT = GATEWAY_CONFIG_FILE_PREFIX + ".remote.alias.service.config";
+  static final String REMOTE_ALIAS_SERVICE_CONFIG_PREFIX_DEFAULT = GATEWAY_CONFIG_FILE_PREFIX + ".remote.alias.service.config.";
 
   private static final List<String> DEFAULT_GLOBAL_RULES_SERVICES = Arrays.asList(
       "NAMENODE", "JOBTRACKER", "WEBHDFS", "WEBHCAT",

@@ -174,13 +174,13 @@ public class DefaultAliasService implements AliasService {
   @Override
   public char[] getPasswordFromAliasForGateway(String alias)
       throws AliasServiceException {
-    return getPasswordFromAliasForCluster("__gateway", alias);
+    return getPasswordFromAliasForCluster(NO_CLUSTER_NAME, alias);
   }
 
   @Override
   public void generateAliasForGateway(String alias)
       throws AliasServiceException {
-    generateAliasForCluster("__gateway", alias);
+    generateAliasForCluster(NO_CLUSTER_NAME, alias);
   }
 
   @Override
