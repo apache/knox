@@ -40,16 +40,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ProviderConfigurationParser {
-
   private static final JAXBContext jaxbContext = getJAXBContext();
-
-  private static JAXBContext getJAXBContext() {
-    try {
-      return JAXBContext.newInstance(XMLProviderConfiguration.class);
-    } catch (JAXBException e) {
-      throw new IllegalStateException(e);
-    }
-  }
 
   private static final String EXT_XML  = "xml";
   private static final String EXT_JSON = "json";
@@ -58,6 +49,13 @@ public class ProviderConfigurationParser {
 
   public static final List<String> SUPPORTED_EXTENSIONS = Collections.unmodifiableList(Arrays.asList(EXT_XML, EXT_JSON, EXT_YML, EXT_YAML));
 
+  private static JAXBContext getJAXBContext() {
+    try {
+      return JAXBContext.newInstance(XMLProviderConfiguration.class);
+    } catch (JAXBException e) {
+      throw new IllegalStateException(e);
+    }
+  }
 
   public static ProviderConfiguration parse(String path) throws Exception {
     return parse(new File(path));

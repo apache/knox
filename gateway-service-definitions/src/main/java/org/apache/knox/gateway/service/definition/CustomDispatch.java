@@ -120,6 +120,13 @@ public class CustomDispatch {
 
   @XmlAccessorType(XmlAccessType.NONE)
   private static class XMLParam {
+    @XmlElement
+    private String name;
+
+    @XmlElement
+    private String value;
+
+    @SuppressWarnings("unused")
     XMLParam() {
 
     }
@@ -128,11 +135,6 @@ public class CustomDispatch {
       this.name = name;
       this.value = value;
     }
-    @XmlElement
-    private String name;
-
-    @XmlElement
-    private String value;
 
     String getName() {
       return name;

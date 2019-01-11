@@ -51,7 +51,6 @@ import static javax.ws.rs.core.Response.status;
  */
 @Path("/api/v1")
 public class AliasResource {
-
   private static final String ALIASES_API_PATH = "aliases";
   private static final String ALIASES_TOPOLOGY_API_PATH =
       ALIASES_API_PATH + "/{topology}";
@@ -72,8 +71,8 @@ public class AliasResource {
   @Produces({ APPLICATION_JSON })
   @Consumes({ APPLICATION_XML, APPLICATION_JSON, TEXT_PLAIN })
   @Path(ALIAS_API_PATH)
-  public Response putAlias(final @PathParam("topology") String topology,
-      final @PathParam("alias") String alias, final String value) {
+  public Response putAlias(@PathParam("topology") final String topology,
+      @PathParam("alias") final String alias, final String value) {
     return postAlias(topology, alias, value);
   }
 
@@ -88,9 +87,9 @@ public class AliasResource {
   @Produces({ APPLICATION_JSON })
   @Consumes(APPLICATION_FORM_URLENCODED)
   @Path(ALIAS_API_PATH)
-  public Response postAlias(final @PathParam("topology") String topology,
-      final @PathParam("alias") String alias,
-      final @FormParam("value") String value) {
+  public Response postAlias(@PathParam("topology") final String topology,
+      @PathParam("alias") final String alias,
+      @FormParam("value") final String value) {
 
     if (value == null || value.isEmpty()) {
       return status(BAD_REQUEST).
@@ -125,8 +124,8 @@ public class AliasResource {
   @DELETE
   @Produces({ APPLICATION_JSON })
   @Path(ALIAS_API_PATH)
-  public Response deleteAlias(final @PathParam("topology") String topology,
-      final @PathParam("alias") String alias) {
+  public Response deleteAlias(@PathParam("topology") final String topology,
+      @PathParam("alias") final String alias) {
 
     final AliasService as = getAliasService();
 
@@ -155,7 +154,7 @@ public class AliasResource {
   @GET
   @Produces({ APPLICATION_JSON })
   @Path(ALIASES_TOPOLOGY_API_PATH)
-  public Response getAliases(final @PathParam("topology") String topology) {
+  public Response getAliases(@PathParam("topology") final String topology) {
 
     final ObjectMapper mapper = new ObjectMapper();
     final AliasService as = getAliasService();

@@ -58,14 +58,6 @@ import java.util.Map;
 public class ApplicationDeploymentContributor extends ServiceDeploymentContributorBase {
   private static final JAXBContext jaxbContext = getJAXBContext();
 
-  private static JAXBContext getJAXBContext() {
-    try {
-      return JAXBContext.newInstance( ServiceDefinition.class );
-    } catch (JAXBException e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
   private static final String SERVICE_DEFINITION_FILE_NAME = "service.xml";
   private static final String REWRITE_RULES_FILE_NAME = "rewrite.xml";
   private static final String XFORWARDED_FILTER_NAME = "XForwardedHeaderFilter";
@@ -76,6 +68,14 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
   private ServiceDefinition serviceDefinition;
 
   private UrlRewriteRulesDescriptor serviceRules;
+
+  private static JAXBContext getJAXBContext() {
+    try {
+      return JAXBContext.newInstance( ServiceDefinition.class );
+    } catch (JAXBException e) {
+      throw new IllegalStateException(e);
+    }
+  }
 
   private static ServiceDefinition loadServiceDefinition( Application application, File file ) throws JAXBException, FileNotFoundException, IOException {
     ServiceDefinition definition;

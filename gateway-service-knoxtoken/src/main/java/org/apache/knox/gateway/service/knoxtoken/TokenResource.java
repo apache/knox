@@ -174,7 +174,7 @@ public class TokenResource {
         .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
     JWTokenAuthority ts = services.getService(GatewayServices.TOKEN_SERVICE);
-    Principal p = ((HttpServletRequest) request).getUserPrincipal();
+    Principal p = request.getUserPrincipal();
     long expires = getExpiry();
 
     if (endpointPublicCert == null) {
@@ -194,7 +194,7 @@ public class TokenResource {
     }
 
     try {
-      JWT token = null;
+      JWT token;
       if (targetAudiences.isEmpty()) {
         token = ts.issueToken(p, signatureAlgorithm, expires);
       } else {
@@ -242,7 +242,7 @@ public class TokenResource {
   }
 
   private long getExpiry() {
-    long expiry = 0L;
+    long expiry;
     if (tokenTTL == -1) {
       expiry = -1;
     } else {

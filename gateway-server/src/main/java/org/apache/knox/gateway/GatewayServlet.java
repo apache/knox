@@ -51,7 +51,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 
 public class GatewayServlet implements Servlet, Filter {
-
   public static final String GATEWAY_DESCRIPTOR_LOCATION_DEFAULT = "gateway.xml";
   public static final String GATEWAY_DESCRIPTOR_LOCATION_PARAM = "gatewayDescriptorLocation";
 
@@ -85,7 +84,7 @@ public class GatewayServlet implements Servlet, Filter {
     }
     this.filter = filter;
     if( filter != null && filterConfig != null ) {
-      ((Filter) filter).destroy();
+      filter.destroy();
     }
   }
 
@@ -283,5 +282,4 @@ public class GatewayServlet implements Servlet, Filter {
       return config.getInitParameterNames();
     }
   }
-
 }

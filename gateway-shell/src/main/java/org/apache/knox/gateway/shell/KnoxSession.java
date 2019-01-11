@@ -119,6 +119,20 @@ public class KnoxSession implements Closeable {
     this.headers = headers;
   }
 
+  protected KnoxSession() throws KnoxShellException, URISyntaxException {
+  }
+
+  public KnoxSession( final ClientContext clientContext) throws KnoxShellException, URISyntaxException {
+    this.executor = Executors.newCachedThreadPool();
+    this.base = clientContext.url();
+
+    try {
+      client = createClient(clientContext);
+    } catch (GeneralSecurityException e) {
+      throw new KnoxShellException("Failed to create HTTP client.", e);
+    }
+  }
+
   public static KnoxSession login( String url, Map<String,String> headers ) throws URISyntaxException {
     KnoxSession instance = new KnoxSession(ClientContext.with(url));
     instance.setHeaders(headers);
@@ -195,20 +209,6 @@ public class KnoxSession implements Closeable {
   public static KnoxSession loginInsecure(String url, String username, String password) throws URISyntaxException {
     return new KnoxSession(ClientContext.with(username, password, url)
         .connection().secure(false).end());
-  }
-
-  protected KnoxSession() throws KnoxShellException, URISyntaxException {
-  }
-
-  public KnoxSession( final ClientContext clientContext) throws KnoxShellException, URISyntaxException {
-    this.executor = Executors.newCachedThreadPool();
-    this.base = clientContext.url();
-
-    try {
-      client = createClient(clientContext);
-    } catch (GeneralSecurityException e) {
-      throw new KnoxShellException("Failed to create HTTP client.", e);
-    }
   }
 
   protected CloseableHttpClient createClient(ClientContext clientContext) throws GeneralSecurityException {
@@ -410,8 +410,8 @@ public class KnoxSession implements Closeable {
   }
 
   protected void discoverTruststoreDetails(ClientContext clientContext) {
-    String truststoreDir = null;
-    String truststoreFileName = null;
+    String truststoreDir;
+    String truststoreFileName;
     if (clientContext.connection().truststoreLocation() != null &&
         clientContext.connection().truststorePass() != null) {
       return;

@@ -46,6 +46,12 @@ import java.util.Set;
 public class ServiceDefinitionsLoader {
   private static final JAXBContext jaxbContext = getJAXBContext();
 
+  private static final GatewayMessages log = MessagesFactory.get(GatewayMessages.class);
+
+  private static final String SERVICE_FILE_NAME = "service";
+
+  private static final String REWRITE_FILE = "rewrite.xml";
+
   private static JAXBContext getJAXBContext() {
     try {
       return JAXBContext.newInstance(ServiceDefinition.class);
@@ -53,12 +59,6 @@ public class ServiceDefinitionsLoader {
       throw new IllegalStateException(e);
     }
   }
-
-  private static final GatewayMessages log = MessagesFactory.get(GatewayMessages.class);
-
-  private static final String SERVICE_FILE_NAME = "service";
-
-  private static final String REWRITE_FILE = "rewrite.xml";
 
   public static Set<ServiceDeploymentContributor> loadServiceDefinitions(File servicesDir) {
     Set<ServiceDeploymentContributor> contributors = new HashSet<>();

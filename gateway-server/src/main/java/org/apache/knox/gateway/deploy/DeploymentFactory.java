@@ -67,18 +67,6 @@ import java.util.TreeMap;
 public abstract class DeploymentFactory {
   private static final JAXBContext jaxbContext = getJAXBContext();
 
-  private static JAXBContext getJAXBContext() {
-    Map<String,String> properties = new HashMap<>(2);
-    properties.put( "eclipselink-oxm-xml", "org/apache/knox/gateway/topology/topology_binding-xml.xml");
-    properties.put( "eclipselink.media-type", "application/xml" );
-
-    try {
-      return JAXBContext.newInstance(Topology.class.getPackage().getName(), Topology.class.getClassLoader(), properties);
-    } catch (JAXBException e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
   private static final String SERVLET_NAME_SUFFIX = "-knox-gateway-servlet";
   private static final String FILTER_NAME_SUFFIX = "-knox-gateway-filter";
   private static final GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
@@ -93,6 +81,18 @@ public abstract class DeploymentFactory {
   private static Map<String,Map<String,ProviderDeploymentContributor>> PROVIDER_CONTRIBUTOR_MAP;
   static {
     loadProviderContributors();
+  }
+
+  private static JAXBContext getJAXBContext() {
+    Map<String,String> properties = new HashMap<>(2);
+    properties.put( "eclipselink-oxm-xml", "org/apache/knox/gateway/topology/topology_binding-xml.xml");
+    properties.put( "eclipselink.media-type", "application/xml" );
+
+    try {
+      return JAXBContext.newInstance(Topology.class.getPackage().getName(), Topology.class.getClassLoader(), properties);
+    } catch (JAXBException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   public static void setGatewayServices(GatewayServices services) {

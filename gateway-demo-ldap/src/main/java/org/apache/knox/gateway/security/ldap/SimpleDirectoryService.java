@@ -22,13 +22,12 @@ import org.apache.directory.server.core.DefaultDirectoryService;
 
 public class SimpleDirectoryService extends DefaultDirectoryService {
 
-  public SimpleDirectoryService() throws Exception {
+  public SimpleDirectoryService() throws LdapException {
     super();
   }
 
   @Override
-  protected void showSecurityWarnings() throws LdapException {
+  protected void showSecurityWarnings() {
     // NoOp - This prevents confusing warnings from being output.
   }
-
 }

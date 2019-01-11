@@ -75,7 +75,6 @@ import java.util.concurrent.TimeUnit;
  * name of the directory containing cluster topologies.  This value default to "clusters".
  */
 public class GatewayConfigImpl extends Configuration implements GatewayConfig {
-
   private static final String GATEWAY_DEFAULT_TOPOLOGY_NAME_PARAM = "default.app.topology.name";
   private static final String GATEWAY_DEFAULT_TOPOLOGY_NAME = null;
 
@@ -228,7 +227,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   static final String DISPATCH_HOST_WHITELIST          = GATEWAY_CONFIG_FILE_PREFIX + ".dispatch.whitelist";
   static final String DISPATCH_HOST_WHITELIST_SERVICES = DISPATCH_HOST_WHITELIST + ".services";
 
-  private List<String> DEFAULT_GLOBAL_RULES_SERVICES;
+  private static final List<String> DEFAULT_GLOBAL_RULES_SERVICES = Arrays.asList(
+      "NAMENODE", "JOBTRACKER", "WEBHDFS", "WEBHCAT",
+      "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER");
 
   public GatewayConfigImpl() {
     init();
@@ -300,19 +301,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     for( String fileName : GATEWAY_CONFIG_FILENAMES ) {
       lastFileUrl = loadConfig( fileName, lastFileUrl );
     }
-    //set default services list
-    setDefaultGlobalRulesServices();
 
     initGatewayHomeDir( lastFileUrl );
 
     // log whether the scoping cookies to the gateway.path feature is enabled
     log.cookieScopingFeatureEnabled(isCookieScopingToPathEnabled());
-  }
-
-  private void setDefaultGlobalRulesServices() {
-    DEFAULT_GLOBAL_RULES_SERVICES = Arrays.asList(
-        "NAMENODE", "JOBTRACKER", "WEBHDFS", "WEBHCAT",
-        "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER");
   }
 
   private void initGatewayHomeDir( URL lastFileUrl ) {

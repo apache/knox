@@ -90,19 +90,6 @@ public class DefaultTopologyService
 
   private static final JAXBContext jaxbContext = getJAXBContext();
 
-  private static JAXBContext getJAXBContext() {
-    String pkgName = Topology.class.getPackage().getName();
-    String bindingFile = pkgName.replace(".", "/") + "/topology_binding-xml.xml";
-
-    Map<String, Object> properties = new HashMap<>(1);
-    properties.put(JAXBContextProperties.OXM_METADATA_SOURCE, bindingFile);
-    try {
-      return JAXBContext.newInstance(pkgName, Topology.class.getClassLoader(), properties);
-    } catch (JAXBException e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
   private static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(
     AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
     AuditConstants.KNOX_COMPONENT_NAME);
@@ -129,6 +116,19 @@ public class DefaultTopologyService
   private RemoteConfigurationMonitor remoteMonitor;
 
   private GatewayConfig config;
+
+  private static JAXBContext getJAXBContext() {
+    String pkgName = Topology.class.getPackage().getName();
+    String bindingFile = pkgName.replace(".", "/") + "/topology_binding-xml.xml";
+
+    Map<String, Object> properties = new HashMap<>(1);
+    properties.put(JAXBContextProperties.OXM_METADATA_SOURCE, bindingFile);
+    try {
+      return JAXBContext.newInstance(pkgName, Topology.class.getClassLoader(), properties);
+    } catch (JAXBException e) {
+      throw new IllegalStateException(e);
+    }
+  }
 
   private Topology loadTopology(File file) throws IOException, SAXException, URISyntaxException, InterruptedException {
     final long TIMEOUT = 250; //ms
