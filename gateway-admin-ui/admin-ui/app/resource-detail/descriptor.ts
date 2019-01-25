@@ -26,14 +26,20 @@ export class Descriptor {
 
     private dirty = false;
 
-    static getServiceParamNames(service: Service): string[] {
+    // getServiceParamNames must not be static since it is used in a view
+    // https://stackoverflow.com/questions/41857047/call-static-function-from-angular2-template
+    // noinspection JSMethodCanBeStatic
+    getServiceParamNames(service: Service): string[] {
         if (!service.params) {
             service.params = {};
         }
         return Object.getOwnPropertyNames(service.params);
     }
 
-    static getServiceParamValue(service: Service, name: string): string {
+    // getServiceParamValue must not be static since it is used in a view
+    // https://stackoverflow.com/questions/41857047/call-static-function-from-angular2-template
+    // noinspection JSMethodCanBeStatic
+    getServiceParamValue(service: Service, name: string): string {
         return service.params[name];
     }
 
