@@ -178,7 +178,7 @@
         <httpclient.version>4.5.7</httpclient.version>
         <httpcore.version>4.4.11</httpcore.version>
         <jackson.version>2.9.8</jackson.version>
-        <jacoco-maven-plugin.version>0.8.2</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.3</jacoco-maven-plugin.version>
         <jansi.version>1.17.1</jansi.version>
         <javax.activation.version>1.2.0</javax.activation.version>
         <javax.annotation-api.version>1.2</javax.annotation-api.version>
