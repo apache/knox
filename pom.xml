@@ -175,7 +175,7 @@
         <hadoop.version>3.2.0</hadoop.version>
         <hamcrest.version>2.1</hamcrest.version>
         <hamcrest-json.version>0.2</hamcrest-json.version>
-        <httpclient.version>4.5.6</httpclient.version>
+        <httpclient.version>4.5.7</httpclient.version>
         <httpcore.version>4.4.11</httpcore.version>
         <jackson.version>2.9.8</jackson.version>
         <jacoco-maven-plugin.version>0.8.2</jacoco-maven-plugin.version>
