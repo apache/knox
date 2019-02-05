@@ -157,7 +157,7 @@ public class DeploymentFactoryTest {
     }
   }
 
-  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
   public void test_validateNoAppsWithDuplicateUrlsInTopology() {
     DeploymentFactory.validateNoAppsWithDuplicateUrlsInTopology( null );
 
