@@ -420,7 +420,7 @@ Release build file for the Apache Knox Gateway
         </exec>
     </target>
 
-    <target name="start-debug-gateway" description="Start test gateway server.">
+    <target name="start-debug-gateway" description="Start test gateway server enabling remote debugging.">
         <exec executable="java" dir="${install.dir}/${gateway-artifact}-${gateway-version}">
             <arg value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"/>
             <arg value="-jar"/>
@@ -443,4 +443,6 @@ Release build file for the Apache Knox Gateway
     <target name="start-test-servers" depends="start-test-ldap,start-test-gateway" description="Start test LDAP and test gateway servers."/>
     <target name="stop-test-servers" depends="stop-test-gateway,stop-test-ldap" description="Stop test LDAP server and gateway servers."/>
     <target name="restart-test-servers" depends="stop-test-servers,start-test-servers" description="Restart test LDAP and gateway servers."/>
+    <target name="start-test-servers-debug" depends="start-test-ldap,start-debug-gateway" description="Start test LDAP and test gateway servers enabling remote debugging."/>
+
 </project>
