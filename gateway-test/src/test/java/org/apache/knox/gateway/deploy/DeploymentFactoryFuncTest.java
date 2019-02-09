@@ -72,7 +72,7 @@ public class DeploymentFactoryFuncTest {
   private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
   private static final long LONG_TIMEOUT = 10 * MEDIUM_TIMEOUT;
 
-  @Test( timeout = MEDIUM_TIMEOUT )
+  @Test( timeout = LONG_TIMEOUT )
   public void testGenericProviderDeploymentContributor() throws ParserConfigurationException, SAXException, IOException {
     LOG_ENTER();
     GatewayTestConfig config = new GatewayTestConfig();
@@ -198,7 +198,7 @@ public class DeploymentFactoryFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = MEDIUM_TIMEOUT )
+  @Test( timeout = LONG_TIMEOUT )
   public void testSimpleTopology() throws IOException, SAXException, ParserConfigurationException {
     LOG_ENTER();
     GatewayTestConfig config = new GatewayTestConfig();
@@ -633,7 +633,7 @@ public class DeploymentFactoryFuncTest {
    * and service uses anonymous authentication in which case we should
    * add AnonymousFilter to the filter chain.
    */
-  @Test( timeout = MEDIUM_TIMEOUT )
+  @Test( timeout = LONG_TIMEOUT )
   public void testServiceAnonAuth() throws IOException, SAXException, ParserConfigurationException {
     LOG_ENTER();
     final GatewayTestConfig config = new GatewayTestConfig();

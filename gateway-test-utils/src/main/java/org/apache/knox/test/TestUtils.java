@@ -52,7 +52,7 @@ import java.util.concurrent.TimeUnit;
 public class TestUtils {
   private static final Logger LOG = Logger.getLogger(TestUtils.class);
 
-  public static final long SHORT_TIMEOUT = 1000L;
+  public static final long SHORT_TIMEOUT = 5000L;
   public static final long MEDIUM_TIMEOUT = 30 * 1000L;
   public static final long LONG_TIMEOUT = 60 * 1000L;
 
