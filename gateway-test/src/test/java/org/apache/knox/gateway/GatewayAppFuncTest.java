@@ -265,7 +265,7 @@ public class GatewayAppFuncTest {
     LOG_EXIT();
   }
 
-  @Test//( timeout = TestUtils.MEDIUM_TIMEOUT )
+  @Test
   public void testDefaultAppName() throws Exception {
     LOG_ENTER();
 
@@ -303,7 +303,7 @@ public class GatewayAppFuncTest {
     LOG_EXIT();
   }
 
-  @Test//( timeout = TestUtils.MEDIUM_TIMEOUT )
+  @Test
   public void testMultiApps() throws Exception {
     LOG_ENTER();
 
@@ -382,7 +382,7 @@ public class GatewayAppFuncTest {
     LOG_EXIT();
   }
 
-  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testServicesAndApplications() throws Exception {
     LOG_ENTER();
 
@@ -461,7 +461,7 @@ public class GatewayAppFuncTest {
     LOG_EXIT();
   }
 
-  @Test//( timeout = TestUtils.MEDIUM_TIMEOUT )
+  @Test
   public void testDeploymentCleanup() throws Exception {
     LOG_ENTER();
 

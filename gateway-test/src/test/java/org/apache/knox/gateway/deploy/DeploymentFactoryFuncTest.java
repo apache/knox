@@ -55,6 +55,8 @@ import org.xml.sax.SAXException;
 
 import static org.apache.knox.test.TestUtils.LOG_ENTER;
 import static org.apache.knox.test.TestUtils.LOG_EXIT;
+import static org.apache.knox.test.TestUtils.LONG_TIMEOUT;
+import static org.apache.knox.test.TestUtils.MEDIUM_TIMEOUT;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -67,10 +69,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 public class DeploymentFactoryFuncTest {
-
-  private static final long SHORT_TIMEOUT = 1000L;
-  private static final long MEDIUM_TIMEOUT = 5 * SHORT_TIMEOUT;
-  private static final long LONG_TIMEOUT = 10 * MEDIUM_TIMEOUT;
 
   @Test( timeout = LONG_TIMEOUT )
   public void testGenericProviderDeploymentContributor() throws ParserConfigurationException, SAXException, IOException {

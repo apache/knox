@@ -2297,7 +2297,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  @Test//( timeout = MEDIUM_TIMEOUT )
+  @Test
   public void testYarnRmApplication() throws Exception {
     LOG_ENTER();
     getYarnRmApp( ContentType.JSON, true );
@@ -3327,7 +3327,7 @@ public class GatewayBasicFuncTest {
   }
 
 
-  @Test//( timeout = MEDIUM_TIMEOUT )
+  @Test
   public void testXForwardHeadersPopulate() throws Exception {
     LOG_ENTER();
     String username = "hdfs";
