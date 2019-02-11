@@ -144,7 +144,7 @@
         <apache-rat-plugin.version>0.13</apache-rat-plugin.version>
         <ant-nodeps.version>1.8.1</ant-nodeps.version>
         <asm.version>7.0</asm.version>
-        <bcprov-jdk15on.version>1.60</bcprov-jdk15on.version>
+        <bcprov-jdk15on.version>1.61</bcprov-jdk15on.version>
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
         <cglib.version>3.2.10</cglib.version>
         <checkstyle.version>8.17</checkstyle.version>
