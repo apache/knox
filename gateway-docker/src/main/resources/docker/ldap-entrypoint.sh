@@ -18,8 +18,7 @@
 set -e
 set -o pipefail
 
+export LDAP_SERVER_RUN_IN_FOREGROUND=true
+
 ./bin/ldap.sh start
 
-# This is needed because ldap.sh starts in the background
-# Would be better for ldap.sh to have a foreground version
-tail -f ./logs/*

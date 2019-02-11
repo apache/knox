@@ -18,9 +18,8 @@
 set -e
 set -o pipefail
 
+export GATEWAY_SERVER_RUN_IN_FOREGROUND=true
+
 ./bin/knoxcli.sh create-master --master knox
 ./bin/gateway.sh start
 
-# This is needed because gateway.sh starts in the background
-# Would be better for gateway.sh to have a foreground version
-tail -f ./logs/*
