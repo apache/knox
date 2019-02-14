@@ -177,6 +177,7 @@
         <hamcrest-json.version>0.2</hamcrest-json.version>
         <httpclient.version>4.5.6</httpclient.version>
         <httpcore.version>4.4.11</httpcore.version>
+        <j2e-pac4j.version>4.1.0</j2e-pac4j.version>
         <jackson.version>2.9.8</jackson.version>
         <jacoco-maven-plugin.version>0.8.3</jacoco-maven-plugin.version>
         <jansi.version>1.17.1</jansi.version>
@@ -209,7 +210,7 @@
         <mina.version>2.0.19</mina.version>
         <nimbus-jose-jwt.version>7.0</nimbus-jose-jwt.version>
         <okhttp.version>2.7.5</okhttp.version>
-        <pac4j.version>2.1.0</pac4j.version>
+        <pac4j.version>3.5.0</pac4j.version>
         <protobuf.version>3.6.1</protobuf.version>
         <rest-assured.version>3.3.0</rest-assured.version>
         <shiro.version>1.4.0</shiro.version>
@@ -218,6 +219,7 @@
         <slf4j.version>1.7.25</slf4j.version>
         <spotbugs.version>3.1.11</spotbugs.version>
         <spotbugs-maven-plugin.version>3.1.11</spotbugs-maven-plugin.version>
+        <spring-core.version>5.1.5.RELEASE</spring-core.version>
         <taglibs-standard.version>1.2.5</taglibs-standard.version>
         <velocity.version>1.7</velocity.version>
         <xmltool.version>3.3</xmltool.version>
@@ -1837,6 +1839,82 @@
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-jvm</artifactId>
                 <version>${metrics.version}</version>
+            </dependency>
+
+            <!-- pac4j Dependencies -->
+            <dependency>
+                <groupId>org.pac4j</groupId>
+                <artifactId>pac4j-cas</artifactId>
+                <version>${pac4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.pac4j</groupId>
+                <artifactId>pac4j-config</artifactId>
+                <version>${pac4j.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>xalan</groupId>
+                        <artifactId>xalan</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.pac4j</groupId>
+                <artifactId>pac4j-core</artifactId>
+                <version>${pac4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.pac4j</groupId>
+                <artifactId>pac4j-http</artifactId>
+                <version>${pac4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.pac4j</groupId>
+                <artifactId>pac4j-oauth</artifactId>
+                <version>${pac4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.pac4j</groupId>
+                <artifactId>pac4j-oidc</artifactId>
+                <version>${pac4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.pac4j</groupId>
+                <artifactId>pac4j-saml</artifactId>
+                <version>${pac4j.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>ch.qos.logback</groupId>
+                        <artifactId>logback-classic</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>xalan</groupId>
+                        <artifactId>xalan</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.springframework</groupId>
+                        <artifactId>spring-core</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <!-- Upgrade pac4j-saml dependencies to avoid known CVEs -->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-core</artifactId>
+                <version>${spring-core.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.pac4j</groupId>
+                <artifactId>j2e-pac4j</artifactId>
+                <version>${j2e-pac4j.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.pac4j</groupId>
+                        <artifactId>pac4j-core</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>

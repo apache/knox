@@ -28,12 +28,6 @@
     <name>gateway-provider-security-pac4j</name>
     <description>An extension of the gateway integrating pac4j as an authentication provider.</description>
 
-    <properties>
-        <j2e-pac4j.version>4.1.0</j2e-pac4j.version>
-        <pac4j.version>3.5.0</pac4j.version>
-        <spring-core.version>5.1.4.RELEASE</spring-core.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.apache.knox</groupId>
@@ -78,7 +72,6 @@
         <dependency>
             <groupId>org.pac4j</groupId>
             <artifactId>j2e-pac4j</artifactId>
-            <version>${j2e-pac4j.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.pac4j</groupId>
@@ -91,12 +84,10 @@
         <dependency>
             <groupId>org.pac4j</groupId>
             <artifactId>pac4j-cas</artifactId>
-            <version>${pac4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.pac4j</groupId>
             <artifactId>pac4j-config</artifactId>
-            <version>${pac4j.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>xalan</groupId>
@@ -107,27 +98,22 @@
         <dependency>
             <groupId>org.pac4j</groupId>
             <artifactId>pac4j-core</artifactId>
-            <version>${pac4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.pac4j</groupId>
             <artifactId>pac4j-http</artifactId>
-            <version>${pac4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.pac4j</groupId>
             <artifactId>pac4j-oauth</artifactId>
-            <version>${pac4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.pac4j</groupId>
             <artifactId>pac4j-oidc</artifactId>
-            <version>${pac4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.pac4j</groupId>
             <artifactId>pac4j-saml</artifactId>
-            <version>${pac4j.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>ch.qos.logback</groupId>
@@ -148,7 +134,6 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
-            <version>${spring-core.version}</version>
         </dependency>
 
         <dependency>
