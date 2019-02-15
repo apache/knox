@@ -63,7 +63,7 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
   @Override
   public String getRegistrationCode(String clusterName) {
     String code = generateRegCode(16);
-    byte[] signature = crypto.sign("SHA256withRSA","gateway-identity",code);
+    byte[] signature = crypto.sign("SHA256withRSA", code);
     String encodedSig = Base64.encodeBase64URLSafeString(signature);
 
     return code + "::" + encodedSig;
@@ -93,7 +93,7 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
     String[] parts = regCode.split("::");
 
     // part one is the code and part two is the signature
-    boolean verified = crypto.verify("SHA256withRSA", "gateway-identity", parts[0], Base64.decodeBase64(parts[1]));
+    boolean verified = crypto.verify("SHA256withRSA", parts[0], Base64.decodeBase64(parts[1]));
     if (verified) {
       Map<String,RegEntry> clusterServices = registry.get(clusterName);
       if (clusterServices == null) {

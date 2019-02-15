@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.services.security;
 
+import static org.junit.Assert.assertEquals;
+
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.impl.ConfigurableEncryptor;
@@ -29,12 +31,9 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.nio.charset.StandardCharsets;
-import java.security.cert.Certificate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
 
 @Category( { ManualTests.class, MediumTests.class } )
 public class CryptoServiceTest {
@@ -88,11 +87,6 @@ public class CryptoServiceTest {
       }
 
       @Override
-      public Certificate getCertificateForGateway(String alias) {
-        return null;
-      }
-
-      @Override
       public void removeAliasForCluster(String clusterName, String alias) {
       }
 
@@ -102,7 +96,22 @@ public class CryptoServiceTest {
       }
 
       @Override
+      public char[] getGatewayIdentityKeystorePassword() throws AliasServiceException {
+        return null;
+      }
+
+      @Override
       public char[] getGatewayIdentityPassphrase() throws AliasServiceException {
+        return null;
+      }
+
+      @Override
+      public char[] getSigningKeystorePassword() throws AliasServiceException {
+        return null;
+      }
+
+      @Override
+      public char[] getSigningKeyPassphrase() throws AliasServiceException {
         return null;
       }
     };

@@ -17,9 +17,13 @@
  */
 package org.apache.knox.gateway.websockets;
 
+import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.DEFAULT_IDENTITY_KEYSTORE_PASSWORD_ALIAS;
+import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.DEFAULT_IDENTITY_KEYSTORE_TYPE;
+import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.DEFAULT_IDENTITY_KEY_ALIAS;
+import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.DEFAULT_IDENTITY_KEY_PASSPHRASE_ALIAS;
+
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
-import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.deploy.DeploymentFactory;
@@ -29,17 +33,18 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.TopologyEvent;
 import org.apache.knox.gateway.topology.TopologyListener;
-import org.apache.knox.test.TestUtils;
 import org.easymock.EasyMock;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.hamcrest.CoreMatchers;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import javax.websocket.CloseReason;
 import javax.websocket.ContainerProvider;
@@ -67,6 +72,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class BadUrlTest {
 
+  @Rule
+  public TemporaryFolder testFolder = new TemporaryFolder();
+
   /**
    * Non-existant backend websocket server
    */
@@ -75,41 +83,36 @@ public class BadUrlTest {
   /**
    * Mock Gateway server
    */
-  private static Server gatewayServer;
+  private Server gatewayServer;
 
   /**
    * Mock gateway config
    */
-  private static GatewayConfig gatewayConfig;
+  private GatewayConfig gatewayConfig;
 
-  private static GatewayServices services;
+  private GatewayServices services;
 
   /**
    * URI for gateway server
    */
-  private static URI serverUri;
-
-  private static File topoDir;
+  private URI serverUri;
 
   public BadUrlTest() {
     super();
   }
 
-  @BeforeClass
-  public static void setUpBeforeClass() throws Exception {
+  @Before
+  public void setUpBeforeClass() throws Exception {
     startGatewayServer();
   }
 
-  @AfterClass
-  public static void tearDownAfterClass() {
+  @After
+  public void tearDownAfterClass() {
     try {
       gatewayServer.stop();
     } catch (final Exception e) {
       e.printStackTrace(System.err);
     }
-
-    /* Cleanup the created files */
-    FileUtils.deleteQuietly(topoDir);
   }
 
   @Test
@@ -129,7 +132,7 @@ public class BadUrlTest {
 
   }
 
-  private static void startGatewayServer() throws Exception {
+  private void startGatewayServer() throws Exception {
     gatewayServer = new Server();
     final ServerConnector connector = new ServerConnector(gatewayServer);
     gatewayServer.addConnector(connector);
@@ -166,15 +169,15 @@ public class BadUrlTest {
   /*
    * Initialize the configs and components required for this test.
    */
-  private static void setupGatewayConfig(final String backend)
+  private void setupGatewayConfig(final String backend)
       throws IOException {
     services = new DefaultGatewayServices();
 
-    topoDir = createDir();
+    File topoDir = testFolder.newFolder();
     URL serviceUrl = ClassLoader.getSystemResource("websocket-services");
 
     final File descriptor = new File(topoDir, "websocket.xml");
-    try(OutputStream stream = Files.newOutputStream(descriptor.toPath())) {
+    try (OutputStream stream = Files.newOutputStream(descriptor.toPath())) {
       createKnoxTopology(backend).toStream(stream);
     }
 
@@ -183,6 +186,10 @@ public class BadUrlTest {
     final Map<String, String> options = new HashMap<>();
     options.put("persist-master", "false");
     options.put("master", "password");
+
+    File dataDir = new File(topoDir, "data");
+    File securityDir = new File(dataDir, "security");
+    File keystoresDir = new File(securityDir, "keystores");
 
     gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfig.getGatewayTopologyDir())
@@ -199,9 +206,6 @@ public class BadUrlTest {
 
     EasyMock.expect(gatewayConfig.getEphemeralDHKeySize()).andReturn("2048")
         .anyTimes();
-
-    EasyMock.expect(gatewayConfig.getGatewaySecurityDir())
-        .andReturn(topoDir.toString()).anyTimes();
 
     /* Websocket configs */
     EasyMock.expect(gatewayConfig.isWebsocketEnabled()).andReturn(true)
@@ -240,6 +244,38 @@ public class BadUrlTest {
             .andReturn(Collections.emptyList())
             .anyTimes();
 
+    EasyMock.expect(gatewayConfig.getGatewayDataDir())
+        .andReturn(dataDir.getAbsolutePath())
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getGatewaySecurityDir())
+        .andReturn(securityDir.getAbsolutePath())
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getGatewayKeystoreDir())
+        .andReturn(keystoresDir.getAbsolutePath())
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getIdentityKeystorePath())
+        .andReturn(new File(keystoresDir, "tls.jks").getAbsolutePath())
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getIdentityKeystoreType())
+        .andReturn(DEFAULT_IDENTITY_KEYSTORE_TYPE)
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getIdentityKeystorePasswordAlias())
+        .andReturn(DEFAULT_IDENTITY_KEYSTORE_PASSWORD_ALIAS)
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getIdentityKeyAlias())
+        .andReturn(DEFAULT_IDENTITY_KEY_ALIAS)
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getIdentityKeyPassphraseAlias())
+        .andReturn(DEFAULT_IDENTITY_KEY_PASSPHRASE_ALIAS)
+        .anyTimes();
+
     EasyMock.replay(gatewayConfig);
 
     try {
@@ -256,21 +292,16 @@ public class BadUrlTest {
 
   }
 
-  private static File createDir() throws IOException {
-    return TestUtils
-        .createTempDir(WebsocketEchoTest.class.getSimpleName() + "-");
-  }
-
   /**
    * Intentionally add bad URL
    */
-  private static XMLTag createKnoxTopology(final String backend) {
+  private XMLTag createKnoxTopology(final String backend) {
     return XMLDoc.newDocument(true).addRoot("topology").addTag("service")
         .addTag("role").addText("WEBSOCKET").addTag("url").addText(backend)
         .gotoParent().gotoRoot();
   }
 
-  private static class TestTopologyListener implements TopologyListener {
+  private class TestTopologyListener implements TopologyListener {
     public List<List<TopologyEvent>> events = new ArrayList<>();
 
     @Override

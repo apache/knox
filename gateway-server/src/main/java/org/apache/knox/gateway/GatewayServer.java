@@ -370,8 +370,7 @@ public class GatewayServer {
       httpsConfig.setSecurePort( connectorPort );
       httpsConfig.addCustomizer( new SecureRequestCustomizer() );
       SSLService ssl = services.getService("SSLService");
-      String keystoreFileName = config.getGatewaySecurityDir() + File.separatorChar + "keystores" + File.separatorChar + "gateway.jks";
-      SslContextFactory sslContextFactory = (SslContextFactory)ssl.buildSslContextFactory( keystoreFileName );
+      SslContextFactory sslContextFactory = (SslContextFactory)ssl.buildSslContextFactory( config );
       connector = new ServerConnector( server, sslContextFactory, new HttpConnectionFactory( httpsConfig ) );
     } else {
       connector = new ServerConnector( server );

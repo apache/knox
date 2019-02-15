@@ -284,33 +284,49 @@ public class X509CertificateUtil {
     }
   }
 
-  private static void writeCertificateToKeyStore(Certificate cert, final File file, String type)
+  private static void writeCertificateToKeyStore(Certificate cert, String alias, final File file, String type)
       throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
     KeyStore ks = KeyStore.getInstance(type);
 
     char[] password = "changeit".toCharArray();
     ks.load(null, password);
-    ks.setCertificateEntry("gateway-identity", cert);
+    ks.setCertificateEntry(alias, cert);
     /* Coverity Scan CID 1361992 */
     try (OutputStream fos = Files.newOutputStream(file.toPath())) {
       ks.store(fos, password);
     }
   }
 
-  public static void writeCertificateToJks(Certificate cert, final File file)
+  public static void writeCertificateToJks(Certificate cert, String alias, final File file)
       throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
-    writeCertificateToKeyStore(cert, file, "jks");
+    writeCertificateToKeyStore(cert, alias, file, "jks");
   }
 
-  public static void writeCertificateToJceks(Certificate cert, final File file)
+  public static void writeCertificateToJceks(Certificate cert, String alias, final File file)
       throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
-    writeCertificateToKeyStore(cert, file, "jceks");
+    writeCertificateToKeyStore(cert, alias, file, "jceks");
   }
 
-  public static void writeCertificateToPkcs12(Certificate cert, final File file)
+  public static void writeCertificateToPkcs12(Certificate cert, String alias, final File file)
       throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
-    writeCertificateToKeyStore(cert, file, "pkcs12");
+    writeCertificateToKeyStore(cert, alias, file, "pkcs12");
   }
 
+  /**
+   * Tests the X509 certificate to see if it was self-signed.
+   * <p>
+   * The certificate is determined to be self-signed if the subject DN is the same as the issuer DN
+   *
+   * @param certificate the {@link X509Certificate} to test
+   * @return <code>true</code> if the X509 certficate is self-signed; otherwise <code>false</code>
+   */
+  public static boolean isSelfSignedCertificate(Certificate certificate) {
+    if (certificate instanceof X509Certificate) {
+      X509Certificate x509Certificate = (X509Certificate) certificate;
+      return x509Certificate.getSubjectDN().equals(x509Certificate.getIssuerDN());
+    } else {
+      return false;
+    }
+  }
 }
 

@@ -92,6 +92,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getGatewayKeystoreDir() {
+    return getGatewaySecurityDir() + "/keystores";
+  }
+
+  @Override
   public String getGatewayTopologyDir() {
     return gatewayHomeDir + "/topologies";
   }
@@ -372,12 +377,52 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getIdentityKeystorePath() {
+    return null;
+  }
+
+  @Override
+  public String getIdentityKeystoreType() {
+    return DEFAULT_IDENTITY_KEYSTORE_TYPE;
+  }
+
+  @Override
+  public String getIdentityKeystorePasswordAlias() {
+    return DEFAULT_IDENTITY_KEYSTORE_PASSWORD_ALIAS;
+  }
+
+  @Override
+  public String getIdentityKeyAlias() {
+    return DEFAULT_IDENTITY_KEY_ALIAS;
+  }
+
+  @Override
+  public String getIdentityKeyPassphraseAlias() {
+    return DEFAULT_IDENTITY_KEY_PASSPHRASE_ALIAS;
+  }
+
+  @Override
   public String getSigningKeystoreName() {
     return null;
   }
 
   @Override
+  public String getSigningKeystoreType() {
+    return null;
+  }
+
+  @Override
   public String getSigningKeyAlias() {
+    return null;
+  }
+
+  @Override
+  public String getSigningKeystorePasswordAlias() {
+    return null;
+  }
+
+  @Override
+  public String getSigningKeyPassphraseAlias() {
     return null;
   }
 

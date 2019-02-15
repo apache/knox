@@ -427,6 +427,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getGatewayKeystoreDir() {
+    return new File(getGatewaySecurityDir(), "keystores").getAbsolutePath();
+  }
+
+  @Override
   public InetSocketAddress getGatewayAddress() throws UnknownHostException {
     String host = getGatewayHost();
     int port = getGatewayPort();
@@ -644,13 +649,57 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getIdentityKeystorePath() {
+    String keystorePath = get(IDENTITY_KEYSTORE_PATH);
+    if(StringUtils.isEmpty(keystorePath)) {
+      keystorePath = getGatewayKeystoreDir() + File.separatorChar + "gateway.jks";
+    }
+    return keystorePath;
+  }
+
+  @Override
+  public String getIdentityKeystoreType() {
+    return get(IDENTITY_KEYSTORE_TYPE, DEFAULT_IDENTITY_KEYSTORE_TYPE);
+  }
+
+  @Override
+  public String getIdentityKeystorePasswordAlias() {
+    return get(IDENTITY_KEYSTORE_PASSWORD_ALIAS, DEFAULT_IDENTITY_KEYSTORE_PASSWORD_ALIAS);
+  }
+
+  @Override
+  public String getIdentityKeyAlias() {
+    return get(IDENTITY_KEY_ALIAS, DEFAULT_IDENTITY_KEY_ALIAS);
+  }
+
+  @Override
+  public String getIdentityKeyPassphraseAlias() {
+    return get(IDENTITY_KEY_PASSPHRASE_ALIAS, DEFAULT_IDENTITY_KEY_PASSPHRASE_ALIAS);
+  }
+
+  @Override
   public String getSigningKeystoreName() {
     return get(SIGNING_KEYSTORE_NAME);
   }
 
   @Override
+  public String getSigningKeystoreType() {
+    return get(SIGNING_KEYSTORE_TYPE, DEFAULT_SIGNING_KEYSTORE_TYPE);
+  }
+
+  @Override
   public String getSigningKeyAlias() {
-    return get(SIGNING_KEY_ALIAS);
+    return get(SIGNING_KEY_ALIAS, DEFAULT_SIGNING_KEY_ALIAS);
+  }
+
+  @Override
+  public String getSigningKeystorePasswordAlias() {
+    return get(SIGNING_KEYSTORE_PASSWORD_ALIAS, DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS);
+  }
+
+  @Override
+  public String getSigningKeyPassphraseAlias() {
+    return get(SIGNING_KEY_PASSPHRASE_ALIAS, DEFAULT_SIGNING_KEY_PASSPHRASE_ALIAS);
   }
 
   @Override

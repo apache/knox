@@ -17,9 +17,13 @@
  */
 package org.apache.knox.gateway.websockets;
 
+import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.DEFAULT_IDENTITY_KEYSTORE_PASSWORD_ALIAS;
+import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.DEFAULT_IDENTITY_KEYSTORE_TYPE;
+import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.DEFAULT_IDENTITY_KEY_ALIAS;
+import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.DEFAULT_IDENTITY_KEY_PASSPHRASE_ALIAS;
+
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
-import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.deploy.DeploymentFactory;
@@ -29,16 +33,17 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.TopologyEvent;
 import org.apache.knox.gateway.topology.TopologyListener;
-import org.apache.knox.test.TestUtils;
 import org.easymock.EasyMock;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import javax.websocket.ContainerProvider;
 import javax.websocket.Endpoint;
@@ -63,36 +68,36 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Test how Knox holds up under multiple concurrent connections.
- *
  */
 public class WebsocketMultipleConnectionTest {
+  @Rule
+  public TemporaryFolder testFolder = new TemporaryFolder();
+
   /**
    * Simulate backend websocket
    */
-  private static Server backendServer;
+  private Server backendServer;
   /**
    * URI for backend websocket server
    */
-  private static URI backendServerUri;
+  private URI backendServerUri;
 
   /**
    * Mock Gateway server
    */
-  private static Server gatewayServer;
+  private Server gatewayServer;
 
   /**
    * Mock gateway config
    */
-  private static GatewayConfig gatewayConfig;
+  private GatewayConfig gatewayConfig;
 
-  private static GatewayServices services;
+  private GatewayServices services;
 
   /**
    * URI for gateway server
    */
-  private static URI serverUri;
-
-  private static File topoDir;
+  private URI serverUri;
 
   /**
    * Maximum number of open connections to test.
@@ -103,25 +108,22 @@ public class WebsocketMultipleConnectionTest {
     super();
   }
 
-  @BeforeClass
-  public static void startServers() throws Exception {
+  @Before
+  public void startServers() throws Exception {
 
     startWebsocketServer();
     startGatewayServer();
 
   }
 
-  @AfterClass
-  public static void stopServers() {
+  @After
+  public void stopServers() {
     try {
       gatewayServer.stop();
       backendServer.stop();
     } catch (final Exception e) {
       e.printStackTrace(System.err);
     }
-
-    /* Cleanup the created files */
-    FileUtils.deleteQuietly(topoDir);
   }
 
   /*
@@ -164,7 +166,7 @@ public class WebsocketMultipleConnectionTest {
    * Start Mock Websocket server that acts as backend.
    * @throws Exception exception on websocket server start
    */
-  private static void startWebsocketServer() throws Exception {
+  private void startWebsocketServer() throws Exception {
 
     backendServer = new Server(new QueuedThreadPool(254));
     ServerConnector connector = new ServerConnector(backendServer);
@@ -188,7 +190,7 @@ public class WebsocketMultipleConnectionTest {
     backendServerUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/ws", host, port));
   }
 
-  private static void startGatewayServer() throws Exception {
+  private void startGatewayServer() throws Exception {
     /* use default Max threads */
     gatewayServer = new Server(new QueuedThreadPool(254));
     final ServerConnector connector = new ServerConnector(gatewayServer);
@@ -227,11 +229,15 @@ public class WebsocketMultipleConnectionTest {
    * Initialize the configs and components required for this test.
    * @param backend name of topology
    */
-  private static void setupGatewayConfig(final String backend)
+  private void setupGatewayConfig(final String backend)
       throws IOException {
     services = new DefaultGatewayServices();
 
-    topoDir = createDir();
+    File topoDir = testFolder.newFolder();
+    File dataDir = new File(topoDir, "data");
+    File securityDir = new File(dataDir, "security");
+    File keystoresDir = new File(securityDir, "keystores");
+
     URL serviceUrl = ClassLoader.getSystemResource("websocket-services");
 
     final File descriptor = new File(topoDir, "websocket.xml");
@@ -260,9 +266,6 @@ public class WebsocketMultipleConnectionTest {
 
     EasyMock.expect(gatewayConfig.getEphemeralDHKeySize()).andReturn("2048")
         .anyTimes();
-
-    EasyMock.expect(gatewayConfig.getGatewaySecurityDir())
-        .andReturn(topoDir.toString()).anyTimes();
 
     /* Websocket configs */
     EasyMock.expect(gatewayConfig.isWebsocketEnabled()).andReturn(true)
@@ -301,6 +304,39 @@ public class WebsocketMultipleConnectionTest {
             .andReturn(Collections.emptyList())
             .anyTimes();
 
+    EasyMock.expect(gatewayConfig.getGatewayDataDir())
+        .andReturn(dataDir.getAbsolutePath())
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getGatewaySecurityDir())
+        .andReturn(securityDir.getAbsolutePath())
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getGatewayKeystoreDir())
+        .andReturn(keystoresDir.getAbsolutePath())
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getIdentityKeystorePath())
+        .andReturn(new File(keystoresDir, "tls.jks").getAbsolutePath())
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getIdentityKeystoreType())
+        .andReturn(DEFAULT_IDENTITY_KEYSTORE_TYPE)
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getIdentityKeystorePasswordAlias())
+        .andReturn(DEFAULT_IDENTITY_KEYSTORE_PASSWORD_ALIAS)
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getIdentityKeyAlias())
+        .andReturn(DEFAULT_IDENTITY_KEY_ALIAS)
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getIdentityKeyPassphraseAlias())
+        .andReturn(DEFAULT_IDENTITY_KEY_PASSPHRASE_ALIAS)
+        .anyTimes();
+
+
     EasyMock.replay(gatewayConfig);
 
     try {
@@ -316,18 +352,13 @@ public class WebsocketMultipleConnectionTest {
     monitor.reloadTopologies();
   }
 
-  private static File createDir() throws IOException {
-    return TestUtils
-        .createTempDir(WebsocketEchoTest.class.getSimpleName() + "-");
-  }
-
-  private static XMLTag createKnoxTopology(final String backend) {
+  private XMLTag createKnoxTopology(final String backend) {
     return XMLDoc.newDocument(true).addRoot("topology").addTag("service")
         .addTag("role").addText("WEBSOCKET").addTag("url").addText(backend)
         .gotoParent().gotoRoot();
   }
 
-  private static class TestTopologyListener implements TopologyListener {
+  private class TestTopologyListener implements TopologyListener {
     public List<List<TopologyEvent>> events = new ArrayList<>();
 
     @Override

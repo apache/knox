@@ -112,7 +112,7 @@ public class JettySSLService implements SSLService {
         if (passphrase == null) {
           passphrase = ms.getMasterSecret();
         }
-        ks.addSelfSignedCertForGateway("gateway-identity", passphrase);
+        ks.addSelfSignedCertForGateway(config.getIdentityKeyAlias(), passphrase);
       }
       else {
         log.keyStoreForGatewayFoundNotCreating();
@@ -137,9 +137,9 @@ public class JettySSLService implements SSLService {
     // let's log the hostname (CN) and cert expiry from the gateway's public cert to aid in SSL debugging
     Certificate cert;
     try {
-      cert = as.getCertificateForGateway("gateway-identity");
-    } catch (AliasServiceException e) {
-      throw new ServiceLifecycleException("Cannot Retreive Gateway SSL Certificate. Server will not start.", e);
+      cert = ks.getGatewayIdentityCertificate();
+    } catch (KeystoreServiceException e) {
+      throw new ServiceLifecycleException("Cannot retrieve Gateway identity Certificate. Server will not start.", e);
     }
     if (cert != null) {
       if (cert instanceof X509Certificate) {
@@ -159,7 +159,7 @@ public class JettySSLService implements SSLService {
           throw new ServiceLifecycleException("Gateway SSL Certificate is not yet valid. Server will not start.", e);
         }
       } else {
-        throw new ServiceLifecycleException("Public certificate for the gateway cannot be found with the alias gateway-identity. Plase check the identity certificate alias.");
+        throw new ServiceLifecycleException("Public certificate for the gateway cannot be found. Please check the identity certificate alias.");
       }
     } else {
       throw new ServiceLifecycleException("Public certificate for the gateway is not of the expected type of X509Certificate. Something is wrong with the gateway keystore.");
@@ -167,13 +167,28 @@ public class JettySSLService implements SSLService {
   }
 
   @Override
-  public Object buildSslContextFactory(String keystoreFileName ) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException {
-    SslContextFactory sslContextFactory = new SslContextFactory( true );
-    sslContextFactory.setCertAlias( "gateway-identity" );
-    sslContextFactory.setKeyStoreType(keystoreType);
-    sslContextFactory.setKeyStorePath(keystoreFileName);
+  public Object buildSslContextFactory(GatewayConfig gatewayConfig) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException {
     char[] master = ms.getMasterSecret();
-    sslContextFactory.setKeyStorePassword(new String(master));
+    String keystoreFileName = gatewayConfig.getIdentityKeystorePath();
+
+    SslContextFactory sslContextFactory = new SslContextFactory( true );
+    sslContextFactory.setCertAlias(gatewayConfig.getIdentityKeyAlias());
+    sslContextFactory.setKeyStoreType(gatewayConfig.getIdentityKeystoreType());
+    sslContextFactory.setKeyStorePath(keystoreFileName);
+
+    char[] keystorePasswordChars = null;
+    try {
+      keystorePasswordChars = as.getGatewayIdentityKeystorePassword();
+    } catch (AliasServiceException e) {
+      log.creatingKeyStoreForGateway();
+      // nop - default passphrase will be used
+    }
+    if(keystorePasswordChars == null) {
+      // If a keystore password was not set, use the master password
+      keystorePasswordChars = master;
+    }
+    sslContextFactory.setKeyStorePassword(new String(keystorePasswordChars));
+
     char[] keypass = null;
     try {
       keypass = as.getGatewayIdentityPassphrase();

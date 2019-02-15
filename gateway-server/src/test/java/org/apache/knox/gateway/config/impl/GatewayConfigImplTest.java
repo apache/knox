@@ -20,9 +20,14 @@ import org.apache.knox.test.TestUtils;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static org.apache.knox.gateway.config.GatewayConfig.DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS;
+import static org.apache.knox.gateway.config.GatewayConfig.DEFAULT_SIGNING_KEYSTORE_TYPE;
+import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.DEFAULT_IDENTITY_KEYSTORE_PASSWORD_ALIAS;
+import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.DEFAULT_IDENTITY_KEYSTORE_TYPE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -76,13 +81,13 @@ public class GatewayConfigImplTest {
     GatewayConfigImpl config = new GatewayConfigImpl();
     assertThat( config.getGatewayDeploymentsBackupVersionLimit(), is(5) );
 
-    config.setInt( config.DEPLOYMENTS_BACKUP_VERSION_LIMIT, 3 );
+    config.setInt(GatewayConfigImpl.DEPLOYMENTS_BACKUP_VERSION_LIMIT, 3 );
     assertThat( config.getGatewayDeploymentsBackupVersionLimit(), is(3) );
 
-    config.setInt( config.DEPLOYMENTS_BACKUP_VERSION_LIMIT, -3 );
+    config.setInt( GatewayConfigImpl.DEPLOYMENTS_BACKUP_VERSION_LIMIT, -3 );
     assertThat( config.getGatewayDeploymentsBackupVersionLimit(), is(-1) );
 
-    config.setInt( config.DEPLOYMENTS_BACKUP_VERSION_LIMIT, 0 );
+    config.setInt( GatewayConfigImpl.DEPLOYMENTS_BACKUP_VERSION_LIMIT, 0 );
     assertThat( config.getGatewayDeploymentsBackupVersionLimit(), is(0) );
   }
 
@@ -91,16 +96,16 @@ public class GatewayConfigImplTest {
     GatewayConfigImpl config = new GatewayConfigImpl();
     assertThat( config.getGatewayDeploymentsBackupAgeLimit(), is(-1L) );
 
-    config.set( config.DEPLOYMENTS_BACKUP_AGE_LIMIT, "1" );
+    config.set( GatewayConfigImpl.DEPLOYMENTS_BACKUP_AGE_LIMIT, "1" );
     assertThat( config.getGatewayDeploymentsBackupAgeLimit(), is(86400000L) );
 
-    config.set( config.DEPLOYMENTS_BACKUP_AGE_LIMIT, "2" );
+    config.set( GatewayConfigImpl.DEPLOYMENTS_BACKUP_AGE_LIMIT, "2" );
     assertThat( config.getGatewayDeploymentsBackupAgeLimit(), is(86400000L*2L) );
 
-    config.set( config.DEPLOYMENTS_BACKUP_AGE_LIMIT, "0" );
+    config.set( GatewayConfigImpl.DEPLOYMENTS_BACKUP_AGE_LIMIT, "0" );
     assertThat( config.getGatewayDeploymentsBackupAgeLimit(), is(0L) );
 
-    config.set( config.DEPLOYMENTS_BACKUP_AGE_LIMIT, "X" );
+    config.set( GatewayConfigImpl.DEPLOYMENTS_BACKUP_AGE_LIMIT, "X" );
     assertThat( config.getGatewayDeploymentsBackupAgeLimit(), is(-1L) );
   }
 
@@ -292,5 +297,50 @@ public class GatewayConfigImplTest {
     assertTrue(names.contains("default"));
   }
 
+  // KNOX-1756
+  @Test
+  public void testCustomIdentityKeystoreOptions() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    // Validate default options (backwards compatibility)
+    assertEquals("gateway-identity", config.getIdentityKeyAlias());
+    assertEquals("gateway-identity-passphrase", config.getIdentityKeyPassphraseAlias());
+    assertEquals("gateway-identity", config.getSigningKeyAlias());
+    assertEquals("gateway-identity-passphrase", config.getSigningKeyPassphraseAlias());
+    assertEquals("gateway.jks", config.getSigningKeystoreName());
+
+    // Validate default options (new)
+    assertEquals(DEFAULT_IDENTITY_KEYSTORE_PASSWORD_ALIAS, config.getIdentityKeystorePasswordAlias());
+    assertEquals(DEFAULT_IDENTITY_KEYSTORE_TYPE, config.getIdentityKeystoreType());
+    assertEquals(new File(config.getGatewayKeystoreDir(), "gateway.jks").getAbsolutePath(), config.getIdentityKeystorePath());
+
+    assertEquals(DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS, config.getSigningKeystorePasswordAlias());
+    assertEquals(DEFAULT_SIGNING_KEYSTORE_TYPE, config.getSigningKeystoreType());
+
+    // Validate changed options
+    config.set("gateway.tls.key.alias", "custom_key_alias");
+    config.set("gateway.tls.key.passphrase.alias", "custom_key_passphrase_alias");
+    config.set("gateway.tls.keystore.path", "/custom/keystore/path/keystore.p12");
+    config.set("gateway.tls.keystore.type", "PKCS12");
+    config.set("gateway.tls.keystore.password.alias", "custom_keystore_password_alias");
+
+    config.set("gateway.signing.key.alias", "custom_key_alias");
+    config.set("gateway.signing.key.passphrase.alias", "custom_key_passphrase_alias");
+    config.set("gateway.signing.keystore.name", "custom_keystore_name");
+    config.set("gateway.signing.keystore.type", "PKCS12");
+    config.set("gateway.signing.keystore.password.alias", "custom_keystore_password_alias");
+
+    assertEquals("custom_key_alias", config.getIdentityKeyAlias());
+    assertEquals("custom_key_passphrase_alias", config.getIdentityKeyPassphraseAlias());
+    assertEquals("/custom/keystore/path/keystore.p12", config.getIdentityKeystorePath());
+    assertEquals("PKCS12", config.getIdentityKeystoreType());
+    assertEquals("custom_keystore_password_alias", config.getIdentityKeystorePasswordAlias());
+
+    assertEquals("custom_key_alias", config.getSigningKeyAlias());
+    assertEquals("custom_key_passphrase_alias", config.getSigningKeyPassphraseAlias());
+    assertEquals("custom_keystore_name", config.getSigningKeystoreName());
+    assertEquals("PKCS12", config.getSigningKeystoreType());
+    assertEquals("custom_keystore_password_alias", config.getSigningKeystorePasswordAlias());
+  }
 
 }

@@ -382,22 +382,22 @@ public class KnoxSession implements Closeable {
       }
       else {
         throw new KnoxShellException("Unable to find a truststore for secure login."
-            + "Please import the gateway-identity certificate into the JVM"
+            + "Please import the gateway identity certificate into the JVM"
             + " truststore or set the truststore location ENV variables.");
       }
     } catch (KeyStoreException e) {
       throw new KnoxShellException("Unable to create keystore of expected type.", e);
     } catch (FileNotFoundException e) {
       throw new KnoxShellException("Unable to read truststore."
-          + " Please import the gateway-identity certificate into the JVM"
+          + " Please import the gateway identity certificate into the JVM"
           + " truststore or set the truststore location ENV variables.", e);
     } catch (NoSuchAlgorithmException e) {
       throw new KnoxShellException("Unable to load the truststore."
-          + " Please import the gateway-identity certificate into the JVM"
+          + " Please import the gateway identity certificate into the JVM"
           + " truststore or set the truststore location ENV variables.", e);
     } catch (CertificateException e) {
       throw new KnoxShellException("Certificate cannot be found in the truststore."
-          + " Please import the gateway-identity certificate into the JVM"
+          + " Please import the gateway identity certificate into the JVM"
           + " truststore or set the truststore location ENV variables.", e);
     } catch (IOException e) {
       throw new KnoxShellException("Unable to load truststore."

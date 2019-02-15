@@ -39,28 +39,26 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 
-public class BaseKeystoreService {
+abstract class BaseKeystoreService {
   private static GatewaySpiMessages LOG = MessagesFactory.get( GatewaySpiMessages.class );
 
-  protected MasterService masterService;
-  protected String keyStoreDir;
+  private MasterService masterService;
 
-  private static KeyStore loadKeyStore(final File keyStoreFile, final char[] masterPassword, String storeType)
+  private static KeyStore loadKeyStore(final File keyStoreFile, final char[] storePassword, String storeType)
       throws CertificateException, IOException, KeyStoreException, NoSuchAlgorithmException {
        final KeyStore  keyStore = KeyStore.getInstance(storeType);
        if ( keyStoreFile.exists() ) {
            try (InputStream input = Files.newInputStream(keyStoreFile.toPath())) {
-               keyStore.load( input, masterPassword );
+               keyStore.load( input, storePassword );
            }
        } else {
-           keyStore.load( null, masterPassword );
+           keyStore.load( null, storePassword );
        }
 
        return keyStore;
       }
 
-  private static OutputStream createKeyStoreFile(String fileName ) throws IOException {
-    File file = new File( fileName );
+  private static OutputStream createKeyStoreFile(File file) throws IOException {
     if( file.exists() ) {
       if( file.isDirectory() ) {
         throw new IOException( file.getAbsolutePath() );
@@ -78,22 +76,22 @@ public class BaseKeystoreService {
     return Files.newOutputStream( file.toPath() );
   }
 
-  protected void createKeystore(String filename, String keystoreType) throws KeystoreServiceException {
-    try (OutputStream out = createKeyStoreFile( filename )) {
+  protected void createKeystore(File file, String keystoreType, char[] storePassword) throws KeystoreServiceException {
+    try (OutputStream out = createKeyStoreFile( file )) {
       KeyStore ks = KeyStore.getInstance(keystoreType);
       ks.load( null, null );
-      ks.store( out, masterService.getMasterSecret() );
+      ks.store( out, storePassword );
     } catch (NoSuchAlgorithmException | CertificateException | KeyStoreException | IOException e) {
-      LOG.failedToCreateKeystore( filename, keystoreType, e );
+      LOG.failedToCreateKeystore( file.getAbsolutePath(), keystoreType, e );
       throw new KeystoreServiceException(e);
     }
   }
 
-  protected boolean isKeystoreAvailable(final File keyStoreFile, String storeType) throws KeyStoreException, IOException {
+  protected boolean isKeystoreAvailable(final File keyStoreFile, String storeType, char[] storePassword) throws KeyStoreException, IOException {
     if ( keyStoreFile.exists() ) {
       try (InputStream input = Files.newInputStream(keyStoreFile.toPath())){
         final KeyStore keyStore = KeyStore.getInstance(storeType);
-        keyStore.load( input, masterService.getMasterSecret() );
+        keyStore.load( input, storePassword );
         return true;
       } catch (NoSuchAlgorithmException | CertificateException e) {
         LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
@@ -105,10 +103,10 @@ public class BaseKeystoreService {
     return false;
   }
 
-  protected KeyStore getKeystore(final File keyStoreFile, String storeType) throws KeystoreServiceException {
+  protected KeyStore getKeystore(final File keyStoreFile, String storeType, char[] password) throws KeystoreServiceException {
     KeyStore credStore;
     try {
-      credStore = loadKeyStore( keyStoreFile, masterService.getMasterSecret(), storeType);
+      credStore = loadKeyStore( keyStoreFile, password, storeType);
     } catch (CertificateException | IOException | NoSuchAlgorithmException | KeyStoreException e) {
       LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
       throw new KeystoreServiceException(e);
@@ -116,15 +114,15 @@ public class BaseKeystoreService {
     return credStore;
   }
 
-  public BaseKeystoreService() {
+  protected BaseKeystoreService() {
     super();
   }
 
-  protected void addCredential(String alias, String value, KeyStore ks) {
+  protected void addCredential(String alias, String value, KeyStore ks, char[] keyPassword) {
     if (ks != null) {
       try {
         final Key key = new SecretKeySpec(value.getBytes(StandardCharsets.UTF_8), "AES");
-        ks.setKeyEntry( alias, key, masterService.getMasterSecret(), null);
+        ks.setKeyEntry( alias, key, keyPassword, null);
       } catch (KeyStoreException e) {
         LOG.failedToAddCredential(e);
       }
@@ -143,15 +141,55 @@ public class BaseKeystoreService {
     }
   }
 
-  protected char[] getCredential(String alias, char[] credential, KeyStore ks) {
-    if (ks != null) {
-      try {
-        credential = new String(ks.getKey(alias, masterService.getMasterSecret()).getEncoded(), StandardCharsets.UTF_8).toCharArray();
-      } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
-        LOG.failedToGetCredential(e);
-      }
+  /**
+   * Given a keystore and an alias name, attempts to retrieve the requested credential;
+   *
+   * @param alias      an alias name
+   * @param keystore   a {@link KeyStore}
+   * @param passphrase that passphrase to use for decryption
+   * @return an array of <code>char</code>s; or <code>null</code> if not found
+   */
+  protected char[] getCredential(String alias, KeyStore keystore, char[] passphrase)
+      throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
+    Key key = getKey(alias, keystore, passphrase);
+    if (key != null) {
+      return new String(key.getEncoded(), StandardCharsets.UTF_8).toCharArray();
     }
-    return credential;
+
+    return null;
+  }
+
+  /**
+   * Given a keystore and an alias name, attempts to retrieve the requested {@link Certificate}
+   *
+   * @param alias    an alias name
+   * @param keystore a {@link KeyStore}
+   * @return a {@link Certificate}; or <code>null</code> if not found
+   * @throws KeyStoreException if an error occurs while trying to retrieve the requested certificate
+   */
+  protected Certificate getCertificate(String alias, KeyStore keystore) throws KeyStoreException {
+    if ((keystore != null) && (alias != null)) {
+      return keystore.getCertificate(alias);
+    }
+
+    return null;
+  }
+
+  /**
+   * Given a keystore and an alias name, attempts to retrieve the requested {@link Key}
+   *
+   * @param alias    an alias name
+   * @param keystore a {@link KeyStore}
+   * @param passphrase that passphrase to use for decryption
+   * @return a {@link Key}; or <code>null</code> if not found
+   */
+  protected Key getKey(String alias, KeyStore keystore, char[] passphrase)
+      throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
+    if ((keystore != null) && (alias != null)) {
+      return keystore.getKey(alias, passphrase);
+    }
+
+    return null;
   }
 
   protected void writeCertificateToFile( Certificate cert, final File file ) throws CertificateEncodingException, IOException {
@@ -164,15 +202,25 @@ public class BaseKeystoreService {
     }
   }
 
-  protected void writeKeystoreToFile(final KeyStore keyStore, final File file)
+  protected void writeKeystoreToFile(final KeyStore keyStore, char[] storePassword, final File file)
       throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
-     // TODO: backup the keystore on disk before attempting a write and restore on failure
-     try( OutputStream out = Files.newOutputStream(file.toPath()) ) {
-         keyStore.store( out, masterService.getMasterSecret() );
-     }
+    // Ensure container directory exists... if not create it....
+    if(!file.getParentFile().exists()) {
+      file.getParentFile().mkdirs();
+    }
+    else {
+      // TODO: backup the keystore on disk before attempting a write and restore on failure
+    }
+    try (OutputStream out = Files.newOutputStream(file.toPath())) {
+      keyStore.store(out, storePassword);
+    }
   }
 
   public void setMasterService(MasterService ms) {
     this.masterService = ms;
+  }
+
+  protected char[] getMasterSecret() {
+    return masterService.getMasterSecret();
   }
 }

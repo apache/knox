@@ -99,6 +99,11 @@ public class DefaultRemoteConfigurationMonitorTest {
     }
 
     @Override
+    public String getGatewayKeystoreDir() {
+      return null;
+    }
+
+    @Override
     public String getGatewayDeploymentDir() {
       return null;
     }
@@ -259,12 +264,52 @@ public class DefaultRemoteConfigurationMonitorTest {
     }
 
     @Override
+    public String getIdentityKeystorePath() {
+      return null;
+    }
+
+    @Override
+    public String getIdentityKeystoreType() {
+      return null;
+    }
+
+    @Override
+    public String getIdentityKeystorePasswordAlias() {
+      return null;
+    }
+
+    @Override
+    public String getIdentityKeyAlias() {
+      return null;
+    }
+
+    @Override
+    public String getIdentityKeyPassphraseAlias() {
+      return null;
+    }
+
+    @Override
     public String getSigningKeystoreName() {
       return null;
     }
 
     @Override
+    public String getSigningKeystoreType() {
+      return null;
+    }
+
+    @Override
     public String getSigningKeyAlias() {
+      return null;
+    }
+
+    @Override
+    public String getSigningKeystorePasswordAlias() {
+      return null;
+    }
+
+    @Override
+    public String getSigningKeyPassphraseAlias() {
       return null;
     }
 

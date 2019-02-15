@@ -28,10 +28,11 @@ import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryType;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorHandler;
-import org.apache.knox.test.TestUtils;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.net.InetSocketAddress;
@@ -50,6 +51,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 public class SimpleDescriptorHandlerFuncTest {
+  @Rule
+  public TemporaryFolder testFolder = new TemporaryFolder();
+
   private static final String TEST_PROVIDER_CONFIG =
       "    <gateway>\n" +
           "        <provider>\n" +
@@ -123,7 +127,7 @@ public class SimpleDescriptorHandlerFuncTest {
     final Map<String, List<String>> serviceURLs = new HashMap<>();
     serviceURLs.put("RESOURCEMANAGER", Collections.singletonList("http://myhost:1234/resource"));
 
-    File testRootDir = TestUtils.createTempDir(getClass().getSimpleName());
+    File testRootDir = testFolder.newFolder();
     File testConfDir = new File(testRootDir, "conf");
     File testProvDir = new File(testConfDir, "shared-providers");
     File testTopoDir = new File(testConfDir, "topologies");
@@ -232,7 +236,6 @@ public class SimpleDescriptorHandlerFuncTest {
       e.printStackTrace();
       fail(e.getMessage());
     } finally {
-      FileUtils.forceDelete(testRootDir);
       if (topologyFile != null) {
         topologyFile.delete();
       }

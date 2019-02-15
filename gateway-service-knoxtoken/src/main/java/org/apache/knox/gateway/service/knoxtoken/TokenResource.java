@@ -17,15 +17,14 @@
  */
 package org.apache.knox.gateway.service.knoxtoken;
 
-import java.security.KeyStoreException;
 import java.security.Principal;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
@@ -178,15 +177,15 @@ public class TokenResource {
     long expires = getExpiry();
 
     if (endpointPublicCert == null) {
-      // acquire PEM for gateway-identity of this gateway instance
+      // acquire PEM for gateway identity of this gateway instance
       KeystoreService ks = services.getService(GatewayServices.KEYSTORE_SERVICE);
       if (ks != null) {
         try {
-          Certificate cert = ks.getKeystoreForGateway().getCertificate("gateway-identity");
+          Certificate cert = ks.getGatewayIdentityCertificate();
           byte[] bytes = cert.getEncoded();
           //Base64 encoder = new Base64(76, "\n".getBytes("ASCII"));
           endpointPublicCert = Base64.encodeBase64String(bytes);
-        } catch (KeyStoreException | KeystoreServiceException | CertificateEncodingException e) {
+        } catch (KeystoreServiceException | CertificateEncodingException e) {
           // assuming that certs will be properly provisioned across all clients
           log.unableToAcquireCertForEndpointClients(e);
         }

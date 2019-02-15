@@ -190,8 +190,18 @@ public class Pac4jDispatcherFilter implements Filter {
       properties.put(PropertiesConfigFactory.SAML_KEYSTORE_PATH,
           keystoreService.getKeystorePath());
 
-      properties.put(PropertiesConfigFactory.SAML_KEYSTORE_PASSWORD,
-          new String(masterService.getMasterSecret()));
+      // check for provisioned alias for keystore password
+      char[] giksp = null;
+      try {
+        giksp = aliasService.getGatewayIdentityKeystorePassword();
+      } catch (AliasServiceException e) {
+        log.noKeystorePasswordProvisioned(e);
+      }
+      if (giksp == null) {
+        // no alias provisioned then use the master
+        giksp = masterService.getMasterSecret();
+      }
+      properties.put(PropertiesConfigFactory.SAML_KEYSTORE_PASSWORD, new String(giksp));
 
       // check for provisioned alias for private key
       char[] gip = null;
@@ -201,15 +211,11 @@ public class Pac4jDispatcherFilter implements Filter {
       catch(AliasServiceException ase) {
         log.noPrivateKeyPasshraseProvisioned(ase);
       }
-      if (gip != null) {
-        properties.put(PropertiesConfigFactory.SAML_PRIVATE_KEY_PASSWORD,
-            new String(gip));
-      }
-      else {
+      if (gip == null) {
         // no alias provisioned then use the master
-        properties.put(PropertiesConfigFactory.SAML_PRIVATE_KEY_PASSWORD,
-            new String(masterService.getMasterSecret()));
+        gip = masterService.getMasterSecret();
       }
+      properties.put(PropertiesConfigFactory.SAML_PRIVATE_KEY_PASSWORD, new String(gip));
     }
   }
 

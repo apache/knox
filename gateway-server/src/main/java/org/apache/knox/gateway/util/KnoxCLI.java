@@ -590,33 +590,38 @@ public class KnoxCLI extends Configured implements Tool {
             out.println("No keystore has been created for the gateway. Please use the create-cert command or populate with a CA signed cert of your own.");
           }
 
-          Certificate cert = ks.getKeystoreForGateway().getCertificate("gateway-identity");
-          String keyStoreDir = getGatewayConfig().getGatewaySecurityDir() + File.separator + "keystores" + File.separator;
-          File ksd = new File(keyStoreDir);
-          if (!ksd.exists()) {
-            if (!ksd.mkdirs()) {
+          Certificate cert = ks.getGatewayIdentityCertificate();
+          File keyStoreDir = new File(getGatewayConfig().getGatewayKeystoreDir());
+          if (!keyStoreDir.exists()) {
+            if (!keyStoreDir.mkdirs()) {
               // certainly should not happen if the keystore is known to be available
-              throw new ServiceLifecycleException("Unable to create keystores directory" + ksd.getAbsolutePath());
+              throw new ServiceLifecycleException("Unable to create keystores directory" + keyStoreDir.getAbsolutePath());
             }
           }
 
+          File file = null;
+          String alias = GatewayConfig.DEFAULT_IDENTITY_KEY_ALIAS;
           if ("PEM".equalsIgnoreCase(type) || type == null) {
-            X509CertificateUtil.writeCertificateToFile(cert, new File(keyStoreDir + "gateway-identity.pem"));
-            out.println("Certificate gateway-identity has been successfully exported to: " + keyStoreDir + "gateway-identity.pem");
+            file = new File(keyStoreDir, "gateway-identity.pem");
+            X509CertificateUtil.writeCertificateToFile(cert, file);
           } else if ("JKS".equalsIgnoreCase(type)) {
-            X509CertificateUtil.writeCertificateToJks(cert, new File(keyStoreDir + "gateway-client-trust.jks"));
-            out.println("Certificate gateway-identity has been successfully exported to: " + keyStoreDir + "gateway-client-trust.jks");
+            file = new File(keyStoreDir, "gateway-client-trust.jks");
+            X509CertificateUtil.writeCertificateToJks(cert, alias, file);
           } else if ("JCEKS".equalsIgnoreCase(type)) {
-            X509CertificateUtil.writeCertificateToJceks(cert, new File(keyStoreDir + "gateway-client-trust.jceks"));
-            out.println("Certificate gateway-identity has been successfully exported to: " + keyStoreDir + "gateway-client-trust.jceks");
+            file = new File(keyStoreDir, "gateway-client-trust.jceks");
+            X509CertificateUtil.writeCertificateToJceks(cert, alias, file);
           } else if ("PKCS12".equalsIgnoreCase(type)) {
-            X509CertificateUtil.writeCertificateToPkcs12(cert, new File(keyStoreDir + "gateway-client-trust.pkcs12"));
-            out.println("Certificate gateway-identity has been successfully exported to: " + keyStoreDir + "gateway-client-trust.pkcs12");
+            file = new File(keyStoreDir, "gateway-client-trust.pkcs12");
+            X509CertificateUtil.writeCertificateToPkcs12(cert, alias, file);
+          }
+
+          if (file != null) {
+            out.println("Certificate " + alias + " has been successfully exported to: " + file.getAbsolutePath());
           } else {
             out.println("Invalid type for export file provided. Export has not been done. Please use: [PEM|JKS|JCEKS|PKCS12] default value is PEM.");
           }
         } catch (KeystoreServiceException e) {
-          throw new ServiceLifecycleException("Keystore was not loaded properly - the provided (or persisted) master secret may not match the password for the keystore.", e);
+          throw new ServiceLifecycleException("Keystore was not loaded properly - the stored password may not match the password for the keystore.", e);
         }
       }
     }
@@ -629,14 +634,14 @@ public class KnoxCLI extends Configured implements Tool {
 
  public class CertCreateCommand extends Command {
 
-  public static final String USAGE = "create-cert [--hostname h]";
-  public static final String DESC = "The create-cert command creates and populates\n" +
-                                    "a gateway.jks keystore with a self-signed certificate\n" +
-                                    "to be used as the gateway identity. It also adds an alias\n" +
-                                    "to the __gateway-credentials.jceks credential store for the\n" +
-                                    "key passphrase.";
+  public static final String USAGE = "create-cert [--force] [--hostname h]";
+  public static final String DESC = "The create-cert command populates the configured identity\n" +
+                                    "keystore with a self-signed certificate to be used as the\n" +
+                                    "gateway identity. If a cert exists and is not self-signed,\n" +
+                                    "--force must be specified to overwrite it.  If a self-signed\n" +
+                                    "cert is created, a password for the key will be generated \n" +
+                                    "and stored in the __gateway-credentials.jceks credential store.";
   private static final String GATEWAY_CREDENTIAL_STORE_NAME = "__gateway";
-  private static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase";
 
    public CertCreateCommand() {
    }
@@ -644,7 +649,6 @@ public class KnoxCLI extends Configured implements Tool {
    @Override
    public void execute() throws Exception {
      KeystoreService ks = getKeystoreService();
-
      AliasService as = getAliasService();
 
      if (ks != null) {
@@ -661,27 +665,42 @@ public class KnoxCLI extends Configured implements Tool {
          // THEY CAN ADD THE ALIAS EXPLICITLY WITH THE CLI
          //as.generateAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
        } catch (KeystoreServiceException e) {
-         throw new ServiceLifecycleException("Keystore was not loaded properly - the provided (or persisted) master secret may not match the password for the keystore.", e);
+         throw new ServiceLifecycleException("Keystore was not loaded properly - the stored password may not match the password for the keystore.", e);
        }
 
        try {
          if (!ks.isKeystoreForGatewayAvailable()) {
-//           log.creatingKeyStoreForGateway();
            ks.createKeystoreForGateway();
          }
-         else {
-//           log.keyStoreForGatewayFoundNotCreating();
+
+         boolean isSelfSigned;
+         Certificate certificate;
+         try {
+           certificate = ks.getGatewayIdentityCertificate();
+         } catch (KeystoreServiceException e) {
+           // A certificate was (probably) not previously created...
+           certificate = null;
          }
-         char[] passphrase = as.getPasswordFromAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
-         if (passphrase == null) {
-           MasterService ms = services.getService("MasterService");
-           passphrase = ms.getMasterSecret();
-         }
-         ks.addSelfSignedCertForGateway("gateway-identity", passphrase, hostname);
+
+         isSelfSigned = (certificate == null) || X509CertificateUtil.isSelfSignedCertificate(certificate);
+
+         if ((certificate == null) || isSelfSigned || force) {
+           char[] passphrase = as.getGatewayIdentityPassphrase();
+           if (passphrase == null) {
+             MasterService ms = services.getService("MasterService");
+             passphrase = ms.getMasterSecret();
+           }
+           String alias = getGatewayConfig().getIdentityKeyAlias();
+           ks.addSelfSignedCertForGateway(alias, passphrase, hostname);
 //         logAndValidateCertificate();
-         out.println("Certificate gateway-identity has been successfully created.");
+           out.println("Certificate " + alias + " has been successfully created.");
+         } else {
+           // require --force to replace...
+           out.println("A non-self-signed certificate has already been installed in the configured keystore. " +
+               "Please use --force if you wish to overwrite it with a generated self-signed certificate.");
+         }
        } catch (KeystoreServiceException e) {
-         throw new ServiceLifecycleException("Keystore was not loaded properly - the provided (or persisted) master secret may not match the password for the keystore.", e);
+         throw new ServiceLifecycleException("Keystore was not loaded properly - the stored password may not match the password for the keystore.", e);
        }
      }
    }

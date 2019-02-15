@@ -34,7 +34,6 @@ import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.zookeeper.ZooDefs;
 
 import java.nio.charset.StandardCharsets;
-import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -62,7 +61,6 @@ public class RemoteAliasService implements AliasService {
       PATH_KNOX_SECURITY + "/topology";
   public static final String PATH_SEPARATOR = "/";
   public static final String DEFAULT_CLUSTER_NAME = "__gateway";
-  public static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase";
 
   private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
   // N.B. This is ZooKeeper-specific, and should be abstracted when another registry is supported
@@ -309,6 +307,11 @@ public class RemoteAliasService implements AliasService {
   public char[] getPasswordFromAliasForCluster(String clusterName,
       String givenAlias, boolean generate) throws AliasServiceException {
 
+    // If the alias is empty null there is nothing to look up, so return null.
+    if (StringUtils.isEmpty(givenAlias)) {
+      return null;
+    }
+
     /* convert all alias names to lower case since JDK expects the same behaviour */
     final String alias = givenAlias.toLowerCase(Locale.ROOT);
 
@@ -377,10 +380,48 @@ public class RemoteAliasService implements AliasService {
   }
 
   @Override
-  public char[] getGatewayIdentityPassphrase() throws AliasServiceException {
-    char[] passphrase = getPasswordFromAliasForGateway(
-        GATEWAY_IDENTITY_PASSPHRASE);
+  public char[] getGatewayIdentityKeystorePassword() throws AliasServiceException {
+    char[] passphrase = getPasswordFromAliasForGateway(config.getIdentityKeystorePasswordAlias());
     if (passphrase == null) {
+      passphrase = ms.getMasterSecret();
+    }
+    return passphrase;
+  }
+
+  @Override
+  public char[] getGatewayIdentityPassphrase() throws AliasServiceException {
+    char[] passphrase = getPasswordFromAliasForGateway(config.getIdentityKeyPassphraseAlias());
+    if (passphrase == null) {
+      // If a password for the identity key is not explicitly found in the local or remote credential
+      // stores, use the identity keystore password
+      passphrase = getGatewayIdentityKeystorePassword();
+    }
+    if (passphrase == null) {
+      // If a password has not yet been determined, use the master key
+      passphrase = ms.getMasterSecret();
+    }
+    return passphrase;
+  }
+
+  @Override
+  public char[] getSigningKeystorePassword() throws AliasServiceException {
+    char[] passphrase = getPasswordFromAliasForGateway(config.getSigningKeystorePasswordAlias());
+    if (passphrase == null) {
+      passphrase = ms.getMasterSecret();
+    }
+    return passphrase;
+  }
+
+  @Override
+  public char[] getSigningKeyPassphrase() throws AliasServiceException {
+    char[] passphrase = getPasswordFromAliasForGateway(config.getSigningKeyPassphraseAlias());
+    if (passphrase == null) {
+      // If a password for the identity key is not explicitly found in the local or remote credential
+      // stores, use the identity keystore password
+      passphrase = getSigningKeystorePassword();
+    }
+    if (passphrase == null) {
+      // If a password has not yet been determined, use the master key
       passphrase = ms.getMasterSecret();
     }
     return passphrase;
@@ -390,13 +431,6 @@ public class RemoteAliasService implements AliasService {
   public void generateAliasForGateway(final String alias)
       throws AliasServiceException {
     generateAliasForCluster(DEFAULT_CLUSTER_NAME, alias);
-  }
-
-  @Override
-  public Certificate getCertificateForGateway(final String alias)
-      throws AliasServiceException {
-    /* We don't store certs in remote registry so we just delegate certs to keystore (DefaultAliasService.getCertificateForGateway) */
-    return localAliasService.getCertificateForGateway(alias);
   }
 
   @Override

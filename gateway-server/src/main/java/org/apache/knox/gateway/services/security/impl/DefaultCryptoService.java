@@ -19,7 +19,6 @@ package org.apache.knox.gateway.services.security.impl;
 
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
-import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.Signature;
@@ -30,13 +29,13 @@ import java.util.Map;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.CryptoService;
 import org.apache.knox.gateway.services.security.EncryptionResult;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
-import org.apache.knox.gateway.services.ServiceLifecycleException;
 
 public class DefaultCryptoService implements CryptoService {
   private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
@@ -129,14 +128,14 @@ public class DefaultCryptoService implements CryptoService {
   }
 
   @Override
-  public boolean verify(String algorithm, String alias, String signed, byte[] signature) {
+  public boolean verify(String algorithm, String signed, byte[] signature) {
     boolean verified = false;
     try {
       Signature sig=Signature.getInstance(algorithm);
-      sig.initVerify(ks.getKeystoreForGateway().getCertificate(alias).getPublicKey());
+      sig.initVerify(ks.getGatewayIdentityCertificate().getPublicKey());
       sig.update(signed.getBytes(StandardCharsets.UTF_8));
       verified = sig.verify(signature);
-    } catch (SignatureException | KeystoreServiceException | KeyStoreException | InvalidKeyException | NoSuchAlgorithmException e) {
+    } catch (SignatureException | KeystoreServiceException | InvalidKeyException | NoSuchAlgorithmException e) {
       LOG.failedToVerifySignature( e );
     }
     LOG.signatureVerified( verified );
@@ -144,11 +143,11 @@ public class DefaultCryptoService implements CryptoService {
   }
 
   @Override
-  public byte[] sign(String algorithm, String alias, String payloadToSign) {
+  public byte[] sign(String algorithm, String payloadToSign) {
     try {
       char[] passphrase;
       passphrase = as.getGatewayIdentityPassphrase();
-      PrivateKey privateKey = (PrivateKey) ks.getKeyForGateway(alias, passphrase);
+      PrivateKey privateKey = (PrivateKey) ks.getGatewayIdentityKey(passphrase);
       Signature signature = Signature.getInstance(algorithm);
       signature.initSign(privateKey);
       signature.update(payloadToSign.getBytes(StandardCharsets.UTF_8));

@@ -17,8 +17,10 @@
  */
 package org.apache.knox.gateway.services.security;
 
+import java.io.File;
 import java.security.Key;
 import java.security.KeyStore;
+import java.security.cert.Certificate;
 
 public interface KeystoreService {
 
@@ -55,4 +57,8 @@ public interface KeystoreService {
   char[] getCredentialForCluster(String clusterName, String alias) throws KeystoreServiceException;
 
   String getKeystorePath();
+
+  Certificate getGatewayIdentityCertificate() throws KeystoreServiceException;
+
+  Key getGatewayIdentityKey(char[] passphrase) throws KeystoreServiceException;
 }

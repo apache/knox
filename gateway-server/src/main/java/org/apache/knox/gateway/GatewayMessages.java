@@ -313,14 +313,23 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.DEBUG, text = "Gateway services have not been initialized." )
   void gatewayServicesNotInitialized();
 
-  @Message( level = MessageLevel.INFO, text = "The Gateway SSL certificate is issued to hostname: {0}." )
+  @Message( level = MessageLevel.INFO, text = "The Gateway identity certificate is issued to hostname: {0}." )
   void certificateHostNameForGateway(String cn);
 
-  @Message( level = MessageLevel.INFO, text = "The Gateway SSL certificate is valid between: {0} and {1}." )
+  @Message( level = MessageLevel.INFO, text = "The Gateway identity certificate is valid between: {0} and {1}." )
   void certificateValidityPeriod(Date notBefore, Date notAfter);
 
   @Message( level = MessageLevel.ERROR, text = "Unable to retrieve certificate for Gateway: {0}." )
   void unableToRetrieveCertificateForGateway(Exception e);
+
+  @Message( level = MessageLevel.ERROR, text = "The identity certificate for the Gateway was not found." )
+  void gatewayIdentityCertificateNotFound();
+
+  @Message( level = MessageLevel.ERROR, text = "Unable to retrieve the identity certificate for the Gateway" )
+  void unableToRetrieveGatewayIdentityCertificate(Exception e);
+
+  @Message( level = MessageLevel.ERROR, text = "Unable to retrieve the signing certificate for the Gateway" )
+  void unableToRetrieveSigningCertificate(Exception e);
 
   @Message( level = MessageLevel.ERROR, text = "Failed to generate alias for cluster: {0} {1}." )
   void failedToGenerateAliasForCluster(String clusterName, KeystoreServiceException e);

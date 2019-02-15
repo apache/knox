@@ -19,7 +19,6 @@ package org.apache.knox.gateway.websockets;
 
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
-import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.deploy.DeploymentFactory;
@@ -29,15 +28,16 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.TopologyEvent;
 import org.apache.knox.gateway.topology.TopologyListener;
-import org.apache.knox.test.TestUtils;
 import org.easymock.EasyMock;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import javax.websocket.ContainerProvider;
 import javax.websocket.Session;
@@ -56,6 +56,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.DEFAULT_IDENTITY_KEYSTORE_PASSWORD_ALIAS;
+import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.DEFAULT_IDENTITY_KEYSTORE_TYPE;
+import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.DEFAULT_IDENTITY_KEY_ALIAS;
+import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.DEFAULT_IDENTITY_KEY_PASSPHRASE_ALIAS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -80,6 +84,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * @since 0.10
  */
 public class WebsocketEchoTest {
+
+  @Rule
+  public TemporaryFolder testFolder = new TemporaryFolder();
 
   /**
    * Simulate backend websocket
@@ -107,29 +114,24 @@ public class WebsocketEchoTest {
    */
   private static URI serverUri;
 
-  private static File topoDir;
-
   public WebsocketEchoTest() {
     super();
   }
 
-  @BeforeClass
-  public static void setUpBeforeClass() throws Exception {
+  @Before
+  public void setUpTest() throws Exception {
     startWebsocketServer();
     startGatewayServer();
   }
 
-  @AfterClass
-  public static void tearDownAfterClass() {
+  @After
+  public void tearDown() {
     try {
       gatewayServer.stop();
       backendServer.stop();
     } catch (final Exception e) {
       e.printStackTrace(System.err);
     }
-
-    /* Cleanup the created files */
-    FileUtils.deleteQuietly(topoDir);
   }
 
   /*
@@ -185,7 +187,7 @@ public class WebsocketEchoTest {
    * Start Mock Websocket server that acts as backend.
    * @throws Exception exception on websocket server start
    */
-  private static void startWebsocketServer() throws Exception {
+  private void startWebsocketServer() throws Exception {
 
     backendServer = new Server();
     ServerConnector connector = new ServerConnector(backendServer);
@@ -213,7 +215,7 @@ public class WebsocketEchoTest {
    * Start Gateway Server.
    * @throws Exception exception on server start
    */
-  private static void startGatewayServer() throws Exception {
+  private void startGatewayServer() throws Exception {
     gatewayServer = new Server();
     final ServerConnector connector = new ServerConnector(gatewayServer);
     gatewayServer.addConnector(connector);
@@ -252,10 +254,15 @@ public class WebsocketEchoTest {
    * @param backend topology to use
    * @throws IOException exception on setting up the gateway
    */
-  private static void setupGatewayConfig(final String backend) throws IOException {
+  private void setupGatewayConfig(final String backend) throws IOException {
     services = new DefaultGatewayServices();
 
-    topoDir = createDir();
+    File topoDir = testFolder.newFolder();
+
+    File dataDir = new File(topoDir, "data");
+    File securityDir = new File(dataDir, "security");
+    File keystoresDir = new File(securityDir, "keystores");
+
     URL serviceUrl = ClassLoader.getSystemResource("websocket-services");
 
     final File descriptor = new File(topoDir, "websocket.xml");
@@ -284,9 +291,6 @@ public class WebsocketEchoTest {
 
     EasyMock.expect(gatewayConfig.getEphemeralDHKeySize()).andReturn("2048")
         .anyTimes();
-
-    EasyMock.expect(gatewayConfig.getGatewaySecurityDir())
-        .andReturn(topoDir.toString()).anyTimes();
 
     /* Websocket configs */
     EasyMock.expect(gatewayConfig.isWebsocketEnabled()).andReturn(true)
@@ -325,6 +329,38 @@ public class WebsocketEchoTest {
             .andReturn(Collections.emptyList())
             .anyTimes();
 
+    EasyMock.expect(gatewayConfig.getGatewayDataDir())
+        .andReturn(dataDir.getAbsolutePath())
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getGatewaySecurityDir())
+        .andReturn(securityDir.getAbsolutePath())
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getGatewayKeystoreDir())
+        .andReturn(keystoresDir.getAbsolutePath())
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getIdentityKeystorePath())
+        .andReturn(new File(keystoresDir, "tls.jks").getAbsolutePath())
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getIdentityKeystoreType())
+        .andReturn(DEFAULT_IDENTITY_KEYSTORE_TYPE)
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getIdentityKeystorePasswordAlias())
+        .andReturn(DEFAULT_IDENTITY_KEYSTORE_PASSWORD_ALIAS)
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getIdentityKeyAlias())
+        .andReturn(DEFAULT_IDENTITY_KEY_ALIAS)
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getIdentityKeyPassphraseAlias())
+        .andReturn(DEFAULT_IDENTITY_KEY_PASSPHRASE_ALIAS)
+        .anyTimes();
+
     EasyMock.replay(gatewayConfig);
 
     try {
@@ -340,18 +376,13 @@ public class WebsocketEchoTest {
     monitor.reloadTopologies();
   }
 
-  private static File createDir() throws IOException {
-    return TestUtils
-        .createTempDir(WebsocketEchoTest.class.getSimpleName() + "-");
-  }
-
-  private static XMLTag createKnoxTopology(final String backend) {
+  private XMLTag createKnoxTopology(final String backend) {
     return XMLDoc.newDocument(true).addRoot("topology").addTag("service")
         .addTag("role").addText("WEBSOCKET").addTag("url").addText(backend)
         .gotoParent().gotoRoot();
   }
 
-  private static class TestTopologyListener implements TopologyListener {
+  private class TestTopologyListener implements TopologyListener {
     public List<List<TopologyEvent>> events = new ArrayList<>();
 
     @Override

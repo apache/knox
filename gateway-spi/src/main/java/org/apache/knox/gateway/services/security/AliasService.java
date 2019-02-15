@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.services.security;
 
-import java.security.cert.Certificate;
 import java.util.List;
 
 import org.apache.knox.gateway.services.Service;
@@ -45,11 +44,62 @@ public interface AliasService extends Service {
   char[] getPasswordFromAliasForGateway(String alias)
       throws AliasServiceException;
 
+  /**
+   * Retrieves the password for the configured identity keystore.
+   * <p>
+   * The alias for this password is set in the Gateway configuration using
+   * "gateway.tls.keystore.password.alias" property. If not set, the default value is
+   * "gateway-identity-keystore-password".  This alias is used to look up the password.
+   * <p>
+   * If not found, the master password should be returned.
+   *
+   * @return an array of characters; or <code>null</code>, if the alias did not resolve to a password.
+   * @throws AliasServiceException if an error occurs looking up the alias
+   */
+  char[] getGatewayIdentityKeystorePassword() throws AliasServiceException;
+
+  /**
+   * Retrieves the password/passphrase for the configured identity key.
+   * <p>
+   * The alias for this password is set in the Gateway configuration using
+   * "gateway.tls.key.passphrase.alias" property. If not set, the default value is
+   * "gateway-identity-passphrase".  This alias is used to look up the password.
+   * <p>
+   * If not found, the password for the keystore holding the Gateway identity key should be returned.
+   *
+   * @return an array of characters; or <code>null</code>, if the alias did not resolve to a password.
+   * @throws AliasServiceException if an error occurs looking up the alias
+   */
   char[] getGatewayIdentityPassphrase() throws AliasServiceException;
 
-  void generateAliasForGateway(String alias)
-      throws AliasServiceException;
+  /**
+   * Retrieves the password for the configured signing keystore.
+   * <p>
+   * The alias for this password is set in the Gateway configuration using
+   * "gateway.signing.keystore.password.alias" property. If not set, the default value is
+   * "signing.keystore.password".  This alias is used to look up the password.
+   * <p>
+   * If not found, the master password should be returned.
+   *
+   * @return an array of characters; or <code>null</code>, if the alias did not resolve to a password.
+   * @throws AliasServiceException if an error occurs looking up the alias
+   */
+  char[] getSigningKeystorePassword() throws AliasServiceException;
 
-  Certificate getCertificateForGateway(String alias)
+  /**
+   * Retrieves the password/passphrase for the configured signing key.
+   * <p>
+   * The alias for this password is set in the Gateway configuration using
+   * "gateway.signing.key.passphrase.alias" property. If not set, the default value is
+   * "signing.key.passphrase".  This alias is used to look up the password.
+   * <p>
+   * If not found, the password for the keystore holding the signing key should be returned.
+   *
+   * @return an array of characters; or <code>null</code>, if the alias did not resolve to a password.
+   * @throws AliasServiceException if an error occurs looking up the alias
+   */
+  char[] getSigningKeyPassphrase() throws AliasServiceException;
+
+  void generateAliasForGateway(String alias)
       throws AliasServiceException;
 }

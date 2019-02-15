@@ -27,9 +27,8 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.services.security.impl.DefaultKeystoreService;
-import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
-
+import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
@@ -52,8 +51,9 @@ public class DefaultTokenAuthorityServiceTest {
       basedir = new File(".").getCanonicalPath();
     }
 
-    EasyMock.expect(config.getGatewaySecurityDir()).andReturn(basedir + "/target/test-classes");
-    EasyMock.expect(config.getSigningKeystoreName()).andReturn("server-keystore.jks");
+    EasyMock.expect(config.getGatewaySecurityDir()).andReturn(basedir + "/target/test-classes").anyTimes();
+    EasyMock.expect(config.getGatewayKeystoreDir()).andReturn(basedir + "/target/test-classes/keystores").anyTimes();
+    EasyMock.expect(config.getSigningKeystoreName()).andReturn("server-keystore.jks").anyTimes();
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
 
     MasterService ms = EasyMock.createNiceMock(MasterService.class);
@@ -93,8 +93,9 @@ public class DefaultTokenAuthorityServiceTest {
       basedir = new File(".").getCanonicalPath();
     }
 
-    EasyMock.expect(config.getGatewaySecurityDir()).andReturn(basedir + "/target/test-classes");
-    EasyMock.expect(config.getSigningKeystoreName()).andReturn("server-keystore.jks");
+    EasyMock.expect(config.getGatewaySecurityDir()).andReturn(basedir + "/target/test-classes").anyTimes();
+    EasyMock.expect(config.getGatewayKeystoreDir()).andReturn(basedir + "/target/test-classes/keystores").anyTimes();
+    EasyMock.expect(config.getSigningKeystoreName()).andReturn("server-keystore.jks").anyTimes();
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
 
     MasterService ms = EasyMock.createNiceMock(MasterService.class);
@@ -135,8 +136,9 @@ public class DefaultTokenAuthorityServiceTest {
       basedir = new File(".").getCanonicalPath();
     }
 
-    EasyMock.expect(config.getGatewaySecurityDir()).andReturn(basedir + "/target/test-classes");
-    EasyMock.expect(config.getSigningKeystoreName()).andReturn("server-keystore.jks");
+    EasyMock.expect(config.getGatewaySecurityDir()).andReturn(basedir + "/target/test-classes").anyTimes();
+    EasyMock.expect(config.getGatewayKeystoreDir()).andReturn(basedir + "/target/test-classes/keystores").anyTimes();
+    EasyMock.expect(config.getSigningKeystoreName()).andReturn("server-keystore.jks").anyTimes();
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
 
     MasterService ms = EasyMock.createNiceMock(MasterService.class);
@@ -176,8 +178,9 @@ public class DefaultTokenAuthorityServiceTest {
       basedir = new File(".").getCanonicalPath();
     }
 
-    EasyMock.expect(config.getGatewaySecurityDir()).andReturn(basedir + "/target/test-classes");
-    EasyMock.expect(config.getSigningKeystoreName()).andReturn("server-keystore.jks");
+    EasyMock.expect(config.getGatewaySecurityDir()).andReturn(basedir + "/target/test-classes").anyTimes();
+    EasyMock.expect(config.getGatewayKeystoreDir()).andReturn(basedir + "/target/test-classes/keystores").anyTimes();
+    EasyMock.expect(config.getSigningKeystoreName()).andReturn("server-keystore.jks").anyTimes();
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
 
     MasterService ms = EasyMock.createNiceMock(MasterService.class);
@@ -218,8 +221,9 @@ public class DefaultTokenAuthorityServiceTest {
       basedir = new File(".").getCanonicalPath();
     }
 
-    EasyMock.expect(config.getGatewaySecurityDir()).andReturn(basedir + "/target/test-classes");
-    EasyMock.expect(config.getSigningKeystoreName()).andReturn("server-keystore.jks");
+    EasyMock.expect(config.getGatewaySecurityDir()).andReturn(basedir + "/target/test-classes").anyTimes();
+    EasyMock.expect(config.getGatewayKeystoreDir()).andReturn(basedir + "/target/test-classes/keystores").anyTimes();
+    EasyMock.expect(config.getSigningKeystoreName()).andReturn("server-keystore.jks").anyTimes();
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
 
     MasterService ms = EasyMock.createNiceMock(MasterService.class);
@@ -266,8 +270,9 @@ public class DefaultTokenAuthorityServiceTest {
       basedir = new File(".").getCanonicalPath();
     }
 
-    EasyMock.expect(config.getGatewaySecurityDir()).andReturn(basedir + "/target/test-classes");
-    EasyMock.expect(config.getSigningKeystoreName()).andReturn("server-keystore.jks");
+    EasyMock.expect(config.getGatewaySecurityDir()).andReturn(basedir + "/target/test-classes").anyTimes();
+    EasyMock.expect(config.getGatewayKeystoreDir()).andReturn(basedir + "/target/test-classes/keystores").anyTimes();
+    EasyMock.expect(config.getSigningKeystoreName()).andReturn("server-keystore.jks").anyTimes();
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
 
     MasterService ms = EasyMock.createNiceMock(MasterService.class);

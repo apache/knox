@@ -20,12 +20,12 @@ package org.apache.knox.gateway.services.security.impl;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.SecureRandom;
-import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -39,20 +39,20 @@ import org.apache.knox.gateway.services.security.MasterService;
 public class DefaultAliasService implements AliasService {
   private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
 
-  private static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase";
-
   protected static char[] chars = { 'a', 'b', 'c', 'd', 'e', 'f', 'g',
   'h', 'j', 'k', 'm', 'n', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
   'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K',
   'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
   '2', '3', '4', '5', '6', '7', '8', '9',};
 
+  private GatewayConfig config;
   private KeystoreService keystoreService;
   private MasterService masterService;
 
   @Override
   public void init(GatewayConfig config, Map<String, String> options)
       throws ServiceLifecycleException {
+    this.config = config;
   }
 
   @Override
@@ -64,9 +64,48 @@ public class DefaultAliasService implements AliasService {
   }
 
   @Override
-  public char[] getGatewayIdentityPassphrase() throws AliasServiceException {
-    char[] passphrase = getPasswordFromAliasForGateway(GATEWAY_IDENTITY_PASSPHRASE);
+  public char[] getGatewayIdentityKeystorePassword() throws AliasServiceException {
+    char[] passphrase = getPasswordFromAliasForGateway(config.getIdentityKeystorePasswordAlias());
     if (passphrase == null) {
+      passphrase = masterService.getMasterSecret();
+    }
+    return passphrase;
+  }
+
+  @Override
+  public char[] getGatewayIdentityPassphrase() throws AliasServiceException {
+    char[] passphrase = getPasswordFromAliasForGateway(config.getIdentityKeyPassphraseAlias());
+    if (passphrase == null) {
+      // If a password for the identity key is not explicitly found in the credential store, use the
+      // identity keystore password
+      passphrase = getGatewayIdentityKeystorePassword();
+    }
+    if (passphrase == null) {
+      // If a password has not yet been determined, use the master key
+      passphrase = masterService.getMasterSecret();
+    }
+    return passphrase;
+  }
+
+  @Override
+  public char[] getSigningKeystorePassword() throws AliasServiceException {
+    char[] passphrase = getPasswordFromAliasForGateway(config.getSigningKeystorePasswordAlias());
+    if (passphrase == null) {
+      passphrase = masterService.getMasterSecret();
+    }
+    return passphrase;
+  }
+
+  @Override
+  public char[] getSigningKeyPassphrase() throws AliasServiceException {
+    char[] passphrase = getPasswordFromAliasForGateway(config.getSigningKeyPassphraseAlias());
+    if (passphrase == null) {
+      // If a password for the signing key is not explicitly found in the credential store, use the
+      // signing keystore password
+      passphrase = getSigningKeystorePassword();
+    }
+    if (passphrase == null) {
+      // If a password has not yet been determined, use the master key
       passphrase = masterService.getMasterSecret();
     }
     return passphrase;
@@ -81,6 +120,12 @@ public class DefaultAliasService implements AliasService {
   @Override
   public char[] getPasswordFromAliasForCluster(String clusterName, String alias, boolean generate)
       throws AliasServiceException {
+
+    // If the alias is empty null there is nothing to look up, so return null.
+    if (StringUtils.isEmpty(alias)) {
+      return null;
+    }
+
     char[] credential;
     try {
       credential = keystoreService.getCredentialForCluster(clusterName, alias);
@@ -157,18 +202,6 @@ public class DefaultAliasService implements AliasService {
   public void generateAliasForGateway(String alias)
       throws AliasServiceException {
     generateAliasForCluster("__gateway", alias);
-  }
-
-  @Override
-  public Certificate getCertificateForGateway(String alias) {
-    Certificate cert = null;
-    try {
-      cert = this.keystoreService.getKeystoreForGateway().getCertificate(alias);
-    } catch (KeyStoreException | KeystoreServiceException e) {
-      LOG.unableToRetrieveCertificateForGateway(e);
-      // should we throw an exception?
-    }
-    return cert;
   }
 
   @Override

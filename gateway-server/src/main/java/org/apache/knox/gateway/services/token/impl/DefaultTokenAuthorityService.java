@@ -49,7 +49,6 @@ import com.nimbusds.jose.crypto.RSASSAVerifier;
 
 public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
 
-  private static final String SIGNING_KEY_PASSPHRASE = "signing.key.passphrase";
   private static final Set<String> SUPPORTED_SIG_ALGS = new HashSet<>();
   private AliasService as;
   private KeystoreService ks;
@@ -158,11 +157,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     if(signingKeyPassphrase != null) {
       return signingKeyPassphrase;
     }
-    char[] phrase = as.getPasswordFromAliasForGateway(SIGNING_KEY_PASSPHRASE);
-    if (phrase == null) {
-      phrase = as.getGatewayIdentityPassphrase();
-    }
-    return phrase;
+    return as.getSigningKeyPassphrase();
   }
 
   private String getSigningKeyAlias(String signingKeystoreAlias) {
@@ -172,7 +167,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     if(signingKeyAlias != null) {
       return signingKeyAlias;
     }
-    return "gateway-identity";
+    return GatewayConfig.DEFAULT_SIGNING_KEY_ALIAS;
   }
 
   @Override
@@ -214,7 +209,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     RSAPrivateKey key;
     char[] passphrase;
     try {
-      passphrase = as.getPasswordFromAliasForGateway(SIGNING_KEY_PASSPHRASE);
+      passphrase = as.getSigningKeyPassphrase();
       if (passphrase != null) {
         key = (RSAPrivateKey) ks.getSigningKey(getSigningKeyAlias(signingKeyAlias),
             passphrase);
