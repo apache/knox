@@ -16,6 +16,8 @@
  */
 package org.apache.knox.gateway.service.config.remote.zk;
 
+import org.apache.knox.gateway.config.ConfigurationException;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.config.remote.RemoteConfigurationMessages;
 import org.apache.knox.gateway.service.config.remote.RemoteConfigurationRegistryConfig;
@@ -49,17 +51,26 @@ class RemoteConfigurationRegistryJAASConfig extends Configuration {
     private static final RemoteConfigurationMessages log = MessagesFactory.get(RemoteConfigurationMessages.class);
 
     // Cache the current JAAS configuration
-    private Configuration delegate = Configuration.getConfiguration();
+    private final Configuration delegate;
 
-    private AliasService aliasService;
+    private final AliasService aliasService;
 
-    private Map<String, AppConfigurationEntry[]> contextEntries =  new HashMap<>();
+    private final Map<String, AppConfigurationEntry[]> contextEntries =  new HashMap<>();
 
     static RemoteConfigurationRegistryJAASConfig configure(List<RemoteConfigurationRegistryConfig> configs, AliasService aliasService) {
         return new RemoteConfigurationRegistryJAASConfig(configs, aliasService);
     }
 
     private RemoteConfigurationRegistryJAASConfig(List<RemoteConfigurationRegistryConfig> configs, AliasService aliasService) {
+        try {
+          delegate = Configuration.getConfiguration();
+        } catch(Exception e) {
+          //populate the original error with a meaningful message; logging will happen later in the upper in the call hierarchy
+          final String message = String.format(Locale.ROOT, "Error while getting secure configuration. This error usually indicates an issue within the supplied JAAS configuration: %s",
+              System.getProperty(GatewayConfig.KRB5_LOGIN_CONFIG, "Undefined"));
+          throw new ConfigurationException(message, e);
+        }
+
         this.aliasService = aliasService;
 
         // Populate context entries
@@ -135,6 +146,8 @@ class RemoteConfigurationRegistryJAASConfig extends Configuration {
                 opts.put("isUseKeyTab", String.valueOf(config.isUseKeyTab()));
                 opts.put("keyTab", config.getKeytab());
                 opts.put("principal", config.getPrincipal());
+            default:
+                break;
         }
 
         if (!opts.isEmpty()) {
@@ -159,6 +172,8 @@ class RemoteConfigurationRegistryJAASConfig extends Configuration {
                 break;
             case Digest:
                 loginModuleName = digestLoginModules.get(registryType.toUpperCase(Locale.ROOT));
+            default:
+              break;
         }
         return loginModuleName;
     }

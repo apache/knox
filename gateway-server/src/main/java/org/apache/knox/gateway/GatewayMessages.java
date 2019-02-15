@@ -34,13 +34,13 @@ import java.util.Set;
 public interface GatewayMessages {
 
   @Message( level = MessageLevel.FATAL, text = "Failed to parse command line: {0}" )
-  void failedToParseCommandLine( @StackTrace( level = MessageLevel.DEBUG ) ParseException e );
+  void failedToParseCommandLine( @StackTrace( level = MessageLevel.FATAL ) ParseException e );
 
   @Message( level = MessageLevel.INFO, text = "Starting gateway..." )
   void startingGateway();
 
   @Message( level = MessageLevel.FATAL, text = "Failed to start gateway: {0}" )
-  void failedToStartGateway( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+  void failedToStartGateway( @StackTrace( level = MessageLevel.FATAL ) Exception e );
 
   @Message( level = MessageLevel.INFO, text = "Started gateway on port {0}." )
   void startedGateway( int port );
@@ -227,7 +227,7 @@ public interface GatewayMessages {
   void failedToReloadTopologies( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
   @Message( level = MessageLevel.FATAL, text = "Unsupported encoding: {0}" )
-  void unsupportedEncoding( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+  void unsupportedEncoding( @StackTrace( level = MessageLevel.FATAL ) Exception e );
 
   @Message( level = MessageLevel.ERROR, text = "Failed to persist master secret: {0}" )
   void failedToPersistMasterSecret( @StackTrace( level = MessageLevel.DEBUG ) Exception e );

@@ -796,7 +796,7 @@ public class MatcherTest {
     Template template;
     Template input;
     Matcher<String> stringMatcher;
-    Matcher<?>.Match match;
+    Matcher<String>.Match match;
 
 //    template = Parser.parse( "*://*:*/**/webhdfs/v1/**?**" );
 //    input = Parser.parse( "http://localhost:53221/gateway/cluster/webhdfs/v1/tmp/GatewayWebHdfsFuncTest/testBasicHdfsUseCase/dir?user.name=hdfs&op=MKDIRS" );

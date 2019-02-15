@@ -27,6 +27,7 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.apache.knox.gateway.config.ConfigurationException;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.config.remote.RemoteConfigurationMessages;
@@ -73,8 +74,12 @@ class CuratorClientService implements ZooKeeperClientService {
       // Load the remote registry configurations
       List<RemoteConfigurationRegistryConfig> registryConfigs = new ArrayList<>(RemoteConfigurationRegistriesAccessor.getRemoteRegistryConfigurations(config));
 
-        // Configure registry authentication
+      // Configure registry authentication
+      try {
         RemoteConfigurationRegistryJAASConfig.configure(registryConfigs, aliasService);
+      } catch (ConfigurationException e) {
+        throw new ServiceLifecycleException("Error while configuring registry authentication", e);
+      }
 
         if (registryConfigs.size() > 1) {
             // Warn about current limit on number of supported client configurations
