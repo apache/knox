@@ -65,7 +65,7 @@ class RemoteConfigurationRegistryJAASConfig extends Configuration {
         try {
           delegate = Configuration.getConfiguration();
         } catch(Exception e) {
-          //populate the original error with a meaningful message; logging will happen later in the upper in the call hierarchy
+          //populate the original error with a meaningful message; logging will happen later in the call hierarchy
           final String message = String.format(Locale.ROOT, "Error while getting secure configuration. This error usually indicates an issue within the supplied JAAS configuration: %s",
               System.getProperty(GatewayConfig.KRB5_LOGIN_CONFIG, "Undefined"));
           throw new ConfigurationException(message, e);
