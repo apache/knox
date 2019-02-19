@@ -53,8 +53,6 @@ public class RemoteConfigurationRegistryJAASConfigTest {
     @Rule
     public final ExpectedException expectedException = ExpectedException.none();
 
-    private static final String JAAS_CONFIG_ERRROR_PREFIX = "Error while getting secure configuration. This error usually indicates an issue within the supplied JAAS configuration";
-
     @Test
     public void testZooKeeperDigestContextEntry() throws Exception {
         List<RemoteConfigurationRegistryConfig> registryConfigs = new ArrayList<>();
@@ -191,7 +189,7 @@ public class RemoteConfigurationRegistryJAASConfigTest {
       System.setProperty(GatewayConfig.KRB5_LOGIN_CONFIG, "nonExistingFilePath");
 
       expectedException.expect(ConfigurationException.class);
-      expectedException.expectMessage(startsWith(JAAS_CONFIG_ERRROR_PREFIX));
+      expectedException.expectMessage(startsWith(RemoteConfigurationRegistryJAASConfig.JAAS_CONFIG_ERRROR_PREFIX));
 
       try {
         RemoteConfigurationRegistryJAASConfig.configure(registryConfigs, null);
@@ -207,7 +205,7 @@ public class RemoteConfigurationRegistryJAASConfigTest {
       System.setProperty(GatewayConfig.KRB5_LOGIN_CONFIG, jaasConfigFilePath);
 
       expectedException.expect(ConfigurationException.class);
-      expectedException.expectMessage(startsWith(JAAS_CONFIG_ERRROR_PREFIX));
+      expectedException.expectMessage(startsWith(RemoteConfigurationRegistryJAASConfig.JAAS_CONFIG_ERRROR_PREFIX));
 
       try {
         RemoteConfigurationRegistryJAASConfig.configure(registryConfigs, null);

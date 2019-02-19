@@ -36,6 +36,8 @@ import java.util.Map;
  */
 class RemoteConfigurationRegistryJAASConfig extends Configuration {
 
+   static final String JAAS_CONFIG_ERRROR_PREFIX = "Error while getting secure configuration. This error usually indicates an issue within the supplied JAAS configuration";
+
     // Underlying SASL mechanisms supported
     enum SASLMechanism {
         Unsupported,
@@ -66,8 +68,7 @@ class RemoteConfigurationRegistryJAASConfig extends Configuration {
           delegate = Configuration.getConfiguration();
         } catch(Exception e) {
           //populate the original error with a meaningful message; logging will happen later in the call hierarchy
-          final String message = String.format(Locale.ROOT, "Error while getting secure configuration. This error usually indicates an issue within the supplied JAAS configuration: %s",
-              System.getProperty(GatewayConfig.KRB5_LOGIN_CONFIG, "Undefined"));
+          final String message = String.format(Locale.ROOT, "%s: %s", JAAS_CONFIG_ERRROR_PREFIX, System.getProperty(GatewayConfig.KRB5_LOGIN_CONFIG, "Undefined"));
           throw new ConfigurationException(message, e);
         }
 
