@@ -31,6 +31,7 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.EncryptionResult;
 import org.apache.knox.gateway.services.security.MasterService;
+import org.apache.knox.gateway.util.PasswordUtils;
 import org.apache.zookeeper.ZooDefs;
 
 import java.nio.charset.StandardCharsets;
@@ -366,7 +367,7 @@ public class RemoteAliasService implements AliasService {
     /* convert all alias names to lower case since JDK expects the same behaviour */
     final String alias = givenAlias.toLowerCase(Locale.ROOT);
     /* auto-generated password */
-    final String passwordString = DefaultAliasService.generatePassword(16);
+    final String passwordString = PasswordUtils.generatePassword(16);
     addAliasForCluster(clusterName, alias, passwordString);
   }
 
