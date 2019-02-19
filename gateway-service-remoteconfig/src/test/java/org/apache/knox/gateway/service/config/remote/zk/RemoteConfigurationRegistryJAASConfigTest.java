@@ -16,14 +16,25 @@
  */
 package org.apache.knox.gateway.service.config.remote.zk;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.knox.gateway.config.ConfigurationException;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.service.config.remote.RemoteConfigurationRegistryConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.easymock.EasyMock;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.junit.rules.TemporaryFolder;
 
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
+
+import static org.hamcrest.CoreMatchers.startsWith;
+
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +46,12 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class RemoteConfigurationRegistryJAASConfigTest {
+
+    @Rule
+    public final TemporaryFolder testFolder = new TemporaryFolder();
+
+    @Rule
+    public final ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void testZooKeeperDigestContextEntry() throws Exception {
@@ -164,6 +181,54 @@ public class RemoteConfigurationRegistryJAASConfigTest {
         } finally {
             Configuration.setConfiguration(null);
         }
+    }
+
+    @Test
+    public void shouldRaiseAnErrorWithMeaningfulErrorMessageIfAuthLoginConfigCannotBeRead() throws Exception {
+      final List<RemoteConfigurationRegistryConfig> registryConfigs = new ArrayList<>();
+      System.setProperty(GatewayConfig.KRB5_LOGIN_CONFIG, "nonExistingFilePath");
+
+      expectedException.expect(ConfigurationException.class);
+      expectedException.expectMessage(startsWith(RemoteConfigurationRegistryJAASConfig.JAAS_CONFIG_ERRROR_PREFIX));
+
+      try {
+        RemoteConfigurationRegistryJAASConfig.configure(registryConfigs, null);
+      } finally {
+        System.clearProperty(GatewayConfig.KRB5_LOGIN_CONFIG);
+      }
+    }
+
+    @Test
+    public void shouldRaiseAnErrorWithMeaningfulErrorMessageIfAuthLoginConfigCannotBeParsed() throws Exception {
+      final List<RemoteConfigurationRegistryConfig> registryConfigs = new ArrayList<>();
+      final String jaasConfigFilePath = writeInvalidJaasConf();
+      System.setProperty(GatewayConfig.KRB5_LOGIN_CONFIG, jaasConfigFilePath);
+
+      expectedException.expect(ConfigurationException.class);
+      expectedException.expectMessage(startsWith(RemoteConfigurationRegistryJAASConfig.JAAS_CONFIG_ERRROR_PREFIX));
+
+      try {
+        RemoteConfigurationRegistryJAASConfig.configure(registryConfigs, null);
+      } finally {
+        System.clearProperty(GatewayConfig.KRB5_LOGIN_CONFIG);
+      }
+    }
+
+    private String writeInvalidJaasConf() throws IOException {
+      final File jaasConfigFile = testFolder.newFile("jaas.conf");
+      final String jaasConfig = "com.sun.security.jgss.initiate {" +
+        "com.sun.security.auth.module.Krb5LoginModule required" +
+        "renewTGT=false" +
+        "doNotPrompt=true" +
+        "useKeyTab=true" +
+        "keyTab=/etc/security/keytabs/knox.service.keytab" + //note the missing quotes; it should be keyTab="/etc/security/keytabs/knox.service.keytab"
+        "principal=\"knox/myHost@myRealm\"" +
+        "storeKey=true" +
+        "useTicketCache=false; " +
+        "};";
+
+      FileUtils.writeStringToFile(jaasConfigFile, jaasConfig, StandardCharsets.UTF_8);
+      return jaasConfigFile.getAbsolutePath();
     }
 
     private static RemoteConfigurationRegistryConfig createDigestConfig(String entryName,
