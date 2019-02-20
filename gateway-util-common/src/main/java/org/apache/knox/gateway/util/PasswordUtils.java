@@ -17,11 +17,10 @@
  */
 package org.apache.knox.gateway.util;
 
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 public class PasswordUtils {
-  private static final SecureRandom SECURE_RANDOM = getSecureRandom();
+  private static final SecureRandom SECURE_RANDOM = new SecureRandom();
   private static final char[] ALPHANUMERIC_CHARS = { 'a', 'b', 'c', 'd', 'e', 'f', 'g',
       'h', 'j', 'k', 'm', 'n', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
       'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K',
@@ -29,14 +28,6 @@ public class PasswordUtils {
       '2', '3', '4', '5', '6', '7', '8', '9',};
 
   private PasswordUtils() {}
-
-  private static SecureRandom getSecureRandom() {
-    try {
-      return SecureRandom.getInstanceStrong();
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException(e);
-    }
-  }
 
   public static synchronized String generatePassword(int length) {
     StringBuilder sb = new StringBuilder();
