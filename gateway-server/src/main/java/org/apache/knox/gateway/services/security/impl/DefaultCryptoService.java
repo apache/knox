@@ -129,14 +129,14 @@ public class DefaultCryptoService implements CryptoService {
   }
 
   @Override
-  public boolean verify(String algorithm, String alias, String signed, byte[] signature) {
+  public boolean verify(String algorithm, String signed, byte[] signature) {
     boolean verified = false;
     try {
       Signature sig=Signature.getInstance(algorithm);
-      sig.initVerify(ks.getKeystoreForGateway().getCertificate(alias).getPublicKey());
+      sig.initVerify(ks.getCertificateForGateway().getPublicKey());
       sig.update(signed.getBytes(StandardCharsets.UTF_8));
       verified = sig.verify(signature);
-    } catch (SignatureException | KeystoreServiceException | KeyStoreException | InvalidKeyException | NoSuchAlgorithmException e) {
+    } catch (SignatureException | KeystoreServiceException | InvalidKeyException | NoSuchAlgorithmException | KeyStoreException e) {
       LOG.failedToVerifySignature( e );
     }
     LOG.signatureVerified( verified );
@@ -144,11 +144,11 @@ public class DefaultCryptoService implements CryptoService {
   }
 
   @Override
-  public byte[] sign(String algorithm, String alias, String payloadToSign) {
+  public byte[] sign(String algorithm, String payloadToSign) {
     try {
       char[] passphrase;
       passphrase = as.getGatewayIdentityPassphrase();
-      PrivateKey privateKey = (PrivateKey) ks.getKeyForGateway(alias, passphrase);
+      PrivateKey privateKey = (PrivateKey) ks.getKeyForGateway(passphrase);
       Signature signature = Signature.getInstance(algorithm);
       signature.initSign(privateKey);
       signature.update(payloadToSign.getBytes(StandardCharsets.UTF_8));

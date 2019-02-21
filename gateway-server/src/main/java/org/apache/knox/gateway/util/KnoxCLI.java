@@ -590,8 +590,9 @@ public class KnoxCLI extends Configured implements Tool {
             out.println("No keystore has been created for the gateway. Please use the create-cert command or populate with a CA signed cert of your own.");
           }
 
-          Certificate cert = ks.getKeystoreForGateway().getCertificate("gateway-identity");
-          String keyStoreDir = getGatewayConfig().getGatewaySecurityDir() + File.separator + "keystores" + File.separator;
+          GatewayConfig config = getGatewayConfig();
+          Certificate cert = ks.getKeystoreForGateway().getCertificate(config.getIdentityKeyAlias());
+          String keyStoreDir = config.getGatewayKeystoreDir() + File.separator;
           File ksd = new File(keyStoreDir);
           if (!ksd.exists()) {
             if (!ksd.mkdirs()) {
@@ -629,14 +630,14 @@ public class KnoxCLI extends Configured implements Tool {
 
  public class CertCreateCommand extends Command {
 
-  public static final String USAGE = "create-cert [--hostname h]";
-  public static final String DESC = "The create-cert command creates and populates\n" +
-                                    "a gateway.jks keystore with a self-signed certificate\n" +
-                                    "to be used as the gateway identity. It also adds an alias\n" +
-                                    "to the __gateway-credentials.jceks credential store for the\n" +
-                                    "key passphrase.";
+  public static final String USAGE = "create-cert [--force] [--hostname h]";
+  public static final String DESC = "The create-cert command populates the configured identity\n" +
+                                    "keystore with a self-signed certificate to be used as the\n" +
+                                    "gateway identity. If a cert exists and is not self-signed,\n" +
+                                    "--force must be specified to overwrite it.  If a self-signed\n" +
+                                    "cert is created, a password for the key will be generated \n" +
+                                    "and stored in the __gateway-credentials.jceks credential store.";
   private static final String GATEWAY_CREDENTIAL_STORE_NAME = "__gateway";
-  private static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase";
 
    public CertCreateCommand() {
    }
@@ -652,8 +653,7 @@ public class KnoxCLI extends Configured implements Tool {
          if (!ks.isCredentialStoreForClusterAvailable(GATEWAY_CREDENTIAL_STORE_NAME)) {
 //           log.creatingCredentialStoreForGateway();
            ks.createCredentialStoreForCluster(GATEWAY_CREDENTIAL_STORE_NAME);
-         }
-         else {
+         } else {
 //           log.credentialStoreForGatewayFoundNotCreating();
          }
          // LET'S NOT GENERATE A DIFFERENT KEY PASSPHRASE BY DEFAULT ANYMORE
@@ -661,25 +661,41 @@ public class KnoxCLI extends Configured implements Tool {
          // THEY CAN ADD THE ALIAS EXPLICITLY WITH THE CLI
          //as.generateAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
        } catch (KeystoreServiceException e) {
-         throw new ServiceLifecycleException("Keystore was not loaded properly - the provided (or persisted) master secret may not match the password for the keystore.", e);
+         throw new ServiceLifecycleException("Keystore was not loaded properly - the stored password may not match the password for the keystore.", e);
        }
 
        try {
          if (!ks.isKeystoreForGatewayAvailable()) {
 //           log.creatingKeyStoreForGateway();
            ks.createKeystoreForGateway();
-         }
-         else {
+         } else {
 //           log.keyStoreForGatewayFoundNotCreating();
          }
-         char[] passphrase = as.getPasswordFromAliasForCluster(GATEWAY_CREDENTIAL_STORE_NAME, GATEWAY_IDENTITY_PASSPHRASE);
-         if (passphrase == null) {
-           MasterService ms = services.getService("MasterService");
-           passphrase = ms.getMasterSecret();
+         boolean isSelfSigned;
+         Certificate certificate;
+         try {
+           certificate = ks.getCertificateForGateway();
+         } catch (KeystoreServiceException e) {
+           // A certificate was (probably) not previously created...
+           certificate = null;
          }
-         ks.addSelfSignedCertForGateway("gateway-identity", passphrase, hostname);
+
+         isSelfSigned = (certificate == null) || X509CertificateUtil.isSelfSignedCertificate(certificate);
+
+         if ((certificate == null) || isSelfSigned || force) {
+           char[] passphrase = as.getGatewayIdentityPassphrase();
+           if (passphrase == null) {
+             MasterService ms = services.getService("MasterService");
+             passphrase = ms.getMasterSecret();
+           }
+           ks.addSelfSignedCertForGateway(getGatewayConfig().getIdentityKeyAlias(), passphrase, hostname);
 //         logAndValidateCertificate();
-         out.println("Certificate gateway-identity has been successfully created.");
+           out.println("Certificate " + getGatewayConfig().getIdentityKeyAlias() + " has been successfully created.");
+         } else {
+           // require --force to replace...
+           out.println("A non-self-signed certificate has already been installed in the configured keystore. " +
+               "Please use --force if you wish to overwrite it with a generated self-signed certificate.");
+         }
        } catch (KeystoreServiceException e) {
          throw new ServiceLifecycleException("Keystore was not loaded properly - the provided (or persisted) master secret may not match the password for the keystore.", e);
        }

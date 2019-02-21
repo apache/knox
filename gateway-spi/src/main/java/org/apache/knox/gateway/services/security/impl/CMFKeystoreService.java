@@ -55,12 +55,12 @@ public class CMFKeystoreService extends BaseKeystoreService {
 
   public void createKeystore() throws KeystoreServiceException {
     String filename = keyStoreDir + serviceName + ".jks";
-    createKeystore(filename, "JKS");
+    createKeystore(filename, "JKS", masterService.getMasterSecret());
   }
 
   public KeyStore getKeystore() throws KeystoreServiceException {
     final File  keyStoreFile = new File( keyStoreDir + serviceName  );
-    return getKeystore(keyStoreFile, "JKS");
+    return getKeystore(keyStoreFile, "JKS", masterService.getMasterSecret());
   }
 
   public void addSelfSignedCert(String alias, char[] passphrase)
@@ -77,7 +77,7 @@ public class CMFKeystoreService extends BaseKeystoreService {
         privateKS.setKeyEntry(alias, KPair.getPrivate(),
           passphrase,
           new java.security.cert.Certificate[]{cert});
-        writeKeystoreToFile(privateKS, new File( keyStoreDir + serviceName  ));
+        writeKeystoreToFile(privateKS, new File( keyStoreDir + serviceName  ), masterService.getMasterSecret());
       } else {
         throw new IOException("Unable to open gateway keystore.");
       }
@@ -88,13 +88,13 @@ public class CMFKeystoreService extends BaseKeystoreService {
 
   public void createCredentialStore() throws KeystoreServiceException {
     String filename = keyStoreDir + serviceName + CREDENTIALS_SUFFIX;
-    createKeystore(filename, "JCEKS");
+    createKeystore(filename, "JCEKS", masterService.getMasterSecret());
   }
 
   public boolean isCredentialStoreAvailable() throws KeystoreServiceException {
     final File  keyStoreFile = new File( keyStoreDir + serviceName + CREDENTIALS_SUFFIX  );
     try {
-      return isKeystoreAvailable(keyStoreFile, "JCEKS");
+      return isKeystoreAvailable(keyStoreFile, "JCEKS", masterService.getMasterSecret());
     } catch (KeyStoreException | IOException e) {
       throw new KeystoreServiceException(e);
     }
@@ -103,7 +103,7 @@ public class CMFKeystoreService extends BaseKeystoreService {
   public boolean isKeystoreAvailable() throws KeystoreServiceException {
     final File  keyStoreFile = new File( keyStoreDir + serviceName + ".jks" );
     try {
-      return isKeystoreAvailable(keyStoreFile, "JKS");
+      return isKeystoreAvailable(keyStoreFile, "JKS", masterService.getMasterSecret());
     } catch (KeyStoreException | IOException e) {
       throw new KeystoreServiceException(e);
     }
@@ -124,7 +124,7 @@ public class CMFKeystoreService extends BaseKeystoreService {
 
   public KeyStore getCredentialStore() throws KeystoreServiceException {
     final File  keyStoreFile = new File( keyStoreDir + serviceName + CREDENTIALS_SUFFIX  );
-    return getKeystore(keyStoreFile, "JCEKS");
+    return getKeystore(keyStoreFile, "JCEKS", masterService.getMasterSecret());
   }
 
   public void addCredential(String alias, String value) throws KeystoreServiceException {
@@ -132,7 +132,7 @@ public class CMFKeystoreService extends BaseKeystoreService {
     addCredential(alias, value, ks);
     final File  keyStoreFile = new File( keyStoreDir + serviceName + CREDENTIALS_SUFFIX  );
     try {
-      writeKeystoreToFile(ks, keyStoreFile);
+      writeKeystoreToFile(ks, keyStoreFile, masterService.getMasterSecret());
     } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
       LOG.failedToAddCredential(e);
     }

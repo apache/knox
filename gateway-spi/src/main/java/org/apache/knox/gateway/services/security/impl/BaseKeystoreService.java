@@ -78,22 +78,22 @@ public class BaseKeystoreService {
     return Files.newOutputStream( file.toPath() );
   }
 
-  protected void createKeystore(String filename, String keystoreType) throws KeystoreServiceException {
+  protected void createKeystore(String filename, String keystoreType, char[] password) throws KeystoreServiceException {
     try (OutputStream out = createKeyStoreFile( filename )) {
       KeyStore ks = KeyStore.getInstance(keystoreType);
       ks.load( null, null );
-      ks.store( out, masterService.getMasterSecret() );
+      ks.store( out, password );
     } catch (NoSuchAlgorithmException | CertificateException | KeyStoreException | IOException e) {
       LOG.failedToCreateKeystore( filename, keystoreType, e );
       throw new KeystoreServiceException(e);
     }
   }
 
-  protected boolean isKeystoreAvailable(final File keyStoreFile, String storeType) throws KeyStoreException, IOException {
+  protected boolean isKeystoreAvailable(final File keyStoreFile, String storeType, char[] password) throws KeyStoreException, IOException {
     if ( keyStoreFile.exists() ) {
       try (InputStream input = Files.newInputStream(keyStoreFile.toPath())){
         final KeyStore keyStore = KeyStore.getInstance(storeType);
-        keyStore.load( input, masterService.getMasterSecret() );
+        keyStore.load( input, password );
         return true;
       } catch (NoSuchAlgorithmException | CertificateException e) {
         LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
@@ -105,10 +105,10 @@ public class BaseKeystoreService {
     return false;
   }
 
-  protected KeyStore getKeystore(final File keyStoreFile, String storeType) throws KeystoreServiceException {
+  protected KeyStore getKeystore(final File keyStoreFile, String storeType, char[] password) throws KeystoreServiceException {
     KeyStore credStore;
     try {
-      credStore = loadKeyStore( keyStoreFile, masterService.getMasterSecret(), storeType);
+      credStore = loadKeyStore( keyStoreFile, password, storeType);
     } catch (CertificateException | IOException | NoSuchAlgorithmException | KeyStoreException e) {
       LOG.failedToLoadKeystore( keyStoreFile.getName(), storeType, e );
       throw new KeystoreServiceException(e);
@@ -164,11 +164,11 @@ public class BaseKeystoreService {
     }
   }
 
-  protected void writeKeystoreToFile(final KeyStore keyStore, final File file)
+  protected void writeKeystoreToFile(final KeyStore keyStore, final File file, char[] password)
       throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
      // TODO: backup the keystore on disk before attempting a write and restore on failure
      try( OutputStream out = Files.newOutputStream(file.toPath()) ) {
-         keyStore.store( out, masterService.getMasterSecret() );
+         keyStore.store( out, password );
      }
   }
 

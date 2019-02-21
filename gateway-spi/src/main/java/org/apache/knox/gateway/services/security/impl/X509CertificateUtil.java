@@ -312,5 +312,21 @@ public class X509CertificateUtil {
     writeCertificateToKeyStore(cert, file, "pkcs12");
   }
 
+  /**
+   * Tests the X509 certificate to see if it was self-signed.
+   * <p>
+   * The certificate is determined to be self-signed if the subject DN is the same as the issuer DN
+   *
+   * @param certificate the {@link X509Certificate} to test
+   * @return <code>true</code> if the X509 certficate is self-signed; otherwise <code>false</code>
+   */
+  public static boolean isSelfSignedCertificate(Certificate certificate) {
+    if (certificate instanceof X509Certificate) {
+      X509Certificate x509Certificate = (X509Certificate) certificate;
+      return x509Certificate.getSubjectDN().equals(x509Certificate.getIssuerDN());
+    } else {
+      return false;
+    }
+  }
 }
 

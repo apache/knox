@@ -17,6 +17,13 @@
  */
 package org.apache.knox.gateway.websockets;
 
+import static org.apache.knox.gateway.config.GatewayConfig.DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS;
+import static org.apache.knox.gateway.config.GatewayConfig.DEFAULT_SIGNING_KEYSTORE_TYPE;
+import static org.apache.knox.gateway.config.GatewayConfig.DEFAULT_SIGNING_KEY_PASSPHRASE_ALIAS;
+import static org.apache.knox.gateway.config.GatewayConfig.DEFAULT_IDENTITY_KEYSTORE_PASSWORD_ALIAS;
+import static org.apache.knox.gateway.config.GatewayConfig.DEFAULT_IDENTITY_KEYSTORE_TYPE;
+import static org.apache.knox.gateway.config.GatewayConfig.DEFAULT_IDENTITY_KEY_PASSPHRASE_ALIAS;
+
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.commons.io.FileUtils;
@@ -26,6 +33,7 @@ import org.apache.knox.gateway.deploy.DeploymentFactory;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.impl.X509CertificateUtil;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.TopologyEvent;
 import org.apache.knox.gateway.topology.TopologyListener;
@@ -52,6 +60,15 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -66,6 +83,9 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class WebsocketMultipleConnectionTest {
+  private static final String TEST_PASSWORD = "password";
+  private static final String TEST_KEY_ALIAS = "test-identity";
+
   /**
    * Simulate backend websocket
    */
@@ -93,6 +113,10 @@ public class WebsocketMultipleConnectionTest {
   private static URI serverUri;
 
   private static File topoDir;
+  private static Path dataDir;
+  private static Path securityDir;
+  private static Path keystoresDir;
+  private static Path keystoreFile;
 
   /**
    * Maximum number of open connections to test.
@@ -105,7 +129,13 @@ public class WebsocketMultipleConnectionTest {
 
   @BeforeClass
   public static void startServers() throws Exception {
+    topoDir = createDir();
+    dataDir = Paths.get(topoDir.getAbsolutePath(), "data").toAbsolutePath();
+    securityDir = dataDir.resolve("security");
+    keystoresDir = securityDir.resolve("keystores");
+    keystoreFile = keystoresDir.resolve("tls.jks");
 
+    createTestKeystore();
     startWebsocketServer();
     startGatewayServer();
 
@@ -231,7 +261,6 @@ public class WebsocketMultipleConnectionTest {
       throws IOException {
     services = new DefaultGatewayServices();
 
-    topoDir = createDir();
     URL serviceUrl = ClassLoader.getSystemResource("websocket-services");
 
     final File descriptor = new File(topoDir, "websocket.xml");
@@ -243,7 +272,7 @@ public class WebsocketMultipleConnectionTest {
 
     final Map<String, String> options = new HashMap<>();
     options.put("persist-master", "false");
-    options.put("master", "password");
+    options.put("master", TEST_PASSWORD);
 
     gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfig.getGatewayTopologyDir())
@@ -260,9 +289,6 @@ public class WebsocketMultipleConnectionTest {
 
     EasyMock.expect(gatewayConfig.getEphemeralDHKeySize()).andReturn("2048")
         .anyTimes();
-
-    EasyMock.expect(gatewayConfig.getGatewaySecurityDir())
-        .andReturn(topoDir.toString()).anyTimes();
 
     /* Websocket configs */
     EasyMock.expect(gatewayConfig.isWebsocketEnabled()).andReturn(true)
@@ -300,6 +326,58 @@ public class WebsocketMultipleConnectionTest {
     EasyMock.expect(gatewayConfig.getRemoteRegistryConfigurationNames())
             .andReturn(Collections.emptyList())
             .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getGatewayDataDir())
+        .andReturn(dataDir.toString())
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getGatewaySecurityDir())
+        .andReturn(securityDir.toString())
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getGatewayKeystoreDir())
+        .andReturn(keystoresDir.toString())
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getIdentityKeystorePath())
+        .andReturn(keystoreFile.toString())
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getIdentityKeystoreType())
+        .andReturn(DEFAULT_IDENTITY_KEYSTORE_TYPE)
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getIdentityKeystorePasswordAlias())
+        .andReturn(DEFAULT_IDENTITY_KEYSTORE_PASSWORD_ALIAS)
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getIdentityKeyAlias())
+        .andReturn(TEST_KEY_ALIAS)
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getIdentityKeyPassphraseAlias())
+        .andReturn(DEFAULT_IDENTITY_KEY_PASSPHRASE_ALIAS)
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getSigningKeystorePasswordAlias())
+        .andReturn(DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS)
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getSigningKeyPassphraseAlias())
+        .andReturn(DEFAULT_SIGNING_KEY_PASSPHRASE_ALIAS)
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getSigningKeystorePath())
+        .andReturn(keystoreFile.toString())
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getSigningKeystoreType())
+        .andReturn(DEFAULT_SIGNING_KEYSTORE_TYPE)
+        .anyTimes();
+
+    EasyMock.expect(gatewayConfig.getSigningKeyAlias())
+        .andReturn(TEST_KEY_ALIAS)
+        .anyTimes();
 
     EasyMock.replay(gatewayConfig);
 
@@ -350,6 +428,30 @@ public class WebsocketMultipleConnectionTest {
     @Override
     public void onOpen(Session session, EndpointConfig config) {
       session.addMessageHandler(this);
+    }
+  }
+
+  private static void createTestKeystore()
+      throws NoSuchAlgorithmException, CertificateException, KeyStoreException, IOException {
+
+    String alias = TEST_KEY_ALIAS;
+    char[] password = TEST_PASSWORD.toCharArray();
+
+    // Ensure parent directory exists...
+    Files.createDirectories(keystoreFile.getParent());
+
+    KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+    kpg.initialize(2048);
+    KeyPair keyPair = kpg.generateKeyPair();
+
+    Certificate cert = X509CertificateUtil.generateCertificate("CN=localhost,OU=Test,O=Hadoop,L=Test,ST=Test,C=US", keyPair, 365, "SHA1withRSA");
+
+    KeyStore keyStore = KeyStore.getInstance("JKS");
+    keyStore.load(null, password);
+    keyStore.setCertificateEntry(alias, cert);
+    keyStore.setKeyEntry(alias, keyPair.getPrivate(), password, new java.security.cert.Certificate[]{cert});
+    try( OutputStream out = Files.newOutputStream(keystoreFile) ) {
+      keyStore.store( out, password );
     }
   }
 }

@@ -71,6 +71,7 @@ public class GatewayLocalServiceFuncTest {
   public static void tearDownAfterClass() throws Exception {
     LOG_ENTER();
     gateway.stop();
+    driver.cleanupTestKeystore(config);
     driver.cleanup();
     FileUtils.deleteQuietly( new File( config.getGatewayConfDir() ) );
     FileUtils.deleteQuietly( new File( config.getGatewayDataDir() ) );
@@ -97,6 +98,8 @@ public class GatewayLocalServiceFuncTest {
     try(OutputStream stream = Files.newOutputStream(descriptor.toPath())) {
       createTopology().toStream(stream);
     }
+
+    driver.setupTestKeystore(config, "password".toCharArray());
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<>();

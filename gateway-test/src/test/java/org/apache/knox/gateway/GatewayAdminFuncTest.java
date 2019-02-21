@@ -64,6 +64,7 @@ public class GatewayAdminFuncTest {
   public static void tearDownAfterClass() throws Exception {
     TestUtils.LOG_ENTER();
     gateway.stop();
+    driver.cleanupTestKeystore(config);
     driver.cleanup();
     TestUtils.LOG_EXIT();
   }
@@ -88,6 +89,8 @@ public class GatewayAdminFuncTest {
     try(OutputStream stream = Files.newOutputStream(descriptor.toPath())) {
       createTopology().toStream( stream );
     }
+
+    driver.setupTestKeystore(config, "password".toCharArray());
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<>();

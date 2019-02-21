@@ -92,6 +92,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getGatewayKeystoreDir() {
+    return getGatewaySecurityDir() + "/keystores";
+  }
+
+  @Override
   public String getGatewayTopologyDir() {
     return gatewayHomeDir + "/topologies";
   }
@@ -133,6 +138,31 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public long getGatewayIdleTimeout() {
     return 0L;
+  }
+
+  @Override
+  public String getIdentityKeystorePath() {
+    return getGatewayKeystoreDir() + "/" + DEFAULT_GATEWAY_KEYSTORE_NAME;
+  }
+
+  @Override
+  public String getIdentityKeystoreType() {
+    return DEFAULT_IDENTITY_KEYSTORE_TYPE;
+  }
+
+  @Override
+  public String getIdentityKeystorePasswordAlias() {
+    return DEFAULT_IDENTITY_KEYSTORE_PASSWORD_ALIAS;
+  }
+
+  @Override
+  public String getIdentityKeyAlias() {
+    return DEFAULT_IDENTITY_KEY_ALIAS;
+  }
+
+  @Override
+  public String getIdentityKeyPassphraseAlias() {
+    return DEFAULT_IDENTITY_KEY_PASSPHRASE_ALIAS;
   }
 
   @Override
@@ -377,8 +407,28 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getSigningKeystorePath() {
+    return getGatewayKeystoreDir() + "/" + DEFAULT_GATEWAY_KEYSTORE_NAME;
+  }
+
+  @Override
+  public String getSigningKeystoreType() {
+    return DEFAULT_SIGNING_KEYSTORE_TYPE;
+  }
+
+  @Override
   public String getSigningKeyAlias() {
-    return null;
+    return DEFAULT_SIGNING_KEY_ALIAS;
+  }
+
+  @Override
+  public String getSigningKeystorePasswordAlias() {
+    return DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS;
+  }
+
+  @Override
+  public String getSigningKeyPassphraseAlias() {
+    return DEFAULT_SIGNING_KEY_PASSPHRASE_ALIAS;
   }
 
   @Override

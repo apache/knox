@@ -39,14 +39,20 @@ import org.apache.knox.gateway.util.PasswordUtils;
 public class DefaultAliasService implements AliasService {
   private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
 
-  private static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase";
+  protected static char[] chars = { 'a', 'b', 'c', 'd', 'e', 'f', 'g',
+  'h', 'j', 'k', 'm', 'n', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
+  'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K',
+  'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+  '2', '3', '4', '5', '6', '7', '8', '9',};
 
   private KeystoreService keystoreService;
   private MasterService masterService;
+  private GatewayConfig config;
 
   @Override
   public void init(GatewayConfig config, Map<String, String> options)
       throws ServiceLifecycleException {
+    this.config = config;
   }
 
   @Override
@@ -59,8 +65,47 @@ public class DefaultAliasService implements AliasService {
 
   @Override
   public char[] getGatewayIdentityPassphrase() throws AliasServiceException {
-    char[] passphrase = getPasswordFromAliasForGateway(GATEWAY_IDENTITY_PASSPHRASE);
+    char[] passphrase = getPasswordFromAliasForGateway(config.getIdentityKeyPassphraseAlias());
     if (passphrase == null) {
+      // Fall back to the keystore password if a key-specific password was not explicitly set.
+      passphrase = getGatewayIdentityKeystorePassword();
+    }
+    if (passphrase == null) {
+      // Use the master password if not password was found
+      passphrase = masterService.getMasterSecret();
+    }
+    return passphrase;
+  }
+
+  @Override
+  public char[] getGatewayIdentityKeystorePassword() throws AliasServiceException {
+    char[] passphrase = getPasswordFromAliasForGateway(config.getIdentityKeystorePasswordAlias());
+    if (passphrase == null) {
+      // Use the master password if not password was found
+      passphrase = masterService.getMasterSecret();
+    }
+    return passphrase;
+  }
+
+  @Override
+  public char[] getSigningKeyPassphrase() throws AliasServiceException {
+    char[] passphrase = getPasswordFromAliasForGateway(config.getSigningKeyPassphraseAlias());
+    if (passphrase == null) {
+      // Fall back to the keystore password if a key-specific password was not explicitly set.
+      passphrase = getSigningKeystorePassword();
+    }
+    if (passphrase == null) {
+      // Use the master password if not password was found
+      passphrase = masterService.getMasterSecret();
+    }
+    return passphrase;
+  }
+
+  @Override
+  public char[] getSigningKeystorePassword() throws AliasServiceException {
+    char[] passphrase = getPasswordFromAliasForGateway(config.getSigningKeystorePasswordAlias());
+    if (passphrase == null) {
+      // Use the master password if not password was found
       passphrase = masterService.getMasterSecret();
     }
     return passphrase;

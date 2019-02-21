@@ -81,6 +81,7 @@ public class GatewayAppFuncTest {
   public static void tearDownAfterClass() throws Exception {
     LOG_ENTER();
     gateway.stop();
+    driver.cleanupTestKeystore(config);
     driver.cleanup();
     FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
     LOG_EXIT();
@@ -127,6 +128,8 @@ public class GatewayAppFuncTest {
   }
 
   public static void startGatewayServer() throws Exception {
+    driver.setupTestKeystore(config, "password".toCharArray());
+
     services = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<>();
     options.put( "persist-master", "false" );

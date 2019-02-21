@@ -19,6 +19,8 @@ package org.apache.knox.gateway.services.security;
 
 import java.security.Key;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.cert.Certificate;
 
 public interface KeystoreService {
 
@@ -35,6 +37,10 @@ public interface KeystoreService {
   KeyStore getSigningKeystore(String keystoreName) throws KeystoreServiceException;
 
   Key getKeyForGateway(String alias, char[] passphrase) throws KeystoreServiceException;
+
+  Key getKeyForGateway(char[] passphrase) throws KeystoreServiceException;
+
+  Certificate getCertificateForGateway() throws KeystoreServiceException, KeyStoreException;
 
   Key getSigningKey(String alias, char[] passphrase) throws KeystoreServiceException;
 

@@ -22,6 +22,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.impl.X509CertificateUtil;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.mock.MockServer;
@@ -41,8 +42,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -114,6 +127,7 @@ public class AmbariServiceDefinitionTest {
     File deployDir = new File( config.getGatewayDeploymentDir() );
     deployDir.mkdirs();
 
+    createTestKeystore();
     setupMockServers();
     startGatewayServer();
   }
@@ -352,4 +366,28 @@ public class AmbariServiceDefinitionTest {
     LOG_EXIT();
   }
 
+  private static void createTestKeystore()
+      throws NoSuchAlgorithmException, CertificateException, KeyStoreException, IOException {
+
+    String alias = config.getIdentityKeyAlias();
+    char[] password = "password".toCharArray();
+
+    // Ensure parent directory exists...
+    Path keystoreFile = Paths.get(config.getIdentityKeystorePath());
+    Files.createDirectories(keystoreFile.getParent());
+
+    KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+    kpg.initialize(2048);
+    KeyPair keyPair = kpg.generateKeyPair();
+
+    Certificate cert = X509CertificateUtil.generateCertificate("CN=localhost,OU=Test,O=Hadoop,L=Test,ST=Test,C=US", keyPair, 365, "SHA1withRSA");
+
+    KeyStore keyStore = KeyStore.getInstance(config.getIdentityKeystoreType());
+    keyStore.load(null, password);
+    keyStore.setCertificateEntry(alias, cert);
+    keyStore.setKeyEntry(alias, keyPair.getPrivate(), password, new java.security.cert.Certificate[]{cert});
+    try( OutputStream out = Files.newOutputStream(keystoreFile) ) {
+      keyStore.store( out, password );
+    }
+  }
 }

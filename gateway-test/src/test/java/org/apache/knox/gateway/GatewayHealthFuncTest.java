@@ -59,6 +59,7 @@ public class GatewayHealthFuncTest {
   public static String clusterUrl;
   public static SimpleLdapDirectoryServer ldap;
   public static TcpTransport ldapTransport;
+  private static GatewayTestDriver driver = new GatewayTestDriver();
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
@@ -73,6 +74,7 @@ public class GatewayHealthFuncTest {
     TestUtils.LOG_ENTER();
     gateway.stop();
     ldap.stop(true);
+    driver.cleanupTestKeystore(config);
     TestUtils.LOG_EXIT();
   }
 
@@ -111,6 +113,8 @@ public class GatewayHealthFuncTest {
     try(OutputStream stream = Files.newOutputStream(descriptor.toPath())) {
       createTopology().toStream(stream);
     }
+
+    driver.setupTestKeystore(config, "password".toCharArray());
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String, String> options = new HashMap<>();

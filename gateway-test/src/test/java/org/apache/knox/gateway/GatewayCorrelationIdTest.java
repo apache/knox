@@ -81,6 +81,7 @@ public class GatewayCorrelationIdTest {
   public static void tearDownAfterClass() throws Exception {
     LOG_ENTER();
     gateway.stop();
+    driver.cleanupTestKeystore(config);
     driver.cleanup();
     CollectAppender.queue.clear();
     LOG_EXIT();
@@ -105,6 +106,8 @@ public class GatewayCorrelationIdTest {
     try(OutputStream stream = Files.newOutputStream(descriptor.toPath())) {
       createTopology().toStream(stream);
     }
+
+    driver.setupTestKeystore(config, "password".toCharArray());
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<>();
