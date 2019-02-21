@@ -26,7 +26,6 @@ import org.apache.knox.gateway.deploy.DeploymentFactory;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.apache.knox.gateway.services.security.impl.X509CertificateUtil;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.TopologyEvent;
 import org.apache.knox.gateway.topology.TopologyListener;
@@ -51,13 +50,6 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -143,7 +135,13 @@ public class WebsocketEchoTest {
     keystoresDir = securityDir.resolve("keystores");
     keystoreFile = keystoresDir.resolve("tls.jks");
 
-    createTestKeystore();
+    TestUtils.createTestKeystore(
+        keystoreFile,
+        "JKS",
+        TEST_KEY_ALIAS,
+        TEST_PASSWORD.toCharArray()
+    );
+
     startWebsocketServer();
     startGatewayServer();
   }
@@ -445,30 +443,6 @@ public class WebsocketEchoTest {
           }
         }
       }
-    }
-  }
-
-  private static void createTestKeystore()
-      throws NoSuchAlgorithmException, CertificateException, KeyStoreException, IOException {
-
-    String alias = TEST_KEY_ALIAS;
-    char[] password = TEST_PASSWORD.toCharArray();
-
-    // Ensure parent directory exists...
-    Files.createDirectories(keystoreFile.getParent());
-
-    KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
-    kpg.initialize(2048);
-    KeyPair keyPair = kpg.generateKeyPair();
-
-    Certificate cert = X509CertificateUtil.generateCertificate("CN=localhost,OU=Test,O=Hadoop,L=Test,ST=Test,C=US", keyPair, 365, "SHA1withRSA");
-
-    KeyStore keyStore = KeyStore.getInstance("JKS");
-    keyStore.load(null, password);
-    keyStore.setCertificateEntry(alias, cert);
-    keyStore.setKeyEntry(alias, keyPair.getPrivate(), password, new java.security.cert.Certificate[]{cert});
-    try( OutputStream out = Files.newOutputStream(keystoreFile) ) {
-      keyStore.store( out, password );
     }
   }
 }

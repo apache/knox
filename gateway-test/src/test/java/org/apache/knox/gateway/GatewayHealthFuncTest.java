@@ -41,6 +41,7 @@ import java.io.OutputStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -59,7 +60,6 @@ public class GatewayHealthFuncTest {
   public static String clusterUrl;
   public static SimpleLdapDirectoryServer ldap;
   public static TcpTransport ldapTransport;
-  private static GatewayTestDriver driver = new GatewayTestDriver();
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
@@ -74,7 +74,7 @@ public class GatewayHealthFuncTest {
     TestUtils.LOG_ENTER();
     gateway.stop();
     ldap.stop(true);
-    driver.cleanupTestKeystore(config);
+    TestUtils.cleanupTestKeystore(Paths.get(config.getIdentityKeystorePath()));
     TestUtils.LOG_EXIT();
   }
 
@@ -114,7 +114,12 @@ public class GatewayHealthFuncTest {
       createTopology().toStream(stream);
     }
 
-    driver.setupTestKeystore(config, "password".toCharArray());
+    TestUtils.createTestKeystore(
+        Paths.get(config.getIdentityKeystorePath()),
+        config.getIdentityKeystoreType(),
+        config.getIdentityKeyAlias(),
+        "password".toCharArray()
+    );
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String, String> options = new HashMap<>();

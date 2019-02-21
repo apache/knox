@@ -22,9 +22,11 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 
-import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,15 +46,15 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT = 60000;
   public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT = 300000;
 
-  private String gatewayHomeDir = "gateway-home";
+  private Path gatewayHomePath = Paths.get("gateway-home");
   private String hadoopConfDir = "hadoop";
   private String gatewayHost = "localhost";
   private int gatewayPort;
   private String gatewayPath = "gateway";
   private boolean hadoopKerberosSecured;
-  private String kerberosConfig = "/etc/knox/conf/krb5.conf";
+  private String kerberosConfig;
   private boolean kerberosDebugEnabled;
-  private String kerberosLoginConfig = "/etc/knox/conf/krb5JAASLogin.conf";
+  private String kerberosLoginConfig;
   private String frontendUrl;
   private boolean xForwardedEnabled = true;
   private String gatewayApplicationsDir;
@@ -68,42 +70,80 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   private int backupVersionLimit = -1;
   private long backupAgeLimit = -1;
 
+  public GatewayTestConfig() {
+
+    Iterable<Path> paths = FileSystems.getDefault().getRootDirectories();
+    Path rootPath = null;
+    for (Path path : paths) {
+      rootPath = path;
+    }
+    if (rootPath == null) {
+      rootPath = Paths.get("/");
+    }
+
+    // /etc/knox/conf
+    Path etcConfKnoxPath = rootPath.resolve("etc").resolve("knox").resolve("conf");
+
+    // /etc/knox/conf/krb5.conf
+    kerberosConfig = etcConfKnoxPath.resolve("krb5.conf").toString();
+
+    // /etc/knox/conf/krb5JAASLogin.conf
+    kerberosLoginConfig = etcConfKnoxPath.resolve("krb5JAASLogin.conf").toString();
+  }
+
+
   public void setGatewayHomeDir( String gatewayHomeDir ) {
-    this.gatewayHomeDir = gatewayHomeDir;
+    this.gatewayHomePath = Paths.get(gatewayHomeDir);
   }
 
   public String getGatewayHomeDir() {
-    return this.gatewayHomeDir;
+    return gatewayHomePath.toString();
   }
 
   @Override
   public String getGatewayConfDir() {
-    return gatewayHomeDir;
+    return getGatewayConfPath().toString();
+  }
+
+  private Path getGatewayConfPath() {
+    return gatewayHomePath.resolve("conf");
   }
 
   @Override
   public String getGatewayDataDir() {
-    return gatewayHomeDir;
+    return getGatewayDataPath().toString();
+  }
+
+  private Path getGatewayDataPath() {
+    return gatewayHomePath.resolve("data");
   }
 
   @Override
   public String getGatewaySecurityDir() {
-    return gatewayHomeDir + "/security";
+    return getGatewaySecurityPath().toString();
+  }
+
+  private Path getGatewaySecurityPath() {
+    return getGatewayDataPath().resolve("security");
   }
 
   @Override
   public String getGatewayKeystoreDir() {
-    return getGatewaySecurityDir() + "/keystores";
+    return getGatewayKeystorePath().toString();
+  }
+
+  private Path getGatewayKeystorePath() {
+    return getGatewayDataPath().resolve("keystores");
   }
 
   @Override
   public String getGatewayTopologyDir() {
-    return gatewayHomeDir + "/topologies";
+    return gatewayHomePath.resolve("topologies").toString();
   }
 
   @Override
   public String getGatewayDeploymentDir() {
-    return gatewayHomeDir + "/deployments";
+    return gatewayHomePath.resolve("deployments").toString();
   }
 
   @Override
@@ -142,7 +182,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public String getIdentityKeystorePath() {
-    return getGatewayKeystoreDir() + "/" + DEFAULT_GATEWAY_KEYSTORE_NAME;
+    return getGatewayKeystorePath().resolve(DEFAULT_GATEWAY_KEYSTORE_NAME).toString();
   }
 
   @Override
@@ -298,8 +338,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     if( gatewayServicesDir != null ) {
       return gatewayServicesDir;
     } else {
-      File targetDir = new File( System.getProperty( "user.dir" ), "target/services" );
-      return targetDir.getPath();
+      return Paths.get(System.getProperty("user.dir"), "target", "services").toString();
     }
   }
 
@@ -312,7 +351,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     if( gatewayApplicationsDir != null ) {
       return gatewayApplicationsDir;
     } else {
-      return getGatewayConfDir() + "/applications";
+      return getGatewayConfPath().resolve("applications").toString();
     }
   }
 
@@ -408,7 +447,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public String getSigningKeystorePath() {
-    return getGatewayKeystoreDir() + "/" + DEFAULT_GATEWAY_KEYSTORE_NAME;
+    return getGatewayKeystorePath().resolve(DEFAULT_GATEWAY_KEYSTORE_NAME).toString();
   }
 
   @Override

@@ -34,13 +34,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -52,7 +45,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.apache.knox.gateway.services.security.impl.X509CertificateUtil;
+import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.mock.MockServer;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
@@ -157,7 +150,12 @@ public class GatewayTestDriver {
         topology.toStream( stream );
     }
 
-    setupTestKeystore(config, "password".toCharArray());
+    TestUtils.createTestKeystore(
+        Paths.get(config.getIdentityKeystorePath()),
+        config.getIdentityKeystoreType(),
+        config.getIdentityKeyAlias(),
+        "password".toCharArray()
+    );
 
     this.srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<>();
@@ -187,7 +185,7 @@ public class GatewayTestDriver {
   public void cleanup() throws Exception {
     stop();
     if ( config != null ) {
-      cleanupTestKeystore(config);
+      FileUtils.deleteQuietly(Paths.get(config.getIdentityKeystorePath()).toFile());
       FileUtils.deleteQuietly( new File( config.getGatewayTopologyDir() ) );
       FileUtils.deleteQuietly( new File( config.getGatewayConfDir() ) );
       FileUtils.deleteQuietly( new File( config.getGatewaySecurityDir() ) );
@@ -272,39 +270,6 @@ public class GatewayTestDriver {
   public String getLdapUrl() {
     return "ldap://localhost:" + ldapTransport.getAcceptor().getLocalAddress().getPort();
   }
-
-  public void setupTestKeystore(GatewayConfig config, char[] password)
-      throws NoSuchAlgorithmException, CertificateException, KeyStoreException, IOException {
-
-    String alias = config.getIdentityKeyAlias();
-
-    // Ensure parent directory exists...
-    Path keystoreFile = Paths.get(config.getIdentityKeystorePath());
-    Files.createDirectories(keystoreFile.getParent());
-
-    KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
-    kpg.initialize(2048);
-    KeyPair keyPair = kpg.generateKeyPair();
-
-    Certificate cert = X509CertificateUtil.generateCertificate("CN=localhost,OU=Test,O=Hadoop,L=Test,ST=Test,C=US", keyPair, 365, "SHA1withRSA");
-
-    KeyStore keyStore = KeyStore.getInstance(config.getIdentityKeystoreType());
-    keyStore.load(null, password);
-    keyStore.setCertificateEntry(alias, cert);
-    keyStore.setKeyEntry(alias, keyPair.getPrivate(), password, new java.security.cert.Certificate[]{cert});
-    try (OutputStream out = Files.newOutputStream(keystoreFile)) {
-      keyStore.store(out, password);
-    }
-  }
-
-  public void cleanupTestKeystore(GatewayConfig config) {
-    try {
-      Files.delete(Paths.get(config.getIdentityKeystorePath()).toAbsolutePath());
-    } catch (IOException e) {
-      // Ignore
-    }
-  }
-
 
   private static class Service {
     String role;

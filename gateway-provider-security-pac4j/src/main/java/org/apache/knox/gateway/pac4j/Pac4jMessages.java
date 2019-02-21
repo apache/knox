@@ -45,10 +45,10 @@ public interface Pac4jMessages {
   void unableToGenerateAPasswordForEncryption(Exception e);
 
   @Message( level = MessageLevel.INFO, text =
-      "No private key passphrase alias found. Defaulting to master. Exception encountered: {0}")
+      "No private key passphrase alias found. Defaulting to master secret. Exception encountered: {0}")
   void noPrivateKeyPasshraseProvisioned(Exception e);
 
   @Message( level = MessageLevel.ERROR, text =
-      "No keystore password alias found. Defaulting to master. Exception encountered: {0}")
+      "No keystore password alias found. Defaulting to master secret. Exception encountered: {0}")
   void noKeystorePasswordProvisioned(Exception e);
 }

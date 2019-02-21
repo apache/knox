@@ -39,6 +39,7 @@ import java.io.File;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -81,7 +82,7 @@ public class GatewayCorrelationIdTest {
   public static void tearDownAfterClass() throws Exception {
     LOG_ENTER();
     gateway.stop();
-    driver.cleanupTestKeystore(config);
+    TestUtils.cleanupTestKeystore(Paths.get(config.getIdentityKeystorePath()));
     driver.cleanup();
     CollectAppender.queue.clear();
     LOG_EXIT();
@@ -107,7 +108,12 @@ public class GatewayCorrelationIdTest {
       createTopology().toStream(stream);
     }
 
-    driver.setupTestKeystore(config, "password".toCharArray());
+    TestUtils.createTestKeystore(
+        Paths.get(config.getIdentityKeystorePath()),
+        config.getIdentityKeystoreType(),
+        config.getIdentityKeyAlias(),
+        "password".toCharArray()
+    );
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<>();

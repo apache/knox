@@ -671,7 +671,6 @@ public class KnoxCLI extends Configured implements Tool {
          } else {
 //           log.keyStoreForGatewayFoundNotCreating();
          }
-         boolean isSelfSigned;
          Certificate certificate;
          try {
            certificate = ks.getCertificateForGateway();
@@ -680,7 +679,7 @@ public class KnoxCLI extends Configured implements Tool {
            certificate = null;
          }
 
-         isSelfSigned = (certificate == null) || X509CertificateUtil.isSelfSignedCertificate(certificate);
+         boolean isSelfSigned = (certificate == null) || X509CertificateUtil.isSelfSignedCertificate(certificate);
 
          if ((certificate == null) || isSelfSigned || force) {
            char[] passphrase = as.getGatewayIdentityPassphrase();

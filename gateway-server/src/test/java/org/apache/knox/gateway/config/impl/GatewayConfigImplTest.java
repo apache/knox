@@ -320,10 +320,12 @@ public class GatewayConfigImplTest {
     assertEquals(config.getIdentityKeyAlias(), config.getSigningKeyAlias());
     assertEquals(config.getIdentityKeyPassphraseAlias(), config.getSigningKeyPassphraseAlias());
 
+    String tlsKeystorePath = Paths.get("custom", "keystore", "path", "keystore.p12").toString();
+
     // Validate changed options
     config.set("gateway.tls.key.alias", "custom_key_alias");
     config.set("gateway.tls.key.passphrase.alias", "custom_key_passphrase_alias");
-    config.set("gateway.tls.keystore.path", "/custom/keystore/path/keystore.p12");
+    config.set("gateway.tls.keystore.path", tlsKeystorePath);
     config.set("gateway.tls.keystore.type", "PKCS12");
     config.set("gateway.tls.keystore.password.alias", "custom_keystore_password_alias");
 
@@ -335,7 +337,7 @@ public class GatewayConfigImplTest {
 
     assertEquals("custom_key_alias", config.getIdentityKeyAlias());
     assertEquals("custom_key_passphrase_alias", config.getIdentityKeyPassphraseAlias());
-    assertEquals("/custom/keystore/path/keystore.p12", config.getIdentityKeystorePath());
+    assertEquals(tlsKeystorePath, config.getIdentityKeystorePath());
     assertEquals("PKCS12", config.getIdentityKeystoreType());
     assertEquals("custom_keystore_password_alias", config.getIdentityKeystorePasswordAlias());
 

@@ -392,11 +392,7 @@ public class RemoteAliasService implements AliasService {
 
   @Override
   public char[] getGatewayIdentityKeystorePassword() throws AliasServiceException {
-    char[] passphrase = getPasswordFromAliasForGateway(config.getIdentityKeystorePasswordAlias());
-    if (passphrase == null) {
-      passphrase = ms.getMasterSecret();
-    }
-    return passphrase;
+    return getKeystorePassword(config.getIdentityKeystorePasswordAlias());
   }
 
   @Override
@@ -415,11 +411,7 @@ public class RemoteAliasService implements AliasService {
 
   @Override
   public char[] getSigningKeystorePassword() throws AliasServiceException {
-    char[] passphrase = getPasswordFromAliasForGateway(config.getSigningKeystorePasswordAlias());
-    if (passphrase == null) {
-      passphrase = ms.getMasterSecret();
-    }
-    return passphrase;
+    return getKeystorePassword(config.getSigningKeystorePasswordAlias());
   }
 
   @Override
@@ -549,6 +541,15 @@ public class RemoteAliasService implements AliasService {
         PATH_KNOX_ALIAS_STORE_TOPOLOGY + PATH_SEPARATOR + DEFAULT_CLUSTER_NAME,
         remoteClient);
   }
+
+  private char[] getKeystorePassword(String alias) throws AliasServiceException {
+    char[] passphrase = getPasswordFromAliasForGateway(alias);
+    if (passphrase == null) {
+      passphrase = ms.getMasterSecret();
+    }
+    return passphrase;
+  }
+
 
   /**
    * Encrypt the clear text with master password.

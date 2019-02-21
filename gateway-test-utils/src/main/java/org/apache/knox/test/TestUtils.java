@@ -33,6 +33,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.net.HttpURLConnection;
@@ -43,6 +44,15 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.UUID;
@@ -229,5 +239,33 @@ public class TestUtils {
     return response;
   }
 
+  public static void createTestKeystore(Path keystoreFilePath, String keystoreFileType, String alias, char[] password)
+      throws NoSuchAlgorithmException, CertificateException, KeyStoreException, IOException {
 
+    // Ensure parent directory exists...
+    Files.createDirectories(keystoreFilePath.getParent());
+
+    KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+    kpg.initialize(2048);
+    KeyPair keyPair = kpg.generateKeyPair();
+
+    Certificate cert = null;
+    try {
+      cert = X509CertificateUtil.generateCertificate("CN=localhost,OU=Knox,O=Apache,L=Test,ST=Test,C=US", keyPair, 365, "SHA1withRSA");
+    } catch (Exception e) {
+      throw new CertificateException("Failed to create the certificate", e);
+    }
+
+    KeyStore keyStore = KeyStore.getInstance(keystoreFileType);
+    keyStore.load(null, password);
+    keyStore.setCertificateEntry(alias, cert);
+    keyStore.setKeyEntry(alias, keyPair.getPrivate(), password, new java.security.cert.Certificate[]{cert});
+    try( OutputStream out = Files.newOutputStream(keystoreFilePath) ) {
+      keyStore.store( out, password );
+    }
+  }
+
+  public static void cleanupTestKeystore(Path path) {
+    FileUtils.deleteQuietly(path.toFile());
+  }
 }

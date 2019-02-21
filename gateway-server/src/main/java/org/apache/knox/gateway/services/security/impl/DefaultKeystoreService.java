@@ -129,7 +129,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
     writeLock.lock();
     try {
       String filename = getKeystorePath();
-      createKeystore(filename, config.getIdentityKeystoreType(), getIdentityKeystorePassword());
+      createKeystore(filename, config.getIdentityKeystoreType(), getKeystorePassword(config.getIdentityKeystorePasswordAlias()));
     } finally {
       writeLock.unlock();
     }
@@ -140,7 +140,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
     final File  keyStoreFile = new File( config.getIdentityKeystorePath() );
     readLock.lock();
     try {
-      return getKeystore(keyStoreFile, config.getIdentityKeystoreType(), getIdentityKeystorePassword());
+      return getKeystore(keyStoreFile, config.getIdentityKeystoreType(), getKeystorePassword(config.getIdentityKeystorePasswordAlias()));
     }
     finally {
       readLock.unlock();
@@ -164,7 +164,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
     } else {
       keyStoreFile = new File(config.getSigningKeystorePath());
       keyStoreType = config.getSigningKeystoreType();
-      password = getSigningKeystorePassword();
+      password = getKeystorePassword(config.getSigningKeystorePasswordAlias());
     }
 
     // make sure the keystore exists
@@ -219,7 +219,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
             passphrase,
             new java.security.cert.Certificate[]{cert});
 
-        writeKeystoreToFile(privateKS, new File( config.getIdentityKeystorePath() ), getIdentityKeystorePassword());
+        writeKeystoreToFile(privateKS, new File( config.getIdentityKeystorePath() ), getKeystorePassword(config.getIdentityKeystorePasswordAlias()));
         //writeCertificateToFile( cert, new File( keyStoreDir + alias + ".pem" ) );
       } catch (GeneralSecurityException | IOException e) {
         LOG.failedToAddSeflSignedCertForGateway( alias, e );
@@ -275,7 +275,7 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
     readLock.lock();
     try {
       try {
-        rc = isKeystoreAvailable(keyStoreFile, config.getIdentityKeystoreType(), getIdentityKeystorePassword());
+        rc = isKeystoreAvailable(keyStoreFile, config.getIdentityKeystoreType(), getKeystorePassword(config.getIdentityKeystorePasswordAlias()));
       } catch (KeyStoreException | IOException e) {
         throw new KeystoreServiceException(e);
       }
@@ -317,18 +317,8 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
 
   @Override
   public Certificate getCertificateForGateway() throws KeystoreServiceException, KeyStoreException {
-    Certificate cert = null;
-    readLock.lock();
-    try {
-      KeyStore ks = getKeystoreForGateway();
-      if (ks != null) {
-        cert = ks.getCertificate(config.getIdentityKeyAlias());
-      }
-      return cert;
-    }
-    finally {
-      readLock.unlock();
-    }
+    KeyStore ks = getKeystoreForGateway();
+    return (ks == null) ? null : ks.getCertificate(config.getIdentityKeyAlias());
   }
 
   @Override
@@ -484,18 +474,10 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
     return config.getIdentityKeystorePath();
   }
 
-  private char[] getIdentityKeystorePassword() throws KeystoreServiceException {
+  private char[] getKeystorePassword(String alias) throws KeystoreServiceException {
     char[] password = null;
-    if (StringUtils.isNotEmpty(config.getIdentityKeystorePasswordAlias())) {
-      password = getCredentialForCluster(NO_CLUSTER_NAME, config.getIdentityKeystorePasswordAlias());
-    }
-    return (password == null) ? masterService.getMasterSecret() : password;
-  }
-
-  private char[] getSigningKeystorePassword() throws KeystoreServiceException {
-    char[] password = null;
-    if (StringUtils.isNotEmpty(config.getSigningKeystorePasswordAlias())) {
-      password = getCredentialForCluster(NO_CLUSTER_NAME, config.getSigningKeystorePasswordAlias());
+    if (StringUtils.isNotEmpty(alias)) {
+      password = getCredentialForCluster(NO_CLUSTER_NAME, alias);
     }
     return (password == null) ? masterService.getMasterSecret() : password;
   }
