@@ -27,6 +27,7 @@ import org.apache.knox.gateway.service.config.remote.RemoteConfigurationRegistry
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
 import org.apache.knox.gateway.services.registry.impl.DefaultServiceDefinitionRegistry;
 import org.apache.knox.gateway.services.metrics.impl.DefaultMetricsService;
+import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.impl.RemoteAliasService;
 import org.apache.knox.gateway.services.topology.impl.DefaultClusterConfigurationMonitorService;
 import org.apache.knox.gateway.services.topology.impl.DefaultTopologyService;
@@ -48,36 +49,20 @@ import java.util.List;
 import java.util.Map;
 
 public class DefaultGatewayServices implements GatewayServices {
-
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
   private Map<String,Service> services = new HashMap<>();
-  private DefaultMasterService ms;
-  private DefaultKeystoreService ks;
-
-  public DefaultGatewayServices() {
-    super();
-  }
 
   @Override
   public void init(GatewayConfig config, Map<String,String> options) throws ServiceLifecycleException {
-    ms = new DefaultMasterService();
+    DefaultMasterService ms = new DefaultMasterService();
     ms.init(config, options);
     services.put(MASTER_SERVICE, ms);
 
-    ks = new DefaultKeystoreService();
+    DefaultKeystoreService ks = new DefaultKeystoreService();
     ks.setMasterService(ms);
     ks.init(config, options);
     services.put(KEYSTORE_SERVICE, ks);
-
-    /* create an instance so that it can be passed to other services */
-    final RemoteAliasService alias = new RemoteAliasService();
-
-    final RemoteConfigurationRegistryClientService registryClientService =
-        RemoteConfigurationRegistryClientServiceFactory.newInstance(config);
-    registryClientService.setAliasService(alias);
-    registryClientService.init(config, options);
-    services.put(REMOTE_REGISTRY_CLIENT_SERVICE, registryClientService);
 
     final DefaultAliasService defaultAlias = new DefaultAliasService();
     defaultAlias.setKeystoreService(ks);
@@ -85,13 +70,25 @@ public class DefaultGatewayServices implements GatewayServices {
     defaultAlias.init(config, options);
 
     /*
+    Doesn't make sense for this to be set to the remote alias service since the impl could
+    be remote itself. This uses the default alias service in case of ZK digest authentication.
+    IE: If ZK digest auth and using ZK remote alias service, then wouldn't be able to connect
+    to ZK anyway due to the circular dependency.
+     */
+    final RemoteConfigurationRegistryClientService registryClientService =
+        RemoteConfigurationRegistryClientServiceFactory.newInstance(config);
+    registryClientService.setAliasService(defaultAlias);
+    registryClientService.init(config, options);
+    services.put(REMOTE_REGISTRY_CLIENT_SERVICE, registryClientService);
+
+
+    /* create an instance so that it can be passed to other services */
+    final RemoteAliasService alias = new RemoteAliasService(defaultAlias, ms);
+    /*
      * Setup and initialize remote Alias Service.
      * NOTE: registryClientService.init() needs to
      * be called before alias.start();
      */
-    alias.setLocalAliasService(defaultAlias);
-    alias.setMasterService(ms);
-    alias.setRegistryClientService(registryClientService);
     alias.init(config, options);
     services.put(ALIAS_SERVICE, alias);
 
@@ -152,8 +149,10 @@ public class DefaultGatewayServices implements GatewayServices {
 
   @Override
   public void start() throws ServiceLifecycleException {
+    Service ms = services.get(MASTER_SERVICE);
     ms.start();
 
+    Service ks = services.get(KEYSTORE_SERVICE);
     ks.start();
 
     Service alias = services.get(ALIAS_SERVICE);
@@ -180,8 +179,10 @@ public class DefaultGatewayServices implements GatewayServices {
 
   @Override
   public void stop() throws ServiceLifecycleException {
+    Service ms = services.get(MASTER_SERVICE);
     ms.stop();
 
+    Service ks = services.get(KEYSTORE_SERVICE);
     ks.stop();
 
     (services.get(CLUSTER_CONFIGURATION_MONITOR_SERVICE)).stop();
@@ -227,6 +228,7 @@ public class DefaultGatewayServices implements GatewayServices {
     // setup credential store as appropriate
     String clusterName = context.getTopology().getName();
     try {
+      KeystoreService ks = getService(KEYSTORE_SERVICE);
       if (!ks.isCredentialStoreForClusterAvailable(clusterName)) {
         log.creatingCredentialStoreForCluster(clusterName);
         ks.createCredentialStoreForCluster(clusterName);
