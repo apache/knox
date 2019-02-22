@@ -41,7 +41,6 @@ import java.io.OutputStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -74,7 +73,6 @@ public class GatewayHealthFuncTest {
     TestUtils.LOG_ENTER();
     gateway.stop();
     ldap.stop(true);
-    TestUtils.cleanupTestKeystore(Paths.get(config.getIdentityKeystorePath()));
     TestUtils.LOG_EXIT();
   }
 
@@ -113,13 +111,6 @@ public class GatewayHealthFuncTest {
     try(OutputStream stream = Files.newOutputStream(descriptor.toPath())) {
       createTopology().toStream(stream);
     }
-
-    TestUtils.createTestKeystore(
-        Paths.get(config.getIdentityKeystorePath()),
-        config.getIdentityKeystoreType(),
-        config.getIdentityKeyAlias(),
-        "password".toCharArray()
-    );
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String, String> options = new HashMap<>();

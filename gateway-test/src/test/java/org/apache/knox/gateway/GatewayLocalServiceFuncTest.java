@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.OutputStream;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -72,7 +71,6 @@ public class GatewayLocalServiceFuncTest {
   public static void tearDownAfterClass() throws Exception {
     LOG_ENTER();
     gateway.stop();
-    TestUtils.cleanupTestKeystore(Paths.get(config.getIdentityKeystorePath()));
     driver.cleanup();
     FileUtils.deleteQuietly( new File( config.getGatewayConfDir() ) );
     FileUtils.deleteQuietly( new File( config.getGatewayDataDir() ) );
@@ -99,13 +97,6 @@ public class GatewayLocalServiceFuncTest {
     try(OutputStream stream = Files.newOutputStream(descriptor.toPath())) {
       createTopology().toStream(stream);
     }
-
-    TestUtils.createTestKeystore(
-        Paths.get(config.getIdentityKeystorePath()),
-        config.getIdentityKeystoreType(),
-        config.getIdentityKeyAlias(),
-        "password".toCharArray()
-    );
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<>();

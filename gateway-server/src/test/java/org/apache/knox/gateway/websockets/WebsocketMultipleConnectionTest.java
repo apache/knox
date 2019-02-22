@@ -75,7 +75,6 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class WebsocketMultipleConnectionTest {
-  private static final String TEST_PASSWORD = "password";
   private static final String TEST_KEY_ALIAS = "test-identity";
 
   /**
@@ -126,13 +125,6 @@ public class WebsocketMultipleConnectionTest {
     securityDir = dataDir.resolve("security");
     keystoresDir = securityDir.resolve("keystores");
     keystoreFile = keystoresDir.resolve("tls.jks");
-
-    TestUtils.createTestKeystore(
-        keystoreFile,
-        "JKS",
-        TEST_KEY_ALIAS,
-        TEST_PASSWORD.toCharArray()
-    );
 
     startWebsocketServer();
     startGatewayServer();
@@ -270,7 +262,7 @@ public class WebsocketMultipleConnectionTest {
 
     final Map<String, String> options = new HashMap<>();
     options.put("persist-master", "false");
-    options.put("master", TEST_PASSWORD);
+    options.put("master", "password");
 
     gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfig.getGatewayTopologyDir())

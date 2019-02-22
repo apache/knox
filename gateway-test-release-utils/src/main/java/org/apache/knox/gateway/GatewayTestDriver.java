@@ -45,7 +45,6 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.security.ldap.SimpleLdapDirectoryServer;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.mock.MockServer;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
@@ -150,13 +149,6 @@ public class GatewayTestDriver {
         topology.toStream( stream );
     }
 
-    TestUtils.createTestKeystore(
-        Paths.get(config.getIdentityKeystorePath()),
-        config.getIdentityKeystoreType(),
-        config.getIdentityKeyAlias(),
-        "password".toCharArray()
-    );
-
     this.srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<>();
     options.put("persist-master", "false");
@@ -185,12 +177,12 @@ public class GatewayTestDriver {
   public void cleanup() throws Exception {
     stop();
     if ( config != null ) {
-      FileUtils.deleteQuietly(Paths.get(config.getIdentityKeystorePath()).toFile());
-      FileUtils.deleteQuietly( new File( config.getGatewayTopologyDir() ) );
-      FileUtils.deleteQuietly( new File( config.getGatewayConfDir() ) );
-      FileUtils.deleteQuietly( new File( config.getGatewaySecurityDir() ) );
-      FileUtils.deleteQuietly( new File( config.getGatewayDeploymentDir() ) );
-      FileUtils.deleteQuietly( new File( config.getGatewayDataDir() ) );
+      FileUtils.deleteQuietly( Paths.get( config.getIdentityKeystorePath() ).toFile() );
+      FileUtils.deleteQuietly( Paths.get( config.getGatewayTopologyDir() ).toFile() );
+      FileUtils.deleteQuietly( Paths.get( config.getGatewayConfDir() ).toFile() );
+      FileUtils.deleteQuietly( Paths.get( config.getGatewaySecurityDir() ).toFile() );
+      FileUtils.deleteQuietly( Paths.get( config.getGatewayDeploymentDir() ).toFile() );
+      FileUtils.deleteQuietly( Paths.get( config.getGatewayDataDir() ).toFile() );
     }
 
     for( Service service : services.values() ) {

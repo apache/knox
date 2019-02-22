@@ -88,7 +88,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * @since 0.10
  */
 public class WebsocketEchoTest {
-  private static final String TEST_PASSWORD = "password";
   private static final String TEST_KEY_ALIAS = "test-identity";
 
   /**
@@ -134,13 +133,6 @@ public class WebsocketEchoTest {
     securityDir = dataDir.resolve("security");
     keystoresDir = securityDir.resolve("keystores");
     keystoreFile = keystoresDir.resolve("tls.jks");
-
-    TestUtils.createTestKeystore(
-        keystoreFile,
-        "JKS",
-        TEST_KEY_ALIAS,
-        TEST_PASSWORD.toCharArray()
-    );
 
     startWebsocketServer();
     startGatewayServer();

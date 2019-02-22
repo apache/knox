@@ -43,7 +43,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -114,13 +113,6 @@ public class AmbariServiceDefinitionTest {
 
     File deployDir = new File( config.getGatewayDeploymentDir() );
     deployDir.mkdirs();
-
-    TestUtils.createTestKeystore(
-        Paths.get(config.getIdentityKeystorePath()),
-        config.getIdentityKeystoreType(),
-        config.getIdentityKeyAlias(),
-        "password".toCharArray()
-    );
 
     setupMockServers();
     startGatewayServer();
@@ -359,4 +351,5 @@ public class AmbariServiceDefinitionTest {
     MatcherAssert.assertThat(body, sameJSONAs(expected));
     LOG_EXIT();
   }
+
 }

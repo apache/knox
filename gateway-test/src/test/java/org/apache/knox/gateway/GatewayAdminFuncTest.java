@@ -35,7 +35,6 @@ import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.OutputStream;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -65,7 +64,6 @@ public class GatewayAdminFuncTest {
   public static void tearDownAfterClass() throws Exception {
     TestUtils.LOG_ENTER();
     gateway.stop();
-    TestUtils.cleanupTestKeystore(Paths.get(config.getIdentityKeystorePath()));
     driver.cleanup();
     TestUtils.LOG_EXIT();
   }
@@ -90,13 +88,6 @@ public class GatewayAdminFuncTest {
     try(OutputStream stream = Files.newOutputStream(descriptor.toPath())) {
       createTopology().toStream( stream );
     }
-
-    TestUtils.createTestKeystore(
-        Paths.get(config.getIdentityKeystorePath()),
-        config.getIdentityKeystoreType(),
-        config.getIdentityKeyAlias(),
-        "password".toCharArray()
-    );
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<>();

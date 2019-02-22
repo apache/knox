@@ -297,6 +297,11 @@ public class SecureKnoxShellTest {
 
     final File jaasFile = setupJaasConf(baseDir, keytab, hdfsPrincipal);
 
+    System.out.println("basedir: " + baseDir.getAbsolutePath() );
+    System.out.println("keytab: " + keytab );
+    System.out.println("princ: " + hdfsPrincipal );
+    System.out.println("jaas: " + jaasFile.getAbsolutePath());
+
     final Binding binding = new Binding();
 
     binding.setProperty("jaasConf", jaasFile.getAbsolutePath());

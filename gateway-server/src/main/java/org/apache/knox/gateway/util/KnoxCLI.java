@@ -668,7 +668,8 @@ public class KnoxCLI extends Configured implements Tool {
          if (!ks.isKeystoreForGatewayAvailable()) {
 //           log.creatingKeyStoreForGateway();
            ks.createKeystoreForGateway();
-         } else {
+         }
+         else {
 //           log.keyStoreForGatewayFoundNotCreating();
          }
          Certificate certificate;

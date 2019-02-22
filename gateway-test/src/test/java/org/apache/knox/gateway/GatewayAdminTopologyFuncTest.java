@@ -25,7 +25,6 @@ import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -96,7 +95,6 @@ public class GatewayAdminTopologyFuncTest {
   @AfterClass
   public static void tearDownAfterClass() throws Exception {
     gateway.stop();
-    TestUtils.cleanupTestKeystore(Paths.get(config.getIdentityKeystorePath()));
     driver.cleanup();
   }
 
@@ -129,13 +127,6 @@ public class GatewayAdminTopologyFuncTest {
     try(OutputStream stream = Files.newOutputStream(descriptor2.toPath())) {
       createNormalTopology().toStream(stream);
     }
-
-    TestUtils.createTestKeystore(
-        Paths.get(config.getIdentityKeystorePath()),
-        config.getIdentityKeystoreType(),
-        config.getIdentityKeyAlias(),
-        "password".toCharArray()
-    );
 
     DefaultGatewayServices srvcs = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<>();

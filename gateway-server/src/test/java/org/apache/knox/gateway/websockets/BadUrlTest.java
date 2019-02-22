@@ -76,7 +76,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class BadUrlTest {
 
-  private static final String TEST_PASSWORD = "password";
   private static final String TEST_KEY_ALIAS = "test-identity";
 
   /**
@@ -118,13 +117,6 @@ public class BadUrlTest {
     securityDir = dataDir.resolve("security");
     keystoresDir = securityDir.resolve("keystores");
     keystoreFile = keystoresDir.resolve("tls.jks");
-
-    TestUtils.createTestKeystore(
-        keystoreFile,
-        "JKS",
-        TEST_KEY_ALIAS,
-        TEST_PASSWORD.toCharArray()
-    );
 
     startGatewayServer();
   }
@@ -210,7 +202,7 @@ public class BadUrlTest {
 
     final Map<String, String> options = new HashMap<>();
     options.put("persist-master", "false");
-    options.put("master", TEST_PASSWORD);
+    options.put("master", "password");
 
     gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfig.getGatewayTopologyDir())

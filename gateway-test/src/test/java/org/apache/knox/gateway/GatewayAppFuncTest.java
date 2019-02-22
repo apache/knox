@@ -20,7 +20,6 @@ package org.apache.knox.gateway;
 import java.io.File;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -82,7 +81,6 @@ public class GatewayAppFuncTest {
   public static void tearDownAfterClass() throws Exception {
     LOG_ENTER();
     gateway.stop();
-    TestUtils.cleanupTestKeystore(Paths.get(config.getIdentityKeystorePath()));
     driver.cleanup();
     FileUtils.deleteQuietly( new File( config.getGatewayHomeDir() ) );
     LOG_EXIT();
@@ -129,13 +127,6 @@ public class GatewayAppFuncTest {
   }
 
   public static void startGatewayServer() throws Exception {
-    TestUtils.createTestKeystore(
-        Paths.get(config.getIdentityKeystorePath()),
-        config.getIdentityKeystoreType(),
-        config.getIdentityKeyAlias(),
-        "password".toCharArray()
-    );
-
     services = new DefaultGatewayServices();
     Map<String,String> options = new HashMap<>();
     options.put( "persist-master", "false" );
