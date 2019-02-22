@@ -40,9 +40,9 @@ public interface GatewayConfig {
   String KRB5_LOGIN_CONFIG = "java.security.auth.login.config";
   String KRB5_USE_SUBJECT_CREDS_ONLY = "javax.security.auth.useSubjectCredsOnly";
 
+  String IDENTITY_KEYSTORE_PASSWORD_ALIAS = "gateway.tls.keystore.password.alias";
   String IDENTITY_KEYSTORE_PATH = "gateway.tls.keystore.path";
   String IDENTITY_KEYSTORE_TYPE = "gateway.tls.keystore.type";
-  String IDENTITY_KEYSTORE_PASSWORD_ALIAS = "gateway.tls.keystore.password.alias";
   String IDENTITY_KEY_ALIAS = "gateway.tls.key.alias";
   String IDENTITY_KEY_PASSPHRASE_ALIAS = "gateway.tls.key.passphrase.alias";
   String DEFAULT_IDENTITY_KEYSTORE_TYPE = "JKS";
@@ -52,12 +52,12 @@ public interface GatewayConfig {
   String DEFAULT_GATEWAY_KEYSTORE_NAME = "gateway.jks";
 
   String SIGNING_KEYSTORE_NAME = "gateway.signing.keystore.name";
-  String SIGNING_KEYSTORE_TYPE = "gateway.signing.keystore.type";
   String SIGNING_KEYSTORE_PASSWORD_ALIAS = "gateway.signing.keystore.password.alias";
+  String SIGNING_KEYSTORE_TYPE = "gateway.signing.keystore.type";
   String SIGNING_KEY_ALIAS = "gateway.signing.key.alias";
   String SIGNING_KEY_PASSPHRASE_ALIAS = "gateway.signing.key.passphrase.alias";
-  String DEFAULT_SIGNING_KEYSTORE_TYPE = "JKS";
   String DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS = "signing.keystore.password";
+  String DEFAULT_SIGNING_KEYSTORE_TYPE = "JKS";
   String DEFAULT_SIGNING_KEY_ALIAS = "gateway-identity";
   String DEFAULT_SIGNING_KEY_PASSPHRASE_ALIAS = "signing.key.passphrase";
 
