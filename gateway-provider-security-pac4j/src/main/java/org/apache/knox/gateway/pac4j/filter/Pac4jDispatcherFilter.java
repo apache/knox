@@ -39,6 +39,7 @@ import org.pac4j.http.credentials.authenticator.test.SimpleTestUsernamePasswordA
 import org.pac4j.j2e.filter.CallbackFilter;
 import org.pac4j.j2e.filter.SecurityFilter;
 import org.pac4j.oidc.client.AzureAdClient;
+import org.pac4j.saml.client.SAML2Client;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -77,7 +78,7 @@ public class Pac4jDispatcherFilter implements Filter {
 
   public static final String PAC4J_CALLBACK_PARAMETER = "pac4jCallback";
 
-  public static final String PAC4J_AZURE_AD_CLIENT = "AzureAdClient";
+  public static final String PAC4J_OICD_TYPE_AZURE = "azure";
 
   public static final String URL_PATH_SEPARATOR = "/";
 
@@ -88,6 +89,8 @@ public class Pac4jDispatcherFilter implements Filter {
   private static final String PAC4J_SESSION_STORE = "pac4j.session.store";
 
   private static final String PAC4J_CLIENT_NAME_PARAM = "clientName";
+
+  private static final String PAC4J_OIDC_TYPE = "oidc.type";
 
   private CallbackFilter callbackFilter;
 
@@ -138,12 +141,14 @@ public class Pac4jDispatcherFilter implements Filter {
       throw new ServletException("Required pac4j clientName parameter is missing.");
     }
 
-
+    final String oidcType = filterConfig.getInitParameter(PAC4J_OIDC_TYPE);
     /*
        add the callback parameter to know it's a callback,
        Azure AD does not honor query param so we add callback param as path element.
     */
-    if(PAC4J_AZURE_AD_CLIENT.equalsIgnoreCase(clientNameParameter)) {
+    if (AzureAdClient.class.getSimpleName().equals(clientNameParameter) || (
+        !StringUtils.isBlank(oidcType) && PAC4J_OICD_TYPE_AZURE
+            .equals(oidcType))) {
       pac4jCallbackUrl = pac4jCallbackUrl + URL_PATH_SEPARATOR + PAC4J_CALLBACK_PARAMETER;
     } else {
       pac4jCallbackUrl = CommonHelper.addParameter(pac4jCallbackUrl, PAC4J_CALLBACK_PARAMETER, "true");
@@ -182,7 +187,7 @@ public class Pac4jDispatcherFilter implements Filter {
 
       /* special handling for Azure AD, use path separators instead of query params */
       clients.forEach( client -> {
-        if(client.getName().equalsIgnoreCase(PAC4J_AZURE_AD_CLIENT)) {
+        if(client.getName().equalsIgnoreCase(AzureAdClient.class.getSimpleName())) {
           ((AzureAdClient)client).setCallbackUrlResolver(new PathParameterCallbackUrlResolver());
         }
       });
@@ -214,13 +219,12 @@ public class Pac4jDispatcherFilter implements Filter {
 
   private void addDefaultConfig(String clientNameParameter, Map<String, String> properties) {
     // add default saml params
-    if (clientNameParameter.contains("SAML2Client")) {
+    if (clientNameParameter.contains(SAML2Client.class.getSimpleName())) {
       properties.put(PropertiesConfigFactory.SAML_KEYSTORE_PATH,
           keystoreService.getKeystorePath());
 
       properties.put(PropertiesConfigFactory.SAML_KEYSTORE_PASSWORD,
           new String(masterService.getMasterSecret()));
-
       // check for provisioned alias for private key
       char[] gip = null;
       try {

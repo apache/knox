@@ -39,7 +39,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -219,8 +218,8 @@ public class KnoxSessionStore implements SessionStore {
      * @since 1.3.0
      */
     private Object clearUserProfile(final Object value) {
-        if(value instanceof LinkedHashMap<?,?>) {
-            final LinkedHashMap<String, CommonProfile> profiles = (LinkedHashMap<String, CommonProfile>) value;
+        if(value instanceof Map<?,?>) {
+            final Map<String, CommonProfile> profiles = (Map<String, CommonProfile>) value;
             profiles.forEach((name, profile) -> profile.clearSensitiveData());
             return profiles;
         } else {
