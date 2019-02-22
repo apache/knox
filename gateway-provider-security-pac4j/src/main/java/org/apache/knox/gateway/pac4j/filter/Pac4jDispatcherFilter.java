@@ -32,11 +32,13 @@ import org.pac4j.core.client.Client;
 import org.pac4j.core.config.Config;
 import org.pac4j.core.context.session.J2ESessionStore;
 import org.pac4j.core.context.session.SessionStore;
+import org.pac4j.core.http.callback.PathParameterCallbackUrlResolver;
 import org.pac4j.core.util.CommonHelper;
 import org.pac4j.http.client.indirect.IndirectBasicAuthClient;
 import org.pac4j.http.credentials.authenticator.test.SimpleTestUsernamePasswordAuthenticator;
 import org.pac4j.j2e.filter.CallbackFilter;
 import org.pac4j.j2e.filter.SecurityFilter;
+import org.pac4j.oidc.client.AzureAdClient;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -75,11 +77,17 @@ public class Pac4jDispatcherFilter implements Filter {
 
   public static final String PAC4J_CALLBACK_PARAMETER = "pac4jCallback";
 
+  public static final String PAC4J_AZURE_AD_CLIENT = "AzureAdClient";
+
+  public static final String URL_PATH_SEPARATOR = "/";
+
   private static final String PAC4J_COOKIE_DOMAIN_SUFFIX_PARAM = "pac4j.cookie.domain.suffix";
 
   private static final String PAC4J_CONFIG = "pac4j.config";
 
   private static final String PAC4J_SESSION_STORE = "pac4j.session.store";
+
+  private static final String PAC4J_CLIENT_NAME_PARAM = "clientName";
 
   private CallbackFilter callbackFilter;
 
@@ -122,17 +130,28 @@ public class Pac4jDispatcherFilter implements Filter {
       log.ssoAuthenticationProviderUrlRequired();
       throw new ServletException("Required pac4j callback URL is missing.");
     }
-    // add the callback parameter to know it's a callback
-    pac4jCallbackUrl = CommonHelper.addParameter(pac4jCallbackUrl, PAC4J_CALLBACK_PARAMETER, "true");
 
-    final Config config;
-    final String clientName;
     // client name from servlet parameter (mandatory)
-    final String clientNameParameter = filterConfig.getInitParameter("clientName");
+    final String clientNameParameter = filterConfig.getInitParameter(PAC4J_CLIENT_NAME_PARAM);
     if (clientNameParameter == null) {
       log.clientNameParameterRequired();
       throw new ServletException("Required pac4j clientName parameter is missing.");
     }
+
+
+    /*
+       add the callback parameter to know it's a callback,
+       Azure AD does not honor query param so we add callback param as path element.
+    */
+    if(PAC4J_AZURE_AD_CLIENT.equalsIgnoreCase(clientNameParameter)) {
+      pac4jCallbackUrl = pac4jCallbackUrl + URL_PATH_SEPARATOR + PAC4J_CALLBACK_PARAMETER;
+    } else {
+      pac4jCallbackUrl = CommonHelper.addParameter(pac4jCallbackUrl, PAC4J_CALLBACK_PARAMETER, "true");
+    }
+
+    final Config config;
+    final String clientName;
+
     if (TEST_BASIC_AUTH.equalsIgnoreCase(clientNameParameter)) {
       // test configuration
       final IndirectBasicAuthClient indirectBasicAuthClient = new IndirectBasicAuthClient(new SimpleTestUsernamePasswordAuthenticator());
@@ -160,7 +179,16 @@ public class Pac4jDispatcherFilter implements Filter {
       } else {
         clientName = clientNameParameter;
       }
+
+      /* special handling for Azure AD, use path separators instead of query params */
+      clients.forEach( client -> {
+        if(client.getName().equalsIgnoreCase(PAC4J_AZURE_AD_CLIENT)) {
+          ((AzureAdClient)client).setCallbackUrlResolver(new PathParameterCallbackUrlResolver());
+        }
+      });
+
     }
+
 
     callbackFilter = new CallbackFilter();
     callbackFilter.init(filterConfig);
@@ -218,10 +246,11 @@ public class Pac4jDispatcherFilter implements Filter {
 
     final HttpServletRequest request = (HttpServletRequest) servletRequest;
     request.setAttribute(PAC4J_CONFIG, securityFilter.getConfig());
-//    final J2EContext context = new J2EContext(request, response, securityFilter.getConfig().getSessionStore());
 
     // it's a callback from an identity provider
-    if (request.getParameter(PAC4J_CALLBACK_PARAMETER) != null) {
+    if (request.getParameter(PAC4J_CALLBACK_PARAMETER) != null || (
+        request.getContextPath() != null && request.getRequestURI()
+            .contains(PAC4J_CALLBACK_PARAMETER))) {
       // apply CallbackFilter
       callbackFilter.doFilter(servletRequest, servletResponse, filterChain);
     } else {

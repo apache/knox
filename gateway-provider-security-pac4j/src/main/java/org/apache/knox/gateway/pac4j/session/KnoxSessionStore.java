@@ -19,14 +19,18 @@ package org.apache.knox.gateway.pac4j.session;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
+import org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter;
 import org.apache.knox.gateway.services.security.CryptoService;
 import org.apache.knox.gateway.services.security.EncryptionResult;
 import org.apache.knox.gateway.util.Urls;
 import org.pac4j.core.context.ContextHelper;
 import org.pac4j.core.context.Cookie;
+import org.pac4j.core.context.J2EContext;
+import org.pac4j.core.context.Pac4jConstants;
 import org.pac4j.core.context.WebContext;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.exception.TechnicalException;
+import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.util.JavaSerializationHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +39,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -68,6 +73,7 @@ public class KnoxSessionStore implements SessionStore {
         this.domainSuffix = domainSuffix;
     }
 
+
     @Override
     public String getOrCreateSessionId(WebContext context) {
         return null;
@@ -78,10 +84,10 @@ public class KnoxSessionStore implements SessionStore {
             byte[] bytes = Base64.decodeBase64(v);
             EncryptionResult result = EncryptionResult.fromByteArray(bytes);
             byte[] clear = cryptoService.decryptForCluster(this.clusterName,
-                    PAC4J_PASSWORD,
-                    result.cipher,
-                    result.iv,
-                    result.salt);
+                PAC4J_PASSWORD,
+                result.cipher,
+                result.iv,
+                result.salt);
             if (clear != null) {
                 try {
                     return javaSerializationHelper.unserializeFromBytes(unCompress(clear));
@@ -130,10 +136,23 @@ public class KnoxSessionStore implements SessionStore {
 
     @Override
     public void set(WebContext context, String key, Object value) {
-        logger.debug("Save in session: {} = {}", key, value);
-        final Cookie cookie = new Cookie(PAC4J_SESSION_PREFIX + key, compressEncryptBase64(value));
+        Object profile = value;
+        Cookie cookie;
+
+        if (value == null) {
+            cookie = new Cookie(PAC4J_SESSION_PREFIX + key, null);
+        } else {
+            if (key.contentEquals(Pac4jConstants.USER_PROFILES)) {
+                /* trim the profile object */
+                profile = clearUserProfile(value);
+            }
+            logger.debug("Save in session: {} = {}", key, profile);
+            cookie = new Cookie(PAC4J_SESSION_PREFIX + key,
+                compressEncryptBase64(profile));
+        }
         try {
-            String domain = Urls.getDomainName(context.getFullRequestURL(), this.domainSuffix);
+            String domain = Urls
+                .getDomainName(context.getFullRequestURL(), this.domainSuffix);
             if (domain == null) {
                 domain = context.getServerName();
             }
@@ -143,6 +162,22 @@ public class KnoxSessionStore implements SessionStore {
         }
         cookie.setHttpOnly(true);
         cookie.setSecure(ContextHelper.isHttpsOrSecure(context));
+
+        /**
+         *  set the correct path for setting pac4j profile cookie.
+         *  This is because, Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER in the path
+         *  indicates callback when ? cannot be used.
+         */
+        if (context.getPath() != null && context.getPath()
+            .contains(Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER)) {
+
+            final String[] parts = ((J2EContext) context).getRequest().getRequestURI()
+                .split(
+                    "websso"+ Pac4jDispatcherFilter.URL_PATH_SEPARATOR + Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER);
+
+            cookie.setPath(parts[0]);
+
+        }
         context.addResponseCookie(cookie);
     }
 
@@ -155,7 +190,7 @@ public class KnoxSessionStore implements SessionStore {
     private static byte[] compress(final byte[] data) throws IOException {
         try (ByteArrayOutputStream byteStream = new ByteArrayOutputStream(data.length)) {
             try(GZIPOutputStream gzip = new GZIPOutputStream(byteStream)) {
-              gzip.write(data);
+                gzip.write(data);
             }
             return byteStream.toByteArray();
         }
@@ -173,6 +208,25 @@ public class KnoxSessionStore implements SessionStore {
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
             GZIPInputStream gzip = new GZIPInputStream(inputStream)) {
             return IOUtils.toByteArray(gzip);
+        }
+    }
+
+    /**
+     * Keep only the fileds that are needed for Pac4J.
+     * Used to reduce the cookie size.
+     * @param value profile object
+     * @return trimmed profile object
+     * @since 1.3.0
+     */
+    private Object clearUserProfile(final Object value) {
+        if(value instanceof LinkedHashMap<?,?>) {
+            final LinkedHashMap<String, CommonProfile> profiles = (LinkedHashMap<String, CommonProfile>) value;
+            profiles.forEach((name, profile) -> profile.clearSensitiveData());
+            return profiles;
+        } else {
+            final CommonProfile profile = (CommonProfile) value;
+            profile.clearSensitiveData();
+            return profile;
         }
     }
 
