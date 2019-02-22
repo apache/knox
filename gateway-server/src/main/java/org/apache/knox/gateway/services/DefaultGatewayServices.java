@@ -93,9 +93,7 @@ public class DefaultGatewayServices implements GatewayServices {
     alias.setMasterService(ms);
     alias.setRegistryClientService(registryClientService);
     alias.init(config, options);
-    alias.start();
     services.put(ALIAS_SERVICE, alias);
-
 
     DefaultCryptoService crypto = new DefaultCryptoService();
     crypto.setKeystoreService(ks);
