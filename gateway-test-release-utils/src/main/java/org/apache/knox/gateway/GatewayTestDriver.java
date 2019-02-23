@@ -33,7 +33,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -177,12 +176,11 @@ public class GatewayTestDriver {
   public void cleanup() throws Exception {
     stop();
     if ( config != null ) {
-      FileUtils.deleteQuietly( Paths.get( config.getIdentityKeystorePath() ).toFile() );
-      FileUtils.deleteQuietly( Paths.get( config.getGatewayTopologyDir() ).toFile() );
-      FileUtils.deleteQuietly( Paths.get( config.getGatewayConfDir() ).toFile() );
-      FileUtils.deleteQuietly( Paths.get( config.getGatewaySecurityDir() ).toFile() );
-      FileUtils.deleteQuietly( Paths.get( config.getGatewayDeploymentDir() ).toFile() );
-      FileUtils.deleteQuietly( Paths.get( config.getGatewayDataDir() ).toFile() );
+      FileUtils.deleteQuietly( new File( config.getGatewayTopologyDir() ) );
+      FileUtils.deleteQuietly( new File( config.getGatewayConfDir() ) );
+      FileUtils.deleteQuietly( new File( config.getGatewaySecurityDir() ) );
+      FileUtils.deleteQuietly( new File( config.getGatewayDeploymentDir() ) );
+      FileUtils.deleteQuietly( new File( config.getGatewayDataDir() ) );
     }
 
     for( Service service : services.values() ) {
