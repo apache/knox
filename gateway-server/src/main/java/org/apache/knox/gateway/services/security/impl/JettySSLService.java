@@ -118,7 +118,7 @@ public class JettySSLService implements SSLService {
       }
       logAndValidateCertificate(config);
     } catch (KeystoreServiceException e) {
-      throw new ServiceLifecycleException("Keystore was not loaded properly - the provided (or persisted) master secret may not match the password for the keystore.", e);
+      throw new ServiceLifecycleException("The identity keystore was not loaded properly - the provided password may not match the password for the keystore.", e);
     }
 
     sslIncludeCiphers = config.getIncludedSSLCiphers();

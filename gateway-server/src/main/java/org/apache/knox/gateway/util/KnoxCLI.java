@@ -75,7 +75,11 @@ import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.KeyStoreException;
 import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -617,7 +621,7 @@ public class KnoxCLI extends Configured implements Tool {
             out.println("Invalid type for export file provided. Export has not been done. Please use: [PEM|JKS|JCEKS|PKCS12] default value is PEM.");
           }
         } catch (KeystoreServiceException e) {
-          throw new ServiceLifecycleException("Keystore was not loaded properly - the provided (or persisted) master secret may not match the password for the keystore.", e);
+          throw new ServiceLifecycleException("The identity keystore was not loaded properly - the provided password may not match the password for the keystore.", e);
         }
       }
     }
@@ -672,34 +676,82 @@ public class KnoxCLI extends Configured implements Tool {
          else {
 //           log.keyStoreForGatewayFoundNotCreating();
          }
-         Certificate certificate;
-         try {
-           certificate = ks.getCertificateForGateway();
-         } catch (KeystoreServiceException e) {
-           // A certificate was (probably) not previously created...
-           certificate = null;
-         }
 
-         boolean isSelfSigned = (certificate == null) || X509CertificateUtil.isSelfSignedCertificate(certificate);
 
-         if ((certificate == null) || isSelfSigned || force) {
+         GatewayConfig config = getGatewayConfig();
+
+         if ( !isForceRequired(config, ks) || force) {
            char[] passphrase = as.getGatewayIdentityPassphrase();
            if (passphrase == null) {
              MasterService ms = services.getService("MasterService");
              passphrase = ms.getMasterSecret();
            }
-           ks.addSelfSignedCertForGateway(getGatewayConfig().getIdentityKeyAlias(), passphrase, hostname);
+           ks.addSelfSignedCertForGateway(config.getIdentityKeyAlias(), passphrase, hostname);
 //         logAndValidateCertificate();
-           out.println("Certificate " + getGatewayConfig().getIdentityKeyAlias() + " has been successfully created.");
+           out.println("Certificate " + config.getIdentityKeyAlias() + " has been successfully created.");
          } else {
            // require --force to replace...
            out.println("A non-self-signed certificate has already been installed in the configured keystore. " +
                "Please use --force if you wish to overwrite it with a generated self-signed certificate.");
          }
        } catch (KeystoreServiceException e) {
-         throw new ServiceLifecycleException("Keystore was not loaded properly - the provided (or persisted) master secret may not match the password for the keystore.", e);
+         throw new ServiceLifecycleException("The identity keystore was not loaded properly - the provided password may not match the password for the keystore.", e);
        }
      }
+   }
+
+   /**
+    * Determines if <code>--force</code> should be used inorder to not accidentally overwrite a
+    * real certificate.
+    * <p>
+    * <p>
+    * All of the following must be met for <code>--force</code> to <b>NOT</b> be required:
+    * <ul>
+    * <li>The path to the keystore file is the default path: <code>[Gateway Keystore Directory]/gateway.jks</code></li>
+    * <li>The alias name for the key is the default name: <code>gateway-identity</code></li>
+    * <li>The relevant certificate does not exist or is self-signed</li>
+    * <li>The relevant certificate has a subject name ending in "OU=Test,O=Hadoop,L=Test,ST=Test,C=US"</li>
+    * </ul>
+    *
+    * @param config the Gateway configuration
+    * @param ks     a {@link KeystoreService} implementation
+    * @return <code>true</code> if <code>--force</code> is required; otherwise <code>false</code>
+    */
+   private boolean isForceRequired(GatewayConfig config, KeystoreService ks) {
+
+     // Test the path of the keystore file
+     Path defaultKeystorePath = Paths.get(config.getGatewayKeystoreDir(), GatewayConfig.DEFAULT_GATEWAY_KEYSTORE_NAME).toAbsolutePath();
+     Path actualKeystorePath = Paths.get(config.getIdentityKeystorePath()).toAbsolutePath();
+     if (!defaultKeystorePath.equals(actualKeystorePath)) {
+       // The path is not the default path: --force is required
+       return true;
+     }
+
+     // Test the alias name for the key
+     if (!GatewayConfig.DEFAULT_IDENTITY_KEY_ALIAS.equals(config.getIdentityKeyAlias())) {
+       // The alias name for the key is not the default name (gateway-identity): --force is required
+       return true;
+     }
+
+     // Test the certificate
+     try {
+       Certificate certificate = ks.getCertificateForGateway();
+
+       if (certificate instanceof X509Certificate) {
+         if (!X509CertificateUtil.isSelfSignedCertificate(certificate)) {
+           // The relevant certificate exists and is not self-signed: --force is required
+           return true;
+         } else if (!((X509Certificate) certificate).getSubjectDN().getName().matches(".*?,\\s*OU=Test,\\s*O=Hadoop,\\s*L=Test,\\s*ST=Test,\\s*C=US")) {
+           // The subject name of certificate does not end with "OU=Test,O=Hadoop,L=Test,ST=Test,C=US": --force is required
+           return true;
+         }
+       }
+     } catch (KeyStoreException | KeystoreServiceException e) {
+       // A certificate was (probably) not previously created...
+     }
+
+     // All indicators point to a previously created test certificate: --force is not required
+     return false;
    }
 
    @Override
