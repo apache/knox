@@ -174,7 +174,7 @@ public class SimpleDescriptorHandlerFuncTest {
       MasterService ms = EasyMock.createNiceMock(MasterService.class);
       EasyMock.expect(ms.getMasterSecret()).andReturn(testMasterSecret.toCharArray()).anyTimes();
       EasyMock.replay(ms);
-      EasyMock.expect(gatewayServices.getService("MasterService")).andReturn(ms).anyTimes();
+      EasyMock.expect(gatewayServices.getService(GatewayServices.MASTER_SERVICE)).andReturn(ms).anyTimes();
 
       // Keystore Service
       KeystoreService ks = EasyMock.createNiceMock(KeystoreService.class);

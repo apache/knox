@@ -369,7 +369,7 @@ public class GatewayServer {
       httpsConfig.setSecureScheme( "https" );
       httpsConfig.setSecurePort( connectorPort );
       httpsConfig.addCustomizer( new SecureRequestCustomizer() );
-      SSLService ssl = services.getService("SSLService");
+      SSLService ssl = services.getService(GatewayServices.SSL_SERVICE);
       SslContextFactory sslContextFactory = (SslContextFactory)ssl.buildSslContextFactory( config.getIdentityKeystorePath(), config.getIdentityKeystoreType(), config.getIdentityKeyAlias() );
       connector = new ServerConnector( server, sslContextFactory, new HttpConnectionFactory( httpsConfig ) );
     } else {
