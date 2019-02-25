@@ -27,21 +27,23 @@ public interface GatewayServices extends Service,
   String GATEWAY_CLUSTER_ATTRIBUTE = "org.apache.knox.gateway.gateway.cluster";
   String GATEWAY_SERVICES_ATTRIBUTE = "org.apache.knox.gateway.gateway.services";
 
-  String SSL_SERVICE = "SSLService";
-  String CRYPTO_SERVICE = "CryptoService";
+  /* ************************************************************************************
+   * Service Name Constants
+   * ************************************************************************************ */
   String ALIAS_SERVICE = "AliasService";
-  String KEYSTORE_SERVICE = "KeystoreService";
-  String TOKEN_SERVICE = "TokenService";
-  String SERVICE_REGISTRY_SERVICE = "ServiceRegistryService";
-  String HOST_MAPPING_SERVICE = "HostMappingService";
-  String SERVER_INFO_SERVICE = "ServerInfoService";
-  String TOPOLOGY_SERVICE = "TopologyService";
-  String SERVICE_DEFINITION_REGISTRY = "ServiceDefinitionRegistry";
-  String METRICS_SERVICE = "MetricsService";
-
-  String REMOTE_REGISTRY_CLIENT_SERVICE = "RemoteConfigRegistryClientService";
-
   String CLUSTER_CONFIGURATION_MONITOR_SERVICE = "ClusterConfigurationMonitorService";
+  String CRYPTO_SERVICE = "CryptoService";
+  String HOST_MAPPING_SERVICE = "HostMappingService";
+  String KEYSTORE_SERVICE = "KeystoreService";
+  String MASTER_SERVICE = "MasterService";
+  String METRICS_SERVICE = "MetricsService";
+  String REMOTE_REGISTRY_CLIENT_SERVICE = "RemoteConfigRegistryClientService";
+  String SERVER_INFO_SERVICE = "ServerInfoService";
+  String SERVICE_DEFINITION_REGISTRY = "ServiceDefinitionRegistry";
+  String SERVICE_REGISTRY_SERVICE = "ServiceRegistryService";
+  String SSL_SERVICE = "SSLService";
+  String TOKEN_SERVICE = "TokenService";
+  String TOPOLOGY_SERVICE = "TopologyService";
 
   Collection<String> getServiceNames();
 

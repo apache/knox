@@ -253,7 +253,7 @@ public class SimpleDescriptorHandler {
         try {
             GatewayServices services = GatewayServer.getGatewayServices();
             if (services != null) {
-                MasterService ms = services.getService("MasterService");
+                MasterService ms = services.getService(GatewayServices.MASTER_SERVICE);
                 if (ms != null) {
                     KeystoreService ks = services.getService(GatewayServices.KEYSTORE_SERVICE);
                     if (ks != null) {

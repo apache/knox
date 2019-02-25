@@ -80,7 +80,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     }
     if (Boolean.parseBoolean(filterConfig.getInitParameter("useTwoWaySsl"))) {
       char[] keypass = null;
-      MasterService ms = services.getService("MasterService");
+      MasterService ms = services.getService(GatewayServices.MASTER_SERVICE);
       AliasService as = services.getService(GatewayServices.ALIAS_SERVICE);
       try {
         keypass = as.getGatewayIdentityPassphrase();

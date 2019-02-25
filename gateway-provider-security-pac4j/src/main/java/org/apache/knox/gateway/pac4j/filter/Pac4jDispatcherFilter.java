@@ -112,7 +112,7 @@ public class Pac4jDispatcherFilter implements Filter {
         keystoreService = services.getService(GatewayServices.KEYSTORE_SERVICE);
         cryptoService = services.getService(GatewayServices.CRYPTO_SERVICE);
         aliasService = services.getService(GatewayServices.ALIAS_SERVICE);
-        masterService = services.getService("MasterService");
+        masterService = services.getService(GatewayServices.MASTER_SERVICE);
       }
     }
     // crypto service, alias service and cluster name are mandatory

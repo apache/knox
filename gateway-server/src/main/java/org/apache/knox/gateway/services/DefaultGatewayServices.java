@@ -63,7 +63,7 @@ public class DefaultGatewayServices implements GatewayServices {
   public void init(GatewayConfig config, Map<String,String> options) throws ServiceLifecycleException {
     ms = new DefaultMasterService();
     ms.init(config, options);
-    services.put("MasterService", ms);
+    services.put(MASTER_SERVICE, ms);
 
     ks = new DefaultKeystoreService();
     ks.setMasterService(ms);

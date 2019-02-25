@@ -684,7 +684,7 @@ public class KnoxCLI extends Configured implements Tool {
          if ( !isForceRequired(config, ks) || force) {
            char[] passphrase = as.getGatewayIdentityPassphrase();
            if (passphrase == null) {
-             MasterService ms = services.getService("MasterService");
+             MasterService ms = services.getService(GatewayServices.MASTER_SERVICE);
              passphrase = ms.getMasterSecret();
            }
            ks.addSelfSignedCertForGateway(config.getIdentityKeyAlias(), passphrase, hostname);
