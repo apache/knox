@@ -28,7 +28,7 @@ public interface CryptoService extends Service {
 
   byte[] decryptForCluster(String clusterName, String alias, byte[] cipherText, byte[] iv, byte[] salt);
 
-  boolean verify(String algorithm, String alias, String payloadToSign, byte[] signaturePayload);
+  boolean verify(String algorithm, String payloadToSign, byte[] signaturePayload);
 
-  byte[] sign(String algorithm, String alias, String payloadToSign);
+  byte[] sign(String algorithm, String payloadToSign);
 }

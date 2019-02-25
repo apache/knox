@@ -62,7 +62,6 @@ public class JettySSLService implements SSLService {
   private boolean clientAuthNeeded;
   private boolean trustAllCerts;
   private String truststorePath;
-  private String keystoreType;
   private String trustStoreType;
   private boolean clientAuthWanted;
 
@@ -112,17 +111,16 @@ public class JettySSLService implements SSLService {
         if (passphrase == null) {
           passphrase = ms.getMasterSecret();
         }
-        ks.addSelfSignedCertForGateway("gateway-identity", passphrase);
+        ks.addSelfSignedCertForGateway(config.getIdentityKeyAlias(), passphrase);
       }
       else {
         log.keyStoreForGatewayFoundNotCreating();
       }
-      logAndValidateCertificate();
+      logAndValidateCertificate(config);
     } catch (KeystoreServiceException e) {
-      throw new ServiceLifecycleException("Keystore was not loaded properly - the provided (or persisted) master secret may not match the password for the keystore.", e);
+      throw new ServiceLifecycleException("The identity keystore was not loaded properly - the provided password may not match the password for the keystore.", e);
     }
 
-    keystoreType = config.getKeystoreType();
     sslIncludeCiphers = config.getIncludedSSLCiphers();
     sslExcludeCiphers = config.getExcludedSSLCiphers();
     sslExcludeProtocols = config.getExcludedSSLProtocols();
@@ -133,11 +131,11 @@ public class JettySSLService implements SSLService {
     trustStoreType = config.getTruststoreType();
   }
 
-  private void logAndValidateCertificate() throws ServiceLifecycleException {
+  private void logAndValidateCertificate(GatewayConfig config) throws ServiceLifecycleException {
     // let's log the hostname (CN) and cert expiry from the gateway's public cert to aid in SSL debugging
     Certificate cert;
     try {
-      cert = as.getCertificateForGateway("gateway-identity");
+      cert = as.getCertificateForGateway(config.getIdentityKeyAlias());
     } catch (AliasServiceException e) {
       throw new ServiceLifecycleException("Cannot Retreive Gateway SSL Certificate. Server will not start.", e);
     }
@@ -167,13 +165,26 @@ public class JettySSLService implements SSLService {
   }
 
   @Override
-  public Object buildSslContextFactory(String keystoreFileName ) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException {
+  public Object buildSslContextFactory(String keystoreFileName, String keystoreType, String alias) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException {
     SslContextFactory sslContextFactory = new SslContextFactory( true );
-    sslContextFactory.setCertAlias( "gateway-identity" );
+    sslContextFactory.setCertAlias( alias );
     sslContextFactory.setKeyStoreType(keystoreType);
     sslContextFactory.setKeyStorePath(keystoreFileName);
     char[] master = ms.getMasterSecret();
-    sslContextFactory.setKeyStorePassword(new String(master));
+
+    char[] keystorePasswordChars = null;
+    try {
+      keystorePasswordChars = as.getGatewayIdentityKeystorePassword();
+    } catch (AliasServiceException e) {
+      log.creatingKeyStoreForGateway();
+      // nop - default passphrase will be used
+    }
+    if(keystorePasswordChars == null) {
+      // If a keystore password was not set, use the master password
+      keystorePasswordChars = master;
+    }
+    sslContextFactory.setKeyStorePassword(new String(keystorePasswordChars));
+
     char[] keypass = null;
     try {
       keypass = as.getGatewayIdentityPassphrase();

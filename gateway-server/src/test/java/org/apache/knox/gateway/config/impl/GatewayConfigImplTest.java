@@ -16,10 +16,12 @@
  */
 package org.apache.knox.gateway.config.impl;
 
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.test.TestUtils;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -32,6 +34,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 
@@ -292,5 +295,57 @@ public class GatewayConfigImplTest {
     assertTrue(names.contains("default"));
   }
 
+  // KNOX-1756
+  @Test
+  public void testCustomIdentityKeystoreOptions() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    // Validate default options (backwards compatibility)
+    assertEquals("gateway-identity", config.getIdentityKeyAlias());
+    assertEquals("gateway-identity-passphrase", config.getIdentityKeyPassphraseAlias());
+    assertEquals("gateway-identity", config.getSigningKeyAlias());
+    assertEquals("gateway-identity-passphrase", config.getSigningKeyPassphraseAlias());
+    assertNull(config.getSigningKeystoreName());
+
+    // Validate default options (new)
+    assertEquals(GatewayConfig.DEFAULT_IDENTITY_KEYSTORE_PASSWORD_ALIAS, config.getIdentityKeystorePasswordAlias());
+    assertEquals(GatewayConfig.DEFAULT_IDENTITY_KEYSTORE_TYPE, config.getIdentityKeystoreType());
+    assertEquals(Paths.get(config.getGatewayKeystoreDir(), "gateway.jks").toAbsolutePath().toString(),
+        config.getIdentityKeystorePath());
+
+    // By default the signing keystore name will not be set, so the values will be taken from the identity's configs
+    assertEquals(config.getIdentityKeystorePath(), config.getSigningKeystorePath());
+    assertEquals(config.getIdentityKeystorePasswordAlias(), config.getSigningKeystorePasswordAlias());
+    assertEquals(config.getIdentityKeystoreType(), config.getSigningKeystoreType());
+    assertEquals(config.getIdentityKeyAlias(), config.getSigningKeyAlias());
+    assertEquals(config.getIdentityKeyPassphraseAlias(), config.getSigningKeyPassphraseAlias());
+
+    String tlsKeystorePath = Paths.get("custom", "keystore", "path", "keystore.p12").toString();
+
+    // Validate changed options
+    config.set("gateway.tls.key.alias", "custom_key_alias");
+    config.set("gateway.tls.key.passphrase.alias", "custom_key_passphrase_alias");
+    config.set("gateway.tls.keystore.path", tlsKeystorePath);
+    config.set("gateway.tls.keystore.type", "PKCS12");
+    config.set("gateway.tls.keystore.password.alias", "custom_keystore_password_alias");
+
+    config.set("gateway.signing.key.alias", "custom_key_alias");
+    config.set("gateway.signing.key.passphrase.alias", "custom_key_passphrase_alias");
+    config.set("gateway.signing.keystore.name", "custom_keystore_name");
+    config.set("gateway.signing.keystore.type", "PKCS12");
+    config.set("gateway.signing.keystore.password.alias", "custom_keystore_password_alias");
+
+    assertEquals("custom_key_alias", config.getIdentityKeyAlias());
+    assertEquals("custom_key_passphrase_alias", config.getIdentityKeyPassphraseAlias());
+    assertEquals(tlsKeystorePath, config.getIdentityKeystorePath());
+    assertEquals("PKCS12", config.getIdentityKeystoreType());
+    assertEquals("custom_keystore_password_alias", config.getIdentityKeystorePasswordAlias());
+
+    assertEquals("custom_key_alias", config.getSigningKeyAlias());
+    assertEquals("custom_key_passphrase_alias", config.getSigningKeyPassphraseAlias());
+    assertEquals("custom_keystore_name", config.getSigningKeystoreName());
+    assertEquals("PKCS12", config.getSigningKeystoreType());
+    assertEquals("custom_keystore_password_alias", config.getSigningKeystorePasswordAlias());
+  }
 
 }

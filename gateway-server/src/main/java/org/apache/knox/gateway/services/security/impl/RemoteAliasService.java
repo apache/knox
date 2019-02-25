@@ -63,7 +63,6 @@ public class RemoteAliasService implements AliasService {
       PATH_KNOX_SECURITY + "/topology";
   public static final String PATH_SEPARATOR = "/";
   public static final String DEFAULT_CLUSTER_NAME = "__gateway";
-  public static final String GATEWAY_IDENTITY_PASSPHRASE = "gateway-identity-passphrase";
 
   private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
   // N.B. This is ZooKeeper-specific, and should be abstracted when another registry is supported
@@ -379,12 +378,40 @@ public class RemoteAliasService implements AliasService {
 
   @Override
   public char[] getGatewayIdentityPassphrase() throws AliasServiceException {
-    char[] passphrase = getPasswordFromAliasForGateway(
-        GATEWAY_IDENTITY_PASSPHRASE);
+    char[] passphrase = getPasswordFromAliasForGateway(config.getIdentityKeyPassphraseAlias());
     if (passphrase == null) {
+      // Fall back to the keystore password if a key-specific password was not explicitly set.
+      passphrase = getGatewayIdentityKeystorePassword();
+    }
+    if (passphrase == null) {
+      // Use the master password if not password was found
       passphrase = ms.getMasterSecret();
     }
     return passphrase;
+  }
+
+  @Override
+  public char[] getGatewayIdentityKeystorePassword() throws AliasServiceException {
+    return getKeystorePassword(config.getIdentityKeystorePasswordAlias());
+  }
+
+  @Override
+  public char[] getSigningKeyPassphrase() throws AliasServiceException {
+    char[] passphrase = getPasswordFromAliasForGateway(config.getSigningKeyPassphraseAlias());
+    if (passphrase == null) {
+      // Fall back to the keystore password if a key-specific password was not explicitly set.
+      passphrase = getSigningKeystorePassword();
+    }
+    if (passphrase == null) {
+      // Use the master password if not password was found
+      passphrase = ms.getMasterSecret();
+    }
+    return passphrase;
+  }
+
+  @Override
+  public char[] getSigningKeystorePassword() throws AliasServiceException {
+    return getKeystorePassword(config.getSigningKeystorePasswordAlias());
   }
 
   @Override
@@ -514,6 +541,15 @@ public class RemoteAliasService implements AliasService {
         PATH_KNOX_ALIAS_STORE_TOPOLOGY + PATH_SEPARATOR + DEFAULT_CLUSTER_NAME,
         remoteClient);
   }
+
+  private char[] getKeystorePassword(String alias) throws AliasServiceException {
+    char[] passphrase = getPasswordFromAliasForGateway(alias);
+    if (passphrase == null) {
+      passphrase = ms.getMasterSecret();
+    }
+    return passphrase;
+  }
+
 
   /**
    * Encrypt the clear text with master password.

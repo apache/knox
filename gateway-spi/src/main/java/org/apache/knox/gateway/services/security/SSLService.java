@@ -25,5 +25,5 @@ import java.security.cert.CertificateException;
 import org.apache.knox.gateway.services.Service;
 
 public interface SSLService extends Service {
-  Object buildSslContextFactory(String gatewayHomeDir) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException;
+  Object buildSslContextFactory(String keystoreFileName, String keystoreType, String alias) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException;
 }

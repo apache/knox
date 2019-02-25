@@ -39,8 +39,27 @@ public interface GatewayConfig {
   String KRB5_DEBUG = "sun.security.krb5.debug";
   String KRB5_LOGIN_CONFIG = "java.security.auth.login.config";
   String KRB5_USE_SUBJECT_CREDS_ONLY = "javax.security.auth.useSubjectCredsOnly";
+
+  String IDENTITY_KEYSTORE_PASSWORD_ALIAS = "gateway.tls.keystore.password.alias";
+  String IDENTITY_KEYSTORE_PATH = "gateway.tls.keystore.path";
+  String IDENTITY_KEYSTORE_TYPE = "gateway.tls.keystore.type";
+  String IDENTITY_KEY_ALIAS = "gateway.tls.key.alias";
+  String IDENTITY_KEY_PASSPHRASE_ALIAS = "gateway.tls.key.passphrase.alias";
+  String DEFAULT_IDENTITY_KEYSTORE_TYPE = "JKS";
+  String DEFAULT_IDENTITY_KEYSTORE_PASSWORD_ALIAS = "gateway-identity-keystore-password";
+  String DEFAULT_IDENTITY_KEY_ALIAS = "gateway-identity";
+  String DEFAULT_IDENTITY_KEY_PASSPHRASE_ALIAS = "gateway-identity-passphrase";
+  String DEFAULT_GATEWAY_KEYSTORE_NAME = "gateway.jks";
+
   String SIGNING_KEYSTORE_NAME = "gateway.signing.keystore.name";
+  String SIGNING_KEYSTORE_PASSWORD_ALIAS = "gateway.signing.keystore.password.alias";
+  String SIGNING_KEYSTORE_TYPE = "gateway.signing.keystore.type";
   String SIGNING_KEY_ALIAS = "gateway.signing.key.alias";
+  String SIGNING_KEY_PASSPHRASE_ALIAS = "gateway.signing.key.passphrase.alias";
+  String DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS = "signing.keystore.password";
+  String DEFAULT_SIGNING_KEYSTORE_TYPE = "JKS";
+  String DEFAULT_SIGNING_KEY_ALIAS = "gateway-identity";
+  String DEFAULT_SIGNING_KEY_PASSPHRASE_ALIAS = "signing.key.passphrase";
 
   String REMOTE_CONFIG_REGISTRY_TYPE = "type";
   String REMOTE_CONFIG_REGISTRY_ADDRESS = "address";
@@ -93,6 +112,16 @@ public interface GatewayConfig {
   String getGatewayTopologyDir();
 
   String getGatewaySecurityDir();
+
+  /**
+   * Returns the path to the Gateway's keystore directory
+   * <p>
+   * This path is generally calculated to be a subdirectory named "keystores" under the configured
+   * "security" directory. However, it may be possible for it to be configured as something else.
+   *
+   * @return the path to the Gateway's keystore directory
+   */
+  String getGatewayKeystoreDir();
 
   String getGatewayDeploymentDir();
 
@@ -158,9 +187,80 @@ public interface GatewayConfig {
 
   long getGatewayIdleTimeout();
 
+  /**
+   * Returns the configured value for the path to the keystore holding the key and certificate for the
+   * Gateway's TLS identity.
+   *
+   * @return a path to the keystore file; or <code>null</code> if not set
+   */
+  String getIdentityKeystorePath();
+
+  /**
+   * Returns the configured value for the type of the keystore holding the Gateway's identity.
+   *
+   * @return a keystore type
+   */
+  String getIdentityKeystoreType();
+
+  /**
+   * Returns the configured value for the alias name to use when to looking up the Gateway's identity
+   * keystore's password.
+   *
+   * @return an alias name
+   */
+  String getIdentityKeystorePasswordAlias();
+
+  /**
+   * Returns the configured value for the alias name to use when to looking up the Gateway's identity
+   * from the Gateway's identity keystore.
+   *
+   * @return an alias name
+   */
+  String getIdentityKeyAlias();
+
+  /**
+   * Returns the configured value for the alias name to use when to looking up the Gateway's identity
+   * key's password.
+   *
+   * @return an alias name
+   */
+  String getIdentityKeyPassphraseAlias();
+
   String getSigningKeystoreName();
 
+  /**
+   * Returns the calculated value for the path to the keystore holding the key and certificate for the
+   * Gateway's signing key.
+   *
+   * @return a path to the keystore file; or <code>null</code> if not set
+   */
+  String getSigningKeystorePath();
+
+  /**
+   * Returns the configured value for the type of the keystore holding the Gateway's signing key.
+   *
+   * @return a keystore type
+   */
+  String getSigningKeystoreType();
+
   String getSigningKeyAlias();
+
+  /**
+   * Returns the configured value for the alias name to use when to looking up the Gateway's signing
+   * keystore's password.
+   *
+   * @return an alias name
+   */
+  String getSigningKeystorePasswordAlias();
+
+  /**
+   * Returns the configured value for the alias name to use when to looking up the signing key's
+   * password.
+   *
+   * @return an alias name
+   */
+  String getSigningKeyPassphraseAlias();
+
 
   List<String> getGlobalRulesServices();
 

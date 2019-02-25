@@ -178,11 +178,11 @@ public class TokenResource {
     long expires = getExpiry();
 
     if (endpointPublicCert == null) {
-      // acquire PEM for gateway-identity of this gateway instance
+      // acquire PEM for gateway identity of this gateway instance
       KeystoreService ks = services.getService(GatewayServices.KEYSTORE_SERVICE);
       if (ks != null) {
         try {
-          Certificate cert = ks.getKeystoreForGateway().getCertificate("gateway-identity");
+          Certificate cert = ks.getCertificateForGateway();
           byte[] bytes = cert.getEncoded();
           //Base64 encoder = new Base64(76, "\n".getBytes("ASCII"));
           endpointPublicCert = Base64.encodeBase64String(bytes);

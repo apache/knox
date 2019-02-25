@@ -47,6 +47,12 @@ public interface AliasService extends Service {
 
   char[] getGatewayIdentityPassphrase() throws AliasServiceException;
 
+  char[] getGatewayIdentityKeystorePassword() throws AliasServiceException;
+
+  char[] getSigningKeyPassphrase() throws AliasServiceException;
+
+  char[] getSigningKeystorePassword() throws AliasServiceException;
+
   void generateAliasForGateway(String alias)
       throws AliasServiceException;
 
