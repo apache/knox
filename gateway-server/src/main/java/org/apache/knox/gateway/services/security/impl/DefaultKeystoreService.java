@@ -66,8 +66,6 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
   private static GatewayResources RES = ResourcesFactory.get( GatewayResources.class );
 
   private GatewayConfig config;
-  private String signingKeystoreName;
-  private String signingKeyAlias;
   private Map<String, Map<String, String>> cache = new ConcurrentHashMap<>();
   private Lock readLock;
   private Lock writeLock;
@@ -86,32 +84,6 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
     if (!ksd.exists()) {
       if( !ksd.mkdirs() ) {
         throw new ServiceLifecycleException( RES.failedToCreateKeyStoreDirectory( ksd.getAbsolutePath() ) );
-      }
-    }
-
-    signingKeystoreName = config.getSigningKeystoreName();
-    // ensure that the keystore actually exists and fail to start if not
-    if (signingKeystoreName != null) {
-      File sks = new File(this.keyStoreDir, signingKeystoreName);
-      if (!sks.exists()) {
-        throw new ServiceLifecycleException("Configured signing keystore does not exist.");
-      }
-      signingKeyAlias = config.getSigningKeyAlias();
-      if (signingKeyAlias != null) {
-        // ensure that the signing key alias exists in the configured keystore
-        KeyStore ks;
-        try {
-          ks = getSigningKeystore();
-          if (ks != null) {
-            if (!ks.containsAlias(signingKeyAlias)) {
-              throw new ServiceLifecycleException("Configured signing key alias does not exist.");
-            }
-          }
-        } catch (KeystoreServiceException e) {
-          throw new ServiceLifecycleException("Unable to get the configured signing keystore.", e);
-        } catch (KeyStoreException e) {
-          throw new ServiceLifecycleException("Signing keystore has not been loaded.", e);
-        }
       }
     }
   }

@@ -162,6 +162,8 @@ public class DefaultGatewayServices implements GatewayServices {
     SSLService ssl = (SSLService) services.get(SSL_SERVICE);
     ssl.start();
 
+    (services.get(TOKEN_SERVICE)).start();
+
     ServerInfoService sis = (ServerInfoService) services.get(SERVER_INFO_SERVICE);
     sis.start();
 
