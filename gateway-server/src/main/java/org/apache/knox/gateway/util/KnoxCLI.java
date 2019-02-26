@@ -44,7 +44,6 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.MasterService;
-import org.apache.knox.gateway.services.security.impl.X509CertificateUtil;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Topology;

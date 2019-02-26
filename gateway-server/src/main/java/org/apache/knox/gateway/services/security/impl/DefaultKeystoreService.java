@@ -27,6 +27,7 @@ import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
+import org.apache.knox.gateway.util.X509CertificateUtil;
 
 import java.io.File;
 import java.io.IOException;

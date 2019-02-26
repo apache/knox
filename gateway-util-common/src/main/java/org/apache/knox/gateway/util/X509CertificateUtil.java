@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.services.security.impl;
+package org.apache.knox.gateway.util;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,12 +41,12 @@ import java.security.cert.X509Certificate;
 import java.util.Date;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.knox.gateway.i18n.GatewaySpiMessages;
+import org.apache.knox.gateway.i18n.GatewayUtilCommonMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 public class X509CertificateUtil {
 
-  private static GatewaySpiMessages LOG = MessagesFactory.get(GatewaySpiMessages.class);
+  private static GatewayUtilCommonMessages LOG = MessagesFactory.get(GatewayUtilCommonMessages.class);
 
   /**
    * Create a self-signed X.509 Certificate

@@ -34,6 +34,7 @@ import org.apache.knox.gateway.i18n.GatewaySpiMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
+import org.apache.knox.gateway.util.X509CertificateUtil;
 
 public class CMFKeystoreService extends BaseKeystoreService {
   private static GatewaySpiMessages LOG = MessagesFactory.get( GatewaySpiMessages.class );

@@ -26,7 +26,7 @@ limitations under the License.
   </Match>
 
   <Match>
-    <Class name="org.apache.knox.gateway.services.security.impl.X509CertificateUtil" />
+    <Class name="org.apache.knox.gateway.util.X509CertificateUtil" />
     <Method name="writeCertificateToKeyStore" />
     <Bug pattern="HARD_CODE_PASSWORD" />
   </Match>
