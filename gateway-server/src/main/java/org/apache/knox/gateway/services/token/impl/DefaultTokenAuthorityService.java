@@ -17,9 +17,14 @@
  */
 package org.apache.knox.gateway.services.token.impl;
 
+import java.security.Key;
+import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.PublicKey;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Map;
@@ -30,7 +35,9 @@ import java.util.HashSet;
 
 import javax.security.auth.Subject;
 
+import org.apache.knox.gateway.GatewayResources;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -48,11 +55,12 @@ import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 
 public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
+  private static final GatewayResources RESOURCES = ResourcesFactory.get(GatewayResources.class);
 
   private static final Set<String> SUPPORTED_SIG_ALGS = new HashSet<>();
   private AliasService as;
   private KeystoreService ks;
-  String signingKeyAlias;
+  private GatewayConfig config;
 
   static {
       // Only standard RSA signature algorithms are accepted
@@ -161,14 +169,18 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     return as.getSigningKeyPassphrase();
   }
 
+  private String getSigningKeyAlias() {
+    String alias = config.getSigningKeyAlias();
+    return (alias == null) ? GatewayConfig.DEFAULT_SIGNING_KEY_ALIAS : alias;
+  }
+
   private String getSigningKeyAlias(String signingKeystoreAlias) {
     if(signingKeystoreAlias != null) {
      return signingKeystoreAlias;
     }
-    if(signingKeyAlias != null) {
-      return signingKeyAlias;
-    }
-    return GatewayConfig.DEFAULT_SIGNING_KEY_ALIAS;
+
+    // Fallback to defaults
+    return getSigningKeyAlias();
   }
 
   @Override
@@ -184,7 +196,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     PublicKey key;
     try {
       if (publicKey == null) {
-        key = ks.getSigningKeystore().getCertificate(getSigningKeyAlias(signingKeyAlias)).getPublicKey();
+        key = ks.getSigningKeystore().getCertificate(getSigningKeyAlias()).getPublicKey();
       }
       else {
         key = publicKey;
@@ -205,26 +217,64 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     if (as == null || ks == null) {
       throw new ServiceLifecycleException("Alias or Keystore service is not set");
     }
-    signingKeyAlias = config.getSigningKeyAlias();
-
-    RSAPrivateKey key;
-    char[] passphrase;
-    try {
-      passphrase = as.getSigningKeyPassphrase();
-      if (passphrase != null) {
-        key = (RSAPrivateKey) ks.getSigningKey(getSigningKeyAlias(signingKeyAlias),
-            passphrase);
-        if (key == null) {
-          throw new ServiceLifecycleException("Provisioned passphrase cannot be used to acquire signing key.");
-        }
-      }
-    } catch (AliasServiceException | KeystoreServiceException e) {
-      throw new ServiceLifecycleException("Provisioned signing key passphrase cannot be acquired.", e);
-    }
+    this.config = config;
   }
 
   @Override
   public void start() throws ServiceLifecycleException {
+    // Ensure that the default signing keystore is available
+    KeyStore keystore;
+    try {
+      keystore = ks.getSigningKeystore();
+      if (keystore == null) {
+        throw new ServiceLifecycleException(RESOURCES.signingKeystoreNotAvailable(config.getSigningKeystorePath()));
+      }
+    } catch (KeystoreServiceException e) {
+      throw new ServiceLifecycleException(RESOURCES.signingKeystoreNotAvailable(config.getSigningKeystorePath()), e);
+    }
+
+    // Ensure that the password for the signing key is available
+    char[] passphrase;
+    try {
+      passphrase = as.getSigningKeyPassphrase();
+      if (passphrase == null) {
+        throw new ServiceLifecycleException(RESOURCES.signingKeyPassphraseNotAvailable(config.getSigningKeyPassphraseAlias()));
+      }
+    } catch (AliasServiceException e) {
+      throw new ServiceLifecycleException(RESOURCES.signingKeyPassphraseNotAvailable(config.getSigningKeyPassphraseAlias()), e);
+    }
+
+    String signingKeyAlias = getSigningKeyAlias();
+
+    // Ensure that the public signing keys is available
+    try {
+      Certificate certificate = keystore.getCertificate(signingKeyAlias);
+      if(certificate == null) {
+        throw new ServiceLifecycleException(RESOURCES.publicSigningKeyNotFound(signingKeyAlias));
+      }
+      PublicKey publicKey = certificate.getPublicKey();
+      if (publicKey == null) {
+        throw new ServiceLifecycleException(RESOURCES.publicSigningKeyNotFound(signingKeyAlias));
+      }
+      else if (! (publicKey instanceof  RSAPublicKey)) {
+        throw new ServiceLifecycleException(RESOURCES.publicSigningKeyWrongType(signingKeyAlias));
+      }
+    } catch (KeyStoreException e) {
+      throw new ServiceLifecycleException(RESOURCES.publicSigningKeyNotFound(signingKeyAlias), e);
+    }
+
+    // Ensure that the private signing keys is available
+    try {
+      Key key = keystore.getKey(signingKeyAlias, passphrase);
+      if (key == null) {
+        throw new ServiceLifecycleException(RESOURCES.privateSigningKeyNotFound(signingKeyAlias));
+      }
+      else if (! (key instanceof  RSAPrivateKey)) {
+        throw new ServiceLifecycleException(RESOURCES.privateSigningKeyWrongType(signingKeyAlias));
+      }
+    } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
+      throw new ServiceLifecycleException(RESOURCES.privateSigningKeyNotFound(signingKeyAlias), e);
+    }
   }
 
   @Override

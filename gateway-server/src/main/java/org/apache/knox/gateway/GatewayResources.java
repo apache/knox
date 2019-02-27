@@ -82,4 +82,22 @@ public interface GatewayResources {
 
   @Resource( text="Forward method: {0} to default context: {1}" )
   String forwardToDefaultTopology(String method, String context );
+
+  @Resource( text="The keystore used to acquire the signing key is not available. The file could be missing or the password could be incorrect: {0}")
+  String signingKeystoreNotAvailable( String path );
+
+  @Resource( text="Provisioned signing key passphrase cannot be acquired using the alias name {0}.")
+  String signingKeyPassphraseNotAvailable( String alias);
+
+  @Resource( text="The public signing key was not found in the signing keystore using the alias name {0}.")
+  String publicSigningKeyNotFound( String alias );
+
+  @Resource( text="The private signing key was not found in the signing keystore using the alias name {0}. The alias could be missing or the password could be incorrect.")
+  String privateSigningKeyNotFound( String alias );
+
+  @Resource( text="The private signing key found in the signing keystore using the alias name {0} is not a RSAPrivateKey")
+  String privateSigningKeyWrongType( String alias );
+
+  @Resource( text="The public signing key found in the signing keystore using the alias name {0} is not a RSAPublicKey")
+  String publicSigningKeyWrongType( String alias );
 }
