@@ -147,7 +147,7 @@
         <bcprov-jdk15on.version>1.61</bcprov-jdk15on.version>
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
         <cglib.version>3.2.10</cglib.version>
-        <checkstyle.version>8.17</checkstyle.version>
+        <checkstyle.version>8.18</checkstyle.version>
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
         <commons-cli.version>1.4</commons-cli.version>
         <commons-codec.version>1.12</commons-codec.version>
