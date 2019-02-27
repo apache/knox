@@ -369,6 +369,10 @@ public class DefaultTokenAuthorityServiceTest {
     ta.init(config, new HashMap<>());
     ta.start();
 
+    // Stop the started services...
+    ta.stop();
+    ks.stop();
+
     EasyMock.verify(config, ms, as);
   }
 

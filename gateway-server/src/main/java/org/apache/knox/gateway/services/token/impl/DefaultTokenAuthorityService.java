@@ -169,13 +169,18 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     return as.getSigningKeyPassphrase();
   }
 
+  private String getSigningKeyAlias() {
+    String alias = config.getSigningKeyAlias();
+    return (alias == null) ? GatewayConfig.DEFAULT_SIGNING_KEY_ALIAS : alias;
+  }
+
   private String getSigningKeyAlias(String signingKeystoreAlias) {
     if(signingKeystoreAlias != null) {
      return signingKeystoreAlias;
     }
 
-    String alias = config.getSigningKeyAlias();
-    return (alias == null) ? GatewayConfig.DEFAULT_SIGNING_KEY_ALIAS : alias;
+    // Fallback to defaults
+    return getSigningKeyAlias();
   }
 
   @Override
@@ -191,7 +196,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     PublicKey key;
     try {
       if (publicKey == null) {
-        key = ks.getSigningKeystore().getCertificate(getSigningKeyAlias(null)).getPublicKey();
+        key = ks.getSigningKeystore().getCertificate(getSigningKeyAlias()).getPublicKey();
       }
       else {
         key = publicKey;
@@ -233,42 +238,42 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     try {
       passphrase = as.getSigningKeyPassphrase();
       if (passphrase == null) {
-        throw new ServiceLifecycleException(RESOURCES.signingKeyPassphraseNotAvailable(config.getSigningKeyAlias()));
+        throw new ServiceLifecycleException(RESOURCES.signingKeyPassphraseNotAvailable(config.getSigningKeyPassphraseAlias()));
       }
     } catch (AliasServiceException e) {
-      throw new ServiceLifecycleException(RESOURCES.signingKeyPassphraseNotAvailable(config.getSigningKeyAlias()), e);
+      throw new ServiceLifecycleException(RESOURCES.signingKeyPassphraseNotAvailable(config.getSigningKeyPassphraseAlias()), e);
     }
 
-    String defaultAliasName = getSigningKeyAlias(null);
+    String signingKeyAlias = getSigningKeyAlias();
 
     // Ensure that the public signing keys is available
     try {
-      Certificate certificate = keystore.getCertificate(defaultAliasName);
+      Certificate certificate = keystore.getCertificate(signingKeyAlias);
       if(certificate == null) {
-        throw new ServiceLifecycleException(RESOURCES.publicSigningKeyNotFound(defaultAliasName));
+        throw new ServiceLifecycleException(RESOURCES.publicSigningKeyNotFound(signingKeyAlias));
       }
       PublicKey publicKey = certificate.getPublicKey();
       if (publicKey == null) {
-        throw new ServiceLifecycleException(RESOURCES.publicSigningKeyNotFound(defaultAliasName));
+        throw new ServiceLifecycleException(RESOURCES.publicSigningKeyNotFound(signingKeyAlias));
       }
       else if (! (publicKey instanceof  RSAPublicKey)) {
-        throw new ServiceLifecycleException(RESOURCES.publicSigningKeyWrongType(defaultAliasName));
+        throw new ServiceLifecycleException(RESOURCES.publicSigningKeyWrongType(signingKeyAlias));
       }
     } catch (KeyStoreException e) {
-      throw new ServiceLifecycleException(RESOURCES.publicSigningKeyNotFound(defaultAliasName), e);
+      throw new ServiceLifecycleException(RESOURCES.publicSigningKeyNotFound(signingKeyAlias), e);
     }
 
     // Ensure that the private signing keys is available
     try {
-      Key key = keystore.getKey(defaultAliasName, passphrase);
+      Key key = keystore.getKey(signingKeyAlias, passphrase);
       if (key == null) {
-        throw new ServiceLifecycleException(RESOURCES.privateSigningKeyNotFound(defaultAliasName));
+        throw new ServiceLifecycleException(RESOURCES.privateSigningKeyNotFound(signingKeyAlias));
       }
       else if (! (key instanceof  RSAPrivateKey)) {
-        throw new ServiceLifecycleException(RESOURCES.privateSigningKeyWrongType(defaultAliasName));
+        throw new ServiceLifecycleException(RESOURCES.privateSigningKeyWrongType(signingKeyAlias));
       }
     } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
-      throw new ServiceLifecycleException(RESOURCES.privateSigningKeyNotFound(defaultAliasName), e);
+      throw new ServiceLifecycleException(RESOURCES.privateSigningKeyNotFound(signingKeyAlias), e);
     }
   }
 

@@ -33,7 +33,6 @@ import org.apache.knox.gateway.services.topology.impl.DefaultTopologyService;
 import org.apache.knox.gateway.services.hostmap.impl.DefaultHostMapperService;
 import org.apache.knox.gateway.services.registry.impl.DefaultServiceRegistryService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
-import org.apache.knox.gateway.services.security.SSLService;
 import org.apache.knox.gateway.services.security.impl.DefaultAliasService;
 import org.apache.knox.gateway.services.security.impl.DefaultCryptoService;
 import org.apache.knox.gateway.services.security.impl.DefaultKeystoreService;
@@ -50,6 +49,33 @@ import java.util.Map;
 public class DefaultGatewayServices implements GatewayServices {
 
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
+
+  private static final String[] SERVICE_START_ORDER = new String[]{
+      MASTER_SERVICE,
+      KEYSTORE_SERVICE,
+      ALIAS_SERVICE,
+      SSL_SERVICE,
+      TOKEN_SERVICE,
+      SERVER_INFO_SERVICE,
+      REMOTE_REGISTRY_CLIENT_SERVICE,
+      CLUSTER_CONFIGURATION_MONITOR_SERVICE,
+      TOPOLOGY_SERVICE,
+      METRICS_SERVICE
+  };
+
+  // TODO: This is the original order of service to stop... however maybe reverse of start should be done instead
+  private static final String[] SERVICE_STOP_ORDER = new String[]{
+      MASTER_SERVICE,
+      KEYSTORE_SERVICE,
+      CLUSTER_CONFIGURATION_MONITOR_SERVICE,
+      ALIAS_SERVICE,
+      SSL_SERVICE,
+      TOKEN_SERVICE,
+      SERVER_INFO_SERVICE,
+      REMOTE_REGISTRY_CLIENT_SERVICE,
+      TOPOLOGY_SERVICE,
+      METRICS_SERVICE
+  };
 
   private Map<String,Service> services = new HashMap<>();
   private DefaultMasterService ms;
@@ -152,56 +178,16 @@ public class DefaultGatewayServices implements GatewayServices {
 
   @Override
   public void start() throws ServiceLifecycleException {
-    ms.start();
-
-    ks.start();
-
-    Service alias = services.get(ALIAS_SERVICE);
-    alias.start();
-
-    SSLService ssl = (SSLService) services.get(SSL_SERVICE);
-    ssl.start();
-
-    (services.get(TOKEN_SERVICE)).start();
-
-    ServerInfoService sis = (ServerInfoService) services.get(SERVER_INFO_SERVICE);
-    sis.start();
-
-    RemoteConfigurationRegistryClientService clientService =
-                            (RemoteConfigurationRegistryClientService)services.get(REMOTE_REGISTRY_CLIENT_SERVICE);
-    clientService.start();
-
-    (services.get(CLUSTER_CONFIGURATION_MONITOR_SERVICE)).start();
-
-    DefaultTopologyService tops = (DefaultTopologyService)services.get(TOPOLOGY_SERVICE);
-    tops.start();
-
-    DefaultMetricsService metricsService = (DefaultMetricsService) services.get(METRICS_SERVICE);
-    metricsService.start();
+    for(String service: SERVICE_START_ORDER) {
+      services.get(service).start();
+    }
   }
 
   @Override
   public void stop() throws ServiceLifecycleException {
-    ms.stop();
-
-    ks.stop();
-
-    (services.get(CLUSTER_CONFIGURATION_MONITOR_SERVICE)).stop();
-
-    Service alias = services.get(ALIAS_SERVICE);
-    alias.stop();
-
-    SSLService ssl = (SSLService) services.get(SSL_SERVICE);
-    ssl.stop();
-
-    ServerInfoService sis = (ServerInfoService) services.get(SERVER_INFO_SERVICE);
-    sis.stop();
-
-    DefaultTopologyService tops = (DefaultTopologyService)services.get(TOPOLOGY_SERVICE);
-    tops.stop();
-
-    DefaultMetricsService metricsService = (DefaultMetricsService) services.get(METRICS_SERVICE);
-    metricsService.stop();
+    for(String service: SERVICE_STOP_ORDER) {
+      services.get(service).stop();
+    }
   }
 
   @Override
