@@ -208,7 +208,7 @@
         <maven-pmd-plugin.version>3.11.0</maven-pmd-plugin.version>
         <metrics.version>4.0.5</metrics.version>
         <mina.version>2.0.20</mina.version>
-        <nimbus-jose-jwt.version>7.0</nimbus-jose-jwt.version>
+        <nimbus-jose-jwt.version>7.0.1</nimbus-jose-jwt.version>
         <okhttp.version>2.7.5</okhttp.version>
         <pac4j.version>3.5.0</pac4j.version>
         <protobuf.version>3.6.1</protobuf.version>
