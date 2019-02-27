@@ -93,7 +93,7 @@ public class KnoxSession implements Closeable {
 
   private static final String GATEWAY_CLIENT_TRUST_DEFAULT_PASS = "changeit";
   private static final String KNOX_CLIENT_TRUSTSTORE_PASS = "KNOX_CLIENT_TRUSTSTORE_PASS";
-  private static final String GATEWAY_CLIENT_TRUST = "gateway-client-trust.jks";
+  public static final String GATEWAY_CLIENT_TRUST = "gateway-client-trust.jks";
   private static final String KNOX_CLIENT_TRUSTSTORE_FILENAME = "KNOX_CLIENT_TRUSTSTORE_FILENAME";
   private static final String KNOX_CLIENT_TRUSTSTORE_DIR = "KNOX_CLIENT_TRUSTSTORE_DIR";
   private static final String DEFAULT_JAAS_FILE = "/jaas.conf";

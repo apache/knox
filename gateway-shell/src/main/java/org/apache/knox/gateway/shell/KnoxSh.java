@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.net.Socket;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -174,18 +175,23 @@ public class KnoxSh {
 
     private static final String USAGE = "buildTrustStore --gateway server-url";
     private static final String DESC = "Downloads the gateway server's public certificate and builds a trust store.";
-    private static final String CLIENT_TRUST_STORE_FILE_NAME = "gateway-client-trust.jks";
+    private static final String GATEWAY_CERT_NOT_EXPORTED = "Finished work without building truststore";
+    private static final String GATEWAY_CERT_EXPORTED_MESSAGE_PREFIX = "Gateway server's certificate is exported into ";
 
     @Override
     public void execute() throws Exception {
-      final X509Certificate gatewayServerPublicCert = fetchPublicCertFromGatewayServer();
-      if (gatewayServerPublicCert != null) {
-        final File trustStoreFile = new File(System.getProperty("user.home"), CLIENT_TRUST_STORE_FILE_NAME);
-        X509CertificateUtil.writeCertificateToJks(gatewayServerPublicCert, trustStoreFile);
-        out.println("Gateway server's certificate is exported into " + trustStoreFile.getAbsolutePath());
-      } else {
-        out.println("Could not obtain server certificate chain");
+      String result = GATEWAY_CERT_NOT_EXPORTED;
+      try {
+        final X509Certificate gatewayServerPublicCert = fetchPublicCertFromGatewayServer();
+        if (gatewayServerPublicCert != null) {
+          final File trustStoreFile = Paths.get(System.getProperty("user.home"), KnoxSession.GATEWAY_CLIENT_TRUST).toFile();
+          X509CertificateUtil.writeCertificateToJks(gatewayServerPublicCert, trustStoreFile);
+          result = GATEWAY_CERT_EXPORTED_MESSAGE_PREFIX + trustStoreFile.getAbsolutePath();
+        }
+      } catch(Exception e) {
+        //NOP
       }
+      out.println(result);
     }
 
     private X509Certificate fetchPublicCertFromGatewayServer() throws Exception {
@@ -198,20 +204,18 @@ public class KnoxSh {
 
       final URI uri = URI.create(gateway);
       out.println("Opening connection to " + uri.getHost() + ":" + uri.getPort() + "...");
-      final SSLSocket socket = (SSLSocket) sslContext.getSocketFactory().createSocket(uri.getHost(), uri.getPort());
-      socket.setSoTimeout(10000);
-      try {
+      try (Socket socket = sslContext.getSocketFactory().createSocket(uri.getHost(), uri.getPort())) {
+        socket.setSoTimeout(10000);
         out.println("Starting SSL handshake...");
-        socket.startHandshake();
-        socket.close();
-        out.println();
+        ((SSLSocket) socket).startHandshake();
         out.println("No errors, certificate is already trusted");
+        trustManagerWithCertificateChain.serverCertificateChain = null; //we already trust the given site's certs; it does not make sense to build a new truststore
       } catch (SSLException e) {
-        // NOP; this is expected in case the gateway server's certificate is not in the trust store the JVM uses
-        out.println("SSL exception; found non-trusted certificate");
+        // NOP; this is expected in case the gateway server's certificate is not in the
+        // trust store the JVM uses
       }
 
-      return trustManagerWithCertificateChain.certificateChain == null ? null : trustManagerWithCertificateChain.certificateChain[0];
+      return trustManagerWithCertificateChain.serverCertificateChain == null ? null : trustManagerWithCertificateChain.serverCertificateChain[0];
     }
 
     @Override
@@ -221,7 +225,7 @@ public class KnoxSh {
 
     private class CertificateChainAwareTrustManager implements X509TrustManager {
       private final X509TrustManager defaultTrustManager;
-      private X509Certificate[] certificateChain;
+      private X509Certificate[] serverCertificateChain;
 
       CertificateChainAwareTrustManager(X509TrustManager tm) {
         this.defaultTrustManager = tm;
@@ -229,17 +233,17 @@ public class KnoxSh {
 
       @Override
       public X509Certificate[] getAcceptedIssuers() {
-        throw new UnsupportedOperationException();
+        return defaultTrustManager.getAcceptedIssuers();
       }
 
       @Override
       public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-        throw new UnsupportedOperationException();
+        defaultTrustManager.checkClientTrusted(chain, authType);
       }
 
       @Override
       public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-        this.certificateChain = chain;
+        this.serverCertificateChain = chain;
         defaultTrustManager.checkServerTrusted(chain, authType);
       }
     }
