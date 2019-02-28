@@ -52,6 +52,7 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.shell.util.ClientTrustStoreHelper;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -91,11 +92,6 @@ import de.thetaphi.forbiddenapis.SuppressForbidden;
 
 public class KnoxSession implements Closeable {
 
-  private static final String GATEWAY_CLIENT_TRUST_DEFAULT_PASS = "changeit";
-  private static final String KNOX_CLIENT_TRUSTSTORE_PASS = "KNOX_CLIENT_TRUSTSTORE_PASS";
-  public static final String GATEWAY_CLIENT_TRUST = "gateway-client-trust.jks";
-  private static final String KNOX_CLIENT_TRUSTSTORE_FILENAME = "KNOX_CLIENT_TRUSTSTORE_FILENAME";
-  private static final String KNOX_CLIENT_TRUSTSTORE_DIR = "KNOX_CLIENT_TRUSTSTORE_DIR";
   private static final String DEFAULT_JAAS_FILE = "/jaas.conf";
   public static final String JGSS_LOGIN_MOUDLE = "com.sun.security.jgss.initiate";
   public static final String END_CERTIFICATE = "-----END CERTIFICATE-----\n";
@@ -410,27 +406,14 @@ public class KnoxSession implements Closeable {
   }
 
   protected void discoverTruststoreDetails(ClientContext clientContext) {
-    String truststoreDir;
-    String truststoreFileName;
     if (clientContext.connection().truststoreLocation() != null &&
         clientContext.connection().truststorePass() != null) {
       return;
     } else {
-      truststoreDir = System.getenv(KNOX_CLIENT_TRUSTSTORE_DIR);
-      if (truststoreDir == null) {
-        truststoreDir = System.getProperty("user.home");
-      }
-      truststoreFileName = System.getenv(KNOX_CLIENT_TRUSTSTORE_FILENAME);
-      if (truststoreFileName == null) {
-        truststoreFileName = GATEWAY_CLIENT_TRUST;
-      }
+      final String truststoreLocation = ClientTrustStoreHelper.getClientTrustStoreFile().getAbsolutePath();
+      final String truststorePass = ClientTrustStoreHelper.getClientTrustStoreFilePassword();
+      clientContext.connection().withTruststore(truststoreLocation, truststorePass);
     }
-    String truststorePass = System.getenv(KNOX_CLIENT_TRUSTSTORE_PASS);
-    if (truststorePass == null) {
-      truststorePass = GATEWAY_CLIENT_TRUST_DEFAULT_PASS;
-    }
-    String truststoreLocation = truststoreDir + File.separator + truststoreFileName;
-    clientContext.connection().withTruststore(truststoreLocation, truststorePass);
   }
 
   public String base() {
