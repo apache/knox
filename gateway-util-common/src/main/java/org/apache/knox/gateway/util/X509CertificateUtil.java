@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.services.security.impl;
+package org.apache.knox.gateway.util;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,12 +41,12 @@ import java.security.cert.X509Certificate;
 import java.util.Date;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.knox.gateway.i18n.GatewaySpiMessages;
+import org.apache.knox.gateway.i18n.GatewayUtilCommonMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 public class X509CertificateUtil {
 
-  private static GatewaySpiMessages LOG = MessagesFactory.get(GatewaySpiMessages.class);
+  private static GatewayUtilCommonMessages LOG = MessagesFactory.get(GatewayUtilCommonMessages.class);
 
   /**
    * Create a self-signed X.509 Certificate
@@ -284,22 +284,56 @@ public class X509CertificateUtil {
     }
   }
 
+  /*
+   * Writes one certificate into the given keystore file protected by the default password
+   */
   private static void writeCertificateToKeyStore(Certificate cert, final File file, String type)
       throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
-    KeyStore ks = KeyStore.getInstance(type);
+    writeCertificateToKeyStore(cert, file, type, null);
+  }
 
-    char[] password = "changeit".toCharArray();
-    ks.load(null, password);
-    ks.setCertificateEntry("gateway-identity", cert);
-    /* Coverity Scan CID 1361992 */
-    try (OutputStream fos = Files.newOutputStream(file.toPath())) {
-      ks.store(fos, password);
+  /*
+   * Writes one certificate into the given keystore file protected by the given password
+   */
+  private static void writeCertificateToKeyStore(Certificate cert, final File file, String type, String keystorePassword)
+      throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
+    writeCertificatesToKeyStore(new Certificate[] { cert }, file, type, keystorePassword);
+  }
+
+  /*
+   * Writes an arbitrary number of certificates into the given keystore file protected by the given password
+   */
+  private static void writeCertificatesToKeyStore(Certificate[] certs, final File file, String type, String keystorePassword)
+      throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
+    if (certs != null) {
+      KeyStore ks = KeyStore.getInstance(type);
+
+      char[] password = keystorePassword == null ? "changeit".toCharArray() : keystorePassword.toCharArray();
+      ks.load(null, password);
+      int counter = 0;
+      for (Certificate cert : certs) {
+        ks.setCertificateEntry("gateway-identity" + (++counter), cert); //it really does not matter what we set as alias for the certificate
+      }
+      /* Coverity Scan CID 1361992 */
+      try (OutputStream fos = Files.newOutputStream(file.toPath())) {
+        ks.store(fos, password);
+      }
     }
   }
 
   public static void writeCertificateToJks(Certificate cert, final File file)
       throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
     writeCertificateToKeyStore(cert, file, "jks");
+  }
+
+  public static void writeCertificateToJks(Certificate cert, final File file, String keystorePassword)
+      throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
+    writeCertificateToKeyStore(cert, file, "jks", keystorePassword);
+  }
+
+  public static void writeCertificatesToJks(Certificate[] certs, final File file, String keystorePassword)
+      throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
+    writeCertificatesToKeyStore(certs, file, "jks", keystorePassword);
   }
 
   public static void writeCertificateToJceks(Certificate cert, final File file)

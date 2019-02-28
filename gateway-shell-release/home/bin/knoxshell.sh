@@ -58,19 +58,16 @@ function main {
    #printf "Starting $APP_LABEL \n"
    #printf "$@"
    case "$1" in
-      init)
+      init|buildTrustStore)
         if [ "$#" -ne 2 ]; then
             echo "Illegal number of parameters."
             printHelp
         else
-          $JAVA -cp $APP_JAR org.apache.knox.gateway.shell.KnoxSh init --gateway $2 || exit 1
+          $JAVA -cp $APP_JAR org.apache.knox.gateway.shell.KnoxSh $1 --gateway $2 || exit 1
         fi
          ;;
-      list)
-        $JAVA -cp $APP_JAR org.apache.knox.gateway.shell.KnoxSh list || exit 1
-         ;;
-      destroy)
-        $JAVA -cp $APP_JAR org.apache.knox.gateway.shell.KnoxSh destroy || exit 1
+      list|destroy)
+        $JAVA -cp $APP_JAR org.apache.knox.gateway.shell.KnoxSh $1 || exit 1
          ;;
       help)
          printHelp
@@ -91,9 +88,11 @@ function printHelp {
    echo "interactive shell where groovy-based DSL and groovy code may be entered and executed in realtime."
    echo ""
    echo "knoxshell usage: "
-   echo "   knoxshell.sh [[init <topology-url>|list|destroy|help] | [<script-file-name>]]"
+   echo "   knoxshell.sh [[buildTrustStore <knox-gateway-url>|init <topology-url>|list|destroy|help] | [<script-file-name>]]"
    echo "   ----------------------------------------------------------"
-   echo "   init <knox-gateway-url> - requests a session from the knox token service at the url"
+   echo "   buildTrustStore <knox-gateway-url> - downloads the given gateway server's public certificate and builds a trust store to be used by KnoxShell"
+   echo "        example: knoxshell.sh buildTrustStore https://localhost:8443/"
+   echo "   init <topology-url> - requests a session from the knox token service at the url"
    echo "        example: knoxshell.sh init https://localhost:8443/gateway/sandbox"
    echo "   list - lists the details of the cached knox session token"
    echo "        example: knoxshell.sh list"

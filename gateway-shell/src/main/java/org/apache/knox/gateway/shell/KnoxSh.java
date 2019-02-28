@@ -19,7 +19,9 @@ package org.apache.knox.gateway.shell;
 
 import org.apache.knox.gateway.shell.knox.token.Get;
 import org.apache.knox.gateway.shell.knox.token.Token;
+import org.apache.knox.gateway.shell.util.ClientTrustStoreHelper;
 import org.apache.knox.gateway.util.JsonUtils;
+import org.apache.knox.gateway.util.X509CertificateUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -28,10 +30,15 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.net.Socket;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
+import java.security.KeyStore;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -42,11 +49,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
+
 public class KnoxSh {
 
   private static final String USAGE_PREFIX = "KnoxSh {cmd} [options]";
   private static final String COMMANDS =
       "   [--help]\n" +
+      "   [" + KnoxBuildTrustStore.USAGE + "]\n" +
       "   [" + KnoxInit.USAGE + "]\n" +
       "   [" + KnoxDestroy.USAGE + "]\n" +
       "   [" + KnoxList.USAGE + "]\n";
@@ -101,6 +116,8 @@ public class KnoxSh {
     for (int i = 0; i < args.length; i++) { // parse command line
       if ( args[i].equals("destroy") ) {
         command = new KnoxDestroy();
+      } else if ( args[i].equals("buildTrustStore") ) {
+        command = new KnoxBuildTrustStore();
       } else if ( args[i].equals("init") ) {
         command = new KnoxInit();
       } else if ( args[i].equals("list") ) {
@@ -153,6 +170,85 @@ public class KnoxSh {
     public abstract void execute() throws Exception;
 
     public abstract String getUsage();
+  }
+
+  private class KnoxBuildTrustStore extends Command {
+
+    private static final String USAGE = "buildTrustStore --gateway server-url";
+    private static final String DESC = "Downloads the gateway server's public certificate and builds a trust store.";
+    private static final String GATEWAY_CERT_NOT_EXPORTED = "Finished work without building truststore";
+    private static final String GATEWAY_CERT_EXPORTED_MESSAGE_PREFIX = "Gateway server's certificate is exported into ";
+
+    @Override
+    public void execute() throws Exception {
+      String result = GATEWAY_CERT_NOT_EXPORTED;
+      try {
+        final X509Certificate[] gatewayServerPublicCerts = fetchPublicCertsFromGatewayServer();
+        if (gatewayServerPublicCerts != null) {
+          final File trustStoreFile = ClientTrustStoreHelper.getClientTrustStoreFile();
+          final String trustStorePassword = ClientTrustStoreHelper.getClientTrustStoreFilePassword();
+          X509CertificateUtil.writeCertificatesToJks(gatewayServerPublicCerts, trustStoreFile, trustStorePassword);
+          result = GATEWAY_CERT_EXPORTED_MESSAGE_PREFIX + trustStoreFile.getAbsolutePath();
+        }
+      } catch(Exception e) {
+        throw new KnoxShellException("Error while building trust store", e);
+      }
+      out.println(result);
+    }
+
+    private X509Certificate[] fetchPublicCertsFromGatewayServer() throws Exception {
+      final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+      trustManagerFactory.init((KeyStore) null);
+      final X509TrustManager defaultTrustManager = (X509TrustManager) trustManagerFactory.getTrustManagers()[0];
+      final CertificateChainAwareTrustManager trustManagerWithCertificateChain = new CertificateChainAwareTrustManager(defaultTrustManager);
+      final SSLContext sslContext = SSLContext.getInstance("TLS");
+      sslContext.init(null, new TrustManager[] { trustManagerWithCertificateChain }, null);
+
+      final URI uri = URI.create(gateway);
+      out.println("Opening connection to " + uri.getHost() + ":" + uri.getPort() + "...");
+      try (Socket socket = sslContext.getSocketFactory().createSocket(uri.getHost(), uri.getPort())) {
+        socket.setSoTimeout(10000);
+        out.println("Starting SSL handshake...");
+        ((SSLSocket) socket).startHandshake();
+        out.println("No errors, certificate is already trusted");
+        return null; //we already trust the given site's certs; it does not make sense to build a new truststore
+      } catch (SSLException e) {
+        // NOP; this is expected in case the gateway server's certificate is not in the
+        // trust store the JVM uses
+      }
+
+      return trustManagerWithCertificateChain.serverCertificateChain;
+    }
+
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+
+    private class CertificateChainAwareTrustManager implements X509TrustManager {
+      private final X509TrustManager defaultTrustManager;
+      private X509Certificate[] serverCertificateChain;
+
+      CertificateChainAwareTrustManager(X509TrustManager tm) {
+        this.defaultTrustManager = tm;
+      }
+
+      @Override
+      public X509Certificate[] getAcceptedIssuers() {
+        return defaultTrustManager.getAcceptedIssuers();
+      }
+
+      @Override
+      public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+        defaultTrustManager.checkClientTrusted(chain, authType);
+      }
+
+      @Override
+      public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+        this.serverCertificateChain = chain;
+        defaultTrustManager.checkServerTrusted(chain, authType);
+      }
+    }
   }
 
   private class KnoxInit extends Command {
