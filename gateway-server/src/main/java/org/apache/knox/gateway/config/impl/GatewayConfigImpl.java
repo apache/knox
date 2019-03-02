@@ -228,6 +228,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   static final String DISPATCH_HOST_WHITELIST          = GATEWAY_CONFIG_FILE_PREFIX + ".dispatch.whitelist";
   static final String DISPATCH_HOST_WHITELIST_SERVICES = DISPATCH_HOST_WHITELIST + ".services";
 
+  static final String REMOTE_ALIAS_SERVICE_CONFIG_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".remote.alias.service.config.prefix";
+  static final String REMOTE_ALIAS_SERVICE_CONFIG_PREFIX_DEFAULT = GATEWAY_CONFIG_FILE_PREFIX + ".remote.alias.service.config";
+
   private static final List<String> DEFAULT_GLOBAL_RULES_SERVICES = Arrays.asList(
       "NAMENODE", "JOBTRACKER", "WEBHDFS", "WEBHCAT",
       "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER");
@@ -942,8 +945,17 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isRemoteAliasServiceEnabled() {
-    final String result = get( REMOTE_ALIAS_SERVICE_ENABLED, Boolean.toString(DEFAULT_REMOTE_ALIAS_SERVICE_ENABLED));
-    return Boolean.parseBoolean(result);
+    return getBoolean( REMOTE_ALIAS_SERVICE_ENABLED, DEFAULT_REMOTE_ALIAS_SERVICE_ENABLED);
+  }
+
+  @Override
+  public String getRemoteAliasServiceConfigurationPrefix() {
+    return get(REMOTE_ALIAS_SERVICE_CONFIG_PREFIX, REMOTE_ALIAS_SERVICE_CONFIG_PREFIX_DEFAULT);
+  }
+
+  @Override
+  public Map<String, String> getRemoteAliasServiceConfiguration() {
+    return getPropsWithPrefix(getRemoteAliasServiceConfigurationPrefix());
   }
 
   @Override

@@ -476,6 +476,20 @@ public interface GatewayConfig {
   boolean isRemoteAliasServiceEnabled();
 
   /**
+   * Returns prefix for the remote alias service configuration
+   *
+   * @return the prefix for the remote alias service configuration
+   */
+  String getRemoteAliasServiceConfigurationPrefix();
+
+  /**
+   * Uses result of getRemoteAliasServiceConfigurationPrefix to return configurations
+   *
+   * @return Map of configurations that apply to the remote alias service
+   */
+  Map<String, String> getRemoteAliasServiceConfiguration();
+
+  /**
    * Get the list of those topology names which should be treated as read-only, regardless of their actual read-write
    * status.
    *

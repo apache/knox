@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.security.impl;
+package org.apache.knox.gateway.services.security.impl;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -26,9 +26,6 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.service.config.remote.zk.ZooKeeperClientService;
 import org.apache.knox.gateway.service.config.remote.zk.ZooKeeperClientServiceProvider;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
-import org.apache.knox.gateway.services.security.impl.DefaultAliasService;
-import org.apache.knox.gateway.services.security.impl.DefaultMasterService;
-import org.apache.knox.gateway.services.security.impl.RemoteAliasService;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
@@ -52,26 +49,23 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Test the listener/monitor service for
- * remote alias service.
+ * Test the listener/monitor service for {@link ZookeeperRemoteAliasService}.
  */
-public class RemoteAliasMonitorTest {
+public class ZookeeperRemoteAliasMonitorTest {
+  private static final String configMonitorName = "remoteConfigMonitorClient";
+  private static final String expectedClusterName = "sandbox";
+  private static final String expectedAlias = "knox.test.alias";
+  private static final String expectedPassword = "dummyPassword";
+  private static final String expectedClusterNameDev = "development";
+  private static final String expectedAliasDev = "knox.test.alias.dev";
+  private static final String expectedPasswordDev = "otherDummyPassword";
+
+  private static final String preferRemoteAlias = "prefer.remote.alias";
+  private static final String preferRemoteAliasEncryptedPassword = "QmgrK2JBRlE1MUU9OjpIYzZlVUttKzdaWkFOSjlYZVVyVzNRPT06Om5kdTQ3WTJ1by9vSHprZUZHcjBqVG5TaGxsMFVUdUNyN0EvUlZDV1ZHQUU9";
+  private static final String preferRemoteAliasClearPassword = "ApacheKnoxPassword123";
 
   private static TestingCluster zkNodes;
-
   private static CuratorFramework client;
-  private static String configMonitorName = "remoteConfigMonitorClient";
-  private static String expectedClusterName = "sandbox";
-  private static String expectedAlias = "knox.test.alias";
-  private static String expectedPassword = "dummyPassword";
-  private static String expectedClusterNameDev = "development";
-  private static String expectedAliasDev = "knox.test.alias.dev";
-  private static String expectedPasswordDev = "otherDummyPassword";
-
-  private static String preferRemoteAlias = "prefer.remote.alias";
-  private static String preferRemoteAliasEncryptedPassword = "QmgrK2JBRlE1MUU9OjpIYzZlVUttKzdaWkFOSjlYZVVyVzNRPT06Om5kdTQ3WTJ1by9vSHprZUZHcjBqVG5TaGxsMFVUdUNyN0EvUlZDV1ZHQUU9";
-  private static String preferRemoteAliasClearPassword = "ApacheKnoxPassword123";
-  private GatewayConfig gc;
 
   @BeforeClass
   public static void setupSuite() throws Exception {
@@ -106,34 +100,34 @@ public class RemoteAliasMonitorTest {
 
     client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
         .withACL(acls).forPath(
-        RemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY + RemoteAliasService.
+        ZookeeperRemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY + ZookeeperRemoteAliasService.
             PATH_SEPARATOR + expectedClusterName);
 
     assertNotNull("Failed to create node:"
-        + RemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY
-        + RemoteAliasService.
+        + ZookeeperRemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY
+        + ZookeeperRemoteAliasService.
         PATH_SEPARATOR + expectedClusterName, client.checkExists().forPath(
-        RemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY + RemoteAliasService.
+        ZookeeperRemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY + ZookeeperRemoteAliasService.
             PATH_SEPARATOR + expectedClusterName));
 
     client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
         .withACL(acls).forPath(
-        RemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY + RemoteAliasService.
+        ZookeeperRemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY + ZookeeperRemoteAliasService.
             PATH_SEPARATOR + expectedClusterNameDev);
 
     assertNotNull("Failed to create node:"
-        + RemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY
-        + RemoteAliasService.
+        + ZookeeperRemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY
+        + ZookeeperRemoteAliasService.
         PATH_SEPARATOR + expectedClusterNameDev, client.checkExists().forPath(
-        RemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY + RemoteAliasService.
+        ZookeeperRemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY + ZookeeperRemoteAliasService.
             PATH_SEPARATOR + expectedClusterNameDev));
 
     /* Start Zookeeper with an existing alias */
     client.create().withMode(CreateMode.PERSISTENT).
-        forPath(RemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY
-                + RemoteAliasService.
+        forPath(ZookeeperRemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY
+                + ZookeeperRemoteAliasService.
                 PATH_SEPARATOR + expectedClusterName
-                + RemoteAliasService.PATH_SEPARATOR + preferRemoteAlias,
+                + ZookeeperRemoteAliasService.PATH_SEPARATOR + preferRemoteAlias,
             preferRemoteAliasEncryptedPassword.getBytes(StandardCharsets.UTF_8));
   }
 
@@ -142,7 +136,7 @@ public class RemoteAliasMonitorTest {
     // Clean up the ZK nodes, and close the client
     if (client != null) {
       client.delete().deletingChildrenIfNeeded()
-          .forPath(RemoteAliasService.PATH_KNOX_SECURITY);
+          .forPath(ZookeeperRemoteAliasService.PATH_KNOX_SECURITY);
       client.close();
     }
 
@@ -154,7 +148,7 @@ public class RemoteAliasMonitorTest {
   public void testListener() throws Exception {
 
     // Setup the base GatewayConfig mock
-    gc = EasyMock.createNiceMock(GatewayConfig.class);
+    GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gc.getRemoteRegistryConfigurationNames())
         .andReturn(Collections.singletonList(configMonitorName)).anyTimes();
 
@@ -204,17 +198,13 @@ public class RemoteAliasMonitorTest {
         .anyTimes();
     EasyMock.replay(ms);
 
-    final RemoteAliasService zkAlias = new RemoteAliasService();
-
     final RemoteConfigurationRegistryClientService clientService = (new ZooKeeperClientServiceProvider())
         .newInstance();
-    clientService.setAliasService(zkAlias);
+    clientService.setAliasService(defaultAlias);
     clientService.init(gc, Collections.emptyMap());
 
-    /* init */
-    zkAlias.setLocalAliasService(defaultAlias);
-    zkAlias.setRegistryClientService(clientService);
-    zkAlias.setMasterService(ms);
+    final ZookeeperRemoteAliasService zkAlias = new ZookeeperRemoteAliasService(defaultAlias,
+        ms, clientService);
     zkAlias.init(gc, Collections.emptyMap());
     zkAlias.start();
 
@@ -227,21 +217,20 @@ public class RemoteAliasMonitorTest {
     Assert.assertEquals(aliases.size(), 1);
     Assert.assertEquals(aliasesDev.size(), 0);
 
-
     /* Create an alias in Zookeeper externally */
     client.create().withMode(CreateMode.PERSISTENT).
-        forPath(RemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY
-                + RemoteAliasService.
+        forPath(ZookeeperRemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY
+                + ZookeeperRemoteAliasService.
                 PATH_SEPARATOR + expectedClusterName
-                + RemoteAliasService.PATH_SEPARATOR + expectedAlias,
+                + ZookeeperRemoteAliasService.PATH_SEPARATOR + expectedAlias,
             zkAlias.encrypt(expectedPassword).getBytes(StandardCharsets.UTF_8));
 
     /* Create an alias in Zookeeper externally */
     client.create().withMode(CreateMode.PERSISTENT).
-        forPath(RemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY
-                + RemoteAliasService.
+        forPath(ZookeeperRemoteAliasService.PATH_KNOX_ALIAS_STORE_TOPOLOGY
+                + ZookeeperRemoteAliasService.
                 PATH_SEPARATOR + expectedClusterNameDev
-                + RemoteAliasService.PATH_SEPARATOR + expectedAliasDev,
+                + ZookeeperRemoteAliasService.PATH_SEPARATOR + expectedAliasDev,
             zkAlias.encrypt(expectedPasswordDev).getBytes(StandardCharsets.UTF_8));
 
     /* Try */
@@ -269,7 +258,5 @@ public class RemoteAliasMonitorTest {
     Assert.assertEquals(preferRemoteAliasClearPassword, new String(prefAliasResult));
 
     zkAlias.stop();
-
   }
-
 }
