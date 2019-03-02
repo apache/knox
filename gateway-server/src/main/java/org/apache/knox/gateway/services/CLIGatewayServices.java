@@ -52,6 +52,7 @@ public class CLIGatewayServices implements GatewayServices {
 
     DefaultAliasService defaultAlias = new DefaultAliasService();
     defaultAlias.setKeystoreService(ks);
+    defaultAlias.setMasterService(ms);
     defaultAlias.init(config, options);
 
     /*

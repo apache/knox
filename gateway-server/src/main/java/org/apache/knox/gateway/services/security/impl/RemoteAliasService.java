@@ -56,7 +56,6 @@ public class RemoteAliasService implements AliasService {
   private final MasterService ms;
 
   private AliasService remoteAliasServiceImpl;
-  private GatewayConfig config;
 
   public RemoteAliasService(AliasService localAliasService, MasterService ms) {
     this.localAliasService = localAliasService;
@@ -179,22 +178,58 @@ public class RemoteAliasService implements AliasService {
 
   @Override
   public char[] getGatewayIdentityPassphrase() throws AliasServiceException {
-    return getPasswordFromAliasForGateway(config.getIdentityKeyPassphraseAlias());
+    char[] password = null;
+    if(remoteAliasServiceImpl != null) {
+      password = remoteAliasServiceImpl.getGatewayIdentityPassphrase();
+    }
+
+    if(password == null) {
+      password = localAliasService.getGatewayIdentityPassphrase();
+    }
+
+    return password;
   }
 
   @Override
   public char[] getGatewayIdentityKeystorePassword() throws AliasServiceException {
-    return getPasswordFromAliasForGateway(config.getIdentityKeystorePasswordAlias());
+    char[] password = null;
+    if(remoteAliasServiceImpl != null) {
+      password = remoteAliasServiceImpl.getGatewayIdentityKeystorePassword();
+    }
+
+    if(password == null) {
+      password = localAliasService.getGatewayIdentityKeystorePassword();
+    }
+
+    return password;
   }
 
   @Override
   public char[] getSigningKeyPassphrase() throws AliasServiceException {
-    return getPasswordFromAliasForGateway(config.getSigningKeyPassphraseAlias());
+    char[] password = null;
+    if(remoteAliasServiceImpl != null) {
+      password = remoteAliasServiceImpl.getSigningKeyPassphrase();
+    }
+
+    if(password == null) {
+      password = localAliasService.getSigningKeyPassphrase();
+    }
+
+    return password;
   }
 
   @Override
   public char[] getSigningKeystorePassword() throws AliasServiceException {
-    return getPasswordFromAliasForGateway(config.getIdentityKeystorePasswordAlias());
+    char[] password = null;
+    if(remoteAliasServiceImpl != null) {
+      password = remoteAliasServiceImpl.getSigningKeystorePassword();
+    }
+
+    if(password == null) {
+      password = localAliasService.getSigningKeystorePassword();
+    }
+
+    return password;
   }
 
   @Override
@@ -213,7 +248,6 @@ public class RemoteAliasService implements AliasService {
   @Override
   public void init(final GatewayConfig config, final Map<String, String> options)
       throws ServiceLifecycleException {
-    this.config = config;
     Map<String, String> remoteAliasServiceConfigs = config.getRemoteAliasServiceConfiguration();
 
     if(config.isRemoteAliasServiceEnabled() && remoteAliasServiceConfigs != null) {
