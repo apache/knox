@@ -23,6 +23,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.config.GatewayConfigurationException;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
@@ -37,9 +38,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -81,9 +84,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
-  private static final String GATEWAY_CONFIG_DIR_PREFIX = "conf";
+  static final String GATEWAY_CONFIG_DIR_PREFIX = "conf";
 
-  private static final String GATEWAY_CONFIG_FILE_PREFIX = "gateway";
+  static final String GATEWAY_CONFIG_FILE_PREFIX = "gateway";
 
   private static final String DEFAULT_STACKS_SERVICES_DIR = "services";
 
@@ -235,8 +238,35 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
       "NAMENODE", "JOBTRACKER", "WEBHDFS", "WEBHCAT",
       "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER");
 
-  public GatewayConfigImpl() {
+  public GatewayConfigImpl() throws GatewayConfigurationException {
     init();
+    validate();
+  }
+
+  private void validate() throws GatewayConfigurationException {
+    final Set<String> errors = new HashSet<>();
+    if (isHadoopKerberosSecured()) {
+      if (getKerberosConfig() != null) {
+        final File krb5ConfFile = Paths.get(getKerberosConfig()).toFile();
+        checkIfFileExistsAndCanBeRead(krb5ConfFile, KRB5_CONFIG, errors);
+      }
+
+      if (getKerberosLoginConfig() != null) {
+        final File loginConfigFile = Paths.get(getKerberosLoginConfig()).toFile();
+        checkIfFileExistsAndCanBeRead(loginConfigFile, KRB5_LOGIN_CONFIG, errors);
+      }
+    }
+    if (!errors.isEmpty()) {
+      throw new GatewayConfigurationException(errors);
+    }
+  }
+
+  private void checkIfFileExistsAndCanBeRead(File fileToBeChecked, String propertyName, Set<String> errors) {
+    if (!fileToBeChecked.exists()) {
+      errors.add(propertyName + " is set to a non-existing file: " + fileToBeChecked);
+    } else if (!fileToBeChecked.canRead()) {
+      errors.add(propertyName + " is set to a non-readable file: " + fileToBeChecked);
+    }
   }
 
   private String getVar( String variableName, String defaultValue ) {

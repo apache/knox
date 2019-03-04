@@ -17,9 +17,6 @@
  */
 package org.apache.knox.gateway.deploy;
 
-import java.io.IOException;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
@@ -31,7 +28,6 @@ import org.apache.knox.test.TestUtils;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 import org.junit.Test;
 import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -41,7 +37,7 @@ import static org.junit.Assert.fail;
 
 public class DeploymentFactoryTest {
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
-  public void testEmptyTopology() throws IOException, SAXException, ParserConfigurationException, TransformerException {
+  public void testEmptyTopology() throws Exception {
     GatewayConfig config = new GatewayConfigImpl();
 
     Topology topology = new Topology();

@@ -43,7 +43,7 @@ public class GatewayGlobalConfigTest {
   }
 
   @Test
-  public void testFullConfig() {
+  public void testFullConfig() throws Exception {
     System.setProperty( GatewayConfigImpl.GATEWAY_HOME_VAR, getHomeDirName( "conf-full/conf/gateway-default.xml" ) );
     GatewayConfig config = new GatewayConfigImpl();
     assertThat( config.getGatewayPort(), is( 7777 ) );
@@ -53,7 +53,7 @@ public class GatewayGlobalConfigTest {
   }
 
   @Test
-  public void testDemoConfig() {
+  public void testDemoConfig() throws Exception {
     System.setProperty( GatewayConfigImpl.GATEWAY_HOME_VAR, getHomeDirName( "conf-demo/conf/gateway-default.xml" ) );
     GatewayConfig config = new GatewayConfigImpl();
     assertThat(config.getGatewayPort(), is( 8888 ) );
@@ -62,7 +62,7 @@ public class GatewayGlobalConfigTest {
   }
 
   @Test
-  public void testSiteConfig() {
+  public void testSiteConfig() throws Exception {
     System.setProperty( GatewayConfigImpl.GATEWAY_HOME_VAR, getHomeDirName( "conf-site/conf/gateway-site.xml" ) );
     GatewayConfig config = new GatewayConfigImpl();
     assertThat( config.getGatewayPort(), is( 5555 ) );
@@ -73,7 +73,7 @@ public class GatewayGlobalConfigTest {
   }
 
   @Test
-  public void testEmptyConfig() {
+  public void testEmptyConfig() throws Exception {
     System.setProperty( GatewayConfigImpl.GATEWAY_HOME_VAR, getHomeDirName( "conf-empty/conf/empty" ) );
     GatewayConfig config = new GatewayConfigImpl();
     assertThat( config.getGatewayPort(), is( 8888 ) );
@@ -81,7 +81,7 @@ public class GatewayGlobalConfigTest {
   }
 
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
-  public void testDefaultTopologyName() {
+  public void testDefaultTopologyName() throws Exception {
     GatewayConfigImpl config = new GatewayConfigImpl();
     assertThat( config.getDefaultTopologyName(), is( nullValue() ) );
 
@@ -90,7 +90,7 @@ public class GatewayGlobalConfigTest {
   }
 
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
-  public void testDefaultAppRedirectPath() {
+  public void testDefaultAppRedirectPath() throws Exception {
     GatewayConfigImpl config = new GatewayConfigImpl();
     assertThat( config.getDefaultAppRedirectPath(), nullValue() );
 
@@ -99,7 +99,7 @@ public class GatewayGlobalConfigTest {
   }
 
   @Test
-  public void testForUpdatedDeploymentDir() {
+  public void testForUpdatedDeploymentDir() throws Exception {
     String homeDirName = getHomeDirName("conf-demo/conf/gateway-site.xml");
     System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
     System.setProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR, homeDirName);
@@ -108,7 +108,7 @@ public class GatewayGlobalConfigTest {
   }
 
   @Test
-  public void testDefaultDeploymentDir() {
+  public void testDefaultDeploymentDir() throws Exception {
     String homeDirName = getHomeDirName("conf-site/conf/gateway-site.xml");
     System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
     System.setProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR, homeDirName);
@@ -117,7 +117,7 @@ public class GatewayGlobalConfigTest {
   }
 
   @Test
-  public void testForDefaultSecurityDataDir() {
+  public void testForDefaultSecurityDataDir() throws Exception {
     String homeDirName = getHomeDirName("conf-site/conf/gateway-site.xml");
     System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
     System.setProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR, homeDirName);
@@ -126,7 +126,7 @@ public class GatewayGlobalConfigTest {
   }
 
   @Test
-  public void testForUpdatedSecurityDataDir() {
+  public void testForUpdatedSecurityDataDir() throws Exception {
     String homeDirName = getHomeDirName("conf-demo/conf/gateway-site.xml");
     System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
     System.setProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR, homeDirName);
@@ -135,7 +135,7 @@ public class GatewayGlobalConfigTest {
   }
 
   @Test
-  public void testForDataDirSetAsSystemProperty() {
+  public void testForDataDirSetAsSystemProperty() throws Exception {
     String homeDirName = getHomeDirName("conf-demo/conf/gateway-site.xml");
     System.setProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR, homeDirName + File.separator
         + "DataDirSystemProperty");
@@ -145,7 +145,7 @@ public class GatewayGlobalConfigTest {
   }
 
   @Test
-  public void testForDataDirSetAsConfiguration() {
+  public void testForDataDirSetAsConfiguration() throws Exception {
     String homeDirName = getHomeDirName("conf-demo/conf/gateway-site.xml");
     System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
     System.clearProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR);
@@ -155,7 +155,7 @@ public class GatewayGlobalConfigTest {
   }
 
   @Test
-  public void testForDefaultDataDir() {
+  public void testForDefaultDataDir() throws Exception {
     String homeDirName = getHomeDirName("conf-site/conf/gateway-site.xml");
     System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
     System.clearProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR);
@@ -168,7 +168,7 @@ public class GatewayGlobalConfigTest {
    * value should be considered
    **/
   @Test
-  public void testDataDirSetAsBothSystemPropertyAndConfig() {
+  public void testDataDirSetAsBothSystemPropertyAndConfig() throws Exception {
     String homeDirName = getHomeDirName("conf-demo/conf/gateway-site.xml");
     System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
     System.setProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR, homeDirName + File.separator
@@ -179,7 +179,7 @@ public class GatewayGlobalConfigTest {
   }
 
   @Test
-  public void testStacksServicesDir() {
+  public void testStacksServicesDir() throws Exception {
     System.clearProperty(GatewayConfigImpl.GATEWAY_HOME_VAR);
     GatewayConfig config = new GatewayConfigImpl();
     assertThat(config.getGatewayServicesDir(), Matchers.endsWith("data" + File.separator + "services"));

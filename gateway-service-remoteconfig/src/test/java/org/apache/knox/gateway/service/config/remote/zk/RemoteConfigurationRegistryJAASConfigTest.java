@@ -30,6 +30,7 @@ import org.junit.rules.TemporaryFolder;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 
+import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.startsWith;
 
 import java.io.File;
@@ -91,8 +92,8 @@ public class RemoteConfigurationRegistryJAASConfigTest {
         final String ENTRY_NAME = "my_kerberos_context";
         final String PRINCIPAL  = "myIdentity";
 
-        File dummyKeyTab = File.createTempFile("my_context", "keytab");
-        registryConfigs.add(createKerberosConfig(ENTRY_NAME, PRINCIPAL, dummyKeyTab.getAbsolutePath()));
+        final String dummyKeyTab = createTempKeytabFile();
+        registryConfigs.add(createKerberosConfig(ENTRY_NAME, PRINCIPAL, dummyKeyTab));
 
         try {
             RemoteConfigurationRegistryJAASConfig jaasConfig =
@@ -105,7 +106,7 @@ public class RemoteConfigurationRegistryJAASConfigTest {
             validateKerberosContext(jaasConfig,
                                     ENTRY_NAME,
                                     PRINCIPAL,
-                                    dummyKeyTab.getAbsolutePath(),
+                                    dummyKeyTab,
                                     true,
                                     false);
 
@@ -128,8 +129,8 @@ public class RemoteConfigurationRegistryJAASConfigTest {
         EasyMock.expect(aliasService.getPasswordFromAliasForGateway(DIGEST_PWD_ALIAS)).andReturn(DIGEST_PWD.toCharArray()).anyTimes();
         EasyMock.replay(aliasService);
 
-        File dummyKeyTab = File.createTempFile("my_context", "keytab");
-        registryConfigs.add(createKerberosConfig(KERBEROS_ENTRY_NAME, KERBEROS_PRINCIPAL, dummyKeyTab.getAbsolutePath()));
+        final String dummyKeyTab = createTempKeytabFile();
+        registryConfigs.add(createKerberosConfig(KERBEROS_ENTRY_NAME, KERBEROS_PRINCIPAL, dummyKeyTab));
         registryConfigs.add(createDigestConfig(DIGEST_ENTRY_NAME, DIGEST_PRINCIPAL, DIGEST_PWD_ALIAS));
 
         try {
@@ -143,7 +144,7 @@ public class RemoteConfigurationRegistryJAASConfigTest {
             validateKerberosContext(jaasConfig,
                                     KERBEROS_ENTRY_NAME,
                                     KERBEROS_PRINCIPAL,
-                                    dummyKeyTab.getAbsolutePath(),
+                                    dummyKeyTab,
                                     true,
                                     false);
 
@@ -195,13 +196,14 @@ public class RemoteConfigurationRegistryJAASConfigTest {
         RemoteConfigurationRegistryJAASConfig.configure(registryConfigs, null);
       } finally {
         System.clearProperty(GatewayConfig.KRB5_LOGIN_CONFIG);
+        Configuration.setConfiguration(null);
       }
     }
 
     @Test
     public void shouldRaiseAnErrorWithMeaningfulErrorMessageIfAuthLoginConfigCannotBeParsed() throws Exception {
       final List<RemoteConfigurationRegistryConfig> registryConfigs = new ArrayList<>();
-      final String jaasConfigFilePath = writeInvalidJaasConf();
+      final String jaasConfigFilePath = writeInvalidJaasConf(false, createTempKeytabFile());
       System.setProperty(GatewayConfig.KRB5_LOGIN_CONFIG, jaasConfigFilePath);
 
       expectedException.expect(ConfigurationException.class);
@@ -211,20 +213,44 @@ public class RemoteConfigurationRegistryJAASConfigTest {
         RemoteConfigurationRegistryJAASConfig.configure(registryConfigs, null);
       } finally {
         System.clearProperty(GatewayConfig.KRB5_LOGIN_CONFIG);
+        Configuration.setConfiguration(null);
       }
     }
 
-    private String writeInvalidJaasConf() throws IOException {
+    @Test
+    public void shouldRaiseAnErrorWithMeaningfulErrorMessageIfReferencedKeytabFileDoesNotExists() throws Exception {
+      final String jaasConfigFilePath = writeInvalidJaasConf(true, "nonExistingKeytabFile");
+      System.setProperty(GatewayConfig.KRB5_LOGIN_CONFIG, jaasConfigFilePath);
+
+      expectedException.expect(ConfigurationException.class);
+      expectedException.expectMessage(startsWith("The specified keytab file"));
+      expectedException.expectMessage(endsWith("is either non-existing or cannot be read!"));
+
+      try {
+        RemoteConfigurationRegistryJAASConfig.configure(new ArrayList<>(), null);
+      } finally {
+        System.clearProperty(GatewayConfig.KRB5_LOGIN_CONFIG);
+        Configuration.setConfiguration(null);
+      }
+    }
+
+    private String createTempKeytabFile() throws IOException {
+      final File keytabFile = testFolder.newFile("myKeytab");
+      FileUtils.writeStringToFile(keytabFile, "dummyBinaryContent", StandardCharsets.UTF_8);
+      return keytabFile.getAbsolutePath();
+    }
+
+    private String writeInvalidJaasConf(boolean valid, String keytabFileName) throws IOException {
       final File jaasConfigFile = testFolder.newFile("jaas.conf");
-      final String jaasConfig = "com.sun.security.jgss.initiate {" +
-        "com.sun.security.auth.module.Krb5LoginModule required" +
-        "renewTGT=false" +
-        "doNotPrompt=true" +
-        "useKeyTab=true" +
-        "keyTab=/etc/security/keytabs/knox.service.keytab" + //note the missing quotes; it should be keyTab="/etc/security/keytabs/knox.service.keytab"
-        "principal=\"knox/myHost@myRealm\"" +
-        "storeKey=true" +
-        "useTicketCache=false; " +
+      final String jaasConfig = "com.sun.security.jgss.initiate {\n" +
+        "com.sun.security.auth.module.Krb5LoginModule required\n" +
+        "renewTGT=false\n" +
+        "doNotPrompt=true\n" +
+        "useKeyTab=true\n" +
+        "keyTab=" + (valid ? "\"" : "" ) + keytabFileName + (valid ? "\"" : "" ) + "\n" + //note the missing quotes in case valid=false; it should be keyTab="/etc/security/keytabs/knox.service.keytab"
+        "principal=\"knox/myHost@myRealm\"\n" +
+        "storeKey=true\n" +
+        "useTicketCache=false;\n" +
         "};";
 
       FileUtils.writeStringToFile(jaasConfigFile, jaasConfig, StandardCharsets.UTF_8);
