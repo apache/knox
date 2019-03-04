@@ -29,7 +29,10 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -407,7 +410,8 @@ public class GatewayConfigImplTest {
       System.setProperty(GatewayConfig.GATEWAY_HOME_VAR, gatewayHome.getAbsolutePath());
       final File krb5ConfFile = new File(gatewayHome, "krb5.conf");
       krb5ConfFile.createNewFile();
-      krb5ConfFile.setReadable(false);
+      //krb5ConfFile.setReadable(false); //for some reason this does not work with root user
+      Files.setPosixFilePermissions(Paths.get(krb5ConfFile.getAbsolutePath()), new HashSet<PosixFilePermission>());
       if (krb5Conf) {
         writeTestGatewayConfig(krb5ConfFile.getAbsolutePath(), null);
       } else {
