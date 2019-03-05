@@ -20,8 +20,11 @@
 
 package org.apache.knox.gateway.services.security.impl;
 
+import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -33,7 +36,6 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
-import org.easymock.EasyMockSupport;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.junit.Test;
 
@@ -42,7 +44,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.UnrecoverableKeyException;
 
-public class JettySSLServiceTest extends EasyMockSupport {
+public class JettySSLServiceTest {
   @Test
   public void TestBuildSslContextFactoryOnlyIdentityKeystore() throws Exception {
     String basedir = System.getProperty("basedir");
@@ -66,7 +68,7 @@ public class JettySSLServiceTest extends EasyMockSupport {
 
     KeystoreService keystoreService = createMock(KeystoreService.class);
 
-    replayAll();
+    replay(config, aliasService, keystoreService);
 
     JettySSLService sslService = new JettySSLService();
     sslService.setAliasService(aliasService);
@@ -89,7 +91,8 @@ public class JettySSLServiceTest extends EasyMockSupport {
     // If the truststore is not set, by default the identity keystore is used by Jetty.
     assertEquals(sslContextFactory.getKeyStore().size(), sslContextFactory.getTrustStore().size());
     assertTrue(sslContextFactory.getTrustStore().containsAlias(identityKeyAlias));
-    verifyAll();
+
+    verify(config, aliasService, keystoreService);
   }
 
   @Test(expected = AliasServiceException.class)
@@ -114,7 +117,7 @@ public class JettySSLServiceTest extends EasyMockSupport {
 
     KeystoreService keystoreService = createMock(KeystoreService.class);
 
-    replayAll();
+    replay(config, aliasService, keystoreService);
 
     JettySSLService sslService = new JettySSLService();
     sslService.setAliasService(aliasService);
@@ -147,7 +150,7 @@ public class JettySSLServiceTest extends EasyMockSupport {
 
     KeystoreService keystoreService = createMock(KeystoreService.class);
 
-    replayAll();
+    replay(config, aliasService, keystoreService);
 
     JettySSLService sslService = new JettySSLService();
     sslService.setAliasService(aliasService);
@@ -171,7 +174,7 @@ public class JettySSLServiceTest extends EasyMockSupport {
     assertEquals(sslContextFactory.getKeyStore().size(), sslContextFactory.getTrustStore().size());
     assertTrue(sslContextFactory.getTrustStore().containsAlias(identityKeyAlias));
 
-    verifyAll();
+    verify(config, aliasService, keystoreService);
 
     // Note: The key password is used if the keystore password is not set; and vice versa
   }
@@ -197,7 +200,7 @@ public class JettySSLServiceTest extends EasyMockSupport {
 
     KeystoreService keystoreService = createMock(KeystoreService.class);
 
-    replayAll();
+    replay(config, aliasService, keystoreService);
 
     JettySSLService sslService = new JettySSLService();
     sslService.setAliasService(aliasService);
@@ -236,7 +239,7 @@ public class JettySSLServiceTest extends EasyMockSupport {
 
     KeystoreService keystoreService = createMock(KeystoreService.class);
 
-    replayAll();
+    replay(config, aliasService, keystoreService);
 
     JettySSLService sslService = new JettySSLService();
     sslService.setAliasService(aliasService);
@@ -260,7 +263,7 @@ public class JettySSLServiceTest extends EasyMockSupport {
     assertEquals(sslContextFactory.getKeyStore().size(), sslContextFactory.getTrustStore().size());
     assertTrue(sslContextFactory.getTrustStore().containsAlias(identityKeyAlias));
 
-    verifyAll();
+    verify(config, aliasService, keystoreService);
   }
 
   @Test
@@ -288,7 +291,7 @@ public class JettySSLServiceTest extends EasyMockSupport {
 
     KeystoreService keystoreService = createMock(KeystoreService.class);
 
-    replayAll();
+    replay(config, aliasService, keystoreService);
 
     JettySSLService sslService = new JettySSLService();
     sslService.setAliasService(aliasService);
@@ -313,7 +316,7 @@ public class JettySSLServiceTest extends EasyMockSupport {
     assertTrue(sslContextFactory.getKeyStore().containsAlias(identityKeyAlias));
     assertFalse(sslContextFactory.getTrustStore().containsAlias(identityKeyAlias));
 
-    verifyAll();
+    verify(config, aliasService, keystoreService);
   }
 
   @Test(expected = AliasServiceException.class)
@@ -340,7 +343,7 @@ public class JettySSLServiceTest extends EasyMockSupport {
 
     KeystoreService keystoreService = createMock(KeystoreService.class);
 
-    replayAll();
+    replay(config, aliasService, keystoreService);
 
     JettySSLService sslService = new JettySSLService();
     sslService.setAliasService(aliasService);
@@ -375,7 +378,7 @@ public class JettySSLServiceTest extends EasyMockSupport {
 
     KeystoreService keystoreService = createMock(KeystoreService.class);
 
-    replayAll();
+    replay(config, aliasService, keystoreService);
 
     JettySSLService sslService = new JettySSLService();
     sslService.setAliasService(aliasService);
@@ -400,9 +403,9 @@ public class JettySSLServiceTest extends EasyMockSupport {
     assertTrue(sslContextFactory.getKeyStore().containsAlias(identityKeyAlias));
     assertFalse(sslContextFactory.getTrustStore().containsAlias(identityKeyAlias));
 
-    // Note: The keystore password is used if the truststore password is not set
+    verify(config, aliasService, keystoreService);
 
-    verifyAll();
+    // Note: The keystore password is used if the truststore password is not set
   }
 
   @Test(expected = UnrecoverableKeyException.class)
@@ -427,7 +430,7 @@ public class JettySSLServiceTest extends EasyMockSupport {
 
     KeystoreService keystoreService = createMock(KeystoreService.class);
 
-    replayAll();
+    replay(config, aliasService, keystoreService);
 
     JettySSLService sslService = new JettySSLService();
     sslService.setAliasService(aliasService);

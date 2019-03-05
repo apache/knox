@@ -17,14 +17,9 @@
  */
 package org.apache.knox.gateway.services.security;
 
-import java.io.IOException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.Service;
 
 public interface SSLService extends Service {
-  Object buildSslContextFactory(GatewayConfig config) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, AliasServiceException;
+  Object buildSslContextFactory(GatewayConfig config) throws AliasServiceException;
 }
