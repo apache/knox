@@ -22,8 +22,6 @@ import java.util.Set;
 @SuppressWarnings("serial")
 public class GatewayConfigurationException extends Exception {
 
-  private static String LINE_SEPARATOR = System.getProperty("line.separator", "\n");
-
   public GatewayConfigurationException(String message, Throwable cause) {
     super(message, cause);
   }
@@ -33,7 +31,7 @@ public class GatewayConfigurationException extends Exception {
   }
 
   public GatewayConfigurationException(Set<String> configurationErrors) {
-    this("Found configurations errors:" + LINE_SEPARATOR + String.join(LINE_SEPARATOR, configurationErrors));
+    this("Found configurations errors:" + System.lineSeparator() + String.join(System.lineSeparator(), configurationErrors));
   }
 
 }
