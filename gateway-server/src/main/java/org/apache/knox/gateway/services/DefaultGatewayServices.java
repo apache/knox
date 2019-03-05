@@ -101,7 +101,6 @@ public class DefaultGatewayServices implements GatewayServices {
     JettySSLService ssl = new JettySSLService();
     ssl.setAliasService(alias);
     ssl.setKeystoreService(ks);
-    ssl.setMasterService(ms);
     ssl.init(config, options);
     services.put(SSL_SERVICE, ssl);
 

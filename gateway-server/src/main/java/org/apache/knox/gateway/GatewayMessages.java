@@ -169,6 +169,12 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.INFO, text = "Creating keystore for the gateway instance." )
   void creatingKeyStoreForGateway();
 
+  @Message( level = MessageLevel.ERROR, text = "Unable to obtain the password for the keystore for the gateway instance: {0}" )
+  void failedToGetPasswordForGatewayIdentityKeystore(Exception e);
+
+  @Message( level = MessageLevel.ERROR, text = "Unable to obtain the password for the gateway identity key: {0}" )
+  void failedToGetPassphraseForGatewayIdentityKey(Exception e);
+
   @Message( level = MessageLevel.INFO, text = "Keystore for the gateway instance found - no need to create one." )
   void keyStoreForGatewayFoundNotCreating();
 
@@ -177,6 +183,9 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.INFO, text = "Credential store found for the cluster: {0} - no need to create one." )
   void credentialStoreForClusterFoundNotCreating(String clusterName);
+
+  @Message( level = MessageLevel.ERROR, text = "Unable to obtain the password for the gateway truststore using the alias {0}: {1}" )
+  void failedToGetPasswordForGatewayTruststore(String alias, Exception e);
 
   @Message( level = MessageLevel.DEBUG, text = "Received request: {0} {1}" )
   void receivedRequest( String method, String uri );

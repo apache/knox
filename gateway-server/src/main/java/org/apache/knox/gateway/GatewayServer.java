@@ -41,6 +41,7 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
+import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.SSLService;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Application;
@@ -377,7 +378,7 @@ public class GatewayServer {
   private Connector createConnector(final Server server,
       final GatewayConfig config, final int port, final String topologyName)
       throws IOException, CertificateException, NoSuchAlgorithmException,
-      KeyStoreException {
+      KeyStoreException, AliasServiceException {
 
     ServerConnector connector;
 
@@ -401,7 +402,7 @@ public class GatewayServer {
       httpsConfig.setSecurePort( connectorPort );
       httpsConfig.addCustomizer( new SecureRequestCustomizer() );
       SSLService ssl = services.getService(GatewayServices.SSL_SERVICE);
-      SslContextFactory sslContextFactory = (SslContextFactory)ssl.buildSslContextFactory( config.getIdentityKeystorePath(), config.getIdentityKeystoreType(), config.getIdentityKeyAlias() );
+      SslContextFactory sslContextFactory = (SslContextFactory)ssl.buildSslContextFactory( config );
       connector = new ServerConnector( server, sslContextFactory, new HttpConnectionFactory( httpsConfig ) );
     } else {
       connector = new ServerConnector( server );
@@ -693,7 +694,7 @@ public class GatewayServer {
     return errorHandler;
   }
 
-  private WebAppContext createWebAppContext( Topology topology, File warFile, String warPath ) throws IOException, ZipException, TransformerException, SAXException, ParserConfigurationException {
+  private WebAppContext createWebAppContext( Topology topology, File warFile, String warPath ) {
     String topoName = topology.getName();
     WebAppContext context = new WebAppContext();
     String contextPath;
