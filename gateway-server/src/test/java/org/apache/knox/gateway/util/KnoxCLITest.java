@@ -21,7 +21,6 @@ import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.knox.gateway.config.GatewayConfigurationException;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
@@ -34,6 +33,7 @@ import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.URL;
@@ -875,11 +875,6 @@ public class KnoxCLITest {
   }
 
   private class GatewayConfigMock extends GatewayConfigImpl{
-
-    GatewayConfigMock() throws GatewayConfigurationException {
-      super();
-    }
-
     private String confDir;
     public void setConfDir(String location) {
       confDir = location;
@@ -961,7 +956,7 @@ public class KnoxCLITest {
         .gotoRoot();
   }
 
-  private File writeTestTopology( String name, XMLTag xml ) throws Exception {
+  private File writeTestTopology( String name, XMLTag xml ) throws IOException {
     // Create the test topology.
 
     GatewayConfigMock config = new GatewayConfigMock();

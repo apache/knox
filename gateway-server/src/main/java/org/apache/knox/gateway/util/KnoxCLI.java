@@ -32,7 +32,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.knox.gateway.GatewayCommandLine;
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.config.GatewayConfigurationException;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.deploy.DeploymentFactory;
 import org.apache.knox.gateway.services.CLIGatewayServices;
@@ -175,7 +174,7 @@ public class KnoxCLI extends Configured implements Tool {
     return services;
   }
 
-  private void initializeServices(boolean persisting) throws ServiceLifecycleException, GatewayConfigurationException {
+  private void initializeServices(boolean persisting) throws ServiceLifecycleException {
     GatewayConfig config = getGatewayConfig();
     Map<String,String> options = new HashMap<>();
     options.put(GatewayCommandLine.PERSIST_LONG, Boolean.toString(persisting));
@@ -573,7 +572,7 @@ public class KnoxCLI extends Configured implements Tool {
                                       "NOTE: The password for the JKS, JCEKS and PKCS12 types is `changeit`.\n" +
                                       "It can be changed using: `keytool -storepasswd -storetype <type> -keystore gateway-client-trust.<type>`";
 
-    private GatewayConfig getGatewayConfig() throws GatewayConfigurationException {
+    private GatewayConfig getGatewayConfig() {
       GatewayConfig result;
       Configuration conf = getConf();
       if (conf instanceof GatewayConfig) {
@@ -895,7 +894,7 @@ public class KnoxCLI extends Configured implements Tool {
    public MasterCreateCommand() {
    }
 
-   private GatewayConfig getGatewayConfig() throws GatewayConfigurationException {
+   private GatewayConfig getGatewayConfig() {
      GatewayConfig result;
      Configuration conf = getConf();
      if( conf != null && conf instanceof GatewayConfig ) {
@@ -909,13 +908,7 @@ public class KnoxCLI extends Configured implements Tool {
    @Override
    public boolean validate() {
      boolean valid = true;
-     GatewayConfig config;
-    try {
-      config = getGatewayConfig();
-    } catch (GatewayConfigurationException e) {
-      out.println("Error while getting gateway configuration: " + e.getMessage());
-      return false;
-    }
+     GatewayConfig config = getGatewayConfig();
      File dir = new File( config.getGatewaySecurityDir() );
      File file = new File( dir, "master" );
      if( file.exists() ) {
@@ -1100,7 +1093,7 @@ public class KnoxCLI extends Configured implements Tool {
     }
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
 
       String confDir = getGatewayConfig().getGatewayConfDir();
       File tops = new File(confDir + "/topologies");
@@ -1138,7 +1131,7 @@ public class KnoxCLI extends Configured implements Tool {
     }
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
       out.println("This command does not have any functionality.");
     }
 
@@ -1487,9 +1480,8 @@ public class KnoxCLI extends Configured implements Tool {
      *
      * @param t - Topology to use for config
      * @return - path of shiro.ini config file.
-     * @throws GatewayConfigurationException in case there is a configuration error
      */
-    protected String getConfig(Topology t) throws GatewayConfigurationException {
+    protected String getConfig(Topology t){
       File tmpDir = new File(System.getProperty("java.io.tmpdir"));
       DeploymentFactory.setGatewayServices(services);
       EnterpriseArchive archive = DeploymentFactory.createDeployment(getGatewayConfig(), t);
@@ -1552,7 +1544,7 @@ public class KnoxCLI extends Configured implements Tool {
     }
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
       if(!acquireTopology()){
         return;
       }
@@ -1594,7 +1586,7 @@ public class KnoxCLI extends Configured implements Tool {
       }
     }
 
-    private Set<String> getGroups(Topology t, UsernamePasswordToken token) throws GatewayConfigurationException {
+    private Set<String> getGroups(Topology t, UsernamePasswordToken token){
       Set<String> groups = null;
       try {
         Subject subject = getSubject(getConfig(t));
@@ -1635,7 +1627,7 @@ public class KnoxCLI extends Configured implements Tool {
     }
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
 
       if(!acquireTopology()) {
         return;
@@ -1653,7 +1645,7 @@ public class KnoxCLI extends Configured implements Tool {
     }
   }
 
-  private GatewayConfig getGatewayConfig() throws GatewayConfigurationException {
+  private GatewayConfig getGatewayConfig() {
     GatewayConfig result;
     Configuration conf = getConf();
     if(conf != null && conf instanceof GatewayConfig) {
@@ -1679,7 +1671,7 @@ public class KnoxCLI extends Configured implements Tool {
     public String getUsage() { return USAGE + ":\n\n" + DESC; }
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
       attempts++;
       SSLContext ctx = null;
       CloseableHttpClient client;
@@ -1802,7 +1794,7 @@ public class KnoxCLI extends Configured implements Tool {
       }
     }
 
-    public void retryRequest() throws Exception {
+    public void retryRequest(){
       if(attempts < 2) {
         if(ssl) {
           ssl = false;

@@ -16,29 +16,15 @@
  */
 package org.apache.knox.gateway.config.impl;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.config.GatewayConfigurationException;
 import org.apache.knox.test.TestUtils;
 import org.hamcrest.CoreMatchers;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFilePermission;
-import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.GATEWAY_CONFIG_DIR_PREFIX;
-import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.GATEWAY_CONFIG_FILE_PREFIX;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -51,16 +37,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+
 public class GatewayConfigImplTest {
 
-  @Rule
-  public final TemporaryFolder testFolder = new TemporaryFolder();
-
-  @Rule
-  public final ExpectedException expectedException = ExpectedException.none();
-
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
-  public void testHttpServerSettings() throws Exception {
+  public void testHttpServerSettings() {
     GatewayConfigImpl config = new GatewayConfigImpl();
 
     // Check the defaults.
@@ -94,7 +75,7 @@ public class GatewayConfigImplTest {
   }
 
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
-  public void testGetGatewayDeploymentsBackupVersionLimit() throws Exception {
+  public void testGetGatewayDeploymentsBackupVersionLimit() {
     GatewayConfigImpl config = new GatewayConfigImpl();
     assertThat( config.getGatewayDeploymentsBackupVersionLimit(), is(5) );
 
@@ -109,7 +90,7 @@ public class GatewayConfigImplTest {
   }
 
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
-  public void testGetGatewayDeploymentsBackupAgeLimit() throws Exception {
+  public void testGetGatewayDeploymentsBackupAgeLimit() {
     GatewayConfigImpl config = new GatewayConfigImpl();
     assertThat( config.getGatewayDeploymentsBackupAgeLimit(), is(-1L) );
 
@@ -128,7 +109,7 @@ public class GatewayConfigImplTest {
 
 
   @Test
-  public void testSSLCiphers() throws Exception {
+  public void testSSLCiphers() {
     GatewayConfigImpl config = new GatewayConfigImpl();
     List<String> list;
 
@@ -182,7 +163,7 @@ public class GatewayConfigImplTest {
   }
 
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
-  public void testGlobalRulesServices() throws Exception {
+  public void testGlobalRulesServices() {
     GatewayConfigImpl config = new GatewayConfigImpl();
     List<String> list;
 
@@ -209,7 +190,7 @@ public class GatewayConfigImplTest {
   }
 
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
-  public void testMetricsSettings() throws Exception {
+  public void testMetricsSettings() {
     GatewayConfigImpl config = new GatewayConfigImpl();
     //test defaults
     assertThat(config.isMetricsEnabled(), is(false));
@@ -220,7 +201,7 @@ public class GatewayConfigImplTest {
   }
 
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
-  public void testGatewayIdleTimeout() throws Exception {
+  public void testGatewayIdleTimeout() {
     GatewayConfigImpl config = new GatewayConfigImpl();
     long idleTimeout;
 
@@ -233,7 +214,7 @@ public class GatewayConfigImplTest {
   }
 
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
-  public void testGatewayServerHeaderEnabled() throws Exception {
+  public void testGatewayServerHeaderEnabled() {
     GatewayConfigImpl config = new GatewayConfigImpl();
     boolean serverHeaderEnabled;
 
@@ -247,7 +228,7 @@ public class GatewayConfigImplTest {
 
 
   @Test
-  public void testGetRemoteConfigurationRegistryNames() throws Exception {
+  public void testGetRemoteConfigurationRegistryNames() {
     GatewayConfigImpl config = new GatewayConfigImpl();
 
     List<String> registryNames = config.getRemoteRegistryConfigurationNames();
@@ -271,7 +252,7 @@ public class GatewayConfigImplTest {
 
 
   @Test
-  public void testHTTPDefaultTimeouts() throws Exception {
+  public void testHTTPDefaultTimeouts() {
     final GatewayConfigImpl config = new GatewayConfigImpl();
 
     assertNotEquals(config.getHttpClientConnectionTimeout(), -1);
@@ -284,7 +265,7 @@ public class GatewayConfigImplTest {
 
   // KNOX-1322
   @Test
-  public void testGetReadOnlyOverrideTopologyNames() throws Exception {
+  public void testGetReadOnlyOverrideTopologyNames() {
     GatewayConfigImpl config = new GatewayConfigImpl();
 
     List<String> names = config.getReadOnlyOverrideTopologyNames();
@@ -316,7 +297,7 @@ public class GatewayConfigImplTest {
 
   // KNOX-1756
   @Test
-  public void testCustomIdentityKeystoreOptions() throws Exception {
+  public void testCustomIdentityKeystoreOptions() {
     GatewayConfigImpl config = new GatewayConfigImpl();
 
     // Validate default options (backwards compatibility)
@@ -365,77 +346,6 @@ public class GatewayConfigImplTest {
     assertEquals("custom_keystore_name", config.getSigningKeystoreName());
     assertEquals("PKCS12", config.getSigningKeystoreType());
     assertEquals("custom_keystore_password_alias", config.getSigningKeystorePasswordAlias());
-  }
-
-  @Test
-  public void shouldRaiseAnExeptionInCaseKerberosIsEnabledAndKerberosConfigDoesNotExist() throws Exception {
-    testNonExistingKerberosConfigFile("nonExistingKrb5Conf", null);
-  }
-
-  @Test
-  public void shouldRaiseAnExeptionInCaseKerberosIsEnabledAndKerberosConfigCannotBeRead() throws Exception {
-    testNonReadableKerberosConfigFile(true);
-  }
-
-  @Test
-  public void shouldRaiseAnExeptionInCaseKerberosIsEnabledAndKerberosLoginConfigDoesNotExist() throws Exception {
-    testNonExistingKerberosConfigFile(null, "nonExistingKrb5LoginConf");
-  }
-
-  @Test
-  public void shouldRaiseAnExeptionInCaseKerberosIsEnabledAndKerberosLoginConfigCannotBeRead() throws Exception {
-    testNonReadableKerberosConfigFile(false);
-  }
-
-  private void testNonExistingKerberosConfigFile(String krb5Config, String krb5LoginConfig) throws Exception {
-    try {
-      expectedException.expect(GatewayConfigurationException.class);
-      expectedException.expectMessage(containsString("set to a non-existing file"));
-
-      final File gatewayHome = testFolder.newFolder("gatewayHome");
-      System.setProperty(GatewayConfig.GATEWAY_HOME_VAR, gatewayHome.getAbsolutePath());
-      writeTestGatewayConfig(krb5Config, krb5LoginConfig);
-      new GatewayConfigImpl(); //exception is expected here
-    } finally {
-      System.clearProperty(GatewayConfig.GATEWAY_HOME_VAR);
-    }
-  }
-
-  private void testNonReadableKerberosConfigFile(boolean krb5Conf) throws Exception {
-    try {
-      expectedException.expect(GatewayConfigurationException.class);
-      expectedException.expectMessage(containsString("set to a non-readable file"));
-
-      final File gatewayHome = testFolder.newFolder("gatewayHome");
-      System.setProperty(GatewayConfig.GATEWAY_HOME_VAR, gatewayHome.getAbsolutePath());
-      final File krb5ConfFile = new File(gatewayHome, "krb5.conf");
-      krb5ConfFile.createNewFile();
-      //krb5ConfFile.setReadable(false); //for some reason this does not work with root user
-      Files.setPosixFilePermissions(Paths.get(krb5ConfFile.getAbsolutePath()), new HashSet<PosixFilePermission>());
-      if (krb5Conf) {
-        writeTestGatewayConfig(krb5ConfFile.getAbsolutePath(), null);
-      } else {
-        writeTestGatewayConfig(null, krb5ConfFile.getAbsolutePath());
-      }
-      new GatewayConfigImpl();  //exception is expected here
-    } finally {
-      System.clearProperty(GatewayConfig.GATEWAY_HOME_VAR);
-    }
-  }
-
-  private void writeTestGatewayConfig(String krb5Config, String krb5LoginConfig) throws IOException {
-    final File configDir = testFolder.newFolder("gatewayHome", GATEWAY_CONFIG_DIR_PREFIX);
-    final File gatewayConfigFile = new File(configDir, GATEWAY_CONFIG_FILE_PREFIX + "-site.xml");
-    final StringBuilder configFileContentBuilder = new StringBuilder(512);
-    configFileContentBuilder.append("<configuration  xmlns:xi=\"http://www.w3.org/2001/XInclude\">\n<property><name>gateway.hadoop.kerberos.secured</name><value>true</value></property>");
-    if (krb5Config != null) {
-      configFileContentBuilder.append("<property><name>java.security.krb5.conf</name><value>" + krb5Config + "</value></property>\n");
-    }
-    if (krb5LoginConfig != null) {
-      configFileContentBuilder.append("<property><name>java.security.auth.login.config</name><value>" + krb5LoginConfig + "</value></property>\n");
-    }
-    configFileContentBuilder.append("</configuration>");
-    FileUtils.writeStringToFile(gatewayConfigFile, configFileContentBuilder.toString(), StandardCharsets.UTF_8);
   }
 
 }
