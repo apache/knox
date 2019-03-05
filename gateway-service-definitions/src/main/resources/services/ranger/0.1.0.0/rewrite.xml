@@ -15,7 +15,13 @@
    limitations under the License.
 -->
 <rules>
-    <rule dir="IN" name="RANGER/ranger/inbound" pattern="*://*:*/**/ranger/service/public/{path=**}?{**}">
+    <rule dir="IN" name="RANGER/ranger/inbound/public" pattern="*://*:*/**/ranger/service/public/{path=**}?{**}">
         <rewrite template="{$serviceUrl[RANGER]}/service/public/{path=**}?{**}"/>
+    </rule>
+    <rule dir="IN" name="RANGER/ranger/inbound/plugins" pattern="*://*:*/**/ranger/service/plugins/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[RANGER]}/service/plugins/{path=**}?{**}"/>
+    </rule>
+    <rule dir="IN" name="RANGER/ranger/inbound/healthcheck" pattern="*://*:*/**/ranger">
+        <rewrite template="{$serviceUrl[RANGER]}"/>
     </rule>
 </rules>
