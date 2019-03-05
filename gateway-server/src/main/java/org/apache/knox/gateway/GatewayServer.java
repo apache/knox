@@ -30,6 +30,7 @@ import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.config.GatewayConfigurationException;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.deploy.DeploymentException;
 import org.apache.knox.gateway.deploy.DeploymentFactory;
@@ -96,6 +97,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
@@ -104,12 +106,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
@@ -152,6 +156,7 @@ public class GatewayServer {
         }
         GatewayConfig config = new GatewayConfigImpl();
         if (config.isHadoopKerberosSecured()) {
+          validateKerberosConfig(config);
           configureKerberosSecurity( config );
         }
         Map<String,String> options = new HashMap<>();
@@ -242,6 +247,32 @@ public class GatewayServer {
     setSystemProperty(GatewayConfig.KRB5_DEBUG, Boolean.toString(config.isKerberosDebugEnabled()));
     setSystemProperty(GatewayConfig.KRB5_LOGIN_CONFIG, config.getKerberosLoginConfig());
     setSystemProperty(GatewayConfig.KRB5_USE_SUBJECT_CREDS_ONLY,  "false");
+  }
+
+  private static void validateKerberosConfig(GatewayConfig config) throws GatewayConfigurationException {
+    final Set<String> errors = new HashSet<>();
+    if (config.isHadoopKerberosSecured()) {
+      if (config.getKerberosConfig() != null) {
+        final File krb5ConfFile = Paths.get(config.getKerberosConfig()).toFile();
+        checkIfFileExistsAndCanBeRead(krb5ConfFile, GatewayConfig.KRB5_CONFIG, errors);
+      }
+
+      if (config.getKerberosLoginConfig() != null) {
+        final File loginConfigFile = Paths.get(config.getKerberosLoginConfig()).toFile();
+        checkIfFileExistsAndCanBeRead(loginConfigFile, GatewayConfig.KRB5_LOGIN_CONFIG, errors);
+      }
+    }
+    if (!errors.isEmpty()) {
+      throw new GatewayConfigurationException(errors);
+    }
+  }
+
+  private static void checkIfFileExistsAndCanBeRead(File fileToBeChecked, String propertyName, Set<String> errors) {
+    if (!fileToBeChecked.exists()) {
+      errors.add(propertyName + " is set to a non-existing file: " + fileToBeChecked);
+    } else if (!fileToBeChecked.canRead()) {
+      errors.add(propertyName + " is set to a non-readable file: " + fileToBeChecked);
+    }
   }
 
   private static void setSystemProperty(String name, String value) {

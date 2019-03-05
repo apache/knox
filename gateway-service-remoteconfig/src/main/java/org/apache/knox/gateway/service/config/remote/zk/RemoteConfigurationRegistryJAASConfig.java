@@ -26,6 +26,9 @@ import org.apache.knox.gateway.services.security.AliasServiceException;
 
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
+
+import java.io.File;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -37,6 +40,7 @@ import java.util.Map;
 class RemoteConfigurationRegistryJAASConfig extends Configuration {
 
    static final String JAAS_CONFIG_ERRROR_PREFIX = "Error while getting secure configuration. This error usually indicates an issue within the supplied JAAS configuration";
+   static final String JGSS_LOGIN_MODUDLE = "com.sun.security.jgss.initiate";
 
     // Underlying SASL mechanisms supported
     enum SASLMechanism {
@@ -72,6 +76,8 @@ class RemoteConfigurationRegistryJAASConfig extends Configuration {
           throw new ConfigurationException(message, e);
         }
 
+        validateKeytabFile();
+
         this.aliasService = aliasService;
 
         // Populate context entries
@@ -87,6 +93,21 @@ class RemoteConfigurationRegistryJAASConfig extends Configuration {
             // For now, set this as the static JAAS configuration
             Configuration.setConfiguration(this);
         }
+    }
+
+    private void validateKeytabFile() {
+      final AppConfigurationEntry[] appConfigurationEntries = delegate.getAppConfigurationEntry(JGSS_LOGIN_MODUDLE);
+      if (appConfigurationEntries != null) {
+        for (AppConfigurationEntry appConfigurationEntry : appConfigurationEntries) {
+          String keytabFileName = (String) appConfigurationEntry.getOptions().get("keyTab");
+          if (keytabFileName != null && keytabFileName.length() > 0) {
+            final File keytabFile = Paths.get(keytabFileName).toFile();
+            if (!keytabFile.exists() || !keytabFile.canRead()) {
+              throw new ConfigurationException("The specified keytab file " + keytabFile.getAbsolutePath() + " is either non-existing or cannot be read!");
+            }
+          }
+        }
+      }
     }
 
     @Override
