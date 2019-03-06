@@ -81,7 +81,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
-  private static final String GATEWAY_CONFIG_DIR_PREFIX = "conf";
+  private static final String GATEWAY_CONFIG_DIR_PREFIX = "conf/";
 
   private static final String GATEWAY_CONFIG_FILE_PREFIX = "gateway";
 
@@ -89,10 +89,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final String DEFAULT_APPLICATIONS_DIR = "applications";
 
-  private static final String[] GATEWAY_CONFIG_FILENAMES = {
-      GATEWAY_CONFIG_DIR_PREFIX + "/" + GATEWAY_CONFIG_FILE_PREFIX + "-default.xml",
-      GATEWAY_CONFIG_DIR_PREFIX + "/" + GATEWAY_CONFIG_FILE_PREFIX + "-site.xml"
-  };
+  private static final String[] GATEWAY_CONFIG_FILENAMES = {GATEWAY_CONFIG_FILE_PREFIX + "-default.xml", GATEWAY_CONFIG_FILE_PREFIX + "-site.xml"};
 
   public static final String HTTP_HOST = GATEWAY_CONFIG_FILE_PREFIX + ".host";
   public static final String HTTP_PORT = GATEWAY_CONFIG_FILE_PREFIX + ".port";
@@ -259,18 +256,30 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public String getGatewayConfDir() {
-    String value = getVar( GATEWAY_CONF_HOME_VAR, getGatewayHomeDir() + File.separator + "conf"  );
-    return FilenameUtils.normalize(value);
+    // 1st try: using the old style environment/system property name
+    @SuppressWarnings("deprecation")
+    String configDir = System.getProperty(GATEWAY_CONF_HOME_VAR, System.getenv(GATEWAY_CONF_HOME_VAR));
+
+    // 2nd try: using the new style environment/system property name or use the default value (relative to the GATEWAY_HOME)
+    if (StringUtils.isBlank(configDir)) {
+      configDir = getVar(KNOX_GATEWAY_CONF_DIR_VAR, getGatewayHomeDir() + File.separator + "conf");
+    }
+    return FilenameUtils.normalize(configDir);
   }
 
   @Override
   public String getGatewayDataDir() {
-    String systemValue =
-        System.getProperty(GATEWAY_DATA_HOME_VAR, System.getenv(GATEWAY_DATA_HOME_VAR));
-    String dataDir;
-    if (systemValue != null) {
-      dataDir = systemValue;
-    } else {
+    // 1st try: using the old style environment/system property name
+    @SuppressWarnings("deprecation")
+    String dataDir = System.getProperty(GATEWAY_DATA_HOME_VAR, System.getenv(GATEWAY_DATA_HOME_VAR));
+
+    // 2nd try: using the new style environment/system property name
+    if (StringUtils.isBlank(dataDir)) {
+      dataDir = System.getProperty(KNOX_GATEWAY_DATA_DIR, System.getenv(KNOX_GATEWAY_DATA_DIR));
+    }
+
+    // 3rd try: fetching it from gateway-[default|site].xml or use the default value (relative to the GATEWAY_HOME)
+    if (StringUtils.isBlank(dataDir)) {
       dataDir = get(DATA_DIR, getGatewayHomeDir() + File.separator + DEFAULT_DATA_DIR);
     }
     return FilenameUtils.normalize(dataDir);
@@ -302,8 +311,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     }
 
     URL lastFileUrl = null;
-    for( String fileName : GATEWAY_CONFIG_FILENAMES ) {
-      lastFileUrl = loadConfig( fileName, lastFileUrl );
+    for (String fileName : GATEWAY_CONFIG_FILENAMES) {
+      lastFileUrl = loadConfig(fileName);
     }
 
     initGatewayHomeDir( lastFileUrl );
@@ -342,25 +351,29 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     }
   }
 
-  // 1. GATEWAY_HOME system property
-  // 2. GATEWAY_HOME environment variable
-  // 3. user.dir system property
-  // 4. class path
-  private URL loadConfig( String fileName, URL lastFileUrl ) {
-    lastFileUrl = loadConfigFile( System.getProperty( GATEWAY_HOME_VAR ), fileName );
-    if( lastFileUrl == null ) {
-      lastFileUrl = loadConfigFile( System.getenv( GATEWAY_HOME_VAR ), fileName );
+  // 1. Pre-defined configuration directory
+  // 2. GATEWAY_HOME system property
+  // 3. GATEWAY_HOME environment variable
+  // 4. user.dir system property
+  // 5. class path
+  private URL loadConfig( String fileName) {
+    URL configFileUrl = loadConfigFile(getGatewayConfDir(), fileName);
+    if (configFileUrl == null ) {
+      configFileUrl = loadConfigFile( System.getProperty( GATEWAY_HOME_VAR ), GATEWAY_CONFIG_DIR_PREFIX + fileName );
     }
-    if( lastFileUrl == null ) {
-      lastFileUrl = loadConfigFile( System.getProperty( "user.dir" ), fileName );
+    if( configFileUrl == null ) {
+      configFileUrl = loadConfigFile( System.getenv( GATEWAY_HOME_VAR ), GATEWAY_CONFIG_DIR_PREFIX + fileName );
     }
-    if( lastFileUrl == null ) {
-      lastFileUrl = loadConfigResource( fileName );
+    if( configFileUrl == null ) {
+      configFileUrl = loadConfigFile( System.getProperty( "user.dir" ), GATEWAY_CONFIG_DIR_PREFIX + fileName );
     }
-    if( lastFileUrl != null && !"file".equals( lastFileUrl.getProtocol() ) ) {
-      lastFileUrl = null;
+    if( configFileUrl == null ) {
+      configFileUrl = loadConfigResource( GATEWAY_CONFIG_DIR_PREFIX +  fileName );
     }
-    return lastFileUrl;
+    if( configFileUrl != null && !"file".equals( configFileUrl.getProtocol() ) ) {
+      configFileUrl = null;
+    }
+    return configFileUrl;
   }
 
   private URL loadConfigFile( String dir, String file ) {
