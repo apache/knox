@@ -162,7 +162,7 @@
         <commons-net.version>3.6</commons-net.version>
         <commons-text.version>1.6</commons-text.version>
         <cors-filter.version>2.6</cors-filter.version>
-        <curator.version>4.1.0</curator.version>
+        <curator.version>4.2.0</curator.version>
         <curator-test.version>2.13.0</curator-test.version>
         <dependency-check-maven.version>4.0.2</dependency-check-maven.version>
         <dockerfile-maven-plugin.version>1.4.10</dockerfile-maven-plugin.version>
