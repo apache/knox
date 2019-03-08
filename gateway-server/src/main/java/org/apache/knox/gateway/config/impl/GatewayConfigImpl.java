@@ -81,7 +81,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
-  private static final String GATEWAY_CONFIG_DIR_PREFIX = "conf/";
+  private static final String GATEWAY_CONFIG_DIR_PREFIX = "conf";
 
   private static final String GATEWAY_CONFIG_FILE_PREFIX = "gateway";
 
@@ -359,16 +359,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private URL loadConfig( String fileName) {
     URL configFileUrl = loadConfigFile(getGatewayConfDir(), fileName);
     if (configFileUrl == null ) {
-      configFileUrl = loadConfigFile( System.getProperty( GATEWAY_HOME_VAR ), GATEWAY_CONFIG_DIR_PREFIX + fileName );
+      configFileUrl = loadConfigFile( System.getProperty( GATEWAY_HOME_VAR ), GATEWAY_CONFIG_DIR_PREFIX + File.separator + fileName );
     }
     if( configFileUrl == null ) {
-      configFileUrl = loadConfigFile( System.getenv( GATEWAY_HOME_VAR ), GATEWAY_CONFIG_DIR_PREFIX + fileName );
+      configFileUrl = loadConfigFile( System.getenv( GATEWAY_HOME_VAR ), GATEWAY_CONFIG_DIR_PREFIX + File.separator + fileName );
     }
     if( configFileUrl == null ) {
-      configFileUrl = loadConfigFile( System.getProperty( "user.dir" ), GATEWAY_CONFIG_DIR_PREFIX + fileName );
+      configFileUrl = loadConfigFile( System.getProperty( "user.dir" ), GATEWAY_CONFIG_DIR_PREFIX + File.separator + fileName );
     }
     if( configFileUrl == null ) {
-      configFileUrl = loadConfigResource( GATEWAY_CONFIG_DIR_PREFIX +  fileName );
+      configFileUrl = loadConfigResource( GATEWAY_CONFIG_DIR_PREFIX + File.separator + fileName );
     }
     if( configFileUrl != null && !"file".equals( configFileUrl.getProtocol() ) ) {
       configFileUrl = null;
