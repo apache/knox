@@ -27,7 +27,7 @@ APP_NAME=ldap
 APP_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # The app's JAR name
-APP_JAR_="$APP_BIN_DIR/ldap.jar"
+APP_JAR="$APP_BIN_DIR/ldap.jar"
 
 # Setup the common environment
 . $APP_BIN_DIR/knox-env.sh
@@ -40,11 +40,11 @@ APP_HOME_DIR=`dirname $APP_BIN_DIR`
 
 # The app's conf dir
 DEFAULT_APP_CONF_DIR="$APP_HOME_DIR/conf"
-APP_CONF_DIR=${$KNOX_LDAP_CONF_DIR:-$DEFAULT_APP_CONF_DIR}
+APP_CONF_DIR=${KNOX_LDAP_CONF_DIR:-$DEFAULT_APP_CONF_DIR}
 
 # The app's log dir
 DEFAULT_APP_LOG_DIR="$APP_HOME_DIR/logs"
-APP_LOG_DIR=${$KNOX_LDAP_LOG_DIR:-$DEFAULT_APP_LOG_DIR}
+APP_LOG_DIR=${KNOX_LDAP_LOG_DIR:-$DEFAULT_APP_LOG_DIR}
 
 # The app's logging options
 APP_LOG_OPTS="$KNOX_LDAP_LOG_OPTS"
