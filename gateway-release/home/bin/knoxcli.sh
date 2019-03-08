@@ -23,11 +23,11 @@ APP_LABEL=KnoxCLI
 # The app's name
 APP_NAME=knoxcli
 
-# The app's jar name
-APP_JAR="$APP_BIN_DIR/knoxcli.jar"
-
 # Start/stop script location
 APP_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# The app's jar name
+APP_JAR="$APP_BIN_DIR/knoxcli.jar"
 
 # Setup the common environment
 . $APP_BIN_DIR/knox-env.sh

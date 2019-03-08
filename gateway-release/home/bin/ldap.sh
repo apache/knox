@@ -23,11 +23,11 @@ APP_LABEL=LDAP
 # The app's name
 APP_NAME=ldap
 
-# The app's JAR name
-APP_JAR_=ldap.jar
-
 # start/stop script location
 APP_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# The app's JAR name
+APP_JAR_="$APP_BIN_DIR/ldap.jar"
 
 # Setup the common environment
 . $APP_BIN_DIR/knox-env.sh
