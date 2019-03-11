@@ -105,8 +105,6 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String TRUST_ALL_CERTS = GATEWAY_CONFIG_FILE_PREFIX + ".trust.all.certs";
   private static final String CLIENT_AUTH_NEEDED = GATEWAY_CONFIG_FILE_PREFIX + ".client.auth.needed";
   private static final String CLIENT_AUTH_WANTED = GATEWAY_CONFIG_FILE_PREFIX + ".client.auth.wanted";
-  private static final String TRUSTSTORE_PATH = GATEWAY_CONFIG_FILE_PREFIX + ".truststore.path";
-  private static final String TRUSTSTORE_TYPE = GATEWAY_CONFIG_FILE_PREFIX + ".truststore.type";
   private static final String KEYSTORE_TYPE = GATEWAY_CONFIG_FILE_PREFIX + ".keystore.type";
   private static final String XFORWARDED_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".xforwarded.enabled";
   private static final String EPHEMERAL_DH_KEY_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".jdk.tls.ephemeralDHKeySize";
@@ -543,7 +541,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public String getTruststorePath() {
-    return get( TRUSTSTORE_PATH, null);
+    return get( GATEWAY_TRUSTSTORE_PATH, null);
   }
 
   @Override
@@ -553,7 +551,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public String getTruststoreType() {
-    return get( TRUSTSTORE_TYPE, "JKS");
+    return get( GATEWAY_TRUSTSTORE_TYPE, DEFAULT_GATEWAY_TRUSTSTORE_TYPE);
+  }
+
+  @Override
+  public String getTruststorePasswordAlias() {
+    return get( GATEWAY_TRUSTSTORE_PASSWORD_ALIAS, DEFAULT_GATEWAY_TRUSTSTORE_PASSWORD_ALIAS);
   }
 
   @Override
@@ -602,6 +605,21 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
       }
     }
     return t;
+  }
+
+  @Override
+  public String getHttpClientTruststorePath() {
+    return get(HTTP_CLIENT_TRUSTSTORE_PATH);
+  }
+
+  @Override
+  public String getHttpClientTruststoreType() {
+    return get(HTTP_CLIENT_TRUSTSTORE_TYPE, DEFAULT_HTTP_CLIENT_TRUSTSTORE_TYPE);
+  }
+
+  @Override
+  public String getHttpClientTruststorePasswordAlias() {
+    return get(HTTP_CLIENT_TRUSTSTORE_PASSWORD_ALIAS, DEFAULT_HTTP_CLIENT_TRUSTSTORE_PASSWORD_ALIAS);
   }
 
   @Override

@@ -33,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.Key;
@@ -64,8 +65,8 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
   private static final String CERT_GEN_MODE = "hadoop.gateway.cert.gen.mode";
   private static final String CERT_GEN_MODE_LOCALHOST = "localhost";
   private static final String CERT_GEN_MODE_HOSTNAME = "hostname";
-  private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
-  private static GatewayResources RES = ResourcesFactory.get( GatewayResources.class );
+  private static GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
+  private static GatewayResources RES = ResourcesFactory.get(GatewayResources.class);
 
   private GatewayConfig config;
   private Map<String, Map<String, String>> cache = new ConcurrentHashMap<>();
@@ -111,13 +112,17 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
 
   @Override
   public KeyStore getKeystoreForGateway() throws KeystoreServiceException {
-    final File  keyStoreFile = new File( config.getIdentityKeystorePath() );
-    readLock.lock();
-    try {
-      return getKeystore(keyStoreFile, config.getIdentityKeystoreType(), getKeystorePassword(config.getIdentityKeystorePasswordAlias()));
-    }
-    finally {
-      readLock.unlock();
+    return getKeystore(Paths.get(config.getIdentityKeystorePath()), config.getIdentityKeystoreType(), config.getIdentityKeystorePasswordAlias(), true);
+  }
+
+  @Override
+  public KeyStore getTruststoreForHttpClient() throws KeystoreServiceException {
+    String trustStorePath = config.getHttpClientTruststorePath();
+    if (trustStorePath == null) {
+      // If the trustStorePath is null, fallback to behavior before KNOX-1812
+      return getKeystoreForGateway();
+    } else {
+      return getKeystore(Paths.get(trustStorePath), config.getHttpClientTruststoreType(), config.getHttpClientTruststorePasswordAlias(), true);
     }
   }
 
@@ -128,30 +133,19 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
 
   @Override
   public KeyStore getSigningKeystore(String keystoreName) throws KeystoreServiceException {
-    File keyStoreFile;
+    Path keyStoreFile;
     String keyStoreType;
-    char[] password;
+    String passwordAlias;
     if(keystoreName != null) {
-      keyStoreFile = new File(keyStoreDir, keystoreName + ".jks");
+      keyStoreFile = Paths.get(keyStoreDir, keystoreName + ".jks");
       keyStoreType = "jks";
-      password = masterService.getMasterSecret();
+      passwordAlias = null;
     } else {
-      keyStoreFile = new File(config.getSigningKeystorePath());
+      keyStoreFile = Paths.get(config.getSigningKeystorePath());
       keyStoreType = config.getSigningKeystoreType();
-      password = getKeystorePassword(config.getSigningKeystorePasswordAlias());
+      passwordAlias = config.getSigningKeystorePasswordAlias();
     }
-
-    // make sure the keystore exists
-    if (!keyStoreFile.exists()) {
-      throw new KeystoreServiceException("Configured signing keystore does not exist.");
-    }
-    readLock.lock();
-    try {
-      return getKeystore(keyStoreFile, keyStoreType, password);
-    }
-    finally {
-      readLock.unlock();
-    }
+    return getKeystore(keyStoreFile, keyStoreType, passwordAlias, true);
   }
 
   @Override
@@ -327,14 +321,9 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
   @Override
   public KeyStore getCredentialStoreForCluster(String clusterName)
       throws KeystoreServiceException {
-    final File  keyStoreFile = new File( keyStoreDir, clusterName + CREDENTIALS_SUFFIX  );
-    readLock.lock();
-    try {
-      return getKeystore(keyStoreFile, "JCEKS", masterService.getMasterSecret());
-    }
-    finally {
-      readLock.unlock();
-    }
+    // Do not fail getting the credential store if the keystore file does not exist.  The returned
+    // KeyStore will be empty.  This seems like a potential bug, but is the behavior before KNOX-1812
+    return getKeystore(Paths.get(keyStoreDir, clusterName + CREDENTIALS_SUFFIX), "JCEKS", null, false);
   }
 
   @Override
@@ -446,6 +435,48 @@ public class DefaultKeystoreService extends BaseKeystoreService implements
   @Override
   public String getKeystorePath() {
     return config.getIdentityKeystorePath();
+  }
+
+  /**
+   * Loads a keystore file.
+   * <p>
+   * if <code>failIfNotAccessible</code> is <code>true</code>, then the path to the keystore file
+   * (keystorePath) is validated such that it exists, is a file and can be read by the process. If
+   * any of these checks fail, a {@link KeystoreServiceException} is thrown in dicatating the exact
+   * reason.
+   * <p>
+   * Before the keystore file is loaded, the service's read lock is locked to prevent concurrent
+   * reads on the file.
+   *
+   * @param keystorePath        the path to the keystore file
+   * @param keystoreType        the type of keystore file
+   * @param alias               the alias for the password to the keystore file (see {@link #getKeystorePassword(String)})
+   * @param failIfNotAccessible <code>true</code> to ensure the keystore file exists and is readable; <code>false</code> to not check
+   * @return a {@link KeyStore}, or <code>null</code> if the requested keystore cannot be created
+   * @throws KeystoreServiceException if an error occurs loading the keystore file
+   */
+  private KeyStore getKeystore(Path keystorePath, String keystoreType, String alias, boolean failIfNotAccessible) throws KeystoreServiceException {
+    File keystoreFile = keystorePath.toFile();
+
+    if (failIfNotAccessible) {
+      if (!keystoreFile.exists()) {
+        LOG.keystoreFileDoesNotExist(keystorePath.toString());
+        throw new KeystoreServiceException("The keystore file does not exist: " + keystoreFile.getAbsolutePath());
+      } else if (!keystoreFile.isFile()) {
+        LOG.keystoreFileIsNotAFile(keystorePath.toString());
+        throw new KeystoreServiceException("The keystore file is not a file: " + keystoreFile.getAbsolutePath());
+      } else if (!keystoreFile.canRead()) {
+        LOG.keystoreFileIsNotAccessible(keystorePath.toString());
+        throw new KeystoreServiceException("The keystore file cannot be read: " + keystoreFile.getAbsolutePath());
+      }
+    }
+
+    readLock.lock();
+    try {
+      return getKeystore(keystoreFile, keystoreType, getKeystorePassword(alias));
+    } finally {
+      readLock.unlock();
+    }
   }
 
   private char[] getKeystorePassword(String alias) throws KeystoreServiceException {

@@ -32,6 +32,15 @@ public interface KeystoreService {
 
   KeyStore getKeystoreForGateway() throws KeystoreServiceException;
 
+  /**
+   * Gets the configured keystore instance that contains trust data.
+   * <p>
+   * If not configured, the Gateway's identity keystore should be returned. See {@link #getKeystoreForGateway()}
+   *
+   * @return a {@link KeyStore}
+   */
+  KeyStore getTruststoreForHttpClient() throws KeystoreServiceException;
+
   KeyStore getSigningKeystore() throws KeystoreServiceException;
 
   KeyStore getSigningKeystore(String keystoreName) throws KeystoreServiceException;

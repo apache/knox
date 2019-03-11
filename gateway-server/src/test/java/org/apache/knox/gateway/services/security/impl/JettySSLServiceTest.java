@@ -59,8 +59,9 @@ public class JettySSLServiceTest {
     String identityKeyAlias = "server";
     Path truststorePath = Paths.get(basedir, "target", "test-classes", "keystores", "server-truststore.jks");
     String truststoreType = "jks";
+    String truststorePasswordAlias = "trust_store_password";
 
-    GatewayConfig config = createGatewayConfig(false, false, identityKeystorePath, identityKeystoreType, identityKeyAlias, truststorePath, truststoreType);
+    GatewayConfig config = createGatewayConfig(false, false, identityKeystorePath, identityKeystoreType, identityKeyAlias, truststorePath, truststoreType, truststorePasswordAlias);
 
     AliasService aliasService = createMock(AliasService.class);
     expect(aliasService.getGatewayIdentityKeystorePassword()).andReturn(identityKeystorePassword).atLeastOnce();
@@ -108,8 +109,9 @@ public class JettySSLServiceTest {
     String identityKeyAlias = "server";
     Path truststorePath = Paths.get(basedir, "target", "test-classes", "keystores", "server-truststore.jks");
     String truststoreType = "jks";
+    String truststorePasswordAlias = "trust_store_password";
 
-    GatewayConfig config = createGatewayConfig(false, false, identityKeystorePath, identityKeystoreType, identityKeyAlias, truststorePath, truststoreType);
+    GatewayConfig config = createGatewayConfig(false, false, identityKeystorePath, identityKeystoreType, identityKeyAlias, truststorePath, truststoreType, truststorePasswordAlias);
 
     AliasService aliasService = createMock(AliasService.class);
     expect(aliasService.getGatewayIdentityKeystorePassword()).andThrow(new AliasServiceException(null)).atLeastOnce();
@@ -141,8 +143,9 @@ public class JettySSLServiceTest {
     String identityKeyAlias = "server";
     Path truststorePath = Paths.get(basedir, "target", "test-classes", "keystores", "server-truststore.jks");
     String truststoreType = "jks";
+    String truststorePasswordAlias = "trust_store_password";
 
-    GatewayConfig config = createGatewayConfig(false, false, identityKeystorePath, identityKeystoreType, identityKeyAlias, truststorePath, truststoreType);
+    GatewayConfig config = createGatewayConfig(false, false, identityKeystorePath, identityKeystoreType, identityKeyAlias, truststorePath, truststoreType, truststorePasswordAlias);
 
     AliasService aliasService = createMock(AliasService.class);
     expect(aliasService.getGatewayIdentityKeystorePassword()).andReturn(null).atLeastOnce();
@@ -191,8 +194,9 @@ public class JettySSLServiceTest {
     String identityKeyAlias = "server";
     Path truststorePath = Paths.get(basedir, "target", "test-classes", "keystores", "server-truststore.jks");
     String truststoreType = "jks";
+    String truststorePasswordAlias = "trust_store_password";
 
-    GatewayConfig config = createGatewayConfig(false, false, identityKeystorePath, identityKeystoreType, identityKeyAlias, truststorePath, truststoreType);
+    GatewayConfig config = createGatewayConfig(false, false, identityKeystorePath, identityKeystoreType, identityKeyAlias, truststorePath, truststoreType, truststorePasswordAlias);
 
     AliasService aliasService = createMock(AliasService.class);
     expect(aliasService.getGatewayIdentityKeystorePassword()).andReturn(null).atLeastOnce();
@@ -230,8 +234,9 @@ public class JettySSLServiceTest {
     String identityKeyAlias = "server";
     Path truststorePath = Paths.get(basedir, "target", "test-classes", "keystores", "server-truststore.jks");
     String truststoreType = "jks";
+    String truststorePasswordAlias = "trust_store_password";
 
-    GatewayConfig config = createGatewayConfig(true, false, identityKeystorePath, identityKeystoreType, identityKeyAlias, truststorePath, truststoreType);
+    GatewayConfig config = createGatewayConfig(true, false, identityKeystorePath, identityKeystoreType, identityKeyAlias, truststorePath, truststoreType, truststorePasswordAlias);
 
     AliasService aliasService = createMock(AliasService.class);
     expect(aliasService.getGatewayIdentityKeystorePassword()).andReturn(identityKeystorePassword).atLeastOnce();
@@ -281,13 +286,14 @@ public class JettySSLServiceTest {
     Path truststorePath = Paths.get(basedir, "target", "test-classes", "keystores", "server-truststore.jks");
     String truststoreType = "jks";
     char[] truststorePassword = "horton".toCharArray();
+    String truststorePasswordAlias = "trust_store_password";
 
-    GatewayConfig config = createGatewayConfig(true, true, identityKeystorePath, identityKeystoreType, identityKeyAlias, truststorePath, truststoreType);
+    GatewayConfig config = createGatewayConfig(true, true, identityKeystorePath, identityKeystoreType, identityKeyAlias, truststorePath, truststoreType, truststorePasswordAlias);
 
     AliasService aliasService = createMock(AliasService.class);
     expect(aliasService.getGatewayIdentityKeystorePassword()).andReturn(identityKeystorePassword).atLeastOnce();
     expect(aliasService.getGatewayIdentityPassphrase()).andReturn(identityKeyPassphrase).atLeastOnce();
-    expect(aliasService.getPasswordFromAliasForGateway(eq("gateway-truststore-password"))).andReturn(truststorePassword).atLeastOnce();
+    expect(aliasService.getPasswordFromAliasForGateway(eq(truststorePasswordAlias))).andReturn(truststorePassword).atLeastOnce();
 
     KeystoreService keystoreService = createMock(KeystoreService.class);
 
@@ -333,13 +339,14 @@ public class JettySSLServiceTest {
     String identityKeyAlias = "server";
     Path truststorePath = Paths.get(basedir, "target", "test-classes", "keystores", "server-truststore.jks");
     String truststoreType = "jks";
+    String truststorePasswordAlias = "trust_store_password";
 
-    GatewayConfig config = createGatewayConfig(true, true, identityKeystorePath, identityKeystoreType, identityKeyAlias, truststorePath, truststoreType);
+    GatewayConfig config = createGatewayConfig(true, true, identityKeystorePath, identityKeystoreType, identityKeyAlias, truststorePath, truststoreType, truststorePasswordAlias);
 
     AliasService aliasService = createMock(AliasService.class);
     expect(aliasService.getGatewayIdentityKeystorePassword()).andReturn(identityKeystorePassword).atLeastOnce();
     expect(aliasService.getGatewayIdentityPassphrase()).andReturn(identityKeyPassphrase).atLeastOnce();
-    expect(aliasService.getPasswordFromAliasForGateway(eq("gateway-truststore-password"))).andThrow(new AliasServiceException(null)).atLeastOnce();
+    expect(aliasService.getPasswordFromAliasForGateway(eq(truststorePasswordAlias))).andThrow(new AliasServiceException(null)).atLeastOnce();
 
     KeystoreService keystoreService = createMock(KeystoreService.class);
 
@@ -368,13 +375,14 @@ public class JettySSLServiceTest {
     String identityKeyAlias = "server";
     Path truststorePath = Paths.get(basedir, "target", "test-classes", "keystores", "server-truststore.jks");
     String truststoreType = "jks";
+    String truststorePasswordAlias = "trust_store_password";
 
-    GatewayConfig config = createGatewayConfig(true, true, identityKeystorePath, identityKeystoreType, identityKeyAlias, truststorePath, truststoreType);
+    GatewayConfig config = createGatewayConfig(true, true, identityKeystorePath, identityKeystoreType, identityKeyAlias, truststorePath, truststoreType, truststorePasswordAlias);
 
     AliasService aliasService = createMock(AliasService.class);
     expect(aliasService.getGatewayIdentityKeystorePassword()).andReturn(identityKeystorePassword).atLeastOnce();
     expect(aliasService.getGatewayIdentityPassphrase()).andReturn(identityKeyPassphrase).atLeastOnce();
-    expect(aliasService.getPasswordFromAliasForGateway(eq("gateway-truststore-password"))).andReturn(null).atLeastOnce();
+    expect(aliasService.getPasswordFromAliasForGateway(eq(truststorePasswordAlias))).andReturn(null).atLeastOnce();
 
     KeystoreService keystoreService = createMock(KeystoreService.class);
 
@@ -420,13 +428,14 @@ public class JettySSLServiceTest {
     String identityKeyAlias = "server";
     Path truststorePath = Paths.get(basedir, "target", "test-classes", "keystores", "server-truststore.jks");
     String truststoreType = "jks";
+    String truststorePasswordAlias = "trust_store_password";
 
-    GatewayConfig config = createGatewayConfig(true, true, identityKeystorePath, identityKeystoreType, identityKeyAlias, truststorePath, truststoreType);
+    GatewayConfig config = createGatewayConfig(true, true, identityKeystorePath, identityKeystoreType, identityKeyAlias, truststorePath, truststoreType, truststorePasswordAlias);
 
     AliasService aliasService = createMock(AliasService.class);
     expect(aliasService.getGatewayIdentityKeystorePassword()).andReturn(null).atLeastOnce();
     expect(aliasService.getGatewayIdentityPassphrase()).andReturn(null).atLeastOnce();
-    expect(aliasService.getPasswordFromAliasForGateway(eq("gateway-truststore-password"))).andReturn(null).atLeastOnce();
+    expect(aliasService.getPasswordFromAliasForGateway(eq(truststorePasswordAlias))).andReturn(null).atLeastOnce();
 
     KeystoreService keystoreService = createMock(KeystoreService.class);
 
@@ -448,7 +457,8 @@ public class JettySSLServiceTest {
 
   private GatewayConfig createGatewayConfig(boolean isClientAuthNeeded, boolean isExplicitTruststore,
                                             Path identityKeystorePath, String identityKeystoreType,
-                                            String identityKeyAlias, Path truststorePath, String truststoreType) {
+                                            String identityKeyAlias, Path truststorePath,
+                                            String truststoreType, String trustStorePasswordAlias) {
     GatewayConfig config = createMock(GatewayConfig.class);
     expect(config.getIdentityKeystorePath()).andReturn(identityKeystorePath.toString()).atLeastOnce();
     expect(config.getIdentityKeystoreType()).andReturn(identityKeystoreType).atLeastOnce();
@@ -460,6 +470,7 @@ public class JettySSLServiceTest {
       if (isExplicitTruststore) {
         expect(config.getTruststorePath()).andReturn(truststorePath.toString()).atLeastOnce();
         expect(config.getTruststoreType()).andReturn(truststoreType).atLeastOnce();
+        expect(config.getTruststorePasswordAlias()).andReturn(trustStorePasswordAlias).atLeastOnce();
       } else {
         expect(config.getTruststorePath()).andReturn(null).atLeastOnce();
       }

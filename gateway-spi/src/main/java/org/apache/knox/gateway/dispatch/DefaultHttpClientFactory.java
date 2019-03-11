@@ -28,9 +28,7 @@ import javax.net.ssl.SSLContext;
 import javax.servlet.FilterConfig;
 
 import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
-import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.metrics.MetricsService;
@@ -79,26 +77,21 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
       builder = HttpClients.custom();
     }
     if (Boolean.parseBoolean(filterConfig.getInitParameter("useTwoWaySsl"))) {
-      char[] keypass = null;
-      MasterService ms = services.getService(GatewayServices.MASTER_SERVICE);
       AliasService as = services.getService(GatewayServices.ALIAS_SERVICE);
-      try {
-        keypass = as.getGatewayIdentityPassphrase();
-      } catch (AliasServiceException e) {
-        // nop - default passphrase will be used
-      }
-      if (keypass == null) {
-        // there has been no alias created for the key - let's assume it is the same as the keystore password
-        keypass = ms.getMasterSecret();
-      }
-
       KeystoreService ks = services.getService(GatewayServices.KEYSTORE_SERVICE);
       final SSLContext sslcontext;
       try {
-        KeyStore keystoreForGateway = ks.getKeystoreForGateway();
+        KeyStore identityKeystore = ks.getKeystoreForGateway();
+        char[] identityKeyPassphrase = as.getGatewayIdentityPassphrase();
+
+        // The trustKeystore will be the same as the identityKeystore if a truststore was not explicitly
+        // configured in gateway-site (gateway.truststore.password.alias, gateway.truststore.path, gateway.truststore.type)
+        // This was the behavior before KNOX-1812
+        KeyStore trustKeystore = ks.getTruststoreForHttpClient();
+
         sslcontext = SSLContexts.custom()
-            .loadTrustMaterial(keystoreForGateway, new TrustSelfSignedStrategy())
-            .loadKeyMaterial(keystoreForGateway, keypass)
+            .loadTrustMaterial(trustKeystore, new TrustSelfSignedStrategy())
+            .loadKeyMaterial(identityKeystore, identityKeyPassphrase)
             .build();
       } catch (Exception e) {
         throw new IllegalArgumentException("Unable to create SSLContext", e);
