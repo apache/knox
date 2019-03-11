@@ -29,42 +29,20 @@ APP_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # The app's jar name
 APP_JAR="$APP_BIN_DIR/knoxcli.jar"
 
-# The apps home dir
-APP_HOME_DIR=`dirname $APP_BIN_DIR`
-
-# The apps home dir
-APP_CONF_DIR="$APP_HOME_DIR/conf"
-
-# The app's log dir
-APP_LOG_DIR="$APP_HOME_DIR/logs"
-
-# The app's logging options
-APP_LOG_OPTS=""
-
-# The app's memory options
-APP_MEM_OPTS=""
-
-# The app's debugging options
-APP_DBG_OPTS=""
-
-# Name of LOG/OUT/ERR file
-APP_OUT_FILE="$APP_LOG_DIR/$APP_NAME.out"
-APP_ERR_FILE="$APP_LOG_DIR/$APP_NAME.err"
-
 # Setup the common environment
 . $APP_BIN_DIR/knox-env.sh
 
+# Source common functions
+. $APP_BIN_DIR/knox-functions.sh
+
 function main {
+   checkJava
+
    #printf "Starting $APP_LABEL \n"
    #printf "$@"
-   
-   $JAVA $APP_MEM_OPTS $APP_DBG_OPTS $APP_LOG_OPTS -jar $APP_JAR $@ || exit 1
 
-   return 0
-}
+   $JAVA $KNOX_CLI_MEM_OPTS $KNOX_CLI_DBG_OPTS $KNOX_CLI_LOG_OPTS -jar $APP_JAR $@ || exit 1
 
-function printHelp {
-   $JAVA -jar $APP_JAR -help
    return 0
 }
 

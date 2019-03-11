@@ -17,8 +17,6 @@
 #  limitations under the License.
 #
 
-ENV_PID_DIR=""
-
 JAVA_VERSION_PATTERNS=( "1.6.0_31/bin/java$" "1.6.0_.*/bin/java$" "1.6.0.*/bin/java$" "1.6\..*/bin/java$" "/bin/java$" )
 
 function findJava() {
@@ -60,9 +58,49 @@ function findJava() {
   fi
 }
 
-findJava
+function checkJava() {
+  findJava
 
   if [[ -z $JAVA ]]; then
     echo "Warning: JAVA is not set and could not be found." 1>&2
   fi
+}
+
+function printEnv() {
+    if [ ! -z "$APP_CONF_DIR" ]; then
+      echo "APP_CONF_DIR = $APP_CONF_DIR"
+    fi
+    
+    if [ ! -z "$APP_LOG_DIR" ]; then
+      echo "APP_LOG_DIR = $APP_LOG_DIR"
+    fi
+
+    if [ ! -z "$APP_DATA_DIR" ]; then
+      echo "APP_DATA_DIR = $APP_DATA_DIR"
+    fi
+
+    if [ ! -z "$APP_MEM_OPTS" ]; then
+      echo "APP_MEM_OPTS = $APP_MEM_OPTS"
+    fi
+
+    if [ ! -z "$APP_LOG_OPTS" ]; then
+      echo "APP_LOG_OPTS = $APP_LOG_OPTS"
+    fi
+
+    if [ ! -z "$APP_DBG_OPTS" ]; then
+      echo "APP_DBG_OPTS = $APP_DBG_OPTS"
+    fi
+
+    if [ ! -z "$APP_PID_DIR" ]; then
+      echo "APP_PID_DIR = $APP_PID_DIR"
+    fi
+
+    if [ ! -z "$APP_JAVA_LIB_PATH" ]; then
+      echo "APP_JAVA_LIB_PATH = $APP_JAVA_LIB_PATH"
+    fi
+
+    if [ ! -z "$APP_JAR" ]; then
+      echo "APP_JAR = $APP_JAR"
+    fi
+}
 

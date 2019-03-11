@@ -17,50 +17,50 @@
 #  limitations under the License.
 #
 
-# App name
+# The app's label
 APP_LABEL=LDAP
 
-# App name
+# The app's name
 APP_NAME=ldap
-
-# App name
-APP_JAR_NAME=ldap.jar
 
 # start/stop script location
 APP_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+# The app's JAR name
+APP_JAR="$APP_BIN_DIR/ldap.jar"
+
 # Setup the common environment
 . $APP_BIN_DIR/knox-env.sh
 
-# The app's jar name
-APP_JAR="$APP_BIN_DIR/$APP_JAR_NAME"
+# Source common functions
+. $APP_BIN_DIR/knox-functions.sh
 
 # The app's home dir
 APP_HOME_DIR=`dirname $APP_BIN_DIR`
 
-# The apps home dir
-APP_CONF_DIR="$APP_HOME_DIR/conf"
+# The app's conf dir
+DEFAULT_APP_CONF_DIR="$APP_HOME_DIR/conf"
+APP_CONF_DIR=${KNOX_LDAP_CONF_DIR:-$DEFAULT_APP_CONF_DIR}
 
 # The app's log dir
-APP_LOG_DIR="$APP_HOME_DIR/logs"
+DEFAULT_APP_LOG_DIR="$APP_HOME_DIR/logs"
+APP_LOG_DIR=${KNOX_LDAP_LOG_DIR:-$DEFAULT_APP_LOG_DIR}
 
-# The app's Log4j options
-APP_LOG_OPTS=""
+# The app's logging options
+APP_LOG_OPTS="$KNOX_LDAP_LOG_OPTS"
 
 # The app's memory options
-APP_MEM_OPTS=""
+APP_MEM_OPTS="$KNOX_LDAP_MEM_OPTS"
 
 # The app's debugging options
-APP_DBG_OPTS=""
-
-# Start, stop, status, clean
-APP_LAUNCH_COMMAND=$1
+APP_DBG_OPTS="$KNOX_LDAP_DBG_OPTS"
 
 # The app's PID
 APP_PID=0
 
 # The name of the PID file
-[[ $ENV_PID_DIR ]] && APP_PID_DIR="$ENV_PID_DIR" || APP_PID_DIR="$APP_HOME_DIR/pids"
+DEFAULT_APP_PID_DIR="$APP_HOME_DIR/pids"
+APP_PID_DIR=${KNOX_LDAP_PID_DIR:-$DEFAULT_APP_PID_DIR}
 APP_PID_FILE="$APP_PID_DIR/$APP_NAME.pid"
 
 #Name of LOG/OUT/ERR file
@@ -74,8 +74,13 @@ APP_START_WAIT_TIME=2
 APP_KILL_WAIT_TIME=10
 
 function main {
+   checkJava
+
    case "$1" in
       start)  
+         if [ "$2" = "--printEnv" ]; then
+           printEnv
+         fi
          appStart
          ;;
       stop)   
@@ -97,7 +102,7 @@ function appStart {
    createLogFiles
 
    if [ "$LDAP_SERVER_RUN_IN_FOREGROUND" == true ]; then
-      $JAVA $APP_MEM_OPTS $APP_DBG_OPTS $APP_LOG_OPTS -jar $APP_JAR $APP_CONF_DIR >>$APP_OUT_FILE 2>>$APP_ERR_FILE
+      $JAVA $APP_MEM_OPTS $APP_DBG_OPTS $APP_LOG_OPTS -jar $APP_JAR $APP_CONF_DIR
    else
       getPID
       if [ $? -eq 0 ]; then
@@ -256,35 +261,10 @@ function deleteLogFiles {
      printf "Removed the $APP_LABEL ERR file: $APP_ERR_FILE.\n"
 }
 
-function setDirPermission {
-   local dirName=$1
-   local userName=$2
-
-   if [ ! -d "$dirName" ]; then mkdir -p $dirName; fi
-   if [ $? -ne 0 ]; then
-      printf "Can't access or create \"$dirName\" folder.\n"
-      exit 1
-   fi
-
-   chown -f $userName $dirName
-   if [ $? -ne 0 ]; then
-      printf "Can't change owner of \"$dirName\" folder to \"$userName\" user.\n"
-      exit 1
-   fi
-
-   chmod o=rwx $dirName 
-   if [ $? -ne 0 ]; then
-      printf "Can't grant rwx permission to \"$userName\" user on \"$dirName\".\n"
-      exit 1
-   fi
-
-   return 0
-}
-
 function printHelp {
    printf "Usage: $0 {start|stop|status|clean}\n"
    return 0
 }
 
 # Starting main
-main $APP_LAUNCH_COMMAND
+main $@
