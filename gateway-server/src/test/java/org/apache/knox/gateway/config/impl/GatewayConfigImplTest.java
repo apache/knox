@@ -348,4 +348,43 @@ public class GatewayConfigImplTest {
     assertEquals("custom_keystore_password_alias", config.getSigningKeystorePasswordAlias());
   }
 
+  @Test
+  public void testHttpClientTruststoreOptions() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    // Validate default options (backwards compatibility)
+    assertEquals("gateway-httpclient-truststore-password", config.getHttpClientTruststorePasswordAlias());
+    assertEquals("JKS", config.getHttpClientTruststoreType());
+    assertNull(config.getHttpClientTruststorePath());
+
+    // Validate changed options
+    config.set("gateway.httpclient.truststore.password.alias", "custom_password_alias");
+    config.set("gateway.httpclient.truststore.path", "custom_path");
+    config.set("gateway.httpclient.truststore.type", "custom_type");
+
+    assertEquals("custom_password_alias", config.getHttpClientTruststorePasswordAlias());
+    assertEquals("custom_path", config.getHttpClientTruststorePath());
+    assertEquals("custom_type", config.getHttpClientTruststoreType());
+  }
+
+  @Test
+  public void testGatewayTruststoreOptions() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    // Validate default options (backwards compatibility)
+    assertEquals("gateway-truststore-password", config.getTruststorePasswordAlias());
+    assertEquals("JKS", config.getTruststoreType());
+    assertNull(config.getTruststorePath());
+
+    // Validate changed options
+    config.set("gateway.truststore.password.alias", "custom_password_alias");
+    config.set("gateway.truststore.path", "custom_path");
+    config.set("gateway.truststore.type", "custom_type");
+
+    assertEquals("custom_password_alias", config.getTruststorePasswordAlias());
+    assertEquals("custom_path", config.getTruststorePath());
+    assertEquals("custom_type", config.getTruststoreType());
+  }
+
+
 }

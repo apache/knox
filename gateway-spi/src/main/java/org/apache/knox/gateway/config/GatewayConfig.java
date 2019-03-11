@@ -73,6 +73,18 @@ public interface GatewayConfig {
   String DEFAULT_SIGNING_KEY_ALIAS = "gateway-identity";
   String DEFAULT_SIGNING_KEY_PASSPHRASE_ALIAS = "signing.key.passphrase";
 
+  String GATEWAY_TRUSTSTORE_PASSWORD_ALIAS = "gateway.truststore.password.alias";
+  String GATEWAY_TRUSTSTORE_PATH = "gateway.truststore.path";
+  String GATEWAY_TRUSTSTORE_TYPE = "gateway.truststore.type";
+  String DEFAULT_GATEWAY_TRUSTSTORE_TYPE = "JKS";
+  String DEFAULT_GATEWAY_TRUSTSTORE_PASSWORD_ALIAS = "gateway-truststore-password";
+
+  String HTTP_CLIENT_TRUSTSTORE_PASSWORD_ALIAS = "gateway.httpclient.truststore.password.alias";
+  String HTTP_CLIENT_TRUSTSTORE_PATH = "gateway.httpclient.truststore.path";
+  String HTTP_CLIENT_TRUSTSTORE_TYPE = "gateway.httpclient.truststore.type";
+  String DEFAULT_HTTP_CLIENT_TRUSTSTORE_TYPE = "JKS";
+  String DEFAULT_HTTP_CLIENT_TRUSTSTORE_PASSWORD_ALIAS = "gateway-httpclient-truststore-password";
+
   String REMOTE_CONFIG_REGISTRY_TYPE = "type";
   String REMOTE_CONFIG_REGISTRY_ADDRESS = "address";
   String REMOTE_CONFIG_REGISTRY_NAMESPACE = "namespace";
@@ -173,6 +185,14 @@ public interface GatewayConfig {
 
   String getTruststoreType();
 
+  /**
+   * Returns the configured value for the alias name to use when to looking up the Gateway's
+   * truststore password.
+   *
+   * @return an alias name
+   */
+  String getTruststorePasswordAlias();
+
   boolean isXForwardedEnabled();
 
   String getEphemeralDHKeySize();
@@ -182,6 +202,29 @@ public interface GatewayConfig {
   int getHttpClientConnectionTimeout();
 
   int getHttpClientSocketTimeout();
+
+  /**
+   * Returns the configured value for the path to the truststore to be used by the HTTP client instance
+   * connecting to a service from the Gateway.
+   *
+   * @return a path to the trust file; or <code>null</code> if not set
+   */
+  String getHttpClientTruststorePath();
+
+  /**
+   * Returns the configured value for the type of the truststore specified by {@link #getHttpClientTruststorePath()}.
+   *
+   * @return a truststore type
+   */
+  String getHttpClientTruststoreType();
+
+  /**
+   * Returns the configured value for the alias name to use when to looking up the HTTP client's
+   * truststore password.
+   *
+   * @return an alias name
+   */
+  String getHttpClientTruststorePasswordAlias();
 
   int getThreadPoolMax();
 

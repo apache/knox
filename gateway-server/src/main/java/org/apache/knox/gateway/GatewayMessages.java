@@ -626,4 +626,13 @@ public interface GatewayMessages {
            text = "Remote Alias Service enabled")
   void remoteAliasServiceEnabled();
 
+  @Message( level = MessageLevel.ERROR, text = "The path to the keystore file does not exist: {0}" )
+  void keystoreFileDoesNotExist(String path);
+
+  @Message( level = MessageLevel.ERROR, text = "The path to the keystore file is not a file: {0}" )
+  void keystoreFileIsNotAFile(String path);
+
+  @Message( level = MessageLevel.ERROR, text = "The path to the keystore is not accessible: {0}" )
+  void keystoreFileIsNotAccessible(String path);
+
 }
