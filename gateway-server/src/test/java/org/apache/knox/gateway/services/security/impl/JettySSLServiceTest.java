@@ -293,7 +293,7 @@ public class JettySSLServiceTest {
     AliasService aliasService = createMock(AliasService.class);
     expect(aliasService.getGatewayIdentityKeystorePassword()).andReturn(identityKeystorePassword).atLeastOnce();
     expect(aliasService.getGatewayIdentityPassphrase()).andReturn(identityKeyPassphrase).atLeastOnce();
-    expect(aliasService.getPasswordFromAliasForGateway(eq("trust_store_password"))).andReturn(truststorePassword).atLeastOnce();
+    expect(aliasService.getPasswordFromAliasForGateway(eq(truststorePasswordAlias))).andReturn(truststorePassword).atLeastOnce();
 
     KeystoreService keystoreService = createMock(KeystoreService.class);
 
@@ -346,7 +346,7 @@ public class JettySSLServiceTest {
     AliasService aliasService = createMock(AliasService.class);
     expect(aliasService.getGatewayIdentityKeystorePassword()).andReturn(identityKeystorePassword).atLeastOnce();
     expect(aliasService.getGatewayIdentityPassphrase()).andReturn(identityKeyPassphrase).atLeastOnce();
-    expect(aliasService.getPasswordFromAliasForGateway(eq("trust_store_password"))).andThrow(new AliasServiceException(null)).atLeastOnce();
+    expect(aliasService.getPasswordFromAliasForGateway(eq(truststorePasswordAlias))).andThrow(new AliasServiceException(null)).atLeastOnce();
 
     KeystoreService keystoreService = createMock(KeystoreService.class);
 
@@ -382,7 +382,7 @@ public class JettySSLServiceTest {
     AliasService aliasService = createMock(AliasService.class);
     expect(aliasService.getGatewayIdentityKeystorePassword()).andReturn(identityKeystorePassword).atLeastOnce();
     expect(aliasService.getGatewayIdentityPassphrase()).andReturn(identityKeyPassphrase).atLeastOnce();
-    expect(aliasService.getPasswordFromAliasForGateway(eq("trust_store_password"))).andReturn(null).atLeastOnce();
+    expect(aliasService.getPasswordFromAliasForGateway(eq(truststorePasswordAlias))).andReturn(null).atLeastOnce();
 
     KeystoreService keystoreService = createMock(KeystoreService.class);
 
@@ -435,7 +435,7 @@ public class JettySSLServiceTest {
     AliasService aliasService = createMock(AliasService.class);
     expect(aliasService.getGatewayIdentityKeystorePassword()).andReturn(null).atLeastOnce();
     expect(aliasService.getGatewayIdentityPassphrase()).andReturn(null).atLeastOnce();
-    expect(aliasService.getPasswordFromAliasForGateway(eq("trust_store_password"))).andReturn(null).atLeastOnce();
+    expect(aliasService.getPasswordFromAliasForGateway(eq(truststorePasswordAlias))).andReturn(null).atLeastOnce();
 
     KeystoreService keystoreService = createMock(KeystoreService.class);
 
