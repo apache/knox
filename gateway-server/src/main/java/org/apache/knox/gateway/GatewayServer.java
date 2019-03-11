@@ -155,7 +155,8 @@ public class GatewayServer {
         if (services == null) {
           log.failedToInstantiateGatewayServices();
         }
-        GatewayConfig config = new GatewayConfigImpl();
+        final GatewayConfig config = new GatewayConfigImpl();
+        validateConfigurableGatewayDirectories(config);
         if (config.isHadoopKerberosSecured()) {
           validateKerberosConfig(config);
           configureKerberosSecurity( config );
@@ -250,6 +251,16 @@ public class GatewayServer {
     setSystemProperty(GatewayConfig.KRB5_USE_SUBJECT_CREDS_ONLY,  "false");
   }
 
+  private static void validateConfigurableGatewayDirectories(GatewayConfig config) throws GatewayConfigurationException {
+    final Set<String> errors = new HashSet<>();
+    checkIfDirectoryExistsAndCanBeRead(Paths.get(config.getGatewayConfDir()).toFile(), GatewayConfig.GATEWAY_CONF_HOME_VAR, errors);
+    checkIfDirectoryExistsAndCanBeWritten(Paths.get(config.getGatewayDataDir()).toFile(), GatewayConfig.GATEWAY_DATA_HOME_VAR, errors);
+
+    if (!errors.isEmpty()) {
+      throw new GatewayConfigurationException(errors);
+    }
+  }
+
   private static void validateKerberosConfig(GatewayConfig config) throws GatewayConfigurationException {
     final Set<String> errors = new HashSet<>();
     if (config.isHadoopKerberosSecured()) {
@@ -269,10 +280,28 @@ public class GatewayServer {
   }
 
   private static void checkIfFileExistsAndCanBeRead(File fileToBeChecked, String propertyName, Set<String> errors) {
+    checkIfFileExistsAndCanBeRead(fileToBeChecked, propertyName, errors, false);
+  }
+
+  private static void checkIfDirectoryExistsAndCanBeRead(File fileToBeChecked, String propertyName, Set<String> errors) {
+    checkIfFileExistsAndCanBeRead(fileToBeChecked, propertyName, errors, true);
+  }
+
+  private static void checkIfFileExistsAndCanBeRead(File fileToBeChecked, String propertyName, Set<String> errors, boolean directory) {
     if (!fileToBeChecked.exists()) {
-      errors.add(propertyName + " is set to a non-existing file: " + fileToBeChecked);
+      errors.add(propertyName + " is set to a non-existing " + (directory ? "directory: " : "file: ") + fileToBeChecked);
     } else if (!fileToBeChecked.canRead()) {
-      errors.add(propertyName + " is set to a non-readable file: " + fileToBeChecked);
+      errors.add(propertyName + " is set to a non-readable " + (directory ? "directory: " : "file: ") + fileToBeChecked);
+    } else if (directory && !fileToBeChecked.isDirectory()) {
+      errors.add(propertyName + " is not a directory: " + fileToBeChecked);
+    }
+  }
+
+  private static void checkIfDirectoryExistsAndCanBeWritten(File fileToBeChecked, String propertyName, Set<String> errors) {
+    if (!fileToBeChecked.exists()) {
+      errors.add(propertyName + " is set to a non-existing directory: " + fileToBeChecked);
+    } else if (!fileToBeChecked.canWrite()) {
+      errors.add(propertyName + " is set to a non-writeable directory: " + fileToBeChecked);
     }
   }
 
