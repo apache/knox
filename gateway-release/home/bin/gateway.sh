@@ -294,8 +294,7 @@ function checkEnv {
         echo "This command $0 must not be run as root."
         exit 1
     fi
-    checkReadDir $APP_CONF_DIR
-    checkWriteDir $APP_DATA_DIR
+
     checkWriteDir $APP_LOG_DIR
     checkWriteDir $APP_PID_DIR
 }
