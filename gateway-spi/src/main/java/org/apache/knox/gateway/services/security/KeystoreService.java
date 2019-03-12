@@ -37,6 +37,7 @@ public interface KeystoreService {
    * <p>
    * If not configured, the Gateway's identity keystore should be returned. See {@link #getKeystoreForGateway()}
    *
+   * @throws KeystoreServiceException Exception when unable to get truststore
    * @return a {@link KeyStore}
    */
   KeyStore getTruststoreForHttpClient() throws KeystoreServiceException;
