@@ -27,6 +27,7 @@ import org.apache.knox.gateway.service.admin.beans.Topology;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.topology.TopologyService;
+import org.owasp.encoder.Encode;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.BadRequestException;
@@ -360,7 +361,8 @@ public class TopologiesResource {
         }
       } catch (URISyntaxException e) {
         log.invalidResourceURI(e.getInput(), e.getReason(), e);
-        response = status(Response.Status.BAD_REQUEST).entity("{ \"error\" : \"Failed to deploy provider configuration " + name + "\" }").build();
+        response = status(Response.Status.BAD_REQUEST).entity("{ \"error\" : \"Failed to deploy provider configuration " + Encode
+            .forHtml(name) + "\" }").build();
       }
     }
 
@@ -407,7 +409,7 @@ public class TopologiesResource {
         }
       } catch (URISyntaxException e) {
         log.invalidResourceURI(e.getInput(), e.getReason(), e);
-        response = status(Response.Status.BAD_REQUEST).entity("{ \"error\" : \"Failed to deploy descriptor " + name + "\" }").build();
+        response = status(Response.Status.BAD_REQUEST).entity("{ \"error\" : \"Failed to deploy descriptor " + Encode.forHtml(name) + "\" }").build();
       }
     }
 

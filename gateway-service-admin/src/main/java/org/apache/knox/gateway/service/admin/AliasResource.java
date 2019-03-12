@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
+import org.owasp.encoder.Encode;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -35,7 +36,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -87,9 +92,9 @@ public class AliasResource {
   @Produces({ APPLICATION_JSON })
   @Consumes(APPLICATION_FORM_URLENCODED)
   @Path(ALIAS_API_PATH)
-  public Response postAlias(@PathParam("topology") final String topology,
-      @PathParam("alias") final String alias,
-      @FormParam("value") final String value) {
+  public Response postAlias(@PathParam("topology") String topology,
+      @PathParam("alias") String alias,
+      @FormParam("value") String value) {
 
     if (value == null || value.isEmpty()) {
       return status(BAD_REQUEST).
@@ -100,15 +105,20 @@ public class AliasResource {
     final AliasService as = getAliasService();
 
     try {
+      /* check if the string is properly encoded and expect encoded values */
+      topology = URLDecoder.decode(topology, StandardCharsets.UTF_8.name());
+      alias = URLDecoder.decode(alias, StandardCharsets.UTF_8.name());
+      value = URLDecoder.decode(value, StandardCharsets.UTF_8.name());
+
       as.addAliasForCluster(topology, alias, value);
       return status(Response.Status.CREATED).
-          entity("{ \"created\" : { \"topology\": \"" + topology
-              + "\", \"alias\": \"" + alias + "\" } }").
+          entity("{ \"created\" : { \"topology\": \"" + Encode.forHtml(topology)
+              + "\", \"alias\": \"" + Encode.forHtml(alias) + "\" } }").
           type(MediaType.APPLICATION_JSON_TYPE).
           build();
-    } catch (AliasServiceException e) {
+    } catch (AliasServiceException | UnsupportedEncodingException e) {
       return status(INTERNAL_SERVER_ERROR).
-          entity("Error adding alias " + alias + " for cluster " + topology
+          entity("Error adding alias " + Encode.forHtml(alias) + " for cluster " + Encode.forHtml(topology)
               + ", reason: " + e.toString()).
           type(MediaType.APPLICATION_JSON_TYPE).build();
     }
@@ -124,21 +134,25 @@ public class AliasResource {
   @DELETE
   @Produces({ APPLICATION_JSON })
   @Path(ALIAS_API_PATH)
-  public Response deleteAlias(@PathParam("topology") final String topology,
-      @PathParam("alias") final String alias) {
+  public Response deleteAlias(@PathParam("topology") String topology,
+      @PathParam("alias") String alias) {
 
     final AliasService as = getAliasService();
 
     try {
+      /* check if the string is properly encoded */
+      topology = URLDecoder.decode(topology, StandardCharsets.UTF_8.name());
+      alias = URLDecoder.decode(alias, StandardCharsets.UTF_8.name());
+
       as.removeAliasForCluster(topology, alias);
       return status(Response.Status.OK).
-          entity("{ \"deleted\" : { \"topology\": \"" + topology
-              + "\", \"alias\": \"" + alias + "\" } }").
+          entity("{ \"deleted\" : { \"topology\": \"" + Encode.forHtml(topology)
+              + "\", \"alias\": \"" + Encode.forHtml(alias) + "\" } }").
           type(MediaType.APPLICATION_JSON_TYPE).
           build();
-    } catch (AliasServiceException e) {
+    } catch (AliasServiceException | UnsupportedEncodingException e) {
       return status(INTERNAL_SERVER_ERROR).
-          entity("Error deleting alias " + alias + " for cluster " + topology
+          entity("Error deleting alias " + Encode.forHtml(alias) + " for cluster " + Encode.forHtml(topology)
               + ", reason: " + e.toString()).
           type(MediaType.APPLICATION_JSON_TYPE).build();
     }
@@ -154,24 +168,24 @@ public class AliasResource {
   @GET
   @Produces({ APPLICATION_JSON })
   @Path(ALIASES_TOPOLOGY_API_PATH)
-  public Response getAliases(@PathParam("topology") final String topology) {
+  public Response getAliases(@PathParam("topology") String topology) {
 
     final ObjectMapper mapper = new ObjectMapper();
     final AliasService as = getAliasService();
 
     List<String> aliases;
     try {
+      topology = URLDecoder.decode(topology, StandardCharsets.UTF_8.name());
       aliases = as.getAliasesForCluster(topology);
       return status(Response.Status.OK).
           entity(
               mapper.writeValueAsString(new TopologyAliases(topology, aliases)))
-          .
-              type(MediaType.APPLICATION_JSON_TYPE).
-              build();
+              .type(MediaType.APPLICATION_JSON_TYPE)
+              .build();
     } catch (final Exception e) {
       return status(INTERNAL_SERVER_ERROR).
           entity(
-              "Error getting aliases for cluster " + topology + ", reason: " + e
+              "Error getting aliases for cluster " + Encode.forHtml(topology) + ", reason: " + e
                   .toString()).
           type(MediaType.APPLICATION_JSON_TYPE).build();
     }
@@ -191,8 +205,9 @@ public class AliasResource {
 
     public TopologyAliases(final String topology, final List<String> aliases) {
       super();
-      this.topology = topology;
-      this.aliases = aliases;
+      this.topology = Encode.forHtml(topology);
+      this.aliases = aliases.stream().map(a -> Encode.forHtml(a)).collect(
+          Collectors.toList());
     }
 
     public String getTopology() {
