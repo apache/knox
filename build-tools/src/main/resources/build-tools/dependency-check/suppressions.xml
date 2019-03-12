@@ -17,6 +17,16 @@ limitations under the License.
 -->
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.1.xsd">
     <suppress>
+        <notes><![CDATA[file name: commons-net-.*.jar]]></notes>
+        <gav regex="true">^commons-net:commons-net:.*$</gav>
+        <cpe>cpe:/a:echo_project:echo</cpe>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[file name: amqp-client-.*.jar]]></notes>
+        <gav regex="true">^com\.rabbitmq:amqp-client:.*$</gav>
+        <cpe>cpe:/a:pivotal_software:rabbitmq</cpe>
+    </suppress>
+    <suppress>
         <notes><![CDATA[file name: javax.jws-api-.*.jar]]></notes>
         <gav regex="true">^javax\.jws:javax\.jws-api:.*$</gav>
         <cpe>cpe:/a:oracle:glassfish</cpe>
@@ -45,6 +55,7 @@ limitations under the License.
         <cpe>cpe:/a:apache:apache_http_server</cpe>
         <cpe>cpe:/a:apache:apache_test</cpe>
         <cpe>cpe:/a:apache:hadoop</cpe>
+        <cpe>cpe:/a:apache:hbase</cpe>
         <cpe>cpe:/a:apache:hive</cpe>
         <cpe>cpe:/a:apache:http_server</cpe>
         <cpe>cpe:/a:apache:nifi</cpe>
@@ -97,9 +108,22 @@ limitations under the License.
         <cpe>cpe:/a:oracle:glassfish</cpe>
     </suppress>
     <suppress>
+        <notes><![CDATA[file name: apache-jsp-.*.jar]]></notes>
+        <gav regex="true">^org\.mortbay\.jasper:apache-jsp:.*$</gav>
+        <cpe>cpe:/a:apache:tomcat</cpe>
+        <cpe>cpe:/a:apache_software_foundation:tomcat</cpe>
+    </suppress>
+    <suppress>
         <notes><![CDATA[slf4j-ext and EventData not used]]></notes>
         <gav regex="true">^org\.slf4j:.*$</gav>
         <cve>CVE-2018-8088</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[file name: spring-vault-core-.*.jar]]></notes>
+        <gav regex="true">^org\.springframework\.vault:spring-vault-core:.*$</gav>
+        <cpe>cpe:/a:pivotal:spring_framework</cpe>
+        <cpe>cpe:/a:pivotal_software:spring_framework</cpe>
+        <cpe>cpe:/a:springsource:spring_framework</cpe>
     </suppress>
     <suppress>
         <notes><![CDATA[file name: xz-.*.jar]]></notes>
