@@ -635,4 +635,9 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.ERROR, text = "The path to the keystore is not accessible: {0}" )
   void keystoreFileIsNotAccessible(String path);
 
+  @Message( level = MessageLevel.ERROR, text = "Failed to add credential: {1}" )
+  void failedToAddCredential( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message(level = MessageLevel.ERROR, text = "Failed to remove credential: {1}")
+  void failedToRemoveCredential(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 }
