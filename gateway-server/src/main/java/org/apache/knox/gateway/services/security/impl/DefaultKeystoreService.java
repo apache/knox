@@ -32,7 +32,6 @@ import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.util.X509CertificateUtil;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -80,7 +79,7 @@ public class DefaultKeystoreService implements KeystoreService, Service {
   private Lock writeLock;
 
   private MasterService masterService;
-  private String keyStoreDir;
+  private Path keyStoreDirPath;
 
   public void setMasterService(MasterService ms) {
     this.masterService = ms;
@@ -95,11 +94,14 @@ public class DefaultKeystoreService implements KeystoreService, Service {
 
     this.config = config;
 
-    this.keyStoreDir = config.getGatewayKeystoreDir();
-    File ksd = new File(this.keyStoreDir);
-    if (!ksd.exists()) {
-      if( !ksd.mkdirs() ) {
-        throw new ServiceLifecycleException( RES.failedToCreateKeyStoreDirectory( ksd.getAbsolutePath() ) );
+    this.keyStoreDirPath = Paths.get(config.getGatewayKeystoreDir());
+    if (Files.notExists(keyStoreDirPath)) {
+      try {
+        // This will attempt to create all missing directories.  No failures will occur if the
+        // directories already exist.
+        Files.createDirectories(keyStoreDirPath);
+      } catch (IOException e) {
+        throw new ServiceLifecycleException(RES.failedToCreateKeyStoreDirectory(keyStoreDirPath.toString()));
       }
     }
   }
@@ -116,7 +118,7 @@ public class DefaultKeystoreService implements KeystoreService, Service {
   public void createKeystoreForGateway() throws KeystoreServiceException {
     writeLock.lock();
     try {
-      createKeyStore(Paths.get(getKeystorePath()), config.getIdentityKeystoreType(), getKeyStorePassword(config.getIdentityKeystorePasswordAlias()));
+      createKeyStore(Paths.get(config.getIdentityKeystorePath()), config.getIdentityKeystoreType(), getKeyStorePassword(config.getIdentityKeystorePasswordAlias()));
     } finally {
       writeLock.unlock();
     }
@@ -149,7 +151,7 @@ public class DefaultKeystoreService implements KeystoreService, Service {
     String keyStoreType;
     String passwordAlias;
     if(keystoreName != null) {
-      keyStoreFile = Paths.get(keyStoreDir, keystoreName + ".jks");
+      keyStoreFile = keyStoreDirPath.resolve(keystoreName + ".jks");
       keyStoreType = "jks";
       passwordAlias = null;
     } else {
@@ -200,7 +202,6 @@ public class DefaultKeystoreService implements KeystoreService, Service {
             new java.security.cert.Certificate[]{cert});
 
         writeKeyStoreToFile(privateKS, Paths.get(config.getIdentityKeystorePath()), getKeyStorePassword(config.getIdentityKeystorePasswordAlias()));
-        //writeCertificateToFile( cert, new File( keyStoreDir + alias + ".pem" ) );
       } catch (GeneralSecurityException | IOException e) {
         LOG.failedToAddSeflSignedCertForGateway( alias, e );
         throw new KeystoreServiceException(e);
@@ -220,7 +221,7 @@ public class DefaultKeystoreService implements KeystoreService, Service {
 
   @Override
   public void createCredentialStoreForCluster(String clusterName) throws KeystoreServiceException {
-    Path keystoreFilePath = Paths.get(keyStoreDir, clusterName + CREDENTIALS_SUFFIX);
+    Path keystoreFilePath = keyStoreDirPath.resolve(clusterName + CREDENTIALS_SUFFIX);
     writeLock.lock();
     try {
       createKeyStore(keystoreFilePath, CREDENTIALS_STORE_TYPE, masterService.getMasterSecret());
@@ -233,7 +234,7 @@ public class DefaultKeystoreService implements KeystoreService, Service {
   @Override
   public boolean isCredentialStoreForClusterAvailable(String clusterName) throws KeystoreServiceException {
     boolean rc;
-    final Path keyStoreFilePath = Paths.get(keyStoreDir, clusterName + CREDENTIALS_SUFFIX);
+    final Path keyStoreFilePath = keyStoreDirPath.resolve(clusterName + CREDENTIALS_SUFFIX);
     readLock.lock();
     try {
       try {
@@ -253,11 +254,9 @@ public class DefaultKeystoreService implements KeystoreService, Service {
     final Path keyStoreFilePath = Paths.get(config.getIdentityKeystorePath());
     readLock.lock();
     try {
-      try {
-        return isKeyStoreAvailable(keyStoreFilePath, config.getIdentityKeystoreType(), getKeyStorePassword(config.getIdentityKeystorePasswordAlias()));
-      } catch (KeyStoreException | IOException e) {
-        throw new KeystoreServiceException(e);
-      }
+      return isKeyStoreAvailable(keyStoreFilePath, config.getIdentityKeystoreType(), getKeyStorePassword(config.getIdentityKeystorePasswordAlias()));
+    } catch (KeyStoreException | IOException e) {
+      throw new KeystoreServiceException(e);
     } finally {
       readLock.unlock();
     }
@@ -332,7 +331,7 @@ public class DefaultKeystoreService implements KeystoreService, Service {
       throws KeystoreServiceException {
     // Do not fail getting the credential store if the keystore file does not exist.  The returned
     // KeyStore will be empty.  This seems like a potential bug, but is the behavior before KNOX-1812
-    return getKeystore(Paths.get(keyStoreDir, clusterName + CREDENTIALS_SUFFIX), CREDENTIALS_STORE_TYPE, null, false);
+    return getKeystore(keyStoreDirPath.resolve(clusterName + CREDENTIALS_SUFFIX), CREDENTIALS_STORE_TYPE, null, false);
   }
 
   @Override
@@ -343,7 +342,7 @@ public class DefaultKeystoreService implements KeystoreService, Service {
       removeFromCache(clusterName, alias);
       KeyStore ks = getCredentialStoreForCluster(clusterName);
       addCredential(alias, value, ks);
-      final Path keyStoreFilePath = Paths.get(keyStoreDir, clusterName + CREDENTIALS_SUFFIX);
+      final Path keyStoreFilePath = keyStoreDirPath.resolve(clusterName + CREDENTIALS_SUFFIX);
       try {
         writeKeyStoreToFile(ks, keyStoreFilePath, masterService.getMasterSecret());
       } catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException e) {
@@ -388,7 +387,7 @@ public class DefaultKeystoreService implements KeystoreService, Service {
 
   @Override
   public void removeCredentialForCluster(String clusterName, String alias) throws KeystoreServiceException {
-    final Path keyStoreFilePath = Paths.get(keyStoreDir, clusterName + CREDENTIALS_SUFFIX);
+    final Path keyStoreFilePath = keyStoreDirPath.resolve(clusterName + CREDENTIALS_SUFFIX);
     writeLock.lock();
     try {
       removeFromCache(clusterName, alias);
@@ -466,17 +465,15 @@ public class DefaultKeystoreService implements KeystoreService, Service {
   private KeyStore getKeystore(Path keystorePath, String keystoreType, String alias, boolean failIfNotAccessible) throws KeystoreServiceException {
 
     if (failIfNotAccessible) {
-      File keystoreFile = keystorePath.toFile();
-
-      if (!keystoreFile.exists()) {
+      if (Files.notExists(keystorePath)) {
         LOG.keystoreFileDoesNotExist(keystorePath.toString());
-        throw new KeystoreServiceException("The keystore file does not exist: " + keystoreFile.getAbsolutePath());
-      } else if (!keystoreFile.isFile()) {
+        throw new KeystoreServiceException("The keystore file does not exist: " + keystorePath.toString());
+      } else if (!Files.isRegularFile(keystorePath)) {
         LOG.keystoreFileIsNotAFile(keystorePath.toString());
-        throw new KeystoreServiceException("The keystore file is not a file: " + keystoreFile.getAbsolutePath());
-      } else if (!keystoreFile.canRead()) {
+        throw new KeystoreServiceException("The keystore file is not a file: " + keystorePath.toString());
+      } else if (!Files.isReadable(keystorePath)) {
         LOG.keystoreFileIsNotAccessible(keystorePath.toString());
-        throw new KeystoreServiceException("The keystore file cannot be read: " + keystoreFile.getAbsolutePath());
+        throw new KeystoreServiceException("The keystore file cannot be read: " + keystorePath.toString());
       }
     }
 
@@ -506,7 +503,19 @@ public class DefaultKeystoreService implements KeystoreService, Service {
 
   // Package private for unit test access
   KeyStore createKeyStore(Path keystoreFilePath, String keystoreType, char[] password) throws KeystoreServiceException {
-    try (OutputStream out = createKeyStoreFile(keystoreFilePath)) {
+    if (Files.notExists(keystoreFilePath)) {
+      // Ensure the parent directory exists...
+      try {
+        // This will attempt to create all missing directories.  No failures will occur if the
+        // directories already exist.
+        Files.createDirectories(keystoreFilePath.getParent());
+      } catch (IOException e) {
+        LOG.failedToCreateKeystore(keystoreFilePath.toString(), keystoreType, e);
+        throw new KeystoreServiceException(e);
+      }
+    }
+
+    try (OutputStream out = Files.newOutputStream(keystoreFilePath)) {
       KeyStore ks = KeyStore.getInstance(keystoreType);
       ks.load(null, null);
       ks.store(out, password);
@@ -515,25 +524,6 @@ public class DefaultKeystoreService implements KeystoreService, Service {
       LOG.failedToCreateKeystore(keystoreFilePath.toString(), keystoreType, e);
       throw new KeystoreServiceException(e);
     }
-  }
-
-  private static OutputStream createKeyStoreFile(Path keystoreFilePath) throws IOException {
-    File file = keystoreFilePath.toFile();
-    if (file.exists()) {
-      if (file.isDirectory()) {
-        throw new IOException(file.getAbsolutePath());
-      } else if (!file.canWrite()) {
-        throw new IOException(file.getAbsolutePath());
-      }
-    } else {
-      File dir = file.getParentFile();
-      if (!dir.exists()) {
-        if (!dir.mkdirs()) {
-          throw new IOException(file.getAbsolutePath());
-        }
-      }
-    }
-    return Files.newOutputStream(file.toPath());
   }
 
   private void addCredential(String alias, String value, KeyStore ks) {
