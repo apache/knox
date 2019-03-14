@@ -17,8 +17,6 @@
  */
 package org.apache.knox.gateway;
 
-import net.lingala.zip4j.core.ZipFile;
-import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
@@ -71,8 +69,10 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.Configuration;
 import org.eclipse.jetty.webapp.WebAppContext;
+import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -749,12 +749,12 @@ public class GatewayServer {
     return context;
   }
 
-  private static void explodeWar( File source, File target ) throws IOException, ZipException {
+  private static void explodeWar( File source, File target ) throws IOException {
     if( source.isDirectory() ) {
       FileUtils.copyDirectory( source, target );
     } else {
-      ZipFile zip = new ZipFile( source );
-      zip.extractAll( target.getAbsolutePath() );
+      WebArchive webArchive = ShrinkWrap.createFromZipFile(WebArchive.class, source);
+      webArchive.as(ExplodedExporter.class).exportExploded(target);
     }
   }
 
@@ -791,7 +791,7 @@ public class GatewayServer {
     }
   }
 
-  private synchronized void internalDeployApplications( Topology topology, File topoDir ) throws IOException, ZipException, ParserConfigurationException, TransformerException, SAXException {
+  private synchronized void internalDeployApplications( Topology topology, File topoDir ) throws IOException, ParserConfigurationException, TransformerException, SAXException {
     if( topology != null ) {
       Collection<Application> applications = topology.getApplications();
       if( applications != null ) {
@@ -809,7 +809,7 @@ public class GatewayServer {
     }
   }
 
-  private synchronized void internalDeployApplication( File topoDir, Application application, String url ) throws IOException, ZipException, TransformerException, SAXException, ParserConfigurationException {
+  private synchronized void internalDeployApplication( File topoDir, Application application, String url ) throws IOException, TransformerException, SAXException, ParserConfigurationException {
     File appsDir = new File( config.getGatewayApplicationsDir() );
     File appDir = new File( appsDir, application.getName() );
     File[] implFiles = appDir.listFiles( new RegexFilenameFilter( "app|app\\..*" ) );
