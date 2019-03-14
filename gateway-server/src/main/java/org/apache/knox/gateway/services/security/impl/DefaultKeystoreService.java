@@ -486,7 +486,7 @@ public class DefaultKeystoreService implements KeystoreService, Service {
   }
 
   private boolean isKeyStoreAvailable(final Path keyStoreFilePath, String storeType, char[] password) throws KeyStoreException, IOException {
-    if (keyStoreFilePath.toFile().exists()) {
+    if (Files.exists(keyStoreFilePath)) {
       try (InputStream input = Files.newInputStream(keyStoreFilePath)) {
         final KeyStore keyStore = KeyStore.getInstance(storeType);
         keyStore.load(input, password);
@@ -555,7 +555,7 @@ public class DefaultKeystoreService implements KeystoreService, Service {
       final KeyStore keyStore = KeyStore.getInstance(storeType);
 
       // If the file does not exist, create an empty keystore
-      if (keyStoreFilePath.toFile().exists()) {
+      if (Files.exists(keyStoreFilePath)) {
         try (InputStream input = Files.newInputStream(keyStoreFilePath)) {
           keyStore.load(input, password);
         }

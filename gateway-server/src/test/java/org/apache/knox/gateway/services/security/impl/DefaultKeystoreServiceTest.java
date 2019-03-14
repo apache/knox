@@ -53,10 +53,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.Key;
@@ -78,10 +78,10 @@ public class DefaultKeystoreServiceTest {
 
   @Test
   public void testGetTruststoreForHttpClientDefaults() throws Exception {
-    final File dataDir = testFolder.newFolder();
+    final Path dataDir = testFolder.newFolder().toPath();
 
     GatewayConfigImpl config = new GatewayConfigImpl();
-    config.set("gateway.data.dir", dataDir.getAbsolutePath());
+    config.set("gateway.data.dir", dataDir.toString());
 
     KeyStore keystore = createNiceMock(KeyStore.class);
 
@@ -101,15 +101,15 @@ public class DefaultKeystoreServiceTest {
 
   @Test
   public void testGetTruststoreForHttpClientCustomTrustStore() throws Exception {
-    final File dataDir = testFolder.newFolder();
-    final File truststoreFile = testFolder.newFile();
+    final Path dataDir = testFolder.newFolder().toPath();
+    final Path truststoreFile = testFolder.newFile().toPath();
     final String truststoreType = "jks";
     final String truststorePasswordAlias = "password-alias";
     final char[] truststorePassword = "truststore_password".toCharArray();
 
     GatewayConfigImpl config = new GatewayConfigImpl();
-    config.set("gateway.data.dir", dataDir.getAbsolutePath());
-    config.set("gateway.httpclient.truststore.path", truststoreFile.getAbsolutePath());
+    config.set("gateway.data.dir", dataDir.toString());
+    config.set("gateway.httpclient.truststore.path", truststoreFile.toString());
     config.set("gateway.httpclient.truststore.type", truststoreType);
     config.set("gateway.httpclient.truststore.password.alias", truststorePasswordAlias);
 
@@ -119,7 +119,7 @@ public class DefaultKeystoreServiceTest {
         .addMockedMethod("loadKeyStore", Path.class, String.class, char[].class)
         .addMockedMethod("getCredentialForCluster", String.class, String.class)
         .createMock();
-    expect(keystoreService.loadKeyStore(eq(truststoreFile.toPath()), eq(truststoreType), eq(truststorePassword)))
+    expect(keystoreService.loadKeyStore(eq(truststoreFile), eq(truststoreType), eq(truststorePassword)))
         .andReturn(keystore)
         .once();
     expect(keystoreService.getCredentialForCluster(eq(AliasService.NO_CLUSTER_NAME), eq(truststorePasswordAlias)))
@@ -137,14 +137,14 @@ public class DefaultKeystoreServiceTest {
 
   @Test(expected = KeystoreServiceException.class)
   public void testGetTruststoreForHttpClientMissingCustomTrustStore() throws Exception {
-    final File dataDir = testFolder.newFolder();
+    final Path dataDir = testFolder.newFolder().toPath();
     final String truststoreType = "jks";
     final String truststorePasswordAlias = "password-alias";
     final char[] truststorePassword = "truststore_password".toCharArray();
 
     GatewayConfigImpl config = new GatewayConfigImpl();
-    config.set("gateway.data.dir", dataDir.getAbsolutePath());
-    config.set("gateway.httpclient.truststore.path", Paths.get(dataDir.getAbsolutePath(), "missing_file.jks").toString());
+    config.set("gateway.data.dir", dataDir.toString());
+    config.set("gateway.httpclient.truststore.path", Paths.get(dataDir.toString(), "missing_file.jks").toString());
     config.set("gateway.httpclient.truststore.type", truststoreType);
     config.set("gateway.httpclient.truststore.password.alias", truststorePasswordAlias);
 
@@ -166,14 +166,14 @@ public class DefaultKeystoreServiceTest {
 
   @Test
   public void testGetTruststoreForHttpClientCustomTrustStoreMissingPasswordAlias() throws Exception {
-    final File dataDir = testFolder.newFolder();
-    final File truststoreFile = testFolder.newFile();
+    final Path dataDir = testFolder.newFolder().toPath();
+    final Path truststoreFile = testFolder.newFile().toPath();
     final String truststoreType = "jks";
     final char[] masterSecret = "master_secret".toCharArray();
 
     GatewayConfigImpl config = new GatewayConfigImpl();
-    config.set("gateway.data.dir", dataDir.getAbsolutePath());
-    config.set("gateway.httpclient.truststore.path", truststoreFile.getAbsolutePath());
+    config.set("gateway.data.dir", dataDir.toString());
+    config.set("gateway.httpclient.truststore.path", truststoreFile.toString());
     config.set("gateway.httpclient.truststore.type", truststoreType);
 
     KeyStore keystore = createNiceMock(KeyStore.class);
@@ -183,7 +183,7 @@ public class DefaultKeystoreServiceTest {
         .addMockedMethod("getCredentialForCluster", String.class, String.class)
         .withConstructor()
         .createMock();
-    expect(keystoreService.loadKeyStore(eq(truststoreFile.toPath()), eq(truststoreType), eq(masterSecret)))
+    expect(keystoreService.loadKeyStore(eq(truststoreFile), eq(truststoreType), eq(masterSecret)))
         .andReturn(keystore)
         .once();
     expect(keystoreService.getCredentialForCluster(eq(AliasService.NO_CLUSTER_NAME), eq(GatewayConfig.DEFAULT_HTTP_CLIENT_TRUSTSTORE_PASSWORD_ALIAS)))
@@ -266,9 +266,9 @@ public class DefaultKeystoreServiceTest {
     testCreateGetAndCheckKeystoreForGateway(keystoreServiceAlt, customKeystoreFile, customAlias, customKeyPassword, config);
 
     // Verify the keystore passwords are set properly...
-    assertTrue(defaultKeystoreFile.toFile().exists());
+    assertTrue(Files.exists(defaultKeystoreFile));
     assertNotNull(keystoreService.loadKeyStore(defaultKeystoreFile, GatewayConfigImpl.DEFAULT_IDENTITY_KEYSTORE_TYPE, masterPassword));
-    assertTrue(customKeystoreFile.toFile().exists());
+    assertTrue(Files.exists(customKeystoreFile));
     assertNotNull(keystoreService.loadKeyStore(customKeystoreFile, customKeystoreType, customKeystorePassword));
 
     verify(keystoreServiceAlt, masterService);
@@ -334,9 +334,9 @@ public class DefaultKeystoreServiceTest {
     testSigningKeystore(keystoreServiceAlt, customFile, customKeyAlias, masterPassword);
 
     // Verify the keystore passwords are set properly...
-    assertTrue(defaultFile.toFile().exists());
+    assertTrue(Files.exists(defaultFile));
     assertNotNull(keystoreService.loadKeyStore(defaultFile, "JKS", masterPassword));
-    assertTrue(customFile.toFile().exists());
+    assertTrue(Files.exists(customFile));
     assertNotNull(keystoreService.loadKeyStore(customFile, "JKS", masterPassword));
 
     verify(keystoreServiceAlt, masterService);
@@ -362,7 +362,7 @@ public class DefaultKeystoreServiceTest {
     keystoreService.setMasterService(masterService);
     keystoreService.init(config, Collections.emptyMap());
 
-    assertFalse(expectedFile.toFile().exists());
+    assertFalse(Files.exists(expectedFile));
     assertFalse(keystoreService.isCredentialStoreForClusterAvailable(clusterName));
 
     // This should be an empty keystore...
@@ -372,7 +372,7 @@ public class DefaultKeystoreServiceTest {
 
     keystoreService.createCredentialStoreForCluster(clusterName);
 
-    assertTrue(expectedFile.toFile().exists());
+    assertTrue(Files.exists(expectedFile));
     assertTrue(keystoreService.isCredentialStoreForClusterAvailable(clusterName));
 
     KeyStore credentialStore = keystoreService.getCredentialStoreForCluster(clusterName);
@@ -563,16 +563,14 @@ public class DefaultKeystoreServiceTest {
                                                        String expectedAlias,
                                                        char[] keyPassword,
                                                        GatewayConfig config) throws Exception {
-    File expectedKeystoreFile = expectedKeystoreFilePath.toFile();
-
-    assertEquals(expectedKeystoreFile.getAbsolutePath(), keystoreService.getKeystorePath());
-    assertFalse(expectedKeystoreFile.exists());
+    assertEquals(expectedKeystoreFilePath.toAbsolutePath().toString(), keystoreService.getKeystorePath());
+    assertFalse(Files.exists(expectedKeystoreFilePath));
 
     assertFalse(keystoreService.isKeystoreForGatewayAvailable());
 
     keystoreService.createKeystoreForGateway();
     // The keystore file has now been created
-    assertTrue(expectedKeystoreFile.exists());
+    assertTrue(Files.exists(expectedKeystoreFilePath));
     KeyStore postCreateKeystore = keystoreService.getKeystoreForGateway();
     assertNotNull(postCreateKeystore);
     assertEquals(0, postCreateKeystore.size());
@@ -594,7 +592,7 @@ public class DefaultKeystoreServiceTest {
                                    Path expectedKeystoreFilePath,
                                    String keyAlias,
                                    char[] masterPassword) throws Exception {
-    assertTrue(expectedKeystoreFilePath.toFile().exists());
+    assertTrue(Files.exists(expectedKeystoreFilePath));
     assertNotNull(keystoreService.getSigningKeystore());
     assertNotNull(keystoreService.getSigningKey(keyAlias, masterPassword));
   }
