@@ -133,8 +133,7 @@ public class DefaultKeystoreService implements KeystoreService, Service {
   public KeyStore getTruststoreForHttpClient() throws KeystoreServiceException {
     String trustStorePath = config.getHttpClientTruststorePath();
     if (trustStorePath == null) {
-      // If the trustStorePath is null, fallback to behavior before KNOX-1812
-      return getKeystoreForGateway();
+      return null;
     } else {
       return getKeystore(Paths.get(trustStorePath), config.getHttpClientTruststoreType(), config.getHttpClientTruststorePasswordAlias(), true);
     }

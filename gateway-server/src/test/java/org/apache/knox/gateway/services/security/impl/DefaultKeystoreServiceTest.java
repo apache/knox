@@ -83,20 +83,10 @@ public class DefaultKeystoreServiceTest {
     GatewayConfigImpl config = new GatewayConfigImpl();
     config.set("gateway.data.dir", dataDir.toString());
 
-    KeyStore keystore = createNiceMock(KeyStore.class);
-
-    DefaultKeystoreService keystoreService = createMockBuilder(DefaultKeystoreService.class)
-        .addMockedMethod("getKeystoreForGateway")
-        .createMock();
-    expect(keystoreService.getKeystoreForGateway()).andReturn(keystore).once();
-
-    replay(keystore, keystoreService);
-
+    DefaultKeystoreService keystoreService = new DefaultKeystoreService();
     keystoreService.init(config, Collections.emptyMap());
 
-    assertEquals(keystore, keystoreService.getTruststoreForHttpClient());
-
-    verify(keystore, keystoreService);
+    assertNull(keystoreService.getTruststoreForHttpClient());
   }
 
   @Test
