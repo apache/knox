@@ -27,6 +27,7 @@ import java.util.List;
 import javax.net.ssl.SSLContext;
 import javax.servlet.FilterConfig;
 
+import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -76,28 +77,14 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     } else {
       builder = HttpClients.custom();
     }
-    if (Boolean.parseBoolean(filterConfig.getInitParameter("useTwoWaySsl"))) {
-      AliasService as = services.getService(GatewayServices.ALIAS_SERVICE);
-      KeystoreService ks = services.getService(GatewayServices.KEYSTORE_SERVICE);
-      final SSLContext sslcontext;
-      try {
-        KeyStore identityKeystore = ks.getKeystoreForGateway();
-        char[] identityKeyPassphrase = as.getGatewayIdentityPassphrase();
 
-        // The trustKeystore will be the same as the identityKeystore if a truststore was not explicitly
-        // configured in gateway-site (gateway.truststore.password.alias, gateway.truststore.path, gateway.truststore.type)
-        // This was the behavior before KNOX-1812
-        KeyStore trustKeystore = ks.getTruststoreForHttpClient();
-
-        sslcontext = SSLContexts.custom()
-            .loadTrustMaterial(trustKeystore, new TrustSelfSignedStrategy())
-            .loadKeyMaterial(identityKeystore, identityKeyPassphrase)
-            .build();
-      } catch (Exception e) {
-        throw new IllegalArgumentException("Unable to create SSLContext", e);
-      }
-      builder.setSSLSocketFactory(new SSLConnectionSocketFactory(sslcontext));
+    // Conditionally set a custom SSLContext
+    boolean useTwoWaySsl = Boolean.parseBoolean(filterConfig.getInitParameter("useTwoWaySsl"));
+    SSLContext sslContext = createSSLContext(services, useTwoWaySsl);
+    if(sslContext != null) {
+      builder.setSSLSocketFactory(new SSLConnectionSocketFactory(sslContext));
     }
+
     if (Boolean.parseBoolean(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
       CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
       credentialsProvider.setCredentials(AuthScope.ANY, new UseJaasCredentials());
@@ -128,6 +115,81 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     builder.disableContentCompression();
 
     return builder.build();
+  }
+
+  /**
+   * Conditionally creates a custom {@link SSLContext} based on the Gateway's configuration and whether
+   * two-way SSL is enabled or not.
+   * <p>
+   * If two-way SSL is enabled, then a context with the Gateway's identity and a configured trust store
+   * is created.  The trust store is forced to be the same as the identity's keystore if an explicit
+   * trust store is not configured.
+   * <p>
+   * If two-way SSL is not enabled and an explict trust store is configured, then a context with the
+   * configured trust store is created.
+   * <p>
+   * Else, a custom context is not crated and <code>null</code> is returned.
+   * <p>
+   * This method is package private to allow access to unit tests
+   *
+   * @param services     the {@link GatewayServices}
+   * @param useTwoWaySsl <code>true</code> is two-way SSL is enabled; <code>false</code> if two-way SSL is not enabled
+   * @return a {@link SSLContext} or <code>null</code> if a custom {@link SSLContext} is not needed.
+   */
+  SSLContext createSSLContext(GatewayServices services, boolean useTwoWaySsl) {
+    KeyStore identityKeystore;
+    char[] identityKeyPassphrase;
+    KeyStore trustKeystore;
+
+    KeystoreService ks = services.getService(GatewayServices.KEYSTORE_SERVICE);
+    try {
+      if (useTwoWaySsl) {
+        AliasService as = services.getService(GatewayServices.ALIAS_SERVICE);
+
+        // Get the Gateway's configured identity keystore and key passphrase
+        identityKeystore = ks.getKeystoreForGateway();
+        identityKeyPassphrase = as.getGatewayIdentityPassphrase();
+
+        // The trustKeystore will be the same as the identityKeystore if a truststore was not explicitly
+        // configured in gateway-site (gateway.truststore.password.alias, gateway.truststore.path, gateway.truststore.type)
+        // This was the behavior before KNOX-1812
+        trustKeystore = ks.getTruststoreForHttpClient();
+        if (trustKeystore == null) {
+          trustKeystore = identityKeystore;
+        }
+      } else {
+        // If not using twoWaySsl, there is no need to calculate the Gateway's identity keystore or
+        // identity key.
+        identityKeystore = null;
+        identityKeyPassphrase = null;
+
+        // The the behavior before KNOX-1812 was to use the HttpClients default SslContext. However,
+        // if a truststore was explicitly configured in gateway-site (gateway.truststore.password.alias,
+        // gateway.truststore.path, gateway.truststore.type) create a custom SslContext and use it.
+        trustKeystore = ks.getTruststoreForHttpClient();
+      }
+
+      // If an identity keystore or a trust store needs to be set, create and return a custom
+      // SSLContext; else return null.
+      if((identityKeystore != null) || (trustKeystore != null)) {
+        SSLContextBuilder sslContextBuilder = SSLContexts.custom();
+
+        if (identityKeystore != null) {
+          sslContextBuilder.loadKeyMaterial(identityKeystore, identityKeyPassphrase);
+        }
+
+        if (trustKeystore != null) {
+          sslContextBuilder.loadTrustMaterial(trustKeystore, new TrustSelfSignedStrategy());
+        }
+
+        return sslContextBuilder.build();
+      }
+      else {
+        return null;
+      }
+    } catch (Exception e) {
+      throw new IllegalArgumentException("Unable to create SSLContext", e);
+    }
   }
 
   private static RequestConfig getRequestConfig( FilterConfig config ) {
