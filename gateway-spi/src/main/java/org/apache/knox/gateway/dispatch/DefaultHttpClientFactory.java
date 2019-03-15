@@ -64,6 +64,7 @@ import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 
 public class DefaultHttpClientFactory implements HttpClientFactory {
+  static final String PARAMETER_USE_TWO_WAY_SSL = "useTwoWaySsl";
 
   @Override
   public HttpClient createHttpClient(FilterConfig filterConfig) {
@@ -79,8 +80,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     }
 
     // Conditionally set a custom SSLContext
-    boolean useTwoWaySsl = Boolean.parseBoolean(filterConfig.getInitParameter("useTwoWaySsl"));
-    SSLContext sslContext = createSSLContext(services, useTwoWaySsl);
+    SSLContext sslContext = createSSLContext(services, filterConfig);
     if(sslContext != null) {
       builder.setSSLSocketFactory(new SSLConnectionSocketFactory(sslContext));
     }
@@ -133,17 +133,17 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
    * This method is package private to allow access to unit tests
    *
    * @param services     the {@link GatewayServices}
-   * @param useTwoWaySsl <code>true</code> is two-way SSL is enabled; <code>false</code> if two-way SSL is not enabled
+   * @param filterConfig a {@link FilterConfig} used to query for parameters for this operation
    * @return a {@link SSLContext} or <code>null</code> if a custom {@link SSLContext} is not needed.
    */
-  SSLContext createSSLContext(GatewayServices services, boolean useTwoWaySsl) {
+  SSLContext createSSLContext(GatewayServices services, FilterConfig filterConfig) {
     KeyStore identityKeystore;
     char[] identityKeyPassphrase;
     KeyStore trustKeystore;
 
     KeystoreService ks = services.getService(GatewayServices.KEYSTORE_SERVICE);
     try {
-      if (useTwoWaySsl) {
+      if (Boolean.parseBoolean(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL))) {
         AliasService as = services.getService(GatewayServices.ALIAS_SERVICE);
 
         // Get the Gateway's configured identity keystore and key passphrase
@@ -171,7 +171,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
 
       // If an identity keystore or a trust store needs to be set, create and return a custom
       // SSLContext; else return null.
-      if((identityKeystore != null) || (trustKeystore != null)) {
+      if ((identityKeystore != null) || (trustKeystore != null)) {
         SSLContextBuilder sslContextBuilder = SSLContexts.custom();
 
         if (identityKeystore != null) {
@@ -183,8 +183,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
         }
 
         return sslContextBuilder.build();
-      }
-      else {
+      } else {
         return null;
       }
     } catch (Exception e) {
