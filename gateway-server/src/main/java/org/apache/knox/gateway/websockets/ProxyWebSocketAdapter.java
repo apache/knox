@@ -81,6 +81,10 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
      * plumbing takes place
      */
     container = ContainerProvider.getWebSocketContainer();
+    container.setDefaultMaxTextMessageBufferSize(frontEndSession.getPolicy().getMaxTextMessageBufferSize());
+    container.setDefaultMaxBinaryMessageBufferSize(frontEndSession.getPolicy().getMaxBinaryMessageBufferSize());
+    container.setAsyncSendTimeout(frontEndSession.getPolicy().getAsyncWriteTimeout());
+    container.setDefaultMaxSessionIdleTimeout(frontEndSession.getPolicy().getIdleTimeout());
 
     final ProxyInboundClient backendSocket = new ProxyInboundClient(getMessageCallback());
 

@@ -55,10 +55,6 @@ public class ProxyInboundClient extends Endpoint {
     this.session = backendSession;
     this.config = config;
 
-    /* Set the max message size */
-    session.setMaxBinaryMessageBufferSize(Integer.MAX_VALUE);
-    session.setMaxTextMessageBufferSize(Integer.MAX_VALUE);
-
     /* Add message handler for binary data */
     session.addMessageHandler(new MessageHandler.Whole<byte[]>() {
 
