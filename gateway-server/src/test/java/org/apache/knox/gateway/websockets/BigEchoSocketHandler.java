@@ -36,8 +36,8 @@ class BigEchoSocketHandler extends WebSocketHandler implements WebSocketCreator 
 
   @Override
   public void configure(WebSocketServletFactory factory) {
-    factory.getPolicy().setMaxTextMessageSize(10);
-    factory.getPolicy().setMaxBinaryMessageSize(10);
+    factory.getPolicy().setMaxTextMessageSize(66000);
+    factory.getPolicy().setMaxTextMessageBufferSize(66000);
     factory.setCreator(this);
   }
 

@@ -16,7 +16,6 @@
  */
 package org.apache.knox.gateway.websockets;
 
-import org.apache.commons.lang.RandomStringUtils;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -192,53 +191,4 @@ public class ProxyInboundClientTest {
     Assert.assertEquals("Binary message does not match", textMessage, new String(receivedBinaryMessage, StandardCharsets.UTF_8));
   }
 
-  @Test(timeout = 3000)
-  public void testTextMaxBufferLimit() throws IOException, DeploymentException {
-    final String longMessage = RandomStringUtils.random(100000);
-
-    final AtomicBoolean isTestComplete = new AtomicBoolean(false);
-
-    final WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-    final ProxyInboundClient client = new ProxyInboundClient( new MessageEventCallback() {
-      @Override
-      public void doCallback(String message) {
-      }
-
-      @Override
-      public void onConnectionOpen(Object session) {
-      }
-
-      @Override
-      public void onConnectionClose(CloseReason reason) {
-        isTestComplete.set(true);
-      }
-
-      @Override
-      public void onError(Throwable cause) {
-        isTestComplete.set(true);
-      }
-
-      @Override
-      public void onMessageText(String message, Object session) {
-        receivedMessage = message;
-        isTestComplete.set(true);
-      }
-
-      @Override
-      public void onMessageBinary(byte[] message, boolean last, Object session) {
-      }
-    });
-
-    Assert.assertThat(client, instanceOf(javax.websocket.Endpoint.class));
-
-    Session session = container.connectToServer(client, serverUri);
-
-    session.getBasicRemote().sendText(longMessage);
-
-    while(!isTestComplete.get()) { // NOPMD
-      /* just wait for the test to finish */
-    }
-
-    Assert.assertEquals(longMessage, receivedMessage);
-  }
 }

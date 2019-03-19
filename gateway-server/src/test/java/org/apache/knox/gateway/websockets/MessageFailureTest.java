@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.websockets;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -69,7 +70,7 @@ public class MessageFailureTest {
    */
   @Test(timeout = 8000)
   public void testMessageTooBig() throws Exception {
-    final String bigMessage = "Echooooooooooooo";
+    final String bigMessage = RandomStringUtils.randomAscii(66001);
 
     WebSocketContainer container = ContainerProvider.getWebSocketContainer();
 
@@ -82,6 +83,28 @@ public class MessageFailureTest {
         TimeUnit.MILLISECONDS);
 
     Assert.assertThat(client.close.getCloseCode().getCode(), CoreMatchers.is(CloseReason.CloseCodes.TOO_BIG.getCode()));
+  }
+
+  /**
+   * Test for a message that bigger than Jetty default but smaller than limit
+   * @throws Exception
+   */
+  @Test(timeout = 8000)
+  public void testMessageBiggerThanDefault() throws Exception {
+    final String bigMessage = RandomStringUtils.randomAscii(66000);
+
+    WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+
+    WebsocketClient client = new WebsocketClient();
+    javax.websocket.Session session = container.connectToServer(client,
+            proxyUri);
+    session.getBasicRemote().sendText(bigMessage);
+
+    client.awaitClose(CloseReason.CloseCodes.TOO_BIG.getCode(), 1000,
+            TimeUnit.MILLISECONDS);
+
+    Assert.assertThat(client.close.getCloseCode().getCode(), CoreMatchers.is(CloseReason.CloseCodes.TOO_BIG.getCode()));
+
   }
 
   /*
