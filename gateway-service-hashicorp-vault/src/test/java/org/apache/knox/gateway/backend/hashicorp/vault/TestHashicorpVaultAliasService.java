@@ -120,14 +120,17 @@ public class TestHashicorpVaultAliasService {
   }
 
   private String getKnoxToken(boolean forceKnoxSpecifcToken) throws Exception {
+    String token;
     if(forceKnoxSpecifcToken) {
       LOG.info("Using Knox specific token");
       Container.ExecResult tokenCreationExecResult = vaultContainer.execInContainer("vault", "token",
           "create", "-policy=" + getVaultPolicy(), "-field=token");
-      return tokenCreationExecResult.getStdout().trim();
+      token = tokenCreationExecResult.getStdout().replaceAll("\\s", "").trim();
+    } else {
+      LOG.info("Using root token");
+      token = vaultToken;
     }
-    LOG.info("Using root token");
-    return vaultToken;
+    return token;
   }
 
   private String getVaultPolicy() {
