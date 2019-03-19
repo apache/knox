@@ -87,7 +87,7 @@ public class MessageFailureTest {
 
   /**
    * Test for a message that bigger than Jetty default but smaller than limit
-   * @throws Exception
+   * @throws Exception exception on failure
    */
   @Test(timeout = 8000)
   public void testMessageBiggerThanDefault() throws Exception {
