@@ -57,6 +57,8 @@ import org.apache.knox.gateway.shell.util.ClientTrustStoreHelper;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.security.auth.Subject;
+import javax.security.auth.login.AppConfigurationEntry;
+import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 
@@ -66,10 +68,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.security.AccessController;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -100,6 +104,8 @@ public class KnoxSession implements Closeable {
   private static final KnoxShellMessages LOG = MessagesFactory.get(KnoxShellMessages.class);
   private boolean isKerberos;
 
+  private URL jaasConfigURL;
+
   String base;
   HttpHost host;
   CloseableHttpClient client;
@@ -118,7 +124,7 @@ public class KnoxSession implements Closeable {
   protected KnoxSession() throws KnoxShellException, URISyntaxException {
   }
 
-  public KnoxSession( final ClientContext clientContext) throws KnoxShellException, URISyntaxException {
+  public KnoxSession(final ClientContext clientContext) throws KnoxShellException, URISyntaxException {
     this.executor = Executors.newCachedThreadPool();
     this.base = clientContext.url();
 
@@ -199,7 +205,22 @@ public class KnoxSession implements Closeable {
    */
   public static KnoxSession kerberosLogin(final String url)
       throws URISyntaxException {
-    return kerberosLogin(url, "", "", false);
+    return kerberosLogin(url, false);
+  }
+
+  /**
+   * Support kerberos authentication.
+   * This method assumed kinit has already been called
+   * and the token is persisted on disk.
+   * @param url Gateway url
+   * @param debug enable debug messages
+   * @return KnoxSession
+   * @throws URISyntaxException exception in case of malformed url
+   * @since 1.3.0
+   */
+  public static KnoxSession kerberosLogin(final String url, boolean debug)
+      throws URISyntaxException {
+    return kerberosLogin(url, "", "", debug);
   }
 
   public static KnoxSession loginInsecure(String url, String username, String password) throws URISyntaxException {
@@ -264,12 +285,24 @@ public class KnoxSession implements Closeable {
       }
 
       if (!StringUtils.isBlank(clientContext.kerberos().jaasConf())) {
-        System.setProperty("java.security.auth.login.config",
-            clientContext.kerberos().jaasConf());
-      } else {
-        final URL url = getClass().getResource(DEFAULT_JAAS_FILE);
-        System.setProperty("java.security.auth.login.config",
-            url.toExternalForm());
+        File f = new File(clientContext.kerberos().jaasConf());
+        if (f.exists()) {
+          try {
+            jaasConfigURL = f.getCanonicalFile().toURI().toURL();
+            LOG.jaasConfigurationLocation(jaasConfigURL.toExternalForm());
+          } catch (IOException e) {
+            LOG.failedToLocateJAASConfiguration(e.getMessage());
+          }
+        } else {
+          LOG.jaasConfigurationDoesNotExist(f.getAbsolutePath());
+        }
+      }
+
+      // Fall back to the default JAAS config
+      if (jaasConfigURL == null) {
+        LOG.usingDefaultJAASConfiguration();
+        jaasConfigURL = getClass().getResource(DEFAULT_JAAS_FILE);
+        LOG.jaasConfigurationLocation(jaasConfigURL.toExternalForm());
       }
 
       if (clientContext.kerberos().debug()) {
@@ -426,7 +459,18 @@ public class KnoxSession implements Closeable {
     if (isKerberos) {
       LoginContext lc;
       try {
-        lc = new LoginContext(JGSS_LOGIN_MOUDLE, new TextCallbackHandler());
+        Configuration jaasConf;
+        try {
+          jaasConf = new JAASClientConfig(jaasConfigURL);
+        } catch (Exception e) {
+          LOG.failedToLoadJAASConfiguration(jaasConfigURL.toExternalForm());
+          throw new KnoxShellException(e.toString(), e);
+        }
+
+        lc = new LoginContext(JGSS_LOGIN_MOUDLE,
+                              Subject.getSubject(AccessController.getContext()),
+                              new TextCallbackHandler(),
+                              jaasConf);
         lc.login();
         return Subject.doAs(lc.getSubject(),
             (PrivilegedAction<CloseableHttpResponse>) () -> {
@@ -447,9 +491,7 @@ public class KnoxSession implements Closeable {
       } catch (final LoginException e) {
         throw new KnoxShellException(e.toString(), e);
       }
-
     } else {
-
       CloseableHttpResponse response = client.execute(host, request, context);
       if (response.getStatusLine().getStatusCode() < 400) {
         return response;
@@ -458,7 +500,6 @@ public class KnoxSession implements Closeable {
             response);
       }
     }
-
   }
 
   public <T> Future<T> executeLater( Callable<T> callable ) {
@@ -519,8 +560,79 @@ public class KnoxSession implements Closeable {
 
   @Override
   public String toString() {
-    final StringBuilder sb = new StringBuilder(
-        "KnoxSession{base='").append(base).append("\'}");
+    final StringBuilder sb = new StringBuilder("KnoxSession{base='");
+    sb.append(base).append("\'}");
     return sb.toString();
   }
+
+
+  private static final class JAASClientConfig extends Configuration {
+
+    private static final Configuration baseConfig = Configuration.getConfiguration();
+
+    private Configuration configFile;
+
+    JAASClientConfig(URL configFileURL) throws Exception {
+      if (configFileURL != null) {
+        this.configFile = ConfigurationFactory.create(configFileURL.toURI());
+      }
+    }
+
+    @Override
+    public AppConfigurationEntry[] getAppConfigurationEntry(String name) {
+      AppConfigurationEntry[] result = null;
+
+      // Try the config file if it exists
+      if (configFile != null) {
+        result = configFile.getAppConfigurationEntry(name);
+      }
+
+      // If the entry isn't there, delegate to the base configuration
+      if (result == null) {
+        result = baseConfig.getAppConfigurationEntry(name);
+      }
+
+      return result;
+    }
+  }
+
+  @SuppressWarnings("PMD.AvoidAccessibilityAlteration")
+  private static class ConfigurationFactory {
+
+    private static final Class implClazz;
+    static {
+      // Oracle and OpenJDK use the Sun implementation
+      String implName = System.getProperty("java.vendor").contains("IBM") ?
+                                "com.ibm.security.auth.login.ConfigFile" : "com.sun.security.auth.login.ConfigFile";
+
+      LOG.usingJAASConfigurationFileImplementation(implName);
+      Class clazz = null;
+      try {
+        clazz = Class.forName(implName, false, Thread.currentThread().getContextClassLoader());
+      } catch (ClassNotFoundException e) {
+        LOG.failedToLoadJAASConfigurationFileImplementation(implName, e.getLocalizedMessage());
+      }
+
+      implClazz = clazz;
+    }
+
+    static Configuration create(URI uri) {
+      Configuration config = null;
+
+      if (implClazz != null) {
+        try {
+          Constructor ctor = implClazz.getDeclaredConstructor(URI.class);
+          config = (Configuration) ctor.newInstance(uri);
+        } catch (Exception e) {
+          LOG.failedToInstantiateJAASConfigurationFileImplementation(implClazz.getCanonicalName(),
+                                                                     e.getLocalizedMessage());
+        }
+      } else {
+        LOG.noJAASConfigurationFileImplementation();
+      }
+
+      return config;
+    }
+  }
+
 }

@@ -240,7 +240,7 @@ public class ClientContext {
     }
 
     public boolean debug() {
-      return configuration.getBoolean("debug");
+      return configuration.getBoolean("debug", false);
     }
 
   }

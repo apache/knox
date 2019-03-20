@@ -26,6 +26,34 @@ import org.apache.knox.gateway.i18n.messages.StackTrace;
 
 @Messages(logger="org.apache.knox.gateway.shell")
 public interface KnoxShellMessages {
-  @Message( level = MessageLevel.WARN, text = "Unable to load provided PEM encoded trusted cert - falling through for other truststores: {0}" )
+  @Message( level = MessageLevel.WARN, text = "Unable to create provided PEM encoded trusted cert - falling through for other truststores: {0}" )
   void unableToLoadProvidedPEMEncodedTrustedCert(@StackTrace( level = MessageLevel.DEBUG ) IOException e);
+
+  @Message( level = MessageLevel.DEBUG, text = "Using JAAS configuration file implementation: {0}" )
+  void usingJAASConfigurationFileImplementation(String implName);
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to create JAAS configuration file implementation {0}: {1}" )
+  void failedToLoadJAASConfigurationFileImplementation(String implName, String error);
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to instantiate JAAS configuration file implementation {0}: {1}" )
+  void failedToInstantiateJAASConfigurationFileImplementation(String implName, String error);
+
+  @Message( level = MessageLevel.ERROR, text = "No JAAS configuration file implementation is available" )
+  void noJAASConfigurationFileImplementation();
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to create the JAAS configuration: {0}" )
+  void failedToLoadJAASConfiguration(String configFileName);
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to locate the specified JAAS configuration: {0}" )
+  void failedToLocateJAASConfiguration(String message);
+
+  @Message( level = MessageLevel.ERROR, text = "The specified JAAS configuration does not exist: {0}" )
+  void jaasConfigurationDoesNotExist(String jaasConf);
+
+  @Message( level = MessageLevel.INFO, text = "Using default JAAS configuration" )
+  void usingDefaultJAASConfiguration();
+
+  @Message( level = MessageLevel.DEBUG, text = "JAAS configuration: {0}" )
+  void jaasConfigurationLocation(String location);
+
 }
