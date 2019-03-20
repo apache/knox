@@ -170,5 +170,13 @@
       <apply path="Location" rule="YARNUIV2/yarnuiv2/outbound/headers/index/location"/>
     </content>
   </filter>
+   
+  <rule dir="IN" name="YARNUIV2/yarnuiv2/inbound/proxy" pattern="*://*:*/**/yarnuiv2/proxy/{**}?{**}">
+      <rewrite template="{$serviceUrl[YARNUIV2]}/proxy/{**}?{**}"/>
+   </rule>
+
+   <rule dir="OUT" name="YARNUIV2/yarnuiv2/outbound/proxy" pattern="*://*:*/proxy/{**}">
+      <rewrite template="{gateway.scheme}://{gateway.host}:{gateway.port}/gateway/default/sparkhistory/history/{**}?{**}"/>
+   </rule>
  </rules>
   
