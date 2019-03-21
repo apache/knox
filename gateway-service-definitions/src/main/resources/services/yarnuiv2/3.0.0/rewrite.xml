@@ -187,7 +187,7 @@
       <rewrite template="{$frontend[url]}/jobhistory/job/{**}?{scheme}?{host}?{port}"/>
     </match>
     <match pattern="{scheme}://{host}:{port}/jobhistory/logs/{**}?{**}">
-      <rewrite template="{$frontend[url]}/jobhistory/logs/{**}"/>
+      <rewrite template="{$frontend[url]}/jobhistory/logs/{**}?{**}"/>
     </match>        
     <match pattern="*://*:*/history/{**}?{**}">
       <rewrite template="{$frontend[url]}/sparkhistory/history/{**}?{**}"/>
