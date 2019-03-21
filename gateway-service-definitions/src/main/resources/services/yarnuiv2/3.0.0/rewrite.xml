@@ -171,12 +171,34 @@
     </content>
   </filter>
    
-  <rule dir="IN" name="YARNUIV2/yarnuiv2/inbound/proxy" pattern="*://*:*/**/yarnuiv2/proxy/{**}?{**}">
-      <rewrite template="{$serviceUrl[YARNUIV2]}/proxy/{**}?{**}"/>
+  <filter name="YARNUIV2/yarnuiv2/outbound/headers/jobhistory/job">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="YARNUIV2/yarnuiv2/outbound/headers/jobhistory/job/location"/>
+    </content>
+   </filter>
+
+  <rule dir="OUT" name="YARNUIV2/yarnuiv2/outbound/proxy" pattern="*://*:*/proxy/{**}">
+      <rewrite template="{$frontend[url]}/yarnuiv2/proxy/{**}"/>
    </rule>
 
-   <rule dir="OUT" name="YARNUIV2/yarnuiv2/outbound/proxy" pattern="*://*:*/proxy/{**}">
-      <rewrite template="{gateway.scheme}://{gateway.host}:{gateway.port}/gateway/default/sparkhistory/history/{**}?{**}"/>
-   </rule>
+
+   <rule flow="OR" dir="OUT" name="YARNUIV2/yarnuiv2/outbound/headers/jobhistory/job/location">
+      <match pattern="{scheme}://{host}:{port}/jobhistory/job/{**}">
+          <rewrite template="{$frontend[url]}/jobhistory/job/{**}?{scheme}?{host}?{port}"/>
+      </match>
+      <match pattern="{scheme}://{host}:{port}/jobhistory/logs/{**}?{**}">
+          <rewrite template="{$frontend[url]}/jobhistory/logs/{**}"/>
+      </match>        
+      <match pattern="*://*:*/history/{**}?{**}">
+          <rewrite template="{$frontend[url]}/sparkhistory/history/{**}?{**}"/>
+      </match>
+      <match pattern="*://*:*/cluster/app/{**}">
+          <rewrite template="{$frontend[url]}/yarnuiv2/cluster/app/{**}"/>
+      </match>
+      <match pattern="*://*:*/cluster/apps/{**}">
+          <rewrite template="{$frontend[url]}/yarnuiv2/cluster/apps/{**}"/>
+      </match>
+    </rule>
+   
  </rules>
   
