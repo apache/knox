@@ -89,6 +89,14 @@
       <rewrite apply="YARNUIV2/yarnuiv2/inbound/config" to="request.url"/>
     </route>
 
+    <route path="/yarnuiv2/proxy/**">
+      <rewrite apply="YARNUIV2/yarnuiv2/outbound/headers/jobhistory/job" to="response.headers"/>
+    </route>
+
+    <route path="/yarnuiv2/jobhistory/**">
+      <rewrite apply="YARNUIV2/yarnuiv2/outbound/headers/jobhistory/job" to="response.headers"/>
+    </route>
+
   </routes>
   <dispatch classname="org.apache.knox.gateway.dispatch.PassAllHeadersDispatch" ha-classname="org.apache.knox.gateway.rm.dispatch.RMUI2HaDispatch"/>
 </service>
