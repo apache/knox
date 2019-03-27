@@ -41,7 +41,7 @@ import java.util.Map;
 
 
 /**
- * This specialized dispatch provides jkg specific features to the
+ * This specialized dispatch provides Jupyter Kernel Gateway specific features to the
  * default dispatch.
  */
 public class JkgDispatch extends DefaultDispatch {
