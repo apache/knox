@@ -28,7 +28,7 @@
     <artifactId>gateway-release</artifactId>
     <name>gateway-release</name>
     <description>The gateway binary release packaging.</description>
-    
+
     <profiles>
         <profile>
             <id>package</id>
@@ -211,6 +211,10 @@
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-service-livy</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-service-jkg</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>

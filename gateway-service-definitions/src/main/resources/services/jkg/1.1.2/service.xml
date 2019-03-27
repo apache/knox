@@ -28,24 +28,13 @@
             <rewrite apply="JKG/jkg/inbound/api/kernelspecs/query" to="request.url"/>
         </route>
         <route path="/jkg/api/kernels">
-            <policies>
-                <policy role="webappsec"/>
-                <policy role="authentication"/>
-                <policy role="rewrite"/>
-                <policy role="authorization"/>
-            </policies>
             <rewrite apply="JKG/jkg/inbound/api/kernelsurl" to="request.url"/>
             <rewrite apply="JKG/jkg/outbound/api/kernels" to="response.body"/>
             <rewrite apply="JKG/jkg/inbound/api/kernels" to="request.body"/>
         </route>
         <route path="/jkg/api/kernels/*">
-            <policies>
-                <policy role="webappsec"/>
-                <policy role="authentication"/>
-                <policy role="rewrite"/>
-                <policy role="authorization"/>
-            </policies>
             <rewrite apply="JKG/jkg/inbound/api/kernel/query" to="request.url"/>
         </route>
     </routes>
+    <dispatch classname="org.apache.knox.gateway.jkg.JkgDispatch"/>
 </service>
