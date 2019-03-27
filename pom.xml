@@ -106,7 +106,6 @@
         <module>gateway-service-knoxtoken</module>
         <module>gateway-service-livy</module>
         <module>gateway-service-jkg</module>
-        <module>gateway-service-health</mo
         <module>gateway-service-health</module>
         <module>gateway-service-webhdfs</module>
         <module>gateway-service-tgs</module>

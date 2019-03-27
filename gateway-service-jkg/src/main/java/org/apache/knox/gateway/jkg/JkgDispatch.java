@@ -41,7 +41,7 @@ import java.util.Map;
 
 
 /**
- * This specialized dispatch provides jeg specific features to the
+ * This specialized dispatch provides jkg specific features to the
  * default dispatch.
  */
 public class JkgDispatch extends DefaultDispatch {
