@@ -105,6 +105,7 @@
         <module>gateway-service-knoxssout</module>
         <module>gateway-service-knoxtoken</module>
         <module>gateway-service-livy</module>
+        <module>gateway-service-jkg</module>
         <module>gateway-service-health</module>
         <module>gateway-service-webhdfs</module>
         <module>gateway-service-tgs</module>
@@ -989,6 +990,11 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-service-jkg</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-definitions</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1234,19 +1240,19 @@
                 <artifactId>groovy-json</artifactId>
                 <version>${groovy.version}</version>
             </dependency>
-            
+
             <dependency>
                 <groupId>org.fusesource.jansi</groupId>
                 <artifactId>jansi</artifactId>
                 <version>${jansi.version}</version>
             </dependency>
-            
+
             <dependency>
                 <groupId>jline</groupId>
                 <artifactId>jline</artifactId>
                 <version>${jline.version}</version>
             </dependency>
-            
+
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
@@ -1257,7 +1263,7 @@
                 <artifactId>httpcore</artifactId>
                 <version>${httpcore.version}</version>
             </dependency>
-            
+
             <dependency>
                 <groupId>joda-time</groupId>
                 <artifactId>joda-time</artifactId>
@@ -1779,7 +1785,7 @@
                 <artifactId>javax.websocket-client-api</artifactId>
                 <version>${javax.websocket-api.version}</version>
             </dependency>
-            
+
             <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>websocket-api</artifactId>
