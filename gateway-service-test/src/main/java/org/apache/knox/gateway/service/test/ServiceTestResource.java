@@ -29,7 +29,6 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
-import org.glassfish.jersey.internal.util.Base64;
 
 import javax.net.ssl.SSLContext;
 import javax.servlet.http.HttpServletRequest;
@@ -49,6 +48,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -77,7 +77,9 @@ public class ServiceTestResource {
 
 //    Create Authorization String
     if( username != null && password != null) {
-      authString = "Basic " + Base64.encodeAsString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
+      String base64EncodedUserPass = Base64.getEncoder().encodeToString(
+          (username + ":" + password).getBytes(StandardCharsets.UTF_8));
+      authString = "Basic " + base64EncodedUserPass;
     } else if (request.getHeader("Authorization") != null) {
       authString = request.getHeader("Authorization");
     } else {
