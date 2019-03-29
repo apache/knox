@@ -19,7 +19,6 @@ package org.apache.knox.gateway.services.security.impl;
 
 import static org.apache.knox.gateway.services.security.AliasService.NO_CLUSTER_NAME;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.GatewayResources;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -579,7 +578,7 @@ public class DefaultKeystoreService implements KeystoreService, Service {
 
   private char[] getKeyStorePassword(String alias) throws KeystoreServiceException {
     char[] password = null;
-    if (StringUtils.isNotEmpty(alias)) {
+    if (alias != null && !alias.isEmpty()) {
       password = getCredentialForCluster(NO_CLUSTER_NAME, alias);
     }
     return (password == null) ? masterService.getMasterSecret() : password;

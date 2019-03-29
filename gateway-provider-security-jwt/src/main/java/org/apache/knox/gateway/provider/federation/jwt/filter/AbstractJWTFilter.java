@@ -55,7 +55,6 @@ import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
-import org.apache.commons.lang.StringUtils;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 
 import com.nimbusds.jose.JWSHeader;
@@ -124,7 +123,7 @@ public abstract class AbstractJWTFilter implements Filter {
   protected List<String> parseExpectedAudiences(String expectedAudiences) {
     List<String> audList = null;
     // setup the list of valid audiences for token validation
-    if (!StringUtils.isEmpty(expectedAudiences)) {
+    if (expectedAudiences != null && !expectedAudiences.isEmpty()) {
       // parse into the list
       String[] audArray = expectedAudiences.split(",");
       audList = new ArrayList<>();

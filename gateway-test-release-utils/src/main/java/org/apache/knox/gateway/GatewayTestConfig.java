@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
