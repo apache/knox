@@ -37,6 +37,7 @@ import java.util.Set;
 
 public class AbstractGatewayServicesTest {
 
+
   @Test
   public void testAddStartAndStop() throws ServiceLifecycleException {
     AbstractGatewayServices gatewayServices = createMockBuilder(AbstractGatewayServices.class)
@@ -46,7 +47,28 @@ public class AbstractGatewayServicesTest {
     Map<ServiceType, Service> serviceMap = new EnumMap<>(ServiceType.class);
     TestService lastService = null;
 
-    for (ServiceType serviceType : ServiceType.PREFERRED_START_ORDER) {
+    ServiceType[] orderedServiceTypes = {
+        ServiceType.MASTER_SERVICE,
+        ServiceType.KEYSTORE_SERVICE,
+        ServiceType.ALIAS_SERVICE,
+        ServiceType.SSL_SERVICE,
+        ServiceType.TOKEN_SERVICE,
+        ServiceType.SERVER_INFO_SERVICE,
+        ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE,
+        ServiceType.CLUSTER_CONFIGURATION_MONITOR_SERVICE,
+        ServiceType.TOPOLOGY_SERVICE,
+        ServiceType.METRICS_SERVICE,
+        ServiceType.CRYPTO_SERVICE,
+        ServiceType.HOST_MAPPING_SERVICE,
+        ServiceType.SERVICE_DEFINITION_REGISTRY,
+        ServiceType.SERVICE_REGISTRY_SERVICE
+    };
+
+    assertNotEquals(ServiceType.values(), orderedServiceTypes);
+
+    // Services should be started in the order they were added.. and stopped in the reverse order.
+    // For testing let's use an order different than what is defined in the ServiceType enum.
+    for (ServiceType serviceType : orderedServiceTypes) {
       TestService testService = new TestService();
       testService.setPreviousService(lastService);
 
@@ -56,9 +78,7 @@ public class AbstractGatewayServicesTest {
 
       lastService = testService;
       serviceMap.put(serviceType, testService);
-    }
 
-    for (ServiceType serviceType : ServiceType.values()) {
       gatewayServices.addService(serviceType, serviceMap.get(serviceType));
     }
 

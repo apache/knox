@@ -34,23 +34,6 @@ public enum ServiceType {
   TOKEN_SERVICE("TokenService"),
   TOPOLOGY_SERVICE("TopologyService");
 
-  public static final ServiceType[] PREFERRED_START_ORDER = {
-      MASTER_SERVICE,
-      KEYSTORE_SERVICE,
-      ALIAS_SERVICE,
-      SSL_SERVICE,
-      TOKEN_SERVICE,
-      SERVER_INFO_SERVICE,
-      REMOTE_REGISTRY_CLIENT_SERVICE,
-      CLUSTER_CONFIGURATION_MONITOR_SERVICE,
-      TOPOLOGY_SERVICE,
-      METRICS_SERVICE,
-      CRYPTO_SERVICE,
-      HOST_MAPPING_SERVICE,
-      SERVICE_DEFINITION_REGISTRY,
-      SERVICE_REGISTRY_SERVICE
-  };
-
   private final String serviceTypeName;
 
   ServiceType(String serviceTypeName) {

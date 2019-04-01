@@ -17,16 +17,14 @@
  */
 package org.apache.knox.gateway.services;
 
-import static org.apache.knox.gateway.services.ServiceType.PREFERRED_START_ORDER;
-
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,6 +46,7 @@ public abstract class AbstractGatewayServices implements GatewayServices {
   private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
 
   private final Map<ServiceType, Service> services = new EnumMap<>(ServiceType.class);
+  private final List<Service> orderedServices = new ArrayList<>();
   private final String role;
   private final String name;
 
@@ -58,29 +57,21 @@ public abstract class AbstractGatewayServices implements GatewayServices {
 
   @Override
   public void start() throws ServiceLifecycleException {
-    for (ServiceType serviceType : PREFERRED_START_ORDER) {
-      Service service = services.get(serviceType);
-      // If the the service has not been registered, skip it.
-      if (service != null) {
-        LOG.startingService(serviceType.getServiceTypeName());
-        service.start();
-      }
+    for (Service service : orderedServices) {
+      LOG.startingService(service.getClass().getName());
+      service.start();
     }
   }
 
   @Override
   public void stop() throws ServiceLifecycleException {
     // Reverse the preferred startup order
-    ArrayList<ServiceType> copy = new ArrayList<>(Arrays.asList(PREFERRED_START_ORDER));
+    ArrayList<Service> copy = new ArrayList<>(orderedServices);
     Collections.reverse(copy);
 
-    for (ServiceType serviceType : copy) {
-      Service service = services.get(serviceType);
-      // If the the service has not been registered, skip it.
-      if (service != null) {
-        LOG.stoppingService(serviceType.getServiceTypeName());
-        service.stop();
-      }
+    for (Service service : copy) {
+      LOG.stoppingService(service.getClass().getName());
+      service.stop();
     }
   }
 
@@ -115,6 +106,13 @@ public abstract class AbstractGatewayServices implements GatewayServices {
    * @param service     the {@link Service} implementation
    */
   protected void addService(ServiceType serviceType, Service service) {
+
+    // Ensure the service is not null
+    if (service == null) {
+      throw new NullPointerException("A null service may not be added.");
+    }
+
+    orderedServices.add(service);
     services.put(serviceType, service);
   }
 }
