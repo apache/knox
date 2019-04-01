@@ -26,6 +26,7 @@ import javax.ws.rs.core.Response;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServerInfoService;
 
@@ -50,7 +51,7 @@ public class VersionResource {
     GatewayServices services = (GatewayServices)request.getServletContext().
         getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
-    ServerInfoService sis = services.getService(GatewayServices.SERVER_INFO_SERVICE);
+    ServerInfoService sis = services.getService(ServiceType.SERVER_INFO_SERVICE);
 
     return new ServerVersion(sis.getBuildVersion(), sis.getBuildHash());
   }

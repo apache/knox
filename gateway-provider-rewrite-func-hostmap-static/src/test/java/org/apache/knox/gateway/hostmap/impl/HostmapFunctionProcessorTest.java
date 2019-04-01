@@ -25,6 +25,7 @@ import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteRulesDescriptorFacto
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriter;
 import org.apache.knox.gateway.filter.rewrite.ext.UrlRewriteActionRewriteDescriptorExt;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.hostmap.HostMapper;
 import org.apache.knox.gateway.services.hostmap.HostMapperService;
@@ -71,7 +72,7 @@ public class HostmapFunctionProcessorTest {
     HostMapperService hms = EasyMock.createNiceMock( HostMapperService.class );
 
     GatewayServices gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
-    EasyMock.expect( gatewayServices.getService( GatewayServices.HOST_MAPPING_SERVICE ) ).andReturn( hms ).anyTimes();
+    EasyMock.expect( gatewayServices.getService( ServiceType.HOST_MAPPING_SERVICE ) ).andReturn( hms ).anyTimes();
 
     UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
     EasyMock.expect( environment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();

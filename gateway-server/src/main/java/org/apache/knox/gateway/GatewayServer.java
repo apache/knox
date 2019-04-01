@@ -37,6 +37,7 @@ import org.apache.knox.gateway.filter.PortMappingHelperHandler;
 import org.apache.knox.gateway.filter.RequestUpdateHandler;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
 import org.apache.knox.gateway.services.security.AliasServiceException;
@@ -323,14 +324,14 @@ public class GatewayServer {
   }
 
   public static void redeployTopologies( String topologyName  ) {
-    TopologyService ts = getGatewayServices().getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = getGatewayServices().getService(ServiceType.TOPOLOGY_SERVICE);
     ts.reloadTopologies();
     ts.redeployTopologies(topologyName);
   }
 
   private void cleanupTopologyDeployments() {
     File deployDir = new File( config.getGatewayDeploymentDir() );
-    TopologyService ts = getGatewayServices().getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = getGatewayServices().getService(ServiceType.TOPOLOGY_SERVICE);
     for( Topology topology : ts.getTopologies() ) {
       cleanupTopologyDeployments( deployDir, topology );
     }
@@ -432,7 +433,7 @@ public class GatewayServer {
       httpsConfig.setSecureScheme( "https" );
       httpsConfig.setSecurePort( connectorPort );
       httpsConfig.addCustomizer( new SecureRequestCustomizer() );
-      SSLService ssl = services.getService(GatewayServices.SSL_SERVICE);
+      SSLService ssl = services.getService(ServiceType.SSL_SERVICE);
       SslContextFactory sslContextFactory = (SslContextFactory)ssl.buildSslContextFactory( config );
       connector = new ServerConnector( server, sslContextFactory, new HttpConnectionFactory( httpsConfig ) );
     } else {
@@ -593,7 +594,7 @@ public class GatewayServer {
     // Redeploy autodeploy topologies.
     File topologiesDir = calculateAbsoluteTopologiesDir();
     log.loadingTopologiesFromDirectory(topologiesDir.getAbsolutePath());
-    monitor = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+    monitor = services.getService(ServiceType.TOPOLOGY_SERVICE);
     monitor.addTopologyChangeListener(listener);
     monitor.reloadTopologies();
     List<String> autoDeploys = config.getAutoDeployTopologyNames();
@@ -865,7 +866,7 @@ public class GatewayServer {
     String topoPath = "/" + Urls.trimLeadingAndTrailingSlashJoin( config.getGatewayPath(), topoName );
     String topoPathSlash = topoPath + "/";
 
-    ServiceRegistry sr = getGatewayServices().getService(GatewayServices.SERVICE_REGISTRY_SERVICE);
+    ServiceRegistry sr = getGatewayServices().getService(ServiceType.SERVICE_REGISTRY_SERVICE);
     if (sr != null) {
       sr.removeClusterServices( topoName );
     }

@@ -23,6 +23,7 @@ import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter;
 import org.apache.knox.gateway.pac4j.filter.Pac4jIdentityAdapter;
 import org.apache.knox.gateway.pac4j.session.KnoxSessionStore;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.impl.DefaultCryptoService;
@@ -71,8 +72,8 @@ public class Pac4jProviderTest {
         cryptoService.setAliasService(aliasService);
 
         final GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
-        EasyMock.expect(services.getService(GatewayServices.CRYPTO_SERVICE)).andReturn(cryptoService);
-        EasyMock.expect(services.getService(GatewayServices.ALIAS_SERVICE)).andReturn(aliasService);
+        EasyMock.expect(services.getService(ServiceType.CRYPTO_SERVICE)).andReturn(cryptoService);
+        EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService);
         EasyMock.replay(services);
 
         final ServletContext context = EasyMock.createNiceMock(ServletContext.class);
@@ -169,8 +170,8 @@ public class Pac4jProviderTest {
         cryptoService.setAliasService(aliasService);
 
         final GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
-        EasyMock.expect(services.getService(GatewayServices.CRYPTO_SERVICE)).andReturn(cryptoService);
-        EasyMock.expect(services.getService(GatewayServices.ALIAS_SERVICE)).andReturn(aliasService);
+        EasyMock.expect(services.getService(ServiceType.CRYPTO_SERVICE)).andReturn(cryptoService);
+        EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService);
         EasyMock.replay(services);
 
         final ServletContext context = EasyMock.createNiceMock(ServletContext.class);
@@ -267,8 +268,8 @@ public class Pac4jProviderTest {
         cryptoService.setAliasService(aliasService);
 
         final GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
-        EasyMock.expect(services.getService(GatewayServices.CRYPTO_SERVICE)).andReturn(cryptoService);
-        EasyMock.expect(services.getService(GatewayServices.ALIAS_SERVICE)).andReturn(aliasService);
+        EasyMock.expect(services.getService(ServiceType.CRYPTO_SERVICE)).andReturn(cryptoService);
+        EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService);
         EasyMock.replay(services);
 
         final ServletContext context = EasyMock.createNiceMock(ServletContext.class);

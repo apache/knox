@@ -22,6 +22,7 @@ import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
@@ -108,7 +109,7 @@ public class TokenServiceResourceTest {
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
 
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
 
     EasyMock.replay(principal, services, context, request);
 
@@ -152,7 +153,7 @@ public class TokenServiceResourceTest {
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
 
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
 
     EasyMock.replay(principal, services, context, request);
 
@@ -204,7 +205,7 @@ public class TokenServiceResourceTest {
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
 
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
 
     EasyMock.replay(principal, services, context, request);
 
@@ -261,7 +262,7 @@ public class TokenServiceResourceTest {
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
 
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
 
     EasyMock.replay(principal, services, context, request, trustedCertMock);
 
@@ -312,7 +313,7 @@ public class TokenServiceResourceTest {
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
 
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
 
     EasyMock.replay(principal, services, context, request, trustedCertMock);
 
@@ -346,7 +347,7 @@ public class TokenServiceResourceTest {
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
 
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
 
     EasyMock.replay(principal, services, context, request);
 
@@ -380,7 +381,7 @@ public class TokenServiceResourceTest {
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
 
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
 
     EasyMock.replay(principal, services, context, request);
 
@@ -426,7 +427,7 @@ public class TokenServiceResourceTest {
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
 
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
 
     EasyMock.replay(principal, services, context, request);
 
@@ -476,7 +477,7 @@ public class TokenServiceResourceTest {
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
 
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
 
     EasyMock.replay(principal, services, context, request);
 
@@ -527,7 +528,7 @@ public class TokenServiceResourceTest {
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
 
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
 
     EasyMock.replay(principal, services, context, request);
 
@@ -577,7 +578,7 @@ public class TokenServiceResourceTest {
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
 
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(GatewayServices.TOKEN_SERVICE)).andReturn(authority);
+    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
 
     EasyMock.replay(principal, services, context, request);
 

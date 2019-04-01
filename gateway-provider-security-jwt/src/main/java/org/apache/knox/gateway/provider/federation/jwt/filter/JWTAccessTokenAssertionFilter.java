@@ -35,6 +35,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.knox.gateway.filter.security.AbstractIdentityAssertionFilter;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
@@ -64,8 +65,8 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
     validity = Long.parseLong(validityStr);
 
     GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    authority = services.getService(GatewayServices.TOKEN_SERVICE);
-    sr = services.getService(GatewayServices.SERVICE_REGISTRY_SERVICE);
+    authority = services.getService(ServiceType.TOKEN_SERVICE);
+    sr = services.getService(ServiceType.SERVICE_REGISTRY_SERVICE);
   }
 
   @Override

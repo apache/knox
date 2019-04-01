@@ -25,6 +25,7 @@ import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletContextListen
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletEnvironment;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletFilter;
 import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteRequest;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
 import org.apache.knox.gateway.util.XmlUtils;
@@ -62,7 +63,7 @@ public class OozieServiceDefinitionTest {
 
     // Mock out the gateway services registry which is required for several url rewrite functions to work.
     GatewayServices services = EasyMock.createNiceMock( GatewayServices.class );
-    EasyMock.expect( services.getService( GatewayServices.SERVICE_REGISTRY_SERVICE ) ).andReturn( registry ).anyTimes();
+    EasyMock.expect( services.getService( ServiceType.SERVICE_REGISTRY_SERVICE ) ).andReturn( registry ).anyTimes();
 
     UrlRewriteProcessor rewriteProcessor = new UrlRewriteProcessor();
 
@@ -116,7 +117,7 @@ public class OozieServiceDefinitionTest {
 
     // Mock out the gateway services registry which is required for several url rewrite functions to work.
     GatewayServices services = EasyMock.createNiceMock( GatewayServices.class );
-    EasyMock.expect( services.getService( GatewayServices.SERVICE_REGISTRY_SERVICE ) ).andReturn( registry ).anyTimes();
+    EasyMock.expect( services.getService( ServiceType.SERVICE_REGISTRY_SERVICE ) ).andReturn( registry ).anyTimes();
 
     UrlRewriteProcessor rewriteProcessor = new UrlRewriteProcessor();
 
@@ -169,7 +170,7 @@ public class OozieServiceDefinitionTest {
 
     // Mock out the gateway services registry which is required for several url rewrite functions to work.
     GatewayServices services = EasyMock.createNiceMock( GatewayServices.class );
-    EasyMock.expect( services.getService( GatewayServices.SERVICE_REGISTRY_SERVICE ) ).andReturn( registry ).anyTimes();
+    EasyMock.expect( services.getService( ServiceType.SERVICE_REGISTRY_SERVICE ) ).andReturn( registry ).anyTimes();
 
     UrlRewriteProcessor rewriteProcessor = new UrlRewriteProcessor();
 

@@ -27,6 +27,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
@@ -77,7 +78,7 @@ public class CredentialResource {
     GatewayServices services = (GatewayServices)request.getServletContext().
         getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     String clusterName = (String) request.getServletContext().getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE);
-    AliasService as = services.getService(GatewayServices.ALIAS_SERVICE);
+    AliasService as = services.getService(ServiceType.ALIAS_SERVICE);
     List<String> aliases = null;
     try {
       aliases = as.getAliasesForCluster(clusterName);
@@ -91,7 +92,7 @@ public class CredentialResource {
     GatewayServices services = (GatewayServices)request.getServletContext().
         getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     String clusterName = (String) request.getServletContext().getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE);
-    AliasService as = services.getService(GatewayServices.ALIAS_SERVICE);
+    AliasService as = services.getService(ServiceType.ALIAS_SERVICE);
     char[] credential = null;
     try {
       credential = as.getPasswordFromAliasForCluster(clusterName, alias);

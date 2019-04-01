@@ -640,4 +640,10 @@ public interface GatewayMessages {
 
   @Message(level = MessageLevel.ERROR, text = "Failed to remove credential: {1}")
   void failedToRemoveCredential(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.INFO, text = "Staring service: {0}")
+  void startingService(String serviceTypeName);
+
+  @Message(level = MessageLevel.INFO, text = "Stopping service: {0}")
+  void stoppingService(String serviceTypeName);
 }

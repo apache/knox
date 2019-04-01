@@ -19,6 +19,7 @@ package org.apache.knox.gateway.topology.simple;
 import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -253,9 +254,9 @@ public class SimpleDescriptorHandler {
         try {
             GatewayServices services = GatewayServer.getGatewayServices();
             if (services != null) {
-                MasterService ms = services.getService(GatewayServices.MASTER_SERVICE);
+                MasterService ms = services.getService(ServiceType.MASTER_SERVICE);
                 if (ms != null) {
-                    KeystoreService ks = services.getService(GatewayServices.KEYSTORE_SERVICE);
+                    KeystoreService ks = services.getService(ServiceType.KEYSTORE_SERVICE);
                     if (ks != null) {
                         if (!ks.isCredentialStoreForClusterAvailable(topologyName)) {
                             ks.createCredentialStoreForCluster(topologyName);
@@ -263,7 +264,7 @@ public class SimpleDescriptorHandler {
 
                         // If the credential store existed, or it was just successfully created
                         if (ks.getCredentialStoreForCluster(topologyName) != null) {
-                            AliasService aliasService = services.getService(GatewayServices.ALIAS_SERVICE);
+                            AliasService aliasService = services.getService(ServiceType.ALIAS_SERVICE);
                             if (aliasService != null) {
                                 // Derive and set the query param encryption password
                                 String queryEncryptionPass = new String(ms.getMasterSecret()) + topologyName;

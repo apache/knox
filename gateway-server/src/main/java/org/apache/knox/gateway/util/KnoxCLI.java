@@ -35,6 +35,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.deploy.DeploymentFactory;
 import org.apache.knox.gateway.services.CLIGatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -510,19 +511,19 @@ public class KnoxCLI extends Configured implements Tool {
     public abstract String getUsage();
 
     protected AliasService getAliasService() {
-      return services.getService(GatewayServices.ALIAS_SERVICE);
+      return services.getService(ServiceType.ALIAS_SERVICE);
     }
 
     protected KeystoreService getKeystoreService() {
-      return services.getService(GatewayServices.KEYSTORE_SERVICE);
+      return services.getService(ServiceType.KEYSTORE_SERVICE);
     }
 
     protected TopologyService getTopologyService()  {
-      return services.getService(GatewayServices.TOPOLOGY_SERVICE);
+      return services.getService(ServiceType.TOPOLOGY_SERVICE);
     }
 
     protected RemoteConfigurationRegistryClientService getRemoteConfigRegistryClientService() {
-      return services.getService(GatewayServices.REMOTE_REGISTRY_CLIENT_SERVICE);
+      return services.getService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE);
     }
 
   }
@@ -683,7 +684,7 @@ public class KnoxCLI extends Configured implements Tool {
          if ( !isForceRequired(config, ks) || force) {
            char[] passphrase = as.getGatewayIdentityPassphrase();
            if (passphrase == null) {
-             MasterService ms = services.getService(GatewayServices.MASTER_SERVICE);
+             MasterService ms = services.getService(ServiceType.MASTER_SERVICE);
              passphrase = ms.getMasterSecret();
            }
            ks.addSelfSignedCertForGateway(config.getIdentityKeyAlias(), passphrase, hostname);

@@ -22,6 +22,7 @@ import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFunctionDescriptor;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 import org.apache.knox.gateway.ha.provider.HaProvider;
 import org.apache.knox.gateway.ha.provider.HaServletContextListener;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
 
@@ -45,7 +46,7 @@ abstract class ServiceRegistryFunctionProcessorBase<T extends UrlRewriteFunction
     if( services == null ) {
       throw new IllegalArgumentException( "services==null" );
     }
-    registry = services.getService( GatewayServices.SERVICE_REGISTRY_SERVICE );
+    registry = services.getService( ServiceType.SERVICE_REGISTRY_SERVICE );
     if( registry == null ) {
       throw new IllegalArgumentException( "registry==null" );
     }

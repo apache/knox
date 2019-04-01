@@ -22,6 +22,7 @@ import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 import org.apache.knox.gateway.ha.provider.HaProvider;
 import org.apache.knox.gateway.ha.provider.HaServletContextListener;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
 import org.apache.knox.gateway.svcregfunc.api.ServiceSchemeFunctionDescriptor;
@@ -55,7 +56,7 @@ public class ServiceSchemeFunctionProcessorTest {
     EasyMock.expect( reg.lookupServiceURL( "test-cluster", "test-service" ) ).andReturn( "test-scheme://test-host:777/test-path" ).anyTimes();
 
     svc = EasyMock.createNiceMock( GatewayServices.class );
-    EasyMock.expect( svc.getService( GatewayServices.SERVICE_REGISTRY_SERVICE ) ).andReturn( reg ).anyTimes();
+    EasyMock.expect( svc.getService( ServiceType.SERVICE_REGISTRY_SERVICE ) ).andReturn( reg ).anyTimes();
 
     env = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
     EasyMock.expect( env.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( svc ).anyTimes();

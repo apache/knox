@@ -25,6 +25,7 @@ import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteStepProcessor;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteStepStatus;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.CryptoService;
 import org.apache.knox.gateway.services.security.EncryptionResult;
@@ -52,7 +53,7 @@ public class DecryptUriProcessor
   public void initialize( UrlRewriteEnvironment environment, DecryptUriDescriptor descriptor ) throws Exception {
     clusterName = environment.getAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE );
     GatewayServices services = environment.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    cryptoService = services.getService(GatewayServices.CRYPTO_SERVICE);
+    cryptoService = services.getService(ServiceType.CRYPTO_SERVICE);
     param = descriptor.getParam();
   }
 

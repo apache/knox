@@ -30,6 +30,7 @@ import org.apache.knox.gateway.descriptor.GatewayDescriptorFactory;
 import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.metrics.MetricsService;
 
@@ -204,7 +205,7 @@ public class GatewayServlet implements Servlet, Filter {
       GatewayConfig gatewayConfig = (GatewayConfig) servletContext.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
       if (gatewayConfig.isMetricsEnabled()) {
         GatewayServices gatewayServices = (GatewayServices) servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-        MetricsService metricsService = gatewayServices.getService(GatewayServices.METRICS_SERVICE);
+        MetricsService metricsService = gatewayServices.getService(ServiceType.METRICS_SERVICE);
         if (metricsService != null) {
           GatewayFilter instrumentedFilter = metricsService.getInstrumented(filter);
           if (instrumentedFilter != null) {

@@ -46,6 +46,7 @@ import javax.ws.rs.WebApplicationException;
 
 import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditor;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
@@ -228,8 +229,8 @@ public class WebSSOResource {
       }
     }
 
-    AliasService as = services.getService(GatewayServices.ALIAS_SERVICE);
-    JWTokenAuthority ts = services.getService(GatewayServices.TOKEN_SERVICE);
+    AliasService as = services.getService(ServiceType.ALIAS_SERVICE);
+    JWTokenAuthority ts = services.getService(ServiceType.TOKEN_SERVICE);
     Principal p = request.getUserPrincipal();
 
     try {

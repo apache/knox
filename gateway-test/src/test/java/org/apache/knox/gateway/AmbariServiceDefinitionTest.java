@@ -20,7 +20,7 @@ package org.apache.knox.gateway;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
-import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.test.TestUtils;
@@ -132,7 +132,7 @@ public class AmbariServiceDefinitionTest {
     } catch ( ServiceLifecycleException e ) {
       e.printStackTrace(); // I18N not required.
     }
-    topos = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+    topos = services.getService(ServiceType.TOPOLOGY_SERVICE);
 
     gateway = GatewayServer.startGateway( config, services );
     MatcherAssert.assertThat( "Failed to start gateway.", gateway, notNullValue() );

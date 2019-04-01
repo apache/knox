@@ -19,6 +19,7 @@ package org.apache.knox.gateway.securequery;
 
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteContext;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.impl.DefaultCryptoService;
@@ -55,7 +56,7 @@ public class SecureQueryEncryptDecryptProcessorTest {
     DefaultCryptoService cryptoService = new DefaultCryptoService();
     cryptoService.setAliasService(as);
     GatewayServices gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
-    EasyMock.expect( gatewayServices.getService( GatewayServices.CRYPTO_SERVICE ) ).andReturn( cryptoService );
+    EasyMock.expect( gatewayServices.getService( ServiceType.CRYPTO_SERVICE ) ).andReturn( cryptoService );
 
     UrlRewriteEnvironment encEnvironment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
     EasyMock.expect( encEnvironment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();
@@ -80,7 +81,7 @@ public class SecureQueryEncryptDecryptProcessorTest {
     // Test decryption.  Results are left in decTemplate.
 
     gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
-    EasyMock.expect( gatewayServices.getService( GatewayServices.CRYPTO_SERVICE ) ).andReturn( cryptoService );
+    EasyMock.expect( gatewayServices.getService( ServiceType.CRYPTO_SERVICE ) ).andReturn( cryptoService );
     as = EasyMock.createNiceMock( AliasService.class );
     EasyMock.expect( as.getPasswordFromAliasForCluster("test-cluster-name", "encryptQueryString")).andReturn( secret.toCharArray() ).anyTimes();
 
@@ -122,7 +123,7 @@ public class SecureQueryEncryptDecryptProcessorTest {
     DefaultCryptoService cryptoService = new DefaultCryptoService();
     cryptoService.setAliasService(as);
     GatewayServices gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
-    EasyMock.expect( gatewayServices.getService( GatewayServices.CRYPTO_SERVICE ) ).andReturn( cryptoService );
+    EasyMock.expect( gatewayServices.getService( ServiceType.CRYPTO_SERVICE ) ).andReturn( cryptoService );
 
     UrlRewriteEnvironment encEnvironment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
     EasyMock.expect( encEnvironment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();
@@ -147,7 +148,7 @@ public class SecureQueryEncryptDecryptProcessorTest {
     // Test decryption with decode returning null
 
     gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
-    EasyMock.expect( gatewayServices.getService( GatewayServices.CRYPTO_SERVICE ) ).andReturn( cryptoService );
+    EasyMock.expect( gatewayServices.getService( ServiceType.CRYPTO_SERVICE ) ).andReturn( cryptoService );
     as = EasyMock.createNiceMock( AliasService.class );
     EasyMock.expect( as.getPasswordFromAliasForCluster("test-cluster-name", "encryptQueryString")).andReturn( secret.toCharArray() ).anyTimes();
 

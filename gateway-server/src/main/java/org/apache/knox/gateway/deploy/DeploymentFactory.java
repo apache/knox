@@ -24,6 +24,7 @@ import org.apache.knox.gateway.deploy.impl.ApplicationDeploymentContributor;
 import org.apache.knox.gateway.descriptor.GatewayDescriptor;
 import org.apache.knox.gateway.descriptor.GatewayDescriptorFactory;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
 import org.apache.knox.gateway.topology.Application;
@@ -449,19 +450,19 @@ public abstract class DeploymentFactory {
   private static void injectServices(Object contributor) {
     if (gatewayServices != null) {
       Statement stmt;
-      for(String serviceName : gatewayServices.getServiceNames()) {
+      for(ServiceType serviceType : gatewayServices.getServiceTypes()) {
 
         try {
           // TODO: this is just a temporary injection solution
           // TODO: test for the existence of the setter before attempting it
           // TODO: avoid exception throwing when there is no setter
-          stmt = new Statement(contributor, "set" + serviceName, new Object[]{gatewayServices.getService(serviceName)});
+          stmt = new Statement(contributor, "set" + serviceType.getServiceTypeName(), new Object[]{gatewayServices.getService(serviceType)});
           stmt.execute();
         } catch (NoSuchMethodException e) {
           // TODO: eliminate the possibility of this being thrown up front
         } catch (Exception e) {
           // Maybe it makes sense to throw exception
-          log.failedToInjectService( serviceName, e );
+          log.failedToInjectService( serviceType.getServiceTypeName(), e );
           throw new DeploymentException("Failed to inject service.", e);
         }
       }
@@ -504,7 +505,7 @@ public abstract class DeploymentFactory {
             log.contributeService( service.getName(), service.getRole() );
             contributor.contributeService( context, service );
             if( gatewayServices != null ) {
-              ServiceRegistry sr = gatewayServices.getService( GatewayServices.SERVICE_REGISTRY_SERVICE );
+              ServiceRegistry sr = gatewayServices.getService( ServiceType.SERVICE_REGISTRY_SERVICE );
               if( sr != null ) {
                 String regCode = sr.getRegistrationCode( topology.getName() );
                 sr.registerService( regCode, topology.getName(), service.getRole(), service.getUrls() );

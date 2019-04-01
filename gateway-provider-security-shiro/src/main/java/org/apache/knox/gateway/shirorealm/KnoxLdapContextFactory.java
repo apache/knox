@@ -27,6 +27,7 @@ import javax.naming.ldap.LdapContext;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
@@ -88,7 +89,7 @@ public class KnoxLdapContextFactory extends JndiLdapContextFactory {
       String aliasName = systemPass;
 
       GatewayServices services = GatewayServer.getGatewayServices();
-      AliasService aliasService = services.getService(GatewayServices.ALIAS_SERVICE);
+      AliasService aliasService = services.getService(ServiceType.ALIAS_SERVICE);
 
       String clusterName = getClusterName();
       //System.err.println("FACTORY systempass 30: " + systemPass);
