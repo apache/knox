@@ -77,8 +77,8 @@
   <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/static/graphlib" pattern="/static/graphlib-dot.min.js">
     <rewrite template="{$frontend[url]}/sparkhistory/static/graphlib-dot.min.js"/>
   </rule>
-  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/apps" pattern="/?{page}?{showIncomplete}">
-    <rewrite template="{$frontend[url]}/sparkhistory/?{page}?{showIncomplete}"/>
+  <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/apps" pattern="/?{showIncomplete}?{**}">
+    <rewrite template="{$frontend[url]}/sparkhistory/?{showIncomplete}?{**}"/>
   </rule>
 
   <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/headers/location">
