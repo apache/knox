@@ -27,7 +27,7 @@ import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
-import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.test.TestUtils;
@@ -136,7 +136,7 @@ public class GatewayAppFuncTest {
     } catch ( ServiceLifecycleException e ) {
       e.printStackTrace(); // I18N not required.
     }
-    topos = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+    topos = services.getService(ServiceType.TOPOLOGY_SERVICE);
 
     gateway = GatewayServer.startGateway( config, services );
     assertThat( "Failed to start gateway.", gateway, notNullValue() );

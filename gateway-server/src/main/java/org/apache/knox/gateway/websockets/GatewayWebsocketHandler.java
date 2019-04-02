@@ -20,6 +20,7 @@ package org.apache.knox.gateway.websockets;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.registry.ServiceDefEntry;
 import org.apache.knox.gateway.services.registry.ServiceDefinitionRegistry;
@@ -151,10 +152,10 @@ public class GatewayWebsocketHandler extends WebSocketHandler
   private synchronized String getMatchedBackendURL(final String path) {
 
     final ServiceRegistry serviceRegistryService = services
-        .getService(GatewayServices.SERVICE_REGISTRY_SERVICE);
+        .getService(ServiceType.SERVICE_REGISTRY_SERVICE);
 
     final ServiceDefinitionRegistry serviceDefinitionService = services
-        .getService(GatewayServices.SERVICE_DEFINITION_REGISTRY);
+        .getService(ServiceType.SERVICE_DEFINITION_REGISTRY);
 
     /* Filter out the /cluster/topology to get the context we want */
     String[] pathInfo = path.split(REGEX_SPLIT_CONTEXT);

@@ -31,24 +31,25 @@ import org.apache.knox.gateway.services.security.impl.DefaultKeystoreService;
 import org.apache.knox.gateway.services.security.impl.CLIMasterService;
 import org.apache.knox.gateway.topology.Provider;
 
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CLIGatewayServices implements GatewayServices {
-  private Map<String,Service> services = new HashMap<>();
+public class CLIGatewayServices extends AbstractGatewayServices {
+
+  public CLIGatewayServices() {
+    super("Services", "GatewayServices");
+  }
 
   @Override
   public void init(GatewayConfig config, Map<String,String> options) throws ServiceLifecycleException {
     CLIMasterService ms = new CLIMasterService();
     ms.init(config, options);
-    services.put(MASTER_SERVICE, ms);
+    addService(ServiceType.MASTER_SERVICE, ms);
 
     DefaultKeystoreService ks = new DefaultKeystoreService();
     ks.setMasterService(ms);
     ks.init(config, options);
-    services.put(KEYSTORE_SERVICE, ks);
+    addService(ServiceType.KEYSTORE_SERVICE, ks);
 
     DefaultAliasService defaultAlias = new DefaultAliasService();
     defaultAlias.setKeystoreService(ks);
@@ -65,7 +66,7 @@ public class CLIGatewayServices implements GatewayServices {
         RemoteConfigurationRegistryClientServiceFactory.newInstance(config);
     registryClientService.setAliasService(defaultAlias);
     registryClientService.init(config, options);
-    services.put(REMOTE_REGISTRY_CLIENT_SERVICE, registryClientService);
+    addService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE, registryClientService);
 
 
     /* create an instance so that it can be passed to other services */
@@ -76,69 +77,17 @@ public class CLIGatewayServices implements GatewayServices {
      * be called before alias.start();
      */
     alias.init(config, options);
-    services.put(ALIAS_SERVICE, alias);
+    addService(ServiceType.ALIAS_SERVICE, alias);
 
     DefaultCryptoService crypto = new DefaultCryptoService();
     crypto.setKeystoreService(ks);
     crypto.setAliasService(alias);
     crypto.init(config, options);
-    services.put(CRYPTO_SERVICE, crypto);
+    addService(ServiceType.CRYPTO_SERVICE, crypto);
 
     DefaultTopologyService tops = new DefaultTopologyService();
     tops.init(  config, options  );
-    services.put(TOPOLOGY_SERVICE, tops);
-  }
-
-  @Override
-  public void start() throws ServiceLifecycleException {
-    Service ms = services.get(MASTER_SERVICE);
-    ms.start();
-
-    Service ks = services.get(KEYSTORE_SERVICE);
-    ks.start();
-
-    Service alias = services.get(ALIAS_SERVICE);
-    alias.start();
-
-    Service tops = services.get(TOPOLOGY_SERVICE);
-    tops.start();
-
-    (services.get(REMOTE_REGISTRY_CLIENT_SERVICE)).start();
-  }
-
-  @Override
-  public void stop() throws ServiceLifecycleException {
-    Service ms = services.get(MASTER_SERVICE);
-    ms.stop();
-
-    Service ks = services.get(KEYSTORE_SERVICE);
-    ks.stop();
-
-    Service alias = services.get(ALIAS_SERVICE);
-    alias.stop();
-
-    Service tops = services.get(TOPOLOGY_SERVICE);
-    tops.stop();
-  }
-
-  @Override
-  public Collection<String> getServiceNames() {
-    return services.keySet();
-  }
-
-  @Override
-  public <T> T getService(String serviceName) {
-    return (T)services.get( serviceName );
-  }
-
-  @Override
-  public String getRole() {
-    return "Services";
-  }
-
-  @Override
-  public String getName() {
-    return "GatewayServices";
+    addService(ServiceType.TOPOLOGY_SERVICE, tops);
   }
 
   @Override

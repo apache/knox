@@ -26,6 +26,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.net.URL;
 
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.test.TestUtils;
@@ -69,7 +70,7 @@ public class GatewayLdapGroupFuncTest {
     TestUtils.awaitNon404HttpStatus( new URL( serviceUrl ), 10000, 100 );
 
     GatewayServices services = GatewayServer.getGatewayServices();
-    AliasService aliasService = services.getService(GatewayServices.ALIAS_SERVICE);
+    AliasService aliasService = services.getService(ServiceType.ALIAS_SERVICE);
     aliasService.addAliasForCluster(cluster, "ldcSystemPassword", "guest-password");
 
     driver.stop();

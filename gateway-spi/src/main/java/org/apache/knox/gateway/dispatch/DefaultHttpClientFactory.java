@@ -28,6 +28,7 @@ import javax.net.ssl.SSLContext;
 import javax.servlet.FilterConfig;
 
 import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -73,7 +74,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     GatewayServices services = (GatewayServices) filterConfig.getServletContext()
         .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     if (gatewayConfig != null && gatewayConfig.isMetricsEnabled()) {
-      MetricsService metricsService = services.getService(GatewayServices.METRICS_SERVICE);
+      MetricsService metricsService = services.getService(ServiceType.METRICS_SERVICE);
       builder = metricsService.getInstrumented(HttpClientBuilder.class);
     } else {
       builder = HttpClients.custom();
@@ -141,10 +142,10 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     char[] identityKeyPassphrase;
     KeyStore trustKeystore;
 
-    KeystoreService ks = services.getService(GatewayServices.KEYSTORE_SERVICE);
+    KeystoreService ks = services.getService(ServiceType.KEYSTORE_SERVICE);
     try {
       if (Boolean.parseBoolean(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL))) {
-        AliasService as = services.getService(GatewayServices.ALIAS_SERVICE);
+        AliasService as = services.getService(ServiceType.ALIAS_SERVICE);
 
         // Get the Gateway's configured identity keystore and key passphrase
         identityKeystore = ks.getKeystoreForGateway();

@@ -24,6 +24,7 @@ import org.apache.knox.gateway.i18n.GatewaySpiMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.admin.beans.BeanConverter;
 import org.apache.knox.gateway.service.admin.beans.Topology;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.topology.TopologyService;
@@ -106,7 +107,7 @@ public class TopologiesResource {
     GatewayServices services =
               (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     if (services != null) {
-      TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+      TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
 
       GatewayConfig config =
                 (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
@@ -140,7 +141,7 @@ public class TopologiesResource {
     GatewayConfig config =
         (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
 
-    TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
 
     ArrayList<SimpleTopology> st = new ArrayList<>();
     for (org.apache.knox.gateway.topology.Topology t : ts.getTopologies()) {
@@ -176,7 +177,7 @@ public class TopologiesResource {
                 (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
     t.setName(id);
-    TopologyService ts = gs.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = gs.getService(ServiceType.TOPOLOGY_SERVICE);
 
     // Check for existing topology with the same name, to see if it had been generated
     boolean existingGenerated = false;
@@ -208,7 +209,7 @@ public class TopologiesResource {
       GatewayServices services = (GatewayServices) request.getServletContext()
           .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
-      TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+      TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
 
       for (org.apache.knox.gateway.topology.Topology t : ts.getTopologies()) {
         if(t.getName().equals(id)) {
@@ -233,7 +234,7 @@ public class TopologiesResource {
             (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
     List<HrefListItem> configs = new ArrayList<>();
-    TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
     // Get all the simple descriptor file names
     for (File providerConfig : ts.getProviderConfigurations()){
       String id = FilenameUtils.getBaseName(providerConfig.getName());
@@ -253,7 +254,7 @@ public class TopologiesResource {
     GatewayServices services =
             (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
-    TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
 
     File providerConfigFile = null;
 
@@ -289,7 +290,7 @@ public class TopologiesResource {
     GatewayServices services =
             (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
-    TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
     if (ts.deleteProviderConfiguration(name, Boolean.valueOf(force))) {
       response = ok().entity("{ \"deleted\" : \"provider config " + name + "\" }").build();
     } else {
@@ -308,7 +309,7 @@ public class TopologiesResource {
       GatewayServices services =
               (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
-      TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+      TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
       if (ts.deleteDescriptor(name)) {
         response = ok().entity("{ \"deleted\" : \"descriptor " + name + "\" }").build();
       }
@@ -342,7 +343,7 @@ public class TopologiesResource {
     GatewayServices gs =
             (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
-    TopologyService ts = gs.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = gs.getService(ServiceType.TOPOLOGY_SERVICE);
 
     File existing = getExistingConfigFile(ts.getProviderConfigurations(), name);
     boolean isUpdate = (existing != null);
@@ -389,7 +390,7 @@ public class TopologiesResource {
     GatewayServices gs =
             (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
-    TopologyService ts = gs.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = gs.getService(ServiceType.TOPOLOGY_SERVICE);
 
     File existing = getExistingConfigFile(ts.getDescriptors(), name);
     boolean isUpdate = (existing != null);
@@ -426,7 +427,7 @@ public class TopologiesResource {
             (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
     List<HrefListItem> descriptors = new ArrayList<>();
-    TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
     for (File descriptor : ts.getDescriptors()){
       String id = FilenameUtils.getBaseName(descriptor.getName());
       descriptors.add(new HrefListItem(buildHref(id, request), descriptor.getName()));
@@ -446,7 +447,7 @@ public class TopologiesResource {
     GatewayServices services =
             (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
-    TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
 
     File descriptorFile = null;
 

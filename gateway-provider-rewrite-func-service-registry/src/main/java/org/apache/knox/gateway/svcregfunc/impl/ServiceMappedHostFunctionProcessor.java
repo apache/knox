@@ -20,7 +20,7 @@ package org.apache.knox.gateway.svcregfunc.impl;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
-import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.hostmap.HostMapper;
 import org.apache.knox.gateway.services.hostmap.HostMapperService;
 import org.apache.knox.gateway.svcregfunc.api.ServiceMappedHostFunctionDescriptor;
@@ -45,7 +45,7 @@ public class ServiceMappedHostFunctionProcessor
   @Override
   public void initialize( UrlRewriteEnvironment environment, ServiceMappedHostFunctionDescriptor descriptor ) throws Exception {
     super.initialize( environment, descriptor );
-    HostMapperService hostmapService = services().getService( GatewayServices.HOST_MAPPING_SERVICE );
+    HostMapperService hostmapService = services().getService( ServiceType.HOST_MAPPING_SERVICE );
     if( hostmapService != null ) {
       hostmap = hostmapService.getHostMapper( cluster() );
     }

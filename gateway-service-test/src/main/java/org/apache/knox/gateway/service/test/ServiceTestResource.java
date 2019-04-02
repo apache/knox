@@ -25,6 +25,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Service;
@@ -176,7 +177,7 @@ public class ServiceTestResource {
         .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
 
-    TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
 
     for (Topology t : ts.getTopologies()) {
       if(t.getName().equals(id)) {
@@ -196,7 +197,7 @@ public class ServiceTestResource {
         .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     List<String> fullURLs = new ArrayList<>();
     if(services != null) {
-      TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+      TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
       Map<String, List<String>> urls = ts.getServiceTestURLs(topology, conf);
       List<String> urlPaths = urls.get(role);
 

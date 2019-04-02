@@ -20,6 +20,7 @@ import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
@@ -165,7 +166,7 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
                     Object obj = m.invoke(null);
                     if (GatewayServices.class.isAssignableFrom(obj.getClass())) {
                         ClusterConfigurationMonitorService clusterMonitorService =
-                              ((GatewayServices) obj).getService(GatewayServices.CLUSTER_CONFIGURATION_MONITOR_SERVICE);
+                              ((GatewayServices) obj).getService(ServiceType.CLUSTER_CONFIGURATION_MONITOR_SERVICE);
                         ClusterConfigurationMonitor monitor =
                                                  clusterMonitorService.getMonitor(AmbariConfigurationMonitor.getType());
                         if (monitor != null) {

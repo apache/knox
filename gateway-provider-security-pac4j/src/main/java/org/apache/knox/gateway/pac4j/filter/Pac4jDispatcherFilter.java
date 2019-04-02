@@ -21,6 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.pac4j.Pac4jMessages;
 import org.apache.knox.gateway.pac4j.session.KnoxSessionStore;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
@@ -109,10 +110,10 @@ public class Pac4jDispatcherFilter implements Filter {
       GatewayServices services = (GatewayServices) context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
       clusterName = (String) context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE);
       if (services != null) {
-        keystoreService = services.getService(GatewayServices.KEYSTORE_SERVICE);
-        cryptoService = services.getService(GatewayServices.CRYPTO_SERVICE);
-        aliasService = services.getService(GatewayServices.ALIAS_SERVICE);
-        masterService = services.getService(GatewayServices.MASTER_SERVICE);
+        keystoreService = services.getService(ServiceType.KEYSTORE_SERVICE);
+        cryptoService = services.getService(ServiceType.CRYPTO_SERVICE);
+        aliasService = services.getService(ServiceType.ALIAS_SERVICE);
+        masterService = services.getService(ServiceType.MASTER_SERVICE);
       }
     }
     // crypto service, alias service and cluster name are mandatory

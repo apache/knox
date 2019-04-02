@@ -25,6 +25,7 @@ import org.apache.knox.gateway.descriptor.GatewayDescriptor;
 import org.apache.knox.gateway.descriptor.ResourceDescriptor;
 import org.apache.knox.gateway.descriptor.impl.GatewayDescriptorImpl;
 import org.apache.knox.gateway.hadoopauth.deploy.HadoopAuthDeploymentContributor;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.impl.DefaultCryptoService;
@@ -104,7 +105,7 @@ public class HadoopAuthDeploymentContributorTest {
     cryptoService.setAliasService( as );
 
     GatewayServices gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
-    EasyMock.expect( gatewayServices.getService( GatewayServices.CRYPTO_SERVICE ) ).andReturn( cryptoService ).anyTimes();
+    EasyMock.expect( gatewayServices.getService( ServiceType.CRYPTO_SERVICE ) ).andReturn( cryptoService ).anyTimes();
 
     HadoopAuthDeploymentContributor contributor = new HadoopAuthDeploymentContributor();
     contributor.setAliasService(as);

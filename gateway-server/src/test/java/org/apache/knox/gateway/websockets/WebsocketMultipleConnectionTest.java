@@ -31,6 +31,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.deploy.DeploymentFactory;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.topology.TopologyService;
@@ -379,7 +380,7 @@ public class WebsocketMultipleConnectionTest {
 
     DeploymentFactory.setGatewayServices(services);
     final TopologyService monitor = services
-        .getService(GatewayServices.TOPOLOGY_SERVICE);
+        .getService(ServiceType.TOPOLOGY_SERVICE);
     monitor.addTopologyChangeListener(topoListener);
     monitor.reloadTopologies();
   }

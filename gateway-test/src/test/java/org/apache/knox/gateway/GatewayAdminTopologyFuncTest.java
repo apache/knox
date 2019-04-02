@@ -38,6 +38,7 @@ import com.mycila.xmltool.XMLTag;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.topology.TopologyService;
@@ -607,7 +608,7 @@ public class GatewayAdminTopologyFuncTest {
 
     GatewayServices srvs = GatewayServer.getGatewayServices();
 
-    TopologyService ts = srvs.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = srvs.getService(ServiceType.TOPOLOGY_SERVICE);
     try {
       ts.stopMonitor();
 
@@ -660,7 +661,7 @@ public class GatewayAdminTopologyFuncTest {
 
     GatewayServices gs = GatewayServer.getGatewayServices();
 
-    TopologyService ts = gs.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = gs.getService(ServiceType.TOPOLOGY_SERVICE);
 
     ts.deployTopology(test);
 

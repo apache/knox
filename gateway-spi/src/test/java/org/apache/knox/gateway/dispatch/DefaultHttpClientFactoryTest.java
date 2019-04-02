@@ -14,8 +14,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- *
  */
 
 package org.apache.knox.gateway.dispatch;
@@ -31,6 +29,7 @@ import static org.junit.Assert.assertNull;
 
 import org.apache.http.client.HttpClient;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
@@ -62,7 +61,7 @@ public class DefaultHttpClientFactoryTest {
     expect(gatewayConfig.getHttpClientSocketTimeout()).andReturn(20000).once();
 
     GatewayServices gatewayServices = createMock(GatewayServices.class);
-    expect(gatewayServices.getService(GatewayServices.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
+    expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
 
     ServletContext servletContext = createMock(ServletContext.class);
     expect(servletContext.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).atLeastOnce();
@@ -90,7 +89,7 @@ public class DefaultHttpClientFactoryTest {
     expect(keystoreService.getTruststoreForHttpClient()).andReturn(null).once();
 
     GatewayServices gatewayServices = createMock(GatewayServices.class);
-    expect(gatewayServices.getService(GatewayServices.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
+    expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
 
     FilterConfig filterConfig = createMock(FilterConfig.class);
     expect(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL)).andReturn("false").once();
@@ -116,8 +115,8 @@ public class DefaultHttpClientFactoryTest {
     expect(aliasService.getGatewayIdentityPassphrase()).andReturn("horton".toCharArray()).once();
 
     GatewayServices gatewayServices = createMock(GatewayServices.class);
-    expect(gatewayServices.getService(GatewayServices.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
-    expect(gatewayServices.getService(GatewayServices.ALIAS_SERVICE)).andReturn(aliasService).once();
+    expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
+    expect(gatewayServices.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).once();
 
     FilterConfig filterConfig = createMock(FilterConfig.class);
     expect(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL)).andReturn("true").once();
@@ -144,8 +143,8 @@ public class DefaultHttpClientFactoryTest {
     expect(aliasService.getGatewayIdentityPassphrase()).andReturn("horton".toCharArray()).once();
 
     GatewayServices gatewayServices = createMock(GatewayServices.class);
-    expect(gatewayServices.getService(GatewayServices.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
-    expect(gatewayServices.getService(GatewayServices.ALIAS_SERVICE)).andReturn(aliasService).once();
+    expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
+    expect(gatewayServices.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).once();
 
     FilterConfig filterConfig = createMock(FilterConfig.class);
     expect(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL)).andReturn("true").once();
@@ -165,7 +164,7 @@ public class DefaultHttpClientFactoryTest {
     expect(keystoreService.getTruststoreForHttpClient()).andReturn(null).once();
 
     GatewayServices gatewayServices = createMock(GatewayServices.class);
-    expect(gatewayServices.getService(GatewayServices.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
+    expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
 
     FilterConfig filterConfig = createMock(FilterConfig.class);
     expect(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL)).andReturn("false").once();
@@ -187,7 +186,7 @@ public class DefaultHttpClientFactoryTest {
     expect(keystoreService.getTruststoreForHttpClient()).andReturn(trustStore).once();
 
     GatewayServices gatewayServices = createMock(GatewayServices.class);
-    expect(gatewayServices.getService(GatewayServices.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
+    expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
 
     FilterConfig filterConfig = createMock(FilterConfig.class);
     expect(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL)).andReturn("false").once();

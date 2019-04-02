@@ -39,6 +39,7 @@ import javax.ws.rs.core.Response;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
@@ -173,13 +174,13 @@ public class TokenResource {
     GatewayServices services = (GatewayServices) request.getServletContext()
         .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
-    JWTokenAuthority ts = services.getService(GatewayServices.TOKEN_SERVICE);
+    JWTokenAuthority ts = services.getService(ServiceType.TOKEN_SERVICE);
     Principal p = request.getUserPrincipal();
     long expires = getExpiry();
 
     if (endpointPublicCert == null) {
       // acquire PEM for gateway identity of this gateway instance
-      KeystoreService ks = services.getService(GatewayServices.KEYSTORE_SERVICE);
+      KeystoreService ks = services.getService(ServiceType.KEYSTORE_SERVICE);
       if (ks != null) {
         try {
           Certificate cert = ks.getCertificateForGateway();

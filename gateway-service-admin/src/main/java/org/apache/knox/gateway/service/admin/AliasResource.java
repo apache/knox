@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.service.admin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
@@ -182,7 +183,7 @@ public class AliasResource {
         .getServletContext()
         .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
-    return services.getService(GatewayServices.ALIAS_SERVICE);
+    return services.getService(ServiceType.ALIAS_SERVICE);
   }
 
   public static class TopologyAliases {

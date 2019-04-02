@@ -20,6 +20,7 @@ package org.apache.knox.gateway.provider.federation.jwt.filter;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
@@ -52,7 +53,7 @@ public class AccessTokenFederationFilter implements Filter {
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
     GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    authority = services.getService(GatewayServices.TOKEN_SERVICE);
+    authority = services.getService(ServiceType.TOKEN_SERVICE);
   }
 
   @Override
