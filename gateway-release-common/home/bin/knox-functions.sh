@@ -163,7 +163,7 @@ function getPID {
 
 function appStart {
    if [ "$APP_RUNNING_IN_FOREGROUND" == true ]; then
-      $JAVA $APP_JAVA_OPTS -jar $APP_JAR $@
+      exec $JAVA $APP_JAVA_OPTS -jar $APP_JAR $@
    else
       getPID
       if [ $? -eq 0 ]; then
