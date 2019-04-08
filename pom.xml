@@ -170,7 +170,7 @@
         <easymock.version>4.0.2</easymock.version>
         <eclipselink.version>2.7.4</eclipselink.version>
         <ehcache.version>2.6.11</ehcache.version>
-        <findsecbugs-plugin.version>1.8.0</findsecbugs-plugin.version>
+        <findsecbugs-plugin.version>1.9.0</findsecbugs-plugin.version>
         <forbiddenapis.version>2.6</forbiddenapis.version>
         <groovy.version>2.5.6</groovy.version>
         <guava.version>27.1-jre</guava.version>
