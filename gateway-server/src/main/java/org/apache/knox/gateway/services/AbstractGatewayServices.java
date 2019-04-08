@@ -32,14 +32,13 @@ import java.util.Set;
  * AbstractGatewayServices is an abstract implementation of {@link GatewayServices} that manages the
  * contained/registered services. See {@link ServiceType} for the different types of services that may
  * be registered.
- * <p>
+ *
  * This implementation ensures the proper ordering of registered services when starting and stopping
  * them.
- * <p>
+ *
  * {@link GatewayServices} implementations should extend this class and register relevant services
  * during the initialization process ({@link GatewayServices#init(GatewayConfig, Map)} using
  * {@link #addService(ServiceType, Service)}.
- * <p>
  */
 public abstract class AbstractGatewayServices implements GatewayServices {
 
@@ -97,7 +96,7 @@ public abstract class AbstractGatewayServices implements GatewayServices {
 
   /**
    * Add/register a service with this container.
-   * <p>
+   *
    * An implementation for a service type may be added/registered only once.  Adding a service
    * implementation for a service type that was previously added overwrites the previously added
    * implementation.
