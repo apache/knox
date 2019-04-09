@@ -29,6 +29,9 @@ public interface KnoxShellMessages {
   @Message( level = MessageLevel.WARN, text = "Unable to create provided PEM encoded trusted cert - falling through for other truststores: {0}" )
   void unableToLoadProvidedPEMEncodedTrustedCert(@StackTrace( level = MessageLevel.DEBUG ) IOException e);
 
+  @Message( level = MessageLevel.DEBUG, text = "No available Subject; Using JAAS configuration login" )
+  void noSubjectAvailable();
+
   @Message( level = MessageLevel.DEBUG, text = "Using JAAS configuration file implementation: {0}" )
   void usingJAASConfigurationFileImplementation(String implName);
 

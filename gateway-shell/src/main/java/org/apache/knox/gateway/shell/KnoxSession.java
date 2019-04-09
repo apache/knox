@@ -102,6 +102,23 @@ public class KnoxSession implements Closeable {
   public static final String BEGIN_CERTIFICATE = "-----BEGIN CERTIFICATE-----\n";
 
   private static final KnoxShellMessages LOG = MessagesFactory.get(KnoxShellMessages.class);
+
+  private static final CredentialsProvider EMPTY_CREDENTIALS_PROVIDER = new BasicCredentialsProvider();
+  static {
+    EMPTY_CREDENTIALS_PROVIDER.setCredentials(AuthScope.ANY,
+                                                new Credentials() {
+                                                  @Override
+                                                  public Principal getUserPrincipal () {
+                                                    return null;
+                                                  }
+
+                                                  @Override
+                                                  public String getPassword () {
+                                                    return null;
+                                                  }
+                                                });
+  }
+
   private boolean isKerberos;
 
   private URL jaasConfigURL;
@@ -312,46 +329,32 @@ public class KnoxSession implements Closeable {
 
       System.setProperty("javax.security.auth.useSubjectCredsOnly", "false");
 
-      final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+      final Registry<AuthSchemeProvider> authSchemeRegistry =
+          RegistryBuilder.<AuthSchemeProvider>create().register(AuthSchemes.SPNEGO, new SPNegoSchemeFactory(true)).build();
 
-      credentialsProvider.setCredentials(AuthScope.ANY, new Credentials() {
-        @Override
-        public Principal getUserPrincipal() {
-          return null;
-        }
-
-        @Override
-        public String getPassword() {
-          return null;
-        }
-      });
-
-      final Registry<AuthSchemeProvider> authSchemeRegistry = RegistryBuilder.<AuthSchemeProvider>create()
-          .register(AuthSchemes.SPNEGO, new SPNegoSchemeFactory(true)).build();
-
-      return HttpClients.custom().setConnectionManager(connectionManager)
-          .setDefaultAuthSchemeRegistry(authSchemeRegistry)
-          .setDefaultCredentialsProvider(credentialsProvider).build();
+      return HttpClients.custom()
+                        .setConnectionManager(connectionManager)
+                        .setDefaultAuthSchemeRegistry(authSchemeRegistry)
+                        .setDefaultCredentialsProvider(EMPTY_CREDENTIALS_PROVIDER)
+                        .build();
     } else {
       AuthCache authCache = new BasicAuthCache();
       BasicScheme authScheme = new BasicScheme();
       authCache.put(host, authScheme);
       context = new BasicHttpContext();
-      context.setAttribute(org.apache.http.client.protocol.HttpClientContext.AUTH_CACHE,
-          authCache);
+      context.setAttribute(org.apache.http.client.protocol.HttpClientContext.AUTH_CACHE, authCache);
 
       CredentialsProvider credentialsProvider = null;
       if (clientContext.username() != null && clientContext.password() != null) {
         credentialsProvider = new BasicCredentialsProvider();
-        credentialsProvider
-            .setCredentials(new AuthScope(host.getHostName(), host.getPort()),
-                new UsernamePasswordCredentials(clientContext.username(),
-                    clientContext.password()));
+        credentialsProvider.setCredentials(new AuthScope(host.getHostName(), host.getPort()),
+                                           new UsernamePasswordCredentials(clientContext.username(),
+                                           clientContext.password()));
       }
       return HttpClients.custom()
-          .setConnectionManager(connectionManager)
-          .setDefaultCredentialsProvider(credentialsProvider)
-          .build();
+                        .setConnectionManager(connectionManager)
+                        .setDefaultCredentialsProvider(credentialsProvider)
+                        .build();
     }
 
   }
@@ -457,22 +460,26 @@ public class KnoxSession implements Closeable {
   public CloseableHttpResponse executeNow(HttpRequest request ) throws IOException {
     /* check for kerberos */
     if (isKerberos) {
-      LoginContext lc;
+      Subject subject = Subject.getSubject(AccessController.getContext());
       try {
-        Configuration jaasConf;
-        try {
-          jaasConf = new JAASClientConfig(jaasConfigURL);
-        } catch (Exception e) {
-          LOG.failedToLoadJAASConfiguration(jaasConfigURL.toExternalForm());
-          throw new KnoxShellException(e.toString(), e);
-        }
+        if (subject == null) {
+          LOG.noSubjectAvailable();
+          Configuration jaasConf;
+          try {
+            jaasConf = new JAASClientConfig(jaasConfigURL);
+          } catch (Exception e) {
+            LOG.failedToLoadJAASConfiguration(jaasConfigURL.toExternalForm());
+            throw new KnoxShellException(e.toString(), e);
+          }
 
-        lc = new LoginContext(JGSS_LOGIN_MOUDLE,
-                              Subject.getSubject(AccessController.getContext()),
-                              new TextCallbackHandler(),
-                              jaasConf);
-        lc.login();
-        return Subject.doAs(lc.getSubject(),
+          LoginContext lc = new LoginContext(JGSS_LOGIN_MOUDLE,
+                                             null,
+                                             new TextCallbackHandler(),
+                                             jaasConf);
+          lc.login();
+          subject = lc.getSubject();
+        }
+        return Subject.doAs(subject,
             (PrivilegedAction<CloseableHttpResponse>) () -> {
               CloseableHttpResponse response;
               try {

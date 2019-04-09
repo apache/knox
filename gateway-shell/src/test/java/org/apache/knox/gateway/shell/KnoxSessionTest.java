@@ -23,8 +23,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.junit.Test;
 
+import javax.security.auth.Subject;
+import java.io.IOException;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Handler;
@@ -98,10 +102,10 @@ public class KnoxSessionTest {
 
     try {
       ClientContext context = ClientContext.with("https://localhost:8443/gateway/dt")
-          .kerberos()
-          .enable(true)
-          .jaasConf(testJaasConf)
-          .end();
+                                           .kerberos()
+                                           .enable(true)
+                                           .jaasConf(testJaasConf)
+                                           .end();
       assertNotNull(context);
       assertEquals(context.kerberos().jaasConf(), testJaasConf);
 
@@ -116,6 +120,55 @@ public class KnoxSessionTest {
       assertEquals("Using default JAAS configuration", logCapture.logMessages.get(1));
       assertTrue(logCapture.logMessages.get(2).startsWith("JAAS configuration: "));
       assertTrue(logCapture.logMessages.get(2).endsWith("jaas.conf"));
+      assertEquals("No available Subject; Using JAAS configuration login", logCapture.logMessages.get(3));
+      assertEquals("Using JAAS configuration file implementation: com.sun.security.auth.login.ConfigFile",
+                   logCapture.logMessages.get(4));
+    } finally {
+      logger.removeHandler(logCapture);
+      logger.setLevel(originalLevel);
+    }
+  }
+
+  /**
+   * Validate that JAAS configuration is not applied when a kerberos Subject is available.
+   * (KNOX-1850)
+   */
+  @Test
+  public void testUseCurrentSubject() {
+    final Logger logger = Logger.getLogger("org.apache.knox.gateway.shell");
+    final Level originalLevel = logger.getLevel();
+    logger.setLevel(Level.FINEST);
+    LogHandler logCapture = new LogHandler();
+    logger.addHandler(logCapture);
+
+    try {
+      ClientContext context = ClientContext.with("https://localhost:8443/gateway/dt")
+                                           .kerberos()
+                                           .enable(true)
+                                           .end();
+      assertNotNull(context);
+
+      Subject testSubject = new Subject();
+
+      try {
+        KnoxSession session = KnoxSession.login(context);
+        Subject.doAs(testSubject, (PrivilegedAction<CloseableHttpResponse>) () -> {
+          try {
+            return session.executeNow(null);
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+          return null;
+        });
+      } catch (Exception e) {
+        // Expected because the HTTP request is null, which is irrelevant for this test
+      }
+
+      if(!logCapture.logMessages.isEmpty()) {
+        for (String logMessage : logCapture.logMessages) {
+          assertFalse(logMessage.startsWith("No available Subject"));
+        }
+      }
     } finally {
       logger.removeHandler(logCapture);
       logger.setLevel(originalLevel);
