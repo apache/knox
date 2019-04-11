@@ -17,10 +17,18 @@
  */
 package org.apache.knox.gateway.services.security.impl;
 
+import org.apache.knox.gateway.GatewayServer;
+import org.apache.knox.gateway.config.ConfigurationException;
 import org.apache.knox.gateway.security.RemoteAliasServiceProvider;
-import org.apache.knox.gateway.service.config.remote.zk.ZooKeeperClientServiceProvider;
+import org.apache.knox.gateway.service.config.remote.zk.ZooKeeperClientService;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.MasterService;
+import org.apache.knox.gateway.util.KnoxCLI;
+
+import java.util.Locale;
 
 public class ZookeeperRemoteAliasServiceProvider implements RemoteAliasServiceProvider {
   @Override
@@ -30,7 +38,21 @@ public class ZookeeperRemoteAliasServiceProvider implements RemoteAliasServicePr
 
   @Override
   public AliasService newInstance(AliasService localAliasService, MasterService ms) {
-    return new ZookeeperRemoteAliasService(localAliasService, ms,
-        new ZooKeeperClientServiceProvider().newInstance());
+
+    final GatewayServices services = GatewayServer.getGatewayServices() != null ? GatewayServer.getGatewayServices() : KnoxCLI.getGatewayServices();
+
+    if(services != null) {
+      final RemoteConfigurationRegistryClientService registryClientService = services
+          .getService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE);
+
+      /* Check to see if we already have ZooKeeperClientService instance, if so use it */
+      if (registryClientService instanceof ZooKeeperClientService) {
+        return new ZookeeperRemoteAliasService(localAliasService, ms,
+            registryClientService);
+
+      }
+    }
+
+    throw new ConfigurationException(String.format(Locale.ROOT,"%s service not configured", ZooKeeperClientService.TYPE));
   }
 }
