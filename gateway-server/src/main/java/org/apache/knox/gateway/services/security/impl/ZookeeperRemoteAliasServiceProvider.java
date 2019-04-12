@@ -45,12 +45,7 @@ public class ZookeeperRemoteAliasServiceProvider implements RemoteAliasServicePr
       final RemoteConfigurationRegistryClientService registryClientService = services
           .getService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE);
 
-      /* Check to see if we already have ZooKeeperClientService instance, if so use it */
-      if (registryClientService instanceof ZooKeeperClientService) {
-        return new ZookeeperRemoteAliasService(localAliasService, ms,
-            registryClientService);
-
-      }
+      return new ZookeeperRemoteAliasService(localAliasService, ms, registryClientService);
     }
 
     throw new ConfigurationException(String.format(Locale.ROOT,"%s service not configured", ZooKeeperClientService.TYPE));
