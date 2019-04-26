@@ -24,8 +24,8 @@
     <rewrite template="{$serviceUrl[ZEPPELINUI]}/"/>
   </rule>
 
-  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/rootAppScript" pattern="*://*:*/**/zeppelin/{path=app**}">
-    <rewrite template="{$serviceUrl[ZEPPELINUI]}/{path=app**}"/>
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/rootAppScript" pattern="*://*:*/**/zeppelin/{path=**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/{path=**}"/>
   </rule>
 
 
