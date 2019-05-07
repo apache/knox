@@ -90,5 +90,5 @@
     </route>
 
   </routes>
-  <dispatch classname="org.apache.knox.gateway.dispatch.PassAllHeadersDispatch" ha-classname="org.apache.knox.gateway.rm.dispatch.RMUI2HaDispatch"/>
+  <dispatch classname="org.apache.knox.gateway.dispatch.DefaultDispatch" ha-classname="org.apache.knox.gateway.rm.dispatch.RMUI2HaDispatch"/>
 </service>
