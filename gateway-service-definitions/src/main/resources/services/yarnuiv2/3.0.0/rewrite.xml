@@ -199,6 +199,26 @@
       <rewrite template="{$frontend[url]}/yarnuiv2/cluster/apps/{**}"/>
     </match>
   </rule>
+  
+  <!-- Yarn application containerlog outbound routing -->
+  <!--
+         This is the reference to the log button on application page
+   Rule changes
+   href='//${yarn.nodemanager}:{yarn.nodemanager.port}/node/containerlogs/container_xxx/user' into'
+   https://knox_host:knox_port/gateway/default/yarn/nodemanager/node/containerlogs/container_XXX/user?host=${yarn.nodemanager.host}&port=${yarn.nodemanager.port}
+
+   This is match by inbound "YARNUIV2/yarnuiv2/inbound/jobhistory/logs" rewrite which is a client content rewrite
+   by adding META refresh. So we need to rewrite META refresh to jobstory.
+  -->
+  <rule dir="OUT" name="YARNUIV2/yarnuiv2/outbound/node/containerlogs">
+    <match pattern="{scheme}://{host}:{port}/node/containerlogs/{**}"/>
+      <rewrite template="{$frontend[url]}/yarnuiv2/nodemanager/node/containerlogs/{**}?{scheme}?host={$hostmap(host)}?{port}"/>
+  </rule>
+
+  <rule dir="OUT" name="YARNUIV2/yarnuiv2/outbound/apps/history1">
+      <rewrite template="{$frontend[url]}/yarnuiv2/proxy/{**}?{**}"/>
+  </rule>  
+  
    
  </rules>
   
