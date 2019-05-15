@@ -17,6 +17,12 @@
  */
 package org.apache.knox.gateway.hadoopauth.filter;
 
+import org.apache.knox.gateway.GatewayServer;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AliasServiceException;
+
 import java.util.Enumeration;
 import java.util.Properties;
 
@@ -47,12 +53,36 @@ public class HadoopAuthFilter extends
 
   @Override
   protected Properties getConfiguration(String configPrefix, FilterConfig filterConfig) throws ServletException {
+    GatewayServices services = GatewayServer.getGatewayServices();
+    AliasService aliasService = services.getService(ServiceType.ALIAS_SERVICE);
+
+    return getConfiguration(aliasService, configPrefix, filterConfig);
+  }
+
+  // Visible for testing
+  Properties getConfiguration(AliasService aliasService, String configPrefix,
+                                        FilterConfig filterConfig) throws ServletException {
+
+    String clusterName = filterConfig.getInitParameter("clusterName");
+
     Properties props = new Properties();
     Enumeration<String> names = filterConfig.getInitParameterNames();
     while (names.hasMoreElements()) {
       String name = names.nextElement();
       if (name.startsWith(configPrefix)) {
         String value = filterConfig.getInitParameter(name);
+
+        // Handle the case value is an alias
+        if (value.startsWith("${ALIAS=") && value.endsWith("}")) {
+          String alias = value.substring("${ALIAS=".length(), value.length() - 1);
+          try {
+            value = String.valueOf(
+                aliasService.getPasswordFromAliasForCluster(clusterName, alias));
+          } catch (AliasServiceException e) {
+            throw new ServletException("Unable to retrieve alias for config: " + name, e);
+          }
+        }
+
         props.put(name.substring(configPrefix.length()), value);
       }
     }
