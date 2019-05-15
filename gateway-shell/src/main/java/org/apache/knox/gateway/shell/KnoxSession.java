@@ -327,7 +327,8 @@ public class KnoxSession implements Closeable {
         System.setProperty("sun.security.jgss.debug", "true");
       }
 
-      System.setProperty("javax.security.auth.useSubjectCredsOnly", "false");
+      System.setProperty("javax.security.auth.useSubjectCredsOnly",
+                         String.valueOf(clientContext.useSubjectCredsOnly()));
 
       final Registry<AuthSchemeProvider> authSchemeRegistry =
           RegistryBuilder.<AuthSchemeProvider>create().register(AuthSchemes.SPNEGO, new SPNegoSchemeFactory(true)).build();
