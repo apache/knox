@@ -746,4 +746,17 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public boolean isTopologyValidationEnabled() {
     return false;
   }
+
+  /**
+   * Returns a list of services that need service name appended to
+   * X-Forward-Context header as a result of which the new header would look
+   * /{gateway}/{sandbox}/{serviceName}
+   *
+   * @return
+   * @since 1.3.0
+   */
+  @Override
+  public List<String> getXForwardContextAppendServices() {
+    return null;
+  }
 }

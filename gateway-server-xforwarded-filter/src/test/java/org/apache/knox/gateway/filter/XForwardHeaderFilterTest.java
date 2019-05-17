@@ -76,6 +76,63 @@ public class XForwardHeaderFilterTest {
     }
   }
 
+  /**
+   * Dummy XForwardedHeaderFilter that is used to call
+   * XForwardedHeaderRequestWrapper letting it know
+   * to append service name.
+   * @since 1.3.0
+   */
+  public static class DummyXForwardedHeaderFilter extends XForwardedHeaderFilter {
+
+    boolean isAppendServiceName;
+    String serviceContext;
+
+    DummyXForwardedHeaderFilter(final boolean isAppendServiceName, final String serviceContext) {
+      super();
+      this.isAppendServiceName = isAppendServiceName;
+      this.serviceContext = serviceContext;
+    }
+
+    @Override
+    protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
+      chain.doFilter( new XForwardedHeaderRequestWrapper( request ,  this.isAppendServiceName, this.serviceContext), response );
+    }
+  }
+
+  /**
+   * Dummy class that tests for proper X-Forwarded-Context assertion.
+   * @since 1.3.0
+   */
+  public static class AssertProxiedXForwardedContextHeaders extends TestFilterAdapter {
+
+    boolean appendServiceName;
+    String serviceContext;
+
+    AssertProxiedXForwardedContextHeaders(boolean appendServiceName, String serviceContext) {
+      super();
+      this.appendServiceName = appendServiceName;
+      this.serviceContext = serviceContext;
+    }
+
+    @Override
+    public void doFilter( HttpServletRequest request, HttpServletResponse response, FilterChain chain ) throws IOException, ServletException {
+      assertThat( request.getHeader( "X-Forwarded-For" ), is( "127.0.0.0,127.0.0.1" ) );
+      assertThat( request.getHeader( "X-Forwarded-Proto" ), is( "https" ) );
+      assertThat( request.getHeader( "X-Forwarded-Port" ), is( "9999" ) );
+      assertThat( request.getHeader( "X-Forwarded-Host" ), is( "remotehost:9999" ) );
+      assertThat( request.getHeader( "X-Forwarded-Server" ), is( "localhost" ) );
+      if(serviceContext!=null) {
+        assertThat( request.getHeader( "X-Forwarded-Context" ), is( "/gateway/sandbox/"+serviceContext ) );
+      }
+      else if(appendServiceName) {
+        assertThat( request.getHeader( "X-Forwarded-Context" ), is( "/gateway/sandbox/webhdfs" ) );
+      } else {
+        assertThat( request.getHeader( "X-Forwarded-Context" ), is( "/gateway/sandbox" ) );
+      }
+
+    }
+  }
+
   @Test
   public void testProxiedXForwardHeaders() throws ServletException, IOException {
     HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
@@ -105,4 +162,117 @@ public class XForwardHeaderFilterTest {
     chain.push( filter );
     chain.doFilter( request, response );
   }
+
+  /**
+   * Test the case where service name is appended to X-Forwarded-Context
+   * along with request context.
+   * @throws ServletException
+   * @throws IOException
+   * @since 1.3.0
+   */
+  @Test
+  public void testProxiedXForwardContextHeaders() throws ServletException, IOException {
+    HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+
+    EasyMock.expect( request.getHeader( "X-Forwarded-For" ) ).andReturn( "127.0.0.0" ).anyTimes();
+    EasyMock.expect( request.getHeader( "X-Forwarded-Proto" ) ).andReturn( "https" ).anyTimes();
+    EasyMock.expect( request.getHeader( "X-Forwarded-Port" ) ).andReturn( "9999" ).anyTimes();
+    EasyMock.expect( request.getHeader( "X-Forwarded-Host" ) ).andReturn( "remotehost:9999" ).anyTimes();
+    EasyMock.expect( request.getHeader( "X-Forwarded-Server" ) ).andReturn( "remotehost" ).anyTimes();
+
+    EasyMock.expect( request.getRemoteAddr() ).andReturn( "127.0.0.1" ).anyTimes();
+    EasyMock.expect( request.isSecure() ).andReturn( false ).anyTimes();
+    EasyMock.expect( request.getLocalPort() ).andReturn( 8888 ).anyTimes();
+    EasyMock.expect( request.getHeader( "Host" ) ).andReturn( "localhost:8888" ).anyTimes();
+    EasyMock.expect( request.getServerName() ).andReturn( "localhost" ).anyTimes();
+    EasyMock.expect( request.getContextPath() ).andReturn( "/gateway/sandbox" ).anyTimes();
+    EasyMock.expect( request.getRequestURI() ).andReturn( "/gateway/sandbox/webhdfs/key?value" ).anyTimes();
+
+    HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
+    EasyMock.replay( request, response );
+
+    TestFilterChain chain = new TestFilterChain();
+
+    XForwardedHeaderFilter filter = new DummyXForwardedHeaderFilter(true, null);
+
+    chain.push( new AssertProxiedXForwardedContextHeaders(true, null) );
+    chain.push( filter );
+    chain.doFilter( request, response );
+  }
+
+  /**
+   * Test the case where service name is appended to X-Forwarded-Context
+   * along with request context.
+   * @throws ServletException
+   * @throws IOException
+   * @since 1.3.0
+   */
+  @Test
+  public void testProxiedXForwardContextHeadersServiceParam() throws ServletException, IOException {
+    HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+
+    EasyMock.expect( request.getHeader( "X-Forwarded-For" ) ).andReturn( "127.0.0.0" ).anyTimes();
+    EasyMock.expect( request.getHeader( "X-Forwarded-Proto" ) ).andReturn( "https" ).anyTimes();
+    EasyMock.expect( request.getHeader( "X-Forwarded-Port" ) ).andReturn( "9999" ).anyTimes();
+    EasyMock.expect( request.getHeader( "X-Forwarded-Host" ) ).andReturn( "remotehost:9999" ).anyTimes();
+    EasyMock.expect( request.getHeader( "X-Forwarded-Server" ) ).andReturn( "remotehost" ).anyTimes();
+
+    EasyMock.expect( request.getRemoteAddr() ).andReturn( "127.0.0.1" ).anyTimes();
+    EasyMock.expect( request.isSecure() ).andReturn( false ).anyTimes();
+    EasyMock.expect( request.getLocalPort() ).andReturn( 8888 ).anyTimes();
+    EasyMock.expect( request.getHeader( "Host" ) ).andReturn( "localhost:8888" ).anyTimes();
+    EasyMock.expect( request.getServerName() ).andReturn( "localhost" ).anyTimes();
+    EasyMock.expect( request.getContextPath() ).andReturn( "/gateway/sandbox" ).anyTimes();
+    EasyMock.expect( request.getRequestURI() ).andReturn( "/gateway/sandbox/livy/v1/key?value" ).anyTimes();
+
+    HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
+    EasyMock.replay( request, response );
+
+    TestFilterChain chain = new TestFilterChain();
+
+    XForwardedHeaderFilter filter = new DummyXForwardedHeaderFilter(true, "livy/v1");
+
+    chain.push( new AssertProxiedXForwardedContextHeaders(true, "livy/v1") );
+    chain.push( filter );
+    chain.doFilter( request, response );
+  }
+
+  /**
+   * Test the case where appending service name to X-Forwarded-Context is
+   * disabled
+   *
+   * @throws ServletException
+   * @throws IOException
+   * @since 1.3.0
+   */
+  @Test
+  public void testProxiedXForwardContextHeadersNegativeTest() throws ServletException, IOException {
+    HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+
+    EasyMock.expect( request.getHeader( "X-Forwarded-For" ) ).andReturn( "127.0.0.0" ).anyTimes();
+    EasyMock.expect( request.getHeader( "X-Forwarded-Proto" ) ).andReturn( "https" ).anyTimes();
+    EasyMock.expect( request.getHeader( "X-Forwarded-Port" ) ).andReturn( "9999" ).anyTimes();
+    EasyMock.expect( request.getHeader( "X-Forwarded-Host" ) ).andReturn( "remotehost:9999" ).anyTimes();
+    EasyMock.expect( request.getHeader( "X-Forwarded-Server" ) ).andReturn( "remotehost" ).anyTimes();
+
+    EasyMock.expect( request.getRemoteAddr() ).andReturn( "127.0.0.1" ).anyTimes();
+    EasyMock.expect( request.isSecure() ).andReturn( false ).anyTimes();
+    EasyMock.expect( request.getLocalPort() ).andReturn( 8888 ).anyTimes();
+    EasyMock.expect( request.getHeader( "Host" ) ).andReturn( "localhost:8888" ).anyTimes();
+    EasyMock.expect( request.getServerName() ).andReturn( "localhost" ).anyTimes();
+    EasyMock.expect( request.getContextPath() ).andReturn( "/gateway/sandbox" ).anyTimes();
+    EasyMock.expect( request.getRequestURI() ).andReturn( "/gateway/sandbox/webhdfs/key?value" ).anyTimes();
+
+    HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
+    EasyMock.replay( request, response );
+
+    TestFilterChain chain = new TestFilterChain();
+
+    XForwardedHeaderFilter filter = new DummyXForwardedHeaderFilter(false, null);
+
+    chain.push( new AssertProxiedXForwardedContextHeaders(false, null) );
+    chain.push( filter );
+    chain.doFilter( request, response );
+  }
+
 }
