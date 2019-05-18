@@ -231,7 +231,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
       "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER");
 
   /* property that specifies list of services for which we need to append service name to the X-Forward-Context header */
-  public static final String X_FORWARD_CONTEXT_HEADER_APPEND_SERVICES = GATEWAY_CONFIG_FILE_PREFIX + ".header.x-forward-context.append.servicename";
+  public static final String X_FORWARD_CONTEXT_HEADER_APPEND_SERVICES = GATEWAY_CONFIG_FILE_PREFIX + ".xforwarded.header.context.append.servicename";
 
   public GatewayConfigImpl() {
     init();

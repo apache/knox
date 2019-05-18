@@ -140,7 +140,7 @@ limitations under the License.
         If the value is DEFAULT, a domain-based whitelist will be derived from the Knox host.</description>
     </property>
     <property>
-        <name>gateway.header.x-forward-context.append.servicename</name>
+        <name>gateway.xforwarded.header.context.append.servicename</name>
         <value>LIVYSERVER</value>
         <description>Add service name to x-forward-context header for the list of services defined above.</description>
     </property>
