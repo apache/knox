@@ -55,12 +55,21 @@ public class XForwardedHeaderRequestWrapper extends GatewayRequestWrapper {
 
   public XForwardedHeaderRequestWrapper(HttpServletRequest request) {
     super( request );
+    setHeaders(request, false, null);
+  }
+
+  public XForwardedHeaderRequestWrapper(HttpServletRequest request, final boolean isAppendServiceName, final String serviceContext) {
+    super( request );
+    setHeaders(request, isAppendServiceName, serviceContext);
+  }
+
+  private void setHeaders(final HttpServletRequest request, final boolean isAppendServiceName, final String serviceContext) {
     setHeader( X_FORWARDED_FOR_LOWER, getForwardedFor( request ) );
     setHeader( X_FORWARDED_PROTO_LOWER, getForwardedProto( request ) );
     setHeader( X_FORWARDED_PORT_LOWER, getForwardedPort( request ) );
     setHeader( X_FORWARDED_HOST_LOWER, getForwardedHost( request ) );
     setHeader( X_FORWARDED_SERVER_LOWER, getForwardedServer( request ) );
-    setHeader( X_FORWARDED_CONTEXT_LOWER, getForwardedContext( request ) );
+    setHeader( X_FORWARDED_CONTEXT_LOWER, getForwardedContext( request, isAppendServiceName, serviceContext) );
   }
 
   @Override
@@ -144,9 +153,39 @@ public class XForwardedHeaderRequestWrapper extends GatewayRequestWrapper {
     return request.getServerName();
   }
 
-  private static String getForwardedContext( HttpServletRequest request ) {
+  private static String getForwardedContext( HttpServletRequest request, final boolean isAppendServiceName, final String serviceContext) {
     String remote = request.getHeader( X_FORWARDED_CONTEXT );
-    String local = request.getContextPath();
+    String local;
+    /* prefer parameter defined in topology over the gateway-site.xml property */
+    if(serviceContext != null && !serviceContext.isEmpty()) {
+      local = request.getContextPath() + "/" + serviceContext;
+    }
+    else if(isAppendServiceName) {
+      local = request.getContextPath() + "/" + extractServiceName(request.getContextPath(), request.getRequestURI());
+    } else {
+      local = request.getContextPath();
+    }
     return ( remote == null ? "" : remote ) + ( local == null ? "" : local );
   }
+
+  /**
+   * Given a URI path and context, this function extracts service name
+   *
+   * @param originalContext {gatewayName}/{topologyname}
+   * @param path            request URI
+   * @return service name
+   * @since 1.3.0
+   */
+  private static String extractServiceName(final String originalContext,
+      final String path) {
+    final String[] sub = path.split(originalContext);
+    String serviceName = "";
+
+    if (sub.length > 1) {
+      final String[] paths = sub[1].split("/");
+      serviceName = paths[1];
+    }
+    return serviceName;
+  }
+
 }

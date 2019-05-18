@@ -230,6 +230,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
       "NAMENODE", "JOBTRACKER", "WEBHDFS", "WEBHCAT",
       "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER");
 
+  /* property that specifies list of services for which we need to append service name to the X-Forward-Context header */
+  public static final String X_FORWARD_CONTEXT_HEADER_APPEND_SERVICES = GATEWAY_CONFIG_FILE_PREFIX + ".xforwarded.header.context.append.servicename";
+
   public GatewayConfigImpl() {
     init();
   }
@@ -1050,5 +1053,23 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public boolean isTopologyValidationEnabled() {
     final String result = get(STRICT_TOPOLOGY_VALIDATION, Boolean.toString(DEFAULT_STRICT_TOPOLOGY_VALIDATION));
     return Boolean.parseBoolean(result);
+  }
+
+  /**
+   * Returns a list of services that need service name appended to
+   * X-Forward-Context header as a result of which the new header would look
+   * /{gateway}/{sandbox}/{serviceName}
+   *
+   * @return
+   * @since 1.3.0
+   */
+  @Override
+  public List<String> getXForwardContextAppendServices() {
+    String value = get( X_FORWARD_CONTEXT_HEADER_APPEND_SERVICES );
+    if ( value != null && !value.isEmpty() && !"none".equalsIgnoreCase(value.trim()) ) {
+      return Arrays.asList( value.trim().split("\\s*,\\s*") );
+    } else {
+      return new ArrayList<>();
+    }
   }
 }

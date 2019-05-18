@@ -606,5 +606,16 @@ public interface GatewayConfig {
    */
   boolean isTopologyValidationEnabled();
 
+  /**
+   * Returns a list of services that need service name appended to
+   * X-Forward-Context header as a result of which the new header would look
+   * /{gateway}/{sandbox}/{serviceName}
+   *
+   * @return List of service names for which service name needs to be appended
+   * to X-Forward-Context header, can be empty list.
+   * @since 1.3.0
+   */
+  List<String> getXForwardContextAppendServices();
+
 
 }

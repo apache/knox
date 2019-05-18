@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.filter;
 
 import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -25,8 +26,27 @@ import java.io.IOException;
 
 public class XForwardedHeaderFilter extends AbstractGatewayFilter {
 
+  private static final String APPEND_SERVICE_NAME_PARAM = "isAppendServiceName";
+  /**
+   * There could be a case where a service might use double context paths
+   * e.g. "/livy/v1" instead of "livy".
+   * This parameter can be used to add such context (/livy/v1) to the
+   * X-Forward-Context header.
+   */
+  private static final String SERVICE_CONTEXT = "serviceContext";
+
+  private boolean isAppendServiceName;
+  private String serviceContext;
+
+  @Override
+  public void init( FilterConfig filterConfig ) throws ServletException {
+    super.init( filterConfig );
+    isAppendServiceName = Boolean.parseBoolean(filterConfig.getInitParameter(APPEND_SERVICE_NAME_PARAM));
+    serviceContext = filterConfig.getInitParameter(SERVICE_CONTEXT);
+  }
+
   @Override
   protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-    chain.doFilter( new XForwardedHeaderRequestWrapper( request ), response );
+    chain.doFilter( new XForwardedHeaderRequestWrapper( request ,  isAppendServiceName, serviceContext), response );
   }
 }
