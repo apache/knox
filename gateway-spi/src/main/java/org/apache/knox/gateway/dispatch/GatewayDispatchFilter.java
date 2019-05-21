@@ -60,6 +60,7 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
     map.put("GET", new GetAdapter());
     map.put("POST", new PostAdapter());
     map.put("PUT", new PutAdapter());
+    map.put("PATCH", new PutAdapter());
     map.put("DELETE", new DeleteAdapter());
     map.put("OPTIONS", new OptionsAdapter());
     map.put("HEAD", new HeadAdapter());
@@ -187,6 +188,14 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
     public void doMethod(Dispatch dispatch, HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException, URISyntaxException {
       dispatch.doPut( dispatch.getDispatchUrl(request), request, response);
+    }
+  }
+
+  private static class PatchAdapter implements Adapter {
+    @Override
+    public void doMethod(Dispatch dispatch, HttpServletRequest request, HttpServletResponse response)
+        throws IOException, ServletException, URISyntaxException {
+      dispatch.doPatch( dispatch.getDispatchUrl(request), request, response);
     }
   }
 
