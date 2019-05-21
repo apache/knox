@@ -60,7 +60,7 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
     map.put("GET", new GetAdapter());
     map.put("POST", new PostAdapter());
     map.put("PUT", new PutAdapter());
-    map.put("PATCH", new PutAdapter());
+    map.put("PATCH", new PatchAdapter());
     map.put("DELETE", new DeleteAdapter());
     map.put("OPTIONS", new OptionsAdapter());
     map.put("HEAD", new HeadAdapter());
