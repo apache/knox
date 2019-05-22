@@ -24,9 +24,12 @@ import org.apache.hadoop.fs.Path;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasService;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
+
+import static org.apache.knox.gateway.services.security.impl.RemoteAliasService.REMOTE_ALIAS_SERVICE_TYPE;
 
 import java.io.File;
 import java.net.InetSocketAddress;
@@ -989,7 +992,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public Map<String, String> getRemoteAliasServiceConfiguration() {
-    return getPropsWithPrefix(getRemoteAliasServiceConfigurationPrefix());
+    final Map<String, String> remoteAliasServiceConfiguration = getPropsWithPrefix(getRemoteAliasServiceConfigurationPrefix());
+
+    //in case the remote alias service configuration type is not set we default to zookeeper
+    if (!remoteAliasServiceConfiguration.containsKey(REMOTE_ALIAS_SERVICE_TYPE)) {
+      remoteAliasServiceConfiguration.put(REMOTE_ALIAS_SERVICE_TYPE, ZookeeperRemoteAliasService.TYPE);
+    }
+    return remoteAliasServiceConfiguration;
   }
 
   @Override

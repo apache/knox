@@ -17,14 +17,17 @@
 package org.apache.knox.gateway.config.impl;
 
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasService;
 import org.apache.knox.test.TestUtils;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static org.apache.knox.gateway.services.security.impl.RemoteAliasService.REMOTE_ALIAS_SERVICE_TYPE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -36,7 +39,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-
 
 public class GatewayConfigImplTest {
 
@@ -386,5 +388,21 @@ public class GatewayConfigImplTest {
     assertEquals("custom_type", config.getTruststoreType());
   }
 
+  @Test
+  public void shouldReturnUserConfiguredRemoteAliasConfigType() throws Exception {
+    final String remoteAliasServiceType = "testServiceType";
+    GatewayConfigImpl config = new GatewayConfigImpl();
+    config.set(config.getRemoteAliasServiceConfigurationPrefix() + REMOTE_ALIAS_SERVICE_TYPE, "testServiceType");
+    final Map<String, String> remoteAliasServiceConfiguration = config.getRemoteAliasServiceConfiguration();
+    assertTrue(remoteAliasServiceConfiguration.containsKey(REMOTE_ALIAS_SERVICE_TYPE));
+    assertEquals(remoteAliasServiceType, remoteAliasServiceConfiguration.get(REMOTE_ALIAS_SERVICE_TYPE));
+  }
+
+  @Test
+  public void shouldReturnZookeeperAsRemoteAliasConfigTypeIfItIsUnset() throws Exception {
+    final Map<String, String> remoteAliasServiceConfiguration = new GatewayConfigImpl().getRemoteAliasServiceConfiguration();
+    assertTrue(remoteAliasServiceConfiguration.containsKey(REMOTE_ALIAS_SERVICE_TYPE));
+    assertEquals(ZookeeperRemoteAliasService.TYPE, remoteAliasServiceConfiguration.get(REMOTE_ALIAS_SERVICE_TYPE));
+  }
 
 }
