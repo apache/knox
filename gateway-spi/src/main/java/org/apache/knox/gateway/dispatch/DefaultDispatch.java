@@ -26,6 +26,7 @@ import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ContentType;
 import org.apache.knox.gateway.SpiGatewayMessages;
@@ -266,6 +267,16 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
    public void doPut(URI url, HttpServletRequest request, HttpServletResponse response)
          throws IOException, URISyntaxException {
       HttpPut method = new HttpPut(url);
+      HttpEntity entity = createRequestEntity(request);
+      method.setEntity(entity);
+      copyRequestHeaderFields(method, request);
+      executeRequest(method, request, response);
+   }
+
+   @Override
+   public void doPatch(URI url, HttpServletRequest request, HttpServletResponse response)
+         throws IOException, URISyntaxException {
+      HttpPatch method = new HttpPatch(url);
       HttpEntity entity = createRequestEntity(request);
       method.setEntity(entity);
       copyRequestHeaderFields(method, request);

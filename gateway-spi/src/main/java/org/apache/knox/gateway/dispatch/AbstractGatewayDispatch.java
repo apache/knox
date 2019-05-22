@@ -95,6 +95,12 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
   }
 
   @Override
+  public void doPatch(URI url, HttpServletRequest request, HttpServletResponse response )
+      throws IOException, URISyntaxException {
+    response.sendError( HttpServletResponse.SC_METHOD_NOT_ALLOWED );
+  }
+
+  @Override
   public void doDelete(URI url, HttpServletRequest request, HttpServletResponse response )
       throws IOException, URISyntaxException {
     response.sendError( HttpServletResponse.SC_METHOD_NOT_ALLOWED );
