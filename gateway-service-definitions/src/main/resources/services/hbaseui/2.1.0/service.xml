@@ -17,9 +17,6 @@
 -->
 <service role="HBASEUI" name="hbase" version="1.2.4">
     <routes>
-        <route path="/hbase/webui/">
-            <rewrite apply="HBASEUI/hbase/inbound/master/root" to="request.url"/>
-        </route>
         <!-- Fixes the stylesheet on the logs servlet -->
         <route path="/hbase/webui/logs/jetty-dir.css">
           <rewrite apply="HBASEUI/hbase/inbound/logs/css" to="request.url"/>
@@ -32,9 +29,7 @@
         <route path="/hbase/webui/static/**">
           <rewrite apply="HBASEUI/hbase/inbound/static" to="request.url"/>
         </route>
-        <route path="/hbase/webui/master?**">
-            <rewrite apply="HBASEUI/hbase/inbound/master/home" to="request.url"/>
-        </route>
+        <!-- Define explicit routes for endpoints shared across master/regionserver -->
         <route path="/hbase/webui/logs?{**}">
             <rewrite apply="HBASEUI/hbase/inbound/logs" to="request.url"/>
             <rewrite apply="HBASEUI/hbase/outbound/logs" to="response.body"/>
@@ -46,20 +41,46 @@
           <rewrite apply="HBASEUI/hbase/inbound/loglevel" to="request.url"/>
           <rewrite apply="HBASEUI/hbase/outbound/loglevel" to="response.body"/>
         </route>
+        <route path="/hbase/webui/conf?{**}">
+          <rewrite apply="HBASEUI/hbase/inbound/conf" to="request.url"/>
+          <rewrite apply="HBASEUI/hbase/outbound/conf" to="response.body"/>
+        </route>
+        <route path="/hbase/webui/dump?{**}">
+          <rewrite apply="HBASEUI/hbase/inbound/dump" to="request.url"/>
+          <rewrite apply="HBASEUI/hbase/outbound/dump" to="response.body"/>
+        </route>
+        <route path="/hbase/webui/jmx?{**}">
+          <rewrite apply="HBASEUI/hbase/inbound/jmx" to="request.url"/>
+          <rewrite apply="HBASEUI/hbase/outbound/jmx" to="response.body"/>
+        </route>
+        <route path="/hbase/webui/prof?{**}">
+          <rewrite apply="HBASEUI/hbase/inbound/profiler" to="request.url"/>
+          <rewrite apply="HBASEUI/hbase/outbound/profiler" to="response.body"/>
+        </route>
+        <route path="/hbase/webui/prof-output/{**}?{**}">
+          <rewrite apply="HBASEUI/hbase/inbound/prof_output" to="request.url"/>
+          <rewrite apply="HBASEUI/hbase/webui/outbound/headers/prof-output" to="response.headers"/>
+        </route>
+        <!-- Region info -->
         <route path="/hbase/webui/regionserver/region.jsp?{**}">
            <rewrite apply="HBASEUI/hbase/inbound/regions" to="request.url"/>
            <rewrite apply="HBASEUI/hbase/outbound/regions" to="response.body"/>
         </route>
+        <!-- Storefile info -->
         <route path="/hbase/webui/regionserver/storeFile.jsp?{**}">
            <rewrite apply="HBASEUI/hbase/inbound/storefile" to="request.url"/>
         </route>
-        <route path="/hbase/webui/master/prof-output/{**}?{**}">
-          <rewrite apply="HBASEUI/hbase/inbound/master/prof_output" to="request.url"/>
-          <rewrite apply="HBASEUI/hbase/webui/outbound/headers/prof-output" to="response.headers"/>
+        <!-- Enables loading the master without /master-status -->
+        <route path="/hbase/webui/master?**">
+            <rewrite apply="HBASEUI/hbase/inbound/master/home" to="request.url"/>
         </route>
         <route path="/hbase/webui/master/{**}?{**}">
           <rewrite apply="HBASEUI/hbase/inbound/master/all_children" to="request.url"/>
           <rewrite apply="HBASEUI/hbase/outbound/master/children" to="response.body"/>
+        </route>
+        <!-- Enables loading the RS without /rs-status -->
+        <route path="/hbase/webui/regionserver?**">
+            <rewrite apply="HBASEUI/hbase/inbound/regionserver/home" to="request.url"/>
         </route>
         <route path="/hbase/webui/regionserver/{**}?{**}">
           <rewrite apply="HBASEUI/hbase/inbound/regionserver/all_children" to="request.url"/>
