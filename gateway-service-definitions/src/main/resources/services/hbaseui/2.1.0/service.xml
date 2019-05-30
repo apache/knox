@@ -15,7 +15,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 -->
-<service role="HBASEUI" name="hbase" version="1.2.4">
+<service role="HBASEUI" name="hbaseui" version="2.1.0">
     <routes>
         <!-- Fixes the stylesheet on the logs servlet -->
         <route path="/hbase/webui/logs/jetty-dir.css">

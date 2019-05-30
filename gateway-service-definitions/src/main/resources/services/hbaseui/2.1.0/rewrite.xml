@@ -16,7 +16,7 @@
    limitations under the License.
 -->
 <rules>
-  <rule dir="IN" name="HBASEUI/hbase/inbound/master/root/qualified" pattern="*://*:*/**/hbase/webui/?{host}?port}">
+  <rule dir="IN" name="HBASEUI/hbase/inbound/master/root/qualified" pattern="*://*:*/**/hbase/webui/?{host}?{port}">
     <rewrite template="{$serviceScheme[HBASEUI]}://{host}:{port}/master-status"/>
   </rule>
   <!-- Make sure that redirects back to the master landing page work -->
