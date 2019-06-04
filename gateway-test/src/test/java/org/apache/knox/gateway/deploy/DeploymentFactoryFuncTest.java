@@ -661,7 +661,7 @@ public class DeploymentFactoryFuncTest {
     authenticationTopology.setName( "test-cluster" );
 
     final Service service = new Service();
-    service.setRole( "RANGER" );
+    service.setRole( "AMBARIUI" );
     service.addUrl( "http://localhost:50070/" );
     federationTopology.addService( service );
     authenticationTopology.addService( service );
@@ -712,31 +712,27 @@ public class DeploymentFactoryFuncTest {
     /* Make sure AnonymousAuthFilter is added to the chain */
     final Document gateway = XmlUtils.readXml( war.get( "%2F/WEB-INF/gateway.xml" ).getAsset().openStream() );
 
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/pattern", equalTo( "/ranger/service/public/**" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/pattern", equalTo( "/ambari" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/role", equalTo( "authentication" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[1]/class", equalTo( "org.apache.knox.gateway.filter.AnonymousAuthFilter" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/role", equalTo( "rewrite" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[2]/class", equalTo( "org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletFilter" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[3]/role", equalTo( "identity-assertion" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[3]/class", equalTo( "org.apache.knox.gateway.identityasserter.filter.IdentityAsserterFilter" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[4]/role", equalTo( "authorization" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[4]/class", equalTo( "org.apache.knox.gateway.filter.AclsAuthorizationFilter" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[5]/role", equalTo( "dispatch" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[5]/class", equalTo( "org.apache.knox.gateway.dispatch.GatewayDispatchFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[3]/role", equalTo( "authorization" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[3]/class", equalTo( "org.apache.knox.gateway.filter.AclsAuthorizationFilter" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[4]/role", equalTo( "dispatch" ) ) );
+    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[4]/class", equalTo( "org.apache.knox.gateway.dispatch.GatewayDispatchFilter" ) ) );
 
     final Document gateway2 = XmlUtils.readXml( war.get( "%2F/WEB-INF/gateway.xml" ).getAsset().openStream() );
 
-    assertThat( gateway2, hasXPath( "/gateway/resource[1]/pattern", equalTo( "/ranger/service/public/**" ) ) );
+    assertThat( gateway2, hasXPath( "/gateway/resource[1]/pattern", equalTo( "/ambari" ) ) );
     assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[1]/role", equalTo( "authentication" ) ) );
     assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[1]/class", equalTo( "org.apache.knox.gateway.filter.AnonymousAuthFilter" ) ) );
     assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[2]/role", equalTo( "rewrite" ) ) );
     assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[2]/class", equalTo( "org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletFilter" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[3]/role", equalTo( "identity-assertion" ) ) );
-    assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[3]/class", equalTo( "org.apache.knox.gateway.identityasserter.filter.IdentityAsserterFilter" ) ) );
-    assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[4]/role", equalTo( "authorization" ) ) );
-    assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[4]/class", equalTo( "org.apache.knox.gateway.filter.AclsAuthorizationFilter" ) ) );
-    assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[5]/role", equalTo( "dispatch" ) ) );
-    assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[5]/class", equalTo( "org.apache.knox.gateway.dispatch.GatewayDispatchFilter" ) ) );
+    assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[3]/role", equalTo( "authorization" ) ) );
+    assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[3]/class", equalTo( "org.apache.knox.gateway.filter.AclsAuthorizationFilter" ) ) );
+    assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[4]/role", equalTo( "dispatch" ) ) );
+    assertThat( gateway2, hasXPath( "/gateway/resource[1]/filter[4]/class", equalTo( "org.apache.knox.gateway.dispatch.GatewayDispatchFilter" ) ) );
 
     LOG_EXIT();
   }
