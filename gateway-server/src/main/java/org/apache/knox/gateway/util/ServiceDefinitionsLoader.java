@@ -60,27 +60,31 @@ public class ServiceDefinitionsLoader {
     }
   }
 
+  private static Unmarshaller createUnmarshaller() {
+    try {
+      return jaxbContext.createUnmarshaller();
+    } catch (JAXBException e) {
+      throw new RuntimeException("Could not create unmarshaller", e);
+    }
+  }
+
   public static Set<ServiceDeploymentContributor> loadServiceDefinitions(File servicesDir) {
     Set<ServiceDeploymentContributor> contributors = new HashSet<>();
     if ( servicesDir.exists() && servicesDir.isDirectory() ) {
-      try {
-        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+      Unmarshaller unmarshaller = createUnmarshaller();
 
-        for ( File file : getFileList(servicesDir) ) {
-          try (InputStream inputStream = Files.newInputStream(file.toPath())) {
-            ServiceDefinition definition = (ServiceDefinition) unmarshaller.unmarshal(inputStream);
-            //look for rewrite rules as a sibling (for now)
-            UrlRewriteRulesDescriptor rewriteRulesDescriptor = loadRewriteRules(file.getParentFile());
-            contributors.add(new ServiceDefinitionDeploymentContributor(definition, rewriteRulesDescriptor));
-            log.addedServiceDefinition(definition.getName(), definition.getRole(), definition.getVersion());
-          } catch ( FileNotFoundException e ) {
-            log.failedToFindServiceDefinitionFile(file.getAbsolutePath(), e);
-          } catch (IOException e) {
-            log.failedToLoadServiceDefinition(file.getAbsolutePath(), e);
-          }
+      for ( File file : getFileList(servicesDir) ) {
+        try (InputStream inputStream = Files.newInputStream(file.toPath())) {
+          ServiceDefinition definition = (ServiceDefinition) unmarshaller.unmarshal(inputStream);
+          //look for rewrite rules as a sibling (for now)
+          UrlRewriteRulesDescriptor rewriteRulesDescriptor = loadRewriteRules(file.getParentFile());
+          contributors.add(new ServiceDefinitionDeploymentContributor(definition, rewriteRulesDescriptor));
+          log.addedServiceDefinition(definition.getName(), definition.getRole(), definition.getVersion());
+        } catch (FileNotFoundException e) {
+          log.failedToFindServiceDefinitionFile(file.getAbsolutePath(), e);
+        } catch (IOException | JAXBException e) {
+          log.failedToLoadServiceDefinition(file.getAbsolutePath(), e);
         }
-      } catch ( JAXBException e ) {
-        log.failedToLoadServiceDefinition(SERVICE_FILE_NAME, e);
       }
     }
     return contributors;
@@ -88,9 +92,8 @@ public class ServiceDefinitionsLoader {
 
   public static Set<ServiceDefinition> getServiceDefinitions(File servicesDir) {
     Set<ServiceDefinition> definitions = new HashSet<>();
+    Unmarshaller unmarshaller = createUnmarshaller();
     try {
-      Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-
       for (File f : getFileList(servicesDir)){
         ServiceDefinition definition = (ServiceDefinition) unmarshaller.unmarshal(f);
         definitions.add( definition );
@@ -109,12 +112,18 @@ public class ServiceDefinitionsLoader {
        files = FileUtils.listFiles(servicesDir, new IOFileFilter() {
         @Override
         public boolean accept(File file) {
-          return file.getName().contains(SERVICE_FILE_NAME);
+          return acceptName(file.getName());
         }
 
         @Override
         public boolean accept(File dir, String name) {
-          return name.contains(SERVICE_FILE_NAME);
+          return acceptName(name);
+        }
+
+        private boolean acceptName(String name) {
+          return name.contains(SERVICE_FILE_NAME) &&
+              !name.startsWith(".") &&
+              name.endsWith(".xml");
         }
       }, TrueFileFilter.INSTANCE);
     } else {
