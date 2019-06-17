@@ -146,7 +146,7 @@
         <maven.compiler.target>8</maven.compiler.target>
 
         <!-- Dependencies sorted alphabetically -->
-        <apacheds.directory.api.version>2.0.0.AM2</apacheds.directory.api.version>
+        <apacheds.directory.api.version>2.0.0.AM1</apacheds.directory.api.version>
         <apacheds.directory.server.version>2.0.0.AM25</apacheds.directory.server.version>
         <apacheds-jdbm.version>2.0.0-M5</apacheds-jdbm.version>
         <apache-rat-plugin.version>0.13</apache-rat-plugin.version>
@@ -167,11 +167,14 @@
         <commons-configuration.version>1.10</commons-configuration.version>
         <commons-digester3.version>3.2</commons-digester3.version>
         <commons-io.version>2.6</commons-io.version>
+	<commons-lang.version>2.6</commons-lang.version>
         <commons-lang3.version>3.9</commons-lang3.version>
+        <commons-logging.version>1.2</commons-logging.version>
         <commons-math3.version>3.6.1</commons-math3.version>
         <commons-net.version>3.6</commons-net.version>
         <commons-text.version>1.8</commons-text.version>
         <cors-filter.version>2.8</cors-filter.version>
+	<cryptacular.version>1.2.3</cryptacular.version>
         <curator.version>4.2.0</curator.version>
         <dependency-check-maven.version>5.2.2</dependency-check-maven.version>
         <dockerfile-maven-plugin.version>1.4.13</dockerfile-maven-plugin.version>
@@ -181,6 +184,7 @@
         <exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
         <findsecbugs-plugin.version>1.10.1</findsecbugs-plugin.version>
         <forbiddenapis.version>2.7</forbiddenapis.version>
+        <gson.version>2.8.6</gson.version>
         <groovy.version>2.5.8</groovy.version>
         <guava.version>28.1-jre</guava.version>
         <hadoop.version>3.2.1</hadoop.version>
@@ -202,6 +206,7 @@
         <jaxb.version>2.3.0</jaxb.version>
         <jaxws-ri.version>2.3.2</jaxws-ri.version>
         <jakarta.xml.bind.version>2.3.2</jakarta.xml.bind.version>
+        <java-support.version>7.5.0</java-support.version>
         <jericho-html.version>3.4</jericho-html.version>
         <jersey.version>2.6</jersey.version>
         <jetty.version>9.4.22.v20191022</jetty.version>
@@ -223,6 +228,7 @@
         <mina.version>2.0.20</mina.version>
         <nimbus-jose-jwt.version>8.2</nimbus-jose-jwt.version>
         <okhttp.version>2.7.5</okhttp.version>
+        <opensaml.version>3.4.3</opensaml.version>
         <pac4j.version>3.8.2</pac4j.version>
         <protobuf.version>3.10.0</protobuf.version>
         <rest-assured.version>4.1.2</rest-assured.version>
@@ -234,9 +240,13 @@
         <spotbugs-maven-plugin.version>3.1.12.2</spotbugs-maven-plugin.version>
         <spring-core.version>5.2.0.RELEASE</spring-core.version>
         <spring-vault.version>2.1.4.RELEASE</spring-vault.version>
+        <stax2-api.version>4.2</stax2-api.version>
         <taglibs-standard.version>1.2.5</taglibs-standard.version>
         <testcontainers.version>1.12.1</testcontainers.version>
+        <txw2.version>2.4.0-b180830.0438</txw2.version>
         <velocity.version>1.7</velocity.version>
+        <woodstox-core.version>6.0.2</woodstox-core.version>
+        <xmlsec.version>2.0.10</xmlsec.version>
         <xmltool.version>3.3</xmltool.version>
         <xml-matchers.version>0.10</xml-matchers.version>
         <zookeeper.version>3.5.6</zookeeper.version>
@@ -488,6 +498,17 @@
                                 <requireJavaVersion>
                                     <version>[1.8,)</version>
                                 </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>enforce-dependencies</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <dependencyConvergence/>
                             </rules>
                         </configuration>
                     </execution>
@@ -1162,6 +1183,11 @@
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-util-ajax</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-servlet</artifactId>
                 <version>${jetty.version}</version>
             </dependency>
@@ -1225,6 +1251,12 @@
                 <groupId>com.sun.xml.bind</groupId>
                 <artifactId>jaxb-impl</artifactId>
                 <version>${jaxb.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>txw2</artifactId>
+                <version>${txw2.version}</version>
             </dependency>
 
             <dependency>
@@ -1319,6 +1351,12 @@
             </dependency>
 
             <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>${gson.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java</artifactId>
                 <version>${protobuf.version}</version>
@@ -1334,11 +1372,24 @@
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-mapreduce-client-core</artifactId>
                 <version>${hadoop.version}</version>
+		<scope>provided</scope>
                 <exclusions>
                     <exclusion>
                         <groupId>jdk.tools</groupId>
                         <artifactId>jdk.tools</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>org.codehaus.jackson</groupId>
+                        <artifactId>jackson-core-asl</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.codehaus.jackson</groupId>
+                        <artifactId>jackson-mapper-asl</artifactId>
+                    </exclusion>
+		    <exclusion>
+		        <groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-yarn-common</artifactId>
+		    </exclusion>
                 </exclusions>
             </dependency>
 
@@ -1347,6 +1398,10 @@
                 <artifactId>hadoop-common</artifactId>
                 <version>${hadoop.version}</version>
                 <exclusions>
+                    <exclusion>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>jsr305</artifactId>
+                    </exclusion>
                     <exclusion>
                         <groupId>com.google.protobuf</groupId>
                         <artifactId>protobuf-java</artifactId>
@@ -1507,6 +1562,17 @@
             </dependency>
 
             <dependency>
+                <groupId>org.codehaus.woodstox</groupId>
+                <artifactId>stax2-api</artifactId>
+                <version>${stax2-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.woodstox</groupId>
+                <artifactId>woodstox-core</artifactId>
+                <version>${woodstox-core.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>cglib</groupId>
                 <artifactId>cglib</artifactId>
                 <version>${cglib.version}</version>
@@ -1559,9 +1625,19 @@
                 <version>${commons-io.version}</version>
             </dependency>
             <dependency>
+                <groupId>commons-lang</groupId>
+                <artifactId>commons-lang</artifactId>
+                <version>${commons-lang.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>${commons-lang3.version}</version>
+            </dependency>
+	    <dependency>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging</artifactId>
+                <version>${commons-logging.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
@@ -1628,6 +1704,11 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.directory.server</groupId>
+                <artifactId>apacheds-i18n</artifactId>
+                <version>${apacheds.directory.server.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.directory.server</groupId>
                 <artifactId>apacheds-protocol-shared</artifactId>
                 <version>${apacheds.directory.server.version}</version>
             </dependency>
@@ -1674,6 +1755,11 @@
                 <artifactId>slf4j-log4j12</artifactId>
                 <version>${slf4j.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>jcl-over-slf4j</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>log4j</groupId>
@@ -1691,6 +1777,12 @@
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>${guava.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>jsr305</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>
@@ -1731,6 +1823,12 @@
                 <groupId>org.apache.zookeeper</groupId>
                 <artifactId>zookeeper</artifactId>
                 <version>${zookeeper.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>jsr305</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.zookeeper</groupId>
@@ -1937,12 +2035,26 @@
                 <groupId>org.pac4j</groupId>
                 <artifactId>pac4j-oidc</artifactId>
                 <version>${pac4j.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.sun.mail</groupId>
+                        <artifactId>javax.mail</artifactId>
+                    </exclusion>
+		    <exclusion>
+		        <groupId>org.mockito</groupId>
+                        <artifactId>mockito-core</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.pac4j</groupId>
                 <artifactId>pac4j-saml</artifactId>
                 <version>${pac4j.version}</version>
                 <exclusions>
+                    <exclusion>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>jsr305</artifactId>
+                    </exclusion>
                     <exclusion>
                         <groupId>ch.qos.logback</groupId>
                         <artifactId>logback-classic</artifactId>
@@ -1975,6 +2087,43 @@
                         <artifactId>pac4j-core</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+
+            <!-- harmonize pac4j-saml dependencies -->
+            <dependency>
+	        <groupId>org.opensaml</groupId>
+		<artifactId>opensaml-core</artifactId>
+		<version>${opensaml.version}</version>
+            </dependency>
+	    <dependency>
+	        <groupId>org.opensaml</groupId>
+		<artifactId>opensaml-security-api</artifactId>
+		<version>${opensaml.version}</version>
+            </dependency>
+	    <dependency>
+	        <groupId>org.opensaml</groupId>
+		<artifactId>opensaml-xmlsec-api</artifactId>
+		<version>${opensaml.version}</version>
+            </dependency>
+            <dependency>
+	        <groupId>org.opensaml</groupId>
+		<artifactId>opensaml-xmlsec-impl</artifactId>
+		<version>${opensaml.version}</version>
+            </dependency>
+	    <dependency>
+	        <groupId>org.apache.santuario</groupId>
+		<artifactId>xmlsec</artifactId>
+		<version>${xmlsec.version}</version>
+            </dependency>
+	    <dependency>
+	        <groupId>org.cryptacular</groupId>
+		<artifactId>cryptacular</artifactId>
+		<version>${cryptacular.version}</version>
+            </dependency>
+	    <dependency>
+	        <groupId>net.shibboleth.utilities</groupId>
+		<artifactId>java-support</artifactId>
+		<version>${java-support.version}</version>
             </dependency>
 
             <dependency>
