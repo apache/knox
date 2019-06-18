@@ -60,5 +60,12 @@
         </dependency>
     </dependencies>
 
+    <repositories>
+        <repository>
+            <id>Cloudera</id>
+            <name>Cloudera</name>
+            <url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
+        </repository>
+    </repositories>
 </project>
 
