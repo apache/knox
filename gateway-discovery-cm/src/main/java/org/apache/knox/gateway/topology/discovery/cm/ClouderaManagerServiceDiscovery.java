@@ -30,21 +30,11 @@ import com.cloudera.api.swagger.model.ApiServiceConfig;
 import com.cloudera.api.swagger.model.ApiServiceList;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.topology.discovery.GatewayService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 
-import javax.security.auth.Subject;
-import javax.security.auth.login.AppConfigurationEntry;
-import javax.security.auth.login.Configuration;
-import javax.security.auth.login.LoginContext;
-import java.io.File;
-import java.lang.reflect.Constructor;
-import java.net.URI;
-import java.net.URL;
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -63,8 +53,6 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
 
   private static final ClouderaManagerServiceDiscoveryMessages log =
                                         MessagesFactory.get(ClouderaManagerServiceDiscoveryMessages.class);
-
-  private static final String JGSS_LOGIN_MODULE = "com.sun.security.jgss.initiate";
 
   static final String API_PATH = "api/v32";
 
@@ -152,33 +140,16 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
   private static List<ApiCluster> getClusters(DiscoveryApiClient client) {
     List<ApiCluster> clusters = new ArrayList<>();
     try {
-      ApiClusterList clusterList = null;
-
       ClustersResourceApi clustersResourceApi = new ClustersResourceApi(client);
-      if (client.isKerberos()) {
-        clusterList =
-            Subject.doAs(getSubject(), (PrivilegedAction<ApiClusterList>) () -> {
-              try {
-                return clustersResourceApi.readClusters(CLUSTER_TYPE_ANY, VIEW_SUMMARY);
-              } catch (Exception e) {
-                log.clusterDiscoveryError(CLUSTER_TYPE_ANY, e);
-              }
-              return null;
-            });
-      } else {
-          clusterList = clustersResourceApi.readClusters(CLUSTER_TYPE_ANY, VIEW_SUMMARY);
-      }
-
+      ApiClusterList clusterList = clustersResourceApi.readClusters(CLUSTER_TYPE_ANY, VIEW_SUMMARY);
       if (clusterList != null) {
         clusters.addAll(clusterList.getItems());
       }
     } catch (Exception e) {
-      log.clusterDiscoveryError(CLUSTER_TYPE_ANY, e); // TODO: PJZ: Better error message here?
+      log.clusterDiscoveryError(CLUSTER_TYPE_ANY, e);
     }
-
     return clusters;
   }
-
 
   private static Cluster discoverCluster(DiscoveryApiClient client, String clusterName) throws ApiException {
     ClouderaManagerCluster cluster = null;
@@ -193,20 +164,20 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
     Set<ServiceModel> serviceModels = new HashSet<>();
     ServiceLoader<ServiceModelGenerator> loader = ServiceLoader.load(ServiceModelGenerator.class);
 
-    ApiServiceList serviceList = getClusterServices(servicesResourceApi, clusterName, client.isKerberos());
+    ApiServiceList serviceList = getClusterServices(servicesResourceApi, clusterName);
     if (serviceList != null) {
       for (ApiService service : serviceList.getItems()) {
         String serviceName = service.getName();
         log.discoveredService(serviceName, service.getType());
         ApiServiceConfig serviceConfig =
-            getServiceConfig(servicesResourceApi, clusterName, serviceName, client.isKerberos());
-        ApiRoleList roleList = getRoles(rolesResourceApi, clusterName, serviceName, client.isKerberos());
+            getServiceConfig(servicesResourceApi, clusterName, serviceName);
+        ApiRoleList roleList = getRoles(rolesResourceApi, clusterName, serviceName);
         if (roleList != null) {
           for (ApiRole role : roleList.getItems()) {
             String roleName = role.getName();
             log.discoveredServiceRole(roleName, role.getType());
             ApiConfigList roleConfig =
-                getRoleConfig(rolesResourceApi, clusterName, serviceName, roleName, client.isKerberos());
+                getRoleConfig(rolesResourceApi, clusterName, serviceName, roleName);
 
             for (ServiceModelGenerator serviceModelGenerator : loader) {
               if (serviceModelGenerator.handles(service, serviceConfig, role, roleConfig)) {
@@ -226,205 +197,51 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
   }
 
   private static ApiServiceList getClusterServices(final ServicesResourceApi servicesResourceApi,
-                                                   final String              clusterName,
-                                                   final boolean             isKerberos) {
-    ApiServiceList serviceList = null;
-    if (isKerberos) {
-      serviceList =
-          Subject.doAs(getSubject(), (PrivilegedAction<ApiServiceList>) () -> {
-            try {
-              return servicesResourceApi.readServices(clusterName, VIEW_SUMMARY);
-            } catch (Exception e) {
-              log.failedToAccessServiceConfigs(clusterName, e);
-            }
-            return null;
-          });
-    } else {
-      try {
-        serviceList = servicesResourceApi.readServices(clusterName, VIEW_SUMMARY);
-      } catch (ApiException e) {
-        log.failedToAccessServiceConfigs(clusterName, e);
-      }
+                                                   final String              clusterName) {
+    ApiServiceList services = null;
+    try {
+      services = servicesResourceApi.readServices(clusterName, VIEW_SUMMARY);
+    } catch (ApiException e) {
+      log.failedToAccessServiceConfigs(clusterName, e);
     }
-    return serviceList;
+    return services;
   }
 
   private static ApiServiceConfig getServiceConfig(final ServicesResourceApi servicesResourceApi,
                                                    final String clusterName,
-                                                   final String serviceName,
-                                                   final boolean isKerberos) {
+                                                   final String serviceName) {
     ApiServiceConfig serviceConfig = null;
-    if (isKerberos) {
-      serviceConfig =
-          Subject.doAs(getSubject(), (PrivilegedAction<ApiServiceConfig>) () -> {
-            try {
-              return servicesResourceApi.readServiceConfig(clusterName, serviceName, VIEW_FULL);
-            } catch (Exception e) {
-              log.failedToAccessServiceConfigs(clusterName, e);
-            }
-            return null;
-          });
-    } else {
-      try {
-        serviceConfig = servicesResourceApi.readServiceConfig(clusterName, serviceName, VIEW_FULL);
-      } catch (Exception e) {
-        log.failedToAccessServiceConfigs(clusterName, e);
-      }
+    try {
+      serviceConfig = servicesResourceApi.readServiceConfig(clusterName, serviceName, VIEW_FULL);
+    } catch (Exception e) {
+      log.failedToAccessServiceConfigs(clusterName, e);
     }
     return serviceConfig;
   }
 
   private static ApiRoleList getRoles(RolesResourceApi rolesResourceApi,
                                       String clusterName,
-                                      String serviceName,
-                                      boolean isKerberos) {
-    ApiRoleList roleList = null;
-
-    if (isKerberos) {
-      roleList =
-          Subject.doAs(getSubject(), (PrivilegedAction<ApiRoleList>) () -> {
-            try {
-              return rolesResourceApi.readRoles(clusterName, serviceName, "", VIEW_SUMMARY);
-            } catch (Exception e) {
-              log.failedToAccessServiceRoleConfigs(clusterName, e);
-            }
-            return null;
-          });
-    } else {
-      try {
-        roleList = rolesResourceApi.readRoles(clusterName, serviceName, "", VIEW_SUMMARY);
-      } catch (ApiException e) {
-        log.failedToAccessServiceRoleConfigs(clusterName, e);
-      }
+                                      String serviceName) {
+    ApiRoleList roles = null;
+    try {
+      roles = rolesResourceApi.readRoles(clusterName, serviceName, "", VIEW_SUMMARY);
+    } catch (Exception e) {
+      log.failedToAccessServiceRoleConfigs(clusterName, e);
     }
-
-    return roleList;
+    return roles;
   }
 
   private static ApiConfigList getRoleConfig(RolesResourceApi rolesResourceApi,
                                              String           clusterName,
                                              String           serviceName,
-                                             String           roleName,
-                                             boolean          isKerberos) {
-    ApiConfigList roleConfig = null;
-    if (isKerberos) {
-      roleConfig =
-          Subject.doAs(getSubject(), (PrivilegedAction<ApiConfigList>) () -> {
-            try {
-              return rolesResourceApi.readRoleConfig(clusterName, roleName, serviceName, VIEW_FULL);
-            } catch (Exception e) {
-              log.failedToAccessServiceRoleConfigs(clusterName, e);
-            }
-            return null;
-          });
-    } else {
-      try {
-        roleConfig = rolesResourceApi.readRoleConfig(clusterName, roleName, serviceName, VIEW_FULL);
-      } catch (ApiException e) {
-        log.failedToAccessServiceRoleConfigs(clusterName, e);
-      }
+                                             String           roleName) {
+    ApiConfigList configList = null;
+    try {
+      configList = rolesResourceApi.readRoleConfig(clusterName, roleName, serviceName, VIEW_FULL);
+    } catch (Exception e) {
+      log.failedToAccessServiceRoleConfigs(clusterName, e);
     }
-    return roleConfig;
-  }
-
-  private static Subject getSubject() {
-    Subject subject = SubjectUtils.getCurrentSubject();
-    if (subject == null) {
-      subject = login();
-    }
-    return subject;
-  }
-
-  private static Subject login() {
-    Subject subject = null;
-    String kerberosLoginConfig = getKerberosLoginConfig();
-    if (kerberosLoginConfig != null) {
-      try {
-        Configuration jaasConf = new JAASClientConfig((new File(kerberosLoginConfig)).toURI().toURL());
-        LoginContext lc = new LoginContext(JGSS_LOGIN_MODULE,
-                                           null,
-                                           null,
-                                           jaasConf);
-        lc.login();
-        subject = lc.getSubject();
-      } catch (Exception e) {
-        log.failedKerberosLogin(kerberosLoginConfig, JGSS_LOGIN_MODULE, e);
-      }
-    }
-
-    return subject;
-  }
-
-  private static final class JAASClientConfig extends Configuration {
-
-    private static final Configuration baseConfig = Configuration.getConfiguration();
-
-    private Configuration configFile;
-
-    JAASClientConfig(URL configFileURL) throws Exception {
-      if (configFileURL != null) {
-        this.configFile = ConfigurationFactory.create(configFileURL.toURI());
-      }
-    }
-
-    @Override
-    public AppConfigurationEntry[] getAppConfigurationEntry(String name) {
-      AppConfigurationEntry[] result = null;
-
-      // Try the config file if it exists
-      if (configFile != null) {
-        result = configFile.getAppConfigurationEntry(name);
-      }
-
-      // If the entry isn't there, delegate to the base configuration
-      if (result == null) {
-        result = baseConfig.getAppConfigurationEntry(name);
-      }
-
-      return result;
-    }
-  }
-
-  @SuppressWarnings("PMD.AvoidAccessibilityAlteration")
-  private static class ConfigurationFactory {
-
-    private static final Class implClazz;
-    static {
-      // Oracle and OpenJDK use the Sun implementation
-      String implName = System.getProperty("java.vendor").contains("IBM") ?
-          "com.ibm.security.auth.login.ConfigFile" : "com.sun.security.auth.login.ConfigFile";
-
-      log.usingJAASConfigurationFileImplementation(implName);
-      Class clazz = null;
-      try {
-        clazz = Class.forName(implName, false, Thread.currentThread().getContextClassLoader());
-      } catch (ClassNotFoundException e) {
-        log.failedToLoadJAASConfigurationFileImplementation(implName, e);
-      }
-
-      implClazz = clazz;
-    }
-
-    static Configuration create(URI uri) {
-      Configuration config = null;
-
-      if (implClazz != null) {
-        try {
-          Constructor ctor = implClazz.getDeclaredConstructor(URI.class);
-          config = (Configuration) ctor.newInstance(uri);
-        } catch (Exception e) {
-          log.failedToInstantiateJAASConfigurationFileImplementation(implClazz.getCanonicalName(), e);
-        }
-      } else {
-        log.noJAASConfigurationFileImplementation();
-      }
-
-      return config;
-    }
-  }
-
-  private static String getKerberosLoginConfig() {
-    return System.getProperty(GatewayConfig.KRB5_LOGIN_CONFIG, "");
+    return configList;
   }
 
 }

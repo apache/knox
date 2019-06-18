@@ -17,18 +17,28 @@
 package org.apache.knox.gateway.topology.discovery.cm;
 
 import com.cloudera.api.swagger.client.ApiClient;
+import com.cloudera.api.swagger.client.Pair;
+import com.cloudera.api.swagger.client.auth.Authentication;
+import com.cloudera.api.swagger.client.auth.HttpBasicAuth;
 import org.apache.knox.gateway.config.ConfigurationException;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
+import org.apache.knox.gateway.topology.discovery.cm.auth.AuthUtils;
+import org.apache.knox.gateway.topology.discovery.cm.auth.SpnegoAuthInterceptor;
+
+import javax.security.auth.Subject;
+import java.util.List;
 
 import static org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscovery.API_PATH;
 import static org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscovery.DEFAULT_USER_ALIAS;
 import static org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscovery.DEFAULT_PWD_ALIAS;
 
-
+/**
+ * Cloudera Manager ApiClient extension for service discovery.
+ */
 public class DiscoveryApiClient extends ApiClient {
 
   private ClouderaManagerServiceDiscoveryMessages log =
@@ -99,6 +109,41 @@ public class DiscoveryApiClient extends ApiClient {
 
     setUsername(username);
     setPassword(password);
+
+    if (isKerberos) {
+      // If there is a Kerberos subject, then add the SPNEGO auth interceptor
+      Subject subject = AuthUtils.getKerberosSubject();
+      if (subject != null) {
+        SpnegoAuthInterceptor spnegoInterceptor = new SpnegoAuthInterceptor(subject);
+        getHttpClient().interceptors().add(spnegoInterceptor);
+      }
+    }
+  }
+
+  @Override
+  public String buildUrl(String path, List<Pair> queryParams) {
+    // If kerberos is enabled, then for every request, we're going to include a doAs query param
+    if (isKerberos()) {
+      String user = getUsername();
+      if (user != null) {
+        queryParams.add(new Pair("doAs", user));
+      }
+    }
+    return super.buildUrl(path, queryParams);
+  }
+
+  /**
+   * @return The username set from the discovery configuration when this instance was initialized.
+   */
+  private String getUsername() {
+    String username = null;
+    Authentication basicAuth = getAuthentication("basic");
+    if (basicAuth != null) {
+      if (basicAuth instanceof HttpBasicAuth) {
+        username = ((HttpBasicAuth) basicAuth).getUsername();
+      }
+    }
+    return username;
   }
 
 }

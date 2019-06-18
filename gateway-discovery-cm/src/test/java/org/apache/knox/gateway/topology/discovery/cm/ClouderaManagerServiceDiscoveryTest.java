@@ -49,58 +49,126 @@ import static org.junit.Assert.assertNotNull;
 public class ClouderaManagerServiceDiscoveryTest {
 
   @Test
-  public void testWebHDFSServiceDiscovery() {
-    GatewayConfig gwConf = EasyMock.createNiceMock(GatewayConfig.class);
-    EasyMock.replay(gwConf);
-
-    ServiceDiscoveryConfig sdConfig = createMockDiscoveryConfig();
-
-    // Create the test client for providing test response content
-    TestDiscoveryApiClient mockClient = new TestDiscoveryApiClient(sdConfig, null);
-
-    // Prepare the service list response for the cluster
-    ApiServiceList serviceList = EasyMock.createNiceMock(ApiServiceList.class);
-    EasyMock.expect(serviceList.getItems())
-            .andReturn(Collections.singletonList(createMockApiService("NAMENODE-1", "HDFS")))
-            .anyTimes();
-    EasyMock.replay(serviceList);
-    mockClient.addResponse(ApiServiceList.class, new TestApiServiceListResponse(serviceList));
-
-    // Prepare the HDFS service config response for the cluster
-    Map<String, String> serviceProps = new HashMap<>();
-    serviceProps.put("hdfs_hadoop_ssl_enabled", "false");
-    serviceProps.put("dfs_webhdfs_enabled", "true");
-    ApiServiceConfig hdfsServiceConfig = createMockApiServiceConfig(serviceProps);
-    mockClient.addResponse(ApiServiceConfig.class, new TestApiServiceConfigResponse(hdfsServiceConfig));
-
-    // Prepare the NameNode role
-    ApiRole nnRole = createMockApiRole("HDFS-1-NAMENODE-d0b64dd7b7611e22bc976ede61678d9e", "NAMENODE", "test-host-1");
-    ApiRoleList nnRoleList = EasyMock.createNiceMock(ApiRoleList.class);
-    EasyMock.expect(nnRoleList.getItems()).andReturn(Collections.singletonList(nnRole)).anyTimes();
-    EasyMock.replay(nnRoleList);
-    mockClient.addResponse(ApiRoleList.class, new TestApiRoleListResponse(nnRoleList));
-
-    // Configure the NameNode role
-    Map<String, String> roleProperties = new HashMap<>();
-    roleProperties.put("dfs_federation_namenode_nameservice", "nameservice1");
-    roleProperties.put("namenode_port", "50070");
-    roleProperties.put("dfs_http_port", "50071");
-    ApiConfigList nnRoleConfigList = createMockApiConfigList(roleProperties);
-    mockClient.addResponse(ApiConfigList.class, new TestApiConfigListResponse(nnRoleConfigList));
-
-    // Invoke the service discovery
-    ClouderaManagerServiceDiscovery cmsd = new ClouderaManagerServiceDiscovery(true);
-    ServiceDiscovery.Cluster cluster = cmsd.discover(gwConf, sdConfig, "test-cluster", mockClient);
-    assertNotNull(cluster);
-    assertEquals("test-cluster", cluster.getName());
-    List<String> webhdfsURLs = cluster.getServiceURLs("WEBHDFS");
-    assertNotNull(webhdfsURLs);
-    assertEquals(1, webhdfsURLs.size());
-    assertEquals("http://test-host-1:50071/webhdfs", webhdfsURLs.get(0));
+  public void testHiveServiceDiscovery() {
+    doTestHiveServiceDiscovery(false);
   }
 
   @Test
-  public void testHiveServiceDiscovery() {
+  public void testHiveServiceDiscoverySSL() {
+    doTestHiveServiceDiscovery(true);
+  }
+
+  private void doTestHiveServiceDiscovery(final boolean enableSSL) {
+    final String clusterName    = "test-cluster-1";
+    final String hostName       = "test-host-1";
+    final String thriftPort     = "10001";
+    final String thriftPath     = "cliService";
+    final String expectedScheme = (enableSSL ? "https" : "http");
+
+    ServiceDiscovery.Cluster cluster =
+        doTestHiveServiceDiscovery(clusterName, hostName, thriftPort, thriftPath, enableSSL);
+    assertEquals(clusterName, cluster.getName());
+    List<String> hiveURLs = cluster.getServiceURLs("HIVE");
+    assertNotNull(hiveURLs);
+    assertEquals(1, hiveURLs.size());
+    assertEquals((expectedScheme + "://" + hostName + ":" +thriftPort + "/" + thriftPath), hiveURLs.get(0));
+  }
+
+  @Test
+  public void testWebHDFSServiceDiscovery() {
+    final String clusterName = "test-cluster-1";
+    final String hostName    = "test-host-1";
+    final String nameService = "nameservice1";
+    final String nnPort      = "50070";
+    final String dfsHttpPort = "50075";
+
+    ServiceDiscovery.Cluster cluster = doTestHDFSDiscovery(clusterName, hostName, nameService, nnPort, dfsHttpPort);
+    assertEquals(clusterName, cluster.getName());
+    List<String> webhdfsURLs = cluster.getServiceURLs("WEBHDFS");
+    assertNotNull(webhdfsURLs);
+    assertEquals(1, webhdfsURLs.size());
+    assertEquals("http://" + hostName + ":" + dfsHttpPort + "/webhdfs",
+                 webhdfsURLs.get(0));
+  }
+
+  @Test
+  public void testWebHDFSServiceDiscoveryWithSSL() {
+    final String clusterName  = "test-cluster-1";
+    final String hostName     = "test-host-1";
+    final String nameService  = "nameservice1";
+    final String nnPort       = "50070";
+    final String dfsHttpPort  = "50075";
+    final String dfsHttpsPort = "50079";
+
+    ServiceDiscovery.Cluster cluster =
+        doTestHDFSDiscovery(clusterName, hostName, nameService, nnPort, dfsHttpPort, dfsHttpsPort);
+    assertEquals(clusterName, cluster.getName());
+    List<String> webhdfsURLs = cluster.getServiceURLs("WEBHDFS");
+    assertNotNull(webhdfsURLs);
+    assertEquals(1, webhdfsURLs.size());
+    assertEquals("https://" + hostName + ":" + dfsHttpsPort + "/webhdfs",
+                 webhdfsURLs.get(0));
+  }
+
+  @Test
+  public void testNameNodeServiceDiscovery() {
+    final String clusterName = "test-cluster-2";
+    final String hostName    = "test-host-2";
+    final String nameService = "nameservice2";
+    final String nnPort      = "50070";
+    final String dfsHttpPort = "50071";
+
+    ServiceDiscovery.Cluster cluster = doTestHDFSDiscovery(clusterName, hostName, nameService, nnPort, dfsHttpPort);
+    assertEquals(clusterName, cluster.getName());
+    List<String> nnURLs = cluster.getServiceURLs("NAMENODE");
+    assertNotNull(nnURLs);
+    assertEquals(1, nnURLs.size());
+    assertEquals(("hdfs://" + hostName + ":" + nnPort), nnURLs.get(0));
+  }
+
+  @Test
+  public void testNameNodeServiceDiscoveryHA() {
+    final String clusterName = "test-cluster-2";
+    final String hostName    = "test-host-2";
+    final String nameService = "nameservice2";
+    final String nnPort      = "50070";
+    final String dfsHttpPort = "50071";
+
+    ServiceDiscovery.Cluster cluster =
+        doTestHDFSDiscovery(clusterName, hostName, nameService, nnPort, dfsHttpPort, null, true);
+    assertEquals(clusterName, cluster.getName());
+    List<String> nnURLs = cluster.getServiceURLs("NAMENODE");
+    assertNotNull(nnURLs);
+    assertEquals(1, nnURLs.size());
+    assertEquals(("hdfs://" + nameService), nnURLs.get(0));
+  }
+
+  @Test
+  public void testHdfsUIServiceDiscovery() {
+    final String clusterName = "test-cluster-3";
+    final String hostName    = "test-host-3";
+    final String nameService = "nameservice3";
+    final String nnPort      = "50070";
+    final String dfsHttpPort = "50071";
+
+    ServiceDiscovery.Cluster cluster = doTestHDFSDiscovery(clusterName, hostName, nameService, nnPort, dfsHttpPort);
+    assertEquals(clusterName, cluster.getName());
+    List<String> hdfsUIURLs = cluster.getServiceURLs("HDFSUI");
+    assertNotNull(hdfsUIURLs);
+    assertEquals(1, hdfsUIURLs.size());
+    assertEquals(("http://" + hostName + ":" + dfsHttpPort), hdfsUIURLs.get(0));
+  }
+
+  private ServiceDiscovery.Cluster doTestHiveServiceDiscovery(final String  clusterName,
+                                                              final String  hostName,
+                                                              final String  thriftPort,
+                                                              final String  thriftPath,
+                                                              final boolean enableSSL) {
+    final String hs2SafetyValveValue =
+          "<property><name>hive.server2.transport.mode</name><value>http</value></property>\n" +
+          "<property><name>hive.server2.thrift.http.port</name><value>" + thriftPort + "</value></property>\n" +
+          "<property><name>hive.server2.thrift.http.path</name><value>" + thriftPath + "</value></property>";
+
     GatewayConfig gwConf = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.replay(gwConf);
 
@@ -112,8 +180,8 @@ public class ClouderaManagerServiceDiscoveryTest {
     // Prepare the service list response for the cluster
     ApiServiceList serviceList = EasyMock.createNiceMock(ApiServiceList.class);
     EasyMock.expect(serviceList.getItems())
-            .andReturn(Collections.singletonList(createMockApiService("HIVE-1", "HIVE")))
-            .anyTimes();
+        .andReturn(Collections.singletonList(createMockApiService("HIVE-1", "HIVE")))
+        .anyTimes();
     EasyMock.replay(serviceList);
     mockClient.addResponse(ApiServiceList.class, new TestApiServiceListResponse(serviceList));
 
@@ -122,7 +190,8 @@ public class ClouderaManagerServiceDiscoveryTest {
     mockClient.addResponse(ApiServiceConfig.class, new TestApiServiceConfigResponse(hiveServiceConfig));
 
     // Prepare the HS2 role
-    ApiRole hs2Role = createMockApiRole("HIVE-1-HIVESERVER2-d0b64dd7b7611e22bc976ede61678d9e", "HIVESERVER2", "test-host-1");
+    ApiRole hs2Role =
+        createMockApiRole("HIVE-1-HIVESERVER2-d0b64dd7b7611e22bc976ede61678d9e", "HIVESERVER2", hostName);
     ApiRoleList hiveRoleList = EasyMock.createNiceMock(ApiRoleList.class);
     EasyMock.expect(hiveRoleList.getItems()).andReturn(Collections.singletonList(hs2Role)).anyTimes();
     EasyMock.replay(hiveRoleList);
@@ -130,29 +199,98 @@ public class ClouderaManagerServiceDiscoveryTest {
 
     // Configure the HS2 role
     Map<String, String> roleProperties = new HashMap<>();
-    roleProperties.put("hive_hs2_config_safety_valve",
-                       "<property><name>hive.server2.transport.mode</name><value>http</value></property>\n" +
-                       "<property><name>hive.server2.thrift.http.port</name><value>10001</value></property>\n" +
-                       "<property><name>hive.server2.thrift.http.path</name><value>cliService</value></property>");
+    roleProperties.put("hive_hs2_config_safety_valve", hs2SafetyValveValue);
+    roleProperties.put("hive.server2.use.SSL", String.valueOf(enableSSL));
     ApiConfigList hiveRoleConfigList = createMockApiConfigList(roleProperties);
     mockClient.addResponse(ApiConfigList.class, new TestApiConfigListResponse(hiveRoleConfigList));
 
     // Invoke the service discovery
     ClouderaManagerServiceDiscovery cmsd = new ClouderaManagerServiceDiscovery(true);
-    ServiceDiscovery.Cluster cluster = cmsd.discover(gwConf, sdConfig, "test-cluster", mockClient);
+    ServiceDiscovery.Cluster cluster = cmsd.discover(gwConf, sdConfig, clusterName, mockClient);
     assertNotNull(cluster);
-    assertEquals("test-cluster", cluster.getName());
-    List<String> hiveURLs = cluster.getServiceURLs("HIVE");
-    assertNotNull(hiveURLs);
-    assertEquals(1, hiveURLs.size());
-    assertEquals("http://test-host-1:10001/cliService", hiveURLs.get(0));
+    return cluster;
   }
 
-  private ServiceDiscoveryConfig createMockDiscoveryConfig() {
+  private ServiceDiscovery.Cluster doTestHDFSDiscovery(final String clusterName,
+                                                       final String hostName,
+                                                       final String nameService,
+                                                       final String nnPort,
+                                                       final String dfsHttpPort) {
+    return doTestHDFSDiscovery(clusterName, hostName, nameService, nnPort, dfsHttpPort, null);
+  }
+
+  private ServiceDiscovery.Cluster doTestHDFSDiscovery(final String clusterName,
+                                                       final String hostName,
+                                                       final String nameService,
+                                                       final String nnPort,
+                                                       final String dfsHttpPort,
+                                                       final String dfsHttpsPort) {
+    return doTestHDFSDiscovery(clusterName, hostName, nameService, nnPort, dfsHttpPort, dfsHttpsPort, false);
+  }
+
+  private ServiceDiscovery.Cluster doTestHDFSDiscovery(final String  clusterName,
+                                                       final String  hostName,
+                                                       final String  nameService,
+                                                       final String  nnPort,
+                                                       final String  dfsHttpPort,
+                                                       final String  dfsHttpsPort,
+                                                       final boolean enableHA) {
+
+    GatewayConfig gwConf = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.replay(gwConf);
+
+    ServiceDiscoveryConfig sdConfig = createMockDiscoveryConfig();
+
+    // Create the test client for providing test response content
+    TestDiscoveryApiClient mockClient = new TestDiscoveryApiClient(sdConfig, null);
+
+    // Prepare the service list response for the cluster
+    ApiServiceList serviceList = EasyMock.createNiceMock(ApiServiceList.class);
+    EasyMock.expect(serviceList.getItems())
+        .andReturn(Collections.singletonList(createMockApiService("NAMENODE-1", "HDFS")))
+        .anyTimes();
+    EasyMock.replay(serviceList);
+    mockClient.addResponse(ApiServiceList.class, new TestApiServiceListResponse(serviceList));
+
+    // Prepare the HDFS service config response for the cluster
+    Map<String, String> serviceProps = new HashMap<>();
+    serviceProps.put("hdfs_hadoop_ssl_enabled", String.valueOf(dfsHttpsPort != null && !dfsHttpsPort.isEmpty()));
+    serviceProps.put("dfs_webhdfs_enabled", "true");
+    ApiServiceConfig hdfsServiceConfig = createMockApiServiceConfig(serviceProps);
+    mockClient.addResponse(ApiServiceConfig.class, new TestApiServiceConfigResponse(hdfsServiceConfig));
+
+    // Prepare the NameNode role
+    ApiRole nnRole = createMockApiRole("HDFS-1-NAMENODE-d0b64dd7b7611e22bc976ede61678d9e", "NAMENODE", hostName);
+    ApiRoleList nnRoleList = EasyMock.createNiceMock(ApiRoleList.class);
+    EasyMock.expect(nnRoleList.getItems()).andReturn(Collections.singletonList(nnRole)).anyTimes();
+    EasyMock.replay(nnRoleList);
+    mockClient.addResponse(ApiRoleList.class, new TestApiRoleListResponse(nnRoleList));
+
+    // Configure the NameNode role
+    Map<String, String> roleProperties = new HashMap<>();
+    roleProperties.put("dfs_federation_namenode_nameservice", nameService);
+    roleProperties.put("autofailover_enabled", String.valueOf(enableHA));
+    roleProperties.put("namenode_port", nnPort);
+    roleProperties.put("dfs_http_port", dfsHttpPort);
+    if (dfsHttpsPort != null && !dfsHttpsPort.isEmpty()) {
+      roleProperties.put("dfs_https_port", dfsHttpsPort);
+    }
+    ApiConfigList nnRoleConfigList = createMockApiConfigList(roleProperties);
+    mockClient.addResponse(ApiConfigList.class, new TestApiConfigListResponse(nnRoleConfigList));
+
+    // Invoke the service discovery
+    ClouderaManagerServiceDiscovery cmsd = new ClouderaManagerServiceDiscovery(true);
+    ServiceDiscovery.Cluster cluster = cmsd.discover(gwConf, sdConfig, clusterName, mockClient);
+    assertNotNull(cluster);
+    assertEquals(clusterName, cluster.getName());
+    return cluster;
+  }
+
+  private static ServiceDiscoveryConfig createMockDiscoveryConfig() {
     return createMockDiscoveryConfig("http://localhost:1234", "itsme");
   }
 
-  private ServiceDiscoveryConfig createMockDiscoveryConfig(String address, String username) {
+  private static ServiceDiscoveryConfig createMockDiscoveryConfig(String address, String username) {
     ServiceDiscoveryConfig config = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
     EasyMock.expect(config.getAddress()).andReturn(address).anyTimes();
     EasyMock.expect(config.getUser()).andReturn(username).anyTimes();
@@ -161,7 +299,7 @@ public class ClouderaManagerServiceDiscoveryTest {
     return config;
   }
 
-  private ApiService createMockApiService(String name, String type) {
+  private static ApiService createMockApiService(String name, String type) {
     ApiService s = EasyMock.createNiceMock(ApiService.class);
     EasyMock.expect(s.getName()).andReturn(name).anyTimes();
     EasyMock.expect(s.getType()).andReturn(type).anyTimes();
@@ -169,7 +307,7 @@ public class ClouderaManagerServiceDiscoveryTest {
     return s;
   }
 
-  private ApiRole createMockApiRole(String name, String type, String hostname) {
+  private static ApiRole createMockApiRole(String name, String type, String hostname) {
     ApiRole r = EasyMock.createNiceMock(ApiRole.class);
     EasyMock.expect(r.getName()).andReturn(name).anyTimes();
     EasyMock.expect(r.getType()).andReturn(type).anyTimes();
@@ -181,11 +319,11 @@ public class ClouderaManagerServiceDiscoveryTest {
     return r;
   }
 
-  private ApiServiceConfig createMockApiServiceConfig() {
+  private static ApiServiceConfig createMockApiServiceConfig() {
     return createMockApiServiceConfig(Collections.emptyMap());
   }
 
-  private ApiServiceConfig createMockApiServiceConfig(Map<String, String> properties) {
+  private static ApiServiceConfig createMockApiServiceConfig(Map<String, String> properties) {
     ApiServiceConfig serviceConfig = EasyMock.createNiceMock(ApiServiceConfig.class);
     List<ApiConfig> serviceConfigs = new ArrayList<>();
 
@@ -202,7 +340,7 @@ public class ClouderaManagerServiceDiscoveryTest {
     return serviceConfig;
   }
 
-  private ApiConfigList createMockApiConfigList(Map<String, String> properties) {
+  private static ApiConfigList createMockApiConfigList(Map<String, String> properties) {
     ApiConfigList configList = EasyMock.createNiceMock(ApiConfigList.class);
     List<ApiConfig> roleConfigs = new ArrayList<>();
 

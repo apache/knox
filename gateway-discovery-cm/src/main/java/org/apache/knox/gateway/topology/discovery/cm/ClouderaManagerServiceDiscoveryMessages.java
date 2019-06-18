@@ -36,8 +36,11 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   @Message(level = MessageLevel.INFO, text = "Discovered service role: {0} ({1})")
   void discoveredServiceRole(String roleName, String roleType);
 
+  @Message(level = MessageLevel.INFO, text = "Attempting to authenticate Knox using {0} ...")
+  void attemptingKerberosLogin(String loginConfigPath);
+
   @Message(level = MessageLevel.ERROR,
-      text = "Failed Kerberos login {0} ({1}): {2}")
+           text = "Failed Kerberos login {0} ({1}): {2}")
   void failedKerberosLogin(String jaasLoginConfig,
                            String entryName,
                            @StackTrace(level = MessageLevel.DEBUG) Exception e);
@@ -46,52 +49,52 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   void usingJAASConfigurationFileImplementation(String implementation);
 
   @Message(level = MessageLevel.ERROR,
-      text = "Failed to load JAAS configuration file implementation {0}: {1}")
+           text = "Failed to load JAAS configuration file implementation {0}: {1}")
   void failedToLoadJAASConfigurationFileImplementation(String implementationName,
                                                        @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.ERROR,
-      text = "Failed to instantiate JAAS configuration file implementation {0}: {1}")
+           text = "Failed to instantiate JAAS configuration file implementation {0}: {1}")
   void failedToInstantiateJAASConfigurationFileImplementation(String implementationName,
-                                                       @StackTrace(level = MessageLevel.DEBUG) Exception e);
+                                                              @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.ERROR, text = "No JAAS configuration file implementation found.")
   void noJAASConfigurationFileImplementation();
 
   @Message(level = MessageLevel.ERROR,
-      text = "Encountered an error during cluster ({0}) discovery: {1}")
+           text = "Encountered an error during cluster ({0}) discovery: {1}")
   void clusterDiscoveryError(String clusterName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.ERROR,
-      text = "Failed to access the service configurations for cluster ({0}) discovery")
+           text = "Failed to access the service configurations for cluster ({0}) discovery: {1}")
   void failedToAccessServiceConfigs(String clusterName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.ERROR,
-      text = "Failed to access the service role configurations for cluster ({0}) discovery")
+           text = "Failed to access the service role configurations for cluster ({0}) discovery: {1}")
   void failedToAccessServiceRoleConfigs(String clusterName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.ERROR,
-      text = "No address for Cloudera Manager service discovery has been configured.")
+           text = "No address for Cloudera Manager service discovery has been configured.")
   void missingDiscoveryAddress();
 
   @Message(level = MessageLevel.ERROR,
-      text = "No cluster for Cloudera Manager service discovery has been configured.")
+           text = "No cluster for Cloudera Manager service discovery has been configured.")
   void missingDiscoveryCluster();
 
   @Message(level = MessageLevel.ERROR,
-      text = "Encountered an error attempting to determine the user for alias {0} : {1}")
+           text = "Encountered an error attempting to determine the user for alias {0} : {1}")
   void aliasServiceUserError(String alias, String error);
 
   @Message(level = MessageLevel.ERROR,
-      text = "Encountered an error attempting to determine the password for alias {0} : {1}")
+           text = "Encountered an error attempting to determine the password for alias {0} : {1}")
   void aliasServicePasswordError(String alias, String error);
 
   @Message(level = MessageLevel.ERROR,
-      text = "No user configured for Cloudera Manager service discovery.")
+           text = "No user configured for Cloudera Manager service discovery.")
   void aliasServiceUserNotFound();
 
   @Message(level = MessageLevel.ERROR,
-      text = "No password configured for Cloudera Manager service discovery.")
+           text = "No password configured for Cloudera Manager service discovery.")
   void aliasServicePasswordNotFound();
 
 }
