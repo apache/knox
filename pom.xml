@@ -174,7 +174,7 @@
         <findsecbugs-plugin.version>1.9.0</findsecbugs-plugin.version>
         <forbiddenapis.version>2.6</forbiddenapis.version>
         <groovy.version>2.5.7</groovy.version>
-        <guava.version>27.1-jre</guava.version>
+        <guava.version>28.0-jre</guava.version>
         <hadoop.version>3.2.0</hadoop.version>
         <hamcrest.version>2.1</hamcrest.version>
         <hamcrest-json.version>0.2</hamcrest-json.version>
