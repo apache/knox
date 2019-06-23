@@ -25,10 +25,12 @@ limitations under the License.
         <exclude name="AccessorMethodGeneration" />
         <exclude name="ArrayIsStoredDirectly" />
         <exclude name="AvoidPrintStackTrace" />
+        <exclude name="AvoidReassigningLoopVariables" />
         <exclude name="AvoidReassigningParameters" />
         <exclude name="AvoidStringBufferField" />
         <exclude name="AvoidUsingHardCodedIP" />
         <exclude name="ConstantsInInterface" />
+        <exclude name="ForLoopVariableCount" />
         <exclude name="GuardLogStatement" />
         <exclude name="JUnitAssertionsShouldIncludeMessage" />
         <exclude name="JUnitTestContainsTooManyAsserts" />
@@ -40,6 +42,7 @@ limitations under the License.
         <exclude name="ReplaceHashtableWithMap" />
         <exclude name="SwitchStmtsShouldHaveDefault" />
         <exclude name="SystemPrintln" />
+        <exclude name="UseTryWithResources" />
         <exclude name="UseVarargs" />
     </rule>
 

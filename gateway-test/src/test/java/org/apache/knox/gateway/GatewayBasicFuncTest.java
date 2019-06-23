@@ -3578,8 +3578,6 @@ public class GatewayBasicFuncTest {
 //        .prettyPrint();
     driver.assertComplete();
 
-
-
 //    Authorize as a different (invalid) user
     setupResources();
     given()
@@ -3745,7 +3743,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  void setupResource(String serviceRole, String path){
+  private void setupResource(String serviceRole, String path){
     driver.getMock(serviceRole)
         .expect().method("GET")
         .pathInfo(path)
@@ -3757,8 +3755,7 @@ public class GatewayBasicFuncTest {
 //            .contentType(type.toString());
   }
 
-  void setupResources() {
-
+  private void setupResources() {
     driver.setResourceBase(GatewayBasicFuncTest.class);
 
     try {

@@ -20,7 +20,6 @@ package org.apache.knox.gateway.shell;
 import com.sun.security.auth.callback.TextCallbackHandler;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
@@ -392,51 +391,46 @@ public class KnoxSession implements Closeable {
 
     discoverTruststoreDetails(clientContext);
 
-    InputStream is = null;
-    try {
-      ks = KeyStore.getInstance("JKS");
-      File file = new File(clientContext.connection().truststoreLocation());
-      if (file.exists()) {
-        truststorePass = clientContext.connection().truststorePass();
-      } else {
-        String truststore = System.getProperty("javax.net.ssl.trustStore");
-        truststorePass = System.getProperty("javax.net.ssl.trustStorePassword", "changeit");
-        if (truststore == null) {
-          String truststoreDir = System.getProperty("java.home");
-          truststore = truststoreDir + File.separator + "lib" + File.separator
-              + "security" + File.separator + "cacerts";
-        }
-        file = new File(truststore);
+    File file = new File(clientContext.connection().truststoreLocation());
+    if (file.exists()) {
+      truststorePass = clientContext.connection().truststorePass();
+    } else {
+      String truststore = System.getProperty("javax.net.ssl.trustStore");
+      truststorePass = System.getProperty("javax.net.ssl.trustStorePassword", "changeit");
+      if (truststore == null) {
+        String truststoreDir = System.getProperty("java.home");
+        truststore = truststoreDir + File.separator + "lib" + File.separator
+                         + "security" + File.separator + "cacerts";
       }
+      file = new File(truststore);
+    }
 
-      if (file.exists()) {
-        is = Files.newInputStream(file.toPath());
+    if (file.exists()) {
+      try (InputStream is = Files.newInputStream(file.toPath())) {
+        ks = KeyStore.getInstance("JKS");
         ks.load(is, truststorePass.toCharArray());
+      } catch (KeyStoreException e) {
+        throw new KnoxShellException("Unable to create keystore of expected type.", e);
+      } catch (FileNotFoundException e) {
+        throw new KnoxShellException("Unable to read truststore."
+            + " Please import the gateway-identity certificate into the JVM"
+            + " truststore or set the truststore location ENV variables.", e);
+      } catch (NoSuchAlgorithmException e) {
+        throw new KnoxShellException("Unable to load the truststore."
+            + " Please import the gateway-identity certificate into the JVM"
+            + " truststore or set the truststore location ENV variables.", e);
+      } catch (CertificateException e) {
+        throw new KnoxShellException("Certificate cannot be found in the truststore."
+            + " Please import the gateway-identity certificate into the JVM"
+            + " truststore or set the truststore location ENV variables.", e);
+      } catch (IOException e) {
+        throw new KnoxShellException("Unable to load truststore."
+            + " May be related to password setting or truststore format.", e);
       }
-      else {
-        throw new KnoxShellException("Unable to find a truststore for secure login."
-            + "Please import the gateway-identity certificate into the JVM"
-            + " truststore or set the truststore location ENV variables.");
-      }
-    } catch (KeyStoreException e) {
-      throw new KnoxShellException("Unable to create keystore of expected type.", e);
-    } catch (FileNotFoundException e) {
-      throw new KnoxShellException("Unable to read truststore."
-          + " Please import the gateway-identity certificate into the JVM"
-          + " truststore or set the truststore location ENV variables.", e);
-    } catch (NoSuchAlgorithmException e) {
-      throw new KnoxShellException("Unable to load the truststore."
-          + " Please import the gateway-identity certificate into the JVM"
-          + " truststore or set the truststore location ENV variables.", e);
-    } catch (CertificateException e) {
-      throw new KnoxShellException("Certificate cannot be found in the truststore."
-          + " Please import the gateway-identity certificate into the JVM"
-          + " truststore or set the truststore location ENV variables.", e);
-    } catch (IOException e) {
-      throw new KnoxShellException("Unable to load truststore."
-          + " May be related to password setting or truststore format.", e);
-    } finally {
-      IOUtils.closeQuietly(is);
+    } else {
+      throw new KnoxShellException("Unable to find a truststore for secure login."
+                                       + "Please import the gateway-identity certificate into the JVM"
+                                       + " truststore or set the truststore location ENV variables.");
     }
 
     return ks;

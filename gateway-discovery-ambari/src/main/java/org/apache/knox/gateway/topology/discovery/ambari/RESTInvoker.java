@@ -83,7 +83,6 @@ class RESTInvoker {
     JSONObject invoke(String url, String username, String passwordAlias) {
         JSONObject result = null;
 
-        CloseableHttpResponse response = null;
         try {
             HttpGet request = new HttpGet(url);
 
@@ -138,31 +137,23 @@ class RESTInvoker {
             // Ambari CSRF protection
             request.addHeader("X-Requested-By", "Knox");
 
-            response = httpClient.execute(request);
-
-            if (HttpStatus.SC_OK == response.getStatusLine().getStatusCode()) {
+            try(CloseableHttpResponse response = httpClient.execute(request)){
+              if (HttpStatus.SC_OK == response.getStatusLine().getStatusCode()) {
                 HttpEntity entity = response.getEntity();
                 if (entity != null) {
-                    result = (JSONObject) JSONValue.parse((EntityUtils.toString(entity)));
-                    log.debugJSON(result.toJSONString());
+                  result = (JSONObject) JSONValue.parse((EntityUtils.toString(entity)));
+                  log.debugJSON(result.toJSONString());
                 } else {
-                    log.noJSON(url);
+                  log.noJSON(url);
                 }
-            } else {
+              } else {
                 log.unexpectedRestResponseStatusCode(url, response.getStatusLine().getStatusCode());
+              }
             }
         } catch (ConnectTimeoutException e) {
             log.restInvocationTimedOut(url, e);
         } catch (IOException e) {
             log.restInvocationError(url, e);
-        } finally {
-            if(response != null) {
-                try {
-                    response.close();
-                } catch (IOException e) {
-                    // Ignore
-                }
-            }
         }
         return result;
     }

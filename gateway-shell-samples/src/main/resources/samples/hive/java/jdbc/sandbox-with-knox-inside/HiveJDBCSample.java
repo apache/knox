@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.apache.knox.gateway.shell.hive
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -28,12 +29,7 @@ import java.util.logging.Logger;
 import org.apache.knox.gateway.shell.Credentials;
 
 public class HiveJDBCSample {
-
   public static void main( String[] args ) {
-    Connection connection = null;
-    Statement statement = null;
-    ResultSet resultSet = null;
-
     try {
       String gatewayHost = "localhost";
       int gatewayPort = 8443;
@@ -54,53 +50,37 @@ public class HiveJDBCSample {
       Class.forName( "org.apache.hive.jdbc.HiveDriver" );
 
       // Configure JDBC connection
-      connection = DriverManager.getConnection( connectionString, user, password );
+      try(Connection connection = DriverManager.getConnection(connectionString, username, pass)) {
+        try (Statement statement = connection.createStatement()) {
+          // Disable Hive authorization - This can be ommited if Hive authorization is configured properly
+          statement.execute("set hive.security.authorization.enabled=false");
 
-      statement = connection.createStatement();
+          // Drop sample table to ensure repeatability
+          statement.execute("DROP TABLE logs");
 
-      // Disable Hive authorization - This can be ommited if Hive authorization is configured properly
-      statement.execute( "set hive.security.authorization.enabled=false" );
+          // Create sample table
+          statement.execute("CREATE TABLE logs(column1 string, column2 string, column3 string, column4 string, column5 string, column6 string, column7 string) ROW FORMAT DELIMITED FIELDS TERMINATED BY ' '");
 
-      // Drop sample table to ensure repeatability
-      statement.execute( "DROP TABLE logs" );
+          // Load data into Hive from file /tmp/log.txt which is placed on the local file system
+          statement.execute("LOAD DATA LOCAL INPATH '/tmp/sample.log' OVERWRITE INTO TABLE logs");
 
-      // Create sample table
-      statement.execute( "CREATE TABLE logs(column1 string, column2 string, column3 string, column4 string, column5 string, column6 string, column7 string) ROW FORMAT DELIMITED FIELDS TERMINATED BY ' '" );
-
-      // Load data into Hive from file /tmp/log.txt which is placed on the local file system
-      statement.execute( "LOAD DATA LOCAL INPATH '/tmp/sample.log' OVERWRITE INTO TABLE logs" );
-
-      resultSet = statement.executeQuery( "SELECT * FROM logs" );
-
-      while ( resultSet.next() ) {
-        System.out.println( resultSet.getString( 1 ) + " --- " + resultSet.getString( 2 ) );
+          try (ResultSet resultSet = statement.executeQuery("SELECT * FROM logs")) {
+            while (resultSet.next()) {
+              System.out.println(resultSet.getString(1) + " --- " + resultSet.getString(2));
+            }
+          } catch (SQLException ex) {
+            Logger.getLogger(HiveJDBCSample.class.getName()).log(Level.SEVERE, null, ex);
+          }
+        } catch (SQLException ex) {
+          Logger.getLogger(HiveJDBCSample.class.getName()).log(Level.SEVERE, null, ex);
+        }
+      } catch ( SQLException ex ) {
+        Logger.getLogger( HiveJDBCSample.class.getName() ).log( Level.SEVERE, null, ex );
       }
     } catch ( ClassNotFoundException ex ) {
       Logger.getLogger( HiveJDBCSample.class.getName() ).log( Level.SEVERE, null, ex );
     } catch ( SQLException ex ) {
       Logger.getLogger( HiveJDBCSample.class.getName() ).log( Level.SEVERE, null, ex );
-    } finally {
-      if ( resultSet != null ) {
-        try {
-          resultSet.close();
-        } catch ( SQLException ex ) {
-          Logger.getLogger( HiveJDBCSample.class.getName() ).log( Level.SEVERE, null, ex );
-        }
-      }
-      if ( statement != null ) {
-        try {
-          statement.close();
-        } catch ( SQLException ex ) {
-          Logger.getLogger( HiveJDBCSample.class.getName() ).log( Level.SEVERE, null, ex );
-        }
-      }
-      if ( connection != null ) {
-        try {
-          connection.close();
-        } catch ( SQLException ex ) {
-          Logger.getLogger( HiveJDBCSample.class.getName() ).log( Level.SEVERE, null, ex );
-        }
-      }
     }
   }
 }
