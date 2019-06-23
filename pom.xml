@@ -194,7 +194,7 @@
         <jaxws-ri.version>2.3.1</jaxws-ri.version>
         <jericho-html.version>3.4</jericho-html.version>
         <jersey.version>2.6</jersey.version>
-        <jetty.version>9.4.15.v20190215</jetty.version>
+        <jetty.version>9.4.19.v20190610</jetty.version>
         <jline.version>2.14.6</jline.version>
         <jna.version>5.3.1</jna.version>
         <joda-time.version>2.10.1</joda-time.version>
