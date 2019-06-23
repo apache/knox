@@ -181,7 +181,7 @@
         <httpclient.version>4.5.6</httpclient.version>
         <httpcore.version>4.4.11</httpcore.version>
         <j2e-pac4j.version>4.1.0</j2e-pac4j.version>
-        <jackson.version>2.9.8</jackson.version>
+        <jackson.version>2.9.9</jackson.version>
         <jacoco-maven-plugin.version>0.8.3</jacoco-maven-plugin.version>
         <jansi.version>1.17.1</jansi.version>
         <javax.activation.version>1.2.0</javax.activation.version>
