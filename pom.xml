@@ -150,7 +150,7 @@
         <asm.version>7.1</asm.version>
         <bcprov-jdk15on.version>1.61</bcprov-jdk15on.version>
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
-        <cglib.version>3.2.10</cglib.version>
+        <cglib.version>3.2.12</cglib.version>
         <checkstyle.version>8.19</checkstyle.version>
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
         <commons-cli.version>1.4</commons-cli.version>
