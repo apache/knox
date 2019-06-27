@@ -80,6 +80,19 @@
                 <div>
                     <table>
                         <tr>
+                            <td><strong>Type</strong></td>
+                            <td>
+                              <span>
+                                <select id="select" autofocus required class="md-select form-control"
+                                        [(ngModel)]="descriptor.discoveryType" (change)="descriptor.setDirty()">
+                                  <option *ngFor="let typeOption of resourceService.getSupportedDiscoveryTypes()"
+                                          class="md-option"
+                                          [value]="typeOption">{{typeOption}}</option>
+                                </select>
+                              </span>
+                            </td>
+                        </tr>
+                        <tr>
                             <td><strong>Address</strong></td>
                             <td>
                 <span>
@@ -95,8 +108,6 @@
                 <span>
                   <input type="text" [(ngModel)]="descriptor.discoveryCluster">
                 </span>
-                                <span *ngIf="!isValidDiscoveryCluster()"
-                                      style="color: red">invalid</span>
                             </td>
                         </tr>
                         <tr>

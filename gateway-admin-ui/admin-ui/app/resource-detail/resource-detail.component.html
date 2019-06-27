@@ -355,6 +355,26 @@
             </div>
             <div class="panel-body" *ngIf="isShowServiceDiscovery()">
                 <table class="table table-sm">
+                    <!-- Discovery type field -->
+                    <tr>
+                        <td width="20%">
+                            <span>
+                              <strong>Type</strong>
+                            </span>
+                        </td>
+                        <td>
+                            <span>
+                              <select id="select" autofocus required class="md-select form-control"
+                                      [(ngModel)]="descriptor.discoveryType" (change)="descriptor.setDirty()">
+                                <option *ngFor="let typeOption of resourceService.getSupportedDiscoveryTypes()"
+                                        class="md-option"
+                                        [value]="typeOption"
+                                        [selected]="descriptor.discoveryType === typeOption">{{typeOption}}</option>
+                              </select>
+                            </span>
+                        </td>
+                    </tr>
+                    <!-- Discovery address field -->
                     <tr>
                         <td width="20%">
               <span [class]="!editModeAddress && !descriptor.discoveryAddress ? 'inline-editable' : ''"
@@ -378,6 +398,7 @@
               </span>
                         </td>
                     </tr>
+                    <!-- Discovery cluster field -->
                     <tr>
                         <td width="20%">
               <span [class]="!editModeCluster && !descriptor.discoveryCluster ? 'inline-editable' : ''"
@@ -401,6 +422,7 @@
               </span>
                         </td>
                     </tr>
+                    <!-- Discovery user field -->
                     <tr>
                         <td width="20%">
               <span [class]="!editModeUser && !descriptor.discoveryUser ? 'inline-editable' : ''"
@@ -424,6 +446,7 @@
               </span>
                         </td>
                     </tr>
+                    <!-- Discovery password alias field -->
                     <tr>
                         <td width="20%">
               <span [class]="!editModeAlias && !descriptor.discoveryPassAlias ? 'inline-editable' : ''"

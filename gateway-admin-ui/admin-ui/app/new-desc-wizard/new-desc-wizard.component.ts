@@ -198,7 +198,6 @@ export class NewDescWizardComponent implements OnInit {
             // Validate the discovery address
             if (this.descriptor.discoveryAddress) {
                 isValid = isValid && this.isValidDiscoveryAddress();
-                isValid = isValid && this.isValidDiscoveryCluster();
             }
         } else {
             isValid = false;
@@ -243,11 +242,4 @@ export class NewDescWizardComponent implements OnInit {
         }
     }
 
-    isValidDiscoveryCluster(): boolean {
-        if (this.descriptor.discoveryCluster) {
-            return (ValidationUtils.isValidResourceName(this.descriptor.discoveryCluster));
-        } else {
-            return true;
-        }
-    }
 }

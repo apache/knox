@@ -17,6 +17,7 @@
 import {Service} from '../resource/service';
 
 export class Descriptor {
+    discoveryType: string;
     discoveryAddress: string;
     discoveryUser: string;
     discoveryPassAlias: string;
