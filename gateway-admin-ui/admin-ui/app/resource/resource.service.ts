@@ -26,6 +26,9 @@ import {Descriptor} from '../resource-detail/descriptor';
 @Injectable()
 export class ResourceService {
 
+    // TODO: PJZ: Get this list dynamically?
+    private static discoveryTypes: Array<string> = ['ClouderaManager', 'Ambari'];
+
     apiUrl = '/gateway/manager/api/v1/';
     providersUrl = this.apiUrl + 'providerconfig';
     descriptorsUrl = this.apiUrl + 'descriptors';
@@ -44,6 +47,10 @@ export class ResourceService {
     changedProviderConfiguration$ = this.changedProviderConfigurationSource.asObservable();
 
     constructor(private http: HttpClient) {
+    }
+
+    getSupportedDiscoveryTypes(): string[] {
+        return ResourceService.discoveryTypes;
     }
 
     getResources(resType: string): Promise<Resource[]> {
@@ -184,6 +191,9 @@ export class ResourceService {
         let serialized: string;
 
         let tmp = {};
+        if (desc.discoveryType) {
+            tmp['discovery-type'] = desc.discoveryType;
+        }
         if (desc.discoveryAddress) {
             tmp['discovery-address'] = desc.discoveryAddress;
         }
