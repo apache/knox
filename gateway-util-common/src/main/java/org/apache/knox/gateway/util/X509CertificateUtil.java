@@ -179,6 +179,7 @@ public class X509CertificateUtil {
       // Pull the hostname out of the DN
       String hostname = dn.split(",", 2)[0].split("=", 2)[1];
       if("localhost".equals(hostname)) {
+        // Add short hostname
         String detectedHostname = InetAddress.getLocalHost().getHostName();
         // DNSName dnsName = new DNSName(detectedHostname);
         Object dnsNameObject = dnsNameConstr.newInstance(detectedHostname);
@@ -186,6 +187,17 @@ public class X509CertificateUtil {
         Object generalNameObject = generalNameConstr.newInstance(dnsNameObject);
         // generalNames.add(generalName);
         generalNamesAdd.invoke(generalNamesObject, generalNameObject);
+
+        // Add fully qualified hostname
+        String detectedFullyQualifiedHostname = InetAddress.getLocalHost().getCanonicalHostName();
+        // DNSName dnsName = new DNSName(detectedFullyQualifiedHostname);
+        Object fullyQualifiedDnsNameObject = dnsNameConstr.newInstance(
+            detectedFullyQualifiedHostname);
+        // GeneralName generalName = new GeneralName(fullyQualifiedDnsNameObject);
+        Object fullyQualifiedGeneralNameObject = generalNameConstr.newInstance(
+            fullyQualifiedDnsNameObject);
+        // generalNames.add(fullyQualifiedGeneralNameObject);
+        generalNamesAdd.invoke(generalNamesObject, fullyQualifiedGeneralNameObject);
       }
 
       // DNSName dnsName = new DNSName(hostname);
