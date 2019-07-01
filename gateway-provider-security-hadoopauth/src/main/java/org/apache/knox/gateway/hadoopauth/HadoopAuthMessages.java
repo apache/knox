@@ -20,9 +20,19 @@ package org.apache.knox.gateway.hadoopauth;
 import org.apache.knox.gateway.i18n.messages.Message;
 import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
+import org.apache.knox.gateway.i18n.messages.StackTrace;
 
 @Messages(logger="org.apache.knox.gateway.provider.global.hadoopauth")
 public interface HadoopAuthMessages {
   @Message( level = MessageLevel.DEBUG, text = "Hadoop Authentication Asserted Principal: {0}" )
   void hadoopAuthAssertedPrincipal(String name);
+
+  @Message( level = MessageLevel.DEBUG, text = "doAsUser = {0}, RemoteUser = {1} , RemoteAddress = {2}" )
+  void hadoopAuthDoAsUser(String doAsUser, String remoteUser, String remoteAddr);
+
+  @Message( level = MessageLevel.DEBUG, text = "Proxy user Authentication successful" )
+  void hadoopAuthProxyUserSuccess();
+
+  @Message( level = MessageLevel.DEBUG, text = "Proxy user Authentication failed: {0}" )
+  void hadoopAuthProxyUserFailed(@StackTrace Throwable t);
 }
