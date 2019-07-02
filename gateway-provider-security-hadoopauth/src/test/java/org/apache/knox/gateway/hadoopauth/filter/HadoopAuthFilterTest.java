@@ -17,21 +17,29 @@
  */
 package org.apache.knox.gateway.hadoopauth.filter;
 
-import org.apache.knox.gateway.deploy.DeploymentContext;
-import org.apache.knox.gateway.services.ServiceType;
-import org.apache.knox.gateway.services.GatewayServices;
+import static org.easymock.EasyMock.anyString;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.createMockBuilder;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.getCurrentArguments;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.impl.DefaultCryptoService;
 import org.apache.knox.gateway.topology.Topology;
-import org.easymock.EasyMock;
 import org.junit.Test;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
-import java.util.Enumeration;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
-
-import static org.junit.Assert.assertEquals;
 
 public class HadoopAuthFilterTest {
   @Test
@@ -39,66 +47,92 @@ public class HadoopAuthFilterTest {
     String aliasKey = "signature.secret";
     String aliasConfigKey = "${ALIAS=" + aliasKey + "}";
     String aliasValue = "password";
+    String clusterName = "Sample";
 
     Topology topology = new Topology();
-    topology.setName("Sample");
+    topology.setName(clusterName);
 
-    DeploymentContext context = EasyMock.createNiceMock(DeploymentContext.class);
-    EasyMock.expect(context.getTopology()).andReturn(topology).anyTimes();
-    EasyMock.replay(context);
-
-    String clusterName = context.getTopology().getName();
-
-    AliasService as = EasyMock.createNiceMock(AliasService.class);
-    EasyMock.expect(as.getPasswordFromAliasForCluster(clusterName, aliasKey))
-        .andReturn(aliasValue.toCharArray()).anyTimes();
-    EasyMock.replay(as);
-    DefaultCryptoService cryptoService = new DefaultCryptoService();
-    cryptoService.setAliasService(as);
-
-    GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
-    EasyMock.expect(gatewayServices.getService(ServiceType.CRYPTO_SERVICE)).andReturn(cryptoService).anyTimes();
-
-    HadoopAuthFilter hadoopAuthFilter = new HadoopAuthFilter();
+    AliasService as = createMock(AliasService.class);
+    expect(as.getPasswordFromAliasForCluster(clusterName, aliasKey))
+        .andReturn(aliasValue.toCharArray()).atLeastOnce();
 
     String configPrefix = "hadoop.auth.config.";
 
-    Properties props = new Properties();
+    Map<String, String> props = new HashMap<>();
     props.put("clusterName", clusterName);
     props.put(configPrefix + "signature.secret", aliasConfigKey);
     props.put(configPrefix + "test", "abc");
 
-    FilterConfig filterConfig = new HadoopAuthTestFilterConfig(props);
+    FilterConfig filterConfig = createMock(FilterConfig.class);
+    expect(filterConfig.getInitParameter(anyString()))
+        .andAnswer(() -> props.get(getCurrentArguments()[0].toString()))
+        .atLeastOnce();
+    expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(props.keySet())).atLeastOnce();
+
+    replay(filterConfig, as);
+
+    HadoopAuthFilter hadoopAuthFilter = new HadoopAuthFilter();
+
     Properties configuration = hadoopAuthFilter.getConfiguration(as, configPrefix, filterConfig);
     assertEquals(aliasValue, configuration.getProperty(aliasKey));
     assertEquals("abc", configuration.getProperty("test"));
+
+    verify(filterConfig, as);
   }
 
-  private static class HadoopAuthTestFilterConfig implements FilterConfig {
-    Properties props;
+  @Test
+  public void testHadoopAuthFilterIgnoreDoAs() throws Exception {
+    Topology topology = new Topology();
+    topology.setName("Sample");
 
-    HadoopAuthTestFilterConfig(Properties props) {
-      this.props = props;
-    }
+    ServletContext servletContext = createMock(ServletContext.class);
+    expect(servletContext.getAttribute("signer.secret.provider.object")).andReturn(null).atLeastOnce();
 
-    @Override
-    public String getFilterName() {
-      return null;
-    }
+    FilterConfig filterConfig = createMock(FilterConfig.class);
+    expect(filterConfig.getInitParameter("config.prefix"))
+        .andReturn("some.prefix")
+        .atLeastOnce();
+    expect(filterConfig.getInitParameterNames())
+        .andReturn(Collections.enumeration(Collections.singleton(GatewayConfig.PROXYUSER_SERVICES_IGNORE_DOAS)))
+        .atLeastOnce();
+    expect(filterConfig.getInitParameter(GatewayConfig.PROXYUSER_SERVICES_IGNORE_DOAS))
+        .andReturn("Knox, hdfs,TesT") // Spacing and case set on purpose
+        .atLeastOnce();
+    expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
 
-    @Override
-    public ServletContext getServletContext() {
-      return null;
-    }
+    Properties configProperties = createMock(Properties.class);
+    expect(configProperties.getProperty("signature.secret.file")).andReturn("signature.secret.file").atLeastOnce();
+    expect(configProperties.getProperty(anyString(), anyString())).andAnswer(() -> {
+      Object[] args = getCurrentArguments();
 
-    @Override
-    public String getInitParameter(String name) {
-      return props.getProperty(name, null);
-    }
+      if ("type".equals(args[0])) {
+        return "simple"; // This is "simple", rather than "kerberos" to avoid the super class' init logic
+      } else {
+        return (String) args[1];
+      }
+    }).atLeastOnce();
 
-    @Override
-    public Enumeration<String> getInitParameterNames() {
-      return (Enumeration<String>)props.propertyNames();
-    }
+    HadoopAuthFilter hadoopAuthFilter = createMockBuilder(HadoopAuthFilter.class)
+        .addMockedMethod("getConfiguration", String.class, FilterConfig.class)
+        .withConstructor()
+        .createMock();
+    expect(hadoopAuthFilter.getConfiguration(eq("some.prefix."), eq(filterConfig)))
+        .andReturn(configProperties)
+        .atLeastOnce();
+
+    replay(filterConfig, configProperties, hadoopAuthFilter, servletContext);
+
+    hadoopAuthFilter.init(filterConfig);
+
+    assertTrue(hadoopAuthFilter.ignoreDoAs("knox"));
+    assertTrue(hadoopAuthFilter.ignoreDoAs("hdfs"));
+    assertTrue(hadoopAuthFilter.ignoreDoAs("test"));
+    assertTrue(hadoopAuthFilter.ignoreDoAs("TEST"));
+    assertTrue(hadoopAuthFilter.ignoreDoAs(null));
+    assertTrue(hadoopAuthFilter.ignoreDoAs(""));
+    assertFalse(hadoopAuthFilter.ignoreDoAs("hive"));
+    assertFalse(hadoopAuthFilter.ignoreDoAs("HivE"));
+
+    verify(filterConfig, configProperties, hadoopAuthFilter, servletContext);
   }
 }
