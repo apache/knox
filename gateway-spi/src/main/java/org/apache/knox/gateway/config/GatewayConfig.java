@@ -21,6 +21,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface GatewayConfig {
 
@@ -94,6 +95,8 @@ public interface GatewayConfig {
   String REMOTE_CONFIG_REGISTRY_KEYTAB = "keytab";
   String REMOTE_CONFIG_REGISTRY_USE_KEYTAB = "useKeytab";
   String REMOTE_CONFIG_REGISTRY_USE_TICKET_CACHE = "useTicketCache";
+
+  String PROXYUSER_SERVICES_IGNORE_DOAS = "gateway.proxyuser.services.ignore.doas";
 
   /**
    * The location of the gateway configuration.
@@ -617,5 +620,17 @@ public interface GatewayConfig {
    */
   List<String> getXForwardContextAppendServices();
 
-
+  /**
+   * Returns a set of service principal names that indicate which services to ignore doAs requests.
+   * <p>
+   * If a service in the returned set sends a Kerberos-authenticated request to the Gateway, the doAs
+   * query parameter is to be ignored; thus leaving the authenticated user details intact.
+   * <p>
+   * If the (authenticated) service is not authorized to set the specified proxy user (see information
+   * related to hadoop.proxyuser.... properties) an error will not be returned since the request to
+   * impersonate users is to be ignored.
+   *
+   * @return a set of service principal names that indicate which services to ignore doAs request
+   */
+  Set<String> getServicesToIgnoreDoAs();
 }

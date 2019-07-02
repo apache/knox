@@ -40,9 +40,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -1080,5 +1082,17 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     } else {
       return new ArrayList<>();
     }
+  }
+
+  @Override
+  public Set<String> getServicesToIgnoreDoAs() {
+    Set<String> set = new HashSet<>();
+    String value = get( PROXYUSER_SERVICES_IGNORE_DOAS );
+
+    if (value != null) {
+      set.addAll(Arrays.asList(value.trim().toLowerCase(Locale.ROOT).split("\\s*,\\s*")));
+    }
+
+    return set;
   }
 }

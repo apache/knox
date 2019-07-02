@@ -34,11 +34,19 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 public abstract class AbstractRequest<T> {
+  private static final String PARAMETER_NAME_DOAS = "doAs";
 
-  private KnoxSession session;
+  private final KnoxSession session;
+
+  private final String doAsUser;
 
   protected AbstractRequest( KnoxSession session ) {
+    this(session, null);
+  }
+
+  protected AbstractRequest( KnoxSession session, String doAsUser ) {
     this.session = session;
+    this.doAsUser = doAsUser;
   }
 
   protected KnoxSession hadoop() {
@@ -57,7 +65,13 @@ public abstract class AbstractRequest<T> {
   }
 
   protected URIBuilder uri( String... parts ) throws URISyntaxException {
-    return new URIBuilder( session.base() + StringUtils.join( parts ) );
+    URIBuilder builder = new URIBuilder(session.base() + StringUtils.join(parts));
+
+    if(StringUtils.isNotEmpty(doAsUser)) {
+      builder.addParameter(PARAMETER_NAME_DOAS, doAsUser);
+    }
+
+    return builder;
   }
 
   protected void addQueryParam( URIBuilder uri, String name, Object value ) {
@@ -73,6 +87,10 @@ public abstract class AbstractRequest<T> {
   }
 
   protected abstract Callable<T> callable();
+
+  public KnoxSession getSession() {
+    return session;
+  }
 
   public T now() throws KnoxShellException {
     try {
@@ -97,4 +115,7 @@ public abstract class AbstractRequest<T> {
     } );
   }
 
+  public String getDoAsUser() {
+    return doAsUser;
+  }
 }
