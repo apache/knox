@@ -162,4 +162,8 @@
         <url>http://localhost:8090</url>
     </service>
 
+    <service>
+        <role>HUE</role>
+        <url>http://localhost:8889</url>
+    </service>
 </topology>
