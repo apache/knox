@@ -15,6 +15,10 @@
    limitations under the License.
 -->
 <rules>
+    <!-- KNOX-1918 prevent global HDFS rules from triggering -->
+    <rule dir="OUT" name="ATLAS-API/atlas/outbound" pattern="hdfs://{host}/{path=**}?{**}">
+        <rewrite template="hdfs://{host}/{path=**}?{**}"/>
+    </rule>
     <rule dir="IN" name="ATLAS-API/atlas/inbound" pattern="*://*:*/**/atlas/api/{path=**}?{**}">
         <rewrite template="{$serviceUrl[ATLAS-API]}/api/{path=**}?{**}"/>
     </rule>
