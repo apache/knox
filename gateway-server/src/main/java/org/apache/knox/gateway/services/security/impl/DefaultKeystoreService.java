@@ -472,8 +472,11 @@ public class DefaultKeystoreService implements KeystoreService, Service {
 
       // If the file does not exist, create an empty keystore
       if (Files.exists(keyStoreFilePath)) {
-        try (InputStream input = Files.newInputStream(keyStoreFilePath)) {
-          keyStore.load(input, password);
+        try (FileChannel fileChannel = FileChannel.open(keyStoreFilePath, StandardOpenOption.READ)) {
+          fileChannel.lock(0L, Long.MAX_VALUE, true);
+          try (InputStream input = Channels.newInputStream(fileChannel)) {
+            keyStore.load(input, password);
+          }
         }
       } else {
         keyStore.load(null, password);
