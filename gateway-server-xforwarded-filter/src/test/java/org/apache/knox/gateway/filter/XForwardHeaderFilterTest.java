@@ -33,7 +33,7 @@ public class XForwardHeaderFilterTest {
 
   public static class AssertXForwardedHeaders extends TestFilterAdapter {
     @Override
-    public void doFilter( HttpServletRequest request, HttpServletResponse response, FilterChain chain ) throws IOException, ServletException {
+    public void doFilter( HttpServletRequest request, HttpServletResponse response, FilterChain chain ) {
       assertThat( request.getHeader( "X-Forwarded-For" ), is( "127.0.0.1" ) );
       assertThat( request.getHeader( "X-Forwarded-Proto" ), is( "http" ) );
       assertThat( request.getHeader( "X-Forwarded-Port" ), is( "8888" ) );
@@ -66,7 +66,7 @@ public class XForwardHeaderFilterTest {
 
   public static class AssertProxiedXForwardedHeaders extends TestFilterAdapter {
     @Override
-    public void doFilter( HttpServletRequest request, HttpServletResponse response, FilterChain chain ) throws IOException, ServletException {
+    public void doFilter( HttpServletRequest request, HttpServletResponse response, FilterChain chain ) {
       assertThat( request.getHeader( "X-Forwarded-For" ), is( "127.0.0.0,127.0.0.1" ) );
       assertThat( request.getHeader( "X-Forwarded-Proto" ), is( "https" ) );
       assertThat( request.getHeader( "X-Forwarded-Port" ), is( "9999" ) );
@@ -83,7 +83,6 @@ public class XForwardHeaderFilterTest {
    * @since 1.3.0
    */
   public static class DummyXForwardedHeaderFilter extends XForwardedHeaderFilter {
-
     boolean isAppendServiceName;
     String serviceContext;
 
@@ -94,8 +93,10 @@ public class XForwardHeaderFilterTest {
     }
 
     @Override
-    protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-      chain.doFilter( new XForwardedHeaderRequestWrapper( request ,  this.isAppendServiceName, this.serviceContext), response );
+    protected void doFilter(HttpServletRequest request, HttpServletResponse response,
+                            FilterChain chain) throws IOException, ServletException {
+      chain.doFilter( new XForwardedHeaderRequestWrapper( request ,
+          this.isAppendServiceName, this.serviceContext), response );
     }
   }
 
@@ -104,7 +105,6 @@ public class XForwardHeaderFilterTest {
    * @since 1.3.0
    */
   public static class AssertProxiedXForwardedContextHeaders extends TestFilterAdapter {
-
     boolean appendServiceName;
     String serviceContext;
 
@@ -115,7 +115,7 @@ public class XForwardHeaderFilterTest {
     }
 
     @Override
-    public void doFilter( HttpServletRequest request, HttpServletResponse response, FilterChain chain ) throws IOException, ServletException {
+    public void doFilter( HttpServletRequest request, HttpServletResponse response, FilterChain chain ) {
       assertThat( request.getHeader( "X-Forwarded-For" ), is( "127.0.0.0,127.0.0.1" ) );
       assertThat( request.getHeader( "X-Forwarded-Proto" ), is( "https" ) );
       assertThat( request.getHeader( "X-Forwarded-Port" ), is( "9999" ) );
@@ -129,7 +129,6 @@ public class XForwardHeaderFilterTest {
       } else {
         assertThat( request.getHeader( "X-Forwarded-Context" ), is( "/gateway/sandbox" ) );
       }
-
     }
   }
 
@@ -163,12 +162,8 @@ public class XForwardHeaderFilterTest {
     chain.doFilter( request, response );
   }
 
-  /**
-   * Test the case where service name is appended to X-Forwarded-Context
-   * along with request context.
-   * @throws ServletException
-   * @throws IOException
-   * @since 1.3.0
+  /*
+   * Test the case where service name is appended to X-Forwarded-Context along with request context.
    */
   @Test
   public void testProxiedXForwardContextHeaders() throws ServletException, IOException {
@@ -200,12 +195,8 @@ public class XForwardHeaderFilterTest {
     chain.doFilter( request, response );
   }
 
-  /**
-   * Test the case where service name is appended to X-Forwarded-Context
-   * along with request context.
-   * @throws ServletException
-   * @throws IOException
-   * @since 1.3.0
+  /*
+   * Test the case where service name is appended to X-Forwarded-Context along with request context.
    */
   @Test
   public void testProxiedXForwardContextHeadersServiceParam() throws ServletException, IOException {
@@ -237,13 +228,8 @@ public class XForwardHeaderFilterTest {
     chain.doFilter( request, response );
   }
 
-  /**
-   * Test the case where appending service name to X-Forwarded-Context is
-   * disabled
-   *
-   * @throws ServletException
-   * @throws IOException
-   * @since 1.3.0
+  /*
+   * Test the case where appending service name to X-Forwarded-Context is disabled
    */
   @Test
   public void testProxiedXForwardContextHeadersNegativeTest() throws ServletException, IOException {
@@ -274,5 +260,4 @@ public class XForwardHeaderFilterTest {
     chain.push( filter );
     chain.doFilter( request, response );
   }
-
 }

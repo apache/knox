@@ -17,6 +17,38 @@
  */
 package org.apache.hadoop.http;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.io.PrintStream;
+import java.net.BindException;
+import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
+import javax.servlet.http.HttpServletResponse;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -70,37 +102,6 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
-import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.io.PrintStream;
-import java.net.BindException;
-import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Create a Jetty embedded server to answer http requests. The primary goal is
@@ -227,7 +228,7 @@ public final class HttpServer2 implements FilterContainer {
       return this;
     }
 
-    /**
+    /*
      * Add an endpoint that the HTTP server should listen to.
      *
      * @param endpoint
@@ -242,7 +243,7 @@ public final class HttpServer2 implements FilterContainer {
       return this;
     }
 
-    /**
+    /*
      * Set the hostname of the http server. The host name is used to resolve the
      * _HOST field in Kerberos principals. The hostname of the first listener
      * will be used if the name is unspecified.
@@ -271,7 +272,7 @@ public final class HttpServer2 implements FilterContainer {
       return this;
     }
 
-    /**
+    /*
      * Specify whether the server should authorize the client in SSL
      * connections.
      */
@@ -295,7 +296,7 @@ public final class HttpServer2 implements FilterContainer {
       return this;
     }
 
-    /**
+    /*
      * Specify the SSL configuration to load. This API provides an alternative
      * to keyStore/keyPassword/trustStore.
      */
@@ -689,7 +690,7 @@ public final class HttpServer2 implements FilterContainer {
     return initializers;
   }
 
-  /**
+  /*
    * Add default apps.
    * @param appDir The application directory
    */
@@ -964,7 +965,7 @@ public final class HttpServer2 implements FilterContainer {
     LOG.info("Added global filter '" + name + "' (class=" + classname + ")");
   }
 
-  /**
+  /*
    * Define a filter for a context and set up default url mappings.
    */
   public static void defineFilter(ServletContextHandler ctx, String name,
@@ -974,7 +975,7 @@ public final class HttpServer2 implements FilterContainer {
     defineFilter(ctx, filterHolder, fmap);
   }
 
-  /**
+  /*
    * Define a filter for a context and set up default url mappings.
    */
   private static void defineFilter(ServletContextHandler ctx,
@@ -1076,6 +1077,7 @@ public final class HttpServer2 implements FilterContainer {
   /**
    * Get the address that corresponds to a particular connector.
    *
+   * @param index index of the connector
    * @return the corresponding address for the connector, or null if there's no
    *         such connector or the connector is not bounded or was closed.
    */
@@ -1094,7 +1096,7 @@ public final class HttpServer2 implements FilterContainer {
     return new InetSocketAddress(c.getHost(), c.getLocalPort());
   }
 
-  /**
+  /*
    * Set the min, max number of worker threads (simultaneous connections).
    */
   public void setThreads(int min, int max) {
@@ -1120,7 +1122,7 @@ public final class HttpServer2 implements FilterContainer {
         AuthenticationFilter.class.getName(), params, null);
   }
 
-  /**
+  /*
    * Start the server. Does not wait for the server to start.
    */
   public void start() throws IOException {
@@ -1276,7 +1278,7 @@ public final class HttpServer2 implements FilterContainer {
     }
   }
 
-  /**
+  /*
    * stop the server
    */
   public void stop() throws Exception {
@@ -1364,7 +1366,8 @@ public final class HttpServer2 implements FilterContainer {
    * @param servletContext the servlet context.
    * @param request the servlet request.
    * @param response the servlet response.
-   * @return TRUE/FALSE based on the logic decribed above.
+   * @return TRUE/FALSE based on the logic described above.
+   * @throws IOException exception on error
    */
   public static boolean isInstrumentationAccessAllowed(
       ServletContext servletContext, HttpServletRequest request,
@@ -1386,6 +1389,8 @@ public final class HttpServer2 implements FilterContainer {
    * Does the user sending the HttpServletRequest has the administrator ACLs? If
    * it isn't the case, response will be modified to send an error to the user.
    *
+   * @param servletContext the servlet context.
+   * @param request the servlet request.
    * @param response used to send the error response if user does not have admin access.
    * @return true if admin-authorized, false otherwise
    * @throws IOException exception on error
