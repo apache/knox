@@ -1066,14 +1066,6 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return Boolean.parseBoolean(result);
   }
 
-  /**
-   * Returns a list of services that need service name appended to
-   * X-Forward-Context header as a result of which the new header would look
-   * /{gateway}/{sandbox}/{serviceName}
-   *
-   * @return
-   * @since 1.3.0
-   */
   @Override
   public List<String> getXForwardContextAppendServices() {
     String value = get( X_FORWARD_CONTEXT_HEADER_APPEND_SERVICES );
