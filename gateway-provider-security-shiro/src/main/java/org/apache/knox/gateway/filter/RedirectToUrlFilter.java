@@ -18,35 +18,47 @@
 
 package org.apache.knox.gateway.filter;
 
+import java.io.IOException;
+import java.util.regex.Pattern;
+
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+
+import org.apache.knox.gateway.config.GatewayConfig;
 
 public class RedirectToUrlFilter extends AbstractGatewayFilter {
   public static final String REDIRECT_TO_URL = "redirectToUrl";
+  private static final String GATEWAY_PATH_PLACEHOLDER = "${GATEWAY_PATH}";
 
-  protected String redirectUrl;
+  private String redirectUrl;
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
     super.init(filterConfig);
     redirectUrl = filterConfig.getInitParameter(REDIRECT_TO_URL);
+    if (redirectUrl != null && redirectUrl.contains(GATEWAY_PATH_PLACEHOLDER)) {
+      final GatewayConfig gatewayConfig = (GatewayConfig) filterConfig.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+      redirectUrl = redirectUrl.replaceAll(Pattern.quote(GATEWAY_PATH_PLACEHOLDER), gatewayConfig.getGatewayPath());
+    }
   }
 
   @Override
-  protected void doFilter( HttpServletRequest request,
-      HttpServletResponse response, FilterChain chain ) throws IOException, ServletException {
+  protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
     if (redirectUrl != null && request.getHeader("Authorization") == null) {
       response.sendRedirect(redirectUrl + getOriginalQueryString(request));
     }
-    chain.doFilter( request, response );
+    chain.doFilter(request, response);
   }
 
   private String getOriginalQueryString(HttpServletRequest request) {
     String originalQueryString = request.getQueryString();
     return (originalQueryString == null) ? "" : "?" + originalQueryString;
+  }
+
+  String getRedirectUrl() {
+    return redirectUrl;
   }
 }
