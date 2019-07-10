@@ -39,7 +39,7 @@
             </param>
             <param>
                 <name>redirectToUrl</name>
-                <value>/gateway/knoxsso/knoxauth/login.html</value>
+                <value>/${GATEWAY_PATH}/knoxsso/knoxauth/login.html</value>
             </param>
             <param>
                 <name>restrictedCookies</name>
