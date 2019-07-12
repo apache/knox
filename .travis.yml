@@ -33,6 +33,9 @@ before_install:
 script:
   # argLine to work around https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=911925
   - $DOCKERRUN $IMAGE mvn -T1C verify -Dsurefire.useFile=false -Djavax.net.ssl.trustStorePassword=changeit -DargLine="-Djdk.net.URLClassPath.disableClassPathURLCheck=true" -B -V
+  - shellcheck gateway-shell-release/home/bin/*.sh
+  - shellcheck gateway-release/home/bin/*.sh
+  - shellcheck gateway-release-common/home/bin/*.sh
 git:
   depth: 1000
 cache:

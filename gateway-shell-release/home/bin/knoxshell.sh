@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+# shellcheck disable=SC1090
 #
 #  Licensed to the Apache Software Foundation (ASF) under one or more
 #  contributor license agreements.  See the NOTICE file distributed with
@@ -18,25 +18,19 @@
 #
 
 # The app's label
-APP_LABEL=KnoxShell
-
-# The app's name
-APP_NAME=knoxshell
+export APP_LABEL=KnoxShell
 
 # Start/stop script location
 APP_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Setup the common environment
-. $APP_BIN_DIR/knox-env.sh
+. "$APP_BIN_DIR"/knox-env.sh
 
 # Source common functions
-. $APP_BIN_DIR/knox-functions.sh
+. "$APP_BIN_DIR"/knox-functions.sh
 
 # The app's jar name
 APP_JAR="$APP_BIN_DIR/knoxshell.jar"
-
-# The apps home dir
-APP_HOME_DIR=`dirname $APP_BIN_DIR`
 
 # The app's logging options
 APP_LOG_OPTS="$KNOX_SHELL_LOG_OPTS"
@@ -47,6 +41,8 @@ APP_MEM_OPTS="$KNOX_SHELL_MEM_OPTS"
 # The app's debugging options
 APP_DBG_OPTS="$KNOX_SHELL_DBG_OPTS"
 
+# JAVA options used by the JVM
+export APP_JAVA_OPTS="$APP_JAVA_LIB_PATH $APP_MEM_OPTS $APP_DBG_OPTS $APP_LOG_OPTS"
 
 function main {
    checkJava
@@ -59,17 +55,17 @@ function main {
             echo "Illegal number of parameters."
             printHelp
         else
-          $JAVA -cp $APP_JAR org.apache.knox.gateway.shell.KnoxSh $1 --gateway $2 || exit 1
+          $JAVA -cp "$APP_JAR" org.apache.knox.gateway.shell.KnoxSh "$1" --gateway "$2" || exit 1
         fi
          ;;
       list|destroy)
-        $JAVA -cp $APP_JAR org.apache.knox.gateway.shell.KnoxSh $1 || exit 1
+        "$JAVA" -cp "$APP_JAR" org.apache.knox.gateway.shell.KnoxSh "$1" || exit 1
          ;;
       help)
          printHelp
          ;;
       *)
-          $JAVA $APP_MEM_OPTS $APP_DBG_OPTS $APP_LOG_OPTS -jar $APP_JAR $@ || exit 1
+         $JAVA "$APP_JAVA_OPTS" -jar "$APP_JAR" "$@" || exit 1
          ;;
    esac
    
@@ -101,4 +97,4 @@ function printHelp {
 }
 
 #Starting main
-main $@
+main "$@"
