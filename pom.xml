@@ -202,7 +202,7 @@
         <json-path.version>2.4.0</json-path.version>
         <json-smart.version>2.3</json-smart.version>
         <junit.version>4.12</junit.version>
-        <libpam4j.version>1.9.1</libpam4j.version>
+        <libpam4j.version>1.11</libpam4j.version>
         <log4j.version>1.2.17</log4j.version>
         <log4j2.version>2.11.2</log4j2.version>
         <maven-checkstyle-plugin.version>3.1.0</maven-checkstyle-plugin.version>
@@ -1670,7 +1670,7 @@
             </dependency>
 
             <dependency>
-                <groupId>org.abstractj</groupId>
+                <groupId>org.kohsuke</groupId>
                 <artifactId>libpam4j</artifactId>
                 <version>${libpam4j.version}</version>
             </dependency>
