@@ -176,6 +176,7 @@ public class X509CertificateUtil {
       Class<?> dnsNameClass = Class.forName(getDNSNameModuleName());
       Constructor<?> dnsNameConstr = dnsNameClass.getConstructor(String.class);
 
+      boolean generalNameAdded = false;
       // Pull the hostname out of the DN
       String hostname = dn.split(",", 2)[0].split("=", 2)[1];
       if("localhost".equals(hostname)) {
@@ -188,6 +189,7 @@ public class X509CertificateUtil {
           Object generalNameObject = generalNameConstr.newInstance(dnsNameObject);
           // generalNames.add(generalName);
           generalNamesAdd.invoke(generalNamesObject, generalNameObject);
+          generalNameAdded = true;
         }
 
         // Add fully qualified hostname
@@ -196,10 +198,10 @@ public class X509CertificateUtil {
           // DNSName dnsName = new DNSName(detectedFullyQualifiedHostname);
           Object fullyQualifiedDnsNameObject = dnsNameConstr.newInstance(detectedFullyQualifiedHostname);
           // GeneralName generalName = new GeneralName(fullyQualifiedDnsNameObject);
-          Object fullyQualifiedGeneralNameObject = generalNameConstr.newInstance(
-              fullyQualifiedDnsNameObject);
+          Object fullyQualifiedGeneralNameObject = generalNameConstr.newInstance(fullyQualifiedDnsNameObject);
           // generalNames.add(fullyQualifiedGeneralNameObject);
           generalNamesAdd.invoke(generalNamesObject, fullyQualifiedGeneralNameObject);
+          generalNameAdded = true;
         }
       }
 
@@ -210,34 +212,29 @@ public class X509CertificateUtil {
         Object generalNameObject = generalNameConstr.newInstance(dnsNameObject);
         // generalNames.add(generalName);
         generalNamesAdd.invoke(generalNamesObject, generalNameObject);
+        generalNameAdded = true;
       }
 
-      // SubjectAlternativeNameExtension san = new SubjectAlternativeNameExtension(generalNames);
-      Class<?> subjectAlternativeNameExtensionClass = Class.forName(
-          getSubjectAlternativeNameExtensionModuleName());
-      Constructor<?> subjectAlternativeNameExtensionConstr =
-          subjectAlternativeNameExtensionClass.getConstructor(generalNamesClass);
-      Object subjectAlternativeNameExtensionObject = subjectAlternativeNameExtensionConstr
-                                                         .newInstance(generalNamesObject);
+      if (generalNameAdded) {
+        // SubjectAlternativeNameExtension san = new SubjectAlternativeNameExtension(generalNames);
+        Class<?> subjectAlternativeNameExtensionClass = Class.forName(getSubjectAlternativeNameExtensionModuleName());
+        Constructor<?> subjectAlternativeNameExtensionConstr = subjectAlternativeNameExtensionClass.getConstructor(generalNamesClass);
+        Object subjectAlternativeNameExtensionObject = subjectAlternativeNameExtensionConstr.newInstance(generalNamesObject);
 
-      // CertificateExtensions certificateExtensions = new CertificateExtensions();
-      Class<?> certificateExtensionsClass = Class.forName(getCertificateExtensionsModuleName());
-      Constructor<?> certificateExtensionsConstr = certificateExtensionsClass.getConstructor();
-      Object certificateExtensionsObject = certificateExtensionsConstr.newInstance();
+        // CertificateExtensions certificateExtensions = new CertificateExtensions();
+        Class<?> certificateExtensionsClass = Class.forName(getCertificateExtensionsModuleName());
+        Constructor<?> certificateExtensionsConstr = certificateExtensionsClass.getConstructor();
+        Object certificateExtensionsObject = certificateExtensionsConstr.newInstance();
 
-      // certificateExtensions.set(san.getExtensionId().toString(), san);
-      Method getExtensionIdMethod = subjectAlternativeNameExtensionObject.getClass()
-                                        .getMethod("getExtensionId");
-      String sanExtensionId = getExtensionIdMethod.invoke(subjectAlternativeNameExtensionObject)
-                                  .toString();
-      Method certificateExtensionsSet = certificateExtensionsObject.getClass().getMethod("set",
-          String.class, Object.class);
-      certificateExtensionsSet.invoke(certificateExtensionsObject, sanExtensionId,
-          subjectAlternativeNameExtensionObject);
+        // certificateExtensions.set(san.getExtensionId().toString(), san);
+        Method getExtensionIdMethod = subjectAlternativeNameExtensionObject.getClass().getMethod("getExtensionId");
+        String sanExtensionId = getExtensionIdMethod.invoke(subjectAlternativeNameExtensionObject).toString();
+        Method certificateExtensionsSet = certificateExtensionsObject.getClass().getMethod("set", String.class, Object.class);
+        certificateExtensionsSet.invoke(certificateExtensionsObject, sanExtensionId, subjectAlternativeNameExtensionObject);
 
-      // info.set(X509CertInfo.EXTENSIONS, certificateExtensions);
-      methodSET.invoke(certInfoObject, getSetField(certInfoObject, "EXTENSIONS"),
-          certificateExtensionsObject);
+        // info.set(X509CertInfo.EXTENSIONS, certificateExtensions);
+        methodSET.invoke(certInfoObject, getSetField(certInfoObject, "EXTENSIONS"), certificateExtensionsObject);
+      }
 
       // Sign the cert to identify the algorithm that's used.
       // X509CertImpl cert = new X509CertImpl(info);
