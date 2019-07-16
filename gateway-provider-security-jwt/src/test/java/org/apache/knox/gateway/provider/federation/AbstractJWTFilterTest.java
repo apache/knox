@@ -83,10 +83,10 @@ public abstract class AbstractJWTFilterTest  {
   protected abstract String getVerificationPemProperty();
 
   private static String buildDistinguishedName(String hostname) {
-    MessageFormat headerFormatter = new MessageFormat(dnTemplate, Locale.ROOT);
+    final String cn = Character.isAlphabetic(hostname.charAt(0)) ? hostname : "localhost";
     String[] paramArray = new String[1];
-    paramArray[0] = hostname;
-    return headerFormatter.format(paramArray);
+    paramArray[0] = cn;
+    return new MessageFormat(dnTemplate, Locale.ROOT).format(paramArray);
   }
 
   @BeforeClass

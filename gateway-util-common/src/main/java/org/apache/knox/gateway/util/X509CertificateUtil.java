@@ -181,31 +181,36 @@ public class X509CertificateUtil {
       if("localhost".equals(hostname)) {
         // Add short hostname
         String detectedHostname = InetAddress.getLocalHost().getHostName();
-        // DNSName dnsName = new DNSName(detectedHostname);
-        Object dnsNameObject = dnsNameConstr.newInstance(detectedHostname);
+        if (Character.isAlphabetic(detectedHostname.charAt(0))) {
+          // DNSName dnsName = new DNSName(detectedHostname);
+          Object dnsNameObject = dnsNameConstr.newInstance(detectedHostname);
+          // GeneralName generalName = new GeneralName(dnsName);
+          Object generalNameObject = generalNameConstr.newInstance(dnsNameObject);
+          // generalNames.add(generalName);
+          generalNamesAdd.invoke(generalNamesObject, generalNameObject);
+        }
+
+        // Add fully qualified hostname
+        String detectedFullyQualifiedHostname = InetAddress.getLocalHost().getCanonicalHostName();
+        if (Character.isAlphabetic(detectedFullyQualifiedHostname.charAt(0))) {
+          // DNSName dnsName = new DNSName(detectedFullyQualifiedHostname);
+          Object fullyQualifiedDnsNameObject = dnsNameConstr.newInstance(detectedFullyQualifiedHostname);
+          // GeneralName generalName = new GeneralName(fullyQualifiedDnsNameObject);
+          Object fullyQualifiedGeneralNameObject = generalNameConstr.newInstance(
+              fullyQualifiedDnsNameObject);
+          // generalNames.add(fullyQualifiedGeneralNameObject);
+          generalNamesAdd.invoke(generalNamesObject, fullyQualifiedGeneralNameObject);
+        }
+      }
+
+      if (Character.isAlphabetic(hostname.charAt(0))) {
+        // DNSName dnsName = new DNSName(hostname);
+        Object dnsNameObject = dnsNameConstr.newInstance(hostname);
         // GeneralName generalName = new GeneralName(dnsName);
         Object generalNameObject = generalNameConstr.newInstance(dnsNameObject);
         // generalNames.add(generalName);
         generalNamesAdd.invoke(generalNamesObject, generalNameObject);
-
-        // Add fully qualified hostname
-        String detectedFullyQualifiedHostname = InetAddress.getLocalHost().getCanonicalHostName();
-        // DNSName dnsName = new DNSName(detectedFullyQualifiedHostname);
-        Object fullyQualifiedDnsNameObject = dnsNameConstr.newInstance(
-            detectedFullyQualifiedHostname);
-        // GeneralName generalName = new GeneralName(fullyQualifiedDnsNameObject);
-        Object fullyQualifiedGeneralNameObject = generalNameConstr.newInstance(
-            fullyQualifiedDnsNameObject);
-        // generalNames.add(fullyQualifiedGeneralNameObject);
-        generalNamesAdd.invoke(generalNamesObject, fullyQualifiedGeneralNameObject);
       }
-
-      // DNSName dnsName = new DNSName(hostname);
-      Object dnsNameObject = dnsNameConstr.newInstance(hostname);
-      // GeneralName generalName = new GeneralName(dnsName);
-      Object generalNameObject = generalNameConstr.newInstance(dnsNameObject);
-      // generalNames.add(generalName);
-      generalNamesAdd.invoke(generalNamesObject, generalNameObject);
 
       // SubjectAlternativeNameExtension san = new SubjectAlternativeNameExtension(generalNames);
       Class<?> subjectAlternativeNameExtensionClass = Class.forName(
