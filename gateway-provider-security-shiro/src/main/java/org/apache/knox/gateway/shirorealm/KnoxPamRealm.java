@@ -16,26 +16,27 @@
  *  specific language governing permissions and limitations
  *  under the License.
  */
-
 package org.apache.knox.gateway.shirorealm;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.api.AuditService;
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.audit.api.Auditor;
-import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.shirorealm.impl.i18n.KnoxShiroMessages;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
+
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
 import org.apache.shiro.authc.UsernamePasswordToken;
-import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.crypto.hash.DefaultHashService;
@@ -44,12 +45,10 @@ import org.apache.shiro.crypto.hash.HashRequest;
 import org.apache.shiro.crypto.hash.HashService;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
+import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.jvnet.libpam.PAM;
 import org.jvnet.libpam.PAMException;
 import org.jvnet.libpam.UnixUser;
-
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 /**
  * A Unix-style
@@ -66,9 +65,9 @@ import java.util.Set;
  * <p>
  * Using a {@code KnoxPamRealm} requires a PAM {@code service} name. This is the
  * name of the file under {@code /etc/pam.d} that is used to initialise and
- * configure the PAM subsytem. Normally, this file reflects the application
+ * configure the PAM subsystem. Normally, this file reflects the application
  * using it. For example {@code gdm}, {@code su}, etc. There is no default value
- * for this propery.
+ * for this property.
  * <p>
  * For example, defining this realm in Shiro .ini:
  *
@@ -81,17 +80,18 @@ import java.util.Set;
  * </pre>
  *
  */
-
 public class KnoxPamRealm extends AuthorizingRealm {
   private static final String HASHING_ALGORITHM = "SHA-256";
   private static final String SUBJECT_USER_ROLES = "subject.userRoles";
   private static final String SUBJECT_USER_GROUPS = "subject.userGroups";
-  private HashService hashService = new DefaultHashService();
-  KnoxShiroMessages ShiroLog = MessagesFactory.get(KnoxShiroMessages.class);
-  GatewayMessages GatewayLog = MessagesFactory.get(GatewayMessages.class);
-  private static AuditService auditService = AuditServiceFactory.getAuditService();
-  private static Auditor auditor = auditService.getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
+
+  private static final AuditService auditService = AuditServiceFactory.getAuditService();
+  private static final Auditor auditor = auditService.getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
       AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
+
+  private final HashService hashService = new DefaultHashService();
+  private final KnoxShiroMessages shiroLog = MessagesFactory.get(KnoxShiroMessages.class);
+  private final GatewayMessages gatewayLog = MessagesFactory.get(GatewayMessages.class);
 
   private String service;
 
@@ -126,41 +126,51 @@ public class KnoxPamRealm extends AuthorizingRealm {
       userName = user.getName();
     }
 
-    GatewayLog.lookedUpUserRoles(roles, userName);
+    gatewayLog.lookedUpUserRoles(roles, userName);
     return new SimpleAuthorizationInfo(roles);
   }
 
   @Override
-  protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
-    UsernamePasswordToken upToken = (UsernamePasswordToken) token;
+  protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token)
+      throws AuthenticationException {
+    PAM pam = null;
     UnixUser user = null;
     try {
-      user = (new PAM(this.getService())).authenticate(upToken.getUsername(), new String(upToken.getPassword()));
+      pam = new PAM(this.getService());
+      UsernamePasswordToken upToken = (UsernamePasswordToken) token;
+      user = pam.authenticate(upToken.getUsername(), new String(upToken.getPassword()));
     } catch (PAMException e) {
       handleAuthFailure(token, e.getMessage(), e);
+    } finally {
+      if(pam != null) {
+        pam.dispose();
+      }
     }
-    HashRequest.Builder builder = new HashRequest.Builder();
-    Hash credentialsHash = hashService
-        .computeHash(builder.setSource(token.getCredentials()).setAlgorithmName(HASHING_ALGORITHM).build());
+
+    HashRequest hashRequest = new HashRequest.Builder()
+                                  .setSource(token.getCredentials())
+                                  .setAlgorithmName(HASHING_ALGORITHM)
+                                  .build();
+    Hash credentialsHash = hashService.computeHash(hashRequest);
+
     /* Coverity Scan CID 1361684 */
     if (credentialsHash == null) {
       handleAuthFailure(token, "Failed to compute hash", null);
     }
-    return new SimpleAuthenticationInfo(new UnixUserPrincipal(user), credentialsHash.toHex(), credentialsHash.getSalt(),
-        getName());
+    return new SimpleAuthenticationInfo(new UnixUserPrincipal(user), credentialsHash.toHex(),
+        credentialsHash.getSalt(), getName());
   }
 
   private void handleAuthFailure(AuthenticationToken token, String errorMessage, Exception e) {
-    auditor.audit(Action.AUTHENTICATION, token.getPrincipal().toString(), ResourceType.PRINCIPAL, ActionOutcome.FAILURE,
-        errorMessage);
-    ShiroLog.failedLoginInfo(token);
+    auditor.audit(Action.AUTHENTICATION, token.getPrincipal().toString(),
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE, errorMessage);
+    shiroLog.failedLoginInfo(token);
 
     if (e != null) {
-      ShiroLog.failedLoginAttempt(e.getCause());
+      shiroLog.failedLoginAttempt(e.getCause());
       throw new AuthenticationException(e);
     }
 
     throw new AuthenticationException(errorMessage);
   }
-
 }
