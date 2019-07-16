@@ -31,7 +31,7 @@
 
     <properties>
         <frontend-maven-plugin.version>1.7.6</frontend-maven-plugin.version>
-        <nodejs.version>v10.14.2</nodejs.version>
+        <nodejs.version>v10.16.0</nodejs.version>
     </properties>
 
     <build>
