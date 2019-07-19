@@ -156,6 +156,14 @@
     </content>
   </filter>
 
+  <rule dir="IN" name="YARNUIV2/yarnuiv2/inbound/nodemanager" pattern="*://*:*/**/yarnuiv2/nodemanager/{**}?{**}?{scheme}?{host}?{port}">
+    <rewrite template="{scheme}://{host}:{port}/ws/v1/node/{**}?{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="YARNUIV2/yarnuiv2/outbound/nodemanager" pattern="{scheme}://{host}:{port}/ws/v1/node/{**}?{**}">
+    <rewrite template="{$frontend[url]}/yarnuiv2/nodemanager/{**}?{**}?{scheme}?{host}?{port}"/>
+  </rule>
+
   <rule flow="OR" dir="OUT" name="YARNUIV2/yarnuiv2/outbound/headers/index/location">
     <match pattern="{scheme}://{host}:{port}/{gateway}/{knoxsso}/{api}/{v}/websso?originalUrl={**}">
       <rewrite template="{scheme}://{host}:{port}/{gateway}/{knoxsso}/{api}/{v}/websso?originalUrl={$postfix[url,/yarnuiv2/]}"/>

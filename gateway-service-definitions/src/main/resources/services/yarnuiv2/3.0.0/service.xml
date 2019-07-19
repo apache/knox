@@ -38,6 +38,10 @@
       <rewrite apply="YARNUIV2/yarnuiv2/inbound/timeline" to="request.url"/>
     </route>
 
+    <route path="/yarnuiv2/nodemanager/**?**">
+      <rewrite apply="YARNUIV2/yarnuiv2/inbound/nodemanager" to="request.url"/>
+    </route>
+
     <route path="/yarnuiv2/redirect">
       <rewrite apply="YARNUIV2/yarnuiv2/inbound/redirect" to="request.url"/>
     </route>
