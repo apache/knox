@@ -18,7 +18,6 @@
 
 org.apache.knox.gateway.topology.discovery.cm.model.atlas.AtlasServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.atlas.AtlasAPIServiceModelGenerator
-org.apache.knox.gateway.topology.discovery.cm.model.atlas.AtlasUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.hbase.HBaseUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.hbase.WebHBaseServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.hdfs.NameNodeServiceModelGenerator
@@ -33,9 +32,7 @@ org.apache.knox.gateway.topology.discovery.cm.model.oozie.OozieServiceModelGener
 org.apache.knox.gateway.topology.discovery.cm.model.oozie.OozieUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.ranger.RangerServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.ranger.RangerUIServiceModelGenerator
-org.apache.knox.gateway.topology.discovery.cm.model.ranger.RangerUIAPIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.solr.SolrServiceModelGenerator
-org.apache.knox.gateway.topology.discovery.cm.model.solr.SolrUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.spark.SparkHistoryUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.yarn.JobHistoryUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.yarn.ResourceManagerUIServiceModelGenerator
