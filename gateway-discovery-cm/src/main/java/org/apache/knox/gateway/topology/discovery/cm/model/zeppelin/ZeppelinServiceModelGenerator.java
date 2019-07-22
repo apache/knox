@@ -16,36 +16,44 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm.model.zeppelin;
 
+import com.cloudera.api.swagger.client.ApiException;
 import com.cloudera.api.swagger.model.ApiConfigList;
 import com.cloudera.api.swagger.model.ApiRole;
 import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
+import org.apache.knox.gateway.topology.discovery.cm.model.AbstractServiceModelGenerator;
 
 import java.util.Locale;
 
-public class ZeppelinWSServiceModelGenerator extends ZeppelinServiceModelGenerator {
-  private static final String SERVICE = "ZEPPELINWS";
+public class ZeppelinServiceModelGenerator extends AbstractServiceModelGenerator {
+  private static final String SERVICE = "ZEPPELIN";
+  protected static final String SERVICE_TYPE = "ZEPPELIN";
+  protected static final String ROLE_TYPE = "ZEPPELIN_SERVER";
+
+  @Override
+  public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
+    return SERVICE_TYPE.equals(service.getType()) && ROLE_TYPE.equals(role.getType());
+  }
 
   @Override
   public ServiceModel generateService(ApiService       service,
                                       ApiServiceConfig serviceConfig,
                                       ApiRole          role,
-                                      ApiConfigList    roleConfig) {
+                                      ApiConfigList    roleConfig) throws ApiException {
     String hostname = role.getHostRef().getHostname();
     String scheme;
     String port;
     boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, "ssl_enabled"));
     if(sslEnabled) {
-      scheme = "wss";
+      scheme = "https";
       port = getRoleConfigValue(roleConfig, "zeppelin_server_ssl_port");
     } else {
-      scheme = "ws";
+      scheme = "http";
       port = getRoleConfigValue(roleConfig, "zeppelin_server_port");
     }
-    return new ServiceModel(ServiceModel.Type.API,
+    return new ServiceModel(ServiceModel.Type.UI,
                             SERVICE,
-                            String.format(Locale.getDefault(), "%s://%s:%s/ws", scheme, hostname, port));
+                            String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
   }
-
 }

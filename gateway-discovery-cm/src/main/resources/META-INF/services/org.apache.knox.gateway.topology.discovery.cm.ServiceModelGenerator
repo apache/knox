@@ -38,4 +38,7 @@ org.apache.knox.gateway.topology.discovery.cm.model.yarn.JobHistoryUIServiceMode
 org.apache.knox.gateway.topology.discovery.cm.model.yarn.ResourceManagerUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.yarn.YarnUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.yarn.YarnUIv2ServiceModelGenerator
+org.apache.knox.gateway.topology.discovery.cm.model.zeppelin.ZeppelinServiceModelGenerator
+org.apache.knox.gateway.topology.discovery.cm.model.zeppelin.ZeppelinUIServiceModelGenerator
+org.apache.knox.gateway.topology.discovery.cm.model.zeppelin.ZeppelinWSServiceModelGenerator
 

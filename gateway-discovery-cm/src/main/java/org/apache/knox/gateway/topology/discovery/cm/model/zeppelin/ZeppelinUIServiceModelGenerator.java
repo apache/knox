@@ -16,42 +16,20 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm.model.zeppelin;
 
+
+import com.cloudera.api.swagger.client.ApiException;
 import com.cloudera.api.swagger.model.ApiConfigList;
 import com.cloudera.api.swagger.model.ApiRole;
 import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
-import org.apache.knox.gateway.topology.discovery.cm.model.AbstractServiceModelGenerator;
 
-import java.util.Locale;
-
-public class ZeppelinUIServiceModelGenerator extends AbstractServiceModelGenerator {
+public class ZeppelinUIServiceModelGenerator extends ZeppelinServiceModelGenerator {
   private static final String SERVICE = "ZEPPELINUI";
-  private static final String SERVICE_TYPE = "ZEPPELIN";
-  private static final String ROLE_TYPE = "ZEPPELIN_SERVER";
 
   @Override
-  public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return SERVICE_TYPE.equals(service.getType()) && ROLE_TYPE.equals(role.getType());
+  public ServiceModel generateService(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) throws ApiException {
+    ServiceModel sm = super.generateService(service, serviceConfig, role, roleConfig);
+    return new ServiceModel(sm.getType(), SERVICE, sm.getServiceUrl());
   }
-
-  @Override
-  public ServiceModel generateService(ApiService       service,
-                                      ApiServiceConfig serviceConfig,
-                                      ApiRole          role,
-                                      ApiConfigList    roleConfig) {
-    String hostname = role.getHostRef().getHostname();
-    String scheme = "http";
-    String port = getRoleConfigValue(roleConfig, "zeppelin_server_port");
-//    boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, "ssl_enabled"));
-//    if(sslEnabled) {
-//      scheme = "https";
-//    } else {
-//      scheme = "http";
-//    }
-    return new ServiceModel(ServiceModel.Type.UI,
-                            SERVICE,
-                            String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
-  }
-
 }
