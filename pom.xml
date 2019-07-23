@@ -162,7 +162,7 @@
         <commons-io.version>2.6</commons-io.version>
         <commons-lang3.version>3.9</commons-lang3.version>
         <commons-net.version>3.6</commons-net.version>
-        <commons-text.version>1.6</commons-text.version>
+        <commons-text.version>1.7</commons-text.version>
         <cors-filter.version>2.6</cors-filter.version>
         <curator.version>4.2.0</curator.version>
         <curator-test.version>2.13.0</curator-test.version>
