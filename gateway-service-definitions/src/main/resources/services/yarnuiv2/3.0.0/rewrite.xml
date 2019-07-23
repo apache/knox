@@ -164,6 +164,32 @@
     <rewrite template="{$frontend[url]}/yarnuiv2/nodemanager/{**}?{**}?{scheme}?{host}?{port}"/>
   </rule>
 
+  <rule dir="OUT" name="YARNUIV2/yarnuiv2/outbound/apps/history" pattern="*://*:*/proxy/{**}">
+    <rewrite template="{$frontend[url]}/yarnuiv2/proxy/{**}"/>
+  </rule>
+
+  <rule dir="IN" name="YARNUIV2/yarnuiv2/inbound/proxy" pattern="*://*:*/**/yarnuiv2/proxy/{**}?{**}">
+    <rewrite template="{$serviceUrl[YARNUIV2]}/proxy/{**}?{**}"/>
+  </rule>
+
+  <filter name="YARNUIV2/yarnuiv2/outbound/headers/jobhistory/job">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="YARNUIV2/yarnuiv2/outbound/headers/jobhistory/job/location"/>
+    </content>
+  </filter>
+
+  <rule flow="OR" dir="OUT" name="YARNUIV2/yarnuiv2/outbound/headers/jobhistory/job/location">
+    <match pattern="{scheme}://{host}:{port}/jobhistory/logs/{**}">
+      <rewrite template="{$frontend[url]}/jobhistory/joblogs/{**}?{scheme}?{host}?{port}"/>
+    </match>
+    <match pattern="{scheme}://{host}:{port}/jobhistory/{**}">
+      <rewrite template="{$frontend[url]}/jobhistory/{**}?{scheme}?{host}?{port}"/>
+    </match>
+    <match pattern="*://*:*/history/{**}?{**}">
+      <rewrite template="{$frontend[url]}/sparkhistory/history/{**}?{**}"/>
+    </match>
+  </rule>
+
   <rule flow="OR" dir="OUT" name="YARNUIV2/yarnuiv2/outbound/headers/index/location">
     <match pattern="{scheme}://{host}:{port}/{gateway}/{knoxsso}/{api}/{v}/websso?originalUrl={**}">
       <rewrite template="{scheme}://{host}:{port}/{gateway}/{knoxsso}/{api}/{v}/websso?originalUrl={$postfix[url,/yarnuiv2/]}"/>
