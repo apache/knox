@@ -1,4 +1,226 @@
 ------------------------------------------------------------------------------
+Release Notes - Apache Knox - Version 1.3.0
+------------------------------------------------------------------------------
+** New Feature
+    * [KNOX-1880] - Support doAs for Cloudera Manager service discovery API interactions
+    * [KNOX-1862] - Add Service Definition for Hue UI (#97)
+    * [KNOX-1875] - Cloudera Manager service discovery
+    * [KNOX-1855] - Add Service Definition for Cloudera Manager API (#88)
+    * [KNOX-1774] - Introduce environment variables in gateway/knoxcli/ldap/knoxshell scripts for customization (#65)
+    * [KNOX-1687] - Hashicorp Vault RemoteAliasService provider
+    * [KNOX-1418] - Add KnoxShell command to build truststore using the gateway server's public certificate (#60)
+    * [KNOX-1285] - Create Apache Knox Dockerfile and image
+** Improvement
+    * [KNOX-1912] - X509CertificateUtil should set CN and SAN
+    * [KNOX-1905] - Upgrade maven-pmd-plugin to 3.12.0
+    * [KNOX-1886] - Upgrade spotbugs-maven-plugin to 3.1.12
+    * [KNOX-1910] - Upgrade rest-assured to 4.0.0
+    * [KNOX-1909] - Upgrade javax.annotation-api to 1.3.1
+    * [KNOX-1908] - Upgrade checkstyle to 8.22
+    * [KNOX-1890] - Upgrade testcontainers to 1.11.3
+    * [KNOX-1907] - Upgrade pac4j to 3.7.0
+    * [KNOX-1884] - Upgrade spring-core to 5.1.8.RELEASE
+    * [KNOX-1899] - Upgrade shiro to 1.4.1
+    * [KNOX-1882] - Upgrade protobuf-java to 3.8.0
+    * [KNOX-1883] - Upgrade nimbus-jose-jwt to 7.3
+    * [KNOX-1897] - Upgrade metrics to 4.1.0
+    * [KNOX-1898] - Upgrade maven-compiler-plugin to 3.8.1
+    * [KNOX-1891] - Upgrade maven-checkstyle-plugin to 3.1.0
+    * [KNOX-1903] - Upgrade frontend-maven-plugin to 1.7.6
+    * [KNOX-1895] - Upgrade joda-time to 2.10.2
+    * [KNOX-1902] - Upgrade maven-bundle-plugin to 4.2.0
+    * [KNOX-1885] - Upgrade jetty to 9.4.19.v20190610
+    * [KNOX-1904]- Upgrade jna to 5.3.1
+    * [KNOX-1887]- Upgrade dependency-check-maven to 5.0.0
+    * [KNOX-1888] - Upgrade bcprov-jdk15on to 1.62
+    * [KNOX-1901] - Upgrade jansi to 1.18
+    * [KNOX-1893] - Upgrade jacoco-maven-plugin to 0.8.4
+    * [KNOX-1892] - Upgrade jackson to 2.9.9
+    * [KNOX-1906] - Upgrade guava to 28.0-jre
+    * [KNOX-1894] - Upgrade groovy to 2.5.7
+    * [KNOX-1900] - Upgrade commons-lang3 to 3.9
+    * [KNOX-1889] - Upgrade checkstyle to 8.21
+    * [KNOX-1896] - Upgrade cglib to 3.2.12
+    * [KNOX-1881] - DefaultKeystoreService should use Java NIO API locking as well
+    * [KNOX-1877] - Atlas service definitions should default to trusted proxy
+    * [KNOX-1876] - Zeppelin should default to trusted proxy for service definition (#100)
+    * [KNOX-1874] - Ignore irrelevant files in service definition directories (#99)
+    * [KNOX-1872] - Update Ranger service definitions to support trusted proxy
+    * [KNOX-1848] - Default to 'zookeeper' as remote alias configuration type in case it is not set in gateway-site.xml (#93)
+    * [KNOX-1858] - Add service name to X-Forwarded-Context header (#90)
+    * [KNOX-1859] - Improve alias lookup for HadoopAuthProvider (#89)
+    * [KNOX-1861] - KnoxSession should support configurable useSubjectCredsOnly system property setting
+    * [KNOX-1857] - YARNUIV2 fails with Authentication Required with kerberos authentication type (Prabhu Joseph via Kevin Risden)
+    * [KNOX-1827] - Knox Fails to Rewrite WebFonts for Zeppelin (#76)
+    * [KNOX-1851] - remove the unnecessary instanceof check (#87)
+    * [KNOX-1841] - Upgrade zookeeper to 3.4.14
+    * [KNOX-1846] - Upgrade testcontainers to 1.11.1
+    * [KNOX-1845] - Upgrade spring-core to 5.1.6.RELEASE
+    * [KNOX-1840] - Upgrade protobuf-java to 3.7.1
+    * [KNOX-1847] - Upgrade findsecbugs to 1.9.0
+    * [KNOX-1843] - Upgrade dependency-check-maven to 5.0.0-M2
+    * [KNOX-1850] - KnoxSession should honor the current subject for Kerberos login
+    * [KNOX-1849] - Start the Java process with 'exec' when running the app in foreground (#85)
+    * [KNOX-1844] - Upgrade checkstyle to 8.19
+    * [KNOX-1819] - Ensure services are started and stopped in the correct order (#82)
+    * [KNOX-1837] - Remove jersey-common from top level pom
+    * [KNOX-1836] - Migrate from commons-lang to commons-lang3
+    * [KNOX-1837] - Remove ServiceTestResource glassfish Base64 dependency
+    * [KNOX-1835] - Jupyter Enterprise Gateway - KERNEL_USERNAME should be added when not present (#79)
+    * [KNOX-1832] - KnoxSession handling of JAAS config for kerberos auth is not deterministic
+    * [KNOX-1828] - Fix javadoc warning for test
+    * [KNOX-1804] - Moving copy-pasted bash functions to knox-function.sh (#71)
+    * [KNOX-1824] - Upgrade guava to 27.1-jre
+    * [KNOX-1823] - Upgrade protobuf-java to 3.7.0
+    * [KNOX-1822] - Upgrade dependency-check-maven to 5.0.0-M1
+    * [KNOX-1814]- Moving conf/data folder checking to Java layer from bash (#68)
+    * [KNOX-1812] - The Knox Gateway truststore should be configurable (#69)
+    * [KNOX-1815] - Removed Windows scripts (#67)
+    * [KNOX-1111] - 2-way SSL Truststore and Keystore Improvements (#74)
+    * [KNOX-1820] - Cleanup KeystoreService implementations and add unit tests (#72)
+    * [KNOX-1804] - Fix variable *_FOREGROUND_* defaults
+    * [KNOX-1826] - Replace zip4j with ShrinkWrap
+    * [KNOX-1810] - Upgrade frontend-maven-plugin to 1.7.5
+    * [KNOX-1811] - Upgrade pac4j to 3.6.1
+    * [KNOX-1809] - Upgrade spotbugs to 3.1.12
+    * [KNOX-1807] - Upgrade curator to 4.2.0
+    * [KNOX-1808] - Upgrade asm to 7.1
+    * [KNOX-1803] - Stop redirecting stderr & stdout to a file when the server runs in the foreground (#64)
+    * [KNOX-1801] - Master secret is incorrectly assumed when a custom truststore is not specified when clientauth is enabled (#63)
+    * [KNOX-1802] - Ranger /service/plugins and healthcheck endpoint needs to be exposed through Knox.
+    * [KNOX-474] - Improve Kerberos config validation and diagnostics at startup (#62)
+    * [KNOX-1789] - Refactor RemoteAliasService to use service loading (#59)
+    * [KNOX-1793] - DefaultKeystoreService should not validate the signing key on initialization (#61)
+    * [KNOX-1799] - Upgrade nimbus-jose-jwt to 7.0.1
+    * [KNOX-1800] - Upgrade mina-core to 2.0.20
+    * [KNOX-1798] - Upgrade checkstyle to 8.18
+    * [KNOX-1791] - MasterService should be a field on GatewayServices - replace "Master Service" with (new) constant, reordered constants in GatewayServices (#58)
+    * [KNOX-1756] - Knox Gateway TLS Keystore and Alias Should be Configurable (#56)
+    * [KNOX-1787] - Use same SecureRandom that DefaultAliasService used
+    * [KNOX-1787] - Create PasswordUtils class in gateway-util-common
+    * [KNOX-1786] - Use mocking to simplify DefaultRemoteConfigurationMonitorTest
+    * [KNOX-1162] - Logging stacktrace for FATAL messages and displaying a meaningful error message in case of missing/non-parsable JAAS configuration (#55)
+    * [KNOX-1784] - Upgrade bootstrap to 3.4.1
+    * [KNOX-1780] - Upgrade slf4j to 1.7.26
+    * [KNOX-1781] - Upgrade commons-codec to 1.12
+    * [KNOX-1782] - Upgrade jetty to 9.4.15.v20190215
+    * [KNOX-1777] - Move pac4j version/dependencies to top level pom.xml
+    * [KNOX-1778] - Update Copyright year to 2019
+    * [KNOX-1709] - Limit parallelism for slower laptops
+    * [KNOX-1760] - Created Pull Request template (#51)
+    * [KNOX-1775] - Cleanup test timeout handling
+    * [KNOX-1773] - Docker start gateway/ldap in the foreground
+    * [KNOX-1771] - Upgrade spotbugs-maven-plugin to 3.1.11
+    * [KNOX-1769] - Upgrade nimbus-jose-jwt to 7.0
+    * [KNOX-1767] - Upgrade log4j2 to 2.11.2
+    * [KNOX-1770] - Upgrade groovy to 2.5.6
+    * [KNOX-1768] - Upgrade bcprov-jdk15on to 1.61
+    * [KNOX-1772] - Upgrade angular-cli to 1.7.4
+    * [KNOX-1709] - Allow tests to run in parallel
+    * [KNOX-1758] - New Ant target to ease starting test servers enabling remote debugging
+    * [KNOX-1757] - Increasing test timeout from 1 second to 3 seconds (Sandor Molnar via Kevin Risden)
+    * [KNOX-1755] - Revert upgrade httpclient to 4.5.7 due to HTTPCLIENT-1968
+    * [KNOX-1754] - Upgrade pac4j to 3.5.0
+    * [KNOX-1753] - Upgrade jacoco-maven-plugin to 0.8.3
+    * [KNOX-1752] - Upgrade httpclient to 4.5.7
+    * [KNOX-1751] - Upgrade checkstyle to 8.17
+    * [KNOX-1792] - AliasService start should only be called once in DefaultGatewayServices
+    * [KNOX-1750] - Unable to view descriptor service params
+    * [KNOX-1559] - Create Dispatch implementation that is configurable via service.xml file
+    * [KNOX-1747] - Upgrade spotbugs to 3.1.11
+    * [KNOX-1746] - Upgrade httpcore to 4.4.11
+    * [KNOX-1748] - Upgrade eclipselink to 2.7.4
+    * [KNOX-1745] - Upgrade hadoop to 3.2.0
+    * [KNOX-1738] - Upgrade nimbus-jose-jwt to 6.7
+    * [KNOX-1739] - Upgrade spring-core to 5.1.4.RELEASE
+    * [KNOX-1737] - Remote configuration monitor start should not be attempted if config is not defined
+    * [KNOX-1736] - Upgrade rest-assured to 3.3.0
+    * [KNOX-1735] - Upgrade admin-ui bootstrap to 3.4.0
+    * [KNOX-1710] - Reuse JAXBContext since they are thread safe
+    * [KNOX-1731] - Gateway Admin UI should not include external js/css
+    * [KNOX-1728] - Allow custom parameters to be passed to dispatches
+    * [KNOX-1727] - Values should not be forced in query parameters when proxying through Knox
+    * [KNOX-1721]- Upgrade dependency-check-maven to 4.0.2
+    * [KNOX-1724] - Upgrade rat plugin to 0.13
+    * [KNOX-1723] - Upgrade dropwizard metrics to 4.0.5
+    * [KNOX-1722] - Upgrade checkstyle to 8.16
+    * [KNOX-1716] - Upgrade hamcrest to 2.1
+    * [KNOX-1717] - Enable PMD incremental analysis
+    * [KNOX-1715] - Upgrade jna to 5.2.0
+    * [KNOX-1712] - Upgrade spotbugs-maven-plugin to 3.1.10
+    * [KNOX-1713] - Upgrade dropwizard metrics to 4.0.4
+    * [KNOX-1714] - Upgrade groovy to 2.5.5
+    * [KNOX-1711] - Provide Endpoint Public Cert for KnoxToken
+    * [KNOX-1679] - Add Alias API service
+    * [KNOX-1679] - Review fixes
+    * [KNOX-1708] - Cleanup admin-ui lint errors
+    * [KNOX-1707] - Gateway Admin UI should have the right version
+    * [KNOX-1705] - Fix including gateway-admin-ui module
+    * [KNOX-1679] - Add Alias API service
+    * [KNOX-1705] - Integrate gateway-admin-ui into Maven build
+    * [KNOX-1703] - Cleanup old System.out debugging lines
+    * [KNOX-1702]- Use Boolean.parseBoolean instead of true.equals
+    * [KNOX-1701] - Use hamcrest assertThat instead of junit
+    * [KNOX-1700] - Tests should not extend org.junit.Assert
+    * [KNOX-1696] - Upgrade nimbus-jose-jwt to 6.5.1
+    * [KNOX-1697] - Upgrade curator to 4.1.0
+    * [KNOX-1690] - Update pom.xml with new git url
+    * [KNOX-1691] - Update doap_Knox with gitbox location
+    * [KNOX-1686] - XmlFilterReader - Ensure XPath and XPathFactory thread safety
+    * [KNOX-1684] - Avoid NPE for deployments in GatewayServer
+    * [KNOX-1685] - MockServlet - avoid mutable instance variables
+    * [KNOX-1683] - Ensure truststorePass is set in KnoxSession
+    * [KNOX-1682] - Upgrade dependency-check-maven to 4.0.1
+    * [KNOX-1681] - Upgrade spotbugs to 3.1.10
+    * [KNOX-1663] - Checkstyle - Enable EqualsAvoidNullCheck and don't instantiate Boolean
+    * [KNOX-1768] - Upgrade Jackson to 2.9.8
+    * [KNOX-1677] - Use try-with-resources to ensure that resources are closed
+    * [KNOX-1527] - Bump apacheds dependency version to 2.0.0-AM25
+    * [KNOX-1676] - Enable PMD for tests
+    * [KNOX-1638] - Migrate from apacheds-all to specific apacheds dependencies
+    * [KNOX-1673] - Upgrade cglib to 3.2.10
+    * [KNOX-1568] - Upgrade nimbus-jose-jwt to 6.5
+    * [KNOX-1672] - Cleanup deprecated API usage
+    * [KNOX-1671] - Cleanup misc logic errors identified by Sonarqube
+    * [KNOX-1669] - Enable PMD code style rules
+    * [KNOX-1668] - Enable PMD multithreading ruleset
+    * [KNOX-1667] - Enable PMD error prone ruleset
+    * [KNOX-1666] - Enable PMD best practices ruleset
+    * [KNOX-503] - Tests which include expected unreachable hosts fail with wildcard DNS records (Kristopher Kane, Kevin Risden)
+    * [KNOX-1615] - Enable PMD for source analysis
+    * [KNOX-1664] - Miscellaneous code cleanup
+    * [KNOX-1663] - Enforce more Checkstyle rules
+    * [KNOX-1618] - Add dropwizard metrics-jvm support
+    * [KNOX-1623] - Fix jenkins build - 2
+    * [KNOX-1364] - Cookie scoping path should contain the topology name (Laszlo Nardai via Kevin Risden)
+    * [KNOX-1662] - Avoid GatewayTestDriver NPE on ldap stop
+    * [KNOX-1659] - Upgrade spring-core to 5.1.3.RELEASE
+    * [KNOX-1656] - Upgrade checkstyle to 8.15
+    * [KNOX-1658] - Upgrade spotbugs-maven-plugin to 3.1.9
+    * [KNOX-1657] - Upgrade easymock to 4.0.2
+    * [KNOX-1660] - OWASP Add suppressions for false positives
+    * [KNOX-1623] - Fix jenkins failure and minor doc changes
+    * [KNOX-1650] - HA dispatcher for Atlas with knox trusted proxy (Nixon Rodrigues via Kevin Risden)
+    * [KNOX-1623] - Kerberos support for KnoxShell
+** Bug
+    * [KNOX-1879] - HDFSUI service definition doesn't work with DefaultHaDispatch
+    * [KNOX-1870] - Zeppelin UI service definition service.xml has wrong version
+    * [KNOX-1868] - HBase UI changes from KNOX-1866 aren't picked up due to service.xml version (#95)
+    * [KNOX-1866] - Fix HBase UI proxying (#94)
+    * [KNOX-1864] - Knox returns HTTP 405 Method Not Allowed error with HTTP PATCH method (#91)
+    * [KNOX-1856] - Incorrect error message in case there is no 'gateway-identity' certificate in the configured keystore (#92)
+    * [KNOX-1854] - Admin UI read-only topology message typo
+    * [KNOX-1851] - Fix NPE in Zookeeper Remote Alias Service (#86)
+    * [KNOX-1830] - Fix sporadic Illegal character error in TestHashicorpVaultAliasService
+    * [KNOX-1828] - Fix Websocket Message Size (#75)
+    * [KNOX-1789] - Fix RemoteAliasService fallback after KNOX-1756
+    * [KNOX-1191] - Azure AD support for KnoxSSO
+    * [KNOX-1733] - Spark History UI Version is Not Correct in the XML
+    * [KNOX-1647] - Identity Assertion should not modify order of query params
+    * [KNOX-1680] - KnoxTokenCredentialCollector results in IndexOutOfBounds exception
+    * [KNOX-1615] - Fix mvn site
+
+------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 1.2.0
 ------------------------------------------------------------------------------
 ** New Feature
