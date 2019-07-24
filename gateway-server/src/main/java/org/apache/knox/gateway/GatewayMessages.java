@@ -449,6 +449,14 @@ public interface GatewayMessages {
            text = "Topology port mapping feature enabled: {0}")
   void gatewayTopologyPortMappingEnabled(boolean enabled);
 
+  @Message(level = MessageLevel.ERROR,
+           text = "No topology mapped to port: {0}")
+  void noTopologyMappedToPort(int port);
+
+  @Message(level = MessageLevel.ERROR,
+           text = "Could not find topology {0} specified in port mapping config")
+  void noMappedTopologyFound(String topology);
+
   @Message(level = MessageLevel.DEBUG,
            text = "Creating a connector for topology {0} listening on port {1}.")
   void createJettyConnector(String topology, int port);
@@ -489,6 +497,10 @@ public interface GatewayMessages {
                    + "This invalid topology mapping will be ignored by the gateway. "
                    + "Gateway restart will be required if in the future \"{0}\" topology is added.")
   void topologyPortMappingCannotFindTopology(String topology, int port);
+
+  @Message(level = MessageLevel.ERROR,
+           text = "Port mapped topology {0} cannot be configured as default topology")
+  void defaultTopologyInPortmappedTopology(String topology);
 
 
   @Message( level = MessageLevel.WARN, text = "There is no registry client defined for remote configuration monitoring." )

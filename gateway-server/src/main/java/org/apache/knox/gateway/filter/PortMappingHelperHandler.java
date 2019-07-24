@@ -16,7 +16,6 @@
  */
 package org.apache.knox.gateway.filter;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -47,31 +46,28 @@ public class PortMappingHelperHandler extends HandlerWrapper {
   private static final GatewayMessages LOG = MessagesFactory
       .get(GatewayMessages.class);
 
-  final GatewayConfig config;
+  private final GatewayConfig config;
+  private final Map<String, Integer> topologyPortMap;
 
   private String defaultTopologyRedirectContext;
 
   public PortMappingHelperHandler(final GatewayConfig config) {
 
     this.config = config;
+    this.topologyPortMap = config.getGatewayPortMappings();
+
     //Set up context for default topology feature.
     String defaultTopologyName = config.getDefaultTopologyName();
 
     // default topology feature can also be enabled using port mapping feature
     // config e.g. gateway.port.mapping.{defaultTopologyName}
-
     if(defaultTopologyName == null && config.getGatewayPortMappings().values().contains(config.getGatewayPort())) {
-
       for(final Map.Entry<String, Integer> entry: config.getGatewayPortMappings().entrySet()) {
-
-        if(entry.getValue() == config.getGatewayPort()) {
+        if(entry.getValue().intValue() == config.getGatewayPort()) {
           defaultTopologyRedirectContext = "/" + config.getGatewayPath() + "/" + entry.getKey();
           break;
         }
-
       }
-
-
     }
 
     if (defaultTopologyName != null) {
@@ -85,7 +81,6 @@ public class PortMappingHelperHandler extends HandlerWrapper {
       LOG.defaultTopologySetup(defaultTopologyName,
           defaultTopologyRedirectContext);
     }
-
   }
 
   @Override
@@ -95,60 +90,54 @@ public class PortMappingHelperHandler extends HandlerWrapper {
 
     String newTarget = target;
     String baseURI = baseRequest.getRequestURI();
+    final int port = baseRequest.getLocalPort();
+    RequestUpdateHandler.ForwardedRequest newRequest;
 
     // If Port Mapping feature enabled
-    if (config.isGatewayPortMappingEnabled()) {
-      int targetIndex;
-      String context = "";
+    if (config.isGatewayPortMappingEnabled() && topologyPortMap.containsValue(port)) {
 
-      // extract the gateway specific part i.e. {/gatewayName/}
-      String originalContextPath = "";
-      targetIndex = StringUtils.ordinalIndexOf(target, "/", 2);
+      final String topologyName = topologyPortMap.entrySet()
+          .stream()
+          .filter(e -> e.getValue().equals(port))
+          .map(Map.Entry::getKey)
+          .findFirst()
+          .orElse(null);
+      final String gatewayTopologyContext =
+          "/" + config.getGatewayPath() + "/" + topologyName;
 
-      // Match found e.g. /{string}/
-      if (targetIndex > 0) {
-        originalContextPath = target.substring(0, targetIndex + 1);
-      } else if (targetIndex == -1) {
-        targetIndex = StringUtils.ordinalIndexOf(target, "/", 1);
-        // For cases "/" and "/hive"
-        if(targetIndex == 0) {
-          originalContextPath = target;
-        }
+      if(!target.contains(gatewayTopologyContext)) {
+        newTarget = gatewayTopologyContext + target;
       }
 
-      // Match "/{gatewayName}/{topologyName/foo" or "/".
-      // There could be a case where content is served from the root
-      // i.e. https://host:port/
+      // if the request does not contain /{gatewayName}/{topologyName}
+      if(!baseRequest.getRequestURI().contains(gatewayTopologyContext)) {
+        newRequest = new RequestUpdateHandler.ForwardedRequest(
+            request, gatewayTopologyContext, newTarget);
 
-      if (!baseURI.startsWith(originalContextPath)) {
-        final int index = StringUtils.ordinalIndexOf(baseURI, "/", 3);
-        if (index > 0) {
-          context = baseURI.substring(0, index);
-        }
-      }
+        baseRequest.setPathInfo(gatewayTopologyContext + baseRequest.getPathInfo());
+        baseRequest.setURIPathQuery(gatewayTopologyContext + baseRequest.getRequestURI());
 
-      if(!StringUtils.isBlank(context)) {
-        LOG.topologyPortMappingAddContext(target, context + target);
+        LOG.topologyPortMappingUpdateRequest(target, newTarget);
+        super.handle(newTarget, baseRequest, newRequest, response);
       }
-      // Move on to the next handler in chain with updated path
-      newTarget = context + target;
+      else {
+        super.handle(newTarget, baseRequest, request, response);
+      }
     }
-
     //Backwards compatibility for default topology feature
-    if (defaultTopologyRedirectContext != null && !baseURI
+    else if (defaultTopologyRedirectContext != null && !baseURI
         .startsWith("/" + config.getGatewayPath())) {
       newTarget = defaultTopologyRedirectContext + target;
 
-      final RequestUpdateHandler.ForwardedRequest newRequest = new RequestUpdateHandler.ForwardedRequest(
+      newRequest = new RequestUpdateHandler.ForwardedRequest(
           request, defaultTopologyRedirectContext, newTarget);
 
       LOG.defaultTopologyForward(target, newTarget);
       super.handle(newTarget, baseRequest, newRequest, response);
 
     } else {
-
+      /* case where topology port mapping is not enabled (or improperly configured) and no default topology is configured  */
       super.handle(newTarget, baseRequest, request, response);
     }
-
   }
 }
