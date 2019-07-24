@@ -32,8 +32,28 @@ public class ZeppelinServiceModelGenerator extends AbstractServiceModelGenerator
   protected static final String ROLE_TYPE = "ZEPPELIN_SERVER";
 
   @Override
+  public String getService() {
+    return SERVICE;
+  }
+
+  @Override
+  public String getServiceType() {
+    return SERVICE_TYPE;
+  }
+
+  @Override
+  public String getRoleType() {
+    return ROLE_TYPE;
+  }
+
+  @Override
+  public ServiceModel.Type getModelType() {
+    return ServiceModel.Type.UI;
+  }
+
+  @Override
   public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return SERVICE_TYPE.equals(service.getType()) && ROLE_TYPE.equals(role.getType());
+    return getServiceType().equals(service.getType()) && getRoleType().equals(role.getType());
   }
 
   @Override
@@ -44,16 +64,26 @@ public class ZeppelinServiceModelGenerator extends AbstractServiceModelGenerator
     String hostname = role.getHostRef().getHostname();
     String scheme;
     String port;
-    boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, "ssl_enabled"));
-    if(sslEnabled) {
+    if(isSSL(roleConfig)) {
       scheme = "https";
-      port = getRoleConfigValue(roleConfig, "zeppelin_server_ssl_port");
+      port = getSSLPort(roleConfig);
     } else {
       scheme = "http";
-      port = getRoleConfigValue(roleConfig, "zeppelin_server_port");
+      port = getPort(roleConfig);
     }
-    return new ServiceModel(ServiceModel.Type.UI,
-                            SERVICE,
-                            String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
   }
+
+  protected boolean isSSL(ApiConfigList roleConfig) {
+    return Boolean.parseBoolean(getRoleConfigValue(roleConfig, "ssl_enabled"));
+  }
+
+  protected String getPort(ApiConfigList roleConfig) {
+    return getRoleConfigValue(roleConfig, "zeppelin_server_port");
+  }
+
+  protected String getSSLPort(ApiConfigList roleConfig) {
+    return getRoleConfigValue(roleConfig, "zeppelin_server_ssl_port");
+  }
+
 }

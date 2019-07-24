@@ -16,23 +16,19 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm.model.ranger;
 
-import com.cloudera.api.swagger.model.ApiConfigList;
-import com.cloudera.api.swagger.model.ApiRole;
-import com.cloudera.api.swagger.model.ApiService;
-import com.cloudera.api.swagger.model.ApiServiceConfig;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
 
 public class RangerUIServiceModelGenerator extends RangerServiceModelGenerator {
   private static final String SERVICE = "RANGERUI";
 
   @Override
-  public ServiceModel generateService(ApiService       service,
-                                      ApiServiceConfig serviceConfig,
-                                      ApiRole          role,
-                                      ApiConfigList    roleConfig) {
-    String serviceUrl = super.generateService(service, serviceConfig, role, roleConfig).getServiceUrl();
-    return new ServiceModel(ServiceModel.Type.UI, SERVICE, serviceUrl);
+  public String getService() {
+    return SERVICE;
   }
 
+  @Override
+  public ServiceModel.Type getModelType() {
+    return ServiceModel.Type.UI;
+  }
 
 }

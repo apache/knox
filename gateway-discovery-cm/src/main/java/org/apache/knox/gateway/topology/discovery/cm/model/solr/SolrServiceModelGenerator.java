@@ -31,8 +31,28 @@ public class SolrServiceModelGenerator extends AbstractServiceModelGenerator {
   private static final String ROLE_TYPE = "SOLR_SERVER";
 
   @Override
+  public String getService() {
+    return SERVICE;
+  }
+
+  @Override
+  public String getServiceType() {
+    return SERVICE_TYPE;
+  }
+
+  @Override
+  public String getRoleType() {
+    return ROLE_TYPE;
+  }
+
+  @Override
+  public ServiceModel.Type getModelType() {
+    return ServiceModel.Type.API;
+  }
+
+  @Override
   public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return SERVICE_TYPE.equals(service.getType()) && ROLE_TYPE.equals(role.getType());
+    return getServiceType().equals(service.getType()) && getRoleType().equals(role.getType());
   }
 
   @Override
@@ -51,9 +71,7 @@ public class SolrServiceModelGenerator extends AbstractServiceModelGenerator {
       scheme = "http";
       port = getRoleConfigValue(roleConfig, "solr_http_port");
     }
-    return new ServiceModel(ServiceModel.Type.API,
-                            SERVICE,
-                            String.format(Locale.getDefault(), "%s://%s:%s/solr/", scheme, hostname, port));
+    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/solr/", scheme, hostname, port));
   }
 
 }

@@ -16,24 +16,19 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm.model.oozie;
 
-import com.cloudera.api.swagger.model.ApiConfigList;
-import com.cloudera.api.swagger.model.ApiRole;
-import com.cloudera.api.swagger.model.ApiService;
-import com.cloudera.api.swagger.model.ApiServiceConfig;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
 
 public class OozieUIServiceModelGenerator extends OozieServiceModelGenerator {
   private static final String SERVICE = "OOZIEUI";
 
   @Override
-  public ServiceModel generateService(ApiService       service,
-                                      ApiServiceConfig serviceConfig,
-                                      ApiRole          role,
-                                      ApiConfigList    roleConfig) {
-    return new ServiceModel(ServiceModel.Type.UI,
-                            SERVICE,
-                            super.generateService(service, serviceConfig, role, roleConfig).getServiceUrl());
+  public String getService() {
+    return SERVICE;
   }
 
+  @Override
+  public ServiceModel.Type getModelType() {
+    return ServiceModel.Type.UI;
+  }
 
 }

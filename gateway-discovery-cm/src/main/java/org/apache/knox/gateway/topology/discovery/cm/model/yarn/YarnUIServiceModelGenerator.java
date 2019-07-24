@@ -33,8 +33,28 @@ public class YarnUIServiceModelGenerator extends AbstractServiceModelGenerator {
   private static final String ROLE_TYPE = "RESOURCEMANAGER";
 
   @Override
+  public String getService() {
+    return SERVICE;
+  }
+
+  @Override
+  public String getServiceType() {
+    return SERVICE_TYPE;
+  }
+
+  @Override
+  public String getRoleType() {
+    return ROLE_TYPE;
+  }
+
+  @Override
+  public ServiceModel.Type getModelType() {
+    return ServiceModel.Type.UI;
+  }
+
+  @Override
   public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return SERVICE_TYPE.equals(service.getType()) && ROLE_TYPE.equals(role.getType());
+    return getServiceType().equals(service.getType()) && getRoleType().equals(role.getType());
   }
 
   @Override
@@ -42,6 +62,14 @@ public class YarnUIServiceModelGenerator extends AbstractServiceModelGenerator {
                                       ApiServiceConfig serviceConfig,
                                       ApiRole          role,
                                       ApiConfigList    roleConfig) throws ApiException {
+    return createServiceModel(generateURL(service, serviceConfig, role, roleConfig));
+  }
+
+  protected String generateURL(ApiService       service,
+                               ApiServiceConfig serviceConfig,
+                               ApiRole          role,
+                               ApiConfigList    roleConfig) throws ApiException {
+
     String hostname = role.getHostRef().getHostname();
     String scheme;
     String port;
@@ -53,9 +81,7 @@ public class YarnUIServiceModelGenerator extends AbstractServiceModelGenerator {
       scheme = "http";
       port = getRoleConfigValue(roleConfig, "resourcemanager_webserver_port");
     }
-    return new ServiceModel(ServiceModel.Type.UI,
-                            SERVICE,
-                            String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+    return String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port);
   }
 
   private boolean isSSLEnabled(ApiService service, ApiServiceConfig serviceConfig)

@@ -49,6 +49,48 @@ import static org.junit.Assert.assertNotNull;
 public class ClouderaManagerServiceDiscoveryTest {
 
   @Test
+  public void testAtlasDiscovery() {
+    doTestAtlasDiscovery(false);
+  }
+
+  @Test
+  public void testAtlasDiscoverySSL() {
+    doTestAtlasDiscovery(true);
+  }
+
+  @Test
+  public void testAtlasAPIDiscovery() {
+    doTestAtlasAPIDiscovery(false);
+  }
+
+  @Test
+  public void testAtlasAPIDiscoverySSL() {
+    doTestAtlasAPIDiscovery(true);
+  }
+
+  private void doTestAtlasDiscovery(final boolean isSSL) {
+    final String hostName       = "atlas-host-1";
+    final String port           = "21000";
+    final String sslPort        = "21003";
+    ServiceDiscovery.Cluster cluster = doTestAtlasDiscovery(hostName, port, sslPort, isSSL);
+    List<String> atlastURLs = cluster.getServiceURLs("ATLAS");
+    assertEquals(1, atlastURLs.size());
+    assertEquals((isSSL ? "https" : "http") + "://" + hostName + ":" + (isSSL ? sslPort : port),
+                 atlastURLs.get(0));
+  }
+
+  private void doTestAtlasAPIDiscovery(final boolean isSSL) {
+    final String hostName       = "atlas-host-1";
+    final String port           = "21000";
+    final String sslPort        = "21003";
+    ServiceDiscovery.Cluster cluster = doTestAtlasDiscovery(hostName, port, sslPort, isSSL);
+    List<String> atlastURLs = cluster.getServiceURLs("ATLAS-API");
+    assertEquals(1, atlastURLs.size());
+    assertEquals((isSSL ? "https" : "http") + "://" + hostName + ":" + (isSSL ? sslPort : port),
+        atlastURLs.get(0));
+  }
+
+  @Test
   public void testHiveServiceDiscovery() {
     doTestHiveServiceDiscovery(false);
   }
@@ -59,15 +101,13 @@ public class ClouderaManagerServiceDiscoveryTest {
   }
 
   private void doTestHiveServiceDiscovery(final boolean enableSSL) {
-    final String clusterName    = "test-cluster-1";
     final String hostName       = "test-host-1";
     final String thriftPort     = "10001";
     final String thriftPath     = "cliService";
     final String expectedScheme = (enableSSL ? "https" : "http");
 
     ServiceDiscovery.Cluster cluster =
-        doTestHiveServiceDiscovery(clusterName, hostName, thriftPort, thriftPath, enableSSL);
-    assertEquals(clusterName, cluster.getName());
+        doTestHiveServiceDiscovery(hostName, thriftPort, thriftPath, enableSSL);
     List<String> hiveURLs = cluster.getServiceURLs("HIVE");
     assertNotNull(hiveURLs);
     assertEquals(1, hiveURLs.size());
@@ -76,14 +116,12 @@ public class ClouderaManagerServiceDiscoveryTest {
 
   @Test
   public void testWebHDFSServiceDiscovery() {
-    final String clusterName = "test-cluster-1";
     final String hostName    = "test-host-1";
     final String nameService = "nameservice1";
     final String nnPort      = "50070";
     final String dfsHttpPort = "50075";
 
-    ServiceDiscovery.Cluster cluster = doTestHDFSDiscovery(clusterName, hostName, nameService, nnPort, dfsHttpPort);
-    assertEquals(clusterName, cluster.getName());
+    ServiceDiscovery.Cluster cluster = doTestHDFSDiscovery(hostName, nameService, nnPort, dfsHttpPort);
     List<String> webhdfsURLs = cluster.getServiceURLs("WEBHDFS");
     assertNotNull(webhdfsURLs);
     assertEquals(1, webhdfsURLs.size());
@@ -93,7 +131,6 @@ public class ClouderaManagerServiceDiscoveryTest {
 
   @Test
   public void testWebHDFSServiceDiscoveryWithSSL() {
-    final String clusterName  = "test-cluster-1";
     final String hostName     = "test-host-1";
     final String nameService  = "nameservice1";
     final String nnPort       = "50070";
@@ -101,8 +138,7 @@ public class ClouderaManagerServiceDiscoveryTest {
     final String dfsHttpsPort = "50079";
 
     ServiceDiscovery.Cluster cluster =
-        doTestHDFSDiscovery(clusterName, hostName, nameService, nnPort, dfsHttpPort, dfsHttpsPort);
-    assertEquals(clusterName, cluster.getName());
+        doTestHDFSDiscovery(hostName, nameService, nnPort, dfsHttpPort, dfsHttpsPort);
     List<String> webhdfsURLs = cluster.getServiceURLs("WEBHDFS");
     assertNotNull(webhdfsURLs);
     assertEquals(1, webhdfsURLs.size());
@@ -112,14 +148,12 @@ public class ClouderaManagerServiceDiscoveryTest {
 
   @Test
   public void testNameNodeServiceDiscovery() {
-    final String clusterName = "test-cluster-2";
     final String hostName    = "test-host-2";
     final String nameService = "nameservice2";
     final String nnPort      = "50070";
     final String dfsHttpPort = "50071";
 
-    ServiceDiscovery.Cluster cluster = doTestHDFSDiscovery(clusterName, hostName, nameService, nnPort, dfsHttpPort);
-    assertEquals(clusterName, cluster.getName());
+    ServiceDiscovery.Cluster cluster = doTestHDFSDiscovery(hostName, nameService, nnPort, dfsHttpPort);
     List<String> nnURLs = cluster.getServiceURLs("NAMENODE");
     assertNotNull(nnURLs);
     assertEquals(1, nnURLs.size());
@@ -128,15 +162,13 @@ public class ClouderaManagerServiceDiscoveryTest {
 
   @Test
   public void testNameNodeServiceDiscoveryHA() {
-    final String clusterName = "test-cluster-2";
     final String hostName    = "test-host-2";
     final String nameService = "nameservice2";
     final String nnPort      = "50070";
     final String dfsHttpPort = "50071";
 
     ServiceDiscovery.Cluster cluster =
-        doTestHDFSDiscovery(clusterName, hostName, nameService, nnPort, dfsHttpPort, null, true);
-    assertEquals(clusterName, cluster.getName());
+        doTestHDFSDiscovery(hostName, nameService, nnPort, dfsHttpPort, null, true);
     List<String> nnURLs = cluster.getServiceURLs("NAMENODE");
     assertNotNull(nnURLs);
     assertEquals(1, nnURLs.size());
@@ -145,22 +177,384 @@ public class ClouderaManagerServiceDiscoveryTest {
 
   @Test
   public void testHdfsUIServiceDiscovery() {
-    final String clusterName = "test-cluster-3";
     final String hostName    = "test-host-3";
     final String nameService = "nameservice3";
     final String nnPort      = "50070";
     final String dfsHttpPort = "50071";
 
-    ServiceDiscovery.Cluster cluster = doTestHDFSDiscovery(clusterName, hostName, nameService, nnPort, dfsHttpPort);
-    assertEquals(clusterName, cluster.getName());
+    ServiceDiscovery.Cluster cluster = doTestHDFSDiscovery(hostName, nameService, nnPort, dfsHttpPort);
     List<String> hdfsUIURLs = cluster.getServiceURLs("HDFSUI");
     assertNotNull(hdfsUIURLs);
     assertEquals(1, hdfsUIURLs.size());
     assertEquals(("http://" + hostName + ":" + dfsHttpPort), hdfsUIURLs.get(0));
   }
 
-  private ServiceDiscovery.Cluster doTestHiveServiceDiscovery(final String  clusterName,
-                                                              final String  hostName,
+  @Test
+  public void testHBaseUIDiscovery() {
+    final String hostName    = "hbase-host";
+    final String port        = "22002";
+    ServiceDiscovery.Cluster cluster = doTestHBaseUIDiscovery(hostName, port, false);
+    assertNotNull(cluster);
+    List<String> hbaseURLs = cluster.getServiceURLs("HBASEUI");
+    assertNotNull(hbaseURLs);
+    assertEquals(1, hbaseURLs.size());
+    assertEquals("http://" + hostName + ":" + port, hbaseURLs.get(0));
+  }
+
+  @Test
+  public void testHBaseUIDiscoverySSL() {
+    final String hostName    = "hbase-host";
+    final String port        = "22003";
+    ServiceDiscovery.Cluster cluster = doTestHBaseUIDiscovery(hostName, port, true);
+    assertNotNull(cluster);
+    List<String> hbaseURLs = cluster.getServiceURLs("HBASEUI");
+    assertNotNull(hbaseURLs);
+    assertEquals(1, hbaseURLs.size());
+    assertEquals("https://" + hostName + ":" + port, hbaseURLs.get(0));
+  }
+
+  @Test
+  public void testWebHBaseDiscovery() {
+    final String hostName    = "hbase-host";
+    final String port        = "22008";
+    ServiceDiscovery.Cluster cluster = doTestWebHBaseDiscovery(hostName, port, false);
+    assertNotNull(cluster);
+    List<String> hbaseURLs = cluster.getServiceURLs("WEBHBASE");
+    assertNotNull(hbaseURLs);
+    assertEquals(1, hbaseURLs.size());
+    assertEquals("http://" + hostName + ":" + port, hbaseURLs.get(0));
+  }
+
+  @Test
+  public void testWebHBaseDiscoverySSL() {
+    final String hostName    = "hbase-host";
+    final String port        = "22009";
+    ServiceDiscovery.Cluster cluster = doTestWebHBaseDiscovery(hostName, port, true);
+    assertNotNull(cluster);
+    List<String> hbaseURLs = cluster.getServiceURLs("WEBHBASE");
+    assertNotNull(hbaseURLs);
+    assertEquals(1, hbaseURLs.size());
+    assertEquals("https://" + hostName + ":" + port, hbaseURLs.get(0));
+  }
+
+  @Test
+  public void testLivyDiscovery() {
+    final String hostName    = "livy-host";
+    final String port        = "8998";
+    ServiceDiscovery.Cluster cluster = doTestLivyDiscovery(hostName, port, false);
+    assertNotNull(cluster);
+    List<String> livyURLs = cluster.getServiceURLs("LIVYSERVER");
+    assertNotNull(livyURLs);
+    assertEquals(1, livyURLs.size());
+    assertEquals("http://" + hostName + ":" + port, livyURLs.get(0));
+  }
+
+  @Test
+  public void testLivyDiscoverySSL() {
+    final String hostName    = "livy-host";
+    final String port        = "8998";
+    ServiceDiscovery.Cluster cluster = doTestLivyDiscovery(hostName, port, true);
+    assertNotNull(cluster);
+    List<String> livyURLs = cluster.getServiceURLs("LIVYSERVER");
+    assertNotNull(livyURLs);
+    assertEquals(1, livyURLs.size());
+    assertEquals("https://" + hostName + ":" + port, livyURLs.get(0));
+  }
+
+
+  @Test
+  public void testOozieDiscovery() {
+    doTestOozieDiscovery("OOZIE", false);
+  }
+
+  @Test
+  public void testOozieDiscoverySSL() {
+    doTestOozieDiscovery("OOZIE", true);
+  }
+
+
+  @Test
+  public void testOozieUIDiscovery() {
+    doTestOozieDiscovery("OOZIEUI", false);
+  }
+
+  @Test
+  public void testOozieUIDiscoverySSL() {
+    doTestOozieDiscovery("OOZIEUI", true);
+  }
+
+  @Test
+  public void testRangerDiscovery() {
+    doTestRangerDiscovery("RANGER", false);
+  }
+
+  @Test
+  public void testRangerDiscoverySSL() {
+    doTestRangerDiscovery("RANGER", true);
+  }
+
+  @Test
+  public void testRangerUIDiscovery() {
+    doTestRangerDiscovery("RANGERUI", false);
+  }
+
+  @Test
+  public void testRangerUIDiscoverySSL() {
+    doTestRangerDiscovery("RANGERUI", true);
+  }
+
+  @Test
+  public void testSolrDiscovery() {
+    doTestSolrDiscovery(false);
+  }
+
+  @Test
+  public void testSolrDiscoverySSL() {
+    doTestSolrDiscovery(true);
+  }
+
+  @Test
+  public void testSparkHistoryUIDiscovery() {
+    doTestSparkHistoryUIDiscovery("spark-history-host", "18088", "18083", false);
+  }
+
+  @Test
+  public void testSparkHistoryUIDiscoverySSL() {
+    doTestSparkHistoryUIDiscovery("spark-history-host", "18088", "18083", true);
+  }
+
+  @Test
+  public void testZeppelinDiscovery() {
+    doTestZeppelinDiscovery("ZEPPELIN", false);
+  }
+
+  @Test
+  public void testZeppelinDiscoverySSL() {
+    doTestZeppelinDiscovery("ZEPPELIN", true);
+  }
+
+  @Test
+  public void testZeppelinUIDiscovery() {
+    doTestZeppelinDiscovery("ZEPPELINUI", false);
+  }
+
+  @Test
+  public void testZeppelinUIDiscoverySSL() {
+    doTestZeppelinDiscovery("ZEPPELINUI", true);
+  }
+
+  @Test
+  public void testZeppelinWSDiscovery() {
+    doTestZeppelinDiscovery("ZEPPELINWS", false);
+  }
+
+  @Test
+  public void testZeppelinWSDiscoverySSL() {
+    doTestZeppelinDiscovery("ZEPPELINWS", true);
+  }
+
+
+  private void doTestOozieDiscovery(final String serviceName, final boolean isSSL) {
+    final String hostName = "oozie-host";
+    final String port        = "11000";
+    final String sslPort     = "11003";
+    final String expectedURL =
+            (isSSL ? "https" : "http") + "://" + hostName + ":" + (isSSL ? sslPort : port) + "/oozie/";
+    ServiceDiscovery.Cluster cluster = doTestOozieDiscovery(hostName, port, sslPort, isSSL);
+    assertNotNull(cluster);
+    List<String> oozieURLs = cluster.getServiceURLs(serviceName);
+    assertNotNull(oozieURLs);
+    assertEquals(1, oozieURLs.size());
+    assertEquals(expectedURL, oozieURLs.get(0));
+  }
+
+  private ServiceDiscovery.Cluster doTestOozieDiscovery(final String  hostName,
+                                                        final String  port,
+                                                        final String  sslPort,
+                                                        final boolean isSSL) {
+    Map<String, String> serviceProperties = new HashMap<>();
+    serviceProperties.put("oozie_use_ssl", String.valueOf(isSSL));
+
+    // Configure the role
+    Map<String, String> roleProperties = new HashMap<>();
+    roleProperties.put("oozie_http_port", port);
+    roleProperties.put("oozie_https_port", sslPort);
+
+    return doTestDiscovery(hostName,
+                           "OOZIE-1",
+                           "OOZIE",
+                           "OOZIE-1-OOZIE_SERVER-12345",
+                           "OOZIE_SERVER",
+                           serviceProperties,
+                           roleProperties);
+  }
+
+
+  private void doTestZeppelinDiscovery(final String serviceName, final boolean isSSL) {
+    final String hostName = "zeppelin-host";
+    final String port     = "8886";
+    final String sslPort  = "8887";
+
+    String expectedScheme;
+    String expectedContextPath;
+
+    if ("ZEPPELINWS".equals(serviceName)) {
+      expectedScheme = "ws";
+      expectedContextPath = "/ws";
+    } else {
+      expectedScheme = "http";
+      expectedContextPath = "";
+    }
+    if (isSSL) {
+      expectedScheme += "s";
+    }
+
+    final String expectedURL =
+        expectedScheme + "://" + hostName + ":" + (isSSL ? sslPort : port) + expectedContextPath;
+    ServiceDiscovery.Cluster cluster = doTestZeppelinDiscovery(hostName, port, sslPort, isSSL);
+    assertNotNull(cluster);
+    List<String> zeppelinURLs = cluster.getServiceURLs(serviceName);
+    assertNotNull(zeppelinURLs);
+    assertEquals(1, zeppelinURLs.size());
+    assertEquals(expectedURL, zeppelinURLs.get(0));
+  }
+
+
+  private ServiceDiscovery.Cluster doTestZeppelinDiscovery(final String  hostName,
+                                                           final String  port,
+                                                           final String  sslPort,
+                                                           final boolean isSSL) {
+    // Configure the role
+    Map<String, String> roleProperties = new HashMap<>();
+    roleProperties.put("zeppelin_server_port", port);
+    roleProperties.put("zeppelin_server_ssl_port", sslPort);
+    roleProperties.put("ssl_enabled", String.valueOf(isSSL));
+
+    return doTestDiscovery(hostName,
+                           "ZEPPELIN-1",
+                           "ZEPPELIN",
+                           "ZEPPELIN-ZEPPELIN_SERVER-1",
+                           "ZEPPELIN_SERVER",
+                           Collections.emptyMap(),
+                           roleProperties);
+  }
+
+
+  private void doTestRangerDiscovery(final String serviceName, final boolean isSSL) {
+    final String hostName    = "ranger-host";
+    final String port        = "6080";
+    final String sslPort     = "6083";
+    final String expectedURL =
+        (isSSL ? "https" : "http") + "://" + hostName + ":" + (isSSL ? sslPort : port);
+    ServiceDiscovery.Cluster cluster = doTestRangerDiscovery(hostName, port, sslPort, isSSL);
+    assertNotNull(cluster);
+    List<String> rangerURLs = cluster.getServiceURLs(serviceName);
+    assertNotNull(rangerURLs);
+    assertEquals(1, rangerURLs.size());
+    assertEquals(expectedURL, rangerURLs.get(0));
+  }
+
+
+  private void doTestSolrDiscovery(final boolean isSSL) {
+    final String hostName    = "solr-host";
+    final String port        = "8983";
+    final String sslPort     = "8985";
+    final String expectedURL =
+        (isSSL ? "https" : "http") + "://" + hostName + ":" + (isSSL ? sslPort : port) + "/solr/";
+    ServiceDiscovery.Cluster cluster = doTestSolrDiscovery(hostName, port, sslPort, isSSL);
+    assertNotNull(cluster);
+    List<String> solrURLs = cluster.getServiceURLs("SOLR");
+    assertNotNull(solrURLs);
+    assertEquals(1, solrURLs.size());
+    assertEquals(expectedURL, solrURLs.get(0));
+  }
+
+
+  private ServiceDiscovery.Cluster doTestRangerDiscovery(final String  hostName,
+                                                         final String  port,
+                                                         final String  sslPort,
+                                                         final boolean isSSL) {
+    Map<String, String> serviceProperties = new HashMap<>();
+    serviceProperties.put("ranger_service_http_port", port);
+    serviceProperties.put("ranger_service_https_port", sslPort);
+
+    // Configure the role
+    Map<String, String> roleProperties = new HashMap<>();
+    roleProperties.put("ssl_enabled", String.valueOf(isSSL));
+
+    return doTestDiscovery(hostName,
+                           "RANGER-1",
+                           "RANGER",
+                           "RANGER-RANGER_ADMIN-1",
+                           "RANGER_ADMIN",
+                           serviceProperties,
+                           roleProperties);
+  }
+
+
+  private ServiceDiscovery.Cluster doTestSolrDiscovery(final String  hostName,
+                                                       final String  port,
+                                                       final String  sslPort,
+                                                       final boolean isSSL) {
+    Map<String, String> serviceProperties = new HashMap<>();
+    serviceProperties.put("solr_use_ssl", String.valueOf(isSSL));
+
+    // Configure the role
+    Map<String, String> roleProperties = new HashMap<>();
+    roleProperties.put("solr_http_port", port);
+    roleProperties.put("solr_https_port", sslPort);
+
+    return doTestDiscovery(hostName,
+                           "SOLR-1",
+                           "SOLR",
+                           "SOLR-SOLR_SERVER-1",
+                           "SOLR_SERVER",
+                           serviceProperties,
+                           roleProperties);
+  }
+
+
+  private ServiceDiscovery.Cluster doTestSparkHistoryUIDiscovery(final String  hostName,
+                                                                 final String  port,
+                                                                 final String  sslPort,
+                                                                 final boolean isSSL) {
+    // Configure the role
+    Map<String, String> roleProperties = new HashMap<>();
+    roleProperties.put("ssl_enabled", String.valueOf(isSSL));
+    roleProperties.put("history_server_web_port", port);
+    roleProperties.put("ssl_server_port", sslPort);
+
+    return doTestDiscovery(hostName,
+                           "SPARK_ON_YARN-1",
+                           "SPARK_ON_YARN",
+                           "SPAR4fcf419a-SPARK_YARN_HISTORY_SERVER-12345",
+                           "SPARK_YARN_HISTORY_SERVER",
+                           Collections.emptyMap(),
+                           roleProperties);
+  }
+
+
+  private ServiceDiscovery.Cluster doTestAtlasDiscovery(final String  atlasHost,
+                                                        final String  port,
+                                                        final String  sslPort,
+                                                        final boolean isSSL) {
+    // Configure the role
+    Map<String, String> roleProperties = new HashMap<>();
+    roleProperties.put("atlas_server_http_port", port);
+    roleProperties.put("atlas_server_https_port", sslPort);
+    roleProperties.put("ssl_enabled", String.valueOf(isSSL));
+
+    return doTestDiscovery(atlasHost,
+                           "ATLAS-1",
+                           "ATLAS",
+                           "ATLAS-ATLAS_SERVER-1",
+                           "ATLAS_SERVER",
+                           Collections.emptyMap(),
+                           roleProperties);
+  }
+
+
+  private ServiceDiscovery.Cluster doTestHiveServiceDiscovery(final String  hostName,
                                                               final String  thriftPort,
                                                               final String  thriftPath,
                                                               final boolean enableSSL) {
@@ -169,104 +563,51 @@ public class ClouderaManagerServiceDiscoveryTest {
           "<property><name>hive.server2.thrift.http.port</name><value>" + thriftPort + "</value></property>\n" +
           "<property><name>hive.server2.thrift.http.path</name><value>" + thriftPath + "</value></property>";
 
-    GatewayConfig gwConf = EasyMock.createNiceMock(GatewayConfig.class);
-    EasyMock.replay(gwConf);
-
-    ServiceDiscoveryConfig sdConfig = createMockDiscoveryConfig();
-
-    // Create the test client for providing test response content
-    TestDiscoveryApiClient mockClient = new TestDiscoveryApiClient(sdConfig, null);
-
-    // Prepare the service list response for the cluster
-    ApiServiceList serviceList = EasyMock.createNiceMock(ApiServiceList.class);
-    EasyMock.expect(serviceList.getItems())
-        .andReturn(Collections.singletonList(createMockApiService("HIVE-1", "HIVE")))
-        .anyTimes();
-    EasyMock.replay(serviceList);
-    mockClient.addResponse(ApiServiceList.class, new TestApiServiceListResponse(serviceList));
-
-    // Prepare the HIVE service config response for the cluster
-    ApiServiceConfig hiveServiceConfig = createMockApiServiceConfig();
-    mockClient.addResponse(ApiServiceConfig.class, new TestApiServiceConfigResponse(hiveServiceConfig));
-
-    // Prepare the HS2 role
-    ApiRole hs2Role =
-        createMockApiRole("HIVE-1-HIVESERVER2-d0b64dd7b7611e22bc976ede61678d9e", "HIVESERVER2", hostName);
-    ApiRoleList hiveRoleList = EasyMock.createNiceMock(ApiRoleList.class);
-    EasyMock.expect(hiveRoleList.getItems()).andReturn(Collections.singletonList(hs2Role)).anyTimes();
-    EasyMock.replay(hiveRoleList);
-    mockClient.addResponse(ApiRoleList.class, new TestApiRoleListResponse(hiveRoleList));
-
-    // Configure the HS2 role
+    // Configure the role
     Map<String, String> roleProperties = new HashMap<>();
     roleProperties.put("hive_hs2_config_safety_valve", hs2SafetyValveValue);
     roleProperties.put("hive.server2.use.SSL", String.valueOf(enableSSL));
-    ApiConfigList hiveRoleConfigList = createMockApiConfigList(roleProperties);
-    mockClient.addResponse(ApiConfigList.class, new TestApiConfigListResponse(hiveRoleConfigList));
 
-    // Invoke the service discovery
-    ClouderaManagerServiceDiscovery cmsd = new ClouderaManagerServiceDiscovery(true);
-    ServiceDiscovery.Cluster cluster = cmsd.discover(gwConf, sdConfig, clusterName, mockClient);
-    assertNotNull(cluster);
-    return cluster;
+    return doTestDiscovery(hostName,
+                           "HIVE-1",
+                           "HIVE",
+                           "HIVE-1-HIVESERVER2-12345",
+                           "HIVESERVER2",
+                           Collections.emptyMap(),
+                           roleProperties);
   }
 
-  private ServiceDiscovery.Cluster doTestHDFSDiscovery(final String clusterName,
-                                                       final String hostName,
+
+  private ServiceDiscovery.Cluster doTestHDFSDiscovery(final String hostName,
                                                        final String nameService,
                                                        final String nnPort,
                                                        final String dfsHttpPort) {
-    return doTestHDFSDiscovery(clusterName, hostName, nameService, nnPort, dfsHttpPort, null);
+    return doTestHDFSDiscovery(hostName, nameService, nnPort, dfsHttpPort, null);
   }
 
-  private ServiceDiscovery.Cluster doTestHDFSDiscovery(final String clusterName,
-                                                       final String hostName,
+
+  private ServiceDiscovery.Cluster doTestHDFSDiscovery(final String hostName,
                                                        final String nameService,
                                                        final String nnPort,
                                                        final String dfsHttpPort,
                                                        final String dfsHttpsPort) {
-    return doTestHDFSDiscovery(clusterName, hostName, nameService, nnPort, dfsHttpPort, dfsHttpsPort, false);
+    return doTestHDFSDiscovery(hostName, nameService, nnPort, dfsHttpPort, dfsHttpsPort, false);
   }
 
-  private ServiceDiscovery.Cluster doTestHDFSDiscovery(final String  clusterName,
-                                                       final String  hostName,
+
+  private ServiceDiscovery.Cluster doTestHDFSDiscovery(final String  hostName,
                                                        final String  nameService,
                                                        final String  nnPort,
                                                        final String  dfsHttpPort,
                                                        final String  dfsHttpsPort,
                                                        final boolean enableHA) {
 
-    GatewayConfig gwConf = EasyMock.createNiceMock(GatewayConfig.class);
-    EasyMock.replay(gwConf);
-
-    ServiceDiscoveryConfig sdConfig = createMockDiscoveryConfig();
-
-    // Create the test client for providing test response content
-    TestDiscoveryApiClient mockClient = new TestDiscoveryApiClient(sdConfig, null);
-
-    // Prepare the service list response for the cluster
-    ApiServiceList serviceList = EasyMock.createNiceMock(ApiServiceList.class);
-    EasyMock.expect(serviceList.getItems())
-        .andReturn(Collections.singletonList(createMockApiService("NAMENODE-1", "HDFS")))
-        .anyTimes();
-    EasyMock.replay(serviceList);
-    mockClient.addResponse(ApiServiceList.class, new TestApiServiceListResponse(serviceList));
-
     // Prepare the HDFS service config response for the cluster
     Map<String, String> serviceProps = new HashMap<>();
     serviceProps.put("hdfs_hadoop_ssl_enabled", String.valueOf(dfsHttpsPort != null && !dfsHttpsPort.isEmpty()));
     serviceProps.put("dfs_webhdfs_enabled", "true");
-    ApiServiceConfig hdfsServiceConfig = createMockApiServiceConfig(serviceProps);
-    mockClient.addResponse(ApiServiceConfig.class, new TestApiServiceConfigResponse(hdfsServiceConfig));
 
-    // Prepare the NameNode role
-    ApiRole nnRole = createMockApiRole("HDFS-1-NAMENODE-d0b64dd7b7611e22bc976ede61678d9e", "NAMENODE", hostName);
-    ApiRoleList nnRoleList = EasyMock.createNiceMock(ApiRoleList.class);
-    EasyMock.expect(nnRoleList.getItems()).andReturn(Collections.singletonList(nnRole)).anyTimes();
-    EasyMock.replay(nnRoleList);
-    mockClient.addResponse(ApiRoleList.class, new TestApiRoleListResponse(nnRoleList));
-
-    // Configure the NameNode role
+    // Configure the role
     Map<String, String> roleProperties = new HashMap<>();
     roleProperties.put("dfs_federation_namenode_nameservice", nameService);
     roleProperties.put("autofailover_enabled", String.valueOf(enableHA));
@@ -275,8 +616,113 @@ public class ClouderaManagerServiceDiscoveryTest {
     if (dfsHttpsPort != null && !dfsHttpsPort.isEmpty()) {
       roleProperties.put("dfs_https_port", dfsHttpsPort);
     }
-    ApiConfigList nnRoleConfigList = createMockApiConfigList(roleProperties);
-    mockClient.addResponse(ApiConfigList.class, new TestApiConfigListResponse(nnRoleConfigList));
+
+    return doTestDiscovery(hostName,
+                           "NAMENODE-1",
+                           "HDFS",
+                           "HDFS-1-NAMENODE-12345",
+                           "NAMENODE",
+                           serviceProps,
+                           roleProperties);
+  }
+
+
+  private ServiceDiscovery.Cluster doTestHBaseUIDiscovery(final String  hostName,
+                                                          final String  port,
+                                                          final boolean isSSL) {
+    // Prepare the HBase service config response for the cluster
+    Map<String, String> serviceProps = new HashMap<>();
+    serviceProps.put("hbase_hadoop_ssl_enabled", String.valueOf(isSSL));
+
+    // Configure the role
+    Map<String, String> roleProperties = new HashMap<>();
+    roleProperties.put("hbase_master_info_port", port);
+
+    return doTestDiscovery(hostName,
+                           "HBASE-1",
+                           "HBASE",
+                           "HBASE-1-MASTER-12345",
+                           "MASTER",
+                           serviceProps,
+                           roleProperties);
+  }
+
+
+  private ServiceDiscovery.Cluster doTestWebHBaseDiscovery(final String  hostName,
+                                                           final String  port,
+                                                           final boolean isSSL) {
+    // Configure the role
+    Map<String, String> roleProperties = new HashMap<>();
+    roleProperties.put("hbase_restserver_port", port);
+    roleProperties.put("hbase_restserver_ssl_enable", String.valueOf(isSSL));
+
+    return doTestDiscovery(hostName,
+                           "HBASE-1",
+                           "HBASE",
+                           "HBASE-1-RESTSERVER",
+                           "HBASERESTSERVER",
+                           Collections.emptyMap(),
+                           roleProperties);
+  }
+
+
+  private ServiceDiscovery.Cluster doTestLivyDiscovery(final String  hostName,
+                                                       final String  port,
+                                                       final boolean isSSL) {
+    // Configure the role
+    Map<String, String> roleProperties = new HashMap<>();
+    roleProperties.put("livy_server_port", port);
+    roleProperties.put("ssl_enabled", String.valueOf(isSSL));
+
+    return doTestDiscovery(hostName,
+                           "LIVY-1",
+                           "LIVY",
+                           "LIVY-LIVY_SERVER-1",
+                           "LIVY_SERVER",
+                           Collections.emptyMap(),
+                           roleProperties);
+  }
+
+
+  private ServiceDiscovery.Cluster doTestDiscovery(final String hostName,
+                                                   final String serviceName,
+                                                   final String serviceType,
+                                                   final String roleName,
+                                                   final String roleType,
+                                                   final Map<String, String> serviceProperties,
+                                                   final Map<String, String> roleProperties) {
+    final String clusterName = "cluster-1";
+
+    GatewayConfig gwConf = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.replay(gwConf);
+
+    ServiceDiscoveryConfig sdConfig = createMockDiscoveryConfig();
+
+    // Create the test client for providing test response content
+    TestDiscoveryApiClient mockClient = new TestDiscoveryApiClient(sdConfig, null);
+
+    // Prepare the service list response for the cluster
+    ApiServiceList serviceList = EasyMock.createNiceMock(ApiServiceList.class);
+    EasyMock.expect(serviceList.getItems())
+            .andReturn(Collections.singletonList(createMockApiService(serviceName, serviceType)))
+            .anyTimes();
+    EasyMock.replay(serviceList);
+    mockClient.addResponse(ApiServiceList.class, new TestApiServiceListResponse(serviceList));
+
+    // Prepare the Livy service config response for the cluster
+    ApiServiceConfig hbase = createMockApiServiceConfig(serviceProperties);
+    mockClient.addResponse(ApiServiceConfig.class, new TestApiServiceConfigResponse(hbase));
+
+    // Prepare the Livy Server role
+    ApiRole livyServerRole = createMockApiRole(roleName, roleType, hostName);
+    ApiRoleList livyServerRoleList = EasyMock.createNiceMock(ApiRoleList.class);
+    EasyMock.expect(livyServerRoleList.getItems()).andReturn(Collections.singletonList(livyServerRole)).anyTimes();
+    EasyMock.replay(livyServerRoleList);
+    mockClient.addResponse(ApiRoleList.class, new TestApiRoleListResponse(livyServerRoleList));
+
+    // Configure the Livy Server role
+    ApiConfigList atlasServerRoleConfigList = createMockApiConfigList(roleProperties);
+    mockClient.addResponse(ApiConfigList.class, new TestApiConfigListResponse(atlasServerRoleConfigList));
 
     // Invoke the service discovery
     ClouderaManagerServiceDiscovery cmsd = new ClouderaManagerServiceDiscovery(true);
@@ -285,6 +731,7 @@ public class ClouderaManagerServiceDiscoveryTest {
     assertEquals(clusterName, cluster.getName());
     return cluster;
   }
+
 
   private static ServiceDiscoveryConfig createMockDiscoveryConfig() {
     return createMockDiscoveryConfig("http://localhost:1234", "itsme");
@@ -317,10 +764,6 @@ public class ClouderaManagerServiceDiscoveryTest {
     EasyMock.expect(r.getHostRef()).andReturn(hostRef).anyTimes();
     EasyMock.replay(r);
     return r;
-  }
-
-  private static ApiServiceConfig createMockApiServiceConfig() {
-    return createMockApiServiceConfig(Collections.emptyMap());
   }
 
   private static ApiServiceConfig createMockApiServiceConfig(Map<String, String> properties) {

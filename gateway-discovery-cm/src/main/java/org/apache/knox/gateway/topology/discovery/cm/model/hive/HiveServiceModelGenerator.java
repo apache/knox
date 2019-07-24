@@ -33,8 +33,28 @@ public class HiveServiceModelGenerator extends AbstractServiceModelGenerator {
   private static final String ROLE_TYPE    = "HIVESERVER2";
 
   @Override
+  public String getService() {
+    return SERVICE;
+  }
+
+  @Override
+  public String getServiceType() {
+    return SERVICE_TYPE;
+  }
+
+  @Override
+  public String getRoleType() {
+    return ROLE_TYPE;
+  }
+
+  @Override
+  public ServiceModel.Type getModelType() {
+    return ServiceModel.Type.API;
+  }
+
+  @Override
   public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return SERVICE_TYPE.equals(service.getType()) && ROLE_TYPE.equals(role.getType()) && checkHiveServer2HTTPMode(roleConfig);
+    return getServiceType().equals(service.getType()) && getRoleType().equals(role.getType()) && checkHiveServer2HTTPMode(roleConfig);
   }
 
   @Override
@@ -48,9 +68,7 @@ public class HiveServiceModelGenerator extends AbstractServiceModelGenerator {
     String httpPath = getSafetyValveValue(hs2SafetyValve, "hive.server2.thrift.http.path");
     boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, "hive.server2.use.SSL"));
     String scheme = sslEnabled ? "https" : "http";
-    return new ServiceModel(ServiceModel.Type.API,
-                            SERVICE,
-                            String.format(Locale.getDefault(), "%s://%s:%s/%s", scheme, hostname, port, httpPath));
+    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/%s", scheme, hostname, port, httpPath));
   }
 
   private boolean checkHiveServer2HTTPMode(ApiConfigList roleConfig) {

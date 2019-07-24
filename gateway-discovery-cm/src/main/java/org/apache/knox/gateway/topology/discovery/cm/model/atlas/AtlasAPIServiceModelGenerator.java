@@ -16,24 +16,19 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm.model.atlas;
 
-import com.cloudera.api.swagger.client.ApiException;
-import com.cloudera.api.swagger.model.ApiConfigList;
-import com.cloudera.api.swagger.model.ApiRole;
-import com.cloudera.api.swagger.model.ApiService;
-import com.cloudera.api.swagger.model.ApiServiceConfig;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
 
 public class AtlasAPIServiceModelGenerator extends AtlasServiceModelGenerator {
   private static final String SERVICE = "ATLAS-API";
 
   @Override
-  public ServiceModel generateService(ApiService       service,
-                                      ApiServiceConfig serviceConfig,
-                                      ApiRole          role,
-                                      ApiConfigList    roleConfig) throws ApiException {
-    return new ServiceModel(ServiceModel.Type.API,
-                           SERVICE,
-                           super.generateService(service, serviceConfig, role, roleConfig).getServiceUrl());
+  public String getService() {
+    return SERVICE;
+  }
+
+  @Override
+  public ServiceModel.Type getModelType() {
+    return ServiceModel.Type.API;
   }
 
 }

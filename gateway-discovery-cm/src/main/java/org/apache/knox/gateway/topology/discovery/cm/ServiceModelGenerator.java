@@ -24,6 +24,23 @@ import com.cloudera.api.swagger.model.ApiServiceConfig;
 
 public interface ServiceModelGenerator {
 
+  /**
+   * @return The name of the Knox service for which the implementation will generate a model.
+   */
+  String getService();
+
+  /**
+   * @return The Cloudera Manager configuration service type.
+   */
+  String getServiceType();
+
+  /**
+   * @return The Cloudera Manager configuration role type.
+   */
+  String getRoleType();
+
+  ServiceModel.Type getModelType();
+
   void setApiClient(DiscoveryApiClient client);
 
   boolean handles(ApiService       service,

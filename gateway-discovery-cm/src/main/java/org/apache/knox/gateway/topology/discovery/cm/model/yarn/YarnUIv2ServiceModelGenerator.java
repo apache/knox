@@ -16,23 +16,12 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm.model.yarn;
 
-import com.cloudera.api.swagger.client.ApiException;
-import com.cloudera.api.swagger.model.ApiConfigList;
-import com.cloudera.api.swagger.model.ApiRole;
-import com.cloudera.api.swagger.model.ApiService;
-import com.cloudera.api.swagger.model.ApiServiceConfig;
-import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
-
 public class YarnUIv2ServiceModelGenerator extends YarnUIServiceModelGenerator {
   private static final String SERVICE = "YARNUIV2";
 
   @Override
-  public ServiceModel generateService(ApiService       service,
-                                      ApiServiceConfig serviceConfig,
-                                      ApiRole          role,
-                                      ApiConfigList    roleConfig) throws ApiException {
-    String serviceUrl = super.generateService(service, serviceConfig, role, roleConfig).getServiceUrl();
-    return new ServiceModel(ServiceModel.Type.UI, SERVICE, serviceUrl);
+  public String getService() {
+    return SERVICE;
   }
 
 }

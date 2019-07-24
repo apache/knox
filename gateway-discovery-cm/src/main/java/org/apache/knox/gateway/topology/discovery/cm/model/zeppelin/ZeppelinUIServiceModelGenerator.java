@@ -17,19 +17,12 @@
 package org.apache.knox.gateway.topology.discovery.cm.model.zeppelin;
 
 
-import com.cloudera.api.swagger.client.ApiException;
-import com.cloudera.api.swagger.model.ApiConfigList;
-import com.cloudera.api.swagger.model.ApiRole;
-import com.cloudera.api.swagger.model.ApiService;
-import com.cloudera.api.swagger.model.ApiServiceConfig;
-import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
-
 public class ZeppelinUIServiceModelGenerator extends ZeppelinServiceModelGenerator {
   private static final String SERVICE = "ZEPPELINUI";
 
   @Override
-  public ServiceModel generateService(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) throws ApiException {
-    ServiceModel sm = super.generateService(service, serviceConfig, role, roleConfig);
-    return new ServiceModel(sm.getType(), SERVICE, sm.getServiceUrl());
+  public String getService() {
+    return SERVICE;
   }
+
 }

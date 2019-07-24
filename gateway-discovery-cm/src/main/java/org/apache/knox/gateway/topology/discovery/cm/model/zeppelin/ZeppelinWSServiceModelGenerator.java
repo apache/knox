@@ -28,6 +28,16 @@ public class ZeppelinWSServiceModelGenerator extends ZeppelinServiceModelGenerat
   private static final String SERVICE = "ZEPPELINWS";
 
   @Override
+  public String getService() {
+    return SERVICE;
+  }
+
+  @Override
+  public ServiceModel.Type getModelType() {
+    return ServiceModel.Type.API;
+  }
+
+  @Override
   public ServiceModel generateService(ApiService       service,
                                       ApiServiceConfig serviceConfig,
                                       ApiRole          role,
@@ -35,17 +45,14 @@ public class ZeppelinWSServiceModelGenerator extends ZeppelinServiceModelGenerat
     String hostname = role.getHostRef().getHostname();
     String scheme;
     String port;
-    boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, "ssl_enabled"));
-    if(sslEnabled) {
+    if(isSSL(roleConfig)) {
       scheme = "wss";
-      port = getRoleConfigValue(roleConfig, "zeppelin_server_ssl_port");
+      port = getSSLPort(roleConfig);
     } else {
       scheme = "ws";
-      port = getRoleConfigValue(roleConfig, "zeppelin_server_port");
+      port = getPort(roleConfig);
     }
-    return new ServiceModel(ServiceModel.Type.API,
-                            SERVICE,
-                            String.format(Locale.getDefault(), "%s://%s:%s/ws", scheme, hostname, port));
+    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/ws", scheme, hostname, port));
   }
 
 }

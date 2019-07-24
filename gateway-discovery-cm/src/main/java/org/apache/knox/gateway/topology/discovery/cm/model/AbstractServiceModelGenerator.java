@@ -21,6 +21,7 @@ import com.cloudera.api.swagger.model.ApiConfig;
 import com.cloudera.api.swagger.model.ApiConfigList;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
 import org.apache.knox.gateway.topology.discovery.cm.DiscoveryApiClient;
+import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGenerator;
 
 import java.util.List;
@@ -71,6 +72,10 @@ public abstract class AbstractServiceModelGenerator implements ServiceModelGener
       }
     }
     return val;
+  }
+
+  protected ServiceModel createServiceModel(final String url) {
+    return new ServiceModel(getModelType(), getService(), url);
   }
 
 }

@@ -29,6 +29,16 @@ public class HdfsUIServiceModelGenerator extends NameNodeServiceModelGenerator {
   private static final String SERVICE = "HDFSUI";
 
   @Override
+  public String getService() {
+    return SERVICE;
+  }
+
+  @Override
+  public ServiceModel.Type getModelType() {
+    return ServiceModel.Type.UI;
+  }
+
+  @Override
   public ServiceModel generateService(ApiService       service,
                                       ApiServiceConfig serviceConfig,
                                       ApiRole          role,
@@ -45,7 +55,7 @@ public class HdfsUIServiceModelGenerator extends NameNodeServiceModelGenerator {
       port = getRoleConfigValue(roleConfig, "dfs_http_port");
     }
     String namenodeUrl = String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port);
-    return new ServiceModel(ServiceModel.Type.UI, SERVICE, namenodeUrl);
+    return createServiceModel(namenodeUrl);
   }
 
 }

@@ -63,6 +63,16 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
   static final String DEFAULT_USER_ALIAS = "cm.discovery.user";
   static final String DEFAULT_PWD_ALIAS  = "cm.discovery.password";
 
+  private static Map<String, List<ServiceModelGenerator>> serviceModelGenerators = new HashMap<>();
+  static {
+    ServiceLoader<ServiceModelGenerator> loader = ServiceLoader.load(ServiceModelGenerator.class);
+    for (ServiceModelGenerator serviceModelGenerator : loader) {
+      List<ServiceModelGenerator> smgList =
+          serviceModelGenerators.computeIfAbsent(serviceModelGenerator.getServiceType(), k -> new ArrayList<>());
+      smgList.add(serviceModelGenerator);
+    }
+  }
+
   private boolean debug;
 
   @GatewayService
@@ -162,7 +172,6 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
     cluster = new ClouderaManagerCluster(clusterName);
 
     Set<ServiceModel> serviceModels = new HashSet<>();
-    ServiceLoader<ServiceModelGenerator> loader = ServiceLoader.load(ServiceModelGenerator.class);
 
     ApiServiceList serviceList = getClusterServices(servicesResourceApi, clusterName);
     if (serviceList != null) {
@@ -179,11 +188,16 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
             ApiConfigList roleConfig =
                 getRoleConfig(rolesResourceApi, clusterName, serviceName, roleName);
 
-            for (ServiceModelGenerator serviceModelGenerator : loader) {
-              if (serviceModelGenerator.handles(service, serviceConfig, role, roleConfig)) {
-                serviceModelGenerator.setApiClient(client);
-                ServiceModel serviceModel = serviceModelGenerator.generateService(service, serviceConfig, role, roleConfig);
-                serviceModels.add(serviceModel);
+            List<ServiceModelGenerator> smgList = serviceModelGenerators.get(service.getType());
+            if (smgList != null) {
+              for (ServiceModelGenerator serviceModelGenerator : smgList) {
+                if (serviceModelGenerator != null) {
+                  if (serviceModelGenerator.handles(service, serviceConfig, role, roleConfig)) {
+                    serviceModelGenerator.setApiClient(client);
+                    ServiceModel serviceModel = serviceModelGenerator.generateService(service, serviceConfig, role, roleConfig);
+                    serviceModels.add(serviceModel);
+                  }
+                }
               }
             }
           }

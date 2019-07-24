@@ -28,13 +28,20 @@ public class ResourceManagerUIServiceModelGenerator extends YarnUIServiceModelGe
   private static final String RM_WS_SUFFIX = "/ws";
 
   @Override
-  public ServiceModel generateService(ApiService       service,
-                                      ApiServiceConfig serviceConfig,
-                                      ApiRole          role,
-                                      ApiConfigList    roleConfig) throws ApiException {
-    String url =  super.generateService(service, serviceConfig, role, roleConfig).getServiceUrl() + RM_WS_SUFFIX;
-    return new ServiceModel(ServiceModel.Type.API, SERVICE, url);
+  public String getService() {
+    return SERVICE;
   }
 
+  @Override
+  public ServiceModel.Type getModelType() {
+    return ServiceModel.Type.API;
+  }
 
+  @Override
+  protected String generateURL(ApiService       service,
+                               ApiServiceConfig serviceConfig,
+                               ApiRole          role,
+                               ApiConfigList    roleConfig) throws ApiException {
+    return (super.generateURL(service, serviceConfig, role, roleConfig) + RM_WS_SUFFIX);
+  }
 }

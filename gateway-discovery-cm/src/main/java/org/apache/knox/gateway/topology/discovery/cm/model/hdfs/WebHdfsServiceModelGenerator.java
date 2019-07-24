@@ -28,6 +28,16 @@ public class WebHdfsServiceModelGenerator extends HdfsUIServiceModelGenerator {
   private static final String WEBHDFS_SUFFIX = "/webhdfs";
 
   @Override
+  public String getService() {
+    return SERVICE;
+  }
+
+  @Override
+  public ServiceModel.Type getModelType() {
+    return ServiceModel.Type.API;
+  }
+
+  @Override
   public boolean handles(ApiService       service,
                          ApiServiceConfig serviceConfig,
                          ApiRole          role,
@@ -43,7 +53,7 @@ public class WebHdfsServiceModelGenerator extends HdfsUIServiceModelGenerator {
                                       ApiConfigList    roleConfig) throws ApiException {
     String serviceUrl =
         super.generateService(service, serviceConfig, role, roleConfig).getServiceUrl() + WEBHDFS_SUFFIX;
-    return new ServiceModel(ServiceModel.Type.API, SERVICE, serviceUrl);
+    return createServiceModel(serviceUrl);
   }
 
 }

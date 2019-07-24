@@ -31,8 +31,28 @@ public class SparkHistoryUIServiceModelGenerator extends AbstractServiceModelGen
   private static final String ROLE_TYPE = "SPARK_YARN_HISTORY_SERVER";
 
   @Override
+  public String getService() {
+    return SERVICE;
+  }
+
+  @Override
+  public String getServiceType() {
+    return SERVICE_TYPE;
+  }
+
+  @Override
+  public String getRoleType() {
+    return ROLE_TYPE;
+  }
+
+  @Override
+  public ServiceModel.Type getModelType() {
+    return ServiceModel.Type.UI;
+  }
+
+  @Override
   public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return SERVICE_TYPE.equals(service.getType()) && ROLE_TYPE.equals(role.getType());
+    return getServiceType().equals(service.getType()) && getRoleType().equals(role.getType());
   }
 
   @Override
@@ -51,9 +71,7 @@ public class SparkHistoryUIServiceModelGenerator extends AbstractServiceModelGen
       scheme = "http";
       port = getRoleConfigValue(roleConfig, "history_server_web_port");
     }
-    return new ServiceModel(ServiceModel.Type.UI,
-                            SERVICE,
-                            String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
   }
 
 }
