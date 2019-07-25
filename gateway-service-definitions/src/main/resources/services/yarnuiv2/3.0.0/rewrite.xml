@@ -21,6 +21,10 @@
     <rewrite template="{$serviceUrl[YARNUIV2]}/ui2/"/>
   </rule>
 
+  <rule dir="IN" name="YARNUIV2/yarnuiv2/inbound/stacks" pattern="*://*:*/**/yarnuiv2/logs/stacks">
+    <rewrite template="{$serviceUrl[YARNUIV2]}/stacks"/>
+  </rule>
+
   <rule dir="IN" name="YARNUIV2/yarnuiv2/inbound/redirect" pattern="*://*:*/**/yarnuiv2/redirect">
     <rewrite template="{$serviceUrl[YARNUIV2]}/ui2/index.html"/>
   </rule> 
