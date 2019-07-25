@@ -115,6 +115,30 @@ public class ClouderaManagerServiceDiscoveryTest {
   }
 
   @Test
+  public void testHiveOnTezDiscovery() {
+    doTestHiveOnTezServiceDiscovery(false);
+  }
+
+  @Test
+  public void testHiveOnTezDiscoverySSL() {
+    doTestHiveOnTezServiceDiscovery(true);
+  }
+
+  private void doTestHiveOnTezServiceDiscovery(final boolean enableSSL) {
+    final String hostName       = "test-host-1";
+    final String thriftPort     = "10001";
+    final String thriftPath     = "cliService";
+    final String expectedScheme = (enableSSL ? "https" : "http");
+
+    ServiceDiscovery.Cluster cluster =
+        doTestHiveOnTezServiceDiscovery(hostName, thriftPort, thriftPath, enableSSL);
+    List<String> hiveURLs = cluster.getServiceURLs("HIVE");
+    assertNotNull(hiveURLs);
+    assertEquals(1, hiveURLs.size());
+    assertEquals((expectedScheme + "://" + hostName + ":" +thriftPort + "/" + thriftPath), hiveURLs.get(0));
+  }
+
+  @Test
   public void testWebHDFSServiceDiscovery() {
     final String hostName    = "test-host-1";
     final String nameService = "nameservice1";
@@ -572,6 +596,30 @@ public class ClouderaManagerServiceDiscoveryTest {
                            "HIVE-1",
                            "HIVE",
                            "HIVE-1-HIVESERVER2-12345",
+                           "HIVESERVER2",
+                           Collections.emptyMap(),
+                           roleProperties);
+  }
+
+
+  private ServiceDiscovery.Cluster doTestHiveOnTezServiceDiscovery(final String  hostName,
+                                                                   final String  thriftPort,
+                                                                   final String  thriftPath,
+                                                                   final boolean enableSSL) {
+    final String hs2SafetyValveValue =
+        "<property><name>hive.server2.transport.mode</name><value>http</value></property>\n" +
+        "<property><name>hive.server2.thrift.http.port</name><value>" + thriftPort + "</value></property>\n" +
+        "<property><name>hive.server2.thrift.http.path</name><value>" + thriftPath + "</value></property>";
+
+    // Configure the role
+    Map<String, String> roleProperties = new HashMap<>();
+    roleProperties.put("hive_hs2_config_safety_valve", hs2SafetyValveValue);
+    roleProperties.put("hive.server2.use.SSL", String.valueOf(enableSSL));
+
+    return doTestDiscovery(hostName,
+                           "HIVE_ON_TEZ-1",
+                           "HIVE_ON_TEZ",
+                           "HIVE_ON_TEZ-1-HIVESERVER2-12345",
                            "HIVESERVER2",
                            Collections.emptyMap(),
                            roleProperties);
