@@ -23,8 +23,8 @@ import {GatewayVersion} from './gateway-version';
 
 @Injectable()
 export class GatewayVersionService {
-
-    private apiUrl = '/gateway/manager/api/v1/version';
+    private apiUrl = window.location.pathname.replace(new RegExp('admin-ui/.*'), 'api/v1/');
+    private versionUrl = this.apiUrl + 'version';
 
     constructor(private http: HttpClient) {
     }
@@ -32,7 +32,7 @@ export class GatewayVersionService {
     getVersion(): Promise<GatewayVersion> {
         let headers = new HttpHeaders();
         headers = this.addHeaders(headers);
-        return this.http.get(this.apiUrl, {headers: headers})
+        return this.http.get(this.versionUrl, {headers: headers})
             .toPromise()
             .then(response => {
                 return response['ServerVersion'] as GatewayVersion;
