@@ -22,14 +22,12 @@ import {Resource} from './resource';
 import {ProviderConfig} from '../resource-detail/provider-config';
 import {Descriptor} from '../resource-detail/descriptor';
 
-
 @Injectable()
 export class ResourceService {
-
     // TODO: PJZ: Get this list dynamically?
     private static discoveryTypes: Array<string> = ['ClouderaManager', 'Ambari'];
 
-    apiUrl = '/gateway/manager/api/v1/';
+    apiUrl = window.location.pathname.replace(new RegExp('admin-ui/.*'), 'api/v1/');
     providersUrl = this.apiUrl + 'providerconfig';
     descriptorsUrl = this.apiUrl + 'descriptors';
     topologiesUrl = this.apiUrl + 'topologies';

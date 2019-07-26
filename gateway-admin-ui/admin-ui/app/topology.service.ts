@@ -23,8 +23,7 @@ import {Topology} from './topology';
 
 @Injectable()
 export class TopologyService {
-
-    apiUrl = '/gateway/manager/api/v1/';
+    apiUrl = window.location.pathname.replace(new RegExp('admin-ui/.*'), 'api/v1/');
     topologiesUrl = this.apiUrl + 'topologies';
     selectedTopologySource = new Subject<Topology>();
     selectedTopology$ = this.selectedTopologySource.asObservable();
