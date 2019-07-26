@@ -40,6 +40,20 @@
 
     <route path="/yarnuiv2/proxy/**">
       <rewrite apply="YARNUIV2/yarnuiv2/outbound/headers/jobhistory/job" to="response.headers"/>
+      <rewrite apply="YARNUIV2/yarnuiv2/outbound/apps" to="response.body"/>
+    </route>
+
+    <route path="/yarnuiv2/cluster/**?**">
+      <rewrite apply="YARNUIV2/yarnuiv2/outbound/headers/jobhistory/job" to="response.headers"/>
+      <rewrite apply="YARNUIV2/yarnuiv2/outbound/apps" to="response.body"/>
+    </route>
+
+    <route path="/yarnuiv2/node/containerlogs/**?**">
+      <rewrite apply="YARNUIV2/yarnuiv2/outbound/headers/jobhistory/job" to="response.headers"/>
+    </route>
+
+    <route path="/yarnuiv2/nodemanager/node/**?**">
+      <rewrite apply="YARNUIV2/yarnuiv2/inbound/nodemanager1" to="request.url"/>
     </route>
 
     <route path="/yarnuiv2/nodemanager/**?**">
