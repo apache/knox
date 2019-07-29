@@ -234,11 +234,7 @@ public class UrlRewriteServletFilterTest {
 //    fail( "TODO" );
 //  }
 
-  /**
-   * If no rewrite rule is defined for inbound request skip rewriting
-   * JSON Body.
-   * @throws Exception
-   */
+  // If no rewrite rule is defined for inbound request skip rewriting JSON Body.
   @Test
   public void testInboundJsonBodyRewrite() throws Exception {
     testSetUp( null );
@@ -461,11 +457,7 @@ public class UrlRewriteServletFilterTest {
 //    fail( "TODO" );
 //  }
 
-  /**
-   * Example test case where inbound rule is specified to rewrite
-   * request body.
-   * @throws Exception
-   */
+  // Example test case where inbound rule is specified to rewrite request body.
   @Test
   public void testRequestJsonBodyRewriteWithFilterInitParam() throws Exception {
     Map<String,String> initParams = new HashMap<>();
@@ -970,7 +962,7 @@ public class UrlRewriteServletFilterTest {
 
   private static class SetupFilter implements Filter {
     @Override
-    public void init( FilterConfig filterConfig ) throws ServletException {
+    public void init( FilterConfig filterConfig ) {
     }
 
     @Override
