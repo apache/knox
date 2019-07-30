@@ -43,6 +43,11 @@
       <rewrite apply="YARNUIV2/yarnuiv2/outbound/apps" to="response.body"/>
     </route>
 
+    <route path="/yarnuiv2/cluster/nodes">
+       <rewrite apply="YARNUIV2/yarnuiv2/outbound/headers/jobhistory/job" to="response.headers"/>
+       <rewrite apply="YARNUIV2/yarnuiv2/outbound/filter/nodes" to="response.body"/>
+    </route>
+
     <route path="/yarnuiv2/cluster/**?**">
       <rewrite apply="YARNUIV2/yarnuiv2/outbound/headers/jobhistory/job" to="response.headers"/>
       <rewrite apply="YARNUIV2/yarnuiv2/outbound/apps" to="response.body"/>
@@ -53,10 +58,14 @@
     </route>
 
     <route path="/yarnuiv2/nodemanager/node/**?**">
+      <rewrite apply="YARNUIV2/yarnuiv2/inbound/nodemanager2" to="request.url"/>
+    </route>
+
+    <route path="/yarnuiv2/nodemanager/node?**">
       <rewrite apply="YARNUIV2/yarnuiv2/inbound/nodemanager1" to="request.url"/>
     </route>
 
-    <route path="/yarnuiv2/nodemanager/**?**">
+    <route path="/yarnuiv2/nodes/**?**">
       <rewrite apply="YARNUIV2/yarnuiv2/inbound/nodemanager" to="request.url"/>
     </route>
 
