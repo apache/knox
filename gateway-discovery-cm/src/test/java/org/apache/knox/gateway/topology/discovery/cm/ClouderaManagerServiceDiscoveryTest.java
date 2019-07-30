@@ -18,6 +18,7 @@ package org.apache.knox.gateway.topology.discovery.cm;
 
 import com.cloudera.api.swagger.client.ApiException;
 import com.cloudera.api.swagger.client.ApiResponse;
+import com.cloudera.api.swagger.model.ApiClusterRef;
 import com.cloudera.api.swagger.model.ApiConfig;
 import com.cloudera.api.swagger.model.ApiConfigList;
 import com.cloudera.api.swagger.model.ApiHostRef;
@@ -47,6 +48,31 @@ import static org.junit.Assert.assertNotNull;
 
 
 public class ClouderaManagerServiceDiscoveryTest {
+
+  @Test
+  public void testJobTrackerServiceDiscovery() {
+    final String hostName = "resourcemanager-host-1";
+    final String  port    = "8032";
+
+    Map<String,String> serviceProperties = new HashMap<>();
+    serviceProperties.put("hdfs_service", ""); // This is only necessary to satisfy code not covered by this test
+
+    // Configure the role
+    Map<String, String> roleProperties = new HashMap<>();
+    roleProperties.put("yarn_resourcemanager_address", port);
+
+    ServiceDiscovery.Cluster cluster =  doTestDiscovery(hostName,
+                                                        "YARN-1",
+                                                        "YARN",
+                                                        "YARN-1-RESOURCEMANAGER-12345",
+                                                        "RESOURCEMANAGER",
+                                                        serviceProperties,
+                                                        roleProperties);
+    List<String> urls = cluster.getServiceURLs("JOBTRACKER");
+    assertNotNull(urls);
+    assertEquals(1, urls.size());
+    assertEquals("rpc://" + hostName + ":" + port, urls.get(0));
+  }
 
   @Test
   public void testAtlasDiscovery() {
@@ -752,25 +778,25 @@ public class ClouderaManagerServiceDiscoveryTest {
     // Prepare the service list response for the cluster
     ApiServiceList serviceList = EasyMock.createNiceMock(ApiServiceList.class);
     EasyMock.expect(serviceList.getItems())
-            .andReturn(Collections.singletonList(createMockApiService(serviceName, serviceType)))
+            .andReturn(Collections.singletonList(createMockApiService(serviceName, serviceType, clusterName)))
             .anyTimes();
     EasyMock.replay(serviceList);
     mockClient.addResponse(ApiServiceList.class, new TestApiServiceListResponse(serviceList));
 
-    // Prepare the Livy service config response for the cluster
-    ApiServiceConfig hbase = createMockApiServiceConfig(serviceProperties);
-    mockClient.addResponse(ApiServiceConfig.class, new TestApiServiceConfigResponse(hbase));
+    // Prepare the service config response for the cluster
+    ApiServiceConfig serviceConfig = createMockApiServiceConfig(serviceProperties);
+    mockClient.addResponse(ApiServiceConfig.class, new TestApiServiceConfigResponse(serviceConfig));
 
-    // Prepare the Livy Server role
-    ApiRole livyServerRole = createMockApiRole(roleName, roleType, hostName);
-    ApiRoleList livyServerRoleList = EasyMock.createNiceMock(ApiRoleList.class);
-    EasyMock.expect(livyServerRoleList.getItems()).andReturn(Collections.singletonList(livyServerRole)).anyTimes();
-    EasyMock.replay(livyServerRoleList);
-    mockClient.addResponse(ApiRoleList.class, new TestApiRoleListResponse(livyServerRoleList));
+    // Prepare the role
+    ApiRole role = createMockApiRole(roleName, roleType, hostName);
+    ApiRoleList roleList = EasyMock.createNiceMock(ApiRoleList.class);
+    EasyMock.expect(roleList.getItems()).andReturn(Collections.singletonList(role)).anyTimes();
+    EasyMock.replay(roleList);
+    mockClient.addResponse(ApiRoleList.class, new TestApiRoleListResponse(roleList));
 
-    // Configure the Livy Server role
-    ApiConfigList atlasServerRoleConfigList = createMockApiConfigList(roleProperties);
-    mockClient.addResponse(ApiConfigList.class, new TestApiConfigListResponse(atlasServerRoleConfigList));
+    // Configure the role
+    ApiConfigList roleConfigList = createMockApiConfigList(roleProperties);
+    mockClient.addResponse(ApiConfigList.class, new TestApiConfigListResponse(roleConfigList));
 
     // Invoke the service discovery
     ClouderaManagerServiceDiscovery cmsd = new ClouderaManagerServiceDiscovery(true);
@@ -794,10 +820,15 @@ public class ClouderaManagerServiceDiscoveryTest {
     return config;
   }
 
-  private static ApiService createMockApiService(String name, String type) {
+  private static ApiService createMockApiService(String name, String type, String clusterName) {
     ApiService s = EasyMock.createNiceMock(ApiService.class);
     EasyMock.expect(s.getName()).andReturn(name).anyTimes();
     EasyMock.expect(s.getType()).andReturn(type).anyTimes();
+
+    ApiClusterRef clusterRef = EasyMock.createNiceMock(ApiClusterRef.class);
+    EasyMock.expect(clusterRef.getClusterName()).andReturn(clusterName).anyTimes();
+    EasyMock.replay(clusterRef);
+    EasyMock.expect(s.getClusterRef()).andReturn(clusterRef).anyTimes();
     EasyMock.replay(s);
     return s;
   }
@@ -906,6 +937,19 @@ public class ClouderaManagerServiceDiscoveryTest {
   private static class TestApiConfigListResponse extends TestResponseBase<ApiConfigList> {
     TestApiConfigListResponse(ApiConfigList data) {
       super(data);
+    }
+  }
+
+  private static final class ApiClusterRefExt extends ApiClusterRef {
+    private String name;
+
+    ApiClusterRefExt(String name) {
+      this.name = name;
+    }
+
+    @Override
+    public String getClusterName() {
+      return name;
     }
   }
 

@@ -16,7 +16,6 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm.model.yarn;
 
-import com.cloudera.api.swagger.ServicesResourceApi;
 import com.cloudera.api.swagger.client.ApiException;
 import com.cloudera.api.swagger.model.ApiConfigList;
 import com.cloudera.api.swagger.model.ApiRole;
@@ -26,8 +25,9 @@ import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
 
 import java.util.Locale;
 
-public class YarnUIServiceModelGenerator extends ResourceManagerServiceModelGeneratorBase {
-  private static final String SERVICE = "YARNUI";
+public class JobTrackerServiceModelGenerator extends ResourceManagerServiceModelGeneratorBase {
+
+  private static final String SERVICE = "JOBTRACKER";
 
   @Override
   public String getService() {
@@ -36,7 +36,7 @@ public class YarnUIServiceModelGenerator extends ResourceManagerServiceModelGene
 
   @Override
   public ServiceModel.Type getModelType() {
-    return ServiceModel.Type.UI;
+    return ServiceModel.Type.API;
   }
 
   @Override
@@ -44,35 +44,10 @@ public class YarnUIServiceModelGenerator extends ResourceManagerServiceModelGene
                                       ApiServiceConfig serviceConfig,
                                       ApiRole          role,
                                       ApiConfigList    roleConfig) throws ApiException {
-    return createServiceModel(generateURL(service, serviceConfig, role, roleConfig));
-  }
-
-  protected String generateURL(ApiService       service,
-                               ApiServiceConfig serviceConfig,
-                               ApiRole          role,
-                               ApiConfigList    roleConfig) throws ApiException {
 
     String hostname = role.getHostRef().getHostname();
-    String scheme;
-    String port;
+    String port = getRoleConfigValue(roleConfig, "yarn_resourcemanager_address");
 
-    if(isSSLEnabled(service, serviceConfig)) {
-      scheme = "https";
-      port = getRoleConfigValue(roleConfig, "resourcemanager_webserver_https_port");
-    } else {
-      scheme = "http";
-      port = getRoleConfigValue(roleConfig, "resourcemanager_webserver_port");
-    }
-    return String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port);
+    return createServiceModel(String.format(Locale.getDefault(), "rpc://%s:%s", hostname, port));
   }
-
-  private boolean isSSLEnabled(ApiService service, ApiServiceConfig serviceConfig)
-      throws ApiException {
-    ServicesResourceApi servicesResourceApi = new ServicesResourceApi(getClient());
-    String clusterName = service.getClusterRef().getClusterName();
-    String hdfsService = getServiceConfigValue(serviceConfig, "hdfs_service");
-    ApiServiceConfig hdfsServiceConfig = servicesResourceApi.readServiceConfig(clusterName, hdfsService, "full");
-    return Boolean.parseBoolean(getServiceConfigValue(hdfsServiceConfig, "hdfs_hadoop_ssl_enabled"));
-  }
-
 }

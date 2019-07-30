@@ -27,6 +27,7 @@ org.apache.knox.gateway.topology.discovery.cm.model.hive.HiveServiceModelGenerat
 org.apache.knox.gateway.topology.discovery.cm.model.hive.HiveOnTezServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.hue.HueServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.hue.HueLBServiceModelGenerator
+org.apache.knox.gateway.topology.discovery.cm.model.yarn.JobTrackerServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.livy.LivyServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.oozie.OozieServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.oozie.OozieUIServiceModelGenerator
