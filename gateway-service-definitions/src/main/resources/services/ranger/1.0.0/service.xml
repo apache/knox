@@ -18,6 +18,8 @@
     <routes>
         <route path="/ranger/service/public/**"/>
         <route path="/ranger/service/plugins/**"/>
+        <route path="/ranger/service/xusers/users/**"/>
+        <route path="/ranger/service/xusers/groups/**"/>
         <route path="/ranger"/>
     </routes>
     <dispatch classname="org.apache.knox.gateway.dispatch.DefaultDispatch"/>
