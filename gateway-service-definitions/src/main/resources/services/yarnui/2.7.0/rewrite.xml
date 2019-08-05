@@ -77,8 +77,14 @@
 <rule dir="IN" name="YARNUI/yarn/inbound/nodemanager/node2" pattern="*://*:*/**/yarn/nodemanager/node?{scheme}?{host}?{port}">
     <rewrite template="{scheme}://{host}:{port}/node"/>
 </rule>
+<rule dir="IN" name="YARNUI/yarn/inbound/containerlogs1" pattern="*://*:*/**/yarn/nodemanager/node/containerlogs/{**}?{**}?{scheme}?{host}?{port}">
+    <rewrite template="{scheme}://{host}:{port}/node/containerlogs/{**}?{**}"/>
+</rule>
 <rule dir="IN" name="YARNUI/yarn/inbound/nodemanager/containerlogs/container" pattern="*://*:*/**/yarn/nodemanager/node/containerlogs/{**}?{scheme}?{host}?{port}">
     <rewrite template="{scheme}://{host}:{port}/node/containerlogs/{**}"/>
+</rule>
+<rule dir="IN" name="YARNUI/yarn/inbound/nodemanager/node3" pattern="*://*:*/**/yarn/nodemanager/node/{**}?{scheme}?{host}?{port}">
+    <rewrite template="{scheme}://{host}:{port}/node/{**}"/>
 </rule>
 <rule dir="IN" name="YARNUI/yarn/inbound/resourcemanager/home" pattern="*://*:*/**/yarn/resourcemanager?{scheme}?{host}?{port}">
     <rewrite template="{scheme}://{host}:{port}/cluster"/>
@@ -124,7 +130,10 @@
     <rewrite template="{$frontend[url]}/yarn/cluster/scheduler?{**}"/>
 </rule>
 <rule dir="OUT" name="YARNUI/yarn/outbound/node" pattern="/node/{**}">
-    <rewrite template="{$frontend[url]}/yarn/nodemanager/node/{**}"/>
+    <rewrite template="{$frontend[url]}/yarn/nodemanager/node/{**}?scheme={$inboundurl[scheme]}?host={$inboundurl[host]}?port={$inboundurl[port]}"/>
+</rule>
+<rule dir="OUT" name="YARNUI/yarn/outbound/node4" pattern="/node/containerlogs/{**}?{start}">
+    <rewrite template="{$frontend[url]}/yarn/nodemanager/node/containerlogs/{**}?{start}?scheme={$inboundurl[scheme]}?host={$inboundurl[host]}?port={$inboundurl[port]}"/>
 </rule>
 <rule dir="OUT" name="YARNUI/yarn/outbound/cluster/app" pattern="*://*:*/cluster/app/{**}">
     <rewrite template="{$frontend[url]}/yarn/cluster/app/{**}"/>
