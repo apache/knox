@@ -18,45 +18,34 @@ package org.apache.knox.gateway;
 
 import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.category.ReleaseTest;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
-import java.net.ConnectException;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.apache.knox.test.TestUtils.LOG_ENTER;
 import static org.apache.knox.test.TestUtils.LOG_EXIT;
 
 /**
- * Test that the Gateway Topology Port Mapping feature is disabled properly.
- *
+ * Test default topology feature
  */
 @Category(ReleaseTest.class)
-public class GatewayPortMappingDisableFeatureTest extends PortMappingHelper {
+public class GatewayDefaultTopologyTest extends PortMappingHelper {
 
-  @Rule
-  public ExpectedException exception = ExpectedException.none();
-
-  public GatewayPortMappingDisableFeatureTest() {
+  public GatewayDefaultTopologyTest() {
     super();
   }
 
-  @Before
-  public void setup() throws Exception {
-    eeriePort = getAvailablePort(1240, 49151);
-    ConcurrentHashMap<String, Integer> topologyPortMapping = new ConcurrentHashMap<>();
-    topologyPortMapping.put("eerie", eeriePort);
-    /* define port mappings but feature disabled */
-    init(null, topologyPortMapping, false);
+  @BeforeClass
+  public static void setup() throws Exception {
+    /* setup test with eerie as a default topology */
+    init("eerie",false);
   }
 
-  @After
-  public void cleanup() throws Exception {
+  @AfterClass
+  public static void cleanup() throws Exception {
     LOG_ENTER();
     driver.cleanup();
     driver.reset();
@@ -65,20 +54,22 @@ public class GatewayPortMappingDisableFeatureTest extends PortMappingHelper {
   }
 
   /*
-   * Test the standard case
+   * Test the standard case:
+   * http://localhost:{topologyPort}/gateway/eerie/webhdfs/v1
    */
   @Test(timeout = TestUtils.MEDIUM_TIMEOUT )
   public void testBasicListOperation() throws IOException {
-    test(driver.getUrl("WEBHDFS") );
+    test("http://localhost:" + driver.getGatewayPort() + "/gateway/eerie" + "/webhdfs" );
   }
 
   /*
-   * Test the multi port fail scenario when the feature is disabled.
+   * Test the Default Topology Feature, activated by property
+   * "default.app.topology.name"
+   *
+   * http://localhost:{eeriePort}/gateway/eerie/webhdfs/v1
    */
   @Test(timeout = TestUtils.MEDIUM_TIMEOUT )
-  public void testMultiPortFailOperation() throws IOException {
-    exception.expect(ConnectException.class);
-    exception.expectMessage("Connection refused");
-    test("http://localhost:" + eeriePort + "/webhdfs" );
+  public void testDefaultTopologyFeature() throws IOException {
+    test("http://localhost:" + driver.getGatewayPort() + "/webhdfs" );
   }
 }

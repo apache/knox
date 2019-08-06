@@ -16,10 +16,9 @@
  */
 package org.apache.knox.gateway;
 
+import org.apache.http.HttpStatus;
 import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.category.ReleaseTest;
-import org.apache.knox.test.mock.MockServer;
-import org.apache.http.HttpStatus;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -36,21 +35,7 @@ import static org.apache.knox.test.TestUtils.LOG_EXIT;
  * Test the fail cases for the Port Mapping Feature
  */
 @Category(ReleaseTest.class)
-public class GatewayPortMappingFailTest {
-
-  // Specifies if the test requests should go through the gateway or directly to the services.
-  // This is frequently used to verify the behavior of the test both with and without the gateway.
-  private static final boolean USE_GATEWAY = true;
-
-  // Specifies if the test requests should be sent to mock services or the real services.
-  // This is frequently used to verify the behavior of the test both with and without mock services.
-  private static final boolean USE_MOCK_SERVICES = true;
-
-  private static GatewayTestDriver driver = new GatewayTestDriver();
-
-  private static MockServer masterServer;
-
-  private static int eeriePort;
+public class GatewayPortMappingFailTest extends PortMappingHelper {
 
   /**
    * Create an instance
@@ -59,39 +44,12 @@ public class GatewayPortMappingFailTest {
     super();
   }
 
-  /**
-   * Creates a deployment of a gateway instance that all test methods will share.  This method also creates a
-   * registry of sorts for all of the services that will be used by the test methods.
-   * The createTopology method is used to create the topology file that would normally be read from disk.
-   * The driver.setupGateway invocation is where the creation of GATEWAY_HOME occurs.
-   * <p>
-   * This would normally be done once for this suite but the failure tests start affecting each other depending
-   * on the state the last 'active' url
-   *
-   * @throws Exception Thrown if any failure occurs.
-   */
   @BeforeClass
   public static void setup() throws Exception {
-    LOG_ENTER();
-
-    eeriePort = GatewayPortMappingFuncTest.getAvailablePort(1240, 49151);
-
+    eeriePort = getAvailablePort(1240, 49151);
     ConcurrentHashMap<String, Integer> topologyPortMapping = new ConcurrentHashMap<>();
     topologyPortMapping.put("eerie", eeriePort);
-
-    masterServer = new MockServer("master", true);
-    GatewayTestConfig config = new GatewayTestConfig();
-    config.setGatewayPath("gateway");
-    config.setTopologyPortMapping(topologyPortMapping);
-
-    driver.setResourceBase(WebHdfsHaFuncTest.class);
-    driver.setupLdap(0);
-
-    driver.setupService("WEBHDFS", "http://vm.local:50070/webhdfs", "/eerie/webhdfs", USE_MOCK_SERVICES);
-
-    driver.setupGateway(config, "eerie", GatewayPortMappingFuncTest.createTopology("WEBHDFS", driver.getLdapUrl(), masterServer.getPort()), USE_GATEWAY);
-
-    LOG_EXIT();
+    init(null, topologyPortMapping);
   }
 
   @AfterClass
