@@ -102,6 +102,7 @@
         <module>gateway-service-as</module>
         <module>gateway-service-hbase</module>
         <module>gateway-service-hive</module>
+        <module>gateway-service-impala</module>
         <module>gateway-service-knoxsso</module>
         <module>gateway-service-knoxssout</module>
         <module>gateway-service-knoxtoken</module>
@@ -972,6 +973,11 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-hive</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-service-impala</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
