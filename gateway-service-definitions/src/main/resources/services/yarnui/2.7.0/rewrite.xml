@@ -202,6 +202,8 @@
         <apply path="/proxy/[^']*" rule="YARNUI/yarn/outbound/apps/history1"/>
         <apply path="(https?:)?//[^/':,]+:[\d]+/node/containerlogs/container(_[^/':,]+)+/[^/':,]+" rule="YARNUI/yarn/outbound/node/containerlogs"/>
     </content>
+    <content type="*/json">
+    </content>
 </filter>
 <filter name="YARNUI/yarn/outbound/filter/cluster">
     <content type="*/html">

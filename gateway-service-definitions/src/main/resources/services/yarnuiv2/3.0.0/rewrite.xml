@@ -195,6 +195,8 @@
       <apply path="https?://[^/':,]+:[\d][^']*" rule="YARNUIV2/yarnuiv2/outbound/node2"/>
       <apply path="/cluster/[^']*" rule="YARNUIV2/yarnuiv2/outbound/cluster/common"/>
     </content>
+    <content type="*/json">
+    </content>
   </filter>
 
   <rule flow="OR" dir="OUT" name="YARNUIV2/yarnuiv2/outbound/cluster/common">
