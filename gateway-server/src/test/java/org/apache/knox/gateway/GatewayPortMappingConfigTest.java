@@ -42,7 +42,6 @@ import static org.hamcrest.Matchers.greaterThan;
  *
  */
 public class GatewayPortMappingConfigTest {
-
   /**
    * Mock gateway config
    */
@@ -108,10 +107,8 @@ public class GatewayPortMappingConfigTest {
    * @param max max port to check
    * @return Port that is available.
    */
-  public static int getAvailablePort(final int min, final int max) {
-
+  private static int getAvailablePort(final int min, final int max) {
     for (int i = min; i <= max; i++) {
-
       if (!GatewayServer.isPortInUse(i)) {
         return i;
       }
@@ -199,7 +196,5 @@ public class GatewayPortMappingConfigTest {
 
     // Start Server
     gatewayServer.start();
-
   }
-
 }

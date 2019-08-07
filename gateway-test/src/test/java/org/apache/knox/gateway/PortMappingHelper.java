@@ -44,7 +44,7 @@ public abstract class PortMappingHelper {
   static MockServer masterServer;
   static int eeriePort;
 
-  public PortMappingHelper() {
+  PortMappingHelper() {
     super();
   }
 
@@ -59,11 +59,14 @@ public abstract class PortMappingHelper {
    * This would normally be done once for this suite but the failure tests start
    * affecting each other depending on the state the last 'active' url
    *
+   * @param defaultTopologyName default topology name
+   * @param topologyPortMapping mapping to topology to port
+   * @param isPortMappingEnabled boolean if port mapping is enabled
    * @throws Exception Thrown if any failure occurs.
    */
   public static void init(final String defaultTopologyName,
-      final ConcurrentHashMap<String, Integer> topologyPortMapping, final boolean isPortMappingEnabled)
-      throws Exception {
+                          final ConcurrentHashMap<String, Integer> topologyPortMapping,
+                          final boolean isPortMappingEnabled) throws Exception {
     LOG_ENTER();
 
     masterServer = new MockServer("master", true);
@@ -114,8 +117,7 @@ public abstract class PortMappingHelper {
    * @param gatewayPort port for the gateway
    * @return A populated XML structure for a topology file.
    */
-  static XMLTag createTopology(final String role, final String ldapURL,
-      final int gatewayPort) {
+  static XMLTag createTopology(final String role, final String ldapURL, final int gatewayPort) {
     return XMLDoc.newDocument(true).addRoot("topology").addTag("gateway")
         .addTag("provider").addTag("role").addText("webappsec").addTag("name")
         .addText("WebAppSec").addTag("enabled").addText("true").addTag("param")
@@ -158,9 +160,7 @@ public abstract class PortMappingHelper {
    * @return Port that is available.
    */
   static int getAvailablePort(final int min, final int max) {
-
     for (int i = min; i <= max; i++) {
-
       if (!GatewayServer.isPortInUse(i)) {
         return i;
       }
