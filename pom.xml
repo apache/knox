@@ -188,7 +188,7 @@
           jackson-databind released a small bug fix for a CVE
           remove the extra version when jackson version is bumped to 2.10.x
         -->
-        <jackson-databind.version>2.9.9.2</jackson-databind.version>
+        <jackson-databind.version>2.9.9.3</jackson-databind.version>
         <jacoco-maven-plugin.version>0.8.4</jacoco-maven-plugin.version>
         <jansi.version>1.18</jansi.version>
         <javax.activation.version>1.2.0</javax.activation.version>
