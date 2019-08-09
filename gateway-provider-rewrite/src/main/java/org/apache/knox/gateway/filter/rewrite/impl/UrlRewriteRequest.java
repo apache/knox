@@ -235,7 +235,12 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
   @Override
   public ServletInputStream getInputStream() throws IOException {
     ServletInputStream input = super.getInputStream();
-    if( getContentLength() != 0 ) {
+    /**
+     *  Make sure payload is not empty before adding
+     *  content-type specific filters. We cannot rely on request.getContentLength()
+     *  since previous filters update it to return -1
+     */
+    if( getContentLength() != 0 && input.available() != 0 ) {
       MimeType mimeType = getMimeType();
 
       /* In cases where content type is application/text and content-encoding is gzip */
