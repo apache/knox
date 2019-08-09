@@ -37,6 +37,11 @@ public class MockServletInputStream extends ServletInputStream {
   }
 
   @Override
+  public int available() throws IOException {
+    return stream.available();
+  }
+
+  @Override
   public boolean isFinished() {
     throw new UnsupportedOperationException();
   }
