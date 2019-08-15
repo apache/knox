@@ -92,10 +92,10 @@
 
   <!-- re-write rules for yarn container logs -->
   <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/yarn/containerlogs" pattern="{scheme}://{host}:{port}/node/containerlogs/{**}">
-    <rewrite template="{$frontend[url]}/yarn/nodemanager/node/containerlogs/{**}?{scheme}?{host}?{port}"/>
+    <rewrite template="{$frontend[url]}/yarnuiv2/node/containerlogs/{**}?{scheme}?{host}?{port}"/>
   </rule>
 
   <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/yarn/containerlogs2" pattern="{scheme}://{host}:{port}/node/containerlogs/{**}?{**}">
-    <rewrite template="{$frontend[url]}/yarn/nodemanager/node/containerlogs/{**}?{**}?{scheme}?{host}?{port}"/>
+    <rewrite template="{$frontend[url]}/yarnuiv2/node/containerlogs/{**}?{**}?{scheme}?{host}?{port}"/>
   </rule>
 </rules>
