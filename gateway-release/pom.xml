@@ -279,6 +279,10 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-service-nifi-registry</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-provider-rewrite</artifactId>
         </dependency>
         <dependency>
