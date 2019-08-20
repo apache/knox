@@ -60,7 +60,7 @@ class NiFiRequestUtil {
         if (index >= 0) {
           knoxRouteContext = inboundRequestPathInfo.substring(0, index);
         } else {
-          Logger.getLogger(NiFiHaDispatch.class.getName()).error(String.format(Locale.ROOT, "Unable to find index of %s in %s", outboundRequestUriPathNoTrailingSlash, inboundRequestPathInfo));
+          Logger.getLogger(NiFiRequestUtil.class.getName()).error(String.format(Locale.ROOT, "Unable to find index of %s in %s", outboundRequestUriPathNoTrailingSlash, inboundRequestPathInfo));
         }
         outboundRequest.setHeader(NiFiHeaders.X_FORWARDED_CONTEXT, xForwardedContextHeaderValue + knoxRouteContext);
       }

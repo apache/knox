@@ -131,6 +131,7 @@
         <module>gateway-shell-release</module>
         <module>gateway-test-release-utils</module>
         <module>gateway-service-nifi</module>
+        <module>gateway-service-nifi-registry</module>
         <module>gateway-docker</module>
         <module>gateway-service-hashicorp-vault</module>
         <module>gateway-release-common</module>
@@ -1013,6 +1014,11 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-nifi</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-service-nifi-registry</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
