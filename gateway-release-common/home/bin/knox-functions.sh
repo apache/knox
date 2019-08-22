@@ -38,6 +38,9 @@ APP_KILL_WAIT_TIME=10
 DEFAULT_JAVA_LIB_PATH="-Djava.library.path=$APP_HOME_DIR/ext/native"
 APP_JAVA_LIB_PATH=${KNOX_GATEWAY_JAVA_LIB_PATH:-$DEFAULT_JAVA_LIB_PATH}
 
+# JAVA options used by the JVM
+declare -a APP_JAVA_OPTS
+
 
 ############################
 ##### common functions #####
@@ -132,6 +135,34 @@ function printEnv() {
     fi
 }
 
+function addAppJavaOpts {
+    options_array=$(echo "${1}" | tr " " "\n")
+    for option in ${options_array}
+    do
+       APP_JAVA_OPTS+=("$option")
+    done
+}
+
+function buildAppJavaOpts {
+    if [ -n "$APP_MEM_OPTS" ]; then
+      addAppJavaOpts "${APP_MEM_OPTS}"
+    fi
+
+    if [ -n "$APP_LOG_OPTS" ]; then
+      addAppJavaOpts "${APP_LOG_OPTS}"
+    fi
+
+    if [ -n "$APP_DBG_OPTS" ]; then
+      addAppJavaOpts "${APP_DBG_OPTS}"
+    fi
+
+    if [ -n "$APP_JAVA_LIB_PATH" ]; then
+      addAppJavaOpts "${APP_JAVA_LIB_PATH}"
+    fi
+
+    # echo "APP_JAVA_OPTS =" "${APP_JAVA_OPTS[@]}"
+}
+
 function appIsRunning {
    if [ "$1" -eq 0 ]; then return 0; fi
 
@@ -169,8 +200,10 @@ function getPID {
 }
 
 function appStart {
+   buildAppJavaOpts
+
    if [ "$APP_RUNNING_IN_FOREGROUND" == true ]; then
-      exec "$JAVA" "$APP_JAVA_OPTS" -jar "$APP_JAR" "$@"
+      exec "$JAVA" "${APP_JAVA_OPTS[@]}" -jar "$APP_JAR" "$@"
    else
       if getPID; then
          printf "%s is already running with PID %d.\n" "$APP_LABEL" "$APP_PID"
@@ -181,7 +214,7 @@ function appStart {
 
       rm -f "$APP_PID_FILE"
 
-      nohup "$JAVA" "$APP_JAVA_OPTS" -jar "$APP_JAR" "$@" >>"$APP_OUT_FILE" 2>>"$APP_ERR_FILE" & printf %s $!>"$APP_PID_FILE" || exit 1
+      nohup "$JAVA" "${APP_JAVA_OPTS[@]}" -jar "$APP_JAR" "$@" >>"$APP_OUT_FILE" 2>>"$APP_ERR_FILE" & printf %s $!>"$APP_PID_FILE" || exit 1
 
       ##give a second to the JVM to start and run validation
       sleep 1
