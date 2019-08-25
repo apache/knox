@@ -136,6 +136,7 @@ public class WebSSOResourceTest {
   public void testGetToken() throws Exception {
 
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(expectGatewayConfig()).anyTimes();
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.name")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.secure.only")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.max.age")).andReturn(null);
@@ -188,6 +189,7 @@ public class WebSSOResourceTest {
   public void testAudiences() throws Exception {
 
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(expectGatewayConfig()).anyTimes();
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.name")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.secure.only")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.max.age")).andReturn(null);
@@ -246,6 +248,7 @@ public class WebSSOResourceTest {
   public void testAudiencesWhitespace() throws Exception {
 
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(expectGatewayConfig()).anyTimes();
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.name")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.secure.only")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.max.age")).andReturn(null);
@@ -304,6 +307,7 @@ public class WebSSOResourceTest {
   public void testSignatureAlgorithm() throws Exception {
 
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(expectGatewayConfig()).anyTimes();
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.name")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.secure.only")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.max.age")).andReturn(null);
@@ -358,6 +362,7 @@ public class WebSSOResourceTest {
   public void testDefaultTTL() throws Exception {
 
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(expectGatewayConfig()).anyTimes();
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.name")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.secure.only")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.max.age")).andReturn(null);
@@ -414,6 +419,7 @@ public class WebSSOResourceTest {
   @Test
   public void testCustomTTL() throws Exception {
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(expectGatewayConfig()).anyTimes();
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.name")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.secure.only")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.max.age")).andReturn(null);
@@ -472,6 +478,7 @@ public class WebSSOResourceTest {
   public void testNegativeTTL() throws Exception {
 
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(expectGatewayConfig()).anyTimes();
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.name")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.secure.only")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.max.age")).andReturn(null);
@@ -526,9 +533,61 @@ public class WebSSOResourceTest {
   }
 
   @Test
+  public void shouldMatchKnoxSsoSecureOnlyWithSslEnabledInCaseKnoxSsoSecureOnlyIsNotSet() throws Exception {
+    testSecureOnly(false, null, false);
+    testSecureOnly(true, null, true);
+  }
+
+  @Test
+  public void shouldUseKnoxSsoSecureOnlyInCaseKnoxSsoSecureOnlyIsSet() throws Exception {
+    testSecureOnly(false, Boolean.TRUE, true);
+    testSecureOnly(true, Boolean.FALSE, false);
+  }
+
+  private void testSecureOnly(boolean sslEnabled, Boolean knoxSsoCookieSecureOnly, boolean expectedknoxSsoSecureOnly) throws Exception {
+    final ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(expectGatewayConfig(sslEnabled)).anyTimes();
+    EasyMock.expect(context.getInitParameter("knoxsso.cookie.secure.only")).andReturn(knoxSsoCookieSecureOnly == null ? null : knoxSsoCookieSecureOnly.toString());
+
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getParameter("originalUrl")).andReturn("http://localhost:9080/service");
+    EasyMock.expect(request.getParameterMap()).andReturn(Collections.emptyMap());
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    ServletOutputStream outputStream = EasyMock.createNiceMock(ServletOutputStream.class);
+    CookieResponseWrapper responseWrapper = new CookieResponseWrapper(response, outputStream);
+
+    final Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    final GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(new TestJWTokenAuthority(gatewayPublicKey, gatewayPrivateKey));
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+
+    EasyMock.replay(context, request, services);
+
+    final WebSSOResource webSSOResponse = new WebSSOResource();
+    webSSOResponse.request = request;
+    webSSOResponse.response = responseWrapper;
+    webSSOResponse.context = context;
+    webSSOResponse.init();
+
+    // Issue a token
+    webSSOResponse.doGet();
+
+    // Check the cookie
+    final Cookie cookie = responseWrapper.getCookie("hadoop-jwt");
+    assertNotNull(cookie);
+    assertEquals(expectedknoxSsoSecureOnly, cookie.getSecure());
+  }
+
+  @Test
   public void testOverflowTTL() throws Exception {
 
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(expectGatewayConfig()).anyTimes();
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.name")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.secure.only")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.max.age")).andReturn(null);
@@ -584,13 +643,8 @@ public class WebSSOResourceTest {
 
   @Test
   public void testWhitelistValidationWithEncodedOriginalURL() throws Exception {
-    GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
-    EasyMock.expect(config.getDispatchWhitelistServices()).andReturn(Collections.emptyList()).anyTimes();
-    EasyMock.expect(config.getDispatchWhitelist()).andReturn(null).anyTimes();
-    EasyMock.replay(config);
-
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
-    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(config).anyTimes();
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(expectGatewayConfig()).anyTimes();
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.name")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.secure.only")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.max.age")).andReturn(null);
@@ -639,16 +693,25 @@ public class WebSSOResourceTest {
     }
   }
 
+  private GatewayConfig expectGatewayConfig() {
+    return expectGatewayConfig(true);
+  }
+
+  private GatewayConfig expectGatewayConfig(boolean sslEnabled) {
+    final GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(config.getDispatchWhitelistServices()).andReturn(Collections.emptyList()).anyTimes();
+    EasyMock.expect(config.getDispatchWhitelist()).andReturn(null).anyTimes();
+    EasyMock.expect(config.isSSLEnabled()).andReturn(sslEnabled).anyTimes();
+    EasyMock.replay(config);
+    return config;
+  }
+
   @Test
   public void testTopologyDefinedWhitelist() throws Exception {
     final String testServiceRole = "TEST";
 
-    GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
-    EasyMock.expect(config.getDispatchWhitelistServices()).andReturn(Collections.singletonList(testServiceRole)).anyTimes();
-    EasyMock.expect(config.getDispatchWhitelist()).andReturn(null).anyTimes();
-    EasyMock.replay(config);
-
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(expectGatewayConfig()).anyTimes();
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.name")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.secure.only")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.max.age")).andReturn(null);
@@ -657,7 +720,6 @@ public class WebSSOResourceTest {
     EasyMock.expect(context.getInitParameter("knoxsso.token.audiences")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.token.ttl")).andReturn("60000");
     EasyMock.expect(context.getInitParameter("knoxsso.enable.session")).andReturn(null);
-    EasyMock.expect(context.getAttribute("org.apache.knox.gateway.config")).andReturn(config).anyTimes();
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getParameter("originalUrl")).andReturn("http://localhost:9080/service");
@@ -710,6 +772,7 @@ public class WebSSOResourceTest {
 
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(context.getInitParameter("knoxsso.expected.params")).andReturn("knoxtoken,originalUrl");
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(expectGatewayConfig()).anyTimes();
 
     ServletContext contextNoParam = EasyMock.createNiceMock(ServletContext.class);
 
@@ -807,6 +870,7 @@ public class WebSSOResourceTest {
     RSAPrivateKey customPrivateKey = (RSAPrivateKey) keyPair.getPrivate();
 
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(expectGatewayConfig()).anyTimes();
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.name")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.secure.only")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knoxsso.cookie.max.age")).andReturn(null);

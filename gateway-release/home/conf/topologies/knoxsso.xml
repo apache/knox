@@ -103,10 +103,12 @@
 
     <service>
         <role>KNOXSSO</role>
+        <!--
         <param>
             <name>knoxsso.cookie.secure.only</name>
             <value>true</value>
         </param>
+         -->
         <param>
             <name>knoxsso.token.ttl</name>
             <value>-1</value>
