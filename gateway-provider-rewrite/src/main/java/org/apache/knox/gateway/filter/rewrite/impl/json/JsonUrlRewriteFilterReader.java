@@ -30,7 +30,6 @@ import java.io.Reader;
 import java.net.URISyntaxException;
 
 public class JsonUrlRewriteFilterReader extends JsonFilterReader {
-
   private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
 
   private Resolver resolver;
@@ -62,7 +61,10 @@ public class JsonUrlRewriteFilterReader extends JsonFilterReader {
       try {
         Template input = Parser.parseLiteral( value );
         Template output = rewriter.rewrite( resolver, input, direction, rule );
-        value = output.getPattern();
+        // We should only use output if it is valid. If a rule doesn't match output could be null.
+        if(output != null) {
+          value = output.getPattern();
+        }
       } catch( URISyntaxException e ) {
         LOG.failedToParseValueForUrlRewrite( value );
       }
@@ -72,5 +74,4 @@ public class JsonUrlRewriteFilterReader extends JsonFilterReader {
       return value;
     }
   }
-
 }

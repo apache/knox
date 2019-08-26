@@ -73,7 +73,7 @@ public interface UrlRewriteMessages {
   @Message( level = MessageLevel.DEBUG, text = "Rewrote URL: {0}, direction: {1} via explicit rule: {2} to URL: {3}" )
   void rewroteUrlViaExplicitRule( Template inputUri, UrlRewriter.Direction direction, String ruleName, Template outputUri );
 
-  @Message( level = MessageLevel.ERROR, text = "Failed to rewrite URL: {0}, direction: {1} via rule: {2}, status: {3}" )
+  @Message( level = MessageLevel.TRACE, text = "Failed to rewrite URL: {0}, direction: {1} via rule: {2}, status: {3}" )
   void failedToRewriteUrl( Template inputUri, UrlRewriter.Direction direction, String ruleName, UrlRewriteStepStatus stepStatus );
 
   @Message( level = MessageLevel.ERROR, text = "Failed to rewrite URL: {0}, direction: {1}, rule: {2}" )

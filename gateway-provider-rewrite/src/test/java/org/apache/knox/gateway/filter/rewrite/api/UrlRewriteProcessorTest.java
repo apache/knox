@@ -19,6 +19,7 @@ package org.apache.knox.gateway.filter.rewrite.api;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -389,6 +390,25 @@ public class UrlRewriteProcessorTest {
     assertEquals("true", reWrittenParams.get("indent"));
   }
 
+  @Test
+  public void testNoMatchOutput() throws IOException, URISyntaxException {
+    UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
+    HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+    HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
+    EasyMock.replay( environment, request, response );
+
+    UrlRewriteProcessor processor = new UrlRewriteProcessor();
+    UrlRewriteRulesDescriptor config = UrlRewriteRulesDescriptorFactory.load(
+        "xml", getTestResourceReader( "rewrite-no-match.xml" ) );
+    processor.initialize( environment, config );
+
+    Template inputUrl = Parser.parseLiteral( "HTTP" );
+    Template outputUrl = processor.rewrite( null, inputUrl, UrlRewriter.Direction.IN, "YARNUIV2/yarnuiv2/outbound/timeline" );
+
+    assertThat( "Expect rewrite to not change the value",
+        outputUrl, nullValue() );
+    processor.destroy();
+  }
 
   /**
    * Turn a string containing URL parameters, e.g.
