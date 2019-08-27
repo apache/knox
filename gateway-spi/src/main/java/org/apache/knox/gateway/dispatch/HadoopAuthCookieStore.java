@@ -38,6 +38,7 @@ public class HadoopAuthCookieStore extends BasicCookieStore {
 
   private static final String HADOOP_AUTH_COOKIE_NAME = "hadoop.auth";
   private static final String HIVE_SERVER2_AUTH_COOKIE_NAME = "hive.server2.auth";
+  private static final String IMPALA_AUTH_COOKIE_NAME = "impala.auth";
 
   private static String knoxPrincipal;
 
@@ -73,28 +74,21 @@ public class HadoopAuthCookieStore extends BasicCookieStore {
 
   private boolean isAuthCookie(Cookie cookie) {
     return HADOOP_AUTH_COOKIE_NAME.equals(cookie.getName()) ||
-               HIVE_SERVER2_AUTH_COOKIE_NAME.equals(cookie.getName());
+        HIVE_SERVER2_AUTH_COOKIE_NAME.equals(cookie.getName()) ||
+        IMPALA_AUTH_COOKIE_NAME.equals(cookie.getName());
   }
 
   private boolean isKnoxCookie(Cookie cookie) {
     boolean result = false;
 
+    // We expect cookies to be some delimited list of parameters, eg. username, principal,
+    // timestamp, random number, etc. along with an HMAC signature. To ensure we only
+    // store cookies that are relevant to Knox, we check that the Knox principal appears
+    // somewhere in the cookie value.
     if (cookie != null) {
       String value = cookie.getValue();
-      if (value != null && !value.isEmpty()) {
-        String principal = null;
-
-        String[] cookieParts = value.split("&");
-        if (cookieParts.length > 1) {
-          String[] elementParts = cookieParts[1].split("=");
-          if (elementParts.length == 2) {
-            principal = elementParts[1];
-          }
-
-          if (principal != null) {
-            result = principal.equals(knoxPrincipal);
-          }
-        }
+      if (value != null && value.contains(knoxPrincipal)) {
+        result = true;
       }
     }
 
