@@ -275,11 +275,6 @@ public class ClientContext {
     return context;
   }
 
-  public ClientContext withSubjectCredsOnly(boolean useSubjectCredsOnly) {
-    configuration.setProperty("useSubjectCredsOnly", useSubjectCredsOnly);
-    return this;
-  }
-
   public String username() {
     return configuration.getString("username");
   }
@@ -292,7 +287,4 @@ public class ClientContext {
     return configuration.getString("url");
   }
 
-  public boolean useSubjectCredsOnly() {
-    return configuration.getBoolean("useSubjectCredsOnly", false);
-  }
 }

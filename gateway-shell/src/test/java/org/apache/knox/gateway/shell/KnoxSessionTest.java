@@ -88,26 +88,6 @@ public class KnoxSessionTest {
   }
 
   /**
-   * KNOX-1861
-   */
-  @Test
-  public void testConfigurableUseSubjectCredsOnly() {
-    final String url = "";
-
-    // The default should be false
-    ClientContext context = ClientContext.with(url);
-    assertFalse(context.useSubjectCredsOnly());
-
-    // Explicitly set to true
-    context = ClientContext.with(url).withSubjectCredsOnly(true);
-    assertTrue(context.useSubjectCredsOnly());
-
-    // Explicitly set to false
-    context = ClientContext.with(url).withSubjectCredsOnly(false);
-    assertFalse(context.useSubjectCredsOnly());
-  }
-
-  /**
    * Validate that the jaasConf option is applied when specified for a kerberos KnoxSession login.
    */
   @Test
