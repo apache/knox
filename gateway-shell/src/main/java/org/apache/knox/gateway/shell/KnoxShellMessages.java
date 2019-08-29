@@ -59,4 +59,8 @@ public interface KnoxShellMessages {
   @Message( level = MessageLevel.DEBUG, text = "JAAS configuration: {0}" )
   void jaasConfigurationLocation(String location);
 
+  @Message( level = MessageLevel.WARN,
+            text = "The javax.security.auth.useSubjectCredsOnly system property is set to 'false'; This may yield unexpected results with respect to Kerberos authentication." )
+  void useSubjectCredsOnlyIsFalse();
+
 }

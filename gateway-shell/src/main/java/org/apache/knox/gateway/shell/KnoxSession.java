@@ -326,6 +326,14 @@ public class KnoxSession implements Closeable {
         System.setProperty("sun.security.jgss.debug", "true");
       }
 
+      // (KNOX-2001) Log a warning if the useSubjectCredsOnly restriction is "relaxed"
+      String useSubjectCredsOnly = System.getProperty("javax.security.auth.useSubjectCredsOnly");
+      if (useSubjectCredsOnly != null) {
+        if (!Boolean.valueOf(useSubjectCredsOnly)) {
+          LOG.useSubjectCredsOnlyIsFalse();
+        }
+      }
+
       final Registry<AuthSchemeProvider> authSchemeRegistry =
           RegistryBuilder.<AuthSchemeProvider>create().register(AuthSchemes.SPNEGO, new SPNegoSchemeFactory(true)).build();
 
