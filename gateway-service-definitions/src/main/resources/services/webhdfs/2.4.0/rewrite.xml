@@ -17,7 +17,7 @@
 -->
 <rules>
 
-    <rule dir="OUT" name="WEBHDFS/webhdfs/outbound" pattern="hdfs://*:*/{path=**}?{**}">
+    <rule dir="OUT" scope="WEBHDFS" name="WEBHDFS/webhdfs/outbound" pattern="hdfs://*:*/{path=**}?{**}">
         <rewrite template="{$frontend[url]}/webhdfs/v1/{path=**}?{**}"/>
     </rule>
 
