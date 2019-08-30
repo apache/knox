@@ -18,12 +18,11 @@
 package org.apache.knox.gateway.shell;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
 
 public class KnoxShellTableTest {
-
   @Test
   public void testSimpleTableRendering() {
     String expectedResult = "+------------+------------+------------+\n"
@@ -52,7 +51,6 @@ public class KnoxShellTableTest {
     table.row().value("123").value("456").value("344444444");
 
     assertEquals(expectedResult, table.toString());
-
   }
 
   @Test
@@ -70,7 +68,6 @@ public class KnoxShellTableTest {
     table.row().value("789").value("012").value("844444444");
 
     assertEquals(expectedResult, table.toString());
-
   }
 
   @Test
@@ -83,12 +80,11 @@ public class KnoxShellTableTest {
 
     table.row().value("123").value("456").value("344444444");
     table.row().value("789").value("012").value("844444444");
-    
-    assertEquals(expectedResult, table.toString());
 
+    assertEquals(expectedResult, table.toString());
   }
 
-  @Test
+  @Test (expected = IllegalStateException.class)
   public void testMultipleRowsTableMismatchedColAndHeadersCountError() {
     KnoxShellTable table = new KnoxShellTable();
 
@@ -97,12 +93,6 @@ public class KnoxShellTableTest {
     table.row().value("123").value("456").value("344444444");
     table.row().value("789").value("012").value("844444444");
 
-    try {
-      table.toString();
-      fail("IllegalStateException expected.");
-    }
-    catch (IllegalStateException ise) {
-      // expected
-    }
+    assertNull(table.toString());
   }
 }
