@@ -233,7 +233,7 @@
         <spring-core.version>5.1.8.RELEASE</spring-core.version>
         <spring-vault.version>2.1.3.RELEASE</spring-vault.version>
         <taglibs-standard.version>1.2.5</taglibs-standard.version>
-        <testcontainers.version>1.11.4</testcontainers.version>
+        <testcontainers.version>1.12.0</testcontainers.version>
         <velocity.version>1.7</velocity.version>
         <xmltool.version>3.3</xmltool.version>
         <xml-matchers.version>0.10</xml-matchers.version>
