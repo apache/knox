@@ -176,7 +176,7 @@
         <exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
         <findsecbugs-plugin.version>1.9.0</findsecbugs-plugin.version>
         <forbiddenapis.version>2.6</forbiddenapis.version>
-        <groovy.version>2.5.7</groovy.version>
+        <groovy.version>2.5.8</groovy.version>
         <guava.version>28.0-jre</guava.version>
         <hadoop.version>3.2.0</hadoop.version>
         <hamcrest.version>2.1</hamcrest.version>
