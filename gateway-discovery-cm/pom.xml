@@ -27,7 +27,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <properties>
-        <cloudera-manager.version>6.2.0</cloudera-manager.version>
+        <cloudera-manager.version>6.3.0</cloudera-manager.version>
         <cloudera-manager-api-swagger.version>${cloudera-manager.version}</cloudera-manager-api-swagger.version>
     </properties>
 
