@@ -57,7 +57,7 @@ public class TestHashicorpVaultAliasService {
   private static final Logger LOG = LoggerFactory.getLogger(TestHashicorpVaultAliasService.class);
 
   private static final Random RANDOM = new Random();
-  private static final String vaultVersion = "1.0.3";
+  private static final String vaultVersion = "1.2.1";
   private static final String vaultImage = "vault:" + vaultVersion;
   private static final Integer vaultPort = 8200;
   private static final String vaultToken = "myroot";
