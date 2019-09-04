@@ -43,7 +43,8 @@ public class Shell {
       Workflow.class.getName(),
       Yarn.class.getName(),
       TimeUnit.class.getName(),
-      Manager.class.getName()
+      Manager.class.getName(),
+      KnoxShellTable.class.getName()
   };
 
   static {

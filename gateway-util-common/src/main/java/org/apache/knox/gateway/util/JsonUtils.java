@@ -45,6 +45,33 @@ public class JsonUtils {
     return json;
   }
 
+  public static String renderAsJsonString(Object obj) {
+    String json = null;
+    ObjectMapper mapper = new ObjectMapper();
+
+    try {
+      // write JSON to a file
+      json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
+    } catch ( JsonProcessingException e ) {
+      LOG.failedToSerializeObjectToJSON( obj, e );
+    }
+    return json;
+  }
+
+  public static Object getObjectFromJsonString(String json) {
+    Map<String, String> obj = null;
+    JsonFactory factory = new JsonFactory();
+    ObjectMapper mapper = new ObjectMapper(factory);
+    TypeReference<Object> typeRef
+          = new TypeReference<Object>() {};
+    try {
+      obj = mapper.readValue(json, typeRef);
+    } catch (IOException e) {
+      LOG.failedToGetMapFromJsonString( json, e );
+    }
+    return obj;
+  }
+
   public static Map<String, String> getMapFromJsonString(String json) {
     Map<String, String> map = null;
     JsonFactory factory = new JsonFactory();

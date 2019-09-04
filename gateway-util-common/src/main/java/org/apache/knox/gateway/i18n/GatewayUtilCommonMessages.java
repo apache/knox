@@ -36,4 +36,6 @@ public interface GatewayUtilCommonMessages {
   @Message( level = MessageLevel.ERROR, text = "Error in generating certificate: {0}" )
   void failedToGenerateCertificate( @StackTrace( level = MessageLevel.ERROR ) Exception e );
 
+  @Message(level = MessageLevel.ERROR, text = "Failed to serialize Object to Json string {0}: {1}" )
+  void failedToSerializeObjectToJSON( Object obj, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 }
