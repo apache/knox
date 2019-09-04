@@ -26,6 +26,7 @@ import {WebAppSecurityContributor} from './webappsec-contributor';
 import {STSProviderConfig} from './sts-provider-config';
 import {XFrameOptionsProviderConfig} from './xframeoptions-provider-config';
 import {XContentTypeOptionsProviderConfig} from './xcontent-type-options-provider-config';
+import {XSSProviderConfig} from './xss-provider-config';
 
 export class WebAppSecurityWizard extends CategoryWizard implements ProviderContributorWizard {
     // WebAppSec provider types
@@ -34,12 +35,14 @@ export class WebAppSecurityWizard extends CategoryWizard implements ProviderCont
     private static XFRAME = 'X-Frame-Options';
     private static XCONTENT_TYPE = 'X-Content-Type-Options';
     private static STS = 'Strict Transport Security';
+    private static XSS = 'X-XSS-Protection';
 
     private static webAppSecTypes: string[] = [WebAppSecurityWizard.CSRF,
         WebAppSecurityWizard.CORS,
         WebAppSecurityWizard.XFRAME,
         WebAppSecurityWizard.XCONTENT_TYPE,
-        WebAppSecurityWizard.STS
+        WebAppSecurityWizard.STS,
+        WebAppSecurityWizard.XSS
     ];
 
     private static typeConfigMap: Map<string, typeof WebAppSecurityContributor> =
@@ -48,7 +51,8 @@ export class WebAppSecurityWizard extends CategoryWizard implements ProviderCont
             [WebAppSecurityWizard.CORS, CORSProviderConfig],
             [WebAppSecurityWizard.XFRAME, XFrameOptionsProviderConfig],
             [WebAppSecurityWizard.XCONTENT_TYPE, XContentTypeOptionsProviderConfig],
-            [WebAppSecurityWizard.STS, STSProviderConfig]
+            [WebAppSecurityWizard.STS, STSProviderConfig],
+            [WebAppSecurityWizard.XSS, XSSProviderConfig]
         ] as [string, typeof WebAppSecurityContributor][]);
 
     private stepCount = 4;
