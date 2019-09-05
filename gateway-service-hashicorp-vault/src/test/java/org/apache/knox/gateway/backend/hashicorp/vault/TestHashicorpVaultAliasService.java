@@ -70,7 +70,6 @@ public class TestHashicorpVaultAliasService {
   public static void setUpClass() {
     try {
       vaultContainer = new VaultContainer(vaultImage)
-                           .withVaultPort(vaultPort)
                            .withVaultToken(vaultToken)
                            .waitingFor(Wait.forHttp("/"));
     } catch (IllegalStateException e) {
@@ -96,7 +95,7 @@ public class TestHashicorpVaultAliasService {
   private void setupVaultSecretsEngine() throws Exception {
     vaultContainer.execInContainer("vault", "secrets", "enable", "-path=" + vaultSecretsEngine,
         "-version=2", "kv");
-    LOG.debug("created KV secrets engine %s", vaultSecretsEngine);
+    LOG.debug("created KV secrets engine {}", vaultSecretsEngine);
   }
 
   @After
@@ -109,7 +108,7 @@ public class TestHashicorpVaultAliasService {
 
   private void cleanupVaultSecretsEngine() throws Exception {
     vaultContainer.execInContainer("vault", "secrets", "disable", vaultSecretsEngine);
-    LOG.debug("deleted KV secrets engine %s", vaultSecretsEngine);
+    LOG.debug("deleted KV secrets engine {}", vaultSecretsEngine);
   }
 
   @AfterClass
@@ -270,14 +269,14 @@ public class TestHashicorpVaultAliasService {
     vaultContainer.copyFileToContainer(Transferable.of(policy.getBytes(StandardCharsets.UTF_8)),
         policyFilePath);
     vaultContainer.execInContainer("vault", "policy", "write", getVaultPolicy(), policyFilePath);
-    LOG.debug("created policy %s", getVaultPolicy());
+    LOG.debug("created policy {}", getVaultPolicy());
     vaultContainer.execInContainer("rm", "-f", policyFilePath);
   }
 
   private void cleanupVaultPolicy() {
     try {
       vaultContainer.execInContainer("vault", "policy", "delete", getVaultPolicy());
-      LOG.debug("deleted policy %s", getVaultPolicy());
+      LOG.debug("deleted policy {}", getVaultPolicy());
     } catch (Exception ignore) {
       // ignore
     }
