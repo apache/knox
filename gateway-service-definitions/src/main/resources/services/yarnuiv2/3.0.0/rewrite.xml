@@ -306,7 +306,7 @@
   </rule>
 
   <rule dir="OUT" name="YARNUIV2/yarnuiv2/outbound/nodelink" pattern="{scheme}://{host}:{port}">
-    <rewrite template="{$frontend[url]}/yarnuiv2/nodemanager/node?{host}"/>
+    <rewrite template="{$frontend[url]}/yarnuiv2/"/>
   </rule>
 
   <rule dir="OUT" name="YARNUIV2/yarnuiv2/outbound/node" pattern="/node/{**}">

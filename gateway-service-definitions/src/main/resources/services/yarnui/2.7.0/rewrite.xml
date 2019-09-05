@@ -289,7 +289,7 @@ https://knox_host:knox_port/gateway/yarnui/yarn/nodemanager/node/containerlogs/c
 </rule>
 
 <rule dir="OUT" name="YARNUI/yarn/outbound/nodelink" pattern="{scheme}://{host}:{port}">
-    <rewrite template="{$frontend[url]}/yarn/nodemanager/node?{host}"/>
+    <rewrite template="{$frontend[url]}/yarn/cluster"/>
 </rule>
 
 <rule dir="OUT" name="YARNUI/yarn/outbound/cluster1" pattern="*://*:*/cluster/{**}">
