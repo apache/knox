@@ -63,7 +63,7 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
 
   /* Message buffer for holding data frames temporarily in memory till connection is setup.
    Keeping the max size of the buffer as 100 messages for now. */
-  private List<String> messageBuffer;
+  private List<String> messageBuffer = new ArrayList<String>();
   private static final int MAX_BUFFER_MESSAGE_COUNT = 100;
   private Lock remoteLock = new ReentrantLock();
 
@@ -120,13 +120,13 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
 
     final RemoteEndpoint remote = frontEndSession.getRemote();
     try {
-      if (messageBuffer != null) {
+      if (!messageBuffer.isEmpty()) {
         LOG.logMessage("Found old buffered messages");
-        for(String obj:messageBuffer) {
+        for (String obj:messageBuffer) {
           LOG.logMessage("Sending old buffered message [From Backend <---]: " + obj);
           remote.sendString(obj);
         }
-        messageBuffer = null;
+        messageBuffer.clear();
         if (remote.getBatchMode() == BatchMode.ON) {
           remote.flush();
         }
@@ -235,30 +235,25 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
         LOG.logMessage("[From Backend <---]" + message);
         remoteLock.lock();
         final RemoteEndpoint remote = getRemote();
-        if (remote == null) {
-          LOG.logMessage("Remote endpoint is null");
-          if (messageBuffer == null) {
-             messageBuffer = new ArrayList<String>();
-          }
-          if (messageBuffer.size() >= MAX_BUFFER_MESSAGE_COUNT) {
-            throw new RuntimeIOException("Remote is null and message buffer is full. Cannot buffer anymore ");
-          }
-          LOG.logMessage("Buffering message: " + message);
-          messageBuffer.add(message);
-          remoteLock.unlock();
-          return;
-        }
-
-        /* Proxy message to frontend */
         try {
-          if (messageBuffer != null) {
-            LOG.logMessage("Found old buffered messages");
-            for(String obj:messageBuffer) {
-              LOG.logMessage("Sending old buffered message [From Backend <---]: " + obj);
-              remote.sendString(obj);
+          if (remote == null) {
+            LOG.logMessage("Remote endpoint is null");
+            if (messageBuffer.size() >= MAX_BUFFER_MESSAGE_COUNT) {
+              throw new RuntimeIOException("Remote is null and message buffer is full. Cannot buffer anymore ");
             }
-            messageBuffer = null;
+            LOG.logMessage("Buffering message: " + message);
+            messageBuffer.add(message);
+            return;
           }
+
+          /* Proxy message to frontend */
+          LOG.logMessage("Found old buffered messages");
+          for (String obj:messageBuffer) {
+            LOG.logMessage("Sending old buffered message [From Backend <---]: " + obj);
+            remote.sendString(obj);
+          }
+          messageBuffer.clear();
+
           LOG.logMessage("Sending current message [From Backend <---]: " + message);
           remote.sendString(message);
           if (remote.getBatchMode() == BatchMode.ON) {
