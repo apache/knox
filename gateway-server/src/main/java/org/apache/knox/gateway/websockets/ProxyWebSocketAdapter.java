@@ -19,7 +19,11 @@ package org.apache.knox.gateway.websockets;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.websocket.ClientEndpointConfig;
 import javax.websocket.CloseReason;
@@ -56,6 +60,12 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
   private WebSocketContainer container;
 
   private ExecutorService pool;
+
+  /* Message buffer for holding data frames temporarily in memory till connection is setup.
+   Keeping the max size of the buffer as 100 messages for now. */
+  private List<String> messageBuffer;
+  private static final int MAX_BUFFER_MESSAGE_COUNT = 100;
+  private Lock remoteLock = new ReentrantLock();
 
   /**
    * Used to transmit headers from browser to backend server.
@@ -104,9 +114,33 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
       throw new RuntimeIOException(e);
     }
 
+    remoteLock.lock();
     super.onWebSocketConnect(frontEndSession);
     this.frontendSession = frontEndSession;
 
+    final RemoteEndpoint remote = frontEndSession.getRemote();
+    try {
+      if (messageBuffer != null) {
+        LOG.logMessage("Found old buffered messages");
+        for(String obj:messageBuffer) {
+          LOG.logMessage("Sending old buffered message [From Backend <---]: " + obj);
+          remote.sendString(obj);
+        }
+        messageBuffer = null;
+        if (remote.getBatchMode() == BatchMode.ON) {
+          remote.flush();
+        }
+      } else {
+        LOG.logMessage("Message buffer is empty");
+      }
+    } catch (IOException e) {
+      LOG.connectionFailed(e);
+      throw new RuntimeIOException(e);
+    }
+    finally
+    {
+      remoteLock.unlock();
+    }
   }
 
   @Override
@@ -198,12 +232,34 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
 
       @Override
       public void onMessageText(String message, Object session) {
-        final RemoteEndpoint remote = getRemote();
-
         LOG.logMessage("[From Backend <---]" + message);
+        remoteLock.lock();
+        final RemoteEndpoint remote = getRemote();
+        if (remote == null) {
+          LOG.logMessage("Remote endpoint is null");
+          if (messageBuffer == null) {
+             messageBuffer = new ArrayList<String>();
+          }
+          if (messageBuffer.size() >= MAX_BUFFER_MESSAGE_COUNT) {
+            throw new RuntimeIOException("Remote is null and message buffer is full. Cannot buffer anymore ");
+          }
+          LOG.logMessage("Buffering message: " + message);
+          messageBuffer.add(message);
+          remoteLock.unlock();
+          return;
+        }
 
         /* Proxy message to frontend */
         try {
+          if (messageBuffer != null) {
+            LOG.logMessage("Found old buffered messages");
+            for(String obj:messageBuffer) {
+              LOG.logMessage("Sending old buffered message [From Backend <---]: " + obj);
+              remote.sendString(obj);
+            }
+            messageBuffer = null;
+          }
+          LOG.logMessage("Sending current message [From Backend <---]: " + message);
           remote.sendString(message);
           if (remote.getBatchMode() == BatchMode.ON) {
             remote.flush();
@@ -212,7 +268,10 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
           LOG.connectionFailed(e);
           throw new RuntimeIOException(e);
         }
-
+        finally
+        {
+          remoteLock.unlock();
+        }
       }
 
       @Override
