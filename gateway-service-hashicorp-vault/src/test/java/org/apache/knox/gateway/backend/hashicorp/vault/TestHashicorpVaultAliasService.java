@@ -71,7 +71,8 @@ public class TestHashicorpVaultAliasService {
     try {
       vaultContainer = new VaultContainer(vaultImage)
                            .withVaultToken(vaultToken)
-                           .waitingFor(Wait.forHttp("/"));
+                           .waitingFor(Wait.forListeningPort());
+      vaultContainer.addExposedPort(vaultPort);
     } catch (IllegalStateException e) {
       assumeNoException(e);
     }
@@ -93,8 +94,9 @@ public class TestHashicorpVaultAliasService {
   }
 
   private void setupVaultSecretsEngine() throws Exception {
-    vaultContainer.execInContainer("vault", "secrets", "enable", "-path=" + vaultSecretsEngine,
-        "-version=2", "kv");
+    Container.ExecResult execResult = vaultContainer.execInContainer("vault", "secrets",
+        "enable", "-path=" + vaultSecretsEngine, "-version=2", "kv");
+    assertEquals(0, execResult.getExitCode());
     LOG.debug("created KV secrets engine {}", vaultSecretsEngine);
   }
 
