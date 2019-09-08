@@ -21,17 +21,11 @@
     <rule dir="IN" name="RANGER/ranger/inbound/plugins" pattern="*://*:*/**/ranger/service/plugins/{path=**}?{**}">
         <rewrite template="{$serviceUrl[RANGER]}/service/plugins/{path=**}?{**}"/>
     </rule>
-    <rule dir="IN" name="RANGER/ranger/inbound/users/path" pattern="*://*:*/**/ranger/service/xusers/users/{path=**}?{**}">
-        <rewrite template="{$serviceUrl[RANGER]}/service/xusers/users/{path=**}?{**}"/>
+    <rule dir="IN" name="RANGER/ranger/inbound/xusers/path" pattern="*://*:*/**/ranger/service/xusers/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[RANGER]}/service/xusers/{path=**}?{**}"/>
     </rule>
-    <rule dir="IN" name="RANGER/ranger/inbound/users" pattern="*://*:*/**/ranger/service/xusers/users">
-        <rewrite template="{$serviceUrl[RANGER]}/service/xusers/users"/>
-    </rule>
-    <rule dir="IN" name="RANGER/ranger/inbound/groups/path" pattern="*://*:*/**/ranger/service/xusers/groups/{path=**}?{**}">
-        <rewrite template="{$serviceUrl[RANGER]}/service/xusers/groups/{path=**}?{**}"/>
-    </rule>
-    <rule dir="IN" name="RANGER/ranger/inbound/groups" pattern="*://*:*/**/ranger/service/xusers/groups">
-        <rewrite template="{$serviceUrl[RANGER]}/service/xusers/groups"/>
+    <rule dir="IN" name="RANGER/ranger/inbound/assets/path" pattern="*://*:*/**/ranger/service/assets/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[RANGER]}/service/assets/{path=**}?{**}"/>
     </rule>
     <rule dir="IN" name="RANGER/ranger/inbound/healthcheck" pattern="*://*:*/**/ranger">
         <rewrite template="{$serviceUrl[RANGER]}"/>
