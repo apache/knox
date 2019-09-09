@@ -115,7 +115,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
       /* URL used to connect to websocket backend */
       final String backendURL = getMatchedBackendURL(path, requestURI);
-      LOG.logMessage("Generated backend URL for websocket connection: " + backendURL);
+      LOG.debugLog("Generated backend URL for websocket connection: " + backendURL);
 
       /* Upgrade happens here */
       return new ProxyWebSocketAdapter(URI.create(backendURL), pool, getClientEndpointConfig(req));
@@ -174,41 +174,28 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
     /* URL used to connect to websocket backend */
     String backendURL = urlFromServiceDefinition(serviceRegistryService, entry, path);
-    LOG.logMessage("Url obtained from services definition: " + backendURL);
+    LOG.debugLog("Url obtained from services definition: " + backendURL);
 
     StringBuilder backend = new StringBuilder();
     try {
       if (StringUtils.containsAny(backendURL, WEBSOCKET_PROTOCOL_STRING, SECURE_WEBSOCKET_PROTOCOL_STRING)) {
-        LOG.logMessage("ws or wss protocol found in service url");
+        LOG.debugLog("ws or wss protocol found in service url");
         URI serviceUri = new URI(backendURL);
         backend.append(serviceUri);
-        /* Avoid Zeppelin Regression - as this would require ambari changes and break current knox websocket use case*/
-        if (!StringUtils.endsWith(backend.toString(), "/ws") && !StringUtils.endsWith(backend.toString(), "/websocket")
-                   && pathService.length > 0 && pathService[1] != null) {
-          String newPathSuffix = pathService[1];
-          if ((backend.toString().endsWith("/")) && (pathService[1].startsWith("/"))) {
-            newPathSuffix = pathService[1].substring(1);
-          }
-          backend.append(newPathSuffix);
-        }
+        String pathSuffix = generateUrlSuffix(backend.toString(), pathService);
+        backend.append(pathSuffix);
       } else if (StringUtils.containsAny(requestURI.toString(), WEBSOCKET_PROTOCOL_STRING, SECURE_WEBSOCKET_PROTOCOL_STRING)) {
-        LOG.logMessage("ws or wss protocol found in request url");
+        LOG.debugLog("ws or wss protocol found in request url");
         URL serviceUrl = new URL(backendURL);
         final String protocol = (serviceUrl.getProtocol().equals("https")) ? "wss" : "ws";
         backend.append(protocol).append("://");
         backend.append(serviceUrl.getHost()).append(':');
         backend.append(serviceUrl.getPort()).append('/');
         backend.append(serviceUrl.getPath());
-        if (!StringUtils.endsWith(backend.toString(), "/ws") && !StringUtils.endsWith(backend.toString(), "/websocket")
-                   && pathService.length > 0 && pathService[1] != null) {
-          String newPathSuffix = pathService[1];
-          if ((backend.toString().endsWith("/")) && (pathService[1].startsWith("/"))) {
-            newPathSuffix = pathService[1].substring(1);
-          }
-          backend.append(newPathSuffix);
-        }
+        String pathSuffix = generateUrlSuffix(backend.toString(), pathService);
+        backend.append(pathSuffix);
       } else {
-        LOG.logMessage("ws or wss protocol not found in service url or request url");
+        LOG.debugLog("ws or wss protocol not found in service url or request url");
         URL serviceUrl = new URL(backendURL);
 
         /* Use http host:port if ws url not configured */
@@ -244,5 +231,18 @@ public class GatewayWebsocketHandler extends WebSocketHandler
      */
     return serviceRegistry.lookupServiceURL(contexts[2],
         entry.getName().toUpperCase(Locale.ROOT));
+  }
+
+  private String generateUrlSuffix(String backendPart, String[] pathService) {
+    /* Avoid Zeppelin Regression - as this would require ambari changes and break current knox websocket use case*/
+    if (!StringUtils.endsWith(backendPart, "/ws") && pathService.length > 0
+              &&  pathService[1] != null) {
+      String newPathSuffix = pathService[1];
+      if ((backendPart.endsWith("/")) && (pathService[1].startsWith("/"))) {
+        newPathSuffix = pathService[1].substring(1);
+      }
+      return newPathSuffix;
+    }
+    return "";
   }
 }
