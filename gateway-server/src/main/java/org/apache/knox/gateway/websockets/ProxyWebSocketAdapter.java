@@ -32,6 +32,7 @@ import javax.websocket.DeploymentException;
 import javax.websocket.WebSocketContainer;
 
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.eclipse.jetty.io.RuntimeIOException;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.websocket.api.BatchMode;
@@ -64,7 +65,7 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
   /* Message buffer for holding data frames temporarily in memory till connection is setup.
    Keeping the max size of the buffer as 100 messages for now. */
   private List<String> messageBuffer = new ArrayList<String>();
-  private static final int MAX_BUFFER_MESSAGE_COUNT = 100;
+  private int maxMessageBufferCount = GatewayConfigImpl.DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT;
   private Lock remoteLock = new ReentrantLock();
 
   /**
@@ -121,9 +122,9 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
     final RemoteEndpoint remote = frontEndSession.getRemote();
     try {
       if (!messageBuffer.isEmpty()) {
-        LOG.logMessage("Found old buffered messages");
+        LOG.debugLog("Found old buffered messages");
         for (String obj:messageBuffer) {
-          LOG.logMessage("Sending old buffered message [From Backend <---]: " + obj);
+          LOG.debugLog("Sending old buffered message [From Backend <---]: " + obj);
           remote.sendString(obj);
         }
         messageBuffer.clear();
@@ -131,7 +132,7 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
           remote.flush();
         }
       } else {
-        LOG.logMessage("Message buffer is empty");
+        LOG.debugLog("Message buffer is empty");
       }
     } catch (IOException e) {
       LOG.connectionFailed(e);
@@ -237,24 +238,24 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
         final RemoteEndpoint remote = getRemote();
         try {
           if (remote == null) {
-            LOG.logMessage("Remote endpoint is null");
-            if (messageBuffer.size() >= MAX_BUFFER_MESSAGE_COUNT) {
+            LOG.debugLog("Remote endpoint is null");
+            if (messageBuffer.size() >= maxMessageBufferCount) {
               throw new RuntimeIOException("Remote is null and message buffer is full. Cannot buffer anymore ");
             }
-            LOG.logMessage("Buffering message: " + message);
+            LOG.debugLog("Buffering message: " + message);
             messageBuffer.add(message);
             return;
           }
 
           /* Proxy message to frontend */
-          LOG.logMessage("Found old buffered messages");
+          LOG.debugLog("Found old buffered messages");
           for (String obj:messageBuffer) {
-            LOG.logMessage("Sending old buffered message [From Backend <---]: " + obj);
+            LOG.debugLog("Sending old buffered message [From Backend <---]: " + obj);
             remote.sendString(obj);
           }
           messageBuffer.clear();
 
-          LOG.logMessage("Sending current message [From Backend <---]: " + message);
+          LOG.debugLog("Sending current message [From Backend <---]: " + message);
           remote.sendString(message);
           if (remote.getBatchMode() == BatchMode.ON) {
             remote.flush();
@@ -312,5 +313,9 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
     if(frontendSession != null && !frontendSession.isOpen()) {
       frontendSession.close();
     }
+  }
+
+  public void setMaxBufferCount(int count) {
+    this.maxMessageBufferCount = count;
   }
 }
