@@ -34,10 +34,6 @@
     </routes>
     <dispatch classname="org.apache.knox.gateway.dispatch.ConfigurableDispatch" ha-classname="org.apache.knox.gateway.dispatch.ConfigurableDispatch">
         <param>
-            <name>requestExcludeHeaders</name>
-            <value>Host,Authorization,Content-Length,Transfer-Encoding</value>
-        </param>
-        <param>
             <name>responseExcludeHeaders</name>
             <value>WWW-AUTHENTICATE</value>
         </param>
