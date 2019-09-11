@@ -117,10 +117,8 @@ public class GatewayWebsocketHandler extends WebSocketHandler
       final String backendURL = getMatchedBackendURL(path);
 
       /* Upgrade happens here */
-      ProxyWebSocketAdapter wsAdaptor =  new ProxyWebSocketAdapter
-              (URI.create(backendURL), pool, getClientEndpointConfig(req));
-      wsAdaptor.setMaxBufferCount(config.getWebsocketMaxWaitBufferCount());
-      return wsAdaptor;
+      return new ProxyWebSocketAdapter
+              (URI.create(backendURL), pool, getClientEndpointConfig(req), config);
     } catch (final Exception e) {
       LOG.failedCreatingWebSocket(e);
       throw e;

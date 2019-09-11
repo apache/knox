@@ -32,7 +32,7 @@ import javax.websocket.DeploymentException;
 import javax.websocket.WebSocketContainer;
 
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.eclipse.jetty.io.RuntimeIOException;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.websocket.api.BatchMode;
@@ -65,8 +65,9 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
   /* Message buffer for holding data frames temporarily in memory till connection is setup.
    Keeping the max size of the buffer as 100 messages for now. */
   private List<String> messageBuffer = new ArrayList<String>();
-  private int maxMessageBufferCount = GatewayConfigImpl.DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT;
   private Lock remoteLock = new ReentrantLock();
+
+  private final GatewayConfig config;
 
   /**
    * Used to transmit headers from browser to backend server.
@@ -74,15 +75,17 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
    */
   private ClientEndpointConfig clientConfig;
 
-  public ProxyWebSocketAdapter(final URI backend, final ExecutorService pool) {
-    this(backend, pool, null);
+  public ProxyWebSocketAdapter(final URI backend, final ExecutorService pool, GatewayConfig config) {
+    this(backend, pool, null, config);
   }
 
-  public ProxyWebSocketAdapter(final URI backend, final ExecutorService pool, final ClientEndpointConfig clientConfig) {
+  public ProxyWebSocketAdapter(final URI backend, final ExecutorService pool, final ClientEndpointConfig clientConfig,
+                               GatewayConfig config) {
     super();
     this.backend = backend;
     this.pool = pool;
     this.clientConfig = clientConfig;
+    this.config = config;
   }
 
   @Override
@@ -239,7 +242,7 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
         try {
           if (remote == null) {
             LOG.debugLog("Remote endpoint is null");
-            if (messageBuffer.size() >= maxMessageBufferCount) {
+            if (messageBuffer.size() >= config.getWebsocketMaxWaitBufferCount()) {
               throw new RuntimeIOException("Remote is null and message buffer is full. Cannot buffer anymore ");
             }
             LOG.debugLog("Buffering message: " + message);
@@ -313,9 +316,5 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
     if(frontendSession != null && !frontendSession.isOpen()) {
       frontendSession.close();
     }
-  }
-
-  public void setMaxBufferCount(int count) {
-    this.maxMessageBufferCount = count;
   }
 }
