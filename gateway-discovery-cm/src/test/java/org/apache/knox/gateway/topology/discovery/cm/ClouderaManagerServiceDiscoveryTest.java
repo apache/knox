@@ -311,6 +311,17 @@ public class ClouderaManagerServiceDiscoveryTest {
     assertEquals("https://" + hostName + ":" + port, livyURLs.get(0));
   }
 
+  @Test
+  public void testPhoenixDiscovery() {
+    final String hostName    = "phoenix-host";
+    final String port        = "8765";
+    ServiceDiscovery.Cluster cluster = doTestPhoenixDiscovery(hostName, port, false);
+    assertNotNull(cluster);
+    List<String> phoenixURLs = cluster.getServiceURLs("AVATICA");
+    assertNotNull(phoenixURLs);
+    assertEquals(1, phoenixURLs.size());
+    assertEquals("http://" + hostName + ":" + port, phoenixURLs.get(0));
+  }
 
   @Test
   public void testOozieDiscovery() {
@@ -755,6 +766,19 @@ public class ClouderaManagerServiceDiscoveryTest {
                            "LIVY_SERVER",
                            Collections.emptyMap(),
                            roleProperties);
+  }
+
+
+  private ServiceDiscovery.Cluster doTestPhoenixDiscovery(final String hostName,
+                                                          final String port,
+                                                          final boolean isSSL) {
+      // Configure the role
+      Map<String, String> roleProperties = new HashMap<>();
+      roleProperties.put("phoenix_query_server_port", port);
+      roleProperties.put("ssl_enabled", String.valueOf(isSSL));
+
+      return doTestDiscovery(hostName, "PHOENIX-1", "PHOENIX", "PHOENIX-PHOENIX_QUERY_SERVER-1", "PHOENIX_QUERY_SERVER", Collections.emptyMap(),
+              roleProperties);
   }
 
 
