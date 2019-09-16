@@ -65,6 +65,9 @@
         <content type="application/x-http-headers">
             <apply path="Location" rule="WEBHDFS/webhdfs/outbound/namenode/headers/location"/>
         </content>
+        <content type="application/json">
+            <apply path="$.Location" rule="WEBHDFS/webhdfs/outbound/namenode/headers/location"/>
+        </content>
     </filter>
 
 </rules>

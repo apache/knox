@@ -23,6 +23,7 @@
         <route path="/webhdfs/v1/**?**">
             <rewrite apply="WEBHDFS/webhdfs/inbound/namenode/file" to="request.url"/>
             <rewrite apply="WEBHDFS/webhdfs/outbound/namenode/headers" to="response.headers"/>
+            <rewrite apply="WEBHDFS/webhdfs/outbound/namenode/headers" to="response.body"/>
         </route>
         <route path="/webhdfs/v1/~?**">
             <rewrite apply="WEBHDFS/webhdfs/inbound/namenode/home" to="request.url"/>
