@@ -24,13 +24,13 @@ import {Descriptor} from '../resource-detail/descriptor';
 
 @Injectable()
 export class ResourceService {
-    // TODO: PJZ: Get this list dynamically?
-    private static discoveryTypes: Array<string> = ['ClouderaManager', 'Ambari'];
+    discoveryTypes: Array<string>;
 
     apiUrl = window.location.pathname.replace(new RegExp('admin-ui/.*'), 'api/v1/');
     providersUrl = this.apiUrl + 'providerconfig';
     descriptorsUrl = this.apiUrl + 'descriptors';
     topologiesUrl = this.apiUrl + 'topologies';
+    serviceDiscoveriesUrl = this.apiUrl + 'servicediscoveries';
 
     selectedResourceTypeSource = new Subject<string>();
     selectedResourceType$ = this.selectedResourceTypeSource.asObservable();
@@ -44,11 +44,30 @@ export class ResourceService {
     changedProviderConfigurationSource = new Subject<Array<ProviderConfig>>();
     changedProviderConfiguration$ = this.changedProviderConfigurationSource.asObservable();
 
+
     constructor(private http: HttpClient) {
+        this.initSupportedDiscoveryTypes();
     }
 
-    getSupportedDiscoveryTypes(): string[] {
-        return ResourceService.discoveryTypes;
+    initSupportedDiscoveryTypes(): void {
+        if (this.discoveryTypes == null || this.discoveryTypes.length === 0) {
+            let headers = this.addJsonHeaders(new HttpHeaders());
+            this.getServiceDiscoveryResources()
+            .then(response => this.discoveryTypes = response.knoxServiceDiscoveries.knoxServiceDiscovery.map(sd => sd.type))
+            .catch((err: HttpErrorResponse) => {
+                console.debug('ResourceService --> getServiceDiscoveryResources() --> error: HTTP ' + err.status + ' ' + err.message);
+                if (err.status === 401) {
+                    window.location.assign(document.location.pathname);
+                } else {
+                    return this.handleError(err);
+                }
+            });
+        }
+    }
+
+    getServiceDiscoveryResources(): Promise<any> {
+        let headers = this.addJsonHeaders(new HttpHeaders());
+        return this.http.get(this.serviceDiscoveriesUrl, {headers: headers}).toPromise();
     }
 
     getResources(resType: string): Promise<Resource[]> {

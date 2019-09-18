@@ -366,7 +366,7 @@
                             <span>
                               <select id="select" autofocus required class="md-select form-control"
                                       [(ngModel)]="descriptor.discoveryType" (change)="descriptor.setDirty()">
-                                <option *ngFor="let typeOption of resourceService.getSupportedDiscoveryTypes()"
+                                <option *ngFor="let typeOption of resourceService.discoveryTypes"
                                         class="md-option"
                                         [value]="typeOption"
                                         [selected]="descriptor.discoveryType === typeOption">{{typeOption}}</option>
