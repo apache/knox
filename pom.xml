@@ -154,6 +154,8 @@
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
         <cglib.version>3.2.12</cglib.version>
         <checkstyle.version>8.23</checkstyle.version>
+        <cloudera-manager.version>6.3.0</cloudera-manager.version>
+        <cloudera-manager-api-swagger.version>${cloudera-manager.version}</cloudera-manager-api-swagger.version>
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
         <commons-cli.version>1.4</commons-cli.version>
         <commons-codec.version>1.13</commons-codec.version>
@@ -1972,6 +1974,11 @@
                 <artifactId>forbiddenapis</artifactId>
                 <version>${forbiddenapis.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.cloudera.api.swagger</groupId>
+                <artifactId>cloudera-manager-api-swagger</artifactId>
+                <version>${cloudera-manager-api-swagger.version}</version>  <!-- or CM version 6.0 and above -->
+            </dependency>
 
             <!-- ********** ********** ********** ********** ********** ********** -->
             <!-- ********** Test Dependencies                           ********** -->
@@ -2118,4 +2125,17 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+    <repositories>
+        <repository>
+            <id>Cloudera</id>
+            <name>Cloudera</name>
+            <url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+    </repositories>
 </project>

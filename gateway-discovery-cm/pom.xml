@@ -26,11 +26,6 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <properties>
-        <cloudera-manager.version>6.3.0</cloudera-manager.version>
-        <cloudera-manager-api-swagger.version>${cloudera-manager.version}</cloudera-manager-api-swagger.version>
-    </properties>
-
     <artifactId>gateway-discovery-cm</artifactId>
     <dependencies>
         <dependency>
@@ -40,36 +35,23 @@
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-i18n</artifactId>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-util-configinjector</artifactId>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.cloudera.api.swagger</groupId>
             <artifactId>cloudera-manager-api-swagger</artifactId>
-            <version>${cloudera-manager-api-swagger.version}</version>  <!-- or CM version 6.0 and above -->
         </dependency>
         <dependency>
             <groupId>com.squareup.okhttp</groupId>
             <artifactId>okhttp</artifactId>
-            <version>${okhttp.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpcore</artifactId>
-            <scope>compile</scope>
         </dependency>
     </dependencies>
-
-    <repositories>
-        <repository>
-            <id>Cloudera</id>
-            <name>Cloudera</name>
-            <url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
-        </repository>
-    </repositories>
 </project>
 
