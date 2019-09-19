@@ -24,7 +24,14 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -85,6 +92,13 @@ public class KnoxShellTable {
   }
 
   public List<String> values(int colIndex) {
+    ArrayList<String> col = new ArrayList<String>();
+    rows.forEach(row -> col.add(row.get(colIndex)));
+    return col;
+  }
+
+  public List<String> values(String colName) {
+    int colIndex = headers.indexOf(colName);
     ArrayList<String> col = new ArrayList<String>();
     rows.forEach(row -> col.add(row.get(colIndex)));
     return col;
@@ -265,6 +279,13 @@ public class KnoxShellTable {
   }
 
   public static class KnoxShellTableBuilder {
+    protected String title;
+
+    public KnoxShellTableBuilder title(String title) {
+      this.title = title;
+      return this;
+    }
+
     public CSVKnoxShellTableBuilder csv() {
       return new CSVKnoxShellTableBuilder();
     }
@@ -276,15 +297,25 @@ public class KnoxShellTable {
     public JoinKnoxShellTableBuilder join() {
       return new JoinKnoxShellTableBuilder();
     }
+
+    public JDBCKnoxShellTableBuilder jdbc() {
+      return new JDBCKnoxShellTableBuilder();
+    }
   }
 
-  public static class JoinKnoxShellTableBuilder {
+  public static class JoinKnoxShellTableBuilder extends KnoxShellTableBuilder {
     private KnoxShellTable left;
     private KnoxShellTable right;
     private int leftIndex = -1;
     private int rightIndex = -1;
 
     public JoinKnoxShellTableBuilder() {
+    }
+
+    @Override
+    public JoinKnoxShellTableBuilder title(String title) {
+      this.title = title;
+      return this;
     }
 
     public JoinKnoxShellTableBuilder left(KnoxShellTable left) {
@@ -299,6 +330,9 @@ public class KnoxShellTable {
 
     public KnoxShellTable on(int leftIndex, int rightIndex) {
       KnoxShellTable joined = new KnoxShellTable();
+      if (title != null) {
+        joined.title(title);
+      }
 
       this.leftIndex = leftIndex;
       this.rightIndex = rightIndex;
@@ -307,7 +341,7 @@ public class KnoxShellTable {
       for (List<String> row : left.rows) {
         joined.rows.add(new ArrayList<String>(row));
       }
-      List<String> col = right.values(leftIndex);
+      List<String> col = right.values(rightIndex);
       ArrayList<String> row;
       String leftKey;
       int matchedIndex;
@@ -330,8 +364,14 @@ public class KnoxShellTable {
     }
   }
 
-  public static class JSONKnoxShellTableBuilder {
+  public static class JSONKnoxShellTableBuilder extends KnoxShellTableBuilder {
     boolean withHeaders;
+
+    @Override
+    public JSONKnoxShellTableBuilder title(String title) {
+      this.title = title;
+      return this;
+    }
 
     public JSONKnoxShellTableBuilder withHeaders() {
       withHeaders = true;
@@ -349,23 +389,28 @@ public class KnoxShellTable {
       return table;
     }
 
-    public static KnoxShellTable getKnoxShellTableFromJsonString(String json) {
+    public KnoxShellTable getKnoxShellTableFromJsonString(String json) throws IOException {
       KnoxShellTable table = null;
       JsonFactory factory = new JsonFactory();
       ObjectMapper mapper = new ObjectMapper(factory);
       TypeReference<KnoxShellTable> typeRef
             = new TypeReference<KnoxShellTable>() {};
-      try {
-        table = mapper.readValue(json, typeRef);
-      } catch (IOException e) {
-        //LOG.failedToGetMapFromJsonString( json, e );
+      table = mapper.readValue(json, typeRef);
+      if (title != null) {
+        table.title(title);
       }
       return table;
     }
   }
 
-  public static class CSVKnoxShellTableBuilder {
+  public static class CSVKnoxShellTableBuilder extends KnoxShellTableBuilder {
     boolean withHeaders;
+
+    @Override
+    public CSVKnoxShellTableBuilder title(String title) {
+      this.title = title;
+      return this;
+    }
 
     public CSVKnoxShellTableBuilder withHeaders() {
       withHeaders = true;
@@ -383,6 +428,9 @@ public class KnoxShellTable {
         csvReader = new BufferedReader(new InputStreamReader(
             connection.getInputStream(), StandardCharsets.UTF_8));
         table = new KnoxShellTable();
+        if (title != null) {
+          table.title(title);
+        }
         String row = null;
         while ((row = csvReader.readLine()) != null) {
             boolean addingHeaders = (withHeaders && rowIndex == 0);
@@ -404,6 +452,89 @@ public class KnoxShellTable {
       }
       finally {
         csvReader.close();
+      }
+      return table;
+    }
+  }
+
+  public static class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
+    private String connect;
+    private String username;
+    private String pwd;
+    private String driver;
+    private Connection conn;
+    private boolean tableManagedConnection = true;
+
+    @Override
+    public JDBCKnoxShellTableBuilder title(String title) {
+      this.title = title;
+      return this;
+    }
+
+    public JDBCKnoxShellTableBuilder connect(String connect) {
+      this.connect = connect;
+      return this;
+    }
+
+    public JDBCKnoxShellTableBuilder username(String username) {
+      this.username = username;
+      return this;
+    }
+
+    public JDBCKnoxShellTableBuilder pwd(String pwd) {
+      this.pwd = pwd;
+      return this;
+    }
+
+    public JDBCKnoxShellTableBuilder driver(String driver) {
+      this.driver = driver;
+      return this;
+    }
+
+    public JDBCKnoxShellTableBuilder connection(Connection connection) {
+      this.conn = connection;
+      this.tableManagedConnection = false;
+      return this;
+    }
+
+    public KnoxShellTable sql(String sql) throws IOException, SQLException {
+      KnoxShellTable table = null;
+      Statement statement = null;
+      ResultSet result = null;
+      if (conn == null) {
+        conn = DriverManager.getConnection(connect);
+      }
+      try {
+        if (conn != null) {
+          statement = conn.createStatement();
+  //table.builder().jdbc().connect("jdbc:derby:codejava/webdb1").username("lmccay").password("xxxx").sql("SELECT * FROM book");
+          result = statement.executeQuery(sql);
+          table = new KnoxShellTable();
+          ResultSetMetaData metadata = result.getMetaData();
+          table.title(metadata.getTableName(1));
+          int colcount = metadata.getColumnCount();
+          for(int i = 1; i < colcount + 1; i++) {
+            table.header(metadata.getColumnName(i));
+          }
+          while (result.next()) {
+            table.row();
+            for(int i = 1; i < colcount + 1; i++) {
+              table.value(result.getString(metadata.getColumnName(i)));
+            }
+          }
+        }
+      }
+      finally {
+        result.close();
+        if (conn != null && tableManagedConnection) {
+          conn.close();
+        }
+        if (statement != null) {
+          statement.close();
+        }
+        if (result != null && !result.isClosed()) {
+          result.close();
+        }
       }
       return table;
     }
@@ -439,6 +570,56 @@ public class KnoxShellTable {
     }
 
     return csv.toString();
+  }
+
+  public KnoxShellTable select(String cols) {
+    KnoxShellTable table = new KnoxShellTable();
+    List<ArrayList<String>> columns = new ArrayList<ArrayList<String>>();
+    String[] colnames = cols.split(",");
+    for (String colName : colnames) {
+      table.header(colName);
+      columns.add((ArrayList<String>) values(headers.indexOf(colName)));
+    }
+    for (int i = 0; i < rows.size(); i ++) {
+      table.row();
+      for (List<String> col : columns) {
+        table.value(col.get(i));
+      }
+    }
+    return table;
+  }
+
+  public KnoxShellTable sort(String colName) {
+    KnoxShellTable table = new KnoxShellTable();
+
+    String value;
+    List<String> col = values(colName);
+    List<RowIndex> index = new ArrayList<RowIndex>();
+    for (int i = 0; i < col.size(); i++) {
+      value = col.get(i);
+      index.add(new RowIndex(value, i));
+    }
+    Collections.sort(index);
+    table.headers = new ArrayList<String>(headers);
+    for (RowIndex i : index) {
+      table.rows.add(new ArrayList<String>(this.rows.get(i.index)));
+    }
+    return table;
+  }
+
+  public static class RowIndex implements Comparable<RowIndex> {
+    String value;
+    int index;
+
+    public RowIndex(String value, int index) {
+      this.value = value;
+      this.index = index;
+    }
+
+    @Override
+    public int compareTo(RowIndex other) {
+      return (this.value.compareTo(other.value));
+    }
   }
 
   public KnoxShellTableFilter filter() {
