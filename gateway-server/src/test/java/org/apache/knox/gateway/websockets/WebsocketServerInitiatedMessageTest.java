@@ -163,7 +163,7 @@ public class WebsocketServerInitiatedMessageTest {
             new URI(serverUri.toString() + "gateway/websocket/123foo456bar/channels"));
 
     //session.getBasicRemote().sendText("Echo");
-    client.messageQueue.awaitMessages(1, 1000, TimeUnit.MILLISECONDS);
+    client.messageQueue.awaitMessages(1, 5000, TimeUnit.MILLISECONDS);
 
     assertThat(client.messageQueue.get(0), is("echo"));
   }
