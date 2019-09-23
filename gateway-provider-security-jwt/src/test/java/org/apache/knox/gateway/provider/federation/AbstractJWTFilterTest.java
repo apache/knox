@@ -25,11 +25,13 @@ import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import java.util.Map;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.util.X509CertificateUtil;
 import org.easymock.EasyMock;
@@ -803,6 +805,31 @@ public abstract class AbstractJWTFilterTest  {
     @Override
     public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires,
                           String signingKeystoreName, String signingKeystoreAlias, char[] signingKeystorePassphrase) {
+      return null;
+    }
+
+    @Override
+    public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires,
+        String signingKeystoreName, String signingKeystoreAlias, char[] signingKeystorePassphrase,
+        Map<String, String> customClaims) throws TokenServiceException {
+      return null;
+    }
+
+    @Override
+    public JWT issueToken(Principal p, Map<String, String> additionalClaims, String algorithm,
+        long expires) throws TokenServiceException {
+      return null;
+    }
+
+    @Override
+    public JWT issueToken(Principal p, Map<String, String> additionalClaims, String audience,
+        String algorithm, long expires)  throws TokenServiceException {
+      return null;
+    }
+
+    @Override
+    public JWT issueToken(Principal p, Map<String, String> additionalClaims, List<String> audience,
+        String algorithm, long expires) throws TokenServiceException {
       return null;
     }
 

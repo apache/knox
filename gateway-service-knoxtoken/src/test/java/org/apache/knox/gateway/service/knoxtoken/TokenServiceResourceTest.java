@@ -25,6 +25,7 @@ import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.easymock.EasyMock;
@@ -675,7 +676,32 @@ public class TokenServiceResourceTest {
     }
 
     @Override
-    public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires) {
+    public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires,
+        String signingKeystoreName, String signingKeystoreAlias, char[] signingKeystorePassphrase,
+        Map<String, String> customClaims) throws TokenServiceException {
+      return null;
+    }
+
+    @Override
+    public JWT issueToken(Principal p, Map<String, String> additionalClaims, String algorithm,
+        long expires) {
+      return issueToken(p, additionalClaims, Collections.emptyList(), algorithm, expires);
+    }
+
+    @Override
+    public JWT issueToken(Principal p, Map<String, String> additionalClaims, String audience,
+        String algorithm, long expires) {
+      ArrayList<String> audiences = null;
+      if (audience != null) {
+        audiences = new ArrayList<>();
+        audiences.add(audience);
+      }
+      return issueToken(p, additionalClaims, audiences, algorithm, expires);
+    }
+
+    @Override
+    public JWT issueToken(Principal p, Map<String, String> additionalClaims, List<String> audience,
+        String algorithm, long expires)  {
       String[] claimArray = new String[4];
       claimArray[0] = "KNOXSSO";
       claimArray[1] = p.getName();
@@ -686,7 +712,7 @@ public class TokenServiceResourceTest {
         claimArray[3] = String.valueOf(expires);
       }
 
-      JWT token = new JWTToken(algorithm, claimArray, audiences);
+      JWT token = new JWTToken(algorithm, claimArray, additionalClaims, audience);
       JWSSigner signer = new RSASSASigner(privateKey);
       token.sign(signer);
 
@@ -694,7 +720,12 @@ public class TokenServiceResourceTest {
     }
 
     @Override
-    public JWT issueToken(Principal p, String algorithm, long expiry) {
+    public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires) {
+      return issueToken(p, null, Collections.emptyList(), algorithm, expires);
+    }
+
+    @Override
+    public JWT issueToken(Principal p, String algorithm, long expiry)  {
       return issueToken(p, Collections.emptyList(), algorithm, expiry);
     }
 

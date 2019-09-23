@@ -17,10 +17,12 @@
 package org.apache.knox.gateway.services.security.token.impl;
 
 import java.text.ParseException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.util.Map;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import com.nimbusds.jose.JOSEException;
@@ -69,6 +71,36 @@ public class JWTToken implements JWT {
     .issuer(claimsArray[0])
     .subject(claimsArray[1])
     .audience(audiences);
+    if(claimsArray[3] != null) {
+      builder = builder.expirationTime(new Date(Long.parseLong(claimsArray[3])));
+    }
+
+    claims = builder.build();
+
+    jwt = new SignedJWT(header, claims);
+  }
+
+  public JWTToken(String alg, String[] claimsArray, Map<String, String> customClaims,
+      List<String> audiences) {
+    JWSHeader header = new JWSHeader(new JWSAlgorithm(alg));
+
+    if (claimsArray[2] != null) {
+      if (audiences == null) {
+        audiences = new ArrayList<String>();
+      }
+      audiences.add(claimsArray[2]);
+    }
+    JWTClaimsSet claims = null;
+    JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder()
+        .issuer(claimsArray[0])
+        .subject(claimsArray[1])
+        .audience(audiences);
+
+    customClaims = (customClaims != null) ? customClaims : Collections.emptyMap();
+    for (Map.Entry<String, String> entry : customClaims.entrySet()) {
+      builder.claim(entry.getKey(), entry.getValue());
+    }
+
     if(claimsArray[3] != null) {
       builder = builder.expirationTime(new Date(Long.parseLong(claimsArray[3])));
     }

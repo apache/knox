@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.service.knoxsso;
 
+import com.google.gson.Gson;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -26,10 +27,12 @@ import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import java.util.Optional;
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
@@ -47,6 +50,10 @@ import javax.ws.rs.WebApplicationException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditor;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.knox.gateway.aws.AwsConstants;
+import org.apache.knox.gateway.aws.model.AwsSamlCredentials;
+import org.apache.knox.gateway.aws.utils.CookieUtils;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
@@ -99,6 +106,7 @@ public class WebSSOResource {
   private String signatureAlgorithm = "RS256";
   private List<String> ssoExpectedparams = new ArrayList<>();
   private String clusterName;
+  private Gson gson = new Gson();
 
   @Context
   HttpServletRequest request;
@@ -241,6 +249,18 @@ public class WebSSOResource {
     Principal p = request.getUserPrincipal();
 
     try {
+      Map<String, String> claims = new HashMap<>();
+      int cookieAge = maxAge;
+      Optional<String> awsCookie =  CookieUtils.getCookieValue(request, AwsConstants.AWS_COOKIE_NAME);
+      AwsSamlCredentials awsSamlCredentials = null;
+      if (awsCookie.isPresent()) {
+        String cookieJson = new String(Base64.decodeBase64(awsCookie.get().getBytes("UTF-8")), "UTF-8");
+        awsSamlCredentials = gson.fromJson(cookieJson,
+            AwsSamlCredentials.class);
+        claims.put(AwsConstants.AWS_COOKIE_NAME, awsCookie.get());
+        cookieAge = CookieUtils.getCookieAgeMatchingAwsCredentials(awsSamlCredentials);
+      }
+
       String signingKeystoreName = context.getInitParameter(SSO_SIGNINGKEY_KEYSTORE_NAME);
       String signingKeystoreAlias = context.getInitParameter(SSO_SIGNINGKEY_KEYSTORE_ALIAS);
       String signingKeystorePassphraseAlias = context.getInitParameter(SSO_SIGNINGKEY_KEYSTORE_PASSPHRASE_ALIAS);
@@ -250,11 +270,11 @@ public class WebSSOResource {
       }
 
       JWT token = ts.issueToken(p, targetAudiences, signatureAlgorithm, getExpiry(),
-          signingKeystoreName,  signingKeystoreAlias, signingKeystorePassphrase);
+          signingKeystoreName,  signingKeystoreAlias, signingKeystorePassphrase, claims);
 
       // Coverity CID 1327959
       if( token != null ) {
-        addJWTHadoopCookie( original, token );
+        addJWTHadoopCookie( original, token, cookieAge);
       }
 
       if (removeOriginalUrlCookie) {
@@ -269,7 +289,7 @@ public class WebSSOResource {
       } catch (IOException e) {
         log.unableToCloseOutputStream(e.getMessage(), Arrays.toString(e.getStackTrace()));
       }
-    } catch (TokenServiceException| AliasServiceException e) {
+    } catch (TokenServiceException| AliasServiceException | UnsupportedEncodingException e) {
       log.unableToIssueToken(e);
     }
     URI location = null;
@@ -342,7 +362,7 @@ public class WebSSOResource {
     return expiry;
   }
 
-  private void addJWTHadoopCookie(String original, JWT token) {
+  private void addJWTHadoopCookie(String original, JWT token, int cookieAge) {
     log.addingJWTCookie(token.toString());
     Cookie c = new Cookie(cookieName,  token.toString());
     c.setPath("/");
@@ -355,8 +375,8 @@ public class WebSSOResource {
       if (secureOnly) {
         c.setSecure(true);
       }
-      if (maxAge != -1) {
-        c.setMaxAge(maxAge);
+      if (cookieAge != -1) {
+        c.setMaxAge(cookieAge);
       }
       response.addCookie(c);
       log.addedJWTCookie();

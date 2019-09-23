@@ -81,6 +81,7 @@
         <module>gateway-provider-rewrite-func-inbound-query-param</module>
         <module>gateway-provider-rewrite-step-secure-query</module>
         <module>gateway-provider-rewrite-step-encrypt-uri</module>
+        <module>gateway-provider-security-aws</module>
         <module>gateway-provider-security-jwt</module>
         <module>gateway-provider-security-webappsec</module>
         <module>gateway-provider-security-preauth</module>
@@ -150,6 +151,7 @@
         <apache-rat-plugin.version>0.13</apache-rat-plugin.version>
         <ant-nodeps.version>1.8.1</ant-nodeps.version>
         <asm.version>7.1</asm.version>
+        <aws-sdk-version>1.11.562</aws-sdk-version>
         <bcprov-jdk15on.version>1.62</bcprov-jdk15on.version>
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
         <cglib.version>3.2.12</cglib.version>
@@ -214,6 +216,7 @@
         <libpam4j.version>1.11</libpam4j.version>
         <log4j.version>1.2.17</log4j.version>
         <log4j2.version>2.12.0</log4j2.version>
+        <lombok-version>1.16.20</lombok-version>
         <maven-checkstyle-plugin.version>3.1.0</maven-checkstyle-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
@@ -223,6 +226,7 @@
         <mina.version>2.0.20</mina.version>
         <nimbus-jose-jwt.version>7.7</nimbus-jose-jwt.version>
         <okhttp.version>2.7.5</okhttp.version>
+        <opensaml-version>3.3.0</opensaml-version>
         <pac4j.version>3.7.0</pac4j.version>
         <protobuf.version>3.9.1</protobuf.version>
         <rest-assured.version>4.0.0</rest-assured.version>
@@ -801,6 +805,11 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-spi</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-provider-security-aws</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
