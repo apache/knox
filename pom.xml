@@ -169,7 +169,6 @@
         <commons-text.version>1.7</commons-text.version>
         <cors-filter.version>2.6</cors-filter.version>
         <curator.version>4.2.0</curator.version>
-        <curator-test.version>2.13.0</curator-test.version>
         <dependency-check-maven.version>5.2.1</dependency-check-maven.version>
         <dockerfile-maven-plugin.version>1.4.12</dockerfile-maven-plugin.version>
         <easymock.version>4.0.2</easymock.version>
@@ -239,7 +238,7 @@
         <velocity.version>1.7</velocity.version>
         <xmltool.version>3.3</xmltool.version>
         <xml-matchers.version>0.10</xml-matchers.version>
-        <zookeeper.version>3.4.14</zookeeper.version>
+        <zookeeper.version>3.5.5</zookeeper.version>
     </properties>
 
     <profiles>
@@ -1705,6 +1704,11 @@
                 <artifactId>zookeeper</artifactId>
                 <version>${zookeeper.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.zookeeper</groupId>
+                <artifactId>zookeeper-jute</artifactId>
+                <version>${zookeeper.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.apache.curator</groupId>
@@ -2079,7 +2083,7 @@
             <dependency>
                 <groupId>org.apache.curator</groupId>
                 <artifactId>curator-test</artifactId>
-                <version>${curator-test.version}</version>
+                <version>${curator.version}</version>
                 <scope>test</scope>
             </dependency>
 
