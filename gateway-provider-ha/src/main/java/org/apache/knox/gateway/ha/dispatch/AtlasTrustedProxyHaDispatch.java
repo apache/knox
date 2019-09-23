@@ -25,7 +25,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-public class AtlasTrustedProxyHaDispatch extends DefaultHaDispatch {
+public class AtlasTrustedProxyHaDispatch extends ConfigurableHADispatch {
   public AtlasTrustedProxyHaDispatch() {
     setServiceRole("ATLAS");
   }

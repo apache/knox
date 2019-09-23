@@ -35,5 +35,10 @@
         </route>
     </routes>
 
-    <dispatch classname="org.apache.knox.gateway.dispatch.DefaultDispatch" ha-classname="org.apache.knox.gateway.ha.dispatch.AtlasTrustedProxyHaDispatch" />
+    <dispatch classname="org.apache.knox.gateway.dispatch.ConfigurableDispatch" ha-classname="org.apache.knox.gateway.ha.dispatch.AtlasTrustedProxyHaDispatch" >
+        <param>
+            <name>responseExcludeHeaders</name>
+            <value>WWW-AUTHENTICATE</value>
+        </param>
+    </dispatch>
 </service>
