@@ -47,7 +47,7 @@ import java.util.Properties;
 
 class AmbariServiceDiscovery implements ServiceDiscovery {
 
-    static final String TYPE = "AMBARI";
+    static final String TYPE = "Ambari";
 
     static final String AMBARI_CLUSTERS_URI = AmbariClientCommon.AMBARI_CLUSTERS_URI;
 

@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import java.lang.reflect.Field;
 import java.util.Locale;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -80,5 +81,16 @@ public class ServiceDiscoveryFactoryTest {
         assertTrue(AliasService.class.isAssignableFrom(fieldValue.getClass()));
     }
 
+    @Test
+    public void testGetAllServiceDiscoveries() {
+      final Set<ServiceDiscovery> serviceDiscoveries = ServiceDiscoveryFactory.getAllServiceDiscoveries();
+      assertEquals(3, serviceDiscoveries.size());
+      assertTrue(hasServiceDiscoveryWithType(serviceDiscoveries, "DUMMY"));
+      assertTrue(hasServiceDiscoveryWithType(serviceDiscoveries, "PROPERTIES_FILE"));
+      assertTrue(hasServiceDiscoveryWithType(serviceDiscoveries, "ActualType"));
+    }
 
+    private boolean hasServiceDiscoveryWithType(Set<ServiceDiscovery> serviceDiscoveries, String type) {
+      return serviceDiscoveries.stream().anyMatch(serviceDiscovery -> serviceDiscovery.getType().equalsIgnoreCase(type));
+    }
 }
