@@ -222,11 +222,14 @@ public class KnoxShellTableTest {
 
     table.header("Column A").header("Column B").header("Column C");
 
-    table.row().value("123").value("456").value("344444444");
-    table.row().value("789").value("012").value("844444444");
+    table.row().value("123").value("456").value("larry");
+    table.row().value("123").value("456").value("david");
+    table.row().value("789").value("012").value("michael");
 
     KnoxShellTable filtered = table.filter().name("Column A").regex("123");
+    assertEquals(filtered.getRows().size(), 1);
 
+    filtered = table.filter().name("COLUMN A").regex("123");
     assertEquals(filtered.getRows().size(), 1);
   }
 
