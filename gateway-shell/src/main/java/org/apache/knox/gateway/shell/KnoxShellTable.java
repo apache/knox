@@ -632,7 +632,6 @@ public class KnoxShellTable {
 
     public KnoxShellTableFilter name(String name) {
       this.name = name;
-      this.name = name;
       for (int i = 0; i < headers.size(); i++) {
         if (headers.get(i).equalsIgnoreCase(name)) {
           index = i;
