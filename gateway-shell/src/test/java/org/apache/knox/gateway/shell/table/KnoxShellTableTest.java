@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.shell;
+package org.apache.knox.gateway.shell.table;
 
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
@@ -35,7 +35,8 @@ import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.knox.gateway.shell.KnoxShellTable.KnoxShellTableCell;
+import org.apache.knox.gateway.shell.table.KnoxShellTable;
+import org.apache.knox.gateway.shell.table.KnoxShellTableCell;
 import org.easymock.IAnswer;
 import org.junit.Test;
 
@@ -179,7 +180,7 @@ public class KnoxShellTableTest {
 
     String json = table.toJSON();
 
-    KnoxShellTable table2 = KnoxShellTable.builder().json().string(json);
+    KnoxShellTable table2 = KnoxShellTable.builder().json().fromJson(json);
     assertEquals(table.toString(), table2.toString());
   }
 
@@ -207,13 +208,13 @@ public class KnoxShellTableTest {
     table.row().value("789").value("012").value("844444444");
 
     KnoxShellTableCell cell = table.cell(1, 1);
-    assertEquals(cell.header(), "Column B");
-    assertEquals(cell.value(), "012");
+    assertEquals(cell.header, "Column B");
+    assertEquals(cell.value, "012");
     cell.header("Column Beeee");
     cell.value("234");
     table.apply(cell);
-    assertEquals(table.cell(1, 1).value(), "234");
-    assertEquals(table.cell(1, 1).header(), "Column Beeee");
+    assertEquals(table.cell(1, 1).value, "234");
+    assertEquals(table.cell(1, 1).header, "Column Beeee");
   }
 
   @Test
@@ -251,15 +252,15 @@ public class KnoxShellTableTest {
 
     assertEquals(joined.getRows().size(), 1);
     assertEquals(joined.getTitle(), "Joined Table");
-    assertEquals(joined.cell(0, 0).value(), "123");
+    assertEquals(joined.cell(0, 0).value, "123");
     String json = joined.toJSON();
 
-    KnoxShellTable zombie = KnoxShellTable.builder().json().string(json);
+    KnoxShellTable zombie = KnoxShellTable.builder().json().fromJson(json);
     zombie.title("Zombie Table");
 
     assertEquals(zombie.getRows().size(), 1);
     assertEquals(zombie.getTitle(), "Zombie Table");
-    assertEquals(zombie.cell(0, 0).value(), "123");
+    assertEquals(zombie.cell(0, 0).value, "123");
     KnoxShellTable joined2 = KnoxShellTable.builder().join().title("Joined Table 2").left(table).right(table2).on(1, 3);
     assertEquals(1, joined2.getRows().size());
   }
@@ -288,7 +289,6 @@ public class KnoxShellTableTest {
         return false;
       }
     }).times(2);
-    expect(resultSet.isClosed()).andReturn(true);
     expect(resultSet.getString("BOOK_ID")).andReturn("1").times(1);
     expect(resultSet.getString("TITLE")).andReturn("Apache Knox: The Definitive Guide").times(1);
     expect(metadata.getTableName(1)).andReturn("BOOK");
