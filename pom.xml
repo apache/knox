@@ -169,7 +169,7 @@
         <commons-text.version>1.8</commons-text.version>
         <cors-filter.version>2.8</cors-filter.version>
         <curator.version>4.2.0</curator.version>
-        <dependency-check-maven.version>5.2.1</dependency-check-maven.version>
+        <dependency-check-maven.version>5.2.2</dependency-check-maven.version>
         <dockerfile-maven-plugin.version>1.4.12</dockerfile-maven-plugin.version>
         <easymock.version>4.0.2</easymock.version>
         <eclipselink.version>2.7.4</eclipselink.version>
