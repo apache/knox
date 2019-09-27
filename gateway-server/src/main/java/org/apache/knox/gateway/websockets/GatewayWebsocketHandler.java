@@ -150,7 +150,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
    * ws://{host}:{port} which might or might not be right.
    * @return Websocket backend url
    */
-  private synchronized String getMatchedBackendURL(final String path, URI requestURI) {
+  protected synchronized String getMatchedBackendURL(final String path, URI requestURI) {
 
     final ServiceRegistry serviceRegistryService = services
         .getService(ServiceType.SERVICE_REGISTRY_SERVICE);

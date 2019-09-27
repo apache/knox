@@ -84,9 +84,9 @@ public class WebsocketEchoTestBase {
   /**
    * Mock gateway config
    */
-  private static GatewayConfig gatewayConfig;
+  public static GatewayConfig gatewayConfig;
 
-  private static GatewayServices services;
+  public static GatewayServices services;
 
   /**
    * URI for gateway server
@@ -103,13 +103,15 @@ public class WebsocketEchoTestBase {
     super();
   }
 
-  public static void setUpBeforeClass(String type) throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     topoDir = createDir();
     dataDir = Paths.get(topoDir.getAbsolutePath(), "data").toAbsolutePath();
     securityDir = dataDir.resolve("security");
     keystoresDir = securityDir.resolve("keystores");
     keystoreFile = keystoresDir.resolve("tls.jks");
+  }
 
+  public static void startServers(String type) throws Exception {
     startWebsocketServer(type);
     startGatewayServer();
   }
@@ -201,7 +203,7 @@ public class WebsocketEchoTestBase {
    * @param backend topology to use
    * @throws IOException exception on setting up the gateway
    */
-  private static void setupGatewayConfig(final String backend) throws IOException {
+  public static void setupGatewayConfig(final String backend) throws IOException {
     services = new DefaultGatewayServices();
 
     URL serviceUrl = ClassLoader.getSystemResource("websocket-services");

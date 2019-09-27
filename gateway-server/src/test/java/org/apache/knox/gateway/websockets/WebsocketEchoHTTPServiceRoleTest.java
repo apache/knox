@@ -51,15 +51,16 @@ import static org.hamcrest.MatcherAssert.assertThat;
  *
  * @since 0.10
  */
-public class WebsocketEcho1Test extends WebsocketEchoTestBase {
+public class WebsocketEchoHTTPServiceRoleTest extends WebsocketEchoTestBase {
 
-  public WebsocketEcho1Test() {
+  public WebsocketEchoHTTPServiceRoleTest() {
     super();
   }
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
-    WebsocketEchoTestBase.setUpBeforeClass("http");
+    WebsocketEchoTestBase.setUpBeforeClass();
+    WebsocketEchoTestBase.startServers("http");
   }
 
   @AfterClass
