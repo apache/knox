@@ -185,12 +185,7 @@
         <httpclient.version>4.5.6</httpclient.version>
         <httpcore.version>4.4.11</httpcore.version>
         <j2e-pac4j.version>4.1.0</j2e-pac4j.version>
-        <jackson.version>2.9.9</jackson.version>
-        <!--
-          jackson-databind released a small bug fix for a CVE
-          remove the extra version when jackson version is bumped to 2.10.x
-        -->
-        <jackson-databind.version>2.9.9.3</jackson-databind.version>
+        <jackson.version>2.9.10</jackson.version>
         <jacoco-maven-plugin.version>0.8.4</jacoco-maven-plugin.version>
         <jansi.version>1.18</jansi.version>
         <javax.activation.version>1.2.0</javax.activation.version>
@@ -1482,7 +1477,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>${jackson-databind.version}</version>
+                <version>${jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.dataformat</groupId>
