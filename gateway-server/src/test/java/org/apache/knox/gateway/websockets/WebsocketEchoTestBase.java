@@ -104,13 +104,15 @@ public class WebsocketEchoTestBase {
     super();
   }
 
-  public static void setUpBeforeClass(String type) throws Exception {
+  public static void setUpBeforeClass() throws Exception {
     topoDir = createDir();
     dataDir = Paths.get(topoDir.getAbsolutePath(), "data").toAbsolutePath();
     securityDir = dataDir.resolve("security");
     keystoresDir = securityDir.resolve("keystores");
     keystoreFile = keystoresDir.resolve("tls.jks");
+  }
 
+  public static void startServers(String type) throws Exception {
     startWebsocketServer(type);
     startGatewayServer();
   }
@@ -271,6 +273,9 @@ public class WebsocketEchoTestBase {
 
     EasyMock.expect(gatewayConfig.getWebsocketIdleTimeout())
         .andReturn(GatewayConfigImpl.DEFAULT_WEBSOCKET_IDLE_TIMEOUT).anyTimes();
+
+    EasyMock.expect(gatewayConfig.getWebsocketMaxWaitBufferCount())
+        .andReturn(GatewayConfigImpl.DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT).anyTimes();
 
     EasyMock.expect(gatewayConfig.getRemoteRegistryConfigurationNames())
             .andReturn(Collections.emptyList())

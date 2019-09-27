@@ -113,7 +113,7 @@ public class WebsocketMultipleConnectionTest {
   /**
    * Maximum number of open connections to test.
    */
-  private static int MAX_CONNECTIONS = 100;
+  private static int MAX_CONNECTIONS = 99;
 
   public WebsocketMultipleConnectionTest() {
     super();
@@ -172,7 +172,7 @@ public class WebsocketMultipleConnectionTest {
       }
     }
 
-    latch.await(5 * MAX_CONNECTIONS, TimeUnit.MILLISECONDS);
+    latch.await(50 * MAX_CONNECTIONS, TimeUnit.MILLISECONDS);
 
     /* 90 KB per connection */
     /*
@@ -313,6 +313,9 @@ public class WebsocketMultipleConnectionTest {
 
     EasyMock.expect(gatewayConfig.getWebsocketIdleTimeout())
         .andReturn(GatewayConfigImpl.DEFAULT_WEBSOCKET_IDLE_TIMEOUT).anyTimes();
+
+    EasyMock.expect(gatewayConfig.getWebsocketMaxWaitBufferCount())
+        .andReturn(GatewayConfigImpl.DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT).anyTimes();
 
     EasyMock.expect(gatewayConfig.getRemoteRegistryConfigurationNames())
             .andReturn(Collections.emptyList())
