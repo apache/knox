@@ -152,7 +152,7 @@
         <asm.version>7.1</asm.version>
         <bcprov-jdk15on.version>1.62</bcprov-jdk15on.version>
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
-        <cglib.version>3.2.12</cglib.version>
+        <cglib.version>3.3.0</cglib.version>
         <checkstyle.version>8.23</checkstyle.version>
         <cloudera-manager.version>6.3.0</cloudera-manager.version>
         <cloudera-manager-api-swagger.version>${cloudera-manager.version}</cloudera-manager-api-swagger.version>
