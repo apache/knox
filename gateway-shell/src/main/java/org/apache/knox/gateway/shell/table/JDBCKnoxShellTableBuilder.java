@@ -24,6 +24,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Locale;
 
 public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
 
@@ -53,13 +54,13 @@ public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
     try {
       Class.forName(driver).newInstance();
     } catch (ClassNotFoundException e) {
-      System.out.println(String.format("Unable to load the JDBC driver %s. Check your CLASSPATH.", driver));
+      System.out.println(String.format(Locale.US, "Unable to load the JDBC driver %s. Check your CLASSPATH.", driver));
       throw e;
     } catch (InstantiationException e) {
-      System.out.println(String.format("Unable to instantiate the JDBC driver %s", driver));
+      System.out.println(String.format(Locale.US, "Unable to instantiate the JDBC driver %s", driver));
       throw e;
     } catch (IllegalAccessException e) {
-      System.out.println(String.format("Not allowed to access the JDBC driver %s", driver));
+      System.out.println(String.format(Locale.US, "Not allowed to access the JDBC driver %s", driver));
       throw e;
     }
   }
@@ -85,7 +86,7 @@ public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
         while (result.next()) {
           table.row();
           for (int i = 1; i < colcount + 1; i++) {
-            table.value(result.getString(metadata.getColumnName(i)));
+            table.value(result.getObject(metadata.getColumnName(i), Comparable.class));
           }
         }
       } finally {

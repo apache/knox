@@ -15,18 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.knox.gateway.shell.table;
 
 import java.util.List;
 
-class KnoxShellTableCell {
+class KnoxShellTableCell<T extends Comparable<T>> implements Comparable<KnoxShellTableCell<T>>{
   int rowIndex;
   int colIndex;
   String header;
-  String value;
+  T value;
 
-  KnoxShellTableCell(List<String> headers, List<List<String>> rows, int colIndex, int rowIndex) {
+  KnoxShellTableCell(List<String> headers, List<List<T>> rows, int colIndex, int rowIndex) {
     this.rowIndex = rowIndex;
     this.colIndex = colIndex;
     if (!headers.isEmpty()) {
@@ -37,7 +36,7 @@ class KnoxShellTableCell {
     }
   }
 
-  KnoxShellTableCell(List<String> headers, List<List<String>> rows, String name, int rowIndex) {
+  KnoxShellTableCell(List<String> headers, List<List<T>> rows, String name, int rowIndex) {
     this.rowIndex = rowIndex;
     if (!headers.isEmpty()) {
       this.header = name;
@@ -48,14 +47,24 @@ class KnoxShellTableCell {
     }
   }
 
-  KnoxShellTableCell value(String value) {
+  KnoxShellTableCell<T> value(T value) {
     this.value = value;
     return this;
   }
 
-  KnoxShellTableCell header(String name) {
+  KnoxShellTableCell<T> header(String name) {
     this.header = name;
     return this;
+  }
+
+  @Override
+  public String toString() {
+    return value.toString();
+  }
+
+  @Override
+  public int compareTo(KnoxShellTableCell<T> other) {
+    return value.compareTo(other.value);
   }
 
 }

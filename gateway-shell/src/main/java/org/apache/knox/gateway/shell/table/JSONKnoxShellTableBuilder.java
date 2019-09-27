@@ -26,11 +26,17 @@ import org.apache.commons.io.FileUtils;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 
 public class JSONKnoxShellTableBuilder extends KnoxShellTableBuilder {
 
   public KnoxShellTable fromJson(String json) throws IOException {
-    final KnoxShellTable table = new ObjectMapper(new JsonFactory()).readValue(json, new TypeReference<KnoxShellTable>() {
+    final ObjectMapper mapper = new ObjectMapper(new JsonFactory());
+    final SimpleModule module = new SimpleModule();
+    module.addDeserializer(KnoxShellTable.class, new KnoxShellTableRowDeserializer());
+    mapper.registerModule(module);
+
+    final KnoxShellTable table = mapper.readValue(json, new TypeReference<KnoxShellTable>() {
     });
     if (title != null) {
       table.title(title);

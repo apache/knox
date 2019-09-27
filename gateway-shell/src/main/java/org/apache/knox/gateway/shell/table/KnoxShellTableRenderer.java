@@ -49,7 +49,7 @@ class KnoxShellTableRenderer {
         csv.append('\n');
       }
     }
-    for (List<String> row : tableToRender.rows) {
+    for (List<Comparable<? extends Object>> row : tableToRender.rows) {
       for (int ii = 0; ii < row.size(); ii++) {
         csv.append(row.get(ii));
         if (ii < row.size() - 1) {
@@ -92,11 +92,11 @@ class KnoxShellTableRenderer {
     }
     createBorder(sb, colCount, widthMap);
 
-    for (List<String> row : tableToRender.rows) {
+    for (List<Comparable<? extends Object>> row : tableToRender.rows) {
       newLine(sb, 1);
       sb.append(CELL_WALL_CHAR);
       for (int i = 0; i < row.size(); i++) {
-        sb.append(centerString(widthMap.get(i) + 4, row.get(i))).append(CELL_WALL_CHAR);
+        sb.append(centerString(widthMap.get(i) + 4, row.get(i).toString())).append(CELL_WALL_CHAR);
       }
     }
 
@@ -150,9 +150,9 @@ class KnoxShellTableRenderer {
     }
     // if there are any cell values longer than the header length set max to longest
     // cell value length
-    for (List<String> row : tableToRender.rows) {
+    for (List<Comparable<? extends Object>> row : tableToRender.rows) {
       for (int i = 0; i < row.size(); i++) {
-        cellValue = ensureEvenLength(row.get(i));
+        cellValue = ensureEvenLength(row.get(i).toString());
         if (map.get(i) == null || cellValue.length() > map.get(i)) {
           map.put(i, cellValue.length());
         }
