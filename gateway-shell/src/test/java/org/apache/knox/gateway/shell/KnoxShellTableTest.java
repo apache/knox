@@ -227,10 +227,10 @@ public class KnoxShellTableTest {
     table.row().value("789").value("012").value("michael");
 
     KnoxShellTable filtered = table.filter().name("Column A").regex("123");
-    assertEquals(filtered.getRows().size(), 1);
+    assertEquals(filtered.getRows().size(), 2);
 
     filtered = table.filter().name("COLUMN A").regex("123");
-    assertEquals(filtered.getRows().size(), 1);
+    assertEquals(filtered.getRows().size(), 2);
   }
 
   @Test
