@@ -224,7 +224,7 @@
         <shiro.version>1.4.1</shiro.version>
         <shrinkwrap.version>1.2.6</shrinkwrap.version>
         <shrinkwrap.descriptors.version>2.0.0</shrinkwrap.descriptors.version>
-        <slf4j.version>1.7.27</slf4j.version>
+        <slf4j.version>1.7.28</slf4j.version>
         <spotbugs.version>3.1.12</spotbugs.version>
         <spotbugs-maven-plugin.version>3.1.12.2</spotbugs-maven-plugin.version>
         <spring-core.version>5.1.9.RELEASE</spring-core.version>
