@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.apache.knox.gateway.util.JsonUtils;
 
+
 /**
  * Simple table representation and text based rendering of a table via
  * toString(). Headers are optional but when used must have the same count as
@@ -31,7 +32,7 @@ import org.apache.knox.gateway.util.JsonUtils;
 public class KnoxShellTable {
 
   List<String> headers = new ArrayList<String>();
-  List<List<String>> rows = new ArrayList<List<String>>();
+  List<List<Comparable<? extends Object>>> rows = new ArrayList<List<Comparable<? extends Object>>>();
   String title;
 
   public KnoxShellTable title(String title) {
@@ -45,35 +46,35 @@ public class KnoxShellTable {
   }
 
   public KnoxShellTable row() {
-    rows.add(new ArrayList<String>());
+    rows.add(new ArrayList<Comparable<? extends Object>>());
     return this;
   }
 
-  public KnoxShellTable value(String value) {
+  public KnoxShellTable value(Comparable<? extends Object> value) {
     final int index = rows.isEmpty() ? 0 : rows.size() - 1;
-    final List<String> row = rows.get(index);
+    final List<Comparable<? extends Object>> row = rows.get(index);
     row.add(value);
     return this;
   }
 
-  public KnoxShellTableCell cell(int colIndex, int rowIndex) {
+  public KnoxShellTableCell<? extends Comparable<? extends Object>> cell(int colIndex, int rowIndex) {
     return new KnoxShellTableCell(headers, rows, colIndex, rowIndex);
   }
 
-  public List<String> values(int colIndex) {
-    ArrayList<String> col = new ArrayList<String>();
+  public List<Comparable<? extends Object>> values(int colIndex) {
+    List<Comparable<? extends Object>> col = new ArrayList<Comparable<? extends Object>>();
     rows.forEach(row -> col.add(row.get(colIndex)));
     return col;
   }
 
-  public List<String> values(String colName) {
+  public List<Comparable<? extends Object>> values(String colName) {
     int colIndex = headers.indexOf(colName);
-    ArrayList<String> col = new ArrayList<String>();
+    List<Comparable<? extends Object>> col = new ArrayList<Comparable<? extends Object>>();
     rows.forEach(row -> col.add(row.get(colIndex)));
     return col;
   }
 
-  public KnoxShellTable apply(KnoxShellTableCell cell) {
+  public KnoxShellTable apply(KnoxShellTableCell<? extends Comparable<? extends Object>> cell) {
     if (!headers.isEmpty()) {
       headers.set(cell.colIndex, cell.header);
     }
@@ -87,7 +88,7 @@ public class KnoxShellTable {
     return headers == null || headers.isEmpty() ? null : headers;
   }
 
-  public List<List<String>> getRows() {
+  public List<List<Comparable<? extends Object>>> getRows() {
     return rows;
   }
 
@@ -105,15 +106,15 @@ public class KnoxShellTable {
 
   public KnoxShellTable select(String cols) {
     KnoxShellTable table = new KnoxShellTable();
-    List<List<String>> columns = new ArrayList<List<String>>();
+    List<List<Comparable<? extends Object>>> columns = new ArrayList<List<Comparable<? extends Object>>>();
     String[] colnames = cols.split(",");
     for (String colName : colnames) {
       table.header(colName);
-      columns.add((ArrayList<String>) values(headers.indexOf(colName)));
+      columns.add(values(headers.indexOf(colName)));
     }
     for (int i = 0; i < rows.size(); i++) {
       table.row();
-      for (List<String> col : columns) {
+      for (List<Comparable<? extends Object>> col : columns) {
         table.value(col.get(i));
       }
     }
@@ -123,8 +124,8 @@ public class KnoxShellTable {
   public KnoxShellTable sort(String colName) {
     KnoxShellTable table = new KnoxShellTable();
 
-    String value;
-    List<String> col = values(colName);
+    Comparable<? extends Object> value;
+    List<Comparable<? extends Object>> col = values(colName);
     List<RowIndex> index = new ArrayList<RowIndex>();
     for (int i = 0; i < col.size(); i++) {
       value = col.get(i);
@@ -133,23 +134,23 @@ public class KnoxShellTable {
     Collections.sort(index);
     table.headers = new ArrayList<String>(headers);
     for (RowIndex i : index) {
-      table.rows.add(new ArrayList<String>(this.rows.get(i.index)));
+      table.rows.add(new ArrayList<Comparable<? extends Object>>(this.rows.get(i.index)));
     }
     return table;
   }
 
   private static class RowIndex implements Comparable<RowIndex> {
-    String value;
+    Comparable value;
     int index;
 
-    public RowIndex(String value, int index) {
+    RowIndex(Comparable<? extends Object> value, int index) {
       this.value = value;
       this.index = index;
     }
 
     @Override
     public int compareTo(RowIndex other) {
-      return (this.value.compareTo(other.value));
+      return this.value.compareTo(other.value);
     }
   }
 

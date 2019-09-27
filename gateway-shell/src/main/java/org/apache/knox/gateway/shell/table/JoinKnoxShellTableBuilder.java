@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class JoinKnoxShellTableBuilder extends KnoxShellTableBuilder {
+class JoinKnoxShellTableBuilder extends KnoxShellTableBuilder {
 
   private KnoxShellTable left;
   private KnoxShellTable right;
@@ -42,23 +42,29 @@ public class JoinKnoxShellTableBuilder extends KnoxShellTableBuilder {
     return this;
   }
 
-  public KnoxShellTable on(int leftIndex, int rightIndex) {
+  KnoxShellTable on(String columnName) {
+    final int leftIndex = left.headers.indexOf(columnName);
+    final int rightIndex = right.headers.indexOf(columnName);
+    return on(leftIndex, rightIndex);
+  }
+
+  KnoxShellTable on(int leftIndex, int rightIndex) {
     final KnoxShellTable joinedTable = new KnoxShellTable();
     if (title != null) {
       joinedTable.title(title);
     }
 
     joinedTable.headers.addAll(new ArrayList<String>(left.headers));
-    for (List<String> row : left.rows) {
-      joinedTable.rows.add(new ArrayList<String>(row));
+    for (List<Comparable<? extends Object>> row : left.rows) {
+      joinedTable.rows.add(new ArrayList<Comparable<? extends Object>>(row));
     }
-    ArrayList<String> row;
-    String leftKey;
+    List<Comparable<? extends Object>> row;
+    Comparable<? extends Object> leftKey;
     int matchedIndex;
 
     joinedTable.headers.addAll(new ArrayList<String>(right.headers));
-    for (Iterator<List<String>> it = joinedTable.rows.iterator(); it.hasNext();) {
-      row = (ArrayList<String>) it.next();
+    for (Iterator<List<Comparable<? extends Object>>> it = joinedTable.rows.iterator(); it.hasNext();) {
+      row = (List<Comparable<? extends Object>>) it.next();
       leftKey = row.get(leftIndex);
       if (leftKey != null) {
         matchedIndex = right.values(rightIndex).indexOf(leftKey);

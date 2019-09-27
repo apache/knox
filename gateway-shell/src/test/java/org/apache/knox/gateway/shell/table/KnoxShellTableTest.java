@@ -35,8 +35,6 @@ import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.knox.gateway.shell.table.KnoxShellTable;
-import org.apache.knox.gateway.shell.table.KnoxShellTableCell;
 import org.easymock.IAnswer;
 import org.junit.Test;
 
@@ -199,6 +197,7 @@ public class KnoxShellTableTest {
   }
 
   @Test
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   public void testCells() throws IOException {
     KnoxShellTable table = new KnoxShellTable();
 
@@ -289,8 +288,8 @@ public class KnoxShellTableTest {
         return false;
       }
     }).times(2);
-    expect(resultSet.getString("BOOK_ID")).andReturn("1").times(1);
-    expect(resultSet.getString("TITLE")).andReturn("Apache Knox: The Definitive Guide").times(1);
+    expect(resultSet.getObject("BOOK_ID", Comparable.class)).andReturn("1").times(1);
+    expect(resultSet.getObject("TITLE", Comparable.class)).andReturn("Apache Knox: The Definitive Guide").times(1);
     expect(metadata.getTableName(1)).andReturn("BOOK");
     expect(metadata.getColumnCount()).andReturn(2);
     expect(metadata.getColumnName(1)).andReturn("BOOK_ID").anyTimes();

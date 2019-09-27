@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.shell.table;
 
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 public class KnoxShellTableFilter {
@@ -40,12 +41,13 @@ public class KnoxShellTableFilter {
     return this;
   }
 
+  //TODO: this method can be eliminated when the 'equalTo' method is implemented: regex(regex) = equalTo(anyString)
   public KnoxShellTable regex(String regex) {
     final Pattern pattern = Pattern.compile(regex);
     final KnoxShellTable filteredTable = new KnoxShellTable();
     filteredTable.headers.addAll(tableToFilter.headers);
-    for (List<String> row : tableToFilter.rows) {
-      if (pattern.matcher(row.get(index)).matches()) {
+    for (List<Comparable<?>> row : tableToFilter.rows) {
+      if (pattern.matcher(row.get(index).toString()).matches()) {
         filteredTable.row();
         row.forEach(value -> {
           filteredTable.value(value);
@@ -53,6 +55,31 @@ public class KnoxShellTableFilter {
       }
     }
     return filteredTable;
+  }
+
+  @SuppressWarnings("rawtypes")
+  private KnoxShellTable filter(Predicate<Comparable> p) throws KnoxShellTableFilterException {
+    try {
+    final KnoxShellTable filteredTable = new KnoxShellTable();
+    filteredTable.headers.addAll(tableToFilter.headers);
+    for (List<Comparable<? extends Object>> row : tableToFilter.rows) {
+      if (p.test(row.get(index))) {
+        filteredTable.row(); // Adds a new empty row to filtered table
+        // Add each value to the row
+        row.forEach(value -> {
+          filteredTable.value(value);
+        });
+      }
+    }
+    return filteredTable;
+    } catch (Exception e) {
+      throw new KnoxShellTableFilterException(e);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  public KnoxShellTable greaterThan(Comparable<? extends Object> comparable) throws KnoxShellTableFilterException {
+    return filter(s -> s.compareTo(comparable) > 0);
   }
 
 }
