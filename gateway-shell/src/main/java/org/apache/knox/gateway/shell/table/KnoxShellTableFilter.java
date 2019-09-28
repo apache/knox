@@ -41,7 +41,9 @@ public class KnoxShellTableFilter {
     return this;
   }
 
-  //TODO: this method can be eliminated when the 'equalTo' method is implemented: regex(regex) = equalTo(anyString)
+  //TODO: use Predicate to evaluate the Pattern.matches 
+  // for regular expressions: startsWith, endsWith, contains,
+  // doesn't contain, etc
   public KnoxShellTable regex(String regex) {
     final Pattern pattern = Pattern.compile(regex);
     final KnoxShellTable filteredTable = new KnoxShellTable();
@@ -82,4 +84,23 @@ public class KnoxShellTableFilter {
     return filter(s -> s.compareTo(comparable) > 0);
   }
 
+  @SuppressWarnings("unchecked")
+  public KnoxShellTable lessThan(Comparable<? extends Object> comparable) throws KnoxShellTableFilterException {
+    return filter(s -> s.compareTo(comparable) < 0);
+  }
+
+  @SuppressWarnings("unchecked")
+  public KnoxShellTable greaterThanOrEqualTo(Comparable<? extends Object> comparable) throws KnoxShellTableFilterException {
+    return filter(s -> s.compareTo(comparable) > 0 || s.compareTo(comparable) == 0);
+  }
+
+  @SuppressWarnings("unchecked")
+  public KnoxShellTable lessThanOrEqualTo(Comparable<? extends Object> comparable) throws KnoxShellTableFilterException {
+    return filter(s -> s.compareTo(comparable) < 0 || s.compareTo(comparable) == 0);
+  }
+
+  @SuppressWarnings("unchecked")
+  public KnoxShellTable EqualTo(Comparable<? extends Object> comparable) throws KnoxShellTableFilterException {
+    return filter(s -> s.compareTo(comparable) == 0);
+  }
 }
