@@ -41,7 +41,7 @@ public class KnoxShellTableFilter {
     return this;
   }
 
-  //TODO: use Predicate to evaluate the Pattern.matches 
+  //TODO: use Predicate to evaluate the Pattern.matches
   // for regular expressions: startsWith, endsWith, contains,
   // doesn't contain, etc
   public KnoxShellTable regex(String regex) {
