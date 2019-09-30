@@ -24,22 +24,22 @@ import java.util.regex.Pattern;
 public class KnoxShellTableFilter {
 
   private KnoxShellTable tableToFilter;
-  private int index;
+  private int index = -1;
 
   public KnoxShellTableFilter table(KnoxShellTable table) {
     this.tableToFilter = table;
     return this;
   }
 
-  public KnoxShellTableFilter name(String name) {
+  public KnoxShellTableFilter name(String name) throws KnoxShellTableFilterException {
     for (int i = 0; i < tableToFilter.headers.size(); i++) {
       if (tableToFilter.headers.get(i).equalsIgnoreCase(name)) {
         index = i;
         break;
       }
-      else {
-        index = -1;
-      }
+    }
+    if (index == -1) {
+        throw new KnoxShellTableFilterException("Column name not found");
     }
     return this;
   }

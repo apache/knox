@@ -23,4 +23,7 @@ class KnoxShellTableFilterException extends Exception {
     super("Error while filtering KnoxShellTable: " + e.getMessage());
   }
 
+  KnoxShellTableFilterException(String s) {
+      super("Error while filtering KnoxShellTable: " + s);
+    }
 }
