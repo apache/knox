@@ -32,7 +32,15 @@ public class KnoxShellTableFilter {
   }
 
   public KnoxShellTableFilter name(String name) {
-    index = tableToFilter == null ? -1 : tableToFilter.headers.indexOf(name);
+    for (int i = 0; i < tableToFilter.headers.size(); i++) {
+      if (tableToFilter.headers.get(i).equalsIgnoreCase(name)) {
+        index = i;
+        break;
+      }
+      else {
+        index = -1;
+      }
+    }
     return this;
   }
 
