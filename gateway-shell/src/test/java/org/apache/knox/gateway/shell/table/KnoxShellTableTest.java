@@ -34,6 +34,8 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 
+import javax.swing.SortOrder;
+
 import org.apache.commons.io.FileUtils;
 import org.easymock.IAnswer;
 import org.junit.Test;
@@ -194,6 +196,14 @@ public class KnoxShellTableTest {
     KnoxShellTable table2 = table.sort("Column A");
     assertEquals(table2.getRows().get(0).get(0), "123");
     assertEquals(table2.getRows().get(1).get(0), "789");
+
+    table2 = table.sort("Column A", SortOrder.DESCENDING);
+    assertEquals(table2.getRows().get(0).get(0), "789");
+    assertEquals(table2.getRows().get(1).get(0), "123");
+
+    table2 = table.sort("Column B", SortOrder.DESCENDING);
+    assertEquals(table2.getRows().get(0).get(1), "456");
+    assertEquals(table2.getRows().get(1).get(1), "012");
   }
 
   @Test
