@@ -124,6 +124,10 @@ public class WebsocketEchoTestBase {
       e.printStackTrace(System.err);
     }
 
+    cleanupFiles();
+  }
+
+  public static void cleanupFiles() {
     /* Cleanup the created files */
     FileUtils.deleteQuietly(topoDir);
   }
