@@ -100,7 +100,7 @@ public class KnoxShellTableFilter {
   }
 
   @SuppressWarnings("unchecked")
-  public KnoxShellTable EqualTo(Comparable<? extends Object> comparable) throws KnoxShellTableFilterException {
-    return filter(s -> s.compareTo(comparable) == 0);
+  public KnoxShellTable equalTo(Comparable<? extends Object> comparable) throws KnoxShellTableFilterException {
+    return filter(s -> s.equals(comparable));
   }
 }

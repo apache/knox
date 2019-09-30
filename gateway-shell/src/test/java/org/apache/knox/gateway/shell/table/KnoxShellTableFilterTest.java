@@ -119,18 +119,18 @@ public class KnoxShellTableFilterTest {
 
   @Test
   public void testEqualToFilter() throws KnoxShellTableFilterException, ParseException {
-    assertEquals(TABLE.filter().name("Column Integer").EqualTo(60).getRows().size(), 0);
-    assertEquals(TABLE.filter().name("Column Integer").EqualTo(50).getRows().size(), 1);
+    assertEquals(TABLE.filter().name("Column Integer").equalTo(60).getRows().size(), 0);
+    assertEquals(TABLE.filter().name("Column Integer").equalTo(50).getRows().size(), 1);
 
-    assertEquals(TABLE.filter().name("Column Double").EqualTo(40d).getRows().size(), 1);
-    assertEquals(TABLE.filter().name("Column Double").EqualTo(90d).getRows().size(), 0);
+    assertEquals(TABLE.filter().name("Column Double").equalTo(40d).getRows().size(), 1);
+    assertEquals(TABLE.filter().name("Column Double").equalTo(90d).getRows().size(), 0);
 
-    assertEquals(TABLE.filter().name("Column String").EqualTo("text90").getRows().size(), 0);
-    assertEquals(TABLE.filter().name("Column String").EqualTo("text30").getRows().size(), 1);
+    assertEquals(TABLE.filter().name("Column String").equalTo("text90").getRows().size(), 0);
+    assertEquals(TABLE.filter().name("Column String").equalTo("text30").getRows().size(), 1);
 
     synchronized (TEST_DATE_FORMAT) {
-      assertEquals(TABLE.filter().name("Column Date").EqualTo(TEST_DATE_FORMAT.parse("2012-02-01")).getRows().size(), 1);
-      assertEquals(TABLE.filter().name("Column Date").EqualTo(TEST_DATE_FORMAT.parse("2016-01-01")).getRows().size(), 0);
+      assertEquals(TABLE.filter().name("Column Date").equalTo(TEST_DATE_FORMAT.parse("2012-02-01")).getRows().size(), 1);
+      assertEquals(TABLE.filter().name("Column Date").equalTo(TEST_DATE_FORMAT.parse("2016-01-01")).getRows().size(), 0);
     }
   }
 
