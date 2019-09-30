@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.swing.SortOrder;
+
 import org.apache.knox.gateway.util.JsonUtils;
 
 
@@ -122,6 +124,10 @@ public class KnoxShellTable {
   }
 
   public KnoxShellTable sort(String colName) {
+    return sort(colName, SortOrder.ASCENDING);
+  }
+
+  public KnoxShellTable sort(String colName, SortOrder order) {
     KnoxShellTable table = new KnoxShellTable();
 
     Comparable<? extends Object> value;
@@ -131,7 +137,12 @@ public class KnoxShellTable {
       value = col.get(i);
       index.add(new RowIndex(value, i));
     }
-    Collections.sort(index);
+    if (SortOrder.ASCENDING.equals(order)) {
+      Collections.sort(index);
+    }
+    else {
+      Collections.sort(index, Collections.reverseOrder());
+    }
     table.headers = new ArrayList<String>(headers);
     for (RowIndex i : index) {
       table.rows.add(new ArrayList<Comparable<? extends Object>>(this.rows.get(i.index)));
