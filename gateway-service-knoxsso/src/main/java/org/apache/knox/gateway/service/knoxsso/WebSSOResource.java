@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway.service.knoxsso;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -50,7 +50,7 @@ import javax.ws.rs.WebApplicationException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditor;
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.commons.codec.binary.Base64;
+import java.util.Base64;
 import org.apache.knox.gateway.aws.AwsConstants;
 import org.apache.knox.gateway.aws.model.AwsSamlCredentials;
 import org.apache.knox.gateway.aws.utils.CookieUtils;
@@ -106,7 +106,7 @@ public class WebSSOResource {
   private String signatureAlgorithm = "RS256";
   private List<String> ssoExpectedparams = new ArrayList<>();
   private String clusterName;
-  private Gson gson = new Gson();
+  private ObjectMapper mapper = new ObjectMapper();
 
   @Context
   HttpServletRequest request;
@@ -254,8 +254,8 @@ public class WebSSOResource {
       Optional<String> awsCookie =  CookieUtils.getCookieValue(request, AwsConstants.AWS_COOKIE_NAME);
       AwsSamlCredentials awsSamlCredentials = null;
       if (awsCookie.isPresent()) {
-        String cookieJson = new String(Base64.decodeBase64(awsCookie.get().getBytes("UTF-8")), "UTF-8");
-        awsSamlCredentials = gson.fromJson(cookieJson,
+        String cookieJson = new String(Base64.getDecoder().decode(awsCookie.get().getBytes("UTF-8")), "UTF-8");
+        awsSamlCredentials = mapper.readValue(cookieJson,
             AwsSamlCredentials.class);
         claims.put(AwsConstants.AWS_COOKIE_NAME, awsCookie.get());
         cookieAge = CookieUtils.getCookieAgeMatchingAwsCredentials(awsSamlCredentials);
@@ -289,7 +289,7 @@ public class WebSSOResource {
       } catch (IOException e) {
         log.unableToCloseOutputStream(e.getMessage(), Arrays.toString(e.getStackTrace()));
       }
-    } catch (TokenServiceException| AliasServiceException | UnsupportedEncodingException e) {
+    } catch (TokenServiceException| AliasServiceException | IOException e) {
       log.unableToIssueToken(e);
     }
     URI location = null;

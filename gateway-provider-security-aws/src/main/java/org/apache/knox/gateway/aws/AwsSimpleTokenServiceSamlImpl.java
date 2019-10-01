@@ -63,8 +63,8 @@ public class AwsSimpleTokenServiceSamlImpl extends BaseSamlInvokerImpl implement
           .withSAMLAssertion(samlResponse);
       AssumeRoleWithSAMLResult assumeRoleWithSAMLResult = stsClient.assumeRoleWithSAML(request);
       return AwsSamlCredentials.builder()
-          .AWSAccessKeyId(assumeRoleWithSAMLResult.getCredentials().getAccessKeyId())
-          .AWSSecretKey(assumeRoleWithSAMLResult.getCredentials().getSecretAccessKey())
+          .awsAccessKeyId(assumeRoleWithSAMLResult.getCredentials().getAccessKeyId())
+          .awsSecretKey(assumeRoleWithSAMLResult.getCredentials().getSecretAccessKey())
           .sessionToken(assumeRoleWithSAMLResult.getCredentials().getSessionToken())
           .expiration(assumeRoleWithSAMLResult.getCredentials().getExpiration().getTime())
           .username(assumeRoleWithSAMLResult.getSubject())

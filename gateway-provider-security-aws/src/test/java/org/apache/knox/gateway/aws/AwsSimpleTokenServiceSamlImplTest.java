@@ -29,6 +29,7 @@ import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClient;
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithSAMLRequest;
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithSAMLResult;
 import com.amazonaws.services.securitytoken.model.Credentials;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import javax.servlet.http.Cookie;
 import org.apache.commons.codec.binary.Base64;
@@ -78,8 +79,8 @@ public class AwsSimpleTokenServiceSamlImplTest extends AwsSamlTestBase {
     AssumeRoleWithSAMLRequest request = argumentCaptor.getValue();
     assertThat(request.getSAMLAssertion(), is(encodedAssertion));
     assertThat(request.getRoleArn(), is(SAML_RESPONSE_ROLE1_ARN));
-    assertThat(awsSamlCredentials.getAWSAccessKeyId(), is(TEST_ACCESS_KEY));
-    assertThat(awsSamlCredentials.getAWSSecretKey(), is(TEST_SECRET_KEY));
+    assertThat(awsSamlCredentials.getAwsAccessKeyId(), is(TEST_ACCESS_KEY));
+    assertThat(awsSamlCredentials.getAwsSecretKey(), is(TEST_SECRET_KEY));
     assertThat(awsSamlCredentials.getSessionToken(), is(TEST_SESSION_TOKEN));
     assertThat(awsSamlCredentials.getUsername(), is(TEST_USERNAME));
     assertThat(awsSamlCredentials.getExpiration(), is(now.getTime()));
@@ -88,7 +89,7 @@ public class AwsSimpleTokenServiceSamlImplTest extends AwsSamlTestBase {
   @Test(expected = AwsSamlException.class)
   public void validate_sts_exception_throws() throws Exception {
     String encodedAssertion = new String(Base64.encodeBase64(
-        VALID_SAML_RESPONSE.getBytes("UTF-8")), "UTF-8");
+        VALID_SAML_RESPONSE.getBytes(StandardCharsets.UTF_8.name())), StandardCharsets.UTF_8.name());
     when(awsSecurityTokenServiceClient
         .assumeRoleWithSAML(any(AssumeRoleWithSAMLRequest.class)))
         .thenThrow(new AmazonServiceException("Internal error"));
@@ -102,8 +103,8 @@ public class AwsSimpleTokenServiceSamlImplTest extends AwsSamlTestBase {
     MockHttpServletResponse response = new MockHttpServletResponse();
     Date now = new Date();
     AwsSamlCredentials awsSamlCredentials = AwsSamlCredentials.builder()
-        .AWSAccessKeyId(TEST_ACCESS_KEY)
-        .AWSSecretKey(TEST_SECRET_KEY)
+        .awsAccessKeyId(TEST_ACCESS_KEY)
+        .awsSecretKey(TEST_SECRET_KEY)
         .sessionToken(TEST_SESSION_TOKEN)
         .expiration(now.getTime()+TEST_COOKIE_AGE_MS)
         .build();

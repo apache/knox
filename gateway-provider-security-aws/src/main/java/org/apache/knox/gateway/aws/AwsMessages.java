@@ -22,9 +22,7 @@ import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
 
 /**
- * Logging messages for the pac4j provider.
- *
- * @since 0.8.0
+ * Logging messages for the AWS federation.
  */
 @Messages(logger="org.apache.knox.gateway.aws")
 public interface AwsMessages {

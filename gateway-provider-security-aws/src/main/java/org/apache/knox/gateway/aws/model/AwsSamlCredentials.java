@@ -17,31 +17,39 @@
  */
 package org.apache.knox.gateway.aws.model;
 
-import com.amazonaws.auth.AWSSessionCredentials;
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * Models credentials obtained from AWS using SAML Response.
  */
 @Getter
 @Builder
-public class AwsSamlCredentials implements AWSSessionCredentials {
+@NoArgsConstructor
+@AllArgsConstructor
+public class AwsSamlCredentials  {
 
-  private static Gson gson = new Gson();
+  private static final ObjectMapper mapper = new ObjectMapper();
 
   /**
    * The username contained in the SAML Response.
    */
   String username;
-  String AWSAccessKeyId;
-  String AWSSecretKey;
+  String awsAccessKeyId;
+  String awsSecretKey;
   String sessionToken;
   long expiration;
 
   @Override
   public String toString() {
-    return gson.toJson(this);
+    try {
+      return mapper.writeValueAsString(this);
+    } catch (JsonProcessingException e) {
+      return null;
+    }
   }
 }
