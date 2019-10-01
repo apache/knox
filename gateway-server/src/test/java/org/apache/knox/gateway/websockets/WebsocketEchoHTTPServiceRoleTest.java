@@ -46,20 +46,21 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * </ul>
  *
  * The test is to confirm whether the message is sent all the way to the backend
- * Websocket server through Knox and back.
+ * Websocket server through Knox and back when backend service URI has http
+ * protocol defined in service definition
  *
  * @since 0.10
  */
-public class WebsocketEchoTest extends WebsocketEchoTestBase {
+public class WebsocketEchoHTTPServiceRoleTest extends WebsocketEchoTestBase {
 
-  public WebsocketEchoTest() {
+  public WebsocketEchoHTTPServiceRoleTest() {
     super();
   }
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
     WebsocketEchoTestBase.setUpBeforeClass();
-    WebsocketEchoTestBase.startServers("ws");
+    WebsocketEchoTestBase.startServers("http");
   }
 
   @AfterClass
@@ -68,42 +69,10 @@ public class WebsocketEchoTest extends WebsocketEchoTestBase {
   }
 
   /*
-   * Test direct connection to websocket server without gateway
-   */
-  @Test
-  public void testDirectEcho() throws Exception {
-
-    WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-    WebsocketClient client = new WebsocketClient();
-
-    Session session = container.connectToServer(client, backendServerUri);
-
-    session.getBasicRemote().sendText("Echo");
-    client.messageQueue.awaitMessages(1, 1000, TimeUnit.MILLISECONDS);
-  }
-
-  /*
-   * Test websocket proxying through gateway.
-   */
-  @Test
-  public void testGatewayEcho() throws Exception {
-    WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-
-    WebsocketClient client = new WebsocketClient();
-    Session session = container.connectToServer(client,
-        new URI(serverUri.toString() + "gateway/websocket/ws"));
-
-    session.getBasicRemote().sendText("Echo");
-    client.messageQueue.awaitMessages(1, 1000, TimeUnit.MILLISECONDS);
-
-    assertThat(client.messageQueue.get(0), is("Echo"));
-  }
-
-  /*
    * Test websocket rewrite rules proxying through gateway.
    */
   @Test
-  public void testGatewayRewriteEcho() throws Exception {
+  public void testGatewayRewriteHttpEcho() throws Exception {
     WebSocketContainer container = ContainerProvider.getWebSocketContainer();
 
     WebsocketClient client = new WebsocketClient();
