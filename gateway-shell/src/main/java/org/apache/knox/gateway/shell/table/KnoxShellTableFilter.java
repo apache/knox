@@ -91,15 +91,14 @@ public class KnoxShellTableFilter {
 
   @SuppressWarnings("unchecked")
   public KnoxShellTable greaterThanOrEqualTo(Comparable<? extends Object> comparable) throws KnoxShellTableFilterException {
-    return filter(s -> s.compareTo(comparable) > 0 || s.compareTo(comparable) == 0);
+    return filter(s -> s.compareTo(comparable) > 0 || s.equals(comparable));
   }
 
   @SuppressWarnings("unchecked")
   public KnoxShellTable lessThanOrEqualTo(Comparable<? extends Object> comparable) throws KnoxShellTableFilterException {
-    return filter(s -> s.compareTo(comparable) < 0 || s.compareTo(comparable) == 0);
+    return filter(s -> s.compareTo(comparable) < 0 || s.equals(comparable));
   }
 
-  @SuppressWarnings("unchecked")
   public KnoxShellTable equalTo(Comparable<? extends Object> comparable) throws KnoxShellTableFilterException {
     return filter(s -> s.equals(comparable));
   }
