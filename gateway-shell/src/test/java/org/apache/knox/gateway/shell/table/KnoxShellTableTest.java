@@ -227,7 +227,7 @@ public class KnoxShellTableTest {
   }
 
   @Test
-  public void testFilterTable() {
+  public void testFilterTable() throws KnoxShellTableFilterException {
     KnoxShellTable table = new KnoxShellTable();
 
     table.header("Column A").header("Column B").header("Column C");

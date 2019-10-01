@@ -50,6 +50,13 @@ public class KnoxShellTableFilterTest {
   }
 
   @Test
+  public void testNameMethod() throws KnoxShellTableFilterException, ParseException {
+    assertEquals(TABLE.filter().name("cOlUmN iNtEgEr").greaterThan(10).getRows().size(), 1);
+    assertEquals(TABLE.filter().name("COLUMN DOUBLE").greaterThan(25d).getRows().size(), 1);
+    assertEquals(TABLE.filter().name("column string").greaterThan("text20").getRows().size(), 2);
+  }
+
+  @Test
   public void testGreaterThanFilter() throws KnoxShellTableFilterException, ParseException {
     assertEquals(TABLE.filter().name("Column Integer").greaterThan(5).getRows().size(), 3);
     assertEquals(TABLE.filter().name("Column Integer").greaterThan(25).getRows().size(), 2);
