@@ -19,7 +19,7 @@ limitations under the License.
 
 ## Docker
 
-`src/resources/docker` contains a Dockerfile and Docker-compose
-configuration files to launch an Apache Knox server. Maven automation
+`src/main/resources/docker` contains a Dockerfile and `src/main/resources/docker-compose.yml` is a Docker-compose
+configuration file to launch an Apache Knox server. Maven automation
 exists for the base Docker image "apache/knox" which can be invoked with
 the "-Pdocker" Maven profile.

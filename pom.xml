@@ -152,13 +152,13 @@
         <ant-nodeps.version>1.8.1</ant-nodeps.version>
         <asm.version>7.1</asm.version>
         <aws-sdk.version>1.11.562</aws-sdk.version>
-        <bcprov-jdk15on.version>1.62</bcprov-jdk15on.version>
+        <bcprov-jdk15on.version>1.63</bcprov-jdk15on.version>
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
-        <cglib.version>3.2.12</cglib.version>
-        <checkstyle.version>8.23</checkstyle.version>
+        <cglib.version>3.3.0</cglib.version>
+        <checkstyle.version>8.24</checkstyle.version>
         <cloudera-manager.version>6.3.0</cloudera-manager.version>
         <cloudera-manager-api-swagger.version>${cloudera-manager.version}</cloudera-manager-api-swagger.version>
-        <commons-beanutils.version>1.9.3</commons-beanutils.version>
+        <commons-beanutils.version>1.9.4</commons-beanutils.version>
         <commons-cli.version>1.4</commons-cli.version>
         <commons-codec.version>1.13</commons-codec.version>
         <commons-collections.version>3.2.2</commons-collections.version>
@@ -168,11 +168,10 @@
         <commons-io.version>2.6</commons-io.version>
         <commons-lang3.version>3.9</commons-lang3.version>
         <commons-net.version>3.6</commons-net.version>
-        <commons-text.version>1.7</commons-text.version>
-        <cors-filter.version>2.6</cors-filter.version>
+        <commons-text.version>1.8</commons-text.version>
+        <cors-filter.version>2.8</cors-filter.version>
         <curator.version>4.2.0</curator.version>
-        <curator-test.version>2.13.0</curator-test.version>
-        <dependency-check-maven.version>5.2.1</dependency-check-maven.version>
+        <dependency-check-maven.version>5.2.2</dependency-check-maven.version>
         <dockerfile-maven-plugin.version>1.4.12</dockerfile-maven-plugin.version>
         <easymock.version>4.0.2</easymock.version>
         <eclipselink.version>2.7.4</eclipselink.version>
@@ -181,19 +180,14 @@
         <findsecbugs-plugin.version>1.9.0</findsecbugs-plugin.version>
         <forbiddenapis.version>2.6</forbiddenapis.version>
         <groovy.version>2.5.8</groovy.version>
-        <guava.version>28.0-jre</guava.version>
-        <hadoop.version>3.2.0</hadoop.version>
+        <guava.version>28.1-jre</guava.version>
+        <hadoop.version>3.2.1</hadoop.version>
         <hamcrest.version>2.1</hamcrest.version>
         <hamcrest-json.version>0.2</hamcrest-json.version>
         <httpclient.version>4.5.6</httpclient.version>
         <httpcore.version>4.4.11</httpcore.version>
         <j2e-pac4j.version>4.1.0</j2e-pac4j.version>
-        <jackson.version>2.9.9</jackson.version>
-        <!--
-          jackson-databind released a small bug fix for a CVE
-          remove the extra version when jackson version is bumped to 2.10.x
-        -->
-        <jackson-databind.version>2.9.9.3</jackson-databind.version>
+        <jackson.version>2.9.10</jackson.version>
         <jacoco-maven-plugin.version>0.8.4</jacoco-maven-plugin.version>
         <jansi.version>1.18</jansi.version>
         <javax.activation.version>1.2.0</javax.activation.version>
@@ -203,20 +197,22 @@
         <javax.ws.rs-api.version>2.0</javax.ws.rs-api.version>
         <javax.websocket-api.version>1.1</javax.websocket-api.version>
         <jaxb.version>2.3.0</jaxb.version>
-        <jaxws-ri.version>2.3.1</jaxws-ri.version>
+        <jaxws-ri.version>2.3.2</jaxws-ri.version>
+        <jakarta.xml.bind.version>2.3.2</jakarta.xml.bind.version>
         <jericho-html.version>3.4</jericho-html.version>
         <jersey.version>2.6</jersey.version>
-        <jetty.version>9.4.19.v20190610</jetty.version>
+        <jetty.version>9.4.20.v20190813</jetty.version>
         <jline.version>2.14.6</jline.version>
         <jna.version>5.4.0</jna.version>
-        <joda-time.version>2.10.3</joda-time.version>
+        <joda-time.version>2.10.4</joda-time.version>
         <json-path.version>2.4.0</json-path.version>
         <json-smart.version>2.3</json-smart.version>
         <junit.version>4.12</junit.version>
         <libpam4j.version>1.11</libpam4j.version>
         <log4j.version>1.2.17</log4j.version>
-        <log4j2.version>2.12.0</log4j2.version>
+        <log4j2.version>2.12.1</log4j2.version>
         <lombok-version>1.18.4</lombok-version>
+        <log4j2.version>2.12.1</log4j2.version>
         <maven-checkstyle-plugin.version>3.1.0</maven-checkstyle-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
@@ -225,26 +221,26 @@
         <metrics.version>4.1.0</metrics.version>
         <mockito.version>1.10.19</mockito.version>
         <mina.version>2.0.20</mina.version>
-        <nimbus-jose-jwt.version>7.7</nimbus-jose-jwt.version>
+        <nimbus-jose-jwt.version>7.8</nimbus-jose-jwt.version>
         <okhttp.version>2.7.5</okhttp.version>
         <opensaml-version>3.3.0</opensaml-version>
-        <pac4j.version>3.7.0</pac4j.version>
-        <protobuf.version>3.9.1</protobuf.version>
-        <rest-assured.version>4.0.0</rest-assured.version>
+        <pac4j.version>3.8.2</pac4j.version>
+        <protobuf.version>3.10.0</protobuf.version>
+        <rest-assured.version>4.1.1</rest-assured.version>
         <shiro.version>1.4.1</shiro.version>
         <shrinkwrap.version>1.2.6</shrinkwrap.version>
         <shrinkwrap.descriptors.version>2.0.0</shrinkwrap.descriptors.version>
-        <slf4j.version>1.7.27</slf4j.version>
+        <slf4j.version>1.7.28</slf4j.version>
         <spotbugs.version>3.1.12</spotbugs.version>
         <spotbugs-maven-plugin.version>3.1.12.2</spotbugs-maven-plugin.version>
         <spring-core.version>5.1.9.RELEASE</spring-core.version>
         <spring-vault.version>2.1.3.RELEASE</spring-vault.version>
         <taglibs-standard.version>1.2.5</taglibs-standard.version>
-        <testcontainers.version>1.12.0</testcontainers.version>
+        <testcontainers.version>1.12.1</testcontainers.version>
         <velocity.version>1.7</velocity.version>
         <xmltool.version>3.3</xmltool.version>
         <xml-matchers.version>0.10</xml-matchers.version>
-        <zookeeper.version>3.4.14</zookeeper.version>
+        <zookeeper.version>3.5.5</zookeeper.version>
     </properties>
 
     <profiles>
@@ -1229,6 +1225,12 @@
             </dependency>
 
             <dependency>
+                <groupId>jakarta.xml.bind</groupId>
+                <artifactId>jakarta.xml.bind-api</artifactId>
+                <version>${jakarta.xml.bind.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.eclipse.persistence</groupId>
                 <artifactId>eclipselink</artifactId>
                 <version>${eclipselink.version}</version>
@@ -1486,7 +1488,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>${jackson-databind.version}</version>
+                <version>${jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.dataformat</groupId>
@@ -1750,6 +1752,11 @@
             <dependency>
                 <groupId>org.apache.zookeeper</groupId>
                 <artifactId>zookeeper</artifactId>
+                <version>${zookeeper.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.zookeeper</groupId>
+                <artifactId>zookeeper-jute</artifactId>
                 <version>${zookeeper.version}</version>
             </dependency>
 
@@ -2132,7 +2139,7 @@
             <dependency>
                 <groupId>org.apache.curator</groupId>
                 <artifactId>curator-test</artifactId>
-                <version>${curator-test.version}</version>
+                <version>${curator.version}</version>
                 <scope>test</scope>
             </dependency>
 

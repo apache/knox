@@ -84,6 +84,7 @@ public class ZookeeperRemoteAliasServiceTest {
     customInstanceSpecProps.put("authProvider.1",
         "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
     customInstanceSpecProps.put("requireClientAuthScheme", "sasl");
+    customInstanceSpecProps.put("admin.enableServer", false);
 
     // Define the test cluster
     List<InstanceSpec> instanceSpecs = new ArrayList<>();
