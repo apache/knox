@@ -62,8 +62,7 @@ public class JsonUtils {
     Map<String, String> obj = null;
     JsonFactory factory = new JsonFactory();
     ObjectMapper mapper = new ObjectMapper(factory);
-    TypeReference<Object> typeRef
-          = new TypeReference<Object>() {};
+    TypeReference<Map<String, String>> typeRef = new TypeReference<Map<String, String>>() {};
     try {
       obj = mapper.readValue(json, typeRef);
     } catch (IOException e) {
