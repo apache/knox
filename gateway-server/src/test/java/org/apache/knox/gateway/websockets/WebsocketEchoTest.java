@@ -58,6 +58,7 @@ public class WebsocketEchoTest extends WebsocketEchoTestBase {
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
+    handler = null;
     WebsocketEchoTestBase.setUpBeforeClass();
     WebsocketEchoTestBase.startServers("ws");
   }
