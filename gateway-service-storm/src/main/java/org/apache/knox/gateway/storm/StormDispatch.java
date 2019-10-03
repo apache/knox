@@ -19,6 +19,7 @@ package org.apache.knox.gateway.storm;
 
 import org.apache.knox.gateway.dispatch.DefaultDispatch;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -29,7 +30,7 @@ public class StormDispatch extends DefaultDispatch {
 
   @Override
   public Set<String> getOutboundResponseExcludeHeaders() {
-    return null;
+    return Collections.emptySet();
   }
 }
 

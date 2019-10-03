@@ -212,14 +212,15 @@ public class ConfigurableDispatchTest {
     assertThat(outboundRequestHeaders[0].getName(), is(HttpHeaders.AUTHORIZATION));
   }
 
-  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  @Test
   public void testResponseExcludeHeadersDefault() {
     ConfigurableDispatch dispatch = new ConfigurableDispatch();
 
     Header[] headers = new Header[]{
         new BasicHeader(SET_COOKIE, "abc"),
         new BasicHeader(WWW_AUTHENTICATE, "negotiate"),
-        new BasicHeader("TEST", "testValue")
+        new BasicHeader("TEST", "testValue"),
+        new BasicHeader("Accept", "applcation/json")
     };
 
     HttpResponse inboundResponse = EasyMock.createNiceMock(HttpResponse.class);
@@ -229,11 +230,12 @@ public class ConfigurableDispatchTest {
     HttpServletResponse outboundResponse = new MockHttpServletResponse();
     dispatch.copyResponseHeaderFields(outboundResponse, inboundResponse);
 
-    assertThat(outboundResponse.getHeaderNames().size(), is(1));
+    assertThat(outboundResponse.getHeaderNames().size(), is(2));
     assertThat(outboundResponse.getHeader("TEST"), is("testValue"));
+    assertThat(outboundResponse.getHeader("Accept"), is("applcation/json"));
   }
 
-  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  @Test
   public void testResponseExcludeHeadersConfig() {
     ConfigurableDispatch dispatch = new ConfigurableDispatch();
     dispatch.setResponseExcludeHeaders(String.join(",", Collections.singletonList("TEST")));
@@ -255,4 +257,23 @@ public class ConfigurableDispatchTest {
     assertThat(outboundResponse.getHeader(SET_COOKIE), is("abc"));
     assertThat(outboundResponse.getHeader(WWW_AUTHENTICATE), is("negotiate"));
   }
+
+  @Test
+  public void shouldExcludeCertainPartsFromSetCookieHeader() throws Exception {
+    final Header[] headers = new Header[] { new BasicHeader(SET_COOKIE, "Domain=localhost; Secure; HttpOnly; Max-Age=1") };
+    final HttpResponse inboundResponse = EasyMock.createNiceMock(HttpResponse.class);
+    EasyMock.expect(inboundResponse.getAllHeaders()).andReturn(headers).anyTimes();
+    EasyMock.replay(inboundResponse);
+
+    final ConfigurableDispatch dispatch = new ConfigurableDispatch();
+    final String setCookieExludeHeaders = SET_COOKIE + ": Domain=localhost; HttpOnly";
+    dispatch.setResponseExcludeHeaders(setCookieExludeHeaders);
+
+    final HttpServletResponse outboundResponse = new MockHttpServletResponse();
+    dispatch.copyResponseHeaderFields(outboundResponse, inboundResponse);
+
+    assertThat(outboundResponse.getHeaderNames().size(), is(1));
+    assertThat(outboundResponse.getHeader(SET_COOKIE), is("Secure; Max-Age=1"));
+  }
+
 }
