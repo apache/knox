@@ -83,9 +83,9 @@ public class WebsocketEchoTestBase {
   /**
    * Mock gateway config
    */
-  private static GatewayConfig gatewayConfig;
+  public static GatewayConfig gatewayConfig;
 
-  private static GatewayServices services;
+  public static GatewayServices services;
 
   /**
    * URI for gateway server
@@ -125,6 +125,10 @@ public class WebsocketEchoTestBase {
       e.printStackTrace(System.err);
     }
 
+    cleanupFiles();
+  }
+
+  public static void cleanupFiles() {
     /* Cleanup the created files */
     FileUtils.deleteQuietly(topoDir);
   }
@@ -158,7 +162,6 @@ public class WebsocketEchoTestBase {
       host = "localhost";
     }
     int port = connector.getLocalPort();
-
     if ("http".equals(type)) {
       backendServerUri = new URI(String.format(Locale.ROOT, "http://%s:%d/ws", host, port));
     } else {
@@ -209,7 +212,7 @@ public class WebsocketEchoTestBase {
    * @param backend topology to use
    * @throws IOException exception on setting up the gateway
    */
-  private static void setupGatewayConfig(final String backend) throws IOException {
+  public static void setupGatewayConfig(final String backend) throws IOException {
     services = new DefaultGatewayServices();
 
     URL serviceUrl = ClassLoader.getSystemResource("websocket-services");

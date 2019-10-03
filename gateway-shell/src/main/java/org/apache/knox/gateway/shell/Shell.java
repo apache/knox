@@ -22,6 +22,7 @@ import org.apache.knox.gateway.shell.hbase.HBase;
 import org.apache.knox.gateway.shell.hdfs.Hdfs;
 import org.apache.knox.gateway.shell.job.Job;
 import org.apache.knox.gateway.shell.manager.Manager;
+import org.apache.knox.gateway.shell.table.KnoxShellTable;
 import org.apache.knox.gateway.shell.workflow.Workflow;
 import org.apache.knox.gateway.shell.yarn.Yarn;
 import org.apache.log4j.PropertyConfigurator;
