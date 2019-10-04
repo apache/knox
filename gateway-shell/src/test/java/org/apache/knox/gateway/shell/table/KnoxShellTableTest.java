@@ -22,8 +22,9 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
-
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import java.io.File;
@@ -33,6 +34,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
+import java.util.Collections;
 
 import javax.swing.SortOrder;
 
@@ -182,6 +184,18 @@ public class KnoxShellTableTest {
 
     KnoxShellTable table2 = KnoxShellTable.builder().json().fromJson(json);
     assertEquals(table.toString(), table2.toString());
+  }
+
+  @Test
+  public void testFromJSONUsingCallHistory() throws IOException {
+    final String jsonPath = KnoxShellTableCallHistoryTest.class.getClassLoader().getResource("knoxShellTableCallHistoryWithFiltering.json").getPath();
+    final String csvPath = "file://" + KnoxShellTableCallHistoryTest.class.getClassLoader().getResource("knoxShellTableLocationsWithZipLessThan14.csv").getPath();
+    String json = (FileUtils.readFileToString(new File(jsonPath), StandardCharsets.UTF_8));
+    json = json.replaceAll("CSV_FILE_PATH_PLACEHOLDER", csvPath);
+    // filtered table where ZIPs are greater than "5" (in CSV everything is String)
+    final KnoxShellTable table = KnoxShellTable.builder().json().fromJson(json);
+    assertNotNull(table);
+    assertEquals(4, table.rows.size()); // only 4 rows with ZIP of 6, 7, 8 and 9
   }
 
   @Test
@@ -343,5 +357,16 @@ public class KnoxShellTableTest {
       resultSet.close();
     }
     verify(connection, statement, resultSet, metadata);
+  }
+
+  @Test
+  public void shouldReturnDifferentCallHistoryForDifferentTables() throws Exception {
+    final KnoxShellTable table1 = new KnoxShellTable();
+    table1.id(1);
+    KnoxShellTableCallHistory.getInstance().saveCall(1, new KnoxShellTableCall("class1", "method1", true, Collections.singletonMap("param1", String.class)));
+    final KnoxShellTable table2 = new KnoxShellTable();
+    table1.id(2);
+    KnoxShellTableCallHistory.getInstance().saveCall(2, new KnoxShellTableCall("class2", "method2", false, Collections.singletonMap("param2", String.class)));
+    assertNotEquals(table1.getCallHistoryList(), table2.getCallHistoryList());
   }
 }

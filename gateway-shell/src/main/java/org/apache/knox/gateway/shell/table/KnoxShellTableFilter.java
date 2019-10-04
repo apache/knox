@@ -23,12 +23,16 @@ import java.util.regex.Pattern;
 
 public class KnoxShellTableFilter {
 
-  private KnoxShellTable tableToFilter;
-  private int index = -1;
+  final long id;
+  final KnoxShellTable tableToFilter;
+  private int index;
 
-  public KnoxShellTableFilter table(KnoxShellTable table) {
+  KnoxShellTableFilter(KnoxShellTable table) {
+    this.id = KnoxShellTable.getUniqueTableId();
     this.tableToFilter = table;
-    return this;
+    //inheriting the original table's call history
+    final List<KnoxShellTableCall> callHistory = KnoxShellTableCallHistory.getInstance().getCallHistory(tableToFilter.id);
+    KnoxShellTableCallHistory.getInstance().saveCalls(id, callHistory);
   }
 
   public KnoxShellTableFilter name(String name) throws KnoxShellTableFilterException {
@@ -39,7 +43,7 @@ public class KnoxShellTableFilter {
       }
     }
     if (index == -1) {
-        throw new KnoxShellTableFilterException("Column name not found");
+      throw new KnoxShellTableFilterException("Column name not found");
     }
     return this;
   }
@@ -49,13 +53,12 @@ public class KnoxShellTableFilter {
     return this;
   }
 
-  //TODO: use Predicate to evaluate the Pattern.matches
+  // TODO: use Predicate to evaluate the Pattern.matches
   // for regular expressions: startsWith, endsWith, contains,
   // doesn't contain, etc
-  public KnoxShellTable regex(String regex) {
-    final Pattern pattern = Pattern.compile(regex);
-    final KnoxShellTable filteredTable = new KnoxShellTable();
-    filteredTable.headers.addAll(tableToFilter.headers);
+  public KnoxShellTable regex(Comparable<String> regex) {
+    final Pattern pattern = Pattern.compile((String) regex);
+    final KnoxShellTable filteredTable = prepareFilteredTable();
     for (List<Comparable<?>> row : tableToFilter.rows) {
       if (pattern.matcher(row.get(index).toString()).matches()) {
         filteredTable.row();
@@ -67,21 +70,28 @@ public class KnoxShellTableFilter {
     return filteredTable;
   }
 
+  private KnoxShellTable prepareFilteredTable() {
+    final KnoxShellTable filteredTable = new KnoxShellTable();
+    filteredTable.id(id);
+    filteredTable.headers.addAll(tableToFilter.headers);
+    filteredTable.title(tableToFilter.title);
+    return filteredTable;
+  }
+
   @SuppressWarnings("rawtypes")
   private KnoxShellTable filter(Predicate<Comparable> p) throws KnoxShellTableFilterException {
     try {
-    final KnoxShellTable filteredTable = new KnoxShellTable();
-    filteredTable.headers.addAll(tableToFilter.headers);
-    for (List<Comparable<? extends Object>> row : tableToFilter.rows) {
-      if (p.test(row.get(index))) {
-        filteredTable.row(); // Adds a new empty row to filtered table
-        // Add each value to the row
-        row.forEach(value -> {
-          filteredTable.value(value);
-        });
+      final KnoxShellTable filteredTable = prepareFilteredTable();
+      for (List<Comparable<? extends Object>> row : tableToFilter.rows) {
+        if (p.test(row.get(index))) {
+          filteredTable.row(); // Adds a new empty row to filtered table
+          // Add each value to the row
+          row.forEach(value -> {
+            filteredTable.value(value);
+          });
+        }
       }
-    }
-    return filteredTable;
+      return filteredTable;
     } catch (Exception e) {
       throw new KnoxShellTableFilterException(e);
     }

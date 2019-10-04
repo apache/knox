@@ -1,0 +1,39 @@
+{
+  "callHistoryList" : [ {
+    "invokerClass" : "org.apache.knox.gateway.shell.table.KnoxShellTableBuilder",
+    "method" : "csv",
+    "builderMethod" : false,
+    "params" : { }
+  }, {
+    "invokerClass" : "org.apache.knox.gateway.shell.table.CSVKnoxShellTableBuilder",
+    "method" : "withHeaders",
+    "builderMethod" : false,
+    "params" : { }
+  }, {
+    "invokerClass" : "org.apache.knox.gateway.shell.table.CSVKnoxShellTableBuilder",
+    "method" : "url",
+    "builderMethod" : true,
+    "params" : {
+      "CSV_FILE_PATH_PLACEHOLDER" : "java.lang.String"
+    }
+  }, {
+    "invokerClass" : "org.apache.knox.gateway.shell.table.KnoxShellTable",
+    "method" : "filter",
+    "builderMethod" : false,
+    "params" : { }
+  }, {
+    "invokerClass" : "org.apache.knox.gateway.shell.table.KnoxShellTableFilter",
+    "method" : "name",
+    "builderMethod" : false,
+    "params" : {
+      "ZIP" : "java.lang.String"
+    }
+  }, {
+    "invokerClass" : "org.apache.knox.gateway.shell.table.KnoxShellTableFilter",
+    "method" : "greaterThan",
+    "builderMethod" : true,
+    "params" : {
+      "5" : "java.lang.String"
+    }
+  } ]
+}

@@ -21,10 +21,14 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-class JoinKnoxShellTableBuilder extends KnoxShellTableBuilder {
+public class JoinKnoxShellTableBuilder extends KnoxShellTableBuilder {
 
   private KnoxShellTable left;
   private KnoxShellTable right;
+
+  JoinKnoxShellTableBuilder(long id) {
+    super(id);
+  }
 
   @Override
   public JoinKnoxShellTableBuilder title(String title) {
@@ -42,17 +46,18 @@ class JoinKnoxShellTableBuilder extends KnoxShellTableBuilder {
     return this;
   }
 
-  KnoxShellTable on(String columnName) {
+  public KnoxShellTable on(String columnName) {
     final int leftIndex = left.headers.indexOf(columnName);
     final int rightIndex = right.headers.indexOf(columnName);
     return on(leftIndex, rightIndex);
   }
 
-  KnoxShellTable on(int leftIndex, int rightIndex) {
+  public KnoxShellTable on(int leftIndex, int rightIndex) {
     final KnoxShellTable joinedTable = new KnoxShellTable();
     if (title != null) {
       joinedTable.title(title);
     }
+    joinedTable.id(id);
 
     joinedTable.headers.addAll(new ArrayList<String>(left.headers));
     for (List<Comparable<? extends Object>> row : left.rows) {

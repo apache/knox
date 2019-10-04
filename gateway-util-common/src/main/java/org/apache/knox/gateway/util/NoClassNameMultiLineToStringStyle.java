@@ -15,34 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.shell.table;
+package org.apache.knox.gateway.util;
 
-public class KnoxShellTableBuilder {
-  protected String title;
-  protected final long id;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
-  KnoxShellTableBuilder(long id) {
-    this.id = id;
-  }
+/**
+ * See https://github.com/apache/commons-lang/pull/308 (at the time of this
+ * class being written the PR is not merged)
+ */
+@SuppressWarnings("serial")
+public class NoClassNameMultiLineToStringStyle extends ToStringStyle {
 
-  public KnoxShellTableBuilder title(String title) {
-    this.title = title;
-    return this;
-  }
-
-  public CSVKnoxShellTableBuilder csv() {
-    return new CSVKnoxShellTableBuilder(id);
-  }
-
-  public JSONKnoxShellTableBuilder json() {
-    return new JSONKnoxShellTableBuilder(id);
-  }
-
-  public JoinKnoxShellTableBuilder join() {
-    return new JoinKnoxShellTableBuilder(id);
-  }
-
-  public JDBCKnoxShellTableBuilder jdbc() {
-    return new JDBCKnoxShellTableBuilder(id);
+  public NoClassNameMultiLineToStringStyle() {
+    super();
+    this.setUseClassName(false);
+    this.setUseIdentityHashCode(false);
+    this.setContentStart(StringUtils.EMPTY);
+    this.setFieldSeparator(System.lineSeparator());
+    this.setFieldSeparatorAtStart(false);
+    this.setContentEnd(System.lineSeparator());
   }
 }

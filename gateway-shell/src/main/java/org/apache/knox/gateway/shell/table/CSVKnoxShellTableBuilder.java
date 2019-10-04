@@ -28,6 +28,10 @@ public class CSVKnoxShellTableBuilder extends KnoxShellTableBuilder {
 
   private boolean withHeaders;
 
+  CSVKnoxShellTableBuilder(long id) {
+    super(id);
+  }
+
   public CSVKnoxShellTableBuilder withHeaders() {
     withHeaders = true;
     return this;
@@ -35,17 +39,15 @@ public class CSVKnoxShellTableBuilder extends KnoxShellTableBuilder {
 
   public KnoxShellTable url(String url) throws IOException {
     int rowIndex = 0;
-    URLConnection connection;
-    BufferedReader csvReader = null;
     KnoxShellTable table = null;
-    try {
-      URL urlToCsv = new URL(url);
-      connection = urlToCsv.openConnection();
-      csvReader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
+    URL urlToCsv = new URL(url);
+    URLConnection connection = urlToCsv.openConnection();
+    try (BufferedReader csvReader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));) {
       table = new KnoxShellTable();
       if (title != null) {
         table.title(title);
       }
+      table.id(id);
       String row = null;
       while ((row = csvReader.readLine()) != null) {
         boolean addingHeaders = (withHeaders && rowIndex == 0);
@@ -63,8 +65,6 @@ public class CSVKnoxShellTableBuilder extends KnoxShellTableBuilder {
         }
         rowIndex++;
       }
-    } finally {
-      csvReader.close();
     }
     return table;
   }
