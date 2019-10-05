@@ -20,6 +20,7 @@ package org.apache.knox.gateway.shell.table;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
@@ -42,7 +43,8 @@ public class CSVKnoxShellTableBuilder extends KnoxShellTableBuilder {
     KnoxShellTable table = null;
     URL urlToCsv = new URL(url);
     URLConnection connection = urlToCsv.openConnection();
-    try (BufferedReader csvReader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));) {
+    try (Reader urlConnectionStreamReader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8);
+        BufferedReader csvReader = new BufferedReader(urlConnectionStreamReader);) {
       table = new KnoxShellTable();
       if (title != null) {
         table.title(title);
