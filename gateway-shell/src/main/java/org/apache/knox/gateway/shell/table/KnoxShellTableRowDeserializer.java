@@ -110,23 +110,23 @@ public class KnoxShellTableRowDeserializer extends StdDeserializer<KnoxShellTabl
   // This may be done in a different way or using a library; I did not find any (I
   // did not do a deep search though)
   private Object cast(String valueAsString, Class<?> type) throws ParseException {
-    if (String.class.getCanonicalName().equals(type.getCanonicalName())) {
+    if (String.class == type) {
       return valueAsString;
-    } else if (Byte.class.getCanonicalName().equals(type.getCanonicalName())) {
+    } else if (Byte.class == type) {
       return Byte.valueOf(valueAsString);
-    } else if (Short.class.getCanonicalName().equals(type.getCanonicalName())) {
+    } else if (Short.class == type) {
       return Short.valueOf(valueAsString);
-    } else if (Integer.class.getCanonicalName().equals(type.getCanonicalName())) {
+    } else if (Integer.class == type) {
       return Integer.valueOf(valueAsString);
-    } else if (Long.class.getCanonicalName().equals(type.getCanonicalName())) {
+    } else if (Long.class == type) {
       return Long.valueOf(valueAsString);
-    } else if (Float.class.getCanonicalName().equals(type.getCanonicalName())) {
+    } else if (Float.class == type) {
       return Float.valueOf(valueAsString);
-    } else if (Double.class.getCanonicalName().equals(type.getCanonicalName())) {
+    } else if (Double.class == type) {
       return Double.valueOf(valueAsString);
-    } else if (Boolean.class.getCanonicalName().equals(type.getCanonicalName())) {
+    } else if (Boolean.class == type) {
       return Boolean.valueOf(valueAsString);
-    } else if (Date.class.getCanonicalName().equals(type.getCanonicalName())) {
+    } else if (Date.class == type) {
       return KnoxShellTableJSONSerializer.JSON_DATE_FORMAT.parse(valueAsString);
     }
 
