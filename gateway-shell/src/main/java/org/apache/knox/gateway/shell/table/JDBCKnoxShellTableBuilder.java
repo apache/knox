@@ -33,6 +33,10 @@ public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
   private Connection conn;
   private boolean tableManagedConnection = true;
 
+  JDBCKnoxShellTableBuilder(long id) {
+    super(id);
+  }
+
   @Override
   public JDBCKnoxShellTableBuilder title(String title) {
     this.title = title;
@@ -75,20 +79,9 @@ public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
     KnoxShellTable table = null;
     conn = conn == null ? DriverManager.getConnection(connectionUrl) : conn;
     if (conn != null) {
-      try (Statement statement = conn.createStatement(); ResultSet result = statement.executeQuery(sql);) {
+      try (Statement statement = conn.createStatement(); ResultSet resultSet = statement.executeQuery(sql);) {
         table = new KnoxShellTable();
-        final ResultSetMetaData metadata = result.getMetaData();
-        table.title(metadata.getTableName(1));
-        int colcount = metadata.getColumnCount();
-        for (int i = 1; i < colcount + 1; i++) {
-          table.header(metadata.getColumnName(i));
-        }
-        while (result.next()) {
-          table.row();
-          for (int i = 1; i < colcount + 1; i++) {
-            table.value(result.getObject(metadata.getColumnName(i), Comparable.class));
-          }
-        }
+        processResultSet(table, resultSet);
       } finally {
         if (conn != null && tableManagedConnection) {
           conn.close();
@@ -98,21 +91,27 @@ public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
     return table;
   }
 
-  public KnoxShellTable build(ResultSet resultSet) throws SQLException {
-    KnoxShellTable table = new KnoxShellTable();
-    ResultSetMetaData metadata = resultSet.getMetaData();
+  // added this as a private method so that KnoxShellTableHistoryAspect will not
+  // intercept this call
+  private void processResultSet(KnoxShellTable table, ResultSet resultSet) throws SQLException {
+    final ResultSetMetaData metadata = resultSet.getMetaData();
+    final int colCount = metadata.getColumnCount();
     table.title(metadata.getTableName(1));
-    int colcount = metadata.getColumnCount();
-    for (int i = 1; i < colcount + 1; i++) {
+    table.id(id);
+    for (int i = 1; i < colCount + 1; i++) {
       table.header(metadata.getColumnName(i));
     }
     while (resultSet.next()) {
       table.row();
-      for (int i = 1; i < colcount + 1; i++) {
-        table.value(resultSet.getString(metadata.getColumnName(i)));
+      for (int i = 1; i < colCount + 1; i++) {
+        table.value(resultSet.getObject(metadata.getColumnName(i), Comparable.class));
       }
     }
-    return table;
   }
 
+  public KnoxShellTable resultSet(ResultSet resultSet) throws SQLException {
+    final KnoxShellTable table = new KnoxShellTable();
+    processResultSet(table, resultSet);
+    return table;
+  }
 }

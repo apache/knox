@@ -86,5 +86,12 @@
                 <include>org.apache.knox:hadoop-examples</include>
             </includes>
         </dependencySet>
+        <dependencySet>
+            <outputDirectory>lib</outputDirectory>
+            <outputFileNameMapping>aspectjweaver.jar</outputFileNameMapping>
+            <includes>
+                <include>org.aspectj:aspectjweaver</include>
+            </includes>
+        </dependencySet>
     </dependencySets>
 </assembly>

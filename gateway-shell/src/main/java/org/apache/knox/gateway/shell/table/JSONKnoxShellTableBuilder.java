@@ -30,7 +30,16 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 
 public class JSONKnoxShellTableBuilder extends KnoxShellTableBuilder {
 
+  JSONKnoxShellTableBuilder(long id) {
+    super(id);
+  }
+
   public KnoxShellTable fromJson(String json) throws IOException {
+    return toKnoxShellTable(json);
+  }
+
+  // introduced a private method so that it can be invoked from both public ones and AspectJ will not intercept it
+  private KnoxShellTable toKnoxShellTable(String json) throws IOException {
     final ObjectMapper mapper = new ObjectMapper(new JsonFactory());
     final SimpleModule module = new SimpleModule();
     module.addDeserializer(KnoxShellTable.class, new KnoxShellTableRowDeserializer());
@@ -41,10 +50,11 @@ public class JSONKnoxShellTableBuilder extends KnoxShellTableBuilder {
     if (title != null) {
       table.title(title);
     }
+    table.id(id);
     return table;
   }
 
   public KnoxShellTable path(String path) throws IOException {
-    return fromJson(FileUtils.readFileToString(new File(path), StandardCharsets.UTF_8));
+    return toKnoxShellTable(FileUtils.readFileToString(new File(path), StandardCharsets.UTF_8));
   }
 }

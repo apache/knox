@@ -94,7 +94,7 @@ function main {
          ;;
       *)
          buildAppJavaOpts
-         $JAVA "${APP_JAVA_OPTS[@]}" -jar "$APP_JAR" "$@" || exit 1
+         $JAVA "${APP_JAVA_OPTS[@]}" -javaagent:"$APP_BIN_DIR"/../lib/aspectjweaver.jar -jar "$APP_JAR" "$@" || exit 1
          ;;
    esac
    
