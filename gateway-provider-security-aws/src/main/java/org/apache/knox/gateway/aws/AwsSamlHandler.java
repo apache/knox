@@ -21,8 +21,6 @@ import javax.servlet.FilterConfig;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import lombok.AllArgsConstructor;
-import lombok.NonNull;
 import org.apache.knox.gateway.aws.model.AwsSamlCredentials;
 import org.apache.knox.gateway.aws.utils.SamlUtils;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -30,23 +28,24 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 /**
  * Interceptor for AWS federation using SAML.
  */
-@AllArgsConstructor
 public class AwsSamlHandler {
 
   public static final String AWS_SAML_FEDERATION_ENABLED = "saml.aws.federation.enabled";
 
   private static AwsMessages log = MessagesFactory.get(AwsMessages.class);
 
-  @NonNull
   private FilterConfig filterConfig;
 
-  @NonNull
   private AwsSamlInvoker awsSamlInvoker;
 
   public AwsSamlHandler(FilterConfig filterConfig) {
     this(filterConfig, AwsSamlInvokerFactory.getAwsSamlInvoker(filterConfig));
   }
 
+  public AwsSamlHandler(FilterConfig filterConfig, AwsSamlInvoker awsSamlInvoker) {
+    this.filterConfig = filterConfig;
+    this.awsSamlInvoker = awsSamlInvoker;
+  }
   /**
    * Processes the {@code request} and adds {@link Cookie} containing AWS credentials to {@code
    * response}.
@@ -59,8 +58,7 @@ public class AwsSamlHandler {
    * @param domain the domain for server
    * @throws AwsSamlException if processing the {@code request} is not successful
    */
-  public void processSamlResponse(@NonNull HttpServletRequest request,
-      @NonNull HttpServletResponse response, String domain)
+  public void processSamlResponse(HttpServletRequest request, HttpServletResponse response, String domain)
       throws AwsSamlException {
     String samlResponse = request.getParameter(SamlUtils.SAML_RESPONSE);
     Boolean awsFederationEnabled = Boolean.valueOf(filterConfig.getInitParameter

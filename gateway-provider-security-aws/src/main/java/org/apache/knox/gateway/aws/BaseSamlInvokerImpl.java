@@ -18,32 +18,28 @@
 package org.apache.knox.gateway.aws;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import javax.servlet.FilterConfig;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.knox.gateway.aws.model.AwsSamlCredentials;
 import org.apache.knox.gateway.aws.utils.CookieUtils;
 
-@Slf4j
 public class BaseSamlInvokerImpl {
 
   private static final String ROOT_PATH = "/";
 
-  protected void addAwsCookie(
-      @NonNull AwsSamlCredentials awsSamlCredentials,
-      @NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
+  protected void addAwsCookie(AwsSamlCredentials awsSamlCredentials,
+      HttpServletRequest request, HttpServletResponse response,
       FilterConfig filterConfig, String domain)
       throws AwsSamlException {
     try {
       int maxAge = CookieUtils.getCookieAgeMatchingAwsCredentials(awsSamlCredentials);
-      log.debug("AWS Cookie with domain " + domain + " and age " + maxAge);
       Cookie awsCookie = CookieUtils
-          .createCookie(AwsConstants.AWS_COOKIE_NAME, Base64.encodeBase64String(
-              awsSamlCredentials.toString().getBytes("UTF-8")), domain, ROOT_PATH, maxAge,
+          .createCookie(AwsConstants.AWS_COOKIE_NAME, Base64.getEncoder().encodeToString(
+              awsSamlCredentials.toString().getBytes(StandardCharsets.UTF_8.name())), domain, ROOT_PATH, maxAge,
               true, true);
       response.addCookie(awsCookie);
     } catch (UnsupportedEncodingException e) {

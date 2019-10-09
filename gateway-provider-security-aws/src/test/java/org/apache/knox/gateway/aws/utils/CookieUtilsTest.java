@@ -79,8 +79,9 @@ public class CookieUtilsTest {
 
   @Test
   public void getCookieAgeMatchingAwsCredentials() {
-    AwsSamlCredentials awsSamlCredentials = AwsSamlCredentials.builder()
-        .expiration(new Date().getTime() + TEST_COOKIE_MAX_AGE).build();
+    AwsSamlCredentials awsSamlCredentials = new AwsSamlCredentials(null, null,
+            null,
+        new Date().getTime() + TEST_COOKIE_MAX_AGE, null);
     assertThat((double)CookieUtils.getCookieAgeMatchingAwsCredentials(awsSamlCredentials),
         closeTo(TEST_COOKIE_MAX_AGE/1000, 10));
   }

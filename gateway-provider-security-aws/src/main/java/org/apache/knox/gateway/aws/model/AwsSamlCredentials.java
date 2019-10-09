@@ -19,18 +19,10 @@ package org.apache.knox.gateway.aws.model;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 /**
  * Models credentials obtained from AWS using SAML Response.
  */
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class AwsSamlCredentials  {
 
   private static final ObjectMapper mapper = new ObjectMapper();
@@ -43,6 +35,59 @@ public class AwsSamlCredentials  {
   String awsSecretKey;
   String sessionToken;
   long expiration;
+
+  public AwsSamlCredentials(String awsAccessKeyId, String awsSecretKey, String sessionToken,
+                            long expiration, String username) {
+    this.username = username;
+    this.awsAccessKeyId = awsAccessKeyId;
+    this.awsSecretKey = awsSecretKey;
+    this.sessionToken = sessionToken;
+    this.expiration = expiration;
+  }
+
+  public static ObjectMapper getMapper() {
+    return mapper;
+  }
+
+  public String getUsername() {
+    return username;
+  }
+
+  public void setUsername(String username) {
+    this.username = username;
+  }
+
+  public String getAwsAccessKeyId() {
+    return awsAccessKeyId;
+  }
+
+  public void setAwsAccessKeyId(String awsAccessKeyId) {
+    this.awsAccessKeyId = awsAccessKeyId;
+  }
+
+  public String getAwsSecretKey() {
+    return awsSecretKey;
+  }
+
+  public void setAwsSecretKey(String awsSecretKey) {
+    this.awsSecretKey = awsSecretKey;
+  }
+
+  public String getSessionToken() {
+    return sessionToken;
+  }
+
+  public void setSessionToken(String sessionToken) {
+    this.sessionToken = sessionToken;
+  }
+
+  public long getExpiration() {
+    return expiration;
+  }
+
+  public void setExpiration(long expiration) {
+    this.expiration = expiration;
+  }
 
   @Override
   public String toString() {

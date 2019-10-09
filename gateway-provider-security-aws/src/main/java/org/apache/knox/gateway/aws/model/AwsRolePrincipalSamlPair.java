@@ -18,9 +18,6 @@
 package org.apache.knox.gateway.aws.model;
 
 import java.util.regex.Pattern;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NonNull;
 
 /**
  * Representation of AWS Role, Principal pairs in SAML attribute.
@@ -28,8 +25,6 @@ import lombok.NonNull;
  * Valid AWS Role assertion contain a Role ARN and a Principal ARN. There is a comma between the
  * two.
  */
-@Data
-@AllArgsConstructor
 public class AwsRolePrincipalSamlPair {
 
   public static final String PAIR_SPLITTER = ",";
@@ -42,7 +37,7 @@ public class AwsRolePrincipalSamlPair {
   private String principalArn;
 
 
-  public AwsRolePrincipalSamlPair(@NonNull String samlAttribute) {
+  public AwsRolePrincipalSamlPair(String samlAttribute) {
     String[] splits = samlAttribute.split(PAIR_SPLITTER);
     if (splits.length == PARTS_AFTER_SPLIT && ROLE_REGEX.matcher(splits[0]).matches()
         && PRINCIPAL_REGEX.matcher(splits[1]).matches()) { // Ignore incorrect mappings
@@ -52,6 +47,19 @@ public class AwsRolePrincipalSamlPair {
       throw new IllegalArgumentException(
           "AWS SAML Role Attribute Value is incorrect " + samlAttribute);
     }
+  }
+
+  public AwsRolePrincipalSamlPair(String roleArn, String principalArn) {
+    this.roleArn = roleArn;
+    this.principalArn = principalArn;
+  }
+
+  public String getRoleArn() {
+    return roleArn;
+  }
+
+  public String getPrincipalArn() {
+    return principalArn;
   }
 
   public String getRoleName() {

@@ -211,19 +211,16 @@
         <libpam4j.version>1.11</libpam4j.version>
         <log4j.version>1.2.17</log4j.version>
         <log4j2.version>2.12.1</log4j2.version>
-        <lombok-version>1.18.4</lombok-version>
-        <log4j2.version>2.12.1</log4j2.version>
         <maven-checkstyle-plugin.version>3.1.0</maven-checkstyle-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
         <maven-enforcer-plugin.version>3.0.0-M2</maven-enforcer-plugin.version>
         <maven-pmd-plugin.version>3.12.0</maven-pmd-plugin.version>
         <metrics.version>4.1.0</metrics.version>
-        <mockito.version>1.10.19</mockito.version>
         <mina.version>2.0.20</mina.version>
         <nimbus-jose-jwt.version>7.8</nimbus-jose-jwt.version>
         <okhttp.version>2.7.5</okhttp.version>
-        <opensaml-version>3.3.0</opensaml-version>
+        <opensaml.version>3.3.0</opensaml.version>
         <pac4j.version>3.8.2</pac4j.version>
         <protobuf.version>3.10.0</protobuf.version>
         <rest-assured.version>4.1.1</rest-assured.version>
@@ -1681,26 +1678,19 @@
             <dependency>
                 <groupId>org.opensaml</groupId>
                 <artifactId>opensaml-core</artifactId>
-                <version>${opensaml-version}</version>
+                <version>${opensaml.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.opensaml</groupId>
                 <artifactId>opensaml-saml-api</artifactId>
-                <version>${opensaml-version}</version>
+                <version>${opensaml.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.opensaml</groupId>
                 <artifactId>opensaml-saml-impl</artifactId>
-                <version>${opensaml-version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.projectlombok</groupId>
-                <artifactId>lombok</artifactId>
-                <scope>provided</scope>
-                <version>${lombok-version}</version>
+                <version>${opensaml.version}</version>
             </dependency>
 
             <dependency>
@@ -2095,12 +2085,6 @@
                 <artifactId>easymock</artifactId>
                 <version>${easymock.version}</version>
                 <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.mockito</groupId>
-                <artifactId>mockito-core</artifactId>
-                <version>${mockito.version}</version>
             </dependency>
 
             <dependency>

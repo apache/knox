@@ -26,20 +26,22 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.knox.gateway.aws.model.AwsRolePrincipalSamlPair;
 import org.apache.knox.gateway.aws.model.AwsSamlCredentials;
 import org.apache.knox.gateway.aws.utils.SamlUtils;
 
-@Slf4j
 public class AwsSimpleTokenServiceSamlImpl extends BaseSamlInvokerImpl implements AwsSamlInvoker {
 
   private AWSSecurityTokenServiceClient stsClient = new AWSSecurityTokenServiceClient();
 
-  @NonNull
   private FilterConfig filterConfig;
 
+  public AwsSimpleTokenServiceSamlImpl() {
+  }
+
+  public AwsSimpleTokenServiceSamlImpl(AWSSecurityTokenServiceClient stsClient) {
+    this.stsClient = stsClient;
+  }
 
   @Override
   public void init(FilterConfig filterConfig) {
@@ -62,13 +64,12 @@ public class AwsSimpleTokenServiceSamlImpl extends BaseSamlInvokerImpl implement
           .withRoleArn(roleArnPrincipalPairs.get(0).getRoleArn())
           .withSAMLAssertion(samlResponse);
       AssumeRoleWithSAMLResult assumeRoleWithSAMLResult = stsClient.assumeRoleWithSAML(request);
-      return AwsSamlCredentials.builder()
-          .awsAccessKeyId(assumeRoleWithSAMLResult.getCredentials().getAccessKeyId())
-          .awsSecretKey(assumeRoleWithSAMLResult.getCredentials().getSecretAccessKey())
-          .sessionToken(assumeRoleWithSAMLResult.getCredentials().getSessionToken())
-          .expiration(assumeRoleWithSAMLResult.getCredentials().getExpiration().getTime())
-          .username(assumeRoleWithSAMLResult.getSubject())
-          .build();
+      return new AwsSamlCredentials(
+          assumeRoleWithSAMLResult.getCredentials().getAccessKeyId(),
+          assumeRoleWithSAMLResult.getCredentials().getSecretAccessKey(),
+          assumeRoleWithSAMLResult.getCredentials().getSessionToken(),
+          assumeRoleWithSAMLResult.getCredentials().getExpiration().getTime(),
+          assumeRoleWithSAMLResult.getSubject());
     } catch (ServletException | AmazonClientException e) {
       throw new AwsSamlException("Could not fetch AWS credentials using STS service", e);
     }

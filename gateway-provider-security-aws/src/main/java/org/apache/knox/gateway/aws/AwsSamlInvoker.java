@@ -30,7 +30,7 @@ public interface AwsSamlInvoker {
   /**
    * Initializes the implementation.
    *
-   * @param filterConfig the config used internally by {@link org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter}
+   * @param filterConfig the config used internally by Pac4j filter
    */
   void init(FilterConfig filterConfig);
 

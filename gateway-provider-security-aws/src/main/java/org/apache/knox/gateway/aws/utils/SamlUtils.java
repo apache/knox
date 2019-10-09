@@ -30,8 +30,6 @@ import javax.servlet.ServletException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.knox.gateway.aws.AwsConstants;
 import org.apache.knox.gateway.aws.model.AwsRolePrincipalSamlPair;
@@ -55,7 +53,6 @@ import org.xml.sax.SAXException;
 /**
  * Utility methods for SAML.
  */
-@Slf4j
 public class SamlUtils {
 
   public static final String SAML_RESPONSE = "SAMLResponse";
@@ -90,12 +87,11 @@ public class SamlUtils {
    * values found for the attribute
    * @throws ServletException if the parsing fails for the {@code samlResponse}
    */
-  public static Map<String, List<Object>> parseAttributes(@NonNull String samlResponse,
+  public static Map<String, List<Object>> parseAttributes(String samlResponse,
       Set<String> attributes) throws ServletException {
     Map<String, List<Object>> parsedResult = new HashMap<>();
     // TODO - Using a library for managing collections
     if (attributes == null || attributes.isEmpty()) {
-      log.debug("No attributes to fetch in the SAML response - returning.");
       return parsedResult;
     }
     byte[] samlAssertionDecoded = new byte[0];
@@ -159,7 +155,6 @@ public class SamlUtils {
       }  else if (val instanceof XSAny) {
         rolePrincipalPair = ((XSAny) val).getTextContent();
       } else {
-        log.info("Unrecognized type found in AWS Role values");
         // This will fail as we can't construct AwsRolePrincipalSamlPair with empty string
       }
 

@@ -18,12 +18,10 @@
 package org.apache.knox.gateway.aws;
 
 import javax.servlet.FilterConfig;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Factory to get implementation for {@link AwsSamlInvoker}
  */
-@Slf4j
 public class AwsSamlInvokerFactory {
 
   public static final String AWS_SAML_FEDERATION_PROVIDER = "saml.aws.federation.provider";
@@ -35,7 +33,6 @@ public class AwsSamlInvokerFactory {
     if (provider != null) {
         return new AwsSimpleTokenServiceSamlImpl();
     }
-    log.debug("Defaulting to STS as AWS Saml Invoker");
     return new AwsSimpleTokenServiceSamlImpl();
   }
 }

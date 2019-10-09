@@ -21,7 +21,6 @@ import java.util.Date;
 import java.util.Optional;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import lombok.NonNull;
 import org.apache.knox.gateway.aws.model.AwsSamlCredentials;
 
 /**
@@ -36,7 +35,7 @@ public class CookieUtils {
    * @param name the name of cookie to search for
    * @return cookie value if found, else {@link Optional#EMPTY}
    */
-  public static Optional<String> getCookieValue(@NonNull HttpServletRequest request, String name) {
+  public static Optional<String> getCookieValue(HttpServletRequest request, String name) {
     Cookie[] cookies = request.getCookies();
     Optional<String> value = Optional.empty();
     if (cookies != null) {
@@ -60,9 +59,9 @@ public class CookieUtils {
    * @param isSecure determines if cookie is sent over secure channels
    * @return a new {@code Cookie} with the settings specified
    */
-  public static Cookie createCookie(@NonNull String name, @NonNull String value,
-      @NonNull String domain,
-      @NonNull String path, int maxAge, boolean isHttp, boolean isSecure) {
+  public static Cookie createCookie(String name, String value,
+      String domain,
+      String path, int maxAge, boolean isHttp, boolean isSecure) {
     Cookie c = new Cookie(name, value);
     c.setDomain(domain);
     c.setMaxAge(maxAge);
@@ -78,7 +77,7 @@ public class CookieUtils {
    * @param credentials  the credentials obtained from AWS using SAML Response
    * @return the age in seconds of cookie
    */
-  public static int getCookieAgeMatchingAwsCredentials(@NonNull AwsSamlCredentials credentials) {
+  public static int getCookieAgeMatchingAwsCredentials(AwsSamlCredentials credentials) {
     long diffInMs = Math.abs(credentials.getExpiration() - new Date().getTime());
     return diffInMs > 0 ? (int) (diffInMs / 1000) : 0;
   }
