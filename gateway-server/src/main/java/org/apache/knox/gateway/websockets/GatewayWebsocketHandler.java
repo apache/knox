@@ -148,10 +148,11 @@ public class GatewayWebsocketHandler extends WebSocketHandler
    * This method looks at the context path and returns the backend websocket
    * url. If websocket url is found it is used as is, or we default to
    * ws://{host}:{port} which might or might not be right.
+   * @param path path to match requestURI against
+   * @param requestURI url to match
    * @return Websocket backend url
    */
   protected synchronized String getMatchedBackendURL(final String path, URI requestURI) {
-
     final ServiceRegistry serviceRegistryService = services
         .getService(ServiceType.SERVICE_REGISTRY_SERVICE);
 

@@ -150,8 +150,10 @@
         <apacheds-jdbm.version>2.0.0-M5</apacheds-jdbm.version>
         <apache-rat-plugin.version>0.13</apache-rat-plugin.version>
         <ant-nodeps.version>1.8.1</ant-nodeps.version>
-        <asm.version>7.1</asm.version>
+        <asm.version>7.2</asm.version>
         <aws-sdk.version>1.11.562</aws-sdk.version>
+        <asm.version>7.2</asm.version>
+        <aspectj.version>1.9.4</aspectj.version>
         <bcprov-jdk15on.version>1.63</bcprov-jdk15on.version>
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
         <cglib.version>3.3.0</cglib.version>
@@ -187,7 +189,7 @@
         <httpclient.version>4.5.6</httpclient.version>
         <httpcore.version>4.4.11</httpcore.version>
         <j2e-pac4j.version>4.1.0</j2e-pac4j.version>
-        <jackson.version>2.9.10</jackson.version>
+        <jackson.version>2.10.0</jackson.version>
         <jacoco-maven-plugin.version>0.8.4</jacoco-maven-plugin.version>
         <jansi.version>1.18</jansi.version>
         <javax.activation.version>1.2.0</javax.activation.version>
@@ -2012,6 +2014,16 @@
                 <artifactId>spring-web</artifactId>
                 <version>${spring-core.version}</version>
             </dependency>
+			<dependency>
+				<groupId>org.aspectj</groupId>
+				<artifactId>aspectjrt</artifactId>
+				<version>${aspectj.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.aspectj</groupId>
+				<artifactId>aspectjweaver</artifactId>
+				<version>${aspectj.version}</version>
+			</dependency>
 
             <dependency>
                 <groupId>de.thetaphi</groupId>

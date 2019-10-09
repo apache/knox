@@ -20,10 +20,12 @@ package org.apache.knox.gateway.shell.table;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.SortOrder;
 
-import org.apache.knox.gateway.util.JsonUtils;
+import com.fasterxml.jackson.annotation.JsonFilter;
 
 
 /**
@@ -31,14 +33,22 @@ import org.apache.knox.gateway.util.JsonUtils;
  * toString(). Headers are optional but when used must have the same count as
  * columns within the rows.
  */
+@JsonFilter("knoxShellTableFilter")
 public class KnoxShellTable {
+  private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
   List<String> headers = new ArrayList<String>();
   List<List<Comparable<? extends Object>>> rows = new ArrayList<List<Comparable<? extends Object>>>();
   String title;
+  long id;
 
   public KnoxShellTable title(String title) {
     this.title = title;
+    return this;
+  }
+
+  public KnoxShellTable id(long id) {
+    this.id = id;
     return this;
   }
 
@@ -98,12 +108,55 @@ public class KnoxShellTable {
     return title;
   }
 
+  public long getId() {
+    return id;
+  }
+
   public static KnoxShellTableBuilder builder() {
-    return new KnoxShellTableBuilder();
+    return new KnoxShellTableBuilder(getUniqueTableId());
+  }
+
+  static long getUniqueTableId() {
+    return System.currentTimeMillis() + ThreadLocalRandom.current().nextLong(1000);
+  }
+
+  public List<KnoxShellTableCall> getCallHistoryList() {
+    return KnoxShellTableCallHistory.getInstance().getCallHistory(id);
+  }
+
+  public String getCallHistory() {
+    final StringBuilder callHistoryStringBuilder = new StringBuilder("Call history (id=" + id + ")" + LINE_SEPARATOR + LINE_SEPARATOR);
+    final AtomicInteger index = new AtomicInteger(1);
+    getCallHistoryList().forEach(callHistory -> {
+      callHistoryStringBuilder.append("Step ").append(index.getAndIncrement()).append(":" + LINE_SEPARATOR).append(callHistory).append(LINE_SEPARATOR);
+    });
+    return callHistoryStringBuilder.toString();
+  }
+
+  public String rollback() {
+    final KnoxShellTable rolledBack = KnoxShellTableCallHistory.getInstance().rollback(id);
+    this.id = rolledBack.id;
+    this.title = rolledBack.title;
+    this.headers = rolledBack.headers;
+    this.rows = rolledBack.rows;
+    return "Successfully rolled back";
+  }
+
+  public KnoxShellTable replayAll() {
+    final int step = KnoxShellTableCallHistory.getInstance().getCallHistory(id).size();
+    return replay(step);
+  }
+
+  public KnoxShellTable replay(int step) {
+    return replay(id, step);
+  }
+
+  public static KnoxShellTable replay(long id, int step) {
+    return KnoxShellTableCallHistory.getInstance().replay(id, step);
   }
 
   public KnoxShellTableFilter filter() {
-    return new KnoxShellTableFilter().table(this);
+    return new KnoxShellTableFilter(this);
   }
 
   public KnoxShellTable select(String cols) {
@@ -171,7 +224,11 @@ public class KnoxShellTable {
   }
 
   public String toJSON() {
-    return JsonUtils.renderAsJsonString(this);
+    return toJSON(true);
+  }
+
+  public String toJSON(boolean data) {
+    return KnoxShellTableJSONSerializer.serializeKnoxShellTable(this, data);
   }
 
   public String toCSV() {

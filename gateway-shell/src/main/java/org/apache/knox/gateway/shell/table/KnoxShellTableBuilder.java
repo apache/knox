@@ -17,9 +17,13 @@
  */
 package org.apache.knox.gateway.shell.table;
 
-
 public class KnoxShellTableBuilder {
   protected String title;
+  protected final long id;
+
+  KnoxShellTableBuilder(long id) {
+    this.id = id;
+  }
 
   public KnoxShellTableBuilder title(String title) {
     this.title = title;
@@ -27,18 +31,18 @@ public class KnoxShellTableBuilder {
   }
 
   public CSVKnoxShellTableBuilder csv() {
-    return new CSVKnoxShellTableBuilder();
+    return new CSVKnoxShellTableBuilder(id);
   }
 
   public JSONKnoxShellTableBuilder json() {
-    return new JSONKnoxShellTableBuilder();
+    return new JSONKnoxShellTableBuilder(id);
   }
 
   public JoinKnoxShellTableBuilder join() {
-    return new JoinKnoxShellTableBuilder();
+    return new JoinKnoxShellTableBuilder(id);
   }
 
   public JDBCKnoxShellTableBuilder jdbc() {
-    return new JDBCKnoxShellTableBuilder();
+    return new JDBCKnoxShellTableBuilder(id);
   }
 }

@@ -52,9 +52,12 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class DefaultDispatch extends AbstractGatewayDispatch {
 
@@ -66,7 +69,9 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
   protected static final Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
       AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
 
-  private Set<String> outboundResponseExcludeHeaders = new HashSet<>(Arrays.asList(SET_COOKIE, WWW_AUTHENTICATE));
+  protected static final String EXCLUDE_ALL = "*";
+  private Set<String> outboundResponseExcludeHeaders = new HashSet<>(Arrays.asList(WWW_AUTHENTICATE));
+  private Set<String> outboundResponseExcludedSetCookieHeaderDirectives = new HashSet<>(Arrays.asList(EXCLUDE_ALL));
 
   //Buffer size in bytes
   private int replayBufferSize = -1;
@@ -310,23 +315,43 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
   }
 
   public void copyResponseHeaderFields(HttpServletResponse outboundResponse, HttpResponse inboundResponse) {
-    Header[] headers = inboundResponse.getAllHeaders();
-    Set<String> excludeHeaders = getOutboundResponseExcludeHeaders();
-    boolean hasExcludeHeaders = false;
-    if ((excludeHeaders != null) && !(excludeHeaders.isEmpty())) {
-      hasExcludeHeaders = true;
-    }
-    for ( Header header : headers ) {
-      String name = header.getName();
-      if (hasExcludeHeaders && excludeHeaders.contains(name.toUpperCase(Locale.ROOT))) {
+    final Map<String, Set<String>> excludedHeaderDirectives = getOutboundResponseExcludeHeaders().stream().collect(Collectors.toMap(k -> k, v -> new HashSet<>(Arrays.asList(EXCLUDE_ALL))));
+    excludedHeaderDirectives.put(SET_COOKIE, getOutboundResponseExcludedSetCookieHeaderDirectives());
+
+    for ( Header header : inboundResponse.getAllHeaders() ) {
+      final String responseHeaderValue = calculateResponseHeaderValue(header, excludedHeaderDirectives);
+      if (responseHeaderValue.isEmpty()) {
         continue;
       }
-      String value = header.getValue();
-      outboundResponse.addHeader(name, value);
+      outboundResponse.addHeader(header.getName(), responseHeaderValue);
     }
   }
 
+  private String calculateResponseHeaderValue(Header headerToCheck, Map<String, Set<String>> excludedHeaderDirectives) {
+    final String headerNameToCheck = headerToCheck.getName();
+    if (excludedHeaderDirectives != null && excludedHeaderDirectives.containsKey(headerNameToCheck.toUpperCase(Locale.ROOT))) {
+      final Set<String> excludedHeaderValues = excludedHeaderDirectives.get(headerNameToCheck.toUpperCase(Locale.ROOT));
+      if (!excludedHeaderValues.isEmpty()) {
+        if (excludedHeaderValues.stream().filter(e -> e.equals(EXCLUDE_ALL)).findAny().isPresent()) {
+          return ""; // we should exclude all -> there should not be any value added with this header
+        } else {
+          final String separator = SET_COOKIE.equalsIgnoreCase(headerNameToCheck) ? "; " : " ";
+          Set<String> headerValuesToCheck = new HashSet<>(Arrays.asList(headerToCheck.getValue().trim().split("\\s+")));
+          headerValuesToCheck = headerValuesToCheck.stream().map(h -> h.replaceAll(separator.trim(), "")).collect(Collectors.toSet());
+          headerValuesToCheck.removeAll(excludedHeaderValues);
+          return headerValuesToCheck.isEmpty() ? "" : headerValuesToCheck.stream().collect(Collectors.joining(separator));
+        }
+      }
+    }
+
+    return headerToCheck.getValue();
+  }
+
   public Set<String> getOutboundResponseExcludeHeaders() {
-    return outboundResponseExcludeHeaders;
+    return outboundResponseExcludeHeaders == null ? Collections.emptySet() : outboundResponseExcludeHeaders;
+  }
+
+  public Set<String> getOutboundResponseExcludedSetCookieHeaderDirectives() {
+    return outboundResponseExcludedSetCookieHeaderDirectives == null ? Collections.emptySet() : outboundResponseExcludedSetCookieHeaderDirectives;
   }
 }
