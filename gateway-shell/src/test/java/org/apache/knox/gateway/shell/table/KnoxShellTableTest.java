@@ -360,6 +360,147 @@ public class KnoxShellTableTest {
   }
 
   @Test
+  public void testMean() throws Exception {
+
+      Byte byte10 = 10;
+      Byte byte20 = 20;
+      Byte byte30 = 30;
+
+      Short short10 = 10;
+      Short short20 = 20;
+      Short short30 = 30;
+
+      Long long10 = (long) 100000000;
+      Long long20 = (long) 200000000;
+      Long long30 = (long) 300000000;
+
+      KnoxShellTable TABLE = new KnoxShellTable();
+      TABLE.header("Column Integer").header("Column Double").header("Column Float").header("Column Byte").header("Column Short").header("Column Long");
+      TABLE.row().value(10).value(20d).value(20.9999).value(byte10).value(short10).value(long10);
+      TABLE.row().value(30).value(40d).value(40.9999).value(byte20).value(short20).value(long20);
+      TABLE.row().value(27).value(60d).value(60.9999).value(byte30).value(short30).value(long30);
+
+      assertEquals(22.3, TABLE.mean("Column Integer"), 0.1);
+      assertEquals(40, TABLE.mean("Column Double"), 0.1);
+      assertEquals(22.3, TABLE.mean(0), 0.1);
+      assertEquals(40, TABLE.mean(1), 0.1);
+      assertEquals(40.9999, TABLE.mean("Column Float"), 0.1);
+      assertEquals(40.9999, TABLE.mean(2), 0.1);
+      assertEquals(20, TABLE.mean("Column Byte"), 0.1);
+      assertEquals(20, TABLE.mean("Column Short"), 0.1);
+      assertEquals(2.0E8, TABLE.mean("Column Long"), 0.1);
+
+    }
+
+
+  @Test
+  public void testMedian() throws Exception {
+
+      KnoxShellTable TABLE = new KnoxShellTable();
+      TABLE.header("Column Integer").header("Column Double").header("Column Float");
+      TABLE.row().value(10).value(20d).value(40.9999);
+      assertEquals(10, TABLE.median("Column Integer"), 0.1);
+      assertEquals(10, TABLE.median(0), 0.1);
+      assertEquals(20, TABLE.median("Column Double"), 0.1);
+      assertEquals(20, TABLE.median(1), 0.1);
+      assertEquals(40.9999, TABLE.mean("Column Float"), 0.1);
+      assertEquals(40.9999, TABLE.mean(2), 0.1);
+
+      KnoxShellTable TABLE2 = new KnoxShellTable();
+      TABLE2.header("Column Integer").header("Column Double").header("Column Float");
+      TABLE2.row().value(10).value(20d).value(20.9999);
+      TABLE2.row().value(30).value(40d).value(40.9999);
+      TABLE2.row().value(50).value(41d).value(60.9999);
+      assertEquals(30, TABLE2.median("Column Integer"), 0.1);
+      assertEquals(30, TABLE2.median(0), 0.1);
+      assertEquals(40.9999, TABLE2.mean("Column Float"), 0.1);
+      assertEquals(40.9999, TABLE2.mean(2), 0.1);
+
+      KnoxShellTable TABLE3 = new KnoxShellTable();
+      TABLE3.header("Column Integer").header("Column Double").header("Column Float");
+      TABLE3.row().value(10).value(20d).value(0.0000);
+      TABLE3.row().value(30).value(40d).value(30.0000);
+      TABLE3.row().value(31).value(41d).value(31.0000);
+      TABLE3.row().value(50).value(60d).value(70.0000);
+      assertEquals(30.5, TABLE3.median("Column Integer"), 0.1);
+      assertEquals(30.5, TABLE3.median(0), 0.01);
+      assertEquals(40.5, TABLE3.median("Column Double"), 0.01);
+      assertEquals(40.5, TABLE3.median(1), 0.01);
+      assertEquals(30.5000, TABLE3.median("Column Float"), 0.1);
+      assertEquals(30.5000, TABLE3.median(2), 0.1);
+}
+
+  @Test
+  public void testMode() throws Exception {
+
+      KnoxShellTable TABLE = new KnoxShellTable();
+      TABLE.header("Column Integer").header("Column Double").header("Column Float");
+      TABLE.row().value(10).value(20d).value(40.9999);
+      assertEquals(10, TABLE.mode("Column Integer"), 0.1);
+      assertEquals(10, TABLE.mode(0), 0.1);
+      assertEquals(40.9999, TABLE.mean("Column Float"), 0.1);
+      assertEquals(40.9999, TABLE.mean(2), 0.1);
+
+
+      KnoxShellTable TABLE2 = new KnoxShellTable();
+      TABLE2.header("Column Integer").header("Column Double").header("Column Float");
+      TABLE2.row().value(10).value(20d).value(20.9999);
+      TABLE2.row().value(30).value(40d).value(20.9999);
+      TABLE2.row().value(30).value(40d).value(30.9999);
+      assertEquals(30, TABLE2.median("Column Integer"), 0.1);
+      assertEquals(30, TABLE2.median(0), 0.1);
+      assertEquals(40, TABLE2.median("Column Double"), 0.1);
+      assertEquals(40, TABLE2.median(1), 0.1);
+      assertEquals(20.9999, TABLE2.median("Column Float"), 0.1);
+      assertEquals(20.9999, TABLE2.median(2), 0.1);
+  }
+
+  @Test
+  public void testSum() throws Exception {
+
+      KnoxShellTable TABLE = new KnoxShellTable();
+      TABLE.header("Column Integer").header("Column Double").header("Column Float");
+      TABLE.row().value(10).value(20d).value(20.5000);
+      TABLE.row().value(90).value(100d).value(20.0500);
+      assertEquals(100, TABLE.sum("Column Integer"), 0.1);
+      assertEquals(100, TABLE.sum(0), 0.1);
+      assertEquals(120, TABLE.sum("Column Double"), 0.1);
+      assertEquals(120, TABLE.sum(1), 0.1);
+      assertEquals(40.5500, TABLE.sum("Column Float"), 0.1);
+      assertEquals(40.5500, TABLE.sum(2), 0.1);
+  }
+
+  @Test
+  public void testMax() throws Exception {
+
+      KnoxShellTable TABLE = new KnoxShellTable();
+      TABLE.header("Column Integer").header("Column Double").header("Column Float");
+      TABLE.row().value(10).value(20d).value(30.9998);
+      TABLE.row().value(20).value(50d).value(30.9999);
+      assertEquals(20, TABLE.max("Column Integer"), 0.1);
+      assertEquals(20, TABLE.max(0), 0.1);
+      assertEquals(50, TABLE.max("Column Double"), 0.1);
+      assertEquals(50, TABLE.max(1), 0.1);
+      assertEquals(30.9999, TABLE.max("Column Float"), 0.1);
+      assertEquals(30.9999, TABLE.max(2), 0.1);
+  }
+
+  @Test
+  public void testMin() throws Exception {
+
+      KnoxShellTable TABLE = new KnoxShellTable();
+      TABLE.header("Column Integer").header("Column Double").header("Column Float");
+      TABLE.row().value(10).value(20d).value(20.9998);
+      TABLE.row().value(20).value(50d).value(20.9999);
+      assertEquals(10, TABLE.min("Column Integer"), 0.1);
+      assertEquals(10, TABLE.min(0), 0.1);
+      assertEquals(20, TABLE.min("Column Double"), 0.1);
+      assertEquals(20, TABLE.min(1), 0.1);
+      assertEquals(20.9998, TABLE.min("Column Float"), 0.1);
+      assertEquals(20.9998, TABLE.min(2), 0.1);
+  }
+
+  @Test
   public void shouldReturnDifferentCallHistoryForDifferentTables() throws Exception {
     final KnoxShellTable table1 = new KnoxShellTable();
     table1.id(1);
