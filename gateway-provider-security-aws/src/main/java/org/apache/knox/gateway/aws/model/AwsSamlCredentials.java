@@ -36,6 +36,9 @@ public class AwsSamlCredentials  {
   String sessionToken;
   long expiration;
 
+  public AwsSamlCredentials() {
+  }
+
   public AwsSamlCredentials(String awsAccessKeyId, String awsSecretKey, String sessionToken,
                             long expiration, String username) {
     this.username = username;
