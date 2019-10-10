@@ -359,6 +359,17 @@ public class KnoxShellTableTest {
     verify(connection, statement, resultSet, metadata);
   }
 
+  @Test (expected = IllegalArgumentException.class)
+  public void testConversion() throws IllegalArgumentException {
+      KnoxShellTable TABLE = new KnoxShellTable();
+      TABLE.header("Column Integer").header("Column String").header("Column Null");
+      TABLE.row().value(10).value("John").value(null);
+
+      System.out.println(TABLE.mean("Column String"));
+      System.out.println(TABLE.mean("Column Null"));
+
+  }
+
   @Test
   public void testMean() throws Exception {
 
@@ -389,9 +400,7 @@ public class KnoxShellTableTest {
       assertEquals(20, TABLE.mean("Column Byte"), 0.1);
       assertEquals(20, TABLE.mean("Column Short"), 0.1);
       assertEquals(2.0E8, TABLE.mean("Column Long"), 0.1);
-
-    }
-
+  }
 
   @Test
   public void testMedian() throws Exception {
@@ -428,7 +437,7 @@ public class KnoxShellTableTest {
       assertEquals(40.5, TABLE3.median(1), 0.01);
       assertEquals(30.5000, TABLE3.median("Column Float"), 0.1);
       assertEquals(30.5000, TABLE3.median(2), 0.1);
-}
+  }
 
   @Test
   public void testMode() throws Exception {

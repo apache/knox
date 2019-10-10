@@ -36,7 +36,7 @@ import org.apache.commons.math3.stat.StatUtils;
 @JsonFilter("knoxShellTableFilter")
 public class KnoxShellTable {
 
-    public enum Conversions {
+    private enum Conversions {
         DOUBLE,
         INTEGER,
         FLOAT,
@@ -96,9 +96,8 @@ public class KnoxShellTable {
     return col;
   }
 
-  public Conversions getConversion(Comparable<? extends Object> colIndex) {
+  private Conversions getConversion(Comparable<? extends Object> colIndex) {
       Conversions type = null;
-
       if (colIndex instanceof Double) {
         type = Conversions.DOUBLE;
       }
@@ -117,95 +116,151 @@ public class KnoxShellTable {
       else if (colIndex instanceof Long) {
         type = Conversions.LONG;
       }
-      return type;
-    }
-
-    public double[] toDoubleArray(String colName) throws IllegalArgumentException {
-      List<Comparable<? extends Object>> col = values(colName);
-      double[] colArray = new double[col.size()];
-      Conversions conversionMethod = null;
-      for (int i = 0; i < col.size(); i++) {
-        if (i == 0) {
-          conversionMethod = getConversion(col.get(i));
-        }
-
-        switch (conversionMethod) {
-          case DOUBLE:
-            colArray[i] = (double) ((Double) col.get(i));
-            break;
-
-          case INTEGER:
-            colArray[i] = (double) ((Integer) col.get(i)).intValue();
-            break;
-
-          case FLOAT:
-            colArray[i] = (double) ((Float) col.get(i)).floatValue();
-            break;
-
-          case BYTE:
-            colArray[i] = (double) ((Byte) col.get(i)).byteValue();
-            break;
-
-          case SHORT:
-            colArray[i] = (double) ((Short) col.get(i)).shortValue();
-            break;
-
-          case LONG:
-            colArray[i] = (double) ((Long) col.get(i)).longValue();
-            break;
-        }
+      else {
+          throw new IllegalArgumentException();
       }
-      return colArray;
-    }
+      return type;
+  }
 
-    public double mean(String colName) {
-      return StatUtils.mean(toDoubleArray(colName));
+  private double[] toDoubleArray(String colName) throws IllegalArgumentException {
+    List<Comparable<? extends Object>> col = values(colName);
+    double[] colArray = new double[col.size()];
+    Conversions conversionMethod = null;
+    for (int i = 0; i < col.size(); i++) {
+      if (i == 0) {
+        conversionMethod = getConversion(col.get(i));
+      }
+      switch (conversionMethod) {
+        case DOUBLE:
+          colArray[i] = (double) ((Double) col.get(i));
+          break;
+        case INTEGER:
+          colArray[i] = (double) ((Integer) col.get(i)).intValue();
+          break;
+        case FLOAT:
+          colArray[i] = (double) ((Float) col.get(i)).floatValue();
+          break;
+        case BYTE:
+          colArray[i] = (double) ((Byte) col.get(i)).byteValue();
+          break;
+        case SHORT:
+          colArray[i] = (double) ((Short) col.get(i)).shortValue();
+          break;
+        case LONG:
+          colArray[i] = (double) ((Long) col.get(i)).longValue();
+          break;
+      }
     }
+    return colArray;
+  }
 
-    public double mean(int colIndex) {
-      return mean(headers.get(colIndex));
-    }
+  /**
+   * Calculates the mean of specified column
+   * @param colName
+   * @return mean
+   */
+  public double mean(String colName) {
+    return StatUtils.mean(toDoubleArray(colName));
+  }
 
-    public double median(String colName) {
-        return StatUtils.percentile(toDoubleArray(colName), 50);
-    }
+  /**
+   * Calculates the mean of specified column
+   * @param colName
+   * @return mean
+   */
+  public double mean(int colIndex) {
+    return mean(headers.get(colIndex));
+  }
 
-    public double median(int colIndex) {
-      return median(headers.get(colIndex));
-    }
+  /**
+   * Calculates the median of specified column
+   * @param colName
+   * @return median
+   */
+  public double median(String colName) {
+    return StatUtils.percentile(toDoubleArray(colName), 50);
+  }
 
-    public double mode(String colName) {
-        return (double) StatUtils.mode(toDoubleArray(colName))[0];
-    }
+  /**
+   * Calculates the median of specified column
+   * @param colName
+   * @return median
+   */
+  public double median(int colIndex) {
+    return median(headers.get(colIndex));
+  }
 
-    public double mode(int colIndex) {
-      return mode(headers.get(colIndex));
-    }
+  /**
+   * Calculates the mode of specified column
+   * @param colName
+   * @return mode
+   */
+  public double mode(String colName) {
+    return (double) StatUtils.mode(toDoubleArray(colName))[0];
+  }
 
-    public double sum(String colName) {
-        return StatUtils.sum(toDoubleArray(colName));
-    }
+  /**
+   * Calculates the mode of specified column
+   * @param colName
+   * @return mode
+   */
+  public double mode(int colIndex) {
+    return mode(headers.get(colIndex));
+  }
 
-    public double sum(int colIndex) {
-      return sum(headers.get(colIndex));
-    }
+  /**
+   * Calculates the sum of specified column
+   * @param colName
+   * @return sum
+   */
+  public double sum(String colName) {
+    return StatUtils.sum(toDoubleArray(colName));
+  }
 
-    public double max(String colName) {
-        return StatUtils.max(toDoubleArray(colName));
-    }
+  /**
+   * Calculates the sum of specified column
+   * @param colName
+   * @return sum
+   */
+  public double sum(int colIndex) {
+    return sum(headers.get(colIndex));
+  }
 
-    public double max(int colIndex) {
-      return max(headers.get(colIndex));
-    }
+  /**
+   * Calculates the max of specified column
+   * @param colName
+   * @return max
+   */
+  public double max(String colName) {
+    return StatUtils.max(toDoubleArray(colName));
+  }
 
-    public double min(String colName) {
-        return StatUtils.min(toDoubleArray(colName));
-    }
+  /**
+   * Calculates the max of specified column
+   * @param colName
+   * @return max
+   */
+  public double max(int colIndex) {
+    return max(headers.get(colIndex));
+  }
 
-    public double min(int colIndex) {
-      return min(headers.get(colIndex));
-    }
+  /**
+   * Calculates the min of specified column
+   * @param colName
+   * @return min
+   */
+  public double min(String colName) {
+    return StatUtils.min(toDoubleArray(colName));
+  }
 
+  /**
+   * Calculates the min of specified column
+   * @param colName
+   * @return min
+   */
+  public double min(int colIndex) {
+    return min(headers.get(colIndex));
+  }
 
   public KnoxShellTable apply(KnoxShellTableCell<? extends Comparable<? extends Object>> cell) {
     if (!headers.isEmpty()) {
@@ -355,5 +410,4 @@ public class KnoxShellTable {
   public String toCSV() {
     return new KnoxShellTableRenderer(this).toCSV();
   }
-
 }
