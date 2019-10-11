@@ -151,7 +151,7 @@
         <ant-nodeps.version>1.8.1</ant-nodeps.version>
         <asm.version>7.2</asm.version>
         <aspectj.version>1.9.4</aspectj.version>
-        <bcprov-jdk15on.version>1.63</bcprov-jdk15on.version>
+        <bcprov-jdk15on.version>1.64</bcprov-jdk15on.version>
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
         <cglib.version>3.3.0</cglib.version>
         <checkstyle.version>8.24</checkstyle.version>
