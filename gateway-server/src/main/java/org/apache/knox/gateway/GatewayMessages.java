@@ -667,4 +667,7 @@ public interface GatewayMessages {
 
   @Message(level = MessageLevel.INFO, text = "Stopping service: {0}")
   void stoppingService(String serviceTypeName);
+
+  @Message(level = MessageLevel.INFO, text = "Redeploying topology {0} due to service definition change {1} / {2} / {3}")
+  void redeployingTopologyOnServiceDefinitionChange(String topologyName, String serviceName, String role, String version);
 }

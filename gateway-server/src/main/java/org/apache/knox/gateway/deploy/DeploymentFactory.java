@@ -703,8 +703,7 @@ public abstract class DeploymentFactory {
     String stacks = config.getGatewayServicesDir();
     log.usingServicesDirectory(stacks);
     File stacksDir = new File(stacks);
-    Set<ServiceDeploymentContributor> deploymentContributors = ServiceDefinitionsLoader
-        .loadServiceDefinitions(stacksDir);
+    Set<ServiceDeploymentContributor> deploymentContributors = ServiceDefinitionsLoader.loadServiceDefinitionDeploymentContributors(stacksDir);
     addServiceDeploymentContributors(deploymentContributors.iterator());
   }
 

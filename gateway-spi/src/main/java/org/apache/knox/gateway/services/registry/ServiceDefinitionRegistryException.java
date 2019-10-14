@@ -17,23 +17,15 @@
  */
 package org.apache.knox.gateway.services.registry;
 
-import java.util.Set;
+@SuppressWarnings("serial")
+public class ServiceDefinitionRegistryException extends Exception {
 
-import org.apache.knox.gateway.service.definition.ServiceDefinitionChangeListener;
-import org.apache.knox.gateway.service.definition.ServiceDefinitionPair;
+  public ServiceDefinitionRegistryException(String message) {
+    super(message);
+  }
 
-public interface ServiceDefinitionRegistry {
-
-  ServiceDefEntry getMatchingService(String urlPattern);
-
-  Set<ServiceDefinitionPair> getServiceDefinitions();
-
-  void saveServiceDefinition(ServiceDefinitionPair serviceDefinition) throws ServiceDefinitionRegistryException;
-
-  void saveOrUpdateServiceDefinition(ServiceDefinitionPair serviceDefinition) throws ServiceDefinitionRegistryException;
-
-  void deleteServiceDefinition(String name, String role, String version) throws ServiceDefinitionRegistryException;
-
-  void addServiceDefinitionChangeListener(ServiceDefinitionChangeListener listener);
+  public ServiceDefinitionRegistryException(String message, Throwable throwable) {
+    super(message, throwable);
+  }
 
 }

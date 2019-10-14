@@ -76,6 +76,7 @@
         <module>gateway-server-launcher</module>
         <module>gateway-server-xforwarded-filter</module>
         <module>gateway-provider-rewrite</module>
+        <module>gateway-provider-rewrite-common</module>
         <module>gateway-provider-rewrite-func-hostmap-static</module>
         <module>gateway-provider-rewrite-func-service-registry</module>
         <module>gateway-provider-rewrite-func-inbound-query-param</module>
@@ -885,6 +886,11 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-rewrite</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-provider-rewrite-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

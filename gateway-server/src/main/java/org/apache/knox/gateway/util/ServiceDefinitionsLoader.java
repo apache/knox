@@ -27,6 +27,9 @@ import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteRulesDescriptorFactory;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.definition.ServiceDefinition;
+import org.apache.knox.gateway.service.definition.ServiceDefinitionComparator;
+import org.apache.knox.gateway.service.definition.ServiceDefinitionPair;
+import org.apache.knox.gateway.service.definition.ServiceDefinitionPairComparator;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -42,6 +45,7 @@ import java.nio.file.Files;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 public class ServiceDefinitionsLoader {
   private static final JAXBContext jaxbContext = getJAXBContext();
@@ -68,42 +72,43 @@ public class ServiceDefinitionsLoader {
     }
   }
 
-  public static Set<ServiceDeploymentContributor> loadServiceDefinitions(File servicesDir) {
-    Set<ServiceDeploymentContributor> contributors = new HashSet<>();
-    if ( servicesDir.exists() && servicesDir.isDirectory() ) {
-      Unmarshaller unmarshaller = createUnmarshaller();
-
-      for ( File file : getFileList(servicesDir) ) {
-        try (InputStream inputStream = Files.newInputStream(file.toPath())) {
-          ServiceDefinition definition = (ServiceDefinition) unmarshaller.unmarshal(inputStream);
-          //look for rewrite rules as a sibling (for now)
-          UrlRewriteRulesDescriptor rewriteRulesDescriptor = loadRewriteRules(file.getParentFile());
-          contributors.add(new ServiceDefinitionDeploymentContributor(definition, rewriteRulesDescriptor));
-          log.addedServiceDefinition(definition.getName(), definition.getRole(), definition.getVersion());
-        } catch (FileNotFoundException e) {
-          log.failedToFindServiceDefinitionFile(file.getAbsolutePath(), e);
-        } catch (IOException | JAXBException e) {
-          log.failedToLoadServiceDefinition(file.getAbsolutePath(), e);
-        }
-      }
-    }
+  public static Set<ServiceDeploymentContributor> loadServiceDefinitionDeploymentContributors(File servicesDir) {
+    final Set<ServiceDeploymentContributor> contributors = new HashSet<>();
+    loadServiceDefinitions(servicesDir).forEach(
+        serviceDefinitionPair -> contributors.add(new ServiceDefinitionDeploymentContributor(serviceDefinitionPair.getService(), serviceDefinitionPair.getRewriteRules())));
     return contributors;
   }
 
-  public static Set<ServiceDefinition> getServiceDefinitions(File servicesDir) {
-    Set<ServiceDefinition> definitions = new HashSet<>();
-    Unmarshaller unmarshaller = createUnmarshaller();
-    try {
-      for (File f : getFileList(servicesDir)){
-        ServiceDefinition definition = (ServiceDefinition) unmarshaller.unmarshal(f);
-        definitions.add( definition );
-      }
-
-    } catch (JAXBException e) {
-      log.failedToLoadServiceDefinition(SERVICE_FILE_NAME, e);
+  public static Set<ServiceDefinitionPair> loadServiceDefinitions(File servicesDir) {
+    final Set<ServiceDefinitionPair> serviceDefinitions = new TreeSet<>(new ServiceDefinitionPairComparator());
+    if (servicesDir.exists() && servicesDir.isDirectory()) {
+      final Unmarshaller unmarshaller = createUnmarshaller();
+      getFileList(servicesDir).forEach(serviceFile -> {
+        try {
+          serviceDefinitions.add(loadServiceDefinition(unmarshaller, serviceFile));
+        } catch (FileNotFoundException e) {
+          log.failedToFindServiceDefinitionFile(serviceFile.getAbsolutePath(), e);
+        } catch (IOException | JAXBException e) {
+          log.failedToLoadServiceDefinition(serviceFile.getAbsolutePath(), e);
+        }
+      });
     }
 
-    return definitions;
+    return serviceDefinitions;
+  }
+
+  private static ServiceDefinitionPair loadServiceDefinition(Unmarshaller unmarshaller, File serviceFile) throws IOException, JAXBException {
+    try (InputStream inputStream = Files.newInputStream(serviceFile.toPath())) {
+      final ServiceDefinition service = (ServiceDefinition) unmarshaller.unmarshal(serviceFile);
+      final UrlRewriteRulesDescriptor rewriteRules = loadRewriteRules(serviceFile.getParentFile());
+      return new ServiceDefinitionPair(service, rewriteRules);
+    }
+  }
+
+  public static Set<ServiceDefinition> getServiceDefinitions(File servicesDir) {
+    final Set<ServiceDefinition> services = new TreeSet<>(new ServiceDefinitionComparator());
+    loadServiceDefinitions(servicesDir).forEach(serviceDefinitionPair -> services.add(serviceDefinitionPair.getService()));
+    return services;
   }
 
   private static Collection<File> getFileList(File servicesDir) {

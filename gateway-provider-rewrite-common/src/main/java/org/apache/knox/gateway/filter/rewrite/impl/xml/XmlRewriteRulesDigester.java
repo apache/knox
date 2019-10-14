@@ -29,12 +29,12 @@ import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFlowDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFunctionDescriptorFactory;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
-import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteRulesDescriptorFactory;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteStepDescriptorFactory;
 import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteFilterApplyDescriptorImpl;
 import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteFilterBufferDescriptorImpl;
 import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteFilterDetectDescriptorImpl;
 import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteFilterScopeDescriptorImpl;
+import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteRulesDescriptorImpl;
 import org.xml.sax.Attributes;
 
 public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlRewriteRulesTags {
@@ -86,7 +86,7 @@ public class XmlRewriteRulesDigester extends AbstractRulesModule implements XmlR
   private static class RulesFactory extends FactoryRule {
     @Override
     public Object create( String namespace, String name, Attributes attributes ) {
-      return UrlRewriteRulesDescriptorFactory.create();
+      return new UrlRewriteRulesDescriptorImpl();
     }
   }
 
