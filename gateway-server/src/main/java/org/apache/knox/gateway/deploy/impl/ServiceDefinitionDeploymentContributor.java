@@ -45,7 +45,6 @@ import java.util.Locale;
 import java.util.Map;
 
 public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentContributorBase {
-
   private static final String DISPATCH_ROLE = "dispatch";
 
   private static final String DISPATCH_IMPL_PARAM = "dispatch-impl";
@@ -128,7 +127,6 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
         e.printStackTrace();
       }
     }
-
   }
 
   private void contributeResource(DeploymentContext context, Service service, Route binding, Map<String, String> filterParams) throws URISyntaxException {
@@ -139,17 +137,17 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
     //add x-forwarded filter if enabled in config
     if (context.getGatewayConfig().isXForwardedEnabled()) {
       final FilterDescriptor filter = resource.addFilter()
-          .name(XFORWARDED_FILTER_NAME).role(XFORWARDED_FILTER_ROLE)
-          .impl(XForwardedHeaderFilter.class);
+                                          .name(XFORWARDED_FILTER_NAME).role(XFORWARDED_FILTER_ROLE)
+                                          .impl(XForwardedHeaderFilter.class);
       /* check if we need to add service name to the context */
       if(service.getParams().containsKey(SERVICE_CONTEXT)) {
         filter.param().name(APPEND_SERVICE_NAME_PARAM).value("true");
         filter.param().name(SERVICE_CONTEXT).value(service.getParams().get(SERVICE_CONTEXT));
       }
       else if (context.getGatewayConfig().getXForwardContextAppendServices() != null
-          && !context.getGatewayConfig().getXForwardContextAppendServices()
-          .isEmpty() && context.getGatewayConfig()
-          .getXForwardContextAppendServices().contains(service.getRole())) {
+                   && !context.getGatewayConfig().getXForwardContextAppendServices()
+                           .isEmpty() && context.getGatewayConfig()
+                                             .getXForwardContextAppendServices().contains(service.getRole())) {
         filter.param().name(APPEND_SERVICE_NAME_PARAM).value("true");
       }
     }
@@ -260,14 +258,13 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
 
   private void addDefaultHaDispatchFilter(DeploymentContext context, Service service, ResourceDescriptor resource,
                                           Map<String, String> dispatchParams) {
-    FilterDescriptor filter = addDispatchFilterForClass(context, service, resource, DEFAULT_HA_DISPATCH_CLASS, null, dispatchParams);
-    filter.param().name(SERVICE_ROLE_PARAM).value(service.getRole());
+    addDispatchFilterForClass(context, service, resource, DEFAULT_HA_DISPATCH_CLASS, null, dispatchParams);
   }
 
-  private FilterDescriptor addDispatchFilterForClass(DeploymentContext context, Service service,
-                                                     ResourceDescriptor resource, String dispatchClass,
-                                                     String httpClientFactory, boolean useTwoWaySsl,
-                                                     Map<String, String> dispatchParams) {
+  private void addDispatchFilterForClass(DeploymentContext context, Service service,
+                                         ResourceDescriptor resource, String dispatchClass,
+                                         String httpClientFactory, boolean useTwoWaySsl,
+                                         Map<String, String> dispatchParams) {
     FilterDescriptor filter = resource.addFilter().name(getName()).role(DISPATCH_ROLE).impl(GatewayDispatchFilter.class);
     filter.param().name(DISPATCH_IMPL_PARAM).value(dispatchClass);
     if (httpClientFactory != null) {
@@ -293,26 +290,25 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
       //special case for hive
       filter.param().name("basicAuthPreemptive").value("true");
     }
-    return filter;
+
+    // Ensure that serviceRole is set in case of HA
+    filter.param().name(SERVICE_ROLE_PARAM).value(service.getRole());
   }
 
-  private FilterDescriptor addDispatchFilterForClass(DeploymentContext context, Service service,
-                                                     ResourceDescriptor resource, String dispatchClass,
-                                                     String httpClientFactory, Map<String, String> dispatchParams) {
-    return addDispatchFilterForClass(context, service, resource, dispatchClass, httpClientFactory, false, dispatchParams);
+  private void addDispatchFilterForClass(DeploymentContext context, Service service,
+                                         ResourceDescriptor resource, String dispatchClass,
+                                         String httpClientFactory, Map<String, String> dispatchParams) {
+    addDispatchFilterForClass(context, service, resource, dispatchClass, httpClientFactory, false, dispatchParams);
   }
 
   private boolean isHaEnabled(DeploymentContext context) {
     Provider provider = getProviderByRole(context, "ha");
     if ( provider != null && provider.isEnabled() ) {
       Map<String, String> params = provider.getParams();
-      if ( params != null ) {
-        if ( params.containsKey(getRole()) ) {
-          return true;
-        }
+      if (params != null && params.containsKey(getRole())) {
+        return true;
       }
     }
     return false;
   }
-
 }

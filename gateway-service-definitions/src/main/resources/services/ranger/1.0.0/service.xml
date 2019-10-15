@@ -22,7 +22,8 @@
         <route path="/ranger/service/assets/**"/>
         <route path="/ranger"/>
     </routes>
-    <dispatch classname="org.apache.knox.gateway.dispatch.ConfigurableDispatch" ha-classname="org.apache.knox.gateway.dispatch.ConfigurableDispatch">
+    <dispatch classname="org.apache.knox.gateway.dispatch.ConfigurableDispatch"
+              ha-classname="org.apache.knox.gateway.ha.dispatch.ConfigurableHADispatch">
         <param>
             <name>responseExcludeHeaders</name>
             <value>WWW-AUTHENTICATE</value>
