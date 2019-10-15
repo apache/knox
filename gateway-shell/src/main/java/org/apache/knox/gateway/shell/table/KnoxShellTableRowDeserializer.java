@@ -46,12 +46,15 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 @SuppressWarnings("serial")
 public class KnoxShellTableRowDeserializer extends StdDeserializer<KnoxShellTable> {
 
-  KnoxShellTableRowDeserializer() {
-    this(KnoxShellTable.class);
+  private final KnoxShellTable table;
+
+  KnoxShellTableRowDeserializer(KnoxShellTable table) {
+    this(KnoxShellTable.class, table);
   }
 
-  protected KnoxShellTableRowDeserializer(Class<?> vc) {
+  protected KnoxShellTableRowDeserializer(Class<?> vc, KnoxShellTable table) {
     super(vc);
+    this.table = table;
   }
 
   @Override
@@ -68,8 +71,10 @@ public class KnoxShellTableRowDeserializer extends StdDeserializer<KnoxShellTabl
     final List<KnoxShellTableCall> calls = parseCallHistoryListJSONNode(jsonContent.get("callHistoryList"));
     long tempId = KnoxShellTable.getUniqueTableId();
     KnoxShellTableCallHistory.getInstance().saveCalls(tempId, calls);
-    final KnoxShellTable table = KnoxShellTableCallHistory.getInstance().replay(tempId, calls.size());
+    final KnoxShellTable tableFromJson = KnoxShellTableCallHistory.getInstance().replay(tempId, calls.size());
+    table.rows = tableFromJson.rows;
     KnoxShellTableCallHistory.getInstance().removeCallsById(tempId);
+    KnoxShellTableCallHistory.getInstance().removeCallsById(tableFromJson.id);
     return table;
   }
 
@@ -134,7 +139,6 @@ public class KnoxShellTableRowDeserializer extends StdDeserializer<KnoxShellTabl
   }
 
   private KnoxShellTable parseJsonWithData(final TreeNode jsonContent) {
-    final KnoxShellTable table = new KnoxShellTable();
     if (jsonContent.get("title").size() != 0) {
       table.title(trimJSONQuotes(jsonContent.get("title").toString()));
     }

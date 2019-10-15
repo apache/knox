@@ -19,10 +19,14 @@ package org.apache.knox.gateway.shell.table;
 
 public class KnoxShellTableBuilder {
   protected String title;
-  protected final long id;
+  protected KnoxShellTable table;
 
-  KnoxShellTableBuilder(long id) {
-    this.id = id;
+  KnoxShellTableBuilder() {
+    this.table = new KnoxShellTable();
+  }
+
+  protected KnoxShellTableBuilder(KnoxShellTable table) {
+    this.table = table;
   }
 
   public KnoxShellTableBuilder title(String title) {
@@ -31,18 +35,18 @@ public class KnoxShellTableBuilder {
   }
 
   public CSVKnoxShellTableBuilder csv() {
-    return new CSVKnoxShellTableBuilder(id);
+    return new CSVKnoxShellTableBuilder(table);
   }
 
   public JSONKnoxShellTableBuilder json() {
-    return new JSONKnoxShellTableBuilder(id);
+    return new JSONKnoxShellTableBuilder(table);
   }
 
   public JoinKnoxShellTableBuilder join() {
-    return new JoinKnoxShellTableBuilder(id);
+    return new JoinKnoxShellTableBuilder(table);
   }
 
   public JDBCKnoxShellTableBuilder jdbc() {
-    return new JDBCKnoxShellTableBuilder(id);
+    return new JDBCKnoxShellTableBuilder(table);
   }
 }

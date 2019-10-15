@@ -23,16 +23,15 @@ import java.util.regex.Pattern;
 
 public class KnoxShellTableFilter {
 
-  final long id;
+  final KnoxShellTable filteredTable = new KnoxShellTable();
   final KnoxShellTable tableToFilter;
   private int index;
 
   KnoxShellTableFilter(KnoxShellTable table) {
-    this.id = KnoxShellTable.getUniqueTableId();
     this.tableToFilter = table;
     //inheriting the original table's call history
     final List<KnoxShellTableCall> callHistory = KnoxShellTableCallHistory.getInstance().getCallHistory(tableToFilter.id);
-    KnoxShellTableCallHistory.getInstance().saveCalls(id, callHistory);
+    KnoxShellTableCallHistory.getInstance().saveCalls(filteredTable.id, callHistory);
   }
 
   public KnoxShellTableFilter name(String name) throws KnoxShellTableFilterException {
@@ -58,7 +57,7 @@ public class KnoxShellTableFilter {
   // doesn't contain, etc
   public KnoxShellTable regex(Comparable<String> regex) {
     final Pattern pattern = Pattern.compile((String) regex);
-    final KnoxShellTable filteredTable = prepareFilteredTable();
+    prepareFilteredTable();
     for (List<Comparable<?>> row : tableToFilter.rows) {
       if (pattern.matcher(row.get(index).toString()).matches()) {
         filteredTable.row();
@@ -70,18 +69,15 @@ public class KnoxShellTableFilter {
     return filteredTable;
   }
 
-  private KnoxShellTable prepareFilteredTable() {
-    final KnoxShellTable filteredTable = new KnoxShellTable();
-    filteredTable.id(id);
+  private void prepareFilteredTable() {
     filteredTable.headers.addAll(tableToFilter.headers);
     filteredTable.title(tableToFilter.title);
-    return filteredTable;
   }
 
   @SuppressWarnings("rawtypes")
   private KnoxShellTable filter(Predicate<Comparable> p) throws KnoxShellTableFilterException {
     try {
-      final KnoxShellTable filteredTable = prepareFilteredTable();
+      prepareFilteredTable();
       for (List<Comparable<? extends Object>> row : tableToFilter.rows) {
         if (p.test(row.get(index))) {
           filteredTable.row(); // Adds a new empty row to filtered table

@@ -30,8 +30,8 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 
 public class JSONKnoxShellTableBuilder extends KnoxShellTableBuilder {
 
-  JSONKnoxShellTableBuilder(long id) {
-    super(id);
+  JSONKnoxShellTableBuilder(KnoxShellTable table) {
+    super(table);
   }
 
   public KnoxShellTable fromJson(String json) throws IOException {
@@ -42,16 +42,15 @@ public class JSONKnoxShellTableBuilder extends KnoxShellTableBuilder {
   private KnoxShellTable toKnoxShellTable(String json) throws IOException {
     final ObjectMapper mapper = new ObjectMapper(new JsonFactory());
     final SimpleModule module = new SimpleModule();
-    module.addDeserializer(KnoxShellTable.class, new KnoxShellTableRowDeserializer());
+    module.addDeserializer(KnoxShellTable.class, new KnoxShellTableRowDeserializer(table));
     mapper.registerModule(module);
 
-    final KnoxShellTable table = mapper.readValue(json, new TypeReference<KnoxShellTable>() {
+    final KnoxShellTable tableFromJson = mapper.readValue(json, new TypeReference<KnoxShellTable>() {
     });
     if (title != null) {
-      table.title(title);
+      tableFromJson.title(title);
     }
-    table.id(id);
-    return table;
+    return tableFromJson;
   }
 
   public KnoxShellTable path(String path) throws IOException {

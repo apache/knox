@@ -59,19 +59,19 @@ public class KnoxShellTableHistoryAspect {
       filter = (KnoxShellTableFilter) joinPoint.proceed();
       return filter;
     } finally {
-      saveKnoxShellTableCall(joinPoint, filter.id);
+      saveKnoxShellTableCall(joinPoint, filter.filteredTable.id);
     }
   }
 
   @After("org.apache.knox.gateway.shell.table.KnoxShellTableHistoryAspect.knoxShellTableBuilderPointcut()")
   public void afterBuilding(JoinPoint joinPoint) throws Throwable {
-    final long builderId = ((KnoxShellTableBuilder) joinPoint.getTarget()).id;
+    final long builderId = ((KnoxShellTableBuilder) joinPoint.getTarget()).table.id;
     saveKnoxShellTableCall(joinPoint, builderId);
   }
 
   @After("org.apache.knox.gateway.shell.table.KnoxShellTableHistoryAspect.knoxShellTableFilterPointcut()")
   public void afterFiltering(JoinPoint joinPoint) throws Throwable {
-    final long builderId = ((KnoxShellTableFilter) joinPoint.getTarget()).id;
+    final long builderId = ((KnoxShellTableFilter) joinPoint.getTarget()).filteredTable.id;
     saveKnoxShellTableCall(joinPoint, builderId);
   }
 

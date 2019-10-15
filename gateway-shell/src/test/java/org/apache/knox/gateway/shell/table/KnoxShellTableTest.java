@@ -362,11 +362,9 @@ public class KnoxShellTableTest {
   @Test
   public void shouldReturnDifferentCallHistoryForDifferentTables() throws Exception {
     final KnoxShellTable table1 = new KnoxShellTable();
-    table1.id(1);
-    KnoxShellTableCallHistory.getInstance().saveCall(1, new KnoxShellTableCall("class1", "method1", true, Collections.singletonMap("param1", String.class)));
+    KnoxShellTableCallHistory.getInstance().saveCall(table1.getId(), new KnoxShellTableCall("class1", "method1", true, Collections.singletonMap("param1", String.class)));
     final KnoxShellTable table2 = new KnoxShellTable();
-    table1.id(2);
-    KnoxShellTableCallHistory.getInstance().saveCall(2, new KnoxShellTableCall("class2", "method2", false, Collections.singletonMap("param2", String.class)));
+    KnoxShellTableCallHistory.getInstance().saveCall(table2.getId(), new KnoxShellTableCall("class2", "method2", false, Collections.singletonMap("param2", String.class)));
     assertNotEquals(table1.getCallHistoryList(), table2.getCallHistoryList());
   }
 }
