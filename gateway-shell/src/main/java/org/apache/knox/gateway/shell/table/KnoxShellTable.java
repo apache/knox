@@ -156,7 +156,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the mean of specified column
-   * @param colName
+   * @param colName the column for which the mean will be calculated
    * @return mean
    */
   public double mean(String colName) {
@@ -165,7 +165,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the mean of specified column
-   * @param colName
+   * @param colIndex the column for which the mean will be calculated
    * @return mean
    */
   public double mean(int colIndex) {
@@ -174,7 +174,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the median of specified column
-   * @param colName
+   * @param colName the column for which the median will be calculated
    * @return median
    */
   public double median(String colName) {
@@ -183,7 +183,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the median of specified column
-   * @param colName
+   * @param colIndex the column for which the median will be calculated
    * @return median
    */
   public double median(int colIndex) {
@@ -192,7 +192,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the mode of specified column
-   * @param colName
+   * @param colName the column for which the mode will be calculated
    * @return mode
    */
   public double mode(String colName) {
@@ -201,7 +201,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the mode of specified column
-   * @param colName
+   * @param colIndex the column for which the mode will be calculated
    * @return mode
    */
   public double mode(int colIndex) {
@@ -210,7 +210,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the sum of specified column
-   * @param colName
+   * @param colName the column for which the sum will be calculated
    * @return sum
    */
   public double sum(String colName) {
@@ -219,7 +219,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the sum of specified column
-   * @param colName
+   * @param colIndex the column for which the sum will be calculated
    * @return sum
    */
   public double sum(int colIndex) {
@@ -228,7 +228,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the max of specified column
-   * @param colName
+   * @param colName the column for which the max will be calculated
    * @return max
    */
   public double max(String colName) {
@@ -237,7 +237,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the max of specified column
-   * @param colName
+   * @param colIndex the column for which the max will be calculated
    * @return max
    */
   public double max(int colIndex) {
@@ -246,7 +246,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the min of specified column
-   * @param colName
+   * @param colName the column for which the min will be calculated
    * @return min
    */
   public double min(String colName) {
@@ -255,7 +255,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the min of specified column
-   * @param colName
+   * @param colIndex the column for which the min will be calculated
    * @return min
    */
   public double min(int colIndex) {
