@@ -52,13 +52,12 @@ public class KnoxShellTable {
   String title;
   long id;
 
-  public KnoxShellTable title(String title) {
-    this.title = title;
-    return this;
+  KnoxShellTable() {
+    this.id = getUniqueTableId();
   }
 
-  public KnoxShellTable id(long id) {
-    this.id = id;
+  public KnoxShellTable title(String title) {
+    this.title = title;
     return this;
   }
 
@@ -289,7 +288,7 @@ public class KnoxShellTable {
   }
 
   public static KnoxShellTableBuilder builder() {
-    return new KnoxShellTableBuilder(getUniqueTableId());
+    return new KnoxShellTableBuilder();
   }
 
   static long getUniqueTableId() {

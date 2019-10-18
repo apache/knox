@@ -33,8 +33,8 @@ public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
   private Connection conn;
   private boolean tableManagedConnection = true;
 
-  JDBCKnoxShellTableBuilder(long id) {
-    super(id);
+  JDBCKnoxShellTableBuilder(KnoxShellTable table) {
+    super(table);
   }
 
   @Override
@@ -76,42 +76,40 @@ public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
   }
 
   public KnoxShellTable sql(String sql) throws IOException, SQLException {
-    KnoxShellTable table = null;
     conn = conn == null ? DriverManager.getConnection(connectionUrl) : conn;
     if (conn != null) {
       try (Statement statement = conn.createStatement(); ResultSet resultSet = statement.executeQuery(sql);) {
-        table = new KnoxShellTable();
-        processResultSet(table, resultSet);
+        processResultSet(resultSet);
       } finally {
         if (conn != null && tableManagedConnection) {
           conn.close();
         }
       }
+      return this.table;
+    } else {
+      return null;
     }
-    return table;
   }
 
   // added this as a private method so that KnoxShellTableHistoryAspect will not
   // intercept this call
-  private void processResultSet(KnoxShellTable table, ResultSet resultSet) throws SQLException {
+  private void processResultSet(ResultSet resultSet) throws SQLException {
     final ResultSetMetaData metadata = resultSet.getMetaData();
     final int colCount = metadata.getColumnCount();
-    table.title(metadata.getTableName(1));
-    table.id(id);
+    this.table.title(metadata.getTableName(1));
     for (int i = 1; i < colCount + 1; i++) {
-      table.header(metadata.getColumnName(i));
+      this.table.header(metadata.getColumnName(i));
     }
     while (resultSet.next()) {
-      table.row();
+      this.table.row();
       for (int i = 1; i < colCount + 1; i++) {
-        table.value(resultSet.getObject(metadata.getColumnName(i), Comparable.class));
+        this.table.value(resultSet.getObject(metadata.getColumnName(i), Comparable.class));
       }
     }
   }
 
   public KnoxShellTable resultSet(ResultSet resultSet) throws SQLException {
-    final KnoxShellTable table = new KnoxShellTable();
-    processResultSet(table, resultSet);
-    return table;
+    processResultSet(resultSet);
+    return this.table;
   }
 }

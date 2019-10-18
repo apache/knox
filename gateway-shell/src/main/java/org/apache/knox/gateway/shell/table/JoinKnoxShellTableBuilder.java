@@ -26,8 +26,8 @@ public class JoinKnoxShellTableBuilder extends KnoxShellTableBuilder {
   private KnoxShellTable left;
   private KnoxShellTable right;
 
-  JoinKnoxShellTableBuilder(long id) {
-    super(id);
+  JoinKnoxShellTableBuilder(KnoxShellTable table) {
+    super(table);
   }
 
   @Override
@@ -53,22 +53,20 @@ public class JoinKnoxShellTableBuilder extends KnoxShellTableBuilder {
   }
 
   public KnoxShellTable on(int leftIndex, int rightIndex) {
-    final KnoxShellTable joinedTable = new KnoxShellTable();
     if (title != null) {
-      joinedTable.title(title);
+      this.table.title(title);
     }
-    joinedTable.id(id);
 
-    joinedTable.headers.addAll(new ArrayList<String>(left.headers));
+    this.table.headers.addAll(new ArrayList<String>(left.headers));
     for (List<Comparable<? extends Object>> row : left.rows) {
-      joinedTable.rows.add(new ArrayList<Comparable<? extends Object>>(row));
+      this.table.rows.add(new ArrayList<Comparable<? extends Object>>(row));
     }
     List<Comparable<? extends Object>> row;
     Comparable<? extends Object> leftKey;
     int matchedIndex;
 
-    joinedTable.headers.addAll(new ArrayList<String>(right.headers));
-    for (Iterator<List<Comparable<? extends Object>>> it = joinedTable.rows.iterator(); it.hasNext();) {
+    this.table.headers.addAll(new ArrayList<String>(right.headers));
+    for (Iterator<List<Comparable<? extends Object>>> it = this.table.rows.iterator(); it.hasNext();) {
       row = (List<Comparable<? extends Object>>) it.next();
       leftKey = row.get(leftIndex);
       if (leftKey != null) {
@@ -80,7 +78,7 @@ public class JoinKnoxShellTableBuilder extends KnoxShellTableBuilder {
         }
       }
     }
-    return joinedTable;
+    return this.table;
   }
 
 }
