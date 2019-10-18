@@ -42,7 +42,8 @@ public class KnoxShellTable {
         FLOAT,
         BYTE,
         SHORT,
-        LONG
+        LONG,
+        STRING
     }
 
   private static final String LINE_SEPARATOR = System.getProperty("line.separator");
@@ -97,29 +98,37 @@ public class KnoxShellTable {
   }
 
   private Conversions getConversion(Comparable<? extends Object> colIndex) {
-      Conversions type = null;
-      if (colIndex instanceof Double) {
-        type = Conversions.DOUBLE;
-      }
-      else if (colIndex instanceof Integer) {
-        type = Conversions.INTEGER;
-      }
-      else if (colIndex instanceof Float) {
-        type = Conversions.FLOAT;
-      }
-      else if (colIndex instanceof Byte) {
-        type = Conversions.BYTE;
-      }
-      else if (colIndex instanceof Short) {
-        type = Conversions.SHORT;
-      }
-      else if (colIndex instanceof Long) {
-        type = Conversions.LONG;
+    Conversions type = null;
+    if (colIndex instanceof Double) {
+      type = Conversions.DOUBLE;
+    }
+    else if (colIndex instanceof Integer) {
+      type = Conversions.INTEGER;
+    }
+    else if (colIndex instanceof Float) {
+      type = Conversions.FLOAT;
+    }
+    else if (colIndex instanceof Byte) {
+      type = Conversions.BYTE;
+    }
+    else if (colIndex instanceof Short) {
+      type = Conversions.SHORT;
+    }
+    else if (colIndex instanceof Long) {
+      type = Conversions.LONG;
+    }
+    else if (colIndex instanceof String) {
+      if (((String) colIndex).matches("-?\\d+(\\.\\d+)?")) {
+          type = Conversions.STRING;
       }
       else {
-          throw new IllegalArgumentException();
+        throw new IllegalArgumentException("String contains non-numeric characters");
       }
-      return type;
+    }
+    else {
+        throw new IllegalArgumentException("Unsupported data type");
+    }
+    return type;
   }
 
   private double[] toDoubleArray(String colName) throws IllegalArgumentException {
@@ -148,6 +157,9 @@ public class KnoxShellTable {
           break;
         case LONG:
           colArray[i] = (double) ((Long) col.get(i)).longValue();
+          break;
+        case STRING:
+          colArray[i] = (double) (Double.parseDouble((String) col.get(i)));
           break;
       }
     }
