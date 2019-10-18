@@ -385,9 +385,9 @@ public class KnoxShellTableTest {
       Long long20 = (long) 200000000;
       Long long30 = (long) 300000000;
 
-      String string10 = "-10";
-      String string20 = "-20";
-      String string30 = "-30.00";
+      String string10 = "1023.98000000000";
+      String string20 = "2089743.6";
+      String string30 = "-3";
 
       KnoxShellTable TABLE = new KnoxShellTable();
       TABLE.header("Column Integer").header("Column Double").header("Column Float").header("Column Byte").header("Column Short").header("Column Long").header("Column String");
@@ -404,7 +404,7 @@ public class KnoxShellTableTest {
       assertEquals(20, TABLE.mean("Column Byte"), 0.1);
       assertEquals(20, TABLE.mean("Column Short"), 0.1);
       assertEquals(2.0E8, TABLE.mean("Column Long"), 0.1);
-      assertEquals(-20, TABLE.mean("Column String"), 0.1);
+      assertEquals(696921.52666666, TABLE.mean("Column String"), 0.1);
   }
 
   @Test
