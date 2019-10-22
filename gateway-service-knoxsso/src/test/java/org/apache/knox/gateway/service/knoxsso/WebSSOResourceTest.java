@@ -1029,6 +1029,15 @@ public class WebSSOResourceTest {
     public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires,
                           String signingKeystoreName, String signingKeystoreAlias, char[] signingKeystorePassphrase)
         throws TokenServiceException {
+
+      return issueToken(p, audiences, algorithm, expires, signingKeystoreName, signingKeystoreAlias,
+          signingKeystorePassphrase, null);
+    }
+
+    @Override
+    public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires,
+        String signingKeystoreName, String signingKeystoreAlias, char[] signingKeystorePassphrase,
+        Map<String, String> customClaims) throws TokenServiceException {
       String[] claimArray = new String[4];
       claimArray[0] = "KNOXSSO";
       claimArray[1] = p.getName();
@@ -1039,12 +1048,30 @@ public class WebSSOResourceTest {
         claimArray[3] = String.valueOf(expires);
       }
 
-      JWT token = new JWTToken(algorithm, claimArray, audiences);
+      JWT token = new JWTToken(algorithm, claimArray, customClaims, audiences);
       RSAPrivateKey privateKey = getPrivateKey(signingKeystoreName, signingKeystoreAlias, signingKeystorePassphrase);
       JWSSigner signer = new RSASSASigner(privateKey);
       token.sign(signer);
 
       return token;
+    }
+
+    @Override
+    public JWT issueToken(Principal p, Map<String, String> additionalClaims, String algorithm,
+        long expires) throws TokenServiceException {
+      return null;
+    }
+
+    @Override
+    public JWT issueToken(Principal p, Map<String, String> additionalClaims, String audience,
+        String algorithm, long expires) {
+      return null;
+    }
+
+    @Override
+    public JWT issueToken(Principal p, Map<String, String> additionalClaims, List<String> audience,
+        String algorithm, long expires) throws TokenServiceException {
+      return null;
     }
 
     private RSAPrivateKey getPrivateKey(String signingKeystoreName, String signingKeystoreAlias,

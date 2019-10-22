@@ -124,6 +124,13 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires,
                         String signingKeystoreName, String signingKeystoreAlias, char[] signingKeystorePassphrase)
       throws TokenServiceException {
+    return issueToken(p, audiences, algorithm, expires, signingKeystoreName, signingKeystoreAlias, signingKeystorePassphrase, null);
+  }
+
+  @Override
+  public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires,
+      String signingKeystoreName, String signingKeystoreAlias, char[] signingKeystorePassphrase,
+      Map<String, String> customClaims) throws TokenServiceException {
     String[] claimArray = new String[4];
     claimArray[0] = "KNOXSSO";
     claimArray[1] = p.getName();
@@ -137,7 +144,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
 
     JWT token;
     if (SUPPORTED_SIG_ALGS.contains(algorithm)) {
-      token = new JWTToken(algorithm, claimArray, audiences);
+      token = new JWTToken(algorithm, claimArray, customClaims, audiences);
       char[] passphrase;
       try {
         passphrase = getSigningKeyPassphrase(signingKeystorePassphrase);
@@ -159,6 +166,32 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     }
 
     return token;
+
+  }
+
+  @Override
+  public JWT issueToken(Principal p, Map<String, String> additionalClaims, String algorithm,
+      long expires) throws TokenServiceException {
+
+    return issueToken(p, (List<String>)null, algorithm, expires, null, null, null, additionalClaims);
+  }
+
+  @Override
+  public JWT issueToken(Principal p, Map<String, String> additionalClaims, String audience,
+      String algorithm, long expires) throws TokenServiceException {
+    List<String> audiences = null;
+    if (audience != null) {
+      audiences = new ArrayList<String>();
+      audiences.add(audience);
+    }
+    return issueToken(p, audiences, algorithm, expires, null, null, null, additionalClaims);
+  }
+
+  @Override
+  public JWT issueToken(Principal p, Map<String, String> additionalClaims, List<String> audiences,
+      String algorithm, long expires) throws TokenServiceException {
+
+    return issueToken(p, audiences, algorithm, expires, null, null,null, additionalClaims);
   }
 
   private char[] getSigningKeyPassphrase(char[] signingKeyPassphrase) throws AliasServiceException {

@@ -17,7 +17,12 @@
  */
 package org.apache.knox.gateway.pac4j.filter;
 
+import java.net.MalformedURLException;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.aws.AwsSamlException;
+import org.apache.knox.gateway.aws.AwsSamlHandler;
+import org.apache.knox.gateway.aws.utils.SamlUtils;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.pac4j.Pac4jMessages;
 import org.apache.knox.gateway.pac4j.session.KnoxSessionStore;
@@ -28,9 +33,12 @@ import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.CryptoService;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.MasterService;
+import org.apache.knox.gateway.util.Urls;
 import org.pac4j.config.client.PropertiesConfigFactory;
 import org.pac4j.core.client.Client;
 import org.pac4j.core.config.Config;
+import org.pac4j.core.context.J2EContext;
+import org.pac4j.core.context.Pac4jConstants;
 import org.pac4j.core.context.session.J2ESessionStore;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.http.callback.PathParameterCallbackUrlResolver;
@@ -99,6 +107,8 @@ public class Pac4jDispatcherFilter implements Filter {
   private MasterService masterService;
   private KeystoreService keystoreService;
   private AliasService aliasService;
+  private AwsSamlHandler awsSamlHandler;
+  private String domainSuffix;
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
@@ -203,7 +213,7 @@ public class Pac4jDispatcherFilter implements Filter {
     securityFilter.setClients(clientName);
     securityFilter.setConfigOnly(config);
 
-    final String domainSuffix = filterConfig.getInitParameter(PAC4J_COOKIE_DOMAIN_SUFFIX_PARAM);
+    domainSuffix = filterConfig.getInitParameter(PAC4J_COOKIE_DOMAIN_SUFFIX_PARAM);
     final String sessionStoreVar = filterConfig.getInitParameter(PAC4J_SESSION_STORE);
 
     SessionStore sessionStore;
@@ -215,7 +225,7 @@ public class Pac4jDispatcherFilter implements Filter {
     }
 
     config.setSessionStore(sessionStore);
-
+    awsSamlHandler = new AwsSamlHandler(filterConfig);
   }
 
   private void addDefaultConfig(String clientNameParameter, Map<String, String> properties) {
@@ -257,6 +267,8 @@ public class Pac4jDispatcherFilter implements Filter {
   public void doFilter( ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
 
     final HttpServletRequest request = (HttpServletRequest) servletRequest;
+    final HttpServletResponse response = (HttpServletResponse) servletResponse;
+
     request.setAttribute(PAC4J_CONFIG, securityFilter.getConfig());
 
     // it's a callback from an identity provider
@@ -264,6 +276,15 @@ public class Pac4jDispatcherFilter implements Filter {
         request.getContextPath() != null && request.getRequestURI()
             .contains(PAC4J_CALLBACK_PARAMETER))) {
       // apply CallbackFilter
+      String samlResponse = request.getParameter(SamlUtils.SAML_RESPONSE);
+      if (samlResponse != null) {
+        try {
+          awsSamlHandler.processSamlResponse(request, response, getCookieDomain(request, response,
+              securityFilter.getConfig().getSessionStore()));
+        } catch (AwsSamlException e) {
+          throw new ServletException("Could not process the SAML Response", e);
+        }
+      }
       callbackFilter.doFilter(servletRequest, servletResponse, filterChain);
     } else {
       // otherwise just apply security and requires authentication
@@ -271,6 +292,29 @@ public class Pac4jDispatcherFilter implements Filter {
       securityFilter.doFilter(servletRequest, servletResponse, filterChain);
     }
   }
+
+
+  private String getCookieDomain(HttpServletRequest request, HttpServletResponse response,
+      SessionStore sessionStore)
+      throws ServletException {
+
+    final J2EContext context = new J2EContext(request, response,
+        sessionStore);
+    String original = (String) sessionStore.get(context, Pac4jConstants.REQUESTED_URL);
+    try {
+      String domain = null;
+      if (original != null) {
+        domain = Urls.getDomainName(original, domainSuffix);
+      }
+      if (domain == null) {
+        domain = context.getServerName();
+      }
+      return domain;
+    } catch (MalformedURLException e) {
+      throw new ServletException("Unable to get original url", e);
+    }
+  }
+
 
   @Override
   public void destroy() { }

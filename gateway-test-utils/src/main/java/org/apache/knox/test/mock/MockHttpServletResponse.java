@@ -17,6 +17,8 @@
  */
 package org.apache.knox.test.mock;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
@@ -29,11 +31,12 @@ import java.util.Locale;
 import java.util.Map;
 
 public class MockHttpServletResponse implements HttpServletResponse {
-
+  private List<Cookie> cookies = new ArrayList<>();
   private Map<String, String> headers = new HashMap<>();
 
   @Override
-  public void addCookie( Cookie cookie ) {
+  public void addCookie(Cookie cookie) {
+    cookies.add(cookie);
   }
 
   @Override
@@ -198,5 +201,9 @@ public class MockHttpServletResponse implements HttpServletResponse {
   @Override
   public Locale getLocale() {
     return null;
+  }
+
+  public List<Cookie> getCookies() {
+    return cookies;
   }
 }

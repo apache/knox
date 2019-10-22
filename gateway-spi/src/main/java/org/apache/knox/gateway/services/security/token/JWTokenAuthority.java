@@ -21,6 +21,7 @@ import java.security.Principal;
 import java.security.interfaces.RSAPublicKey;
 import java.util.List;
 
+import java.util.Map;
 import javax.security.auth.Subject;
 
 import org.apache.knox.gateway.services.security.token.impl.JWT;
@@ -52,4 +53,17 @@ public interface JWTokenAuthority {
   JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires,
                  String signingKeystoreName, String signingKeystoreAlias, char[] signingKeystorePassphrase)
       throws TokenServiceException;
+
+  JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires,
+      String signingKeystoreName, String signingKeystoreAlias, char[] signingKeystorePassphrase,
+      Map<String, String> customClaims) throws TokenServiceException;
+
+  JWT issueToken(Principal p, Map<String, String> additionalClaims, String algorithm,
+      long expires) throws TokenServiceException;
+
+  JWT issueToken(Principal p, Map<String, String> additionalClaims, String audience,
+      String algorithm, long expires)  throws TokenServiceException;
+
+  JWT issueToken(Principal p, Map<String, String> additionalClaims, List<String> audience,
+      String algorithm, long expires) throws TokenServiceException;
 }

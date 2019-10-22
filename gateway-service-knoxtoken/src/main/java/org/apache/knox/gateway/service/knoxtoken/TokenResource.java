@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 
+import java.util.Optional;
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -38,6 +39,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.knox.gateway.aws.AwsConstants;
+import org.apache.knox.gateway.aws.utils.CookieUtils;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
@@ -195,11 +198,17 @@ public class TokenResource {
     }
 
     try {
+      Map<String, String> claims = new HashMap<>();
+      Optional<String> awsCookie = CookieUtils.getCookieValue(request, AwsConstants.AWS_COOKIE_NAME);
+      if (awsCookie.isPresent()) {
+        claims.put(AwsConstants.AWS_COOKIE_NAME, awsCookie.get());
+      }
+
       JWT token;
       if (targetAudiences.isEmpty()) {
-        token = ts.issueToken(p, signatureAlgorithm, expires);
+        token = ts.issueToken(p, claims, signatureAlgorithm, expires);
       } else {
-        token = ts.issueToken(p, targetAudiences, signatureAlgorithm, expires);
+        token = ts.issueToken(p, claims, targetAudiences, signatureAlgorithm, expires);
       }
 
       if (token != null) {
