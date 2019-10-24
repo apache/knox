@@ -30,35 +30,11 @@
     <dependencies>
         <dependency>
             <groupId>org.apache.knox</groupId>
-            <artifactId>gateway-i18n</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-server</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-spi</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.knox</groupId>
-            <artifactId>gateway-util-common</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.knox</groupId>
-            <artifactId>gateway-test-utils</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>
