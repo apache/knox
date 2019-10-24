@@ -385,11 +385,15 @@ public class KnoxShellTableTest {
       Long long20 = (long) 200000000;
       Long long30 = (long) 300000000;
 
+      String string10 = "1023.98000000000";
+      String string20 = "2089743.6";
+      String string30 = "-3";
+
       KnoxShellTable TABLE = new KnoxShellTable();
-      TABLE.header("Column Integer").header("Column Double").header("Column Float").header("Column Byte").header("Column Short").header("Column Long");
-      TABLE.row().value(10).value(20d).value(20.9999).value(byte10).value(short10).value(long10);
-      TABLE.row().value(30).value(40d).value(40.9999).value(byte20).value(short20).value(long20);
-      TABLE.row().value(27).value(60d).value(60.9999).value(byte30).value(short30).value(long30);
+      TABLE.header("Column Integer").header("Column Double").header("Column Float").header("Column Byte").header("Column Short").header("Column Long").header("Column String");
+      TABLE.row().value(10).value(20d).value(20.9999).value(byte10).value(short10).value(long10).value(string10);
+      TABLE.row().value(30).value(40d).value(40.9999).value(byte20).value(short20).value(long20).value(string20);
+      TABLE.row().value(27).value(60d).value(60.9999).value(byte30).value(short30).value(long30).value(string30);
 
       assertEquals(22.3, TABLE.mean("Column Integer"), 0.1);
       assertEquals(40, TABLE.mean("Column Double"), 0.1);
@@ -400,6 +404,7 @@ public class KnoxShellTableTest {
       assertEquals(20, TABLE.mean("Column Byte"), 0.1);
       assertEquals(20, TABLE.mean("Column Short"), 0.1);
       assertEquals(2.0E8, TABLE.mean("Column Long"), 0.1);
+      assertEquals(696921.52666666, TABLE.mean("Column String"), 0.1);
   }
 
   @Test
@@ -512,11 +517,9 @@ public class KnoxShellTableTest {
   @Test
   public void shouldReturnDifferentCallHistoryForDifferentTables() throws Exception {
     final KnoxShellTable table1 = new KnoxShellTable();
-    table1.id(1);
-    KnoxShellTableCallHistory.getInstance().saveCall(1, new KnoxShellTableCall("class1", "method1", true, Collections.singletonMap("param1", String.class)));
+    KnoxShellTableCallHistory.getInstance().saveCall(table1.getId(), new KnoxShellTableCall("class1", "method1", true, Collections.singletonMap("param1", String.class)));
     final KnoxShellTable table2 = new KnoxShellTable();
-    table1.id(2);
-    KnoxShellTableCallHistory.getInstance().saveCall(2, new KnoxShellTableCall("class2", "method2", false, Collections.singletonMap("param2", String.class)));
+    KnoxShellTableCallHistory.getInstance().saveCall(table2.getId(), new KnoxShellTableCall("class2", "method2", false, Collections.singletonMap("param2", String.class)));
     assertNotEquals(table1.getCallHistoryList(), table2.getCallHistoryList());
   }
 }

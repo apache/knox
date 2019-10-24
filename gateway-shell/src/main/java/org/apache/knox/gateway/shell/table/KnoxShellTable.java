@@ -42,7 +42,8 @@ public class KnoxShellTable {
         FLOAT,
         BYTE,
         SHORT,
-        LONG
+        LONG,
+        STRING
     }
 
   private static final String LINE_SEPARATOR = System.getProperty("line.separator");
@@ -52,13 +53,12 @@ public class KnoxShellTable {
   String title;
   long id;
 
-  public KnoxShellTable title(String title) {
-    this.title = title;
-    return this;
+  KnoxShellTable() {
+    this.id = getUniqueTableId();
   }
 
-  public KnoxShellTable id(long id) {
-    this.id = id;
+  public KnoxShellTable title(String title) {
+    this.title = title;
     return this;
   }
 
@@ -97,29 +97,37 @@ public class KnoxShellTable {
   }
 
   private Conversions getConversion(Comparable<? extends Object> colIndex) {
-      Conversions type = null;
-      if (colIndex instanceof Double) {
-        type = Conversions.DOUBLE;
-      }
-      else if (colIndex instanceof Integer) {
-        type = Conversions.INTEGER;
-      }
-      else if (colIndex instanceof Float) {
-        type = Conversions.FLOAT;
-      }
-      else if (colIndex instanceof Byte) {
-        type = Conversions.BYTE;
-      }
-      else if (colIndex instanceof Short) {
-        type = Conversions.SHORT;
-      }
-      else if (colIndex instanceof Long) {
-        type = Conversions.LONG;
+    Conversions type = null;
+    if (colIndex instanceof Double) {
+      type = Conversions.DOUBLE;
+    }
+    else if (colIndex instanceof Integer) {
+      type = Conversions.INTEGER;
+    }
+    else if (colIndex instanceof Float) {
+      type = Conversions.FLOAT;
+    }
+    else if (colIndex instanceof Byte) {
+      type = Conversions.BYTE;
+    }
+    else if (colIndex instanceof Short) {
+      type = Conversions.SHORT;
+    }
+    else if (colIndex instanceof Long) {
+      type = Conversions.LONG;
+    }
+    else if (colIndex instanceof String) {
+      if (((String) colIndex).matches("-?\\d+(\\.\\d+)?")) {
+          type = Conversions.STRING;
       }
       else {
-          throw new IllegalArgumentException();
+        throw new IllegalArgumentException("String contains non-numeric characters");
       }
-      return type;
+    }
+    else {
+        throw new IllegalArgumentException("Unsupported data type");
+    }
+    return type;
   }
 
   private double[] toDoubleArray(String colName) throws IllegalArgumentException {
@@ -149,6 +157,9 @@ public class KnoxShellTable {
         case LONG:
           colArray[i] = (double) ((Long) col.get(i)).longValue();
           break;
+        case STRING:
+          colArray[i] = (double) (Double.parseDouble((String) col.get(i)));
+          break;
       }
     }
     return colArray;
@@ -156,7 +167,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the mean of specified column
-   * @param colName
+   * @param colName the column for which the mean will be calculated
    * @return mean
    */
   public double mean(String colName) {
@@ -165,7 +176,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the mean of specified column
-   * @param colName
+   * @param colIndex the column for which the mean will be calculated
    * @return mean
    */
   public double mean(int colIndex) {
@@ -174,7 +185,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the median of specified column
-   * @param colName
+   * @param colName the column for which the median will be calculated
    * @return median
    */
   public double median(String colName) {
@@ -183,7 +194,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the median of specified column
-   * @param colName
+   * @param colIndex the column for which the median will be calculated
    * @return median
    */
   public double median(int colIndex) {
@@ -192,7 +203,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the mode of specified column
-   * @param colName
+   * @param colName the column for which the mode will be calculated
    * @return mode
    */
   public double mode(String colName) {
@@ -201,7 +212,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the mode of specified column
-   * @param colName
+   * @param colIndex the column for which the mode will be calculated
    * @return mode
    */
   public double mode(int colIndex) {
@@ -210,7 +221,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the sum of specified column
-   * @param colName
+   * @param colName the column for which the sum will be calculated
    * @return sum
    */
   public double sum(String colName) {
@@ -219,7 +230,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the sum of specified column
-   * @param colName
+   * @param colIndex the column for which the sum will be calculated
    * @return sum
    */
   public double sum(int colIndex) {
@@ -228,7 +239,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the max of specified column
-   * @param colName
+   * @param colName the column for which the max will be calculated
    * @return max
    */
   public double max(String colName) {
@@ -237,7 +248,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the max of specified column
-   * @param colName
+   * @param colIndex the column for which the max will be calculated
    * @return max
    */
   public double max(int colIndex) {
@@ -246,7 +257,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the min of specified column
-   * @param colName
+   * @param colName the column for which the min will be calculated
    * @return min
    */
   public double min(String colName) {
@@ -255,7 +266,7 @@ public class KnoxShellTable {
 
   /**
    * Calculates the min of specified column
-   * @param colName
+   * @param colIndex the column for which the min will be calculated
    * @return min
    */
   public double min(int colIndex) {
@@ -289,7 +300,7 @@ public class KnoxShellTable {
   }
 
   public static KnoxShellTableBuilder builder() {
-    return new KnoxShellTableBuilder(getUniqueTableId());
+    return new KnoxShellTableBuilder();
   }
 
   static long getUniqueTableId() {

@@ -653,6 +653,15 @@ public interface GatewayMessages {
   @Message(level = MessageLevel.ERROR, text = "Failed to remove credential: {1}")
   void failedToRemoveCredential(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.ERROR, text = "Failed to save token state: {0}")
+  void failedToSaveTokenState(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.ERROR, text = "Error accessing token state: {0}")
+  void errorAccessingTokenState(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.ERROR, text = "Failed to update token expiration: {0}")
+  void failedToUpdateTokenExpiration(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
   @Message(level = MessageLevel.INFO, text = "Starting service: {0}")
   void startingService(String serviceTypeName);
 

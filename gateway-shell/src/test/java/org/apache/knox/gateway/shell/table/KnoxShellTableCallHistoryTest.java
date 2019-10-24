@@ -51,13 +51,13 @@ public class KnoxShellTableCallHistoryTest {
 
   @Test
   public void shouldReturnEmptyListInCaseThereWasNoCall() throws Exception {
-    long id = 0;
+    final long id = KnoxShellTable.getUniqueTableId();
     assertTrue(KnoxShellTableCallHistory.getInstance().getCallHistory(id).isEmpty());
   }
 
   @Test
   public void shouldReturnCallHistoryInProperOrder() throws Exception {
-    final long id = 1;
+    final long id = KnoxShellTable.getUniqueTableId();
     recordCallHistory(id, 2);
     final List<KnoxShellTableCall> callHistory = KnoxShellTableCallHistory.getInstance().getCallHistory(id);
     assertFalse(callHistory.isEmpty());
@@ -67,7 +67,7 @@ public class KnoxShellTableCallHistoryTest {
 
   @Test
   public void shouldThrowIllegalArgumentExceptionIfReplayingToInappropriateStep() {
-    final long id = 2;
+    final long id = KnoxShellTable.getUniqueTableId();
     recordCallHistory(id, 3);
 
     // step 2 - second call - does not produce KnoxShellTable (builderMethod=false)
@@ -78,7 +78,7 @@ public class KnoxShellTableCallHistoryTest {
 
   @Test
   public void shouldProduceKnoxShellTableIfReplayingToValidStep() {
-    final long id = 3;
+    final long id = KnoxShellTable.getUniqueTableId();
     recordCallHistory(id, 3);
 
     final KnoxShellTable table = KnoxShellTableCallHistory.getInstance().replay(id, 3);
@@ -90,7 +90,7 @@ public class KnoxShellTableCallHistoryTest {
 
   @Test
   public void shouldNotRollBackIfNoBuilderMethodRecorded() throws Exception {
-    final long id = 4;
+    final long id = KnoxShellTable.getUniqueTableId();
     recordCallHistory(id, 1);
 
     expectedException.expect(IllegalArgumentException.class);
@@ -100,7 +100,7 @@ public class KnoxShellTableCallHistoryTest {
 
   @Test
   public void shouldNotRollBackIfOnlyOneBuilderMethodRecorded() throws Exception {
-    final long id = 5;
+    final long id = KnoxShellTable.getUniqueTableId();
     recordCallHistory(id, 3);
 
     expectedException.expect(IllegalArgumentException.class);
@@ -110,7 +110,7 @@ public class KnoxShellTableCallHistoryTest {
 
   @Test
   public void shouldRollbackToValidPreviousStep() throws Exception {
-    long id = 6;
+    final long id = KnoxShellTable.getUniqueTableId();
     recordCallHistory(id, 6);
     // filtered table where ZIPs are greater than "5" (in CSV everything is String)
     final KnoxShellTable table = KnoxShellTableCallHistory.getInstance().replay(id, 6);
