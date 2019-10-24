@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -53,6 +54,7 @@ import org.apache.knox.gateway.services.registry.ServiceDefinitionRegistry;
 import org.apache.knox.gateway.services.registry.ServiceDefinitionRegistryException;
 
 @Path("/api/v1")
+@Singleton
 public class ServiceDefinitionsResource {
 
   private static final String ERROR_CODE_CREATION = "CREATION_ERROR";
