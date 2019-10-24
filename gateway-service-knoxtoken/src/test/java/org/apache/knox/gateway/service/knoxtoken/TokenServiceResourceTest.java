@@ -17,14 +17,19 @@
  */
 package org.apache.knox.gateway.service.knoxtoken;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.easymock.EasyMock;
@@ -36,9 +41,11 @@ import javax.security.auth.Subject;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.Principal;
+import java.security.PrivilegedAction;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -49,8 +56,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -61,6 +70,11 @@ public class TokenServiceResourceTest {
 
   private static RSAPublicKey publicKey;
   private static RSAPrivateKey privateKey;
+
+  private enum TokenLifecycleOperation {
+    Renew,
+    Revoke
+  }
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
@@ -610,6 +624,286 @@ public class TokenServiceResourceTest {
     assertTrue((expiresDate.getTime() - now.getTime()) < 30000L);
   }
 
+  @Test
+  public void testTokenRenewal_ServerManagedStateNotConfigured() throws Exception {
+    Response renewalResponse = doTestTokenRenewal(null, null, null);
+    validateRenewalResponse(renewalResponse, 400, false, "Token renewal support is not configured");
+  }
+
+  @Test
+  public void testTokenRenewal_Disabled() throws Exception {
+    Response renewalResponse = doTestTokenRenewal(false, null, null);
+    validateRenewalResponse(renewalResponse, 400, false, "Token renewal support is not configured");
+  }
+
+  @Test
+  public void testTokenRenewal_Enabled_NoRenewersNoSubject() throws Exception {
+    Response renewalResponse = doTestTokenRenewal(true, null, null);
+    validateRenewalResponse(renewalResponse, 400, false, "Caller (null) not authorized to renew tokens.");
+  }
+
+  @Test
+  public void testTokenRenewal_Enabled_NoRenewersWithSubject() throws Exception {
+    final String caller = "yarn";
+    Response renewalResponse = doTestTokenRenewal(true, null, createTestSubject(caller));
+    validateRenewalResponse(renewalResponse,
+                            400,
+                            false,
+                            "Caller (" + caller + ") not authorized to renew tokens.");
+  }
+
+  @Test
+  public void testTokenRenewal_Enabled_WithRenewersNoSubject() throws Exception {
+    Response renewalResponse = doTestTokenRenewal(true, "larry, moe,  curly ", null);
+    validateRenewalResponse(renewalResponse,
+                            400,
+                            false,
+                            "Caller (null) not authorized to renew tokens.");
+  }
+
+  @Test
+  public void testTokenRenewal_Enabled_WithRenewersWithInvalidSubject() throws Exception {
+    final String caller = "shemp";
+    Response renewalResponse = doTestTokenRenewal(true, "larry, moe,  curly ", createTestSubject(caller));
+    validateRenewalResponse(renewalResponse,
+                            400,
+                            false,
+                            "Caller (" + caller + ") not authorized to renew tokens.");
+  }
+
+  @Test
+  public void testTokenRenewal_Enabled_WithRenewersWithValidSubject() throws Exception {
+    final String caller = "shemp";
+    Response renewalResponse =
+                      doTestTokenRenewal(true, ("larry, moe,  curly ," + caller), createTestSubject(caller));
+    validateSuccessfulRenewalResponse(renewalResponse);
+  }
+
+  @Test
+  public void testTokenRevocation_ServerManagedStateNotConfigured() throws Exception {
+    Response renewalResponse = doTestTokenRevocation(null, null, null);
+    validateRevocationResponse(renewalResponse,
+                               400,
+                               false,
+                               "Token revocation support is not configured");
+  }
+
+  @Test
+  public void testTokenRevocation_Disabled() throws Exception {
+    Response renewalResponse = doTestTokenRevocation(false, null, null);
+    validateRevocationResponse(renewalResponse,
+                               400,
+                               false,
+                               "Token revocation support is not configured");
+  }
+
+  @Test
+  public void testTokenRevocation_Enabled_NoRenewersNoSubject() throws Exception {
+    Response renewalResponse = doTestTokenRevocation(true, null, null);
+    validateRevocationResponse(renewalResponse,
+                               400,
+                               false,
+                               "Caller (null) not authorized to revoke tokens.");
+  }
+
+  @Test
+  public void testTokenRevocation_Enabled_NoRenewersWithSubject() throws Exception {
+    final String caller = "yarn";
+    Response renewalResponse = doTestTokenRevocation(true, null, createTestSubject(caller));
+    validateRevocationResponse(renewalResponse,
+                               400,
+                               false,
+                               "Caller (" + caller + ") not authorized to revoke tokens.");
+  }
+
+  @Test
+  public void testTokenRevocation_Enabled_WithRenewersNoSubject() throws Exception {
+    Response renewalResponse = doTestTokenRevocation(true, "larry, moe,  curly ", null);
+    validateRevocationResponse(renewalResponse,
+                               400,
+                               false,
+                               "Caller (null) not authorized to revoke tokens.");
+  }
+
+  @Test
+  public void testTokenRevocation_Enabled_WithRenewersWithInvalidSubject() throws Exception {
+    final String caller = "shemp";
+    Response renewalResponse = doTestTokenRevocation(true, "larry, moe,  curly ", createTestSubject(caller));
+    validateRevocationResponse(renewalResponse,
+                               400,
+                               false,
+                               "Caller (" + caller + ") not authorized to revoke tokens.");
+  }
+
+  @Test
+  public void testTokenRevocation_Enabled_WithRenewersWithValidSubject() throws Exception {
+    final String caller = "shemp";
+    Response renewalResponse =
+        doTestTokenRevocation(true, ("larry, moe,  curly ," + caller), createTestSubject(caller));
+    validateSuccessfulRevocationResponse(renewalResponse);
+  }
+
+  /**
+   *
+   * @param isTokenStateServerManaged true, if server-side token state management should be enabled; Otherwise, false or null.
+   * @param renewers A comma-delimited list of permitted renewer user names
+   * @param caller The user name making the request
+   *
+   * @return The Response from the token renewal request
+   *
+   * @throws Exception
+   */
+  private Response doTestTokenRenewal(final Boolean isTokenStateServerManaged,
+                                      final String  renewers,
+                                      final Subject caller) throws Exception {
+    return doTestTokenLifecyle(TokenLifecycleOperation.Renew, isTokenStateServerManaged, renewers, caller);
+  }
+
+  /**
+   *
+   * @param isTokenStateServerManaged true, if server-side token state management should be enabled; Otherwise, false or null.
+   * @param renewers A comma-delimited list of permitted renewer user names
+   * @param caller The user name making the request
+   *
+   * @return The Response from the token revocation request
+   *
+   * @throws Exception
+   */
+  private Response doTestTokenRevocation(final Boolean isTokenStateServerManaged,
+                                         final String  renewers,
+                                         final Subject caller) throws Exception {
+    return doTestTokenLifecyle(TokenLifecycleOperation.Revoke, isTokenStateServerManaged, renewers, caller);
+  }
+
+  /**
+   * @param operation A TokenLifecycleOperation
+   * @param isTokenStateServerManaged true, if server-side token state management should be enabled; Otherwise, false or null.
+   * @param renewers A comma-delimited list of permitted renewer user names
+   * @param caller The user name making the request
+   *
+   * @return The Response from the token revocation request
+   *
+   * @throws Exception
+   */
+  private Response doTestTokenLifecyle(final TokenLifecycleOperation operation,
+                                       final Boolean isTokenStateServerManaged,
+                                       final String  renewers,
+                                       final Subject caller) throws Exception {
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameter("knox.token.audiences")).andReturn("recipient1,recipient2");
+    EasyMock.expect(context.getInitParameter("knox.token.ttl")).andReturn(String.valueOf(Long.MAX_VALUE));
+    EasyMock.expect(context.getInitParameter("knox.token.target.url")).andReturn(null);
+    EasyMock.expect(context.getInitParameter("knox.token.client.data")).andReturn(null);
+    if (isTokenStateServerManaged != null) {
+      EasyMock.expect(context.getInitParameter("knox.token.exp.server-managed"))
+          .andReturn(String.valueOf(isTokenStateServerManaged));
+    }
+    EasyMock.expect(context.getInitParameter("knox.token.renewer.whitelist")).andReturn(renewers);
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services).anyTimes();
+
+    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority).anyTimes();
+
+    TokenStateService tss = new TestTokenStateService();
+    EasyMock.expect(services.getService(ServiceType.TOKEN_STATE_SERVICE)).andReturn(tss).anyTimes();
+
+    EasyMock.replay(principal, services, context, request);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    // Request a token
+    Response retResponse = tr.doGet();
+    assertEquals(200, retResponse.getStatus());
+
+    // Parse the response
+    String retString = retResponse.getEntity().toString();
+    String accessToken = getTagValue(retString, "access_token");
+    assertNotNull(accessToken);
+
+    Response response;
+    switch (operation) {
+      case Renew:
+        response = requestTokenRenewal(tr, accessToken, caller);
+        break;
+      case Revoke:
+        response = requestTokenRevocation(tr, accessToken, caller);
+        break;
+      default:
+        throw new Exception("Invalid operation: " + operation);
+    }
+    return response;
+  }
+
+  private static Response requestTokenRenewal(final TokenResource tr, final String tokenData, final Subject caller) {
+    Response response;
+    if (caller != null) {
+      response = Subject.doAs(caller, (PrivilegedAction<Response>) () -> tr.renew(tokenData));
+    } else {
+      response = tr.renew(tokenData);
+    }
+    return response;
+  }
+
+  private static Response requestTokenRevocation(final TokenResource tr, final String tokenData, final Subject caller) {
+    Response response;
+    if (caller != null) {
+      response = Subject.doAs(caller, (PrivilegedAction<Response>) () -> tr.revoke(tokenData));
+    } else {
+      response = tr.revoke(tokenData);
+    }
+    return response;
+  }
+
+  private static void validateSuccessfulRenewalResponse(final Response response) throws IOException {
+    validateRenewalResponse(response, 200, true, null);
+  }
+
+  private static void validateRenewalResponse(final Response response,
+                                              final int      expectedStatusCode,
+                                              final boolean  expectedResult,
+                                              final String   expectedMessage) throws IOException {
+    assertEquals(expectedStatusCode, response.getStatus());
+    assertTrue(response.hasEntity());
+    String responseContent = (String) response.getEntity();
+    assertNotNull(responseContent);
+    assertFalse(responseContent.isEmpty());
+    Map<String, String> json = parseJSONResponse(responseContent);
+    boolean result = Boolean.valueOf(json.get("renewed"));
+    assertEquals(expectedResult, result);
+    assertEquals(expectedMessage, json.get("error"));
+  }
+
+  private static void validateSuccessfulRevocationResponse(final Response response) throws IOException {
+    validateRevocationResponse(response, 200, true, null);
+  }
+
+  private static void validateRevocationResponse(final Response response,
+                                                 final int      expectedStatusCode,
+                                                 final boolean  expectedResult,
+                                                 final String   expectedMessage) throws IOException {
+    assertEquals(expectedStatusCode, response.getStatus());
+    assertTrue(response.hasEntity());
+    String responseContent = (String) response.getEntity();
+    assertNotNull(responseContent);
+    assertFalse(responseContent.isEmpty());
+    Map<String, String> json = parseJSONResponse(responseContent);
+    boolean result = Boolean.valueOf(json.get("revoked"));
+    assertEquals(expectedResult, result);
+    assertEquals(expectedMessage, json.get("error"));
+  }
+
+
   private String getTagValue(String token, String tagName) {
     String searchString = tagName + "\":";
     String value = token.substring(token.indexOf(searchString) + searchString.length());
@@ -622,6 +916,94 @@ public class TokenServiceResourceTest {
       return value.substring(0, value.indexOf(','));
     } else {
       return value.substring(0, value.length() - 1);
+    }
+  }
+
+  /**
+   * Create a Subject for testing.
+   *
+   * @param username The user identifier
+   *
+   * @return A Subject
+   */
+  private Subject createTestSubject(final String username) {
+    Subject s = new Subject();
+
+    Set<Principal> principals = s.getPrincipals();
+    principals.add(new PrimaryPrincipal(username));
+
+    return s;
+  }
+
+  private static Map<String, String> parseJSONResponse(final String response) throws IOException {
+    return (new ObjectMapper()).readValue(response, new TypeReference<Map<String, String>>(){});
+  }
+
+
+  private static class TestTokenStateService implements TokenStateService {
+    @Override
+    public void addToken(JWTToken token, long issueTime) {
+      addToken(token.getPayload(), issueTime, token.getExpiresDate().getTime());
+    }
+
+    @Override
+    public void addToken(String token, long issueTime, long expiration) {
+    }
+
+    @Override
+    public boolean isExpired(JWTToken token) {
+      return isExpired(token.getPayload());
+    }
+
+    @Override
+    public boolean isExpired(String token) {
+      return false;
+    }
+
+    @Override
+    public void revokeToken(JWTToken token) {
+      revokeToken(token.getPayload());
+    }
+
+    @Override
+    public void revokeToken(String token) {
+    }
+
+    @Override
+    public long renewToken(JWTToken token) {
+      return renewToken(token.getPayload());
+    }
+
+    @Override
+    public long renewToken(String token) {
+      return renewToken(token, 0L);
+    }
+
+    @Override
+    public long renewToken(JWTToken token, Long renewInterval) {
+      return renewToken(token.getPayload());
+    }
+
+    @Override
+    public long renewToken(String token, Long renewInterval) {
+      return 0;
+    }
+
+    @Override
+    public long getTokenExpiration(String token) {
+      return 0;
+    }
+
+    @Override
+    public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
+    }
+
+    @Override
+    public void start() throws ServiceLifecycleException {
+    }
+
+    @Override
+    public void stop() throws ServiceLifecycleException {
     }
   }
 

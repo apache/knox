@@ -66,4 +66,8 @@ public interface TokenServiceMessages {
 
   @Message( level = MessageLevel.WARN, text = "Unable to acquire cert for endpoint clients - assume trust will be provisioned separately: {0}.")
   void unableToAcquireCertForEndpointClients(@StackTrace( level = MessageLevel.DEBUG ) Exception e);
+
+  @Message( level = MessageLevel.ERROR, text = "The specified value for the {0} configuration property is not valid: {1}")
+  void invalidConfigValue(String name, String value, @StackTrace( level = MessageLevel.DEBUG ) Exception e);
+
 }

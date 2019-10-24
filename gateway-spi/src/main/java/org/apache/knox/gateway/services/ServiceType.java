@@ -32,6 +32,7 @@ public enum ServiceType {
   SERVICE_REGISTRY_SERVICE("ServiceRegistryService"),
   SSL_SERVICE("SSLService"),
   TOKEN_SERVICE("TokenService"),
+  TOKEN_STATE_SERVICE("TokenStateService"),
   TOPOLOGY_SERVICE("TopologyService");
 
   private final String serviceTypeName;

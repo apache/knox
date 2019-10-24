@@ -43,7 +43,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
-      super.init(filterConfig);
+    super.init(filterConfig);
 
     // expected audiences or null
     String expectedAudiences = filterConfig.getInitParameter(KNOX_TOKEN_AUDIENCES);

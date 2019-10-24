@@ -29,6 +29,7 @@ import org.apache.knox.gateway.services.registry.impl.DefaultServiceDefinitionRe
 import org.apache.knox.gateway.services.metrics.impl.DefaultMetricsService;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.impl.RemoteAliasService;
+import org.apache.knox.gateway.services.token.impl.AliasBasedTokenStateService;
 import org.apache.knox.gateway.services.topology.impl.DefaultClusterConfigurationMonitorService;
 import org.apache.knox.gateway.services.topology.impl.DefaultTopologyService;
 import org.apache.knox.gateway.services.hostmap.impl.DefaultHostMapperService;
@@ -112,6 +113,11 @@ public class DefaultGatewayServices extends AbstractGatewayServices {
     // prolly should not allow the token service to be looked up?
     addService(ServiceType.TOKEN_SERVICE, ts);
 
+    AliasBasedTokenStateService tss = new AliasBasedTokenStateService();
+    tss.setAliasService(alias);
+    tss.init(config, options);
+    addService(ServiceType.TOKEN_STATE_SERVICE, tss);
+
     DefaultServiceRegistryService sr = new DefaultServiceRegistryService();
     sr.setCryptoService( crypto );
     sr.init( config, options );
@@ -124,7 +130,6 @@ public class DefaultGatewayServices extends AbstractGatewayServices {
     DefaultServerInfoService sis = new DefaultServerInfoService();
     sis.init( config, options );
     addService(ServiceType.SERVER_INFO_SERVICE, sis );
-
 
     DefaultClusterConfigurationMonitorService ccs = new DefaultClusterConfigurationMonitorService();
     ccs.setAliasService(alias);

@@ -52,6 +52,7 @@ public class AbstractGatewayServicesTest {
         ServiceType.KEYSTORE_SERVICE,
         ServiceType.ALIAS_SERVICE,
         ServiceType.SSL_SERVICE,
+        ServiceType.TOKEN_STATE_SERVICE,
         ServiceType.TOKEN_SERVICE,
         ServiceType.SERVER_INFO_SERVICE,
         ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE,
