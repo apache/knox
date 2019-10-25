@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.services.topology;
 
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.service.definition.ServiceDefinitionChangeListener;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.TopologyListener;
@@ -28,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 
-public interface TopologyService extends Service {
+public interface TopologyService extends Service, ServiceDefinitionChangeListener {
 
   void reloadTopologies();
 

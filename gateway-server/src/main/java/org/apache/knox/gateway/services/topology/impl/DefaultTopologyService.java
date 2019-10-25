@@ -36,17 +36,20 @@ import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.definition.ServiceDefinition;
+import org.apache.knox.gateway.service.definition.ServiceDefinitionChangeListener;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
+import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.TopologyEvent;
 import org.apache.knox.gateway.topology.TopologyListener;
 import org.apache.knox.gateway.topology.TopologyMonitor;
 import org.apache.knox.gateway.topology.TopologyProvider;
+import org.apache.knox.gateway.topology.Version;
 import org.apache.knox.gateway.topology.builder.TopologyBuilder;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
@@ -86,7 +89,7 @@ import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 
 public class DefaultTopologyService
     extends FileAlterationListenerAdaptor
-    implements TopologyService, TopologyMonitor, TopologyProvider, FileFilter, FileAlterationListener {
+    implements TopologyService, TopologyMonitor, TopologyProvider, FileFilter, FileAlterationListener, ServiceDefinitionChangeListener {
 
   private static final JAXBContext jaxbContext = getJAXBContext();
 
@@ -528,6 +531,19 @@ public class DefaultTopologyService
   @Override
   public void addTopologyChangeListener(TopologyListener listener) {
     listeners.add(listener);
+  }
+
+  @Override
+  public void onServiceDefinitionChange(String name, String role, String version) {
+    getTopologies().stream().filter(topology -> topology.getServices().stream().anyMatch(service -> isRelevantService(service, role, name, version))).forEach(topology -> {
+      log.redeployingTopologyOnServiceDefinitionChange(topology.getName(), name, role, version);
+      redeployTopology(topology);
+    });
+  }
+
+  private boolean isRelevantService(Service service, String role, String name, String version) {
+    return service.getRole().equalsIgnoreCase(role)
+        && (service.getName() == null || service.getName().equalsIgnoreCase(name) && (service.getVersion() == null || service.getVersion().equals(new Version(version))));
   }
 
   @Override

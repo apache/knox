@@ -59,7 +59,11 @@ public class XmlUrlRewriteRulesExporter implements UrlRewriteRulesExporter, XmlR
   }
 
   @Override
-  public void store( UrlRewriteRulesDescriptor descriptor, Writer writer ) throws IOException {
+  public Object store(UrlRewriteRulesDescriptor descriptor, Writer writer) throws IOException {
+    return store(descriptor, writer, false);
+  }
+
+  public Object store( UrlRewriteRulesDescriptor descriptor, Writer writer, boolean omitXmlHeader ) throws IOException {
     try {
       Document document = XmlUtils.createDocument();
 
@@ -89,12 +93,15 @@ public class XmlUrlRewriteRulesExporter implements UrlRewriteRulesExporter, XmlR
         }
       }
 
-      XmlUtils.writeXml( document, writer );
+      XmlUtils.writeXml( document, writer, omitXmlHeader);
+
+      return document;
 
     } catch( ParserConfigurationException | TransformerException e ) {
       throw new IOException( e );
     } catch( InvocationTargetException | IllegalAccessException | IntrospectionException | NoSuchMethodException e ) {
       LOG.failedToWriteRulesDescriptor( e );
+      return null;
     }
   }
 

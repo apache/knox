@@ -26,6 +26,6 @@ public interface UrlRewriteRulesExporter {
 
   String getFormat();
 
-  void store( UrlRewriteRulesDescriptor rules, Writer writer ) throws IOException;
+  Object store( UrlRewriteRulesDescriptor rules, Writer writer ) throws IOException;
 
 }

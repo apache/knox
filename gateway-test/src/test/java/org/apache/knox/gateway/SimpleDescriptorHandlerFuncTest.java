@@ -19,6 +19,7 @@ package org.apache.knox.gateway;
 import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.registry.ServiceDefinitionRegistry;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
@@ -170,6 +171,12 @@ public class SimpleDescriptorHandlerFuncTest {
 
       // Setup the Gateway Services
       GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
+
+      //Service Definition Registry
+      final ServiceDefinitionRegistry serviceDefinitionRegistry = EasyMock.createNiceMock(ServiceDefinitionRegistry.class);
+      EasyMock.expect(serviceDefinitionRegistry.getServiceDefinitions()).andReturn(Collections.emptySet()).anyTimes();
+      EasyMock.replay(serviceDefinitionRegistry);
+      EasyMock.expect(gatewayServices.getService(ServiceType.SERVICE_DEFINITION_REGISTRY)).andReturn(serviceDefinitionRegistry).anyTimes();
 
       // Master Service
       MasterService ms = EasyMock.createNiceMock(MasterService.class);

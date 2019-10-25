@@ -36,11 +36,19 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-service-definitions</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-util-common</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-util-configinjector</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-provider-rewrite-common</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
@@ -136,6 +144,10 @@
             <groupId>com.sun.activation</groupId>
             <artifactId>javax.activation</artifactId>
         </dependency>
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.apache.knox</groupId>
@@ -151,10 +163,6 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-util</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.knox</groupId>
-            <artifactId>gateway-service-definitions</artifactId>
         </dependency>
     </dependencies>
 </project>

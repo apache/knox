@@ -54,6 +54,10 @@
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-provider-rewrite</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-provider-rewrite-common</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>commons-codec</groupId>

@@ -61,7 +61,10 @@
             <groupId>org.glassfish</groupId>
             <artifactId>javax.json</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-provider-rewrite-common</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-i18n</artifactId>
@@ -77,6 +80,10 @@
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-util-urltemplate</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-service-definitions</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
@@ -217,6 +224,10 @@
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-service-definitions</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-provider-rewrite</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>

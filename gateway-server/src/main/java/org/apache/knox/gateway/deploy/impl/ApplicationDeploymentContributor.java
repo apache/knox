@@ -58,8 +58,8 @@ import java.util.Map;
 public class ApplicationDeploymentContributor extends ServiceDeploymentContributorBase {
   private static final JAXBContext jaxbContext = getJAXBContext();
 
-  private static final String SERVICE_DEFINITION_FILE_NAME = "service.xml";
-  private static final String REWRITE_RULES_FILE_NAME = "rewrite.xml";
+  public static final String SERVICE_DEFINITION_FILE_NAME = "service.xml";
+  public static final String REWRITE_RULES_FILE_NAME = "rewrite.xml";
   private static final String XFORWARDED_FILTER_NAME = "XForwardedHeaderFilter";
   private static final String XFORWARDED_FILTER_ROLE = "xforwardedheaders";
   private static final String COOKIE_SCOPING_FILTER_NAME = "CookieScopeServletFilter";
