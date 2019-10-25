@@ -14,12 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import {RewriteRules} from './rewrite.rules';
+import {Service} from './service';
 
-export class Resource {
-    timestamp: number;
+export class ServiceDefinition {
     name: string;
-    uri: string;
-    href: string;
-    content: string;
     service: string;
+    role: string;
+    version: string;
 }

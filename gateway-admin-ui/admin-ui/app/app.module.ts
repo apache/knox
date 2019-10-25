@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 import {NgModule} from '@angular/core';
+import {DataTableModule} from 'angular2-datatable';
 import {BrowserModule} from '@angular/platform-browser';
 import {HttpClientModule, HttpClientXsrfModule} from '@angular/common/http';
 import {FormsModule} from '@angular/forms';
@@ -23,6 +24,8 @@ import {APP_BASE_HREF} from '@angular/common';
 
 import {AppComponent} from './app.component';
 import {TopologyService} from './topology.service';
+import {ServiceDefinitionService} from './service-definition/servicedefinition.service';
+import {ServiceDefinitionDetailComponent} from './service-definition/servicedefinition-detail.component';
 import {GatewayVersionService} from './gateway-version.service';
 import {GatewayVersionComponent} from './gateway-version.component';
 import {TopologyComponent} from './topology.component';
@@ -51,11 +54,13 @@ import {ProviderConfigWizardComponent} from './provider-config-wizard/provider-c
         FormsModule,
         CustomFormsModule,
         BsModalModule,
-        AceEditorModule
+        AceEditorModule,
+        DataTableModule
     ],
     declarations: [AppComponent,
         TopologyComponent,
         TopologyDetailComponent,
+        ServiceDefinitionDetailComponent,
         GatewayVersionComponent,
         XmlPipe,
         JsonPrettyPipe,
@@ -70,6 +75,7 @@ import {ProviderConfigWizardComponent} from './provider-config-wizard/provider-c
         ProviderConfigWizardComponent
     ],
     providers: [TopologyService,
+        ServiceDefinitionService,
         GatewayVersionService,
         ResourceComponent,
         ResourceTypesService,

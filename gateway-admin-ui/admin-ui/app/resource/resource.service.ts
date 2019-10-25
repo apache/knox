@@ -31,6 +31,7 @@ export class ResourceService {
     descriptorsUrl = this.apiUrl + 'descriptors';
     topologiesUrl = this.apiUrl + 'topologies';
     serviceDiscoveriesUrl = this.apiUrl + 'servicediscoveries';
+    serviceDefinitionsUrl = this.apiUrl + 'servicedefinitions';
 
     selectedResourceTypeSource = new Subject<string>();
     selectedResourceType$ = this.selectedResourceTypeSource.asObservable();
@@ -43,7 +44,6 @@ export class ResourceService {
 
     changedProviderConfigurationSource = new Subject<Array<ProviderConfig>>();
     changedProviderConfiguration$ = this.changedProviderConfigurationSource.asObservable();
-
 
     constructor(private http: HttpClient) {
         this.initSupportedDiscoveryTypes();
@@ -77,6 +77,9 @@ export class ResourceService {
             }
             case 'Descriptors': {
                 return this.getDescriptorResources();
+            }
+            case 'Service Definitions': {
+                return this.getServiceDefinitionResources();
             }
             case 'Topologies': {
                 return this.getTopologyResources();
@@ -129,11 +132,32 @@ export class ResourceService {
             });
     }
 
+    getServiceDefinitionResources(): Promise<Resource[]> {
+        let headers = this.addJsonHeaders(new HttpHeaders());
+        return this.http.get(this.serviceDefinitionsUrl + '?serviceOnly=true', {headers: headers})
+            .toPromise()
+            .then(response => response['serviceDefinitions'].serviceDefinition as Resource[])
+            .catch((err: HttpErrorResponse) => {
+                console.debug('ResourceService --> getServiceDefinitionResources() --> error: HTTP ' + err.status + ' ' + err.message);
+                if (err.status === 401) {
+                    window.location.assign(document.location.pathname);
+                } else {
+                    return this.handleError(err);
+                }
+            });
+    }
+
     getResource(resType: string, res: Resource): Promise<string> {
         if (res) {
+            let href = res.href;
+            if (resType === 'Service Definitions') {
+                href = this.serviceDefinitionsUrl + '/' + res.service['name'] + '/' + res.service['role'] + '/' + res.service['version']
+                    + '?serviceOnly=true';
+            }
             let headers = new HttpHeaders();
-            headers = (resType === 'Topologies') ? this.addXmlHeaders(headers) : this.addHeaders(headers, res.name);
-            return this.http.get(res.href, {headers: headers, responseType: 'text'})
+            headers = (resType === 'Topologies' || resType === 'Service Definitions') ? this.addXmlHeaders(headers)
+                : this.addHeaders(headers, res.name);
+            return this.http.get(href, {headers: headers, responseType: 'text'})
                 .toPromise()
                 .then(response => {
                     console.debug('ResourceService --> Loading resource ' + res.name + ' :\n' + response);
@@ -343,12 +367,15 @@ export class ResourceService {
     }
 
     public getResourceDisplayName(res: Resource): string {
-        if (res && res.name) {
-            let index = res.name.lastIndexOf('.');
-            return index > 0 ? res.name.substring(0, index) : res.name;
-        } else {
-            return null;
+        if (res) {
+            if (res.service) {
+                return res.service['role'] + ' (' + res.service['version'] + ')';
+            } else if (res.name) {
+                let index = res.name.lastIndexOf('.');
+                return index > 0 ? res.name.substring(0, index) : res.name;
+            }
         }
+        return null;
     }
 
     private handleError(error: any): Promise<any> {

@@ -1,6 +1,6 @@
 <div>
     <div class="table-responsive" style="width:100%; overflow: auto; overflow-y: scroll">
-        <table class="table table-hover">
+        <table class="table table-hover" [mfData]="resources" #mf="mfDataTable" [mfRowsOnPage]="10">
             <thead>
             <tr>
                 <th>
@@ -23,7 +23,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr *ngFor="let resource of resources"
+            <tr *ngFor="let resource of mf.data"
                 [class.selected]="resource === selectedResource"
                 [class.active]="isSelectedResource(resource)"
                 (click)="onSelect(resource)"
@@ -32,6 +32,13 @@
                 <td *ngIf="resourceType === 'Topologies'">{{resource.timestamp | date:'medium'}}</td>
             </tr>
             </tbody>
+		    <tfoot>
+		    <tr>
+		        <td colspan="4">
+		            <mfBootstrapPaginator [rowsOnPageSet]="[5,10,15]"></mfBootstrapPaginator>
+		        </td>
+		    </tr>
+		    </tfoot>
         </table>
     </div>
     <div>

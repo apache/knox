@@ -16,6 +16,7 @@
  */
 import {Component} from '@angular/core';
 import {TopologyService} from './topology.service';
+import {ServiceDefinitionService} from './service-definition/servicedefinition.service';
 import {ResourceTypesService} from './resourcetypes/resourcetypes.service';
 
 @Component({
@@ -35,11 +36,12 @@ import {ResourceTypesService} from './resourcetypes/resourcetypes.service';
             </div>
         </div>
     `,
-    providers: [TopologyService, ResourceTypesService]
+    providers: [TopologyService, ServiceDefinitionService, ResourceTypesService]
 })
 
 export class AppComponent {
     constructor(private topologyService: TopologyService,
+                private serviceDefinitionService: ServiceDefinitionService,
                 private resourcetypesService: ResourceTypesService) {
     }
 }
