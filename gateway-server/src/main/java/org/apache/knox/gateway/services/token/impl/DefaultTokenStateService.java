@@ -166,7 +166,7 @@ public class DefaultTokenStateService implements TokenStateService {
   }
 
   /**
-   * @param token
+   * @param token token to check
    * @return false, if the service has previously stored the specified token; Otherwise, true.
    */
   protected boolean isUnknown(final String token) {
