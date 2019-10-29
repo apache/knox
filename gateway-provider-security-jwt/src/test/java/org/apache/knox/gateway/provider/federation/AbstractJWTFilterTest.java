@@ -43,8 +43,10 @@ import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.net.InetAddress;
@@ -127,7 +129,21 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
           SERVICE_URL);
-      EasyMock.replay(request);
+      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
+        @Override
+        public void write(int b) {
+        }
+
+        @Override
+        public void setWriteListener(WriteListener arg0) {
+        }
+
+        @Override
+        public boolean isReady() {
+          return false;
+        }
+      }).anyTimes();
+      EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
@@ -159,7 +175,21 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
           SERVICE_URL);
-      EasyMock.replay(request);
+      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
+        @Override
+        public void write(int b) {
+        }
+
+        @Override
+        public void setWriteListener(WriteListener arg0) {
+        }
+
+        @Override
+        public boolean isReady() {
+          return false;
+        }
+      }).anyTimes();
+      EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
@@ -193,7 +223,21 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
           SERVICE_URL);
-      EasyMock.replay(request);
+      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
+        @Override
+        public void write(int b) {
+        }
+
+        @Override
+        public void setWriteListener(WriteListener arg0) {
+        }
+
+        @Override
+        public boolean isReady() {
+          return false;
+        }
+      }).anyTimes();
+      EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
@@ -223,7 +267,21 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
           SERVICE_URL);
-      EasyMock.replay(request);
+      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
+        @Override
+        public void write(int b) {
+        }
+
+        @Override
+        public void setWriteListener(WriteListener arg0) {
+        }
+
+        @Override
+        public boolean isReady() {
+          return false;
+        }
+      }).anyTimes();
+      EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
@@ -255,7 +313,21 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
           SERVICE_URL);
-      EasyMock.replay(request);
+      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
+        @Override
+        public void write(int b) {
+        }
+
+        @Override
+        public void setWriteListener(WriteListener arg0) {
+        }
+
+        @Override
+        public boolean isReady() {
+          return false;
+        }
+      }).anyTimes();
+      EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
@@ -284,7 +356,21 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
           SERVICE_URL);
-      EasyMock.replay(request);
+      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
+        @Override
+        public void write(int b) {
+        }
+
+        @Override
+        public void setWriteListener(WriteListener arg0) {
+        }
+
+        @Override
+        public boolean isReady() {
+          return false;
+        }
+      }).anyTimes();
+      EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
@@ -316,7 +402,21 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
           SERVICE_URL);
-      EasyMock.replay(request);
+      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
+        @Override
+        public void write(int b) {
+        }
+
+        @Override
+        public void setWriteListener(WriteListener arg0) {
+        }
+
+        @Override
+        public boolean isReady() {
+          return false;
+        }
+      }).anyTimes();
+      EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
@@ -351,7 +451,21 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
           SERVICE_URL);
-      EasyMock.replay(request);
+      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
+        @Override
+        public void write(int b) {
+        }
+
+        @Override
+        public void setWriteListener(WriteListener arg0) {
+        }
+
+        @Override
+        public boolean isReady() {
+          return false;
+        }
+      }).anyTimes();
+      EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
@@ -371,7 +485,7 @@ public abstract class AbstractJWTFilterTest  {
       handler.init(new TestFilterConfig(props));
 
       SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice",
-                             new Date(new Date().getTime() - 1000), privateKey);
+          new Date(new Date().getTime() - 1000), privateKey);
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
@@ -382,7 +496,21 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
           SERVICE_URL);
-      EasyMock.replay(request);
+      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
+        @Override
+        public void write(int b) {
+        }
+
+        @Override
+        public void setWriteListener(WriteListener arg0) {
+        }
+
+        @Override
+        public boolean isReady() {
+          return false;
+        }
+      }).anyTimes();
+      EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
@@ -410,7 +538,21 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
           SERVICE_URL).anyTimes();
-      EasyMock.replay(request);
+      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
+        @Override
+        public void write(int b) {
+        }
+
+        @Override
+        public void setWriteListener(WriteListener arg0) {
+        }
+
+        @Override
+        public boolean isReady() {
+          return false;
+        }
+      }).anyTimes();
+      EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
@@ -441,7 +583,21 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
           SERVICE_URL).anyTimes();
-      EasyMock.replay(request);
+      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
+        @Override
+        public void write(int b) {
+        }
+
+        @Override
+        public void setWriteListener(WriteListener arg0) {
+        }
+
+        @Override
+        public boolean isReady() {
+          return false;
+        }
+      }).anyTimes();
+      EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
@@ -476,7 +632,21 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
           SERVICE_URL).anyTimes();
-      EasyMock.replay(request);
+      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
+        @Override
+        public void write(int b) {
+        }
+
+        @Override
+        public void setWriteListener(WriteListener arg0) {
+        }
+
+        @Override
+        public boolean isReady() {
+          return false;
+        }
+      }).anyTimes();
+      EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
@@ -517,7 +687,21 @@ public abstract class AbstractJWTFilterTest  {
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
-      EasyMock.replay(request);
+      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
+        @Override
+        public void write(int b) {
+        }
+
+        @Override
+        public void setWriteListener(WriteListener arg0) {
+        }
+
+        @Override
+        public boolean isReady() {
+          return false;
+        }
+      }).anyTimes();
+      EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
@@ -545,7 +729,21 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
           SERVICE_URL);
-      EasyMock.replay(request);
+      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
+        @Override
+        public void write(int b) {
+        }
+
+        @Override
+        public void setWriteListener(WriteListener arg0) {
+        }
+
+        @Override
+        public boolean isReady() {
+          return false;
+        }
+      }).anyTimes();
+      EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
@@ -574,7 +772,21 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
           SERVICE_URL);
-      EasyMock.replay(request);
+      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
+        @Override
+        public void write(int b) {
+        }
+
+        @Override
+        public void setWriteListener(WriteListener arg0) {
+        }
+
+        @Override
+        public boolean isReady() {
+          return false;
+        }
+      }).anyTimes();
+      EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
@@ -606,7 +818,21 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
           SERVICE_URL);
-      EasyMock.replay(request);
+      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
+        @Override
+        public void write(int b) {
+        }
+
+        @Override
+        public void setWriteListener(WriteListener arg0) {
+        }
+
+        @Override
+        public boolean isReady() {
+          return false;
+        }
+      }).anyTimes();
+      EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
@@ -637,7 +863,21 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
           SERVICE_URL);
-      EasyMock.replay(request);
+      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
+        @Override
+        public void write(int b) {
+        }
+
+        @Override
+        public void setWriteListener(WriteListener arg0) {
+        }
+
+        @Override
+        public boolean isReady() {
+          return false;
+        }
+      }).anyTimes();
+      EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
@@ -668,7 +908,21 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
           SERVICE_URL);
-      EasyMock.replay(request);
+      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
+        @Override
+        public void write(int b) {
+        }
+
+        @Override
+        public void setWriteListener(WriteListener arg0) {
+        }
+
+        @Override
+        public boolean isReady() {
+          return false;
+        }
+      }).anyTimes();
+      EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
