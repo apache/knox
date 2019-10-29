@@ -1,4 +1,4 @@
-<div *ngIf="resourceType && resourceType !== 'Topologies'" class="panel panel-default">
+<div *ngIf="resourceType && resourceType !== 'Topologies' && resourceType !== 'Service Definitions'" class="panel panel-default">
     <div class="panel-heading">
         <h4 class="panel-title">
             {{ getTitleSubject() }} Detail <span *ngIf="hasSelectedResource()"
@@ -550,4 +550,9 @@
 <!-- Topology Details -->
 <div *ngIf="resourceType === 'Topologies'">
     <app-topology-detail></app-topology-detail>
+</div>
+
+<!-- Service Definition Details -->
+<div *ngIf="resourceType === 'Service Definitions'">
+    <app-servicedefinition-detail></app-servicedefinition-detail>
 </div>

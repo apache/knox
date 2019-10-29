@@ -15,11 +15,8 @@
  * limitations under the License.
  */
 
-export class Resource {
-    timestamp: number;
+export class RewriteRule {
+    dir: string;
     name: string;
-    uri: string;
-    href: string;
-    content: string;
-    service: string;
+    pattern: string;
 }

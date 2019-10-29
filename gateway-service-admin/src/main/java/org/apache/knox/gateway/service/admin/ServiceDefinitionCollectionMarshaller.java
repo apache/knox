@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
@@ -28,17 +30,19 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
-import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 
 import org.apache.knox.gateway.service.admin.ServiceDefinitionsResource.ServiceDefinitionsWrapper;
+import org.eclipse.persistence.jaxb.JAXBContextFactory;
+import org.eclipse.persistence.jaxb.JAXBContextProperties;
 
 @Provider
 @Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
 public class ServiceDefinitionCollectionMarshaller implements MessageBodyWriter<ServiceDefinitionsResource.ServiceDefinitionsWrapper> {
 
-  private static Marshaller marshaller;
+  private static Marshaller xmlMarshaller;
+  private static Marshaller jsonMarshaller;
 
   @Override
   public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
@@ -54,17 +58,33 @@ public class ServiceDefinitionCollectionMarshaller implements MessageBodyWriter<
   public void writeTo(ServiceDefinitionsWrapper instance, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType,
       MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
     try {
-      getMarshaller().marshal(instance, entityStream);
+      getMarshaller(mediaType).marshal(instance, entityStream);
     } catch (JAXBException e) {
       throw new IOException(e);
     }
   }
 
-  private synchronized Marshaller getMarshaller() throws JAXBException {
-    if (marshaller == null) {
-      marshaller = JAXBContext.newInstance(ServiceDefinitionsWrapper.class).createMarshaller();
-      marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+  private Marshaller getMarshaller(MediaType mediaType) throws JAXBException {
+    return MediaType.APPLICATION_JSON_TYPE.getSubtype().equals(mediaType.getSubtype()) ? getJsonMarshaller() : getXmlMarshaller();
+  }
+
+  private synchronized Marshaller getXmlMarshaller() throws JAXBException {
+    if (xmlMarshaller == null) {
+      final Map<String, Object> properties = new HashMap<>(1);
+      properties.put(JAXBContextProperties.MEDIA_TYPE, MediaType.APPLICATION_XML);
+      xmlMarshaller = JAXBContextFactory.createContext(new Class[] { ServiceDefinitionsWrapper.class }, properties).createMarshaller();
+      xmlMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
     }
-    return marshaller;
+    return xmlMarshaller;
+  }
+
+  private synchronized Marshaller getJsonMarshaller() throws JAXBException {
+    if (jsonMarshaller == null) {
+      final Map<String, Object> properties = new HashMap<>(1);
+      properties.put(JAXBContextProperties.MEDIA_TYPE, MediaType.APPLICATION_JSON);
+      jsonMarshaller = JAXBContextFactory.createContext(new Class[] { ServiceDefinitionsWrapper.class }, properties).createMarshaller();
+      jsonMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+    }
+    return jsonMarshaller;
   }
 }

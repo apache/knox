@@ -33,6 +33,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -148,7 +149,7 @@ public class DefaultServiceDefinitionRegistry implements ServiceDefinitionRegist
   public Set<ServiceDefinitionPair> getServiceDefinitions() {
     readLock.lock();
     try {
-      return serviceDefinitions;
+      return Collections.unmodifiableSet(serviceDefinitions);
     } finally {
       readLock.unlock();
     }
@@ -157,11 +158,13 @@ public class DefaultServiceDefinitionRegistry implements ServiceDefinitionRegist
   @Override
   public void saveServiceDefinition(ServiceDefinitionPair serviceDefinition) throws ServiceDefinitionRegistryException {
     saveOrUpdateServiceDefinition(serviceDefinition, false);
+    LOG.savedServiceDefinitionChange(serviceDefinition.getService().getName(), serviceDefinition.getService().getRole(), serviceDefinition.getService().getVersion());
   }
 
   @Override
   public void saveOrUpdateServiceDefinition(ServiceDefinitionPair serviceDefinition) throws ServiceDefinitionRegistryException {
     saveOrUpdateServiceDefinition(serviceDefinition, true);
+    LOG.updatedServiceDefinitionChange(serviceDefinition.getService().getName(), serviceDefinition.getService().getRole(), serviceDefinition.getService().getVersion());
   }
 
   public void saveOrUpdateServiceDefinition(ServiceDefinitionPair serviceDefinition, boolean allowUpdate) throws ServiceDefinitionRegistryException {
@@ -228,6 +231,7 @@ public class DefaultServiceDefinitionRegistry implements ServiceDefinitionRegist
         writeLock.unlock();
       }
       notifyListeners(name, role, version);
+      LOG.deletedServiceDefinitionChange(name, role, version);
     } else {
       throw new ServiceDefinitionRegistryException("There is no service definition with the given attributes: " + name + "," + role + "," + version);
     }

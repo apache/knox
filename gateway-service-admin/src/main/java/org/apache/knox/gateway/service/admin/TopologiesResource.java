@@ -113,19 +113,23 @@ public class TopologiesResource {
                 (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
       for (org.apache.knox.gateway.topology.Topology t : ts.getTopologies()) {
         if (t.getName().equals(id)) {
+          // we need to convert first so that the original topology does not get
+          // overwritten in TopologyService (i.e. URI does not change from 'file://...' to
+          // 'https://...'
+          final Topology convertedTopology = BeanConverter.getTopology(t);
           try {
-            t.setUri(new URI( buildURI(t, config, request) ));
+            convertedTopology.setUri(new URI( buildURI(t, config, request) ));
           } catch (URISyntaxException se) {
-            t.setUri(null);
+            convertedTopology.setUri(null);
           }
 
           // For any read-only override topology, mark it as generated to discourage modification.
-          List<String> ambariManagedTopos = config.getReadOnlyOverrideTopologyNames();
-          if (ambariManagedTopos.contains(t.getName())) {
-            t.setGenerated(true);
+          final List<String> ambariManagedTopos = config.getReadOnlyOverrideTopologyNames();
+          if (ambariManagedTopos.contains(convertedTopology.getName())) {
+            convertedTopology.setGenerated(true);
           }
 
-          return BeanConverter.getTopology(t);
+          return convertedTopology;
         }
       }
     }

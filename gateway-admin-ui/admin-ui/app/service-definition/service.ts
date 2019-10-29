@@ -15,11 +15,8 @@
  * limitations under the License.
  */
 
-export class Resource {
-    timestamp: number;
+export class Service {
     name: string;
-    uri: string;
-    href: string;
-    content: string;
-    service: string;
+    role: string;
+    version: string;
 }

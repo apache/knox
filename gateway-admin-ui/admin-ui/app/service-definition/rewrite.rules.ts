@@ -14,12 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import {RewriteRule} from './rewrite.rule';
 
-export class Resource {
-    timestamp: number;
-    name: string;
-    uri: string;
-    href: string;
-    content: string;
-    service: string;
+export class RewriteRules {
+    rules: RewriteRule[];
 }

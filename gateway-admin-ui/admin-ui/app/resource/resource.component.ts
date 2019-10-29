@@ -20,6 +20,8 @@ import {ResourceService} from './resource.service';
 import {Resource} from './resource';
 import {TopologyService} from '../topology.service';
 import {Topology} from '../topology';
+import {ServiceDefinitionService} from '../service-definition/servicedefinition.service';
+import {ServiceDefinition} from '../service-definition/servicedefinition';
 import {HttpErrorResponse} from '@angular/common/http';
 
 @Component({
@@ -35,7 +37,8 @@ export class ResourceComponent implements OnInit {
 
     constructor(private resourceTypesService: ResourceTypesService,
                 private resourceService: ResourceService,
-                private topologyService: TopologyService) {
+                private topologyService: TopologyService,
+                private serviceDefinitionService: ServiceDefinitionService) {
     }
 
     ngOnInit() {
@@ -55,7 +58,11 @@ export class ResourceComponent implements OnInit {
 
                 let debugMsg = 'ResourceComponent --> Found ' + resources.length + ' ' + resType + ' resources\n';
                 for (let res of resources) {
-                    debugMsg += '  ' + res.name + '\n';
+                    if (res.service) {
+                        debugMsg += '  ' + res.service['role'] + ' (' + res.service['version'] + ')' + '\n';
+                    } else {
+                        debugMsg += '  ' + res.name + '\n';
+                    }
                 }
                 console.debug(debugMsg);
             })
@@ -73,6 +80,13 @@ export class ResourceComponent implements OnInit {
             topology.name = resource.name;
             topology.href = resource.href;
             this.topologyService.selectedTopology(topology);
+        } else if (this.resourceType === 'Service Definitions') {
+           let serviceDefinition = new ServiceDefinition();
+           serviceDefinition.name = resource.name;
+           serviceDefinition.service = resource.service['name'];
+           serviceDefinition.role = resource.service['role'];
+           serviceDefinition.version = resource.service['version'];
+           this.serviceDefinitionService.selectedServiceDefinition(serviceDefinition);
         } else {
             // Otherwise, notify the resource service
             this.resourceService.selectedResource(resource);
@@ -80,7 +94,14 @@ export class ResourceComponent implements OnInit {
     }
 
     isSelectedResource(res: Resource): boolean {
-        return (res && this.selectedResource) ? (res.name === this.selectedResource.name) : false;
+        return (res && this.selectedResource) ? (res.service && this.selectedResource.service ? this.isSelectedServiceDefinition(res)
+            : (res.name === this.selectedResource.name)) : false;
+    }
+
+    isSelectedServiceDefinition(res: Resource): boolean {
+        return res.service['name'] === this.selectedResource.service['name']
+            && res.service['role'] === this.selectedResource.service['role']
+            && res.service['version'] === this.selectedResource.service['version'];
     }
 
     getResourceTypeSingularDisplayName(resType: string): string {
@@ -89,6 +110,7 @@ export class ResourceComponent implements OnInit {
                 return 'Topology';
             }
             case 'Provider Configurations':
+            case 'Service Definitions':
             case 'Descriptors': {
                 return resType.substring(0, resType.length - 1);
             }
