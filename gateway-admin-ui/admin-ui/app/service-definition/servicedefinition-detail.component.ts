@@ -16,6 +16,8 @@
  */
 import {Component, OnInit, ViewChild} from '@angular/core';
 import {BsModalComponent} from 'ng2-bs3-modal/ng2-bs3-modal';
+import swal from 'sweetalert';
+
 import {ServiceDefinition} from './servicedefinition';
 import {ServiceDefinitionService} from './servicedefinition.service';
 import {ResourceTypesService} from '../resourcetypes/resourcetypes.service';
@@ -123,22 +125,19 @@ export class ServiceDefinitionDetailComponent implements OnInit {
     updateServiceDefinition() {
         this.serviceDefinitionService.updateServiceDefinition(this.changedServiceDefinitionContent ? this.changedServiceDefinitionContent
                                                                 : this.serviceDefinitionContent)
-            .then(() => {
-                // This refreshes the list of service definitions
+            .then(response => {
+                swal('Updated successfully!');
                 this.resourceTypesService.selectResourceType('Service Definitions');
+                this.serviceDefinitionService.selectedServiceDefinition(null);
             });
     }
 
     deleteServiceDefinition() {
         this.serviceDefinitionService.deleteServiceDefinition(this.serviceDefinition)
-            .then(() => {
-                // This refreshes the list of service definitions
+            .then(response => {
+                swal('Deleted successfully!');
                 this.resourceTypesService.selectResourceType('Service Definitions');
-                // This refreshes the service definition content panel to the first one in the list
-                this.serviceDefinitionService.getServiceDefinitions()
-                    .then(serviceDefinitions => {
-                        this.serviceDefinitionService.selectedServiceDefinition(serviceDefinitions[0]);
-                    });
+                this.serviceDefinitionService.selectedServiceDefinition(null);
             });
     }
 }

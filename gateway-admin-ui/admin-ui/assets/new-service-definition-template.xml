@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<serviceDefinition>
+	<service name="your_service_name" role="YOUR_ROLE" version="1.0.0">
+		<dispatch classname="org.apache.knox.gateway.dispatch.DefaultDispatch" use-two-way-ssl="false" />
+		<routes />
+	</service>
+	<rules />
+</serviceDefinition>

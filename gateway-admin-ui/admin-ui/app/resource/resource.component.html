@@ -18,6 +18,11 @@
                           (click)="newDescriptorModal.open()"
                           title="Create New Descriptor"
                           data-toggle="tooltip"></span>
+                    <span class="clickable inline-glyph glyphicon glyphicon-plus-sign btn btn-xs pull-right"
+                          *ngIf="resourceType === 'Service Definitions'"
+                          (click)="newServiceDefinitionModal.open()"
+                          title="Create New Service Definition"
+                          data-toggle="tooltip"></span>
                 </th>
                 <th *ngIf="resourceType === 'Topologies'">Timestamp</th>
             </tr>
@@ -44,5 +49,6 @@
     <div>
         <app-new-desc-wizard #newDescriptorModal></app-new-desc-wizard>
         <app-provider-config-wizard #newProviderConfigModal></app-provider-config-wizard>
+        <app-service-definition-wizard #newServiceDefinitionModal></app-service-definition-wizard>
     </div>
 </div>

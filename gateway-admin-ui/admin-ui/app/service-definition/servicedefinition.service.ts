@@ -17,6 +17,7 @@
 import {Injectable} from '@angular/core';
 import {HttpClient, HttpErrorResponse, HttpHeaders} from '@angular/common/http';
 import {RestURLBuilder} from 'rest-url-builder';
+import swal from 'sweetalert';
 
 import 'rxjs/add/operator/toPromise';
 import {Subject} from 'rxjs/Subject';
@@ -65,6 +66,24 @@ export class ServiceDefinitionService {
             .catch((err: HttpErrorResponse) => {
                 console.debug('ServiceDefinitionService --> getServiceDefinitionXml() --> ' + urlBuilder.get()
                               + '\n  error: ' + err.message);
+                if (err.status === 401) {
+                    window.location.assign(document.location.pathname);
+                } else {
+                    return this.handleError(err);
+                }
+            });
+    }
+
+    saveNewServiceDefinition(xml: string): Promise<string> {
+        let xheaders = new HttpHeaders();
+        xheaders = this.addXmlHeaders(xheaders);
+        let serviceDefintionXml = xml.replace('<serviceDefinitions>', '').replace('</serviceDefinitions>', '');
+        return this.http.post(this.serviceDefinitionsBaseUrl, serviceDefintionXml, {headers: xheaders, responseType: 'text'})
+            .toPromise()
+            .then(response => response)
+            .catch((err: HttpErrorResponse) => {
+                console.debug('ServiceDefinitionService --> saveNewServiceDefinition() --> ' + this.serviceDefinitionsBaseUrl
+                              + '\n  error: ' + err.status + ' ' + err.message);
                 if (err.status === 401) {
                     window.location.assign(document.location.pathname);
                 } else {
@@ -134,8 +153,8 @@ export class ServiceDefinitionService {
         return headers.append('X-Requested-With', 'XMLHttpRequest');
     }
 
-    private handleError(error: any): Promise<any> {
-        console.error('An error occurred', error); // for demo purposes only
+    private handleError(error: HttpErrorResponse): Promise<any> {
+        swal('Oops!', 'Something went wrong!\n' + (error.error ? error.error : error.statusText), 'error');
         return Promise.reject(error.message || error);
     }
 
