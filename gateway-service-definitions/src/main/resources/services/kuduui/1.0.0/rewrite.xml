@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<rules>
+  <!-- Match a URL with a base path ('/') and without any query parameters.
+
+       ?{foo} is a named match of a single query parameter: {foo} can be
+       used in the template as a substitution.
+  -->
+  <rule dir="IN" name="KUDUUI/kudu/inbound/base-path">
+    <match pattern="*://*:*/**/kuduui/?{scheme}?{host}?{port}"/>
+    <rewrite template="{scheme}://{host}:{port}/"/>
+  </rule>
+
+  <!-- Match a URL with a non-base path ('/foo') that might have query
+       parameters.
+
+       {**} is a positional match for any number of URL components.
+
+       ?{**} is the same, except it matches query parameters rather than path components.
+  -->
+  <rule dir="IN" name="KUDUUI/kudu/inbound/extra-path">
+    <match pattern="*://*:*/**/kuduui/{**}?{scheme}?{host}?{port}?{**}"/>
+    <rewrite template="{scheme}://{host}:{port}/{**}?{**}"/>
+  </rule>
+
+  <!-- Rewrite the Knox identifier in a base path URL with optional query
+       parameters.
+
+       {$inboundurl} is a special map that can be used to derive HTTP-specific
+       properties of the URL sent to Knox.
+
+       {gateway.url} is the portion of the URL that references the Knox gateway.
+  -->
+  <rule dir="OUT" name="KUDUUI/kudu/outbound/base-path" pattern="/KNOX-BASE/?{**}">
+    <rewrite template="{gateway.url}/kuduui/?scheme={$inboundurl[scheme]}?host={$inboundurl[host]}?port={$inboundurl[port]}?{**}"/>
+  </rule>
+
+  <!-- Rewrite the Knox identifier in a non-base path URL with optional query
+       parameters.
+  -->
+  <rule dir="OUT" name="KUDUUI/kudu/outbound/extra-path" pattern="/KNOX-BASE/{**}?{**}">
+    <rewrite template="{gateway.url}/kuduui/{**}?scheme={$inboundurl[scheme]}?host={$inboundurl[host]}?port={$inboundurl[port]}?{**}"/>
+  </rule>
+
+  <!-- Rewrite an external base path URL (i.e. to another Kudu server) with
+       optional query parameters.
+  -->
+  <rule dir="OUT" name="KUDUUI/kudu/outbound/external-base-path" pattern="{scheme}://{host}:{port}/?{**}">
+    <rewrite template="{gateway.url}/kuduui/?scheme={scheme}?host={host}?port={port}"/>
+  </rule>
+
+  <!-- Rewrite an external non-base path URL (i.e. to another Kudu server) with
+       optional query parameters.
+  -->
+  <rule dir="OUT" name="KUDUUI/kudu/outbound/external-extra-path" pattern="{scheme}://{host}:{port}/{**}?{**}">
+    <rewrite template="{gateway.url}/kuduui/{**}?scheme={scheme}?host={host}?port={port}?{**}"/>
+  </rule>
+</rules>
