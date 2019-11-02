@@ -52,6 +52,12 @@ public class JoinKnoxShellTableBuilder extends KnoxShellTableBuilder {
     return on(leftIndex, rightIndex);
   }
 
+  public KnoxShellTable on(String columnName, String columnName2) {
+      final int leftIndex = left.headers.indexOf(columnName);
+      final int rightIndex = right.headers.indexOf(columnName2);
+      return on(leftIndex, rightIndex);
+    }
+
   public KnoxShellTable on(int leftIndex, int rightIndex) {
     if (title != null) {
       this.table.title(title);

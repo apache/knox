@@ -278,14 +278,20 @@ public class KnoxShellTableTest {
     assertEquals(joined.cell(0, 0).value, "123");
     String json = joined.toJSON();
 
+    KnoxShellTable joined2 = KnoxShellTable.builder().join().title("Joined Table").left(table).right(table2).on("Column A", "Column D");
+
+    assertEquals(joined2.getRows().size(), 1);
+    assertEquals(joined2.getTitle(), "Joined Table");
+    assertEquals(joined2.cell(0, 0).value, "123");
+
     KnoxShellTable zombie = KnoxShellTable.builder().json().fromJson(json);
     zombie.title("Zombie Table");
 
     assertEquals(zombie.getRows().size(), 1);
     assertEquals(zombie.getTitle(), "Zombie Table");
     assertEquals(zombie.cell(0, 0).value, "123");
-    KnoxShellTable joined2 = KnoxShellTable.builder().join().title("Joined Table 2").left(table).right(table2).on(1, 3);
-    assertEquals(1, joined2.getRows().size());
+    KnoxShellTable joined3 = KnoxShellTable.builder().join().title("Joined Table 3").left(table).right(table2).on(1, 3);
+    assertEquals(1, joined3.getRows().size());
   }
 
   @Test
