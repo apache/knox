@@ -26,6 +26,7 @@ import {AppComponent} from './app.component';
 import {TopologyService} from './topology.service';
 import {ServiceDefinitionService} from './service-definition/servicedefinition.service';
 import {ServiceDefinitionDetailComponent} from './service-definition/servicedefinition-detail.component';
+import {NewServiceDefinitionComponent} from './service-definition/new-service-definition.component';
 import {GatewayVersionService} from './gateway-version.service';
 import {GatewayVersionComponent} from './gateway-version.component';
 import {TopologyComponent} from './topology.component';
@@ -61,6 +62,7 @@ import {ProviderConfigWizardComponent} from './provider-config-wizard/provider-c
         TopologyComponent,
         TopologyDetailComponent,
         ServiceDefinitionDetailComponent,
+        NewServiceDefinitionComponent,
         GatewayVersionComponent,
         XmlPipe,
         JsonPrettyPipe,
