@@ -192,7 +192,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     }
   }
 
-  private static RequestConfig getRequestConfig( FilterConfig config ) {
+  static RequestConfig getRequestConfig( FilterConfig config ) {
     RequestConfig.Builder builder = RequestConfig.custom();
     int connectionTimeout = getConnectionTimeout( config );
     if ( connectionTimeout != -1 ) {
@@ -203,6 +203,15 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     if( socketTimeout != -1 ) {
       builder.setSocketTimeout( socketTimeout );
     }
+
+    // HttpClient 4.5.7 is broken for %2F handling with url normalization.
+    // However, HttpClient 4.5.8+ (HTTPCLIENT-1968) has reasonable url
+    // normalization that matches what Knox already does related to url handling.
+    //
+    // If this view changes later, need to change here as well as make sure
+    // rest-assured doesn't use the old HttpClient behavior.
+    builder.setNormalizeUri(true);
+
     return builder.build();
   }
 

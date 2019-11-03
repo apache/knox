@@ -28,6 +28,7 @@ import io.restassured.response.Response;
 import io.restassured.specification.ResponseSpecification;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -35,15 +36,19 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.knox.gateway.util.KnoxCLI;
 import org.apache.knox.test.TestUtils;
@@ -99,6 +104,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.text.IsEmptyString.isEmptyString;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.xmlmatchers.XmlMatchers.isEquivalentTo;
 import static org.xmlmatchers.transform.XmlConverters.the;
@@ -1661,6 +1667,74 @@ public class GatewayBasicFuncTest {
     // RestAssured seems to be screwing up the binary comparison so do it explicitly.
     assertThat( driver.getResourceBytes( resourceName + ".protobuf" ), is( response.body().asByteArray() ) );
     driver.assertComplete();
+    LOG_EXIT();
+  }
+
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
+  public void testEncodedForwardSlash() throws IOException {
+    LOG_ENTER();
+    String username = "hbase";
+    String password = "hbase-password";
+
+    String resourceName = "hbase/table-data";
+    String singleRowPath = "/table/%2F%2Ftestrow";
+
+    //PUT request
+    driver.getMock( "WEBHBASE" )
+        .expect()
+        .method( "PUT" )
+        .requestURI( singleRowPath ) // Need to use requestURI since pathInfo is url decoded
+        .contentType( ContentType.JSON.toString() )
+        .respond()
+        .status( HttpStatus.SC_OK );
+
+    CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+    UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(username, password);
+    credentialsProvider.setCredentials(AuthScope.ANY, credentials);
+    // Show that normalizing from HttpClient doesn't change the behavior of %2F handling
+    // with HttpClient 4.5.8+ - HTTPCLIENT-1968
+    RequestConfig requestConfig = RequestConfig.custom().setNormalizeUri(false).build();
+    try(CloseableHttpClient httpClient = HttpClients.custom()
+        .setDefaultCredentialsProvider(credentialsProvider)
+        .setDefaultRequestConfig(requestConfig)
+        .build()) {
+
+      HttpPut httpPut = new HttpPut(driver.getUrl("WEBHBASE") + singleRowPath);
+      httpPut.setHeader("X-XSRF-Header", "jksdhfkhdsf");
+      httpPut.setHeader(HttpHeaders.CONTENT_TYPE, org.apache.http.entity.ContentType.APPLICATION_JSON.getMimeType());
+      httpPut.setEntity(new ByteArrayEntity(driver.getResourceBytes(resourceName + ".json")));
+
+      HttpResponse response = httpClient.execute(httpPut);
+      assertEquals(200, response.getStatusLine().getStatusCode());
+    }
+    driver.assertComplete();
+
+    driver.getMock( "WEBHBASE" )
+    .expect()
+    .method( "PUT" )
+    .requestURI( singleRowPath ) // Need to use requestURI since pathInfo is url decoded
+    .contentType( ContentType.JSON.toString() )
+    .respond()
+    .status( HttpStatus.SC_OK );
+
+    // There is no way to change the normalization behavior of the
+    // HttpClient created by rest-assured since RequestConfig isn't
+    // exposed. Instead the above test uses HttpClient directly,
+    // this shows that url normalization doesn't matter with 4.5.8+.
+    // If this view changes, don't use rest-assured for this type of
+    // testing.
+    // See: https://github.com/rest-assured/rest-assured/issues/497
+    given()
+    .urlEncodingEnabled(false) // make sure to avoid rest-assured automatic url encoding
+    .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
+    .body( driver.getResourceBytes( resourceName + ".json" ) )
+    .contentType( ContentType.JSON.toString() )
+    .then()
+    .statusCode( HttpStatus.SC_OK )
+    .when().put(driver.getUrl("WEBHBASE") + singleRowPath);
+    driver.assertComplete();
+
     LOG_EXIT();
   }
 

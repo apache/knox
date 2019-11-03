@@ -56,6 +56,7 @@ public class MockRequestMatcher {
   private MockResponseProvider response;
   private Set<String> methods;
   private String pathInfo;
+  private String requestURI;
   private String requestURL;
   Map<String,Matcher> headers;
   Set<Cookie> cookies;
@@ -92,6 +93,11 @@ public class MockRequestMatcher {
 
   public MockRequestMatcher pathInfo( String pathInfo ) {
     this.pathInfo = pathInfo;
+    return this;
+  }
+
+  public MockRequestMatcher requestURI( String requestURI ) {
+    this.requestURI = requestURI;
     return this;
   }
 
@@ -208,6 +214,12 @@ public class MockRequestMatcher {
               " does not have the expected pathInfo",
           request.getPathInfo(), is( pathInfo ) );
     }
+    if( requestURI != null ) {
+      assertThat(
+          "Request " + request.getMethod() + " " + request.getRequestURL() +
+              " does not have the expected requestURI",
+          request.getRequestURI(), is(requestURI) );
+    }
     if( requestURL != null ) {
       assertThat(
           "Request " + request.getMethod() + " " + request.getRequestURL() +
@@ -319,7 +331,7 @@ public class MockRequestMatcher {
 
   @Override
   public String toString() {
-    return "from=" + from + ", pathInfo=" + pathInfo;
+    return "from=" + from + ", pathInfo=" + pathInfo + ", requestURI=" + requestURI;
   }
 
   private static List<NameValuePair> parseQueryString( String queryString ) {
