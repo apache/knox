@@ -239,7 +239,7 @@
         <velocity.version>1.7</velocity.version>
         <xmltool.version>3.3</xmltool.version>
         <xml-matchers.version>0.10</xml-matchers.version>
-        <zookeeper.version>3.5.5</zookeeper.version>
+        <zookeeper.version>3.5.6</zookeeper.version>
     </properties>
 
     <profiles>
