@@ -179,7 +179,7 @@
         <eclipselink.version>2.7.5</eclipselink.version>
         <ehcache.version>2.6.11</ehcache.version>
         <exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
-        <findsecbugs-plugin.version>1.9.0</findsecbugs-plugin.version>
+        <findsecbugs-plugin.version>1.10.1</findsecbugs-plugin.version>
         <forbiddenapis.version>2.6</forbiddenapis.version>
         <groovy.version>2.5.8</groovy.version>
         <guava.version>28.1-jre</guava.version>
