@@ -143,7 +143,7 @@
 </rule>
 
 <rule dir="OUT" name="YARNUI/yarn/outbound/proxy" pattern="*://*:*/proxy/{**}">
-    <rewrite template="{$frontend[url]}/yarn/proxy/{**}"/>
+    <rewrite template="{$frontend[url]}/yarn/proxy/{**}/"/>
 </rule>
 <rule flow="OR" dir="OUT" name="YARNUI/yarn/outbound/headers/jobhistory/job/location">
     <match pattern="{scheme}://{host}:{port}/jobhistory/logs/{**}">
@@ -248,7 +248,7 @@
 
 <rule dir="OUT" name="YARNUI/yarn/outbound/apps/history">
     <match pattern="*://*:*/proxy/{**}"/>
-    <rewrite template="{$frontend[url]}/yarn/proxy/{**}"/>
+    <rewrite template="{$frontend[url]}/yarn/proxy/{**}/"/>
 </rule>
 <rule dir="OUT" name="YARNUI/yarn/outbound/apps/history1">
     <match pattern="/proxy/{**}?{**}"/>
@@ -285,7 +285,7 @@ https://knox_host:knox_port/gateway/yarnui/yarn/nodemanager/node/containerlogs/c
     <rewrite template="{$frontend[url]}/yarn/nodemanager/node/containerlogs/{**}?{**}?{scheme}?{host}?{port}"/>
 </rule>
 <rule dir="OUT" name="YARNUI/yarn/outbound/proxy1" pattern="/proxy/{**}">
-    <rewrite template="{$frontend[url]}/yarn/proxy/{**}"/>
+    <rewrite template="{$frontend[url]}/yarn/proxy/{**}/"/>
 </rule>
 
 <rule dir="OUT" name="YARNUI/yarn/outbound/nodelink" pattern="{scheme}://{host}:{port}">
