@@ -29,6 +29,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
@@ -43,6 +44,7 @@ import org.apache.knox.gateway.servlet.SynchronousServletOutputStreamAdapter;
 import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.category.FastTests;
 import org.apache.knox.test.category.UnitTests;
+import org.apache.http.HttpStatus;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpVersion;
 import org.apache.http.RequestLine;
@@ -189,6 +191,36 @@ public class DefaultDispatchTest {
     defaultDispatch.setReplayBufferSize(16);
     assertEquals(defaultDispatch.getReplayBufferSizeInBytes(), 16384);
     assertEquals(defaultDispatch.getReplayBufferSize(), 16);
+
+  }
+
+  @Test
+  public void testSocketTimeoutHandling() throws Exception {
+      //Expect outboundResponse to have its status set to 504 on socket timeout.
+      URI uri = new URI( "http://socket-timeout-host" );
+
+      HttpUriRequest outboundRequest = EasyMock.createNiceMock( HttpUriRequest.class );
+      EasyMock.expect( outboundRequest.getMethod() ).andReturn( "GET" ).anyTimes();
+      EasyMock.expect( outboundRequest.getURI() ).andReturn( uri  ).anyTimes();
+
+      CloseableHttpClient client = EasyMock.createNiceMock( CloseableHttpClient.class );
+      EasyMock.expect( client.execute(EasyMock.anyObject(HttpUriRequest.class) )).andThrow(new SocketTimeoutException("Pretending that we timed out"));
+
+      HttpServletResponse outboundResponse = EasyMock.createNiceMock( HttpServletResponse.class );
+      outboundResponse.setStatus(HttpStatus.SC_GATEWAY_TIMEOUT);
+      EasyMock.expectLastCall().andAnswer(() -> {
+          System.out.println("Successfully set 504 error in SocketTimeoutHandling test!");
+          return null;
+      });
+
+      HttpServletRequest inboundRequest = EasyMock.createNiceMock( HttpServletRequest.class );
+
+      EasyMock.replay(outboundRequest, client, inboundRequest, outboundResponse);
+
+      DefaultDispatch dispatch = new DefaultDispatch();
+      dispatch.setHttpClient(client);
+      dispatch.executeRequest(outboundRequest, inboundRequest, outboundResponse);
+      EasyMock.verify(outboundRequest, client, inboundRequest, outboundResponse);
 
   }
 

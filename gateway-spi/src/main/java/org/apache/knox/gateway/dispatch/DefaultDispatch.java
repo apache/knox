@@ -20,6 +20,9 @@ package org.apache.knox.gateway.dispatch;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpResponseFactory;
+import org.apache.http.HttpStatus;
+import org.apache.http.HttpVersion;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
@@ -29,6 +32,8 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ContentType;
+import org.apache.http.impl.DefaultHttpResponseFactory;
+import org.apache.http.message.BasicStatusLine;
 import org.apache.knox.gateway.SpiGatewayMessages;
 import org.apache.knox.gateway.SpiGatewayResources;
 import org.apache.knox.gateway.audit.api.Action;
@@ -49,6 +54,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -138,6 +144,10 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
         }
       }
       auditor.audit( Action.DISPATCH, outboundRequest.getURI().toString(), ResourceType.URI, ActionOutcome.SUCCESS, RES.responseStatus( statusCode ) );
+    } catch( SocketTimeoutException e ) {
+        //Set a 504 instead of throwing an IO exception in the event of a socket timeout,
+        //as an IO exception forces a 500 to be displayed.
+        inboundResponse = generateInboundResponseOverride(HttpStatus.SC_GATEWAY_TIMEOUT);
     } catch( Exception e ) {
       // We do not want to expose back end host. port end points to clients, see JIRA KNOX-58
       auditor.audit( Action.DISPATCH, outboundRequest.getURI().toString(), ResourceType.URI, ActionOutcome.FAILURE );
@@ -145,6 +155,12 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       throw new IOException( RES.dispatchConnectionError() );
     }
     return inboundResponse;
+  }
+
+  protected HttpResponse generateInboundResponseOverride(int errorCode) {
+      HttpResponseFactory factory = new DefaultHttpResponseFactory();
+      HttpResponse inboundResponse = factory.newHttpResponse(new BasicStatusLine(HttpVersion.HTTP_1_1, errorCode, null), null);
+      return inboundResponse;
   }
 
   protected void writeOutboundResponse(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse, HttpResponse inboundResponse) throws IOException {
