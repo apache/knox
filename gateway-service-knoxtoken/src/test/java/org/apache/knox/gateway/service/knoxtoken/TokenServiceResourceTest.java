@@ -49,6 +49,7 @@ import java.security.PrivilegedAction;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -680,6 +681,40 @@ public class TokenServiceResourceTest {
   }
 
   @Test
+  public void testTokenRenewal_Enabled_WithDefaultMaxTokenLifetime() throws Exception {
+    final String caller = "yarn";
+
+    // Max lifetime duration is 10ms
+    Map.Entry<TestTokenStateService, Response> testResult =
+                  doTestTokenRenewal(true, caller, null, createTestSubject(caller));
+
+    TestTokenStateService tss = testResult.getKey();
+    assertEquals(1, tss.issueTimes.size());
+    String token = tss.issueTimes.keySet().iterator().next();
+
+    // Verify that the configured max lifetime was honored
+    assertEquals(tss.getDefaultMaxLifetimeDuration(), tss.getMaxLifetime(token) - tss.getIssueTime(token));
+  }
+
+
+  @Test
+  public void testTokenRenewal_Enabled_WithConfigurableMaxTokenLifetime() throws Exception {
+    final String caller = "yarn";
+
+    // Max lifetime duration is 10ms
+    Map.Entry<TestTokenStateService, Response> testResult =
+                                              doTestTokenRenewal(true, caller, 10L, createTestSubject(caller));
+
+    TestTokenStateService tss = testResult.getKey();
+    assertEquals(1, tss.issueTimes.size());
+    String token = tss.issueTimes.keySet().iterator().next();
+
+    // Verify that the configured max lifetime was honored
+    assertEquals(10L, tss.getMaxLifetime(token) - tss.getIssueTime(token));
+  }
+
+
+  @Test
   public void testTokenRevocation_ServerManagedStateNotConfigured() throws Exception {
     Response renewalResponse = doTestTokenRevocation(null, null, null);
     validateRevocationResponse(renewalResponse,
@@ -743,6 +778,7 @@ public class TokenServiceResourceTest {
     validateSuccessfulRevocationResponse(renewalResponse);
   }
 
+
   /**
    *
    * @param isTokenStateServerManaged true, if server-side token state management should be enabled; Otherwise, false or null.
@@ -756,7 +792,29 @@ public class TokenServiceResourceTest {
   private Response doTestTokenRenewal(final Boolean isTokenStateServerManaged,
                                       final String  renewers,
                                       final Subject caller) throws Exception {
-    return doTestTokenLifecyle(TokenLifecycleOperation.Renew, isTokenStateServerManaged, renewers, caller);
+    return doTestTokenRenewal(isTokenStateServerManaged, renewers, null, caller).getValue();
+  }
+
+  /**
+   *
+   * @param isTokenStateServerManaged true, if server-side token state management should be enabled; Otherwise, false or null.
+   * @param renewers                  A comma-delimited list of permitted renewer user names
+   * @param maxTokenLifetime          The maximum duration (milliseconds) for a token's lifetime
+   * @param caller                    The user name making the request
+   *
+   * @return The Response from the token renewal request
+   *
+   * @throws Exception
+   */
+  private Map.Entry<TestTokenStateService, Response> doTestTokenRenewal(final Boolean isTokenStateServerManaged,
+                                                                        final String  renewers,
+                                                                        final Long    maxTokenLifetime,
+                                                                        final Subject caller) throws Exception {
+    return doTestTokenLifecyle(TokenLifecycleOperation.Renew,
+                               isTokenStateServerManaged,
+                               renewers,
+                               maxTokenLifetime,
+                               caller);
   }
 
   /**
@@ -776,19 +834,38 @@ public class TokenServiceResourceTest {
   }
 
   /**
-   * @param operation A TokenLifecycleOperation
-   * @param isTokenStateServerManaged true, if server-side token state management should be enabled; Otherwise, false or null.
-   * @param renewers A comma-delimited list of permitted renewer user names
-   * @param caller The user name making the request
+   * @param operation     A TokenLifecycleOperation
+   * @param serverManaged true, if server-side token state management should be enabled; Otherwise, false or null.
+   * @param renewers      A comma-delimited list of permitted renewer user names
+   * @param caller        The user name making the request
    *
    * @return The Response from the token revocation request
    *
    * @throws Exception
    */
   private Response doTestTokenLifecyle(final TokenLifecycleOperation operation,
-                                       final Boolean isTokenStateServerManaged,
-                                       final String  renewers,
-                                       final Subject caller) throws Exception {
+                                       final Boolean                 serverManaged,
+                                       final String                  renewers,
+                                       final Subject                 caller) throws Exception {
+    return doTestTokenLifecyle(operation, serverManaged, renewers, null, caller).getValue();
+  }
+
+  /**
+   * @param operation                 A TokenLifecycleOperation
+   * @param isTokenStateServerManaged true, if server-side token state management should be enabled; Otherwise, false or null.
+   * @param renewers                  A comma-delimited list of permitted renewer user names
+   * @param maxTokenLifetime          The maximum lifetime duration for a token.
+   * @param caller                    The user name making the request
+   *
+   * @return The Response from the token revocation request
+   *
+   * @throws Exception
+   */
+  private Map.Entry<TestTokenStateService, Response> doTestTokenLifecyle(final TokenLifecycleOperation operation,
+                                                                         final Boolean                 isTokenStateServerManaged,
+                                                                         final String                  renewers,
+                                                                         final Long                    maxTokenLifetime,
+                                                                         final Subject                 caller) throws Exception {
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(context.getInitParameter("knox.token.audiences")).andReturn("recipient1,recipient2");
     EasyMock.expect(context.getInitParameter("knox.token.ttl")).andReturn(String.valueOf(Long.MAX_VALUE));
@@ -796,7 +873,11 @@ public class TokenServiceResourceTest {
     EasyMock.expect(context.getInitParameter("knox.token.client.data")).andReturn(null);
     if (isTokenStateServerManaged != null) {
       EasyMock.expect(context.getInitParameter("knox.token.exp.server-managed"))
-          .andReturn(String.valueOf(isTokenStateServerManaged));
+              .andReturn(String.valueOf(isTokenStateServerManaged));
+      if (maxTokenLifetime != null) {
+        EasyMock.expect(context.getInitParameter("knox.token.exp.renew-interval")).andReturn(String.valueOf(maxTokenLifetime / 2));
+        EasyMock.expect(context.getInitParameter("knox.token.exp.max-lifetime")).andReturn(maxTokenLifetime.toString());
+      }
     }
     EasyMock.expect(context.getInitParameter("knox.token.renewer.whitelist")).andReturn(renewers);
 
@@ -812,7 +893,7 @@ public class TokenServiceResourceTest {
     JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
     EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority).anyTimes();
 
-    TokenStateService tss = new TestTokenStateService();
+    TestTokenStateService tss = new TestTokenStateService();
     EasyMock.expect(services.getService(ServiceType.TOKEN_STATE_SERVICE)).andReturn(tss).anyTimes();
 
     EasyMock.replay(principal, services, context, request);
@@ -842,7 +923,8 @@ public class TokenServiceResourceTest {
       default:
         throw new Exception("Invalid operation: " + operation);
     }
-    return response;
+
+    return new AbstractMap.SimpleEntry<>(tss, response);
   }
 
   private static Response requestTokenRenewal(final TokenResource tr, final String tokenData, final Subject caller) {
@@ -941,13 +1023,48 @@ public class TokenServiceResourceTest {
 
 
   private static class TestTokenStateService implements TokenStateService {
+
+    private Map<String, Long> expirationData = new HashMap<>();
+    private Map<String, Long> issueTimes = new HashMap<>();
+    private Map<String, Long> maxLifetimes = new HashMap<>();
+
+    long getIssueTime(final String token) {
+      return issueTimes.get(token);
+    }
+
+    long getMaxLifetime(final String token) {
+      return maxLifetimes.get(token);
+    }
+
+    long getExpiration(final String token) {
+      return expirationData.get(token);
+    }
+
     @Override
     public void addToken(JWTToken token, long issueTime) {
       addToken(token.getPayload(), issueTime, token.getExpiresDate().getTime());
     }
 
     @Override
+    public long getDefaultRenewInterval() {
+      return 250;
+    }
+
+    @Override
+    public long getDefaultMaxLifetimeDuration() {
+      return 500;
+    }
+
+    @Override
     public void addToken(String token, long issueTime, long expiration) {
+      addToken(token, issueTime, expiration, getDefaultMaxLifetimeDuration());
+    }
+
+    @Override
+    public void addToken(String token, long issueTime, long expiration, long maxLifetimeDuration) {
+      issueTimes.put(token, issueTime);
+      expirationData.put(token, expiration);
+      maxLifetimes.put(token, issueTime + maxLifetimeDuration);
     }
 
     @Override
@@ -980,12 +1097,12 @@ public class TokenServiceResourceTest {
     }
 
     @Override
-    public long renewToken(JWTToken token, Long renewInterval) {
+    public long renewToken(JWTToken token, long renewInterval) {
       return renewToken(token.getPayload());
     }
 
     @Override
-    public long renewToken(String token, Long renewInterval) {
+    public long renewToken(String token, long renewInterval) {
       return 0;
     }
 

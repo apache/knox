@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
@@ -71,6 +72,7 @@ public class TokenResource {
   private static final String TOKEN_ALLOWED_PRINCIPALS = "knox.token.allowed.principals";
   private static final String TOKEN_SIG_ALG = "knox.token.sigalg";
   private static final String TOKEN_EXP_RENEWAL_INTERVAL = "knox.token.exp.renew-interval";
+  private static final String TOKEN_EXP_RENEWAL_MAX_LIFETIME = "knox.token.exp.max-lifetime";
   private static final String TOKEN_RENEWER_WHITELIST = "knox.token.renewer.whitelist";
   private static final long TOKEN_TTL_DEFAULT = 30000L;
   static final String RESOURCE_PATH = "knoxtoken/api/v1/token";
@@ -90,7 +92,9 @@ public class TokenResource {
   // Optional token store service
   private TokenStateService tokenStateService;
 
-  private Long renewInterval;
+  private Optional<Long> renewInterval = Optional.empty();
+
+  private Optional<Long> maxTokenLifetime = Optional.empty();
 
   private List<String> allowedRenewers;
 
@@ -162,9 +166,18 @@ public class TokenResource {
       String renewIntervalValue = context.getInitParameter(TOKEN_EXP_RENEWAL_INTERVAL);
       if (renewIntervalValue != null && !renewIntervalValue.isEmpty()) {
         try {
-          renewInterval = Long.parseLong(renewIntervalValue);
+          renewInterval = Optional.of(Long.parseLong(renewIntervalValue));
         } catch (NumberFormatException e) {
           log.invalidConfigValue(TOKEN_EXP_RENEWAL_INTERVAL, renewIntervalValue, e);
+        }
+      }
+
+      String maxLifetimeValue = context.getInitParameter(TOKEN_EXP_RENEWAL_MAX_LIFETIME);
+      if (maxLifetimeValue != null && !maxLifetimeValue.isEmpty()) {
+        try {
+          maxTokenLifetime = Optional.of(Long.parseLong(maxLifetimeValue));
+        } catch (NumberFormatException e) {
+          log.invalidConfigValue(TOKEN_EXP_RENEWAL_MAX_LIFETIME, maxLifetimeValue, e);
         }
       }
 
@@ -206,7 +219,8 @@ public class TokenResource {
       if (allowedRenewers.contains(renewer)) {
         try {
           // If renewal fails, it should be an exception
-          expiration = tokenStateService.renewToken(token, renewInterval);
+          expiration = tokenStateService.renewToken(token,
+                                                    renewInterval.orElse(tokenStateService.getDefaultRenewInterval()));
         } catch (Exception e) {
           error = e.getMessage();
         }
@@ -334,7 +348,10 @@ public class TokenResource {
 
         // Optional token store service persistence
         if (tokenStateService != null) {
-          tokenStateService.addToken(accessToken, System.currentTimeMillis(), expires);
+          tokenStateService.addToken(accessToken,
+                                     System.currentTimeMillis(),
+                                     expires,
+                                     maxTokenLifetime.orElse(tokenStateService.getDefaultMaxLifetimeDuration()));
         }
 
         return Response.ok().entity(jsonResponse).build();

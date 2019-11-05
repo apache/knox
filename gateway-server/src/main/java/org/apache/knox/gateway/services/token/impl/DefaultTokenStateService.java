@@ -43,12 +43,9 @@ public class DefaultTokenStateService implements TokenStateService {
 
   private final Map<String, Long> maxTokenLifetimes = new HashMap<>();
 
-  private long maxLifetimeInterval = DEFAULT_MAX_LIFETIME;
-
 
   @Override
-  public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
-//    maxLifetimeInterval = ??; // TODO: PJZ: Honor gateway configuration for this value, if specified ?
+  public void init(final GatewayConfig config, final Map<String, String> options) throws ServiceLifecycleException {
   }
 
   @Override
@@ -60,7 +57,17 @@ public class DefaultTokenStateService implements TokenStateService {
   }
 
   @Override
-  public void addToken(final JWTToken token, final long issueTime) {
+  public long getDefaultRenewInterval() {
+    return DEFAULT_RENEWAL_INTERVAL;
+  }
+
+  @Override
+  public long getDefaultMaxLifetimeDuration() {
+    return DEFAULT_MAX_LIFETIME;
+  }
+
+  @Override
+  public void addToken(final JWTToken token, long issueTime) {
     if (token == null) {
       throw new IllegalArgumentException("Token data cannot be null.");
     }
@@ -68,18 +75,26 @@ public class DefaultTokenStateService implements TokenStateService {
   }
 
   @Override
-  public void addToken(final String token, final long issueTime, final long expiration) {
+  public void addToken(final String token, long issueTime, long expiration) {
+    addToken(token, issueTime, expiration, getDefaultMaxLifetimeDuration());
+  }
+
+  @Override
+  public void addToken(final String token,
+                       long         issueTime,
+                       long         expiration,
+                       long         maxLifetimeDuration) {
     if (!isValidIdentifier(token)) {
       throw new IllegalArgumentException("Token data cannot be null.");
     }
     synchronized (tokenExpirations) {
       tokenExpirations.put(token, expiration);
     }
-    setMaxLifetime(token, issueTime);
+    setMaxLifetime(token, issueTime, maxLifetimeDuration);
   }
 
   @Override
-  public long getTokenExpiration(String token) {
+  public long getTokenExpiration(final String token) {
     long expiration;
 
     validateToken(token);
@@ -97,7 +112,7 @@ public class DefaultTokenStateService implements TokenStateService {
   }
 
   @Override
-  public long renewToken(final JWTToken token, final Long renewInterval) {
+  public long renewToken(final JWTToken token, long renewInterval) {
     if (token == null) {
       throw new IllegalArgumentException("Token data cannot be null.");
     }
@@ -110,14 +125,14 @@ public class DefaultTokenStateService implements TokenStateService {
   }
 
   @Override
-  public long renewToken(final String token, final Long renewInterval) { // Should return new expiration?
+  public long renewToken(final String token, long renewInterval) {
     long expiration;
 
     validateToken(token, true);
 
     // Make sure the maximum lifetime has not been (and will not be) exceeded
-    if (hasRemainingRenewals(token, (renewInterval != null ? renewInterval : DEFAULT_RENEWAL_INTERVAL))) {
-      expiration = System.currentTimeMillis() + (renewInterval != null ? renewInterval : DEFAULT_RENEWAL_INTERVAL);
+    if (hasRemainingRenewals(token, renewInterval)) {
+      expiration = System.currentTimeMillis() + renewInterval;
       updateExpiration(token, expiration);
     } else {
       throw new IllegalArgumentException("The renewal limit for the token has been exceeded");
@@ -159,9 +174,9 @@ public class DefaultTokenStateService implements TokenStateService {
     return isExpired;
   }
 
-  protected void setMaxLifetime(final String token, final long issueTime) {
+  protected void setMaxLifetime(final String token, long issueTime, long maxLifetimeDuration) {
     synchronized (maxTokenLifetimes) {
-      maxTokenLifetimes.put(token, issueTime + maxLifetimeInterval);
+      maxTokenLifetimes.put(token, issueTime + maxLifetimeDuration);
     }
   }
 
@@ -185,7 +200,7 @@ public class DefaultTokenStateService implements TokenStateService {
     }
   }
 
-  protected boolean hasRemainingRenewals(final String token, final Long renewInterval) {
+  protected boolean hasRemainingRenewals(final String token, long renewInterval) {
     // Is the current time + 30-second buffer + the renewal interval is less than the max lifetime for the token?
     return ((System.currentTimeMillis() + 30000 + renewInterval) < getMaxLifetime(token));
   }
@@ -200,10 +215,6 @@ public class DefaultTokenStateService implements TokenStateService {
 
   protected boolean isRevoked(final String token) {
     return revokedTokens.contains(token);
-  }
-
-  protected long getMaxLifetimeInterval() {
-    return maxLifetimeInterval;
   }
 
   protected boolean isValidIdentifier(final String token) {
@@ -229,7 +240,7 @@ public class DefaultTokenStateService implements TokenStateService {
    *
    * @throws IllegalArgumentException if the specified token in invalid.
    */
-  protected void validateToken(final String token, final boolean includeRevocation) throws IllegalArgumentException {
+  protected void validateToken(final String token, boolean includeRevocation) throws IllegalArgumentException {
     if (!isValidIdentifier(token)) {
       throw new IllegalArgumentException("Token data cannot be null.");
     }
