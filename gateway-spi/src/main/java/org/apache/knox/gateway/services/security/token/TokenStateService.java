@@ -28,13 +28,22 @@ public interface TokenStateService extends Service {
   String CONFIG_SERVER_MANAGED = "knox.token.exp.server-managed";
 
   /**
+   * @return The default duration (in milliseconds) for which a token's life will be extended when it is renewed.
+   */
+  long getDefaultRenewInterval();
+
+  /**
+   * @return The default maximum lifetime duration (in milliseconds) of a token.
+   */
+  long getDefaultMaxLifetimeDuration();
+
+  /**
    * Add state for the specified token.
    *
    * @param token     The token.
    * @param issueTime The time the token was issued.
    */
   void addToken(JWTToken token, long issueTime);
-
   /**
    * Add state for the specified token.
    *
@@ -43,6 +52,16 @@ public interface TokenStateService extends Service {
    * @param expiration The token expiration time.
    */
   void addToken(String token, long issueTime, long expiration);
+
+  /**
+   * Add state for the specified token.
+   *
+   * @param token               The token.
+   * @param issueTime           The time the token was issued.
+   * @param expiration          The token expiration time.
+   * @param maxLifetimeDuration The maximum allowed lifetime for the token.
+   */
+  void addToken(String token, long issueTime, long expiration, long maxLifetimeDuration);
 
   /**
    *
@@ -91,7 +110,7 @@ public interface TokenStateService extends Service {
    *
    * @return The token's updated expiration time in milliseconds.
    */
-  long renewToken(JWTToken token, Long renewInterval);
+  long renewToken(JWTToken token, long renewInterval);
 
   /**
    * Extend the lifetime of the specified token by the default amount of time.
@@ -110,7 +129,7 @@ public interface TokenStateService extends Service {
    *
    * @return The token's updated expiration time in milliseconds.
    */
-  long renewToken(String token, Long renewInterval);
+  long renewToken(String token, long renewInterval);
 
   /**
    *

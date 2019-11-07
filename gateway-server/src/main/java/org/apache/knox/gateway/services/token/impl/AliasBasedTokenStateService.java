@@ -39,7 +39,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
   }
 
   @Override
-  public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
+  public void init(final GatewayConfig config, final Map<String, String> options) throws ServiceLifecycleException {
     super.init(config, options);
     if (aliasService == null) {
       throw new ServiceLifecycleException("The required AliasService reference has not been set.");
@@ -47,30 +47,33 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
   }
 
   @Override
-  public void addToken(final String token, final long issueTime, final long expiration) {
+  public void addToken(final String token,
+                       long         issueTime,
+                       long         expiration,
+                       long         maxLifetimeDuration) {
     isValidIdentifier(token);
 
     try {
       aliasService.addAliasForCluster(AliasService.NO_CLUSTER_NAME, token, String.valueOf(expiration));
-      setMaxLifetime(token, issueTime);
+      setMaxLifetime(token, issueTime, maxLifetimeDuration);
     } catch (AliasServiceException e) {
       LOG.failedToSaveTokenState(e);
     }
   }
 
   @Override
-  protected void setMaxLifetime(final String token, final long issueTime) {
+  protected void setMaxLifetime(final String token, long issueTime, long maxLifetimeDuration) {
     try {
       aliasService.addAliasForCluster(AliasService.NO_CLUSTER_NAME,
                                       token + "--max",
-                                      String.valueOf(issueTime + getMaxLifetimeInterval()));
+                                      String.valueOf(issueTime + maxLifetimeDuration));
     } catch (AliasServiceException e) {
       LOG.failedToSaveTokenState(e);
     }
   }
 
   @Override
-  protected long getMaxLifetime(String token) {
+  protected long getMaxLifetime(final String token) {
     long result = 0;
     try {
       char[] maxLifetimeStr =
@@ -85,7 +88,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
   }
 
   @Override
-  public long getTokenExpiration(String token) {
+  public long getTokenExpiration(final String token) {
     long expiration = 0;
 
     validateToken(token);
@@ -103,18 +106,18 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
   }
 
   @Override
-  public void revokeToken(String token) {
+  public void revokeToken(final String token) {
     // Record the revocation by setting the expiration to -1
-    updateExpiration(token, -1);
+    updateExpiration(token, -1L);
   }
 
   @Override
-  protected boolean isRevoked(String token) {
+  protected boolean isRevoked(final String token) {
     return (getTokenExpiration(token) < 0);
   }
 
   @Override
-  protected boolean isUnknown(String token) {
+  protected boolean isUnknown(final String token) {
     boolean isUnknown = false;
     try {
       isUnknown = (aliasService.getPasswordFromAliasForCluster(AliasService.NO_CLUSTER_NAME, token) == null);
@@ -125,7 +128,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
   }
 
   @Override
-  protected void updateExpiration(String token, long expiration) {
+  protected void updateExpiration(final String token, long expiration) {
     if (isUnknown(token)) {
       throw new IllegalArgumentException("Unknown token.");
     }

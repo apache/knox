@@ -123,6 +123,27 @@ public class DefaultTokenStateServiceTest {
   }
 
 
+  @Test
+  public void testRenewalBeyondMaxLifetime() {
+    long issueTime = System.currentTimeMillis();
+    long expiration = issueTime + 5000;
+    final JWTToken token = createMockToken(expiration);
+    final TokenStateService tss = createTokenStateService();
+
+    // Add the token with a short maximum lifetime
+    tss.addToken(token.getPayload(), issueTime, expiration, 5000L);
+
+    try {
+      // Attempt to renew the token for the default interval, which should exceed the specified short maximum lifetime
+      // for this token.
+      tss.renewToken(token);
+      fail("Token renewal should have been disallowed because the maximum lifetime will have been exceeded.");
+    } catch (IllegalArgumentException e) {
+      assertEquals("The renewal limit for the token has been exceeded", e.getMessage());
+    }
+  }
+
+
   protected static JWTToken createMockToken(final long expiration) {
     return createMockToken("ABCD1234", expiration);
   }
