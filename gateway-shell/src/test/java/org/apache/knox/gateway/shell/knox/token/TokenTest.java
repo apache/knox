@@ -129,47 +129,21 @@ public class TokenTest {
   }
 
   private void testRenewToken(boolean setDoAsUser, String doAsUser) throws Exception {
-    final String testToken = "ABCDEFG123456";
+    final String testToken = "RENEW+ABCDEFG123456";
 
-    KnoxSession knoxSession = createMock(KnoxSession.class);
-    expect(knoxSession.base()).andReturn("http://localhost/base").atLeastOnce();
-    expect(knoxSession.getHeaders()).andReturn(Collections.emptyMap()).atLeastOnce();
-    expect(knoxSession.executeNow(isA(HttpRequest.class))).andReturn(null).atLeastOnce();
-    replay(knoxSession);
+    final KnoxSession knoxSession = createMockKnoxSession();
 
     Renew.Request request = (setDoAsUser)
-        ? Token.renew(knoxSession, testToken, doAsUser)
-        : Token.renew(knoxSession, testToken);
-
-    boolean shouldHaveDoAs = false;
+                              ? Token.renew(knoxSession, testToken, doAsUser)
+                              : Token.renew(knoxSession, testToken);
 
     if (setDoAsUser) {
       assertEquals(doAsUser, request.getDoAsUser());
-      shouldHaveDoAs = StringUtils.isNotEmpty(doAsUser);
     } else {
       assertNull(request.getDoAsUser());
     }
 
-    assertEquals("http://localhost/base/knoxtoken/api/v1/token/renew" + (shouldHaveDoAs ? ("?doAs=" + doAsUser) : ""),
-                 request.getRequestURI().toString());
-
-    assertEquals(testToken, request.getToken());
-
-    Callable<TokenLifecycleResponse> callable = request.callable();
-    try {
-      callable.call();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    HttpEntity entity = request.getRequest().getEntity();
-    assertNotNull("Missing expected POST data.", entity);
-    String postData = null;
-    try {
-      postData = EntityUtils.toString(entity);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    assertEquals(testToken, postData);
+    testTokenLifecyle(request, testToken);
 
     assertSame(knoxSession, request.getSession());
     verify(knoxSession);
@@ -177,28 +151,46 @@ public class TokenTest {
 
 
   private void testRevokeToken(boolean setDoAsUser, String doAsUser) throws Exception {
-    final String testToken = "ABCDEFG123456";
+    final String testToken = "REVOKE+ABCDEFG123456";
 
+    final KnoxSession knoxSession = createMockKnoxSession();
+
+    Revoke.Request request = (setDoAsUser)
+                                ? Token.revoke(knoxSession, testToken, doAsUser)
+                                : Token.revoke(knoxSession, testToken);
+
+    if (setDoAsUser) {
+      assertEquals(doAsUser, request.getDoAsUser());
+    } else {
+      assertNull(request.getDoAsUser());
+    }
+
+    testTokenLifecyle(request, testToken);
+
+    assertSame(knoxSession, request.getSession());
+    verify(knoxSession);
+  }
+
+  private KnoxSession createMockKnoxSession() throws Exception {
     KnoxSession knoxSession = createMock(KnoxSession.class);
     expect(knoxSession.base()).andReturn("http://localhost/base").atLeastOnce();
     expect(knoxSession.getHeaders()).andReturn(Collections.emptyMap()).atLeastOnce();
     expect(knoxSession.executeNow(isA(HttpRequest.class))).andReturn(null).atLeastOnce();
     replay(knoxSession);
+    return knoxSession;
+  }
 
-    Revoke.Request request = (setDoAsUser)
-        ? Token.revoke(knoxSession, testToken, doAsUser)
-        : Token.revoke(knoxSession, testToken);
+  private void testTokenLifecyle(AbstractTokenLifecycleRequest request, final String testToken) throws Exception {
 
-    boolean shouldHaveDoAs = false;
+    final String expectedEndpointPath =
+                    request.getSession().base()+ "/knoxtoken/api/v1/token/" + request.getOperation();
 
-    if (setDoAsUser) {
-      assertEquals(doAsUser, request.getDoAsUser());
-      shouldHaveDoAs = StringUtils.isNotEmpty(doAsUser);
-    } else {
-      assertNull(request.getDoAsUser());
+    String doAsUser = request.getDoAsUser();
+    if (doAsUser != null && doAsUser.isEmpty()) {
+      doAsUser = null;
     }
 
-    assertEquals("http://localhost/base/knoxtoken/api/v1/token/revoke" + (shouldHaveDoAs ? ("?doAs=" + doAsUser) : ""),
+    assertEquals(expectedEndpointPath + (doAsUser != null ? ("?doAs=" + doAsUser) : ""),
                  request.getRequestURI().toString());
 
     assertEquals(testToken, request.getToken());
@@ -207,8 +199,9 @@ public class TokenTest {
     try {
       callable.call();
     } catch (Exception e) {
-      e.printStackTrace();
+      // expected
     }
+
     HttpEntity entity = request.getRequest().getEntity();
     assertNotNull("Missing expected POST data.", entity);
     String postData = null;
@@ -218,9 +211,6 @@ public class TokenTest {
       e.printStackTrace();
     }
     assertEquals(testToken, postData);
-
-    assertSame(knoxSession, request.getSession());
-    verify(knoxSession);
   }
 
 }
