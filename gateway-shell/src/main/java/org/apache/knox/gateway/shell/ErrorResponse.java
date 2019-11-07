@@ -19,7 +19,7 @@ package org.apache.knox.gateway.shell;
 
 import org.apache.http.HttpResponse;
 
-class ErrorResponse extends RuntimeException {
+public class ErrorResponse extends RuntimeException {
 
   HttpResponse response;
 
@@ -28,7 +28,7 @@ class ErrorResponse extends RuntimeException {
     this.response = response;
   }
 
-  public HttpResponse getReponse() {
+  public HttpResponse getResponse() {
     return response;
   }
 
