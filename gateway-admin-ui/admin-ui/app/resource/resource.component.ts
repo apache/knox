@@ -51,7 +51,6 @@ export class ResourceComponent implements OnInit {
 
         this.resourceType = resType;
         this.resourceService.selectedResourceType(this.resourceType);
-        this.resources = []; // Clear the table before loading the new resources
         this.resourceService.getResources(resType)
             .then(resources => {
                 this.resources = resources;
