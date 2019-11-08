@@ -23,11 +23,28 @@ public class Token {
 
   static String SERVICE_PATH = "/knoxtoken/api/v1/token";
 
-  public static Get.Request get(KnoxSession session) {
+  public static Get.Request get(final KnoxSession session) {
     return new Get.Request(session);
   }
 
-  public static Get.Request get(KnoxSession session, String doAsUser) {
+  public static Get.Request get(final KnoxSession session, final String doAsUser) {
     return new Get.Request(session, doAsUser);
   }
+
+  public static Renew.Request renew(final KnoxSession session, final String token) {
+    return new Renew.Request(session, token);
+  }
+
+  public static Renew.Request renew(final KnoxSession session, final String token, final String doAsUser) {
+    return new Renew.Request(session, token, doAsUser);
+  }
+
+  public static Revoke.Request revoke(final KnoxSession session, final String token) {
+    return new Revoke.Request(session, token);
+  }
+
+  public static Revoke.Request revoke(final KnoxSession session, final String token, final String doAsUser) {
+    return new Revoke.Request(session, token, doAsUser);
+  }
+
 }
