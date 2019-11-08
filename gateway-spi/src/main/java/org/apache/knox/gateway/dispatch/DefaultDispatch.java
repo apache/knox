@@ -147,6 +147,9 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
     } catch( SocketTimeoutException e ) {
         //Set a 504 instead of throwing an IO exception in the event of a socket timeout,
         //as an IO exception forces a 500 to be displayed.
+        int timeoutStatus = HttpStatus.SC_GATEWAY_TIMEOUT;
+        auditor.audit( Action.DISPATCH, outboundRequest.getURI().toString(), ResourceType.URI, ActionOutcome.FAILURE, RES.responseStatus(timeoutStatus));
+        LOG.dispatchServiceConnectionException( outboundRequest.getURI(), e );
         inboundResponse = generateInboundResponseOverride(HttpStatus.SC_GATEWAY_TIMEOUT);
     } catch( Exception e ) {
       // We do not want to expose back end host. port end points to clients, see JIRA KNOX-58
