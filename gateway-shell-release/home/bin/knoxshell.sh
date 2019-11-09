@@ -64,40 +64,25 @@ function buildAppJavaOpts {
     if [ -n "$APP_DBG_OPTS" ]; then
       addAppJavaOpts "${APP_DBG_OPTS}"
     fi
-
-    if [ -n "$APP_JAVA_LIB_PATH" ]; then
-      addAppJavaOpts "${APP_JAVA_LIB_PATH}"
-    fi
-
-    # echo "APP_JAVA_OPTS =" "${APP_JAVA_OPTS[@]}"
 }
 
 function main {
-   checkJava
-
-   #printf "Starting $APP_LABEL \n"
-   #printf "$@"
    case "$1" in
       init|buildTrustStore)
         if [ "$#" -ne 2 ]; then
             echo "Illegal number of parameters."
-            printHelp
-        else
-          $JAVA -cp "$APP_JAR" org.apache.knox.gateway.shell.KnoxSh "$1" --gateway "$2" || exit 1
+            printHelp && exit 1
         fi
-         ;;
-      list|destroy)
-        "$JAVA" -cp "$APP_JAR" org.apache.knox.gateway.shell.KnoxSh "$1" || exit 1
-         ;;
+        ;;
       help)
-         printHelp
-         ;;
-      *)
-         buildAppJavaOpts
-         $JAVA "${APP_JAVA_OPTS[@]}" -javaagent:"$APP_BIN_DIR"/../lib/aspectjweaver.jar -jar "$APP_JAR" "$@" || exit 1
+         printHelp && exit 0
          ;;
    esac
-   
+
+   checkJava
+   buildAppJavaOpts
+   $JAVA "${APP_JAVA_OPTS[@]}" -javaagent:"$APP_BIN_DIR"/../lib/aspectjweaver.jar -jar "$APP_JAR" "$@" || exit 1
+
    return 0
 }
 
