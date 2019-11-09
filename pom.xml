@@ -155,6 +155,7 @@
         <aspectj.version>1.9.4</aspectj.version>
         <bcprov-jdk15on.version>1.64</bcprov-jdk15on.version>
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
+        <cas.version>3.5.1</cas.version>
         <cglib.version>3.3.0</cglib.version>
         <checkstyle.version>8.24</checkstyle.version>
         <cloudera-manager.version>6.3.0</cloudera-manager.version>
@@ -2006,6 +2007,18 @@
                 <artifactId>pac4j-cas</artifactId>
                 <version>${pac4j.version}</version>
             </dependency>
+            <!-- Upgrade pac4j-saml dependencies to avoid known CVEs -->
+            <dependency>
+                <groupId>org.jasig.cas.client</groupId>
+                <artifactId>cas-client-core</artifactId>
+                <version>${cas.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jasig.cas.client</groupId>
+                <artifactId>cas-client-support-saml</artifactId>
+                <version>${cas.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.pac4j</groupId>
                 <artifactId>pac4j-config</artifactId>
