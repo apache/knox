@@ -22,9 +22,26 @@ limitations under the License.
         <cpe>cpe:/a:echo_project:echo</cpe>
     </suppress>
     <suppress>
+        <notes><![CDATA[file name: cloudera-manager-api-swagger.*.jar]]></notes>
+        <gav regex="true">^com\.cloudera\.api\.swagger:cloudera-manager-api-swagger:.*$</gav>
+        <cpe>cpe:/a:cloudera:cloudera_manager</cpe>
+        <cpe>cpe:/a:cloudera:manager</cpe>
+        <cpe>cpe:/a:swagger:swagger-codegen</cpe>
+    </suppress>
+    <suppress>
         <notes><![CDATA[file name: amqp-client-.*.jar]]></notes>
         <gav regex="true">^com\.rabbitmq:amqp-client:.*$</gav>
         <cpe>cpe:/a:pivotal_software:rabbitmq</cpe>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[file name: forbiddenapis.*.jar]]></notes>
+        <gav regex="true">^de\.thetaphi:forbiddenapis:.*$</gav>
+        <cpe>cpe:/a:gradle:gradle</cpe>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[file name: netty-*.Final.jar]]></notes>
+        <gav regex="true">^io\.netty:netty:.*$</gav>
+        <cve>CVE-2019-16869</cve>
     </suppress>
     <suppress>
         <notes><![CDATA[file name: javax.jws-api-.*.jar]]></notes>
@@ -58,6 +75,7 @@ limitations under the License.
         <cpe>cpe:/a:apache:hbase</cpe>
         <cpe>cpe:/a:apache:hive</cpe>
         <cpe>cpe:/a:apache:http_server</cpe>
+        <cpe>cpe:/a:apache:impala</cpe>
         <cpe>cpe:/a:apache:nifi</cpe>
         <cpe>cpe:/a:apache:shiro</cpe>
         <cpe>cpe:/a:apache:storm</cpe>
@@ -100,6 +118,7 @@ limitations under the License.
     <suppress>
         <notes><![CDATA[file name: ha-api-.*.jar]]></notes>
         <gav regex="true">^org\.glassfish\.ha:ha-api:.*$</gav>
+        <cpe>cpe:/a:eclipse:eclipse_ide</cpe>
         <cpe>cpe:/a:oracle:glassfish</cpe>
     </suppress>
     <suppress>
