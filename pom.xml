@@ -178,6 +178,7 @@
         <curator.version>4.2.0</curator.version>
         <dependency-check-maven.version>5.2.2</dependency-check-maven.version>
         <dockerfile-maven-plugin.version>1.4.13</dockerfile-maven-plugin.version>
+        <dom4j.version>2.1.1</dom4j.version>
         <easymock.version>4.0.2</easymock.version>
         <eclipselink.version>2.7.5</eclipselink.version>
         <ehcache.version>2.6.11</ehcache.version>
@@ -2067,6 +2068,10 @@
                         <groupId>org.springframework</groupId>
                         <artifactId>spring-core</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>dom4j</groupId>
+                        <artifactId>dom4j</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
 
@@ -2075,6 +2080,11 @@
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-core</artifactId>
                 <version>${spring-core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.dom4j</groupId>
+                <artifactId>dom4j</artifactId>
+                <version>${dom4j.version}</version>
             </dependency>
 
             <dependency>
