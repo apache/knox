@@ -15,7 +15,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.1.xsd">
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
     <suppress>
         <notes><![CDATA[file name: commons-net-.*.jar]]></notes>
         <gav regex="true">^commons-net:commons-net:.*$</gav>
@@ -125,6 +125,11 @@ limitations under the License.
         <notes><![CDATA[org.glassfish.jaxb:xsom)]]></notes>
         <gav regex="true">^org\.glassfish\.jaxb:xsom:.*$</gav>
         <cpe>cpe:/a:oracle:glassfish</cpe>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[file name: cas-client-core.*.jar]]></notes>
+        <gav regex="true">^org\.jasig\.cas\.client:cas-client-core:.*$</gav>
+        <cwe>611</cwe>
     </suppress>
     <suppress>
         <notes><![CDATA[file name: apache-jsp-.*.jar]]></notes>
