@@ -179,7 +179,7 @@
         <dependency-check-maven.version>5.2.2</dependency-check-maven.version>
         <dockerfile-maven-plugin.version>1.4.13</dockerfile-maven-plugin.version>
         <dom4j.version>2.1.1</dom4j.version>
-        <easymock.version>4.0.2</easymock.version>
+        <easymock.version>4.1</easymock.version>
         <eclipselink.version>2.7.5</eclipselink.version>
         <ehcache.version>2.6.11</ehcache.version>
         <exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
