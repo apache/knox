@@ -73,7 +73,7 @@ public class TestHashicorpVaultAliasService {
                            .withVaultToken(vaultToken)
                            .waitingFor(Wait.forListeningPort());
       vaultContainer.addExposedPort(vaultPort);
-    } catch (IllegalStateException e) {
+    } catch (Exception e) {
       assumeNoException(e);
     }
 

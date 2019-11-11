@@ -244,7 +244,7 @@
         <spring-vault.version>2.2.0.RELEASE</spring-vault.version>
         <stax2-api.version>4.2</stax2-api.version>
         <taglibs-standard.version>1.2.5</taglibs-standard.version>
-        <testcontainers.version>1.12.1</testcontainers.version>
+        <testcontainers.version>1.12.3</testcontainers.version>
         <txw2.version>2.4.0-b180830.0438</txw2.version>
         <velocity.version>1.7</velocity.version>
         <woodstox-core.version>6.0.2</woodstox-core.version>
