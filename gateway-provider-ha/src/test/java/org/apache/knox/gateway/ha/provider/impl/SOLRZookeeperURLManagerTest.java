@@ -48,7 +48,7 @@ public class SOLRZookeeperURLManagerTest {
 
   @Before
   public void setUp() throws Exception {
-    cluster = new TestingCluster(3);
+    cluster = new TestingCluster(1);
     cluster.start();
 
     try(CuratorFramework zooKeeperClient =
