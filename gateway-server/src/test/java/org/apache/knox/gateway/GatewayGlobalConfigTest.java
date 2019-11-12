@@ -102,7 +102,7 @@ public class GatewayGlobalConfigTest {
   public void testForUpdatedDeploymentDir() {
     String homeDirName = getHomeDirName("conf-demo/conf/gateway-site.xml");
     System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
-    System.setProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR, homeDirName);
+    System.setProperty(GatewayConfigImpl.KNOX_GATEWAY_DATA_DIR, homeDirName);
     GatewayConfig config = new GatewayConfigImpl();
     assertTrue(("target/test").equalsIgnoreCase(config.getGatewayDeploymentDir()));
   }
@@ -111,7 +111,7 @@ public class GatewayGlobalConfigTest {
   public void testDefaultDeploymentDir() {
     String homeDirName = getHomeDirName("conf-site/conf/gateway-site.xml");
     System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
-    System.setProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR, homeDirName);
+    System.setProperty(GatewayConfigImpl.KNOX_GATEWAY_DATA_DIR, homeDirName);
     GatewayConfig config = new GatewayConfigImpl();
     assertThat(config.getGatewayDeploymentDir(), is(homeDirName + File.separator + "deployments"));
   }
@@ -120,7 +120,7 @@ public class GatewayGlobalConfigTest {
   public void testForDefaultSecurityDataDir() {
     String homeDirName = getHomeDirName("conf-site/conf/gateway-site.xml");
     System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
-    System.setProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR, homeDirName);
+    System.setProperty(GatewayConfigImpl.KNOX_GATEWAY_DATA_DIR, homeDirName);
     GatewayConfig config = new GatewayConfigImpl();
     assertThat(config.getGatewaySecurityDir(), is(homeDirName + File.separator + "security"));
   }
@@ -129,7 +129,7 @@ public class GatewayGlobalConfigTest {
   public void testForUpdatedSecurityDataDir() {
     String homeDirName = getHomeDirName("conf-demo/conf/gateway-site.xml");
     System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
-    System.setProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR, homeDirName);
+    System.setProperty(GatewayConfigImpl.KNOX_GATEWAY_DATA_DIR, homeDirName);
     GatewayConfig config = new GatewayConfigImpl();
     assertTrue(("target/test").equalsIgnoreCase(config.getGatewaySecurityDir()));
   }
@@ -137,7 +137,7 @@ public class GatewayGlobalConfigTest {
   @Test
   public void testForDataDirSetAsSystemProperty() {
     String homeDirName = getHomeDirName("conf-demo/conf/gateway-site.xml");
-    System.setProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR, homeDirName + File.separator
+    System.setProperty(GatewayConfigImpl.KNOX_GATEWAY_DATA_DIR, homeDirName + File.separator
         + "DataDirSystemProperty");
     GatewayConfig config = new GatewayConfigImpl();
     assertTrue((homeDirName + File.separator + "DataDirSystemProperty").equalsIgnoreCase(config
@@ -148,7 +148,7 @@ public class GatewayGlobalConfigTest {
   public void testForDataDirSetAsConfiguration() {
     String homeDirName = getHomeDirName("conf-demo/conf/gateway-site.xml");
     System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
-    System.clearProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR);
+    System.clearProperty(GatewayConfigImpl.KNOX_GATEWAY_DATA_DIR);
     GatewayConfig config = new GatewayConfigImpl();
     assertTrue(("target/testDataDir").equalsIgnoreCase(config
         .getGatewayDataDir()));
@@ -158,7 +158,7 @@ public class GatewayGlobalConfigTest {
   public void testForDefaultDataDir() {
     String homeDirName = getHomeDirName("conf-site/conf/gateway-site.xml");
     System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
-    System.clearProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR);
+    System.clearProperty(GatewayConfigImpl.KNOX_GATEWAY_DATA_DIR);
     GatewayConfig config = new GatewayConfigImpl();
     assertTrue((homeDirName + File.separator + "data").equalsIgnoreCase(config.getGatewayDataDir()));
   }
@@ -171,7 +171,7 @@ public class GatewayGlobalConfigTest {
   public void testDataDirSetAsBothSystemPropertyAndConfig() {
     String homeDirName = getHomeDirName("conf-demo/conf/gateway-site.xml");
     System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
-    System.setProperty(GatewayConfigImpl.GATEWAY_DATA_HOME_VAR, homeDirName + File.separator
+    System.setProperty(GatewayConfigImpl.KNOX_GATEWAY_DATA_DIR, homeDirName + File.separator
         + "DataDirSystemProperty");
     GatewayConfig config = new GatewayConfigImpl();
     assertTrue((homeDirName + File.separator + "DataDirSystemProperty").equalsIgnoreCase(config

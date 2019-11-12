@@ -136,7 +136,7 @@ public class JettySSLService implements SSLService {
     String identityKeystoreType = config.getIdentityKeystoreType();
     String identityKeyAlias = config.getIdentityKeyAlias();
 
-    SslContextFactory sslContextFactory = new SslContextFactory( true );
+    SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
     sslContextFactory.setCertAlias( identityKeyAlias );
     sslContextFactory.setKeyStoreType(identityKeystoreType);
     sslContextFactory.setKeyStorePath(identityKeystorePath );

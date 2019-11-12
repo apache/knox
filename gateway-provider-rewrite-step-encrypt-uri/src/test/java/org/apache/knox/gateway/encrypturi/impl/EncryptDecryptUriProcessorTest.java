@@ -39,10 +39,9 @@ import java.util.ServiceLoader;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.core.IsNot.not;
-import static org.hamcrest.text.IsEmptyString.isEmptyOrNullString;
 import static org.junit.Assert.fail;
-
 
 public class EncryptDecryptUriProcessorTest {
 
@@ -115,7 +114,7 @@ public class EncryptDecryptUriProcessorTest {
     assertThat( encodedValue.getValue(), notNullValue() );
     assertThat( encodedValue.getValue().resolve( encryptedValueParamName ).size(), is( 1 ) );
     String encryptedAdrress = encodedValue.getValue().resolve( encryptedValueParamName ).get( 0 );
-    assertThat( encryptedAdrress, not( isEmptyOrNullString() ) );
+    assertThat( encryptedAdrress, not( is(emptyOrNullString()) ) );
     assertThat( encryptedAdrress, not( "{host}:{port}" ) );
     assertThat( encryptedAdrress, not( "hdp:8088" ) );
 

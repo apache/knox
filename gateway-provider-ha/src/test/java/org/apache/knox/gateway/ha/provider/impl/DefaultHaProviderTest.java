@@ -24,7 +24,8 @@ import org.junit.Test;
 import java.util.ArrayList;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.isIn;
+import static org.hamcrest.collection.IsIn.in;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -60,7 +61,7 @@ public class DefaultHaProviderTest {
       assertNull(provider.getActiveURL("bar"));
       String url = provider.getActiveURL("foo");
       assertNotNull(url);
-      assertThat(url, isIn(urls));
+      assertThat(url, is(in(urls)));
    }
 
    @Test

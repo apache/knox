@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.util.urltemplate;
 
-
 import org.apache.knox.test.category.FastTests;
 import org.apache.knox.test.category.UnitTests;
 import org.junit.Test;
@@ -33,7 +32,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.IsCollectionContaining.hasItem;
+import static org.hamcrest.core.IsIterableContaining.hasItem;
 import static org.hamcrest.core.IsNull.notNullValue;
 
 //TODO: Test to make sure that extra unmatched query parameters prevent a match.
