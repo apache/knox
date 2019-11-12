@@ -93,7 +93,7 @@ public class ZooKeeperConfigurationMonitorTest {
 
         // Define the test cluster
         List<InstanceSpec> instanceSpecs = new ArrayList<>();
-        for (int i = 0 ; i < 3 ; i++) {
+        for (int i = 0 ; i < 1 ; i++) {
             InstanceSpec is = new InstanceSpec(null, -1, -1, -1, false, (i+1), -1, -1, customInstanceSpecProps);
             instanceSpecs.add(is);
         }
