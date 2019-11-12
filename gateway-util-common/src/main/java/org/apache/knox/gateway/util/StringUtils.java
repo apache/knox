@@ -18,29 +18,22 @@
 package org.apache.knox.gateway.util;
 
 public class StringUtils {
-
   private StringUtils() {
-  };
+  }
 
   /**
-   * @param str
-   *          a String
-   * @param prefix
-   *          a prefix
-   * @return true if {@code str} starts with {@code prefix}, ignoring case
-   *         sensitivity
+   * @param str a String
+   * @param prefix a prefix
+   * @return true if {@code str} starts with {@code prefix}, ignoring case sensitivity
    */
   public static boolean startsWithIgnoreCase(String str, String prefix) {
     return str.regionMatches(true, 0, prefix, 0, prefix.length());
   }
 
   /**
-   * @param str
-   *          a String
-   * @param prefix
-   *          a prefix
-   * @return true if {@code str} ends with {@code prefix}, ignoring case
-   *         sensitivity
+   * @param str a String
+   * @param suffix a suffix
+   * @return true if {@code str} ends with {@code suffix}, ignoring case sensitivity
    */
   public static boolean endsWithIgnoreCase(String str, String suffix) {
     int suffixLength = suffix.length();
