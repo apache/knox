@@ -238,12 +238,13 @@ public class ConfigurableDispatchTest {
   @Test
   public void testResponseExcludeHeadersConfig() {
     ConfigurableDispatch dispatch = new ConfigurableDispatch();
-    dispatch.setResponseExcludeHeaders(String.join(",", Collections.singletonList("TEST")));
+    dispatch.setResponseExcludeHeaders(String.join(",", Arrays.asList("test", "caseINSENSITIVEheader")));
 
     Header[] headers = new Header[]{
         new BasicHeader(SET_COOKIE, "abc"),
         new BasicHeader(WWW_AUTHENTICATE, "negotiate"),
-        new BasicHeader("TEST", "testValue")
+        new BasicHeader("TEST", "testValue"),
+        new BasicHeader("caseInsensitiveHeader", "caseInsensitiveHeaderValue")
     };
 
     HttpResponse inboundResponse = EasyMock.createNiceMock(HttpResponse.class);

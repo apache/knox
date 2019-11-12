@@ -19,6 +19,8 @@ package org.apache.knox.gateway.dispatch;
 
 import org.apache.knox.gateway.config.Configure;
 import org.apache.knox.gateway.config.Default;
+import org.apache.knox.gateway.util.StringUtils;
+
 import javax.servlet.http.HttpServletRequest;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -63,7 +65,7 @@ public class ConfigurableDispatch extends DefaultDispatch {
   }
 
   private void populateSetCookieHeaderDirectiveExlusions(final Set<String> headerSet) {
-    final Optional<String> setCookieHeader = headerSet.stream().filter(s -> s.startsWith(SET_COOKIE)).findFirst();
+    final Optional<String> setCookieHeader = headerSet.stream().filter(s -> StringUtils.startsWithIgnoreCase(s, SET_COOKIE)).findFirst();
     if (setCookieHeader.isPresent()) {
       final String[] setCookieHeaderParts = setCookieHeader.get().split(":");
       responseExcludeSetCookieHeaderDirectives = setCookieHeaderParts.length > 1
@@ -75,7 +77,7 @@ public class ConfigurableDispatch extends DefaultDispatch {
   }
 
   private void populateHttpHeaderExlusionsOtherThanSetCookie(final Set<String> headerSet) {
-    final Set<String> excludedHeadersOthenThanSetCookie = headerSet.stream().filter(s -> !s.startsWith(SET_COOKIE)).collect(Collectors.toSet());
+    final Set<String> excludedHeadersOthenThanSetCookie = headerSet.stream().filter(s -> !StringUtils.startsWithIgnoreCase(s, SET_COOKIE)).collect(Collectors.toSet());
     if (!excludedHeadersOthenThanSetCookie.isEmpty()) {
       this.responseExcludeHeaders = excludedHeadersOthenThanSetCookie;
     }
