@@ -43,7 +43,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.apache.knox.gateway.backend.hashicorp.vault.HashicorpVaultAliasService.VAULT_SEPARATOR;
 import static org.junit.Assert.assertEquals;
@@ -56,7 +56,6 @@ import static org.junit.Assume.assumeNoException;
 public class TestHashicorpVaultAliasService {
   private static final Logger LOG = LoggerFactory.getLogger(TestHashicorpVaultAliasService.class);
 
-  private static final Random RANDOM = new Random();
   private static final String vaultVersion = "1.2.1";
   private static final String vaultImage = "vault:" + vaultVersion;
   private static final Integer vaultPort = 8200;
@@ -88,7 +87,7 @@ public class TestHashicorpVaultAliasService {
 
   @Before
   public void setUp() throws Exception {
-    vaultSecretsEngine = "knox-secret-" + RANDOM.nextInt(100);
+    vaultSecretsEngine = "knox-secret-" + ThreadLocalRandom.current().nextInt(100);
 
     setupVaultSecretsEngine();
   }
@@ -155,7 +154,7 @@ public class TestHashicorpVaultAliasService {
     remoteAliasServiceConfiguration.put(HashicorpVaultClientAuthenticationProvider.AUTHENTICATION_TYPE_KEY,
         TokenHashicorpVaultClientAuthenticationProvider.TYPE);
     remoteAliasServiceConfiguration.put(TokenHashicorpVaultClientAuthenticationProvider.TOKEN_KEY,
-        getKnoxToken(RANDOM.nextBoolean()));
+        getKnoxToken(ThreadLocalRandom.current().nextBoolean()));
 
     EasyMock.expect(gatewayConfig.getRemoteAliasServiceConfiguration())
         .andReturn(remoteAliasServiceConfiguration).anyTimes();
@@ -167,9 +166,9 @@ public class TestHashicorpVaultAliasService {
     aliasService.init(gatewayConfig, Collections.emptyMap());
     aliasService.start();
 
-    String clusterName = "test-" + RANDOM.nextInt(100);
-    String alias = "abc-" + RANDOM.nextInt(100);
-    String aliasPassword = "def-" + RANDOM.nextInt(100);
+    String clusterName = "test-" + ThreadLocalRandom.current().nextInt(100);
+    String alias = "abc-" + ThreadLocalRandom.current().nextInt(100);
+    String aliasPassword = "def-" + ThreadLocalRandom.current().nextInt(100);
 
     assertEquals(0, aliasService.getAliasesForCluster(clusterName).size());
 
@@ -215,9 +214,9 @@ public class TestHashicorpVaultAliasService {
     aliasService.init(gatewayConfig, Collections.emptyMap());
     aliasService.start();
 
-    String clusterName = "test-" + RANDOM.nextInt(100);
-    String alias = "abc-" + RANDOM.nextInt(100);
-    String aliasPassword = "def-" + RANDOM.nextInt(100);
+    String clusterName = "test-" + ThreadLocalRandom.current().nextInt(100);
+    String alias = "abc-" + ThreadLocalRandom.current().nextInt(100);
+    String aliasPassword = "def-" + ThreadLocalRandom.current().nextInt(100);
 
     try {
       aliasService.getAliasesForCluster(clusterName);
@@ -252,9 +251,9 @@ public class TestHashicorpVaultAliasService {
 
   private String generatePathPrefix() {
     StringBuilder pathPrefix = new StringBuilder();
-    int numParts = RANDOM.nextInt(10);
+    int numParts = ThreadLocalRandom.current().nextInt(10);
     for(int i = 0; i < numParts; i++) {
-      pathPrefix.append(VAULT_SEPARATOR).append(RANDOM.nextInt(10));
+      pathPrefix.append(VAULT_SEPARATOR).append(ThreadLocalRandom.current().nextInt(10));
     }
     pathPrefix.append(VAULT_SEPARATOR);
     String result = pathPrefix.toString();

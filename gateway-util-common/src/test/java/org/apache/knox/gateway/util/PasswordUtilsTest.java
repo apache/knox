@@ -19,14 +19,14 @@ package org.apache.knox.gateway.util;
 
 import org.junit.Test;
 
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.junit.Assert.assertEquals;
 
 public class PasswordUtilsTest {
   @Test
   public void testGeneratePassword() {
-    int len = new Random().nextInt(20);
+    int len = ThreadLocalRandom.current().nextInt(20);
     String randomPassword = PasswordUtils.generatePassword(len);
     assertEquals(len, randomPassword.length());
   }

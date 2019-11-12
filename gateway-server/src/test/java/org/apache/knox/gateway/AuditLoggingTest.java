@@ -58,6 +58,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -120,7 +121,7 @@ public class AuditLoggingTest {
     FilterChain chain = EasyMock.createNiceMock( FilterChain.class );
     EasyMock.replay( chain );
 
-    Random rnd = new Random();
+    Random rnd = ThreadLocalRandom.current();
 
     // Make number of total requests between 1-100
     int numberTotalRequests = rnd.nextInt(99) + 1;

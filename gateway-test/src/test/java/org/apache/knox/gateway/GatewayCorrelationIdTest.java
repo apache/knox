@@ -25,7 +25,6 @@ import org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationService;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.log.CollectAppender;
 import org.apache.log4j.spi.LoggingEvent;
 import org.hamcrest.MatcherAssert;
@@ -42,12 +41,12 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 import static io.restassured.RestAssured.given;
@@ -159,17 +158,15 @@ public class GatewayCorrelationIdTest {
         .gotoRoot();
   }
 
-  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
+  @Test
   public void testTestService() throws Exception {
     LOG_ENTER();
     String username = "guest";
     String password = "guest-password";
     String serviceUrl = clusterUrl + "/test-service-path/test-service-resource";
 
-    Random rnd = new Random();
-
     // Make number of total requests between 1-100
-    int numberTotalRequests = rnd.nextInt(99) + 1;
+    int numberTotalRequests = ThreadLocalRandom.current().nextInt(99) + 1;
     Set<Callable<Void>> callables = new HashSet<>(numberTotalRequests);
     for (int i = 0; i < numberTotalRequests; i++) {
       callables.add(() -> {
@@ -185,9 +182,10 @@ public class GatewayCorrelationIdTest {
     }
 
     // Make number of concurrent requests between 1-10
-    int numberConcurrentRequests = rnd.nextInt( 9) + 1;
+    int numberConcurrentRequests = ThreadLocalRandom.current().nextInt( 9) + 1;
 
-    LOG.info("Executing %d total requests with %d concurrently", numberTotalRequests, numberConcurrentRequests);
+    LOG.info("Executing {} total requests with {} concurrently",
+        numberTotalRequests, numberConcurrentRequests);
 
     ExecutorService executor = Executors.newFixedThreadPool(numberConcurrentRequests);
     executor.invokeAll(callables);
