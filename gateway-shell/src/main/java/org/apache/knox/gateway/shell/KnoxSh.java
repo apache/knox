@@ -31,7 +31,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.Socket;
-import java.net.URI;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -67,9 +67,9 @@ public class KnoxSh {
       "   [" + KnoxList.USAGE + "]\n";
 
   /** allows stdout to be captured if necessary */
-  public PrintStream out = System.out;
+  PrintStream out = System.out;
   /** allows stderr to be captured if necessary */
-  public PrintStream err = System.err;
+  PrintStream err = System.err;
 
   private Command command;
   private String gateway;
@@ -172,7 +172,7 @@ public class KnoxSh {
     public abstract String getUsage();
   }
 
-  private class KnoxBuildTrustStore extends Command {
+  class KnoxBuildTrustStore extends Command {
 
     private static final String USAGE = "buildTrustStore --gateway server-url";
     private static final String DESC = "Downloads the gateway server's public certificate and builds a trust store.";
@@ -204,9 +204,10 @@ public class KnoxSh {
       final SSLContext sslContext = SSLContext.getInstance("TLS");
       sslContext.init(null, new TrustManager[] { trustManagerWithCertificateChain }, null);
 
-      final URI uri = URI.create(gateway);
-      out.println("Opening connection to " + uri.getHost() + ":" + uri.getPort() + "...");
-      try (Socket socket = sslContext.getSocketFactory().createSocket(uri.getHost(), uri.getPort())) {
+      final URL url = new URL(gateway);
+      final int port = url.getPort() == -1 ? url.getDefaultPort() : url.getPort();
+      out.println("Opening connection to " + url.getHost() + ":" + port + "...");
+      try (Socket socket = sslContext.getSocketFactory().createSocket(url.getHost(), port)) {
         socket.setSoTimeout(10000);
         out.println("Starting SSL handshake...");
         ((SSLSocket) socket).startHandshake();
