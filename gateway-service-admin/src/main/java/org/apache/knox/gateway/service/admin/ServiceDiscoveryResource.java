@@ -93,10 +93,8 @@ public class ServiceDiscoveryResource {
     }
 
     void setKnoxServiceDiscoveries(Collection<ServiceDiscovery> serviceDiscoveries) {
-      serviceDiscoveries.forEach(serviceDiscovery -> {
-        this.knoxServiceDiscoveries.add(new KnoxServiceDiscovery(serviceDiscovery.getType(), serviceDiscovery.getClass().getCanonicalName()));
-
-      });
+      serviceDiscoveries.forEach(serviceDiscovery -> this.knoxServiceDiscoveries.add(
+          new KnoxServiceDiscovery(serviceDiscovery.getType(), serviceDiscovery.getClass().getCanonicalName())));
     }
   }
 }

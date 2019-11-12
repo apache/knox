@@ -29,7 +29,6 @@ public class UrlRewriteActionRewriteProcessorExt
     implements UrlRewriteStepProcessor<UrlRewriteActionRewriteDescriptorExt> {
 
   private Template template;
-  private Expander expander;
 
   @Override
   public String getType() {
@@ -38,7 +37,6 @@ public class UrlRewriteActionRewriteProcessorExt
 
   @Override
   public void initialize( UrlRewriteEnvironment environment, UrlRewriteActionRewriteDescriptorExt descriptor ) throws Exception {
-    this.expander = new Expander();
     if ( descriptor.parameter() != null ) {
       this.template = Parser.parseTemplate( descriptor.parameter() );
     } else {
@@ -48,7 +46,7 @@ public class UrlRewriteActionRewriteProcessorExt
 
   @Override
   public UrlRewriteStepStatus process( UrlRewriteContext context ) throws Exception {
-    Template rewritten = expander.expandToTemplate( template, context.getParameters(), context.getEvaluator() );
+    Template rewritten = Expander.expandToTemplate( template, context.getParameters(), context.getEvaluator() );
     context.setCurrentUrl( rewritten );
     return UrlRewriteStepStatus.SUCCESS;
   }

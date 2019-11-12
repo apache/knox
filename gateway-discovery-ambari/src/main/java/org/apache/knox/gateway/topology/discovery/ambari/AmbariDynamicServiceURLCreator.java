@@ -150,10 +150,8 @@ class AmbariDynamicServiceURLCreator implements ServiceURLCreator {
                         log.handlingDerivedProperty(serviceName, configProperty.getType(), configProperty.getName());
                         ServiceURLPropertyConfig.Property p = config.getConfigProperty(serviceName, configProperty.getName());
                         propertyValue = p.getValue();
-                        if (propertyValue == null) {
-                            if (p.getConditionHandler() != null) {
-                                propertyValue = p.getConditionHandler().evaluate(config, cluster);
-                            }
+                        if (propertyValue == null && p.getConditionHandler() != null) {
+                            propertyValue = p.getConditionHandler().evaluate(config, cluster);
                         }
                     }
 

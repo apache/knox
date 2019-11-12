@@ -126,6 +126,8 @@ public class GatewayServer {
   private static final Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
       AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
 
+  private static final String TOPOLOGY_EXTENSION = ".topo.";
+
   static final String KNOXSESSIONCOOKIENAME = "KNOXSESSIONID";
 
   private static GatewayServer server;
@@ -1032,7 +1034,7 @@ public class GatewayServer {
   }
 
   private String calculateDeploymentExtension() {
-    return ".topo.";
+    return TOPOLOGY_EXTENSION;
   }
 
   private String calculateDeploymentName( Topology topology ) {

@@ -115,7 +115,7 @@ public class GatewayTestDriver {
   public void setupService( String role, String realUrl, String gatewayPath, boolean mock ) throws Exception {
     Service service = new Service( role, realUrl, gatewayPath, mock );
     services.put( role, service );
-    log.info( role + " port = " + service.server.getPort() );
+    log.info("{} port = {}", role, service.server.getPort());
   }
 
   /**

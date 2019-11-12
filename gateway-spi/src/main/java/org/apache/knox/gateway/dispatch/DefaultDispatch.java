@@ -332,14 +332,14 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
     if (excludedHeaderDirectives != null && excludedHeaderDirectives.containsKey(headerNameToCheck.toUpperCase(Locale.ROOT))) {
       final Set<String> excludedHeaderValues = excludedHeaderDirectives.get(headerNameToCheck.toUpperCase(Locale.ROOT));
       if (!excludedHeaderValues.isEmpty()) {
-        if (excludedHeaderValues.stream().filter(e -> e.equals(EXCLUDE_ALL)).findAny().isPresent()) {
+        if (excludedHeaderValues.stream().anyMatch(e -> e.equals(EXCLUDE_ALL))) {
           return ""; // we should exclude all -> there should not be any value added with this header
         } else {
           final String separator = SET_COOKIE.equalsIgnoreCase(headerNameToCheck) ? "; " : " ";
           Set<String> headerValuesToCheck = new HashSet<>(Arrays.asList(headerToCheck.getValue().trim().split("\\s+")));
           headerValuesToCheck = headerValuesToCheck.stream().map(h -> h.replaceAll(separator.trim(), "")).collect(Collectors.toSet());
           headerValuesToCheck.removeAll(excludedHeaderValues);
-          return headerValuesToCheck.isEmpty() ? "" : headerValuesToCheck.stream().collect(Collectors.joining(separator));
+          return headerValuesToCheck.isEmpty() ? "" : String.join(separator, headerValuesToCheck);
         }
       }
     }

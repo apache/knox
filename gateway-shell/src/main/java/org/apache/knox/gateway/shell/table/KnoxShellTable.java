@@ -27,7 +27,6 @@ import javax.swing.SortOrder;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import org.apache.commons.math3.stat.StatUtils;
 
-
 /**
  * Simple table representation and text based rendering of a table via
  * toString(). Headers are optional but when used must have the same count as
@@ -48,8 +47,8 @@ public class KnoxShellTable {
 
   private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
-  List<String> headers = new ArrayList<String>();
-  List<List<Comparable<? extends Object>>> rows = new ArrayList<List<Comparable<? extends Object>>>();
+  List<String> headers = new ArrayList<>();
+  List<List<Comparable<? extends Object>>> rows = new ArrayList<>();
   String title;
   long id;
 
@@ -68,7 +67,7 @@ public class KnoxShellTable {
   }
 
   public KnoxShellTable row() {
-    rows.add(new ArrayList<Comparable<? extends Object>>());
+    rows.add(new ArrayList<>());
     return this;
   }
 
@@ -84,14 +83,14 @@ public class KnoxShellTable {
   }
 
   public List<Comparable<? extends Object>> values(int colIndex) {
-    List<Comparable<? extends Object>> col = new ArrayList<Comparable<? extends Object>>();
+    List<Comparable<? extends Object>> col = new ArrayList<>();
     rows.forEach(row -> col.add(row.get(colIndex)));
     return col;
   }
 
   public List<Comparable<? extends Object>> values(String colName) {
     int colIndex = headers.indexOf(colName);
-    List<Comparable<? extends Object>> col = new ArrayList<Comparable<? extends Object>>();
+    List<Comparable<? extends Object>> col = new ArrayList<>();
     rows.forEach(row -> col.add(row.get(colIndex)));
     return col;
   }
@@ -140,25 +139,25 @@ public class KnoxShellTable {
       }
       switch (conversionMethod) {
         case DOUBLE:
-          colArray[i] = (double) ((Double) col.get(i));
+          colArray[i] = (Double) col.get(i);
           break;
         case INTEGER:
-          colArray[i] = (double) ((Integer) col.get(i)).intValue();
+          colArray[i] = (Integer) col.get(i);
           break;
         case FLOAT:
-          colArray[i] = (double) ((Float) col.get(i)).floatValue();
+          colArray[i] = (Float) col.get(i);
           break;
         case BYTE:
-          colArray[i] = (double) ((Byte) col.get(i)).byteValue();
+          colArray[i] = (Byte) col.get(i);
           break;
         case SHORT:
-          colArray[i] = (double) ((Short) col.get(i)).shortValue();
+          colArray[i] = (Short) col.get(i);
           break;
         case LONG:
-          colArray[i] = (double) ((Long) col.get(i)).longValue();
+          colArray[i] = (double) (Long) col.get(i);
           break;
         case STRING:
-          colArray[i] = (double) (Double.parseDouble((String) col.get(i)));
+          colArray[i] = Double.parseDouble((String) col.get(i));
           break;
       }
     }
@@ -207,7 +206,7 @@ public class KnoxShellTable {
    * @return mode
    */
   public double mode(String colName) {
-    return (double) StatUtils.mode(toDoubleArray(colName))[0];
+    return StatUtils.mode(toDoubleArray(colName))[0];
   }
 
   /**
@@ -312,11 +311,11 @@ public class KnoxShellTable {
   }
 
   public String getCallHistory() {
-    final StringBuilder callHistoryStringBuilder = new StringBuilder("Call history (id=" + id + ")" + LINE_SEPARATOR + LINE_SEPARATOR);
+    final StringBuilder callHistoryStringBuilder = new StringBuilder("Call history (id=")
+        .append(id).append(')').append(LINE_SEPARATOR).append(LINE_SEPARATOR);
     final AtomicInteger index = new AtomicInteger(1);
-    getCallHistoryList().forEach(callHistory -> {
-      callHistoryStringBuilder.append("Step ").append(index.getAndIncrement()).append(":" + LINE_SEPARATOR).append(callHistory).append(LINE_SEPARATOR);
-    });
+    getCallHistoryList().forEach(callHistory -> callHistoryStringBuilder.append("Step ")
+        .append(index.getAndIncrement()).append(':').append(LINE_SEPARATOR).append(callHistory).append(LINE_SEPARATOR));
     return callHistoryStringBuilder.toString();
   }
 
@@ -348,7 +347,7 @@ public class KnoxShellTable {
 
   public KnoxShellTable select(String cols) {
     KnoxShellTable table = new KnoxShellTable();
-    List<List<Comparable<? extends Object>>> columns = new ArrayList<List<Comparable<? extends Object>>>();
+    List<List<Comparable<? extends Object>>> columns = new ArrayList<>();
     String[] colnames = cols.split(",");
     for (String colName : colnames) {
       table.header(colName);
@@ -372,7 +371,7 @@ public class KnoxShellTable {
 
     Comparable<? extends Object> value;
     List<Comparable<? extends Object>> col = values(colName);
-    List<RowIndex> index = new ArrayList<RowIndex>();
+    List<RowIndex> index = new ArrayList<>();
     for (int i = 0; i < col.size(); i++) {
       value = col.get(i);
       index.add(new RowIndex(value, i));
@@ -381,11 +380,11 @@ public class KnoxShellTable {
       Collections.sort(index);
     }
     else {
-      Collections.sort(index, Collections.reverseOrder());
+      index.sort(Collections.reverseOrder());
     }
-    table.headers = new ArrayList<String>(headers);
+    table.headers = new ArrayList<>(headers);
     for (RowIndex i : index) {
-      table.rows.add(new ArrayList<Comparable<? extends Object>>(this.rows.get(i.index)));
+      table.rows.add(new ArrayList<>(this.rows.get(i.index)));
     }
     return table;
   }

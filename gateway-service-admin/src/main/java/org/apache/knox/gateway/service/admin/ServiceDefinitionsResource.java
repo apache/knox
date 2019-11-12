@@ -73,7 +73,7 @@ public class ServiceDefinitionsResource {
   @Produces({ APPLICATION_JSON, APPLICATION_XML })
   @Path("servicedefinitions")
   public ServiceDefinitionsWrapper getServiceDefinitions(@QueryParam("serviceOnly") @DefaultValue("false") boolean serviceOnly) {
-    return getServiceDefinitions((Predicate<? super ServiceDefinitionPair>) null, serviceOnly);
+    return getServiceDefinitions(null, serviceOnly);
   }
 
   @GET

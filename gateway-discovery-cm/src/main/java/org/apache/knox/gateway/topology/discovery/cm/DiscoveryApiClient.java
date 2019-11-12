@@ -138,10 +138,8 @@ public class DiscoveryApiClient extends ApiClient {
   private String getUsername() {
     String username = null;
     Authentication basicAuth = getAuthentication("basic");
-    if (basicAuth != null) {
-      if (basicAuth instanceof HttpBasicAuth) {
-        username = ((HttpBasicAuth) basicAuth).getUsername();
-      }
+    if (basicAuth instanceof HttpBasicAuth) {
+      username = ((HttpBasicAuth) basicAuth).getUsername();
     }
     return username;
   }

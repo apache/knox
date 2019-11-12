@@ -31,7 +31,7 @@ import java.util.Set;
  */
 public class DefaultTokenStateService implements TokenStateService {
 
-  protected static final long DEFAULT_RENEWAL_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
+  protected static final long DEFAULT_RENEWAL_INTERVAL = 24 * 60 * 60 * 1000L; // 24 hours
 
   protected static final int MAX_RENEWALS = 7;
 

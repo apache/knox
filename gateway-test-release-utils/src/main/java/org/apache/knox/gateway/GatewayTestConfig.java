@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
@@ -67,7 +68,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   private String truststoreType = "jks";
   private String keystoreType = "jks";
   private boolean isTopologyPortMappingEnabled = true;
-  private ConcurrentHashMap<String, Integer> topologyPortMapping = new ConcurrentHashMap<>();
+  private ConcurrentMap<String, Integer> topologyPortMapping = new ConcurrentHashMap<>();
   private int backupVersionLimit = -1;
   private long backupAgeLimit = -1;
 
@@ -443,7 +444,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return backupVersionLimit;
   }
 
-  public void setTopologyPortMapping(ConcurrentHashMap<String, Integer> topologyPortMapping) {
+  public void setTopologyPortMapping(ConcurrentMap<String, Integer> topologyPortMapping) {
     this.topologyPortMapping = topologyPortMapping;
   }
 

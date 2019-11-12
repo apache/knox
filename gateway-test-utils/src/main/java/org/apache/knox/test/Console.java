@@ -24,9 +24,12 @@ import java.nio.charset.StandardCharsets;
 
 public class Console {
 
-  PrintStream oldOut, newOut;
-  PrintStream oldErr, newErr;
-  ByteArrayOutputStream newOutBuf, newErrBuf;
+  PrintStream oldOut;
+  PrintStream newOut;
+  PrintStream oldErr;
+  PrintStream newErr;
+  ByteArrayOutputStream newOutBuf;
+  ByteArrayOutputStream newErrBuf;
 
   public void capture() throws UnsupportedEncodingException {
     oldErr = System.err;

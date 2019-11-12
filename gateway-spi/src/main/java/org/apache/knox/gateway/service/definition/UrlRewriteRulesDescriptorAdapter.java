@@ -61,7 +61,7 @@ public class UrlRewriteRulesDescriptorAdapter extends XmlAdapter<Object, UrlRewr
   @Override
   public Object marshal(UrlRewriteRulesDescriptor value) throws Exception {
     try (Writer writer = new StringWriter()) {
-      return (Node) xmlRewriteRulesExporter.store(value, writer, true);
+      return xmlRewriteRulesExporter.store(value, writer, true);
     }
   }
 }

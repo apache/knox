@@ -63,7 +63,7 @@ class KnoxShellTableCall {
 
   @JsonIgnore
   Class<?>[] getParameterTypes() {
-    final List<Class<?>> parameterTypes = new ArrayList<Class<?>>(params.size());
+    final List<Class<?>> parameterTypes = new ArrayList<>(params.size());
     if (KNOX_SHELL_TABLE_FILTER_TYPE.equals(invokerClass) && builderMethod) {
       parameterTypes.add(Comparable.class);
     } else {

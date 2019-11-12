@@ -998,13 +998,11 @@ public class DefaultTopologyService
         // Identify any descriptors associated with the cluster configuration change
         for (File descriptor : topologyService.getDescriptors()) {
           String descriptorContent = FileUtils.readFileToString(descriptor, StandardCharsets.UTF_8);
-          if (descriptorContent.contains(source)) {
-            if (descriptorContent.contains(clusterName)) {
-              affectedDescriptors = true;
-              log.triggeringTopologyRegeneration(source, clusterName, descriptor.getAbsolutePath());
-              // 'Touch' the descriptor to trigger re-generation of the associated topology
-              descriptor.setLastModified(System.currentTimeMillis());
-            }
+          if (descriptorContent.contains(source) && descriptorContent.contains(clusterName)) {
+            affectedDescriptors = true;
+            log.triggeringTopologyRegeneration(source, clusterName, descriptor.getAbsolutePath());
+            // 'Touch' the descriptor to trigger re-generation of the associated topology
+            descriptor.setLastModified(System.currentTimeMillis());
           }
         }
 

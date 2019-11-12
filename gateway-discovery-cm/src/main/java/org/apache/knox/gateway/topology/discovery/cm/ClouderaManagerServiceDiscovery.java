@@ -191,12 +191,11 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
             List<ServiceModelGenerator> smgList = serviceModelGenerators.get(service.getType());
             if (smgList != null) {
               for (ServiceModelGenerator serviceModelGenerator : smgList) {
-                if (serviceModelGenerator != null) {
-                  if (serviceModelGenerator.handles(service, serviceConfig, role, roleConfig)) {
-                    serviceModelGenerator.setApiClient(client);
-                    ServiceModel serviceModel = serviceModelGenerator.generateService(service, serviceConfig, role, roleConfig);
-                    serviceModels.add(serviceModel);
-                  }
+                if (serviceModelGenerator != null &&
+                    serviceModelGenerator.handles(service, serviceConfig, role, roleConfig)) {
+                  serviceModelGenerator.setApiClient(client);
+                  ServiceModel serviceModel = serviceModelGenerator.generateService(service, serviceConfig, role, roleConfig);
+                  serviceModels.add(serviceModel);
                 }
               }
             }

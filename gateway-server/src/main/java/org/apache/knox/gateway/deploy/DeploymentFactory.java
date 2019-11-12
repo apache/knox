@@ -137,11 +137,9 @@ public abstract class DeploymentFactory {
           }
           for( String url : urls ) {
             List<Application> dups = findApplicationsByUrl( topology, url );
-            if( dups != null ) {
-              for( Application dup : dups ) {
-                if( dup != app ) { //NOPMD - check for exact same object
-                  throw new DeploymentException( "Topology " + topology.getName() + " contains applications " + app.getName() + " and " + dup.getName() + " with the same url: " + url );
-                }
+            for( Application dup : dups ) {
+              if( dup != app ) { //NOPMD - check for exact same object
+                throw new DeploymentException( "Topology " + topology.getName() + " contains applications " + app.getName() + " and " + dup.getName() + " with the same url: " + url );
               }
             }
           }
@@ -153,9 +151,10 @@ public abstract class DeploymentFactory {
   // Verify that if there are services that there are no applications with a root url.
   static void validateNoAppsWithRootUrlsInServicesTopology( Topology topology ) {
     if( topology != null ) {
-      if( topology.getServices() != null && !topology.getServices().isEmpty() ) {
+      Collection<Service> services = topology.getServices();
+      if( services != null && !services.isEmpty() ) {
         List<Application> dups = findApplicationsByUrl( topology, "/" );
-        if( dups != null && !dups.isEmpty() ) {
+        if(!dups.isEmpty()) {
           throw new DeploymentException( "Topology " + topology.getName() + " contains both services and an application " + dups.get( 0 ).getName() + " with a root url." );
         }
       }
@@ -307,11 +306,7 @@ public abstract class DeploymentFactory {
   private static void collectDefaultProviders( Map<String,List<ProviderDeploymentContributor>> defaults ) {
     for( ProviderDeploymentContributor contributor : PROVIDER_CONTRIBUTORS ) {
       String role = contributor.getRole();
-      List<ProviderDeploymentContributor> list = defaults.get( role );
-      if( list == null ) {
-        list = new ArrayList<>();
-        defaults.put( role, list );
-      }
+      List<ProviderDeploymentContributor> list = defaults.computeIfAbsent(role, k -> new ArrayList<>());
       if( list.isEmpty() ) {
         list.add( contributor );
       }
@@ -327,11 +322,7 @@ public abstract class DeploymentFactory {
       String role = service.getRole();
       ServiceDeploymentContributor contributor = getServiceContributor( role, service.getName(), service.getVersion() );
       if( contributor != null ) {
-        List<ServiceDeploymentContributor> list = defaults.get( role );
-        if( list == null ) {
-          list = new ArrayList<>( 1 );
-          defaults.put( role, list );
-        }
+        List<ServiceDeploymentContributor> list = defaults.computeIfAbsent(role, k -> new ArrayList<>(1));
         if( !list.contains( contributor ) ) {
           list.add( contributor );
         }
