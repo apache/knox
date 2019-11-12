@@ -260,7 +260,7 @@ public class KnoxCLI extends Configured implements Tool {
           return -1;
         }
         this.value = args[++i];
-        if ( command != null && command instanceof MasterCreateCommand ) {
+        if ( command instanceof MasterCreateCommand ) {
           this.master = this.value;
         }
       } else if ( args[i].equals("version") ) {
@@ -290,7 +290,7 @@ public class KnoxCLI extends Configured implements Tool {
           command = new ServiceTestCommand();
         }
       } else if (args[i].equals("--generate")) {
-        if ( command != null && command instanceof MasterCreateCommand ) {
+        if ( command instanceof MasterCreateCommand ) {
           this.master = UUID.randomUUID().toString();
         } else {
           this.generate = "true";
@@ -898,7 +898,7 @@ public class KnoxCLI extends Configured implements Tool {
    private GatewayConfig getGatewayConfig() {
      GatewayConfig result;
      Configuration conf = getConf();
-     if( conf != null && conf instanceof GatewayConfig ) {
+     if( conf instanceof GatewayConfig ) {
        result = (GatewayConfig)conf;
      } else {
        result = new GatewayConfigImpl();
@@ -1649,7 +1649,7 @@ public class KnoxCLI extends Configured implements Tool {
   private GatewayConfig getGatewayConfig() {
     GatewayConfig result;
     Configuration conf = getConf();
-    if(conf != null && conf instanceof GatewayConfig) {
+    if(conf instanceof GatewayConfig) {
       result = (GatewayConfig) conf;
     } else {
       result = new GatewayConfigImpl();

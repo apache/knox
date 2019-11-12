@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.ServiceLoader;
 
 public class Credentials {
-  List<CredentialCollector> collectors = new ArrayList<CredentialCollector>();
+  List<CredentialCollector> collectors = new ArrayList<>();
 
   public Credentials add(String collectorType, String prompt, String name)
     throws CredentialCollectionException {

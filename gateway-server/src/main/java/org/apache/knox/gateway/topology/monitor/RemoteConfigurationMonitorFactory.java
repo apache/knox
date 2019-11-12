@@ -31,7 +31,7 @@ public class RemoteConfigurationMonitorFactory {
 
     private static RemoteConfigurationRegistryClientService remoteConfigRegistryClientService;
 
-    static void setClientService(RemoteConfigurationRegistryClientService clientService) {
+    static synchronized void setClientService(RemoteConfigurationRegistryClientService clientService) {
         remoteConfigRegistryClientService = clientService;
     }
 

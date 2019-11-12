@@ -31,7 +31,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * A custom @JsonDeserializer in order to be able to deserialize a previously
@@ -79,7 +78,7 @@ public class KnoxShellTableRowDeserializer extends StdDeserializer<KnoxShellTabl
   }
 
   private List<KnoxShellTableCall> parseCallHistoryListJSONNode(TreeNode callHistoryNode) throws IOException {
-    final List<KnoxShellTableCall> callHistoryList = new LinkedList<KnoxShellTableCall>();
+    final List<KnoxShellTableCall> callHistoryList = new LinkedList<>();
     TreeNode callNode;
     Map<Object, Class<?>> params;
     String invokerClass, method;
@@ -98,7 +97,7 @@ public class KnoxShellTableRowDeserializer extends StdDeserializer<KnoxShellTabl
   private Map<Object, Class<?>> fetchParameterMap(TreeNode paramsNode) throws IOException {
     try {
       final Map<Object, Class<?>> parameterMap = new HashMap<>();
-      final Iterator<String> paramsFieldNamesIterator = ((ObjectNode) paramsNode).fieldNames();
+      final Iterator<String> paramsFieldNamesIterator = paramsNode.fieldNames();
       String parameterValueAsString;
       Class<?> parameterType;
       while (paramsFieldNamesIterator.hasNext()) {
@@ -132,7 +131,7 @@ public class KnoxShellTableRowDeserializer extends StdDeserializer<KnoxShellTabl
     } else if (Boolean.class == type) {
       return Boolean.valueOf(valueAsString);
     } else if (Date.class == type) {
-      return KnoxShellTableJSONSerializer.JSON_DATE_FORMAT.parse(valueAsString);
+      return KnoxShellTableJSONSerializer.JSON_DATE_FORMAT.get().parse(valueAsString);
     }
 
     return type.cast(valueAsString); // may throw ClassCastException

@@ -96,7 +96,7 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
 
   private String[] combineGroupMappings(String[] mappedGroups, String[] groups) {
     if (mappedGroups != null && groups != null) {
-      return (String[])ArrayUtils.addAll(mappedGroups, groups);
+      return ArrayUtils.addAll(mappedGroups, groups);
     }
     else {
       return groups != null ? groups : mappedGroups;

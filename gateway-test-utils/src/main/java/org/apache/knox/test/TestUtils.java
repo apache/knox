@@ -56,6 +56,9 @@ public class TestUtils {
   public static final long MEDIUM_TIMEOUT = 30 * 1000L;
   public static final long LONG_TIMEOUT = 60 * 1000L;
 
+  private TestUtils() {
+  }
+
   public static String getResourceName( Class clazz, String name ) {
     name = clazz.getName().replaceAll( "\\.", "/" ) + "/" + name;
     return name;

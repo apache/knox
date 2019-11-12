@@ -19,7 +19,6 @@ package org.apache.knox.gateway.shell.table;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -46,14 +45,14 @@ class KnoxShellTableCallHistory {
   private final Map<Long, List<KnoxShellTableCall>> callHistory = new ConcurrentHashMap<>();
 
   private KnoxShellTableCallHistory() {
-  };
+  }
 
   static KnoxShellTableCallHistory getInstance() {
     return INSTANCE;
   }
 
   void saveCall(long id, KnoxShellTableCall call) {
-    saveCalls(id, Arrays.asList(call));
+    saveCalls(id, Collections.singletonList(call));
   }
 
   void saveCalls(long id, List<KnoxShellTableCall> calls) {
@@ -64,9 +63,7 @@ class KnoxShellTableCallHistory {
   }
 
   void removeCallsById(long id) {
-    if (callHistory.containsKey(id)) {
-      callHistory.remove(id);
-    }
+    callHistory.remove(id);
   }
 
   public List<KnoxShellTableCall> getCallHistory(long id) {

@@ -554,10 +554,10 @@ public class SimpleDescriptorHandler {
                     // Params
                     Map<String, String> appParams = app.getParams();
                     if (appParams != null) {
-                        for (String paramName : appParams.keySet()) {
+                        for (Entry<String, String> entry : appParams.entrySet()) {
                             sw.write("        <param>\n");
-                            sw.write("            <name>" + paramName + "</name>\n");
-                            sw.write("            <value>" + appParams.get(paramName) + "</value>\n");
+                            sw.write("            <name>" + entry.getKey() + "</name>\n");
+                            sw.write("            <value>" + entry.getValue() + "</value>\n");
                             sw.write("        </param>\n");
                         }
                     }

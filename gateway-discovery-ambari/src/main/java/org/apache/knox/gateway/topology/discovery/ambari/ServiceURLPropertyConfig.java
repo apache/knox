@@ -164,8 +164,8 @@ class ServiceURLPropertyConfig {
                     }
 
                     // Add the override properties
-                    for (String propertyName : serviceProperties.keySet()) {
-                        setConfigProperty(service, propertyName, serviceProperties.get(propertyName));
+                    for (Map.Entry<String, Property> entry : serviceProperties.entrySet()) {
+                        setConfigProperty(service, entry.getKey(), entry.getValue());
                     }
                 }
             }
@@ -173,11 +173,7 @@ class ServiceURLPropertyConfig {
     }
 
     void setConfigProperty(String service, String name, Property value) {
-        Map<String, Property> serviceProperties = properties.get(service);
-        if (serviceProperties == null) {
-            serviceProperties = new HashMap<>();
-            properties.put(service, serviceProperties);
-        }
+        Map<String, Property> serviceProperties = properties.computeIfAbsent(service, k -> new HashMap<>());
         serviceProperties.put(name, value);
     }
 

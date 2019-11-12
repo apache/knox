@@ -500,9 +500,9 @@ public class TopologiesResource {
   private String getExtensionForMediaType(MediaType type) {
     String extension = null;
 
-    for (MediaType key : mediaTypeFileExtensions.keySet()) {
-      if (type.isCompatible(key)) {
-        extension = mediaTypeFileExtensions.get(key);
+    for (Map.Entry<MediaType, String> entry : mediaTypeFileExtensions.entrySet()) {
+      if (type.isCompatible(entry.getKey())) {
+        extension = entry.getValue();
         break;
       }
     }
@@ -521,19 +521,9 @@ public class TopologiesResource {
     return result;
   }
 
-
   private static boolean isValidResourceName(final String name) {
-    boolean isValid = false;
-
-    if (name != null) {
-      if (name.length() <= RESOURCE_NAME_LENGTH_MAX) {
-        if (RESOURCE_NAME_PATTERN.matcher(name).matches()) {
-          isValid = true;
-        }
-      }
-    }
-
-    return isValid;
+    return name != null && name.length() <= RESOURCE_NAME_LENGTH_MAX &&
+        RESOURCE_NAME_PATTERN.matcher(name).matches();
   }
 
 

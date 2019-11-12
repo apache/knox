@@ -149,11 +149,7 @@ public class Topology {
   public void addProvider( Provider provider ) {
     providerList.add( provider );
     String role = provider.getRole();
-    Map<String,Provider> nameMap = providerMap.get( role );
-    if( nameMap == null ) {
-      nameMap = new HashMap<>();
-      providerMap.put( role, nameMap );
-    }
+    Map<String, Provider> nameMap = providerMap.computeIfAbsent(role, k -> new HashMap<>());
     nameMap.put( provider.getName(), provider );
   }
 

@@ -328,10 +328,8 @@ public class KnoxSession implements Closeable {
 
       // (KNOX-2001) Log a warning if the useSubjectCredsOnly restriction is "relaxed"
       String useSubjectCredsOnly = System.getProperty("javax.security.auth.useSubjectCredsOnly");
-      if (useSubjectCredsOnly != null) {
-        if (!Boolean.valueOf(useSubjectCredsOnly)) {
-          LOG.useSubjectCredsOnlyIsFalse();
-        }
+      if (useSubjectCredsOnly != null && !Boolean.parseBoolean(useSubjectCredsOnly)) {
+        LOG.useSubjectCredsOnlyIsFalse();
       }
 
       final Registry<AuthSchemeProvider> authSchemeRegistry =

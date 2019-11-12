@@ -30,11 +30,6 @@ public class ImpalaDispatch extends DefaultDispatch {
   private boolean basicAuthPreemptive;
 
   @Override
-  public void init() {
-    super.init();
-  }
-
-  @Override
   protected void addCredentialsToRequest(HttpUriRequest request) {
     if( isBasicAuthPreemptive() ) {
       ImpalaDispatchUtils.addCredentialsToRequest(request);

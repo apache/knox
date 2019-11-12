@@ -63,17 +63,17 @@ public class JoinKnoxShellTableBuilder extends KnoxShellTableBuilder {
       this.table.title(title);
     }
 
-    this.table.headers.addAll(new ArrayList<String>(left.headers));
+    this.table.headers.addAll(new ArrayList<>(left.headers));
     for (List<Comparable<? extends Object>> row : left.rows) {
-      this.table.rows.add(new ArrayList<Comparable<? extends Object>>(row));
+      this.table.rows.add(new ArrayList<>(row));
     }
     List<Comparable<? extends Object>> row;
     Comparable<? extends Object> leftKey;
     int matchedIndex;
 
-    this.table.headers.addAll(new ArrayList<String>(right.headers));
+    this.table.headers.addAll(new ArrayList<>(right.headers));
     for (Iterator<List<Comparable<? extends Object>>> it = this.table.rows.iterator(); it.hasNext();) {
-      row = (List<Comparable<? extends Object>>) it.next();
+      row = it.next();
       leftKey = row.get(leftIndex);
       if (leftKey != null) {
         matchedIndex = right.values(rightIndex).indexOf(leftKey);

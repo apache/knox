@@ -20,17 +20,15 @@ package org.apache.knox.gateway.service.definition;
 import java.util.Comparator;
 
 public class ServiceDefinitionPairComparator implements Comparator<ServiceDefinitionPair> {
-
-  final ServiceDefinitionComparator serviceDefinitionComparator = new ServiceDefinitionComparator();
+  private static final ServiceDefinitionComparator SERVICE_DEFINITION_COMPARATOR = new ServiceDefinitionComparator();
 
   @Override
   public int compare(ServiceDefinitionPair serviceDefinitionPair, ServiceDefinitionPair otherServiceDefinitionPair) {
     final ServiceDefinition service = serviceDefinitionPair.getService();
     final ServiceDefinition otherService = otherServiceDefinitionPair.getService();
-    if (service == null || otherServiceDefinitionPair == null) {
+    if (service == null || otherService == null) {
       throw new IllegalArgumentException("One (or both) of the supplied service definitions is null");
     }
-    return serviceDefinitionComparator.compare(service, otherService);
+    return SERVICE_DEFINITION_COMPARATOR.compare(service, otherService);
   }
-
 }

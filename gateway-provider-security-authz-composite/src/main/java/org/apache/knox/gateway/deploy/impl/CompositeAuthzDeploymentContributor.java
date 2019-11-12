@@ -43,11 +43,6 @@ public class CompositeAuthzDeploymentContributor extends ProviderDeploymentContr
   }
 
   @Override
-  public void initializeContribution(DeploymentContext context) {
-    super.initializeContribution(context);
-  }
-
-  @Override
   public void contributeProvider( DeploymentContext context, Provider provider ) {
   }
 
@@ -71,8 +66,7 @@ public class CompositeAuthzDeploymentContributor extends ProviderDeploymentContr
   }
 
   String[] parseProviderNames(String providerNames) {
-    String[] names = providerNames.split(",\\s*");
-    return names;
+    return providerNames.split(",\\s*");
   }
 
   void getProviderSpecificParams(ResourceDescriptor resource, List<FilterParamDescriptor> params,

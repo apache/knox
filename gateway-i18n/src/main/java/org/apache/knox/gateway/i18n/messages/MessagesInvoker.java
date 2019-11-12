@@ -89,11 +89,9 @@ public class MessagesInvoker extends ResourcesInvoker implements InvocationHandl
         Object arg = args[i];
         if( arg instanceof Throwable ) {
           StackTrace anno = getStackTraceAnno( method, i );
-          if( anno != null ) {
-            if( logger.isLoggable( anno.level() ) ) {
-              throwable = (Throwable)arg;
-              break;
-            }
+          if( anno != null && logger.isLoggable( anno.level() ) ) {
+            throwable = (Throwable)arg;
+            break;
           }
         }
       }

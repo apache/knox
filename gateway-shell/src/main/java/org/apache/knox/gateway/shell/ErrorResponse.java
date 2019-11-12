@@ -20,8 +20,7 @@ package org.apache.knox.gateway.shell;
 import org.apache.http.HttpResponse;
 
 public class ErrorResponse extends RuntimeException {
-
-  HttpResponse response;
+  private final HttpResponse response;
 
   ErrorResponse(String text, HttpResponse response) {
     super(text + response.getStatusLine());
@@ -31,5 +30,4 @@ public class ErrorResponse extends RuntimeException {
   public HttpResponse getResponse() {
     return response;
   }
-
 }

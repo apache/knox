@@ -34,10 +34,13 @@ import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
  * Object</li>
  * <li>conditionally exclude certain fields from the serialized JSON
  * representation</li>
+ * </ol>
  */
 class KnoxShellTableJSONSerializer {
 
-   static final DateFormat JSON_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.getDefault());
+  // SimpleDateFormat is not thread safe must use as a ThreadLocal
+  static final ThreadLocal<DateFormat> JSON_DATE_FORMAT = ThreadLocal.withInitial(() ->
+       new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.getDefault()));
 
   /**
    * Serializes the given {@link KnoxShellTable}
@@ -57,7 +60,6 @@ class KnoxShellTableJSONSerializer {
     } else {
       filterProvider.addFilter("knoxShellTableFilter", SimpleBeanPropertyFilter.filterOutAllExcept("callHistoryList"));
     }
-    return JsonUtils.renderAsJsonString(table, filterProvider, JSON_DATE_FORMAT);
+    return JsonUtils.renderAsJsonString(table, filterProvider, JSON_DATE_FORMAT.get());
   }
-
 }

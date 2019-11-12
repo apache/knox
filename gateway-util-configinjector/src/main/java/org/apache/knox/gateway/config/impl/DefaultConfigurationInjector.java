@@ -199,7 +199,7 @@ public class DefaultConfigurationInjector implements ConfigurationInjector {
   private static String getConfigName( String name, Annotation[] tags ) {
     if( tags != null ) {
       for( Annotation tag : tags ) {
-        if( tag != null && tag instanceof Alias ) {
+        if(tag instanceof Alias) {
           Alias aliasTag = (Alias) tag;
           String aliasValue = aliasTag.value().trim();
           if(!aliasValue.isEmpty()) {
