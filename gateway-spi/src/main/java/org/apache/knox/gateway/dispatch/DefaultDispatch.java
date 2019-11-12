@@ -54,9 +54,9 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 public class DefaultDispatch extends AbstractGatewayDispatch {
@@ -315,10 +315,11 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
   }
 
   public void copyResponseHeaderFields(HttpServletResponse outboundResponse, HttpResponse inboundResponse) {
-    final Map<String, Set<String>> excludedHeaderDirectives = getOutboundResponseExcludeHeaders().stream().collect(Collectors.toMap(k -> k, v -> new HashSet<>(Arrays.asList(EXCLUDE_ALL))));
+    final TreeMap<String, Set<String>> excludedHeaderDirectives = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    getOutboundResponseExcludeHeaders().stream().forEach(excludeHeader -> excludedHeaderDirectives.put(excludeHeader, new HashSet<>(Arrays.asList(EXCLUDE_ALL))));
     excludedHeaderDirectives.put(SET_COOKIE, getOutboundResponseExcludedSetCookieHeaderDirectives());
 
-    for ( Header header : inboundResponse.getAllHeaders() ) {
+    for (Header header : inboundResponse.getAllHeaders()) {
       final String responseHeaderValue = calculateResponseHeaderValue(header, excludedHeaderDirectives);
       if (responseHeaderValue.isEmpty()) {
         continue;
@@ -329,8 +330,8 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
 
   private String calculateResponseHeaderValue(Header headerToCheck, Map<String, Set<String>> excludedHeaderDirectives) {
     final String headerNameToCheck = headerToCheck.getName();
-    if (excludedHeaderDirectives != null && excludedHeaderDirectives.containsKey(headerNameToCheck.toUpperCase(Locale.ROOT))) {
-      final Set<String> excludedHeaderValues = excludedHeaderDirectives.get(headerNameToCheck.toUpperCase(Locale.ROOT));
+    if (excludedHeaderDirectives != null && excludedHeaderDirectives.containsKey(headerNameToCheck)) {
+      final Set<String> excludedHeaderValues = excludedHeaderDirectives.get(headerNameToCheck);
       if (!excludedHeaderValues.isEmpty()) {
         if (excludedHeaderValues.stream().anyMatch(e -> e.equals(EXCLUDE_ALL))) {
           return ""; // we should exclude all -> there should not be any value added with this header
