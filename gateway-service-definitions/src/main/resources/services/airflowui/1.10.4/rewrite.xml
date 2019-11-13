@@ -1,0 +1,144 @@
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+    <rule dir="IN" name="AIRFLOWUI/airflow/inbound/root" pattern="*://*:*/**/airflow">
+        <rewrite template="{$serviceUrl[AIRFLOWUI]}/admin/"/>
+    </rule>
+
+    <!-- /admin/airflow/blocked, etc. -->
+    <rule dir="IN" name="AIRFLOWUI/airflow/inbound/admin1" pattern="*://*:*/**/airflow/admin/{**}">
+        <rewrite template="{$serviceUrl[AIRFLOWUI]}/admin/{**}"/>
+    </rule>
+
+    <!-- For airflow menus, ex /admin/charts/ -->
+    <rule dir="IN" name="AIRFLOWUI/airflow/inbound/admin2" pattern="*://*:*/**/airflow/admin/{path=*}/">
+        <rewrite template="{$serviceUrl[AIRFLOWUI]}/admin/{path}/"/>
+    </rule>
+
+    <!-- For model new and edit, ex /admin/chart/new/?url=xxxx, etc. -->
+    <rule dir="IN" name="AIRFLOWUI/airflow/inbound/chart_new" pattern="*://*:*/**/airflow/admin/chart/new/?{**}">
+        <rewrite template="{$serviceUrl[AIRFLOWUI]}/admin/chart/new/?{**}"/>
+    </rule>
+    <rule dir="IN" name="AIRFLOWUI/airflow/inbound/chart_edit" pattern="*://*:*/**/airflow/admin/chart/edit/?{**}">
+        <rewrite template="{$serviceUrl[AIRFLOWUI]}/admin/chart/edit/?{**}"/>
+    </rule>
+    <rule dir="IN" name="AIRFLOWUI/airflow/inbound/knownevent_new" pattern="*://*:*/**/airflow/admin/knownevent/new/?{**}">
+        <rewrite template="{$serviceUrl[AIRFLOWUI]}/admin/knownevent/new/?{**}"/>
+    </rule>
+    <rule dir="IN" name="AIRFLOWUI/airflow/inbound/knownevent_edit" pattern="*://*:*/**/airflow/admin/knownevent/edit/?{**}">
+        <rewrite template="{$serviceUrl[AIRFLOWUI]}/admin/knownevent/edit/?{**}"/>
+    </rule>
+    <rule dir="IN" name="AIRFLOWUI/airflow/inbound/dagrun_new" pattern="*://*:*/**/airflow/admin/dagrun/new/?{**}">
+        <rewrite template="{$serviceUrl[AIRFLOWUI]}/admin/dagrun/new/?{**}"/>
+    </rule>
+    <rule dir="IN" name="AIRFLOWUI/airflow/inbound/dagrun_edit" pattern="*://*:*/**/airflow/admin/dagrun/edit/?{**}">
+        <rewrite template="{$serviceUrl[AIRFLOWUI]}/admin/dagrun/edit/?{**}"/>
+    </rule>
+    <rule dir="IN" name="AIRFLOWUI/airflow/inbound/pool_new" pattern="*://*:*/**/airflow/admin/pool/new/?{**}">
+        <rewrite template="{$serviceUrl[AIRFLOWUI]}/admin/pool/new/?{**}"/>
+    </rule>
+    <rule dir="IN" name="AIRFLOWUI/airflow/inbound/pool_edit" pattern="*://*:*/**/airflow/admin/pool/edit/?{**}">
+        <rewrite template="{$serviceUrl[AIRFLOWUI]}/admin/pool/edit/?{**}"/>
+    </rule>
+    <rule dir="IN" name="AIRFLOWUI/airflow/inbound/user_new" pattern="*://*:*/**/airflow/admin/user/new/?{**}">
+        <rewrite template="{$serviceUrl[AIRFLOWUI]}/admin/user/new/?{**}"/>
+    </rule>
+    <rule dir="IN" name="AIRFLOWUI/airflow/inbound/user_edit" pattern="*://*:*/**/airflow/admin/user/edit/?{**}">
+        <rewrite template="{$serviceUrl[AIRFLOWUI]}/admin/user/edit/?{**}"/>
+    </rule>
+    <rule dir="IN" name="AIRFLOWUI/airflow/inbound/connection_new" pattern="*://*:*/**/airflow/admin/connection/new/?{**}">
+        <rewrite template="{$serviceUrl[AIRFLOWUI]}/admin/connection/new/?{**}"/>
+    </rule>
+    <rule dir="IN" name="AIRFLOWUI/airflow/inbound/connection_edit" pattern="*://*:*/**/airflow/admin/connection/edit/?{**}">
+        <rewrite template="{$serviceUrl[AIRFLOWUI]}/admin/connection/edit/?{**}"/>
+    </rule>
+    <rule dir="IN" name="AIRFLOWUI/airflow/inbound/variable_new" pattern="*://*:*/**/airflow/admin/variable/new/?{**}">
+        <rewrite template="{$serviceUrl[AIRFLOWUI]}/admin/variable/new/?{**}"/>
+    </rule>
+    <rule dir="IN" name="AIRFLOWUI/airflow/inbound/variable_edit" pattern="*://*:*/**/airflow/admin/variable/edit/?{**}">
+        <rewrite template="{$serviceUrl[AIRFLOWUI]}/admin/variable/edit/?{**}"/>
+    </rule>
+    <rule dir="IN" name="AIRFLOWUI/airflow/inbound/xcom_new" pattern="*://*:*/**/airflow/admin/xcom/new/?{**}">
+        <rewrite template="{$serviceUrl[AIRFLOWUI]}/admin/xcom/new/?{**}"/>
+    </rule>
+    <rule dir="IN" name="AIRFLOWUI/airflow/inbound/xcom_edit" pattern="*://*:*/**/airflow/admin/xcom/edit/?{**}">
+        <rewrite template="{$serviceUrl[AIRFLOWUI]}/admin/xcom/edit/?{**}"/>
+    </rule>
+
+    <!-- For /admin/airflow/graph?dag_id=xxxx, etc. -->
+    <rule dir="IN" name="AIRFLOWUI/airflow/inbound/admin3" pattern="*://*:*/**/airflow/admin/{**}?{**}">
+        <rewrite template="{$serviceUrl[AIRFLOWUI]}/admin/{**}?{**}"/>
+    </rule>
+
+    <rule dir="IN" name="AIRFLOWUI/airflow/inbound/static" pattern="*://*:*/**/airflow/static/{**}">
+        <rewrite template="{$serviceUrl[AIRFLOWUI]}/static/{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="AIRFLOWUI/airflow/outbound/static" pattern="/static/{**}?{**}">
+        <rewrite template="{$frontend[url]}/airflow/static/{**}?{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="AIRFLOWUI/airflow/outbound/bootstrap" pattern="/admin/admin/bootstrap/{**}?{**}">
+        <rewrite template="{$frontend[url]}/airflow/admin/admin/bootstrap/{**}?{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="AIRFLOWUI/airflow/outbound/admin_css" pattern="/admin/admin/admin/css/bootstrap3/{**}">
+        <rewrite template="{$frontend[url]}/airflow/admin/admin/admin/css/bootstrap3/{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="AIRFLOWUI/airflow/outbound/vendor" pattern="/admin/admin/vendor/{**}?{**}">
+        <rewrite template="{$frontend[url]}/airflow/admin/admin/vendor/{**}?{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="AIRFLOWUI/airflow/outbound/admin/index">
+        <match pattern="/admin/" />
+        <rewrite template="{$frontend[url]}/airflow"/>
+    </rule>
+
+    <rule dir="OUT" name="AIRFLOWUI/airflow/outbound/admin/admin1">
+        <match pattern="/admin/{**}" />
+        <rewrite template="{$frontend[url]}/airflow/admin/{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="AIRFLOWUI/airflow/outbound/admin/admin2">
+        <match pattern="/admin/{**}/" />
+        <rewrite template="{$frontend[url]}/airflow/admin/{**}/"/>
+    </rule>
+
+    <rule dir="OUT" name="AIRFLOWUI/airflow/outbound/admin/admin3">
+        <match pattern="/admin/{**}?{**}" />
+        <rewrite template="{$frontend[url]}/airflow/admin/{**}?{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="AIRFLOWUI/airflow/outbound/admin/admin4">
+        <match pattern="/admin/{**}/?{**}" />
+        <rewrite template="{$frontend[url]}/airflow/admin/{**}/?{**}"/>
+    </rule>
+
+    <filter name="AIRFLOWUI/airflow/outbound/admin/filter">
+        <content type="*/html">
+            <apply path="/admin/$" rule="AIRFLOWUI/airflow/outbound/admin/index"/>
+            <apply path="/admin/airflow/blocked" rule="AIRFLOWUI/airflow/outbound/admin/admin1"/>
+            <apply path="/admin/airflow/dag_stats" rule="AIRFLOWUI/airflow/outbound/admin/admin1"/>
+            <apply path="/admin/airflow/task_stats" rule="AIRFLOWUI/airflow/outbound/admin/admin1"/>
+            <apply path="/admin/[a-z/_]+[a-z]$" rule="AIRFLOWUI/airflow/outbound/admin/admin1"/>
+            <apply path="/admin/[a-z/_]+/$" rule="AIRFLOWUI/airflow/outbound/admin/admin2"/>
+            <apply path="/admin/[^\?]+[^/]\?.+[^\?]$" rule="AIRFLOWUI/airflow/outbound/admin/admin3"/>
+            <apply path="/admin/[^\?]+/\?.+[^\?]$" rule="AIRFLOWUI/airflow/outbound/admin/admin4"/>
+        </content>
+    </filter>
+</rules>
