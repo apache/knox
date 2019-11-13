@@ -257,8 +257,8 @@ public class GatewayServer {
 
   private static void validateConfigurableGatewayDirectories(GatewayConfig config) throws GatewayConfigurationException {
     final Set<String> errors = new HashSet<>();
-    checkIfDirectoryExistsAndCanBeRead(Paths.get(config.getGatewayConfDir()), GatewayConfig.GATEWAY_CONF_HOME_VAR, errors);
-    checkIfDirectoryExistsAndCanBeWritten(Paths.get(config.getGatewayDataDir()), GatewayConfig.GATEWAY_DATA_HOME_VAR, errors);
+    checkIfDirectoryExistsAndCanBeRead(Paths.get(config.getGatewayConfDir()), GatewayConfig.KNOX_GATEWAY_CONF_DIR_VAR, errors);
+    checkIfDirectoryExistsAndCanBeWritten(Paths.get(config.getGatewayDataDir()), GatewayConfig.KNOX_GATEWAY_DATA_DIR, errors);
 
     if (!errors.isEmpty()) {
       throw new GatewayConfigurationException(errors);

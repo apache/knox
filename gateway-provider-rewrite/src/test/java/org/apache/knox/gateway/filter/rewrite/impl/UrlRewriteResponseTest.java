@@ -41,7 +41,7 @@ import java.util.zip.GZIPOutputStream;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.IsCollectionContaining.hasItems;
+import static org.hamcrest.core.IsIterableContaining.hasItems;
 
 public class UrlRewriteResponseTest {
 
