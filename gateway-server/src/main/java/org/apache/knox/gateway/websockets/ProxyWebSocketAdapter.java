@@ -19,7 +19,11 @@ package org.apache.knox.gateway.websockets;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.websocket.ClientEndpointConfig;
 import javax.websocket.CloseReason;
@@ -28,6 +32,7 @@ import javax.websocket.DeploymentException;
 import javax.websocket.WebSocketContainer;
 
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.eclipse.jetty.io.RuntimeIOException;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.websocket.api.BatchMode;
@@ -57,21 +62,30 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
 
   private ExecutorService pool;
 
+  /* Message buffer for holding data frames temporarily in memory till connection is setup.
+   Keeping the max size of the buffer as 100 messages for now. */
+  private List<String> messageBuffer = new ArrayList<String>();
+  private Lock remoteLock = new ReentrantLock();
+
+  private final GatewayConfig config;
+
   /**
    * Used to transmit headers from browser to backend server.
    * @since 0.14
    */
   private ClientEndpointConfig clientConfig;
 
-  public ProxyWebSocketAdapter(final URI backend, final ExecutorService pool) {
-    this(backend, pool, null);
+  public ProxyWebSocketAdapter(final URI backend, final ExecutorService pool, GatewayConfig config) {
+    this(backend, pool, null, config);
   }
 
-  public ProxyWebSocketAdapter(final URI backend, final ExecutorService pool, final ClientEndpointConfig clientConfig) {
+  public ProxyWebSocketAdapter(final URI backend, final ExecutorService pool, final ClientEndpointConfig clientConfig,
+                               GatewayConfig config) {
     super();
     this.backend = backend;
     this.pool = pool;
     this.clientConfig = clientConfig;
+    this.config = config;
   }
 
   @Override
@@ -104,9 +118,33 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
       throw new RuntimeIOException(e);
     }
 
+    remoteLock.lock();
     super.onWebSocketConnect(frontEndSession);
     this.frontendSession = frontEndSession;
 
+    final RemoteEndpoint remote = frontEndSession.getRemote();
+    try {
+      if (!messageBuffer.isEmpty()) {
+        LOG.debugLog("Found old buffered messages");
+        for (String obj:messageBuffer) {
+          LOG.debugLog("Sending old buffered message [From Backend <---]: " + obj);
+          remote.sendString(obj);
+        }
+        messageBuffer.clear();
+        if (remote.getBatchMode() == BatchMode.ON) {
+          remote.flush();
+        }
+      } else {
+        LOG.debugLog("Message buffer is empty");
+      }
+    } catch (IOException e) {
+      LOG.connectionFailed(e);
+      throw new RuntimeIOException(e);
+    }
+    finally
+    {
+      remoteLock.unlock();
+    }
   }
 
   @Override
@@ -198,12 +236,29 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
 
       @Override
       public void onMessageText(String message, Object session) {
-        final RemoteEndpoint remote = getRemote();
-
         LOG.logMessage("[From Backend <---]" + message);
-
-        /* Proxy message to frontend */
+        remoteLock.lock();
+        final RemoteEndpoint remote = getRemote();
         try {
+          if (remote == null) {
+            LOG.debugLog("Remote endpoint is null");
+            if (messageBuffer.size() >= config.getWebsocketMaxWaitBufferCount()) {
+              throw new RuntimeIOException("Remote is null and message buffer is full. Cannot buffer anymore ");
+            }
+            LOG.debugLog("Buffering message: " + message);
+            messageBuffer.add(message);
+            return;
+          }
+
+          /* Proxy message to frontend */
+          LOG.debugLog("Found old buffered messages");
+          for (String obj:messageBuffer) {
+            LOG.debugLog("Sending old buffered message [From Backend <---]: " + obj);
+            remote.sendString(obj);
+          }
+          messageBuffer.clear();
+
+          LOG.debugLog("Sending current message [From Backend <---]: " + message);
           remote.sendString(message);
           if (remote.getBatchMode() == BatchMode.ON) {
             remote.flush();
@@ -212,7 +267,10 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
           LOG.connectionFailed(e);
           throw new RuntimeIOException(e);
         }
-
+        finally
+        {
+          remoteLock.unlock();
+        }
       }
 
       @Override

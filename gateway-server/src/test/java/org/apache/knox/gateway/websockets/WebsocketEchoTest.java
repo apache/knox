@@ -21,10 +21,10 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.net.URI;
 import javax.websocket.ContainerProvider;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
-import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -58,6 +58,7 @@ public class WebsocketEchoTest extends WebsocketEchoTestBase {
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
+    handler = null;
     WebsocketEchoTestBase.setUpBeforeClass();
     WebsocketEchoTestBase.startServers("ws");
   }

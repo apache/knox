@@ -118,7 +118,8 @@ public class GatewayWebsocketHandler extends WebSocketHandler
       LOG.debugLog("Generated backend URL for websocket connection: " + backendURL);
 
       /* Upgrade happens here */
-      return new ProxyWebSocketAdapter(URI.create(backendURL), pool, getClientEndpointConfig(req));
+      return new ProxyWebSocketAdapter
+              (URI.create(backendURL), pool, getClientEndpointConfig(req), config);
     } catch (final Exception e) {
       LOG.failedCreatingWebSocket(e);
       throw e;

@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.websockets;
 
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -26,6 +27,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.easymock.EasyMock;
 
 import javax.websocket.CloseReason;
 import javax.websocket.ContainerProvider;
@@ -152,13 +154,14 @@ public class MessageFailureTest {
   }
 
   private static void startProxy() throws Exception {
+    GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     proxy = new Server();
     proxyConnector = new ServerConnector(proxy);
     proxy.addConnector(proxyConnector);
 
     /* start Knox with WebsocketAdapter to test */
     final BigEchoSocketHandler wsHandler = new BigEchoSocketHandler(
-        new ProxyWebSocketAdapter(serverUri, Executors.newFixedThreadPool(10)));
+        new ProxyWebSocketAdapter(serverUri, Executors.newFixedThreadPool(10), gatewayConfig));
 
     ContextHandler context = new ContextHandler();
     context.setContextPath("/");

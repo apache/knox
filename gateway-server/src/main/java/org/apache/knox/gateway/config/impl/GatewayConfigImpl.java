@@ -141,6 +141,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String WEBSOCKET_INPUT_BUFFER_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.input.buffer.size";
   public static final String WEBSOCKET_ASYNC_WRITE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.async.write.timeout";
   public static final String WEBSOCKET_IDLE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.idle.timeout";
+  public static final String WEBSOCKET_MAX_WAIT_BUFFER_COUNT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.wait.buffer.count";
 
   /**
    * Properties for for gateway port mapping feature
@@ -190,6 +191,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSOCKET_INPUT_BUFFER_SIZE = 4096;
   public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT = 60000;
   public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT = 300000;
+  public static final int DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT = 100;
 
   public static final boolean DEFAULT_GATEWAY_PORT_MAPPING_ENABLED = true;
   public static final boolean DEFAULT_REMOTE_ALIAS_SERVICE_ENABLED = true;
@@ -848,6 +850,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public int getWebsocketIdleTimeout() {
     return getInt( WEBSOCKET_IDLE_TIMEOUT, DEFAULT_WEBSOCKET_IDLE_TIMEOUT);
+  }
+
+  @Override
+  public int getWebsocketMaxWaitBufferCount() {
+    return getInt( WEBSOCKET_MAX_WAIT_BUFFER_COUNT, DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT);
   }
 
   @Override

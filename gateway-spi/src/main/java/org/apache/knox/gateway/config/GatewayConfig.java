@@ -379,6 +379,13 @@ public interface GatewayConfig {
    */
   int getWebsocketIdleTimeout();
 
+  /**
+   * Max count of messages that can be temporarily buffered in memory before a connection is properly setup.
+   * @since 0.10
+   * @return buffer size
+   */
+  int getWebsocketMaxWaitBufferCount();
+
   boolean isMetricsEnabled();
 
   boolean isJmxMetricsReportingEnabled();

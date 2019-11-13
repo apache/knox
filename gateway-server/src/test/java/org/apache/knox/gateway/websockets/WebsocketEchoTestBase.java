@@ -36,6 +36,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
+import org.eclipse.jetty.websocket.server.WebSocketHandler;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,9 +61,7 @@ import static org.apache.knox.gateway.config.GatewayConfig.DEFAULT_IDENTITY_KEYS
 import static org.apache.knox.gateway.config.GatewayConfig.DEFAULT_IDENTITY_KEY_PASSPHRASE_ALIAS;
 
 /**
- * Base class for tests that attempt to proxy websocket connections through Knox
- * gateway. It setups a websocket socket connection that simply echoes data back.
- *
+ * Base class for websocoket echo tests.
  */
 public class WebsocketEchoTestBase {
   private static final String TEST_KEY_ALIAS = "test-identity";
@@ -70,7 +69,7 @@ public class WebsocketEchoTestBase {
   /**
    * Simulate backend websocket
    */
-  private static Server backendServer;
+  public static Server backendServer;
   /**
    * URI for backend websocket server
    */
@@ -92,6 +91,8 @@ public class WebsocketEchoTestBase {
    * URI for gateway server
    */
   public static URI serverUri;
+
+  public static WebSocketHandler handler;
 
   private static File topoDir;
   private static Path dataDir;
@@ -142,7 +143,11 @@ public class WebsocketEchoTestBase {
     ServerConnector connector = new ServerConnector(backendServer);
     backendServer.addConnector(connector);
 
-    final WebsocketEchoHandler handler = new WebsocketEchoHandler();
+    synchronized (WebsocketEchoTestBase.class) {
+      if (handler == null) {
+        handler = new WebsocketEchoHandler();
+      }
+    }
 
     ContextHandler context = new ContextHandler();
     context.setContextPath("/");
@@ -271,6 +276,9 @@ public class WebsocketEchoTestBase {
 
     EasyMock.expect(gatewayConfig.getWebsocketIdleTimeout())
         .andReturn(GatewayConfigImpl.DEFAULT_WEBSOCKET_IDLE_TIMEOUT).anyTimes();
+
+    EasyMock.expect(gatewayConfig.getWebsocketMaxWaitBufferCount())
+        .andReturn(GatewayConfigImpl.DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT).anyTimes();
 
     EasyMock.expect(gatewayConfig.getRemoteRegistryConfigurationNames())
             .andReturn(Collections.emptyList())

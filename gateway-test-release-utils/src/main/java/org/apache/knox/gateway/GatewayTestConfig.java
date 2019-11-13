@@ -47,6 +47,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSOCKET_INPUT_BUFFER_SIZE = 4096;
   public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT = 60000;
   public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT = 300000;
+  public static final int DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT = 100;
 
   private Path gatewayHomePath = Paths.get("gateway-home");
   private String hadoopConfDir = "hadoop";
@@ -542,6 +543,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public int getWebsocketIdleTimeout() {
     return DEFAULT_WEBSOCKET_IDLE_TIMEOUT;
+  }
+
+  @Override
+  public int getWebsocketMaxWaitBufferCount() {
+    return DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT;
   }
 
   @Override
