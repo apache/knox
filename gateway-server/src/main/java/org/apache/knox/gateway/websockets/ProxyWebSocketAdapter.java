@@ -64,7 +64,7 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
 
   /* Message buffer for holding data frames temporarily in memory till connection is setup.
    Keeping the max size of the buffer as 100 messages for now. */
-  private List<String> messageBuffer = new ArrayList<String>();
+  private List<String> messageBuffer = new ArrayList<>();
   private Lock remoteLock = new ReentrantLock();
 
   private final GatewayConfig config;
