@@ -87,4 +87,7 @@ public interface UrlRewriteMessages {
 
   @Message( level = MessageLevel.INFO, text = "No rewrite rule was found, skipping rewriting JSON request body" )
   void skippingRewritingJsonRequestBody();
+
+  @Message(level = MessageLevel.DEBUG, text = "Excluding GLOBAL rule {0} for role {1}")
+  void excludeGlobalRewriteRule(String globalRuleName, String role);
 }

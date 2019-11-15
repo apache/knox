@@ -17,21 +17,21 @@
  */
 package org.apache.knox.gateway;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.io.File;
+import java.net.URL;
+
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.test.TestUtils;
 import org.hamcrest.Matchers;
 import org.junit.Test;
-
-import java.io.File;
-import java.net.URL;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 public class GatewayGlobalConfigTest {
 
@@ -48,7 +48,7 @@ public class GatewayGlobalConfigTest {
     GatewayConfig config = new GatewayConfigImpl();
     assertThat( config.getGatewayPort(), is( 7777 ) );
     assertThat( config.isClientAuthNeeded(), is( false ) );
-    assertNull("ssl.exclude.protocols should be null.", config.getExcludedSSLProtocols());
+    assertThat("ssl.exclude.protocols should be empty.", config.getExcludedSSLProtocols(), is(empty()));
     //assertThat( config.getShiroConfigFile(), is( "full-shiro.ini") );
   }
 

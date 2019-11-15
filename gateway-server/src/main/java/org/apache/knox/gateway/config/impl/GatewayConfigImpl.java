@@ -104,6 +104,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String DATA_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".data.dir";
   public static final String STACKS_SERVICES_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".services.dir";
   public static final String GLOBAL_RULES_SERVICES = GATEWAY_CONFIG_FILE_PREFIX + ".global.rules.services";
+  public static final String GLOBAL_RULES_EXCLUDED_SERVICES = GATEWAY_CONFIG_FILE_PREFIX + ".global.rules.excluded.services";
   public static final String APPLICATIONS_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".applications.dir";
   public static final String HADOOP_CONF_DIR = GATEWAY_CONFIG_FILE_PREFIX + ".hadoop.conf.dir";
   public static final String FRONTEND_URL = GATEWAY_CONFIG_FILE_PREFIX + ".frontend.url";
@@ -511,32 +512,30 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public List<String> getExcludedSSLProtocols() {
-    List<String> protocols = null;
-    String value = get(SSL_EXCLUDE_PROTOCOLS);
-    if (!"none".equals(value)) {
-      protocols = Arrays.asList(value.split("\\s*,\\s*"));
+    return getPropertyValueAsList(SSL_EXCLUDE_PROTOCOLS);
+  }
+
+  private List<String> getPropertyValueAsList(String propertyName) {
+    return getPropertyValueAsList(propertyName, null);
+  }
+
+  private List<String> getPropertyValueAsList(String propertyName, List<String> defaultValue) {
+    final String propertyValue = get(propertyName);
+    if (propertyValue != null && !propertyValue.isEmpty() && !"none".equalsIgnoreCase(propertyValue.trim())) {
+      return Arrays.asList(propertyValue.trim().split("\\s*,\\s*"));
+    } else {
+      return defaultValue == null ? Collections.emptyList() : defaultValue;
     }
-    return protocols;
   }
 
   @Override
   public List<String> getIncludedSSLCiphers() {
-    List<String> list = null;
-    String value = get(SSL_INCLUDE_CIPHERS);
-    if (value != null && !value.isEmpty() && !"none".equalsIgnoreCase(value.trim())) {
-      list = Arrays.asList(value.trim().split("\\s*,\\s*"));
-    }
-    return list;
+    return getPropertyValueAsList(SSL_INCLUDE_CIPHERS);
   }
 
   @Override
   public List<String> getExcludedSSLCiphers() {
-    List<String> list = null;
-    String value = get(SSL_EXCLUDE_CIPHERS);
-    if (value != null && !value.isEmpty() && !"none".equalsIgnoreCase(value.trim())) {
-      list = Arrays.asList(value.trim().split("\\s*,\\s*"));
-    }
-    return list;
+    return getPropertyValueAsList(SSL_EXCLUDE_CIPHERS);
   }
 
   @Override
@@ -774,11 +773,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public List<String> getGlobalRulesServices() {
-    String value = get( GLOBAL_RULES_SERVICES );
-    if ( value != null && !value.isEmpty() && !"none".equalsIgnoreCase(value.trim()) ) {
-      return Arrays.asList( value.trim().split("\\s*,\\s*") );
-    }
-    return DEFAULT_GLOBAL_RULES_SERVICES;
+    return getPropertyValueAsList(GLOBAL_RULES_SERVICES, DEFAULT_GLOBAL_RULES_SERVICES);
+  }
+
+  @Override
+  public List<String> getGlobalRulesExcludedServices() {
+    return getPropertyValueAsList(GLOBAL_RULES_EXCLUDED_SERVICES);
   }
 
   @Override
@@ -1075,12 +1075,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public List<String> getXForwardContextAppendServices() {
-    String value = get( X_FORWARD_CONTEXT_HEADER_APPEND_SERVICES );
-    if ( value != null && !value.isEmpty() && !"none".equalsIgnoreCase(value.trim()) ) {
-      return Arrays.asList( value.trim().split("\\s*,\\s*") );
-    } else {
-      return new ArrayList<>();
-    }
+    return getPropertyValueAsList(X_FORWARD_CONTEXT_HEADER_APPEND_SERVICES);
   }
 
   @Override

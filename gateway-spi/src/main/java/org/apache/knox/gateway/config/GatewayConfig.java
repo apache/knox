@@ -323,6 +323,11 @@ public interface GatewayConfig {
   List<String> getGlobalRulesServices();
 
   /**
+   * @return The list of services which the global rules have no any affect on
+   */
+  List<String> getGlobalRulesExcludedServices();
+
+  /**
    * Returns true if websocket feature enabled else false.
    * Default is false.
    * @since 0.10

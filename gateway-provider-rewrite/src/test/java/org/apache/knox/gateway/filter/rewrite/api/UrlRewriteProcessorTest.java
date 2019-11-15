@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.filter.rewrite.api;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -34,15 +35,18 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.util.urltemplate.Expander;
 import org.apache.knox.gateway.util.urltemplate.Matcher;
 import org.apache.knox.gateway.util.urltemplate.Parser;
+import org.apache.knox.gateway.util.urltemplate.Resolver;
 import org.apache.knox.gateway.util.urltemplate.Template;
 import org.easymock.EasyMock;
 import org.junit.Test;
@@ -407,6 +411,32 @@ public class UrlRewriteProcessorTest {
 
     assertThat( "Expect rewrite to not change the value",
         outputUrl, nullValue() );
+    processor.destroy();
+  }
+
+  @Test
+  public void testServicesExcludingGlobalRules() throws Exception {
+    final UrlRewriteEnvironment environment = EasyMock.createNiceMock(UrlRewriteEnvironment.class);
+    final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(environment.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).atLeastOnce();
+    final Resolver resolver = EasyMock.createNiceMock(Resolver.class);
+    EasyMock.expect(resolver.resolve("service.role")).andReturn(Arrays.asList("test-rule-1")).anyTimes();
+    EasyMock.expect(gatewayConfig.getGlobalRulesServices()).andReturn(Arrays.asList("test-rule-2")).anyTimes();
+    EasyMock.expect(gatewayConfig.getGlobalRulesExcludedServices()).andReturn(Arrays.asList("test-rule-1")).anyTimes();
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.replay(environment, resolver, gatewayConfig, request, response);
+
+    final UrlRewriteRulesDescriptor config = UrlRewriteRulesDescriptorFactory.load("xml", getTestResourceReader("rewrite-global-rules.xml"));
+    final UrlRewriteProcessor processor = new UrlRewriteProcessor();
+    processor.initialize(environment, config);
+
+    final Template inputUrl = Parser.parseLiteral( "input-mock-scheme-1://input-mock-host-1:42/test-input-path" );
+    final Template outputUrl = processor.rewrite(resolver, inputUrl, UrlRewriter.Direction.OUT, null);
+
+    //Since `test-rule-2` being GLOBAL -> output would be changed to 'output-mock-scheme-2://output-mock-host-2:42/test-input-path'
+    //However, it's been told that 'test-rule-1' should be excluded from GLOBAL rules -> no change is expected
+    assertThat("Expect rewrite to not change the value", outputUrl, is(equalTo(inputUrl)));
     processor.destroy();
   }
 
