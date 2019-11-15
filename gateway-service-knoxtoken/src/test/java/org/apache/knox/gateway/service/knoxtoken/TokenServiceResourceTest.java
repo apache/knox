@@ -23,11 +23,17 @@ import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
+import java.security.KeyStore;
+import java.security.cert.Certificate;
+import javax.ws.rs.core.Response.Status;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
@@ -59,6 +65,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -778,6 +785,32 @@ public class TokenServiceResourceTest {
     validateSuccessfulRevocationResponse(renewalResponse);
   }
 
+  @Test
+  public void testGetPublicKey() throws Exception {
+    TokenResource tr = createTokenResourceForPublicKeyTests(false);
+
+    Response response = tr.publicKey();
+    assertEquals("Unexpected response code", Status.OK.getStatusCode(), response.getStatus());
+    String retString = response.getEntity().toString();
+    Map<String, String> responseMap = parseJSONResponse(retString);
+    assertNotNull("PublicKey is null", responseMap.get(TokenResource.PUBLIC_KEY));
+    assertNotNull("Algorithm is null", responseMap.get(TokenResource.ALGORITHM));
+    assertEquals("Mismatched algorithm", responseMap.get(TokenResource.ALGORITHM),
+        publicKey.getAlgorithm());
+    assertArrayEquals("Mismatched public key",
+        Base64.decodeBase64(responseMap.get(TokenResource.PUBLIC_KEY)), publicKey.getEncoded());
+
+  }
+
+  @Test
+  public void testGetPublicKey_error() throws Exception {
+    TokenResource tr = createTokenResourceForPublicKeyTests(true);
+
+    Response response = tr.publicKey();
+    assertEquals("Unexpoected response code", Status.INTERNAL_SERVER_ERROR.getStatusCode(),
+        response.getStatus());
+  }
+
 
   /**
    *
@@ -985,6 +1018,50 @@ public class TokenServiceResourceTest {
     assertEquals(expectedMessage, json.get("error"));
   }
 
+  private TokenResource createTokenResourceForPublicKeyTests(boolean throwOnKeyStoreServiceAccess) throws Exception {
+    String signingKeyAlias = "signing-key-alias";
+
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+
+    Certificate certificate = EasyMock.createNiceMock(Certificate.class);
+    EasyMock.expect(certificate.getPublicKey()).andReturn(publicKey);
+
+    // KeyStore cannot be mocked using EasyMock since it uses final methods.
+    KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+    char[] password = "notarealpassword".toCharArray();
+    keyStore.load(null, password);
+    if (certificate != null) {
+      keyStore.setCertificateEntry(signingKeyAlias, certificate);
+    }
+
+    KeystoreService keystoreService = EasyMock.createNiceMock(KeystoreService.class);
+    if (throwOnKeyStoreServiceAccess) {
+      EasyMock.expect(keystoreService.getSigningKeystore())
+          .andThrow(new KeystoreServiceException("keystoreserviceexception"));
+    } else {
+      EasyMock.expect(keystoreService.getSigningKeystore()).andReturn(keyStore);
+    }
+
+    GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gatewayConfig.getSigningKeyAlias()).andReturn(signingKeyAlias);
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE))
+        .andReturn(services);
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE))
+        .andReturn(gatewayConfig);
+
+    EasyMock.expect(services.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService);
+
+    EasyMock.replay(context, request, certificate, keystoreService, gatewayConfig, services);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    return tr;
+  }
 
   private String getTagValue(String token, String tagName) {
     String searchString = tagName + "\":";

@@ -19,6 +19,7 @@ package org.apache.knox.gateway.service.knoxtoken;
 
 import java.security.KeyStoreException;
 import java.security.Principal;
+import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
@@ -40,6 +41,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.ServiceType;
@@ -64,6 +66,9 @@ public class TokenResource {
   private static final String TARGET_URL = "target_url";
   private static final String ENDPOINT_PUBLIC_CERT = "endpoint_public_cert";
   private static final String BEARER = "Bearer";
+  // VisibleForTesting
+  static final String PUBLIC_KEY = "public_key";
+  static final String ALGORITHM = "algorithm";
   private static final String TOKEN_TTL_PARAM = "knox.token.ttl";
   private static final String TOKEN_AUDIENCES_PARAM = "knox.token.audiences";
   private static final String TOKEN_TARGET_URL = "knox.token.target.url";
@@ -78,6 +83,7 @@ public class TokenResource {
   static final String RESOURCE_PATH = "knoxtoken/api/v1/token";
   static final String RENEW_PATH = "/renew";
   static final String REVOKE_PATH = "/revoke";
+  static final String PUBLIC_KEY_PATH = "/publickey";
   private static final String TARGET_ENDPOINT_PULIC_CERT_PEM = "knox.token.target.endpoint.cert.pem";
   private static TokenServiceMessages log = MessagesFactory.get(TokenServiceMessages.class);
   private long tokenTTL = TOKEN_TTL_DEFAULT;
@@ -276,6 +282,39 @@ public class TokenResource {
     }
 
     return resp;
+  }
+
+  @GET
+  @Path(PUBLIC_KEY_PATH)
+  @Produces ({APPLICATION_JSON})
+  public Response publicKey() {
+    GatewayServices services = (GatewayServices) request.getServletContext()
+        .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+
+    KeystoreService ks = services.getService(ServiceType.KEYSTORE_SERVICE);
+
+    try {
+      PublicKey publicKey = ks.getSigningKeystore().getCertificate(getSigningKeyAlias()).getPublicKey();
+      publicKey.getAlgorithm();
+      byte[] pubKeyBytes = publicKey.getEncoded();
+      String base64Key = Base64.encodeBase64String(pubKeyBytes);
+      Map<String, String> map = new HashMap<>();
+      map.put(PUBLIC_KEY, base64Key);
+      map.put(ALGORITHM, publicKey.getAlgorithm());
+
+      String jsonResponse = JsonUtils.renderAsJsonString(map);
+      return Response.ok().entity(jsonResponse).build();
+    } catch (KeyStoreException | KeystoreServiceException e) {
+      return Response.serverError().build();
+      // TODO: Look at serverError(). ... (Ref: ServiceDefinitionResource for more info)
+    }
+  }
+
+  private String getSigningKeyAlias() {
+    GatewayConfig config = (GatewayConfig) request.getServletContext()
+        .getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    String alias = config.getSigningKeyAlias();
+    return (alias == null) ? GatewayConfig.DEFAULT_SIGNING_KEY_ALIAS : alias;
   }
 
   private X509Certificate extractCertificate(HttpServletRequest req) {
