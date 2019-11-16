@@ -22,13 +22,13 @@ import org.apache.knox.gateway.dispatch.GatewayDispatchFilter;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 
-/***
+/**
  * KNOX-526. Need to keep this class around for backward compatibility of deployed
  * topologies. This is required for releases older than Apache Knox 0.6.0
+ * @deprecated Use {@link org.apache.knox.gateway.dispatch.GatewayDispatchFilter}
  */
 @Deprecated
 public class HiveHttpClientDispatch extends GatewayDispatchFilter {
-
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
     setDispatch(new HiveDispatch());

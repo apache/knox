@@ -30,7 +30,6 @@ public class HdfsHttpClientDispatch extends DefaultDispatch {
     super();
   }
 
-  //@Override
   /**
    * This method ensures that the request InputStream is not acquired
    * prior to a dispatch to a component such as a namenode that doesn't

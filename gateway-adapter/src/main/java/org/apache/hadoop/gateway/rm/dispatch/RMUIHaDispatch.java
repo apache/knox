@@ -16,23 +16,18 @@
  */
 package org.apache.hadoop.gateway.rm.dispatch;
 
-import org.apache.knox.gateway.ha.provider.HaProvider;
-
 import javax.servlet.ServletException;
 
+/**
+ * An adapter class that delegate calls to {@link org.apache.knox.gateway.rm.dispatch.RMUIHaDispatch}
+ * for backwards compatibility with package structure.
+ *
+ * @since 0.14.0
+ * @deprecated Use {@link org.apache.knox.gateway.rm.dispatch.RMUIHaDispatch}
+ */
 @Deprecated
 public class RMUIHaDispatch extends org.apache.knox.gateway.rm.dispatch.RMUIHaDispatch {
   public RMUIHaDispatch() throws ServletException {
     super();
-  }
-
-  @Override
-  public void setHaProvider(HaProvider haProvider) {
-    super.setHaProvider(haProvider);
-  }
-
-  @Override
-  public void init() {
-    super.init();
   }
 }

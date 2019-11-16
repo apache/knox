@@ -18,8 +18,15 @@ package org.apache.hadoop.gateway.hive;
 
 import org.apache.http.client.methods.HttpUriRequest;
 
+/**
+ * An adapter class that delegate calls to {@link org.apache.knox.gateway.hive.HiveHaDispatch}
+ * for backwards compatibility with package structure.
+ *
+ * @since 0.14.0
+ * @deprecated Use {@link org.apache.knox.gateway.hive.HiveHaDispatch}
+ */
 @Deprecated
-public class HiveHaDispatch extends org.apache.knox.gateway.hive.HiveHaDispatch{
+public class HiveHaDispatch extends org.apache.knox.gateway.hive.HiveHaDispatch {
   public HiveHaDispatch() {
     super();
   }
@@ -27,15 +34,5 @@ public class HiveHaDispatch extends org.apache.knox.gateway.hive.HiveHaDispatch{
   @Override
   protected void addCredentialsToRequest(HttpUriRequest request) {
     super.addCredentialsToRequest(request);
-  }
-
-  @Override
-  public void setBasicAuthPreemptive(boolean basicAuthPreemptive) {
-    super.setBasicAuthPreemptive(basicAuthPreemptive);
-  }
-
-  @Override
-  public boolean isBasicAuthPreemptive() {
-    return super.isBasicAuthPreemptive();
   }
 }

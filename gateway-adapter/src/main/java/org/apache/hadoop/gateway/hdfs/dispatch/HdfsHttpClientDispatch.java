@@ -22,14 +22,19 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
+/**
+ * An adapter class that delegate calls to {@link org.apache.knox.gateway.hdfs.dispatch.HdfsHttpClientDispatch}
+ * for backwards compatibility with package structure.
+ *
+ * @since 0.14.0
+ * @deprecated Use {@link org.apache.knox.gateway.hdfs.dispatch.HdfsHttpClientDispatch}
+ */
 @Deprecated
 public class HdfsHttpClientDispatch extends org.apache.knox.gateway.hdfs.dispatch.HdfsHttpClientDispatch {
-
   public HdfsHttpClientDispatch() throws ServletException {
     super();
   }
 
-  //@Override
   /**
    * This method ensures that the request InputStream is not acquired
    * prior to a dispatch to a component such as a namenode that doesn't
@@ -43,5 +48,4 @@ public class HdfsHttpClientDispatch extends org.apache.knox.gateway.hdfs.dispatc
       throws IOException {
     return super.createRequestEntity(request);
   }
-
 }

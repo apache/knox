@@ -16,7 +16,13 @@
  */
 package org.apache.hadoop.gateway.util;
 
+/**
+ * An adapter class that delegate calls to {@link org.apache.knox.gateway.util.RegExUtils}
+ * for backwards compatibility with package structure.
+ *
+ * @since 0.14.0
+ * @deprecated Use {@link org.apache.knox.gateway.util.RegExUtils}
+ */
 @Deprecated
 public class RegExUtils extends org.apache.knox.gateway.util.RegExUtils {
-
 }
