@@ -26,22 +26,14 @@ import org.apache.shiro.subject.PrincipalCollection;
  * An adapter class that delegate calls to {@link org.apache.knox.gateway.shirorealm.KnoxPamRealm}
  * for backwards compatibility with package structure.
  *
- * This is class is deprecated and only used for backwards compatibility
- * please use
- * org.apache.knox.gateway.shirorealm.KnoxPamRealm
- * @since 1.0.0
+ * @since 0.14.0
+ * @deprecated Use {@link org.apache.knox.gateway.shirorealm.KnoxPamRealm}
  */
 @Deprecated
-public class KnoxPamRealm
-    extends org.apache.knox.gateway.shirorealm.KnoxPamRealm {
-
-  /**
-   * Create an instance
-   */
+public class KnoxPamRealm extends org.apache.knox.gateway.shirorealm.KnoxPamRealm {
   public KnoxPamRealm() {
     super();
   }
-
 
   @Override
   protected AuthenticationInfo doGetAuthenticationInfo(

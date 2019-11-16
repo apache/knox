@@ -20,9 +20,15 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import java.util.Properties;
 
+/**
+ * An adapter class that delegate calls to {@link org.apache.knox.gateway.hadoopauth.filter.HadoopAuthFilter}
+ * for backwards compatibility with package structure.
+ *
+ * @since 0.14.0
+ * @deprecated Use {@link org.apache.knox.gateway.hadoopauth.filter.HadoopAuthFilter}
+ */
 @Deprecated
 public class HadoopAuthFilter extends org.apache.knox.gateway.hadoopauth.filter.HadoopAuthFilter {
-
   @Override
   protected Properties getConfiguration(String configPrefix,
       FilterConfig filterConfig) throws ServletException {

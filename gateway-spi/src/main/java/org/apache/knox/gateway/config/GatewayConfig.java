@@ -33,6 +33,7 @@ public interface GatewayConfig {
    *
    * @deprecated use {@link GatewayConfig#KNOX_GATEWAY_CONF_DIR_VAR} instead
    */
+  @Deprecated
   String GATEWAY_CONF_HOME_VAR = "GATEWAY_CONF_HOME";
 
   String KNOX_GATEWAY_CONF_DIR_VAR = "KNOX_GATEWAY_CONF_DIR";
@@ -42,6 +43,7 @@ public interface GatewayConfig {
    *
    * @deprecated use {@link GatewayConfig#KNOX_GATEWAY_DATA_DIR} instead
    */
+  @Deprecated
   String GATEWAY_DATA_HOME_VAR = "GATEWAY_DATA_HOME";
 
   String KNOX_GATEWAY_DATA_DIR = "KNOX_GATEWAY_DATA_DIR";

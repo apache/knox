@@ -22,19 +22,13 @@ import java.util.Hashtable;
 
 /**
  * An adapter class that delegate calls to {@link org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory}
- * for backwards compatability with package structure.
+ * for backwards compatibility with package structure.
  *
- * This is class is deprecated and only used for backwards compatibility
- * please use
- * org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory
  * @since 0.14.0
+ * @deprecated Use {@link org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory}
  */
 @Deprecated
 public class KnoxLdapContextFactory extends org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory {
-
-  /**
-   * Create an instance
-   */
   public KnoxLdapContextFactory() {
     super();
   }
@@ -44,5 +38,4 @@ public class KnoxLdapContextFactory extends org.apache.knox.gateway.shirorealm.K
       throws NamingException {
     return super.createLdapContext(env);
   }
-
 }

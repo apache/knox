@@ -16,13 +16,14 @@
  */
 package org.apache.hadoop.gateway.dispatch;
 
-import javax.servlet.http.HttpServletRequest;
-import java.net.URI;
-
+/**
+ * An adapter class that delegate calls to {@link org.apache.knox.gateway.dispatch.PassAllHeadersNoEncodingDispatch}
+ * for backwards compatibility with package structure.
+ *
+ * @since 0.14.0
+ * @deprecated Use {@link org.apache.knox.gateway.dispatch.PassAllHeadersNoEncodingDispatch}
+ */
 @Deprecated
-public class PassAllHeadersNoEncodingDispatch extends org.apache.knox.gateway.dispatch.PassAllHeadersNoEncodingDispatch {
-  @Override
-  public URI getDispatchUrl(HttpServletRequest request) {
-    return super.getDispatchUrl(request);
-  }
+public class PassAllHeadersNoEncodingDispatch
+    extends org.apache.knox.gateway.dispatch.PassAllHeadersNoEncodingDispatch {
 }
