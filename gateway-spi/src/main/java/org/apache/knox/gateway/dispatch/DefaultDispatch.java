@@ -60,7 +60,6 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 public class DefaultDispatch extends AbstractGatewayDispatch {
-
   protected static final String SET_COOKIE = "SET-COOKIE";
   protected static final String WWW_AUTHENTICATE = "WWW-AUTHENTICATE";
 
@@ -70,15 +69,14 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
 
   protected static final String EXCLUDE_ALL = "*";
-  private Set<String> outboundResponseExcludeHeaders = new HashSet<>(Arrays.asList(WWW_AUTHENTICATE));
-  private Set<String> outboundResponseExcludedSetCookieHeaderDirectives = new HashSet<>(Arrays.asList(EXCLUDE_ALL));
+  private Set<String> outboundResponseExcludeHeaders = Collections.singleton(WWW_AUTHENTICATE);
+  private Set<String> outboundResponseExcludedSetCookieHeaderDirectives = Collections.singleton(EXCLUDE_ALL);
 
   //Buffer size in bytes
   private int replayBufferSize = -1;
 
   @Override
   public void destroy() {
-
   }
 
   protected int getReplayBufferSize() {
@@ -103,7 +101,6 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
     }
     replayBufferSize = size;
   }
-
 
   protected void executeRequest(
          HttpUriRequest outboundRequest,
@@ -171,7 +168,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
     }
   }
 
-  private String getInboundResponseContentType( final HttpEntity entity ) {
+  protected String getInboundResponseContentType( final HttpEntity entity ) {
     String fullContentType = null;
     if( entity != null ) {
       ContentType entityContentType = ContentType.get( entity );
@@ -216,9 +213,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
    protected void addCredentialsToRequest(HttpUriRequest outboundRequest) {
    }
 
-   protected HttpEntity createRequestEntity(HttpServletRequest request)
-         throws IOException {
-
+   protected HttpEntity createRequestEntity(HttpServletRequest request) throws IOException {
       String contentType = request.getContentType();
       int contentLength = request.getContentLength();
       InputStream contentStream = request.getInputStream();
@@ -251,7 +246,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
 
    @Override
    public void doGet(URI url, HttpServletRequest request, HttpServletResponse response)
-         throws IOException, URISyntaxException {
+         throws IOException {
       HttpGet method = new HttpGet(url);
       // https://issues.apache.org/jira/browse/KNOX-107 - Service URLs not rewritten for WebHDFS GET redirects
       // This is now taken care of in DefaultHttpClientFactory.createHttpClient
@@ -263,14 +258,14 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
 
    @Override
    public void doOptions(URI url, HttpServletRequest request, HttpServletResponse response)
-         throws IOException, URISyntaxException {
+         throws IOException {
       HttpOptions method = new HttpOptions(url);
       executeRequest(method, request, response);
    }
 
    @Override
    public void doPut(URI url, HttpServletRequest request, HttpServletResponse response)
-         throws IOException, URISyntaxException {
+         throws IOException {
       HttpPut method = new HttpPut(url);
       HttpEntity entity = createRequestEntity(request);
       method.setEntity(entity);
@@ -280,7 +275,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
 
    @Override
    public void doPatch(URI url, HttpServletRequest request, HttpServletResponse response)
-         throws IOException, URISyntaxException {
+         throws IOException {
       HttpPatch method = new HttpPatch(url);
       HttpEntity entity = createRequestEntity(request);
       method.setEntity(entity);
@@ -300,7 +295,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
 
    @Override
    public void doDelete(URI url, HttpServletRequest request, HttpServletResponse response)
-         throws IOException, URISyntaxException {
+         throws IOException {
       HttpDelete method = new HttpDelete(url);
       copyRequestHeaderFields(method, request);
       executeRequest(method, request, response);
@@ -308,7 +303,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
 
   @Override
   public void doHead(URI url, HttpServletRequest request, HttpServletResponse response)
-      throws IOException, URISyntaxException {
+      throws IOException {
     final HttpHead method = new HttpHead(url);
     copyRequestHeaderFields(method, request);
     executeRequest(method, request, response);
@@ -316,7 +311,8 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
 
   public void copyResponseHeaderFields(HttpServletResponse outboundResponse, HttpResponse inboundResponse) {
     final TreeMap<String, Set<String>> excludedHeaderDirectives = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-    getOutboundResponseExcludeHeaders().stream().forEach(excludeHeader -> excludedHeaderDirectives.put(excludeHeader, new HashSet<>(Arrays.asList(EXCLUDE_ALL))));
+    getOutboundResponseExcludeHeaders().stream().forEach(excludeHeader ->
+        excludedHeaderDirectives.put(excludeHeader, Collections.singleton(EXCLUDE_ALL)));
     excludedHeaderDirectives.put(SET_COOKIE, getOutboundResponseExcludedSetCookieHeaderDirectives());
 
     for (Header header : inboundResponse.getAllHeaders()) {
