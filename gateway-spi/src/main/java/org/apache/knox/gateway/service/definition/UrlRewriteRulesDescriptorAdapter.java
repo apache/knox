@@ -25,6 +25,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 
+import javax.xml.XMLConstants;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -53,7 +54,9 @@ public class UrlRewriteRulesDescriptorAdapter extends XmlAdapter<Object, UrlRewr
 
   private static InputStream nodeToInputStream(Node node) throws Exception {
     try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-      TransformerFactory.newInstance().newTransformer().transform(new DOMSource(node), new StreamResult(outputStream));
+      TransformerFactory transformerFactory = TransformerFactory.newInstance();
+      transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+      transformerFactory.newTransformer().transform(new DOMSource(node), new StreamResult(outputStream));
       return new ByteArrayInputStream(outputStream.toByteArray());
     }
   }
