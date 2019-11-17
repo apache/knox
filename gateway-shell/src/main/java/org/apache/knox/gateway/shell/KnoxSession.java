@@ -83,6 +83,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -94,7 +95,6 @@ import java.util.concurrent.TimeoutException;
 import de.thetaphi.forbiddenapis.SuppressForbidden;
 
 public class KnoxSession implements Closeable {
-
   private static final String DEFAULT_JAAS_FILE = "/jaas.conf";
   public static final String JGSS_LOGIN_MOUDLE = "com.sun.security.jgss.initiate";
   public static final String END_CERTIFICATE = "-----END CERTIFICATE-----\n";
@@ -559,17 +559,15 @@ public class KnoxSession implements Closeable {
     try {
       shutdown();
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw new KnoxShellException("Can not shutdown underlying resources", e);
     }
   }
 
   @Override
   public String toString() {
-    final StringBuilder sb = new StringBuilder("KnoxSession{base='");
-    sb.append(base).append("\'}");
-    return sb.toString();
+    return String.format(Locale.ROOT, "KnoxSession{base='%s'}", base);
   }
-
 
   private static final class JAASClientConfig extends Configuration {
 
@@ -603,7 +601,6 @@ public class KnoxSession implements Closeable {
 
   @SuppressWarnings("PMD.AvoidAccessibilityAlteration")
   private static class ConfigurationFactory {
-
     private static final Class implClazz;
     static {
       // Oracle and OpenJDK use the Sun implementation
@@ -639,5 +636,4 @@ public class KnoxSession implements Closeable {
       return config;
     }
   }
-
 }

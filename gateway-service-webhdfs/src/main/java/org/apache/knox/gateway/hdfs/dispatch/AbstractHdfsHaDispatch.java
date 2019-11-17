@@ -128,6 +128,7 @@ public abstract class AbstractHdfsHaDispatch extends HdfsHttpClientDispatch {
                Thread.sleep(failoverSleep);
             } catch (InterruptedException e) {
                LOG.failoverSleepFailed(getResourceRole(), e);
+               Thread.currentThread().interrupt();
             }
          }
          LOG.failingOverRequest(outboundRequest.getURI().toString());
@@ -141,5 +142,4 @@ public abstract class AbstractHdfsHaDispatch extends HdfsHttpClientDispatch {
          }
       }
    }
-
 }

@@ -72,7 +72,6 @@ import javax.xml.bind.Marshaller;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -87,9 +86,8 @@ import java.util.Set;
 
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 
-public class DefaultTopologyService
-    extends FileAlterationListenerAdaptor
-    implements TopologyService, TopologyMonitor, TopologyProvider, FileFilter, FileAlterationListener, ServiceDefinitionChangeListener {
+public class DefaultTopologyService extends FileAlterationListenerAdaptor implements TopologyService, TopologyMonitor,
+    TopologyProvider, FileFilter, FileAlterationListener, ServiceDefinitionChangeListener {
 
   private static final JAXBContext jaxbContext = getJAXBContext();
 
@@ -97,14 +95,11 @@ public class DefaultTopologyService
     AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
     AuditConstants.KNOX_COMPONENT_NAME);
 
-  private static final List<String> SUPPORTED_TOPOLOGY_FILE_EXTENSIONS = new ArrayList<>();
-  static {
-    SUPPORTED_TOPOLOGY_FILE_EXTENSIONS.add("xml");
-    SUPPORTED_TOPOLOGY_FILE_EXTENSIONS.add("conf");
-  }
+  private static final List<String> SUPPORTED_TOPOLOGY_FILE_EXTENSIONS = Arrays.asList("xml", "conf");
 
   private static GatewayMessages log = MessagesFactory.get(GatewayMessages.class);
-  private static DigesterLoader digesterLoader = newLoader(new KnoxFormatXmlTopologyRules(), new AmbariFormatXmlTopologyRules());
+  private static DigesterLoader digesterLoader = newLoader(new KnoxFormatXmlTopologyRules(),
+      new AmbariFormatXmlTopologyRules());
   private List<FileAlterationMonitor> monitors = new ArrayList<>();
   private File topologiesDirectory;
   private File sharedProvidersDirectory;
@@ -133,7 +128,7 @@ public class DefaultTopologyService
     }
   }
 
-  private Topology loadTopology(File file) throws IOException, SAXException, URISyntaxException, InterruptedException {
+  private Topology loadTopology(File file) throws IOException, SAXException, InterruptedException {
     final long TIMEOUT = 250; //ms
     final long DELAY = 50; //ms
     log.loadingTopologyFile(file.getAbsolutePath());
@@ -155,7 +150,7 @@ public class DefaultTopologyService
     return topology;
   }
 
-  private Topology loadTopologyAttempt(File file) throws IOException, SAXException, URISyntaxException {
+  private Topology loadTopologyAttempt(File file) throws IOException, SAXException {
     Topology topology;
     Digester digester = digesterLoader.newDigester();
     TopologyBuilder topologyBuilder = digester.parse(FileUtils.openInputStream(file));
@@ -207,10 +202,9 @@ public class DefaultTopologyService
             break;
           }
         } catch (InterruptedException e) {
-          auditor.audit(Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY,
-              ActionOutcome.FAILURE);
+          auditor.audit(Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
           log.failedToRedeployTopology(topology.getName(), e);
-          e.printStackTrace();
+          Thread.currentThread().interrupt();
         }
       }
     } catch (SAXException e) {
@@ -258,7 +252,7 @@ public class DefaultTopologyService
     return configDir.getAbsoluteFile();
   }
 
-  private void  initListener(FileAlterationMonitor  monitor,
+  private void initListener(FileAlterationMonitor  monitor,
                             File                   directory,
                             FileFilter             filter,
                             FileAlterationListener listener) {
@@ -268,7 +262,7 @@ public class DefaultTopologyService
     monitor.addObserver(observer);
   }
 
-  private void initListener(File directory, FileFilter filter, FileAlterationListener listener) throws IOException, SAXException {
+  private void initListener(File directory, FileFilter filter, FileAlterationListener listener) {
     // Increasing the monitoring interval to 5 seconds as profiling has shown
     // this is rather expensive in terms of generated garbage objects.
     initListener(new FileAlterationMonitor(5000L), directory, filter, listener);
@@ -691,8 +685,8 @@ public class DefaultTopologyService
       // Initialize the remote configuration monitor, if it has been configured
       remoteMonitor = RemoteConfigurationMonitorFactory.get(config);
 
-    } catch (IOException | SAXException io) {
-      throw new ServiceLifecycleException(io.getMessage());
+    } catch (IOException io) {
+      throw new ServiceLifecycleException(io.getMessage(), io);
     }
   }
 

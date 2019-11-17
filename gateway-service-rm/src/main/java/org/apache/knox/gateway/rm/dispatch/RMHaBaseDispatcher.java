@@ -135,6 +135,7 @@ class  RMHaBaseDispatcher extends DefaultDispatch {
                 Thread.sleep(failoverSleep);
              } catch (InterruptedException e) {
                 LOG.failoverSleepFailed(this.resourceRole, e);
+                Thread.currentThread().interrupt();
              }
           }
           executeRequest(outboundRequest, inboundRequest, outboundResponse);
