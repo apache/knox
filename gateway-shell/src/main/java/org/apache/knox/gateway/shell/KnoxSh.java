@@ -261,7 +261,7 @@ public class KnoxSh {
     public void execute() throws Exception {
       Credentials credentials = new Credentials();
       credentials.add("ClearInput", "Enter username: ", "user")
-                      .add("HiddenInput", "Enter pas" + "sword: ", "pass");
+                      .add("HiddenInput", "Enter password: ", "pass");
       credentials.collect();
 
       String username = credentials.get("user").string();

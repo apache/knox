@@ -37,7 +37,6 @@ import org.aspectj.lang.reflect.MethodSignature;
  */
 @Aspect
 public class KnoxShellTableHistoryAspect {
-
   private static final String KNOX_SHELL_TYPE = "org.apache.knox.gateway.shell.table.KnoxShellTable";
 
   @Pointcut("execution(public org.apache.knox.gateway.shell.table.KnoxShellTableFilter org.apache.knox.gateway.shell.table.KnoxShellTable.filter(..))")
@@ -59,7 +58,9 @@ public class KnoxShellTableHistoryAspect {
       filter = (KnoxShellTableFilter) joinPoint.proceed();
       return filter;
     } finally {
-      saveKnoxShellTableCall(joinPoint, filter.filteredTable.id);
+      if (filter != null) {
+        saveKnoxShellTableCall(joinPoint, filter.filteredTable.id);
+      }
     }
   }
 

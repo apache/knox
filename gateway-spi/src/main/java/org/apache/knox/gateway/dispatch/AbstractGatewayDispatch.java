@@ -78,7 +78,7 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
 
   @Override
   public void doGet(URI url, HttpServletRequest request, HttpServletResponse response )
-      throws IOException, URISyntaxException {
+      throws IOException {
     response.sendError( HttpServletResponse.SC_METHOD_NOT_ALLOWED );
   }
 
@@ -90,25 +90,25 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
 
   @Override
   public void doPut(URI url, HttpServletRequest request, HttpServletResponse response )
-      throws IOException, URISyntaxException {
+      throws IOException {
     response.sendError( HttpServletResponse.SC_METHOD_NOT_ALLOWED );
   }
 
   @Override
   public void doPatch(URI url, HttpServletRequest request, HttpServletResponse response )
-      throws IOException, URISyntaxException {
+      throws IOException {
     response.sendError( HttpServletResponse.SC_METHOD_NOT_ALLOWED );
   }
 
   @Override
   public void doDelete(URI url, HttpServletRequest request, HttpServletResponse response )
-      throws IOException, URISyntaxException {
+      throws IOException {
     response.sendError( HttpServletResponse.SC_METHOD_NOT_ALLOWED );
   }
 
   @Override
   public void doOptions(URI url, HttpServletRequest request, HttpServletResponse response )
-      throws IOException, URISyntaxException {
+      throws IOException {
     response.sendError( HttpServletResponse.SC_METHOD_NOT_ALLOWED );
   }
 
@@ -117,7 +117,7 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
    */
   @Override
   public void doHead(URI url, HttpServletRequest request, HttpServletResponse response )
-      throws IOException, URISyntaxException {
+      throws IOException {
     response.sendError( HttpServletResponse.SC_METHOD_NOT_ALLOWED );
   }
 

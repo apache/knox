@@ -20,6 +20,7 @@ package org.apache.knox.gateway.security;
 import javax.security.auth.Subject;
 import java.security.AccessController;
 import java.security.Principal;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -41,10 +42,9 @@ public class SubjectUtils {
     // LJM TODO: this implementation assumes the first one found.
     // We should configure through context param based on knowledge
     // of the authentication provider in use
-    Set<Principal> principals = subject.getPrincipals();
-    for (Principal p : principals) {
-      name = p.getName();
-      break;
+    Optional<Principal> principal = subject.getPrincipals().stream().findFirst();
+    if (principal.isPresent()) {
+      name = principal.get().getName();
     }
 
     return name;
