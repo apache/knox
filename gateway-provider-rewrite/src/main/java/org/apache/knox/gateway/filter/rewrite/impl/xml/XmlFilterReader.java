@@ -39,6 +39,7 @@ import javax.xml.namespace.QName;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.Characters;
@@ -147,37 +148,37 @@ public abstract class XmlFilterReader extends Reader {
   private void processEvent( XMLEvent event ) throws ParserConfigurationException, XPathExpressionException, IOException, XMLStreamException {
     int type = event.getEventType();
     switch( type ) {
-      case XMLEvent.START_DOCUMENT:
+      case XMLStreamConstants.START_DOCUMENT:
         processStartDocument( (StartDocument)event );
         break;
-      case XMLEvent.END_DOCUMENT:
+      case XMLStreamConstants.END_DOCUMENT:
         processEndDocument();
         break;
-      case XMLEvent.START_ELEMENT:
-        if( parser.peek().getEventType() == XMLEvent.END_ELEMENT ) {
+      case XMLStreamConstants.START_ELEMENT:
+        if( parser.peek().getEventType() == XMLStreamConstants.END_ELEMENT ) {
           isEmptyElement = true;
         }
         processStartElement( event.asStartElement());
         break;
-      case XMLEvent.END_ELEMENT:
+      case XMLStreamConstants.END_ELEMENT:
         processEndElement( event.asEndElement() );
         isEmptyElement = false;
         break;
-      case XMLEvent.CHARACTERS:
-      case XMLEvent.CDATA:
-      case XMLEvent.SPACE:
+      case XMLStreamConstants.CHARACTERS:
+      case XMLStreamConstants.CDATA:
+      case XMLStreamConstants.SPACE:
         processCharacters( event.asCharacters() );
         break;
-      case XMLEvent.COMMENT:
+      case XMLStreamConstants.COMMENT:
         processComment( (Comment)event );
         break;
-      case XMLEvent.DTD:
-      case XMLEvent.NAMESPACE:
-      case XMLEvent.ATTRIBUTE:
-      case XMLEvent.ENTITY_REFERENCE:
-      case XMLEvent.ENTITY_DECLARATION:
-      case XMLEvent.NOTATION_DECLARATION:
-      case XMLEvent.PROCESSING_INSTRUCTION:
+      case XMLStreamConstants.DTD:
+      case XMLStreamConstants.NAMESPACE:
+      case XMLStreamConstants.ATTRIBUTE:
+      case XMLStreamConstants.ENTITY_REFERENCE:
+      case XMLStreamConstants.ENTITY_DECLARATION:
+      case XMLStreamConstants.NOTATION_DECLARATION:
+      case XMLStreamConstants.PROCESSING_INSTRUCTION:
       default:
         // Fail if we run into any of these for now.
         throw new IllegalStateException( Integer.toString( type ) );
