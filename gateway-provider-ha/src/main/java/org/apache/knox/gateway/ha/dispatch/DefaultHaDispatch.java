@@ -114,6 +114,7 @@ public class DefaultHaDispatch extends DefaultDispatch {
           Thread.sleep(failoverSleep);
         } catch ( InterruptedException e ) {
           LOG.failoverSleepFailed(getServiceRole(), e);
+          Thread.currentThread().interrupt();
         }
       }
       executeRequest(outboundRequest, inboundRequest, outboundResponse);
@@ -126,5 +127,4 @@ public class DefaultHaDispatch extends DefaultDispatch {
       }
     }
   }
-
 }
