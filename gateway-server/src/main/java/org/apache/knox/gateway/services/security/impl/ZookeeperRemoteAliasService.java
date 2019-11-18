@@ -102,7 +102,8 @@ public class ZookeeperRemoteAliasService implements AliasService {
    */
   private static String buildAliasEntryName(final String clusterName,
       final String alias) {
-    return buildClusterEntryName(clusterName) + PATH_SEPARATOR + alias;
+    // Convert all alias names to lower case (JDK-4891485)
+    return buildClusterEntryName(clusterName) + PATH_SEPARATOR + alias.toLowerCase(Locale.ROOT);
   }
 
   /**
@@ -228,10 +229,7 @@ public class ZookeeperRemoteAliasService implements AliasService {
 
   @Override
   public char[] getPasswordFromAliasForCluster(String clusterName,
-      String givenAlias, boolean generate) throws AliasServiceException {
-
-    /* convert all alias names to lower case since JDK expects the same behaviour */
-    final String alias = givenAlias.toLowerCase(Locale.ROOT);
+      String alias, boolean generate) throws AliasServiceException {
 
     char[] password = null;
 
