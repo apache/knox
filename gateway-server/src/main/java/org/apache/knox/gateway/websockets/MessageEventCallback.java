@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.websockets;
 
 import javax.websocket.CloseReason;
+import javax.websocket.PongMessage;
 
 /**
  * A simple callback interface used when evens happen on the Websocket client socket.
@@ -63,4 +64,11 @@ public interface MessageEventCallback {
    * @param session session
    */
   void onMessageBinary(byte[]  message, boolean last, Object session);
+
+  /**
+   * Callback when a pong control message is received.
+   * @param pongMessage pong message
+   * @param session session
+   */
+  void onMessagePong(PongMessage pongMessage, Object session);
 }

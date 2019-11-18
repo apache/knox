@@ -125,12 +125,8 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
     final RemoteEndpoint remote = frontEndSession.getRemote();
     try {
       if (!messageBuffer.isEmpty()) {
-        LOG.debugLog("Found old buffered messages");
-        for (String obj:messageBuffer) {
-          LOG.debugLog("Sending old buffered message [From Backend <---]: " + obj);
-          remote.sendString(obj);
-        }
-        messageBuffer.clear();
+        flushBufferedMessages(remote);
+
         if (remote.getBatchMode() == BatchMode.ON) {
           remote.flush();
         }
@@ -251,12 +247,7 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
           }
 
           /* Proxy message to frontend */
-          LOG.debugLog("Found old buffered messages");
-          for (String obj:messageBuffer) {
-            LOG.debugLog("Sending old buffered message [From Backend <---]: " + obj);
-            remote.sendString(obj);
-          }
-          messageBuffer.clear();
+          flushBufferedMessages(remote);
 
           LOG.debugLog("Sending current message [From Backend <---]: " + message);
           remote.sendString(message);
@@ -279,6 +270,35 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
         throw new UnsupportedOperationException(
             "Websocket support for binary messages is not supported at this time.");
 
+      }
+
+      @Override
+      public void onMessagePong(javax.websocket.PongMessage message, Object session) {
+        LOG.logMessage("[From Backend <---]: PING");
+        remoteLock.lock();
+        final RemoteEndpoint remote = getRemote();
+        try {
+          if (remote == null) {
+            LOG.debugLog("Remote endpoint is null");
+            return;
+          }
+
+          /* Proxy Ping message to frontend */
+          flushBufferedMessages(remote);
+
+          LOG.logMessage("Sending current PING [From Backend <---]: ");
+          remote.sendPing(message.getApplicationData());
+          if (remote.getBatchMode() == BatchMode.ON) {
+            remote.flush();
+          }
+        } catch (IOException e) {
+          LOG.connectionFailed(e);
+          throw new RuntimeIOException(e);
+        }
+        finally
+        {
+          remoteLock.unlock();
+        }
       }
 
     };
@@ -316,5 +336,17 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
     if(frontendSession != null && !frontendSession.isOpen()) {
       frontendSession.close();
     }
+  }
+
+  /*
+   * Function to flush buffered messages. Should be called with remoteLock held
+   */
+  private void flushBufferedMessages(final RemoteEndpoint remote) throws IOException {
+    LOG.debugLog("Flushing old buffered messages");
+    for(String obj:messageBuffer) {
+      LOG.debugLog("Sending old buffered message [From Backend <---]: " + obj);
+      remote.sendString(obj);
+    }
+    messageBuffer.clear();
   }
 }

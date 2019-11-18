@@ -28,6 +28,7 @@ import org.junit.Test;
 import javax.websocket.CloseReason;
 import javax.websocket.ContainerProvider;
 import javax.websocket.DeploymentException;
+import javax.websocket.PongMessage;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 import java.io.IOException;
@@ -123,6 +124,10 @@ public class ProxyInboundClientTest {
       @Override
       public void onMessageBinary(byte[] message, boolean last, Object session) {
       }
+
+      @Override
+      public void onMessagePong(PongMessage message, Object session) {
+      }
     });
 
     Assert.assertThat(client, instanceOf(javax.websocket.Endpoint.class));
@@ -175,6 +180,10 @@ public class ProxyInboundClientTest {
       public void onMessageBinary(byte[] message, boolean last, Object session) {
         receivedBinaryMessage = message;
         isTestComplete.set(true);
+      }
+
+      @Override
+      public void onMessagePong(PongMessage message, Object session) {
       }
     });
 

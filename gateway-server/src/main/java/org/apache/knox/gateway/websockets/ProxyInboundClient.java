@@ -21,6 +21,7 @@ import javax.websocket.Endpoint;
 import javax.websocket.EndpointConfig;
 import javax.websocket.MessageHandler;
 import javax.websocket.Session;
+import javax.websocket.PongMessage;
 
 /**
  * A Websocket client with callback which is not annotation based.
@@ -81,6 +82,21 @@ public class ProxyInboundClient extends Endpoint {
       @Override
       public void onMessage(final String message) {
         callback.onMessageText(message, session);
+      }
+
+    });
+
+    /* Add message handler for Pong Control Message */
+    session.addMessageHandler(new MessageHandler.Whole<PongMessage>() {
+
+      /**
+       * Called when a ping message has been received.
+       *
+       * @param message the message data.
+       */
+      @Override
+      public void onMessage(final PongMessage pongMessage) {
+        callback.onMessagePong(pongMessage, session);
       }
 
     });
