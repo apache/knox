@@ -177,6 +177,7 @@
         <cryptacular.version>1.2.3</cryptacular.version>
         <curator.version>4.2.0</curator.version>
         <dependency-check-maven.version>5.2.2</dependency-check-maven.version>
+        <derby.db.version>10.14.2.0</derby.db.version> <!-- 10.15.1.3 requires Java 9 -->
         <dockerfile-maven-plugin.version>1.4.13</dockerfile-maven-plugin.version>
         <dom4j.version>2.1.1</dom4j.version>
         <easymock.version>4.1</easymock.version>
@@ -2254,6 +2255,13 @@
                 <groupId>org.easymock</groupId>
                 <artifactId>easymock</artifactId>
                 <version>${easymock.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.derby</groupId>
+                <artifactId>derby</artifactId>
+                <version>${derby.db.version}</version>
                 <scope>test</scope>
             </dependency>
 

@@ -128,6 +128,7 @@ public class X500PrincipalParser {
 
     rdnNameArray.clear();
 
+    boolean terminatedProperly = true;
     while(startIndex < dn.length()) {
       int endIndex;
       for(endIndex = startIndex; endIndex < dn.length(); endIndex++) {
@@ -150,13 +151,14 @@ public class X500PrincipalParser {
         rdnNameArray.add(nameValues);
         if(endIndex != dn.length()) {
           nameValues = new ArrayList<>();
+          terminatedProperly = false;
         } else {
-          nameValues = null;
+          terminatedProperly = true;
         }
       }
       startIndex = endIndex + 1;
     }
-    if(nameValues != null) {
+    if(!terminatedProperly) {
       throw new IllegalArgumentException("improperly terminated DN " + dn);
     }
   }
