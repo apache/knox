@@ -653,27 +653,28 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
           if (DescriptorsMonitor.isDescriptorFile(descriptorFilename)) {
             String topologyName = FilenameUtils.getBaseName(descriptorFilename);
             File existingDescriptorFile = getExistingFile(descriptorsDirectory, topologyName);
+            if (existingDescriptorFile != null) {
+              // If there isn't a corresponding topology file, or if the descriptor has been modified since the
+              // corresponding topology file was generated, then trigger generation of one
+              File matchingTopologyFile = getExistingFile(topologiesDirectory, topologyName);
+              if (matchingTopologyFile == null || matchingTopologyFile.lastModified() < existingDescriptorFile.lastModified()) {
+                descriptorsMonitor.onFileChange(existingDescriptorFile);
+              } else {
+                // If regeneration is NOT required, then we at least need to report the provider configuration
+                // reference relationship (KNOX-1144)
+                String normalizedDescriptorPath = FilenameUtils.normalize(existingDescriptorFile.getAbsolutePath());
 
-            // If there isn't a corresponding topology file, or if the descriptor has been modified since the
-            // corresponding topology file was generated, then trigger generation of one
-            File matchingTopologyFile = getExistingFile(topologiesDirectory, topologyName);
-            if (matchingTopologyFile == null || matchingTopologyFile.lastModified() < existingDescriptorFile.lastModified()) {
-              descriptorsMonitor.onFileChange(existingDescriptorFile);
-            } else {
-              // If regeneration is NOT required, then we at least need to report the provider configuration
-              // reference relationship (KNOX-1144)
-              String normalizedDescriptorPath = FilenameUtils.normalize(existingDescriptorFile.getAbsolutePath());
-
-              // Parse the descriptor to determine the provider config reference
-              SimpleDescriptor sd = SimpleDescriptorFactory.parse(normalizedDescriptorPath);
-              if (sd != null) {
-                File referencedProviderConfig =
-                           getExistingFile(sharedProvidersDirectory, FilenameUtils.getBaseName(sd.getProviderConfig()));
-                if (referencedProviderConfig != null) {
-                  List<String> references =
-                         descriptorsMonitor.getReferencingDescriptors(referencedProviderConfig.getAbsolutePath());
-                  if (!references.contains(normalizedDescriptorPath)) {
-                    references.add(normalizedDescriptorPath);
+                // Parse the descriptor to determine the provider config reference
+                SimpleDescriptor sd = SimpleDescriptorFactory.parse(normalizedDescriptorPath);
+                if (sd != null) {
+                  File referencedProviderConfig =
+                             getExistingFile(sharedProvidersDirectory, FilenameUtils.getBaseName(sd.getProviderConfig()));
+                  if (referencedProviderConfig != null) {
+                    List<String> references =
+                           descriptorsMonitor.getReferencingDescriptors(referencedProviderConfig.getAbsolutePath());
+                    if (!references.contains(normalizedDescriptorPath)) {
+                      references.add(normalizedDescriptorPath);
+                    }
                   }
                 }
               }

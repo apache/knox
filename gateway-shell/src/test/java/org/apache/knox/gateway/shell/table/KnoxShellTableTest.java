@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.shell.table;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.commons.io.FileUtils.readFileToString;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.expectLastCall;
@@ -26,23 +28,39 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.Collections;
 
 import javax.swing.SortOrder;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.knox.gateway.shell.jdbc.Database;
+import org.apache.knox.gateway.shell.jdbc.derby.DerbyDatabase;
 import org.easymock.IAnswer;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class KnoxShellTableTest {
+
+  @Rule
+  public final TemporaryFolder testFolder = new TemporaryFolder();
+
+  private static final String SYSTEM_PROPERTY_DERBY_STREAM_ERROR_FILE = "derby.stream.error.file";
+  private static final String SAMPLE_DERBY_DATABASE_NAME = "sampleDerbyDatabase";
+
   @Test
   public void testSimpleTableRendering() {
     String expectedResult = "+------------+------------+------------+\n"
@@ -363,6 +381,40 @@ public class KnoxShellTableTest {
       resultSet.close();
     }
     verify(connection, statement, resultSet, metadata);
+  }
+
+  @Test
+  public void testJDBCBuilderUsingConnectionString() throws Exception {
+    System.setProperty(SYSTEM_PROPERTY_DERBY_STREAM_ERROR_FILE, "/dev/null");
+    final Path derbyDatabaseFolder = Paths.get(testFolder.newFolder().toPath().toString(), SAMPLE_DERBY_DATABASE_NAME);
+    Database derbyDatabase = null;
+    try {
+      derbyDatabase = prepareDerbyDatabase(derbyDatabaseFolder);
+      assertTrue(derbyDatabase.hasTable("BOOKS"));
+      final KnoxShellTable table = KnoxShellTable.builder().jdbc().driver(DerbyDatabase.DRIVER).connectTo(DerbyDatabase.PROTOCOL + derbyDatabaseFolder.toString())
+          .sql("select * from books");
+      assertEquals(2, table.getRows().size());
+      assertTrue(table.values("TITLE").containsAll(Arrays.asList("Apache Knox: The Definitive Guide", "Apache Knox: The Definitive Guide 2nd Edition")));
+    } finally {
+      if (derbyDatabase != null) {
+        derbyDatabase.shutdown();
+      }
+      System.clearProperty(SYSTEM_PROPERTY_DERBY_STREAM_ERROR_FILE);
+    }
+  }
+
+  private Database prepareDerbyDatabase(Path derbyDatabaseFolder) throws SQLException, IOException {
+    final Database derbyDatabase = new DerbyDatabase(derbyDatabaseFolder.toString());
+    derbyDatabase.create();
+    final String createTableSql = readFileToString(new File(getClass().getClassLoader().getResource("createBooksTable.sql").getFile()), UTF_8);
+    final String insertDataSql = readFileToString(new File(getClass().getClassLoader().getResource("insertBooks.sql").getFile()), UTF_8);
+    try (Connection connection = derbyDatabase.getConnection();
+        Statement createTableStatment = connection.createStatement();
+        Statement insertDataStatement = connection.createStatement();) {
+      createTableStatment.execute(createTableSql);
+      insertDataStatement.execute(insertDataSql);
+    }
+    return derbyDatabase;
   }
 
   @Test (expected = IllegalArgumentException.class)

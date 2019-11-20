@@ -77,18 +77,14 @@ public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
 
   public KnoxShellTable sql(String sql) throws IOException, SQLException {
     conn = conn == null ? DriverManager.getConnection(connectionUrl) : conn;
-    if (conn != null) {
-      try (Statement statement = conn.createStatement(); ResultSet resultSet = statement.executeQuery(sql);) {
-        processResultSet(resultSet);
-      } finally {
-        if (conn != null && tableManagedConnection) {
-          conn.close();
-        }
+    try (Statement statement = conn.createStatement(); ResultSet resultSet = statement.executeQuery(sql);) {
+      processResultSet(resultSet);
+    } finally {
+      if (conn != null && tableManagedConnection) {
+        conn.close();
       }
-      return this.table;
-    } else {
-      return null;
     }
+    return this.table;
   }
 
   // added this as a private method so that KnoxShellTableHistoryAspect will not
