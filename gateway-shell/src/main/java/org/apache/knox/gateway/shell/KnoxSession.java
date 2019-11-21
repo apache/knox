@@ -244,6 +244,7 @@ public class KnoxSession implements Closeable {
         .connection().secure(false).end());
   }
 
+  @SuppressForbidden
   protected CloseableHttpClient createClient(ClientContext clientContext) throws GeneralSecurityException {
 
     // SSL

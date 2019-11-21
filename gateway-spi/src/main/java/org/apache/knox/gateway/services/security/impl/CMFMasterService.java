@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.services.security.impl;
 
+import de.thetaphi.forbiddenapis.SuppressForbidden;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.net.ntp.TimeStamp;
@@ -176,6 +177,7 @@ public class CMFMasterService {
       }
   }
 
+  @SuppressForbidden
   private void chmod(String args, File file) throws IOException {
       // TODO: move to Java 7 NIO support to add windows as well
       // TODO: look into the following for Windows: Runtime.getRuntime().exec("attrib -r myFile");

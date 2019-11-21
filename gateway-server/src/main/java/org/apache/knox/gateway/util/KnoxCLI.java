@@ -26,10 +26,8 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.ssl.SSLContexts;
 import org.apache.knox.gateway.GatewayCommandLine;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
@@ -63,7 +61,6 @@ import org.eclipse.persistence.oxm.MediaType;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import java.io.BufferedReader;
 import java.io.Console;
@@ -1674,14 +1671,12 @@ public class KnoxCLI extends Configured implements Tool {
     @Override
     public void execute() {
       attempts++;
-      SSLContext ctx = null;
       CloseableHttpClient client;
       String http = "http://";
       String https = "https://";
       GatewayConfig conf = getGatewayConfig();
       String gatewayPort;
       String host;
-
 
       if(cluster == null) {
         printKnoxShellUsage();
@@ -1693,7 +1688,7 @@ public class KnoxCLI extends Configured implements Tool {
         host = hostname;
       } else {
         try {
-          host = InetAddress.getLocalHost().getHostAddress();
+          host = InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
           out.println(e.toString());
           out.println("Defaulting address to localhost. Use --hostname option to specify a different hostname");
@@ -1724,19 +1719,8 @@ public class KnoxCLI extends Configured implements Tool {
         out.println("Username and/or password not supplied. Expect HTTP 401 Unauthorized responses.");
       }
 
-//    Attempt to build SSL context for HTTP client.
-      try {
-        ctx = SSLContexts.custom().loadTrustMaterial(null, new TrustSelfSignedStrategy()).build();
-      } catch (Exception e) {
-        out.println(e.toString());
-      }
-
 //    Initialize the HTTP client
-      if(ctx == null) {
-        client = HttpClients.createDefault();
-      } else {
-        client = HttpClients.custom().setSSLContext(ctx).build();
-      }
+      client = HttpClients.createDefault();
 
       HttpGet request;
       if(ssl) {

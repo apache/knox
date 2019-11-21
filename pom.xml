@@ -576,6 +576,15 @@
                         <!-- disallow unsafe commons-io classes -->
                         <bundledSignature>commons-io-unsafe-${commons-io.version}</bundledSignature>
                     </bundledSignatures>
+                    <signaturesArtifacts>
+                        <signaturesArtifact>
+                            <groupId>org.apache.knox</groupId>
+                            <artifactId>build-tools</artifactId>
+                            <version>1.0.0</version>
+                            <type>jar</type>
+                            <path>build-tools/forbiddenapis/signatures.txt</path>
+                        </signaturesArtifact>
+                    </signaturesArtifacts>
                 </configuration>
                 <executions>
                     <execution>
