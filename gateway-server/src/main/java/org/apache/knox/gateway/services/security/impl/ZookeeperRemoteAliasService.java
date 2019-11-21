@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * An {@link AliasService} implementation based on zookeeper remote service registry.
@@ -48,8 +49,7 @@ public class ZookeeperRemoteAliasService implements AliasService {
 
   public static final String PATH_KNOX = "/knox";
   public static final String PATH_KNOX_SECURITY = PATH_KNOX + "/security";
-  public static final String PATH_KNOX_ALIAS_STORE_TOPOLOGY =
-      PATH_KNOX_SECURITY + "/topology";
+  public static final String PATH_KNOX_ALIAS_STORE_TOPOLOGY = PATH_KNOX_SECURITY + "/topology";
   public static final String PATH_SEPARATOR = "/";
 
   private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
@@ -81,6 +81,8 @@ public class ZookeeperRemoteAliasService implements AliasService {
           return true;
         }
       };
+
+  private Map<String, Map<String, String>> aliasCache = new ConcurrentHashMap<>();
 
   private final AliasService localAliasService;
   private final MasterService ms;
@@ -169,19 +171,23 @@ public class ZookeeperRemoteAliasService implements AliasService {
   public List<String> getAliasesForCluster(final String clusterName) throws AliasServiceException {
     List<String> remoteAliases = new ArrayList<>();
 
-    /* If we have remote registry configured, query it */
-    if (remoteClient != null) {
-      remoteAliases = remoteClient
-          .listChildEntries(buildClusterEntryName(clusterName));
+    // First, check the alias cache
+    if (aliasCache.containsKey(clusterName)) {
+      remoteAliases.addAll(aliasCache.get(clusterName).keySet());
+    } else { // If it's not available locally, then check ZK
+      /* If we have remote registry configured, query it */
+      if (remoteClient != null) {
+        remoteAliases = remoteClient.listChildEntries(buildClusterEntryName(clusterName));
+      }
     }
 
     return remoteAliases;
   }
 
   @Override
-  public void addAliasForCluster(final String clusterName,
-      final String alias, final String value)
+  public void addAliasForCluster(final String clusterName, final String alias, final String value)
       throws AliasServiceException {
+
     if (remoteClient != null) {
       final String aliasEntryPath = buildAliasEntryName(clusterName, alias);
 
@@ -199,12 +205,17 @@ public class ZookeeperRemoteAliasService implements AliasService {
             "Failed to store alias %s for cluster %s in remote registry", alias,
             clusterName));
       }
+    } else {
+      // Add it to the local cache only
+      Map<String, String> clusterAliases = aliasCache.computeIfAbsent(clusterName, m -> new ConcurrentHashMap<>());
+      clusterAliases.put(alias, value);
     }
   }
 
   @Override
   public void removeAliasForCluster(final String clusterName, final String alias)
       throws AliasServiceException {
+
     /* If we have remote registry configured, query it */
     if (remoteClient != null) {
       final String aliasEntryPath = buildAliasEntryName(clusterName, alias);
@@ -228,35 +239,46 @@ public class ZookeeperRemoteAliasService implements AliasService {
   }
 
   @Override
-  public char[] getPasswordFromAliasForCluster(String clusterName,
-      String alias, boolean generate) throws AliasServiceException {
+  public char[] getPasswordFromAliasForCluster(String clusterName, String alias, boolean generate)
+      throws AliasServiceException {
 
     char[] password = null;
 
-    /* try to get it from remote registry */
-    if (remoteClient != null) {
-      checkPathsExist(remoteClient);
-      String encrypted = null;
-
-      if(remoteClient.entryExists(buildAliasEntryName(clusterName, alias))) {
-        encrypted = remoteClient
-            .getEntryData(buildAliasEntryName(clusterName, alias));
+    // Try the local cache first
+    if (aliasCache.containsKey(clusterName)) {
+      String value = aliasCache.get(clusterName).get(alias);
+      if (value != null) {
+        password = value.toCharArray();
       }
+    }
 
-      /* Generate a new password */
-      if (encrypted == null) {
+    // If it wasn't found in the local cache, check the remote registry
+    if (password == null) {
+      /* try to get it from remote registry */
+      if (remoteClient != null) {
+        checkPathsExist(remoteClient);
+        String encrypted = null;
 
-        /* Generate a new password  */
-        if (generate) {
-          generateAliasForCluster(clusterName, alias);
-          password = getPasswordFromAliasForCluster(clusterName, alias);
+        if (remoteClient.entryExists(buildAliasEntryName(clusterName, alias))) {
+          encrypted = remoteClient
+              .getEntryData(buildAliasEntryName(clusterName, alias));
         }
 
-      } else {
-        try {
-          password = decrypt(encrypted).toCharArray();
-        } catch (final Exception e) {
-          throw new AliasServiceException(e);
+        /* Generate a new password */
+        if (encrypted == null) {
+
+          /* Generate a new password  */
+          if (generate) {
+            generateAliasForCluster(clusterName, alias);
+            password = getPasswordFromAliasForCluster(clusterName, alias);
+          }
+
+        } else {
+          try {
+            password = decrypt(encrypted).toCharArray();
+          } catch (final Exception e) {
+            throw new AliasServiceException(e);
+          }
         }
       }
     }
@@ -401,14 +423,11 @@ public class ZookeeperRemoteAliasService implements AliasService {
   /**
    * Ensure that the nodes are properly set up.
    */
-  private void ensureEntries(
-      final RemoteConfigurationRegistryClient remoteClient) {
+  private void ensureEntries(final RemoteConfigurationRegistryClient remoteClient) {
     ensureEntry(PATH_KNOX, remoteClient);
     ensureEntry(PATH_KNOX_SECURITY, remoteClient);
     ensureEntry(PATH_KNOX_ALIAS_STORE_TOPOLOGY, remoteClient);
-    ensureEntry(
-        PATH_KNOX_ALIAS_STORE_TOPOLOGY + PATH_SEPARATOR + NO_CLUSTER_NAME,
-        remoteClient);
+    ensureEntry(PATH_KNOX_ALIAS_STORE_TOPOLOGY + PATH_SEPARATOR + NO_CLUSTER_NAME, remoteClient);
   }
 
   /**
@@ -438,6 +457,9 @@ public class ZookeeperRemoteAliasService implements AliasService {
           client.removeEntryListener(path);
           if (paths.length > 1) {
             localAliasService.removeAliasForCluster(paths[0], paths[1]);
+            if (aliasCache.containsKey(paths[0])) {
+              aliasCache.get(paths[0]).remove(paths[1]);
+            }
           }
         } catch (final Exception e) {
           LOG.errorRemovingAliasLocally(paths[0], paths[1], e.toString());
@@ -480,7 +502,8 @@ public class ZookeeperRemoteAliasService implements AliasService {
     final AliasService remoteAliasService;
     final AliasService localAliasService;
 
-    RemoteAliasEntryListener(final String cluster, final String alias,
+    RemoteAliasEntryListener(final String       cluster,
+                             final String       alias,
                              final AliasService remoteAliasService,
                              final AliasService localAliasService) {
       this.cluster = cluster;
@@ -493,8 +516,15 @@ public class ZookeeperRemoteAliasService implements AliasService {
     public void entryChanged(final RemoteConfigurationRegistryClient client,
         final String path, final byte[] data) {
       try {
-        localAliasService.addAliasForCluster(cluster, alias,
-            decrypt(new String(data, StandardCharsets.UTF_8)));
+        String decrypted = decrypt(new String(data, StandardCharsets.UTF_8));
+
+        // Update the in-memory cache
+        Map<String, String> clusterAliases =
+            aliasCache.computeIfAbsent(cluster, m -> new ConcurrentHashMap<>());
+        clusterAliases.put(alias, decrypted);
+
+        // Update the local alias service
+        localAliasService.addAliasForCluster(cluster, alias, decrypted);
       } catch (final Exception e) {
         /* log and move on */
         LOG.errorAddingAliasLocally(cluster, alias, e.toString());

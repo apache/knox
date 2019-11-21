@@ -54,10 +54,10 @@ import static org.junit.Assert.assertTrue;
 public class ZookeeperRemoteAliasMonitorTest {
   private static final String configMonitorName = "remoteConfigMonitorClient";
   private static final String expectedClusterName = "sandbox";
-  private static final String expectedAlias = "knox.test.alias";
+  private static final String expectedAlias = "knox.test.mon.alias";
   private static final String expectedPassword = "dummyPassword";
   private static final String expectedClusterNameDev = "development";
-  private static final String expectedAliasDev = "knox.test.alias.dev";
+  private static final String expectedAliasDev = expectedAlias + ".dev";
   private static final String expectedPasswordDev = "otherDummyPassword";
 
   private static final String preferRemoteAlias = "prefer.remote.alias";
@@ -211,8 +211,7 @@ public class ZookeeperRemoteAliasMonitorTest {
 
     /* GET Aliases */
     List<String> aliases = zkAlias.getAliasesForCluster(expectedClusterName);
-    List<String> aliasesDev = zkAlias
-        .getAliasesForCluster(expectedClusterNameDev);
+    List<String> aliasesDev = zkAlias.getAliasesForCluster(expectedClusterNameDev);
 
     /* no alias added so ist should be empty, except the one in ZK  */
     Assert.assertEquals(aliases.size(), 1);
@@ -234,13 +233,19 @@ public class ZookeeperRemoteAliasMonitorTest {
                 + ZookeeperRemoteAliasService.PATH_SEPARATOR + expectedAliasDev,
             zkAlias.encrypt(expectedPasswordDev).getBytes(StandardCharsets.UTF_8));
 
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      //
+    }
+
     /* Try */
     aliases = zkAlias.getAliasesForCluster(expectedClusterName);
     aliasesDev = zkAlias.getAliasesForCluster(expectedClusterNameDev);
 
-    Assert.assertTrue("Expected alias 'knox.test.alias' not found ",
+    Assert.assertTrue("Expected alias '" + expectedAlias + "' not found ",
         aliases.contains(expectedAlias));
-    Assert.assertTrue("Expected alias 'knox.test.alias.dev' not found ",
+    Assert.assertTrue("Expected alias '" + expectedAliasDev + "' not found ",
         aliasesDev.contains(expectedAliasDev));
 
     final char[] result = zkAlias
@@ -254,8 +259,7 @@ public class ZookeeperRemoteAliasMonitorTest {
     Assert.assertEquals(expectedPasswordDev, new String(result1));
 
     /* test that remote alias service prefers remote over local */
-    final char[] prefAliasResult = zkAlias
-        .getPasswordFromAliasForCluster(expectedClusterName, preferRemoteAlias);
+    final char[] prefAliasResult = zkAlias.getPasswordFromAliasForCluster(expectedClusterName, preferRemoteAlias);
     Assert.assertEquals(preferRemoteAliasClearPassword, new String(prefAliasResult));
 
     zkAlias.stop();
