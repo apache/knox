@@ -82,8 +82,9 @@ public class SimpleLdapDirectoryServer {
         partitionFactory = new JdbmPartitionFactory();
       }
     } catch ( Exception e ) {
-      LOG.error( "Error instantiating custom partiton factory", e );
-      throw new RuntimeException( e );
+      String msg = "Error instantiating custom partition factory";
+      LOG.error(msg, e );
+      throw new RuntimeException(msg, e);
     }
 
     DirectoryServiceFactory factory = new DefaultDirectoryServiceFactory(directoryService, partitionFactory);

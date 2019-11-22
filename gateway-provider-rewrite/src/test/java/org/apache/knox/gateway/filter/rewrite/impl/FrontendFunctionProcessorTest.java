@@ -24,6 +24,7 @@ import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletContextListener;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletFilter;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
 import org.apache.knox.gateway.util.urltemplate.Parser;
@@ -129,7 +130,7 @@ public class FrontendFunctionProcessorTest {
     EasyMock.expect( mockServiceRegistry.lookupServiceURL( "test-cluster", "JOBTRACKER" ) ).andReturn( "test-jt-scheme://test-jt-host:511" ).anyTimes();
 
     GatewayServices mockGatewayServices = EasyMock.createNiceMock( GatewayServices.class );
-    EasyMock.expect( mockGatewayServices.getService(GatewayServices.SERVICE_REGISTRY_SERVICE) ).andReturn( mockServiceRegistry ).anyTimes();
+    EasyMock.expect( mockGatewayServices.getService(ServiceType.SERVICE_REGISTRY_SERVICE) ).andReturn( mockServiceRegistry ).anyTimes();
 
     EasyMock.replay( mockServiceRegistry, mockGatewayServices );
 

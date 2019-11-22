@@ -47,6 +47,9 @@ public interface Dispatch {
   void doPut( URI url, HttpServletRequest request, HttpServletResponse response )
       throws IOException, ServletException, URISyntaxException;
 
+  void doPatch( URI url, HttpServletRequest request, HttpServletResponse response )
+      throws IOException, ServletException, URISyntaxException;
+
   void doDelete( URI url, HttpServletRequest request, HttpServletResponse response )
       throws IOException, ServletException, URISyntaxException;
 

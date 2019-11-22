@@ -39,10 +39,12 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -98,6 +100,91 @@ public class UrlRewriteRequestTest {
     String hostHeader = rewriteRequest.getHeader("Host");
 
     assertEquals(hostHeader, "targethost.com");
+  }
+
+  @Test
+  public void testEmptyPayload() throws Exception {
+
+    /* copy results */
+    final ByteArrayOutputStream results = new ByteArrayOutputStream();
+    final ByteArrayInputStream bai = new ByteArrayInputStream(
+        "".getBytes(StandardCharsets.UTF_8));
+
+    final ServletInputStream payload = new ServletInputStream() {
+
+      @Override
+      public int read() throws IOException {
+        return bai.read();
+      }
+
+      @Override
+      public int available() throws IOException {
+        return bai.available();
+      }
+
+      @Override
+      public boolean isFinished() {
+        return false;
+      }
+
+      @Override
+      public boolean isReady() {
+        return false;
+      }
+
+      @Override
+      public void setReadListener(ReadListener readListener) {
+
+      }
+    };
+
+    UrlRewriteProcessor rewriter = EasyMock
+        .createNiceMock(UrlRewriteProcessor.class);
+
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getServletContextName())
+        .andReturn("test-cluster-name").anyTimes();
+    EasyMock.expect(context.getInitParameter("test-init-param-name"))
+        .andReturn("test-init-param-value").anyTimes();
+    EasyMock.expect(context.getAttribute(
+        UrlRewriteServletContextListener.PROCESSOR_ATTRIBUTE_NAME))
+        .andReturn(rewriter).anyTimes();
+
+    FilterConfig config = EasyMock.createNiceMock(FilterConfig.class);
+    EasyMock.expect(config.getInitParameter("test-filter-init-param-name"))
+        .andReturn("test-filter-init-param-value").anyTimes();
+    EasyMock.expect(config.getServletContext()).andReturn(context).anyTimes();
+
+    HttpServletRequest request = EasyMock
+        .createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getScheme()).andReturn("https").anyTimes();
+    EasyMock.expect(request.getServerName()).andReturn("targethost.com")
+        .anyTimes();
+    EasyMock.expect(request.getServerPort()).andReturn(80).anyTimes();
+    EasyMock.expect(request.getRequestURI()).andReturn("/").anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null).anyTimes();
+    EasyMock.expect(request.getHeader("Host")).andReturn("sourcehost.com")
+        .anyTimes();
+
+    EasyMock.expect(request.getMethod()).andReturn("POST").anyTimes();
+    EasyMock.expect(request.getContentType())
+        .andReturn("application/xml").anyTimes();
+    EasyMock.expect(request.getInputStream()).andReturn(payload).anyTimes();
+    EasyMock.expect(request.getContentLength()).andReturn(-1).anyTimes();
+
+    HttpServletResponse response = EasyMock
+        .createNiceMock(HttpServletResponse.class);
+    //    EasyMock.replay( rewriter, context, config, request, response );
+    EasyMock.replay(rewriter, context, config, request, response);
+
+    // instantiate UrlRewriteRequest so that we can use it as a Template factory for targetUrl
+    UrlRewriteRequest rewriteRequest = new UrlRewriteRequest(config, request);
+
+    ServletInputStream inputStream = rewriteRequest.getInputStream();
+    HttpEntity entity = new InputStreamEntity(inputStream,
+        request.getContentLength(), ContentType.parse("application/xml"));
+    entity.writeTo(results);
+
   }
 
   /*

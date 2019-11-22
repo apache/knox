@@ -37,6 +37,17 @@
     <rewrite template="{$frontend[url]}/druid-coordinator-ui/druid.js"/>
   </rule>
 
+  <!-- For the 0.16.0-incubating -->
+  <rule dir="OUT" name="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/bootstrap" pattern="/coordinator-console/bootstrap/{**}">
+    <rewrite template="{$frontend[url]}/druid-coordinator-ui/coordinator-console/bootstrap/{**}"/>
+  </rule>
+  <rule dir="OUT" name="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/druidcss" pattern="/coordinator-console/druid.css">
+    <rewrite template="{$frontend[url]}/druid-coordinator-ui/coordinator-console/druid.css"/>
+  </rule>
+  <rule dir="OUT" name="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/druidjs" pattern="/coordinator-console/druid.js">
+    <rewrite template="{$frontend[url]}/druid-coordinator-ui/coordinator-console/druid.js"/>
+  </rule>
+
   <rule dir="OUT" name="DRUID-COORDINATOR-UI/druid-coordinator-ui/outbound/api">
     <rewrite template="{$frontend[url]}/druid-coordinator/druid/coordinator/v1"/>
   </rule>

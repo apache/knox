@@ -36,17 +36,20 @@ import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.definition.ServiceDefinition;
-import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.service.definition.ServiceDefinitionChangeListener;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
+import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.TopologyEvent;
 import org.apache.knox.gateway.topology.TopologyListener;
 import org.apache.knox.gateway.topology.TopologyMonitor;
 import org.apache.knox.gateway.topology.TopologyProvider;
+import org.apache.knox.gateway.topology.Version;
 import org.apache.knox.gateway.topology.builder.TopologyBuilder;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
@@ -69,7 +72,6 @@ import javax.xml.bind.Marshaller;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -84,9 +86,8 @@ import java.util.Set;
 
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 
-public class DefaultTopologyService
-    extends FileAlterationListenerAdaptor
-    implements TopologyService, TopologyMonitor, TopologyProvider, FileFilter, FileAlterationListener {
+public class DefaultTopologyService extends FileAlterationListenerAdaptor implements TopologyService, TopologyMonitor,
+    TopologyProvider, FileFilter, FileAlterationListener, ServiceDefinitionChangeListener {
 
   private static final JAXBContext jaxbContext = getJAXBContext();
 
@@ -94,14 +95,11 @@ public class DefaultTopologyService
     AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
     AuditConstants.KNOX_COMPONENT_NAME);
 
-  private static final List<String> SUPPORTED_TOPOLOGY_FILE_EXTENSIONS = new ArrayList<>();
-  static {
-    SUPPORTED_TOPOLOGY_FILE_EXTENSIONS.add("xml");
-    SUPPORTED_TOPOLOGY_FILE_EXTENSIONS.add("conf");
-  }
+  private static final List<String> SUPPORTED_TOPOLOGY_FILE_EXTENSIONS = Arrays.asList("xml", "conf");
 
   private static GatewayMessages log = MessagesFactory.get(GatewayMessages.class);
-  private static DigesterLoader digesterLoader = newLoader(new KnoxFormatXmlTopologyRules(), new AmbariFormatXmlTopologyRules());
+  private static DigesterLoader digesterLoader = newLoader(new KnoxFormatXmlTopologyRules(),
+      new AmbariFormatXmlTopologyRules());
   private List<FileAlterationMonitor> monitors = new ArrayList<>();
   private File topologiesDirectory;
   private File sharedProvidersDirectory;
@@ -130,7 +128,7 @@ public class DefaultTopologyService
     }
   }
 
-  private Topology loadTopology(File file) throws IOException, SAXException, URISyntaxException, InterruptedException {
+  private Topology loadTopology(File file) throws IOException, SAXException, InterruptedException {
     final long TIMEOUT = 250; //ms
     final long DELAY = 50; //ms
     log.loadingTopologyFile(file.getAbsolutePath());
@@ -152,7 +150,7 @@ public class DefaultTopologyService
     return topology;
   }
 
-  private Topology loadTopologyAttempt(File file) throws IOException, SAXException, URISyntaxException {
+  private Topology loadTopologyAttempt(File file) throws IOException, SAXException {
     Topology topology;
     Digester digester = digesterLoader.newDigester();
     TopologyBuilder topologyBuilder = digester.parse(FileUtils.openInputStream(file));
@@ -204,10 +202,9 @@ public class DefaultTopologyService
             break;
           }
         } catch (InterruptedException e) {
-          auditor.audit(Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY,
-              ActionOutcome.FAILURE);
+          auditor.audit(Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
           log.failedToRedeployTopology(topology.getName(), e);
-          e.printStackTrace();
+          Thread.currentThread().interrupt();
         }
       }
     } catch (SAXException e) {
@@ -255,7 +252,7 @@ public class DefaultTopologyService
     return configDir.getAbsoluteFile();
   }
 
-  private void  initListener(FileAlterationMonitor  monitor,
+  private void initListener(FileAlterationMonitor  monitor,
                             File                   directory,
                             FileFilter             filter,
                             FileAlterationListener listener) {
@@ -265,7 +262,7 @@ public class DefaultTopologyService
     monitor.addObserver(observer);
   }
 
-  private void initListener(File directory, FileFilter filter, FileAlterationListener listener) throws IOException, SAXException {
+  private void initListener(File directory, FileFilter filter, FileAlterationListener listener) {
     // Increasing the monitoring interval to 5 seconds as profiling has shown
     // this is rather expensive in terms of generated garbage objects.
     initListener(new FileAlterationMonitor(5000L), directory, filter, listener);
@@ -531,6 +528,19 @@ public class DefaultTopologyService
   }
 
   @Override
+  public void onServiceDefinitionChange(String name, String role, String version) {
+    getTopologies().stream().filter(topology -> topology.getServices().stream().anyMatch(service -> isRelevantService(service, role, name, version))).forEach(topology -> {
+      log.redeployingTopologyOnServiceDefinitionChange(topology.getName(), name, role, version);
+      redeployTopology(topology);
+    });
+  }
+
+  private boolean isRelevantService(Service service, String role, String name, String version) {
+    return service.getRole().equalsIgnoreCase(role)
+        && (service.getName() == null || service.getName().equalsIgnoreCase(name) && (service.getVersion() == null || service.getVersion().equals(new Version(version))));
+  }
+
+  @Override
   public void startMonitor() throws Exception {
     // Start the local configuration monitors
     for (FileAlterationMonitor monitor : monitors) {
@@ -596,7 +606,7 @@ public class DefaultTopologyService
   public void start() {
     // Register a cluster configuration monitor listener for change notifications
     ClusterConfigurationMonitorService ccms =
-                  GatewayServer.getGatewayServices().getService(GatewayServices.CLUSTER_CONFIGURATION_MONITOR_SERVICE);
+                  GatewayServer.getGatewayServices().getService(ServiceType.CLUSTER_CONFIGURATION_MONITOR_SERVICE);
     ccms.addListener(new TopologyDiscoveryTrigger(this, ccms));
   }
 
@@ -643,27 +653,28 @@ public class DefaultTopologyService
           if (DescriptorsMonitor.isDescriptorFile(descriptorFilename)) {
             String topologyName = FilenameUtils.getBaseName(descriptorFilename);
             File existingDescriptorFile = getExistingFile(descriptorsDirectory, topologyName);
+            if (existingDescriptorFile != null) {
+              // If there isn't a corresponding topology file, or if the descriptor has been modified since the
+              // corresponding topology file was generated, then trigger generation of one
+              File matchingTopologyFile = getExistingFile(topologiesDirectory, topologyName);
+              if (matchingTopologyFile == null || matchingTopologyFile.lastModified() < existingDescriptorFile.lastModified()) {
+                descriptorsMonitor.onFileChange(existingDescriptorFile);
+              } else {
+                // If regeneration is NOT required, then we at least need to report the provider configuration
+                // reference relationship (KNOX-1144)
+                String normalizedDescriptorPath = FilenameUtils.normalize(existingDescriptorFile.getAbsolutePath());
 
-            // If there isn't a corresponding topology file, or if the descriptor has been modified since the
-            // corresponding topology file was generated, then trigger generation of one
-            File matchingTopologyFile = getExistingFile(topologiesDirectory, topologyName);
-            if (matchingTopologyFile == null || matchingTopologyFile.lastModified() < existingDescriptorFile.lastModified()) {
-              descriptorsMonitor.onFileChange(existingDescriptorFile);
-            } else {
-              // If regeneration is NOT required, then we at least need to report the provider configuration
-              // reference relationship (KNOX-1144)
-              String normalizedDescriptorPath = FilenameUtils.normalize(existingDescriptorFile.getAbsolutePath());
-
-              // Parse the descriptor to determine the provider config reference
-              SimpleDescriptor sd = SimpleDescriptorFactory.parse(normalizedDescriptorPath);
-              if (sd != null) {
-                File referencedProviderConfig =
-                           getExistingFile(sharedProvidersDirectory, FilenameUtils.getBaseName(sd.getProviderConfig()));
-                if (referencedProviderConfig != null) {
-                  List<String> references =
-                         descriptorsMonitor.getReferencingDescriptors(referencedProviderConfig.getAbsolutePath());
-                  if (!references.contains(normalizedDescriptorPath)) {
-                    references.add(normalizedDescriptorPath);
+                // Parse the descriptor to determine the provider config reference
+                SimpleDescriptor sd = SimpleDescriptorFactory.parse(normalizedDescriptorPath);
+                if (sd != null) {
+                  File referencedProviderConfig =
+                             getExistingFile(sharedProvidersDirectory, FilenameUtils.getBaseName(sd.getProviderConfig()));
+                  if (referencedProviderConfig != null) {
+                    List<String> references =
+                           descriptorsMonitor.getReferencingDescriptors(referencedProviderConfig.getAbsolutePath());
+                    if (!references.contains(normalizedDescriptorPath)) {
+                      references.add(normalizedDescriptorPath);
+                    }
                   }
                 }
               }
@@ -675,8 +686,8 @@ public class DefaultTopologyService
       // Initialize the remote configuration monitor, if it has been configured
       remoteMonitor = RemoteConfigurationMonitorFactory.get(config);
 
-    } catch (IOException | SAXException io) {
-      throw new ServiceLifecycleException(io.getMessage());
+    } catch (IOException io) {
+      throw new ServiceLifecycleException(io.getMessage(), io);
     }
   }
 
@@ -982,13 +993,11 @@ public class DefaultTopologyService
         // Identify any descriptors associated with the cluster configuration change
         for (File descriptor : topologyService.getDescriptors()) {
           String descriptorContent = FileUtils.readFileToString(descriptor, StandardCharsets.UTF_8);
-          if (descriptorContent.contains(source)) {
-            if (descriptorContent.contains(clusterName)) {
-              affectedDescriptors = true;
-              log.triggeringTopologyRegeneration(source, clusterName, descriptor.getAbsolutePath());
-              // 'Touch' the descriptor to trigger re-generation of the associated topology
-              descriptor.setLastModified(System.currentTimeMillis());
-            }
+          if (descriptorContent.contains(source) && descriptorContent.contains(clusterName)) {
+            affectedDescriptors = true;
+            log.triggeringTopologyRegeneration(source, clusterName, descriptor.getAbsolutePath());
+            // 'Touch' the descriptor to trigger re-generation of the associated topology
+            descriptor.setLastModified(System.currentTimeMillis());
           }
         }
 

@@ -15,7 +15,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 -->
-<service role="ZEPPELINUI" name="zeppelinui" version="0.6.0">
+<service role="ZEPPELINUI" name="zeppelinui" version="0.8.0">
   <policies>
     <policy role="webappsec"/>
     <policy role="authentication" name="Anonymous"/>

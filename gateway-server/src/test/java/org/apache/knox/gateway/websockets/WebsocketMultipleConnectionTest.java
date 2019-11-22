@@ -31,6 +31,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.deploy.DeploymentFactory;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.topology.TopologyService;
@@ -112,7 +113,7 @@ public class WebsocketMultipleConnectionTest {
   /**
    * Maximum number of open connections to test.
    */
-  private static int MAX_CONNECTIONS = 100;
+  private static int MAX_CONNECTIONS = 99;
 
   public WebsocketMultipleConnectionTest() {
     super();
@@ -171,7 +172,7 @@ public class WebsocketMultipleConnectionTest {
       }
     }
 
-    latch.await(5 * MAX_CONNECTIONS, TimeUnit.MILLISECONDS);
+    latch.await(50 * MAX_CONNECTIONS, TimeUnit.MILLISECONDS);
 
     /* 90 KB per connection */
     /*
@@ -313,6 +314,9 @@ public class WebsocketMultipleConnectionTest {
     EasyMock.expect(gatewayConfig.getWebsocketIdleTimeout())
         .andReturn(GatewayConfigImpl.DEFAULT_WEBSOCKET_IDLE_TIMEOUT).anyTimes();
 
+    EasyMock.expect(gatewayConfig.getWebsocketMaxWaitBufferCount())
+        .andReturn(GatewayConfigImpl.DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT).anyTimes();
+
     EasyMock.expect(gatewayConfig.getRemoteRegistryConfigurationNames())
             .andReturn(Collections.emptyList())
             .anyTimes();
@@ -379,7 +383,7 @@ public class WebsocketMultipleConnectionTest {
 
     DeploymentFactory.setGatewayServices(services);
     final TopologyService monitor = services
-        .getService(GatewayServices.TOPOLOGY_SERVICE);
+        .getService(ServiceType.TOPOLOGY_SERVICE);
     monitor.addTopologyChangeListener(topoListener);
     monitor.reloadTopologies();
   }

@@ -24,6 +24,7 @@ import org.apache.knox.gateway.deploy.impl.ApplicationDeploymentContributor;
 import org.apache.knox.gateway.descriptor.GatewayDescriptor;
 import org.apache.knox.gateway.descriptor.GatewayDescriptorFactory;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
 import org.apache.knox.gateway.topology.Application;
@@ -136,11 +137,9 @@ public abstract class DeploymentFactory {
           }
           for( String url : urls ) {
             List<Application> dups = findApplicationsByUrl( topology, url );
-            if( dups != null ) {
-              for( Application dup : dups ) {
-                if( dup != app ) { //NOPMD - check for exact same object
-                  throw new DeploymentException( "Topology " + topology.getName() + " contains applications " + app.getName() + " and " + dup.getName() + " with the same url: " + url );
-                }
+            for( Application dup : dups ) {
+              if( dup != app ) { //NOPMD - check for exact same object
+                throw new DeploymentException( "Topology " + topology.getName() + " contains applications " + app.getName() + " and " + dup.getName() + " with the same url: " + url );
               }
             }
           }
@@ -152,9 +151,10 @@ public abstract class DeploymentFactory {
   // Verify that if there are services that there are no applications with a root url.
   static void validateNoAppsWithRootUrlsInServicesTopology( Topology topology ) {
     if( topology != null ) {
-      if( topology.getServices() != null && !topology.getServices().isEmpty() ) {
+      Collection<Service> services = topology.getServices();
+      if( services != null && !services.isEmpty() ) {
         List<Application> dups = findApplicationsByUrl( topology, "/" );
-        if( dups != null && !dups.isEmpty() ) {
+        if(!dups.isEmpty()) {
           throw new DeploymentException( "Topology " + topology.getName() + " contains both services and an application " + dups.get( 0 ).getName() + " with a root url." );
         }
       }
@@ -306,11 +306,7 @@ public abstract class DeploymentFactory {
   private static void collectDefaultProviders( Map<String,List<ProviderDeploymentContributor>> defaults ) {
     for( ProviderDeploymentContributor contributor : PROVIDER_CONTRIBUTORS ) {
       String role = contributor.getRole();
-      List<ProviderDeploymentContributor> list = defaults.get( role );
-      if( list == null ) {
-        list = new ArrayList<>();
-        defaults.put( role, list );
-      }
+      List<ProviderDeploymentContributor> list = defaults.computeIfAbsent(role, k -> new ArrayList<>());
       if( list.isEmpty() ) {
         list.add( contributor );
       }
@@ -326,11 +322,7 @@ public abstract class DeploymentFactory {
       String role = service.getRole();
       ServiceDeploymentContributor contributor = getServiceContributor( role, service.getName(), service.getVersion() );
       if( contributor != null ) {
-        List<ServiceDeploymentContributor> list = defaults.get( role );
-        if( list == null ) {
-          list = new ArrayList<>( 1 );
-          defaults.put( role, list );
-        }
+        List<ServiceDeploymentContributor> list = defaults.computeIfAbsent(role, k -> new ArrayList<>(1));
         if( !list.contains( contributor ) ) {
           list.add( contributor );
         }
@@ -449,19 +441,19 @@ public abstract class DeploymentFactory {
   private static void injectServices(Object contributor) {
     if (gatewayServices != null) {
       Statement stmt;
-      for(String serviceName : gatewayServices.getServiceNames()) {
+      for(ServiceType serviceType : gatewayServices.getServiceTypes()) {
 
         try {
           // TODO: this is just a temporary injection solution
           // TODO: test for the existence of the setter before attempting it
           // TODO: avoid exception throwing when there is no setter
-          stmt = new Statement(contributor, "set" + serviceName, new Object[]{gatewayServices.getService(serviceName)});
+          stmt = new Statement(contributor, "set" + serviceType.getServiceTypeName(), new Object[]{gatewayServices.getService(serviceType)});
           stmt.execute();
         } catch (NoSuchMethodException e) {
           // TODO: eliminate the possibility of this being thrown up front
         } catch (Exception e) {
           // Maybe it makes sense to throw exception
-          log.failedToInjectService( serviceName, e );
+          log.failedToInjectService( serviceType.getServiceTypeName(), e );
           throw new DeploymentException("Failed to inject service.", e);
         }
       }
@@ -504,7 +496,7 @@ public abstract class DeploymentFactory {
             log.contributeService( service.getName(), service.getRole() );
             contributor.contributeService( context, service );
             if( gatewayServices != null ) {
-              ServiceRegistry sr = gatewayServices.getService( GatewayServices.SERVICE_REGISTRY_SERVICE );
+              ServiceRegistry sr = gatewayServices.getService( ServiceType.SERVICE_REGISTRY_SERVICE );
               if( sr != null ) {
                 String regCode = sr.getRegistrationCode( topology.getName() );
                 sr.registerService( regCode, topology.getName(), service.getRole(), service.getUrls() );
@@ -702,8 +694,7 @@ public abstract class DeploymentFactory {
     String stacks = config.getGatewayServicesDir();
     log.usingServicesDirectory(stacks);
     File stacksDir = new File(stacks);
-    Set<ServiceDeploymentContributor> deploymentContributors = ServiceDefinitionsLoader
-        .loadServiceDefinitions(stacksDir);
+    Set<ServiceDeploymentContributor> deploymentContributors = ServiceDefinitionsLoader.loadServiceDefinitionDeploymentContributors(stacksDir);
     addServiceDeploymentContributors(deploymentContributors.iterator());
   }
 

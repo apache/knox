@@ -21,7 +21,7 @@
     <parent>
         <groupId>org.apache.knox</groupId>
         <artifactId>gateway</artifactId>
-        <version>1.3.0-SNAPSHOT</version>
+        <version>1.4.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>gateway-provider-security-pac4j</artifactId>
@@ -55,8 +55,8 @@
             <artifactId>commons-io</artifactId>
         </dependency>
         <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
         </dependency>
 
         <dependency>

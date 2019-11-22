@@ -26,7 +26,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.knox.gateway.IdentityAsserterMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.principal.PrincipalMappingException;
@@ -96,7 +96,7 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
 
   private String[] combineGroupMappings(String[] mappedGroups, String[] groups) {
     if (mappedGroups != null && groups != null) {
-      return (String[])ArrayUtils.addAll(mappedGroups, groups);
+      return ArrayUtils.addAll(mappedGroups, groups);
     }
     else {
       return groups != null ? groups : mappedGroups;

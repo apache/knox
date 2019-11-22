@@ -38,8 +38,43 @@
       <rewrite apply="YARNUIV2/yarnuiv2/inbound/timeline" to="request.url"/>
     </route>
 
+    <route path="/yarnuiv2/proxy/**">
+      <rewrite apply="YARNUIV2/yarnuiv2/outbound/headers/jobhistory/job" to="response.headers"/>
+      <rewrite apply="YARNUIV2/yarnuiv2/outbound/apps" to="response.body"/>
+    </route>
+
+    <route path="/yarnuiv2/cluster/nodes">
+       <rewrite apply="YARNUIV2/yarnuiv2/outbound/headers/jobhistory/job" to="response.headers"/>
+       <rewrite apply="YARNUIV2/yarnuiv2/outbound/filter/nodes" to="response.body"/>
+    </route>
+
+    <route path="/yarnuiv2/cluster/**?**">
+      <rewrite apply="YARNUIV2/yarnuiv2/outbound/headers/jobhistory/job" to="response.headers"/>
+      <rewrite apply="YARNUIV2/yarnuiv2/outbound/apps" to="response.body"/>
+    </route>
+
+    <route path="/yarnuiv2/node/containerlogs/**?**">
+      <rewrite apply="YARNUIV2/yarnuiv2/outbound/headers/jobhistory/job" to="response.headers"/>
+    </route>
+
+    <route path="/yarnuiv2/nodemanager/node/**?**">
+      <rewrite apply="YARNUIV2/yarnuiv2/inbound/nodemanager2" to="request.url"/>
+    </route>
+
+    <route path="/yarnuiv2/nodemanager/node?**">
+      <rewrite apply="YARNUIV2/yarnuiv2/inbound/nodemanager1" to="request.url"/>
+    </route>
+
+    <route path="/yarnuiv2/nodes/**?**">
+      <rewrite apply="YARNUIV2/yarnuiv2/inbound/nodemanager" to="request.url"/>
+    </route>
+
     <route path="/yarnuiv2/redirect">
       <rewrite apply="YARNUIV2/yarnuiv2/inbound/redirect" to="request.url"/>
+    </route>
+
+    <route path="/yarnuiv2/logs/stacks">
+      <rewrite apply="YARNUIV2/yarnuiv2/inbound/stacks" to="request.url"/>
     </route>
 
     <route path="/yarnuiv2/**?**">
@@ -90,5 +125,5 @@
     </route>
 
   </routes>
-  <dispatch classname="org.apache.knox.gateway.dispatch.PassAllHeadersDispatch" ha-classname="org.apache.knox.gateway.rm.dispatch.RMUI2HaDispatch"/>
+  <dispatch classname="org.apache.knox.gateway.dispatch.DefaultDispatch" ha-classname="org.apache.knox.gateway.rm.dispatch.RMUI2HaDispatch"/>
 </service>

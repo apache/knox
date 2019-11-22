@@ -336,7 +336,7 @@ public class Template {
   @Override
   public boolean equals(Object object ) {
     boolean equals = false;
-    if( object != null && object instanceof Template ) {
+    if(object instanceof Template) {
       String thisStr = toString();
       String thatStr = object.toString();
       equals = thisStr.equals( thatStr );

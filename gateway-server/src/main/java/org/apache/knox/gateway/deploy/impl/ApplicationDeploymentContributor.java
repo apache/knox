@@ -58,12 +58,13 @@ import java.util.Map;
 public class ApplicationDeploymentContributor extends ServiceDeploymentContributorBase {
   private static final JAXBContext jaxbContext = getJAXBContext();
 
-  private static final String SERVICE_DEFINITION_FILE_NAME = "service.xml";
-  private static final String REWRITE_RULES_FILE_NAME = "rewrite.xml";
+  public static final String SERVICE_DEFINITION_FILE_NAME = "service.xml";
+  public static final String REWRITE_RULES_FILE_NAME = "rewrite.xml";
   private static final String XFORWARDED_FILTER_NAME = "XForwardedHeaderFilter";
   private static final String XFORWARDED_FILTER_ROLE = "xforwardedheaders";
   private static final String COOKIE_SCOPING_FILTER_NAME = "CookieScopeServletFilter";
   private static final String COOKIE_SCOPING_FILTER_ROLE = "cookiescopef";
+  private static final String APPEND_SERVICE_NAME_PARAM = "isAppendServiceName";
 
   private ServiceDefinition serviceDefinition;
 
@@ -185,7 +186,16 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
     resource.pattern(binding.getPath());
     //add x-forwarded filter if enabled in config
     if (context.getGatewayConfig().isXForwardedEnabled()) {
-      resource.addFilter().name(XFORWARDED_FILTER_NAME).role(XFORWARDED_FILTER_ROLE).impl(XForwardedHeaderFilter.class);
+      final FilterDescriptor filter = resource.addFilter()
+          .name(XFORWARDED_FILTER_NAME).role(XFORWARDED_FILTER_ROLE)
+          .impl(XForwardedHeaderFilter.class);
+      /* check if we need to add service name to the context */
+      if (context.getGatewayConfig().getXForwardContextAppendServices() != null
+          && !context.getGatewayConfig().getXForwardContextAppendServices()
+          .isEmpty() && context.getGatewayConfig()
+          .getXForwardContextAppendServices().contains(service.getRole())) {
+        filter.param().name(APPEND_SERVICE_NAME_PARAM).value("true");
+      }
     }
     if (context.getGatewayConfig().isCookieScopingToPathEnabled()) {
       FilterDescriptor filter = resource.addFilter().name(COOKIE_SCOPING_FILTER_NAME).role(COOKIE_SCOPING_FILTER_ROLE).impl(CookieScopeServletFilter.class);

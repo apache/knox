@@ -24,22 +24,16 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Set;
 
+/**
+ * An adapter class that delegate calls to {@link org.apache.knox.gateway.dispatch.DefaultDispatch}
+ * for backwards compatibility with package structure.
+ *
+ * @since 0.14.0
+ * @deprecated Use {@link org.apache.knox.gateway.dispatch.DefaultDispatch}
+ */
 @Deprecated
 public class DefaultDispatch extends org.apache.knox.gateway.dispatch.DefaultDispatch {
-  @Override
-  public void init() {
-    super.init();
-  }
-
-  @Override
-  public void destroy() {
-    super.destroy();
-  }
-
   @Override
   protected int getReplayBufferSize() {
     return super.getReplayBufferSize();
@@ -96,46 +90,5 @@ public class DefaultDispatch extends org.apache.knox.gateway.dispatch.DefaultDis
   protected HttpEntity createRequestEntity(HttpServletRequest request)
       throws IOException {
     return super.createRequestEntity(request);
-  }
-
-  @Override
-  public void doGet(URI url, HttpServletRequest request,
-      HttpServletResponse response) throws IOException, URISyntaxException {
-    super.doGet(url, request, response);
-  }
-
-  @Override
-  public void doOptions(URI url, HttpServletRequest request,
-      HttpServletResponse response) throws IOException, URISyntaxException {
-    super.doOptions(url, request, response);
-  }
-
-  @Override
-  public void doPut(URI url, HttpServletRequest request,
-      HttpServletResponse response) throws IOException, URISyntaxException {
-    super.doPut(url, request, response);
-  }
-
-  @Override
-  public void doPost(URI url, HttpServletRequest request,
-      HttpServletResponse response) throws IOException, URISyntaxException {
-    super.doPost(url, request, response);
-  }
-
-  @Override
-  public void doDelete(URI url, HttpServletRequest request,
-      HttpServletResponse response) throws IOException, URISyntaxException {
-    super.doDelete(url, request, response);
-  }
-
-  @Override
-  public void doHead(URI url, HttpServletRequest request,
-      HttpServletResponse response) throws IOException, URISyntaxException {
-    super.doHead(url, request, response);
-  }
-
-  @Override
-  public Set<String> getOutboundResponseExcludeHeaders() {
-    return super.getOutboundResponseExcludeHeaders();
   }
 }

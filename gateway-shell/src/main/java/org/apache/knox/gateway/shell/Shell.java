@@ -22,6 +22,7 @@ import org.apache.knox.gateway.shell.hbase.HBase;
 import org.apache.knox.gateway.shell.hdfs.Hdfs;
 import org.apache.knox.gateway.shell.job.Job;
 import org.apache.knox.gateway.shell.manager.Manager;
+import org.apache.knox.gateway.shell.table.KnoxShellTable;
 import org.apache.knox.gateway.shell.workflow.Workflow;
 import org.apache.knox.gateway.shell.yarn.Yarn;
 import org.apache.log4j.PropertyConfigurator;
@@ -30,10 +31,13 @@ import org.codehaus.groovy.tools.shell.Groovysh;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
-import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class Shell {
+
+  private static final List<String> NON_INTERACTIVE_COMMANDS = Arrays.asList("buildTrustStore", "init", "list", "destroy");
 
   private static final String[] IMPORTS = new String[] {
       KnoxSession.class.getName(),
@@ -43,7 +47,8 @@ public class Shell {
       Workflow.class.getName(),
       Yarn.class.getName(),
       TimeUnit.class.getName(),
-      Manager.class.getName()
+      Manager.class.getName(),
+      KnoxShellTable.class.getName()
   };
 
   static {
@@ -52,10 +57,20 @@ public class Shell {
     System.setProperty( "groovysh.prompt", "knox" );
   }
 
-  public static void main( String... args ) throws IOException {
+  public static void main( String... args ) throws Exception {
     PropertyConfigurator.configure( System.getProperty( "log4j.configuration" ) );
     if( args.length > 0 ) {
-      GroovyMain.main( args );
+      if (NON_INTERACTIVE_COMMANDS.contains(args[0])) {
+          final String[] arguments = new String[args.length == 1 ? 1:3];
+          arguments[0] = args[0];
+          if (args.length > 1) {
+            arguments[1] = "--gateway";
+            arguments[2] = args[1];
+          }
+          KnoxSh.main(arguments);
+      } else {
+          GroovyMain.main( args );
+      }
     } else {
       Groovysh shell = new Groovysh();
       for( String name : IMPORTS ) {

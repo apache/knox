@@ -19,6 +19,7 @@ package org.apache.knox.gateway.securequery;
 
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteContext;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.impl.DefaultCryptoService;
@@ -45,7 +46,7 @@ public class SecureQueryEncodeProcessorTest {
     DefaultCryptoService cryptoService = new DefaultCryptoService();
     cryptoService.setAliasService(as);
     GatewayServices gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
-    EasyMock.expect( gatewayServices.getService( GatewayServices.CRYPTO_SERVICE ) ).andReturn( cryptoService );
+    EasyMock.expect( gatewayServices.getService( ServiceType.CRYPTO_SERVICE ) ).andReturn( cryptoService );
 
     UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
     EasyMock.expect( environment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();

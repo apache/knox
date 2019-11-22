@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.services.security.impl;
 
+import de.thetaphi.forbiddenapis.SuppressForbidden;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.net.ntp.TimeStamp;
@@ -35,7 +36,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class CMFMasterService {
-  private static GatewaySpiMessages LOG = MessagesFactory.get( GatewaySpiMessages.class );
+  private static final GatewaySpiMessages LOG = MessagesFactory.get( GatewaySpiMessages.class );
 
   private static final String MASTER_PASSPHRASE = "masterpassphrase";
   private static final String MASTER_PERSISTENCE_TAG = "#1.0# " + TimeStamp.getCurrentTime().toDateString();
@@ -132,8 +133,8 @@ public class CMFMasterService {
   }
 
   protected void persistMaster(char[] master, File masterFile) {
-    EncryptionResult atom = encryptMaster(master);
     try {
+      EncryptionResult atom = encryptMaster(master);
       ArrayList<String> lines = new ArrayList<>();
       lines.add(MASTER_PERSISTENCE_TAG);
 
@@ -151,13 +152,13 @@ public class CMFMasterService {
     }
   }
 
-  private EncryptionResult encryptMaster(char[] master) {
+  private EncryptionResult encryptMaster(char[] master) throws IOException {
     try {
       return encryptor.encrypt(new String(master));
     } catch (Exception e) {
       LOG.failedToEncryptMasterSecret(e);
+      throw new IOException(e);
     }
-    return null;
   }
 
   protected void initializeFromMaster(File masterFile) throws Exception {
@@ -176,6 +177,7 @@ public class CMFMasterService {
       }
   }
 
+  @SuppressForbidden
   private void chmod(String args, File file) throws IOException {
       // TODO: move to Java 7 NIO support to add windows as well
       // TODO: look into the following for Windows: Runtime.getRuntime().exec("attrib -r myFile");

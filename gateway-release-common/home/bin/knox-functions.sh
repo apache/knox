@@ -22,7 +22,8 @@
 ############################
 
 # The app's home dir
-APP_HOME_DIR=`dirname $APP_BIN_DIR`
+APP_HOME_DIR=$(dirname "$APP_BIN_DIR")
+export APP_HOME_DIR
 
 # The app's PID
 APP_PID=0
@@ -32,6 +33,13 @@ APP_START_WAIT_TIME=2
 
 # The kill wait time limit
 APP_KILL_WAIT_TIME=10
+
+#dynamic library path
+DEFAULT_JAVA_LIB_PATH="-Djava.library.path=$APP_HOME_DIR/ext/native"
+APP_JAVA_LIB_PATH=${KNOX_GATEWAY_JAVA_LIB_PATH:-$DEFAULT_JAVA_LIB_PATH}
+
+# JAVA options used by the JVM
+declare -a APP_JAVA_OPTS
 
 
 ############################
@@ -60,7 +68,7 @@ function findJava() {
 
   # Try to find java on PATH.
   if [ "$JAVA" == "" ]; then
-    JAVA=`which java 2>/dev/null`
+    JAVA=$(command -v java 2>/dev/null)
     if [ ! -x "$JAVA" ]; then
       JAVA=""
     fi
@@ -69,8 +77,10 @@ function findJava() {
   # Use the search patterns to find java.
   if [ "$JAVA" == "" ]; then
     for pattern in "${JAVA_VERSION_PATTERNS[@]}"; do
-      JAVA=( $(find /usr -executable -name java -print 2> /dev/null | grep "$pattern" | head -n 1 ) )
+      # shellcheck disable=SC2207
+      JAVAS=( $(find /usr -executable -name java -print 2> /dev/null | grep "$pattern" | head -n 1 ) )
       if [ -x "$JAVA" ]; then
+        JAVA=${JAVAS[1]}
         break
       else
         JAVA=""
@@ -88,47 +98,75 @@ function checkJava() {
 }
 
 function printEnv() {
-    if [ ! -z "$APP_CONF_DIR" ]; then
+    if [ -n "$APP_CONF_DIR" ]; then
       echo "APP_CONF_DIR = $APP_CONF_DIR"
     fi
     
-    if [ ! -z "$APP_LOG_DIR" ]; then
+    if [ -n "$APP_LOG_DIR" ]; then
       echo "APP_LOG_DIR = $APP_LOG_DIR"
     fi
 
-    if [ ! -z "$APP_DATA_DIR" ]; then
+    if [ -n "$APP_DATA_DIR" ]; then
       echo "APP_DATA_DIR = $APP_DATA_DIR"
     fi
 
-    if [ ! -z "$APP_MEM_OPTS" ]; then
+    if [ -n "$APP_MEM_OPTS" ]; then
       echo "APP_MEM_OPTS = $APP_MEM_OPTS"
     fi
 
-    if [ ! -z "$APP_LOG_OPTS" ]; then
+    if [ -n "$APP_LOG_OPTS" ]; then
       echo "APP_LOG_OPTS = $APP_LOG_OPTS"
     fi
 
-    if [ ! -z "$APP_DBG_OPTS" ]; then
+    if [ -n "$APP_DBG_OPTS" ]; then
       echo "APP_DBG_OPTS = $APP_DBG_OPTS"
     fi
 
-    if [ ! -z "$APP_PID_DIR" ]; then
+    if [ -n "$APP_PID_DIR" ]; then
       echo "APP_PID_DIR = $APP_PID_DIR"
     fi
 
-    if [ ! -z "$APP_JAVA_LIB_PATH" ]; then
+    if [ -n "$APP_JAVA_LIB_PATH" ]; then
       echo "APP_JAVA_LIB_PATH = $APP_JAVA_LIB_PATH"
     fi
 
-    if [ ! -z "$APP_JAR" ]; then
+    if [ -n "$APP_JAR" ]; then
       echo "APP_JAR = $APP_JAR"
     fi
 }
 
-function appIsRunning {
-   if [ $1 -eq 0 ]; then return 0; fi
+function addAppJavaOpts {
+    options_array=$(echo "${1}" | tr " " "\n")
+    for option in ${options_array}
+    do
+       APP_JAVA_OPTS+=("$option")
+    done
+}
 
-   ps -p $1 > /dev/null
+function buildAppJavaOpts {
+    if [ -n "$APP_MEM_OPTS" ]; then
+      addAppJavaOpts "${APP_MEM_OPTS}"
+    fi
+
+    if [ -n "$APP_LOG_OPTS" ]; then
+      addAppJavaOpts "${APP_LOG_OPTS}"
+    fi
+
+    if [ -n "$APP_DBG_OPTS" ]; then
+      addAppJavaOpts "${APP_DBG_OPTS}"
+    fi
+
+    if [ -n "$APP_JAVA_LIB_PATH" ]; then
+      addAppJavaOpts "${APP_JAVA_LIB_PATH}"
+    fi
+
+    # echo "APP_JAVA_OPTS =" "${APP_JAVA_OPTS[@]}"
+}
+
+function appIsRunning {
+   if [ "$1" -eq 0 ]; then return 0; fi
+
+   ps -p "$1" > /dev/null
 
    if [ $? -eq 1 ]; then
      return 0
@@ -140,18 +178,18 @@ function appIsRunning {
 # Returns 0 if the app is running and sets the $PID variable
 # TODO: this may be a false indication: it may happen the process started but it'll return with a <>0 exit code due to validation errors; this should be fixed ASAP
 function getPID {
-   if [ ! -d $APP_PID_DIR ]; then
+   if [ ! -d "$APP_PID_DIR" ]; then
       printf "Can't find PID dir.\n"
       exit 1
    fi
-   if [ ! -f $APP_PID_FILE ]; then
+   if [ ! -f "$APP_PID_FILE" ]; then
      APP_PID=0
      return 1
    fi
 
-   APP_PID="$(<$APP_PID_FILE)"
+   APP_PID="$(<"$APP_PID_FILE")"
 
-   ps -p $APP_PID > /dev/null
+   ps -p "$APP_PID" > /dev/null
    # if the exit code was 1 then it isn't running
    if [ "$?" -eq "1" ];
    then
@@ -162,74 +200,72 @@ function getPID {
 }
 
 function appStart {
+   buildAppJavaOpts
+
    if [ "$APP_RUNNING_IN_FOREGROUND" == true ]; then
-      $JAVA $APP_JAVA_OPTS -jar $APP_JAR $@
+      exec "$JAVA" "${APP_JAVA_OPTS[@]}" -jar "$APP_JAR" "$@"
    else
-      getPID
-      if [ $? -eq 0 ]; then
-         printf "$APP_LABEL is already running with PID $APP_PID.\n"
+      if getPID; then
+         printf "%s is already running with PID %d.\n" "$APP_LABEL" "$APP_PID"
          exit 0
       fi
 
-      printf "Starting $APP_LABEL "
+      printf "Starting %s " "$APP_LABEL"
 
-      rm -f $APP_PID_FILE
+      rm -f "$APP_PID_FILE"
 
-      nohup $JAVA $APP_JAVA_OPTS -jar $APP_JAR $@ >>$APP_OUT_FILE 2>>$APP_ERR_FILE & printf $!>$APP_PID_FILE || exit 1
+      nohup "$JAVA" "${APP_JAVA_OPTS[@]}" -jar "$APP_JAR" "$@" >>"$APP_OUT_FILE" 2>>"$APP_ERR_FILE" & printf %s $!>"$APP_PID_FILE" || exit 1
 
       ##give a second to the JVM to start and run validation
       sleep 1
 
       getPID
       for ((i=0; i<APP_START_WAIT_TIME*10; i++)); do
-         appIsRunning $APP_PID
-         if [ $? -eq 0 ]; then break; fi
+         if appIsRunning "$APP_PID"; then break; fi
          sleep 0.1
       done
-      appIsRunning $APP_PID
+      appIsRunning "$APP_PID"
       if [ $? -ne 1 ]; then
          printf "failed.\n"
-         rm -f $APP_PID_FILE
+         rm -f "$APP_PID_FILE"
          exit 1
       fi
-      printf "succeeded with PID $APP_PID.\n"
+      printf "succeeded with PID %s.\n" "$APP_PID"
       return 0
    fi
 }
 
 function appStop {
    getPID
-   appIsRunning $APP_PID
-   if [ "$?" -eq "0" ]; then
-     printf "$APP_LABEL is not running.\n"
-     rm -f $APP_PID_FILE
+   if appIsRunning "$APP_PID"; then
+     printf "%s is not running.\n" "$APP_LABEL"
+     rm -f "$APP_PID_FILE"
      return 0
    fi
 
-   printf "Stopping $APP_LABEL with PID $APP_PID "
-   appKill $APP_PID >>$APP_OUT_FILE 2>>$APP_ERR_FILE
+   printf "Stopping %s with PID %d " "$APP_LABEL" "$APP_PID"
 
-   if [ "$?" -ne "0" ]; then
+   if ! appKill "$APP_PID" >>"$APP_OUT_FILE" 2>>"$APP_ERR_FILE"; then
      printf "failed. \n"
      exit 1
    else
-     rm -f $APP_PID_FILE
+     rm -f "$APP_PID_FILE"
      printf "succeeded.\n"
      return 0
    fi
 }
 
 function appStatus {
-   printf "$APP_LABEL "
+   printf "%s " "$APP_LABEL"
    getPID
    if [ "$?" -eq "1" ]; then
      printf "is not running. No PID file found.\n"
      return 0
    fi
 
-   appIsRunning $APP_PID
+   appIsRunning "$APP_PID"
    if [ "$?" -eq "1" ]; then
-     printf "is running with PID $APP_PID.\n"
+     printf "is running with PID %d.\n" "$APP_PID"
      exit 1
    else
      printf "is not running.\n"
@@ -240,29 +276,26 @@ function appStatus {
 # Removing the app's PID/ERR/OUT files if app is not running
 function appClean {
    getPID
-   appIsRunning $APP_PID
-   if [ "$?" -eq "0" ]; then
+   if appIsRunning "$APP_PID"; then
      deleteLogFiles
      return 0
    else
-     printf "Can't clean files.  $APP_LABEL is running with PID $APP_PID.\n"
+     printf "Can't clean files.  %s is running with PID %d.\n" "$APP_LABEL" "$APP_PID"
      exit 1
    fi
 }
 
 function appKill {
    local localPID=$1
-   kill $localPID || return 1
+   kill "$localPID" || return 1
    for ((i=0; i<APP_KILL_WAIT_TIME*10; i++)); do
-      appIsRunning $localPID
-      if [ "$?" -eq "0" ]; then return 0; fi
+      if appIsRunning "$localPID"; then return 0; fi
       sleep 0.1
    done
 
-   kill -s KILL $localPID || return 1
+   kill -s KILL "$localPID" || return 1
    for ((i=0; i<APP_KILL_WAIT_TIME*10; i++)); do
-      appIsRunning $localPID
-      if [ "$?" -eq "0" ]; then return 0; fi
+      if appIsRunning "$localPID"; then return 0; fi
       sleep 0.1
    done
 
@@ -270,12 +303,12 @@ function appKill {
 }
 
 function deleteLogFiles {
-     rm -f $APP_PID_FILE
-     printf "Removed the $APP_LABEL PID file: $APP_PID_FILE.\n"
+     rm -f "$APP_PID_FILE"
+     printf "Removed the %s PID file.\n" "$APP_LABEL"
 
-     rm -f $APP_OUT_FILE
-     printf "Removed the $APP_LABEL OUT file: $APP_OUT_FILE.\n"
+     rm -f "$APP_OUT_FILE"
+     printf "Removed the %s OUT file.\n" "$APP_LABEL"
 
-     rm -f $APP_ERR_FILE
-     printf "Removed the $APP_LABEL ERR file: $APP_ERR_FILE.\n"
+     rm -f "$APP_ERR_FILE"
+     printf "Removed the %s ERR file.\n" "$APP_LABEL"
 }

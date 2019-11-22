@@ -39,7 +39,7 @@ import org.apache.knox.gateway.service.config.remote.config.RemoteConfigurationR
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.client.ZooKeeperSaslClient;
+import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
@@ -56,7 +56,7 @@ import java.util.Map;
  */
 class CuratorClientService implements ZooKeeperClientService {
 
-    private static final String LOGIN_CONTEXT_NAME_PROPERTY = ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY;
+    private static final String LOGIN_CONTEXT_NAME_PROPERTY = ZKClientConfig.LOGIN_CONTEXT_NAME_KEY;
 
     private static final String DEFAULT_LOGIN_CONTEXT_NAME = "Client";
 

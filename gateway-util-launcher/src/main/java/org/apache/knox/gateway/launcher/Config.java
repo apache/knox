@@ -134,11 +134,7 @@ public class Config {
   public void set( String section, String name, String value ) {
     section = fixName( section );
     name = fixName( name );
-    Map<String,String> map = sections.get( section );
-    if( map == null ) {
-      map = new LinkedHashMap<>();
-      sections.put( section, map );
-    }
+    Map<String, String> map = sections.computeIfAbsent(section, k -> new LinkedHashMap<>());
     map.put( name, value );
   }
 

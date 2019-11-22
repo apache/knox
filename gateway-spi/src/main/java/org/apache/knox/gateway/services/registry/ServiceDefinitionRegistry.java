@@ -17,9 +17,23 @@
  */
 package org.apache.knox.gateway.services.registry;
 
+import java.util.Set;
+
+import org.apache.knox.gateway.service.definition.ServiceDefinitionChangeListener;
+import org.apache.knox.gateway.service.definition.ServiceDefinitionPair;
+
 public interface ServiceDefinitionRegistry {
 
   ServiceDefEntry getMatchingService(String urlPattern);
 
+  Set<ServiceDefinitionPair> getServiceDefinitions();
+
+  void saveServiceDefinition(ServiceDefinitionPair serviceDefinition) throws ServiceDefinitionRegistryException;
+
+  void saveOrUpdateServiceDefinition(ServiceDefinitionPair serviceDefinition) throws ServiceDefinitionRegistryException;
+
+  void deleteServiceDefinition(String name, String role, String version) throws ServiceDefinitionRegistryException;
+
+  void addServiceDefinitionChangeListener(ServiceDefinitionChangeListener listener);
 
 }

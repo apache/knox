@@ -20,18 +20,15 @@ package org.apache.knox.gateway.service.test;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.ssl.SSLContexts;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
-import org.glassfish.jersey.internal.util.Base64;
 
-import javax.net.ssl.SSLContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -49,6 +46,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -69,7 +67,6 @@ public class ServiceTestResource {
     List<String> messages = new ArrayList<>();
     String authString;
     GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
-    SSLContext ctx = null;
     CloseableHttpClient client = null;
     String id = getTopologyName();
 
@@ -77,27 +74,18 @@ public class ServiceTestResource {
 
 //    Create Authorization String
     if( username != null && password != null) {
-      authString = "Basic " + Base64.encodeAsString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
+      String base64EncodedUserPass = Base64.getEncoder().encodeToString(
+          (username + ":" + password).getBytes(StandardCharsets.UTF_8));
+      authString = "Basic " + base64EncodedUserPass;
     } else if (request.getHeader("Authorization") != null) {
       authString = request.getHeader("Authorization");
     } else {
       authString = null;
     }
 
-//    Attempt to build SSL context for HTTP client.
-    try {
-      ctx = SSLContexts.custom().loadTrustMaterial(null, new TrustSelfSignedStrategy()).build();
-    } catch (Exception e) {
-      messages.add(e.getMessage());
-    }
-
 //    Initialize the HTTP client
     try {
-      if (ctx == null) {
-        client = HttpClients.createDefault();
-      } else {
-        client = HttpClients.custom().setSSLContext(ctx).build();
-      }
+      client = HttpClients.createDefault();
 
       if (topology != null) {
         for (Service s : topology.getServices()) {
@@ -174,7 +162,7 @@ public class ServiceTestResource {
         .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
 
-    TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
 
     for (Topology t : ts.getTopologies()) {
       if(t.getName().equals(id)) {
@@ -194,7 +182,7 @@ public class ServiceTestResource {
         .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     List<String> fullURLs = new ArrayList<>();
     if(services != null) {
-      TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+      TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
       Map<String, List<String>> urls = ts.getServiceTestURLs(topology, conf);
       List<String> urlPaths = urls.get(role);
 

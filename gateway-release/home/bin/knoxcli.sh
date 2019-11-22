@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+# shellcheck disable=SC1090
 #
 #  Licensed to the Apache Software Foundation (ASF) under one or more
 #  contributor license agreements.  See the NOTICE file distributed with
@@ -18,10 +18,7 @@
 #
 
 # The app's label
-APP_LABEL=KnoxCLI
-
-# The app's name
-APP_NAME=knoxcli
+export APP_LABEL=KnoxCLI
 
 # Start/stop script location
 APP_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -30,21 +27,48 @@ APP_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 APP_JAR="$APP_BIN_DIR/knoxcli.jar"
 
 # Setup the common environment
-. $APP_BIN_DIR/knox-env.sh
+. "$APP_BIN_DIR"/knox-env.sh
 
 # Source common functions
-. $APP_BIN_DIR/knox-functions.sh
+. "$APP_BIN_DIR"/knox-functions.sh
+
+# JAVA options used by the JVM
+declare -a APP_JAVA_OPTS
+
+function addAppJavaOpts {
+    options_array=$(echo "${1}" | tr " " "\n")
+    for option in ${options_array}
+    do
+       APP_JAVA_OPTS+=("$option")
+    done
+}
+
+function buildAppJavaOpts {
+    if [ -n "$KNOX_CLI_MEM_OPTS" ]; then
+      addAppJavaOpts "${KNOX_CLI_MEM_OPTS}"
+    fi
+
+    if [ -n "$KNOX_CLI_LOG_OPTS" ]; then
+      addAppJavaOpts "${KNOX_CLI_LOG_OPTS}"
+    fi
+
+    if [ -n "$KNOX_CLI_DBG_OPTS" ]; then
+      addAppJavaOpts "${KNOX_CLI_DBG_OPTS}"
+    fi
+
+    if [ -n "$APP_JAVA_LIB_PATH" ]; then
+      addAppJavaOpts "${APP_JAVA_LIB_PATH}"
+    fi
+
+    # echo "APP_JAVA_OPTS =" "${APP_JAVA_OPTS[@]}"
+}
 
 function main {
    checkJava
-
-   #printf "Starting $APP_LABEL \n"
-   #printf "$@"
-
-   $JAVA $KNOX_CLI_MEM_OPTS $KNOX_CLI_DBG_OPTS $KNOX_CLI_LOG_OPTS -jar $APP_JAR $@ || exit 1
-
+   buildAppJavaOpts
+   $JAVA "${APP_JAVA_OPTS[@]}" -jar "$APP_JAR" "$@" || exit 1
    return 0
 }
 
 #Starting main
-main $@
+main "$@"

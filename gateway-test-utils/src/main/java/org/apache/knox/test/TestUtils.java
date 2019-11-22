@@ -56,9 +56,11 @@ public class TestUtils {
   public static final long MEDIUM_TIMEOUT = 30 * 1000L;
   public static final long LONG_TIMEOUT = 60 * 1000L;
 
+  private TestUtils() {
+  }
+
   public static String getResourceName( Class clazz, String name ) {
-    name = clazz.getName().replaceAll( "\\.", "/" ) + "/" + name;
-    return name;
+    return clazz.getName().replaceAll( "\\.", "/" ) + "/" + name;
   }
 
   public static URL getResourceUrl( Class clazz, String name ) throws FileNotFoundException {
@@ -213,7 +215,7 @@ public class TestUtils {
       try {
         Thread.sleep( wait );
       } catch( InterruptedException e ) {
-        // Ignore.
+        Thread.currentThread().interrupt();
       }
     }
   }
@@ -228,6 +230,4 @@ public class TestUtils {
     LOG.debug( "execute: reponse=" + response );
     return response;
   }
-
-
 }

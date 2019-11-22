@@ -20,6 +20,7 @@ import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
@@ -30,7 +31,10 @@ import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 
 import java.io.File;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -43,7 +47,7 @@ import java.util.Properties;
 
 class AmbariServiceDiscovery implements ServiceDiscovery {
 
-    static final String TYPE = "AMBARI";
+    static final String TYPE = "Ambari";
 
     static final String AMBARI_CLUSTERS_URI = AmbariClientCommon.AMBARI_CLUSTERS_URI;
 
@@ -165,13 +169,11 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
                     Object obj = m.invoke(null);
                     if (GatewayServices.class.isAssignableFrom(obj.getClass())) {
                         ClusterConfigurationMonitorService clusterMonitorService =
-                              ((GatewayServices) obj).getService(GatewayServices.CLUSTER_CONFIGURATION_MONITOR_SERVICE);
+                              ((GatewayServices) obj).getService(ServiceType.CLUSTER_CONFIGURATION_MONITOR_SERVICE);
                         ClusterConfigurationMonitor monitor =
-                                                 clusterMonitorService.getMonitor(AmbariConfigurationMonitor.getType());
-                        if (monitor != null) {
-                            if (AmbariConfigurationMonitor.class.isAssignableFrom(monitor.getClass())) {
-                                ambariMonitor = (AmbariConfigurationMonitor) monitor;
-                            }
+                            clusterMonitorService.getMonitor(AmbariConfigurationMonitor.getType());
+                        if (monitor != null && AmbariConfigurationMonitor.class.isAssignableFrom(monitor.getClass())) {
+                            ambariMonitor = (AmbariConfigurationMonitor) monitor;
                         }
                     }
                 }
@@ -250,12 +252,21 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
         if (discoveryAddress != null && clusterName != null) {
             cluster = new AmbariCluster(clusterName);
 
+            String encodedClusterName;
+            try {
+                encodedClusterName = URLEncoder.encode(clusterName, StandardCharsets.UTF_8.name());
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace(); // TODO: Logging
+                encodedClusterName = clusterName;
+            }
+
             Map<String, String> serviceComponents = new HashMap<>();
 
             init(gatewayConfig);
 
             Map<String, List<String>> componentHostNames = new HashMap<>();
-            String hostRolesURL = String.format(Locale.ROOT, "%s" + AMBARI_HOSTROLES_URI, discoveryAddress, clusterName);
+            String hostRolesURL =
+                        String.format(Locale.ROOT, "%s" + AMBARI_HOSTROLES_URI, discoveryAddress, encodedClusterName);
             JSONObject hostRolesJSON = restClient.invoke(hostRolesURL, discoveryUser, discoveryPwdAlias);
             if (hostRolesJSON != null) {
                 // Process the host roles JSON
@@ -297,7 +308,7 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
             // Service configurations
             Map<String, Map<String, AmbariCluster.ServiceConfiguration>> serviceConfigurations =
                 ambariClient.getActiveServiceConfigurations(discoveryAddress,
-                                                            clusterName,
+                                                            encodedClusterName,
                                                             discoveryUser,
                                                             discoveryPwdAlias);
             if (serviceConfigurations.isEmpty()) {
@@ -310,8 +321,9 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
             }
 
             // Construct the AmbariCluster model
-            for (String componentName : serviceComponents.keySet()) {
-                String serviceName = serviceComponents.get(componentName);
+            for (Entry<String, String> entry : serviceComponents.entrySet()) {
+                String componentName = entry.getKey();
+                String serviceName = entry.getValue();
                 List<String> hostNames = componentHostNames.get(componentName);
 
                 Map<String, AmbariCluster.ServiceConfiguration> configs = serviceConfigurations.get(serviceName);
@@ -320,11 +332,11 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
                     AmbariCluster.ServiceConfiguration svcConfig = configs.get(configType);
                     if (svcConfig != null) {
                         AmbariComponent c = new AmbariComponent(componentName,
-                            svcConfig.getVersion(),
-                            clusterName,
-                            serviceName,
-                            hostNames,
-                            svcConfig.getProperties());
+                                                                svcConfig.getVersion(),
+                                                                encodedClusterName,
+                                                                serviceName,
+                                                                hostNames,
+                                                                svcConfig.getProperties());
                         cluster.addComponent(c);
                     }
                 }

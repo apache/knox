@@ -27,9 +27,12 @@ public interface HadoopAuthMessages {
   @Message( level = MessageLevel.DEBUG, text = "Hadoop Authentication Asserted Principal: {0}" )
   void hadoopAuthAssertedPrincipal(String name);
 
-  @Message( level = MessageLevel.ERROR, text = "Alias service exception: {0}" )
-  void aliasServiceException(@StackTrace( level = MessageLevel.DEBUG ) Exception e);
+  @Message( level = MessageLevel.DEBUG, text = "doAsUser = {0}, RemoteUser = {1} , RemoteAddress = {2}" )
+  void hadoopAuthDoAsUser(String doAsUser, String remoteUser, String remoteAddr);
 
-  @Message( level = MessageLevel.ERROR, text = "Unable to get password for {0}: {1}" )
-  void unableToGetPassword(String name, @StackTrace( level = MessageLevel.DEBUG ) Exception e);
+  @Message( level = MessageLevel.DEBUG, text = "Proxy user Authentication successful" )
+  void hadoopAuthProxyUserSuccess();
+
+  @Message( level = MessageLevel.DEBUG, text = "Proxy user Authentication failed: {0}" )
+  void hadoopAuthProxyUserFailed(@StackTrace Throwable t);
 }

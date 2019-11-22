@@ -50,11 +50,7 @@ public class ShiroConfig {
   }
 
   private void addNameValueToSection(String name, String value, String sectionName) {
-    Map<String, String> section = sections.get(sectionName);
-    if (section == null) {
-      section = new LinkedHashMap<>();
-      sections.put(sectionName, section);
-    }
+    Map<String, String> section = sections.computeIfAbsent(sectionName, k -> new LinkedHashMap<>());
     section.put(name, value);
   }
 

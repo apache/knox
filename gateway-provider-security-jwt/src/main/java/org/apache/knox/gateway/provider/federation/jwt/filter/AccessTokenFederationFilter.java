@@ -20,9 +20,11 @@ package org.apache.knox.gateway.provider.federation.jwt.filter;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
+import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
 import javax.security.auth.Subject;
@@ -49,10 +51,16 @@ public class AccessTokenFederationFilter implements Filter {
 
   private JWTokenAuthority authority;
 
+  private TokenStateService tokenStateService;
+
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
     GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    authority = services.getService(GatewayServices.TOKEN_SERVICE);
+    authority = services.getService(ServiceType.TOKEN_SERVICE);
+
+    if (Boolean.valueOf(filterConfig.getInitParameter(TokenStateService.CONFIG_SERVER_MANAGED))) {
+      tokenStateService = services.getService(ServiceType.TOKEN_STATE_SERVICE);
+    }
   }
 
   @Override
@@ -80,31 +88,30 @@ public class AccessTokenFederationFilter implements Filter {
         log.unableToVerifyToken(e);
       }
       if (verified) {
-        long expires = Long.parseLong(token.getExpires());
-        if (expires > System.currentTimeMillis()) {
+        if (!isExpired(token)) {
           if (((HttpServletRequest) request).getRequestURL().indexOf(token.getAudience().toLowerCase(Locale.ROOT)) != -1) {
             Subject subject = createSubjectFromToken(token);
             continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
-          }
-          else {
+          } else {
             log.failedToValidateAudience();
             sendUnauthorized(response);
           }
-        }
-        else {
+        } else {
           log.tokenHasExpired();
           sendUnauthorized(response);
         }
-      }
-      else {
+      } else {
         log.failedToVerifyTokenSignature();
         sendUnauthorized(response);
       }
-    }
-    else {
+    } else {
       log.missingBearerToken();
       sendUnauthorized(response);
     }
+  }
+
+  private boolean isExpired(JWTToken token) {
+    return (tokenStateService != null) ? tokenStateService.isExpired(token.toString()) : (Long.parseLong(token.getExpires()) <= System.currentTimeMillis());
   }
 
   private void sendUnauthorized(ServletResponse response) throws IOException {

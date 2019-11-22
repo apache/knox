@@ -185,7 +185,13 @@ public class RemoteConfigurationRegistryJAASConfigTest {
     }
 
     @Test
-    public void shouldRaiseAnErrorWithMeaningfulErrorMessageIfAuthLoginConfigCannotBeRead() throws Exception {
+    public void shouldRaiseAnErrorWithMeaningfulErrorMessageInCaseOfJAASConfigError() throws Exception {
+      shouldRaiseAnErrorWithMeaningfulErrorMessageIfAuthLoginConfigCannotBeRead();
+      shouldRaiseAnErrorWithMeaningfulErrorMessageIfAuthLoginConfigCannotBeParsed();
+      shouldRaiseAnErrorWithMeaningfulErrorMessageIfReferencedKeytabFileDoesNotExists();
+    }
+
+    private void shouldRaiseAnErrorWithMeaningfulErrorMessageIfAuthLoginConfigCannotBeRead() throws Exception {
       final List<RemoteConfigurationRegistryConfig> registryConfigs = new ArrayList<>();
       System.setProperty(GatewayConfig.KRB5_LOGIN_CONFIG, "nonExistingFilePath");
 
@@ -200,8 +206,7 @@ public class RemoteConfigurationRegistryJAASConfigTest {
       }
     }
 
-    @Test
-    public void shouldRaiseAnErrorWithMeaningfulErrorMessageIfAuthLoginConfigCannotBeParsed() throws Exception {
+    private void shouldRaiseAnErrorWithMeaningfulErrorMessageIfAuthLoginConfigCannotBeParsed() throws Exception {
       final List<RemoteConfigurationRegistryConfig> registryConfigs = new ArrayList<>();
       final String jaasConfigFilePath = writeInvalidJaasConf(false, "jaasConfWithInvalidKeytab", createTempKeytabFile("invalidKeytab"));
       System.setProperty(GatewayConfig.KRB5_LOGIN_CONFIG, jaasConfigFilePath);
@@ -217,8 +222,7 @@ public class RemoteConfigurationRegistryJAASConfigTest {
       }
     }
 
-    @Test
-    public void shouldRaiseAnErrorWithMeaningfulErrorMessageIfReferencedKeytabFileDoesNotExists() throws Exception {
+    private void shouldRaiseAnErrorWithMeaningfulErrorMessageIfReferencedKeytabFileDoesNotExists() throws Exception {
       final String jaasConfigFilePath = writeInvalidJaasConf(true, "jaasConfWithMissingKeytab", "nonExistingKeytabFile");
       System.setProperty(GatewayConfig.KRB5_LOGIN_CONFIG, jaasConfigFilePath);
 

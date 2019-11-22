@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.knox.gateway.ha.dispatch;
 
 import org.apache.http.Header;
@@ -26,23 +25,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 public class AtlasHaDispatch extends DefaultHaDispatch {
-    private static Set<String> REQUEST_EXCLUDE_HEADERS = new HashSet<>();
-
-    static {
-        REQUEST_EXCLUDE_HEADERS.add("Content-Length");
-    }
+    private static final Set<String> REQUEST_EXCLUDE_HEADERS = Collections.singleton("Content-Length");
 
     public AtlasHaDispatch() {
         setServiceRole("ATLAS");
-    }
-
-    @Override
-    public void init() {
-        super.init();
     }
 
     @Override

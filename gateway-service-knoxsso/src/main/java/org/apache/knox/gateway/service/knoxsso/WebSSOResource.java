@@ -44,8 +44,11 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.WebApplicationException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditor;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
@@ -132,8 +135,13 @@ public class WebSSOResource {
       cookieName = DEFAULT_SSO_COOKIE_NAME;
     }
 
-    String secure = context.getInitParameter(SSO_COOKIE_SECURE_ONLY_INIT_PARAM);
-    secureOnly = Boolean.parseBoolean(secure);
+    final String secure = context.getInitParameter(SSO_COOKIE_SECURE_ONLY_INIT_PARAM);
+    if (StringUtils.isBlank(secure)) {
+      final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+      secureOnly = config.isSSLEnabled();
+    } else {
+      secureOnly = Boolean.parseBoolean(secure);
+    }
     if (!secureOnly) {
       log.cookieSecureOnly(secureOnly);
     }
@@ -228,8 +236,8 @@ public class WebSSOResource {
       }
     }
 
-    AliasService as = services.getService(GatewayServices.ALIAS_SERVICE);
-    JWTokenAuthority ts = services.getService(GatewayServices.TOKEN_SERVICE);
+    AliasService as = services.getService(ServiceType.ALIAS_SERVICE);
+    JWTokenAuthority ts = services.getService(ServiceType.TOKEN_SERVICE);
     Principal p = request.getUserPrincipal();
 
     try {

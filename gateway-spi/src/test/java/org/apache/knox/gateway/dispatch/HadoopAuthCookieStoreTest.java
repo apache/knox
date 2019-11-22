@@ -167,6 +167,7 @@ public class HadoopAuthCookieStoreTest {
     File result = null;
     try {
       File f = File.createTempFile(filename, ".conf");
+      f.deleteOnExit();
       try(OutputStream out = Files.newOutputStream(f.toPath())) {
         out.write(contents.getBytes(StandardCharsets.UTF_8));
         out.flush();
@@ -194,5 +195,4 @@ public class HadoopAuthCookieStoreTest {
            "storeKey=true\n" +
            "useTicketCache=false;";
   }
-
 }

@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.apache.knox</groupId>
         <artifactId>gateway</artifactId>
-        <version>1.3.0-SNAPSHOT</version>
+        <version>1.4.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>gateway-service-knoxsso</artifactId>
@@ -72,7 +72,10 @@
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-test-utils</artifactId>

@@ -22,9 +22,11 @@ import java.security.GeneralSecurityException;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
+/**
+ * @deprecated Use {@link org.apache.knox.gateway.shell.KnoxSession}
+ */
 @Deprecated
 public class Hadoop extends KnoxSession {
-
   public Hadoop(ClientContext clientContext) throws KnoxShellException, URISyntaxException {
     this.executor = Executors.newCachedThreadPool();
     this.base = clientContext.url();

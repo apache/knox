@@ -234,18 +234,19 @@ public class UrlRewriteServletFilterTest {
 //    fail( "TODO" );
 //  }
 
+  // If no rewrite rule is defined for inbound request skip rewriting JSON Body.
   @Test
   public void testInboundJsonBodyRewrite() throws Exception {
     testSetUp( null );
 
     String inputJson = "{\"url\":\"http://mock-host:1/test-input-path\"}";
-    String outputJson = "{\"url\":\"http://mock-host:1/test-output-path-1\"}";
 
     // Setup the server side request/response interaction.
     interaction.expect()
         .method( "PUT" )
         .requestUrl( "http://mock-host:1/test-output-path-1" )
-        .content( outputJson, StandardCharsets.UTF_8 );
+        // Make sure nothing changed in the payload since no rule for payload was specified
+        .content( inputJson, StandardCharsets.UTF_8 );
     interaction.respond()
         .status( 200 );
     interactions.add( interaction );
@@ -258,7 +259,6 @@ public class UrlRewriteServletFilterTest {
 
     // Execute the request.
     response = TestUtils.execute( server, request );
-
     // Test the results.
     assertThat( response.getStatus(), is( 200 ) );
   }
@@ -457,6 +457,7 @@ public class UrlRewriteServletFilterTest {
 //    fail( "TODO" );
 //  }
 
+  // Example test case where inbound rule is specified to rewrite request body.
   @Test
   public void testRequestJsonBodyRewriteWithFilterInitParam() throws Exception {
     Map<String,String> initParams = new HashMap<>();
@@ -961,7 +962,7 @@ public class UrlRewriteServletFilterTest {
 
   private static class SetupFilter implements Filter {
     @Override
-    public void init( FilterConfig filterConfig ) throws ServletException {
+    public void init( FilterConfig filterConfig ) {
     }
 
     @Override

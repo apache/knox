@@ -21,7 +21,6 @@ import org.apache.http.impl.auth.SPNegoScheme;
 import org.ietf.jgss.GSSException;
 
 public class KnoxSpnegoAuthScheme extends SPNegoScheme {
-
   private static long nano = Long.MIN_VALUE;
 
   public KnoxSpnegoAuthScheme( boolean stripPort ) {
@@ -43,7 +42,7 @@ public class KnoxSpnegoAuthScheme extends SPNegoScheme {
         try {
           Thread.sleep( 0 );
         } catch( InterruptedException e ) {
-          // Ignore it.
+          Thread.currentThread().interrupt();
         }
       }
       nano = now;

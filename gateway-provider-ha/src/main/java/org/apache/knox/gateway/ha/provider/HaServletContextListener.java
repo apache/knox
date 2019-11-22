@@ -19,6 +19,7 @@ package org.apache.knox.gateway.ha.provider;
 
 import org.apache.knox.gateway.ha.provider.impl.DefaultHaProvider;
 import org.apache.knox.gateway.ha.provider.impl.HaDescriptorManager;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
 
@@ -62,7 +63,7 @@ public class HaServletContextListener implements ServletContextListener {
    private void setupHaProvider(HaDescriptor descriptor, ServletContext servletContext) {
       GatewayServices services = (GatewayServices) servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
       String clusterName = (String) servletContext.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE);
-      ServiceRegistry serviceRegistry = services.getService(GatewayServices.SERVICE_REGISTRY_SERVICE);
+      ServiceRegistry serviceRegistry = services.getService(ServiceType.SERVICE_REGISTRY_SERVICE);
       HaProvider provider = new DefaultHaProvider(descriptor);
       List<String> serviceNames = descriptor.getEnabledServiceNames();
       for (String serviceName : serviceNames) {

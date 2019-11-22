@@ -17,12 +17,15 @@
  */
 package org.apache.knox.gateway.provider.federation;
 
+import static org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter.XHR_HEADER;
+import static org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter.XHR_VALUE;
 import static org.junit.Assert.fail;
 
 import java.security.Principal;
 import java.util.Properties;
 import java.util.Date;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
@@ -39,8 +42,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.nimbusds.jwt.SignedJWT;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SSOCookieProviderTest extends AbstractJWTFilterTest {
+  private static Logger LOGGER = LoggerFactory.getLogger(SSOCookieProviderTest.class);
+
   private static final String SERVICE_URL = "https://localhost:8888/resource";
 
   @Before
@@ -53,6 +60,11 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
   protected void setTokenOnRequest(HttpServletRequest request, SignedJWT jwt) {
     Cookie cookie = new Cookie("hadoop-jwt", jwt.serialize());
     EasyMock.expect(request.getCookies()).andReturn(new Cookie[] { cookie });
+
+    if(ThreadLocalRandom.current().nextBoolean()) {
+      LOGGER.info("Using XHR header for request");
+      EasyMock.expect(request.getHeader(XHR_HEADER)).andReturn(XHR_VALUE).anyTimes();
+    }
   }
 
   @Override

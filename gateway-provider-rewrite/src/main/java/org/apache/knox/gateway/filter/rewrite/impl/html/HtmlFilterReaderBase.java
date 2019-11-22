@@ -37,11 +37,12 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Stack;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,7 +54,7 @@ public abstract class HtmlFilterReaderBase extends Reader implements
 
   private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
 
-  private Stack<Level> stack;
+  private Deque<Level> stack;
   private Reader reader;
   private StreamedSource parser;
   private Iterator<Segment> iterator;
@@ -63,9 +64,9 @@ public abstract class HtmlFilterReaderBase extends Reader implements
   private StringBuffer buffer;
   private UrlRewriteFilterContentDescriptor config;
 
-  protected HtmlFilterReaderBase( Reader reader ) throws IOException, ParserConfigurationException {
+  protected HtmlFilterReaderBase( Reader reader ) throws IOException {
     this.reader = reader;
-    stack = new Stack<>();
+    stack = new ConcurrentLinkedDeque<>();
     parser = new StreamedSource( reader );
     iterator = parser.iterator();
     writer = new StringWriter();
@@ -192,7 +193,7 @@ public abstract class HtmlFilterReaderBase extends Reader implements
 
   private String getRuleName(String inputValue) {
     if( config != null && !config.getSelectors().isEmpty() ) {
-      for( UrlRewriteFilterPathDescriptor selector : config.getSelectors() ) {
+      for( UrlRewriteFilterPathDescriptor<?> selector : config.getSelectors() ) {
         if ( selector instanceof UrlRewriteFilterApplyDescriptor) {
           UrlRewriteFilterApplyDescriptor apply = (UrlRewriteFilterApplyDescriptor)selector;
           Matcher matcher = apply.compiledPath( REGEX_COMPILER ).matcher( inputValue );
@@ -209,10 +210,7 @@ public abstract class HtmlFilterReaderBase extends Reader implements
     String inputValue = segment.toString();
     String outputValue = inputValue;
     try {
-      if( stack.isEmpty() ) {
-        // This can happen for whitespace outside of the root element.
-        //outputValue = filterText( null, inputValue );
-      } else {
+      if (!stack.isEmpty()) {
         String tagName = stack.peek().getTag().getName();
         if (SCRIPTTAG.equals(tagName) && config != null && !config.getSelectors().isEmpty() ) {
           // embedded javascript content
@@ -264,19 +262,24 @@ public abstract class HtmlFilterReaderBase extends Reader implements
       return getNamespaces().get( prefix );
     }
 
-    private QName getQName( String name ) {
-      String prefix;
-      String local;
-      int colon = ( name == null ? -1 : name.indexOf( ':' ) );
-      if( colon < 0 ) {
-        prefix = "";
-        local = name;
+    private QName getQName(String name) {
+      final int colon = name == null ? -1 : name.indexOf(':');
+      final String prefix = getPrefix(name, colon);
+      final String local = getLocal(name, colon);
+      final String namespace = getNamespace(prefix);
+      return new QName(namespace, local, prefix);
+    }
+
+    private String getPrefix(String name, final int colon) {
+      return name != null && colon > 0 ? name.substring(0, colon) : "";
+    }
+
+    private String getLocal(String name, final int colon) {
+      if (name != null && colon > 0) {
+        return colon + 1 < name.length() ? name.substring(colon + 1) : "";
       } else {
-        prefix = name.substring( 0, colon );
-        local = ( colon + 1 < name.length() ? name.substring( colon + 1 ) : "" );
+        return name;
       }
-      String namespace = getNamespace( prefix );
-      return new QName( namespace, local, prefix );
     }
 
     private Map<String,String> getNamespaces() {
@@ -288,19 +291,14 @@ public abstract class HtmlFilterReaderBase extends Reader implements
     }
 
     private void parseNamespaces() {
-      Attributes attributes = tag.getAttributes();
-      if( attributes != null ) {
-        for( Attribute attribute : tag.getAttributes() ) {
-          String name = attribute.getName();
-          if( name.toLowerCase(Locale.ROOT).startsWith( "xmlns" ) ) {
-            int colon = name.indexOf( ':', 5 );
-            String prefix;
-            if( colon <= 0 ) {
-              prefix = "";
-            } else {
-              prefix = name.substring( colon );
-            }
-            namespaces.put( prefix, attribute.getValue() );
+      if (tag.getAttributes() != null) {
+        String prefix, attributeName;
+        for (Attribute attribute : tag.getAttributes()) {
+          attributeName = attribute.getName() == null ? "" : attribute.getName();
+          if (attributeName.toLowerCase(Locale.ROOT).startsWith("xmlns")) {
+            int colon = attributeName.indexOf(':', 5);
+            prefix = colon <= 0 ? "" : attributeName.substring(colon);
+            namespaces.put(prefix, attribute.getValue());
           }
         }
       }

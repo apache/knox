@@ -18,35 +18,43 @@
 package org.apache.knox.gateway.util;
 
 import org.apache.knox.gateway.deploy.ServiceDeploymentContributor;
+import org.apache.knox.gateway.service.definition.ServiceDefinition;
+import org.apache.knox.gateway.service.definition.ServiceDefinitionComparator;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
 public class ServiceDefinitionsLoaderTest {
 
   @Test
   public void testServiceDefinitionLoading() {
+    final List<String> barVersions = Arrays.asList("1.0.0", "2.0.0");
     URL url = ClassLoader.getSystemResource("services");
-    Set<ServiceDeploymentContributor> contributors = ServiceDefinitionsLoader.loadServiceDefinitions(new File(url.getFile()));
-    assertNotNull(contributors);
-    assertEquals(2, contributors.size());
+    Set<ServiceDeploymentContributor> contributors = ServiceDefinitionsLoader.loadServiceDefinitionDeploymentContributors(new File(url.getFile()));
+    Assert.assertNotNull(contributors);
+    Assert.assertEquals(2, contributors.size());
     for (ServiceDeploymentContributor contributor : contributors) {
       if (contributor.getName().equals("foo")) {
         Assert.assertEquals("1.0.0", contributor.getVersion().toString());
-        assertEquals("FOO", contributor.getRole());
+        Assert.assertEquals("FOO", contributor.getRole());
       } else if (contributor.getName().equals("bar")) {
-        Assert.assertEquals("2.0.0", contributor.getVersion().toString());
-        assertEquals("BAR", contributor.getRole());
+        Assert.assertTrue(barVersions.contains(contributor.getVersion().toString()));
+        Assert.assertEquals("BAR", contributor.getRole());
       } else {
-        fail("the loaded services don't match the test input");
+        Assert.fail("the loaded services don't match the test input");
       }
     }
+  }
+
+  @Test
+  public void shouldReturnLoadedServiceDefinitionsOrdered() throws Exception {
+    final URL url = ClassLoader.getSystemResource("services");
+    final Set<ServiceDefinition> serviceDefinitions = ServiceDefinitionsLoader.getServiceDefinitions(new File(url.getFile()));
+    Assert.assertTrue(CollectionUtils.isSorted(serviceDefinitions, new ServiceDefinitionComparator()));
   }
 }

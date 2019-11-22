@@ -23,6 +23,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+/**
+ * An adapter class that delegate calls to {@link org.apache.knox.gateway.dispatch.NiFiHaDispatch}
+ * for backwards compatibility with package structure.
+ *
+ * @since 0.14.0
+ * @deprecated Use {@link org.apache.knox.gateway.dispatch.NiFiHaDispatch}
+ */
 @Deprecated
 public class NiFiHaDispatch extends org.apache.knox.gateway.dispatch.NiFiHaDispatch {
   public NiFiHaDispatch() {

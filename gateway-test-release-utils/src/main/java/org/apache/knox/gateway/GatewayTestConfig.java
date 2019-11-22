@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
@@ -32,7 +32,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
@@ -45,6 +47,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSOCKET_INPUT_BUFFER_SIZE = 4096;
   public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT = 60000;
   public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT = 300000;
+  public static final int DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT = 100;
 
   private Path gatewayHomePath = Paths.get("gateway-home");
   private String hadoopConfDir = "hadoop";
@@ -66,7 +69,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   private String truststoreType = "jks";
   private String keystoreType = "jks";
   private boolean isTopologyPortMappingEnabled = true;
-  private ConcurrentHashMap<String, Integer> topologyPortMapping = new ConcurrentHashMap<>();
+  private ConcurrentMap<String, Integer> topologyPortMapping = new ConcurrentHashMap<>();
   private int backupVersionLimit = -1;
   private long backupAgeLimit = -1;
 
@@ -442,7 +445,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return backupVersionLimit;
   }
 
-  public void setTopologyPortMapping(ConcurrentHashMap<String, Integer> topologyPortMapping) {
+  public void setTopologyPortMapping(ConcurrentMap<String, Integer> topologyPortMapping) {
     this.topologyPortMapping = topologyPortMapping;
   }
 
@@ -540,6 +543,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public int getWebsocketIdleTimeout() {
     return DEFAULT_WEBSOCKET_IDLE_TIMEOUT;
+  }
+
+  @Override
+  public int getWebsocketMaxWaitBufferCount() {
+    return DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT;
   }
 
   @Override
@@ -745,5 +753,15 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public boolean isTopologyValidationEnabled() {
     return false;
+  }
+
+  @Override
+  public List<String> getXForwardContextAppendServices() {
+    return null;
+  }
+
+  @Override
+  public Set<String> getServicesToIgnoreDoAs() {
+    return null;
   }
 }

@@ -17,53 +17,52 @@
  */
 package org.apache.knox.gateway.provider.federation;
 
-import java.security.NoSuchAlgorithmException;
-
-import javax.servlet.http.HttpServletRequest;
-
+import com.nimbusds.jwt.SignedJWT;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.easymock.EasyMock;
 import org.junit.Before;
+import org.junit.Test;
 
-import com.nimbusds.jwt.SignedJWT;
+import javax.servlet.http.HttpServletRequest;
 
 public class JWTFederationFilterTest extends AbstractJWTFilterTest {
+  @Before
+  public void setUp() {
+    handler = new TestJWTFederationFilter();
+    ((TestJWTFederationFilter) handler).setTokenService(new TestJWTokenAuthority(publicKey));
+  }
 
-    @Before
-    public void setup() throws Exception, NoSuchAlgorithmException {
-      handler = new TestJWTFederationFilter();
-      ((TestJWTFederationFilter) handler).setTokenService(new TestJWTokenAuthority(publicKey));
+  @Override
+  protected void setTokenOnRequest(HttpServletRequest request, SignedJWT jwt) {
+    String token = "Bearer " + jwt.serialize();
+    EasyMock.expect(request.getHeader("Authorization")).andReturn(token);
+  }
+
+  @Override
+  protected void setGarbledTokenOnRequest(HttpServletRequest request, SignedJWT jwt) {
+    String token = "Bearer " + "ljm" + jwt.serialize();
+    EasyMock.expect(request.getHeader("Authorization")).andReturn(token);
+  }
+
+  @Override
+  protected String getAudienceProperty() {
+    return TestJWTFederationFilter.KNOX_TOKEN_AUDIENCES;
+  }
+
+  private static class TestJWTFederationFilter extends JWTFederationFilter {
+    void setTokenService(JWTokenAuthority ts) {
+      authority = ts;
     }
+  }
 
-    @Override
-    protected void setTokenOnRequest(HttpServletRequest request, SignedJWT jwt) {
-      String token = "Bearer " + jwt.serialize();
-      EasyMock.expect(request.getHeader("Authorization")).andReturn(token);
-    }
+  @Override
+  protected String getVerificationPemProperty() {
+    return TestJWTFederationFilter.TOKEN_VERIFICATION_PEM;
+  }
 
-    @Override
-    protected void setGarbledTokenOnRequest(HttpServletRequest request, SignedJWT jwt) {
-      String token = "Bearer " + "ljm" + jwt.serialize();
-      EasyMock.expect(request.getHeader("Authorization")).andReturn(token);
-    }
-
-    @Override
-    protected String getAudienceProperty() {
-      return TestJWTFederationFilter.KNOX_TOKEN_AUDIENCES;
-    }
-
-    private static class TestJWTFederationFilter extends JWTFederationFilter {
-
-      public void setTokenService(JWTokenAuthority ts) {
-        authority = ts;
-      }
-
-    }
-
-    @Override
-    protected String getVerificationPemProperty() {
-      return TestJWTFederationFilter.TOKEN_VERIFICATION_PEM;
-    }
-
+  @Test
+  public void doTest() {
+    // TODO
+  }
 }

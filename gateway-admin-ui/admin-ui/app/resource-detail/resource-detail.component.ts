@@ -169,6 +169,7 @@ export class ResourceDetailComponent implements OnInit {
                 }
                 let tempDesc = new Descriptor();
                 if (contentObj) {
+                    tempDesc.discoveryType = contentObj['discovery-type'];
                     tempDesc.discoveryAddress = contentObj['discovery-address'];
                     tempDesc.discoveryUser = contentObj['discovery-user'];
                     tempDesc.discoveryPassAlias = contentObj['discovery-pwd-alias'];

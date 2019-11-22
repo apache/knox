@@ -34,61 +34,61 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 public class HadoopAuthCookieStore extends BasicCookieStore {
+  private static final SpiGatewayMessages LOG = MessagesFactory.get(SpiGatewayMessages.class);
 
-  private static SpiGatewayMessages LOG = MessagesFactory.get( SpiGatewayMessages.class );
+  private static final String HADOOP_AUTH_COOKIE_NAME = "hadoop.auth";
+  private static final String HIVE_SERVER2_AUTH_COOKIE_NAME = "hive.server2.auth";
+  private static final String IMPALA_AUTH_COOKIE_NAME = "impala.auth";
 
-  private GatewayConfig gatewayConfig;
+  private static String knoxPrincipal;
 
   HadoopAuthCookieStore(GatewayConfig config) {
-    this.gatewayConfig = config;
-  }
-
-  @Override
-  public void addCookie(Cookie cookie) {
-    if (cookie.getName().equals("hadoop.auth") || cookie.getName().equals("hive.server2.auth")) {
-      // Only add the cookie if it's Knox's cookie
-      if (isKnoxCookie(gatewayConfig, cookie)) {
-        Wrapper wrapper = new Wrapper(cookie);
-        LOG.acceptingServiceCookie(wrapper);
-        super.addCookie(wrapper);
+    // Read knoxPrincipal from krb5 login jaas config file
+    String krb5Config = config.getKerberosLoginConfig();
+    if (krb5Config != null && !krb5Config.isEmpty()) {
+      Properties p = new Properties();
+      try (InputStream in = Files.newInputStream(Paths.get(krb5Config))){
+        p.load(in);
+        String configuredKnoxPrincipal = p.getProperty("principal");
+        // Strip off enclosing quotes, if present
+        if (configuredKnoxPrincipal.startsWith("\"")) {
+          configuredKnoxPrincipal = configuredKnoxPrincipal.substring(1,
+              configuredKnoxPrincipal.length() - 1);
+        }
+        knoxPrincipal = configuredKnoxPrincipal;
+      } catch (IOException e) {
+        LOG.errorReadingKerberosLoginConfig(krb5Config, e);
       }
     }
   }
 
-  private static boolean isKnoxCookie(GatewayConfig config, Cookie cookie) {
+  @Override
+  public void addCookie(Cookie cookie) {
+    // Only add the cookie if it is an auth cookie and belongs to Knox
+    if (isAuthCookie(cookie) && isKnoxCookie(cookie)) {
+      Wrapper wrapper = new Wrapper(cookie);
+      LOG.acceptingServiceCookie(wrapper);
+      super.addCookie(wrapper);
+    }
+  }
+
+  private boolean isAuthCookie(Cookie cookie) {
+    return HADOOP_AUTH_COOKIE_NAME.equals(cookie.getName()) ||
+        HIVE_SERVER2_AUTH_COOKIE_NAME.equals(cookie.getName()) ||
+        IMPALA_AUTH_COOKIE_NAME.equals(cookie.getName());
+  }
+
+  private boolean isKnoxCookie(Cookie cookie) {
     boolean result = false;
 
+    // We expect cookies to be some delimited list of parameters, eg. username, principal,
+    // timestamp, random number, etc. along with an HMAC signature. To ensure we only
+    // store cookies that are relevant to Knox, we check that the Knox principal appears
+    // somewhere in the cookie value.
     if (cookie != null) {
       String value = cookie.getValue();
-      if (value != null && !value.isEmpty()) {
-        String principal = null;
-
-        String[] cookieParts = value.split("&");
-        if (cookieParts.length > 1) {
-          String[] elementParts = cookieParts[1].split("=");
-          if (elementParts.length == 2) {
-            principal = elementParts[1];
-          }
-
-          if (principal != null) {
-            String krb5Config = config.getKerberosLoginConfig();
-            if (krb5Config != null && !krb5Config.isEmpty()) {
-              Properties p = new Properties();
-              try (InputStream in = Files.newInputStream(Paths.get(krb5Config))){
-                p.load(in);
-                String configuredPrincipal = p.getProperty("principal");
-                // Strip off enclosing quotes, if present
-                if (configuredPrincipal.startsWith("\"")) {
-                  configuredPrincipal = configuredPrincipal.substring(1, configuredPrincipal.length() - 1);
-                }
-                // Check if they're the same principal
-                result = principal.equals(configuredPrincipal);
-              } catch (IOException e) {
-                LOG.errorReadingKerberosLoginConfig(krb5Config, e);
-              }
-            }
-          }
-        }
+      if (value != null && value.contains(knoxPrincipal)) {
+        result = true;
       }
     }
 
@@ -96,11 +96,11 @@ public class HadoopAuthCookieStore extends BasicCookieStore {
   }
 
   private static class Wrapper extends BasicClientCookie {
+    private static final String DELEGATE_STR = "delegate";
+    private final Cookie delegate;
 
-    private Cookie delegate;
-
-    Wrapper( Cookie delegate ) {
-      super( delegate.getName(), delegate.getValue() );
+    Wrapper(Cookie delegate ) {
+      super(delegate.getName(), delegate.getValue());
       this.delegate = delegate;
     }
 
@@ -189,11 +189,9 @@ public class HadoopAuthCookieStore extends BasicCookieStore {
       return (new ReflectionToStringBuilder(this) {
         @Override
         protected boolean accept(Field f) {
-          return super.accept(f) && !f.getName().equals("delegate");
+          return super.accept(f) && !DELEGATE_STR.equals(f.getName());
         }
       }).toString();
     }
-
   }
-
 }

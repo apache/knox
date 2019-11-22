@@ -28,6 +28,7 @@ import io.restassured.response.Response;
 import io.restassured.specification.ResponseSpecification;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -35,15 +36,19 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.knox.gateway.util.KnoxCLI;
 import org.apache.knox.test.TestUtils;
@@ -97,8 +102,11 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.text.IsEmptyString.isEmptyString;
+import static org.hamcrest.collection.IsIn.in;
+import static org.hamcrest.collection.IsIn.oneOf;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.xmlmatchers.XmlMatchers.isEquivalentTo;
 import static org.xmlmatchers.transform.XmlConverters.the;
@@ -1665,6 +1673,74 @@ public class GatewayBasicFuncTest {
   }
 
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
+  public void testEncodedForwardSlash() throws IOException {
+    LOG_ENTER();
+    String username = "hbase";
+    String password = "hbase-password";
+
+    String resourceName = "hbase/table-data";
+    String singleRowPath = "/table/%2F%2Ftestrow";
+
+    //PUT request
+    driver.getMock( "WEBHBASE" )
+        .expect()
+        .method( "PUT" )
+        .requestURI( singleRowPath ) // Need to use requestURI since pathInfo is url decoded
+        .contentType( ContentType.JSON.toString() )
+        .respond()
+        .status( HttpStatus.SC_OK );
+
+    CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+    UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(username, password);
+    credentialsProvider.setCredentials(AuthScope.ANY, credentials);
+    // Show that normalizing from HttpClient doesn't change the behavior of %2F handling
+    // with HttpClient 4.5.8+ - HTTPCLIENT-1968
+    RequestConfig requestConfig = RequestConfig.custom().setNormalizeUri(false).build();
+    try(CloseableHttpClient httpClient = HttpClients.custom()
+        .setDefaultCredentialsProvider(credentialsProvider)
+        .setDefaultRequestConfig(requestConfig)
+        .build()) {
+
+      HttpPut httpPut = new HttpPut(driver.getUrl("WEBHBASE") + singleRowPath);
+      httpPut.setHeader("X-XSRF-Header", "jksdhfkhdsf");
+      httpPut.setHeader(HttpHeaders.CONTENT_TYPE, org.apache.http.entity.ContentType.APPLICATION_JSON.getMimeType());
+      httpPut.setEntity(new ByteArrayEntity(driver.getResourceBytes(resourceName + ".json")));
+
+      HttpResponse response = httpClient.execute(httpPut);
+      assertEquals(200, response.getStatusLine().getStatusCode());
+    }
+    driver.assertComplete();
+
+    driver.getMock( "WEBHBASE" )
+    .expect()
+    .method( "PUT" )
+    .requestURI( singleRowPath ) // Need to use requestURI since pathInfo is url decoded
+    .contentType( ContentType.JSON.toString() )
+    .respond()
+    .status( HttpStatus.SC_OK );
+
+    // There is no way to change the normalization behavior of the
+    // HttpClient created by rest-assured since RequestConfig isn't
+    // exposed. Instead the above test uses HttpClient directly,
+    // this shows that url normalization doesn't matter with 4.5.8+.
+    // If this view changes, don't use rest-assured for this type of
+    // testing.
+    // See: https://github.com/rest-assured/rest-assured/issues/497
+    given()
+    .urlEncodingEnabled(false) // make sure to avoid rest-assured automatic url encoding
+    .auth().preemptive().basic( username, password )
+    .header("X-XSRF-Header", "jksdhfkhdsf")
+    .body( driver.getResourceBytes( resourceName + ".json" ) )
+    .contentType( ContentType.JSON.toString() )
+    .then()
+    .statusCode( HttpStatus.SC_OK )
+    .when().put(driver.getUrl("WEBHBASE") + singleRowPath);
+    driver.assertComplete();
+
+    LOG_EXIT();
+  }
+
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
   public void testHBaseInsertDataIntoTable() throws IOException {
     LOG_ENTER();
     String username = "hbase";
@@ -2210,16 +2286,16 @@ public class GatewayBasicFuncTest {
 //         .log().all()
         .statusCode( HttpStatus.SC_OK )
         .contentType( contentType )
-        .body( "apps.app[0].trackingUrl", isEmptyString() )
+        .body( "apps.app[0].trackingUrl", is(emptyString()) )
         .body( "apps.app[1].trackingUrl",
             anyOf(
                 startsWith( "http://" + gatewayHostName + ":" + gatewayAddress.getPort() + "/" ),
                 startsWith( "http://" + gatewayAddrName + ":" + gatewayAddress.getPort() + "/" ) ) )
-        .body( "apps.app[2].trackingUrl", isEmptyString() )
-        .body( "apps.app[0].amContainerLogs", isEmptyString() )
-        .body( "apps.app[1].amContainerLogs", isEmptyString() )
-        .body( "apps.app[0].amHostHttpAddress", isEmptyString() )
-        .body( "apps.app[1].amHostHttpAddress", isEmptyString() )
+        .body( "apps.app[2].trackingUrl", is(emptyString()))
+        .body( "apps.app[0].amContainerLogs", is(emptyString()) )
+        .body( "apps.app[1].amContainerLogs", is(emptyString()) )
+        .body( "apps.app[0].amHostHttpAddress", is(emptyString()) )
+        .body( "apps.app[1].amHostHttpAddress", is(emptyString()) )
         .body( "apps.app[2].id", is( "application_1399541193872_0009" ) )
         .when()
         .get(gatewayPath + gatewayPathQuery);
@@ -2371,11 +2447,11 @@ public class GatewayBasicFuncTest {
               startsWith( "http://" + gatewayHostName + ":" + gatewayAddress.getPort() + "/" ),
               startsWith( "http://" + gatewayAddrName + ":" + gatewayAddress.getPort() + "/" ) ) );
     } else {
-      response.body( "app.trackingUrl", isEmptyString() );
+      response.body( "app.trackingUrl", is(emptyString()) );
     }
 
-    response.body( "app.amContainerLogs", isEmptyString() )
-        .body( "app.amHostHttpAddress", isEmptyString() )
+    response.body( "app.amContainerLogs", is(emptyString()) )
+        .body( "app.amHostHttpAddress", is(emptyString()) )
         .when()
         .get( gatewayPath );
 
@@ -2476,9 +2552,9 @@ public class GatewayBasicFuncTest {
 //         .log().all()
         .statusCode( HttpStatus.SC_OK )
         .contentType( contentType )
-        .body( "appAttempts.appAttempt[0].nodeHttpAddress", isEmptyString() )
+        .body( "appAttempts.appAttempt[0].nodeHttpAddress", is(emptyString()) )
         .body( "appAttempts.appAttempt[0].nodeId", not( containsString( "localhost:50060" ) ) )
-        .body( "appAttempts.appAttempt[0].logsLink", isEmptyString() )
+        .body( "appAttempts.appAttempt[0].logsLink", is(emptyString()) )
         .when()
         .get( gatewayPath );
 
@@ -2544,8 +2620,8 @@ public class GatewayBasicFuncTest {
         .statusCode( HttpStatus.SC_OK )
         .contentType( contentType )
         .body( "nodes.node[0].id", not( containsString( nodeId ) ) )
-        .body( "nodes.node[0].nodeHostName", isEmptyString() )
-        .body( "nodes.node[0].nodeHTTPAddress", isEmptyString() )
+        .body( "nodes.node[0].nodeHostName", is(emptyString()) )
+        .body( "nodes.node[0].nodeHTTPAddress", is(emptyString()) )
         .when()
         .get( gatewayPath + gatewayPathQuery ).getBody().path( "nodes.node[0].id" );
 
@@ -2568,8 +2644,8 @@ public class GatewayBasicFuncTest {
         .statusCode( HttpStatus.SC_OK )
         .contentType( contentType )
         .body( "node.id", not( containsString( nodeId ) ) )
-        .body( "node.nodeHostName", isEmptyString() )
-        .body( "node.nodeHTTPAddress", isEmptyString() )
+        .body( "node.nodeHostName", is(emptyString()) )
+        .body( "node.nodeHTTPAddress", is(emptyString()) )
         .when()
         .get( gatewayPath + encryptedNodeId );
 
@@ -2687,9 +2763,9 @@ public class GatewayBasicFuncTest {
     path = "/proxy/application_1399541193872_0036/ws/v1/mapreduce/jobs/job_1399541193872_0036/jobattempts";
     resource = "yarn/proxy-mapreduce-job-attempts";
     matchers.clear();
-    matchers.put( "jobAttempts.jobAttempt[0].nodeHttpAddress", isEmptyString() );
+    matchers.put( "jobAttempts.jobAttempt[0].nodeHttpAddress", is(emptyString()) );
     matchers.put( "jobAttempts.jobAttempt[0].nodeId", not( containsString( "host.yarn.com:45454" ) ) );
-    matchers.put( "jobAttempts.jobAttempt[0].logsLink", isEmptyString() );
+    matchers.put( "jobAttempts.jobAttempt[0].logsLink", is(emptyString()) );
     getYarnRmProxyData( encryptedQuery, path, resource, ContentType.JSON, matchers );
     getYarnRmProxyData( encryptedQuery, path, resource, ContentType.XML, matchers );
 
@@ -2712,14 +2788,14 @@ public class GatewayBasicFuncTest {
     path = "/proxy/application_1399541193872_0036/ws/v1/mapreduce/jobs/job_1399541193872_0036/tasks/task_1399541193872_0036_r_00/attempts";
     resource = "yarn/proxy-mapreduce-task-attempts";
     matchers.clear();
-    matchers.put( "taskAttempts.taskAttempt[0].nodeHttpAddress", isEmptyString() );
+    matchers.put( "taskAttempts.taskAttempt[0].nodeHttpAddress", is(emptyString()) );
     getYarnRmProxyData( encryptedQuery, path, resource, ContentType.JSON, matchers );
     getYarnRmProxyData( encryptedQuery, path, resource, ContentType.XML, matchers );
 
     path = "/proxy/application_1399541193872_0036/ws/v1/mapreduce/jobs/job_1399541193872_0036/tasks/task_1399541193872_0036_r_00/attempts/attempt_1399541193872_0036_r_000000_0";
     resource = "yarn/proxy-mapreduce-task-attempt";
     matchers.clear();
-    matchers.put( "taskAttempt.nodeHttpAddress", isEmptyString() );
+    matchers.put( "taskAttempt.nodeHttpAddress", is(emptyString()) );
     getYarnRmProxyData( encryptedQuery, path, resource, ContentType.JSON, matchers );
     getYarnRmProxyData( encryptedQuery, path, resource, ContentType.XML, matchers );
 
@@ -3344,12 +3420,12 @@ public class GatewayBasicFuncTest {
     driver.getMock("STORM")
         .expect()
         .method("GET")
-        .header("X-Forwarded-Host", Matchers.isOneOf(gatewayHostName + ":" + gatewayPort, gatewayAddrName + ":" + gatewayPort))
+        .header("X-Forwarded-Host", Matchers.is(oneOf(gatewayHostName + ":" + gatewayPort, gatewayAddrName + ":" + gatewayPort)))
         .header("X-Forwarded-Proto", "http")
         .header("X-Forwarded-Port", Integer.toString(gatewayPort))
         .header("X-Forwarded-Context", "/gateway/cluster")
-        .header( "X-Forwarded-Server", Matchers.isOneOf( gatewayHostName, gatewayAddrName ) )
-        .header( "X-Forwarded-For", Matchers.isOneOf( gatewayHostName, gatewayAddrName ) )
+        .header( "X-Forwarded-Server", Matchers.is(oneOf( gatewayHostName, gatewayAddrName ) ))
+        .header( "X-Forwarded-For", Matchers.is(oneOf( gatewayHostName, gatewayAddrName ) ))
         .pathInfo( path )
         .queryParam( "user.name", username )
         .respond()
@@ -3402,7 +3478,7 @@ public class GatewayBasicFuncTest {
         .header("X-Forwarded-Proto", scheme)
         .header("X-Forwarded-Port", port)
         .header("X-Forwarded-Context", "/gateway/cluster")
-        .header("X-Forwarded-Server", Matchers.isOneOf( gatewayHostName, gatewayAddrName ) )
+        .header("X-Forwarded-Server", Matchers.is(oneOf( gatewayHostName, gatewayAddrName ) ))
         .header("X-Forwarded-For", Matchers.containsString("what, boo"))
         .pathInfo(path)
         .queryParam("user.name", username)
@@ -3442,7 +3518,7 @@ public class GatewayBasicFuncTest {
         .header("X-Forwarded-Proto", scheme)
         .header("X-Forwarded-Port", port)
         .header("X-Forwarded-Context", "/gateway/cluster")
-        .header("X-Forwarded-Server", Matchers.isOneOf( gatewayHostName, gatewayAddrName ) )
+        .header("X-Forwarded-Server", Matchers.is(oneOf( gatewayHostName, gatewayAddrName ) ))
         .header("X-Forwarded-For", Matchers.containsString("what, boo"))
         .pathInfo(path)
         .queryParam("user.name", username)
@@ -3485,7 +3561,7 @@ public class GatewayBasicFuncTest {
         .header("X-Forwarded-Proto", scheme)
         .header("X-Forwarded-Port", port)
         .header("X-Forwarded-Context", "/gateway/cluster")
-        .header("X-Forwarded-Server", Matchers.isOneOf( gatewayHostName, gatewayAddrName ) )
+        .header("X-Forwarded-Server", Matchers.is(oneOf( gatewayHostName, gatewayAddrName ) ))
         .header("X-Forwarded-For", Matchers.containsString("what, boo"))
         .queryParam("op", "CREATE")
         .queryParam( "user.name", username )
@@ -3577,8 +3653,6 @@ public class GatewayBasicFuncTest {
         .get(testUrl);
 //        .prettyPrint();
     driver.assertComplete();
-
-
 
 //    Authorize as a different (invalid) user
     setupResources();
@@ -3745,7 +3819,7 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
-  void setupResource(String serviceRole, String path){
+  private void setupResource(String serviceRole, String path){
     driver.getMock(serviceRole)
         .expect().method("GET")
         .pathInfo(path)
@@ -3757,8 +3831,7 @@ public class GatewayBasicFuncTest {
 //            .contentType(type.toString());
   }
 
-  void setupResources() {
-
+  private void setupResources() {
     driver.setResourceBase(GatewayBasicFuncTest.class);
 
     try {
@@ -4084,7 +4157,7 @@ public class GatewayBasicFuncTest {
         .queryParam( "recursive", recursive )
         .then()
         //.log().all()
-        .statusCode( Matchers.isIn(ArrayUtils.toObject(status)) )
+        .statusCode( Matchers.is(in(ArrayUtils.toObject(status))) )
         .when()
         .delete( driver.getUrl( "WEBHDFS" ) + "/v1" + file + ( driver.isUseGateway() ? "" : "?user.name=" + user ) );
     driver.assertComplete();
@@ -4179,7 +4252,7 @@ public class GatewayBasicFuncTest {
         .formParam( "statusdir", statusDir )
         .then()
         //.log().all();
-        .statusCode( Matchers.isIn(ArrayUtils.toObject(status)) )
+        .statusCode( Matchers.is(in(ArrayUtils.toObject(status))) )
         .contentType( "application/json" )
         //.content( "boolean", equalTo( true ) )
         .when()
@@ -4212,7 +4285,7 @@ public class GatewayBasicFuncTest {
         .formParam( "statusdir", statusDir )
         .then()
         //.log().all()
-        .statusCode( Matchers.isIn(ArrayUtils.toObject(status)) )
+        .statusCode( Matchers.is(in(ArrayUtils.toObject(status))) )
         .contentType( "application/json" )
         //.content( "boolean", equalTo( true ) )
         .when()

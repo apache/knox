@@ -20,6 +20,7 @@ import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
 
@@ -30,7 +31,7 @@ public class RemoteConfigurationMonitorFactory {
 
     private static RemoteConfigurationRegistryClientService remoteConfigRegistryClientService;
 
-    static void setClientService(RemoteConfigurationRegistryClientService clientService) {
+    static synchronized void setClientService(RemoteConfigurationRegistryClientService clientService) {
         remoteConfigRegistryClientService = clientService;
     }
 
@@ -38,7 +39,7 @@ public class RemoteConfigurationMonitorFactory {
         if (remoteConfigRegistryClientService == null) {
             GatewayServices services = GatewayServer.getGatewayServices();
             if (services != null) {
-                remoteConfigRegistryClientService = services.getService(GatewayServices.REMOTE_REGISTRY_CLIENT_SERVICE);
+                remoteConfigRegistryClientService = services.getService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE);
             }
         }
 

@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.util;
 
 import java.io.IOException;
+import java.text.DateFormat;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,6 +29,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ser.FilterProvider;
 
 public class JsonUtils {
   private static final GatewayUtilCommonMessages LOG = MessagesFactory.get( GatewayUtilCommonMessages.class );
@@ -43,6 +45,43 @@ public class JsonUtils {
       LOG.failedToSerializeMapToJSON( map, e );
     }
     return json;
+  }
+
+  public static String renderAsJsonString(Object obj) {
+    return renderAsJsonString(obj, null, null);
+  }
+
+  public static String renderAsJsonString(Object obj, FilterProvider filterProvider, DateFormat dateFormat) {
+    String json = null;
+    ObjectMapper mapper = new ObjectMapper();
+    if (filterProvider != null) {
+      mapper.setFilterProvider(filterProvider);
+    }
+
+    if (dateFormat != null) {
+      mapper.setDateFormat(dateFormat);
+    }
+
+    try {
+      // write JSON to a file
+      json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
+    } catch ( JsonProcessingException e ) {
+      LOG.failedToSerializeObjectToJSON( obj, e );
+    }
+    return json;
+  }
+
+  public static Object getObjectFromJsonString(String json) {
+    Map<String, String> obj = null;
+    JsonFactory factory = new JsonFactory();
+    ObjectMapper mapper = new ObjectMapper(factory);
+    TypeReference<Map<String, String>> typeRef = new TypeReference<Map<String, String>>() {};
+    try {
+      obj = mapper.readValue(json, typeRef);
+    } catch (IOException e) {
+      LOG.failedToGetMapFromJsonString( json, e );
+    }
+    return obj;
   }
 
   public static Map<String, String> getMapFromJsonString(String json) {

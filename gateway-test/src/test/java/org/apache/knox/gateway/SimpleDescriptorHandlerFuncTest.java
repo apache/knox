@@ -18,6 +18,8 @@ package org.apache.knox.gateway;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.registry.ServiceDefinitionRegistry;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
@@ -170,11 +172,17 @@ public class SimpleDescriptorHandlerFuncTest {
       // Setup the Gateway Services
       GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
 
+      //Service Definition Registry
+      final ServiceDefinitionRegistry serviceDefinitionRegistry = EasyMock.createNiceMock(ServiceDefinitionRegistry.class);
+      EasyMock.expect(serviceDefinitionRegistry.getServiceDefinitions()).andReturn(Collections.emptySet()).anyTimes();
+      EasyMock.replay(serviceDefinitionRegistry);
+      EasyMock.expect(gatewayServices.getService(ServiceType.SERVICE_DEFINITION_REGISTRY)).andReturn(serviceDefinitionRegistry).anyTimes();
+
       // Master Service
       MasterService ms = EasyMock.createNiceMock(MasterService.class);
       EasyMock.expect(ms.getMasterSecret()).andReturn(testMasterSecret.toCharArray()).anyTimes();
       EasyMock.replay(ms);
-      EasyMock.expect(gatewayServices.getService(GatewayServices.MASTER_SERVICE)).andReturn(ms).anyTimes();
+      EasyMock.expect(gatewayServices.getService(ServiceType.MASTER_SERVICE)).andReturn(ms).anyTimes();
 
       // Keystore Service
       KeystoreService ks = EasyMock.createNiceMock(KeystoreService.class);
@@ -184,7 +192,7 @@ public class SimpleDescriptorHandlerFuncTest {
       KeyStore credStore = EasyMock.createNiceMock(KeyStore.class);
       EasyMock.expect(ks.getCredentialStoreForCluster(testDescriptor.getName())).andReturn(credStore).anyTimes();
       EasyMock.replay(ks);
-      EasyMock.expect(gatewayServices.getService(GatewayServices.KEYSTORE_SERVICE)).andReturn(ks).anyTimes();
+      EasyMock.expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(ks).anyTimes();
 
       // Alias Service
       AliasService as = EasyMock.createNiceMock(AliasService.class);
@@ -195,7 +203,7 @@ public class SimpleDescriptorHandlerFuncTest {
       as.addAliasForCluster(capture(capturedCluster), capture(capturedAlias), capture(capturedPwd));
       EasyMock.expectLastCall().anyTimes();
       EasyMock.replay(as);
-      EasyMock.expect(gatewayServices.getService(GatewayServices.ALIAS_SERVICE)).andReturn(as).anyTimes();
+      EasyMock.expect(gatewayServices.getService(ServiceType.ALIAS_SERVICE)).andReturn(as).anyTimes();
 
       // Topology Service
       TopologyService ts = EasyMock.createNiceMock(TopologyService.class);
@@ -205,7 +213,7 @@ public class SimpleDescriptorHandlerFuncTest {
       EasyMock.expectLastCall().anyTimes();
       EasyMock.expect(ts.getTopologies()).andReturn(Collections.emptyList()).anyTimes();
       EasyMock.replay(ts);
-      EasyMock.expect(gatewayServices.getService(GatewayServices.TOPOLOGY_SERVICE)).andReturn(ts).anyTimes();
+      EasyMock.expect(gatewayServices.getService(ServiceType.TOPOLOGY_SERVICE)).andReturn(ts).anyTimes();
 
       EasyMock.replay(gatewayServices);
 

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "license": "Apache-2.0",
   "scripts": {
-    "start": "ng serve",
+    "start": "ng serve --base-href /gateway/manager/admin-ui/ --deploy-url /gateway/manager/admin-ui/ --proxy-config proxy.conf.json",
     "build": "ng build",
     "build-prod": "ng build --prod",
     "lint": "tslint \"admin-ui/**/*.ts\""
@@ -18,6 +18,7 @@
     "@angular/platform-browser": "^5.2.0",
     "@angular/platform-browser-dynamic": "^5.2.0",
     "@angular/router": "^5.2.0",
+    "angular2-datatable": "^0.6.0",
     "bootstrap": "^3.4.1",
     "core-js": "^2.6.4",
     "jquery": ">=3.0.0",
@@ -26,7 +27,9 @@
     "ng2-bs3-modal": "^0.13.0",
     "ng2-validation": "^4.2.0",
     "popper.js": "^1.14.7",
+    "rest-url-builder": "^1.0.6",
     "rxjs": "^5.5.2",
+    "sweetalert": "^2.1.2",
     "ts-helpers": "^1.1.1",
     "zone.js": "^0.8.29"
   },

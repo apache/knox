@@ -24,6 +24,7 @@ import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteStepProcessor;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteStepStatus;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.impl.DefaultCryptoService;
@@ -38,10 +39,9 @@ import java.util.ServiceLoader;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.core.IsNot.not;
-import static org.hamcrest.text.IsEmptyString.isEmptyOrNullString;
 import static org.junit.Assert.fail;
-
 
 public class EncryptDecryptUriProcessorTest {
 
@@ -85,7 +85,7 @@ public class EncryptDecryptUriProcessorTest {
     DefaultCryptoService cryptoService = new DefaultCryptoService();
     cryptoService.setAliasService( as );
     GatewayServices gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
-    EasyMock.expect( gatewayServices.getService( GatewayServices.CRYPTO_SERVICE ) ).andReturn( cryptoService );
+    EasyMock.expect( gatewayServices.getService( ServiceType.CRYPTO_SERVICE ) ).andReturn( cryptoService );
 
     UrlRewriteEnvironment encEnvironment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
     EasyMock.expect( encEnvironment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE ) ).andReturn( gatewayServices ).anyTimes();
@@ -114,14 +114,14 @@ public class EncryptDecryptUriProcessorTest {
     assertThat( encodedValue.getValue(), notNullValue() );
     assertThat( encodedValue.getValue().resolve( encryptedValueParamName ).size(), is( 1 ) );
     String encryptedAdrress = encodedValue.getValue().resolve( encryptedValueParamName ).get( 0 );
-    assertThat( encryptedAdrress, not( isEmptyOrNullString() ) );
+    assertThat( encryptedAdrress, not( is(emptyOrNullString()) ) );
     assertThat( encryptedAdrress, not( "{host}:{port}" ) );
     assertThat( encryptedAdrress, not( "hdp:8088" ) );
 
     // Test decryption.  Result is in dectryptedAdrress.
     String decParam = "foo";
     gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
-    EasyMock.expect( gatewayServices.getService( GatewayServices.CRYPTO_SERVICE ) ).andReturn( cryptoService );
+    EasyMock.expect( gatewayServices.getService( ServiceType.CRYPTO_SERVICE ) ).andReturn( cryptoService );
     as = EasyMock.createNiceMock( AliasService.class );
     EasyMock.expect( as.getPasswordFromAliasForCluster( clusterName, passwordAlias ) ).andReturn( secret.toCharArray() ).anyTimes();
 

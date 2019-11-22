@@ -57,7 +57,7 @@ public class HiveJDBCSample {
       Class.forName( "org.apache.hive.jdbc.HiveDriver" );
 
       // Configure JDBC connection
-      connection = DriverManager.getConnection( connectionString, user, pass );
+      connection = DriverManager.getConnection( connectionString, username, pass );
 
       statement = connection.createStatement();
 

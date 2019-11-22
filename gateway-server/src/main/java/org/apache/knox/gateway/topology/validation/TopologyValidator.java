@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.knox.gateway.topology.validation;
 
 import java.io.File;
@@ -55,25 +54,26 @@ public class TopologyValidator {
   public boolean validateTopology() {
     errors = new LinkedList<>();
     try {
-      SchemaFactory fact = SchemaFactory
-          .newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+      SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
       URL schemaUrl = getClass().getResource( "/conf/topology-v1.xsd" );
-      Schema s = fact.newSchema( schemaUrl );
+      Schema s = schemaFactory.newSchema( schemaUrl );
       Validator validator = s.newValidator();
+      validator.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+      validator.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
       final List<SAXParseException> exceptions = new LinkedList<>();
       validator.setErrorHandler(new ErrorHandler() {
         @Override
-        public void warning(SAXParseException exception) throws SAXException {
+        public void warning(SAXParseException exception) {
           exceptions.add(exception);
         }
 
         @Override
-        public void fatalError(SAXParseException exception) throws SAXException {
+        public void fatalError(SAXParseException exception) {
           exceptions.add(exception);
         }
 
         @Override
-        public void error(SAXParseException exception) throws SAXException {
+        public void error(SAXParseException exception) {
           exceptions.add(exception);
         }
       });

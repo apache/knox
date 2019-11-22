@@ -21,6 +21,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface GatewayConfig {
 
@@ -32,6 +33,7 @@ public interface GatewayConfig {
    *
    * @deprecated use {@link GatewayConfig#KNOX_GATEWAY_CONF_DIR_VAR} instead
    */
+  @Deprecated
   String GATEWAY_CONF_HOME_VAR = "GATEWAY_CONF_HOME";
 
   String KNOX_GATEWAY_CONF_DIR_VAR = "KNOX_GATEWAY_CONF_DIR";
@@ -41,6 +43,7 @@ public interface GatewayConfig {
    *
    * @deprecated use {@link GatewayConfig#KNOX_GATEWAY_DATA_DIR} instead
    */
+  @Deprecated
   String GATEWAY_DATA_HOME_VAR = "GATEWAY_DATA_HOME";
 
   String KNOX_GATEWAY_DATA_DIR = "KNOX_GATEWAY_DATA_DIR";
@@ -94,6 +97,8 @@ public interface GatewayConfig {
   String REMOTE_CONFIG_REGISTRY_KEYTAB = "keytab";
   String REMOTE_CONFIG_REGISTRY_USE_KEYTAB = "useKeytab";
   String REMOTE_CONFIG_REGISTRY_USE_TICKET_CACHE = "useTicketCache";
+
+  String PROXYUSER_SERVICES_IGNORE_DOAS = "gateway.proxyuser.services.ignore.doas";
 
   /**
    * The location of the gateway configuration.
@@ -376,6 +381,13 @@ public interface GatewayConfig {
    */
   int getWebsocketIdleTimeout();
 
+  /**
+   * Max count of messages that can be temporarily buffered in memory before a connection is properly setup.
+   * @since 0.10
+   * @return buffer size
+   */
+  int getWebsocketMaxWaitBufferCount();
+
   boolean isMetricsEnabled();
 
   boolean isJmxMetricsReportingEnabled();
@@ -606,5 +618,28 @@ public interface GatewayConfig {
    */
   boolean isTopologyValidationEnabled();
 
+  /**
+   * Returns a list of services that need service name appended to
+   * X-Forward-Context header as a result of which the new header would look
+   * /{gateway}/{sandbox}/{serviceName}
+   *
+   * @return List of service names for which service name needs to be appended
+   * to X-Forward-Context header, can be empty list.
+   * @since 1.3.0
+   */
+  List<String> getXForwardContextAppendServices();
 
+  /**
+   * Returns a set of service principal names that indicate which services to ignore doAs requests.
+   * <p>
+   * If a service in the returned set sends a Kerberos-authenticated request to the Gateway, the doAs
+   * query parameter is to be ignored; thus leaving the authenticated user details intact.
+   * <p>
+   * If the (authenticated) service is not authorized to set the specified proxy user (see information
+   * related to hadoop.proxyuser.... properties) an error will not be returned since the request to
+   * impersonate users is to be ignored.
+   *
+   * @return a set of service principal names that indicate which services to ignore doAs request
+   */
+  Set<String> getServicesToIgnoreDoAs();
 }

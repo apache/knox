@@ -1,4 +1,4 @@
-<div *ngIf="resourceType && resourceType !== 'Topologies'" class="panel panel-default">
+<div *ngIf="resourceType && resourceType !== 'Topologies' && resourceType !== 'Service Definitions'" class="panel panel-default">
     <div class="panel-heading">
         <h4 class="panel-title">
             {{ getTitleSubject() }} Detail <span *ngIf="hasSelectedResource()"
@@ -355,6 +355,26 @@
             </div>
             <div class="panel-body" *ngIf="isShowServiceDiscovery()">
                 <table class="table table-sm">
+                    <!-- Discovery type field -->
+                    <tr>
+                        <td width="20%">
+                            <span>
+                              <strong>Type</strong>
+                            </span>
+                        </td>
+                        <td>
+                            <span>
+                              <select id="select" autofocus required class="md-select form-control"
+                                      [(ngModel)]="descriptor.discoveryType" (change)="descriptor.setDirty()">
+                                <option *ngFor="let typeOption of resourceService.discoveryTypes"
+                                        class="md-option"
+                                        [value]="typeOption"
+                                        [selected]="descriptor.discoveryType === typeOption">{{typeOption}}</option>
+                              </select>
+                            </span>
+                        </td>
+                    </tr>
+                    <!-- Discovery address field -->
                     <tr>
                         <td width="20%">
               <span [class]="!editModeAddress && !descriptor.discoveryAddress ? 'inline-editable' : ''"
@@ -378,6 +398,7 @@
               </span>
                         </td>
                     </tr>
+                    <!-- Discovery cluster field -->
                     <tr>
                         <td width="20%">
               <span [class]="!editModeCluster && !descriptor.discoveryCluster ? 'inline-editable' : ''"
@@ -401,6 +422,7 @@
               </span>
                         </td>
                     </tr>
+                    <!-- Discovery user field -->
                     <tr>
                         <td width="20%">
               <span [class]="!editModeUser && !descriptor.discoveryUser ? 'inline-editable' : ''"
@@ -424,6 +446,7 @@
               </span>
                         </td>
                     </tr>
+                    <!-- Discovery password alias field -->
                     <tr>
                         <td width="20%">
               <span [class]="!editModeAlias && !descriptor.discoveryPassAlias ? 'inline-editable' : ''"
@@ -527,4 +550,9 @@
 <!-- Topology Details -->
 <div *ngIf="resourceType === 'Topologies'">
     <app-topology-detail></app-topology-detail>
+</div>
+
+<!-- Service Definition Details -->
+<div *ngIf="resourceType === 'Service Definitions'">
+    <app-servicedefinition-detail></app-servicedefinition-detail>
 </div>

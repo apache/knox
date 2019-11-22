@@ -28,6 +28,7 @@ import javax.net.ssl.SSLContext;
 import javax.servlet.FilterConfig;
 
 import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -50,7 +51,6 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
@@ -73,7 +73,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     GatewayServices services = (GatewayServices) filterConfig.getServletContext()
         .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     if (gatewayConfig != null && gatewayConfig.isMetricsEnabled()) {
-      MetricsService metricsService = services.getService(GatewayServices.METRICS_SERVICE);
+      MetricsService metricsService = services.getService(ServiceType.METRICS_SERVICE);
       builder = metricsService.getInstrumented(HttpClientBuilder.class);
     } else {
       builder = HttpClients.custom();
@@ -141,10 +141,10 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     char[] identityKeyPassphrase;
     KeyStore trustKeystore;
 
-    KeystoreService ks = services.getService(GatewayServices.KEYSTORE_SERVICE);
+    KeystoreService ks = services.getService(ServiceType.KEYSTORE_SERVICE);
     try {
       if (Boolean.parseBoolean(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL))) {
-        AliasService as = services.getService(GatewayServices.ALIAS_SERVICE);
+        AliasService as = services.getService(ServiceType.ALIAS_SERVICE);
 
         // Get the Gateway's configured identity keystore and key passphrase
         identityKeystore = ks.getKeystoreForGateway();
@@ -163,7 +163,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
         identityKeystore = null;
         identityKeyPassphrase = null;
 
-        // The the behavior before KNOX-1812 was to use the HttpClients default SslContext. However,
+        // The behavior before KNOX-1812 was to use the HttpClients default SslContext. However,
         // if a truststore was explicitly configured in gateway-site (gateway.truststore.password.alias,
         // gateway.truststore.path, gateway.truststore.type) create a custom SslContext and use it.
         trustKeystore = ks.getTruststoreForHttpClient();
@@ -179,7 +179,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
         }
 
         if (trustKeystore != null) {
-          sslContextBuilder.loadTrustMaterial(trustKeystore, new TrustSelfSignedStrategy());
+          sslContextBuilder.loadTrustMaterial(trustKeystore, null);
         }
 
         return sslContextBuilder.build();
@@ -191,7 +191,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     }
   }
 
-  private static RequestConfig getRequestConfig( FilterConfig config ) {
+  static RequestConfig getRequestConfig( FilterConfig config ) {
     RequestConfig.Builder builder = RequestConfig.custom();
     int connectionTimeout = getConnectionTimeout( config );
     if ( connectionTimeout != -1 ) {
@@ -202,6 +202,15 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     if( socketTimeout != -1 ) {
       builder.setSocketTimeout( socketTimeout );
     }
+
+    // HttpClient 4.5.7 is broken for %2F handling with url normalization.
+    // However, HttpClient 4.5.8+ (HTTPCLIENT-1968) has reasonable url
+    // normalization that matches what Knox already does related to url handling.
+    //
+    // If this view changes later, need to change here as well as make sure
+    // rest-assured doesn't use the old HttpClient behavior.
+    builder.setNormalizeUri(true);
+
     return builder.build();
   }
 

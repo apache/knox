@@ -26,6 +26,7 @@ import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ContentType;
 import org.apache.knox.gateway.SpiGatewayMessages;
@@ -51,12 +52,14 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 public class DefaultDispatch extends AbstractGatewayDispatch {
-
   protected static final String SET_COOKIE = "SET-COOKIE";
   protected static final String WWW_AUTHENTICATE = "WWW-AUTHENTICATE";
 
@@ -65,14 +68,15 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
   protected static final Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
       AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
 
-  private Set<String> outboundResponseExcludeHeaders = new HashSet<>(Arrays.asList(SET_COOKIE, WWW_AUTHENTICATE));
+  protected static final String EXCLUDE_ALL = "*";
+  private Set<String> outboundResponseExcludeHeaders = Collections.singleton(WWW_AUTHENTICATE);
+  private Set<String> outboundResponseExcludedSetCookieHeaderDirectives = Collections.singleton(EXCLUDE_ALL);
 
   //Buffer size in bytes
   private int replayBufferSize = -1;
 
   @Override
   public void destroy() {
-
   }
 
   protected int getReplayBufferSize() {
@@ -97,7 +101,6 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
     }
     replayBufferSize = size;
   }
-
 
   protected void executeRequest(
          HttpUriRequest outboundRequest,
@@ -165,7 +168,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
     }
   }
 
-  private String getInboundResponseContentType( final HttpEntity entity ) {
+  protected String getInboundResponseContentType( final HttpEntity entity ) {
     String fullContentType = null;
     if( entity != null ) {
       ContentType entityContentType = ContentType.get( entity );
@@ -210,9 +213,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
    protected void addCredentialsToRequest(HttpUriRequest outboundRequest) {
    }
 
-   protected HttpEntity createRequestEntity(HttpServletRequest request)
-         throws IOException {
-
+   protected HttpEntity createRequestEntity(HttpServletRequest request) throws IOException {
       String contentType = request.getContentType();
       int contentLength = request.getContentLength();
       InputStream contentStream = request.getInputStream();
@@ -245,7 +246,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
 
    @Override
    public void doGet(URI url, HttpServletRequest request, HttpServletResponse response)
-         throws IOException, URISyntaxException {
+         throws IOException {
       HttpGet method = new HttpGet(url);
       // https://issues.apache.org/jira/browse/KNOX-107 - Service URLs not rewritten for WebHDFS GET redirects
       // This is now taken care of in DefaultHttpClientFactory.createHttpClient
@@ -257,15 +258,25 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
 
    @Override
    public void doOptions(URI url, HttpServletRequest request, HttpServletResponse response)
-         throws IOException, URISyntaxException {
+         throws IOException {
       HttpOptions method = new HttpOptions(url);
       executeRequest(method, request, response);
    }
 
    @Override
    public void doPut(URI url, HttpServletRequest request, HttpServletResponse response)
-         throws IOException, URISyntaxException {
+         throws IOException {
       HttpPut method = new HttpPut(url);
+      HttpEntity entity = createRequestEntity(request);
+      method.setEntity(entity);
+      copyRequestHeaderFields(method, request);
+      executeRequest(method, request, response);
+   }
+
+   @Override
+   public void doPatch(URI url, HttpServletRequest request, HttpServletResponse response)
+         throws IOException {
+      HttpPatch method = new HttpPatch(url);
       HttpEntity entity = createRequestEntity(request);
       method.setEntity(entity);
       copyRequestHeaderFields(method, request);
@@ -284,7 +295,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
 
    @Override
    public void doDelete(URI url, HttpServletRequest request, HttpServletResponse response)
-         throws IOException, URISyntaxException {
+         throws IOException {
       HttpDelete method = new HttpDelete(url);
       copyRequestHeaderFields(method, request);
       executeRequest(method, request, response);
@@ -292,30 +303,52 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
 
   @Override
   public void doHead(URI url, HttpServletRequest request, HttpServletResponse response)
-      throws IOException, URISyntaxException {
+      throws IOException {
     final HttpHead method = new HttpHead(url);
     copyRequestHeaderFields(method, request);
     executeRequest(method, request, response);
   }
 
   public void copyResponseHeaderFields(HttpServletResponse outboundResponse, HttpResponse inboundResponse) {
-    Header[] headers = inboundResponse.getAllHeaders();
-    Set<String> excludeHeaders = getOutboundResponseExcludeHeaders();
-    boolean hasExcludeHeaders = false;
-    if ((excludeHeaders != null) && !(excludeHeaders.isEmpty())) {
-      hasExcludeHeaders = true;
-    }
-    for ( Header header : headers ) {
-      String name = header.getName();
-      if (hasExcludeHeaders && excludeHeaders.contains(name.toUpperCase(Locale.ROOT))) {
+    final TreeMap<String, Set<String>> excludedHeaderDirectives = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    getOutboundResponseExcludeHeaders().stream().forEach(excludeHeader ->
+        excludedHeaderDirectives.put(excludeHeader, Collections.singleton(EXCLUDE_ALL)));
+    excludedHeaderDirectives.put(SET_COOKIE, getOutboundResponseExcludedSetCookieHeaderDirectives());
+
+    for (Header header : inboundResponse.getAllHeaders()) {
+      final String responseHeaderValue = calculateResponseHeaderValue(header, excludedHeaderDirectives);
+      if (responseHeaderValue.isEmpty()) {
         continue;
       }
-      String value = header.getValue();
-      outboundResponse.addHeader(name, value);
+      outboundResponse.addHeader(header.getName(), responseHeaderValue);
     }
   }
 
+  private String calculateResponseHeaderValue(Header headerToCheck, Map<String, Set<String>> excludedHeaderDirectives) {
+    final String headerNameToCheck = headerToCheck.getName();
+    if (excludedHeaderDirectives != null && excludedHeaderDirectives.containsKey(headerNameToCheck)) {
+      final Set<String> excludedHeaderValues = excludedHeaderDirectives.get(headerNameToCheck);
+      if (!excludedHeaderValues.isEmpty()) {
+        if (excludedHeaderValues.stream().anyMatch(e -> e.equals(EXCLUDE_ALL))) {
+          return ""; // we should exclude all -> there should not be any value added with this header
+        } else {
+          final String separator = SET_COOKIE.equalsIgnoreCase(headerNameToCheck) ? "; " : " ";
+          Set<String> headerValuesToCheck = new HashSet<>(Arrays.asList(headerToCheck.getValue().trim().split("\\s+")));
+          headerValuesToCheck = headerValuesToCheck.stream().map(h -> h.replaceAll(separator.trim(), "")).collect(Collectors.toSet());
+          headerValuesToCheck.removeAll(excludedHeaderValues);
+          return headerValuesToCheck.isEmpty() ? "" : String.join(separator, headerValuesToCheck);
+        }
+      }
+    }
+
+    return headerToCheck.getValue();
+  }
+
   public Set<String> getOutboundResponseExcludeHeaders() {
-    return outboundResponseExcludeHeaders;
+    return outboundResponseExcludeHeaders == null ? Collections.emptySet() : outboundResponseExcludeHeaders;
+  }
+
+  public Set<String> getOutboundResponseExcludedSetCookieHeaderDirectives() {
+    return outboundResponseExcludedSetCookieHeaderDirectives == null ? Collections.emptySet() : outboundResponseExcludedSetCookieHeaderDirectives;
   }
 }

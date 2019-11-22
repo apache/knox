@@ -14,8 +14,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- *
  */
 
 package org.apache.knox.gateway.dispatch;
@@ -28,10 +26,13 @@ import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.junit.Test;
@@ -62,7 +63,7 @@ public class DefaultHttpClientFactoryTest {
     expect(gatewayConfig.getHttpClientSocketTimeout()).andReturn(20000).once();
 
     GatewayServices gatewayServices = createMock(GatewayServices.class);
-    expect(gatewayServices.getService(GatewayServices.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
+    expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
 
     ServletContext servletContext = createMock(ServletContext.class);
     expect(servletContext.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).atLeastOnce();
@@ -90,7 +91,7 @@ public class DefaultHttpClientFactoryTest {
     expect(keystoreService.getTruststoreForHttpClient()).andReturn(null).once();
 
     GatewayServices gatewayServices = createMock(GatewayServices.class);
-    expect(gatewayServices.getService(GatewayServices.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
+    expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
 
     FilterConfig filterConfig = createMock(FilterConfig.class);
     expect(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL)).andReturn("false").once();
@@ -116,8 +117,8 @@ public class DefaultHttpClientFactoryTest {
     expect(aliasService.getGatewayIdentityPassphrase()).andReturn("horton".toCharArray()).once();
 
     GatewayServices gatewayServices = createMock(GatewayServices.class);
-    expect(gatewayServices.getService(GatewayServices.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
-    expect(gatewayServices.getService(GatewayServices.ALIAS_SERVICE)).andReturn(aliasService).once();
+    expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
+    expect(gatewayServices.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).once();
 
     FilterConfig filterConfig = createMock(FilterConfig.class);
     expect(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL)).andReturn("true").once();
@@ -144,8 +145,8 @@ public class DefaultHttpClientFactoryTest {
     expect(aliasService.getGatewayIdentityPassphrase()).andReturn("horton".toCharArray()).once();
 
     GatewayServices gatewayServices = createMock(GatewayServices.class);
-    expect(gatewayServices.getService(GatewayServices.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
-    expect(gatewayServices.getService(GatewayServices.ALIAS_SERVICE)).andReturn(aliasService).once();
+    expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
+    expect(gatewayServices.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).once();
 
     FilterConfig filterConfig = createMock(FilterConfig.class);
     expect(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL)).andReturn("true").once();
@@ -165,7 +166,7 @@ public class DefaultHttpClientFactoryTest {
     expect(keystoreService.getTruststoreForHttpClient()).andReturn(null).once();
 
     GatewayServices gatewayServices = createMock(GatewayServices.class);
-    expect(gatewayServices.getService(GatewayServices.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
+    expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
 
     FilterConfig filterConfig = createMock(FilterConfig.class);
     expect(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL)).andReturn("false").once();
@@ -187,7 +188,7 @@ public class DefaultHttpClientFactoryTest {
     expect(keystoreService.getTruststoreForHttpClient()).andReturn(trustStore).once();
 
     GatewayServices gatewayServices = createMock(GatewayServices.class);
-    expect(gatewayServices.getService(GatewayServices.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
+    expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
 
     FilterConfig filterConfig = createMock(FilterConfig.class);
     expect(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL)).andReturn("false").once();
@@ -199,6 +200,29 @@ public class DefaultHttpClientFactoryTest {
     assertNotNull(context);
 
     verify(keystoreService, gatewayServices, filterConfig);
+  }
+
+  @Test
+  public void testHttpClientPathNormalization() {
+    GatewayConfig gatewayConfig = createMock(GatewayConfig.class);
+    expect(gatewayConfig.getHttpClientConnectionTimeout()).andReturn(20000).once();
+    expect(gatewayConfig.getHttpClientSocketTimeout()).andReturn(20000).once();
+
+    ServletContext servletContext = createMock(ServletContext.class);
+    expect(servletContext.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).atLeastOnce();
+
+    FilterConfig filterConfig = createMock(FilterConfig.class);
+    expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
+    expect(filterConfig.getInitParameter("httpclient.connectionTimeout")).andReturn(null).once();
+    expect(filterConfig.getInitParameter("httpclient.socketTimeout")).andReturn(null).once();
+
+    replay(gatewayConfig, servletContext, filterConfig);
+
+    RequestConfig requestConfig = DefaultHttpClientFactory.getRequestConfig(filterConfig);
+
+    assertTrue(requestConfig.isNormalizeUri());
+
+    verify(gatewayConfig, servletContext, filterConfig);
   }
 
   private KeyStore loadKeyStore(String keyStoreFile, String password, String storeType)

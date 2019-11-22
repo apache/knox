@@ -89,9 +89,8 @@ public class RemoteConfigurationMonitorTest {
     private static File providersDir;
     private static File descriptorsDir;
 
-    private static TestingCluster zkCluster;
-
-    private static CuratorFramework client;
+    private TestingCluster zkCluster;
+    private CuratorFramework client;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -102,7 +101,7 @@ public class RemoteConfigurationMonitorTest {
     }
 
     @AfterClass
-    public static void tearDownAfterClass() throws Exception {
+    public static void tearDownAfterClass() {
         // Delete the working dir
         testTmp.delete();
     }
@@ -155,15 +154,16 @@ public class RemoteConfigurationMonitorTest {
     /**
      * Configure and start the ZooKeeper test cluster, and create the znodes monitored by the RemoteConfigurationMonitor.
      */
-    private static void configureAndStartZKCluster() throws Exception {
+    private void configureAndStartZKCluster() throws Exception {
         // Configure security for the ZK cluster instances
         Map<String, Object> customInstanceSpecProps = new HashMap<>();
         customInstanceSpecProps.put("authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
         customInstanceSpecProps.put("requireClientAuthScheme", "sasl");
+        customInstanceSpecProps.put("admin.enableServer", false);
 
         // Define the test cluster
         List<InstanceSpec> instanceSpecs = new ArrayList<>();
-        for (int i = 0 ; i < 3 ; i++) {
+        for (int i = 0 ; i < 1 ; i++) {
             InstanceSpec is = new InstanceSpec(null, -1, -1, -1, false, (i+1), -1, -1, customInstanceSpecProps);
             instanceSpecs.add(is);
         }
@@ -188,7 +188,6 @@ public class RemoteConfigurationMonitorTest {
         client.start();
 
         assertTrue(client.blockUntilConnected(10, TimeUnit.SECONDS));
-        assertTrue(client.isZk34CompatibilityMode());
 
         // Create test config nodes with an ACL for a sasl user that is NOT configured for the test client
         List<ACL> acls = Arrays.asList(new ACL(ZooDefs.Perms.ALL, new Id("sasl", ALT_USERNAME)),
@@ -198,8 +197,7 @@ public class RemoteConfigurationMonitorTest {
                       client.checkExists().forPath(PATH_AUTH_TEST));
     }
 
-
-    private static void validateKnoxConfigNodeACLs(List<ACL> expectedACLS, List<ACL> actualACLs) throws Exception {
+    private void validateKnoxConfigNodeACLs(List<ACL> expectedACLS, List<ACL> actualACLs) {
         assertEquals(expectedACLS.size(), actualACLs.size());
         int matchedCount = 0;
         for (ACL expected : expectedACLS) {
@@ -215,7 +213,6 @@ public class RemoteConfigurationMonitorTest {
         }
         assertEquals("ACL mismatch despite being same quantity.", expectedACLS.size(), matchedCount);
     }
-
 
     @Test
     public void testZooKeeperConfigMonitorSASLNodesExistWithUnacceptableACL() throws Exception {

@@ -49,7 +49,6 @@ public abstract class SparkCommonServiceURLCreator implements ServiceURLCreator 
     return comp.getConfigProperty(portConfigProperty);
   }
 
-
   @Override
   public List<String> create(String service, Map<String, String> serviceParams) {
     List<String> urls = new ArrayList<>();
@@ -71,7 +70,4 @@ public abstract class SparkCommonServiceURLCreator implements ServiceURLCreator 
 
     return urls;
   }
-
-
-
 }

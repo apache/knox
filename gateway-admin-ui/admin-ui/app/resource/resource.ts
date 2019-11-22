@@ -21,4 +21,5 @@ export class Resource {
     uri: string;
     href: string;
     content: string;
+    service: string;
 }

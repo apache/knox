@@ -35,7 +35,7 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -72,7 +72,7 @@ public class JsonFilterReaderTest {
 
   @Test
   public void testNumber() throws IOException {
-    int num = new Random().nextInt();
+    int num = ThreadLocalRandom.current().nextInt();
     String inputJson = String.valueOf(num);
     StringReader inputReader = new StringReader( inputJson );
     JsonFilterReader filterReader = new TestJsonFilterReader( inputReader, null );

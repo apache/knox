@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway.dispatch;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
@@ -60,7 +60,7 @@ class NiFiRequestUtil {
         if (index >= 0) {
           knoxRouteContext = inboundRequestPathInfo.substring(0, index);
         } else {
-          Logger.getLogger(NiFiHaDispatch.class.getName()).error(String.format(Locale.ROOT, "Unable to find index of %s in %s", outboundRequestUriPathNoTrailingSlash, inboundRequestPathInfo));
+          Logger.getLogger(NiFiRequestUtil.class.getName()).error(String.format(Locale.ROOT, "Unable to find index of %s in %s", outboundRequestUriPathNoTrailingSlash, inboundRequestPathInfo));
         }
         outboundRequest.setHeader(NiFiHeaders.X_FORWARDED_CONTEXT, xForwardedContextHeaderValue + knoxRouteContext);
       }

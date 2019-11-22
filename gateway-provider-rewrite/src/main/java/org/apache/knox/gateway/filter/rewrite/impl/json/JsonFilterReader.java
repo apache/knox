@@ -189,10 +189,8 @@ class JsonFilterReader extends Reader {
         throw new IllegalStateException();
       }
     }
-    if( bufferingLevel == null ) {
-      if( !startBuffering( child ) ) {
-        generator.writeStartObject();
-      }
+    if( bufferingLevel == null && !startBuffering( child ) ) {
+      generator.writeStartObject();
     }
   }
 
@@ -253,10 +251,8 @@ class JsonFilterReader extends Reader {
         throw new IllegalStateException();
       }
     }
-    if( bufferingLevel == null ) {
-      if( !startBuffering( child ) ) {
-        generator.writeStartArray();
-      }
+    if( bufferingLevel == null && !startBuffering( child ) ) {
+      generator.writeStartArray();
     }
   }
 
@@ -525,12 +521,10 @@ class JsonFilterReader extends Reader {
         List<JsonPath.Match> matches = path.evaluate( node.scopeNode );
         if( matches != null && !matches.isEmpty() ) {
           JsonPath.Match match = matches.get( 0 );
-          if( match.getNode().isTextual() ) {
-            if( selector instanceof UrlRewriteFilterApplyDescriptor ) {
-              UrlRewriteFilterApplyDescriptor apply = (UrlRewriteFilterApplyDescriptor)selector;
-              rule = apply.rule();
-              break;
-            }
+          if( match.getNode().isTextual() && selector instanceof UrlRewriteFilterApplyDescriptor ) {
+            UrlRewriteFilterApplyDescriptor apply = (UrlRewriteFilterApplyDescriptor)selector;
+            rule = apply.rule();
+            break;
           }
         }
       }
@@ -580,10 +574,8 @@ class JsonFilterReader extends Reader {
       JsonPath.Expression path = (JsonPath.Expression)selector.compiledPath( JPATH_COMPILER );
       List<JsonPath.Match> matches = path.evaluate( node.node );
       for( JsonPath.Match match : matches ) {
-        if( match.getNode().isTextual() ) {
-          if( selector instanceof UrlRewriteFilterApplyDescriptor ) {
-            filterBufferedValue( match, (UrlRewriteFilterApplyDescriptor)selector );
-          }
+        if( match.getNode().isTextual() && selector instanceof UrlRewriteFilterApplyDescriptor ) {
+          filterBufferedValue( match, (UrlRewriteFilterApplyDescriptor)selector );
         }
       }
     }

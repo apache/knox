@@ -99,8 +99,9 @@ public class JettySSLService implements SSLService {
   private void logAndValidateCertificate(GatewayConfig config) throws ServiceLifecycleException {
     // let's log the hostname (CN) and cert expiry from the gateway's public cert to aid in SSL debugging
     Certificate cert;
+    final String identityKeyAlias = config.getIdentityKeyAlias();
     try {
-      cert = as.getCertificateForGateway(config.getIdentityKeyAlias());
+      cert = as.getCertificateForGateway(identityKeyAlias);
     } catch (AliasServiceException e) {
       throw new ServiceLifecycleException("Cannot Retreive Gateway SSL Certificate. Server will not start.", e);
     }
@@ -122,10 +123,10 @@ public class JettySSLService implements SSLService {
           throw new ServiceLifecycleException("Gateway SSL Certificate is not yet valid. Server will not start.", e);
         }
       } else {
-        throw new ServiceLifecycleException("Public certificate for the gateway cannot be found with the alias gateway-identity. Plase check the identity certificate alias.");
+        throw new ServiceLifecycleException("Public certificate for the gateway is not of the expected type of  . Something is wrong with the gateway keystore.");
       }
     } else {
-      throw new ServiceLifecycleException("Public certificate for the gateway is not of the expected type of X509Certificate. Something is wrong with the gateway keystore.");
+      throw new ServiceLifecycleException("Public certificate for the gateway cannot be found with the alias " + identityKeyAlias + ". Please check the identity certificate alias.");
     }
   }
 
@@ -135,7 +136,7 @@ public class JettySSLService implements SSLService {
     String identityKeystoreType = config.getIdentityKeystoreType();
     String identityKeyAlias = config.getIdentityKeyAlias();
 
-    SslContextFactory sslContextFactory = new SslContextFactory( true );
+    SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
     sslContextFactory.setCertAlias( identityKeyAlias );
     sslContextFactory.setKeyStoreType(identityKeystoreType);
     sslContextFactory.setKeyStorePath(identityKeystorePath );

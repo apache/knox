@@ -56,4 +56,8 @@ public interface WebsocketLogMessages {
       text = "Websocket connection to backend server {0} closed")
   void onConnectionClose(String backend);
 
+  @Message(level = MessageLevel.DEBUG,
+      text = "{0}")
+  void debugLog(String message);
+
 }

@@ -24,9 +24,12 @@ import org.apache.hadoop.fs.Path;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasService;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
+
+import static org.apache.knox.gateway.services.security.impl.RemoteAliasService.REMOTE_ALIAS_SERVICE_TYPE;
 
 import java.io.File;
 import java.net.InetSocketAddress;
@@ -37,9 +40,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -136,6 +141,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String WEBSOCKET_INPUT_BUFFER_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.input.buffer.size";
   public static final String WEBSOCKET_ASYNC_WRITE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.async.write.timeout";
   public static final String WEBSOCKET_IDLE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.idle.timeout";
+  public static final String WEBSOCKET_MAX_WAIT_BUFFER_COUNT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.wait.buffer.count";
 
   /**
    * Properties for for gateway port mapping feature
@@ -185,6 +191,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSOCKET_INPUT_BUFFER_SIZE = 4096;
   public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT = 60000;
   public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT = 300000;
+  public static final int DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT = 100;
 
   public static final boolean DEFAULT_GATEWAY_PORT_MAPPING_ENABLED = true;
   public static final boolean DEFAULT_REMOTE_ALIAS_SERVICE_ENABLED = true;
@@ -229,6 +236,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final List<String> DEFAULT_GLOBAL_RULES_SERVICES = Arrays.asList(
       "NAMENODE", "JOBTRACKER", "WEBHDFS", "WEBHCAT",
       "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER");
+
+  /* property that specifies list of services for which we need to append service name to the X-Forward-Context header */
+  public static final String X_FORWARD_CONTEXT_HEADER_APPEND_SERVICES = GATEWAY_CONFIG_FILE_PREFIX + ".xforwarded.header.context.append.servicename";
 
   public GatewayConfigImpl() {
     init();
@@ -843,6 +853,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public int getWebsocketMaxWaitBufferCount() {
+    return getInt( WEBSOCKET_MAX_WAIT_BUFFER_COUNT, DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT);
+  }
+
+  @Override
   public Map<String, Integer> getGatewayPortMappings() {
 
     final Map<String, Integer> result = new ConcurrentHashMap<>();
@@ -986,7 +1001,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public Map<String, String> getRemoteAliasServiceConfiguration() {
-    return getPropsWithPrefix(getRemoteAliasServiceConfigurationPrefix());
+    final Map<String, String> remoteAliasServiceConfiguration = getPropsWithPrefix(getRemoteAliasServiceConfigurationPrefix());
+
+    //in case the remote alias service configuration type is not set we default to zookeeper
+    if (!remoteAliasServiceConfiguration.containsKey(REMOTE_ALIAS_SERVICE_TYPE)) {
+      remoteAliasServiceConfiguration.put(REMOTE_ALIAS_SERVICE_TYPE, ZookeeperRemoteAliasService.TYPE);
+    }
+    return remoteAliasServiceConfiguration;
   }
 
   @Override
@@ -1050,5 +1071,27 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public boolean isTopologyValidationEnabled() {
     final String result = get(STRICT_TOPOLOGY_VALIDATION, Boolean.toString(DEFAULT_STRICT_TOPOLOGY_VALIDATION));
     return Boolean.parseBoolean(result);
+  }
+
+  @Override
+  public List<String> getXForwardContextAppendServices() {
+    String value = get( X_FORWARD_CONTEXT_HEADER_APPEND_SERVICES );
+    if ( value != null && !value.isEmpty() && !"none".equalsIgnoreCase(value.trim()) ) {
+      return Arrays.asList( value.trim().split("\\s*,\\s*") );
+    } else {
+      return new ArrayList<>();
+    }
+  }
+
+  @Override
+  public Set<String> getServicesToIgnoreDoAs() {
+    Set<String> set = new HashSet<>();
+    String value = get( PROXYUSER_SERVICES_IGNORE_DOAS );
+
+    if (value != null) {
+      set.addAll(Arrays.asList(value.trim().toLowerCase(Locale.ROOT).split("\\s*,\\s*")));
+    }
+
+    return set;
   }
 }

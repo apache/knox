@@ -52,10 +52,11 @@ import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
-import org.apache.commons.lang.StringUtils;
+import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 
 import com.nimbusds.jose.JWSHeader;
@@ -87,6 +88,8 @@ public abstract class AbstractJWTFilter implements Filter {
   private String expectedIssuer;
   private String expectedSigAlg;
 
+  private TokenStateService tokenStateService;
+
   @Override
   public abstract void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException;
@@ -104,7 +107,10 @@ public abstract class AbstractJWTFilter implements Filter {
     if (context != null) {
       GatewayServices services = (GatewayServices) context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
       if (services != null) {
-        authority = services.getService(GatewayServices.TOKEN_SERVICE);
+        authority = services.getService(ServiceType.TOKEN_SERVICE);
+        if (Boolean.valueOf(filterConfig.getInitParameter(TokenStateService.CONFIG_SERVER_MANAGED))) {
+          tokenStateService = services.getService(ServiceType.TOKEN_STATE_SERVICE);
+        }
       }
     }
   }
@@ -124,7 +130,7 @@ public abstract class AbstractJWTFilter implements Filter {
   protected List<String> parseExpectedAudiences(String expectedAudiences) {
     List<String> audList = null;
     // setup the list of valid audiences for token validation
-    if (!StringUtils.isEmpty(expectedAudiences)) {
+    if (expectedAudiences != null && !expectedAudiences.isEmpty()) {
       // parse into the list
       String[] audArray = expectedAudiences.split(",");
       audList = new ArrayList<>();
@@ -136,10 +142,15 @@ public abstract class AbstractJWTFilter implements Filter {
   }
 
   protected boolean tokenIsStillValid(JWT jwtToken) {
-    // if there is no expiration date then the lifecycle is tied entirely to
-    // the cookie validity - otherwise ensure that the current time is before
-    // the designated expiration time
-    Date expires = jwtToken.getExpiresDate();
+    Date expires;
+    if (tokenStateService != null) {
+      expires = new Date(tokenStateService.getTokenExpiration(jwtToken.toString()));
+    } else {
+      // if there is no expiration date then the lifecycle is tied entirely to
+      // the cookie validity - otherwise ensure that the current time is before
+      // the designated expiration time
+      expires = jwtToken.getExpiresDate();
+    }
     return expires == null || new Date().before(expires);
   }
 

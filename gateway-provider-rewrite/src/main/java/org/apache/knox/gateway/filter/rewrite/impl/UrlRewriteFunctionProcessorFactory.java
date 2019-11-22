@@ -66,11 +66,8 @@ public abstract class UrlRewriteFunctionProcessorFactory {
     ServiceLoader<UrlRewriteFunctionProcessor> processors = ServiceLoader.load( UrlRewriteFunctionProcessor.class );
     for( UrlRewriteFunctionProcessor processor : processors ) {
       Class<? extends UrlRewriteFunctionDescriptor> descriptorInterface = getDescriptorInterface( processor );
-      Map<String,Class<? extends UrlRewriteFunctionProcessor>> typeMap = descriptorMap.get( descriptorInterface );
-      if( typeMap == null ) {
-        typeMap = new HashMap<>();
-        descriptorMap.put( descriptorInterface, typeMap );
-      }
+      Map<String, Class<? extends UrlRewriteFunctionProcessor>> typeMap = descriptorMap
+          .computeIfAbsent(descriptorInterface, k -> new HashMap<>());
       String functionName = processor.name();
       typeMap.put( functionName, processor.getClass() );
     }

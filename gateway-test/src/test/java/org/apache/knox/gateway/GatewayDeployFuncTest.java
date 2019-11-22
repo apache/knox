@@ -157,11 +157,6 @@ public class GatewayDeployFuncTest {
         .gotoRoot();
   }
 
-  //@Test
-  public void waitForManualTesting() throws IOException {
-    System.in.read();
-  }
-
   @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testDeployRedeployUndeploy() throws InterruptedException, IOException {
     LOG_ENTER();

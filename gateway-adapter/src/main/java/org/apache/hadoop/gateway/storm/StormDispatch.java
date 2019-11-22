@@ -16,12 +16,13 @@
  */
 package org.apache.hadoop.gateway.storm;
 
-import java.util.Set;
-
+/**
+ * An adapter class that delegate calls to {@link org.apache.knox.gateway.storm.StormDispatch}
+ * for backwards compatibility with package structure.
+ *
+ * @since 0.14.0
+ * @deprecated Use {@link org.apache.knox.gateway.storm.StormDispatch}
+ */
 @Deprecated
-public class StormDispatch extends org.apache.knox.gateway.storm.StormDispatch{
-  @Override
-  public Set<String> getOutboundResponseExcludeHeaders() {
-    return super.getOutboundResponseExcludeHeaders();
-  }
+public class StormDispatch extends org.apache.knox.gateway.storm.StormDispatch {
 }

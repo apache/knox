@@ -17,10 +17,11 @@
  */
 package org.apache.knox.gateway.pac4j.filter;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.pac4j.Pac4jMessages;
 import org.apache.knox.gateway.pac4j.session.KnoxSessionStore;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
@@ -28,6 +29,7 @@ import org.apache.knox.gateway.services.security.CryptoService;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.MasterService;
 import org.pac4j.config.client.PropertiesConfigFactory;
+import org.pac4j.config.client.PropertiesConstants;
 import org.pac4j.core.client.Client;
 import org.pac4j.core.config.Config;
 import org.pac4j.core.context.session.J2ESessionStore;
@@ -109,10 +111,10 @@ public class Pac4jDispatcherFilter implements Filter {
       GatewayServices services = (GatewayServices) context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
       clusterName = (String) context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE);
       if (services != null) {
-        keystoreService = services.getService(GatewayServices.KEYSTORE_SERVICE);
-        cryptoService = services.getService(GatewayServices.CRYPTO_SERVICE);
-        aliasService = services.getService(GatewayServices.ALIAS_SERVICE);
-        masterService = services.getService(GatewayServices.MASTER_SERVICE);
+        keystoreService = services.getService(ServiceType.KEYSTORE_SERVICE);
+        cryptoService = services.getService(ServiceType.CRYPTO_SERVICE);
+        aliasService = services.getService(ServiceType.ALIAS_SERVICE);
+        masterService = services.getService(ServiceType.MASTER_SERVICE);
       }
     }
     // crypto service, alias service and cluster name are mandatory
@@ -220,7 +222,7 @@ public class Pac4jDispatcherFilter implements Filter {
   private void addDefaultConfig(String clientNameParameter, Map<String, String> properties) {
     // add default saml params
     if (clientNameParameter.contains(SAML2Client.class.getSimpleName())) {
-      properties.put(PropertiesConfigFactory.SAML_KEYSTORE_PATH,
+      properties.put(PropertiesConstants.SAML_KEYSTORE_PATH,
           keystoreService.getKeystorePath());
 
       // check for provisioned alias for keystore password
@@ -234,7 +236,7 @@ public class Pac4jDispatcherFilter implements Filter {
         // no alias provisioned then use the master
         giksp = masterService.getMasterSecret();
       }
-      properties.put(PropertiesConfigFactory.SAML_KEYSTORE_PASSWORD, new String(giksp));
+      properties.put(PropertiesConstants.SAML_KEYSTORE_PASSWORD, new String(giksp));
 
       // check for provisioned alias for private key
       char[] gip = null;
@@ -248,7 +250,7 @@ public class Pac4jDispatcherFilter implements Filter {
         // no alias provisioned then use the master
         gip = masterService.getMasterSecret();
       }
-      properties.put(PropertiesConfigFactory.SAML_PRIVATE_KEY_PASSWORD, new String(gip));
+      properties.put(PropertiesConstants.SAML_PRIVATE_KEY_PASSWORD, new String(gip));
     }
   }
 

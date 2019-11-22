@@ -17,7 +17,9 @@
  */
 package org.apache.knox.gateway.audit.api;
 
-public interface CorrelationContext {
+import java.io.Serializable;
+
+public interface CorrelationContext extends Serializable {
 
   /**
    * A unique value representing the current, active request.

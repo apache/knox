@@ -449,6 +449,14 @@ public interface GatewayMessages {
            text = "Topology port mapping feature enabled: {0}")
   void gatewayTopologyPortMappingEnabled(boolean enabled);
 
+  @Message(level = MessageLevel.ERROR,
+           text = "No topology mapped to port: {0}")
+  void noTopologyMappedToPort(int port);
+
+  @Message(level = MessageLevel.ERROR,
+           text = "Could not find topology {0} specified in port mapping config")
+  void noMappedTopologyFound(String topology);
+
   @Message(level = MessageLevel.DEBUG,
            text = "Creating a connector for topology {0} listening on port {1}.")
   void createJettyConnector(String topology, int port);
@@ -489,6 +497,10 @@ public interface GatewayMessages {
                    + "This invalid topology mapping will be ignored by the gateway. "
                    + "Gateway restart will be required if in the future \"{0}\" topology is added.")
   void topologyPortMappingCannotFindTopology(String topology, int port);
+
+  @Message(level = MessageLevel.ERROR,
+           text = "Port mapped topology {0} cannot be configured as default topology")
+  void defaultTopologyInPortmappedTopology(String topology);
 
 
   @Message( level = MessageLevel.WARN, text = "There is no registry client defined for remote configuration monitoring." )
@@ -640,4 +652,31 @@ public interface GatewayMessages {
 
   @Message(level = MessageLevel.ERROR, text = "Failed to remove credential: {1}")
   void failedToRemoveCredential(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.ERROR, text = "Failed to save token state: {0}")
+  void failedToSaveTokenState(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.ERROR, text = "Error accessing token state: {0}")
+  void errorAccessingTokenState(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.ERROR, text = "Failed to update token expiration: {0}")
+  void failedToUpdateTokenExpiration(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.INFO, text = "Starting service: {0}")
+  void startingService(String serviceTypeName);
+
+  @Message(level = MessageLevel.INFO, text = "Stopping service: {0}")
+  void stoppingService(String serviceTypeName);
+
+  @Message(level = MessageLevel.INFO, text = "Redeploying topology {0} due to service definition change {1} / {2} / {3}")
+  void redeployingTopologyOnServiceDefinitionChange(String topologyName, String serviceName, String role, String version);
+
+  @Message(level = MessageLevel.INFO, text = "Saved service definition {0} / {1} / {2}")
+  void savedServiceDefinitionChange(String serviceName, String role, String version);
+
+  @Message(level = MessageLevel.INFO, text = "Updated service definition {0} / {1} / {2}")
+  void updatedServiceDefinitionChange(String serviceName, String role, String version);
+
+  @Message(level = MessageLevel.INFO, text = "Deleted service definition {0} / {1} / {2}")
+  void deletedServiceDefinitionChange(String serviceName, String role, String version);
 }

@@ -24,6 +24,7 @@ import org.apache.knox.gateway.i18n.GatewaySpiMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.admin.beans.BeanConverter;
 import org.apache.knox.gateway.service.admin.beans.Topology;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.topology.TopologyService;
@@ -106,25 +107,29 @@ public class TopologiesResource {
     GatewayServices services =
               (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     if (services != null) {
-      TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+      TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
 
       GatewayConfig config =
                 (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
       for (org.apache.knox.gateway.topology.Topology t : ts.getTopologies()) {
         if (t.getName().equals(id)) {
+          // we need to convert first so that the original topology does not get
+          // overwritten in TopologyService (i.e. URI does not change from 'file://...' to
+          // 'https://...'
+          final Topology convertedTopology = BeanConverter.getTopology(t);
           try {
-            t.setUri(new URI( buildURI(t, config, request) ));
+            convertedTopology.setUri(new URI( buildURI(t, config, request) ));
           } catch (URISyntaxException se) {
-            t.setUri(null);
+            convertedTopology.setUri(null);
           }
 
           // For any read-only override topology, mark it as generated to discourage modification.
-          List<String> ambariManagedTopos = config.getReadOnlyOverrideTopologyNames();
-          if (ambariManagedTopos.contains(t.getName())) {
-            t.setGenerated(true);
+          final List<String> ambariManagedTopos = config.getReadOnlyOverrideTopologyNames();
+          if (ambariManagedTopos.contains(convertedTopology.getName())) {
+            convertedTopology.setGenerated(true);
           }
 
-          return BeanConverter.getTopology(t);
+          return convertedTopology;
         }
       }
     }
@@ -140,7 +145,7 @@ public class TopologiesResource {
     GatewayConfig config =
         (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
 
-    TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
 
     ArrayList<SimpleTopology> st = new ArrayList<>();
     for (org.apache.knox.gateway.topology.Topology t : ts.getTopologies()) {
@@ -176,7 +181,7 @@ public class TopologiesResource {
                 (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
     t.setName(id);
-    TopologyService ts = gs.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = gs.getService(ServiceType.TOPOLOGY_SERVICE);
 
     // Check for existing topology with the same name, to see if it had been generated
     boolean existingGenerated = false;
@@ -208,7 +213,7 @@ public class TopologiesResource {
       GatewayServices services = (GatewayServices) request.getServletContext()
           .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
-      TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+      TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
 
       for (org.apache.knox.gateway.topology.Topology t : ts.getTopologies()) {
         if(t.getName().equals(id)) {
@@ -233,7 +238,7 @@ public class TopologiesResource {
             (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
     List<HrefListItem> configs = new ArrayList<>();
-    TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
     // Get all the simple descriptor file names
     for (File providerConfig : ts.getProviderConfigurations()){
       String id = FilenameUtils.getBaseName(providerConfig.getName());
@@ -253,7 +258,7 @@ public class TopologiesResource {
     GatewayServices services =
             (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
-    TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
 
     File providerConfigFile = null;
 
@@ -289,7 +294,7 @@ public class TopologiesResource {
     GatewayServices services =
             (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
-    TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
     if (ts.deleteProviderConfiguration(name, Boolean.valueOf(force))) {
       response = ok().entity("{ \"deleted\" : \"provider config " + name + "\" }").build();
     } else {
@@ -308,7 +313,7 @@ public class TopologiesResource {
       GatewayServices services =
               (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
-      TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+      TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
       if (ts.deleteDescriptor(name)) {
         response = ok().entity("{ \"deleted\" : \"descriptor " + name + "\" }").build();
       }
@@ -342,7 +347,7 @@ public class TopologiesResource {
     GatewayServices gs =
             (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
-    TopologyService ts = gs.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = gs.getService(ServiceType.TOPOLOGY_SERVICE);
 
     File existing = getExistingConfigFile(ts.getProviderConfigurations(), name);
     boolean isUpdate = (existing != null);
@@ -389,7 +394,7 @@ public class TopologiesResource {
     GatewayServices gs =
             (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
-    TopologyService ts = gs.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = gs.getService(ServiceType.TOPOLOGY_SERVICE);
 
     File existing = getExistingConfigFile(ts.getDescriptors(), name);
     boolean isUpdate = (existing != null);
@@ -426,7 +431,7 @@ public class TopologiesResource {
             (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
     List<HrefListItem> descriptors = new ArrayList<>();
-    TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
     for (File descriptor : ts.getDescriptors()){
       String id = FilenameUtils.getBaseName(descriptor.getName());
       descriptors.add(new HrefListItem(buildHref(id, request), descriptor.getName()));
@@ -446,7 +451,7 @@ public class TopologiesResource {
     GatewayServices services =
             (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
-    TopologyService ts = services.getService(GatewayServices.TOPOLOGY_SERVICE);
+    TopologyService ts = services.getService(ServiceType.TOPOLOGY_SERVICE);
 
     File descriptorFile = null;
 
@@ -495,9 +500,9 @@ public class TopologiesResource {
   private String getExtensionForMediaType(MediaType type) {
     String extension = null;
 
-    for (MediaType key : mediaTypeFileExtensions.keySet()) {
-      if (type.isCompatible(key)) {
-        extension = mediaTypeFileExtensions.get(key);
+    for (Map.Entry<MediaType, String> entry : mediaTypeFileExtensions.entrySet()) {
+      if (type.isCompatible(entry.getKey())) {
+        extension = entry.getValue();
         break;
       }
     }
@@ -516,19 +521,9 @@ public class TopologiesResource {
     return result;
   }
 
-
   private static boolean isValidResourceName(final String name) {
-    boolean isValid = false;
-
-    if (name != null) {
-      if (name.length() <= RESOURCE_NAME_LENGTH_MAX) {
-        if (RESOURCE_NAME_PATTERN.matcher(name).matches()) {
-          isValid = true;
-        }
-      }
-    }
-
-    return isValid;
+    return name != null && name.length() <= RESOURCE_NAME_LENGTH_MAX &&
+        RESOURCE_NAME_PATTERN.matcher(name).matches();
   }
 
 

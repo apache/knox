@@ -27,7 +27,7 @@
 
     <groupId>org.apache.knox</groupId>
     <artifactId>gateway</artifactId>
-    <version>1.3.0-SNAPSHOT</version>
+    <version>1.4.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>gateway</name>
@@ -71,10 +71,12 @@
         <module>gateway-i18n-logging-sl4j</module>
         <module>gateway-spi</module>
         <module>gateway-discovery-ambari</module>
+        <module>gateway-discovery-cm</module>
         <module>gateway-server</module>
         <module>gateway-server-launcher</module>
         <module>gateway-server-xforwarded-filter</module>
         <module>gateway-provider-rewrite</module>
+        <module>gateway-provider-rewrite-common</module>
         <module>gateway-provider-rewrite-func-hostmap-static</module>
         <module>gateway-provider-rewrite-func-service-registry</module>
         <module>gateway-provider-rewrite-func-inbound-query-param</module>
@@ -88,6 +90,7 @@
         <module>gateway-provider-security-shiro</module>
         <module>gateway-provider-security-pac4j</module>
         <module>gateway-provider-security-authz-acls</module>
+        <module>gateway-provider-security-authz-composite</module>
         <module>gateway-provider-security-authc-anon</module>
         <module>gateway-provider-identity-assertion-common</module>
         <module>gateway-provider-identity-assertion-concat</module>
@@ -101,10 +104,12 @@
         <module>gateway-service-as</module>
         <module>gateway-service-hbase</module>
         <module>gateway-service-hive</module>
+        <module>gateway-service-impala</module>
         <module>gateway-service-knoxsso</module>
         <module>gateway-service-knoxssout</module>
         <module>gateway-service-knoxtoken</module>
         <module>gateway-service-livy</module>
+        <module>gateway-service-jkg</module>
         <module>gateway-service-health</module>
         <module>gateway-service-webhdfs</module>
         <module>gateway-service-tgs</module>
@@ -128,6 +133,7 @@
         <module>gateway-shell-release</module>
         <module>gateway-test-release-utils</module>
         <module>gateway-service-nifi</module>
+        <module>gateway-service-nifi-registry</module>
         <module>gateway-docker</module>
         <module>gateway-service-hashicorp-vault</module>
         <module>gateway-release-common</module>
@@ -140,95 +146,113 @@
         <maven.compiler.target>8</maven.compiler.target>
 
         <!-- Dependencies sorted alphabetically -->
-        <apacheds.directory.api.version>2.0.0.AM2</apacheds.directory.api.version>
+        <apacheds.directory.api.version>2.0.0.AM1</apacheds.directory.api.version>
         <apacheds.directory.server.version>2.0.0.AM25</apacheds.directory.server.version>
         <apacheds-jdbm.version>2.0.0-M5</apacheds-jdbm.version>
         <apache-rat-plugin.version>0.13</apache-rat-plugin.version>
         <ant-nodeps.version>1.8.1</ant-nodeps.version>
-        <asm.version>7.1</asm.version>
-        <bcprov-jdk15on.version>1.61</bcprov-jdk15on.version>
+        <asm.version>7.2</asm.version>
+        <aspectj.version>1.9.4</aspectj.version>
+        <bcprov-jdk15on.version>1.64</bcprov-jdk15on.version>
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
-        <cglib.version>3.2.10</cglib.version>
-        <checkstyle.version>8.18</checkstyle.version>
-        <commons-beanutils.version>1.9.3</commons-beanutils.version>
+        <cglib.version>3.3.0</cglib.version>
+        <checkstyle.version>8.26</checkstyle.version>
+        <cloudera-manager.version>6.3.0</cloudera-manager.version>
+        <cloudera-manager-api-swagger.version>${cloudera-manager.version}</cloudera-manager-api-swagger.version>
+        <commons-beanutils.version>1.9.4</commons-beanutils.version>
         <commons-cli.version>1.4</commons-cli.version>
-        <commons-codec.version>1.12</commons-codec.version>
+        <commons-codec.version>1.13</commons-codec.version>
         <commons-collections.version>3.2.2</commons-collections.version>
-        <commons-compress.version>1.18</commons-compress.version>
+        <commons-compress.version>1.19</commons-compress.version>
         <commons-configuration.version>1.10</commons-configuration.version>
         <commons-digester3.version>3.2</commons-digester3.version>
         <commons-io.version>2.6</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
-        <commons-lang3.version>3.8.1</commons-lang3.version>
+        <commons-lang3.version>3.9</commons-lang3.version>
+        <commons-logging.version>1.2</commons-logging.version>
+        <commons-math3.version>3.6.1</commons-math3.version>
         <commons-net.version>3.6</commons-net.version>
-        <commons-text.version>1.6</commons-text.version>
-        <cors-filter.version>2.6</cors-filter.version>
+        <commons-text.version>1.8</commons-text.version>
+        <cors-filter.version>2.8</cors-filter.version>
+        <cryptacular.version>1.2.3</cryptacular.version>
         <curator.version>4.2.0</curator.version>
-        <curator-test.version>2.13.0</curator-test.version>
-        <dependency-check-maven.version>5.0.0-M1</dependency-check-maven.version>
-        <dockerfile-maven-plugin.version>1.4.10</dockerfile-maven-plugin.version>
-        <easymock.version>4.0.2</easymock.version>
-        <eclipselink.version>2.7.4</eclipselink.version>
+        <dependency-check-maven.version>5.2.2</dependency-check-maven.version>
+        <derby.db.version>10.14.2.0</derby.db.version> <!-- 10.15.1.3 requires Java 9 -->
+        <dockerfile-maven-plugin.version>1.4.13</dockerfile-maven-plugin.version>
+        <dom4j.version>2.1.1</dom4j.version>
+        <easymock.version>4.1</easymock.version>
+        <eclipselink.version>2.7.5</eclipselink.version>
         <ehcache.version>2.6.11</ehcache.version>
-        <findsecbugs-plugin.version>1.8.0</findsecbugs-plugin.version>
-        <forbiddenapis.version>2.6</forbiddenapis.version>
-        <groovy.version>2.5.6</groovy.version>
-        <guava.version>27.1-jre</guava.version>
-        <hadoop.version>3.2.0</hadoop.version>
-        <hamcrest.version>2.1</hamcrest.version>
+        <exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
+        <findsecbugs-plugin.version>1.10.1</findsecbugs-plugin.version>
+        <forbiddenapis.version>2.7</forbiddenapis.version>
+        <gson.version>2.8.6</gson.version>
+        <groovy.version>2.5.8</groovy.version>
+        <guava.version>28.1-jre</guava.version>
+        <hadoop.version>3.2.1</hadoop.version>
+        <hamcrest.version>2.2</hamcrest.version>
         <hamcrest-json.version>0.2</hamcrest-json.version>
-        <httpclient.version>4.5.6</httpclient.version>
-        <httpcore.version>4.4.11</httpcore.version>
+        <httpclient.version>4.5.10</httpclient.version>
+        <httpcore.version>4.4.12</httpcore.version>
         <j2e-pac4j.version>4.1.0</j2e-pac4j.version>
-        <jackson.version>2.9.8</jackson.version>
-        <jacoco-maven-plugin.version>0.8.3</jacoco-maven-plugin.version>
-        <jansi.version>1.17.1</jansi.version>
+        <jackson.version>2.10.1</jackson.version>
+        <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
+        <jansi.version>1.18</jansi.version>
         <javax.activation.version>1.2.0</javax.activation.version>
-        <javax.annotation-api.version>1.2</javax.annotation-api.version>
+        <javax.annotation-api.version>1.3.2</javax.annotation-api.version>
+        <javax.inject.version>2.4.0</javax.inject.version>
         <javax.json.version>1.1.3</javax.json.version>
         <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
         <javax.ws.rs-api.version>2.0</javax.ws.rs-api.version>
         <javax.websocket-api.version>1.1</javax.websocket-api.version>
         <jaxb.version>2.3.0</jaxb.version>
-        <jaxws-ri.version>2.3.1</jaxws-ri.version>
+        <jaxws-ri.version>2.3.2</jaxws-ri.version>
+        <jakarta.xml.bind.version>2.3.2</jakarta.xml.bind.version>
+        <java-support.version>7.5.1</java-support.version>
         <jericho-html.version>3.4</jericho-html.version>
         <jersey.version>2.6</jersey.version>
-        <jetty.version>9.4.15.v20190215</jetty.version>
+        <jetty.version>9.4.22.v20191022</jetty.version>
         <jline.version>2.14.6</jline.version>
-        <jna.version>5.2.0</jna.version>
-        <joda-time.version>2.10.1</joda-time.version>
+        <jna.version>5.5.0</jna.version>
+        <joda-time.version>2.10.5</joda-time.version>
         <json-path.version>2.4.0</json-path.version>
         <json-smart.version>2.3</json-smart.version>
         <junit.version>4.12</junit.version>
-        <libpam4j.version>1.9.1</libpam4j.version>
+        <lang-tag.version>1.4.4</lang-tag.version>
+        <libpam4j.version>1.11</libpam4j.version>
         <log4j.version>1.2.17</log4j.version>
-        <log4j2.version>2.11.2</log4j2.version>
-        <maven-checkstyle-plugin.version>3.0.0</maven-checkstyle-plugin.version>
-        <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
+        <log4j2.version>2.12.1</log4j2.version>
+        <maven-checkstyle-plugin.version>3.1.0</maven-checkstyle-plugin.version>
+        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
         <maven-enforcer-plugin.version>3.0.0-M2</maven-enforcer-plugin.version>
-        <maven-pmd-plugin.version>3.11.0</maven-pmd-plugin.version>
-        <metrics.version>4.0.5</metrics.version>
-        <mina.version>2.0.20</mina.version>
-        <nimbus-jose-jwt.version>7.0.1</nimbus-jose-jwt.version>
+        <maven-pmd-plugin.version>3.12.0</maven-pmd-plugin.version>
+        <metrics.version>4.1.1</metrics.version>
+        <mina.version>2.0.21</mina.version>
+        <nimbus-jose-jwt.version>8.2.1</nimbus-jose-jwt.version>
         <okhttp.version>2.7.5</okhttp.version>
-        <pac4j.version>3.6.1</pac4j.version>
-        <protobuf.version>3.7.0</protobuf.version>
-        <rest-assured.version>3.3.0</rest-assured.version>
-        <shiro.version>1.4.0</shiro.version>
+        <opensaml.version>3.4.3</opensaml.version>
+        <pac4j.version>3.8.3</pac4j.version>
+        <protobuf.version>3.10.0</protobuf.version>
+        <rest-assured.version>4.1.2</rest-assured.version>
+        <shiro.version>1.4.1</shiro.version>
         <shrinkwrap.version>1.2.6</shrinkwrap.version>
         <shrinkwrap.descriptors.version>2.0.0</shrinkwrap.descriptors.version>
-        <slf4j.version>1.7.26</slf4j.version>
+        <slf4j.version>1.7.29</slf4j.version>
         <spotbugs.version>3.1.12</spotbugs.version>
-        <spotbugs-maven-plugin.version>3.1.11</spotbugs-maven-plugin.version>
-        <spring-core.version>5.1.5.RELEASE</spring-core.version>
-        <spring-vault.version>2.1.2.RELEASE</spring-vault.version>
+        <spotbugs-maven-plugin.version>3.1.12.2</spotbugs-maven-plugin.version>
+        <spring-core.version>5.2.1.RELEASE</spring-core.version>
+        <spring-vault.version>2.2.0.RELEASE</spring-vault.version>
+        <stax2-api.version>4.2</stax2-api.version>
         <taglibs-standard.version>1.2.5</taglibs-standard.version>
-        <testcontainers.version>1.10.6</testcontainers.version>
+        <testcontainers.version>1.12.3</testcontainers.version>
+        <txw2.version>2.4.0-b180830.0438</txw2.version>
         <velocity.version>1.7</velocity.version>
+        <woodstox-core.version>6.0.2</woodstox-core.version>
+        <xmlsec.version>2.1.4</xmlsec.version>
         <xmltool.version>3.3</xmltool.version>
         <xml-matchers.version>0.10</xml-matchers.version>
-        <zookeeper.version>3.4.13</zookeeper.version>
+        <zookeeper.version>3.5.6</zookeeper.version>
     </properties>
 
     <profiles>
@@ -396,6 +420,7 @@
                         <exclude>**/admin-ui/**/*.html</exclude>
                         <exclude>atlassian-ide-plugin.xml</exclude>
                         <exclude>**/PULL_REQUEST_TEMPLATE*</exclude>
+                        <exclude>**/new-service-definition-template.xml</exclude>
                     </excludes>
                 </configuration>
             </plugin>
@@ -479,6 +504,17 @@
                             </rules>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>enforce-dependencies</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <dependencyConvergence/>
+                            </rules>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
@@ -540,6 +576,15 @@
                         <!-- disallow unsafe commons-io classes -->
                         <bundledSignature>commons-io-unsafe-${commons-io.version}</bundledSignature>
                     </bundledSignatures>
+                    <signaturesArtifacts>
+                        <signaturesArtifact>
+                            <groupId>org.apache.knox</groupId>
+                            <artifactId>build-tools</artifactId>
+                            <version>1.0.0</version>
+                            <type>jar</type>
+                            <path>build-tools/forbiddenapis/signatures.txt</path>
+                        </signaturesArtifact>
+                    </signaturesArtifacts>
                 </configuration>
                 <executions>
                     <execution>
@@ -839,6 +884,11 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-provider-security-authz-composite</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-identity-assertion-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -870,6 +920,11 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-rewrite</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-provider-rewrite-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -969,6 +1024,11 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-service-impala</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-webhdfs</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -989,12 +1049,22 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-service-jkg</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-definitions</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-nifi</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-service-nifi-registry</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1044,6 +1114,11 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-discovery-cm</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-release</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1079,11 +1154,6 @@
             </dependency>
 
             <dependency>
-                <groupId>org.glassfish.jersey.core</groupId>
-                <artifactId>jersey-common</artifactId>
-                <version>${jersey.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.glassfish.jersey.containers</groupId>
                 <artifactId>jersey-container-servlet-core</artifactId>
                 <version>${jersey.version}</version>
@@ -1098,11 +1168,18 @@
                 <artifactId>jersey-server</artifactId>
                 <version>${jersey.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>com.nimbusds</groupId>
                 <artifactId>nimbus-jose-jwt</artifactId>
                 <version>${nimbus-jose-jwt.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.nimbusds</groupId>
+                <artifactId>lang-tag</artifactId>
+                <version>${lang-tag.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>net.minidev</groupId>
                 <artifactId>json-smart</artifactId>
@@ -1121,6 +1198,11 @@
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-util</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-util-ajax</artifactId>
                 <version>${jetty.version}</version>
             </dependency>
             <dependency>
@@ -1151,6 +1233,11 @@
                 <groupId>javax.annotation</groupId>
                 <artifactId>javax.annotation-api</artifactId>
                 <version>${javax.annotation-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.hk2.external</groupId>
+                <artifactId>javax.inject</artifactId>
+                <version>${javax.inject.version}</version>
             </dependency>
             <dependency>
                 <groupId>javax.servlet</groupId>
@@ -1186,10 +1273,22 @@
             </dependency>
 
             <dependency>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>txw2</artifactId>
+                <version>${txw2.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>com.sun.xml.ws</groupId>
                 <artifactId>jaxws-ri</artifactId>
                 <version>${jaxws-ri.version}</version>
                 <type>pom</type>
+            </dependency>
+
+            <dependency>
+                <groupId>jakarta.xml.bind</groupId>
+                <artifactId>jakarta.xml.bind-api</artifactId>
+                <version>${jakarta.xml.bind.version}</version>
             </dependency>
 
             <dependency>
@@ -1234,19 +1333,19 @@
                 <artifactId>groovy-json</artifactId>
                 <version>${groovy.version}</version>
             </dependency>
-            
+
             <dependency>
                 <groupId>org.fusesource.jansi</groupId>
                 <artifactId>jansi</artifactId>
                 <version>${jansi.version}</version>
             </dependency>
-            
+
             <dependency>
                 <groupId>jline</groupId>
                 <artifactId>jline</artifactId>
                 <version>${jline.version}</version>
             </dependency>
-            
+
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
@@ -1257,7 +1356,7 @@
                 <artifactId>httpcore</artifactId>
                 <version>${httpcore.version}</version>
             </dependency>
-            
+
             <dependency>
                 <groupId>joda-time</groupId>
                 <artifactId>joda-time</artifactId>
@@ -1268,6 +1367,12 @@
                 <groupId>com.squareup.okhttp</groupId>
                 <artifactId>okhttp</artifactId>
                 <version>${okhttp.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>${gson.version}</version>
             </dependency>
 
             <dependency>
@@ -1286,11 +1391,24 @@
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-mapreduce-client-core</artifactId>
                 <version>${hadoop.version}</version>
+		<scope>provided</scope>
                 <exclusions>
                     <exclusion>
                         <groupId>jdk.tools</groupId>
                         <artifactId>jdk.tools</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>org.codehaus.jackson</groupId>
+                        <artifactId>jackson-core-asl</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.codehaus.jackson</groupId>
+                        <artifactId>jackson-mapper-asl</artifactId>
+                    </exclusion>
+		    <exclusion>
+		        <groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-yarn-common</artifactId>
+		    </exclusion>
                 </exclusions>
             </dependency>
 
@@ -1299,6 +1417,10 @@
                 <artifactId>hadoop-common</artifactId>
                 <version>${hadoop.version}</version>
                 <exclusions>
+                    <exclusion>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>jsr305</artifactId>
+                    </exclusion>
                     <exclusion>
                         <groupId>com.google.protobuf</groupId>
                         <artifactId>protobuf-java</artifactId>
@@ -1459,6 +1581,17 @@
             </dependency>
 
             <dependency>
+                <groupId>org.codehaus.woodstox</groupId>
+                <artifactId>stax2-api</artifactId>
+                <version>${stax2-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.woodstox</groupId>
+                <artifactId>woodstox-core</artifactId>
+                <version>${woodstox-core.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>cglib</groupId>
                 <artifactId>cglib</artifactId>
                 <version>${cglib.version}</version>
@@ -1520,6 +1653,16 @@
                 <artifactId>commons-lang3</artifactId>
                 <version>${commons-lang3.version}</version>
             </dependency>
+	    <dependency>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging</artifactId>
+                <version>${commons-logging.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-math3</artifactId>
+                <version>${commons-math3.version}</version>
+            </dependency>
             <dependency>
                 <groupId>commons-net</groupId>
                 <artifactId>commons-net</artifactId>
@@ -1580,6 +1723,11 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.directory.server</groupId>
+                <artifactId>apacheds-i18n</artifactId>
+                <version>${apacheds.directory.server.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.directory.server</groupId>
                 <artifactId>apacheds-protocol-shared</artifactId>
                 <version>${apacheds.directory.server.version}</version>
             </dependency>
@@ -1626,6 +1774,11 @@
                 <artifactId>slf4j-log4j12</artifactId>
                 <version>${slf4j.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>jcl-over-slf4j</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>log4j</groupId>
@@ -1643,6 +1796,12 @@
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>${guava.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>jsr305</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>
@@ -1668,7 +1827,7 @@
             </dependency>
 
             <dependency>
-                <groupId>org.abstractj</groupId>
+                <groupId>org.kohsuke</groupId>
                 <artifactId>libpam4j</artifactId>
                 <version>${libpam4j.version}</version>
             </dependency>
@@ -1682,6 +1841,17 @@
             <dependency>
                 <groupId>org.apache.zookeeper</groupId>
                 <artifactId>zookeeper</artifactId>
+                <version>${zookeeper.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>jsr305</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.zookeeper</groupId>
+                <artifactId>zookeeper-jute</artifactId>
                 <version>${zookeeper.version}</version>
             </dependency>
 
@@ -1779,7 +1949,7 @@
                 <artifactId>javax.websocket-client-api</artifactId>
                 <version>${javax.websocket-api.version}</version>
             </dependency>
-            
+
             <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>websocket-api</artifactId>
@@ -1884,12 +2054,26 @@
                 <groupId>org.pac4j</groupId>
                 <artifactId>pac4j-oidc</artifactId>
                 <version>${pac4j.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.sun.mail</groupId>
+                        <artifactId>javax.mail</artifactId>
+                    </exclusion>
+		    <exclusion>
+		        <groupId>org.mockito</groupId>
+                        <artifactId>mockito-core</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.pac4j</groupId>
                 <artifactId>pac4j-saml</artifactId>
                 <version>${pac4j.version}</version>
                 <exclusions>
+                    <exclusion>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>jsr305</artifactId>
+                    </exclusion>
                     <exclusion>
                         <groupId>ch.qos.logback</groupId>
                         <artifactId>logback-classic</artifactId>
@@ -1902,6 +2086,10 @@
                         <groupId>org.springframework</groupId>
                         <artifactId>spring-core</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>dom4j</groupId>
+                        <artifactId>dom4j</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
 
@@ -1910,6 +2098,16 @@
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-core</artifactId>
                 <version>${spring-core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-orm</artifactId>
+                <version>${spring-core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.dom4j</groupId>
+                <artifactId>dom4j</artifactId>
+                <version>${dom4j.version}</version>
             </dependency>
 
             <dependency>
@@ -1922,6 +2120,43 @@
                         <artifactId>pac4j-core</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+
+            <!-- harmonize pac4j-saml dependencies -->
+            <dependency>
+	        <groupId>org.opensaml</groupId>
+		<artifactId>opensaml-core</artifactId>
+		<version>${opensaml.version}</version>
+            </dependency>
+	    <dependency>
+	        <groupId>org.opensaml</groupId>
+		<artifactId>opensaml-security-api</artifactId>
+		<version>${opensaml.version}</version>
+            </dependency>
+	    <dependency>
+	        <groupId>org.opensaml</groupId>
+		<artifactId>opensaml-xmlsec-api</artifactId>
+		<version>${opensaml.version}</version>
+            </dependency>
+            <dependency>
+	        <groupId>org.opensaml</groupId>
+		<artifactId>opensaml-xmlsec-impl</artifactId>
+		<version>${opensaml.version}</version>
+            </dependency>
+	    <dependency>
+	        <groupId>org.apache.santuario</groupId>
+		<artifactId>xmlsec</artifactId>
+		<version>${xmlsec.version}</version>
+            </dependency>
+	    <dependency>
+	        <groupId>org.cryptacular</groupId>
+		<artifactId>cryptacular</artifactId>
+		<version>${cryptacular.version}</version>
+            </dependency>
+	    <dependency>
+	        <groupId>net.shibboleth.utilities</groupId>
+		<artifactId>java-support</artifactId>
+		<version>${java-support.version}</version>
             </dependency>
 
             <dependency>
@@ -1947,11 +2182,26 @@
                 <artifactId>spring-web</artifactId>
                 <version>${spring-core.version}</version>
             </dependency>
+			<dependency>
+				<groupId>org.aspectj</groupId>
+				<artifactId>aspectjrt</artifactId>
+				<version>${aspectj.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.aspectj</groupId>
+				<artifactId>aspectjweaver</artifactId>
+				<version>${aspectj.version}</version>
+			</dependency>
 
             <dependency>
                 <groupId>de.thetaphi</groupId>
                 <artifactId>forbiddenapis</artifactId>
                 <version>${forbiddenapis.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.cloudera.api.swagger</groupId>
+                <artifactId>cloudera-manager-api-swagger</artifactId>
+                <version>${cloudera-manager-api-swagger.version}</version>  <!-- or CM version 6.0 and above -->
             </dependency>
 
             <!-- ********** ********** ********** ********** ********** ********** -->
@@ -2018,6 +2268,13 @@
             </dependency>
 
             <dependency>
+                <groupId>org.apache.derby</groupId>
+                <artifactId>derby</artifactId>
+                <version>${derby.db.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
                 <groupId>org.apache.velocity</groupId>
                 <artifactId>velocity</artifactId>
                 <version>${velocity.version}</version>
@@ -2053,7 +2310,7 @@
             <dependency>
                 <groupId>org.apache.curator</groupId>
                 <artifactId>curator-test</artifactId>
-                <version>${curator-test.version}</version>
+                <version>${curator.version}</version>
                 <scope>test</scope>
             </dependency>
 
@@ -2099,4 +2356,17 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+    <repositories>
+        <repository>
+            <id>Cloudera</id>
+            <name>Cloudera</name>
+            <url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+    </repositories>
 </project>

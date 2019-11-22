@@ -21,7 +21,7 @@
     <parent>
         <groupId>org.apache.knox</groupId>
         <artifactId>gateway</artifactId>
-        <version>1.3.0-SNAPSHOT</version>
+        <version>1.4.0-SNAPSHOT</version>
     </parent>
     
     <artifactId>gateway-provider-security-hadoopauth</artifactId>
@@ -32,6 +32,10 @@
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-i18n</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-server</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
@@ -62,10 +66,16 @@
             <artifactId>gateway-test-utils</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-common</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.knox</groupId>
-            <artifactId>gateway-server</artifactId>
+            <artifactId>gateway-provider-security-pac4j</artifactId>
             <scope>test</scope>
         </dependency>
-    </dependencies>
+      </dependencies>
 </project>

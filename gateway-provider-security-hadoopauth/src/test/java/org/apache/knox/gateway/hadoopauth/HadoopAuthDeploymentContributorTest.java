@@ -25,9 +25,6 @@ import org.apache.knox.gateway.descriptor.GatewayDescriptor;
 import org.apache.knox.gateway.descriptor.ResourceDescriptor;
 import org.apache.knox.gateway.descriptor.impl.GatewayDescriptorImpl;
 import org.apache.knox.gateway.hadoopauth.deploy.HadoopAuthDeploymentContributor;
-import org.apache.knox.gateway.services.GatewayServices;
-import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.impl.DefaultCryptoService;
 import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Topology;
 import org.easymock.EasyMock;
@@ -35,7 +32,6 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
 
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -66,20 +62,20 @@ public class HadoopAuthDeploymentContributorTest {
   }
 
   @Test
-  public void testDeployment() throws Exception {
+  public void testDeployment() {
     String aliasKey = "signature.secret";
-    String aliasValue = "password";
+    String aliasValue = "${ALIAS=signature.secret}";
     String normalKey = "type";
     String normalValue = "simple";
 
-    WebArchive webArchive = ShrinkWrap.create( WebArchive.class, "test-acrhive" );
+    WebArchive webArchive = ShrinkWrap.create( WebArchive.class, "test-archive" );
 
     Provider provider = new Provider();
     provider.setEnabled( true );
     provider.setName( HadoopAuthDeploymentContributor.NAME );
     // Keep order of params in map for testing
     Map<String, String> params = new TreeMap<>();
-    params.put(aliasKey, aliasKey);
+    params.put(aliasKey, aliasValue);
     params.put(normalKey, normalValue);
     provider.setParams(params);
 
@@ -94,30 +90,13 @@ public class HadoopAuthDeploymentContributorTest {
     GatewayDescriptor gatewayDescriptor = new GatewayDescriptorImpl();
     ResourceDescriptor resource = gatewayDescriptor.createResource();
 
-    AliasService as = EasyMock.createNiceMock( AliasService.class );
-    EasyMock.expect(as.getAliasesForCluster(context.getTopology().getName()))
-        .andReturn(Collections.singletonList(aliasKey)).anyTimes();
-    EasyMock.expect(as.getPasswordFromAliasForCluster(context.getTopology().getName(), aliasKey))
-        .andReturn(aliasValue.toCharArray()).anyTimes();
-    EasyMock.replay( as );
-    DefaultCryptoService cryptoService = new DefaultCryptoService();
-    cryptoService.setAliasService( as );
-
-    GatewayServices gatewayServices = EasyMock.createNiceMock( GatewayServices.class );
-    EasyMock.expect( gatewayServices.getService( GatewayServices.CRYPTO_SERVICE ) ).andReturn( cryptoService ).anyTimes();
-
     HadoopAuthDeploymentContributor contributor = new HadoopAuthDeploymentContributor();
-    contributor.setAliasService(as);
 
     assertThat( contributor.getRole(), is( HadoopAuthDeploymentContributor.ROLE ) );
     assertThat( contributor.getName(), is( HadoopAuthDeploymentContributor.NAME ) );
 
-    // Just make sure it doesn't blow up.
     contributor.initializeContribution( context );
-
     contributor.contributeFilter(context, provider, null, resource, null);
-
-    // Just make sure it doesn't blow up.
     contributor.finalizeContribution( context );
 
     // Check that the params are properly setup
@@ -125,7 +104,7 @@ public class HadoopAuthDeploymentContributorTest {
     assertNotNull(hadoopAuthFilterDescriptor);
     assertEquals(HadoopAuthDeploymentContributor.NAME, hadoopAuthFilterDescriptor.name());
     List<FilterParamDescriptor> hadoopAuthFilterParams = hadoopAuthFilterDescriptor.params();
-    assertEquals(2, hadoopAuthFilterParams.size());
+    assertEquals(3, hadoopAuthFilterParams.size());
 
     FilterParamDescriptor paramDescriptor = hadoopAuthFilterParams.get(0);
     assertEquals(aliasKey, paramDescriptor.name());

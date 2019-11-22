@@ -18,6 +18,8 @@
 package org.apache.knox.gateway.shell.knox.token;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.concurrent.Callable;
 
 import org.apache.knox.gateway.shell.AbstractRequest;
@@ -26,6 +28,7 @@ import org.apache.knox.gateway.shell.KnoxSession;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.knox.gateway.shell.KnoxShellException;
 
 /**
  * Acquire a Knox access token for token based authentication
@@ -34,18 +37,36 @@ import org.apache.http.client.utils.URIBuilder;
 public class Get {
   public static class Request extends AbstractRequest<Response> {
     Request(KnoxSession session) {
-      super(session);
+      this(session, null);
+    }
+
+    Request(KnoxSession session, String doAsUser) {
+      super(session, doAsUser);
+      try {
+        URIBuilder uri = uri(Token.SERVICE_PATH);
+        requestURI = uri.build();
+      } catch (URISyntaxException e) {
+        throw new KnoxShellException(e);
+      }
+    }
+
+    private URI requestURI;
+
+    private HttpGet httpGetRequest;
+
+    public URI getRequestURI() {
+      return requestURI;
+    }
+
+    public HttpGet getRequest() {
+      return httpGetRequest;
     }
 
     @Override
     protected Callable<Response> callable() {
-      return new Callable<Response>() {
-        @Override
-        public Response call() throws Exception {
-          URIBuilder uri = uri(Token.SERVICE_PATH);
-          HttpGet request = new HttpGet(uri.build());
-          return new Response(execute(request));
-        }
+      return () -> {
+        httpGetRequest = new HttpGet(requestURI);
+        return new Response(execute(httpGetRequest));
       };
     }
   }

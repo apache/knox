@@ -39,7 +39,7 @@
             </param>
             <param>
                 <name>redirectToUrl</name>
-                <value>/gateway/knoxsso/knoxauth/login.html</value>
+                <value>/${GATEWAY_PATH}/knoxsso/knoxauth/login.html</value>
             </param>
             <param>
                 <name>restrictedCookies</name>
@@ -103,13 +103,16 @@
 
     <service>
         <role>KNOXSSO</role>
+        <!--
         <param>
             <name>knoxsso.cookie.secure.only</name>
             <value>true</value>
         </param>
+         -->
         <param>
+            <!-- 24 hours in milliseconds = 86400000 -->
             <name>knoxsso.token.ttl</name>
-            <value>-1</value>
+            <value>86400000</value>
         </param>
     </service>
 

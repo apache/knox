@@ -20,7 +20,7 @@ import {Subject} from 'rxjs/Subject';
 @Injectable()
 export class ResourceTypesService {
 
-    resourceTypes = ['Provider Configurations', 'Descriptors', 'Topologies'];
+    resourceTypes = ['Provider Configurations', 'Descriptors', 'Topologies', 'Service Definitions'];
     selectedResourceTypeSource = new Subject<string>();
     public selectedResourceType$ = this.selectedResourceTypeSource.asObservable();
 

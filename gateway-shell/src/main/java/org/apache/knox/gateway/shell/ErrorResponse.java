@@ -19,17 +19,15 @@ package org.apache.knox.gateway.shell;
 
 import org.apache.http.HttpResponse;
 
-class ErrorResponse extends RuntimeException {
-
-  HttpResponse response;
+public class ErrorResponse extends RuntimeException {
+  private final HttpResponse response;
 
   ErrorResponse(String text, HttpResponse response) {
     super(text + response.getStatusLine());
     this.response = response;
   }
 
-  public HttpResponse getReponse() {
+  public HttpResponse getResponse() {
     return response;
   }
-
 }

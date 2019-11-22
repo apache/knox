@@ -30,7 +30,7 @@ import {ValidationUtils} from './utils/validation-utils';
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h4 class="panel-title">{{title}} <span *ngIf="showEditOptions == false" style="padding-left: 15%;"
-                                                        class="text-danger text-center"> Ready Only (generated file) </span> <span
+                                                        class="text-danger text-center"> Read Only (generated file) </span> <span
                         class="pull-right">{{titleSuffix}}</span></h4>
             </div>
             <div *ngIf="topologyContent" class="panel-body">

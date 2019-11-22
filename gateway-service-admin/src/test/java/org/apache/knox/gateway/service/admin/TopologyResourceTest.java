@@ -42,7 +42,11 @@ public class TopologyResourceTest {
   private String reqPort = "9001";
   private String gatewayPath = "gateway-path";
   private String reqContext = "/" + gatewayPath + "/a-topology";
-  private String proto = "proto", port = "1337", server = "my-server", host = server + ":" + port, startContext = "/mycontext";
+  private String proto = "proto";
+  private String port = "1337";
+  private String server = "my-server";
+  private String host = server + ":" + port;
+  private String startContext = "/mycontext";
   private String fullContext = startContext + reqContext;
   private String pathInfo = "/api/version";
   private String topologyName = "topology-name";

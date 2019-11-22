@@ -17,7 +17,7 @@
 -->
 <rules>
 
-    <rule dir="OUT" name="WEBHDFS/webhdfs/outbound" pattern="hdfs://*:*/{path=**}?{**}">
+    <rule dir="OUT" scope="WEBHDFS" name="WEBHDFS/webhdfs/outbound" pattern="hdfs://*:*/{path=**}?{**}">
         <rewrite template="{$frontend[url]}/webhdfs/v1/{path=**}?{**}"/>
     </rule>
 
@@ -64,6 +64,9 @@
     <filter name="WEBHDFS/webhdfs/outbound/namenode/headers">
         <content type="application/x-http-headers">
             <apply path="Location" rule="WEBHDFS/webhdfs/outbound/namenode/headers/location"/>
+        </content>
+        <content type="application/json">
+            <apply path="$.Location" rule="WEBHDFS/webhdfs/outbound/namenode/headers/location"/>
         </content>
     </filter>
 

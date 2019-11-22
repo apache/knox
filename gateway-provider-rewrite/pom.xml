@@ -21,7 +21,7 @@
     <parent>
         <groupId>org.apache.knox</groupId>
         <artifactId>gateway</artifactId>
-        <version>1.3.0-SNAPSHOT</version>
+        <version>1.4.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>gateway-provider-rewrite</artifactId>
@@ -32,6 +32,10 @@
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-util-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-provider-rewrite-common</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>

@@ -16,14 +16,13 @@
  */
 package org.apache.knox.gateway.topology.discovery.ambari;
 
+import org.junit.Test;
 
 public class YarnUIV2URLCreatorTest extends YarnUIURLCreatorTest {
-
   @Override
   String getTargetService() {
     return "YARNUIV2";
   }
-
 
   @Override
   ServiceURLCreator getServiceURLCreator(AmbariCluster cluster) {
@@ -32,4 +31,8 @@ public class YarnUIV2URLCreatorTest extends YarnUIURLCreatorTest {
     return creator;
   }
 
+  @Test
+  public void doTest() {
+    // TODO
+  }
 }

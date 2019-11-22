@@ -258,10 +258,8 @@ class AmbariCluster implements ServiceDiscovery.Cluster {
             int index = 0;
             for (String host : hosts) {
                 int portIndex = host.indexOf(':');
-                if (portIndex > 0) {
-                    host = host.substring(0, portIndex);
-                }
-                updatedEnsemble.append(host).append(':').append(port);
+                String qualifiedHost = (portIndex > 0) ? host.substring(0, portIndex) : host;
+                updatedEnsemble.append(qualifiedHost).append(':').append(port);
                 index += 1;
                 if (index < hosts.length) {
                     updatedEnsemble.append(',');

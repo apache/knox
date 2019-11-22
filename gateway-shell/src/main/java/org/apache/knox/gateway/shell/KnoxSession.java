@@ -20,7 +20,6 @@ package org.apache.knox.gateway.shell;
 import com.sun.security.auth.callback.TextCallbackHandler;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
@@ -57,6 +56,8 @@ import org.apache.knox.gateway.shell.util.ClientTrustStoreHelper;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.security.auth.Subject;
+import javax.security.auth.login.AppConfigurationEntry;
+import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 
@@ -66,10 +67,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.security.AccessController;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -80,6 +83,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -91,14 +95,32 @@ import java.util.concurrent.TimeoutException;
 import de.thetaphi.forbiddenapis.SuppressForbidden;
 
 public class KnoxSession implements Closeable {
-
   private static final String DEFAULT_JAAS_FILE = "/jaas.conf";
   public static final String JGSS_LOGIN_MOUDLE = "com.sun.security.jgss.initiate";
   public static final String END_CERTIFICATE = "-----END CERTIFICATE-----\n";
   public static final String BEGIN_CERTIFICATE = "-----BEGIN CERTIFICATE-----\n";
 
   private static final KnoxShellMessages LOG = MessagesFactory.get(KnoxShellMessages.class);
+
+  private static final CredentialsProvider EMPTY_CREDENTIALS_PROVIDER = new BasicCredentialsProvider();
+  static {
+    EMPTY_CREDENTIALS_PROVIDER.setCredentials(AuthScope.ANY,
+                                                new Credentials() {
+                                                  @Override
+                                                  public Principal getUserPrincipal () {
+                                                    return null;
+                                                  }
+
+                                                  @Override
+                                                  public String getPassword () {
+                                                    return null;
+                                                  }
+                                                });
+  }
+
   private boolean isKerberos;
+
+  private URL jaasConfigURL;
 
   String base;
   HttpHost host;
@@ -118,7 +140,7 @@ public class KnoxSession implements Closeable {
   protected KnoxSession() throws KnoxShellException, URISyntaxException {
   }
 
-  public KnoxSession( final ClientContext clientContext) throws KnoxShellException, URISyntaxException {
+  public KnoxSession(final ClientContext clientContext) throws KnoxShellException, URISyntaxException {
     this.executor = Executors.newCachedThreadPool();
     this.base = clientContext.url();
 
@@ -199,7 +221,22 @@ public class KnoxSession implements Closeable {
    */
   public static KnoxSession kerberosLogin(final String url)
       throws URISyntaxException {
-    return kerberosLogin(url, "", "", false);
+    return kerberosLogin(url, false);
+  }
+
+  /**
+   * Support kerberos authentication.
+   * This method assumed kinit has already been called
+   * and the token is persisted on disk.
+   * @param url Gateway url
+   * @param debug enable debug messages
+   * @return KnoxSession
+   * @throws URISyntaxException exception in case of malformed url
+   * @since 1.3.0
+   */
+  public static KnoxSession kerberosLogin(final String url, boolean debug)
+      throws URISyntaxException {
+    return kerberosLogin(url, "", "", debug);
   }
 
   public static KnoxSession loginInsecure(String url, String username, String password) throws URISyntaxException {
@@ -207,6 +244,7 @@ public class KnoxSession implements Closeable {
         .connection().secure(false).end());
   }
 
+  @SuppressForbidden
   protected CloseableHttpClient createClient(ClientContext clientContext) throws GeneralSecurityException {
 
     // SSL
@@ -264,12 +302,24 @@ public class KnoxSession implements Closeable {
       }
 
       if (!StringUtils.isBlank(clientContext.kerberos().jaasConf())) {
-        System.setProperty("java.security.auth.login.config",
-            clientContext.kerberos().jaasConf());
-      } else {
-        final URL url = getClass().getResource(DEFAULT_JAAS_FILE);
-        System.setProperty("java.security.auth.login.config",
-            url.toExternalForm());
+        File f = new File(clientContext.kerberos().jaasConf());
+        if (f.exists()) {
+          try {
+            jaasConfigURL = f.getCanonicalFile().toURI().toURL();
+            LOG.jaasConfigurationLocation(jaasConfigURL.toExternalForm());
+          } catch (IOException e) {
+            LOG.failedToLocateJAASConfiguration(e.getMessage());
+          }
+        } else {
+          LOG.jaasConfigurationDoesNotExist(f.getAbsolutePath());
+        }
+      }
+
+      // Fall back to the default JAAS config
+      if (jaasConfigURL == null) {
+        LOG.usingDefaultJAASConfiguration();
+        jaasConfigURL = getClass().getResource(DEFAULT_JAAS_FILE);
+        LOG.jaasConfigurationLocation(jaasConfigURL.toExternalForm());
       }
 
       if (clientContext.kerberos().debug()) {
@@ -277,48 +327,38 @@ public class KnoxSession implements Closeable {
         System.setProperty("sun.security.jgss.debug", "true");
       }
 
-      System.setProperty("javax.security.auth.useSubjectCredsOnly", "false");
+      // (KNOX-2001) Log a warning if the useSubjectCredsOnly restriction is "relaxed"
+      String useSubjectCredsOnly = System.getProperty("javax.security.auth.useSubjectCredsOnly");
+      if (useSubjectCredsOnly != null && !Boolean.parseBoolean(useSubjectCredsOnly)) {
+        LOG.useSubjectCredsOnlyIsFalse();
+      }
 
-      final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+      final Registry<AuthSchemeProvider> authSchemeRegistry =
+          RegistryBuilder.<AuthSchemeProvider>create().register(AuthSchemes.SPNEGO, new SPNegoSchemeFactory(true)).build();
 
-      credentialsProvider.setCredentials(AuthScope.ANY, new Credentials() {
-        @Override
-        public Principal getUserPrincipal() {
-          return null;
-        }
-
-        @Override
-        public String getPassword() {
-          return null;
-        }
-      });
-
-      final Registry<AuthSchemeProvider> authSchemeRegistry = RegistryBuilder.<AuthSchemeProvider>create()
-          .register(AuthSchemes.SPNEGO, new SPNegoSchemeFactory(true)).build();
-
-      return HttpClients.custom().setConnectionManager(connectionManager)
-          .setDefaultAuthSchemeRegistry(authSchemeRegistry)
-          .setDefaultCredentialsProvider(credentialsProvider).build();
+      return HttpClients.custom()
+                        .setConnectionManager(connectionManager)
+                        .setDefaultAuthSchemeRegistry(authSchemeRegistry)
+                        .setDefaultCredentialsProvider(EMPTY_CREDENTIALS_PROVIDER)
+                        .build();
     } else {
       AuthCache authCache = new BasicAuthCache();
       BasicScheme authScheme = new BasicScheme();
       authCache.put(host, authScheme);
       context = new BasicHttpContext();
-      context.setAttribute(org.apache.http.client.protocol.HttpClientContext.AUTH_CACHE,
-          authCache);
+      context.setAttribute(org.apache.http.client.protocol.HttpClientContext.AUTH_CACHE, authCache);
 
       CredentialsProvider credentialsProvider = null;
       if (clientContext.username() != null && clientContext.password() != null) {
         credentialsProvider = new BasicCredentialsProvider();
-        credentialsProvider
-            .setCredentials(new AuthScope(host.getHostName(), host.getPort()),
-                new UsernamePasswordCredentials(clientContext.username(),
-                    clientContext.password()));
+        credentialsProvider.setCredentials(new AuthScope(host.getHostName(), host.getPort()),
+                                           new UsernamePasswordCredentials(clientContext.username(),
+                                           clientContext.password()));
       }
       return HttpClients.custom()
-          .setConnectionManager(connectionManager)
-          .setDefaultCredentialsProvider(credentialsProvider)
-          .build();
+                        .setConnectionManager(connectionManager)
+                        .setDefaultCredentialsProvider(credentialsProvider)
+                        .build();
     }
 
   }
@@ -355,51 +395,46 @@ public class KnoxSession implements Closeable {
 
     discoverTruststoreDetails(clientContext);
 
-    InputStream is = null;
-    try {
-      ks = KeyStore.getInstance("JKS");
-      File file = new File(clientContext.connection().truststoreLocation());
-      if (file.exists()) {
-        truststorePass = clientContext.connection().truststorePass();
-      } else {
-        String truststore = System.getProperty("javax.net.ssl.trustStore");
-        truststorePass = System.getProperty("javax.net.ssl.trustStorePassword", "changeit");
-        if (truststore == null) {
-          String truststoreDir = System.getProperty("java.home");
-          truststore = truststoreDir + File.separator + "lib" + File.separator
-              + "security" + File.separator + "cacerts";
-        }
-        file = new File(truststore);
+    File file = new File(clientContext.connection().truststoreLocation());
+    if (file.exists()) {
+      truststorePass = clientContext.connection().truststorePass();
+    } else {
+      String truststore = System.getProperty("javax.net.ssl.trustStore");
+      truststorePass = System.getProperty("javax.net.ssl.trustStorePassword", "changeit");
+      if (truststore == null) {
+        String truststoreDir = System.getProperty("java.home");
+        truststore = truststoreDir + File.separator + "lib" + File.separator
+                         + "security" + File.separator + "cacerts";
       }
+      file = new File(truststore);
+    }
 
-      if (file.exists()) {
-        is = Files.newInputStream(file.toPath());
+    if (file.exists()) {
+      try (InputStream is = Files.newInputStream(file.toPath())) {
+        ks = KeyStore.getInstance("JKS");
         ks.load(is, truststorePass.toCharArray());
+      } catch (KeyStoreException e) {
+        throw new KnoxShellException("Unable to create keystore of expected type.", e);
+      } catch (FileNotFoundException e) {
+        throw new KnoxShellException("Unable to read truststore."
+            + " Please import the gateway-identity certificate into the JVM"
+            + " truststore or set the truststore location ENV variables.", e);
+      } catch (NoSuchAlgorithmException e) {
+        throw new KnoxShellException("Unable to load the truststore."
+            + " Please import the gateway-identity certificate into the JVM"
+            + " truststore or set the truststore location ENV variables.", e);
+      } catch (CertificateException e) {
+        throw new KnoxShellException("Certificate cannot be found in the truststore."
+            + " Please import the gateway-identity certificate into the JVM"
+            + " truststore or set the truststore location ENV variables.", e);
+      } catch (IOException e) {
+        throw new KnoxShellException("Unable to load truststore."
+            + " May be related to password setting or truststore format.", e);
       }
-      else {
-        throw new KnoxShellException("Unable to find a truststore for secure login."
-            + "Please import the gateway-identity certificate into the JVM"
-            + " truststore or set the truststore location ENV variables.");
-      }
-    } catch (KeyStoreException e) {
-      throw new KnoxShellException("Unable to create keystore of expected type.", e);
-    } catch (FileNotFoundException e) {
-      throw new KnoxShellException("Unable to read truststore."
-          + " Please import the gateway-identity certificate into the JVM"
-          + " truststore or set the truststore location ENV variables.", e);
-    } catch (NoSuchAlgorithmException e) {
-      throw new KnoxShellException("Unable to load the truststore."
-          + " Please import the gateway-identity certificate into the JVM"
-          + " truststore or set the truststore location ENV variables.", e);
-    } catch (CertificateException e) {
-      throw new KnoxShellException("Certificate cannot be found in the truststore."
-          + " Please import the gateway-identity certificate into the JVM"
-          + " truststore or set the truststore location ENV variables.", e);
-    } catch (IOException e) {
-      throw new KnoxShellException("Unable to load truststore."
-          + " May be related to password setting or truststore format.", e);
-    } finally {
-      IOUtils.closeQuietly(is);
+    } else {
+      throw new KnoxShellException("Unable to find a truststore for secure login."
+                                       + "Please import the gateway-identity certificate into the JVM"
+                                       + " truststore or set the truststore location ENV variables.");
     }
 
     return ks;
@@ -424,11 +459,26 @@ public class KnoxSession implements Closeable {
   public CloseableHttpResponse executeNow(HttpRequest request ) throws IOException {
     /* check for kerberos */
     if (isKerberos) {
-      LoginContext lc;
+      Subject subject = Subject.getSubject(AccessController.getContext());
       try {
-        lc = new LoginContext(JGSS_LOGIN_MOUDLE, new TextCallbackHandler());
-        lc.login();
-        return Subject.doAs(lc.getSubject(),
+        if (subject == null) {
+          LOG.noSubjectAvailable();
+          Configuration jaasConf;
+          try {
+            jaasConf = new JAASClientConfig(jaasConfigURL);
+          } catch (Exception e) {
+            LOG.failedToLoadJAASConfiguration(jaasConfigURL.toExternalForm());
+            throw new KnoxShellException(e.toString(), e);
+          }
+
+          LoginContext lc = new LoginContext(JGSS_LOGIN_MOUDLE,
+                                             null,
+                                             new TextCallbackHandler(),
+                                             jaasConf);
+          lc.login();
+          subject = lc.getSubject();
+        }
+        return Subject.doAs(subject,
             (PrivilegedAction<CloseableHttpResponse>) () -> {
               CloseableHttpResponse response;
               try {
@@ -447,9 +497,7 @@ public class KnoxSession implements Closeable {
       } catch (final LoginException e) {
         throw new KnoxShellException(e.toString(), e);
       }
-
     } else {
-
       CloseableHttpResponse response = client.execute(host, request, context);
       if (response.getStatusLine().getStatusCode() < 400) {
         return response;
@@ -458,7 +506,6 @@ public class KnoxSession implements Closeable {
             response);
       }
     }
-
   }
 
   public <T> Future<T> executeLater( Callable<T> callable ) {
@@ -513,14 +560,81 @@ public class KnoxSession implements Closeable {
     try {
       shutdown();
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw new KnoxShellException("Can not shutdown underlying resources", e);
     }
   }
 
   @Override
   public String toString() {
-    final StringBuilder sb = new StringBuilder(
-        "KnoxSession{base='").append(base).append("\'}");
-    return sb.toString();
+    return String.format(Locale.ROOT, "KnoxSession{base='%s'}", base);
+  }
+
+  private static final class JAASClientConfig extends Configuration {
+
+    private static final Configuration baseConfig = Configuration.getConfiguration();
+
+    private Configuration configFile;
+
+    JAASClientConfig(URL configFileURL) throws Exception {
+      if (configFileURL != null) {
+        this.configFile = ConfigurationFactory.create(configFileURL.toURI());
+      }
+    }
+
+    @Override
+    public AppConfigurationEntry[] getAppConfigurationEntry(String name) {
+      AppConfigurationEntry[] result = null;
+
+      // Try the config file if it exists
+      if (configFile != null) {
+        result = configFile.getAppConfigurationEntry(name);
+      }
+
+      // If the entry isn't there, delegate to the base configuration
+      if (result == null) {
+        result = baseConfig.getAppConfigurationEntry(name);
+      }
+
+      return result;
+    }
+  }
+
+  @SuppressWarnings("PMD.AvoidAccessibilityAlteration")
+  private static class ConfigurationFactory {
+    private static final Class implClazz;
+    static {
+      // Oracle and OpenJDK use the Sun implementation
+      String implName = System.getProperty("java.vendor").contains("IBM") ?
+                                "com.ibm.security.auth.login.ConfigFile" : "com.sun.security.auth.login.ConfigFile";
+
+      LOG.usingJAASConfigurationFileImplementation(implName);
+      Class clazz = null;
+      try {
+        clazz = Class.forName(implName, false, Thread.currentThread().getContextClassLoader());
+      } catch (ClassNotFoundException e) {
+        LOG.failedToLoadJAASConfigurationFileImplementation(implName, e.getLocalizedMessage());
+      }
+
+      implClazz = clazz;
+    }
+
+    static Configuration create(URI uri) {
+      Configuration config = null;
+
+      if (implClazz != null) {
+        try {
+          Constructor ctor = implClazz.getDeclaredConstructor(URI.class);
+          config = (Configuration) ctor.newInstance(uri);
+        } catch (Exception e) {
+          LOG.failedToInstantiateJAASConfigurationFileImplementation(implClazz.getCanonicalName(),
+                                                                     e.getLocalizedMessage());
+        }
+      } else {
+        LOG.noJAASConfigurationFileImplementation();
+      }
+
+      return config;
+    }
   }
 }

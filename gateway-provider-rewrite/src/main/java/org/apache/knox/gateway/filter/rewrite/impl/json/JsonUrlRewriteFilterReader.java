@@ -30,7 +30,6 @@ import java.io.Reader;
 import java.net.URISyntaxException;
 
 public class JsonUrlRewriteFilterReader extends JsonFilterReader {
-
   private static final UrlRewriteMessages LOG = MessagesFactory.get( UrlRewriteMessages.class );
 
   private Resolver resolver;
@@ -52,14 +51,27 @@ public class JsonUrlRewriteFilterReader extends JsonFilterReader {
 
   @Override
   protected String filterValueString(String name, String value, String rule ) {
-    try {
-      Template input = Parser.parseLiteral( value );
-      Template output = rewriter.rewrite( resolver, input, direction, rule );
-      value = output.getPattern();
-    } catch( URISyntaxException e ) {
-      LOG.failedToParseValueForUrlRewrite( value );
+    /*
+     Prevent inbound JSON payload from getting rewritten
+     (by picking up best match rewrite rule) when no rule is
+     specified for the request url. This behavior does not affect outbound
+     JSON requests and any other rewrite functionality.
+     */
+    if(rule != null || UrlRewriter.Direction.OUT == direction) {
+      try {
+        Template input = Parser.parseLiteral( value );
+        Template output = rewriter.rewrite( resolver, input, direction, rule );
+        // We should only use output if it is valid. If a rule doesn't match output could be null.
+        if(output != null) {
+          value = output.getPattern();
+        }
+      } catch( URISyntaxException e ) {
+        LOG.failedToParseValueForUrlRewrite( value );
+      }
+      return value;
+    } else {
+      LOG.skippingRewritingJsonRequestBody();
+      return value;
     }
-    return value;
   }
-
 }

@@ -41,9 +41,10 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 public class DefaultCryptoService implements CryptoService {
   private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
 
+  private static final Map<String,ConfigurableEncryptor> ENCRYPTOR_CACHE = new HashMap<>();
+
   private AliasService as;
   private KeystoreService ks;
-  private Map<String,ConfigurableEncryptor> encryptorCache = new HashMap<>();
   private GatewayConfig config;
 
   public void setKeystoreService(KeystoreService ks) {
@@ -162,12 +163,12 @@ public class DefaultCryptoService implements CryptoService {
   // The assumption here is that lock contention will be less of a performance issue than the cost of object creation.
   // We have seen via profiling that AESEncryptor instantiation is very expensive.
   private ConfigurableEncryptor getEncryptor( final String clusterName, final char[] password ) {
-    synchronized( encryptorCache ) {
-      ConfigurableEncryptor encryptor = encryptorCache.get( clusterName );
+    synchronized(ENCRYPTOR_CACHE) {
+      ConfigurableEncryptor encryptor = ENCRYPTOR_CACHE.get( clusterName );
       if( encryptor == null ) {
         encryptor = new ConfigurableEncryptor( String.valueOf( password ) );
         encryptor.init(config);
-        encryptorCache.put( clusterName, encryptor );
+        ENCRYPTOR_CACHE.put( clusterName, encryptor );
       }
       return encryptor;
     }

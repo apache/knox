@@ -21,6 +21,7 @@ import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteEnvironment;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteContext;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 import org.apache.knox.gateway.hostmap.api.HostmapFunctionDescriptor;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.hostmap.FileBasedHostMapper;
 import org.apache.knox.gateway.services.hostmap.HostMapper;
@@ -52,7 +53,7 @@ public class HostmapFunctionProcessor
     clusterName = environment.getAttribute(  GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE );
     GatewayServices services = environment.getAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE );
     if( clusterName != null && services != null ) {
-      hostMapperService = services.getService( GatewayServices.HOST_MAPPING_SERVICE );
+      hostMapperService = services.getService( ServiceType.HOST_MAPPING_SERVICE );
       if( hostMapperService != null ) {
         hostMapperService.registerHostMapperForCluster( clusterName, hostMapper );
       }

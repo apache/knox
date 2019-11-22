@@ -60,7 +60,11 @@ public class XmlUtils {
   }
 
   public static void writeXml( Document document, Writer writer ) throws TransformerException {
-    Transformer t = XmlUtils.getTransformer( false, true, 4, false );
+    writeXml( document, writer, false );
+  }
+
+  public static void writeXml( Document document, Writer writer, boolean omitXmlHeader ) throws TransformerException {
+    Transformer t = XmlUtils.getTransformer( false, true, 4, omitXmlHeader );
     writeXml( document, writer, t );
   }
 
