@@ -18,6 +18,8 @@
 package org.apache.knox.gateway.websockets;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -30,6 +32,7 @@ import javax.websocket.OnClose;
 import javax.websocket.OnError;
 import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
+import javax.websocket.PongMessage;
 import javax.websocket.Session;
 
 import org.eclipse.jetty.util.BlockingArrayQueue;
@@ -59,6 +62,13 @@ public class WebsocketClient {
   @OnMessage
   public void onMessage(String message) {
     this.messageQueue.offer(message);
+  }
+
+  @OnMessage
+  public void onMessage(PongMessage message) {
+    ByteBuffer byteMessage = message.getApplicationData();
+    String s = StandardCharsets.UTF_8.decode(byteMessage).toString();
+    this.messageQueue.offer(s);
   }
 
   @OnOpen
