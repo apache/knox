@@ -51,7 +51,6 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
@@ -164,7 +163,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
         identityKeystore = null;
         identityKeyPassphrase = null;
 
-        // The the behavior before KNOX-1812 was to use the HttpClients default SslContext. However,
+        // The behavior before KNOX-1812 was to use the HttpClients default SslContext. However,
         // if a truststore was explicitly configured in gateway-site (gateway.truststore.password.alias,
         // gateway.truststore.path, gateway.truststore.type) create a custom SslContext and use it.
         trustKeystore = ks.getTruststoreForHttpClient();
@@ -180,7 +179,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
         }
 
         if (trustKeystore != null) {
-          sslContextBuilder.loadTrustMaterial(trustKeystore, new TrustSelfSignedStrategy());
+          sslContextBuilder.loadTrustMaterial(trustKeystore, null);
         }
 
         return sslContextBuilder.build();
