@@ -29,6 +29,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Locale;
 
 /**
  * This handler will be ONLY registered with a specific connector listening on a
@@ -42,9 +43,7 @@ import java.io.IOException;
  *
  */
 public class RequestUpdateHandler extends ScopedHandler {
-
-  private static final GatewayMessages LOG = MessagesFactory
-      .get(GatewayMessages.class);
+  private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
 
   private String redirectContext;
 
@@ -63,7 +62,6 @@ public class RequestUpdateHandler extends ScopedHandler {
     }
 
     redirectContext = "/" + config.getGatewayPath() + "/" + topologyName;
-
   }
 
   @Override
@@ -78,22 +76,20 @@ public class RequestUpdateHandler extends ScopedHandler {
       final HttpServletRequest request, final HttpServletResponse response)
       throws IOException, ServletException {
 
-    final String newTarget = redirectContext + target;
-
     RequestUpdateHandler.ForwardedRequest newRequest = new RequestUpdateHandler.ForwardedRequest(
-        request, redirectContext, newTarget);
+        request, redirectContext);
 
     // if the request already has the /{gatewaypath}/{topology} part then skip
     if (!StringUtils.startsWithIgnoreCase(target, redirectContext)) {
       baseRequest.setPathInfo(redirectContext + baseRequest.getPathInfo());
       baseRequest.setURIPathQuery(redirectContext + baseRequest.getRequestURI());
 
+      final String newTarget = redirectContext + target;
       LOG.topologyPortMappingUpdateRequest(target, newTarget);
       nextHandle(newTarget, baseRequest, newRequest, response);
     } else {
       nextHandle(target, baseRequest, newRequest, response);
     }
-
   }
 
   /**
@@ -101,32 +97,47 @@ public class RequestUpdateHandler extends ScopedHandler {
    * needed.
    */
   static class ForwardedRequest extends HttpServletRequestWrapper {
+    private final String contextPath;
+    private final String requestURL;
 
-    private String newURL;
-    private String contextpath;
-
-    ForwardedRequest(final HttpServletRequest request,
-        final String contextpath, final String newURL) {
+    ForwardedRequest(final HttpServletRequest request, final String contextPath) {
       super(request);
-      this.newURL = newURL;
-      this.contextpath = contextpath;
+      this.contextPath = contextPath;
+      this.requestURL = generateRequestURL();
+    }
+
+    /**
+     * Handle the case where getServerPort returns -1
+     * @return requestURL
+     */
+    private String generateRequestURL() {
+      if (getRequest().getServerPort() != -1) {
+        return String.format(Locale.ROOT, "%s://%s:%s%s",
+            getRequest().getScheme(),
+            getRequest().getServerName(),
+            getRequest().getServerPort(),
+            getRequestURI());
+      } else {
+        return String.format(Locale.ROOT, "%s://%s%s",
+            getRequest().getScheme(),
+            getRequest().getServerName(),
+            getRequestURI());
+      }
     }
 
     @Override
     public StringBuffer getRequestURL() {
-      return new StringBuffer(newURL);
+      return new StringBuffer(this.requestURL);
     }
 
     @Override
     public String getRequestURI() {
-      return contextpath + super.getRequestURI();
+      return this.contextPath + super.getRequestURI();
     }
 
     @Override
     public String getContextPath() {
-      return this.contextpath;
+      return this.contextPath;
     }
-
   }
-
 }
