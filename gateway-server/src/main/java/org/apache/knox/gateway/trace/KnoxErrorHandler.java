@@ -20,6 +20,7 @@ package org.apache.knox.gateway.trace;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.ErrorHandler;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -35,7 +36,7 @@ public class KnoxErrorHandler extends ErrorHandler {
 
   @Override
   public void handle( String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response )
-      throws IOException {
+      throws IOException, ServletException {
     HttpServletResponse traceResponse = new TraceResponse( response, bodyFilter );
     super.handle( target, baseRequest, request, traceResponse );
   }
