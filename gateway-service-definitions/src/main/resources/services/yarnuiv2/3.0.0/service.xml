@@ -24,6 +24,7 @@
 
     <route path="/yarnuiv2/logs/?**">
       <rewrite apply="YARNUIV2/yarnuiv2/inbound/logs" to="request.url"/>
+      <rewrite apply="YARNUIV2/yarnuiv2/outbound/filter/logs1" to="response.body"/>
     </route>
 
     <route path="/yarnuiv2/**">

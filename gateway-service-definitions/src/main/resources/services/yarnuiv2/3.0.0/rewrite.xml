@@ -292,6 +292,17 @@
     <rewrite template="{$frontend[url]}/yarnuiv2/logs"/>
   </rule>
 
+  <filter name="YARNUIV2/yarnuiv2/outbound/filter/logs1">
+    <content type="*/html">
+      <apply path="/logs/[^']*" rule="YARNUIV2/yarnuiv2/outbound/logs1"/>
+    </content>
+  </filter>
+
+  <rule dir="OUT" name="YARNUIV2/yarnuiv2/outbound/logs1">
+    <match pattern="/logs/{**}" />
+    <rewrite template="{$frontend[url]}/yarnuiv2/logs/{**}"/>
+  </rule>
+
   <rule dir="IN" name="YARNUIV2/yarnuiv2/inbound/nodelogs" pattern="*://*:*/**/yarnuiv2/logs?{scheme}?{host}?{port}?{**}">
     <rewrite template="{scheme}://{host}:{port}/logs/?{**}"/>
   </rule>
