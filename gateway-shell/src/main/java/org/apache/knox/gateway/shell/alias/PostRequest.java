@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.shell.alias;
 
+import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
@@ -73,6 +74,11 @@ public class PostRequest extends AbstractAliasRequest {
     formData.add(new BasicNameValuePair(FORM_PARAM_VALUE, pwd));
     ((HttpPost) request).setEntity(new UrlEncodedFormEntity(formData, StandardCharsets.UTF_8));
     return request;
+  }
+
+  @Override
+  protected AliasResponse createResponse(HttpResponse response) {
+    return new AddAliasResponse(response);
   }
 
 }

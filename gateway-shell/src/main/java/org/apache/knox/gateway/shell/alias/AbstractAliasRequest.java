@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.shell.alias;
 
+import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -76,7 +77,7 @@ public abstract class AbstractAliasRequest extends AbstractRequest<AliasResponse
     return () -> {
       httpRequest = createRequest();
       try {
-        return new AliasResponse(execute(httpRequest));
+        return createResponse(execute(httpRequest));
       } catch (ErrorResponse e) {
         return new AliasResponse(e.getResponse());
       }
@@ -121,6 +122,10 @@ public abstract class AbstractAliasRequest extends AbstractRequest<AliasResponse
         break;
     }
     return request;
+  }
+
+  protected AliasResponse createResponse(HttpResponse response) {
+    return new AliasResponse(response);
   }
 
 }
