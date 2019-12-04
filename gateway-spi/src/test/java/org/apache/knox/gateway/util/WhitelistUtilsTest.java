@@ -34,11 +34,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class WhitelistUtilsTest {
-
   private static final List<String> LOCALHOST_NAMES = Arrays.asList("localhost", "127.0.0.1", "0:0:0:0:0:0:0:1", "::1");
 
   @Test
-  public void testDefault() throws Exception {
+  public void testDefault() {
     String whitelist = doTestGetDispatchWhitelist(createMockGatewayConfig(Collections.emptyList(), null), "TEST");
     assertNull("The test service role is not configured to honor the whitelist, so there should be none returned.",
                whitelist);
@@ -48,13 +47,13 @@ public class WhitelistUtilsTest {
    * KNOXSSO is implicitly included in the set of service roles for which the whitelist will be applied.
    */
   @Test
-  public void testDefaultKnoxSSO() throws Exception {
+  public void testDefaultKnoxSSO() {
     String whitelist = doTestGetDispatchWhitelist(createMockGatewayConfig(Collections.emptyList(), null), "KNOXSSO");
     assertNotNull(whitelist);
   }
 
   @Test
-  public void testDefaultForAffectedServiceRole() throws Exception {
+  public void testDefaultForAffectedServiceRole() {
     final String serviceRole = "TEST";
 
     GatewayConfig config = createMockGatewayConfig(Collections.singletonList(serviceRole), null);
@@ -71,7 +70,7 @@ public class WhitelistUtilsTest {
   }
 
   @Test
-  public void testDefaultDomainWhitelist() throws Exception {
+  public void testDefaultDomainWhitelist() {
     final String serviceRole = "TEST";
 
     String whitelist =
@@ -93,7 +92,7 @@ public class WhitelistUtilsTest {
   }
 
   @Test
-  public void testDefaultDomainWhitelistWithXForwardedHost() throws Exception {
+  public void testDefaultDomainWhitelistWithXForwardedHost() {
     final String serviceRole = "TEST";
 
     String whitelist =
@@ -106,7 +105,7 @@ public class WhitelistUtilsTest {
   }
 
   @Test
-  public void testDefaultDomainWhitelistWithXForwardedHostAndPort() throws Exception {
+  public void testDefaultDomainWhitelistWithXForwardedHostAndPort() {
     final String serviceRole = "TEST";
 
     String whitelist =
@@ -120,7 +119,7 @@ public class WhitelistUtilsTest {
   }
 
   @Test
-  public void testConfiguredWhitelist() throws Exception {
+  public void testConfiguredWhitelist() {
     final String serviceRole = "TEST";
     final String WHITELIST   = "^.*\\.my\\.domain\\.com.*$";
 
@@ -132,7 +131,7 @@ public class WhitelistUtilsTest {
   }
 
   @Test
-  public void testLocalhostAddressAsHostName() throws Exception {
+  public void testLocalhostAddressAsHostName() {
     final String serviceRole = "TEST";
     // InetAddress#getCanonicalHostName() sometimes returns the IP address as the host name
     String whitelist = doTestGetDispatchWhitelist(createMockGatewayConfig(Collections.singletonList(serviceRole), null),
@@ -143,7 +142,7 @@ public class WhitelistUtilsTest {
   }
 
   @Test
-  public void testExplicitlyConfiguredDefaultWhitelist() throws Exception {
+  public void testExplicitlyConfiguredDefaultWhitelist() {
     final String serviceRole = "TEST";
     final String WHITELIST   = "DEFAULT";
 
@@ -153,6 +152,21 @@ public class WhitelistUtilsTest {
     assertNotNull(whitelist);
     assertTrue("Expected to match whitelist given the explicitly configured DEFAULT whitelist.",
         RegExUtils.checkWhitelist(whitelist, "http://localhost:9099/"));
+  }
+
+  @Test
+  public void testExplicitlyConfiguredHttpsOnlyWhitelist() {
+    final String serviceRole = "TEST";
+    final String WHITELIST   = "HTTPS_ONLY";
+
+    String whitelist =
+        doTestGetDispatchWhitelist(createMockGatewayConfig(Collections.singletonList(serviceRole), WHITELIST),
+            serviceRole);
+    assertNotNull(whitelist);
+    assertFalse("Expected to not match whitelist given the explicitly configured HTTPS_ONLY whitelist.",
+        RegExUtils.checkWhitelist(whitelist, "http://localhost:9099/"));
+    assertTrue("Expected to match whitelist given the explicitly configured HTTPS_ONLY whitelist.",
+        RegExUtils.checkWhitelist(whitelist, "https://localhost:9099/"));
   }
 
   private String doTestGetDispatchWhitelist(GatewayConfig config, String serviceRole) {
@@ -185,9 +199,10 @@ public class WhitelistUtilsTest {
     String result = null;
     if (xForwardedHost != null && !xForwardedHost.isEmpty()) {
       try {
-        Method method = WhitelistUtils.class.getDeclaredMethod("deriveDefaultDispatchWhitelist", HttpServletRequest.class);
+        Method method = WhitelistUtils.class.getDeclaredMethod("deriveDefaultDispatchWhitelist",
+            HttpServletRequest.class, String.class);
         method.setAccessible(true);
-        result = (String) method.invoke(null, request);
+        result = (String) method.invoke(null, request, WhitelistUtils.DEFAULT_DISPATCH_WHITELIST_TEMPLATE);
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -205,9 +220,10 @@ public class WhitelistUtilsTest {
     String domain = (String) getDomainMethod.invoke(null, serverName);
 
     // Then, invoke the method for defining the whitelist based on the domain we just derived (which may be invalid)
-    Method defineWhitelistMethod = WhitelistUtils.class.getDeclaredMethod("defineWhitelistForDomain", String.class);
+    Method defineWhitelistMethod = WhitelistUtils.class.getDeclaredMethod("defineWhitelistForDomain",
+        String.class, String.class);
     defineWhitelistMethod.setAccessible(true);
-    return (String) defineWhitelistMethod.invoke(null, domain);
+    return (String) defineWhitelistMethod.invoke(null, domain, WhitelistUtils.DEFAULT_DISPATCH_WHITELIST_TEMPLATE);
   }
 
   private static GatewayConfig createMockGatewayConfig(final List<String> serviceRoles, final String whitelist) {

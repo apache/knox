@@ -27,14 +27,14 @@ import java.util.List;
 import java.util.Locale;
 
 public class WhitelistUtils {
-
   static final String DEFAULT_CONFIG_VALUE = "DEFAULT";
+  static final String DEFAULT_DISPATCH_WHITELIST_TEMPLATE = "^\\/.*$;^https?:\\/\\/%s:[0-9]+\\/?.*$";
+
+  static final String HTTPS_ONLY_CONFIG_VALUE = "HTTPS_ONLY";
+  static final String HTTPS_ONLY_DISPATCH_WHITELIST_TEMPLATE = "^\\/.*$;^https:\\/\\/%s:[0-9]+\\/?.*$";
 
   static final String LOCALHOST_REGEXP_SEGMENT = "(localhost|127\\.0\\.0\\.1|0:0:0:0:0:0:0:1|::1)";
-
   static final String LOCALHOST_REGEXP = "^" + LOCALHOST_REGEXP_SEGMENT + "$";
-
-  static final String DEFAULT_DISPATCH_WHITELIST_TEMPLATE = "^\\/.*$;^https?:\\/\\/%s:[0-9]+\\/?.*$";
 
   private static final String IP_ADDRESS_REGEX = "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$";
 
@@ -42,12 +42,11 @@ public class WhitelistUtils {
 
   private static final List<String> DEFAULT_SERVICE_ROLES = Collections.singletonList("KNOXSSO");
 
-
   public static String getDispatchWhitelist(HttpServletRequest request) {
     String whitelist = null;
 
-    GatewayConfig config =
-                      (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    GatewayConfig config = (GatewayConfig) request.getServletContext()
+                                               .getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
     if (config != null) {
       List<String> whitelistedServiceRoles = new ArrayList<>();
       whitelistedServiceRoles.addAll(DEFAULT_SERVICE_ROLES);
@@ -58,7 +57,10 @@ public class WhitelistUtils {
         // Check the whitelist against the URL to be dispatched
         whitelist = config.getDispatchWhitelist();
         if (whitelist == null || whitelist.equalsIgnoreCase(DEFAULT_CONFIG_VALUE)) {
-          whitelist = deriveDefaultDispatchWhitelist(request);
+          whitelist = deriveDefaultDispatchWhitelist(request, DEFAULT_DISPATCH_WHITELIST_TEMPLATE);
+          LOG.derivedDispatchWhitelist(whitelist);
+        } else if (whitelist.equalsIgnoreCase(HTTPS_ONLY_CONFIG_VALUE)) {
+          whitelist = deriveDefaultDispatchWhitelist(request, HTTPS_ONLY_DISPATCH_WHITELIST_TEMPLATE);
           LOG.derivedDispatchWhitelist(whitelist);
         }
       }
@@ -67,8 +69,8 @@ public class WhitelistUtils {
     return whitelist;
   }
 
-
-  private static String deriveDefaultDispatchWhitelist(HttpServletRequest request) {
+  private static String deriveDefaultDispatchWhitelist(HttpServletRequest request,
+                                                       String whitelistTemplate) {
     String defaultWhitelist = null;
 
     // Check first for the X-Forwarded-Host header, and use it to determine the domain
@@ -83,24 +85,23 @@ public class WhitelistUtils {
     }
 
     if (domain != null) {
-      defaultWhitelist = defineWhitelistForDomain(domain);
+      defaultWhitelist = defineWhitelistForDomain(domain, whitelistTemplate);
     } else {
       if (!requestedHost.matches(LOCALHOST_REGEXP)) { // localhost will be handled subsequently
         // Use the requested host address/name for the whitelist
         LOG.unableToDetermineKnoxDomainForDefaultWhitelist(requestedHost);
-        defaultWhitelist = String.format(Locale.ROOT, DEFAULT_DISPATCH_WHITELIST_TEMPLATE, requestedHost);
+        defaultWhitelist = String.format(Locale.ROOT, whitelistTemplate, requestedHost);
       }
     }
 
     // If the whitelist has not been determined at this point, default to just the local/relative whitelist
     if (defaultWhitelist == null) {
       LOG.unableToDetermineKnoxDomainForDefaultWhitelist("localhost");
-      defaultWhitelist = String.format(Locale.ROOT, DEFAULT_DISPATCH_WHITELIST_TEMPLATE, LOCALHOST_REGEXP_SEGMENT);
+      defaultWhitelist = String.format(Locale.ROOT, whitelistTemplate, LOCALHOST_REGEXP_SEGMENT);
     }
 
     return defaultWhitelist;
   }
-
 
   private static String getDomain(String hostname) {
     String domain = null;
@@ -120,18 +121,16 @@ public class WhitelistUtils {
     return domain;
   }
 
-
-  private static String defineWhitelistForDomain(String domain) {
+  private static String defineWhitelistForDomain(String domain, String whitelistTemplate) {
     String whitelist = null;
 
     if (domain != null && !domain.isEmpty()) {
       String domainPattern = ".+" + domain.replaceAll("\\.", "\\\\.");
-      whitelist = String.format(Locale.ROOT, DEFAULT_DISPATCH_WHITELIST_TEMPLATE, "(" + domainPattern + ")");
+      whitelist = String.format(Locale.ROOT, whitelistTemplate, "(" + domainPattern + ")");
     }
 
     return whitelist;
   }
-
 
   private static String stripPort(String hostName) {
     String result = hostName;
@@ -143,6 +142,4 @@ public class WhitelistUtils {
 
     return result;
   }
-
-
 }
