@@ -17,31 +17,32 @@
 package org.apache.knox.gateway.shell.alias;
 
 import org.apache.http.HttpResponse;
-import org.apache.knox.gateway.shell.KnoxSession;
+import org.apache.http.HttpStatus;
+import java.util.Map;
 
-public class ListRequest extends AbstractAliasRequest {
+public class AddAliasResponse extends AliasResponse {
 
-  ListRequest(KnoxSession session) {
-    this(session, null);
-  }
+  private String alias;
 
-  ListRequest(final KnoxSession session, final String clusterName) {
-    this(session, clusterName, null);
-  }
+  AddAliasResponse(HttpResponse response) {
+    super(response);
 
-  ListRequest(final KnoxSession session, final String clusterName, final String doAsUser) {
-    super(session, clusterName, doAsUser);
-    requestURI = buildURI();
-  }
-
-  @Override
-  protected RequestType getRequestType() {
-    return RequestType.GET;
+    if (parsedResponse.containsKey("created")) {
+      Map<String, String> created = (Map<String, String>) parsedResponse.get("created");
+      if (created != null) {
+        cluster = created.get("topology");
+        alias = created.get("alias");
+      }
+    }
   }
 
   @Override
-  protected AliasResponse createResponse(HttpResponse response) {
-    return new ListAliasResponse(response);
+  protected boolean isExpectedResponseStatus() {
+    return (response().getStatusLine().getStatusCode() == HttpStatus.SC_CREATED);
+  }
+
+  public String getAlias() {
+    return alias;
   }
 
 }

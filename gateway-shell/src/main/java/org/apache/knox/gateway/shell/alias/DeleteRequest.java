@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.shell.alias;
 
+import org.apache.http.HttpResponse;
 import org.apache.knox.gateway.shell.KnoxSession;
 
 import java.util.List;
@@ -54,4 +55,8 @@ public class DeleteRequest extends AbstractAliasRequest {
     return elements;
   }
 
+  @Override
+  protected AliasResponse createResponse(HttpResponse response) {
+    return new RemoveAliasResponse(response);
+  }
 }

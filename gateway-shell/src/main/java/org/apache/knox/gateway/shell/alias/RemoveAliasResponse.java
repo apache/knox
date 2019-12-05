@@ -17,31 +17,26 @@
 package org.apache.knox.gateway.shell.alias;
 
 import org.apache.http.HttpResponse;
-import org.apache.knox.gateway.shell.KnoxSession;
+import java.util.Map;
 
-public class ListRequest extends AbstractAliasRequest {
+public class RemoveAliasResponse extends AliasResponse {
 
-  ListRequest(KnoxSession session) {
-    this(session, null);
+  private String alias;
+
+  RemoveAliasResponse(HttpResponse response) {
+    super(response);
+
+    if (parsedResponse.containsKey("deleted")) {
+      Map<String, String> deleted = (Map<String, String>) parsedResponse.get("deleted");
+      if (deleted != null) {
+        cluster = deleted.get("topology");
+        alias = deleted.get("alias");
+      }
+    }
   }
 
-  ListRequest(final KnoxSession session, final String clusterName) {
-    this(session, clusterName, null);
-  }
-
-  ListRequest(final KnoxSession session, final String clusterName, final String doAsUser) {
-    super(session, clusterName, doAsUser);
-    requestURI = buildURI();
-  }
-
-  @Override
-  protected RequestType getRequestType() {
-    return RequestType.GET;
-  }
-
-  @Override
-  protected AliasResponse createResponse(HttpResponse response) {
-    return new ListAliasResponse(response);
+  public String getAlias() {
+    return alias;
   }
 
 }

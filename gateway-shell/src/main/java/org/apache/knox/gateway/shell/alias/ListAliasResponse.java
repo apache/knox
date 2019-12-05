@@ -17,31 +17,22 @@
 package org.apache.knox.gateway.shell.alias;
 
 import org.apache.http.HttpResponse;
-import org.apache.knox.gateway.shell.KnoxSession;
+import java.util.ArrayList;
+import java.util.List;
 
-public class ListRequest extends AbstractAliasRequest {
+public class ListAliasResponse extends AliasResponse {
 
-  ListRequest(KnoxSession session) {
-    this(session, null);
+  private List<String> aliases = new ArrayList<>();
+
+  ListAliasResponse(HttpResponse response) {
+    super(response);
+    cluster = (String) parsedResponse.get("topology");
+    List<String> values = (List<String>)parsedResponse.get("aliases");
+    aliases.addAll(values);
   }
 
-  ListRequest(final KnoxSession session, final String clusterName) {
-    this(session, clusterName, null);
-  }
-
-  ListRequest(final KnoxSession session, final String clusterName, final String doAsUser) {
-    super(session, clusterName, doAsUser);
-    requestURI = buildURI();
-  }
-
-  @Override
-  protected RequestType getRequestType() {
-    return RequestType.GET;
-  }
-
-  @Override
-  protected AliasResponse createResponse(HttpResponse response) {
-    return new ListAliasResponse(response);
+  public List<String> getAliases() {
+    return aliases;
   }
 
 }
