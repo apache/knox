@@ -384,6 +384,23 @@ public class KnoxShellTableTest {
   }
 
   @Test
+  public void testJDBCBuilderUsernamePassword() throws Exception {
+    // Since testing statics isn't really doable with EasyMock we
+    // are limited to what we can test here. We will just ensure that
+    // the expected username/password are set when needed in the sql call.
+    KnoxShellTable table = new KnoxShellTable();
+    JDBCKnoxShellTableBuilder builder = new JDBCKnoxShellTableBuilder(table) {
+      @Override
+      public KnoxShellTable sql(String sql) {
+        assertNotNull(username());
+        assertNotNull(password());
+        return table;
+      }
+    };
+    builder.username("joe").pwd("pass").sql("select * from book");
+  }
+
+  @Test
   public void testJDBCBuilderUsingConnectionString() throws Exception {
     System.setProperty(SYSTEM_PROPERTY_DERBY_STREAM_ERROR_FILE, "/dev/null");
     final Path derbyDatabaseFolder = Paths.get(testFolder.newFolder().toPath().toString(), SAMPLE_DERBY_DATABASE_NAME);

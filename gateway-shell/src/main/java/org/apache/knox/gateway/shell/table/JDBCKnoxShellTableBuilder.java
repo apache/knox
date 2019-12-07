@@ -32,6 +32,26 @@ public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
   private String driver;
   private Connection conn;
   private boolean tableManagedConnection = true;
+  private String username;
+  private String pass;
+
+  public JDBCKnoxShellTableBuilder username(String username) {
+    this.username = username;
+    return this;
+  }
+
+  public String username() {
+    return username;
+  }
+
+  public JDBCKnoxShellTableBuilder pwd(String pass) {
+    this.pass = pass;
+    return this;
+  }
+
+  public String password() {
+    return pass;
+  }
 
   JDBCKnoxShellTableBuilder(KnoxShellTable table) {
     super(table);
@@ -76,7 +96,7 @@ public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
   }
 
   public KnoxShellTable sql(String sql) throws IOException, SQLException {
-    conn = conn == null ? DriverManager.getConnection(connectionUrl) : conn;
+    conn = conn == null ? createConnection() : conn;
     try (Statement statement = conn.createStatement(); ResultSet resultSet = statement.executeQuery(sql);) {
       processResultSet(resultSet);
     } finally {
@@ -87,19 +107,40 @@ public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
     return this.table;
   }
 
+  public Connection createConnection() throws SQLException {
+    Connection con = null;
+    if (username != null && pass != null) {
+      con = DriverManager.getConnection(connectionUrl, username, pass);
+    }
+    else {
+      con = DriverManager.getConnection(connectionUrl);
+    }
+    return con;
+  }
+
   // added this as a private method so that KnoxShellTableHistoryAspect will not
   // intercept this call
   private void processResultSet(ResultSet resultSet) throws SQLException {
     final ResultSetMetaData metadata = resultSet.getMetaData();
     final int colCount = metadata.getColumnCount();
-    this.table.title(metadata.getTableName(1));
+    try {
+      table.title(metadata.getTableName(1));
+    }
+    catch (SQLException e) {
+      // nop. Apache HiveDriver doesn't support this.
+    }
     for (int i = 1; i < colCount + 1; i++) {
       this.table.header(metadata.getColumnName(i));
     }
     while (resultSet.next()) {
-      this.table.row();
+      table.row();
       for (int i = 1; i < colCount + 1; i++) {
-        this.table.value(resultSet.getObject(metadata.getColumnName(i), Comparable.class));
+        try {
+          table.value(resultSet.getObject(metadata.getColumnName(i), Comparable.class));
+        }
+        catch (SQLException e) {
+          table.value(resultSet.getString(metadata.getColumnName(i)));
+        }
       }
     }
   }
