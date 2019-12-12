@@ -47,7 +47,6 @@ public class AuthUtilsTest {
       conf1 = AuthUtils.getKerberosJAASConfiguration();
       conf2 = AuthUtils.getKerberosJAASConfiguration();
     } catch (Throwable e) {
-      e.printStackTrace();
       fail(e.getMessage());
     } finally {
       System.clearProperty(GatewayConfig.KRB5_LOGIN_CONFIG);
