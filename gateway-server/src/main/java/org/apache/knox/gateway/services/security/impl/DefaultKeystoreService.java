@@ -19,6 +19,8 @@ package org.apache.knox.gateway.services.security.impl;
 
 import static org.apache.knox.gateway.services.security.AliasService.NO_CLUSTER_NAME;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.GatewayResources;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -30,6 +32,9 @@ import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.util.X509CertificateUtil;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,10 +59,9 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.text.MessageFormat;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import javax.crypto.spec.SecretKeySpec;
 
@@ -71,8 +75,9 @@ public class DefaultKeystoreService implements KeystoreService, Service {
   private static GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
   private static GatewayResources RES = ResourcesFactory.get(GatewayResources.class);
 
+  //let's configure the cache with hard-coded attributes now; we can introduce new gateway configuration later on if needed
+  private final Cache<CacheKey, String> cache = Caffeine.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).maximumSize(1000).build();
   private GatewayConfig config;
-  private Map<String, Map<String, String>> cache = new ConcurrentHashMap<>();
 
   private MasterService masterService;
   private Path keyStoreDirPath;
@@ -290,6 +295,7 @@ public class DefaultKeystoreService implements KeystoreService, Service {
 
         final Path keyStoreFilePath = keyStoreDirPath.resolve(clusterName + CREDENTIALS_SUFFIX);
         writeKeyStoreToFile(ks, keyStoreFilePath, masterService.getMasterSecret());
+        addToCache(clusterName, alias, value);
       } catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException e) {
         LOG.failedToAddCredentialForCluster(clusterName, e);
       }
@@ -323,7 +329,6 @@ public class DefaultKeystoreService implements KeystoreService, Service {
 
   @Override
   public void removeCredentialForCluster(String clusterName, String alias) throws KeystoreServiceException {
-    removeFromCache(clusterName, alias);
     KeyStore ks = getCredentialStoreForCluster(clusterName);
     if (ks != null) {
       try {
@@ -333,6 +338,7 @@ public class DefaultKeystoreService implements KeystoreService, Service {
 
         final Path keyStoreFilePath = keyStoreDirPath.resolve(clusterName + CREDENTIALS_SUFFIX);
         writeKeyStoreToFile(ks, keyStoreFilePath, masterService.getMasterSecret());
+        removeFromCache(clusterName, alias);
       } catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException e) {
         LOG.failedToRemoveCredentialForCluster(clusterName, e);
       }
@@ -343,36 +349,22 @@ public class DefaultKeystoreService implements KeystoreService, Service {
    * Called only from within critical sections of other methods above.
    */
   private char[] checkCache(String clusterName, String alias) {
-    char[] c = null;
-    String cred;
-    Map<String, String> clusterCache = cache.get(clusterName);
-    if (clusterCache == null) {
-      return null;
-    }
-    cred = clusterCache.get(alias);
-    if (cred != null) {
-      c = cred.toCharArray();
-    }
-    return c;
+    final String cachedCredential = cache.getIfPresent(CacheKey.of(clusterName, alias));
+    return cachedCredential == null ? null : cachedCredential.toCharArray();
   }
 
   /**
    * Called only from within critical sections of other methods above.
    */
   private void addToCache(String clusterName, String alias, String credentialString) {
-    Map<String, String> clusterCache = cache.computeIfAbsent(clusterName, k -> new HashMap<>());
-    clusterCache.put(alias, credentialString);
+    cache.put(CacheKey.of(clusterName, alias), credentialString);
   }
 
   /**
    * Called only from within critical sections of other methods above.
    */
   private void removeFromCache(String clusterName, String alias) {
-    Map<String, String> clusterCache = cache.get(clusterName);
-    if (clusterCache == null) {
-      return;
-    }
-    clusterCache.remove(alias);
+    cache.invalidate(CacheKey.of(clusterName, alias));
   }
 
   @Override
@@ -507,5 +499,29 @@ public class DefaultKeystoreService implements KeystoreService, Service {
       password = getCredentialForCluster(NO_CLUSTER_NAME, alias);
     }
     return (password == null) ? masterService.getMasterSecret() : password;
+  }
+
+  private static class CacheKey {
+    private final String clusterName;
+    private final String alias;
+
+    private CacheKey(String clusterName, String alias) {
+      this.clusterName = clusterName;
+      this.alias = alias;
+    }
+
+    private static CacheKey of(String clusterName, String alias) {
+      return new CacheKey(clusterName, alias);
+    }
+
+    @Override
+    public int hashCode() {
+      return HashCodeBuilder.reflectionHashCode(this);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return EqualsBuilder.reflectionEquals(this, obj);
+    }
   }
 }

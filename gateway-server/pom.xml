@@ -371,6 +371,10 @@
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-util-configinjector</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
 
         <!-- ********** ********** ********** ********** ********** ********** -->
         <!-- ********** Test Dependencies                           ********** -->
