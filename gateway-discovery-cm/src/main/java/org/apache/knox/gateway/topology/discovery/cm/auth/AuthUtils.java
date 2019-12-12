@@ -27,18 +27,25 @@ import java.io.File;
 
 public class AuthUtils {
 
-  private static final String JGSS_LOGIN_MODULE = "com.sun.security.jgss.initiate";
+  static final String JGSS_LOGIN_MODULE = "com.sun.security.jgss.initiate";
 
   private static ClouderaManagerServiceDiscoveryMessages log =
       MessagesFactory.get(ClouderaManagerServiceDiscoveryMessages.class);
 
+  private static Configuration kerberosConfig;
 
-  public static String getKerberosLoginConfiguration() {
+  public static String getKerberosLoginConfigLocation() {
     return System.getProperty(GatewayConfig.KRB5_LOGIN_CONFIG);
   }
 
-  public static Configuration createKerberosJAASConfiguration() throws Exception {
-    return createKerberosJAASConfiguration(getKerberosLoginConfiguration());
+  public static synchronized Configuration getKerberosJAASConfiguration() throws Exception {
+    if (kerberosConfig == null) {
+      String configLocation = getKerberosLoginConfigLocation();
+      if (configLocation != null && !configLocation.isEmpty()) {
+        kerberosConfig = createKerberosJAASConfiguration(configLocation);
+      }
+    }
+    return kerberosConfig;
   }
 
   public static Configuration createKerberosJAASConfiguration(String kerberosLoginConfig) throws Exception {
@@ -50,17 +57,16 @@ public class AuthUtils {
 
   public static Subject getKerberosSubject() {
     Subject subject = null;
-    String kerberosLoginConfig = getKerberosLoginConfiguration();
-    if (kerberosLoginConfig != null) {
-      log.attemptingKerberosLogin(kerberosLoginConfig);
-      try {
-        Configuration jaasConf = new JAASClientConfig((new File(kerberosLoginConfig)).toURI().toURL());
+    try {
+      Configuration jaasConf = getKerberosJAASConfiguration();
+      if (jaasConf != null) {
+        log.attemptingKerberosLogin(getKerberosLoginConfigLocation());
         LoginContext lc = new LoginContext(JGSS_LOGIN_MODULE, null, null, jaasConf);
         lc.login();
         subject = lc.getSubject();
-      } catch (Exception e) {
-        log.failedKerberosLogin(kerberosLoginConfig, JGSS_LOGIN_MODULE, e);
       }
+    } catch (Exception e) {
+      log.failedKerberosLogin(getKerberosLoginConfigLocation(), JGSS_LOGIN_MODULE, e);
     }
 
     return subject;
