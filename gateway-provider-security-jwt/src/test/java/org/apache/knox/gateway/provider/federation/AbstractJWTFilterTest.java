@@ -1070,6 +1070,11 @@ public abstract class AbstractJWTFilterTest  {
       JWSVerifier verifier = new RSASSAVerifier(publicKey);
       return token.verify(verifier);
     }
+
+    @Override
+    public boolean verifyToken(JWT token, String jwksurl, String algorithm) {
+     return false;
+    }
   }
 
   protected static class TestFilterChain implements FilterChain {

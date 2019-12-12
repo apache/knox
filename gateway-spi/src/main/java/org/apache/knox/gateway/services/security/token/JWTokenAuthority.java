@@ -38,8 +38,9 @@ public interface JWTokenAuthority {
 
   boolean verifyToken(JWT token) throws TokenServiceException;
 
-  boolean verifyToken(JWT token, RSAPublicKey publicKey)
-      throws TokenServiceException;
+  boolean verifyToken(JWT token, RSAPublicKey publicKey) throws TokenServiceException;
+
+  boolean verifyToken(JWT token, String jwksurl ,String algorithm ) throws TokenServiceException;
 
   JWT issueToken(Principal p, String algorithm, long expires) throws TokenServiceException;
 

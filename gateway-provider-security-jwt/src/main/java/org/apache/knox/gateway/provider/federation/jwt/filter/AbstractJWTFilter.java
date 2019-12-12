@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import javax.security.auth.Subject;
@@ -52,8 +53,8 @@ import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
-import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
@@ -87,6 +88,8 @@ public abstract class AbstractJWTFilter implements Filter {
   protected RSAPublicKey publicKey;
   private String expectedIssuer;
   private String expectedSigAlg;
+  protected String expectedPrincipalClaim;
+  protected String expectedJWKSUrl;
 
   private TokenStateService tokenStateService;
 
@@ -225,8 +228,15 @@ public abstract class AbstractJWTFilter implements Filter {
   }
 
   protected Subject createSubjectFromToken(JWT token) {
-    final String principal = token.getSubject();
+    String principal = token.getSubject();
+    String claimvalue = null;
+    if (expectedPrincipalClaim != null) {
+      claimvalue = token.getClaim(expectedPrincipalClaim);
+    }
 
+    if (claimvalue != null) {
+      principal = claimvalue.toLowerCase(Locale.ROOT);
+    }
     @SuppressWarnings("rawtypes")
     HashSet emptySet = new HashSet();
     Set<Principal> principals = new HashSet<>();
@@ -248,11 +258,12 @@ public abstract class AbstractJWTFilter implements Filter {
       throws IOException, ServletException {
     boolean verified = false;
     try {
-      if (publicKey == null) {
-        verified = authority.verifyToken(token);
-      }
-      else {
+      if (publicKey != null) {
         verified = authority.verifyToken(token, publicKey);
+      } else if (expectedJWKSUrl != null) {
+        verified = authority.verifyToken(token, expectedJWKSUrl, expectedSigAlg);
+      } else {
+        verified = authority.verifyToken(token);
       }
     } catch (TokenServiceException e) {
       log.unableToVerifyToken(e);

@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.services.token.impl;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -27,11 +29,12 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.Map;
-import java.util.Set;
-import java.util.List;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.security.auth.Subject;
 
@@ -49,10 +52,22 @@ import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.jwk.source.RemoteJWKSet;
+import com.nimbusds.jose.proc.BadJOSEException;
+import com.nimbusds.jose.proc.JWSKeySelector;
+import com.nimbusds.jose.proc.JWSVerificationKeySelector;
+import com.nimbusds.jose.proc.SecurityContext;
+import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
+import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
+import com.nimbusds.jwt.proc.DefaultJWTProcessor;
+import com.nimbusds.jwt.proc.JWTClaimsSetVerifier;
 
 public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   private static final GatewayResources RESOURCES = ResourcesFactory.get(GatewayResources.class);
@@ -209,6 +224,32 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
       throw new TokenServiceException("Cannot verify token.", e);
     }
     return rc;
+  }
+
+  @Override
+  public boolean verifyToken(JWT token, String jwksurl, String algorithm) throws TokenServiceException {
+    boolean verified = false;
+    try {
+      if (algorithm != null && jwksurl != null) {
+        JWSAlgorithm expectedJWSAlg = JWSAlgorithm.parse(algorithm);
+        JWKSource<SecurityContext> keySource = new RemoteJWKSet<>(new URL(jwksurl));
+        JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(expectedJWSAlg, keySource);
+
+        // Create a JWT processor for the access tokens
+        ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
+        jwtProcessor.setJWSKeySelector(keySelector);
+        JWTClaimsSetVerifier<SecurityContext> claimsVerifier = new DefaultJWTClaimsVerifier<>();
+        jwtProcessor.setJWTClaimsSetVerifier(claimsVerifier);
+
+        // Process the token
+        SecurityContext ctx = null; // optional context parameter, not required here
+        jwtProcessor.process(token.toString(), ctx);
+        verified = true;
+      }
+    } catch (BadJOSEException | JOSEException | ParseException | MalformedURLException e) {
+      throw new TokenServiceException("Cannot verify token.", e);
+    }
+    return verified;
   }
 
   @Override
