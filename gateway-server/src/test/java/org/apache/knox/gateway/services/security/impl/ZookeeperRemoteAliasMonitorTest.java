@@ -189,7 +189,7 @@ public class ZookeeperRemoteAliasMonitorTest {
         .andReturn(new ArrayList<>()).anyTimes();
 
     EasyMock.expect(defaultAlias.getPasswordFromAliasForCluster(expectedClusterName, preferRemoteAlias))
-        .andReturn("thisiswrong".toCharArray()).anyTimes();
+        .andReturn(preferRemoteAliasClearPassword.toCharArray()).anyTimes();
 
     EasyMock.replay(defaultAlias);
 

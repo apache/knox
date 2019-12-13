@@ -155,7 +155,12 @@ public class ZookeeperRemoteAliasService implements AliasService {
      */
     @Override
     public List<String> getAliasesForCluster(final String clusterName) throws AliasServiceException {
-        return remoteClient == null ? new ArrayList<>() : remoteClient.listChildEntries(buildClusterEntryName(clusterName));
+        final List<String> localAliases = localAliasService.getAliasesForCluster(clusterName);
+        if (localAliases == null || localAliases.isEmpty()) {
+          return remoteClient == null ? new ArrayList<>() : remoteClient.listChildEntries(buildClusterEntryName(clusterName));
+        } else {
+          return localAliases;
+        }
     }
 
     @Override
@@ -201,10 +206,10 @@ public class ZookeeperRemoteAliasService implements AliasService {
 
     @Override
     public char[] getPasswordFromAliasForCluster(String clusterName, String alias, boolean generate) throws AliasServiceException {
-        char[] password = null;
+        char[] password = localAliasService.getPasswordFromAliasForCluster(clusterName, alias);
 
         /* try to get it from remote registry */
-        if (remoteClient != null) {
+        if (password == null && remoteClient != null) {
             checkPathsExist(remoteClient);
             String encrypted = null;
 
@@ -322,7 +327,7 @@ public class ZookeeperRemoteAliasService implements AliasService {
 
     /**
      * Encrypt the clear text with master password.
-     * 
+     *
      * @param clear
      *            clear text to be encrypted
      * @return encrypted and base 64 encoded result.

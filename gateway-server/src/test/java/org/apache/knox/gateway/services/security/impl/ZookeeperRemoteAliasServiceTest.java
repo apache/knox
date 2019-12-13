@@ -24,14 +24,20 @@ import org.apache.knox.gateway.service.config.remote.zk.ZooKeeperClientService;
 import org.apache.knox.gateway.service.config.remote.zk.ZooKeeperClientServiceProvider;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.MasterService;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -45,6 +51,10 @@ import static org.easymock.EasyMock.capture;
  * Test for {@link ZookeeperRemoteAliasService} backed by Zookeeper.
  */
 public class ZookeeperRemoteAliasServiceTest {
+
+  @ClassRule
+  public static final TemporaryFolder testFolder = new TemporaryFolder();
+
   private static TestingCluster zkNodes;
   private static GatewayConfig gc;
 
@@ -75,6 +85,10 @@ public class ZookeeperRemoteAliasServiceTest {
 
     EasyMock.expect(gc.isRemoteAliasServiceEnabled())
         .andReturn(true).anyTimes();
+
+    final Path baseFolder = Paths.get(testFolder.newFolder().getAbsolutePath());
+    EasyMock.expect(gc.getGatewayDataDir()).andReturn(Paths.get(baseFolder.toString(), "data").toString()).anyTimes();
+    EasyMock.expect(gc.getGatewayKeystoreDir()).andReturn(Paths.get(baseFolder.toString(), "data", "keystores").toString()).anyTimes();
 
     EasyMock.replay(gc);
   }
@@ -250,4 +264,41 @@ public class ZookeeperRemoteAliasServiceTest {
       Assert.assertEquals("Data should have 3 parts split by ::", e.getMessage());
     }
   }
+
+    @Test
+    @Ignore("should be executed manually in case you'd like to measure how much time alias addition/fetch takes")
+    public void testPerformance() throws Exception {
+        final MasterService masterService = EasyMock.createNiceMock(MasterService.class);
+        EasyMock.expect(masterService.getMasterSecret()).andReturn("ThisIsMyM4sterP4sW0r!d".toCharArray()).anyTimes();
+        EasyMock.replay(masterService);
+
+        final DefaultKeystoreService keystoreService = new DefaultKeystoreService();
+        keystoreService.init(gc, null);
+        keystoreService.setMasterService(masterService);
+
+        final int rounds = 11;
+        final int numOfAliases = 200;
+        final String cluster = "myTestCluster";
+        for (int round = 0; round < rounds; round++) {
+            //re-creating the alias service every time so that its cache is empty too
+            final DefaultAliasService aliasService = new DefaultAliasService();
+            aliasService.init(gc, null);
+            aliasService.setMasterService(masterService);
+            aliasService.setKeystoreService(keystoreService);
+
+            RemoteConfigurationRegistryClientService clientService = (new ZooKeeperClientServiceProvider()).newInstance();
+            clientService.setAliasService(aliasService);
+            clientService.init(gc, Collections.emptyMap());
+
+            final ZookeeperRemoteAliasService zkAlias = new ZookeeperRemoteAliasService(aliasService, masterService, clientService);
+            zkAlias.init(gc, Collections.emptyMap());
+            zkAlias.start();
+            final long start = System.currentTimeMillis();
+            for (int i = 0; i < numOfAliases; i++) {
+                zkAlias.addAliasForCluster(cluster, "alias" + i, "password" + i);
+                Assert.assertEquals("password" + i, new String(zkAlias.getPasswordFromAliasForCluster(cluster, "alias" + i)));
+            }
+            System.out.println(System.currentTimeMillis() - start);
+        }
+    }
 }
