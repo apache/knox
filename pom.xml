@@ -231,7 +231,6 @@
         <mina.version>2.0.21</mina.version>
         <nimbus-jose-jwt.version>8.2.1</nimbus-jose-jwt.version>
         <okhttp.version>2.7.5</okhttp.version>
-        <okta-jwt-verifier.version>0.4.0</okta-jwt-verifier.version>
         <opensaml.version>3.4.3</opensaml.version>
         <pac4j.version>3.8.3</pac4j.version>
         <protobuf.version>3.10.0</protobuf.version>
@@ -1368,18 +1367,6 @@
                 <groupId>com.squareup.okhttp</groupId>
                 <artifactId>okhttp</artifactId>
                 <version>${okhttp.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.okta.jwt</groupId>
-                <artifactId>okta-jwt-verifier-impl</artifactId>
-                <version>${okta-jwt-verifier.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.okta.jwt</groupId>
-                <artifactId>okta-jwt-verifier</artifactId>
-                <version>${okta-jwt-verifier.version}</version>
             </dependency>
 
             <dependency>

@@ -62,16 +62,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.okta.jwt</groupId>
-            <artifactId>okta-jwt-verifier-impl</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.okta.jwt</groupId>
-            <artifactId>okta-jwt-verifier</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
         </dependency>
