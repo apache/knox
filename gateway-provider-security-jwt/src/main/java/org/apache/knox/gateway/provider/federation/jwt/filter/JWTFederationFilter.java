@@ -142,13 +142,13 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       boolean validate = false;
       if (expectedJWKSUrl != null) {
         JWSAlgorithm expectedJWSAlg = JWSAlgorithm.parse(expectedSigAlg);
-        JWKSource<SecurityContext> keySource = new RemoteJWKSet(new URL(expectedJWKSUrl));
-        JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector(expectedJWSAlg, keySource);
+        JWKSource<SecurityContext> keySource = new RemoteJWKSet<>(new URL(expectedJWKSUrl));
+        JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(expectedJWSAlg, keySource);
         // Create a JWT processor for the access tokens
-        ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor();
+        ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
 
         jwtProcessor.setJWSKeySelector(keySelector);
-        JWTClaimsSetVerifier<SecurityContext> claimsVerifier = new DefaultJWTClaimsVerifier<SecurityContext>();
+        JWTClaimsSetVerifier<SecurityContext> claimsVerifier = new DefaultJWTClaimsVerifier<>();
         jwtProcessor.setJWTClaimsSetVerifier(claimsVerifier);
 
         // Process the token
@@ -157,13 +157,18 @@ public class JWTFederationFilter extends AbstractJWTFilter {
         validate = true;
       }
 
-      if (publicKey != null && !validate) {
+      else if (!validate) {
 
         boolean validateToken = validateToken((HttpServletRequest) request, (HttpServletResponse) response, chain,
             token);
         if (!validateToken) {
-          throw new JOSEException(" Token is not Valid");
+          throw new JOSEException("Token is invalid");
         }
+        validate = true;
+      }
+
+      if (!validate) {
+        throw new JOSEException(" Either JWKS Key url or Public cert is missing");
       }
 
       subject = createSubjectFromToken(token);
