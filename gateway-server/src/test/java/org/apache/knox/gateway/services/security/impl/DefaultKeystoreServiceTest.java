@@ -409,6 +409,39 @@ public class DefaultKeystoreServiceTest {
   }
 
   @Test
+  public void testCredentialCache() throws Exception {
+    final String clusterName = "my_cluster";
+    final String credentialAlias = "my_alias";
+    final String credentialValue = "my_value";
+
+    final MasterService masterService = createMock(MasterService.class);
+    expect(masterService.getMasterSecret()).andReturn("master_password".toCharArray()).anyTimes();
+    replay(masterService);
+
+    final GatewayConfigImpl gatewayConfig = createGatewayConfig(testFolder.newFolder().toPath());
+
+    final DefaultKeystoreService keystoreService = new DefaultKeystoreService();
+    keystoreService.setMasterService(masterService);
+    keystoreService.init(gatewayConfig, null);
+
+    keystoreService.addCredentialForCluster(clusterName, credentialAlias, credentialValue);
+
+    // changing the security folder so that we "invalidate" the previously created
+    // keystore and rely on the cache when fetching a credential for an alias
+    gatewayConfig.set(GatewayConfigImpl.SECURITY_DIR, gatewayConfig.getGatewaySecurityDir() + "_other");
+    keystoreService.init(gatewayConfig, null);
+
+    // A request for a existing alias should return the expected value from cache.
+    // Since the service now has a new security folder set it should return 'null'
+    // if the cache did not contain the previously added value
+    final char[] keyValue = keystoreService.getCredentialForCluster(clusterName, credentialAlias);
+    assertNotNull(keyValue);
+    assertEquals(credentialValue, new String(keyValue));
+
+    verify(masterService);
+  }
+
+  @Test
   public void testAddSelfSignedCertForGatewayLocalhost() throws Exception {
     testAddSelfSignedCertForGateway(null);
   }
