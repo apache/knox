@@ -17,10 +17,17 @@
  */
 package org.apache.knox.gateway.shell.table;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.shell.KnoxShellException;
 import org.apache.knox.gateway.util.JsonUtils;
 
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
@@ -51,15 +58,56 @@ class KnoxShellTableJSONSerializer {
    *          if this is <code>true</code> the underlying JSON serializer will
    *          output the table's content; otherwise the table's
    *          <code>callHistory</code> will be serilized
+   * @param filePath
+   *          if set, the JSON result will be written into the given file
+   *          (creating if not exists; overwritten if exists)
    * @return the serialized table in JSON format
    */
-  static String serializeKnoxShellTable(KnoxShellTable table, boolean data) {
-    SimpleFilterProvider filterProvider = new SimpleFilterProvider();
-    if (data) {
-      filterProvider.addFilter("knoxShellTableFilter", SimpleBeanPropertyFilter.filterOutAllExcept("headers", "rows", "title", "id"));
+  static String serializeKnoxShellTable(KnoxShellTable table, boolean data, String filePath) {
+    if (StringUtils.isNotBlank(filePath)) {
+      return saveTableInFile(table, data, filePath);
     } else {
-      filterProvider.addFilter("knoxShellTableFilter", SimpleBeanPropertyFilter.filterOutAllExcept("callHistoryList"));
+      final SimpleFilterProvider filterProvider = new SimpleFilterProvider();
+      if (data) {
+        filterProvider.addFilter("knoxShellTableFilter", SimpleBeanPropertyFilter.filterOutAllExcept("headers", "rows", "title", "id"));
+      } else {
+        filterProvider.addFilter("knoxShellTableFilter", SimpleBeanPropertyFilter.filterOutAllExcept("callHistoryList"));
+      }
+      return JsonUtils.renderAsJsonString(table, filterProvider, JSON_DATE_FORMAT.get());
     }
-    return JsonUtils.renderAsJsonString(table, filterProvider, JSON_DATE_FORMAT.get());
+  }
+
+  private static String saveTableInFile(KnoxShellTable table, boolean data, String filePath) {
+    try {
+      final String jsonResult;
+      if (data) {
+        final SimpleFilterProvider filterProvider = new SimpleFilterProvider();
+        filterProvider.addFilter("knoxShellTableFilter", SimpleBeanPropertyFilter.filterOutAllExcept("headers", "rows", "title", "id"));
+        jsonResult = JsonUtils.renderAsJsonString(table, filterProvider, JSON_DATE_FORMAT.get());
+      } else {
+        jsonResult = JsonUtils.renderAsJsonString(KnoxShellTableCallHistory.getInstance().getCallHistory(table.id), null, JSON_DATE_FORMAT.get());
+      }
+      final Path jsonFilePath = Paths.get(filePath);
+      if (!Files.exists(jsonFilePath.getParent())) {
+        Files.createDirectories(jsonFilePath.getParent());
+      }
+      Files.deleteIfExists(jsonFilePath);
+      Files.createFile(jsonFilePath);
+      setPermissions(jsonFilePath);
+      Files.write(jsonFilePath, jsonResult.getBytes(StandardCharsets.UTF_8));
+      return "Successfully saved into " + filePath;
+    } catch (IOException e) {
+      throw new KnoxShellException("Error while saving KnoxShellTable JSON into " + filePath, e);
+    }
+  }
+
+  private static void setPermissions(Path path) throws IOException {
+    // clear all flags for everybody
+    path.toFile().setReadable(false, false);
+    path.toFile().setWritable(false, false);
+    path.toFile().setExecutable(false, false);
+    // allow owners to read/write
+    path.toFile().setReadable(true, true);
+    path.toFile().setWritable(true, true);
   }
 }

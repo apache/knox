@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.shell.table;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Collections.singletonMap;
 import static org.apache.commons.io.FileUtils.readFileToString;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
@@ -33,8 +34,11 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -42,6 +46,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.SortOrder;
 
@@ -202,6 +208,15 @@ public class KnoxShellTableTest {
 
     KnoxShellTable table2 = KnoxShellTable.builder().json().fromJson(json);
     assertEquals(table.toString(), table2.toString());
+
+    final Path jsonPath = Paths.get(testFolder.newFolder().getAbsolutePath(), "testJson.json");
+    table.toJSON(jsonPath.toString());
+
+    final PosixFileAttributes jsonPathAttributes = Files.readAttributes(jsonPath, PosixFileAttributes.class);
+    assertEquals("rw-------", PosixFilePermissions.toString(jsonPathAttributes.permissions()));
+
+    KnoxShellTable table3 = KnoxShellTable.builder().json().path(jsonPath.toString());
+    assertEquals(table.toString(), table3.toString());
   }
 
   @Test
@@ -432,6 +447,32 @@ public class KnoxShellTableTest {
       insertDataStatement.execute(insertDataSql);
     }
     return derbyDatabase;
+  }
+
+  @Test
+  public void shouldMaskUserNameAndPasswordParametersWhenConnectingToDBUsingJDBCBuilder() throws Exception {
+    final KnoxShellTable table = new KnoxShellTable();
+    // it's quite hard to integrate AspectJ weaving together with JUnit so we
+    // manually build up the history
+    saveCall(table.id, "org.apache.knox.gateway.shell.table.KnoxShellTableBuilder", "jdbc", false, Collections.emptyMap());
+    saveCall(table.id, "org.apache.knox.gateway.shell.table.JDBCKnoxShellTableBuilder", "driver", false, singletonMap("org.apache.derby.jdbc.EmbeddedDriver", String.class));
+    saveCall(table.id, "org.apache.knox.gateway.shell.table.JDBCKnoxShellTableBuilder", "username", false, singletonMap("myUserName", String.class));
+    saveCall(table.id, "org.apache.knox.gateway.shell.table.JDBCKnoxShellTableBuilder", "pwd", false, singletonMap("myP4ssW0rd", String.class));
+    saveCall(table.id, "org.apache.knox.gateway.shell.table.JDBCKnoxShellTableBuilder", "connectTo", false, singletonMap("myDBConnectionUrl", String.class));
+    saveCall(table.id, "org.apache.knox.gateway.shell.table.JDBCKnoxShellTableBuilder", "sql", true, singletonMap("SELECT 1 FROM DUAL", String.class));
+    final AtomicBoolean foundSensitiveData = new AtomicBoolean(false);
+    table.getCallHistoryList().forEach(call -> {
+      if (call.hasSensitiveData()) {
+        assertEquals(1, call.getParams().size());
+        assertTrue(call.getParams().containsKey("***"));
+        foundSensitiveData.set(true);
+      }
+    });
+    assertTrue(foundSensitiveData.get());
+  }
+
+  private void saveCall(long id, String invokerClass, String method, boolean builderMethod, Map<Object, Class<?>>params) {
+    KnoxShellTableCallHistory.getInstance().saveCall(id, new KnoxShellTableCall(invokerClass, method, builderMethod, params));
   }
 
   @Test (expected = IllegalArgumentException.class)
