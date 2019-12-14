@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import javax.security.auth.Subject;
@@ -222,11 +223,14 @@ public abstract class AbstractJWTFilter implements Filter {
   }
 
   protected Subject createSubjectFromToken(JWT token) {
-    String principal = null;
+    String principal = token.getSubject();
+    String claimvalue = null;
     if (expectedPrincipalClaim != null) {
-      principal = expectedPrincipalClaim;
-    } else {
-      principal = token.getSubject();
+      claimvalue = token.getClaim(expectedPrincipalClaim);
+    }
+
+    if (claimvalue != null) {
+      principal = claimvalue.toLowerCase(Locale.ENGLISH);
     }
     @SuppressWarnings("rawtypes")
     HashSet emptySet = new HashSet();
