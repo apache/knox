@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
 import java.io.IOException;
+import java.net.URL;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -60,35 +61,46 @@ import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.jwk.source.RemoteJWKSet;
+import com.nimbusds.jose.proc.BadJOSEException;
+import com.nimbusds.jose.proc.JWSKeySelector;
+import com.nimbusds.jose.proc.JWSVerificationKeySelector;
+import com.nimbusds.jose.proc.SecurityContext;
+import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
+import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
+import com.nimbusds.jwt.proc.DefaultJWTProcessor;
+import com.nimbusds.jwt.proc.JWTClaimsSetVerifier;
 
 public abstract class AbstractJWTFilter implements Filter {
   /**
-   * If specified, this configuration property refers to a value which the issuer
-   * of a received token must match. Otherwise, the default value "KNOXSSO" is
-   * used
+   * If specified, this configuration property refers to a value which the issuer of a received
+   * token must match. Otherwise, the default value "KNOXSSO" is used
    */
   public static final String JWT_EXPECTED_ISSUER = "jwt.expected.issuer";
   public static final String JWT_DEFAULT_ISSUER = "KNOXSSO";
 
   /**
-   * If specified, this configuration property refers to the signature algorithm
-   * which a received token must match. Otherwise, the default value "RS256" is
-   * used
+   * If specified, this configuration property refers to the signature algorithm which a received
+   * token must match. Otherwise, the default value "RS256" is used
    */
   public static final String JWT_EXPECTED_SIGALG = "jwt.expected.sigalg";
   public static final String JWT_DEFAULT_SIGALG = "RS256";
 
-  static JWTMessages log = MessagesFactory.get(JWTMessages.class);
+  static JWTMessages log = MessagesFactory.get( JWTMessages.class );
   private static AuditService auditService = AuditServiceFactory.getAuditService();
-  private static Auditor auditor = auditService.getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
-      AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
+  private static Auditor auditor = auditService.getAuditor(
+      AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
+      AuditConstants.KNOX_COMPONENT_NAME );
 
   protected List<String> audiences;
   protected JWTokenAuthority authority;
   protected RSAPublicKey publicKey;
   private String expectedIssuer;
-  protected String expectedSigAlg;
+  private String expectedSigAlg;
   protected String expectedPrincipalClaim;
   protected String expectedJWKSUrl;
 
@@ -106,7 +118,7 @@ public abstract class AbstractJWTFilter implements Filter {
   }
 
   @Override
-  public void init(FilterConfig filterConfig) throws ServletException {
+  public void init( FilterConfig filterConfig ) throws ServletException {
     ServletContext context = filterConfig.getServletContext();
     if (context != null) {
       GatewayServices services = (GatewayServices) context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
@@ -159,11 +171,12 @@ public abstract class AbstractJWTFilter implements Filter {
   }
 
   /**
-   * Validate whether any of the accepted audience claims is present in the issued
-   * token claims list for audience. Override this method in subclasses in order
-   * to customize the audience validation behavior.
+   * Validate whether any of the accepted audience claims is present in the
+   * issued token claims list for audience. Override this method in subclasses
+   * in order to customize the audience validation behavior.
    *
-   * @param jwtToken the JWT token where the allowed audiences will be found
+   * @param jwtToken
+   *          the JWT token where the allowed audiences will be found
    * @return true if an expected audience is present, otherwise false
    */
   protected boolean validateAudiences(JWT jwtToken) {
@@ -190,38 +203,42 @@ public abstract class AbstractJWTFilter implements Filter {
     return valid;
   }
 
-  protected void continueWithEstablishedSecurityContext(Subject subject, final HttpServletRequest request,
-      final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
+  protected void continueWithEstablishedSecurityContext(Subject subject, final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
     Principal principal = (Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0];
     AuditContext context = auditService.getContext();
     if (context != null) {
-      context.setUsername(principal.getName());
-      String sourceUri = (String) request.getAttribute(AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME);
+      context.setUsername( principal.getName() );
+      String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
       if (sourceUri != null) {
-        auditor.audit(Action.AUTHENTICATION, sourceUri, ResourceType.URI, ActionOutcome.SUCCESS);
+        auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
       }
     }
 
     try {
-      Subject.doAs(subject, new PrivilegedExceptionAction<Object>() {
-        @Override
-        public Object run() throws Exception {
-          chain.doFilter(request, response);
-          return null;
+      Subject.doAs(
+        subject,
+        new PrivilegedExceptionAction<Object>() {
+          @Override
+          public Object run() throws Exception {
+            chain.doFilter(request, response);
+            return null;
+          }
         }
-      });
-    } catch (PrivilegedActionException e) {
+        );
+    }
+    catch (PrivilegedActionException e) {
       Throwable t = e.getCause();
       if (t instanceof IOException) {
         throw (IOException) t;
-      } else if (t instanceof ServletException) {
+      }
+      else if (t instanceof ServletException) {
         throw (ServletException) t;
-      } else {
+      }
+      else {
         throw new ServletException(t);
       }
     }
   }
-
   protected Subject createSubjectFromToken(JWT token) {
     String principal = token.getSubject();
     String claimvalue = null;
@@ -230,7 +247,7 @@ public abstract class AbstractJWTFilter implements Filter {
     }
 
     if (claimvalue != null) {
-      principal = claimvalue.toLowerCase(Locale.ENGLISH);
+      principal = claimvalue.toLowerCase(Locale.ROOT);
     }
     @SuppressWarnings("rawtypes")
     HashSet emptySet = new HashSet();
@@ -255,13 +272,27 @@ public abstract class AbstractJWTFilter implements Filter {
   protected boolean validateToken(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
       JWT token) throws IOException, ServletException {
     boolean verified = false;
+
     try {
-      if (publicKey == null) {
-        verified = authority.verifyToken(token);
-      } else {
+      if (publicKey != null) {
         verified = authority.verifyToken(token, publicKey);
+      } else if (expectedJWKSUrl != null) {
+        JWSAlgorithm expectedJWSAlg = JWSAlgorithm.parse(expectedSigAlg);
+        JWKSource<SecurityContext> keySource = new RemoteJWKSet<>(new URL(expectedJWKSUrl));
+        JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(expectedJWSAlg, keySource);
+        // Create a JWT processor for the access tokens
+        ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
+        jwtProcessor.setJWSKeySelector(keySelector);
+        JWTClaimsSetVerifier<SecurityContext> claimsVerifier = new DefaultJWTClaimsVerifier<>();
+        jwtProcessor.setJWTClaimsSetVerifier(claimsVerifier);
+        // Process the token
+        SecurityContext ctx = null; // optional context parameter, not required here
+        jwtProcessor.process(token.toString(), ctx);
+        verified = true;
+      } else {
+        verified = authority.verifyToken(token);
       }
-    } catch (TokenServiceException e) {
+    } catch (TokenServiceException | BadJOSEException | JOSEException | ParseException e) {
       log.unableToVerifyToken(e);
     }
 
@@ -287,28 +318,32 @@ public abstract class AbstractJWTFilter implements Filter {
         if (tokenIsStillValid(token)) {
           boolean audValid = validateAudiences(token);
           if (audValid) {
-            Date nbf = token.getNotBeforeDate();
-            if (nbf == null || new Date().after(nbf)) {
-              return true;
-            } else {
-              log.notBeforeCheckFailed();
-              handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-                  "Bad request: the NotBefore check failed");
-            }
-          } else {
+              Date nbf = token.getNotBeforeDate();
+              if (nbf == null || new Date().after(nbf)) {
+                return true;
+              } else {
+                log.notBeforeCheckFailed();
+                handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+                                      "Bad request: the NotBefore check failed");
+              }
+          }
+          else {
             log.failedToValidateAudience();
             handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-                "Bad request: missing required token audience");
+                                  "Bad request: missing required token audience");
           }
-        } else {
+        }
+        else {
           log.tokenHasExpired();
           handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-              "Bad request: token has expired");
+                                "Bad request: token has expired");
         }
-      } else {
+      }
+      else {
         handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
       }
-    } else {
+    }
+    else {
       log.failedToVerifyTokenSignature();
       handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
     }
@@ -317,6 +352,6 @@ public abstract class AbstractJWTFilter implements Filter {
   }
 
   protected abstract void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status,
-      String error) throws IOException;
+                                                String error) throws IOException;
 
 }
