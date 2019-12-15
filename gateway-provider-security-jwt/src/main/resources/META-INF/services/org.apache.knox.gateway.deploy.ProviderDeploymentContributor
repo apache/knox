@@ -21,3 +21,4 @@ org.apache.knox.gateway.provider.federation.jwt.deploy.JWTAccessTokenAssertionCo
 org.apache.knox.gateway.provider.federation.jwt.deploy.JWTAuthCodeAssertionContributor
 org.apache.knox.gateway.provider.federation.jwt.deploy.AccessTokenFederationContributor
 org.apache.knox.gateway.provider.federation.jwt.deploy.SSOCookieFederationContributor
+org.apache.knox.gateway.provider.federation.jwt.deploy.JWKSFederationContributor

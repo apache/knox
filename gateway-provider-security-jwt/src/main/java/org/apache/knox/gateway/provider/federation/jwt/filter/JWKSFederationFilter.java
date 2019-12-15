@@ -17,9 +17,8 @@
  */
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
-import org.apache.knox.gateway.services.security.token.impl.JWTToken;
-import org.apache.knox.gateway.util.CertificateUtils;
-import org.apache.knox.gateway.services.security.token.impl.JWT;
+import java.io.IOException;
+import java.text.ParseException;
 
 import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
@@ -30,19 +29,19 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import java.io.IOException;
-import java.text.ParseException;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
-public class JWTFederationFilter extends AbstractJWTFilter {
+public class JWKSFederationFilter extends AbstractJWTFilter {
 
   public static final String KNOX_TOKEN_AUDIENCES = "knox.token.audiences";
-  public static final String TOKEN_VERIFICATION_PEM = "knox.token.verification.pem";
-  private static final String KNOX_TOKEN_QUERY_PARAM_NAME = "knox.token.query.param.name";
+  public static final String TOKEN_PRINCIPAL_CLAIM = "jwt.expected.principal.claim";
+  public static final String JWKS_URL = "jwt.expected.jwks.url";
   private static final String BEARER = "Bearer ";
-  private String paramName = "knoxtoken";
+  private String HEADER_TOKEN_NAME = "accesstoken";
 
   @Override
-  public void init( FilterConfig filterConfig ) throws ServletException {
+  public void init(FilterConfig filterConfig) throws ServletException {
     super.init(filterConfig);
 
     // expected audiences or null
@@ -50,18 +49,15 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     if (expectedAudiences != null) {
       audiences = parseExpectedAudiences(expectedAudiences);
     }
-
-    // query param name for finding the provided knoxtoken
-    String queryParamName = filterConfig.getInitParameter(KNOX_TOKEN_QUERY_PARAM_NAME);
-    if (queryParamName != null) {
-      paramName = queryParamName;
+    // JWKSUrl
+    String oidcjwksurl = filterConfig.getInitParameter(JWKS_URL);
+    if (oidcjwksurl != null) {
+      expectedJWKSUrl = oidcjwksurl;
     }
-
-    // token verification pem
-    String verificationPEM = filterConfig.getInitParameter(TOKEN_VERIFICATION_PEM);
-    // setup the public key of the token issuer for verification
-    if (verificationPEM != null) {
-      publicKey = CertificateUtils.parseRSAPublicKey(verificationPEM);
+    // expected claim
+    String oidcPrincipalclaim = filterConfig.getInitParameter(TOKEN_PRINCIPAL_CLAIM);
+    if (oidcPrincipalclaim != null) {
+      expectedPrincipalClaim = oidcPrincipalclaim;
     }
 
     configureExpectedParameters(filterConfig);
@@ -77,26 +73,26 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     String header = ((HttpServletRequest) request).getHeader("Authorization");
     String wireToken;
     if (header != null && header.startsWith(BEARER)) {
-      // what follows the bearer designator should be the JWT token being used to request or as an access token
+      // what follows the bearer designator should be the JWT token being used to
+      // request or as an access token
       wireToken = header.substring(BEARER.length());
-    }
-    else {
-      // check for query param
-      wireToken = request.getParameter(paramName);
+    } else {
+      // to support JWT in Authorization Header without as BEARER in case of Hive JDBC
+      wireToken = ((HttpServletRequest) request).getHeader(HEADER_TOKEN_NAME);
     }
 
     if (wireToken != null) {
       try {
         JWT token = new JWTToken(wireToken);
-        if (validateToken((HttpServletRequest)request, (HttpServletResponse)response, chain, token)) {
+        if (validateToken((HttpServletRequest) request, (HttpServletResponse) response, chain, token)) {
           Subject subject = createSubjectFromToken(token);
-          continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
+          continueWithEstablishedSecurityContext(subject, (HttpServletRequest) request, (HttpServletResponse) response,
+              chain);
         }
       } catch (ParseException ex) {
         ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
       }
-    }
-    else {
+    } else {
       // no token provided in header
       ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
     }
@@ -104,11 +100,10 @@ public class JWTFederationFilter extends AbstractJWTFilter {
 
   @Override
   protected void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status,
-                                       String error) throws IOException {
+      String error) throws IOException {
     if (error != null) {
       response.sendError(status, error);
-    }
-    else {
+    } else {
       response.sendError(status);
     }
   }
