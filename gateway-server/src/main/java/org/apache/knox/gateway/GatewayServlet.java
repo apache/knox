@@ -33,6 +33,7 @@ import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.metrics.MetricsService;
+import org.apache.knox.gateway.util.ServletRequestUtils;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -58,10 +59,9 @@ public class GatewayServlet implements Servlet, Filter {
   private static final GatewayResources res = ResourcesFactory.get( GatewayResources.class );
   private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
 
-  private static AuditService auditService = AuditServiceFactory.getAuditService();
-  private static Auditor auditor = AuditServiceFactory.getAuditService()
-      .getAuditor( AuditConstants.DEFAULT_AUDITOR_NAME,
-          AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
+  private static final AuditService auditService = AuditServiceFactory.getAuditService();
+  private static final Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
+      AuditConstants.KNOX_COMPONENT_NAME);
 
   private FilterConfigAdapter filterConfig;
   private GatewayFilter filter;
@@ -140,9 +140,7 @@ public class GatewayServlet implements Servlet, Filter {
       } else {
         ((HttpServletResponse)servletResponse).setStatus( HttpServletResponse.SC_SERVICE_UNAVAILABLE );
       }
-      String requestUri = (String)servletRequest.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
-      int status = ((HttpServletResponse)servletResponse).getStatus();
-      auditor.audit( Action.ACCESS, requestUri, ResourceType.URI, ActionOutcome.SUCCESS, res.responseStatus( status ) );
+      auditLog(servletRequest, servletResponse);
     } finally {
       auditService.detachContext();
     }
@@ -170,12 +168,23 @@ public class GatewayServlet implements Servlet, Filter {
       } else {
         ((HttpServletResponse)servletResponse).setStatus( HttpServletResponse.SC_SERVICE_UNAVAILABLE );
       }
-      String requestUri = (String)servletRequest.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
-      int status = ((HttpServletResponse)servletResponse).getStatus();
-      auditor.audit( Action.ACCESS, requestUri, ResourceType.URI, ActionOutcome.SUCCESS, res.responseStatus( status ) );
+      auditLog(servletRequest, servletResponse);
     } finally {
       auditService.detachContext();
     }
+  }
+
+  private void auditLog(ServletRequest servletRequest, ServletResponse servletResponse) {
+    final int status = ((HttpServletResponse) servletResponse).getStatus();
+    final String requestUri, actionOutcome;
+    if (HttpServletResponse.SC_SERVICE_UNAVAILABLE == status) {
+      requestUri = ServletRequestUtils.getContextPathWithQuery(servletRequest);
+      actionOutcome = ActionOutcome.UNAVAILABLE;
+    } else {
+      requestUri = (String) servletRequest.getAttribute(AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME);
+      actionOutcome = ActionOutcome.SUCCESS;
+    }
+    auditor.audit(Action.ACCESS, requestUri, ResourceType.URI, actionOutcome, res.responseStatus(status));
   }
 
   @Override
