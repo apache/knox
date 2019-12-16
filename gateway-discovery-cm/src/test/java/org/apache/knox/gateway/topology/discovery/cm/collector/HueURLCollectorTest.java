@@ -45,7 +45,7 @@ public class HueURLCollectorTest extends AbstractURLCollectorTest {
   public void testSingleServiceModel() {
     Map<String, List<ServiceModel>> testRoleModels = new HashMap<>();
 
-    testRoleModels.put(HueServiceModelGenerator.SERVICE,
+    testRoleModels.put(HueServiceModelGenerator.ROLE_TYPE,
                        Collections.singletonList(createMockServiceModel(HueServiceModelGenerator.SERVICE,
                                                                         HueServiceModelGenerator.SERVICE_TYPE,
                                                                         HueServiceModelGenerator.ROLE_TYPE,
@@ -61,7 +61,7 @@ public class HueURLCollectorTest extends AbstractURLCollectorTest {
   public void testMultipleServiceModels() {
     Map<String, List<ServiceModel>> testRoleModels = new HashMap<>();
 
-    testRoleModels.put(HueServiceModelGenerator.SERVICE,
+    testRoleModels.put(HueServiceModelGenerator.ROLE_TYPE,
                        Arrays.asList(createMockServiceModel(HueServiceModelGenerator.SERVICE,
                                                             HueServiceModelGenerator.SERVICE_TYPE,
                                                             HueServiceModelGenerator.ROLE_TYPE,
@@ -109,6 +109,28 @@ public class HueURLCollectorTest extends AbstractURLCollectorTest {
     List<String> urls = collector.collect(testRoleModels);
     assertEquals("Expected only the load-balancer URL.", 1, urls.size());
     assertEquals("Expected the load-balancer URL.", "http://hostx:1234/lb", urls.get(0));
+  }
+
+  @Test
+  public void testLBSSL() {
+    Map<String, List<ServiceModel>> testRoleModels = new HashMap<>();
+
+    testRoleModels.put(HueServiceModelGenerator.ROLE_TYPE,
+                       Collections.singletonList(createMockServiceModel(HueServiceModelGenerator.SERVICE,
+                                                                        HueServiceModelGenerator.SERVICE_TYPE,
+                                                                        HueServiceModelGenerator.ROLE_TYPE,
+                                                                        "https://hostx:1234/test1")));
+
+    testRoleModels.put(HueLBServiceModelGenerator.ROLE_TYPE,
+                       Collections.singletonList(createMockServiceModel(HueLBServiceModelGenerator.SERVICE,
+                                                                        HueLBServiceModelGenerator.SERVICE_TYPE,
+                                                                        HueLBServiceModelGenerator.ROLE_TYPE,
+                                                                        "http://hostx:1234/lb")));
+
+    HueURLCollector collector = new HueURLCollector();
+    List<String> urls = collector.collect(testRoleModels);
+    assertEquals("Expected the LB URL with https.", 1, urls.size());
+    assertTrue(urls.contains("https://hostx:1234/lb"));
   }
 
 }
