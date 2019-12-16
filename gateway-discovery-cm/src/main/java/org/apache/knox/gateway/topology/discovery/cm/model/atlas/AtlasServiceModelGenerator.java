@@ -74,6 +74,8 @@ public class AtlasServiceModelGenerator extends AbstractServiceModelGenerator {
     }
     return new ServiceModel(getModelType(),
                             getService(),
+                            getServiceType(),
+                            getRoleType(),
                             String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
   }
 

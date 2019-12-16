@@ -24,36 +24,72 @@ public class ServiceModel {
 
   private final Type type;
   private final String service;
+  private final String serviceType;
+  private final String roleType;
   private final String serviceUrl;
 
-  public ServiceModel(Type   type,
-                      String service,
-                      String serviceUrl) {
-    this.type = type;
-    this.service = service;
-    this.serviceUrl = serviceUrl;
+  /**
+   * @param type        The model type
+   * @param service     The service name
+   * @param serviceType The service type
+   * @param roleType    The service role type
+   * @param serviceUrl  The service URL
+   */
+  public ServiceModel(final Type   type,
+                      final String service,
+                      final String serviceType,
+                      final String roleType,
+                      final String serviceUrl) {
+    this.type        = type;
+    this.service     = service;
+    this.serviceType = serviceType;
+    this.roleType    = roleType;
+    this.serviceUrl  = serviceUrl;
   }
 
+  /**
+   * @return The model type
+   */
   public Type getType() {
     return type;
   }
 
+  /**
+   * @return The name of the modeled service
+   */
   public String getService() {
     return service;
   }
 
+  /**
+   * @return The type of the modeled service
+   */
+  public String getServiceType() {
+    return serviceType;
+  }
+
+  /**
+   * @return The role type of the modeled service
+   */
+  public String getRoleType() {
+    return roleType;
+  }
+
+  /**
+   * @return The URL of the modeled service
+   */
   public String getServiceUrl() {
     return serviceUrl;
   }
 
   @Override
   public String toString() {
-    return getService() + '-' + getServiceUrl();
+    return getService() + '-' + getServiceType() + '-' + getRoleType() + '-' + getServiceUrl();
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, service, serviceUrl);
+    return Objects.hash(type, service, serviceType, roleType, serviceUrl);
   }
 
   @Override
@@ -67,6 +103,8 @@ public class ServiceModel {
     ServiceModel other = (ServiceModel) obj;
     return getType().equals(other.getType()) &&
            getService().equals(other.getService()) &&
+           getServiceType().equals(other.getServiceType()) &&
+           getRoleType().equals(other.getRoleType()) &&
            getServiceUrl().equals(other.getServiceUrl());
   }
 

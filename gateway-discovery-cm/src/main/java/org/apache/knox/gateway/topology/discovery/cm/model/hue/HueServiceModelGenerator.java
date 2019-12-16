@@ -27,9 +27,9 @@ import java.util.Locale;
 
 public class HueServiceModelGenerator extends AbstractServiceModelGenerator {
 
-  private static final String SERVICE = "HUE";
-  private static final String SERVICE_TYPE = "HUE";
-  private static final String ROLE_TYPE = "HUE_SERVER";
+  public static final String SERVICE = "HUE";
+  public static final String SERVICE_TYPE = "HUE";
+  public static final String ROLE_TYPE = "HUE_SERVER";
 
   @Override
   public String getService() {
