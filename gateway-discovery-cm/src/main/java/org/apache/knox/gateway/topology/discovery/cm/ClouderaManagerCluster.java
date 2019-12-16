@@ -17,9 +17,10 @@
 package org.apache.knox.gateway.topology.discovery.cm;
 
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
+import org.apache.knox.gateway.topology.discovery.cm.collector.ServiceURLCollectors;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,7 +32,7 @@ public class ClouderaManagerCluster implements ServiceDiscovery.Cluster {
 
   private String name;
 
-  private Set<ServiceModel> serviceModels = new HashSet<>();
+  private Map<String, List<ServiceModel>> serviceModels = new HashMap<>();
 
   ClouderaManagerCluster(String clusterName) {
     this.name = clusterName;
@@ -45,13 +46,14 @@ public class ClouderaManagerCluster implements ServiceDiscovery.Cluster {
   @Override
   public List<String> getServiceURLs(String serviceName) {
     List<String> urls = new ArrayList<>();
-
-    for (ServiceModel sm : serviceModels) {
-      if (sm.getService().equals(serviceName)) {
-        urls.add(sm.getServiceUrl());
+    if (serviceModels.containsKey(serviceName)) {
+      Map<String, List<ServiceModel>> roleModels = new HashMap<>();
+      for (ServiceModel model : serviceModels.get(serviceName)) {
+        roleModels.computeIfAbsent(model.getRoleType(), l -> new ArrayList<>()).add(model);
       }
-    }
 
+      urls.addAll((ServiceURLCollectors.getCollector(serviceName)).collect(roleModels));
+    }
     return urls;
   }
 
@@ -66,7 +68,9 @@ public class ClouderaManagerCluster implements ServiceDiscovery.Cluster {
   }
 
   void addServiceModels(Set<ServiceModel> serviceModels) {
-    this.serviceModels.addAll(serviceModels);
+    for (ServiceModel model : serviceModels) {
+      this.serviceModels.computeIfAbsent(model.getService(), l -> new ArrayList<>()).add(model);
+    }
   }
 
   static class ServiceConfiguration {

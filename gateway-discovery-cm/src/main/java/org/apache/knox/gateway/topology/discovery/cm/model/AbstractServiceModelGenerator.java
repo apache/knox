@@ -75,7 +75,7 @@ public abstract class AbstractServiceModelGenerator implements ServiceModelGener
   }
 
   protected ServiceModel createServiceModel(final String url) {
-    return new ServiceModel(getModelType(), getService(), url);
+    return new ServiceModel(getModelType(), getService(), getServiceType(), getRoleType(), url);
   }
 
 }
