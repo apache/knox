@@ -28,12 +28,27 @@ import java.util.Map;
  */
 public class HueURLCollector extends AbstractURLCollector {
 
+  private static final String SCHEME_HTTP  = "http";
+  private static final String SCHEME_HTTPS = "https";
+
   @Override
   protected List<String> getURLs(Map<String, List<ServiceModel>> roleModels) {
     List<String> urls = new ArrayList<>();
 
     if (roleModels.containsKey(HueLBServiceModelGenerator.ROLE_TYPE)) {
-      urls.addAll(getURLs(roleModels.get(HueLBServiceModelGenerator.ROLE_TYPE)));
+      List<String> lbUrls = getURLs(roleModels.get(HueLBServiceModelGenerator.ROLE_TYPE));
+      // KNOX-1921
+      // The Hue load balancer use the HUE_SERVER role ssl_enabled configuration as its own SSL enablement flag.
+      // Rather than jumping through hoops to get the HUE_SERVER configuration, use the HUE_SERVER role URL scheme to
+      // determine whether SSL is enabled or not.
+      if (roleModels.get("HUE_SERVER").get(0).getServiceUrl().startsWith(SCHEME_HTTPS)) {
+        // If the HUE_SERVER URLs have the http scheme, modify the load balancer URLs accordingly
+        for (String url : lbUrls) {
+          urls.add(url.replace(SCHEME_HTTP, SCHEME_HTTPS));
+        }
+      } else {
+        urls.addAll(lbUrls);
+      }
     } else {
       for (List<ServiceModel> models : roleModels.values()) {
         urls.addAll(getURLs(models));
