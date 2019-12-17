@@ -260,17 +260,17 @@ public abstract class AbstractJWTFilter implements Filter {
       JWT token) throws IOException, ServletException {
     boolean verified = false;
 
-  try {
-   if (publicKey != null) {
-    verified = authority.verifyToken(token, publicKey);
-   } else if (expectedJWKSUrl != null) {
-    verified = authority.verifyToken(token, expectedJWKSUrl, expectedSigAlg);
-   } else {
-    verified = authority.verifyToken(token);
+   try {
+    if (publicKey != null) {
+     verified = authority.verifyToken(token, publicKey);
+    } else if (expectedJWKSUrl != null) {
+     verified = authority.verifyToken(token, expectedJWKSUrl, expectedSigAlg);
+    } else {
+     verified = authority.verifyToken(token);
+    }
+   } catch (TokenServiceException e) {
+    log.unableToVerifyToken(e);
    }
-  } catch (TokenServiceException e) {
-   log.unableToVerifyToken(e);
-  }
 
     // Check received signature algorithm
     if (verified) {
