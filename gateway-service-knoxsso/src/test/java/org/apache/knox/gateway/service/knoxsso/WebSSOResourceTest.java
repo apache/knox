@@ -1071,5 +1071,11 @@ public class WebSSOResourceTest {
       JWSVerifier verifier = new RSASSAVerifier(publicKey);
       return token.verify(verifier);
     }
+
+    @Override
+    public boolean verifyToken(JWT token, String jwksurl, String algorithm) throws TokenServiceException {
+     // TODO Auto-generated method stub
+     return false;
+    }
   }
 }

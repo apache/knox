@@ -29,6 +29,7 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
@@ -1201,6 +1202,12 @@ public class TokenServiceResourceTest {
     public boolean verifyToken(JWT token, RSAPublicKey publicKey) {
       JWSVerifier verifier = new RSASSAVerifier(publicKey);
       return token.verify(verifier);
+    }
+
+    @Override
+    public boolean verifyToken(JWT token, String jwksurl, String algorithm) throws TokenServiceException {
+     // TODO Auto-generated method stub
+     return false;
     }
   }
 }

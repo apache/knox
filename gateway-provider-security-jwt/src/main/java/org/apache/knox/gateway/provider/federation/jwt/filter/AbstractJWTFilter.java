@@ -18,7 +18,6 @@
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
 import java.io.IOException;
-import java.net.URL;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -54,26 +53,14 @@ import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
-import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.jwk.source.RemoteJWKSet;
-import com.nimbusds.jose.proc.BadJOSEException;
-import com.nimbusds.jose.proc.JWSKeySelector;
-import com.nimbusds.jose.proc.JWSVerificationKeySelector;
-import com.nimbusds.jose.proc.SecurityContext;
-import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
-import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
-import com.nimbusds.jwt.proc.DefaultJWTProcessor;
-import com.nimbusds.jwt.proc.JWTClaimsSetVerifier;
 
 public abstract class AbstractJWTFilter implements Filter {
   /**
@@ -273,28 +260,17 @@ public abstract class AbstractJWTFilter implements Filter {
       JWT token) throws IOException, ServletException {
     boolean verified = false;
 
-    try {
-      if (publicKey != null) {
-        verified = authority.verifyToken(token, publicKey);
-      } else if (expectedJWKSUrl != null) {
-        JWSAlgorithm expectedJWSAlg = JWSAlgorithm.parse(expectedSigAlg);
-        JWKSource<SecurityContext> keySource = new RemoteJWKSet<>(new URL(expectedJWKSUrl));
-        JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(expectedJWSAlg, keySource);
-        // Create a JWT processor for the access tokens
-        ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
-        jwtProcessor.setJWSKeySelector(keySelector);
-        JWTClaimsSetVerifier<SecurityContext> claimsVerifier = new DefaultJWTClaimsVerifier<>();
-        jwtProcessor.setJWTClaimsSetVerifier(claimsVerifier);
-        // Process the token
-        SecurityContext ctx = null; // optional context parameter, not required here
-        jwtProcessor.process(token.toString(), ctx);
-        verified = true;
-      } else {
-        verified = authority.verifyToken(token);
-      }
-    } catch (TokenServiceException | BadJOSEException | JOSEException | ParseException e) {
-      log.unableToVerifyToken(e);
-    }
+  try {
+   if (publicKey != null) {
+    verified = authority.verifyToken(token, publicKey);
+   } else if (expectedJWKSUrl != null) {
+    verified = authority.verifyToken(token, expectedJWKSUrl, expectedSigAlg);
+   } else {
+    verified = authority.verifyToken(token);
+   }
+  } catch (TokenServiceException e) {
+   log.unableToVerifyToken(e);
+  }
 
     // Check received signature algorithm
     if (verified) {

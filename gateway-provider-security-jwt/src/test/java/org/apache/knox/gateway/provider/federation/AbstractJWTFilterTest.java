@@ -30,6 +30,7 @@ import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.util.X509CertificateUtil;
 import org.easymock.EasyMock;
@@ -1069,6 +1070,12 @@ public abstract class AbstractJWTFilterTest  {
     public boolean verifyToken(JWT token, RSAPublicKey publicKey) {
       JWSVerifier verifier = new RSASSAVerifier(publicKey);
       return token.verify(verifier);
+    }
+
+    @Override
+    public boolean verifyToken(JWT token, String jwksurl, String algorithm) throws TokenServiceException {
+     // TODO Auto-generated method stub
+     return false;
     }
   }
 
