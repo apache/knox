@@ -32,6 +32,7 @@ import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
 import org.apache.knox.gateway.topology.Topology;
+import org.apache.knox.gateway.util.ServletRequestUtils;
 import org.apache.knox.gateway.util.urltemplate.Matcher;
 import org.apache.knox.gateway.util.urltemplate.Parser;
 import org.apache.knox.gateway.util.urltemplate.Template;
@@ -101,11 +102,9 @@ public class GatewayFilter implements Filter {
     HttpServletResponse httpResponse = (HttpServletResponse)servletResponse;
 
     //TODO: The resulting pathInfo + query needs to be added to the servlet context somehow so that filters don't need to rebuild it.  This is done in HttpClientDispatch right now for example.
-    String servlet = httpRequest.getServletPath();
     String path = httpRequest.getPathInfo();
-    String query = httpRequest.getQueryString();
-    String requestPath = ( servlet == null ? "" : servlet ) + ( path == null ? "" : path );
-    String requestPathWithQuery = requestPath + ( query == null ? "" : "?" + query );
+    String requestPath = ServletRequestUtils.getRequestPath(httpRequest);
+    String requestPathWithQuery = ServletRequestUtils.getRequestPathWithQuery(httpRequest);
 
     Template pathWithQueryTemplate;
     try {
@@ -113,7 +112,7 @@ public class GatewayFilter implements Filter {
     } catch( URISyntaxException e ) {
       throw new ServletException( e );
     }
-    String contextWithPathAndQuery = httpRequest.getContextPath() + requestPathWithQuery;
+    String contextWithPathAndQuery = ServletRequestUtils.getContextPathWithQuery(httpRequest);
     LOG.receivedRequest( httpRequest.getMethod(), requestPath );
 
     servletRequest.setAttribute(
