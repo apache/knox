@@ -324,6 +324,30 @@ public class ClouderaManagerServiceDiscoveryTest {
   }
 
   @Test
+  public void testWebHCatDiscovery() {
+    final String hostName = "webhcat-host";
+    final String port     = "22222";
+    final String expectedURL = "http://" + hostName + ":" + port + "/templeton";
+
+    // Configure the role
+    Map<String, String> roleProperties = new HashMap<>();
+    roleProperties.put("hive_webhcat_address_port", port);
+
+    ServiceDiscovery.Cluster cluster = doTestDiscovery(hostName,
+                                                       "HIVE-1",
+                                                       "HIVE",
+                                                       "HIVE-1-WEBHCAT-1",
+                                                       "WEBHCAT",
+                                                       Collections.emptyMap(),
+                                                       roleProperties);
+
+    List<String> urls = cluster.getServiceURLs("WEBHCAT");
+    assertNotNull(urls);
+    assertEquals(1, urls.size());
+    assertEquals(expectedURL, urls.get(0));
+  }
+
+  @Test
   public void testOozieDiscovery() {
     doTestOozieDiscovery("OOZIE", false);
   }
