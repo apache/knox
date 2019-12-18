@@ -953,7 +953,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isClusterMonitorEnabled(String type) {
-    return getBoolean(CLUSTER_CONFIG_MONITOR_PREFIX + type.toLowerCase(Locale.ROOT) + CLUSTER_CONFIG_MONITOR_ENABLED_SUFFIX, true);
+    return getBoolean(CLUSTER_CONFIG_MONITOR_PREFIX + type.toLowerCase(Locale.ROOT) + CLUSTER_CONFIG_MONITOR_ENABLED_SUFFIX, false);
   }
 
   @Override
