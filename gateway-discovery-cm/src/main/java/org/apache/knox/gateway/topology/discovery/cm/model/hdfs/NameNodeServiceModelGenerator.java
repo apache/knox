@@ -27,9 +27,9 @@ import org.apache.knox.gateway.topology.discovery.cm.model.AbstractServiceModelG
 import java.util.Locale;
 
 public class NameNodeServiceModelGenerator extends AbstractServiceModelGenerator {
-  private static final String SERVICE      = "NAMENODE";
-  private static final String SERVICE_TYPE = "HDFS";
-  private static final String ROLE_TYPE    = "NAMENODE";
+  public static final String SERVICE      = "NAMENODE";
+  public static final String SERVICE_TYPE = "HDFS";
+  public static final String ROLE_TYPE    = "NAMENODE";
 
   @Override
   public String getServiceType() {
@@ -49,14 +49,6 @@ public class NameNodeServiceModelGenerator extends AbstractServiceModelGenerator
   @Override
   public ServiceModel.Type getModelType() {
     return ServiceModel.Type.API;
-  }
-
-  @Override
-  public boolean handles(ApiService       service,
-                         ApiServiceConfig serviceConfig,
-                         ApiRole          role,
-                         ApiConfigList    roleConfig) {
-    return getServiceType().equals(service.getType()) && getRoleType().equals(role.getType());
   }
 
   @Override

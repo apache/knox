@@ -26,9 +26,9 @@ import org.apache.knox.gateway.topology.discovery.cm.model.AbstractServiceModelG
 import java.util.Locale;
 
 public class SparkHistoryUIServiceModelGenerator extends AbstractServiceModelGenerator {
-  private static final String SERVICE = "SPARKHISTORYUI";
-  private static final String SERVICE_TYPE = "SPARK_ON_YARN";
-  private static final String ROLE_TYPE = "SPARK_YARN_HISTORY_SERVER";
+  public static final String SERVICE      = "SPARKHISTORYUI";
+  public static final String SERVICE_TYPE = "SPARK_ON_YARN";
+  public static final String ROLE_TYPE    = "SPARK_YARN_HISTORY_SERVER";
 
   @Override
   public String getService() {
@@ -48,11 +48,6 @@ public class SparkHistoryUIServiceModelGenerator extends AbstractServiceModelGen
   @Override
   public ServiceModel.Type getModelType() {
     return ServiceModel.Type.UI;
-  }
-
-  @Override
-  public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return getServiceType().equals(service.getType()) && getRoleType().equals(role.getType());
   }
 
   @Override

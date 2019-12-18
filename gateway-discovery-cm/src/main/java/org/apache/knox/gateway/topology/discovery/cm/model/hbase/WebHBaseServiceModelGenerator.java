@@ -27,9 +27,9 @@ import java.util.Locale;
 
 public class WebHBaseServiceModelGenerator extends AbstractServiceModelGenerator {
 
-  private static final String SERVICE = "WEBHBASE";
-  private static final String SERVICE_TYPE = "HBASE";
-  private static final String ROLE_TYPE = "HBASERESTSERVER";
+  public static final String SERVICE      = "WEBHBASE";
+  public static final String SERVICE_TYPE = "HBASE";
+  public static final String ROLE_TYPE    = "HBASERESTSERVER";
 
   @Override
   public String getService() {
@@ -49,11 +49,6 @@ public class WebHBaseServiceModelGenerator extends AbstractServiceModelGenerator
   @Override
   public ServiceModel.Type getModelType() {
     return ServiceModel.Type.API;
-  }
-
-  @Override
-  public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return getServiceType().equals(service.getType()) && getRoleType().equals(role.getType());
   }
 
   @Override

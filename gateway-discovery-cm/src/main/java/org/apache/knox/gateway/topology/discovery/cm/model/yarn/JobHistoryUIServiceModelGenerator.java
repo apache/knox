@@ -53,11 +53,6 @@ public class JobHistoryUIServiceModelGenerator extends AbstractServiceModelGener
   }
 
   @Override
-  public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return getServiceType().equals(service.getType()) && getRoleType().equals(role.getType());
-  }
-
-  @Override
   public ServiceModel generateService(ApiService       service,
                                       ApiServiceConfig serviceConfig,
                                       ApiRole          role,

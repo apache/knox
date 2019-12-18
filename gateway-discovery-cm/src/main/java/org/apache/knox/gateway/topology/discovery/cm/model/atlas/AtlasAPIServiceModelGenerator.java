@@ -19,7 +19,7 @@ package org.apache.knox.gateway.topology.discovery.cm.model.atlas;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
 
 public class AtlasAPIServiceModelGenerator extends AtlasServiceModelGenerator {
-  private static final String SERVICE = "ATLAS-API";
+  public static final String SERVICE = "ATLAS-API";
 
   @Override
   public String getService() {

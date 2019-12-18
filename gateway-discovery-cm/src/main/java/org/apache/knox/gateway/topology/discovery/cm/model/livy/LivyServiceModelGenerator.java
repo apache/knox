@@ -27,9 +27,9 @@ import java.util.Locale;
 
 public class LivyServiceModelGenerator extends AbstractServiceModelGenerator {
 
-  private static final String SERVICE = "LIVYSERVER";
-  private static final String SERVICE_TYPE = "LIVY";
-  private static final String ROLE_TYPE = "LIVY_SERVER";
+  public static final String SERVICE      = "LIVYSERVER";
+  public static final String SERVICE_TYPE = "LIVY";
+  public static final String ROLE_TYPE    = "LIVY_SERVER";
 
   @Override
   public String getService() {
@@ -49,11 +49,6 @@ public class LivyServiceModelGenerator extends AbstractServiceModelGenerator {
   @Override
   public ServiceModel.Type getModelType() {
     return ServiceModel.Type.API;
-  }
-
-  @Override
-  public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return getServiceType().equals(service.getType()) && getRoleType().equals(role.getType());
   }
 
   @Override

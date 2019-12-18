@@ -27,9 +27,9 @@ import java.util.Locale;
 
 public class OozieServiceModelGenerator extends AbstractServiceModelGenerator {
 
-  private static final String SERVICE = "OOZIE";
-  private static final String SERVICE_TYPE = "OOZIE";
-  private static final String ROLE_TYPE = "OOZIE_SERVER";
+  public static final String SERVICE      = "OOZIE";
+  public static final String SERVICE_TYPE = "OOZIE";
+  public static final String ROLE_TYPE    = "OOZIE_SERVER";
 
   @Override
   public String getService() {
@@ -49,11 +49,6 @@ public class OozieServiceModelGenerator extends AbstractServiceModelGenerator {
   @Override
   public ServiceModel.Type getModelType() {
     return ServiceModel.Type.API;
-  }
-
-  @Override
-  public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return getServiceType().equals(service.getType()) && getRoleType().equals(role.getType());
   }
 
   @Override

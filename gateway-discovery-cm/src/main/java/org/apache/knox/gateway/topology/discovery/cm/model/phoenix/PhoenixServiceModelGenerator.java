@@ -27,9 +27,9 @@ import java.util.Locale;
 
 public class PhoenixServiceModelGenerator extends AbstractServiceModelGenerator {
 
-  private static final String SERVICE = "AVATICA";
-  private static final String SERVICE_TYPE = "PHOENIX";
-  private static final String ROLE_TYPE = "PHOENIX_QUERY_SERVER";
+  public static final String SERVICE      = "AVATICA";
+  public static final String SERVICE_TYPE = "PHOENIX";
+  public static final String ROLE_TYPE    = "PHOENIX_QUERY_SERVER";
 
   @Override
   public String getService() {
@@ -49,11 +49,6 @@ public class PhoenixServiceModelGenerator extends AbstractServiceModelGenerator 
   @Override
   public ServiceModel.Type getModelType() {
     return ServiceModel.Type.API;
-  }
-
-  @Override
-  public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return getServiceType().equals(service.getType()) && getRoleType().equals(role.getType());
   }
 
   @Override

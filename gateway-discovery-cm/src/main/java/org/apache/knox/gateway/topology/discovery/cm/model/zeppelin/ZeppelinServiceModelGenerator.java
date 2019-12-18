@@ -27,9 +27,9 @@ import org.apache.knox.gateway.topology.discovery.cm.model.AbstractServiceModelG
 import java.util.Locale;
 
 public class ZeppelinServiceModelGenerator extends AbstractServiceModelGenerator {
-  private static final String SERVICE = "ZEPPELIN";
-  protected static final String SERVICE_TYPE = "ZEPPELIN";
-  protected static final String ROLE_TYPE = "ZEPPELIN_SERVER";
+  public static final String SERVICE      = "ZEPPELIN";
+  public static final String SERVICE_TYPE = "ZEPPELIN";
+  public static final String ROLE_TYPE    = "ZEPPELIN_SERVER";
 
   @Override
   public String getService() {
@@ -49,11 +49,6 @@ public class ZeppelinServiceModelGenerator extends AbstractServiceModelGenerator
   @Override
   public ServiceModel.Type getModelType() {
     return ServiceModel.Type.UI;
-  }
-
-  @Override
-  public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return getServiceType().equals(service.getType()) && getRoleType().equals(role.getType());
   }
 
   @Override

@@ -28,9 +28,9 @@ import java.util.Locale;
 
 public class WebHCatServiceModelGenerator extends AbstractServiceModelGenerator {
 
-  public static final String SERVICE = "WEBHCAT";
-  private static final String SERVICE_TYPE = "HIVE";
-  private static final String ROLE_TYPE = "WEBHCAT";
+  public static final String SERVICE      = "WEBHCAT";
+  public static final String SERVICE_TYPE = "HIVE";
+  public static final String ROLE_TYPE    = "WEBHCAT";
 
   @Override
   public String getService() {
@@ -50,11 +50,6 @@ public class WebHCatServiceModelGenerator extends AbstractServiceModelGenerator 
   @Override
   public ServiceModel.Type getModelType() {
     return ServiceModel.Type.API;
-  }
-
-  @Override
-  public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return getServiceType().equals(service.getType()) && getRoleType().equals(role.getType());
   }
 
   @Override
