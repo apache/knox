@@ -32,6 +32,10 @@ public class HiveServiceModelGenerator extends AbstractServiceModelGenerator {
   public static final String SERVICE_TYPE = "HIVE";
   public static final String ROLE_TYPE    = "HIVESERVER2";
 
+  protected static final String TRANSPORT_MODE_HTTP = "http";
+
+
+
   @Override
   public String getService() {
     return SERVICE;
@@ -54,7 +58,9 @@ public class HiveServiceModelGenerator extends AbstractServiceModelGenerator {
 
   @Override
   public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return getServiceType().equals(service.getType()) && getRoleType().equals(role.getType()) && checkHiveServer2HTTPMode(roleConfig);
+    return getServiceType().equals(service.getType()) &&
+           getRoleType().equals(role.getType()) &&
+           checkHiveServer2HTTPMode(roleConfig);
   }
 
   @Override
@@ -71,13 +77,13 @@ public class HiveServiceModelGenerator extends AbstractServiceModelGenerator {
     return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/%s", scheme, hostname, port, httpPath));
   }
 
-  private boolean checkHiveServer2HTTPMode(ApiConfigList roleConfig) {
+  protected boolean checkHiveServer2HTTPMode(ApiConfigList roleConfig) {
+    boolean isHttp = false;
     String hiveServer2SafetyValve = getRoleConfigValue(roleConfig, "hive_hs2_config_safety_valve");
     if(hiveServer2SafetyValve != null) {
-      String transportMode = getSafetyValveValue(hiveServer2SafetyValve, "hive.server2.transport.mode");
-      return "http".equals(transportMode);
+      isHttp = TRANSPORT_MODE_HTTP.equals(getSafetyValveValue(hiveServer2SafetyValve, "hive.server2.transport.mode"));
     }
-    return false;
+    return isHttp;
   }
 
 }
