@@ -41,7 +41,6 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   public static final String TOKEN_PRINCIPAL_CLAIM = "knox.token.principal.claim";
   public static final String JWKS_URL = "knox.token.jwks.url";
   private static final String BEARER = "Bearer ";
-  private String HEADER_TOKEN_NAME = "accesstoken";
   private String paramName = "knoxtoken";
 
   @Override
@@ -91,10 +90,6 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     if (header != null && header.startsWith(BEARER)) {
       // what follows the bearer designator should be the JWT token being used to request or as an access token
       wireToken = header.substring(BEARER.length());
-    }
-    else if((((HttpServletRequest) request).getHeader(HEADER_TOKEN_NAME))!= null) {
-     // to support JWT in Authorization Header without as BEARER in case of Hive JDBC and others
-      wireToken = ((HttpServletRequest) request).getHeader(HEADER_TOKEN_NAME);
     }
     else {
       // check for query param
