@@ -19,6 +19,8 @@ package org.apache.knox.gateway.topology.discovery.cm.model;
 import com.cloudera.api.swagger.client.ApiClient;
 import com.cloudera.api.swagger.model.ApiConfig;
 import com.cloudera.api.swagger.model.ApiConfigList;
+import com.cloudera.api.swagger.model.ApiRole;
+import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
 import org.apache.knox.gateway.topology.discovery.cm.DiscoveryApiClient;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
@@ -76,6 +78,11 @@ public abstract class AbstractServiceModelGenerator implements ServiceModelGener
 
   protected ServiceModel createServiceModel(final String url) {
     return new ServiceModel(getModelType(), getService(), getServiceType(), getRoleType(), url);
+  }
+
+  @Override
+  public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
+    return getServiceType().equals(service.getType()) && getRoleType().equals(role.getType());
   }
 
 }

@@ -14,8 +14,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.knox.gateway.topology.discovery.cm.model.hbase;
+package org.apache.knox.gateway.topology.discovery.cm.model.impala;
 
+import com.cloudera.api.swagger.client.ApiException;
 import com.cloudera.api.swagger.model.ApiConfigList;
 import com.cloudera.api.swagger.model.ApiRole;
 import com.cloudera.api.swagger.model.ApiService;
@@ -25,11 +26,12 @@ import org.apache.knox.gateway.topology.discovery.cm.model.AbstractServiceModelG
 
 import java.util.Locale;
 
-public class HBaseUIServiceModelGenerator extends AbstractServiceModelGenerator {
+public class ImpalaUIServiceModelGenerator extends AbstractServiceModelGenerator {
 
-  public static final String SERVICE      = "HBASEUI";
-  public static final String SERVICE_TYPE = "HBASE";
-  public static final String ROLE_TYPE    = "MASTER";
+  public static final String SERVICE      = "IMPALAUI";
+  public static final String SERVICE_TYPE = "IMPALA";
+  public static final String ROLE_TYPE    = "IMPALAD";
+
 
   @Override
   public String getService() {
@@ -52,20 +54,22 @@ public class HBaseUIServiceModelGenerator extends AbstractServiceModelGenerator 
   }
 
   @Override
+  public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
+    return super.handles(service, serviceConfig, role, roleConfig) &&
+           Boolean.parseBoolean(getRoleConfigValue(roleConfig, "impalad_enable_webserver"));
+  }
+
+  @Override
   public ServiceModel generateService(ApiService       service,
                                       ApiServiceConfig serviceConfig,
                                       ApiRole          role,
-                                      ApiConfigList    roleConfig) {
+                                      ApiConfigList    roleConfig) throws ApiException {
     String hostname = role.getHostRef().getHostname();
-    String scheme;
-    String port = getRoleConfigValue(roleConfig, "hbase_master_info_port"); // TODO: Is there an SSL port, or is this property re-used?
-    boolean sslEnabled = Boolean.parseBoolean(getServiceConfigValue(serviceConfig, "hbase_hadoop_ssl_enabled"));
-    if(sslEnabled) {
-      scheme = "https";
-    } else {
-      scheme = "http";
-    }
-    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
-  }
 
+    boolean sslEnabled = Boolean.parseBoolean(getServiceConfigValue(serviceConfig, "client_services_ssl_enabled"));
+    String scheme = sslEnabled ? "https" : "http";
+
+    String port = getRoleConfigValue(roleConfig, "impalad_webserver_port");
+    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/", scheme, hostname, port));
+  }
 }

@@ -16,10 +16,6 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm.model.yarn;
 
-import com.cloudera.api.swagger.model.ApiConfigList;
-import com.cloudera.api.swagger.model.ApiRole;
-import com.cloudera.api.swagger.model.ApiService;
-import com.cloudera.api.swagger.model.ApiServiceConfig;
 import org.apache.knox.gateway.topology.discovery.cm.model.AbstractServiceModelGenerator;
 
 public abstract class ResourceManagerServiceModelGeneratorBase extends AbstractServiceModelGenerator {
@@ -35,11 +31,6 @@ public abstract class ResourceManagerServiceModelGeneratorBase extends AbstractS
   @Override
   public String getRoleType() {
     return ROLE_TYPE;
-  }
-
-  @Override
-  public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return getServiceType().equals(service.getType()) && getRoleType().equals(role.getType());
   }
 
 }

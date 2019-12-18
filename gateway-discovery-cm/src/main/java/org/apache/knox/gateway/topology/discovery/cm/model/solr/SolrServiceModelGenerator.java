@@ -26,9 +26,9 @@ import org.apache.knox.gateway.topology.discovery.cm.model.AbstractServiceModelG
 import java.util.Locale;
 
 public class SolrServiceModelGenerator extends AbstractServiceModelGenerator {
-  private static final String SERVICE = "SOLR";
-  private static final String SERVICE_TYPE = "SOLR";
-  private static final String ROLE_TYPE = "SOLR_SERVER";
+  public static final String SERVICE      = "SOLR";
+  public static final String SERVICE_TYPE = "SOLR";
+  public static final String ROLE_TYPE    = "SOLR_SERVER";
 
   @Override
   public String getService() {
@@ -48,11 +48,6 @@ public class SolrServiceModelGenerator extends AbstractServiceModelGenerator {
   @Override
   public ServiceModel.Type getModelType() {
     return ServiceModel.Type.API;
-  }
-
-  @Override
-  public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return getServiceType().equals(service.getType()) && getRoleType().equals(role.getType());
   }
 
   @Override

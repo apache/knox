@@ -32,6 +32,23 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
+import org.apache.knox.gateway.topology.discovery.cm.model.atlas.AtlasAPIServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.atlas.AtlasServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.hbase.HBaseUIServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.hbase.WebHBaseServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.hdfs.NameNodeServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.hive.HiveOnTezServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.hive.HiveServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.hive.WebHCatServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.impala.ImpalaServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.impala.ImpalaUIServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.livy.LivyServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.oozie.OozieServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.phoenix.PhoenixServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.ranger.RangerServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.solr.SolrServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.spark.SparkHistoryUIServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.zeppelin.ZeppelinServiceModelGenerator;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
@@ -99,7 +116,7 @@ public class ClouderaManagerServiceDiscoveryTest {
     final String port           = "21000";
     final String sslPort        = "21003";
     ServiceDiscovery.Cluster cluster = doTestAtlasDiscovery(hostName, port, sslPort, isSSL);
-    List<String> atlastURLs = cluster.getServiceURLs("ATLAS");
+    List<String> atlastURLs = cluster.getServiceURLs(AtlasServiceModelGenerator.SERVICE);
     assertEquals(1, atlastURLs.size());
     assertEquals((isSSL ? "https" : "http") + "://" + hostName + ":" + (isSSL ? sslPort : port),
                  atlastURLs.get(0));
@@ -110,7 +127,7 @@ public class ClouderaManagerServiceDiscoveryTest {
     final String port           = "21000";
     final String sslPort        = "21003";
     ServiceDiscovery.Cluster cluster = doTestAtlasDiscovery(hostName, port, sslPort, isSSL);
-    List<String> atlastURLs = cluster.getServiceURLs("ATLAS-API");
+    List<String> atlastURLs = cluster.getServiceURLs(AtlasAPIServiceModelGenerator.SERVICE);
     assertEquals(1, atlastURLs.size());
     assertEquals((isSSL ? "https" : "http") + "://" + hostName + ":" + (isSSL ? sslPort : port),
         atlastURLs.get(0));
@@ -335,9 +352,9 @@ public class ClouderaManagerServiceDiscoveryTest {
 
     ServiceDiscovery.Cluster cluster = doTestDiscovery(hostName,
                                                        "HIVE-1",
-                                                       "HIVE",
+                                                       WebHCatServiceModelGenerator.SERVICE_TYPE,
                                                        "HIVE-1-WEBHCAT-1",
-                                                       "WEBHCAT",
+                                                       WebHCatServiceModelGenerator.ROLE_TYPE,
                                                        Collections.emptyMap(),
                                                        roleProperties);
 
@@ -438,6 +455,92 @@ public class ClouderaManagerServiceDiscoveryTest {
     doTestZeppelinDiscovery("ZEPPELINWS", true);
   }
 
+  @Test
+  public void testImpalaDiscovery() {
+    doTestImpalaDiscovery(false);
+  }
+
+  @Test
+  public void testImpalaDiscoverySSL() {
+    doTestImpalaDiscovery(true);
+  }
+
+  @Test
+  public void testImpalaUIDiscoveryWebServerNotEnabled() {
+    doTestImpalaUIDiscovery(false, false);
+  }
+
+  @Test
+  public void testImpalaUIDiscovery() {
+    doTestImpalaUIDiscovery(false, true);
+  }
+
+  @Test
+  public void testImpalaUIDiscoverySSL() {
+    doTestImpalaUIDiscovery(true, true);
+  }
+
+  private void doTestImpalaDiscovery(boolean sslEnabled) {
+    final String hostName = "impalad-host";
+    final String port     = "28000";
+    final String expectedURL = (sslEnabled ? "https" : "http") + "://" + hostName + ":" + port + "/";
+
+    Map<String, String> serviceProperties = new HashMap<>();
+    if (sslEnabled) {
+      serviceProperties.put("client_services_ssl_enabled", "true");
+    }
+
+    // Configure the role
+    Map<String, String> roleProperties = new HashMap<>();
+    roleProperties.put("hs2_http_port", port);
+
+    ServiceDiscovery.Cluster cluster = doTestDiscovery(hostName,
+                                                       "IMPALA-1",
+                                                       ImpalaServiceModelGenerator.SERVICE_TYPE,
+                                                       "IMAPALA-1-IMPALAD-1",
+                                                       ImpalaServiceModelGenerator.ROLE_TYPE,
+                                                       serviceProperties,
+                                                       roleProperties);
+
+    List<String> urls = cluster.getServiceURLs("IMPALA");
+    assertEquals(1, urls.size());
+    assertEquals(expectedURL, urls.get(0));
+  }
+
+  private void doTestImpalaUIDiscovery(boolean sslEnabled, boolean webserverEnabled) {
+    final String hostName = "impalad-host";
+    final String port     = "25000";
+    final String expectedURL = (sslEnabled ? "https" : "http") + "://" + hostName + ":" + port + "/";
+
+    Map<String, String> serviceProperties = new HashMap<>();
+    if (sslEnabled) {
+      serviceProperties.put("client_services_ssl_enabled", "true");
+    }
+
+    // Configure the role
+    Map<String, String> roleProperties = new HashMap<>();
+    roleProperties.put("hs2_http_port", port);
+    if (webserverEnabled) {
+      roleProperties.put("impalad_enable_webserver", "true");
+      roleProperties.put("impalad_webserver_port", port);
+    }
+
+    ServiceDiscovery.Cluster cluster = doTestDiscovery(hostName,
+                                                       "IMPALA-1",
+                                                       ImpalaUIServiceModelGenerator.SERVICE_TYPE,
+                                                       "IMAPALA-1-IMPALAD-1",
+                                                       ImpalaUIServiceModelGenerator.ROLE_TYPE,
+                                                       serviceProperties,
+                                                       roleProperties);
+
+    List<String> urls = cluster.getServiceURLs("IMPALAUI");
+    if (webserverEnabled) {
+      assertEquals(1, urls.size());
+      assertEquals(expectedURL, urls.get(0));
+    } else {
+      assertEquals(0, urls.size());
+    }
+  }
 
   private void doTestOozieDiscovery(final String serviceName, final boolean isSSL) {
     final String hostName = "oozie-host";
@@ -467,13 +570,12 @@ public class ClouderaManagerServiceDiscoveryTest {
 
     return doTestDiscovery(hostName,
                            "OOZIE-1",
-                           "OOZIE",
+                           OozieServiceModelGenerator.SERVICE_TYPE,
                            "OOZIE-1-OOZIE_SERVER-12345",
-                           "OOZIE_SERVER",
+                           OozieServiceModelGenerator.ROLE_TYPE,
                            serviceProperties,
                            roleProperties);
   }
-
 
   private void doTestZeppelinDiscovery(final String serviceName, final boolean isSSL) {
     final String hostName = "zeppelin-host";
@@ -517,9 +619,9 @@ public class ClouderaManagerServiceDiscoveryTest {
 
     return doTestDiscovery(hostName,
                            "ZEPPELIN-1",
-                           "ZEPPELIN",
+                           ZeppelinServiceModelGenerator.SERVICE_TYPE,
                            "ZEPPELIN-ZEPPELIN_SERVER-1",
-                           "ZEPPELIN_SERVER",
+                           ZeppelinServiceModelGenerator.ROLE_TYPE,
                            Collections.emptyMap(),
                            roleProperties);
   }
@@ -569,9 +671,9 @@ public class ClouderaManagerServiceDiscoveryTest {
 
     return doTestDiscovery(hostName,
                            "RANGER-1",
-                           "RANGER",
+                           RangerServiceModelGenerator.SERVICE_TYPE,
                            "RANGER-RANGER_ADMIN-1",
-                           "RANGER_ADMIN",
+                           RangerServiceModelGenerator.ROLE_TYPE,
                            serviceProperties,
                            roleProperties);
   }
@@ -591,9 +693,9 @@ public class ClouderaManagerServiceDiscoveryTest {
 
     return doTestDiscovery(hostName,
                            "SOLR-1",
-                           "SOLR",
+                           SolrServiceModelGenerator.SERVICE_TYPE,
                            "SOLR-SOLR_SERVER-1",
-                           "SOLR_SERVER",
+                           SolrServiceModelGenerator.ROLE_TYPE,
                            serviceProperties,
                            roleProperties);
   }
@@ -611,9 +713,9 @@ public class ClouderaManagerServiceDiscoveryTest {
 
     return doTestDiscovery(hostName,
                            "SPARK_ON_YARN-1",
-                           "SPARK_ON_YARN",
+                           SparkHistoryUIServiceModelGenerator.SERVICE_TYPE,
                            "SPAR4fcf419a-SPARK_YARN_HISTORY_SERVER-12345",
-                           "SPARK_YARN_HISTORY_SERVER",
+                           SparkHistoryUIServiceModelGenerator.ROLE_TYPE,
                            Collections.emptyMap(),
                            roleProperties);
   }
@@ -631,9 +733,9 @@ public class ClouderaManagerServiceDiscoveryTest {
 
     return doTestDiscovery(atlasHost,
                            "ATLAS-1",
-                           "ATLAS",
+                           AtlasServiceModelGenerator.SERVICE_TYPE,
                            "ATLAS-ATLAS_SERVER-1",
-                           "ATLAS_SERVER",
+                           AtlasServiceModelGenerator.ROLE_TYPE,
                            Collections.emptyMap(),
                            roleProperties);
   }
@@ -655,9 +757,9 @@ public class ClouderaManagerServiceDiscoveryTest {
 
     return doTestDiscovery(hostName,
                            "HIVE-1",
-                           "HIVE",
+                           HiveServiceModelGenerator.SERVICE_TYPE,
                            "HIVE-1-HIVESERVER2-12345",
-                           "HIVESERVER2",
+                           HiveServiceModelGenerator.ROLE_TYPE,
                            Collections.emptyMap(),
                            roleProperties);
   }
@@ -679,9 +781,9 @@ public class ClouderaManagerServiceDiscoveryTest {
 
     return doTestDiscovery(hostName,
                            "HIVE_ON_TEZ-1",
-                           "HIVE_ON_TEZ",
+                           HiveOnTezServiceModelGenerator.SERVICE_TYPE,
                            "HIVE_ON_TEZ-1-HIVESERVER2-12345",
-                           "HIVESERVER2",
+                           HiveServiceModelGenerator.ROLE_TYPE,
                            Collections.emptyMap(),
                            roleProperties);
   }
@@ -728,9 +830,9 @@ public class ClouderaManagerServiceDiscoveryTest {
 
     return doTestDiscovery(hostName,
                            "NAMENODE-1",
-                           "HDFS",
+                           NameNodeServiceModelGenerator.SERVICE_TYPE,
                            "HDFS-1-NAMENODE-12345",
-                           "NAMENODE",
+                           NameNodeServiceModelGenerator.ROLE_TYPE,
                            serviceProps,
                            roleProperties);
   }
@@ -749,9 +851,9 @@ public class ClouderaManagerServiceDiscoveryTest {
 
     return doTestDiscovery(hostName,
                            "HBASE-1",
-                           "HBASE",
+                           HBaseUIServiceModelGenerator.SERVICE_TYPE,
                            "HBASE-1-MASTER-12345",
-                           "MASTER",
+                           HBaseUIServiceModelGenerator.ROLE_TYPE,
                            serviceProps,
                            roleProperties);
   }
@@ -767,9 +869,9 @@ public class ClouderaManagerServiceDiscoveryTest {
 
     return doTestDiscovery(hostName,
                            "HBASE-1",
-                           "HBASE",
+                           WebHBaseServiceModelGenerator.SERVICE_TYPE,
                            "HBASE-1-RESTSERVER",
-                           "HBASERESTSERVER",
+                           WebHBaseServiceModelGenerator.ROLE_TYPE,
                            Collections.emptyMap(),
                            roleProperties);
   }
@@ -785,9 +887,9 @@ public class ClouderaManagerServiceDiscoveryTest {
 
     return doTestDiscovery(hostName,
                            "LIVY-1",
-                           "LIVY",
+                           LivyServiceModelGenerator.SERVICE_TYPE,
                            "LIVY-LIVY_SERVER-1",
-                           "LIVY_SERVER",
+                           LivyServiceModelGenerator.ROLE_TYPE,
                            Collections.emptyMap(),
                            roleProperties);
   }
@@ -801,8 +903,13 @@ public class ClouderaManagerServiceDiscoveryTest {
       roleProperties.put("phoenix_query_server_port", port);
       roleProperties.put("ssl_enabled", String.valueOf(isSSL));
 
-      return doTestDiscovery(hostName, "PHOENIX-1", "PHOENIX", "PHOENIX-PHOENIX_QUERY_SERVER-1", "PHOENIX_QUERY_SERVER", Collections.emptyMap(),
-              roleProperties);
+      return doTestDiscovery(hostName,
+                             "PHOENIX-1",
+                             PhoenixServiceModelGenerator.SERVICE_TYPE,
+                             "PHOENIX-PHOENIX_QUERY_SERVER-1",
+                             PhoenixServiceModelGenerator.ROLE_TYPE,
+                             Collections.emptyMap(),
+                             roleProperties);
   }
 
 

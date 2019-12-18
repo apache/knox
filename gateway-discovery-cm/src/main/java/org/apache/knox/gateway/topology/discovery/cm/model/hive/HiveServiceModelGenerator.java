@@ -28,9 +28,9 @@ import java.util.Locale;
 
 public class HiveServiceModelGenerator extends AbstractServiceModelGenerator {
 
-  private static final String SERVICE      = "HIVE";
-  private static final String SERVICE_TYPE = "HIVE";
-  private static final String ROLE_TYPE    = "HIVESERVER2";
+  public static final String SERVICE      = "HIVE";
+  public static final String SERVICE_TYPE = "HIVE";
+  public static final String ROLE_TYPE    = "HIVESERVER2";
 
   @Override
   public String getService() {

@@ -18,7 +18,7 @@ package org.apache.knox.gateway.topology.discovery.cm.model.hive;
 
 public class HiveOnTezServiceModelGenerator extends HiveServiceModelGenerator {
 
-  private static final String SERVICE_TYPE = "HIVE_ON_TEZ";
+  public static final String SERVICE_TYPE = "HIVE_ON_TEZ";
 
   @Override
   public String getServiceType() {

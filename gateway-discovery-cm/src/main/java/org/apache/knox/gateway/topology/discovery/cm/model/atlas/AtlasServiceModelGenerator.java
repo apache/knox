@@ -27,9 +27,9 @@ import org.apache.knox.gateway.topology.discovery.cm.model.AbstractServiceModelG
 import java.util.Locale;
 
 public class AtlasServiceModelGenerator extends AbstractServiceModelGenerator {
-  private static final String SERVICE = "ATLAS";
-  private static final String SERVICE_TYPE = "ATLAS";
-  private static final String ROLE_TYPE = "ATLAS_SERVER";
+  public static final String SERVICE = "ATLAS";
+  public static final String SERVICE_TYPE = "ATLAS";
+  public static final String ROLE_TYPE = "ATLAS_SERVER";
 
   @Override
   public String getService() {
@@ -49,11 +49,6 @@ public class AtlasServiceModelGenerator extends AbstractServiceModelGenerator {
   @Override
   public ServiceModel.Type getModelType() {
     return ServiceModel.Type.UI;
-  }
-
-  @Override
-  public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return getServiceType().equals(service.getType()) && getRoleType().equals(role.getType());
   }
 
   @Override
