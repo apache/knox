@@ -770,12 +770,12 @@ public class ClouderaManagerServiceDiscoveryTest {
                                                                    final String  thriftPath,
                                                                    final boolean enableSSL) {
     final String hs2SafetyValveValue =
-        "<property><name>hive.server2.transport.mode</name><value>http</value></property>\n" +
         "<property><name>hive.server2.thrift.http.port</name><value>" + thriftPort + "</value></property>\n" +
         "<property><name>hive.server2.thrift.http.path</name><value>" + thriftPath + "</value></property>";
 
     // Configure the role
     Map<String, String> roleProperties = new HashMap<>();
+    roleProperties.put("hive_server2_transport_mode", "http");
     roleProperties.put("hive_hs2_config_safety_valve", hs2SafetyValveValue);
     roleProperties.put("hive.server2.use.SSL", String.valueOf(enableSSL));
 
