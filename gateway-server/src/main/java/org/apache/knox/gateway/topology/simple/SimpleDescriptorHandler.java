@@ -47,6 +47,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Processes simple topology descriptors, producing full topology files, which can subsequently be deployed to the
@@ -84,6 +85,8 @@ public class SimpleDescriptorHandler {
 
     private static Map<String, ServiceDiscovery> discoveryInstances = new HashMap<>();
 
+    private static final Set<String> ALLOWED_SERVICES_WITHOUT_URLS_AND_PARAMS = Collections.singleton("KNOX");
+
     public static Map<String, File> handle(GatewayConfig config, File desc) throws IOException {
         return handle(config, desc, NO_GATEWAY_SERVICES);
     }
@@ -107,7 +110,7 @@ public class SimpleDescriptorHandler {
     public static Map<String, File> handle(GatewayConfig config, SimpleDescriptor desc, File srcDirectory, File destDirectory, Service...gatewayServices) {
 
         List<String> declaredServiceNames = new ArrayList<>();
-        List<String> validServiceNames = new ArrayList<>();
+        Set<String> validServiceNames = new TreeSet<>();
         Map<String, String> serviceVersions = new HashMap<>();
         Map<String, Map<String, String>> serviceParams = new HashMap<>();
         Map<String, List<String>> serviceURLs = new HashMap<>();
@@ -169,10 +172,12 @@ public class SimpleDescriptorHandler {
                 // Don't add the service if the only params are discovery-only params
                 if (hasNonDiscoveryParams) {
                     serviceParams.put(serviceName, descService.getParams());
-                    if (!validServiceNames.contains(serviceName)) {
-                        validServiceNames.add(serviceName);
-                    }
+                    validServiceNames.add(serviceName);
                 }
+            }
+
+            if (ALLOWED_SERVICES_WITHOUT_URLS_AND_PARAMS.contains(serviceName)) {
+              validServiceNames.add(serviceName);
             }
         }
 
@@ -359,7 +364,7 @@ public class SimpleDescriptorHandler {
                                                       final File destDirectory,
                                                       final ServiceDiscovery.Cluster cluster,
                                                       final List<String> declaredServiceNames,
-                                                      final List<String> validServiceNames,
+                                                      final Set<String> validServiceNames,
                                                       final Map<String, String> serviceVersions,
                                                       final Map<String, List<String>> serviceURLs,
                                                       final Map<String, Map<String, String>> serviceParams) {
@@ -441,7 +446,7 @@ public class SimpleDescriptorHandler {
 
             // Services
             // Sort the service names to write the services alphabetically
-            List<String> serviceNames = new ArrayList<>(validServiceNames);
+            Set<String> serviceNames = new TreeSet<>(validServiceNames);
 
             // Add any declared services, which were not validated, but which have ZK-based HA provider config
             for (String haServiceName : haServiceParams.keySet()) {
@@ -453,8 +458,6 @@ public class SimpleDescriptorHandler {
                     }
                 }
             }
-
-            Collections.sort(serviceNames);
 
             // Write the service declarations
             for (String serviceName : serviceNames) {
