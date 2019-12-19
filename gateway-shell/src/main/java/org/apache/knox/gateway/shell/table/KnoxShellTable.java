@@ -19,12 +19,15 @@ package org.apache.knox.gateway.shell.table;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.SortOrder;
 import com.fasterxml.jackson.annotation.JsonFilter;
+
 import org.apache.commons.math3.stat.StatUtils;
 
 /**
@@ -307,7 +310,12 @@ public class KnoxShellTable {
   }
 
   public List<KnoxShellTableCall> getCallHistoryList() {
-    return KnoxShellTableCallHistory.getInstance().getCallHistory(id);
+    final List<KnoxShellTableCall> sanitizedCallHistoryList = new LinkedList<>();
+    KnoxShellTableCallHistory.getInstance().getCallHistory(id).forEach(call -> {
+      final Map<Object, Class<?>> params = call.hasSensitiveData() ? Collections.singletonMap("***", String.class) : call.getParams();
+      sanitizedCallHistoryList.add(new KnoxShellTableCall(call.getInvokerClass(), call.getMethod(), call.isBuilderMethod(), params));
+    });
+    return sanitizedCallHistoryList;
   }
 
   public String getCallHistory() {
@@ -410,11 +418,19 @@ public class KnoxShellTable {
   }
 
   public String toJSON() {
-    return toJSON(true);
+    return toJSON((String) null);
   }
 
   public String toJSON(boolean data) {
-    return KnoxShellTableJSONSerializer.serializeKnoxShellTable(this, data);
+    return toJSON(data, null);
+  }
+
+  public String toJSON(String path) {
+    return toJSON(true, path);
+  }
+
+  public String toJSON(boolean data, String path) {
+    return KnoxShellTableJSONSerializer.serializeKnoxShellTable(this, data, path);
   }
 
   public String toCSV() {

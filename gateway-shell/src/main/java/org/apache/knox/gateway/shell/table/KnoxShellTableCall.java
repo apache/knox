@@ -62,6 +62,11 @@ class KnoxShellTableCall {
   }
 
   @JsonIgnore
+  boolean hasSensitiveData() {
+    return "username".equals(getMethod()) || "pwd".equals(getMethod());
+  }
+
+  @JsonIgnore
   Class<?>[] getParameterTypes() {
     final List<Class<?>> parameterTypes = new ArrayList<>(params.size());
     if (KNOX_SHELL_TABLE_FILTER_TYPE.equals(invokerClass) && builderMethod) {

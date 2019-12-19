@@ -26,6 +26,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Locale;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
 
   private String connectionUrl;
@@ -107,15 +109,12 @@ public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
     return this.table;
   }
 
-  public Connection createConnection() throws SQLException {
-    Connection con = null;
-    if (username != null && pass != null) {
-      con = DriverManager.getConnection(connectionUrl, username, pass);
+  private Connection createConnection() throws SQLException {
+    if (StringUtils.isNotBlank(username) && pass != null) {
+      return DriverManager.getConnection(connectionUrl, username, pass);
+    } else {
+      return DriverManager.getConnection(connectionUrl);
     }
-    else {
-      con = DriverManager.getConnection(connectionUrl);
-    }
-    return con;
   }
 
   // added this as a private method so that KnoxShellTableHistoryAspect will not
