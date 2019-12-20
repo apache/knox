@@ -30,9 +30,6 @@ public interface KnoxSSOMessages {
   @Message( level = MessageLevel.DEBUG, text = "Adding the following JWT token as a cookie: {0}")
   void addingJWTCookie(String token);
 
-  @Message( level = MessageLevel.INFO, text = "Unable to find cookie with name: {0}")
-  void cookieNotFound(String name);
-
   @Message( level = MessageLevel.ERROR, text = "Unable to properly send needed HTTP status code: {0}, {1}")
   void unableToCloseOutputStream(String message, String string);
 

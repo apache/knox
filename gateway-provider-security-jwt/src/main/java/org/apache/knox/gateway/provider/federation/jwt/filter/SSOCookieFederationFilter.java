@@ -23,6 +23,7 @@ import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.util.CertificateUtils;
+import org.apache.knox.gateway.util.CookieUtils;
 import org.eclipse.jetty.http.MimeTypes;
 
 import javax.security.auth.Subject;
@@ -37,8 +38,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
+import java.util.List;
 
 public class SSOCookieFederationFilter extends AbstractJWTFilter {
+  private static final JWTMessages LOGGER = MessagesFactory.get( JWTMessages.class );
+
   public static final String XHR_HEADER = "X-Requested-With";
   public static final String XHR_VALUE = "XMLHttpRequest";
 
@@ -53,7 +57,6 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
 
   private static final String ORIGINAL_URL_QUERY_PARAM = "originalUrl=";
   private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
-  private static JWTMessages log = MessagesFactory.get( JWTMessages.class );
 
   private String cookieName;
   private String authenticationProviderUrl;
@@ -78,7 +81,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
     // url to SSO authentication provider
     authenticationProviderUrl = filterConfig.getInitParameter(SSO_AUTHENTICATION_PROVIDER_URL);
     if (authenticationProviderUrl == null) {
-      log.missingAuthenticationProviderUrlConfiguration();
+      LOGGER.missingAuthenticationProviderUrlConfiguration();
     }
 
     // token verification pem
@@ -101,33 +104,48 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
-    String wireToken;
     HttpServletRequest req = (HttpServletRequest) request;
+    HttpServletResponse res = (HttpServletResponse) response;
 
-    String loginURL = constructLoginURL(req);
-    wireToken = getJWTFromCookie(req);
-    if (wireToken == null) {
+    List<Cookie> ssoCookies = CookieUtils.getCookiesForName(req, cookieName);
+    if (ssoCookies.isEmpty()) {
       if (req.getMethod().equals("OPTIONS")) {
         // CORS preflight requests to determine allowed origins and related config
         // must be able to continue without being redirected
         Subject sub = new Subject();
         sub.getPrincipals().add(new PrimaryPrincipal("anonymous"));
-        continueWithEstablishedSecurityContext(sub, req, (HttpServletResponse) response, chain);
+        continueWithEstablishedSecurityContext(sub, req, res, chain);
+      } else {
+        sendRedirectToLoginURL(req, res);
       }
-      log.sendRedirectToLoginURL(loginURL);
-      ((HttpServletResponse) response).sendRedirect(loginURL);
-    }
-    else {
-      try {
-        JWT token = new JWTToken(wireToken);
-        if (validateToken((HttpServletRequest)request, (HttpServletResponse)response, chain, token)) {
-          Subject subject = createSubjectFromToken(token);
-          continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
+    } else {
+      for(Cookie ssoCookie : ssoCookies) {
+        String wireToken = ssoCookie.getValue();
+        try {
+          JWT token = new JWTToken(wireToken);
+          if (validateToken(req, res, chain, token)) {
+            Subject subject = createSubjectFromToken(token);
+            continueWithEstablishedSecurityContext(subject, req, res, chain);
+
+            // we found a valid cookie we don't need to keep checking anymore
+            return;
+          }
+        } catch (ParseException ignore) {
+          // Ignore the error since cookie was invalid
+          // Fall through to keep checking if there are more cookies
         }
-      } catch (ParseException ex) {
-        ((HttpServletResponse) response).sendRedirect(loginURL);
       }
+
+      // There were no valid cookies found so redirect to login url
+      sendRedirectToLoginURL(req, res);
     }
+  }
+
+  private void sendRedirectToLoginURL(HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
+    String loginURL = constructLoginURL(request);
+    LOGGER.sendRedirectToLoginURL(loginURL);
+    response.sendRedirect(loginURL);
   }
 
   @Override
@@ -147,29 +165,6 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
       String loginURL = constructLoginURL(request);
       response.sendRedirect(loginURL);
     }
-
-  }
-
-  /**
-   * Encapsulate the acquisition of the JWT token from HTTP cookies within the
-   * request.
-   *
-   * @param req servlet request to get the JWT token from
-   * @return serialized JWT token
-   */
-  protected String getJWTFromCookie(HttpServletRequest req) {
-    String serializedJWT = null;
-    Cookie[] cookies = req.getCookies();
-    if (cookies != null) {
-      for (Cookie cookie : cookies) {
-        if (cookieName.equals(cookie.getName())) {
-          log.cookieHasBeenFound(cookieName);
-          serializedJWT = cookie.getValue();
-          break;
-        }
-      }
-    }
-    return serializedJWT;
   }
 
   /**

@@ -46,7 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SSOCookieProviderTest extends AbstractJWTFilterTest {
-  private static Logger LOGGER = LoggerFactory.getLogger(SSOCookieProviderTest.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(SSOCookieProviderTest.class);
 
   private static final String SERVICE_URL = "https://localhost:8888/resource";
 
@@ -58,8 +58,9 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
 
   @Override
   protected void setTokenOnRequest(HttpServletRequest request, SignedJWT jwt) {
-    Cookie cookie = new Cookie("hadoop-jwt", jwt.serialize());
-    EasyMock.expect(request.getCookies()).andReturn(new Cookie[] { cookie });
+    Cookie cookie1 = new Cookie("hadoop-jwt", "garbage");
+    Cookie cookie2 = new Cookie("hadoop-jwt", jwt.serialize());
+    EasyMock.expect(request.getCookies()).andReturn(new Cookie[] { cookie1, cookie2 });
 
     if(ThreadLocalRandom.current().nextBoolean()) {
       LOGGER.info("Using XHR header for request");
@@ -88,9 +89,10 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
       SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice",
                              new Date(new Date().getTime() + 5000), privateKey);
 
-      Cookie cookie = new Cookie("jowt", jwt.serialize());
+      Cookie cookie1 = new Cookie("jowt", "garbage");
+      Cookie cookie2 = new Cookie("jowt", jwt.serialize());
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-      EasyMock.expect(request.getCookies()).andReturn(new Cookie[] { cookie });
+      EasyMock.expect(request.getCookies()).andReturn(new Cookie[] { cookie1, cookie2 });
       EasyMock.expect(request.getRequestURL()).andReturn(
           new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
@@ -103,7 +105,7 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
       handler.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
       Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
-      Assert.assertTrue("No PrimaryPrincipal returned.", !principals.isEmpty());
+      Assert.assertFalse("No PrimaryPrincipal returned.", principals.isEmpty());
       Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
