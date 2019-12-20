@@ -42,6 +42,7 @@ import org.apache.knox.gateway.topology.discovery.cm.model.hive.HiveServiceModel
 import org.apache.knox.gateway.topology.discovery.cm.model.hive.WebHCatServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.impala.ImpalaServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.impala.ImpalaUIServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.kudu.KuduUIServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.livy.LivyServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.oozie.OozieServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.phoenix.PhoenixServiceModelGenerator;
@@ -478,6 +479,40 @@ public class ClouderaManagerServiceDiscoveryTest {
   @Test
   public void testImpalaUIDiscoverySSL() {
     doTestImpalaUIDiscovery(true, true);
+  }
+
+
+  @Test
+  public void testKuduUIDiscovery() {
+    doTestKuduUIDiscovery(false);
+  }
+
+  @Test
+  public void testKuduUIDiscoverySSL() {
+    doTestKuduUIDiscovery(true);
+  }
+
+  private void doTestKuduUIDiscovery(final boolean isSSL) {
+    final String hostName    = "kudu-host";
+    final String port        = "8051";
+    final String expectedURL = (isSSL ? "https" : "http") + "://" + hostName + ":" + port + "/";
+
+    // Configure the role
+    Map<String, String> roleProperties = new HashMap<>();
+    roleProperties.put("ssl_enabled", String.valueOf(isSSL));
+    roleProperties.put("webserver_port", port);
+
+    ServiceDiscovery.Cluster cluster = doTestDiscovery(hostName,
+                                                       "KUDU-1",
+                                                       KuduUIServiceModelGenerator.SERVICE_TYPE,
+                                                       "KUDU-KUDU_MASTER-12345",
+                                                       KuduUIServiceModelGenerator.ROLE_TYPE,
+                                                       Collections.emptyMap(),
+                                                       roleProperties);
+
+    List<String> urls = cluster.getServiceURLs(KuduUIServiceModelGenerator.SERVICE);
+    assertEquals(1, urls.size());
+    assertEquals(expectedURL, urls.get(0));
   }
 
   private void doTestImpalaDiscovery(boolean sslEnabled) {
