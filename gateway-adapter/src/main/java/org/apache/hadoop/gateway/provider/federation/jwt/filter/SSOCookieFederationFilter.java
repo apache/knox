@@ -39,18 +39,6 @@ public class SSOCookieFederationFilter
   }
 
   /**
-   * Encapsulate the acquisition of the JWT token from HTTP cookies within the
-   * request.
-   *
-   * @param req servlet request to get the JWT token from
-   * @return serialized JWT token
-   */
-  @Override
-  protected String getJWTFromCookie(HttpServletRequest req) {
-    return super.getJWTFromCookie(req);
-  }
-
-  /**
    * Create the URL to be used for authentication of the user in the absence of
    * a JWT token within the incoming request.
    *

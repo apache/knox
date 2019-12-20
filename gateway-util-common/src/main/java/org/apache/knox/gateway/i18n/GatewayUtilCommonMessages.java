@@ -38,4 +38,10 @@ public interface GatewayUtilCommonMessages {
 
   @Message(level = MessageLevel.ERROR, text = "Failed to serialize Object to Json string {0}: {1}" )
   void failedToSerializeObjectToJSON( Object obj, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.INFO, text = "Unable to find cookie with name: {0}")
+  void cookieNotFound(String name);
+
+  @Message( level = MessageLevel.DEBUG, text = "{0} Cookie has been found." )
+  void cookieHasBeenFound(String cookieName);
 }
