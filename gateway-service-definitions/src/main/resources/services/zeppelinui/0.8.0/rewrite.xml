@@ -45,8 +45,8 @@
     <rewrite template="{$serviceUrl[ZEPPELINUI]}/{**}/configuration/{**}"/>
   </rule>
 
-  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/api" pattern="*://*:*/**/zeppelin/api/{**}">
-    <rewrite template="{$serviceUrl[ZEPPELINUI]}/api/{**}"/>
+  <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/api" pattern="*://*:*/**/zeppelin/api/{path=**}?{**}">
+    <rewrite template="{$serviceUrl[ZEPPELINUI]}/api/{path=**}?{**}"/>
   </rule>
 
   <rule dir="IN" name="ZEPPELINUI/zeppelin/inbound/components" pattern="*://*:*/**/zeppelin/components/{**}">
@@ -119,7 +119,7 @@
   <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript" pattern="components/{**}">
     <rewrite template="{$frontend[path]}/zeppelin/components/{**}"/>
   </rule>
-    
+
   <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript" pattern="{path=app.**}">
     <rewrite template="{$frontend[path]}/zeppelin/{path=app.**}"/>
   </rule>
@@ -128,7 +128,7 @@
   <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/component/tick" pattern="'components/{**}">
     <rewrite template="{$prefix[&#39;,url]}/zeppelin/components/{**}"/>
   </rule>
-  
+
   <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/component/tick" pattern="'app/{**}">
     <rewrite template="{$prefix[&#39;,url]}/zeppelin/app/{**}"/>
   </rule>
@@ -138,35 +138,35 @@
   <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/home" >
     <rewrite template="{$frontend[path]}/zeppelin/app/home/home.html"/>
   </rule>
-  
+
   <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/notebook" >
     <rewrite template="{$frontend[path]}/zeppelin/app/notebook/notebook.html"/>
   </rule>
-  
+
   <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/jobmanager" >
     <rewrite template="{$frontend[path]}/zeppelin/app/jobmanager/jobmanager.html"/>
   </rule>
-  
+
   <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/interpreter" >
     <rewrite template="{$frontend[path]}/zeppelin/app/interpreter/interpreter.html"/>
   </rule>
-  
+
   <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/notebookRepos" >
     <rewrite template="{$frontend[path]}/zeppelin/app/notebook-repository/notebook-repository.html"/>
   </rule>
-  
+
   <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/credential" >
     <rewrite template="{$frontend[path]}/zeppelin/app/credential/credential.html"/>
   </rule>
-  
+
   <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/helium" >
     <rewrite template="{$frontend[path]}/zeppelin/app/helium/helium.html"/>
   </rule>
-  
+
   <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/configuration" >
     <rewrite template="{$frontend[path]}/zeppelin/app/configuration/configuration.html"/>
   </rule>
-  
+
   <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/searchTerm" >
     <rewrite template="{$frontend[path]}/zeppelin/app/search/result-list.html"/>
   </rule>
@@ -176,10 +176,10 @@
     <rewrite template="{$frontend[path]}/zeppelin/api/login"/>
   </rule>
 
-  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/api" pattern="*://*:*/api/{**}">
-    <rewrite template="{$frontend[path]}/zeppelin/api/{**}"/>
+  <rule dir="OUT" name="ZEPPELINUI/zeppelin/outbound/api" pattern="*://*:*/api/{path=**}?{**}">
+    <rewrite template="{$frontend[path]}/zeppelin/api/{path=**}?{**}"/>
   </rule>
-  
+
   <filter name="ZEPPELINUI/zeppelin/outbound/javascript/filter">
           <content type="application/javascript">
               <apply path="app/home/home.html" rule="ZEPPELINUI/zeppelin/outbound/javascript/filter/app/home"/>
