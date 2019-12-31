@@ -52,6 +52,21 @@ limitations under the License.
   </Match>
 
   <Match>
+    <Class name="org.apache.knox.gateway.shell.table.JDBCKnoxShellTableBuilder" />
+    <Bug pattern="SQL_INJECTION_JDBC" />
+  </Match>
+  
+  <Match>
+    <Class name="org.apache.knox.gateway.shell.commands.SelectCommand" />
+    <Bug pattern="SQL_INJECTION_JDBC" />
+  </Match>
+  
+  <Match>
+    <Class name="org.apache.knox.gateway.shell.commands.DataSourceCommand" />
+    <Bug pattern="SQL_INJECTION_JDBC" />
+  </Match>
+  
+  <Match>
     <Class name="~org.apache.hadoop.gateway..*" />
     <Bug pattern="NM_SAME_SIMPLE_NAME_AS_SUPERCLASS" />
   </Match>

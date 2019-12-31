@@ -55,7 +55,7 @@ public class KnoxShellTable {
   String title;
   long id;
 
-  KnoxShellTable() {
+  public KnoxShellTable() {
     this.id = getUniqueTableId();
   }
 
