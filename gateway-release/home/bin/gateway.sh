@@ -76,10 +76,37 @@ function main {
          setupEnv
          ;;
       start)
-         if [ "$2" = "--printEnv" ]; then
+         printEnv=0
+         while [[ $# -gt 0 ]]
+         do
+           key="$1"
+
+           case $key in
+             --printEnv)
+               printEnv=1
+               shift # past argument
+               ;;
+             --test-gateway-retry-attempts)
+               export APP_STATUS_TEST_RETRY_ATTEMPTS="$2"
+               shift # past argument
+               shift # past value
+               ;;
+             --test-gateway-retry-sleep)
+               export APP_STATUS_TEST_RETRY_SLEEP="$2"
+               shift # past argument
+               shift # past value
+               ;;
+             *)    # unknown option
+               shift # past argument
+               ;;
+           esac
+         done
+
+         if [ $printEnv -eq 1 ]; then
            printEnv
          fi
          checkEnv
+         export TEST_APP_STATUS=true
          appStart
          ;;
       stop)   

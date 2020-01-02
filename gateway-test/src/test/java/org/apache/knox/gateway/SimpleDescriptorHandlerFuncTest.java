@@ -38,6 +38,8 @@ import org.junit.Test;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -130,6 +132,8 @@ public class SimpleDescriptorHandlerFuncTest {
     File testProvDir = new File(testConfDir, "shared-providers");
     File testTopoDir = new File(testConfDir, "topologies");
     File testDeployDir = new File(testConfDir, "deployments");
+    File testDataDir = new File(testRootDir, "data");
+    Files.createDirectories(Paths.get(testDataDir.getAbsolutePath()));
 
     // Write the externalized provider config to a temp file
     File providerConfig = new File(testProvDir, "ambari-cluster-policy.xml");
@@ -162,6 +166,7 @@ public class SimpleDescriptorHandlerFuncTest {
       // Try setting up enough of the GatewayServer to support the test...
       GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
       InetSocketAddress gatewayAddress = new InetSocketAddress(0);
+      EasyMock.expect(config.getGatewayDataDir()).andReturn(testDataDir.getAbsolutePath()).anyTimes();
       EasyMock.expect(config.getGatewayTopologyDir()).andReturn(testTopoDir.getAbsolutePath()).anyTimes();
       EasyMock.expect(config.getGatewayDeploymentDir()).andReturn(testDeployDir.getAbsolutePath()).anyTimes();
       EasyMock.expect(config.getGatewayAddress()).andReturn(gatewayAddress).anyTimes();
