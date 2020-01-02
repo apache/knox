@@ -17,8 +17,12 @@
  */
 package org.apache.knox.gateway.shell.commands;
 
-import java.sql.Connection;
-import java.sql.SQLException;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.net.URISyntaxException;
+//import java.sql.Connection;
+//import java.sql.DriverManager;
+//import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,15 +32,57 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+
 import org.apache.knox.gateway.shell.CredentialCollectionException;
 import org.apache.knox.gateway.shell.KnoxDataSource;
 import org.apache.knox.gateway.shell.table.KnoxShellTable;
 import org.codehaus.groovy.tools.shell.Groovysh;
 
-public class SelectCommand extends AbstractSQLCommandSupport {
+public class SelectCommand extends AbstractKnoxShellCommand implements KeyListener {
+
+  private static final String KNOXDATASOURCE = "__knoxdatasource";
+  private JTextArea sqlField;
+  private List<String> sqlHistory;
+  private int historyIndex = -1;
 
   public SelectCommand(Groovysh shell) {
     super(shell, ":SQL", ":sql");
+  }
+
+  @Override
+  public void keyPressed(KeyEvent event) {
+    int code = event.getKeyCode();
+    boolean setFromHistory = false;
+    if (sqlHistory != null && !sqlHistory.isEmpty()) {
+      if (code == KeyEvent.VK_KP_UP ||
+          code == KeyEvent.VK_UP) {
+        if (historyIndex > 0) {
+          historyIndex -= 1;
+          setFromHistory = true;
+        }
+      }
+      else if (code == KeyEvent.VK_KP_DOWN ||
+          code == KeyEvent.VK_DOWN) {
+        if (historyIndex < sqlHistory.size() - 1) {
+          historyIndex += 1;
+          setFromHistory = true;
+        }
+      }
+      if (setFromHistory) {
+        sqlField.setText(sqlHistory.get(historyIndex));
+        sqlField.invalidate();
+      }
+    }
+  }
+
+  @Override
+  public void keyReleased(KeyEvent event) {
+    // TODO Auto-generated method stub
+  }
+
+  @Override
+  public void keyTyped(KeyEvent event) {
+    // TODO Auto-generated method stub
   }
 
   @SuppressWarnings("unchecked")
@@ -45,6 +91,7 @@ public class SelectCommand extends AbstractSQLCommandSupport {
     boolean ok = false;
     String sql = "";
     String bindVariableName = null;
+    KnoxShellTable table = null;
 
     if (!args.isEmpty()) {
       bindVariableName = getBindingVariableNameForResultingTable(args);
@@ -59,17 +106,22 @@ public class SelectCommand extends AbstractSQLCommandSupport {
       if (dataSources == null || dataSources.isEmpty()) {
         return "please configure a datasource with ':datasources add {name} {connectStr} {driver} {authntype: none|basic}'.";
       }
-      if (dataSources.size() == 1) {
+      else if (dataSources.size() == 1) {
         dsName = (String) dataSources.keySet().toArray()[0];
       }
       else {
         return "mulitple datasources configured. please disambiguate with ':datasources select {name}'.";
       }
     }
+
+    sqlHistory = getSQLHistory(dsName);
+    historyIndex = (sqlHistory != null && !sqlHistory.isEmpty()) ? sqlHistory.size() - 1 : -1;
+
     ds = dataSources.get(dsName);
     if (ds != null) {
       JLabel jl = new JLabel("Query: ");
-      JTextArea sqlField = new JTextArea(5,40);
+      sqlField = new JTextArea(5,40);
+      sqlField.addKeyListener(this);
       sqlField.setLineWrap(true);
       JScrollPane scrollPane = new JScrollPane(sqlField);
       Box box = Box.createHorizontalBox();
@@ -85,18 +137,35 @@ public class SelectCommand extends AbstractSQLCommandSupport {
       if (x == JOptionPane.OK_OPTION) {
         ok = true;
         sql = sqlField.getText();
+        addToSQLHistory(dsName, sql);
+        historyIndex = -1;
       }
 
       //KnoxShellTable.builder().jdbc().connect("jdbc:derby:codejava/webdb1").driver("org.apache.derby.jdbc.EmbeddedDriver").username("lmccay").pwd("xxxx").sql("SELECT * FROM book");
       try {
         if (ok) {
-          Connection conn = getConnection(ds);
-          KnoxShellTable table = KnoxShellTable.builder().jdbc().connection(conn).sql(sql);
-          conn.close();
-          if (bindVariableName != null) {
-            getVariables().put(bindVariableName, table);
+          if (ds.getAuthnType().equalsIgnoreCase("none")) {
+            table = KnoxShellTable.builder().jdbc()
+                .connectTo(ds.getConnectStr())
+                .driver(ds.getDriver())
+                .sql(sql);
           }
-          return table;
+          else if (ds.getAuthnType().equalsIgnoreCase("basic")) {
+            KnoxLoginDialog dlg = new KnoxLoginDialog();
+            try {
+              dlg.collect();
+              if (dlg.ok) {
+                table = KnoxShellTable.builder().jdbc()
+                    .connectTo(ds.getConnectStr())
+                    .driver(ds.getDriver())
+                    .username(dlg.username)
+                    .pwd(new String(dlg.pass))
+                    .sql(sql);
+              }
+            } catch (CredentialCollectionException | URISyntaxException e) {
+              e.printStackTrace();
+            }
+          }
         }
       } catch (Exception e) {
         e.printStackTrace();
@@ -105,38 +174,26 @@ public class SelectCommand extends AbstractSQLCommandSupport {
     else {
       return "please select a datasource via ':datasources select {name}'.";
     }
-    return null;
+    if (table != null && bindVariableName != null) {
+      getVariables().put(bindVariableName, table);
+    }
+    return table;
   }
 
-  private Connection getConnection(KnoxDataSource ds)
-      throws CredentialCollectionException, SQLException, Exception {
-    Connection conn = getConnectionFromSession(ds);
-    if (ds.getAuthnType().equalsIgnoreCase("none")) {
-      if (conn == null || conn.isClosed()) {
-        conn = getConnection(ds, null, null);
-      }
-    }
-    else if (ds.getAuthnType().equalsIgnoreCase("basic")) {
-      if (conn == null || conn.isClosed()) {
-        KnoxLoginDialog dlg = new KnoxLoginDialog();
-        dlg.collect();
-        if (dlg.ok) {
-          String u = dlg.username;
-          String p = new String(dlg.pass);
-          if (u == null || u.isEmpty() || p.isEmpty()) {
-            throw new CredentialCollectionException(
-                "selected datasource requires username and password.");
-          }
-          conn = getConnection(ds, u, p);
-        }
-      }
-    }
-    return conn;
-  }
+//  private Connection createConnection(String connectStr, String username, String pass) throws SQLException {
+//    Connection con = null;
+//    if (username != null && pass != null) {
+//      con = DriverManager.getConnection(connectStr, username, pass);
+//    }
+//    else {
+//      con = DriverManager.getConnection(connectStr);
+//    }
+//    return con;
+//  }
 
   public static void main(String[] args) {
-    SelectCommand cmd = new SelectCommand(new Groovysh());
-    List<String> args2 = new ArrayList<>();
+    AbstractKnoxShellCommand cmd = new SelectCommand(new Groovysh());
+    List<String> args2 = new ArrayList<String>();
     cmd.execute(args2);
   }
 }
