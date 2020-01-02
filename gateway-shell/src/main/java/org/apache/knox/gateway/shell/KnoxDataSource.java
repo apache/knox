@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.shell;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class KnoxDataSource {
   private String name;
   private String connectStr;
@@ -55,7 +57,10 @@ public class KnoxDataSource {
     this.authnType = authnType;
   }
 
-  public KnoxDataSource(String name, String connectStr, String driver, String authnType) {
+  public KnoxDataSource(@JsonProperty("name") String name,
+      @JsonProperty("contectStr") String connectStr,
+      @JsonProperty("driver") String driver,
+      @JsonProperty("authnType") String authnType) {
     this.name = name;
     this.connectStr = connectStr;
     this.driver = driver;
