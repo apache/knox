@@ -21,20 +21,24 @@ import java.io.IOException;
 import java.util.List;
 
 import org.apache.knox.gateway.shell.table.KnoxShellTable;
-import org.codehaus.groovy.tools.shell.CommandSupport;
 import org.codehaus.groovy.tools.shell.Groovysh;
 
-public class CSVCommand extends CommandSupport {
+public class CSVCommand extends AbstractKnoxShellCommand {
   private boolean withHeaders;
   private String url;
 
   public CSVCommand(Groovysh shell) {
-    super(shell, "CSV", "csv");
+    super(shell, ":CSV", ":csv");
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public Object execute(List<String> args) {
     KnoxShellTable table = null;
+    String bindVariableName = null;
+    if (!args.isEmpty()) {
+      bindVariableName = getBindingVariableNameForResultingTable(args);
+    }
     if (args.get(0).contentEquals("withHeaders")) {
       withHeaders = true;
       url = args.get(1);
@@ -53,6 +57,9 @@ public class CSVCommand extends CommandSupport {
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
+    }
+    if (table != null && bindVariableName != null) {
+      getVariables().put(bindVariableName, table);
     }
     return table;
   }

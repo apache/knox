@@ -20,10 +20,6 @@ package org.apache.knox.gateway.shell.commands;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.net.URISyntaxException;
-//import java.sql.Connection;
-//import java.sql.DriverManager;
-//import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -38,7 +34,7 @@ import org.apache.knox.gateway.shell.KnoxDataSource;
 import org.apache.knox.gateway.shell.table.KnoxShellTable;
 import org.codehaus.groovy.tools.shell.Groovysh;
 
-public class SelectCommand extends AbstractKnoxShellCommand implements KeyListener {
+public class SelectCommand extends AbstractSQLCommandSupport implements KeyListener {
 
   private static final String KNOXDATASOURCE = "__knoxdatasource";
   private JTextArea sqlField;
@@ -99,8 +95,7 @@ public class SelectCommand extends AbstractKnoxShellCommand implements KeyListen
 
     String dsName = (String) getVariables().get(KNOXDATASOURCE);
     @SuppressWarnings("unchecked")
-    Map<String, KnoxDataSource> dataSources =
-        (Map<String, KnoxDataSource>) getVariables().get(KNOXDATASOURCES);
+    Map<String, KnoxDataSource> dataSources = getDataSources();
     KnoxDataSource ds = null;
     if (dsName == null || dsName.isEmpty()) {
       if (dataSources == null || dataSources.isEmpty()) {
@@ -178,22 +173,5 @@ public class SelectCommand extends AbstractKnoxShellCommand implements KeyListen
       getVariables().put(bindVariableName, table);
     }
     return table;
-  }
-
-//  private Connection createConnection(String connectStr, String username, String pass) throws SQLException {
-//    Connection con = null;
-//    if (username != null && pass != null) {
-//      con = DriverManager.getConnection(connectStr, username, pass);
-//    }
-//    else {
-//      con = DriverManager.getConnection(connectStr);
-//    }
-//    return con;
-//  }
-
-  public static void main(String[] args) {
-    AbstractKnoxShellCommand cmd = new SelectCommand(new Groovysh());
-    List<String> args2 = new ArrayList<String>();
-    cmd.execute(args2);
   }
 }

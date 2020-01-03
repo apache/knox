@@ -18,7 +18,6 @@
 package org.apache.knox.gateway.shell.commands;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +34,8 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
   @SuppressWarnings("unchecked")
   @Override
   public Object execute(List<String> args) {
+    Map<String, KnoxDataSource> dataSources =
+        getDataSources();
     if (args.isEmpty()) {
       args.add("list");
     }
@@ -43,17 +44,9 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
           args.get(2),
           args.get(3),
           args.get(4));
-      Map<String, KnoxDataSource> dataSources =
-          (Map<String, KnoxDataSource>) getVariables().get(KNOXDATASOURCES);
-      if (dataSources == null || dataSources.isEmpty()) {
-        dataSources = new HashMap<>();
-        getVariables().put(KNOXDATASOURCES, dataSources);
-      }
       dataSources.put(ds.getName(), ds);
     }
     else if (args.get(0).equalsIgnoreCase("remove")) {
-      Map<String, KnoxDataSource> dataSources =
-          (Map<String, KnoxDataSource>) getVariables().get(KNOXDATASOURCES);
       if (dataSources == null || dataSources.isEmpty()) {
         return "No datasources to remove.";
       }
@@ -69,8 +62,6 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
       // valid command no additional work needed though
     }
     else if(args.get(0).equalsIgnoreCase("select")) {
-      Map<String, KnoxDataSource> dataSources =
-          (Map<String, KnoxDataSource>) getVariables().get(KNOXDATASOURCES);
       if (dataSources == null || dataSources.isEmpty()) {
         return "No datasources to select from.";
       }
