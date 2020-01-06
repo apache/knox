@@ -290,7 +290,15 @@ public class KnoxSh {
           Files.setPosixFilePermissions(Paths.get(System.getProperty("user.home") + "/.knoxtokencache"), perms);
         }
       } catch(KnoxShellException he) {
-        System.out.println("Failure to acquire token. Please verify your credentials and Knox URL and try again.");
+          String message = "Failure to acquire token. Please verify your credentials, Knox URL, and TLS truststore configuration.";
+          Throwable t = he.getCause();
+          if (t != null) {
+              String rc = t.getMessage();
+              if (rc != null) {
+                  message += " Cause: " + rc;
+              }
+          }
+        System.out.println(message);
       }
       if ( session != null ) {
         session.shutdown();
