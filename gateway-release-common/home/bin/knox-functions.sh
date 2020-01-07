@@ -41,6 +41,9 @@ APP_JAVA_LIB_PATH=${KNOX_GATEWAY_JAVA_LIB_PATH:-$DEFAULT_JAVA_LIB_PATH}
 # JAVA options used by the JVM
 declare -a APP_JAVA_OPTS
 
+#status-based test related variables
+DEFAULT_APP_STATUS_TEST_RETRY_ATTEMPTS=5
+DEFAULT_APP_STATUS_TEST_RETRY_SLEEP=2s
 
 ############################
 ##### common functions #####
@@ -163,7 +166,7 @@ function buildAppJavaOpts {
     # echo "APP_JAVA_OPTS =" "${APP_JAVA_OPTS[@]}"
 }
 
-function appIsRunning {
+function appIsRunningByPID {
    if [ "$1" -eq 0 ]; then return 0; fi
 
    ps -p "$1" > /dev/null
@@ -173,6 +176,52 @@ function appIsRunning {
    else
      return 1
    fi
+}
+
+function appIsRunningByStatus {
+   retryAttempts=${APP_STATUS_TEST_RETRY_ATTEMPTS:-$DEFAULT_APP_STATUS_TEST_RETRY_ATTEMPTS}
+   retrySleep=${APP_STATUS_TEST_RETRY_SLEEP:-$DEFAULT_APP_STATUS_TEST_RETRY_SLEEP}
+
+   #echo "Retry attempts = $retryAttempts"
+   #echo "Retry sleep = $retrySleep"
+
+   statusCheck=0
+   for ((i=1; i<=retryAttempts; i++))
+   do
+     #echo "$i. try"
+
+     if grep -Fxqs "STARTED" "$APP_DATA_DIR"/gatewayServer.status; then
+       statusCheck=1
+       break
+     fi
+
+     sleep "$retrySleep"
+   done
+
+   return $statusCheck
+}
+
+#returns 0 if not running and 1 if running
+function appIsRunning {
+   appIsRunningByPID "$1"
+   if [ $? -eq 1 ]; then
+     #echo "PID check succeeded"
+     if [[ "$TEST_APP_STATUS" = "true" ]]; then
+       #echo "Checking status..."
+       appIsRunningByStatus
+       if [ $? -eq 1 ]; then
+         #echo "Status check passed"
+         return 1;
+       else
+         #echo "Status check NOT passsed"
+         return 0;
+       fi
+     else
+       return 1;
+     fi
+   fi;
+
+   return 0
 }
 
 # Returns 0 if the app is running and sets the $PID variable
@@ -221,7 +270,10 @@ function appStart {
 
       getPID
       for ((i=0; i<APP_START_WAIT_TIME*10; i++)); do
-         if appIsRunning "$APP_PID"; then break; fi
+         appIsRunning "$APP_PID"
+         if [ $? -eq 1 ]; then
+            break
+         fi
          sleep 0.1
       done
       appIsRunning "$APP_PID"
@@ -288,6 +340,7 @@ function appClean {
 function appKill {
    local localPID=$1
    kill "$localPID" || return 1
+
    for ((i=0; i<APP_KILL_WAIT_TIME*10; i++)); do
       if appIsRunning "$localPID"; then return 0; fi
       sleep 0.1

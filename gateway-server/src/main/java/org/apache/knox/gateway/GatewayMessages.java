@@ -51,6 +51,9 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.INFO, text = "Stopped gateway." )
   void stoppedGateway();
 
+  @Message( level = MessageLevel.INFO, text = "Failed to stopped gateway." )
+  void failedToStopGateway(@StackTrace( level = MessageLevel.INFO ) Exception e);
+
   @Message( level = MessageLevel.INFO, text = "Loading configuration resource {0}" )
   void loadingConfigurationResource( String res );
 
@@ -679,4 +682,7 @@ public interface GatewayMessages {
 
   @Message(level = MessageLevel.INFO, text = "Deleted service definition {0} / {1} / {2}")
   void deletedServiceDefinitionChange(String serviceName, String role, String version);
+
+  @Message(level = MessageLevel.ERROR, text = "Failed to save gateway status")
+  void failedToSaveGatewayStatus();
 }
