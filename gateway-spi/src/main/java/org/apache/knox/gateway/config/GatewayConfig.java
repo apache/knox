@@ -642,4 +642,14 @@ public interface GatewayConfig {
    * @return a set of service principal names that indicate which services to ignore doAs request
    */
   Set<String> getServicesToIgnoreDoAs();
+
+  /**
+   * @return the name of the folder where refreshable service parameters should be monitored; <code>null</code> if monitoring is disabled
+   */
+  String getRefreshableServiceParametersFolder();
+
+  /**
+   * @return the service parameter folder refresh interval in ms.
+   */
+  int getServiceParametersFolderRefreshInterval();
 }

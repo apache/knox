@@ -25,6 +25,7 @@ import java.util.Map;
 import org.apache.knox.gateway.i18n.GatewayUtilCommonMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -48,10 +49,18 @@ public class JsonUtils {
   }
 
   public static String renderAsJsonString(Object obj) {
-    return renderAsJsonString(obj, null, null);
+    return renderAsJsonString(obj, false);
+  }
+
+  public static String renderAsJsonString(Object obj, boolean ignoreNullValues) {
+    return renderAsJsonString(obj, null, null, ignoreNullValues);
   }
 
   public static String renderAsJsonString(Object obj, FilterProvider filterProvider, DateFormat dateFormat) {
+    return renderAsJsonString(obj, filterProvider, dateFormat, false);
+  }
+
+  public static String renderAsJsonString(Object obj, FilterProvider filterProvider, DateFormat dateFormat, boolean ignoreNullValues) {
     String json = null;
     ObjectMapper mapper = new ObjectMapper();
     if (filterProvider != null) {
@@ -60,6 +69,10 @@ public class JsonUtils {
 
     if (dateFormat != null) {
       mapper.setDateFormat(dateFormat);
+    }
+
+    if (ignoreNullValues) {
+      mapper.setSerializationInclusion(Include.NON_NULL);
     }
 
     try {

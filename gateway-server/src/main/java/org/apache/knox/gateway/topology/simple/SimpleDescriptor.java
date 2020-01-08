@@ -31,7 +31,7 @@ public interface SimpleDescriptor {
 
     String getDiscoveryPasswordAlias();
 
-    String getClusterName();
+    String getCluster();
 
     String getProviderConfig();
 
@@ -46,6 +46,8 @@ public interface SimpleDescriptor {
         String getVersion();
 
         Map<String, String> getParams();
+
+        void addParams(Map<String, String> paramsToAdd);
 
         List<String> getURLs();
     }

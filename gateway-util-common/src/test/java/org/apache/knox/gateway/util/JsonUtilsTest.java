@@ -24,6 +24,7 @@ import org.junit.Test;
 
 
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 
@@ -45,6 +46,9 @@ public class JsonUtilsTest {
     assertThat( result, containsString( expiresIn ) );
     assertThat( result, containsString( tokenType ) );
     assertThat( result, containsString( accessToken ) );
+
+    map.put("KeyWithNullValue", null);
+    assertThat(JsonUtils.renderAsJsonString(map, true), not(containsString("KeyWithNullValue")));
   }
 
   @Test

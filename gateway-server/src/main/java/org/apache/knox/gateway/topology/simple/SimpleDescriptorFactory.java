@@ -16,15 +16,28 @@
  */
 package org.apache.knox.gateway.topology.simple;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.apache.commons.io.FilenameUtils;
-
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+
+import org.apache.commons.io.FilenameUtils;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 
 public class SimpleDescriptorFactory {
+
+    /**
+     * @param path
+     *          The path to the file
+     * @return A SimpleDescriptor based on the contents of the file referenced by the given path.
+     * @throws IOException
+     *           in case of any parsing error
+     */
+    public static SimpleDescriptor parse(Path path) throws IOException {
+      return parse(path.toString());
+    }
 
     /**
      * Create a SimpleDescriptor from the specified file.

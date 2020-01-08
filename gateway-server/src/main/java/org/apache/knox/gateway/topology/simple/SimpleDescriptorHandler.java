@@ -220,7 +220,7 @@ public class SimpleDescriptorHandler {
             discoveryInstances.put(discoveryType, sd);
         }
 
-        return sd.discover(config, sdc, desc.getClusterName());
+        return sd.discover(config, sdc, desc.getCluster());
     }
 
 
@@ -574,7 +574,7 @@ public class SimpleDescriptorHandler {
             // Write the generated content to a file
             String topologyFilename = desc.getName();
             if (topologyFilename == null) {
-                topologyFilename = desc.getClusterName();
+                topologyFilename = desc.getCluster();
             }
             topologyDescriptor = new File(destDirectory, topologyFilename + ".xml");
 

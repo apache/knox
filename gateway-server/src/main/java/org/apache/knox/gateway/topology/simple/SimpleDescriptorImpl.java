@@ -20,6 +20,7 @@ package org.apache.knox.gateway.topology.simple;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -81,7 +82,7 @@ class SimpleDescriptorImpl implements SimpleDescriptor {
     }
 
     @Override
-    public String getClusterName() {
+    public String getCluster() {
         return cluster;
     }
 
@@ -134,6 +135,14 @@ class SimpleDescriptorImpl implements SimpleDescriptor {
         @Override
         public Map<String, String> getParams() {
             return params;
+        }
+
+        @Override
+        public void addParams(Map<String, String> paramsToAdd) {
+          if (params == null) {
+            params = new HashMap<>();
+          }
+          params.putAll(paramsToAdd);
         }
 
         @Override

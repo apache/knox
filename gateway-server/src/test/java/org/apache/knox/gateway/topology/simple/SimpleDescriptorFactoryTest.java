@@ -755,7 +755,7 @@ public class SimpleDescriptorFactoryTest {
         assertEquals(discoveryType, sd.getDiscoveryType());
         assertEquals(discoveryAddress, sd.getDiscoveryAddress());
         assertEquals(providerConfig, sd.getProviderConfig());
-        assertEquals(clusterName, sd.getClusterName());
+        assertEquals(clusterName, sd.getCluster());
 
         List<SimpleDescriptor.Service> actualServices = sd.getServices();
 

@@ -233,6 +233,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   static final String REMOTE_ALIAS_SERVICE_CONFIG_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".remote.alias.service.config.prefix";
   static final String REMOTE_ALIAS_SERVICE_CONFIG_PREFIX_DEFAULT = GATEWAY_CONFIG_FILE_PREFIX + ".remote.alias.service.config.";
 
+  public static final String REFRESHABLE_SERVIVCE_PARAMETERS_FILENAME = "refreshable-service-parameters.xml";
+  private static final String REFRESHABLE_SERVICE_PARAMETERS_FOLDER = GATEWAY_CONFIG_FILE_PREFIX + ".refreshable.service.parameters.folder";
+  private static final String REFRESHABLE_SERVICE_PARAMETERS_FOLDER_MONITORING_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX
+          + ".refreshable.service.parameters.folder.monitor.interval";
+  private static final int REFRESHABLE_SERVICE_PARAMETERS_FOLDER_MONITORING_INTERVAL_DEFAULT = 60000;
+
   private static final List<String> DEFAULT_GLOBAL_RULES_SERVICES = Arrays.asList(
       "NAMENODE", "JOBTRACKER", "WEBHDFS", "WEBHCAT",
       "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER");
@@ -1093,5 +1099,15 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     }
 
     return set;
+  }
+
+  @Override
+  public String getRefreshableServiceParametersFolder() {
+  return get(REFRESHABLE_SERVICE_PARAMETERS_FOLDER);
+  }
+
+  @Override
+  public int getServiceParametersFolderRefreshInterval() {
+    return getInt(REFRESHABLE_SERVICE_PARAMETERS_FOLDER_MONITORING_INTERVAL, REFRESHABLE_SERVICE_PARAMETERS_FOLDER_MONITORING_INTERVAL_DEFAULT);
   }
 }

@@ -25,6 +25,7 @@ import org.apache.commons.io.monitor.FileAlterationListener;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.audit.api.Action;
@@ -34,6 +35,8 @@ import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
+import org.apache.knox.gateway.descriptor.RefreshableServiceParametersConfiguration;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.definition.ServiceDefinition;
 import org.apache.knox.gateway.service.definition.ServiceDefinitionChangeListener;
@@ -62,6 +65,7 @@ import org.apache.knox.gateway.topology.simple.SimpleDescriptorHandler;
 import org.apache.knox.gateway.topology.validation.TopologyValidator;
 import org.apache.knox.gateway.topology.xml.AmbariFormatXmlTopologyRules;
 import org.apache.knox.gateway.topology.xml.KnoxFormatXmlTopologyRules;
+import org.apache.knox.gateway.util.JsonUtils;
 import org.apache.knox.gateway.util.ServiceDefinitionsLoader;
 import org.eclipse.persistence.jaxb.JAXBContextProperties;
 import org.xml.sax.SAXException;
@@ -73,6 +77,10 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -83,6 +91,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 
@@ -633,7 +645,7 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
       initListener(topologiesDirectory, this, this);
 
       // Add support for conf/descriptors
-      descriptorsMonitor = new DescriptorsMonitor(config, topologiesDirectory, aliasService);
+      descriptorsMonitor = new DescriptorsMonitor(config, topologiesDirectory, aliasService, this);
       initListener(descriptorsDirectory,
                    descriptorsMonitor,
                    descriptorsMonitor);
@@ -800,23 +812,93 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
       SUPPORTED_EXTENSIONS.add("yaml");
     }
 
-    private GatewayConfig gatewayConfig;
-
-    private File topologiesDir;
-
-    private AliasService aliasService;
-
-    private Map<String, List<String>> providerConfigReferences = new HashMap<>();
-
-
     static boolean isDescriptorFile(String filename) {
       return SUPPORTED_EXTENSIONS.contains(FilenameUtils.getExtension(filename));
     }
 
-    public DescriptorsMonitor(GatewayConfig config, File topologiesDir, AliasService aliasService) {
+    private final GatewayConfig gatewayConfig;
+    private final File topologiesDir;
+    private final AliasService aliasService;
+    private final TopologyService topologyService;
+    private final Map<String, List<String>> providerConfigReferences = new HashMap<>();
+
+  private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(
+      new BasicThreadFactory.Builder().namingPattern("ServiceParamaterChangesMonitor-%d").build());
+    private FileTime lastReloadTime;
+
+    public DescriptorsMonitor(GatewayConfig config, File topologiesDir, AliasService aliasService, TopologyService topologyService) {
       this.gatewayConfig  = config;
       this.topologiesDir  = topologiesDir;
       this.aliasService   = aliasService;
+      this.topologyService = topologyService;
+      setupServiceParametersRefresh();
+    }
+
+    private void setupServiceParametersRefresh() {
+      final String refreshableServiceParamsFolder = gatewayConfig.getRefreshableServiceParametersFolder();
+      if (refreshableServiceParamsFolder != null) {
+        final Path resourcePath = Paths.get(refreshableServiceParamsFolder, GatewayConfigImpl.REFRESHABLE_SERVIVCE_PARAMETERS_FILENAME);
+        final int refreshInterval = gatewayConfig.getServiceParametersFolderRefreshInterval();
+        if (refreshInterval > 0) {
+          log.monitoringServiceParameterChanges(refreshableServiceParamsFolder);
+          executorService.scheduleAtFixedRate(() -> refreshServiceParameters(resourcePath), 0, refreshInterval, TimeUnit.MILLISECONDS);
+        }
+      }
+    }
+
+    private void refreshServiceParameters(Path resourcePath) {
+      try {
+        if (Files.exists(resourcePath) && Files.isReadable(resourcePath)) {
+          FileTime lastModifiedTime = Files.getLastModifiedTime(resourcePath);
+          if (lastReloadTime == null || lastReloadTime.compareTo(lastModifiedTime) < 0) {
+            lastReloadTime = lastModifiedTime;
+            log.refreshingServiceParameters();
+            final Set<String> updatedDescriptors = updateDescriptors(resourcePath);
+            log.refreshedServiceParameters(updatedDescriptors.isEmpty() ? "without redeploying any descriptors" : "in " + String.join(", ", updatedDescriptors));
+          }
+        }
+      } catch (IOException e) {
+        log.unableToRefreshServiceParameters(e);
+      }
+    }
+
+    private Set<String> updateDescriptors(Path resourcePath) throws IOException {
+      final RefreshableServiceParametersConfiguration serviceParametersConfig = new RefreshableServiceParametersConfiguration(resourcePath);
+      final Set<String> updatedDescriptors = new TreeSet<>();
+      for (String topology : serviceParametersConfig.getTopologies()) {
+        final Path descriptorPath = getDescriptorPath(topology);
+        boolean redeploy = false;
+        if (descriptorPath != null) {
+          final RefreshableServiceParametersConfiguration.TopologyServiceParameters serviceParameters = serviceParametersConfig.getServiceParameters(topology);
+          final SimpleDescriptor descriptor = SimpleDescriptorFactory.parse(descriptorPath);
+          for (SimpleDescriptor.Service service : descriptor.getServices()) {
+            if (serviceParameters.getServiceParameters().containsKey(service.getName())) {
+              service.addParams(serviceParameters.getServiceParameters().get(service.getName()));
+              updatedDescriptors.add(descriptor.getName());
+              redeploy = true;
+            }
+          }
+          if (redeploy) {
+            topologyService.deployDescriptor(FilenameUtils.getName(descriptorPath.toString()), JsonUtils.renderAsJsonString(descriptor, true));
+          }
+        }
+      }
+      return updatedDescriptors;
+    }
+
+    private Path getDescriptorPath(String topology) {
+        for (String supportedExtension : DescriptorsMonitor.SUPPORTED_EXTENSIONS) {
+            Path descriptorPath = getDescriptorPath(topology, supportedExtension);
+            if (descriptorPath != null) {
+                return descriptorPath;
+            }
+        }
+        return null;
+    }
+
+    private Path getDescriptorPath(String topologyName, String fileExtension) {
+        final Path path = Paths.get(gatewayConfig.getGatewayDescriptorsDir(), topologyName + "." + fileExtension);
+        return Files.exists(path) ? path : null;
     }
 
     List<String> getReferencingDescriptors(String providerConfigPath) {

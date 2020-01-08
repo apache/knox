@@ -685,4 +685,16 @@ public interface GatewayMessages {
 
   @Message(level = MessageLevel.ERROR, text = "Failed to save gateway status")
   void failedToSaveGatewayStatus();
+
+  @Message(level = MessageLevel.INFO, text = "Monitoring service parameter changes in {0}")
+  void monitoringServiceParameterChanges(String folder);
+
+  @Message(level = MessageLevel.INFO, text = "Refreshing service parameters...")
+  void refreshingServiceParameters();
+
+  @Message(level = MessageLevel.INFO, text = "Refreshed service parameters {0}")
+  void refreshedServiceParameters(String updatedDescriptors);
+
+  @Message(level = MessageLevel.WARN, text = "Unable to refresh service parameters")
+  void unableToRefreshServiceParameters(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 }
