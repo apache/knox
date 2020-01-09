@@ -19,9 +19,10 @@ limitations under the License.
 <configuration>
   <property>
     <name>refreshable.service.parameters</name>
-    <value>topology1.NIFI-REGISTRY.useTwoWaySsl=true;
-        topology2.HIVE.httpclient.connectionTimeout=5m;
-        topology2.HIVE.httpclient.socketTimeout=200m;
-        topology2.HUE.httpclient.connectionTimeout=5m</value>
+    <value>topology1:NIFI-REGISTRY:1.0:useTwoWaySsl=true;
+        topology2:HIVE:1.0:httpclient.connectionTimeout=5m;
+        topology2:HIVE:1.0:httpclient.socketTimeout=100m;
+        topology2:HIVE:2.0:httpclient.socketTimeout=200m;
+        topology2:HUE:2.0:httpclient.connectionTimeout=5m</value>
   </property>
 </configuration>

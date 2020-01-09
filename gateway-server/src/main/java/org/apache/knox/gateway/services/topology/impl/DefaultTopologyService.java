@@ -872,8 +872,9 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
           final RefreshableServiceParametersConfiguration.TopologyServiceParameters serviceParameters = serviceParametersConfig.getServiceParameters(topology);
           final SimpleDescriptor descriptor = SimpleDescriptorFactory.parse(descriptorPath);
           for (SimpleDescriptor.Service service : descriptor.getServices()) {
-            if (serviceParameters.getServiceParameters().containsKey(service.getName())) {
-              service.addParams(serviceParameters.getServiceParameters().get(service.getName()));
+            Map<String, String> serviceParams = serviceParameters.getServiceParameters(service.getName(), service.getVersion());
+            if (!serviceParams.isEmpty()) {
+              service.addParams(serviceParams);
               updatedDescriptors.add(descriptor.getName());
               redeploy = true;
             }

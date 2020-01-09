@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.descriptor;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.nio.file.Paths;
@@ -38,19 +39,22 @@ public class RefreshableServiceParametersConfigurationTest {
 
     TopologyServiceParameters topologyServiceParameters = serviceParametersConfiguration.getServiceParameters("topology1");
     assertEquals(1, topologyServiceParameters.getServiceParameters().size());
-    assertServiceParameters(topologyServiceParameters, "NIFI-REGISTRY", "useTwoWaySsl", "true");
+    assertServiceParameters(topologyServiceParameters, "NIFI-REGISTRY", "1.0", "useTwoWaySsl", "true");
 
     topologyServiceParameters = serviceParametersConfiguration.getServiceParameters("topology2");
-    assertEquals(2, topologyServiceParameters.getServiceParameters().size());
-    assertServiceParameters(topologyServiceParameters, "HIVE", "httpclient.connectionTimeout", "5m");
-    assertServiceParameters(topologyServiceParameters, "HIVE", "httpclient.socketTimeout", "200m");
-    assertServiceParameters(topologyServiceParameters, "HUE", "httpclient.connectionTimeout", "5m");
+    assertEquals(3, topologyServiceParameters.getServiceParameters().size());
+    assertServiceParameters(topologyServiceParameters, "HIVE", "1.0", "httpclient.connectionTimeout", "5m");
+    assertServiceParameters(topologyServiceParameters, "HIVE", "1.0", "httpclient.socketTimeout", "100m");
+    assertServiceParameters(topologyServiceParameters, "HIVE", "2.0", "httpclient.socketTimeout", "200m");
+    assertServiceParameters(topologyServiceParameters, "HUE", "2.0", "httpclient.connectionTimeout", "5m");
+    assertServiceParameters(topologyServiceParameters, "HUE", null, "httpclient.connectionTimeout", "5m");
+    assertServiceParameters(topologyServiceParameters, "HUE", "", "httpclient.connectionTimeout", "5m");
   }
 
-  private void assertServiceParameters(TopologyServiceParameters topologyServiceParameters, String expectedServiceName, String expectedParameterName,
+  private void assertServiceParameters(TopologyServiceParameters topologyServiceParameters, String expectedServiceName, String expectedVersion, String expectedParameterName,
       String expectedParameterValue) {
-    assertTrue(topologyServiceParameters.getServiceParameters().containsKey(expectedServiceName));
-    assertTrue(topologyServiceParameters.getServiceParameters().get(expectedServiceName).containsKey(expectedParameterName));
-    assertTrue(topologyServiceParameters.getServiceParameters().get(expectedServiceName).get(expectedParameterName).equals(expectedParameterValue));
+    assertFalse(topologyServiceParameters.getServiceParameters(expectedServiceName, expectedVersion).isEmpty());
+    assertTrue(topologyServiceParameters.getServiceParameters(expectedServiceName, expectedVersion).containsKey(expectedParameterName));
+    assertTrue(topologyServiceParameters.getServiceParameters(expectedServiceName, expectedVersion).get(expectedParameterName).equals(expectedParameterValue));
   }
 }

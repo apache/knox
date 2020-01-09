@@ -25,8 +25,11 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.knox.gateway.config.GatewayConfig;
 
@@ -46,23 +49,24 @@ public class RefreshableServiceParametersConfiguration {
   }
 
   // the configuration value equals to BLOCK_1;BLOCK_2;...BLOCK_N,
-  // where BLOCK_* is built up as $TOPOLOGY.$SERVICE.$PARMAPETER_NAME=$PARAMETER_VALUE
+  // where BLOCK_* is built up as $TOPOLOGY:$SERVICE:$VERSION:$PARMAPETER_NAME=$PARAMETER_VALUE
   // For instance: test-topology.HDFS.test.pramameter=test.value
   private void parseConfig(final Configuration configuration) {
     final String parametersText = configuration.get(CONFIGURATION_NAME);
     if (parametersText != null && !parametersText.isEmpty()) {
       for (String topologyServiceParameterConfig : parametersText.split(";")) {
         String[] parameterPairParts = topologyServiceParameterConfig.trim().split("=", 2);
-        String[] topologyAndServiceAndParameterNames = parameterPairParts[0].trim().split("\\.");
-        String topology = topologyAndServiceAndParameterNames[0].trim();
+        String[] serviceParamIdentifier = parameterPairParts[0].trim().split(":");
+        String topology = serviceParamIdentifier[0].trim();
         if (getServiceParameters(topology) == null) {
           topologyServiceParameters.add(new TopologyServiceParameters(topology));
         }
 
-        String serviceName = topologyAndServiceAndParameterNames[1].trim();
-        String parameterName = parameterPairParts[0].substring(topology.length() + serviceName.length() + 2).trim();
+        String serviceName = serviceParamIdentifier[1].trim();
+        String version = serviceParamIdentifier[2].trim();
+        String parameterName = serviceParamIdentifier[3].trim();
         String parameterValue = parameterPairParts[1].trim();
-        getServiceParameters(topology).addServiceParameter(serviceName, parameterName, parameterValue);
+        getServiceParameters(topology).addServiceParameter(serviceName, version, parameterName, parameterValue);
       }
     }
   }
@@ -77,7 +81,7 @@ public class RefreshableServiceParametersConfiguration {
 
   public class TopologyServiceParameters {
     private String topology;
-    private Map<String, Map<String, String>> serviceParameters;
+    private Map<ServiceParametersKey, Map<String, String>> serviceParameters;
 
     TopologyServiceParameters(String topology) {
       this.topology = topology;
@@ -88,12 +92,23 @@ public class RefreshableServiceParametersConfiguration {
       return topology;
     }
 
-    void addServiceParameter(String serviceName, String parameterName, String parameterValue) {
-      serviceParameters.computeIfAbsent(serviceName, k -> new TreeMap<>()).put(parameterName, parameterValue);
+    void addServiceParameter(String serviceName, String version, String parameterName, String parameterValue) {
+      serviceParameters.computeIfAbsent(new ServiceParametersKey(serviceName, version), k -> new TreeMap<>()).put(parameterName, parameterValue);
     }
 
-    public Map<String, Map<String, String>> getServiceParameters() {
+    public Map<ServiceParametersKey, Map<String, String>> getServiceParameters() {
       return serviceParameters;
+    }
+
+    public Map<String, String> getServiceParameters(String serviceName, String version) {
+      final Map<String, String> serviceParametersByServiceAndVersion = new TreeMap<>();
+      getServiceParameters().forEach((key, value) -> {
+        //descriptors created on Admin UI comes with no version defined; in this case only the service name should matter
+        if (key.getName().equalsIgnoreCase(serviceName) && (StringUtils.isBlank(version) || key.getVersion().equals(version))) {
+          serviceParametersByServiceAndVersion.putAll(value);
+        }
+      });
+      return serviceParametersByServiceAndVersion;
     }
 
     @Override
@@ -104,6 +119,50 @@ public class RefreshableServiceParametersConfiguration {
     @Override
     public int hashCode() {
       return HashCodeBuilder.reflectionHashCode(this);
+    }
+
+    @Override
+    public String toString() {
+      return ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE);
+    }
+  }
+
+  public class ServiceParametersKey implements Comparable<ServiceParametersKey> {
+    private final String name;
+    private final String version;
+
+    ServiceParametersKey(String name, String version) {
+      this.name = name;
+      this.version = version;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public String getVersion() {
+      return version;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return EqualsBuilder.reflectionEquals(this, obj);
+    }
+
+    @Override
+    public int hashCode() {
+      return HashCodeBuilder.reflectionHashCode(this);
+    }
+
+    @Override
+    public String toString() {
+      return ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE);
+    }
+
+    @Override
+    public int compareTo(ServiceParametersKey other) {
+      final int byName = other.getName().compareTo(name);
+      return byName == 0 ? other.getVersion().compareTo(version) : byName;
     }
   }
 
