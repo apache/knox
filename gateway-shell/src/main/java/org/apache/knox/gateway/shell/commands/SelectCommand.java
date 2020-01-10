@@ -73,12 +73,10 @@ public class SelectCommand extends AbstractSQLCommandSupport implements KeyListe
 
   @Override
   public void keyReleased(KeyEvent event) {
-    // TODO Auto-generated method stub
   }
 
   @Override
   public void keyTyped(KeyEvent event) {
-    // TODO Auto-generated method stub
   }
 
   @SuppressWarnings("unchecked")
@@ -154,7 +152,7 @@ public class SelectCommand extends AbstractSQLCommandSupport implements KeyListe
                     .connectTo(ds.getConnectStr())
                     .driver(ds.getDriver())
                     .username(dlg.username)
-                    .pwd(new String(dlg.pass))
+                    .password(new String(dlg.pass))
                     .sql(sql);
               }
             } catch (CredentialCollectionException | URISyntaxException e) {

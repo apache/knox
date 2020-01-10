@@ -26,6 +26,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Locale;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
 
   private String connectionUrl;
@@ -40,7 +42,7 @@ public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
     return this;
   }
 
-  public JDBCKnoxShellTableBuilder pwd(String pass) {
+  public JDBCKnoxShellTableBuilder password(String pass) {
     this.pass = pass;
     return this;
   }
@@ -109,7 +111,7 @@ public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
 
   public Connection createConnection() throws SQLException {
     Connection con = null;
-    if (username != null && pass != null) {
+    if (StringUtils.isNotBlank(username) && pass != null) {
       con = DriverManager.getConnection(connectionUrl, username, pass);
     }
     else {

@@ -105,6 +105,7 @@ public class KnoxLoginDialog implements CredentialCollector {
     this.name = name;
   }
 
+  // JDK-5018574 : Unable to set focus to another component in JOptionPane
   private void workAroundFocusIssue(JTextField field) {
     // begin workaround
     field.addHierarchyListener(new HierarchyListener() {

@@ -55,7 +55,6 @@ public class CSVCommand extends AbstractKnoxShellCommand {
         table = KnoxShellTable.builder().csv().url(url);
       }
     } catch (IOException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
     if (table != null && bindVariableName != null) {

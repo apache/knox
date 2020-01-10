@@ -412,7 +412,7 @@ public class KnoxShellTableTest {
         return table;
       }
     };
-    builder.username("joe").pwd("pass").sql("select * from book");
+    builder.username("joe").password("pass").sql("select * from book");
   }
 
   @Test

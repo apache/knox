@@ -53,6 +53,7 @@ public abstract class AbstractKnoxShellCommand extends CommandSupport {
     return variableName;
   }
 
+  // JDK-5018574 : Unable to set focus to another component in JOptionPane
   protected void workAroundFocusIssue(JTextArea sqlField) {
     // begin workaround
     sqlField.addHierarchyListener(new HierarchyListener() {

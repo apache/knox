@@ -60,7 +60,7 @@ public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand
           .connectTo(ds.getConnectStr())
           .driver(ds.getDriver())
           .username(user)
-          .pwd(pass)
+          .password(pass)
           .createConnection();
       }
       else {
