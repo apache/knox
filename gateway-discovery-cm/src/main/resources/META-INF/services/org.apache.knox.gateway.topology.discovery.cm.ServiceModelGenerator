@@ -47,4 +47,6 @@ org.apache.knox.gateway.topology.discovery.cm.model.yarn.YarnUIv2ServiceModelGen
 org.apache.knox.gateway.topology.discovery.cm.model.zeppelin.ZeppelinServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.zeppelin.ZeppelinUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.zeppelin.ZeppelinWSServiceModelGenerator
+org.apache.knox.gateway.topology.discovery.cm.model.nifi.NifiServiceModelGenerator
+org.apache.knox.gateway.topology.discovery.cm.model.nifi.NifiRegistryServiceModelGenerator
 
