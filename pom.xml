@@ -137,6 +137,8 @@
         <module>gateway-docker</module>
         <module>gateway-service-hashicorp-vault</module>
         <module>gateway-release-common</module>
+        <module>gateway-topology-simple</module>
+        <module>gateway-cm-integration</module>
     </modules>
 
     <properties>
@@ -1151,6 +1153,16 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-release-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-topology-simple</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-cm-integration</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

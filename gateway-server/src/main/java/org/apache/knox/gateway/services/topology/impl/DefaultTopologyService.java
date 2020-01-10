@@ -34,6 +34,7 @@ import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.descriptor.xml.XmlDescriptorParser;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.definition.ServiceDefinition;
 import org.apache.knox.gateway.service.definition.ServiceDefinitionChangeListener;
@@ -62,6 +63,7 @@ import org.apache.knox.gateway.topology.simple.SimpleDescriptorHandler;
 import org.apache.knox.gateway.topology.validation.TopologyValidator;
 import org.apache.knox.gateway.topology.xml.AmbariFormatXmlTopologyRules;
 import org.apache.knox.gateway.topology.xml.KnoxFormatXmlTopologyRules;
+import org.apache.knox.gateway.util.JsonUtils;
 import org.apache.knox.gateway.util.ServiceDefinitionsLoader;
 import org.eclipse.persistence.jaxb.JAXBContextProperties;
 import org.xml.sax.SAXException;
@@ -633,7 +635,7 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
       initListener(topologiesDirectory, this, this);
 
       // Add support for conf/descriptors
-      descriptorsMonitor = new DescriptorsMonitor(config, topologiesDirectory, aliasService);
+      descriptorsMonitor = new DescriptorsMonitor(config, topologiesDirectory, aliasService, this);
       initListener(descriptorsDirectory,
                    descriptorsMonitor,
                    descriptorsMonitor);
@@ -790,22 +792,14 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
   /**
    * Change handler for simple descriptors
    */
-  public static class DescriptorsMonitor extends FileAlterationListenerAdaptor
-                                          implements FileFilter {
+  public static class DescriptorsMonitor extends FileAlterationListenerAdaptor implements FileFilter {
 
-    static final List<String> SUPPORTED_EXTENSIONS = new ArrayList<>();
-    static {
-      SUPPORTED_EXTENSIONS.add("json");
-      SUPPORTED_EXTENSIONS.add("yml");
-      SUPPORTED_EXTENSIONS.add("yaml");
-    }
+    static final List<String> SUPPORTED_EXTENSIONS = Arrays.asList("json", "yml", "yaml");
 
     private GatewayConfig gatewayConfig;
-
     private File topologiesDir;
-
     private AliasService aliasService;
-
+    private final TopologyService topologyService;
     private Map<String, List<String>> providerConfigReferences = new HashMap<>();
 
 
@@ -813,10 +807,15 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
       return SUPPORTED_EXTENSIONS.contains(FilenameUtils.getExtension(filename));
     }
 
-    public DescriptorsMonitor(GatewayConfig config, File topologiesDir, AliasService aliasService) {
+    static boolean isXmlTypeDescriptorFile(String fileName) {
+      return "xml".equals(FilenameUtils.getExtension(fileName));
+    }
+
+    public DescriptorsMonitor(GatewayConfig config, File topologiesDir, AliasService aliasService, TopologyService topologyService) {
       this.gatewayConfig  = config;
       this.topologiesDir  = topologiesDir;
       this.aliasService   = aliasService;
+      this.topologyService = topologyService;
     }
 
     List<String> getReferencingDescriptors(String providerConfigPath) {
@@ -859,28 +858,34 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
     @Override
     public void onFileChange(File file) {
       try {
-        // When a simple descriptor has been created or modified, generate the new topology descriptor
-        Map<String, File> result = SimpleDescriptorHandler.handle(gatewayConfig, file, topologiesDir, aliasService);
-        log.generatedTopologyForDescriptorChange(result.get(SimpleDescriptorHandler.RESULT_TOPOLOGY).getName(),
-            file.getName());
+        if (isXmlTypeDescriptorFile(file.getAbsolutePath())) {
+          XmlDescriptorParser.parse(file.getAbsolutePath()).forEach(simpleDescriptor -> {
+            topologyService.deployDescriptor(simpleDescriptor.getName() + ".json", JsonUtils.renderAsJsonString(simpleDescriptor));
+          });
+        } else {
+          // When a simple descriptor has been created or modified, generate the new topology descriptor
+          Map<String, File> result = SimpleDescriptorHandler.handle(gatewayConfig, file, topologiesDir, GatewayServer.getGatewayServices(), aliasService);
+          log.generatedTopologyForDescriptorChange(result.get(SimpleDescriptorHandler.RESULT_TOPOLOGY).getName(),
+              file.getName());
 
-        // Add the provider config reference relationship for handling updates to the provider config
-        String providerConfig =
-            FilenameUtils.normalize(result.get(SimpleDescriptorHandler.RESULT_REFERENCE).getAbsolutePath());
-        if (!providerConfigReferences.containsKey(providerConfig)) {
-          providerConfigReferences.put(providerConfig, new ArrayList<>());
-        }
-        List<String> refs = providerConfigReferences.get(providerConfig);
-        String descriptorName = FilenameUtils.normalize(file.getAbsolutePath());
-        if (!refs.contains(descriptorName)) {
-          // Need to check if descriptor had previously referenced another provider config, so it can be removed
-          for (List<String> descs : providerConfigReferences.values()) {
-            descs.remove(descriptorName);
+          // Add the provider config reference relationship for handling updates to the provider config
+          String providerConfig =
+              FilenameUtils.normalize(result.get(SimpleDescriptorHandler.RESULT_REFERENCE).getAbsolutePath());
+          if (!providerConfigReferences.containsKey(providerConfig)) {
+            providerConfigReferences.put(providerConfig, new ArrayList<>());
           }
+          List<String> refs = providerConfigReferences.get(providerConfig);
+          String descriptorName = FilenameUtils.normalize(file.getAbsolutePath());
+          if (!refs.contains(descriptorName)) {
+            // Need to check if descriptor had previously referenced another provider config, so it can be removed
+            for (List<String> descs : providerConfigReferences.values()) {
+              descs.remove(descriptorName);
+            }
 
-          // Add the current reference relationship
-          refs.add(descriptorName);
-          log.addedProviderConfigurationReference(descriptorName, providerConfig);
+            // Add the current reference relationship
+            refs.add(descriptorName);
+            log.addedProviderConfigurationReference(descriptorName, providerConfig);
+          }
         }
       } catch (IllegalArgumentException e) {
         log.simpleDescriptorHandlingError(file.getName(), e);
@@ -901,8 +906,8 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
     public boolean accept(File file) {
       boolean accept = false;
       if (!file.isDirectory() && file.canRead()) {
-        String extension = FilenameUtils.getExtension(file.getName());
-        if (SUPPORTED_EXTENSIONS.contains(extension)) {
+        String fileName = file.getName();
+        if (isDescriptorFile(fileName) || isXmlTypeDescriptorFile(fileName)) {
           accept = true;
         }
       }
