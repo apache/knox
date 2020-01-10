@@ -70,13 +70,14 @@ var login = function() {
                     redirectUrl = "redirecting.html?originalUrl=" + originalUrl;
                   }
                   redirect(redirectUrl);
-                }
-                else {
+                } else {
+                  $('#errorBox').show();
+                  $('#signInLoading').hide();
+                  $('#signIn').removeAttr('disabled');
                   if (request.status==401) {
-                    $('#errorBox').show();
-                    $('#signInLoading').hide();
-                    $('#signIn').removeAttr('disabled');
                     $('#errorBox .errorMsg').text("The username or password you entered is incorrect.");
+                  } else {
+                    $('#errorBox .errorMsg').text("Response from " + request.responseURL + " - " + request.status + ": " + request.statusText);
                   }
                 }
             }
