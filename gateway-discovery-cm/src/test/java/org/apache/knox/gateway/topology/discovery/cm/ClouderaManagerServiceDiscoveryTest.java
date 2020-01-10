@@ -44,6 +44,8 @@ import org.apache.knox.gateway.topology.discovery.cm.model.impala.ImpalaServiceM
 import org.apache.knox.gateway.topology.discovery.cm.model.impala.ImpalaUIServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.kudu.KuduUIServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.livy.LivyServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.nifi.NifiRegistryServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.nifi.NifiServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.oozie.OozieServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.phoenix.PhoenixServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.ranger.RangerServiceModelGenerator;
@@ -515,6 +517,76 @@ public class ClouderaManagerServiceDiscoveryTest {
     assertEquals(expectedURL, urls.get(0));
   }
 
+  @Test
+  public void testNiFiDiscovery() {
+    doTestNiFiDiscovery(false);
+  }
+
+  @Test
+  public void testNiFiDiscoverySSL() {
+    doTestNiFiDiscovery(true);
+  }
+
+  private void doTestNiFiDiscovery(boolean sslEnabled) {
+    final String hostName = "nifi-host";
+    final String port = "8080";
+    final String sslPort = "8443";
+    final String servicePort = sslEnabled ? "8443" : "8080";
+    final String expectedURL = (sslEnabled ? "https" : "http") + "://" + hostName + ":" + servicePort;
+
+    // Configure the role
+    Map<String, String> roleProperties = new HashMap<>();
+    roleProperties.put("nifi.web.http.port", port);
+    roleProperties.put("nifi.web.https.port", sslPort);
+    roleProperties.put("ssl_enabled", String.valueOf(sslEnabled));
+
+    ServiceDiscovery.Cluster cluster = doTestDiscovery(hostName,
+        "NIFI-1", NifiServiceModelGenerator.SERVICE_TYPE,
+        "nifi-NIFI_NODE-1",
+        NifiServiceModelGenerator.ROLE_TYPE,
+        Collections.emptyMap(),
+        roleProperties);
+
+    List<String> urls = cluster.getServiceURLs("NIFI");
+    assertEquals(1, urls.size());
+    assertEquals(expectedURL, urls.get(0));
+  }
+
+  @Test
+  public void testNiFiRegistryDiscovery() {
+    doTestNiFiRegistryDiscovery(false);
+  }
+
+  @Test
+  public void testNiFiRegistryDiscoverySSL() {
+    doTestNiFiRegistryDiscovery(true);
+  }
+
+  private void doTestNiFiRegistryDiscovery(boolean sslEnabled) {
+    final String hostName = "nifi-registry-host";
+    final String port = "18080";
+    final String sslPort = "18443";
+    final String servicePort = sslEnabled ? "18443" : "18080";
+    final String expectedURL = (sslEnabled ? "https" : "http") + "://" + hostName + ":" + servicePort;
+
+    // Configure the role
+    Map<String, String> roleProperties = new HashMap<>();
+    roleProperties.put("nifi.registry.web.http.port", port);
+    roleProperties.put("nifi.registry.web.https.port", sslPort);
+    roleProperties.put("ssl_enabled", String.valueOf(sslEnabled));
+
+    ServiceDiscovery.Cluster cluster = doTestDiscovery(hostName,
+        "NIFI_REGISTRY-1", NifiRegistryServiceModelGenerator.SERVICE_TYPE,
+        "NIFI_REGISTRY_SERVER-1",
+        NifiRegistryServiceModelGenerator.ROLE_TYPE,
+        Collections.emptyMap(),
+        roleProperties);
+
+    List<String> urls = cluster.getServiceURLs("NIFI-REGISTRY");
+    assertEquals(1, urls.size());
+    assertEquals(expectedURL, urls.get(0));
+  }
+
   private void doTestImpalaDiscovery(boolean sslEnabled) {
     final String hostName = "impalad-host";
     final String port     = "28000";
@@ -541,6 +613,7 @@ public class ClouderaManagerServiceDiscoveryTest {
     assertEquals(1, urls.size());
     assertEquals(expectedURL, urls.get(0));
   }
+
 
   private void doTestImpalaUIDiscovery(boolean sslEnabled, boolean webserverEnabled) {
     final String hostName = "impalad-host";
