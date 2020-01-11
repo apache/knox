@@ -72,17 +72,16 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
 import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.security.AccessController;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
@@ -607,14 +606,10 @@ public class KnoxSession implements Closeable {
   }
 
   private static void write(File file, String s, Charset utf8) throws IOException {
-    FileLock lock = null;
-
-    try (FileChannel channel = new RandomAccessFile(file, "w").getChannel();) {
-      lock = channel.tryLock();
+    try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.WRITE,
+        StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+      channel.tryLock();
       FileUtils.write(file, s, utf8);
-      if( lock != null ) {
-        lock.release();
-      }
     }
     catch (OverlappingFileLockException e) {
       System.out.println("Unable to acquire write lock for: " + file.getAbsolutePath());
@@ -652,19 +647,16 @@ public class KnoxSession implements Closeable {
 
   private static String readFileToString(File file, String s)
       throws FileNotFoundException, IOException {
-    FileLock lock = null;
     String content = null;
 
-    try (FileChannel channel = new RandomAccessFile(file, "r").getChannel();) {
-      lock = channel.tryLock();
+    try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.READ)) {
+      channel.tryLock(0L, Long.MAX_VALUE, true);
       content = FileUtils.readFileToString(file, s);
-      if( lock != null ) {
-        lock.release();
-      }
     }
     catch (OverlappingFileLockException e) {
       System.out.println("Unable to acquire write lock for: " + file.getAbsolutePath());
     }
+
     return content;
   }
 
