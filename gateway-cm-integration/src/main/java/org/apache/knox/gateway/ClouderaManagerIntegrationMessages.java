@@ -30,7 +30,9 @@ public interface ClouderaManagerIntegrationMessages {
   @Message(level = MessageLevel.INFO, text = "Found descriptors {0} in {1}")
   void parsedXmlDescriptor(String descriptorList, String path);
 
-  @Message(level = MessageLevel.ERROR, text = "Parsing XML descriptor {0} failed: {1}")
-  void failedToParseXmlDescriptor(String path, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+  @Message(level = MessageLevel.ERROR, text = "Parsing descriptor {0} failed: {1}")
+  void failedToParseDescriptor(String name, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.ERROR, text = "Parsing XML configuration {0} failed: {1}")
+  void failedToParseXmlConfiguration(String path, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 }

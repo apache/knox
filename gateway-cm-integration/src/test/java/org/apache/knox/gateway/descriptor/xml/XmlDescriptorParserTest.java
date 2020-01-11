@@ -46,6 +46,22 @@ public class XmlDescriptorParserTest {
     validateTopology2(descriptorsIterator.next());
   }
 
+  @Test
+  public void testXmlParserWrongDescriptorContent() throws Exception {
+    final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptorConfigurationWithWrongDescriptor.xml").getPath();
+    final Set<SimpleDescriptor> descriptors = XmlDescriptorParser.parse(testConfigPath);
+    assertEquals(1, descriptors.size());
+    final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
+    validateTopology1(descriptorsIterator.next());
+  }
+
+  @Test
+  public void testXmlParserWrongXMLContent() throws Exception {
+    final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptorConfigurationWithNonHadoopStyleConfiguration.xml").getPath();
+    final Set<SimpleDescriptor> descriptors = XmlDescriptorParser.parse(testConfigPath);
+    assertTrue(descriptors.isEmpty());
+  }
+
   private void validateTopology1(SimpleDescriptor descriptor) {
     assertEquals("topology1", descriptor.getName());
     assertEquals("ClouderaManager", descriptor.getDiscoveryType());

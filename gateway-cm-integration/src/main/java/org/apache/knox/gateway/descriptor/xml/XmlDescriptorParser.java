@@ -59,7 +59,7 @@ public class XmlDescriptorParser {
       log.parsedXmlDescriptor(String.join(", ", descriptors.stream().map(descriptor -> descriptor.getName()).collect(Collectors.toSet())), path);
       return descriptors;
     } catch (Exception e) {
-      log.failedToParseXmlDescriptor(path, e.getMessage(), e);
+      log.failedToParseXmlConfiguration(path, e.getMessage(), e);
       return Collections.emptySet();
     }
   }
@@ -67,47 +67,55 @@ public class XmlDescriptorParser {
   private static Set<SimpleDescriptor> parseXmlConfig(Configuration xmlConfiguration) {
     final Set<SimpleDescriptor> descriptors = new LinkedHashSet<>();
     xmlConfiguration.forEach(xmlDescriptor -> {
-      descriptors.add(parseXmlDescriptor(xmlDescriptor.getKey(), xmlDescriptor.getValue()));
+      SimpleDescriptor descriptor = parseXmlDescriptor(xmlDescriptor.getKey(), xmlDescriptor.getValue());
+      if (descriptor != null) {
+        descriptors.add(descriptor);
+      }
     });
     return descriptors;
   }
 
   private static SimpleDescriptor parseXmlDescriptor(String name, String xmlValue) {
-    final SimpleDescriptorImpl descriptor = new SimpleDescriptorImpl();
-    descriptor.setName(name);
-    final String[] configurationPairs = xmlValue.split(";");
-    for (String configurationPair : configurationPairs) {
-      String[] parameterPairParts = configurationPair.trim().split("=", 2);
-      String parameterName = parameterPairParts[0].trim();
-      switch (parameterName) {
-      case CONFIG_NAME_DISCOVERY_TYPE:
-        descriptor.setDiscoveryType(parameterPairParts[1].trim());
-        break;
-      case CONFIG_NAME_DISCOVERY_ADDRESS:
-        descriptor.setDiscoveryAddress(parameterPairParts[1].trim());
-        break;
-      case CONFIG_NAME_DISCOVERY_USER:
-        descriptor.setDiscoveryUser(parameterPairParts[1].trim());
-        break;
-      case CONFIG_NAME_DISCOVERY_PASSWORD_ALIAS:
-        descriptor.setDiscoveryPasswordAlias(parameterPairParts[1].trim());
-        break;
-      case CONFIG_NAME_DISCOVERY_CLUSTER:
-        descriptor.setCluster(parameterPairParts[1].trim());
-        break;
-      case CONFIG_NAME_PROVIDER_CONFIG_REFERENCE:
-        descriptor.setProviderConfig(parameterPairParts[1].trim());
-        break;
-      default:
-        if (parameterName.startsWith(CONFIG_NAME_APPLICATION_PREFIX)) {
-          parseApplication(descriptor, configurationPair.trim());
-        } else {
-          parseService(descriptor, configurationPair.trim());
+    try {
+      final SimpleDescriptorImpl descriptor = new SimpleDescriptorImpl();
+      descriptor.setName(name);
+      final String[] configurationPairs = xmlValue.split(";");
+      for (String configurationPair : configurationPairs) {
+        String[] parameterPairParts = configurationPair.trim().split("=", 2);
+        String parameterName = parameterPairParts[0].trim();
+        switch (parameterName) {
+        case CONFIG_NAME_DISCOVERY_TYPE:
+          descriptor.setDiscoveryType(parameterPairParts[1].trim());
+          break;
+        case CONFIG_NAME_DISCOVERY_ADDRESS:
+          descriptor.setDiscoveryAddress(parameterPairParts[1].trim());
+          break;
+        case CONFIG_NAME_DISCOVERY_USER:
+          descriptor.setDiscoveryUser(parameterPairParts[1].trim());
+          break;
+        case CONFIG_NAME_DISCOVERY_PASSWORD_ALIAS:
+          descriptor.setDiscoveryPasswordAlias(parameterPairParts[1].trim());
+          break;
+        case CONFIG_NAME_DISCOVERY_CLUSTER:
+          descriptor.setCluster(parameterPairParts[1].trim());
+          break;
+        case CONFIG_NAME_PROVIDER_CONFIG_REFERENCE:
+          descriptor.setProviderConfig(parameterPairParts[1].trim());
+          break;
+        default:
+          if (parameterName.startsWith(CONFIG_NAME_APPLICATION_PREFIX)) {
+            parseApplication(descriptor, configurationPair.trim());
+          } else {
+            parseService(descriptor, configurationPair.trim());
+          }
+          break;
         }
-        break;
       }
+      return descriptor;
+    } catch(Exception e) {
+      log.failedToParseDescriptor(name, e.getMessage(), e);
+      return null;
     }
-    return descriptor;
   }
 
   /**

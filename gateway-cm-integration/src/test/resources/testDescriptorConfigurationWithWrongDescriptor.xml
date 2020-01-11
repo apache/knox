@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<configuration>
+  <property>
+    <name>topology1</name>
+    <value>
+        discoveryType=ClouderaManager;
+        discoveryAddress=http://host:123;
+        discoveryUser=user;
+        discoveryPasswordAlias=alias;
+        cluster=Cluster 1;
+        providerConfigRef=topology1-provider;
+        app:knoxauth:param1.name=param1.value;
+        app:admin-ui;
+        HIVE:url=http://localhost:456;
+        HIVE:version=1.0;
+        HIVE:httpclient.connectionTimeout=5m;
+        HIVE:httpclient.socketTimeout=100m
+    </value>
+  </property>
+  <property>
+    <name>topology2</name>
+    <value>
+        discoveryType=Ambari;
+        discoveryAddress=http://host:456;
+        cluster=Cluster 2;
+        providerConfigRef=topology2-provider;
+        HDFS:url=http://localhost:456;
+        HDFS <!-- can not be parsed -->
+    </value>
+  </property>
+</configuration>
