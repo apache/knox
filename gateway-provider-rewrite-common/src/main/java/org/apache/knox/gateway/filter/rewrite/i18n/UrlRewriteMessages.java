@@ -85,6 +85,6 @@ public interface UrlRewriteMessages {
   @Message( level = MessageLevel.TRACE, text = "Failed to decode query string: {0}" )
   void failedToDecodeQueryString( String queryString, @StackTrace(level = MessageLevel.TRACE) Exception exception );
 
-  @Message( level = MessageLevel.INFO, text = "No rewrite rule was found, skipping rewriting JSON request body" )
+  @Message( level = MessageLevel.DEBUG, text = "No rewrite rule was found, skipping rewriting JSON request body" )
   void skippingRewritingJsonRequestBody();
 }
