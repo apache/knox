@@ -56,7 +56,7 @@ import static org.junit.Assume.assumeNoException;
 public class TestHashicorpVaultAliasService {
   private static final Logger LOG = LoggerFactory.getLogger(TestHashicorpVaultAliasService.class);
 
-  private static final String vaultVersion = "1.2.1";
+  private static final String vaultVersion = "1.3.1";
   private static final String vaultImage = "vault:" + vaultVersion;
   private static final Integer vaultPort = 8200;
   private static final String vaultToken = "myroot";
@@ -72,17 +72,18 @@ public class TestHashicorpVaultAliasService {
                            .withVaultToken(vaultToken)
                            .waitingFor(Wait.forListeningPort());
       vaultContainer.addExposedPort(vaultPort);
+
+      vaultContainer.start();
+
+      vaultAddress = String.format(Locale.ROOT,
+          "http://%s:%s",
+          vaultContainer.getContainerIpAddress(),
+          vaultContainer.getMappedPort(vaultPort));
+
+      assertTrue(vaultContainer.isRunning());
     } catch (Exception e) {
       assumeNoException(e);
     }
-
-    vaultContainer.start();
-    vaultAddress = String.format(Locale.ROOT,
-        "http://%s:%s",
-        vaultContainer.getContainerIpAddress(),
-        vaultContainer.getMappedPort(vaultPort));
-
-    assertTrue(vaultContainer.isRunning());
   }
 
   @Before
