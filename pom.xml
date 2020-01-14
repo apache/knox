@@ -212,7 +212,7 @@
         <java-support.version>7.5.1</java-support.version>
         <jericho-html.version>3.4</jericho-html.version>
         <jersey.version>2.6</jersey.version>
-        <jetty.version>9.4.24.v20191120</jetty.version>
+        <jetty.version>9.4.25.v20191220</jetty.version>
         <jline.version>2.14.6</jline.version>
         <jna.version>5.5.0</jna.version>
         <joda-time.version>2.10.5</joda-time.version>
