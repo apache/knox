@@ -408,7 +408,7 @@ public class KnoxShellTableTest {
       @Override
       public KnoxShellTable sql(String sql) {
         assertNotNull(username());
-        assertNotNull(pwd());
+        assertNotNull(password());
         return table;
       }
     };

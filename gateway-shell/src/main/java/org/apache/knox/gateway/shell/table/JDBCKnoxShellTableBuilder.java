@@ -51,7 +51,7 @@ public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
     return username;
   }
 
-  public String pwd() {
+  public String password() {
     return pass;
   }
 

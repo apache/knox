@@ -17,16 +17,7 @@
  */
 package org.apache.knox.gateway.shell.commands;
 
-import java.awt.Component;
-import java.awt.Window;
-import java.awt.event.HierarchyEvent;
-import java.awt.event.HierarchyListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.List;
-import javax.swing.JTextArea;
-import javax.swing.SwingUtilities;
-
 import org.codehaus.groovy.tools.shell.CommandSupport;
 import org.codehaus.groovy.tools.shell.Groovysh;
 
@@ -51,27 +42,5 @@ public abstract class AbstractKnoxShellCommand extends CommandSupport {
       }
     }
     return variableName;
-  }
-
-  // JDK-5018574 : Unable to set focus to another component in JOptionPane
-  protected void workAroundFocusIssue(JTextArea sqlField) {
-    // begin workaround
-    sqlField.addHierarchyListener(new HierarchyListener() {
-        @Override
-        public void hierarchyChanged(HierarchyEvent e) {
-            final Component c = e.getComponent();
-            if (c.isShowing() && (e.getChangeFlags() &
-                HierarchyEvent.SHOWING_CHANGED) != 0) {
-                Window toplevel = SwingUtilities.getWindowAncestor(c);
-                toplevel.addWindowFocusListener(new WindowAdapter() {
-                    @Override
-                    public void windowGainedFocus(WindowEvent e) {
-                        c.requestFocus();
-                    }
-                });
-            }
-        }
-    });
-    // end workaround
   }
 }

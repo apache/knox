@@ -122,7 +122,7 @@ public class SelectCommand extends AbstractSQLCommandSupport implements KeyListe
       box.add(scrollPane);
 
       // JDK-5018574 : Unable to set focus to another component in JOptionPane
-      workAroundFocusIssue(sqlField);
+      SwingUtils.workAroundFocusIssue(sqlField);
 
       int x = JOptionPane.showConfirmDialog(null, box,
           "SQL Query Input", JOptionPane.OK_CANCEL_OPTION);

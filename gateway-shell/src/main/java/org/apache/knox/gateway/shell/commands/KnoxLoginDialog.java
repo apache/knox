@@ -17,20 +17,11 @@
  */
 package org.apache.knox.gateway.shell.commands;
 
-import java.awt.Component;
-import java.awt.Window;
-import java.awt.event.HierarchyEvent;
-import java.awt.event.HierarchyListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-
 import javax.swing.Box;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-
 import org.apache.knox.gateway.shell.CredentialCollectionException;
 import org.apache.knox.gateway.shell.CredentialCollector;
 
@@ -59,7 +50,7 @@ public class KnoxLoginDialog implements CredentialCollector {
     box.add(box2);
 
     // JDK-5018574 : Unable to set focus to another component in JOptionPane
-    workAroundFocusIssue(juf);
+    SwingUtils.workAroundFocusIssue(juf);
 
     int x = JOptionPane.showConfirmDialog(null, box,
         "KnoxShell Login", JOptionPane.OK_CANCEL_OPTION);
@@ -103,28 +94,6 @@ public class KnoxLoginDialog implements CredentialCollector {
   @Override
   public void setName(String name) {
     this.name = name;
-  }
-
-  // JDK-5018574 : Unable to set focus to another component in JOptionPane
-  private void workAroundFocusIssue(JTextField field) {
-    // begin workaround
-    field.addHierarchyListener(new HierarchyListener() {
-        @Override
-        public void hierarchyChanged(HierarchyEvent e) {
-            final Component c = e.getComponent();
-            if (c.isShowing() && (e.getChangeFlags() &
-                HierarchyEvent.SHOWING_CHANGED) != 0) {
-                Window toplevel = SwingUtilities.getWindowAncestor(c);
-                toplevel.addWindowFocusListener(new WindowAdapter() {
-                    @Override
-                    public void windowGainedFocus(WindowEvent e) {
-                        c.requestFocus();
-                    }
-                });
-            }
-        }
-    });
-    // end workaround
   }
 
   public static void main(String[] args) {

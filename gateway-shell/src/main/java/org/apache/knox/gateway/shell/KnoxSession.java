@@ -593,26 +593,26 @@ public class KnoxSession implements Closeable {
   public static <T> void persistToKnoxShell(String fileName, Map<String, List<T>> map) {
     String s = JsonUtils.renderAsJsonString(map);
     String home = System.getProperty("user.home");
-    synchronized(KnoxSession.class) {
-      try {
-        write(new File(
-            home + File.separator +
-            ".knoxshell" + File.separator + fileName),
-            s, StandardCharsets.UTF_8);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
+    try {
+      write(new File(
+          home + File.separator +
+          ".knoxshell" + File.separator + fileName),
+          s, StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      e.printStackTrace();
     }
   }
 
   private static void write(File file, String s, Charset utf8) throws IOException {
-    try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.WRITE,
-        StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
-      channel.tryLock();
-      FileUtils.write(file, s, utf8);
-    }
-    catch (OverlappingFileLockException e) {
-      System.out.println("Unable to acquire write lock for: " + file.getAbsolutePath());
+    synchronized(KnoxSession.class) {
+      try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.WRITE,
+          StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+        channel.tryLock();
+        FileUtils.write(file, s, utf8);
+      }
+      catch (OverlappingFileLockException e) {
+        System.out.println("Unable to acquire write lock for: " + file.getAbsolutePath());
+      }
     }
   }
 
@@ -636,11 +636,9 @@ public class KnoxSession implements Closeable {
     File historyFile = new File(
         home + File.separator +
         ".knoxshell" + File.separator + KNOXSQLHISTORIES_JSON);
-    synchronized(KnoxSession.class) {
-      if (historyFile.exists()) {
-        String json = readFileToString(historyFile, "UTF8");
-        sqlHistories = (Map<String, List<String>>) getMapOfStringArrayListsFromJsonString(json);
-      }
+    if (historyFile.exists()) {
+      String json = readFileToString(historyFile, "UTF8");
+      sqlHistories = (Map<String, List<String>>) getMapOfStringArrayListsFromJsonString(json);
     }
     return sqlHistories;
   }
@@ -649,12 +647,14 @@ public class KnoxSession implements Closeable {
       throws FileNotFoundException, IOException {
     String content = null;
 
-    try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.READ)) {
-      channel.tryLock(0L, Long.MAX_VALUE, true);
-      content = FileUtils.readFileToString(file, s);
-    }
-    catch (OverlappingFileLockException e) {
-      System.out.println("Unable to acquire write lock for: " + file.getAbsolutePath());
+    synchronized(KnoxSession.class) {
+      try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.READ)) {
+        channel.tryLock(0L, Long.MAX_VALUE, true);
+        content = FileUtils.readFileToString(file, s);
+      }
+      catch (OverlappingFileLockException e) {
+        System.out.println("Unable to acquire write lock for: " + file.getAbsolutePath());
+      }
     }
 
     return content;
@@ -673,9 +673,7 @@ public class KnoxSession implements Closeable {
     File dsFile = new File(
         home + File.separator +
         ".knoxshell" + File.separator + KNOXDATASOURCES_JSON);
-    synchronized(KnoxSession.class) {
-      json = readFileToString(dsFile, "UTF8");
-    }
+    json = readFileToString(dsFile, "UTF8");
     datasources = getMapOfDataSourcesFromJsonString(json);
 
     return datasources;
