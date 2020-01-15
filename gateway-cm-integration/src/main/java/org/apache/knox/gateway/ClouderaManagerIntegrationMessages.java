@@ -21,18 +21,27 @@ import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
 
-@Messages(logger="org.apache.knox.gateway")
+@Messages(logger = "org.apache.knox.gateway")
 public interface ClouderaManagerIntegrationMessages {
 
-  @Message(level = MessageLevel.INFO, text = "Parsing XML descriptor {0}")
-  void parseXmlDescriptor(String path);
+  @Message(level = MessageLevel.INFO, text = "Monitoring Cloudera Manager descriptors in {0} ...")
+  void monitoringClouderaManagerDescriptor(String path);
 
-  @Message(level = MessageLevel.INFO, text = "Found descriptors {0} in {1}")
-  void parsedXmlDescriptor(String descriptorList, String path);
+  @Message(level = MessageLevel.INFO, text = "Parsing Cloudera Manager descriptor {0}")
+  void parseClouderaManagerDescriptor(String path);
 
-  @Message(level = MessageLevel.ERROR, text = "Parsing descriptor {0} failed: {1}")
+  @Message(level = MessageLevel.INFO, text = "Found Knox descriptors {0} in {1}")
+  void parsedClouderaManagerDescriptor(String descriptorList, String path);
+
+  @Message(level = MessageLevel.ERROR, text = "Parsing Knox descriptor {0} failed: {1}")
   void failedToParseDescriptor(String name, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.ERROR, text = "Parsing XML configuration {0} failed: {1}")
   void failedToParseXmlConfiguration(String path, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.ERROR, text = "Error while monitoring CM descriptor {0}: {1}")
+  void failedToMonitorClouderaManagerDescriptor(String descriptorPath, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.ERROR, text = "Error while producing Knox descriptor: {0}")
+  void failedToProduceKnoxDescriptor(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 }

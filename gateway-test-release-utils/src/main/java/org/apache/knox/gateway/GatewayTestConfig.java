@@ -764,4 +764,9 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public Set<String> getServicesToIgnoreDoAs() {
     return null;
   }
+
+  @Override
+  public long getClouderaManagerDescriptorsMonitoringInterval() {
+    return 0;
+  }
 }

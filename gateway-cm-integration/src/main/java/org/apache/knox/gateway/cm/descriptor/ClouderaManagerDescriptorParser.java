@@ -14,7 +14,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.knox.gateway.descriptor.xml;
+package org.apache.knox.gateway.cm.descriptor;
 
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -30,7 +30,7 @@ import org.apache.knox.gateway.topology.simple.SimpleDescriptorImpl;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorImpl.ApplicationImpl;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorImpl.ServiceImpl;
 
-public class XmlDescriptorParser {
+public class ClouderaManagerDescriptorParser {
   private static final ClouderaManagerIntegrationMessages log = MessagesFactory.get(ClouderaManagerIntegrationMessages.class);
   private static final String CONFIG_NAME_DISCOVERY_TYPE = "discoveryType";
   private static final String CONFIG_NAME_DISCOVERY_ADDRESS = "discoveryAddress";
@@ -51,12 +51,12 @@ public class XmlDescriptorParser {
    */
   public static Set<SimpleDescriptor> parse(String path) {
     try {
-      log.parseXmlDescriptor(path);
+      log.parseClouderaManagerDescriptor(path);
       final Configuration xmlConfiguration = new Configuration(false);
       xmlConfiguration.addResource(Paths.get(path).toUri().toURL());
       xmlConfiguration.reloadConfiguration();
       final Set<SimpleDescriptor> descriptors = parseXmlConfig(xmlConfiguration);
-      log.parsedXmlDescriptor(String.join(", ", descriptors.stream().map(descriptor -> descriptor.getName()).collect(Collectors.toSet())), path);
+      log.parsedClouderaManagerDescriptor(String.join(", ", descriptors.stream().map(descriptor -> descriptor.getName()).collect(Collectors.toSet())), path);
       return descriptors;
     } catch (Exception e) {
       log.failedToParseXmlConfiguration(path, e.getMessage(), e);

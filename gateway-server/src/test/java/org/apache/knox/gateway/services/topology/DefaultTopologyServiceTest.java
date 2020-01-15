@@ -217,7 +217,7 @@ public class DefaultTopologyServiceTest {
       EasyMock.expect(aliasService.getPasswordFromAliasForGateway(anyObject(String.class))).andReturn(null).anyTimes();
       EasyMock.replay(aliasService);
       DefaultTopologyService.DescriptorsMonitor dm =
-              new DefaultTopologyService.DescriptorsMonitor(config, topologyDir, aliasService, provider);
+              new DefaultTopologyService.DescriptorsMonitor(config, topologyDir, aliasService);
 
       // Listener to simulate the topologies directory monitor, to notice when a topology has been deleted
       provider.addTopologyChangeListener(new TestTopologyDeleteListener(provider));

@@ -14,7 +14,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.knox.gateway.descriptor.xml;
+package org.apache.knox.gateway.cm.descriptor;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -34,12 +34,12 @@ import org.apache.knox.gateway.topology.simple.SimpleDescriptor.Application;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor.Service;
 import org.junit.Test;
 
-public class XmlDescriptorParserTest {
+public class ClouderaManagerDescriptorParserTest {
 
   @Test
   public void testXmlParser() throws Exception {
     final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptor.xml").getPath();
-    final Set<SimpleDescriptor> descriptors = XmlDescriptorParser.parse(testConfigPath);
+    final Set<SimpleDescriptor> descriptors = ClouderaManagerDescriptorParser.parse(testConfigPath);
     assertEquals(2, descriptors.size());
     final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
     validateTopology1(descriptorsIterator.next());
@@ -49,7 +49,7 @@ public class XmlDescriptorParserTest {
   @Test
   public void testXmlParserWrongDescriptorContent() throws Exception {
     final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptorConfigurationWithWrongDescriptor.xml").getPath();
-    final Set<SimpleDescriptor> descriptors = XmlDescriptorParser.parse(testConfigPath);
+    final Set<SimpleDescriptor> descriptors = ClouderaManagerDescriptorParser.parse(testConfigPath);
     assertEquals(1, descriptors.size());
     final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
     validateTopology1(descriptorsIterator.next());
@@ -58,7 +58,7 @@ public class XmlDescriptorParserTest {
   @Test
   public void testXmlParserWrongXMLContent() throws Exception {
     final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptorConfigurationWithNonHadoopStyleConfiguration.xml").getPath();
-    final Set<SimpleDescriptor> descriptors = XmlDescriptorParser.parse(testConfigPath);
+    final Set<SimpleDescriptor> descriptors = ClouderaManagerDescriptorParser.parse(testConfigPath);
     assertTrue(descriptors.isEmpty());
   }
 
