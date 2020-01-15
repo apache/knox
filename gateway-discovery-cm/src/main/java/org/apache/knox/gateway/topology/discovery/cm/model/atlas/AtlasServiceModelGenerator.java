@@ -31,6 +31,10 @@ public class AtlasServiceModelGenerator extends AbstractServiceModelGenerator {
   public static final String SERVICE_TYPE = "ATLAS";
   public static final String ROLE_TYPE = "ATLAS_SERVER";
 
+  static final String SSL_ENABLED = "ssl_enabled";
+  static final String HTTP_PORT   = "atlas_server_http_port";
+  static final String HTTPS_PORT  = "atlas_server_https_port";
+
   @Override
   public String getService() {
     return SERVICE;
@@ -59,19 +63,27 @@ public class AtlasServiceModelGenerator extends AbstractServiceModelGenerator {
     String hostname = role.getHostRef().getHostname();
     String scheme;
     String port;
-    boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, "ssl_enabled"));
+    boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, SSL_ENABLED));
     if(sslEnabled) {
       scheme = "https";
-      port = getRoleConfigValue(roleConfig, "atlas_server_https_port");
+      port = getRoleConfigValue(roleConfig, HTTPS_PORT);
     } else {
       scheme = "http";
-      port = getRoleConfigValue(roleConfig, "atlas_server_http_port");
+      port = getRoleConfigValue(roleConfig, HTTP_PORT);
     }
-    return new ServiceModel(getModelType(),
+
+    ServiceModel model =
+           new ServiceModel(getModelType(),
                             getService(),
                             getServiceType(),
                             getRoleType(),
                             String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+
+    model.addRoleProperty(getRoleType(), SSL_ENABLED, getRoleConfigValue(roleConfig, SSL_ENABLED));
+    model.addRoleProperty(getRoleType(), HTTPS_PORT, getRoleConfigValue(roleConfig, HTTPS_PORT));
+    model.addRoleProperty(getRoleType(), HTTP_PORT, getRoleConfigValue(roleConfig, HTTP_PORT));
+
+    return model;
   }
 
 }

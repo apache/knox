@@ -29,6 +29,12 @@ public interface ServiceDiscoveryConfig {
 
     /**
      *
+     * @return The name of the cluster.
+     */
+    String getCluster();
+
+    /**
+     *
      * @return The username configured for interactions with the discovery source.
      */
     String getUser();

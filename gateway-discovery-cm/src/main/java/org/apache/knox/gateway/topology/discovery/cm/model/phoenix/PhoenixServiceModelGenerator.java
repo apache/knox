@@ -31,6 +31,8 @@ public class PhoenixServiceModelGenerator extends AbstractServiceModelGenerator 
   public static final String SERVICE_TYPE = "PHOENIX";
   public static final String ROLE_TYPE    = "PHOENIX_QUERY_SERVER";
 
+  static final String QUERY_SERVER_PORT = "phoenix_query_server_port";
+
   @Override
   public String getService() {
     return SERVICE;
@@ -59,8 +61,12 @@ public class PhoenixServiceModelGenerator extends AbstractServiceModelGenerator 
     String hostname = role.getHostRef().getHostname();
     // Phoenix Query Server does not support https
     String scheme = "http";
-    String port = getRoleConfigValue(roleConfig, "phoenix_query_server_port");
-    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+    String port = getRoleConfigValue(roleConfig, QUERY_SERVER_PORT);
+
+    ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+    model.addRoleProperty(getRoleType(), QUERY_SERVER_PORT, port);
+
+    return model;
   }
 
 }

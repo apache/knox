@@ -31,6 +31,8 @@ public class HueLBServiceModelGenerator extends AbstractServiceModelGenerator {
   public static final String SERVICE_TYPE = "HUE";
   public static final String ROLE_TYPE = "HUE_LOAD_BALANCER";
 
+  static final String LISTEN_PORT = "listen";
+
   @Override
   public String getService() {
     return SERVICE;
@@ -58,8 +60,12 @@ public class HueLBServiceModelGenerator extends AbstractServiceModelGenerator {
                                       ApiConfigList    roleConfig) {
     String hostname = role.getHostRef().getHostname();
     String scheme = "http";
-    String port = getRoleConfigValue(roleConfig, "listen");
-    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+    String port = getRoleConfigValue(roleConfig, LISTEN_PORT);
+
+    ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+    model.addRoleProperty(getRoleType(), LISTEN_PORT, port);
+
+    return model;
   }
 
 }

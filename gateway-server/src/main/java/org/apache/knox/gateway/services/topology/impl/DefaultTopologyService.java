@@ -37,6 +37,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.definition.ServiceDefinition;
 import org.apache.knox.gateway.service.definition.ServiceDefinitionChangeListener;
+import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
@@ -604,10 +605,7 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
 
   @Override
   public void start() {
-    // Register a cluster configuration monitor listener for change notifications
-    ClusterConfigurationMonitorService ccms =
-                  GatewayServer.getGatewayServices().getService(ServiceType.CLUSTER_CONFIGURATION_MONITOR_SERVICE);
-    ccms.addListener(new TopologyDiscoveryTrigger(this, ccms));
+
   }
 
   @Override
@@ -617,6 +615,16 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
     String gatewayConfDir = config.getGatewayConfDir();
     if (gatewayConfDir != null) {
       System.setProperty(ServiceDiscovery.CONFIG_DIR_PROPERTY, gatewayConfDir);
+    }
+
+    // Register a cluster configuration monitor listener for change notifications.
+    // The cluster monitor service will start before this service, so the listener must be registered
+    // beforehand or we risk the possibility of missing configuration change notifications.
+    GatewayServices gwServices = GatewayServer.getGatewayServices();
+    if (gwServices != null) {
+      ClusterConfigurationMonitorService ccms =
+              gwServices.getService(ServiceType.CLUSTER_CONFIGURATION_MONITOR_SERVICE);
+      ccms.addListener(new TopologyDiscoveryTrigger(this, ccms));
     }
 
     try {
@@ -1002,7 +1010,7 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
         }
 
         if (!affectedDescriptors) {
-          // If not descriptors are affected by this configuration, then clear the cache to prevent future notifications
+          // If no descriptors are affected by this configuration, then clear the cache to prevent future notifications
           ccms.clearCache(source, clusterName);
         }
       } catch (Exception e) {

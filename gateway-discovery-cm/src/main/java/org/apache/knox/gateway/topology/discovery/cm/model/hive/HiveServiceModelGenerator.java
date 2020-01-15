@@ -32,9 +32,13 @@ public class HiveServiceModelGenerator extends AbstractServiceModelGenerator {
   public static final String SERVICE_TYPE = "HIVE";
   public static final String ROLE_TYPE    = "HIVESERVER2";
 
-  protected static final String TRANSPORT_MODE_HTTP = "http";
+  static final String TRANSPORT_MODE_HTTP = "http";
 
-
+  static final String SAFETY_VALVE   = "hive_hs2_config_safety_valve";
+  static final String SSL_ENABLED    = "hive.server2.use.SSL";
+  static final String TRANSPORT_MODE = "hive.server2.transport.mode";
+  static final String HTTP_PORT      = "hive.server2.thrift.http.port";
+  static final String HTTP_PATH      = "hive.server2.thrift.http.path";
 
   @Override
   public String getService() {
@@ -58,9 +62,7 @@ public class HiveServiceModelGenerator extends AbstractServiceModelGenerator {
 
   @Override
   public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return getServiceType().equals(service.getType()) &&
-           getRoleType().equals(role.getType()) &&
-           checkHiveServer2HTTPMode(roleConfig);
+    return super.handles(service, serviceConfig, role, roleConfig) && checkHiveServer2HTTPMode(roleConfig);
   }
 
   @Override
@@ -69,21 +71,39 @@ public class HiveServiceModelGenerator extends AbstractServiceModelGenerator {
                                       ApiRole          role,
                                       ApiConfigList    roleConfig) throws ApiException {
     String hostname = role.getHostRef().getHostname();
-    String hs2SafetyValve = getRoleConfigValue(roleConfig, "hive_hs2_config_safety_valve");
-    String port = getSafetyValveValue(hs2SafetyValve, "hive.server2.thrift.http.port");
-    String httpPath = getSafetyValveValue(hs2SafetyValve, "hive.server2.thrift.http.path");
-    boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, "hive.server2.use.SSL"));
+    boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, SSL_ENABLED));
     String scheme = sslEnabled ? "https" : "http";
-    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/%s", scheme, hostname, port, httpPath));
+
+    String port     = getHttpPort(roleConfig);
+    String httpPath = getHttpPath(roleConfig);
+
+    ServiceModel model =
+        createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/%s", scheme, hostname, port, httpPath));
+    model.addRoleProperty(getRoleType(), SSL_ENABLED, getRoleConfigValue(roleConfig, SSL_ENABLED));
+    model.addRoleProperty(getRoleType(), SAFETY_VALVE, getRoleConfigValue(roleConfig, SAFETY_VALVE));
+
+    return model;
+  }
+
+  private String getHS2SafetyValveValue(final ApiConfigList roleConfig, final String name) {
+    String value = null;
+    String hs2SafetyValve = getRoleConfigValue(roleConfig, SAFETY_VALVE);
+    if (hs2SafetyValve != null && !hs2SafetyValve.isEmpty()) {
+      value = getSafetyValveValue(hs2SafetyValve, name);
+    }
+    return value;
+  }
+
+  protected String getHttpPort(ApiConfigList roleConfig) {
+    return getHS2SafetyValveValue(roleConfig, HTTP_PORT);
+  }
+
+  protected String getHttpPath(ApiConfigList roleConfig) {
+    return getHS2SafetyValveValue(roleConfig, HTTP_PATH);
   }
 
   protected boolean checkHiveServer2HTTPMode(ApiConfigList roleConfig) {
-    boolean isHttp = false;
-    String hiveServer2SafetyValve = getRoleConfigValue(roleConfig, "hive_hs2_config_safety_valve");
-    if(hiveServer2SafetyValve != null) {
-      isHttp = TRANSPORT_MODE_HTTP.equals(getSafetyValveValue(hiveServer2SafetyValve, "hive.server2.transport.mode"));
-    }
-    return isHttp;
+    return TRANSPORT_MODE_HTTP.equals(getHS2SafetyValveValue(roleConfig, TRANSPORT_MODE));
   }
 
 }

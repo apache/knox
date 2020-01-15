@@ -32,6 +32,9 @@ public class JobHistoryUIServiceModelGenerator extends AbstractServiceModelGener
   private static final String SERVICE_TYPE = "YARN";
   private static final String ROLE_TYPE = "JOBHISTORY";
 
+  private static final String HTTPS_PORT = "mapreduce_jobhistory_webapp_https_address";
+  private static final String HTTP_PORT  = "mapreduce_jobhistory_webapp_address";
+
   @Override
   public String getService() {
     return SERVICE;
@@ -63,12 +66,17 @@ public class JobHistoryUIServiceModelGenerator extends AbstractServiceModelGener
 
     if(isSSLEnabled(service, serviceConfig)) {
       scheme = "https";
-      port = getRoleConfigValue(roleConfig, "mapreduce_jobhistory_webapp_https_address");
+      port = getRoleConfigValue(roleConfig, HTTPS_PORT);
     } else {
       scheme = "http";
-      port = getRoleConfigValue(roleConfig, "mapreduce_jobhistory_webapp_address");
+      port = getRoleConfigValue(roleConfig, HTTP_PORT);
     }
-    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+
+    ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+    model.addRoleProperty(getRoleType(), HTTP_PORT, getRoleConfigValue(roleConfig, HTTP_PORT));
+    model.addRoleProperty(getRoleType(), HTTPS_PORT, getRoleConfigValue(roleConfig, HTTPS_PORT));
+
+    return model;
   }
 
   private boolean isSSLEnabled(ApiService service, ApiServiceConfig serviceConfig)

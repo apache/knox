@@ -18,6 +18,7 @@ package org.apache.knox.gateway.topology.discovery;
 
 public class DefaultServiceDiscoveryConfig implements ServiceDiscoveryConfig {
     private String address;
+    private String cluster;
     private String user;
     private String pwdAlias;
 
@@ -36,6 +37,15 @@ public class DefaultServiceDiscoveryConfig implements ServiceDiscoveryConfig {
     @Override
     public String getAddress() {
         return address;
+    }
+
+    public void setCluster(String cluster) {
+        this.cluster = cluster;
+    }
+
+    @Override
+    public String getCluster() {
+        return cluster;
     }
 
     @Override

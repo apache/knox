@@ -31,6 +31,9 @@ public class LivyServiceModelGenerator extends AbstractServiceModelGenerator {
   public static final String SERVICE_TYPE = "LIVY";
   public static final String ROLE_TYPE    = "LIVY_SERVER";
 
+  static final String SSL_ENABLED      = "ssl_enabled";
+  static final String LIVY_SERVER_PORT = "livy_server_port";
+
   @Override
   public String getService() {
     return SERVICE;
@@ -58,14 +61,19 @@ public class LivyServiceModelGenerator extends AbstractServiceModelGenerator {
                                       ApiConfigList    roleConfig) {
     String hostname = role.getHostRef().getHostname();
     String scheme;
-    String port = getRoleConfigValue(roleConfig, "livy_server_port");
-    boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, "ssl_enabled"));
-    if(sslEnabled) {
+    String port = getRoleConfigValue(roleConfig, LIVY_SERVER_PORT);
+    String sslEnabled = getRoleConfigValue(roleConfig, SSL_ENABLED);
+    if(Boolean.parseBoolean(sslEnabled)) {
       scheme = "https";
     } else {
       scheme = "http";
     }
-    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+
+    ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+    model.addRoleProperty(getRoleType(), SSL_ENABLED, sslEnabled);
+    model.addRoleProperty(getRoleType(), LIVY_SERVER_PORT, port);
+
+    return model;
   }
 
 }

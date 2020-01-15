@@ -30,6 +30,10 @@ public class SparkHistoryUIServiceModelGenerator extends AbstractServiceModelGen
   public static final String SERVICE_TYPE = "SPARK_ON_YARN";
   public static final String ROLE_TYPE    = "SPARK_YARN_HISTORY_SERVER";
 
+  static final String SSL_ENABLED         = "ssl_enabled";
+  static final String SSL_SERVER_PORT     = "ssl_server_port";
+  static final String HISTORY_SERVER_PORT = "history_server_web_port";
+
   @Override
   public String getService() {
     return SERVICE;
@@ -58,15 +62,21 @@ public class SparkHistoryUIServiceModelGenerator extends AbstractServiceModelGen
     String hostname = role.getHostRef().getHostname();
     String scheme;
     String port;
-    boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, "ssl_enabled"));
-    if(sslEnabled) {
+    String sslEnabled = getRoleConfigValue(roleConfig, SSL_ENABLED);
+    if(Boolean.parseBoolean(sslEnabled)) {
       scheme = "https";
-      port = getRoleConfigValue(roleConfig, "ssl_server_port");
+      port = getRoleConfigValue(roleConfig, SSL_SERVER_PORT);
     } else {
       scheme = "http";
-      port = getRoleConfigValue(roleConfig, "history_server_web_port");
+      port = getRoleConfigValue(roleConfig, HISTORY_SERVER_PORT);
     }
-    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+
+    ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+    model.addRoleProperty(getRoleType(), SSL_ENABLED, sslEnabled);
+    model.addRoleProperty(getRoleType(), SSL_SERVER_PORT, getRoleConfigValue(roleConfig, SSL_SERVER_PORT));
+    model.addRoleProperty(getRoleType(), HISTORY_SERVER_PORT, getRoleConfigValue(roleConfig, HISTORY_SERVER_PORT));
+
+    return model;
   }
 
 }
