@@ -642,4 +642,9 @@ public interface GatewayConfig {
    * @return a set of service principal names that indicate which services to ignore doAs request
    */
   Set<String> getServicesToIgnoreDoAs();
+
+  /**
+   * @return the monitoring interval (in milliseconds) of Cloudera Manager descriptors
+   */
+  long getClouderaManagerDescriptorsMonitoringInterval();
 }

@@ -27,6 +27,7 @@ import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
+import org.apache.knox.gateway.cm.descriptor.ClouderaManagerDescriptorMonitor;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.GatewayConfigurationException;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
@@ -620,6 +621,9 @@ public class GatewayServer {
     classlist.addBefore(
         "org.eclipse.jetty.webapp.JettyWebXmlConfiguration",
         "org.eclipse.jetty.annotations.AnnotationConfiguration" );
+
+    final ClouderaManagerDescriptorMonitor cmDescriptorMonitor = new ClouderaManagerDescriptorMonitor(config);
+    cmDescriptorMonitor.setupMonitor();
 
     // Load the current topologies.
     // Redeploy autodeploy topologies.

@@ -19,6 +19,9 @@ package org.apache.knox.gateway.topology.simple;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+
 public interface SimpleDescriptor {
 
     String getName();
@@ -31,15 +34,19 @@ public interface SimpleDescriptor {
 
     String getDiscoveryPasswordAlias();
 
-    String getClusterName();
+    String getCluster();
 
     String getProviderConfig();
 
     List<Service> getServices();
 
+    Service getService(String serviceName);
+
     List<Application> getApplications();
 
+    Application getApplication(String applicationName);
 
+    @JsonDeserialize(as = SimpleDescriptorImpl.ServiceImpl.class)
     interface Service {
         String getName();
 
@@ -50,6 +57,7 @@ public interface SimpleDescriptor {
         List<String> getURLs();
     }
 
+    @JsonDeserialize(as = SimpleDescriptorImpl.ApplicationImpl.class)
     interface Application {
         String getName();
 

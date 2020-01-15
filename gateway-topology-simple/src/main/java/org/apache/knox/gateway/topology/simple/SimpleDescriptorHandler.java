@@ -16,7 +16,6 @@
  */
 package org.apache.knox.gateway.topology.simple;
 
-import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceType;
@@ -86,18 +85,6 @@ public class SimpleDescriptorHandler {
     private static Map<String, ServiceDiscovery> discoveryInstances = new HashMap<>();
 
     private static final Set<String> ALLOWED_SERVICES_WITHOUT_URLS_AND_PARAMS = Collections.singleton("KNOX");
-
-    public static Map<String, File> handle(GatewayConfig config, File desc) throws IOException {
-        return handle(config, desc, NO_GATEWAY_SERVICES);
-    }
-
-    public static Map<String, File> handle(GatewayConfig config, File desc, Service...gatewayServices) throws IOException {
-        return handle(config, desc, desc.getParentFile(), gatewayServices);
-    }
-
-    public static Map<String, File> handle(GatewayConfig config, File desc, File destDirectory) throws IOException {
-        return handle(config, desc, destDirectory, NO_GATEWAY_SERVICES);
-    }
 
     public static Map<String, File> handle(GatewayConfig config, File desc, File destDirectory, Service...gatewayServices) throws IOException {
         return handle(config, SimpleDescriptorFactory.parse(desc.getAbsolutePath()), desc.getParentFile(), destDirectory, gatewayServices);
@@ -185,7 +172,7 @@ public class SimpleDescriptorHandler {
         // when the topology is deployed. This is to support Knox HA deployments, where multiple Knox instances are
         // generating topologies based on a shared remote descriptor, and they must all be able to encrypt/decrypt
         // query params with the same credentials. (KNOX-1136)
-        if (!provisionQueryParamEncryptionCredential(desc.getName())) {
+        if (!provisionQueryParamEncryptionCredential(desc.getName(), getGatewayServices(gatewayServices))) {
             log.unableCreatePasswordForEncryption(desc.getName());
         }
 
@@ -201,6 +188,14 @@ public class SimpleDescriptorHandler {
                                 serviceParams);
     }
 
+    private static GatewayServices getGatewayServices(Service... services) {
+      for (Service service : services) {
+        if (service instanceof GatewayServices) {
+          return (GatewayServices) service;
+        }
+      }
+      return null;
+    }
 
     private static ServiceDiscovery.Cluster performDiscovery(GatewayConfig config, SimpleDescriptor desc, Service...gatewayServices) {
         DefaultServiceDiscoveryConfig sdc = new DefaultServiceDiscoveryConfig(desc.getDiscoveryAddress());
@@ -220,7 +215,7 @@ public class SimpleDescriptorHandler {
             discoveryInstances.put(discoveryType, sd);
         }
 
-        return sd.discover(config, sdc, desc.getClusterName());
+        return sd.discover(config, sdc, desc.getCluster());
     }
 
 
@@ -253,11 +248,10 @@ public class SimpleDescriptorHandler {
      *
      * @return true if the credential was successfully provisioned; otherwise, false.
      */
-    private static boolean provisionQueryParamEncryptionCredential(final String topologyName) {
+    private static boolean provisionQueryParamEncryptionCredential(final String topologyName, final GatewayServices services) {
         boolean result = false;
 
         try {
-            GatewayServices services = GatewayServer.getGatewayServices();
             if (services != null) {
                 MasterService ms = services.getService(ServiceType.MASTER_SERVICE);
                 if (ms != null) {
@@ -574,7 +568,7 @@ public class SimpleDescriptorHandler {
             // Write the generated content to a file
             String topologyFilename = desc.getName();
             if (topologyFilename == null) {
-                topologyFilename = desc.getClusterName();
+                topologyFilename = desc.getCluster();
             }
             topologyDescriptor = new File(destDirectory, topologyFilename + ".xml");
 

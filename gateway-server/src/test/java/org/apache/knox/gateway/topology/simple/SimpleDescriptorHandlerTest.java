@@ -199,7 +199,7 @@ public class SimpleDescriptorHandlerTest {
             EasyMock.expect(testDescriptor.getDiscoveryType()).andReturn(type).anyTimes();
             EasyMock.expect(testDescriptor.getDiscoveryUser()).andReturn(null).anyTimes();
             EasyMock.expect(testDescriptor.getProviderConfig()).andReturn(providerConfig.getAbsolutePath()).anyTimes();
-            EasyMock.expect(testDescriptor.getClusterName()).andReturn(clusterName).anyTimes();
+            EasyMock.expect(testDescriptor.getCluster()).andReturn(clusterName).anyTimes();
             List<SimpleDescriptor.Service> serviceMocks = new ArrayList<>();
             for (String serviceName : serviceURLs.keySet()) {
                 SimpleDescriptor.Service svc = EasyMock.createNiceMock(SimpleDescriptor.Service.class);
@@ -377,7 +377,7 @@ public class SimpleDescriptorHandlerTest {
             EasyMock.expect(testDescriptor.getDiscoveryType()).andReturn(type).anyTimes();
             EasyMock.expect(testDescriptor.getDiscoveryUser()).andReturn(null).anyTimes();
             EasyMock.expect(testDescriptor.getProviderConfig()).andReturn(providerConfig.getAbsolutePath()).anyTimes();
-            EasyMock.expect(testDescriptor.getClusterName()).andReturn(CLUSTER_NAME).anyTimes();
+            EasyMock.expect(testDescriptor.getCluster()).andReturn(CLUSTER_NAME).anyTimes();
             List<SimpleDescriptor.Service> serviceMocks = new ArrayList<>();
             for (String serviceName : serviceURLs.keySet()) {
                 SimpleDescriptor.Service svc = EasyMock.createNiceMock(SimpleDescriptor.Service.class);
@@ -580,7 +580,7 @@ public class SimpleDescriptorHandlerTest {
             EasyMock.expect(testDescriptor.getDiscoveryType()).andReturn(type).anyTimes();
             EasyMock.expect(testDescriptor.getDiscoveryUser()).andReturn(null).anyTimes();
             EasyMock.expect(testDescriptor.getProviderConfig()).andReturn(providerConfig.getAbsolutePath()).anyTimes();
-            EasyMock.expect(testDescriptor.getClusterName()).andReturn(clusterName).anyTimes();
+            EasyMock.expect(testDescriptor.getCluster()).andReturn(clusterName).anyTimes();
             List<SimpleDescriptor.Service> serviceMocks = new ArrayList<>();
             for (String serviceName : serviceURLs.keySet()) {
                 SimpleDescriptor.Service svc = EasyMock.createNiceMock(SimpleDescriptor.Service.class);
@@ -781,7 +781,7 @@ public class SimpleDescriptorHandlerTest {
         EasyMock.expect(testDescriptor.getDiscoveryAddress()).andReturn(discoveryConfig.getAbsolutePath()).anyTimes();
         EasyMock.expect(testDescriptor.getDiscoveryType()).andReturn("PROPERTIES_FILE").anyTimes();
         EasyMock.expect(testDescriptor.getDiscoveryUser()).andReturn(null).anyTimes();
-        EasyMock.expect(testDescriptor.getClusterName()).andReturn(clusterName).anyTimes();
+        EasyMock.expect(testDescriptor.getCluster()).andReturn(clusterName).anyTimes();
 
         final SimpleDescriptor.Service knoxService = EasyMock.createNiceMock(SimpleDescriptor.Service.class);
         EasyMock.expect(knoxService.getName()).andReturn("KNOX").anyTimes();

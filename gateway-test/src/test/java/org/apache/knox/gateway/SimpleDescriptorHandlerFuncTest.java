@@ -150,7 +150,7 @@ public class SimpleDescriptorHandlerFuncTest {
       EasyMock.expect(testDescriptor.getDiscoveryType()).andReturn(discoveryType).anyTimes();
       EasyMock.expect(testDescriptor.getDiscoveryUser()).andReturn(null).anyTimes();
       EasyMock.expect(testDescriptor.getProviderConfig()).andReturn(providerConfig.getAbsolutePath()).anyTimes();
-      EasyMock.expect(testDescriptor.getClusterName()).andReturn(clusterName).anyTimes();
+      EasyMock.expect(testDescriptor.getCluster()).andReturn(clusterName).anyTimes();
       List<SimpleDescriptor.Service> serviceMocks = new ArrayList<>();
       for (String serviceName : serviceURLs.keySet()) {
         SimpleDescriptor.Service svc = EasyMock.createNiceMock(SimpleDescriptor.Service.class);
@@ -231,7 +231,8 @@ public class SimpleDescriptorHandlerFuncTest {
       Map<String, File> files = SimpleDescriptorHandler.handle(config,
                                                                testDescriptor,
                                                                providerConfig.getParentFile(),
-                                                               destDir);
+                                                               destDir,
+                                                               GatewayServer.getGatewayServices());
       topologyFile = files.get("topology");
 
       // Validate the AliasService interaction

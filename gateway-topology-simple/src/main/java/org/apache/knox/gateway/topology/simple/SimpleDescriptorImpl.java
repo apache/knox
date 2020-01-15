@@ -22,8 +22,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
-class SimpleDescriptorImpl implements SimpleDescriptor {
+public class SimpleDescriptorImpl implements SimpleDescriptor {
 
     @JsonProperty("discovery-type")
     private String discoveryType;
@@ -44,14 +45,14 @@ class SimpleDescriptorImpl implements SimpleDescriptor {
     private String cluster;
 
     @JsonProperty("services")
-    private List<ServiceImpl> services;
+    private List<Service> services;
 
     @JsonProperty("applications")
-    private List<ApplicationImpl> applications;
+    private List<Application> applications;
 
     private String name;
 
-    void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
@@ -60,9 +61,17 @@ class SimpleDescriptorImpl implements SimpleDescriptor {
         return name;
     }
 
+    public void setDiscoveryType(String discoveryType) {
+      this.discoveryType = discoveryType;
+    }
+
     @Override
     public String getDiscoveryType() {
         return discoveryType;
+    }
+
+    public void setDiscoveryAddress(String discoveryAddress) {
+      this.discoveryAddress = discoveryAddress;
     }
 
     @Override
@@ -70,9 +79,17 @@ class SimpleDescriptorImpl implements SimpleDescriptor {
         return discoveryAddress;
     }
 
+    public void setDiscoveryUser(String discoveryUser) {
+      this.discoveryUser = discoveryUser;
+    }
+
     @Override
     public String getDiscoveryUser() {
         return discoveryUser;
+    }
+
+    public void setDiscoveryPasswordAlias(String discoveryPasswordAlias) {
+      this.discoveryPasswordAlias = discoveryPasswordAlias;
     }
 
     @Override
@@ -80,14 +97,29 @@ class SimpleDescriptorImpl implements SimpleDescriptor {
         return discoveryPasswordAlias;
     }
 
+    public void setCluster(String cluster) {
+      this.cluster = cluster;
+    }
+
     @Override
-    public String getClusterName() {
+    public String getCluster() {
         return cluster;
+    }
+
+    public void setProviderConfig(String providerConfig) {
+      this.providerConfig = providerConfig;
     }
 
     @Override
     public String getProviderConfig() {
         return providerConfig;
+    }
+
+    public void addService(Service service) {
+      if (services == null) {
+        services = new ArrayList<>();
+      }
+      services.add(service);
     }
 
     @Override
@@ -100,12 +132,29 @@ class SimpleDescriptorImpl implements SimpleDescriptor {
     }
 
     @Override
+    public Service getService(String serviceName) {
+      return getServices().stream().filter(service -> service.getName().equals(serviceName)).findFirst().orElse(null);
+    }
+
+    public void addApplication(Application application) {
+      if (applications == null) {
+        applications = new ArrayList<>();
+      }
+      applications.add(application);
+    }
+
+    @Override
     public List<Application> getApplications() {
         List<Application> result = new ArrayList<>();
         if (applications != null) {
             result.addAll(applications);
         }
         return result;
+    }
+
+    @Override
+    public Application getApplication(String applicationName) {
+      return getApplications().stream().filter(application -> application.getName().equals(applicationName)).findFirst().orElse(null);
     }
 
     public static class ServiceImpl implements Service {
@@ -140,6 +189,28 @@ class SimpleDescriptorImpl implements SimpleDescriptor {
         public List<String> getURLs() {
             return urls;
         }
+
+        public void addUrl(String url) {
+          if (this.urls == null) {
+            this.urls = new ArrayList<>();
+          }
+          this.urls.add(url);
+        }
+
+        public void setName(String name) {
+          this.name = name;
+        }
+
+        public void setVersion(String version) {
+          this.version = version;
+        }
+
+        public void addParam(String name, String value) {
+          if (this.params == null) {
+            this.params = new TreeMap<>();
+          }
+          this.params.put(name, value);
+        }
     }
 
     public static class ApplicationImpl implements Application {
@@ -165,6 +236,24 @@ class SimpleDescriptorImpl implements SimpleDescriptor {
         @Override
         public List<String> getURLs() {
             return urls;
+        }
+
+        public void addUrl(String url) {
+          if (this.urls == null) {
+            this.urls = new ArrayList<>();
+          }
+          this.urls.add(url);
+        }
+
+        public void setName(String name) {
+          this.name = name;
+        }
+
+        public void addParam(String name, String value) {
+          if (this.params == null) {
+            this.params = new TreeMap<>();
+          }
+          this.params.put(name, value);
         }
     }
 
