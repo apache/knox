@@ -605,6 +605,9 @@ public class KnoxSession implements Closeable {
 
   private static void write(File file, String s, Charset utf8) throws IOException {
     synchronized(KnoxSession.class) {
+      // Ensure the parent directory exists...
+      // This will attempt to create all missing directories.  No failures will occur if the directories already exist.
+      Files.createDirectories(file.toPath().getParent());
       try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.WRITE,
           StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
         channel.tryLock();
@@ -673,8 +676,10 @@ public class KnoxSession implements Closeable {
     File dsFile = new File(
         home + File.separator +
         ".knoxshell" + File.separator + KNOXDATASOURCES_JSON);
-    json = readFileToString(dsFile, "UTF8");
-    datasources = getMapOfDataSourcesFromJsonString(json);
+    if (dsFile.exists()) {
+      json = readFileToString(dsFile, "UTF8");
+      datasources = getMapOfDataSourcesFromJsonString(json);
+    }
 
     return datasources;
   }

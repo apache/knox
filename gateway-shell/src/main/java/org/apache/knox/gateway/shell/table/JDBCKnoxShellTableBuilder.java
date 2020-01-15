@@ -19,14 +19,13 @@ package org.apache.knox.gateway.shell.table;
 
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Locale;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.shell.jdbc.JDBCUtils;
 
 public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
 
@@ -109,15 +108,8 @@ public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
     return this.table;
   }
 
-  public Connection createConnection() throws SQLException {
-    Connection con = null;
-    if (StringUtils.isNotBlank(username) && pass != null) {
-      con = DriverManager.getConnection(connectionUrl, username, pass);
-    }
-    else {
-      con = DriverManager.getConnection(connectionUrl);
-    }
-    return con;
+  private Connection createConnection() throws SQLException {
+    return JDBCUtils.createConnection(connectionUrl, username, pass);
   }
 
   // added this as a private method so that KnoxShellTableHistoryAspect will not

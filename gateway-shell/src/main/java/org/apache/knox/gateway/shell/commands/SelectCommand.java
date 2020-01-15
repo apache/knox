@@ -50,12 +50,15 @@ public class SelectCommand extends AbstractSQLCommandSupport implements KeyListe
     int code = event.getKeyCode();
     boolean setFromHistory = false;
     if (sqlHistory != null && !sqlHistory.isEmpty()) {
+      if (historyIndex == -1) {
+        historyIndex = sqlHistory.size() + 1;
+      }
       if (code == KeyEvent.VK_KP_UP ||
           code == KeyEvent.VK_UP) {
         if (historyIndex > 0) {
           historyIndex -= 1;
-          setFromHistory = true;
         }
+        setFromHistory = true;
       }
       else if (code == KeyEvent.VK_KP_DOWN ||
           code == KeyEvent.VK_DOWN) {

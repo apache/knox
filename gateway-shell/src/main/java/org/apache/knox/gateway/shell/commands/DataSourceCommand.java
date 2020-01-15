@@ -45,6 +45,8 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
           args.get(3),
           args.get(4));
       dataSources.put(ds.getName(), ds);
+      getVariables().put(KNOXDATASOURCES, dataSources);
+      persistDataSources();
     }
     else if (args.get(0).equalsIgnoreCase("remove")) {
       if (dataSources == null || dataSources.isEmpty()) {
@@ -54,8 +56,9 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
       dataSources.remove(args.get(1));
       if (((String)getVariables().get(KNOXDATASOURCE)).equals(args.get(1))) {
         System.out.println("unselecting datasource.");
-//        getVariables().remove(KNOXDATASOURCE);
         getVariables().put(KNOXDATASOURCE, "");
+        getVariables().put(KNOXDATASOURCES, dataSources);
+        persistDataSources();
       }
     }
     else if (args.get(0).equalsIgnoreCase("list")) {

@@ -27,7 +27,7 @@ import java.util.Map;
 
 import org.apache.knox.gateway.shell.KnoxDataSource;
 import org.apache.knox.gateway.shell.KnoxSession;
-import org.apache.knox.gateway.shell.table.KnoxShellTable;
+import org.apache.knox.gateway.shell.jdbc.JDBCUtils;
 import org.codehaus.groovy.tools.shell.Groovysh;
 
 public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand {
@@ -56,18 +56,11 @@ public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand
     Connection conn = getConnectionFromSession(ds);
     if (conn == null) {
       if (user != null && pass != null) {
-        conn = KnoxShellTable.builder().jdbc()
-          .connectTo(ds.getConnectStr())
-          .driver(ds.getDriver())
-          .username(user)
-          .password(pass)
-          .createConnection();
+        conn = JDBCUtils.createConnection(ds.getConnectStr(), user, pass);
       }
       else {
-        conn = KnoxShellTable.builder().jdbc()
-          .connectTo(ds.getConnectStr())
-          .driver(ds.getDriver())
-          .createConnection();
+        conn = JDBCUtils.createConnection(ds.getConnectStr(), null, null);
+
       }
       HashMap<String, Connection> connections =
           (HashMap<String, Connection>) getVariables()
@@ -121,7 +114,9 @@ public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand
     Map<String, List<String>> sqlHistories = null;
     try {
       sqlHistories = KnoxSession.loadSQLHistories();
-      getVariables().put(KNOXSQLHISTORY, sqlHistories);
+      if (sqlHistories != null) {
+        getVariables().put(KNOXSQLHISTORY, sqlHistories);
+      }
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -132,7 +127,9 @@ public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand
     Map<String, KnoxDataSource> datasources = null;
     try {
       datasources = KnoxSession.loadDataSources();
-      getVariables().put(KNOXDATASOURCES, datasources);
+      if (datasources != null) {
+        getVariables().put(KNOXDATASOURCES, datasources);
+      }
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -178,6 +175,9 @@ public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand
       datasources = loadDataSources();
       if (datasources != null) {
         getVariables().put(KNOXDATASOURCES, datasources);
+      }
+      else {
+        datasources = new HashMap<>();
       }
     }
     return datasources;
