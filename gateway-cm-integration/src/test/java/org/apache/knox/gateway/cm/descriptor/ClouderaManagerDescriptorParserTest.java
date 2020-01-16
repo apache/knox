@@ -114,6 +114,8 @@ public class ClouderaManagerDescriptorParserTest {
 
     if (expectedUrls != null) {
       assertTrue(service.getURLs().containsAll(expectedUrls));
+    } else {
+      assertNull(service.getURLs());
     }
 
     if (expectedParams != null) {

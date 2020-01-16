@@ -148,6 +148,7 @@ public class ClouderaManagerDescriptorParser {
   /**
    * A service consists of the following parts:
    * <ul>
+   * <li><code>$SERVICE_NAME</code></li>
    * <li><code>$SERVICE_NAME:url=$URL</code></li>
    * <li><code>$SERVICE_NAME:version=$VERSION</code> (optional)</li>
    * <li><code>$SERVICE_NAME[:$PARAMETER_NAME=$PARAMETER_VALUE] (optional)</code></li>
@@ -169,21 +170,23 @@ public class ClouderaManagerDescriptorParser {
       descriptor.addService(service);
     }
 
-    // configuration value may contain ":" (for instance http://host:port) -> considering a configuration name/value pair everything after '$SERVICE_NAME:'
-    final String serviceConfiguration = configurationPair.substring(serviceName.length() + 1).trim();
-    final String[] serviceConfigurationParts = serviceConfiguration.split("=", 2);
-    final String serviceConfigurationName = serviceConfigurationParts[0].trim();
-    final String serviceConfigurationValue = serviceConfigurationParts[1].trim();
-    switch (serviceConfigurationName) {
-    case CONFIG_NAME_SERVICE_URL:
-      service.addUrl(serviceConfigurationValue);
-      break;
-    case CONFIG_NAME_SERVICE_VERSION:
-      service.setVersion(serviceConfigurationValue);
-      break;
-    default:
-      service.addParam(serviceConfigurationName, serviceConfigurationValue);
-      break;
+    if (serviceParts.length > 1) {
+      // configuration value may contain ":" (for instance http://host:port) -> considering a configuration name/value pair everything after '$SERVICE_NAME:'
+      final String serviceConfiguration = configurationPair.substring(serviceName.length() + 1).trim();
+      final String[] serviceConfigurationParts = serviceConfiguration.split("=", 2);
+      final String serviceConfigurationName = serviceConfigurationParts[0].trim();
+      final String serviceConfigurationValue = serviceConfigurationParts[1].trim();
+      switch (serviceConfigurationName) {
+      case CONFIG_NAME_SERVICE_URL:
+        service.addUrl(serviceConfigurationValue);
+        break;
+      case CONFIG_NAME_SERVICE_VERSION:
+        service.setVersion(serviceConfigurationValue);
+        break;
+      default:
+        service.addParam(serviceConfigurationName, serviceConfigurationValue);
+        break;
+      }
     }
   }
 

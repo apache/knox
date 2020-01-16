@@ -40,7 +40,7 @@ limitations under the License.
         cluster=Cluster 2;
         providerConfigRef=topology2-provider;
         HDFS:url=http://localhost:456;
-        HDFS <!-- can not be parsed -->
+        HDFS:noValueParam <!-- can not be parsed -->
     </value>
   </property>
 </configuration>
