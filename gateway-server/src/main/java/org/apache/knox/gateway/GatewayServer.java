@@ -28,6 +28,7 @@ import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.cm.descriptor.ClouderaManagerDescriptorMonitor;
+import org.apache.knox.gateway.cm.descriptor.ClouderaManagerDescriptorParser;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.GatewayConfigurationException;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
@@ -48,6 +49,7 @@ import org.apache.knox.gateway.topology.Application;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.TopologyEvent;
 import org.apache.knox.gateway.topology.TopologyListener;
+import org.apache.knox.gateway.topology.discovery.advanced.AdvancedServiceDiscoveryConfigurationMonitor;
 import org.apache.knox.gateway.trace.AccessHandler;
 import org.apache.knox.gateway.trace.KnoxErrorHandler;
 import org.apache.knox.gateway.trace.TraceHandler;
@@ -622,8 +624,12 @@ public class GatewayServer {
         "org.eclipse.jetty.webapp.JettyWebXmlConfiguration",
         "org.eclipse.jetty.annotations.AnnotationConfiguration" );
 
-    final ClouderaManagerDescriptorMonitor cmDescriptorMonitor = new ClouderaManagerDescriptorMonitor(config);
+    final ClouderaManagerDescriptorParser cmDescriptorParser = new ClouderaManagerDescriptorParser();
+    final ClouderaManagerDescriptorMonitor cmDescriptorMonitor = new ClouderaManagerDescriptorMonitor(config, cmDescriptorParser);
     cmDescriptorMonitor.setupMonitor();
+    final AdvancedServiceDiscoveryConfigurationMonitor advancedServiceDiscoveryConfigurationMonitor = new AdvancedServiceDiscoveryConfigurationMonitor(config);
+    advancedServiceDiscoveryConfigurationMonitor.registerListener(cmDescriptorParser);
+    advancedServiceDiscoveryConfigurationMonitor.registerListener(cmDescriptorMonitor);
 
     // Load the current topologies.
     // Redeploy autodeploy topologies.
