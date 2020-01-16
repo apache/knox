@@ -18,6 +18,10 @@
 package org.apache.knox.gateway.shell;
 
 import groovy.ui.GroovyMain;
+
+import org.apache.knox.gateway.shell.commands.CSVCommand;
+import org.apache.knox.gateway.shell.commands.DataSourceCommand;
+import org.apache.knox.gateway.shell.commands.SelectCommand;
 import org.apache.knox.gateway.shell.hbase.HBase;
 import org.apache.knox.gateway.shell.hdfs.Hdfs;
 import org.apache.knox.gateway.shell.job.Job;
@@ -76,6 +80,10 @@ public class Shell {
       for( String name : IMPORTS ) {
         shell.execute( "import " + name );
       }
+      // register custom groovysh commands
+      shell.register(new SelectCommand(shell));
+      shell.register(new DataSourceCommand(shell));
+      shell.register(new CSVCommand(shell));
       shell.run( null );
     }
   }

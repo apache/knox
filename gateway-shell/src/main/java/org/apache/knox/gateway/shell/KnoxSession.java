@@ -17,9 +17,13 @@
  */
 package org.apache.knox.gateway.shell;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.security.auth.callback.TextCallbackHandler;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
@@ -52,6 +56,7 @@ import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.shell.util.ClientTrustStoreHelper;
+import org.apache.knox.gateway.util.JsonUtils;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -71,7 +76,12 @@ import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.channels.FileChannel;
+import java.nio.channels.OverlappingFileLockException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.security.AccessController;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
@@ -83,6 +93,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -128,6 +139,9 @@ public class KnoxSession implements Closeable {
   BasicHttpContext context;
   ExecutorService executor;
   Map<String, String> headers = new HashMap<>();
+
+  private static final String KNOXSQLHISTORIES_JSON = "knoxsqlhistories.json";
+  private static final String KNOXDATASOURCES_JSON = "knoxdatasources.json";
 
   public Map<String, String> getHeaders() {
     return headers;
@@ -568,6 +582,124 @@ public class KnoxSession implements Closeable {
   @Override
   public String toString() {
     return String.format(Locale.ROOT, "KnoxSession{base='%s'}", base);
+  }
+
+  /**
+   * Persist provided Map to a file within the {user.home}/.knoxshell directory
+   * @param <T>
+   * @param fileName of persisted file
+   * @param map to persist
+   */
+  public static <T> void persistToKnoxShell(String fileName, Map<String, List<T>> map) {
+    String s = JsonUtils.renderAsJsonString(map);
+    String home = System.getProperty("user.home");
+    try {
+      write(new File(
+          home + File.separator +
+          ".knoxshell" + File.separator + fileName),
+          s, StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+  private static void write(File file, String s, Charset utf8) throws IOException {
+    synchronized(KnoxSession.class) {
+      // Ensure the parent directory exists...
+      // This will attempt to create all missing directories.  No failures will occur if the directories already exist.
+      Files.createDirectories(file.toPath().getParent());
+      try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.WRITE,
+          StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+        channel.tryLock();
+        FileUtils.write(file, s, utf8);
+      }
+      catch (OverlappingFileLockException e) {
+        System.out.println("Unable to acquire write lock for: " + file.getAbsolutePath());
+      }
+    }
+  }
+
+  public static void persistSQLHistory(Map<String, List<String>> sqlHistories) {
+    persistToKnoxShell(KNOXSQLHISTORIES_JSON, sqlHistories);
+  }
+
+  public static void persistDataSources(Map<String, List<KnoxDataSource>> datasources) {
+    persistToKnoxShell(KNOXDATASOURCES_JSON, datasources);
+  }
+
+  /**
+   * Load and return a map of datasource names to sql commands
+   * from the {user.home}/.knoxshell/knoxsqlhistories.json file.
+   * @return sqlHistory map
+   */
+  public static Map<String, List<String>> loadSQLHistories() throws IOException {
+    Map<String, List<String>> sqlHistories = null;
+    String home = System.getProperty("user.home");
+
+    File historyFile = new File(
+        home + File.separator +
+        ".knoxshell" + File.separator + KNOXSQLHISTORIES_JSON);
+    if (historyFile.exists()) {
+      String json = readFileToString(historyFile, "UTF8");
+      sqlHistories = (Map<String, List<String>>) getMapOfStringArrayListsFromJsonString(json);
+    }
+    return sqlHistories;
+  }
+
+  private static String readFileToString(File file, String s)
+      throws FileNotFoundException, IOException {
+    String content = null;
+
+    synchronized(KnoxSession.class) {
+      try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.READ)) {
+        channel.tryLock(0L, Long.MAX_VALUE, true);
+        content = FileUtils.readFileToString(file, s);
+      }
+      catch (OverlappingFileLockException e) {
+        System.out.println("Unable to acquire write lock for: " + file.getAbsolutePath());
+      }
+    }
+
+    return content;
+  }
+
+  /**
+   * Load and return a map of datasource names to KnoxDataSource
+   * objects from the {user.home}/.knoxshell/knoxdatasources.json file.
+   * @return
+   */
+  public static Map<String, KnoxDataSource> loadDataSources() throws IOException {
+    Map<String, KnoxDataSource> datasources = null;
+    String home = System.getProperty("user.home");
+    String json = null;
+
+    File dsFile = new File(
+        home + File.separator +
+        ".knoxshell" + File.separator + KNOXDATASOURCES_JSON);
+    if (dsFile.exists()) {
+      json = readFileToString(dsFile, "UTF8");
+      datasources = getMapOfDataSourcesFromJsonString(json);
+    }
+
+    return datasources;
+  }
+
+  public static Map<String, List<String>> getMapOfStringArrayListsFromJsonString(String json) throws IOException {
+    Map<String, List<String>> obj = null;
+    JsonFactory factory = new JsonFactory();
+    ObjectMapper mapper = new ObjectMapper(factory);
+    TypeReference<Map<String, List<String>>> typeRef = new TypeReference<Map<String, List<String>>>() {};
+    obj = mapper.readValue(json, typeRef);
+    return obj;
+  }
+
+  public static Map<String, KnoxDataSource> getMapOfDataSourcesFromJsonString(String json) throws IOException {
+    Map<String, KnoxDataSource> obj = null;
+    JsonFactory factory = new JsonFactory();
+    ObjectMapper mapper = new ObjectMapper(factory);
+    TypeReference<Map<String, KnoxDataSource>> typeRef = new TypeReference<Map<String, KnoxDataSource>>() {};
+    obj = mapper.readValue(json, typeRef);
+    return obj;
   }
 
   private static final class JAASClientConfig extends Configuration {

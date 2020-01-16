@@ -19,14 +19,13 @@ package org.apache.knox.gateway.shell.table;
 
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Locale;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.shell.jdbc.JDBCUtils;
 
 public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
 
@@ -42,13 +41,13 @@ public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
     return this;
   }
 
-  public String username() {
-    return username;
-  }
-
-  public JDBCKnoxShellTableBuilder pwd(String pass) {
+  public JDBCKnoxShellTableBuilder password(String pass) {
     this.pass = pass;
     return this;
+  }
+
+  public String username() {
+    return username;
   }
 
   public String password() {
@@ -110,11 +109,7 @@ public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
   }
 
   private Connection createConnection() throws SQLException {
-    if (StringUtils.isNotBlank(username) && pass != null) {
-      return DriverManager.getConnection(connectionUrl, username, pass);
-    } else {
-      return DriverManager.getConnection(connectionUrl);
-    }
+    return JDBCUtils.createConnection(connectionUrl, username, pass);
   }
 
   // added this as a private method so that KnoxShellTableHistoryAspect will not
@@ -132,7 +127,7 @@ public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
       this.table.header(metadata.getColumnName(i));
     }
     while (resultSet.next()) {
-      table.row();
+      this.table.row();
       for (int i = 1; i < colCount + 1; i++) {
         try {
           table.value(resultSet.getObject(metadata.getColumnName(i), Comparable.class));
