@@ -44,4 +44,10 @@ public interface ClouderaManagerIntegrationMessages {
 
   @Message(level = MessageLevel.ERROR, text = "Error while producing Knox descriptor: {0}")
   void failedToProduceKnoxDescriptor(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.WARN, text = "Service {0} is disabled. It will NOT be added in {1}")
+  void serviceDisabled(String serviceName, String descriptorName);
+
+  @Message(level = MessageLevel.INFO, text = "Updated advanced service discovery configuration.")
+  void updatedAdvanceServiceDiscoverytConfiguration();
 }

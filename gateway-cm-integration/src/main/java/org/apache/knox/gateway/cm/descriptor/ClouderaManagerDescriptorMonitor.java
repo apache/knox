@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
+import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -34,22 +35,25 @@ import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.knox.gateway.ClouderaManagerIntegrationMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.topology.discovery.advanced.AdvancedServiceDiscoveryConfigChangeListener;
 import org.apache.knox.gateway.util.JsonUtils;
 
 /**
  * Monitoring KNOX_DESCRIPTOR_DIR for *.cm files - which is a Hadoop XML configuration - and processing those files if they were modified
  * since the last time it they were processed
  */
-public class ClouderaManagerDescriptorMonitor {
+public class ClouderaManagerDescriptorMonitor implements AdvancedServiceDiscoveryConfigChangeListener {
 
   private static final String CM_DESCRIPTOR_FILE_EXTENSION = ".cm";
   private static final ClouderaManagerIntegrationMessages LOG = MessagesFactory.get(ClouderaManagerIntegrationMessages.class);
   private final String descriptorsDir;
   private final long monitoringInterval;
   private final ScheduledExecutorService executorService;
+  private final ClouderaManagerDescriptorParser cmDescriptorParser;
   private FileTime lastReloadTime;
 
-  public ClouderaManagerDescriptorMonitor(GatewayConfig gatewayConfig) {
+  public ClouderaManagerDescriptorMonitor(GatewayConfig gatewayConfig, ClouderaManagerDescriptorParser cmDescriptorParser) {
+    this.cmDescriptorParser = cmDescriptorParser;
     this.descriptorsDir = gatewayConfig.getGatewayDescriptorsDir();
     this.monitoringInterval = gatewayConfig.getClouderaManagerDescriptorsMonitoringInterval();
     this.executorService = Executors.newSingleThreadScheduledExecutor(new BasicThreadFactory.Builder().namingPattern("ClouderaManagerDescriptorMonitor-%d").build());
@@ -57,23 +61,23 @@ public class ClouderaManagerDescriptorMonitor {
 
   public void setupMonitor() {
     if (monitoringInterval > 0) {
-      executorService.scheduleAtFixedRate(() -> monitorClouderaManagerDescriptors(), 0, monitoringInterval, TimeUnit.MILLISECONDS);
+      executorService.scheduleAtFixedRate(() -> monitorClouderaManagerDescriptors(false), 0, monitoringInterval, TimeUnit.MILLISECONDS);
       LOG.monitoringClouderaManagerDescriptor(descriptorsDir);
     }
   }
 
-  private void monitorClouderaManagerDescriptors() {
+  private void monitorClouderaManagerDescriptors(boolean force) {
     final File[] clouderaManagerDescriptorFiles = new File(descriptorsDir).listFiles((FileFilter) new SuffixFileFilter(CM_DESCRIPTOR_FILE_EXTENSION));
     for (File clouderaManagerDescriptorFile : clouderaManagerDescriptorFiles) {
-      monitorClouderaManagerDescriptor(Paths.get(clouderaManagerDescriptorFile.getAbsolutePath()));
+      monitorClouderaManagerDescriptor(Paths.get(clouderaManagerDescriptorFile.getAbsolutePath()), force);
     }
   }
 
-  private void monitorClouderaManagerDescriptor(Path clouderaManagerDescriptorFile) {
+  private void monitorClouderaManagerDescriptor(Path clouderaManagerDescriptorFile, boolean force) {
     try {
       if (Files.isReadable(clouderaManagerDescriptorFile)) {
         final FileTime lastModifiedTime = Files.getLastModifiedTime(clouderaManagerDescriptorFile);
-        if (lastReloadTime == null || lastReloadTime.compareTo(lastModifiedTime) < 0) {
+        if (force || lastReloadTime == null || lastReloadTime.compareTo(lastModifiedTime) < 0) {
           lastReloadTime = lastModifiedTime;
           processClouderaManagerDescriptor(clouderaManagerDescriptorFile.toString());
         }
@@ -86,7 +90,7 @@ public class ClouderaManagerDescriptorMonitor {
   }
 
   private void processClouderaManagerDescriptor(String descriptorFilePath) {
-    ClouderaManagerDescriptorParser.parse(descriptorFilePath).forEach(simpleDescriptor -> {
+    cmDescriptorParser.parse(descriptorFilePath).forEach(simpleDescriptor -> {
       try {
         final File knoxDescriptorFile = new File(descriptorsDir, simpleDescriptor.getName() + ".json");
         FileUtils.writeStringToFile(knoxDescriptorFile, JsonUtils.renderAsJsonString(simpleDescriptor), StandardCharsets.UTF_8);
@@ -94,5 +98,10 @@ public class ClouderaManagerDescriptorMonitor {
         LOG.failedToProduceKnoxDescriptor(e.getMessage(), e);
       }
     });
+  }
+
+  @Override
+  public void onAdvancedServiceDiscoveryConfigurationChange(Properties newConfiguration) {
+    monitorClouderaManagerDescriptors(true);
   }
 }

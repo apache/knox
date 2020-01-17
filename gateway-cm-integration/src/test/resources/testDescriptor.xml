@@ -39,9 +39,10 @@ limitations under the License.
         discoveryAddress=http://host:456;
         cluster=Cluster 2;
         providerConfigRef=topology2-provider;
-        HDFS:url=http://localhost:456;
-        HDFS:httpclient.connectionTimeout=5m;
-        HDFS:httpclient.socketTimeout=100m
+        ATLAS-API:url=http://localhost:456;
+        ATLAS-API:httpclient.connectionTimeout=5m;
+        ATLAS-API:httpclient.socketTimeout=100m;
+        NIFI
     </value>
   </property>
 </configuration>
