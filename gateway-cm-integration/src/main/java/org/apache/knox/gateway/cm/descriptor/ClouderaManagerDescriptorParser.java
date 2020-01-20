@@ -23,6 +23,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.knox.gateway.ClouderaManagerIntegrationMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -121,12 +122,27 @@ public class ClouderaManagerDescriptorParser implements AdvancedServiceDiscovery
         }
       }
       if (advancedServiceDiscoveryConfig.getExpectedTopologyNames().contains(name)) {
+        setDiscoveryDetails(descriptor);
         addEnabledServices(descriptor);
       }
       return descriptor;
     } catch (Exception e) {
       log.failedToParseDescriptor(name, e.getMessage(), e);
       return null;
+    }
+  }
+
+  private void setDiscoveryDetails(SimpleDescriptorImpl descriptor) {
+    if (StringUtils.isBlank(descriptor.getDiscoveryAddress())) {
+      descriptor.setDiscoveryAddress(advancedServiceDiscoveryConfig.getDiscoveryAddress());
+    }
+
+    if (StringUtils.isBlank(descriptor.getCluster())) {
+      descriptor.setCluster(advancedServiceDiscoveryConfig.getDiscoveryCluster());
+    }
+
+    if (StringUtils.isBlank(descriptor.getDiscoveryType())) {
+      descriptor.setDiscoveryType("ClouderaManager");
     }
   }
 

@@ -106,6 +106,24 @@ public class ClouderaManagerDescriptorParserTest {
     assertNull(descriptor.getService("OOZIE"));
   }
 
+  @Test
+  public void testSettingDiscoveryDetails() throws Exception {
+    final String address = "http://myCmHost:7180";
+    final String cluster = "My Test Cluster";
+    final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptorWithoutDiscoveryDetails.xml").getPath();
+    final Properties advancedConfiguration = new Properties();
+    advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_EXPECTED_TOPOLOGIES, "topology1");
+    advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_DISCOVERY_ADDRESS, address);
+    advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_DISCOVERY_CLUSTER, cluster);
+    cmDescriptorParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfiguration);
+    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath);
+    final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
+    SimpleDescriptor descriptor = descriptorsIterator.next();
+    assertEquals(address, descriptor.getDiscoveryAddress());
+    assertEquals(cluster, descriptor.getCluster());
+    assertEquals("ClouderaManager", descriptor.getDiscoveryType());
+  }
+
   private void validateTopology1(SimpleDescriptor descriptor) {
     assertEquals("topology1", descriptor.getName());
     assertEquals("ClouderaManager", descriptor.getDiscoveryType());
