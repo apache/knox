@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.shell;
 
+import org.apache.knox.gateway.shell.jdbc.KnoxLine;
 import org.apache.knox.gateway.shell.knox.token.Get;
 import org.apache.knox.gateway.shell.knox.token.Token;
 import org.apache.knox.gateway.shell.util.ClientTrustStoreHelper;
@@ -41,6 +42,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashSet;
@@ -122,6 +124,8 @@ public class KnoxSh {
         command = new KnoxInit();
       } else if ( args[i].equals("list") ) {
         command = new KnoxList();
+      } else if ( args[i].equals("knoxline") ) {
+        command = new KnoxLineCommand();
       } else if (args[i].equals("--gateway")) {
         if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
           printKnoxShellUsage();
@@ -389,6 +393,23 @@ public class KnoxSh {
         stringBuilder.append(ls);
       }
       return stringBuilder.toString();
+    }
+  }
+
+  private class KnoxLineCommand extends Command {
+
+    public static final String USAGE = "knoxline";
+    public static final String DESC = "Simple SQL Client.";
+
+    @Override
+    public void execute() throws Exception {
+      KnoxLine line = new KnoxLine();
+      line.execute(new ArrayList<String>().toArray(new String[0]));
+    }
+
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
     }
   }
 
