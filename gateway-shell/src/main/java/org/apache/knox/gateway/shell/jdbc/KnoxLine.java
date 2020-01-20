@@ -117,11 +117,19 @@ public class KnoxLine {
       selectDataSource(args[2]);
     }
     else if (args[1].equals("add")) {
-      if (args.length == 5) {
+      if (args.length == 6) {
         addDataSource(args[2], args[3], args[4], args[5]);
       }
       else {
         System.out.println("Invalid number of arguments for :ds add. Useage: :ds add {ds-name} {connectStr} {driver} {authnType: none|basic}");
+      }
+    }
+    else if (args[1].contentEquals("remove")) {
+      if (args.length == 3) {
+        removeDataSource(args[2]);
+      }
+      else {
+        System.out.println("Invalid number of arguments for :ds remove. Useage: :ds remove {ds-name}");
       }
     }
   }
@@ -146,7 +154,14 @@ public class KnoxLine {
     Map<String, KnoxDataSource> datasources = getDataSources();
     KnoxDataSource ds = new KnoxDataSource(name, connectStr, driver, authnType);
     datasources.put(name, ds);
+    KnoxSession.persistDataSources(datasources);
     return ds;
+  }
+
+  private void removeDataSource(String name) {
+    Map<String, KnoxDataSource> datasources = getDataSources();
+    datasources.remove(name);
+    KnoxSession.persistDataSources(datasources);
   }
 
   private void selectDataSource(String name) throws CredentialCollectionException {

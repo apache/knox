@@ -603,6 +603,25 @@ public class KnoxSession implements Closeable {
     }
   }
 
+  /**
+   * Persist provided Map to a file within the {user.home}/.knoxshell directory
+   * @param <T>
+   * @param fileName of persisted file
+   * @param map to persist
+   */
+  public static <T> void persistDataSourcesToKnoxShell(String fileName, Map<String, T> map) {
+    String s = JsonUtils.renderAsJsonString(map);
+    String home = System.getProperty("user.home");
+    try {
+      write(new File(
+          home + File.separator +
+          ".knoxshell" + File.separator + fileName),
+          s, StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
   private static void write(File file, String s, Charset utf8) throws IOException {
     synchronized(KnoxSession.class) {
       // Ensure the parent directory exists...
@@ -623,8 +642,8 @@ public class KnoxSession implements Closeable {
     persistToKnoxShell(KNOXSQLHISTORIES_JSON, sqlHistories);
   }
 
-  public static void persistDataSources(Map<String, List<KnoxDataSource>> datasources) {
-    persistToKnoxShell(KNOXDATASOURCES_JSON, datasources);
+  public static void persistDataSources(Map<String, KnoxDataSource> datasources) {
+    persistDataSourcesToKnoxShell(KNOXDATASOURCES_JSON, datasources);
   }
 
   /**
