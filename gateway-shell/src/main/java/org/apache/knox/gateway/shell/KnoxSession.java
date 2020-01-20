@@ -384,7 +384,7 @@ public class KnoxSession implements Closeable {
 
   private KeyStore getTrustStore(ClientContext clientContext) throws GeneralSecurityException {
     KeyStore ks;
-    String truststorePass = null;
+    String truststorePass;
 
     // if a PEM file was provided create a keystore from that and use
     // it as the truststore
@@ -528,7 +528,7 @@ public class KnoxSession implements Closeable {
 
   public void waitFor( Future<?>... futures ) throws ExecutionException, InterruptedException {
     if( futures != null ) {
-      for( Future future : futures ) {
+      for( Future<?> future : futures ) {
         future.get();
       }
     }
@@ -538,7 +538,7 @@ public class KnoxSession implements Closeable {
     if( futures != null ) {
       timeout = TimeUnit.MILLISECONDS.convert( timeout, units );
       long start;
-      for( Future future : futures ) {
+      for( Future<?> future : futures ) {
         start = System.currentTimeMillis();
         future.get( timeout, TimeUnit.MILLISECONDS );
         timeout -= ( System.currentTimeMillis() - start );
@@ -586,7 +586,7 @@ public class KnoxSession implements Closeable {
 
   /**
    * Persist provided Map to a file within the {user.home}/.knoxshell directory
-   * @param <T>
+   * @param <T> type of the list
    * @param fileName of persisted file
    * @param map to persist
    */
@@ -595,8 +595,7 @@ public class KnoxSession implements Closeable {
     String home = System.getProperty("user.home");
     try {
       write(new File(
-          home + File.separator +
-          ".knoxshell" + File.separator + fileName),
+          home + File.separator + ".knoxshell" + File.separator + fileName),
           s, StandardCharsets.UTF_8);
     } catch (IOException e) {
       e.printStackTrace();
@@ -631,8 +630,7 @@ public class KnoxSession implements Closeable {
           StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
         channel.tryLock();
         FileUtils.write(file, s, utf8);
-      }
-      catch (OverlappingFileLockException e) {
+      } catch (OverlappingFileLockException e) {
         System.out.println("Unable to acquire write lock for: " + file.getAbsolutePath());
       }
     }
@@ -650,6 +648,7 @@ public class KnoxSession implements Closeable {
    * Load and return a map of datasource names to sql commands
    * from the {user.home}/.knoxshell/knoxsqlhistories.json file.
    * @return sqlHistory map
+   * @throws IOException exception when loading sql history
    */
   public static Map<String, List<String>> loadSQLHistories() throws IOException {
     Map<String, List<String>> sqlHistories = null;
@@ -659,22 +658,20 @@ public class KnoxSession implements Closeable {
         home + File.separator +
         ".knoxshell" + File.separator + KNOXSQLHISTORIES_JSON);
     if (historyFile.exists()) {
-      String json = readFileToString(historyFile, "UTF8");
-      sqlHistories = (Map<String, List<String>>) getMapOfStringArrayListsFromJsonString(json);
+      String json = readFileToString(historyFile);
+      sqlHistories = getMapOfStringArrayListsFromJsonString(json);
     }
     return sqlHistories;
   }
 
-  private static String readFileToString(File file, String s)
-      throws FileNotFoundException, IOException {
+  private static String readFileToString(File file) throws IOException {
     String content = null;
 
     synchronized(KnoxSession.class) {
       try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.READ)) {
         channel.tryLock(0L, Long.MAX_VALUE, true);
-        content = FileUtils.readFileToString(file, s);
-      }
-      catch (OverlappingFileLockException e) {
+        content = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+      } catch (OverlappingFileLockException e) {
         System.out.println("Unable to acquire write lock for: " + file.getAbsolutePath());
       }
     }
@@ -685,18 +682,17 @@ public class KnoxSession implements Closeable {
   /**
    * Load and return a map of datasource names to KnoxDataSource
    * objects from the {user.home}/.knoxshell/knoxdatasources.json file.
-   * @return
+   * @return map of data sources
+   * @throws IOException exception when loading data sources
    */
   public static Map<String, KnoxDataSource> loadDataSources() throws IOException {
     Map<String, KnoxDataSource> datasources = null;
     String home = System.getProperty("user.home");
-    String json = null;
+    String json;
 
-    File dsFile = new File(
-        home + File.separator +
-        ".knoxshell" + File.separator + KNOXDATASOURCES_JSON);
+    File dsFile = new File(home + File.separator + ".knoxshell" + File.separator + KNOXDATASOURCES_JSON);
     if (dsFile.exists()) {
-      json = readFileToString(dsFile, "UTF8");
+      json = readFileToString(dsFile);
       datasources = getMapOfDataSourcesFromJsonString(json);
     }
 
@@ -704,7 +700,7 @@ public class KnoxSession implements Closeable {
   }
 
   public static Map<String, List<String>> getMapOfStringArrayListsFromJsonString(String json) throws IOException {
-    Map<String, List<String>> obj = null;
+    Map<String, List<String>> obj;
     JsonFactory factory = new JsonFactory();
     ObjectMapper mapper = new ObjectMapper(factory);
     TypeReference<Map<String, List<String>>> typeRef = new TypeReference<Map<String, List<String>>>() {};
@@ -713,7 +709,7 @@ public class KnoxSession implements Closeable {
   }
 
   public static Map<String, KnoxDataSource> getMapOfDataSourcesFromJsonString(String json) throws IOException {
-    Map<String, KnoxDataSource> obj = null;
+    Map<String, KnoxDataSource> obj;
     JsonFactory factory = new JsonFactory();
     ObjectMapper mapper = new ObjectMapper(factory);
     TypeReference<Map<String, KnoxDataSource>> typeRef = new TypeReference<Map<String, KnoxDataSource>>() {};
@@ -722,7 +718,6 @@ public class KnoxSession implements Closeable {
   }
 
   private static final class JAASClientConfig extends Configuration {
-
     private static final Configuration baseConfig = Configuration.getConfiguration();
 
     private Configuration configFile;

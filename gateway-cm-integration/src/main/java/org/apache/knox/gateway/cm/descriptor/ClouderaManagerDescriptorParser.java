@@ -19,18 +19,21 @@ package org.apache.knox.gateway.cm.descriptor;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.knox.gateway.ClouderaManagerIntegrationMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.topology.discovery.advanced.AdvancedServiceDiscoveryConfig;
+import org.apache.knox.gateway.topology.discovery.advanced.AdvancedServiceDiscoveryConfigChangeListener;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorImpl;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorImpl.ApplicationImpl;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorImpl.ServiceImpl;
 
-public class ClouderaManagerDescriptorParser {
+public class ClouderaManagerDescriptorParser implements AdvancedServiceDiscoveryConfigChangeListener {
   private static final ClouderaManagerIntegrationMessages log = MessagesFactory.get(ClouderaManagerIntegrationMessages.class);
   private static final String CONFIG_NAME_DISCOVERY_TYPE = "discoveryType";
   private static final String CONFIG_NAME_DISCOVERY_ADDRESS = "discoveryAddress";
@@ -42,6 +45,12 @@ public class ClouderaManagerDescriptorParser {
   private static final String CONFIG_NAME_SERVICE_URL = "url";
   private static final String CONFIG_NAME_SERVICE_VERSION = "version";
 
+  private AdvancedServiceDiscoveryConfig advancedServiceDiscoveryConfig;
+
+  public ClouderaManagerDescriptorParser() {
+    advancedServiceDiscoveryConfig = new AdvancedServiceDiscoveryConfig();
+  }
+
   /**
    * Produces a set of {@link SimpleDescriptor}s from the specified file.
    *
@@ -49,7 +58,7 @@ public class ClouderaManagerDescriptorParser {
    *          The path to the configuration file which holds descriptor information in a pre-defined format.
    * @return A SimpleDescriptor based on the contents of the given file.
    */
-  public static Set<SimpleDescriptor> parse(String path) {
+  public Set<SimpleDescriptor> parse(String path) {
     try {
       log.parseClouderaManagerDescriptor(path);
       final Configuration xmlConfiguration = new Configuration(false);
@@ -64,7 +73,7 @@ public class ClouderaManagerDescriptorParser {
     }
   }
 
-  private static Set<SimpleDescriptor> parseXmlConfig(Configuration xmlConfiguration) {
+  private Set<SimpleDescriptor> parseXmlConfig(Configuration xmlConfiguration) {
     final Set<SimpleDescriptor> descriptors = new LinkedHashSet<>();
     xmlConfiguration.forEach(xmlDescriptor -> {
       SimpleDescriptor descriptor = parseXmlDescriptor(xmlDescriptor.getKey(), xmlDescriptor.getValue());
@@ -75,7 +84,7 @@ public class ClouderaManagerDescriptorParser {
     return descriptors;
   }
 
-  private static SimpleDescriptor parseXmlDescriptor(String name, String xmlValue) {
+  private SimpleDescriptor parseXmlDescriptor(String name, String xmlValue) {
     try {
       final SimpleDescriptorImpl descriptor = new SimpleDescriptorImpl();
       descriptor.setName(name);
@@ -111,11 +120,27 @@ public class ClouderaManagerDescriptorParser {
           break;
         }
       }
+      if (advancedServiceDiscoveryConfig.getExpectedTopologyNames().contains(name)) {
+        addEnabledServices(descriptor);
+      }
       return descriptor;
-    } catch(Exception e) {
+    } catch (Exception e) {
       log.failedToParseDescriptor(name, e.getMessage(), e);
       return null;
     }
+  }
+
+  /*
+   * Adds any enabled service which is not listed in the CM descriptor
+   */
+  private void addEnabledServices(SimpleDescriptorImpl descriptor) {
+    advancedServiceDiscoveryConfig.getEnabledServiceNames().forEach(enabledServiceName -> {
+      if(descriptor.getService(enabledServiceName) == null) {
+        ServiceImpl service = new ServiceImpl();
+        service.setName(enabledServiceName);
+        descriptor.addService(service);
+      }
+    });
   }
 
   /**
@@ -127,7 +152,7 @@ public class ClouderaManagerDescriptorParser {
    * <li>app:knoxauth:param1.name=param1.value</li>
    * </ul>
    */
-  private static void parseApplication(SimpleDescriptorImpl descriptor, String configurationPair) {
+  private void parseApplication(SimpleDescriptorImpl descriptor, String configurationPair) {
     final String[] applicationParts = configurationPair.split(":");
     final String applicationName = applicationParts[1].trim();
     ApplicationImpl application = (ApplicationImpl) descriptor.getApplication(applicationName);
@@ -148,6 +173,7 @@ public class ClouderaManagerDescriptorParser {
   /**
    * A service consists of the following parts:
    * <ul>
+   * <li><code>$SERVICE_NAME</code></li>
    * <li><code>$SERVICE_NAME:url=$URL</code></li>
    * <li><code>$SERVICE_NAME:version=$VERSION</code> (optional)</li>
    * <li><code>$SERVICE_NAME[:$PARAMETER_NAME=$PARAMETER_VALUE] (optional)</code></li>
@@ -159,32 +185,44 @@ public class ClouderaManagerDescriptorParser {
    * <li>HIVE:param1.name=param1.value</li>
    * </ul>
    */
-  private static void parseService(SimpleDescriptorImpl descriptor, String configurationPair) {
+  private void parseService(SimpleDescriptorImpl descriptor, String configurationPair) {
     final String[] serviceParts = configurationPair.split(":");
     final String serviceName = serviceParts[0].trim();
-    ServiceImpl service = (ServiceImpl) descriptor.getService(serviceName);
-    if (service == null) {
-      service = new ServiceImpl();
-      service.setName(serviceName);
-      descriptor.addService(service);
-    }
+    if (advancedServiceDiscoveryConfig.isServiceEnabled(serviceName)) {
+      ServiceImpl service = (ServiceImpl) descriptor.getService(serviceName);
+      if (service == null) {
+        service = new ServiceImpl();
+        service.setName(serviceName);
+        descriptor.addService(service);
+      }
 
-    // configuration value may contain ":" (for instance http://host:port) -> considering a configuration name/value pair everything after '$SERVICE_NAME:'
-    final String serviceConfiguration = configurationPair.substring(serviceName.length() + 1).trim();
-    final String[] serviceConfigurationParts = serviceConfiguration.split("=", 2);
-    final String serviceConfigurationName = serviceConfigurationParts[0].trim();
-    final String serviceConfigurationValue = serviceConfigurationParts[1].trim();
-    switch (serviceConfigurationName) {
-    case CONFIG_NAME_SERVICE_URL:
-      service.addUrl(serviceConfigurationValue);
-      break;
-    case CONFIG_NAME_SERVICE_VERSION:
-      service.setVersion(serviceConfigurationValue);
-      break;
-    default:
-      service.addParam(serviceConfigurationName, serviceConfigurationValue);
-      break;
+      if (serviceParts.length > 1) {
+        // configuration value may contain ":" (for instance http://host:port) -> considering a configuration name/value pair everything after '$SERVICE_NAME:'
+        final String serviceConfiguration = configurationPair.substring(serviceName.length() + 1).trim();
+        final String[] serviceConfigurationParts = serviceConfiguration.split("=", 2);
+        final String serviceConfigurationName = serviceConfigurationParts[0].trim();
+        final String serviceConfigurationValue = serviceConfigurationParts[1].trim();
+        switch (serviceConfigurationName) {
+        case CONFIG_NAME_SERVICE_URL:
+          service.addUrl(serviceConfigurationValue);
+          break;
+        case CONFIG_NAME_SERVICE_VERSION:
+          service.setVersion(serviceConfigurationValue);
+          break;
+        default:
+          service.addParam(serviceConfigurationName, serviceConfigurationValue);
+          break;
+        }
+      }
+    } else {
+      log.serviceDisabled(serviceName, descriptor.getName());
     }
+  }
+
+  @Override
+  public void onAdvancedServiceDiscoveryConfigurationChange(Properties newConfiguration) {
+    advancedServiceDiscoveryConfig = new AdvancedServiceDiscoveryConfig(newConfiguration);
+    log.updatedAdvanceServiceDiscoverytConfiguration();
   }
 
 }

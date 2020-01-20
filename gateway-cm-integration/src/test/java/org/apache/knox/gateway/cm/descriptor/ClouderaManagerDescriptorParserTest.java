@@ -25,21 +25,31 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.knox.gateway.topology.discovery.advanced.AdvancedServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor.Application;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor.Service;
+import org.junit.Before;
 import org.junit.Test;
 
 public class ClouderaManagerDescriptorParserTest {
 
+  private ClouderaManagerDescriptorParser cmDescriptorParser;
+
+  @Before
+  public void setUp() {
+    cmDescriptorParser = new ClouderaManagerDescriptorParser();
+  }
+
   @Test
-  public void testXmlParser() throws Exception {
+  public void testCMDescriptorParser() throws Exception {
     final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptor.xml").getPath();
-    final Set<SimpleDescriptor> descriptors = ClouderaManagerDescriptorParser.parse(testConfigPath);
+    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath);
     assertEquals(2, descriptors.size());
     final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
     validateTopology1(descriptorsIterator.next());
@@ -47,19 +57,53 @@ public class ClouderaManagerDescriptorParserTest {
   }
 
   @Test
-  public void testXmlParserWrongDescriptorContent() throws Exception {
+  public void testCMDescriptorParserWrongDescriptorContent() throws Exception {
     final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptorConfigurationWithWrongDescriptor.xml").getPath();
-    final Set<SimpleDescriptor> descriptors = ClouderaManagerDescriptorParser.parse(testConfigPath);
+    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath);
     assertEquals(1, descriptors.size());
     final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
     validateTopology1(descriptorsIterator.next());
   }
 
   @Test
-  public void testXmlParserWrongXMLContent() throws Exception {
+  public void testCMDescriptorParserWrongXMLContent() throws Exception {
     final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptorConfigurationWithNonHadoopStyleConfiguration.xml").getPath();
-    final Set<SimpleDescriptor> descriptors = ClouderaManagerDescriptorParser.parse(testConfigPath);
+    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath);
     assertTrue(descriptors.isEmpty());
+  }
+
+  @Test
+  public void testCMDescriptorParserWithNotEnabledServices() throws Exception {
+    final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptor.xml").getPath();
+    final Properties advancedConfiguration = new Properties();
+    advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_PREFIX_ENABLED_SERVICE + "HIVE", "false");
+    cmDescriptorParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfiguration);
+    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath);
+    assertEquals(2, descriptors.size());
+    final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
+    SimpleDescriptor descriptor = descriptorsIterator.next();
+    assertNotNull(descriptor);
+    // topology1 comes with HIVE which is disabled
+    assertTrue(descriptor.getServices().isEmpty());
+  }
+
+  @Test
+  public void testCMDescriptorParserWithEnabledNotListedServiceInTopology1() throws Exception {
+    final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptor.xml").getPath();
+    final Properties advancedConfiguration = new Properties();
+    advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_PREFIX_ENABLED_SERVICE + "OOZIE", "true");
+    advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_EXPECTED_TOPOLOGIES, "topology1, topology100");
+    cmDescriptorParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfiguration);
+    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath);
+    final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
+    SimpleDescriptor descriptor = descriptorsIterator.next();
+    assertNotNull(descriptor);
+    // topology1 comes without OOZIE but it's enabled and topology1 is expected -> OOZIE should be added without any url/version/parameter
+    assertService(descriptor, "OOZIE", null, null, null);
+
+    descriptor = descriptorsIterator.next();
+    validateTopology2(descriptor);
+    assertNull(descriptor.getService("OOZIE"));
   }
 
   private void validateTopology1(SimpleDescriptor descriptor) {
@@ -90,7 +134,8 @@ public class ClouderaManagerDescriptorParserTest {
 
     final Map<String, String> expectedServiceParameters = Stream.of(new String[][] { { "httpclient.connectionTimeout", "5m" }, { "httpclient.socketTimeout", "100m" }, })
         .collect(Collectors.toMap(data -> data[0], data -> data[1]));
-    assertService(descriptor, "HDFS", null, Collections.singletonList("http://localhost:456"), expectedServiceParameters);
+    assertService(descriptor, "ATLAS-API", null, Collections.singletonList("http://localhost:456"), expectedServiceParameters);
+    assertService(descriptor, "NIFI", null, null, null);
   }
 
   private void assertApplication(SimpleDescriptor descriptor, String expectedApplicationName, Map<String, String> expectedParams) {
@@ -114,6 +159,8 @@ public class ClouderaManagerDescriptorParserTest {
 
     if (expectedUrls != null) {
       assertTrue(service.getURLs().containsAll(expectedUrls));
+    } else {
+      assertNull(service.getURLs());
     }
 
     if (expectedParams != null) {
