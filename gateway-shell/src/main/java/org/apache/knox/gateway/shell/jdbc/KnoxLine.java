@@ -32,10 +32,10 @@ import org.apache.knox.gateway.shell.KnoxSession;
 import org.apache.knox.gateway.shell.table.KnoxShellTable;
 
 public class KnoxLine {
-  String user;
-  String pass;
-  KnoxDataSource datasource;
-  Connection conn;
+  private String user;
+  private String pass;
+  private KnoxDataSource datasource;
+  private Connection conn;
 
   @SuppressWarnings("PMD.DoNotUseThreads") // we need to define a Thread to be able to register a shutdown hook
   public void execute(String[] args)
