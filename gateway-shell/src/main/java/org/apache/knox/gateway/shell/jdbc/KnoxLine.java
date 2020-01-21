@@ -37,6 +37,7 @@ public class KnoxLine {
   KnoxDataSource datasource;
   Connection conn;
 
+  @SuppressWarnings("PMD.DoNotUseThreads") // we need to define a Thread to be able to register a shutdown hook
   public void execute(String[] args)
       throws ClassNotFoundException, SQLException, CredentialCollectionException {
 
@@ -86,12 +87,7 @@ public class KnoxLine {
               }
             }
             catch(SQLException e) {
-              //e.printStackTrace()
               System.out.println("SQL Exception encountered... " + e.getMessage());
-  //            if (e.getMessage().contains("org.apache.thrift.transport.TTransportException")) {
-  //              System.out.println("reconnecting... ");
-  //              connection = DriverManager.getConnection( connectionString, user, pass );
-  //            }
             }
           }
           else {

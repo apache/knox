@@ -78,7 +78,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.nio.channels.OverlappingFileLockException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
@@ -595,8 +594,7 @@ public class KnoxSession implements Closeable {
     String home = System.getProperty("user.home");
     try {
       write(new File(
-          home + File.separator + ".knoxshell" + File.separator + fileName),
-          s, StandardCharsets.UTF_8);
+          home + File.separator + ".knoxshell" + File.separator + fileName), s);
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -614,14 +612,13 @@ public class KnoxSession implements Closeable {
     try {
       write(new File(
           home + File.separator +
-          ".knoxshell" + File.separator + fileName),
-          s, StandardCharsets.UTF_8);
+          ".knoxshell" + File.separator + fileName), s);
     } catch (IOException e) {
       e.printStackTrace();
     }
   }
 
-  private static void write(File file, String s, Charset utf8) throws IOException {
+  private static void write(File file, String s) throws IOException {
     synchronized(KnoxSession.class) {
       // Ensure the parent directory exists...
       // This will attempt to create all missing directories.  No failures will occur if the directories already exist.
@@ -629,7 +626,7 @@ public class KnoxSession implements Closeable {
       try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.WRITE,
           StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
         channel.tryLock();
-        FileUtils.write(file, s, utf8);
+        FileUtils.write(file, s, StandardCharsets.UTF_8);
       } catch (OverlappingFileLockException e) {
         System.out.println("Unable to acquire write lock for: " + file.getAbsolutePath());
       }

@@ -88,7 +88,6 @@ limitations under the License.
     <rule ref="category/java/multithreading.xml">
         <exclude name="AvoidSynchronizedAtMethodLevel" />
         <exclude name="UseConcurrentHashMap" />
-        <exclude name="DoNotUseThreads" />
     </rule>
     <rule ref="category/java/performance.xml">
         <exclude name="AvoidInstantiatingObjectsInLoops" />
