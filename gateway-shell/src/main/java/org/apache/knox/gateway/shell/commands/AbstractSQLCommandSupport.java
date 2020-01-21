@@ -79,8 +79,8 @@ public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand
   }
 
   protected void persistDataSources() {
-    Map<String, List<KnoxDataSource>> datasources =
-        (Map<String, List<KnoxDataSource>>) getVariables().get(KNOXDATASOURCES);
+    Map<String, KnoxDataSource> datasources =
+        (Map<String, KnoxDataSource>) getVariables().get(KNOXDATASOURCES);
     KnoxSession.persistDataSources(datasources);
   }
 

@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Shell {
 
-  private static final List<String> NON_INTERACTIVE_COMMANDS = Arrays.asList("buildTrustStore", "init", "list", "destroy");
+  private static final List<String> NON_INTERACTIVE_COMMANDS = Arrays.asList("buildTrustStore", "init", "list", "destroy", "knoxline");
 
   private static final String[] IMPORTS = new String[] {
       KnoxSession.class.getName(),

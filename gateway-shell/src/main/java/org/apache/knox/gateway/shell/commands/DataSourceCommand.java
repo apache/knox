@@ -54,12 +54,19 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
       }
       // if the removed datasource is currently selected, unselect it
       dataSources.remove(args.get(1));
-      if (((String)getVariables().get(KNOXDATASOURCE)).equals(args.get(1))) {
-        System.out.println("unselecting datasource.");
-        getVariables().put(KNOXDATASOURCE, "");
-        getVariables().put(KNOXDATASOURCES, dataSources);
-        persistDataSources();
+      if (getVariables().get(KNOXDATASOURCE) != null) {
+        if (args.get(1) != null) {
+          if (((String)getVariables().get(KNOXDATASOURCE)).equals(args.get(1))) {
+            System.out.println("unselecting datasource.");
+            getVariables().put(KNOXDATASOURCE, "");
+          }
+        }
+        else {
+          System.out.println("Missing datasource name to remove.");
+        }
       }
+      getVariables().put(KNOXDATASOURCES, dataSources);
+      persistDataSources();
     }
     else if (args.get(0).equalsIgnoreCase("list")) {
       // valid command no additional work needed though

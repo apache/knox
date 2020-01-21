@@ -65,6 +65,11 @@ limitations under the License.
     <Class name="org.apache.knox.gateway.shell.commands.DataSourceCommand" />
     <Bug pattern="SQL_INJECTION_JDBC" />
   </Match>
+
+  <Match>
+    <Class name="org.apache.knox.gateway.shell.jdbc.KnoxLine" />
+    <Bug pattern="SQL_INJECTION_JDBC" />
+  </Match>
   
   <Match>
     <Class name="~org.apache.hadoop.gateway..*" />
