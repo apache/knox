@@ -66,7 +66,8 @@ public class KnoxSh {
       "   [" + KnoxBuildTrustStore.USAGE + "]\n" +
       "   [" + KnoxInit.USAGE + "]\n" +
       "   [" + KnoxDestroy.USAGE + "]\n" +
-      "   [" + KnoxList.USAGE + "]\n";
+      "   [" + KnoxList.USAGE + "]\n" +
+      "   [" + KnoxLineCommand.USAGE + "]\n";
 
   /** allows stdout to be captured if necessary */
   PrintStream out = System.out;
@@ -148,7 +149,8 @@ public class KnoxSh {
     out.println( USAGE_PREFIX + "\n" + COMMANDS );
     if ( command != null ) {
       out.println(command.getUsage());
-    } else {
+    }
+    else {
       char[] chars = new char[79];
       Arrays.fill( chars, '=' );
       String div = new String( chars );
@@ -161,6 +163,9 @@ public class KnoxSh {
       out.println();
       out.println( div );
       out.println(KnoxList.USAGE + "\n\n" + KnoxList.DESC);
+      out.println();
+      out.println( div );
+      out.println(KnoxLineCommand.USAGE + "\n\n" + KnoxLineCommand.DESC);
       out.println();
       out.println( div );
     }
