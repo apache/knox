@@ -28,7 +28,9 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -51,7 +53,7 @@ public class AdvancedServiceDiscoveryConfigurationMonitor {
   private final String gatewayConfigurationDir;
 
   private ScheduledExecutorService executorService;
-  private FileTime lastReloadTime;
+  private final Map<Path, FileTime> lastReloadTimes;
 
   public AdvancedServiceDiscoveryConfigurationMonitor(GatewayConfig gatewayConfig) {
     this.gatewayConfigurationDir = gatewayConfig.getGatewayConfDir();
@@ -63,6 +65,7 @@ public class AdvancedServiceDiscoveryConfigurationMonitor {
     }
 
     listeners = new ArrayList<>();
+    lastReloadTimes = new ConcurrentHashMap<>();
   }
 
   public void registerListener(AdvancedServiceDiscoveryConfigChangeListener listener) {
@@ -82,8 +85,9 @@ public class AdvancedServiceDiscoveryConfigurationMonitor {
     try {
       if (Files.exists(resourcePath) && Files.isReadable(resourcePath)) {
         FileTime lastModifiedTime = Files.getLastModifiedTime(resourcePath);
+        FileTime lastReloadTime = lastReloadTimes.get(resourcePath);
         if (lastReloadTime == null || lastReloadTime.compareTo(lastModifiedTime) < 0) {
-          lastReloadTime = lastModifiedTime;
+          lastReloadTimes.put(resourcePath, lastModifiedTime);
           try (InputStream advanceconfigurationFileInputStream = Files.newInputStream(resourcePath)) {
             Properties properties = new Properties();
             properties.load(advanceconfigurationFileInputStream);
