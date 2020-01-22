@@ -32,6 +32,8 @@ public class AdvancedServiceDiscoveryConfig {
 
   public static final String PARAMETER_NAME_PREFIX_ENABLED_SERVICE = "gateway.auto.discovery.enabled.";
   public static final String PARAMETER_NAME_EXPECTED_TOPOLOGIES = "gateway.auto.discovery.expected.topology.names";
+  public static final String PARAMETER_NAME_DISCOVERY_ADDRESS = "gateway.auto.discovery.address";
+  public static final String PARAMETER_NAME_DISCOVERY_CLUSTER  = "gateway.auto.discovery.cluster";
 
   private final Properties properties;
 
@@ -53,7 +55,15 @@ public class AdvancedServiceDiscoveryConfig {
   }
 
   public Set<String> getExpectedTopologyNames() {
-    return Stream.of(properties.getProperty(PARAMETER_NAME_EXPECTED_TOPOLOGIES, "").split(",")).map(expectedToplogyName -> expectedToplogyName.trim()).collect(toSet());
+    return Stream.of(getPropertyIgnoreCase(PARAMETER_NAME_EXPECTED_TOPOLOGIES, "").split(",")).map(expectedToplogyName -> expectedToplogyName.trim()).collect(toSet());
+  }
+
+  public String getDiscoveryAddress() {
+    return getPropertyIgnoreCase(PARAMETER_NAME_DISCOVERY_ADDRESS, "");
+  }
+
+  public String getDiscoveryCluster() {
+    return getPropertyIgnoreCase(PARAMETER_NAME_DISCOVERY_CLUSTER, "");
   }
 
   private String getPropertyIgnoreCase(String propertyName, String defaultValue) {
