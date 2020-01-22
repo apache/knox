@@ -52,7 +52,7 @@ public class AdvancedServiceDiscoveryConfig {
 
   public Set<String> getEnabledServiceNames() {
     return properties.entrySet().stream().filter(keyValuePair -> Boolean.valueOf((String) keyValuePair.getValue()))
-        .map(keyValuePair -> ((String) keyValuePair.getKey()).substring(((String) keyValuePair.getKey()).lastIndexOf(".") + 1).toUpperCase(Locale.getDefault())).collect(toSet());
+        .map(keyValuePair -> ((String) keyValuePair.getKey()).substring(((String) keyValuePair.getKey()).lastIndexOf('.') + 1).toUpperCase(Locale.getDefault())).collect(toSet());
   }
 
   public String getTopologyName() {

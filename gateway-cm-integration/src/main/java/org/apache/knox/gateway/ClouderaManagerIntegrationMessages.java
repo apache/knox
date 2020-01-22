@@ -27,8 +27,8 @@ public interface ClouderaManagerIntegrationMessages {
   @Message(level = MessageLevel.INFO, text = "Monitoring Cloudera Manager descriptors in {0} ...")
   void monitoringClouderaManagerDescriptor(String path);
 
-  @Message(level = MessageLevel.INFO, text = "Parsing Cloudera Manager descriptor {0}")
-  void parseClouderaManagerDescriptor(String path);
+  @Message(level = MessageLevel.INFO, text = "Parsing Cloudera Manager descriptor {0}. Looking up {1}...")
+  void parseClouderaManagerDescriptor(String path, String topologyName);
 
   @Message(level = MessageLevel.INFO, text = "Found Knox descriptors {0} in {1}")
   void parsedClouderaManagerDescriptor(String descriptorList, String path);

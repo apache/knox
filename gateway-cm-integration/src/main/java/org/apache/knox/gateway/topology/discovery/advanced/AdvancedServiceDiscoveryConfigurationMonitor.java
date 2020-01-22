@@ -87,7 +87,7 @@ public class AdvancedServiceDiscoveryConfigurationMonitor {
           try (InputStream advanceconfigurationFileInputStream = Files.newInputStream(resourcePath)) {
             Properties properties = new Properties();
             properties.load(advanceconfigurationFileInputStream);
-            notifyListeners(properties);
+            notifyListeners(resourcePath.toString(), properties);
           }
         }
       }
@@ -96,8 +96,8 @@ public class AdvancedServiceDiscoveryConfigurationMonitor {
     }
   }
 
-  private void notifyListeners(Properties properties) {
-    LOG.notifyListeners();
+  private void notifyListeners(String path, Properties properties) {
+    LOG.notifyListeners(path);
     listeners.forEach(listener -> listener.onAdvancedServiceDiscoveryConfigurationChange(properties));
   }
 
