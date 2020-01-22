@@ -48,6 +48,6 @@ public interface ClouderaManagerIntegrationMessages {
   @Message(level = MessageLevel.WARN, text = "Service {0} is disabled. It will NOT be added in {1}")
   void serviceDisabled(String serviceName, String descriptorName);
 
-  @Message(level = MessageLevel.INFO, text = "Updated advanced service discovery configuration.")
-  void updatedAdvanceServiceDiscoverytConfiguration();
+  @Message(level = MessageLevel.INFO, text = "Updated advanced service discovery configuration for {0}.")
+  void updatedAdvanceServiceDiscoverytConfiguration(String topologyName);
 }

@@ -31,10 +31,12 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.knox.gateway.ClouderaManagerIntegrationMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.topology.discovery.advanced.AdvancedServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.advanced.AdvancedServiceDiscoveryConfigChangeListener;
 import org.apache.knox.gateway.util.JsonUtils;
 
@@ -61,25 +63,25 @@ public class ClouderaManagerDescriptorMonitor implements AdvancedServiceDiscover
 
   public void setupMonitor() {
     if (monitoringInterval > 0) {
-      executorService.scheduleAtFixedRate(() -> monitorClouderaManagerDescriptors(false), 0, monitoringInterval, TimeUnit.MILLISECONDS);
+      executorService.scheduleAtFixedRate(() -> monitorClouderaManagerDescriptors(null), 0, monitoringInterval, TimeUnit.MILLISECONDS);
       LOG.monitoringClouderaManagerDescriptor(descriptorsDir);
     }
   }
 
-  private void monitorClouderaManagerDescriptors(boolean force) {
+  private void monitorClouderaManagerDescriptors(String topologyName) {
     final File[] clouderaManagerDescriptorFiles = new File(descriptorsDir).listFiles((FileFilter) new SuffixFileFilter(CM_DESCRIPTOR_FILE_EXTENSION));
     for (File clouderaManagerDescriptorFile : clouderaManagerDescriptorFiles) {
-      monitorClouderaManagerDescriptor(Paths.get(clouderaManagerDescriptorFile.getAbsolutePath()), force);
+      monitorClouderaManagerDescriptor(Paths.get(clouderaManagerDescriptorFile.getAbsolutePath()), topologyName);
     }
   }
 
-  private void monitorClouderaManagerDescriptor(Path clouderaManagerDescriptorFile, boolean force) {
+  private void monitorClouderaManagerDescriptor(Path clouderaManagerDescriptorFile, String topologyName) {
     try {
       if (Files.isReadable(clouderaManagerDescriptorFile)) {
         final FileTime lastModifiedTime = Files.getLastModifiedTime(clouderaManagerDescriptorFile);
-        if (force || lastReloadTime == null || lastReloadTime.compareTo(lastModifiedTime) < 0) {
+        if (topologyName != null || lastReloadTime == null || lastReloadTime.compareTo(lastModifiedTime) < 0) {
           lastReloadTime = lastModifiedTime;
-          processClouderaManagerDescriptor(clouderaManagerDescriptorFile.toString());
+          processClouderaManagerDescriptor(clouderaManagerDescriptorFile.toString(), topologyName);
         }
       } else {
         LOG.failedToMonitorClouderaManagerDescriptor(clouderaManagerDescriptorFile.toString(), "File is not readable!", null);
@@ -89,8 +91,8 @@ public class ClouderaManagerDescriptorMonitor implements AdvancedServiceDiscover
     }
   }
 
-  private void processClouderaManagerDescriptor(String descriptorFilePath) {
-    cmDescriptorParser.parse(descriptorFilePath).forEach(simpleDescriptor -> {
+  private void processClouderaManagerDescriptor(String descriptorFilePath, String topologyName) {
+    cmDescriptorParser.parse(descriptorFilePath, topologyName).forEach(simpleDescriptor -> {
       try {
         final File knoxDescriptorFile = new File(descriptorsDir, simpleDescriptor.getName() + ".json");
         FileUtils.writeStringToFile(knoxDescriptorFile, JsonUtils.renderAsJsonString(simpleDescriptor), StandardCharsets.UTF_8);
@@ -102,6 +104,10 @@ public class ClouderaManagerDescriptorMonitor implements AdvancedServiceDiscover
 
   @Override
   public void onAdvancedServiceDiscoveryConfigurationChange(Properties newConfiguration) {
-    monitorClouderaManagerDescriptors(true);
+    final String topologyName = new AdvancedServiceDiscoveryConfig(newConfiguration).getTopologyName();
+    if (StringUtils.isBlank(topologyName)) {
+      throw new IllegalArgumentException("Invalid advanced service discovery configuration: topology name is missing!");
+    }
+    monitorClouderaManagerDescriptors(topologyName);
   }
 }
