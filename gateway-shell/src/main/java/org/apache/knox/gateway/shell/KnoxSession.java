@@ -602,7 +602,7 @@ public class KnoxSession implements Closeable {
 
   /**
    * Persist provided Map to a file within the {user.home}/.knoxshell directory
-   * @param <T>
+   * @param <T> type of the value in the map
    * @param fileName of persisted file
    * @param map to persist
    */
