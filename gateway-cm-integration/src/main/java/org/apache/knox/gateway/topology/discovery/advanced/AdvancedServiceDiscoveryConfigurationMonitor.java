@@ -51,21 +51,27 @@ public class AdvancedServiceDiscoveryConfigurationMonitor {
 
   private final List<AdvancedServiceDiscoveryConfigChangeListener> listeners;
   private final String gatewayConfigurationDir;
-
-  private ScheduledExecutorService executorService;
+  private final long monitoringInterval;
   private final Map<Path, FileTime> lastReloadTimes;
 
   public AdvancedServiceDiscoveryConfigurationMonitor(GatewayConfig gatewayConfig) {
     this.gatewayConfigurationDir = gatewayConfig.getGatewayConfDir();
-    final long monitoringInterval = gatewayConfig.getClouderaManagerAdvancedServiceDiscoveryConfigurationMonitoringInterval();
+    this.monitoringInterval = gatewayConfig.getClouderaManagerAdvancedServiceDiscoveryConfigurationMonitoringInterval();
+    this.listeners = new ArrayList<>();
+    this.lastReloadTimes = new ConcurrentHashMap<>();
+  }
+
+  public void init() {
+    monitorAdvancedServiceConfigurations();
+    setupMonitor();
+  }
+
+  private void setupMonitor() {
     if (monitoringInterval > 0) {
-      this.executorService = newSingleThreadScheduledExecutor(new BasicThreadFactory.Builder().namingPattern("AdvancedServiceDiscoveryConfigurationMonitor-%d").build());
+      final ScheduledExecutorService executorService = newSingleThreadScheduledExecutor(new BasicThreadFactory.Builder().namingPattern("AdvancedServiceDiscoveryConfigurationMonitor-%d").build());
       executorService.scheduleAtFixedRate(() -> monitorAdvancedServiceConfigurations(), 0, monitoringInterval, TimeUnit.MILLISECONDS);
       LOG.monitorStarted(gatewayConfigurationDir, ADVANCED_CONFIGURATION_FILE_NAME_PREFIX);
     }
-
-    listeners = new ArrayList<>();
-    lastReloadTimes = new ConcurrentHashMap<>();
   }
 
   public void registerListener(AdvancedServiceDiscoveryConfigChangeListener listener) {

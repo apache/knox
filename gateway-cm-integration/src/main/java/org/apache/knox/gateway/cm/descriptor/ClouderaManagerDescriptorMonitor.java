@@ -50,7 +50,6 @@ public class ClouderaManagerDescriptorMonitor implements AdvancedServiceDiscover
   private static final ClouderaManagerIntegrationMessages LOG = MessagesFactory.get(ClouderaManagerIntegrationMessages.class);
   private final String descriptorsDir;
   private final long monitoringInterval;
-  private final ScheduledExecutorService executorService;
   private final ClouderaManagerDescriptorParser cmDescriptorParser;
   private FileTime lastReloadTime;
 
@@ -58,11 +57,11 @@ public class ClouderaManagerDescriptorMonitor implements AdvancedServiceDiscover
     this.cmDescriptorParser = cmDescriptorParser;
     this.descriptorsDir = gatewayConfig.getGatewayDescriptorsDir();
     this.monitoringInterval = gatewayConfig.getClouderaManagerDescriptorsMonitoringInterval();
-    this.executorService = Executors.newSingleThreadScheduledExecutor(new BasicThreadFactory.Builder().namingPattern("ClouderaManagerDescriptorMonitor-%d").build());
   }
 
   public void setupMonitor() {
     if (monitoringInterval > 0) {
+      final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(new BasicThreadFactory.Builder().namingPattern("ClouderaManagerDescriptorMonitor-%d").build());
       executorService.scheduleAtFixedRate(() -> monitorClouderaManagerDescriptors(null), 0, monitoringInterval, TimeUnit.MILLISECONDS);
       LOG.monitoringClouderaManagerDescriptor(descriptorsDir);
     }
@@ -95,11 +94,24 @@ public class ClouderaManagerDescriptorMonitor implements AdvancedServiceDiscover
     cmDescriptorParser.parse(descriptorFilePath, topologyName).forEach(simpleDescriptor -> {
       try {
         final File knoxDescriptorFile = new File(descriptorsDir, simpleDescriptor.getName() + ".json");
-        FileUtils.writeStringToFile(knoxDescriptorFile, JsonUtils.renderAsJsonString(simpleDescriptor), StandardCharsets.UTF_8);
+        final String simpleDescriptorJsonString = JsonUtils.renderAsJsonString(simpleDescriptor);
+        if (isDescriptorChangedOrNew(knoxDescriptorFile, simpleDescriptorJsonString)) {
+          FileUtils.writeStringToFile(knoxDescriptorFile, JsonUtils.renderAsJsonString(simpleDescriptor), StandardCharsets.UTF_8);
+        } else {
+          LOG.descriptorDidNotChange(simpleDescriptor.getName());
+        }
       } catch (IOException e) {
         LOG.failedToProduceKnoxDescriptor(e.getMessage(), e);
       }
     });
+  }
+
+  private boolean isDescriptorChangedOrNew(File knoxDescriptorFile, String simpleDescriptorJsonString) throws IOException {
+    if (knoxDescriptorFile.exists()) {
+      final String currentContent = FileUtils.readFileToString(knoxDescriptorFile, StandardCharsets.UTF_8);
+      return !simpleDescriptorJsonString.equals(currentContent);
+    }
+    return true;
   }
 
   @Override

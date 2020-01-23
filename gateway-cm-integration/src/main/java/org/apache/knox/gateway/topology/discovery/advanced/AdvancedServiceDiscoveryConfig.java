@@ -80,4 +80,9 @@ public class AdvancedServiceDiscoveryConfig {
       return defaultValue;
     }
   }
+
+  @Override
+  public String toString() {
+    return this.properties.toString();
+  }
 }
