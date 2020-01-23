@@ -626,10 +626,11 @@ public class GatewayServer {
 
     final ClouderaManagerDescriptorParser cmDescriptorParser = new ClouderaManagerDescriptorParser();
     final ClouderaManagerDescriptorMonitor cmDescriptorMonitor = new ClouderaManagerDescriptorMonitor(config, cmDescriptorParser);
-    cmDescriptorMonitor.setupMonitor();
     final AdvancedServiceDiscoveryConfigurationMonitor advancedServiceDiscoveryConfigurationMonitor = new AdvancedServiceDiscoveryConfigurationMonitor(config);
     advancedServiceDiscoveryConfigurationMonitor.registerListener(cmDescriptorParser);
     advancedServiceDiscoveryConfigurationMonitor.registerListener(cmDescriptorMonitor);
+    advancedServiceDiscoveryConfigurationMonitor.init();
+    cmDescriptorMonitor.setupMonitor();
 
     // Load the current topologies.
     // Redeploy autodeploy topologies.

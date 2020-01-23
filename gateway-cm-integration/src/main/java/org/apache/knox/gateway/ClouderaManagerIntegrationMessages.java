@@ -27,11 +27,14 @@ public interface ClouderaManagerIntegrationMessages {
   @Message(level = MessageLevel.INFO, text = "Monitoring Cloudera Manager descriptors in {0} ...")
   void monitoringClouderaManagerDescriptor(String path);
 
-  @Message(level = MessageLevel.INFO, text = "Parsing Cloudera Manager descriptor {0}")
-  void parseClouderaManagerDescriptor(String path);
+  @Message(level = MessageLevel.INFO, text = "Parsing Cloudera Manager descriptor {0}. Looking up {1}...")
+  void parseClouderaManagerDescriptor(String path, String topologyName);
 
   @Message(level = MessageLevel.INFO, text = "Found Knox descriptors {0} in {1}")
   void parsedClouderaManagerDescriptor(String descriptorList, String path);
+
+  @Message(level = MessageLevel.INFO, text = "Ignoring {0} Knox descriptor update because it did not change.")
+  void descriptorDidNotChange(String descriptorName);
 
   @Message(level = MessageLevel.ERROR, text = "Parsing Knox descriptor {0} failed: {1}")
   void failedToParseDescriptor(String name, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
@@ -48,6 +51,6 @@ public interface ClouderaManagerIntegrationMessages {
   @Message(level = MessageLevel.WARN, text = "Service {0} is disabled. It will NOT be added in {1}")
   void serviceDisabled(String serviceName, String descriptorName);
 
-  @Message(level = MessageLevel.INFO, text = "Updated advanced service discovery configuration.")
-  void updatedAdvanceServiceDiscoverytConfiguration();
+  @Message(level = MessageLevel.INFO, text = "Updated advanced service discovery configuration for {0}.")
+  void updatedAdvanceServiceDiscoverytConfiguration(String topologyName);
 }
