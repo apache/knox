@@ -267,7 +267,7 @@ public class UrlRewriteRequest extends GatewayRequestWrapper implements Resolver
       final InputStream stream;
       UrlRewriteStreamFilter filter = UrlRewriteStreamFilterFactory.create(mimeType, null);
       if(filter != null) {
-        String charset = MimeTypes.getCharset( mimeType, StandardCharsets.ISO_8859_1.name() );
+        String charset = MimeTypes.getCharset( mimeType, StandardCharsets.UTF_8.name() );
         stream = filter.filter(input, charset, rewriter, this, UrlRewriter.Direction.IN, filterContentConfig );
       } else {
         stream = input;
