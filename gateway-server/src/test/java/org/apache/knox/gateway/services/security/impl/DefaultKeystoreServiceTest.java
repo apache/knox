@@ -32,6 +32,8 @@ import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -47,6 +49,7 @@ import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.util.X509CertificateUtil;
+import org.easymock.IAnswer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -68,7 +71,13 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class DefaultKeystoreServiceTest {
   @Rule
@@ -519,6 +528,82 @@ public class DefaultKeystoreServiceTest {
 
     keystoreService.removeCredentialForCluster(clusterName, alias);
     assertNull(keystoreService.getCredentialForCluster(clusterName, alias));
+
+    verify(masterService);
+  }
+
+  @Test
+  public void testAddRemoveCredentialForClusterSynchronization() throws Exception {
+    char[] masterPassword = "master_password".toCharArray();
+
+    MasterService masterService = createMock(MasterService.class);
+    IAnswer<? extends char[]> iAnswer = (IAnswer<char[]>) () -> {
+      // Wait .5-1 seconds to return
+//      Thread.sleep(ThreadLocalRandom.current().nextInt(500, 1000));
+      return masterPassword;
+    };
+    expect(masterService.getMasterSecret()).andAnswer(iAnswer).anyTimes();
+    replay(masterService);
+
+    Path baseDir = testFolder.newFolder().toPath();
+    GatewayConfigImpl config = createGatewayConfig(baseDir);
+
+    DefaultKeystoreService keystoreService = new DefaultKeystoreService();
+    keystoreService.setMasterService(masterService);
+    keystoreService.init(config, Collections.emptyMap());
+
+    String clusterName = "cluster";
+    keystoreService.createCredentialStoreForCluster(clusterName);
+
+    int numberTotalRequests = 10;
+
+    Set<Callable<Void>> addCallables = new HashSet<>(numberTotalRequests);
+    for (int i = 0; i < numberTotalRequests; i++) {
+      String alias = "alias" + i;
+      String value = "value" + i;
+      addCallables.add(() -> {
+        keystoreService.addCredentialForCluster(clusterName, alias, value);
+        return null;
+      });
+    }
+
+    ExecutorService insertExecutor = Executors.newFixedThreadPool(numberTotalRequests);
+    insertExecutor.invokeAll(addCallables);
+    insertExecutor.shutdown();
+    insertExecutor.awaitTermination(5, TimeUnit.SECONDS);
+    assertThat(insertExecutor.isTerminated(), is(true));
+
+    // Ensure not to use cache
+    keystoreService.cache.invalidateAll();
+
+    for (int i = 0; i < numberTotalRequests; i++) {
+      String alias = "alias" + i;
+      String value = "value" + i;
+      assertEquals(value, String.valueOf(keystoreService.getCredentialForCluster(clusterName, alias)));
+    }
+
+    Set<Callable<Void>> removeCallables = new HashSet<>(numberTotalRequests);
+    for (int i = 0; i < numberTotalRequests; i++) {
+      String alias = "alias" + i;
+      removeCallables.add(() -> {
+        keystoreService.removeCredentialForCluster(clusterName, alias);
+        return null;
+      });
+    }
+
+    ExecutorService removeExecutor = Executors.newFixedThreadPool(numberTotalRequests);
+    removeExecutor.invokeAll(removeCallables);
+    removeExecutor.shutdown();
+    removeExecutor.awaitTermination(5, TimeUnit.SECONDS);
+    assertThat(removeExecutor.isTerminated(), is(true));
+
+    // Ensure not to use cache
+    keystoreService.cache.invalidateAll();
+
+    for (int i = 0; i < numberTotalRequests; i++) {
+      String alias = "alias" + i;
+      assertNull(keystoreService.getCredentialForCluster(clusterName, alias));
+    }
 
     verify(masterService);
   }
