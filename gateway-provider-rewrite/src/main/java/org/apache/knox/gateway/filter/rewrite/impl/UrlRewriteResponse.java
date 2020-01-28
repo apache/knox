@@ -180,7 +180,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
       } else {
         unFilteredStream = inBuffer;
       }
-      String charset = MimeTypes.getCharset( mimeType, StandardCharsets.ISO_8859_1.name() );
+      String charset = MimeTypes.getCharset( mimeType, StandardCharsets.UTF_8.name() );
       inStream = filter.filter( unFilteredStream, charset, rewriter, this, UrlRewriter.Direction.OUT, filterContentConfig );
       outStream = (isGzip) ? new GZIPOutputStream(output, STREAM_BUFFER_SIZE) : output;
     } else {

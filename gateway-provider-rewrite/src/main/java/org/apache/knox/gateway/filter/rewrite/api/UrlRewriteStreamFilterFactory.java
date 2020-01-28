@@ -49,7 +49,7 @@ public abstract class UrlRewriteStreamFilterFactory {
       UrlRewriteFilterContentDescriptor config )
           throws IOException {
     UrlRewriteStreamFilter filter = create(type, name);
-    String charset = MimeTypes.getCharset( type, StandardCharsets.ISO_8859_1.name() );
+    String charset = MimeTypes.getCharset( type, StandardCharsets.UTF_8.name() );
     final InputStream filteredStream;
     if( filter != null ) {
       filteredStream = filter.filter( stream, charset, rewriter, resolver, direction, config );
