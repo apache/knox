@@ -132,7 +132,12 @@ public class KnoxLine {
 
   private void listDataSources() {
     Map<String, KnoxDataSource> sources = getDataSources();
-    sources.forEach((name, ds)->System.out.println("Name : " + name + " : " + ds.getConnectStr()));
+    if (sources != null) {
+      sources.forEach((name, ds)->System.out.println("Name : " + name + " : " + ds.getConnectStr()));
+    }
+    else {
+      System.out.println("No datasources configured. Use :ds add {ds-name} {connectStr} {driver} {authnType: none|basic}");
+    }
   }
 
   private Map<String, KnoxDataSource> getDataSources() {
