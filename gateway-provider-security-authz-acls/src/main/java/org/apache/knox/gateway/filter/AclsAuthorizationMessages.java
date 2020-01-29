@@ -39,7 +39,7 @@ public interface AclsAuthorizationMessages {
   @Message( level = MessageLevel.DEBUG, text = "No ACLs found for: {0}" )
   void noAclsFoundForResource(String resourceRole);
 
-  @Message( level = MessageLevel.INFO, text = "Access Granted: {0}" )
+  @Message( level = MessageLevel.DEBUG, text = "Access Granted: {0}" )
   void accessGranted(boolean accessGranted);
 
   @Message( level = MessageLevel.DEBUG, text = "PrimaryPrincipal: {0}" )
