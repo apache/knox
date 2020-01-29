@@ -20,7 +20,6 @@ import static java.util.stream.Collectors.toSet;
 
 import java.util.Locale;
 import java.util.Map.Entry;
-import java.util.stream.Stream;
 import java.util.Properties;
 import java.util.Set;
 
@@ -30,8 +29,11 @@ import java.util.Set;
  */
 public class AdvancedServiceDiscoveryConfig {
 
-  public static final String PARAMETER_NAME_PREFIX_ENABLED_SERVICE = "gateway.auto.discovery.enabled.";
-  public static final String PARAMETER_NAME_EXPECTED_TOPOLOGIES = "gateway.auto.discovery.expected.topology.names";
+  public static final String PARAMETER_NAME_PREFIX_ENABLED_SERVICE = "gateway.auto.discovery.";
+  public static final String PARAMETER_NAME_POSTFIX_ENABLED_SERVICE = ".enabled.";
+  public static final String PARAMETER_NAME_TOPOLOGY_NAME = "gateway.auto.discovery.topology.name";
+  public static final String PARAMETER_NAME_DISCOVERY_ADDRESS = "gateway.auto.discovery.address";
+  public static final String PARAMETER_NAME_DISCOVERY_CLUSTER = "gateway.auto.discovery.cluster";
 
   private final Properties properties;
 
@@ -44,16 +46,25 @@ public class AdvancedServiceDiscoveryConfig {
   }
 
   public boolean isServiceEnabled(String serviceName) {
-    return Boolean.valueOf(getPropertyIgnoreCase(PARAMETER_NAME_PREFIX_ENABLED_SERVICE + serviceName, "true"));
+    final String propertyName = PARAMETER_NAME_PREFIX_ENABLED_SERVICE + getTopologyName() + PARAMETER_NAME_POSTFIX_ENABLED_SERVICE + serviceName;
+    return Boolean.valueOf(getPropertyIgnoreCase(propertyName, "true"));
   }
 
   public Set<String> getEnabledServiceNames() {
     return properties.entrySet().stream().filter(keyValuePair -> Boolean.valueOf((String) keyValuePair.getValue()))
-        .map(keyValuePair -> ((String) keyValuePair.getKey()).substring(PARAMETER_NAME_PREFIX_ENABLED_SERVICE.length()).toUpperCase(Locale.getDefault())).collect(toSet());
+        .map(keyValuePair -> ((String) keyValuePair.getKey()).substring(((String) keyValuePair.getKey()).lastIndexOf('.') + 1).toUpperCase(Locale.getDefault())).collect(toSet());
   }
 
-  public Set<String> getExpectedTopologyNames() {
-    return Stream.of(properties.getProperty(PARAMETER_NAME_EXPECTED_TOPOLOGIES, "").split(",")).map(expectedToplogyName -> expectedToplogyName.trim()).collect(toSet());
+  public String getTopologyName() {
+    return getPropertyIgnoreCase(PARAMETER_NAME_TOPOLOGY_NAME, "");
+  }
+
+  public String getDiscoveryAddress() {
+    return getPropertyIgnoreCase(PARAMETER_NAME_DISCOVERY_ADDRESS, "");
+  }
+
+  public String getDiscoveryCluster() {
+    return getPropertyIgnoreCase(PARAMETER_NAME_DISCOVERY_CLUSTER, "");
   }
 
   private String getPropertyIgnoreCase(String propertyName, String defaultValue) {
@@ -68,5 +79,10 @@ public class AdvancedServiceDiscoveryConfig {
       }
       return defaultValue;
     }
+  }
+
+  @Override
+  public String toString() {
+    return this.properties.toString();
   }
 }

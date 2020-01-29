@@ -19,10 +19,13 @@ package org.apache.knox.gateway.cm.descriptor;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.knox.gateway.ClouderaManagerIntegrationMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -45,10 +48,21 @@ public class ClouderaManagerDescriptorParser implements AdvancedServiceDiscovery
   private static final String CONFIG_NAME_SERVICE_URL = "url";
   private static final String CONFIG_NAME_SERVICE_VERSION = "version";
 
-  private AdvancedServiceDiscoveryConfig advancedServiceDiscoveryConfig;
+  private Map<String, AdvancedServiceDiscoveryConfig> advancedServiceDiscoveryConfigMap;
 
   public ClouderaManagerDescriptorParser() {
-    advancedServiceDiscoveryConfig = new AdvancedServiceDiscoveryConfig();
+    advancedServiceDiscoveryConfigMap = new ConcurrentHashMap<>();
+  }
+
+  /**
+   * Produces a set of {@link SimpleDescriptor}s from the specified file. Parses ALL descriptors listed in the given file.
+   *
+   * @param path
+   *          The path to the configuration file which holds descriptor information in a pre-defined format.
+   * @return A SimpleDescriptor based on the contents of the given file.
+   */
+  public Set<SimpleDescriptor> parse(String path) {
+    return parse(path, null);
   }
 
   /**
@@ -56,15 +70,17 @@ public class ClouderaManagerDescriptorParser implements AdvancedServiceDiscovery
    *
    * @param path
    *          The path to the configuration file which holds descriptor information in a pre-defined format.
+   * @param topologyName
+   *          if set, the parser should only parse a descriptor with the same name
    * @return A SimpleDescriptor based on the contents of the given file.
    */
-  public Set<SimpleDescriptor> parse(String path) {
+  public Set<SimpleDescriptor> parse(String path, String topologyName) {
     try {
-      log.parseClouderaManagerDescriptor(path);
+      log.parseClouderaManagerDescriptor(path, topologyName == null ? "all topologies" : topologyName);
       final Configuration xmlConfiguration = new Configuration(false);
       xmlConfiguration.addResource(Paths.get(path).toUri().toURL());
       xmlConfiguration.reloadConfiguration();
-      final Set<SimpleDescriptor> descriptors = parseXmlConfig(xmlConfiguration);
+      final Set<SimpleDescriptor> descriptors = parseXmlConfig(xmlConfiguration, topologyName);
       log.parsedClouderaManagerDescriptor(String.join(", ", descriptors.stream().map(descriptor -> descriptor.getName()).collect(Collectors.toSet())), path);
       return descriptors;
     } catch (Exception e) {
@@ -73,12 +89,15 @@ public class ClouderaManagerDescriptorParser implements AdvancedServiceDiscovery
     }
   }
 
-  private Set<SimpleDescriptor> parseXmlConfig(Configuration xmlConfiguration) {
+  private Set<SimpleDescriptor> parseXmlConfig(Configuration xmlConfiguration, String topologyName) {
     final Set<SimpleDescriptor> descriptors = new LinkedHashSet<>();
     xmlConfiguration.forEach(xmlDescriptor -> {
-      SimpleDescriptor descriptor = parseXmlDescriptor(xmlDescriptor.getKey(), xmlDescriptor.getValue());
-      if (descriptor != null) {
-        descriptors.add(descriptor);
+      String descriptorName = xmlDescriptor.getKey();
+      if (topologyName == null || descriptorName.equals(topologyName)) {
+        SimpleDescriptor descriptor = parseXmlDescriptor(descriptorName, xmlDescriptor.getValue());
+        if (descriptor != null) {
+          descriptors.add(descriptor);
+        }
       }
     });
     return descriptors;
@@ -120,8 +139,11 @@ public class ClouderaManagerDescriptorParser implements AdvancedServiceDiscovery
           break;
         }
       }
-      if (advancedServiceDiscoveryConfig.getExpectedTopologyNames().contains(name)) {
-        addEnabledServices(descriptor);
+
+      final AdvancedServiceDiscoveryConfig advancedServiceDiscoveryConfig = advancedServiceDiscoveryConfigMap.get(name);
+      if (advancedServiceDiscoveryConfig != null) {
+        setDiscoveryDetails(descriptor, advancedServiceDiscoveryConfig);
+        addEnabledServices(descriptor, advancedServiceDiscoveryConfig);
       }
       return descriptor;
     } catch (Exception e) {
@@ -130,12 +152,26 @@ public class ClouderaManagerDescriptorParser implements AdvancedServiceDiscovery
     }
   }
 
+  private void setDiscoveryDetails(SimpleDescriptorImpl descriptor, AdvancedServiceDiscoveryConfig advancedServiceDiscoveryConfig) {
+    if (StringUtils.isBlank(descriptor.getDiscoveryAddress())) {
+      descriptor.setDiscoveryAddress(advancedServiceDiscoveryConfig.getDiscoveryAddress());
+    }
+
+    if (StringUtils.isBlank(descriptor.getCluster())) {
+      descriptor.setCluster(advancedServiceDiscoveryConfig.getDiscoveryCluster());
+    }
+
+    if (StringUtils.isBlank(descriptor.getDiscoveryType())) {
+      descriptor.setDiscoveryType("ClouderaManager");
+    }
+  }
+
   /*
    * Adds any enabled service which is not listed in the CM descriptor
    */
-  private void addEnabledServices(SimpleDescriptorImpl descriptor) {
+  private void addEnabledServices(SimpleDescriptorImpl descriptor, AdvancedServiceDiscoveryConfig advancedServiceDiscoveryConfig) {
     advancedServiceDiscoveryConfig.getEnabledServiceNames().forEach(enabledServiceName -> {
-      if(descriptor.getService(enabledServiceName) == null) {
+      if (descriptor.getService(enabledServiceName) == null) {
         ServiceImpl service = new ServiceImpl();
         service.setName(enabledServiceName);
         descriptor.addService(service);
@@ -188,7 +224,7 @@ public class ClouderaManagerDescriptorParser implements AdvancedServiceDiscovery
   private void parseService(SimpleDescriptorImpl descriptor, String configurationPair) {
     final String[] serviceParts = configurationPair.split(":");
     final String serviceName = serviceParts[0].trim();
-    if (advancedServiceDiscoveryConfig.isServiceEnabled(serviceName)) {
+    if (isServiceEnabled(descriptor.getName(), serviceName)) {
       ServiceImpl service = (ServiceImpl) descriptor.getService(serviceName);
       if (service == null) {
         service = new ServiceImpl();
@@ -219,10 +255,19 @@ public class ClouderaManagerDescriptorParser implements AdvancedServiceDiscovery
     }
   }
 
+  private boolean isServiceEnabled(String descriptorName, String serviceName) {
+    return advancedServiceDiscoveryConfigMap.containsKey(descriptorName) ? advancedServiceDiscoveryConfigMap.get(descriptorName).isServiceEnabled(serviceName) : true;
+  }
+
   @Override
   public void onAdvancedServiceDiscoveryConfigurationChange(Properties newConfiguration) {
-    advancedServiceDiscoveryConfig = new AdvancedServiceDiscoveryConfig(newConfiguration);
-    log.updatedAdvanceServiceDiscoverytConfiguration();
+    final AdvancedServiceDiscoveryConfig advancedServiceDiscoveryConfig = new AdvancedServiceDiscoveryConfig(newConfiguration);
+    final String topologyName = advancedServiceDiscoveryConfig.getTopologyName();
+    if (StringUtils.isBlank(topologyName)) {
+      throw new IllegalArgumentException("Invalid advanced service discovery configuration: topology name is missing!");
+    }
+    advancedServiceDiscoveryConfigMap.put(topologyName, advancedServiceDiscoveryConfig);
+    log.updatedAdvanceServiceDiscoverytConfiguration(topologyName);
   }
 
 }

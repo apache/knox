@@ -18,6 +18,8 @@ package org.apache.knox.gateway.topology.discovery.advanced;
 
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 
+import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -26,10 +28,13 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.io.filefilter.PrefixFileFilter;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -41,40 +46,58 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
  */
 public class AdvancedServiceDiscoveryConfigurationMonitor {
 
-  private static final String ADVANCED_CONFIGURATION_FILE_NAME = "auto-discovery-advanced-configuration.properties";
+  private static final String ADVANCED_CONFIGURATION_FILE_NAME_PREFIX = "auto-discovery-advanced-configuration-";
   private static final AdvanceServiceDiscoveryConfigurationMessages LOG = MessagesFactory.get(AdvanceServiceDiscoveryConfigurationMessages.class);
 
   private final List<AdvancedServiceDiscoveryConfigChangeListener> listeners;
-
-  private ScheduledExecutorService executorService;
-  private FileTime lastReloadTime;
+  private final String gatewayConfigurationDir;
+  private final long monitoringInterval;
+  private final Map<Path, FileTime> lastReloadTimes;
 
   public AdvancedServiceDiscoveryConfigurationMonitor(GatewayConfig gatewayConfig) {
-    final long monitoringInterval = gatewayConfig.getClouderaManagerAdvancedServiceDiscoveryConfigurationMonitoringInterval();
-    if (monitoringInterval > 0) {
-      this.executorService = newSingleThreadScheduledExecutor(new BasicThreadFactory.Builder().namingPattern("AdvancedServiceDiscoveryConfigurationMonitor-%d").build());
-      final Path resourcePath = Paths.get(gatewayConfig.getGatewayConfDir(), ADVANCED_CONFIGURATION_FILE_NAME);
-      executorService.scheduleAtFixedRate(() -> monitorAdvancedServiceConfiguration(resourcePath), 0, monitoringInterval, TimeUnit.MILLISECONDS);
-      LOG.monitorStarted(resourcePath.toString());
-    }
+    this.gatewayConfigurationDir = gatewayConfig.getGatewayConfDir();
+    this.monitoringInterval = gatewayConfig.getClouderaManagerAdvancedServiceDiscoveryConfigurationMonitoringInterval();
+    this.listeners = new ArrayList<>();
+    this.lastReloadTimes = new ConcurrentHashMap<>();
+  }
 
-    listeners = new ArrayList<>();
+  public void init() {
+    monitorAdvancedServiceConfigurations();
+    setupMonitor();
+  }
+
+  private void setupMonitor() {
+    if (monitoringInterval > 0) {
+      final ScheduledExecutorService executorService = newSingleThreadScheduledExecutor(new BasicThreadFactory.Builder().namingPattern("AdvancedServiceDiscoveryConfigurationMonitor-%d").build());
+      executorService.scheduleAtFixedRate(() -> monitorAdvancedServiceConfigurations(), 0, monitoringInterval, TimeUnit.MILLISECONDS);
+      LOG.monitorStarted(gatewayConfigurationDir, ADVANCED_CONFIGURATION_FILE_NAME_PREFIX);
+    }
   }
 
   public void registerListener(AdvancedServiceDiscoveryConfigChangeListener listener) {
     listeners.add(listener);
   }
 
+  private void monitorAdvancedServiceConfigurations() {
+    final File[] advancedConfigurationFiles = new File(gatewayConfigurationDir).listFiles((FileFilter) new PrefixFileFilter(ADVANCED_CONFIGURATION_FILE_NAME_PREFIX));
+    if (advancedConfigurationFiles != null) {
+      for (File advancedConfigurationFile : advancedConfigurationFiles) {
+        monitorAdvancedServiceConfiguration(Paths.get(advancedConfigurationFile.getAbsolutePath()));
+      }
+    }
+  }
+
   private void monitorAdvancedServiceConfiguration(Path resourcePath) {
     try {
       if (Files.exists(resourcePath) && Files.isReadable(resourcePath)) {
         FileTime lastModifiedTime = Files.getLastModifiedTime(resourcePath);
+        FileTime lastReloadTime = lastReloadTimes.get(resourcePath);
         if (lastReloadTime == null || lastReloadTime.compareTo(lastModifiedTime) < 0) {
-          lastReloadTime = lastModifiedTime;
+          lastReloadTimes.put(resourcePath, lastModifiedTime);
           try (InputStream advanceconfigurationFileInputStream = Files.newInputStream(resourcePath)) {
             Properties properties = new Properties();
             properties.load(advanceconfigurationFileInputStream);
-            notifyListeners(properties);
+            notifyListeners(resourcePath.toString(), properties);
           }
         }
       }
@@ -83,8 +106,8 @@ public class AdvancedServiceDiscoveryConfigurationMonitor {
     }
   }
 
-  private void notifyListeners(Properties properties) {
-    LOG.notifyListeners();
+  private void notifyListeners(String path, Properties properties) {
+    LOG.notifyListeners(path);
     listeners.forEach(listener -> listener.onAdvancedServiceDiscoveryConfigurationChange(properties));
   }
 

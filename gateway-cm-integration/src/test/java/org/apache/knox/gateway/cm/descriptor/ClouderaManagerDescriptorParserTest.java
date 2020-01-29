@@ -53,7 +53,15 @@ public class ClouderaManagerDescriptorParserTest {
     assertEquals(2, descriptors.size());
     final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
     validateTopology1(descriptorsIterator.next());
-    validateTopology2(descriptorsIterator.next());
+    validateTopology2(descriptorsIterator.next(), true);
+  }
+
+  @Test
+  public void testCMDescriptorParserOnlyTopology2() throws Exception {
+    final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptor.xml").getPath();
+    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath, "topology2");
+    assertEquals(1, descriptors.size());
+    validateTopology2(descriptors.iterator().next(), true);
   }
 
   @Test
@@ -75,35 +83,70 @@ public class ClouderaManagerDescriptorParserTest {
   @Test
   public void testCMDescriptorParserWithNotEnabledServices() throws Exception {
     final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptor.xml").getPath();
-    final Properties advancedConfiguration = new Properties();
-    advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_PREFIX_ENABLED_SERVICE + "HIVE", "false");
-    cmDescriptorParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfiguration);
+
+    final Properties advancedConfigurationTopology1 = new Properties();
+    advancedConfigurationTopology1.put(buildEnabledParameter("topology1", "HIVE"), "false");
+    advancedConfigurationTopology1.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_TOPOLOGY_NAME, "topology1");
+    cmDescriptorParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfigurationTopology1);
+
+    final Properties advancedConfigurationTopology2 = new Properties();
+    advancedConfigurationTopology2.put(buildEnabledParameter("topology2", "NIFI"), "false");
+    advancedConfigurationTopology2.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_TOPOLOGY_NAME, "topology2");
+    cmDescriptorParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfigurationTopology2);
+
     final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath);
     assertEquals(2, descriptors.size());
     final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
-    SimpleDescriptor descriptor = descriptorsIterator.next();
-    assertNotNull(descriptor);
+    SimpleDescriptor topology1 = descriptorsIterator.next();
+    assertNotNull(topology1);
     // topology1 comes with HIVE which is disabled
-    assertTrue(descriptor.getServices().isEmpty());
+    assertTrue(topology1.getServices().isEmpty());
+
+    SimpleDescriptor topology2 = descriptorsIterator.next();
+    assertNotNull(topology2);
+    // topology1 comes with ATLAS and NIFI but the latter one is disabled
+    validateTopology2(topology2, false);
   }
 
   @Test
   public void testCMDescriptorParserWithEnabledNotListedServiceInTopology1() throws Exception {
     final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptor.xml").getPath();
     final Properties advancedConfiguration = new Properties();
-    advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_PREFIX_ENABLED_SERVICE + "OOZIE", "true");
-    advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_EXPECTED_TOPOLOGIES, "topology1, topology100");
+    advancedConfiguration.put(buildEnabledParameter("topology1", "oozie"), "true"); //it should not matter if service name is lowercase advanced configuration
+    advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_TOPOLOGY_NAME, "topology1");
     cmDescriptorParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfiguration);
     final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath);
     final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
     SimpleDescriptor descriptor = descriptorsIterator.next();
     assertNotNull(descriptor);
-    // topology1 comes without OOZIE but it's enabled and topology1 is expected -> OOZIE should be added without any url/version/parameter
+    // topology1 comes without OOZIE but it's enabled in topology1 -> OOZIE should be added without any url/version/parameter
     assertService(descriptor, "OOZIE", null, null, null);
 
     descriptor = descriptorsIterator.next();
-    validateTopology2(descriptor);
+    validateTopology2(descriptor, true);
     assertNull(descriptor.getService("OOZIE"));
+  }
+
+  private String buildEnabledParameter(String topologyName, String serviceName) {
+    return AdvancedServiceDiscoveryConfig.PARAMETER_NAME_PREFIX_ENABLED_SERVICE + topologyName + AdvancedServiceDiscoveryConfig.PARAMETER_NAME_POSTFIX_ENABLED_SERVICE + serviceName;
+  }
+
+  @Test
+  public void testSettingDiscoveryDetails() throws Exception {
+    final String address = "http://myCmHost:7180";
+    final String cluster = "My Test Cluster";
+    final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptorWithoutDiscoveryDetails.xml").getPath();
+    final Properties advancedConfiguration = new Properties();
+    advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_TOPOLOGY_NAME, "topology1");
+    advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_DISCOVERY_ADDRESS, address);
+    advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_DISCOVERY_CLUSTER, cluster);
+    cmDescriptorParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfiguration);
+    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath);
+    final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
+    SimpleDescriptor descriptor = descriptorsIterator.next();
+    assertEquals(address, descriptor.getDiscoveryAddress());
+    assertEquals(cluster, descriptor.getCluster());
+    assertEquals("ClouderaManager", descriptor.getDiscoveryType());
   }
 
   private void validateTopology1(SimpleDescriptor descriptor) {
@@ -124,7 +167,7 @@ public class ClouderaManagerDescriptorParserTest {
     assertService(descriptor, "HIVE", "1.0", Collections.singletonList("http://localhost:456"), expectedServiceParameters);
   }
 
-  private void validateTopology2(SimpleDescriptor descriptor) {
+  private void validateTopology2(SimpleDescriptor descriptor, boolean nifiExpected) {
     assertEquals("topology2", descriptor.getName());
     assertEquals("Ambari", descriptor.getDiscoveryType());
     assertEquals("http://host:456", descriptor.getDiscoveryAddress());
@@ -135,7 +178,11 @@ public class ClouderaManagerDescriptorParserTest {
     final Map<String, String> expectedServiceParameters = Stream.of(new String[][] { { "httpclient.connectionTimeout", "5m" }, { "httpclient.socketTimeout", "100m" }, })
         .collect(Collectors.toMap(data -> data[0], data -> data[1]));
     assertService(descriptor, "ATLAS-API", null, Collections.singletonList("http://localhost:456"), expectedServiceParameters);
-    assertService(descriptor, "NIFI", null, null, null);
+    if (nifiExpected) {
+      assertService(descriptor, "NIFI", null, null, null);
+    } else {
+      assertNull(descriptor.getService("NIFI"));
+    }
   }
 
   private void assertApplication(SimpleDescriptor descriptor, String expectedApplicationName, Map<String, String> expectedParams) {

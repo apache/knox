@@ -76,7 +76,8 @@ public class DefaultKeystoreService implements KeystoreService, Service {
   private static GatewayResources RES = ResourcesFactory.get(GatewayResources.class);
 
   //let's configure the cache with hard-coded attributes now; we can introduce new gateway configuration later on if needed
-  private final Cache<CacheKey, String> cache = Caffeine.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).maximumSize(1000).build();
+  // visible for testing
+  final Cache<CacheKey, String> cache = Caffeine.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).maximumSize(1000).build();
   private GatewayConfig config;
 
   private MasterService masterService;
@@ -286,18 +287,21 @@ public class DefaultKeystoreService implements KeystoreService, Service {
   @Override
   public void addCredentialForCluster(String clusterName, String alias, String value)
       throws KeystoreServiceException {
-    removeFromCache(clusterName, alias);
-    KeyStore ks = getCredentialStoreForCluster(clusterName);
-    if (ks != null) {
-      try {
-        final Key key = new SecretKeySpec(value.getBytes(StandardCharsets.UTF_8), "AES");
-        ks.setKeyEntry(alias, key, masterService.getMasterSecret(), null);
+    // Needed to prevent read then write synchronization issue where alias is not added
+    synchronized (this) {
+      removeFromCache(clusterName, alias);
+      KeyStore ks = getCredentialStoreForCluster(clusterName);
+      if (ks != null) {
+        try {
+          final Key key = new SecretKeySpec(value.getBytes(StandardCharsets.UTF_8), "AES");
+          ks.setKeyEntry(alias, key, masterService.getMasterSecret(), null);
 
-        final Path keyStoreFilePath = keyStoreDirPath.resolve(clusterName + CREDENTIALS_SUFFIX);
-        writeKeyStoreToFile(ks, keyStoreFilePath, masterService.getMasterSecret());
-        addToCache(clusterName, alias, value);
-      } catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException e) {
-        LOG.failedToAddCredentialForCluster(clusterName, e);
+          final Path keyStoreFilePath = keyStoreDirPath.resolve(clusterName + CREDENTIALS_SUFFIX);
+          writeKeyStoreToFile(ks, keyStoreFilePath, masterService.getMasterSecret());
+          addToCache(clusterName, alias, value);
+        } catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException e) {
+          LOG.failedToAddCredentialForCluster(clusterName, e);
+        }
       }
     }
   }
@@ -329,18 +333,21 @@ public class DefaultKeystoreService implements KeystoreService, Service {
 
   @Override
   public void removeCredentialForCluster(String clusterName, String alias) throws KeystoreServiceException {
-    KeyStore ks = getCredentialStoreForCluster(clusterName);
-    if (ks != null) {
-      try {
-        if (ks.containsAlias(alias)) {
-          ks.deleteEntry(alias);
-        }
+    // Needed to prevent read then write synchronization issue where alias is not removed
+    synchronized (this) {
+      KeyStore ks = getCredentialStoreForCluster(clusterName);
+      if (ks != null) {
+        try {
+          if (ks.containsAlias(alias)) {
+            ks.deleteEntry(alias);
+          }
 
-        final Path keyStoreFilePath = keyStoreDirPath.resolve(clusterName + CREDENTIALS_SUFFIX);
-        writeKeyStoreToFile(ks, keyStoreFilePath, masterService.getMasterSecret());
-        removeFromCache(clusterName, alias);
-      } catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException e) {
-        LOG.failedToRemoveCredentialForCluster(clusterName, e);
+          final Path keyStoreFilePath = keyStoreDirPath.resolve(clusterName + CREDENTIALS_SUFFIX);
+          writeKeyStoreToFile(ks, keyStoreFilePath, masterService.getMasterSecret());
+          removeFromCache(clusterName, alias);
+        } catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException e) {
+          LOG.failedToRemoveCredentialForCluster(clusterName, e);
+        }
       }
     }
   }
