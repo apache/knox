@@ -22,6 +22,7 @@ import com.cloudera.api.swagger.model.ApiRole;
 import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
+import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGeneratorHandleResponse;
 import org.apache.knox.gateway.topology.discovery.cm.model.AbstractServiceModelGenerator;
 
 import java.util.Locale;
@@ -61,8 +62,12 @@ public class HiveServiceModelGenerator extends AbstractServiceModelGenerator {
   }
 
   @Override
-  public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return super.handles(service, serviceConfig, role, roleConfig) && checkHiveServer2HTTPMode(roleConfig);
+  public ServiceModelGeneratorHandleResponse handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
+    final ServiceModelGeneratorHandleResponse response = super.handles(service, serviceConfig, role, roleConfig);
+    if (response.handled()) {
+      checkHiveServer2HTTPMode(roleConfig, response);
+    }
+    return response;
   }
 
   @Override
@@ -102,8 +107,14 @@ public class HiveServiceModelGenerator extends AbstractServiceModelGenerator {
     return getHS2SafetyValveValue(roleConfig, HTTP_PATH);
   }
 
-  protected boolean checkHiveServer2HTTPMode(ApiConfigList roleConfig) {
-    return TRANSPORT_MODE_HTTP.equals(getHS2SafetyValveValue(roleConfig, TRANSPORT_MODE));
+  protected void checkHiveServer2HTTPMode(ApiConfigList roleConfig, ServiceModelGeneratorHandleResponse response) {
+    final String hiveServer2SafetyValve = getRoleConfigValue(roleConfig, SAFETY_VALVE);
+    final String hiveServer2TransportMode = hiveServer2SafetyValve == null ? null : getSafetyValveValue(hiveServer2SafetyValve, TRANSPORT_MODE);
+    if (hiveServer2TransportMode == null ) {
+      response.addConfigurationIssue("Missing configuration: " + TRANSPORT_MODE);
+    } else if (!TRANSPORT_MODE_HTTP.equals(hiveServer2TransportMode)) {
+      response.addConfigurationIssue("Invalid configuration: " + TRANSPORT_MODE + ". Expected=" + TRANSPORT_MODE_HTTP + "; Found=" + hiveServer2TransportMode);
+    }
   }
 
 }
