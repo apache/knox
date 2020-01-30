@@ -29,6 +29,9 @@ import java.util.Locale;
 public class YarnUIServiceModelGenerator extends ResourceManagerServiceModelGeneratorBase {
   private static final String SERVICE = "YARNUI";
 
+  static final String RM_HTTPS_PORT = "resourcemanager_webserver_https_port";
+  static final String RM_HTTP_PORT  = "resourcemanager_webserver_port";
+
   @Override
   public String getService() {
     return SERVICE;
@@ -44,7 +47,14 @@ public class YarnUIServiceModelGenerator extends ResourceManagerServiceModelGene
                                       ApiServiceConfig serviceConfig,
                                       ApiRole          role,
                                       ApiConfigList    roleConfig) throws ApiException {
-    return createServiceModel(generateURL(service, serviceConfig, role, roleConfig));
+    ServiceModel model = createServiceModel(generateURL(service, serviceConfig, role, roleConfig));
+    model.addRoleProperty(getRoleType(), RM_HTTP_PORT, getRoleConfigValue(roleConfig, RM_HTTP_PORT));
+    model.addRoleProperty(getRoleType(), RM_HTTPS_PORT, getRoleConfigValue(roleConfig, RM_HTTPS_PORT));
+
+    // N.B. It is not necessary to register the hdfs_hadoop_ssl_enabled configuration property for monitoring here
+    //      because that property is already registered for the HDFS ServiceModelGenerator types.
+
+    return model;
   }
 
   protected String generateURL(ApiService       service,
@@ -58,10 +68,10 @@ public class YarnUIServiceModelGenerator extends ResourceManagerServiceModelGene
 
     if(isSSLEnabled(service, serviceConfig)) {
       scheme = "https";
-      port = getRoleConfigValue(roleConfig, "resourcemanager_webserver_https_port");
+      port = getRoleConfigValue(roleConfig, RM_HTTPS_PORT);
     } else {
       scheme = "http";
-      port = getRoleConfigValue(roleConfig, "resourcemanager_webserver_port");
+      port = getRoleConfigValue(roleConfig, RM_HTTP_PORT);
     }
     return String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port);
   }

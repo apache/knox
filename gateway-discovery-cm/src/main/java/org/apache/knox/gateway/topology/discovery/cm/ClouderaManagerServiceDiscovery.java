@@ -28,12 +28,17 @@ import com.cloudera.api.swagger.model.ApiRoleList;
 import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
 import com.cloudera.api.swagger.model.ApiServiceList;
+import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.topology.discovery.GatewayService;
+import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
+import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
+import org.apache.knox.gateway.topology.discovery.cm.monitor.ClouderaManagerClusterConfigurationMonitor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -75,8 +80,9 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
 
   private boolean debug;
 
-  @GatewayService
   private AliasService aliasService;
+
+  private ClouderaManagerClusterConfigurationMonitor configChangeMonitor;
 
 
   ClouderaManagerServiceDiscovery() {
@@ -84,7 +90,12 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
   }
 
   ClouderaManagerServiceDiscovery(boolean debug) {
+    GatewayServices gwServices = GatewayServer.getGatewayServices();
+    if (gwServices != null) {
+      this.aliasService = gwServices.getService(ServiceType.ALIAS_SERVICE);
+    }
     this.debug = debug;
+    this.configChangeMonitor = getConfigurationChangeMonitor();
   }
 
   @Override
@@ -105,6 +116,29 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
     return client;
   }
 
+  /**
+   * Get the ClouderaManager configuration change monitor from the associated gateway service.
+   */
+  private ClouderaManagerClusterConfigurationMonitor getConfigurationChangeMonitor() {
+    ClouderaManagerClusterConfigurationMonitor cmMonitor = null;
+
+    try {
+      GatewayServices gwServices = GatewayServer.getGatewayServices();
+      if (gwServices != null) {
+        ClusterConfigurationMonitorService clusterMonitorService =
+            GatewayServer.getGatewayServices().getService(ServiceType.CLUSTER_CONFIGURATION_MONITOR_SERVICE);
+        ClusterConfigurationMonitor monitor =
+            clusterMonitorService.getMonitor(ClouderaManagerClusterConfigurationMonitor.getType());
+        if (monitor != null && ClouderaManagerClusterConfigurationMonitor.class.isAssignableFrom(monitor.getClass())) {
+          cmMonitor = (ClouderaManagerClusterConfigurationMonitor) monitor;
+        }
+      }
+    } catch (Exception e) {
+      log.errorAccessingConfigurationChangeMonitor(e);
+    }
+    return cmMonitor;
+  }
+
   @Override
   public Map<String, Cluster> discover(GatewayConfig gatewayConfig, ServiceDiscoveryConfig discoveryConfig) {
     Map<String, Cluster> clusters = new HashMap<>();
@@ -115,7 +149,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
       String clusterName = apiCluster.getName();
       log.discoveredCluster(clusterName, apiCluster.getFullVersion());
 
-      Cluster cluster = discover(gatewayConfig, discoveryConfig, clusterName, client);
+      ClouderaManagerCluster cluster = discover(gatewayConfig, discoveryConfig, clusterName, client);
       clusters.put(clusterName, cluster);
     }
 
@@ -123,15 +157,17 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
   }
 
   @Override
-  public Cluster discover(GatewayConfig gatewayConfig, ServiceDiscoveryConfig discoveryConfig, String clusterName) {
+  public ClouderaManagerCluster discover(GatewayConfig          gatewayConfig,
+                                         ServiceDiscoveryConfig discoveryConfig,
+                                         String                 clusterName) {
     return discover(gatewayConfig, discoveryConfig, clusterName, getClient(discoveryConfig));
   }
 
-  protected Cluster discover(GatewayConfig          gatewayConfig,
-                             ServiceDiscoveryConfig discoveryConfig,
-                             String                 clusterName,
-                             DiscoveryApiClient     client) {
-    ServiceDiscovery.Cluster cluster = null;
+  protected ClouderaManagerCluster discover(GatewayConfig          gatewayConfig,
+                                            ServiceDiscoveryConfig discoveryConfig,
+                                            String                 clusterName,
+                                            DiscoveryApiClient     client) {
+    ClouderaManagerCluster cluster = null;
 
     if (clusterName == null || clusterName.isEmpty()) {
       log.missingDiscoveryCluster();
@@ -140,6 +176,11 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
 
     try {
       cluster = discoverCluster(client, clusterName);
+
+      if (configChangeMonitor != null) {
+        // Notify the cluster config monitor about these cluster configuration details
+        configChangeMonitor.addServiceConfiguration(cluster, discoveryConfig);
+      }
     } catch (ApiException e) {
       log.clusterDiscoveryError(clusterName, e);
     }
@@ -161,8 +202,9 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
     return clusters;
   }
 
-  private static Cluster discoverCluster(DiscoveryApiClient client, String clusterName) throws ApiException {
-    ClouderaManagerCluster cluster = null;
+  private static ClouderaManagerCluster discoverCluster(DiscoveryApiClient client, String clusterName)
+      throws ApiException {
+    ClouderaManagerCluster cluster;
 
     ServicesResourceApi servicesResourceApi = new ServicesResourceApi(client);
     RolesResourceApi rolesResourceApi = new RolesResourceApi(client);

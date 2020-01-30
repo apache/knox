@@ -52,7 +52,14 @@ public class ZeppelinWSServiceModelGenerator extends ZeppelinServiceModelGenerat
       scheme = "ws";
       port = getPort(roleConfig);
     }
-    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/ws", scheme, hostname, port));
+
+    ServiceModel model =
+        createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/ws", scheme, hostname, port));
+    model.addRoleProperty(getRoleType(), SSL_ENABLED, getRoleConfigValue(roleConfig, SSL_ENABLED));
+    model.addRoleProperty(getRoleType(), SERVER_PORT, getPort(roleConfig));
+    model.addRoleProperty(getRoleType(), SERVER_SSL_PORT, getSSLPort(roleConfig));
+
+    return model;
   }
 
 }

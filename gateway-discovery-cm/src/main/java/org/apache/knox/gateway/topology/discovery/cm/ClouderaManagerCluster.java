@@ -73,32 +73,8 @@ public class ClouderaManagerCluster implements ServiceDiscovery.Cluster {
     }
   }
 
-  static class ServiceConfiguration {
-
-    private String type;
-    private String version;
-    private Map<String, String> props;
-
-    ServiceConfiguration(String type, String version, Map<String, String> properties) {
-      this.type = type;
-      this.version = version;
-      this.props = properties;
-    }
-
-    public String getVersion() {
-      return version;
-    }
-
-    public String getType() {
-      return type;
-    }
-
-    public Map<String, String> getProperties() {
-      return props;
-    }
+  public Map<String, List<ServiceModel>> getServiceModels() {
+    return serviceModels;
   }
-
-
-
 
 }

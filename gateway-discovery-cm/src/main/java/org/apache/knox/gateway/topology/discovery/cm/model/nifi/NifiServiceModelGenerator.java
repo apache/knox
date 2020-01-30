@@ -33,6 +33,10 @@ public class NifiServiceModelGenerator extends AbstractServiceModelGenerator {
   public static final String SERVICE_TYPE = "NIFI";
   public static final String ROLE_TYPE = "NIFI_NODE";
 
+  static final String SSL_ENABLED = "ssl_enabled";
+  static final String HTTP_PORT   = "nifi.web.http.port";
+  static final String HTTPS_PORT  = "nifi.web.https.port";
+
   /**
    * @return The name of the Knox service for which the implementation will
    * generate a model.
@@ -70,18 +74,23 @@ public class NifiServiceModelGenerator extends AbstractServiceModelGenerator {
     String hostname = role.getHostRef().getHostname();
     String scheme;
     String port;
-    boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, "ssl_enabled"));
+    boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, SSL_ENABLED));
     if(sslEnabled) {
       scheme = "https";
-      port = getRoleConfigValue(roleConfig, "nifi.web.https.port");
+      port = getRoleConfigValue(roleConfig, HTTPS_PORT);
     } else {
       scheme = "http";
-      port = getRoleConfigValue(roleConfig, "nifi.web.http.port");
+      port = getRoleConfigValue(roleConfig, HTTP_PORT);
     }
-    return new ServiceModel(getModelType(),
-        getService(),
-        getServiceType(),
-        getRoleType(),
-        String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+    ServiceModel model = new ServiceModel(getModelType(),
+                                          getService(),
+                                          getServiceType(),
+                                          getRoleType(),
+                                          String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+    model.addRoleProperty(getRoleType(), SSL_ENABLED, getRoleConfigValue(roleConfig, SSL_ENABLED));
+    model.addRoleProperty(getRoleType(), HTTP_PORT, getRoleConfigValue(roleConfig, HTTP_PORT));
+    model.addRoleProperty(getRoleType(), HTTPS_PORT, getRoleConfigValue(roleConfig, HTTPS_PORT));
+
+    return model;
   }
 }

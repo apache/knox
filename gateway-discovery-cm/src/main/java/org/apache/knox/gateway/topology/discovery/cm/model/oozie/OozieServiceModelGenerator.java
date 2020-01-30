@@ -31,6 +31,10 @@ public class OozieServiceModelGenerator extends AbstractServiceModelGenerator {
   public static final String SERVICE_TYPE = "OOZIE";
   public static final String ROLE_TYPE    = "OOZIE_SERVER";
 
+  static final String USE_SSL    = "oozie_use_ssl";
+  static final String HTTP_PORT  = "oozie_http_port";
+  static final String HTTPS_PORT = "oozie_https_port";
+
   @Override
   public String getService() {
     return SERVICE;
@@ -59,15 +63,22 @@ public class OozieServiceModelGenerator extends AbstractServiceModelGenerator {
     String hostname = role.getHostRef().getHostname();
     String scheme;
     String port;
-    boolean sslEnabled = Boolean.parseBoolean(getServiceConfigValue(serviceConfig, "oozie_use_ssl"));
-    if(sslEnabled) {
+    String sslEnabled = getServiceConfigValue(serviceConfig, USE_SSL);
+    if(Boolean.parseBoolean(sslEnabled)) {
       scheme = "https";
-      port = getRoleConfigValue(roleConfig, "oozie_https_port");
+      port = getRoleConfigValue(roleConfig, HTTPS_PORT);
     } else {
       scheme = "http";
-      port = getRoleConfigValue(roleConfig, "oozie_http_port");
+      port = getRoleConfigValue(roleConfig, HTTP_PORT);
     }
-    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/oozie/", scheme, hostname, port));
+
+    ServiceModel model =
+        createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/oozie/", scheme, hostname, port));
+    model.addServiceProperty(USE_SSL, sslEnabled);
+    model.addRoleProperty(getRoleType(), HTTP_PORT, getRoleConfigValue(roleConfig, HTTP_PORT));
+    model.addRoleProperty(getRoleType(), HTTPS_PORT, getRoleConfigValue(roleConfig, HTTPS_PORT));
+
+    return model;
   }
 
 }

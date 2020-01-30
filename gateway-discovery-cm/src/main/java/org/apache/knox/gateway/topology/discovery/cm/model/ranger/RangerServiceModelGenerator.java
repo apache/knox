@@ -30,6 +30,10 @@ public class RangerServiceModelGenerator extends AbstractServiceModelGenerator {
   public static final String SERVICE_TYPE = "RANGER";
   public static final String ROLE_TYPE    = "RANGER_ADMIN";
 
+  static final String SSL_ENABLED = "ssl_enabled";
+  static final String HTTP_PORT   = "ranger_service_http_port";
+  static final String HTTPS_PORT  = "ranger_service_https_port";
+
   @Override
   public String getService() {
     return SERVICE;
@@ -58,15 +62,21 @@ public class RangerServiceModelGenerator extends AbstractServiceModelGenerator {
     String hostname = role.getHostRef().getHostname();
     String scheme;
     String port;
-    boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, "ssl_enabled"));
-    if(sslEnabled) {
+    String sslEnabled = getRoleConfigValue(roleConfig, SSL_ENABLED);
+    if(Boolean.parseBoolean(sslEnabled)) {
       scheme = "https";
-      port = getServiceConfigValue(serviceConfig, "ranger_service_https_port");
+      port = getServiceConfigValue(serviceConfig, HTTPS_PORT);
     } else {
       scheme = "http";
-      port = getServiceConfigValue(serviceConfig, "ranger_service_http_port");
+      port = getServiceConfigValue(serviceConfig, HTTP_PORT);
     }
-    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+
+    ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+    model.addServiceProperty(HTTP_PORT, getServiceConfigValue(serviceConfig, HTTP_PORT));
+    model.addServiceProperty(HTTPS_PORT, getServiceConfigValue(serviceConfig, HTTPS_PORT));
+    model.addRoleProperty(getRoleType(), SSL_ENABLED, sslEnabled);
+
+    return model;
   }
 
 }

@@ -32,6 +32,8 @@ public class WebHCatServiceModelGenerator extends AbstractServiceModelGenerator 
   public static final String SERVICE_TYPE = "HIVE";
   public static final String ROLE_TYPE    = "WEBHCAT";
 
+  private static final String WEBHCAT_PORT = "hive_webhcat_address_port";
+
   @Override
   public String getService() {
     return SERVICE;
@@ -58,7 +60,11 @@ public class WebHCatServiceModelGenerator extends AbstractServiceModelGenerator 
                                       ApiRole          role,
                                       ApiConfigList    roleConfig) throws ApiException {
     String hostname = role.getHostRef().getHostname();
-    String port = getRoleConfigValue(roleConfig, "hive_webhcat_address_port");
-    return createServiceModel(String.format(Locale.getDefault(), "http://%s:%s/templeton", hostname, port));
+    String port = getRoleConfigValue(roleConfig, WEBHCAT_PORT);
+
+    ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "http://%s:%s/templeton", hostname, port));
+    model.addRoleProperty(getRoleType(), WEBHCAT_PORT, getRoleConfigValue(roleConfig, WEBHCAT_PORT));
+
+    return model;
   }
 }

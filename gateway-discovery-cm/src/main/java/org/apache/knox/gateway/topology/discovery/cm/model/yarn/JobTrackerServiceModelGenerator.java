@@ -29,6 +29,8 @@ public class JobTrackerServiceModelGenerator extends ResourceManagerServiceModel
 
   private static final String SERVICE = "JOBTRACKER";
 
+  private static final String RM_PORT = "yarn_resourcemanager_address";
+
   @Override
   public String getService() {
     return SERVICE;
@@ -46,8 +48,14 @@ public class JobTrackerServiceModelGenerator extends ResourceManagerServiceModel
                                       ApiConfigList    roleConfig) throws ApiException {
 
     String hostname = role.getHostRef().getHostname();
-    String port = getRoleConfigValue(roleConfig, "yarn_resourcemanager_address");
+    String port = getRoleConfigValue(roleConfig, RM_PORT);
 
-    return createServiceModel(String.format(Locale.getDefault(), "rpc://%s:%s", hostname, port));
+    ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "rpc://%s:%s", hostname, port));
+    model.addRoleProperty(getRoleType(), RM_PORT, port);
+
+    // N.B. It is not necessary to register the hdfs_hadoop_ssl_enabled configuration property for monitoring here
+    //      because that property is already registered for the HDFS ServiceModelGenerator types.
+
+    return model;
   }
 }

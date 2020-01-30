@@ -32,6 +32,9 @@ public class ImpalaUIServiceModelGenerator extends AbstractServiceModelGenerator
   public static final String SERVICE_TYPE = "IMPALA";
   public static final String ROLE_TYPE    = "IMPALAD";
 
+  static final String ENABLE_WEBSERVER = "impalad_enable_webserver";
+  static final String SSL_ENABLED      = "client_services_ssl_enabled";
+  static final String WEBSERVER_PORT   = "impalad_webserver_port";
 
   @Override
   public String getService() {
@@ -56,7 +59,7 @@ public class ImpalaUIServiceModelGenerator extends AbstractServiceModelGenerator
   @Override
   public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
     return super.handles(service, serviceConfig, role, roleConfig) &&
-           Boolean.parseBoolean(getRoleConfigValue(roleConfig, "impalad_enable_webserver"));
+           Boolean.parseBoolean(getRoleConfigValue(roleConfig, ENABLE_WEBSERVER));
   }
 
   @Override
@@ -66,10 +69,16 @@ public class ImpalaUIServiceModelGenerator extends AbstractServiceModelGenerator
                                       ApiConfigList    roleConfig) throws ApiException {
     String hostname = role.getHostRef().getHostname();
 
-    boolean sslEnabled = Boolean.parseBoolean(getServiceConfigValue(serviceConfig, "client_services_ssl_enabled"));
-    String scheme = sslEnabled ? "https" : "http";
+    String sslEnabled = getServiceConfigValue(serviceConfig, SSL_ENABLED);
+    String scheme = Boolean.parseBoolean(sslEnabled) ? "https" : "http";
 
-    String port = getRoleConfigValue(roleConfig, "impalad_webserver_port");
-    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/", scheme, hostname, port));
+    String port = getRoleConfigValue(roleConfig, WEBSERVER_PORT);
+
+    ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/", scheme, hostname, port));
+    model.addServiceProperty(SSL_ENABLED, sslEnabled);
+    model.addRoleProperty(getRoleType(), WEBSERVER_PORT, port);
+    model.addRoleProperty(getRoleType(), ENABLE_WEBSERVER, getRoleConfigValue(roleConfig, ENABLE_WEBSERVER));
+
+    return model;
   }
 }

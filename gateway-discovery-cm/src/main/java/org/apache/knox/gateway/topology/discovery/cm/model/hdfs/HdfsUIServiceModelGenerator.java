@@ -26,7 +26,11 @@ import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
 import java.util.Locale;
 
 public class HdfsUIServiceModelGenerator extends NameNodeServiceModelGenerator {
-  private static final String SERVICE = "HDFSUI";
+  public static final String SERVICE = "HDFSUI";
+
+  static final String SSL_ENABLED = "hdfs_hadoop_ssl_enabled";
+  static final String HTTP_PORT   = "dfs_http_port";
+  static final String HTTPS_PORT  = "dfs_https_port";
 
   @Override
   public String getService() {
@@ -46,16 +50,22 @@ public class HdfsUIServiceModelGenerator extends NameNodeServiceModelGenerator {
     String hostname = role.getHostRef().getHostname();
     String scheme;
     String port;
-    boolean sslEnabled = Boolean.parseBoolean(getServiceConfigValue(serviceConfig, "hdfs_hadoop_ssl_enabled"));
+    boolean sslEnabled = Boolean.parseBoolean(getServiceConfigValue(serviceConfig, SSL_ENABLED));
     if(sslEnabled) {
       scheme = "https";
-      port = getRoleConfigValue(roleConfig, "dfs_https_port");
+      port = getRoleConfigValue(roleConfig, HTTPS_PORT);
     } else {
       scheme = "http";
-      port = getRoleConfigValue(roleConfig, "dfs_http_port");
+      port = getRoleConfigValue(roleConfig, HTTP_PORT);
     }
     String namenodeUrl = String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port);
-    return createServiceModel(namenodeUrl);
+
+    ServiceModel model = createServiceModel(namenodeUrl);
+    model.addServiceProperty(SSL_ENABLED, getServiceConfigValue(serviceConfig, SSL_ENABLED));
+    model.addRoleProperty(role.getType(), HTTPS_PORT, getRoleConfigValue(roleConfig, HTTPS_PORT));
+    model.addRoleProperty(role.getType(), HTTP_PORT, getRoleConfigValue(roleConfig, HTTP_PORT));
+
+    return model;
   }
 
 }

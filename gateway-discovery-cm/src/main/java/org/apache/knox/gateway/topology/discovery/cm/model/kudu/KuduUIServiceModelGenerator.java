@@ -32,6 +32,8 @@ public class KuduUIServiceModelGenerator extends AbstractServiceModelGenerator {
   public static final String SERVICE_TYPE = "KUDU";
   public static final String ROLE_TYPE    = "KUDU_MASTER";
 
+  static final String WEBSERVER_PORT = "webserver_port";
+  static final String SSL_ENABLED    = "ssl_enabled";
 
   @Override
   public String getService() {
@@ -54,13 +56,21 @@ public class KuduUIServiceModelGenerator extends AbstractServiceModelGenerator {
   }
 
   @Override
-  public ServiceModel generateService(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) throws ApiException {
+  public ServiceModel generateService(ApiService       service,
+                                      ApiServiceConfig serviceConfig,
+                                      ApiRole          role,
+                                      ApiConfigList    roleConfig) throws ApiException {
     String hostname = role.getHostRef().getHostname();
 
-    boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, "ssl_enabled"));
-    String scheme = sslEnabled ? "https" : "http";
+    String sslEnabled = getRoleConfigValue(roleConfig, SSL_ENABLED);
+    String scheme = Boolean.parseBoolean(sslEnabled) ? "https" : "http";
 
-    String port = getRoleConfigValue(roleConfig, "webserver_port");
-    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/", scheme, hostname, port));
+    String port = getRoleConfigValue(roleConfig, WEBSERVER_PORT);
+
+    ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/", scheme, hostname, port));
+    model.addRoleProperty(getRoleType(), SSL_ENABLED, sslEnabled);
+    model.addRoleProperty(getRoleType(), WEBSERVER_PORT, port);
+
+    return model;
   }
 }

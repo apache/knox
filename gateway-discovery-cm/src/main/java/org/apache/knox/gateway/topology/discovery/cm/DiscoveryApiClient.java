@@ -46,15 +46,18 @@ public class DiscoveryApiClient extends ApiClient {
 
   private boolean isKerberos;
 
-  DiscoveryApiClient(ServiceDiscoveryConfig discoveryConfig, AliasService aliasService) {
-    configure(discoveryConfig, aliasService);
+  private ServiceDiscoveryConfig config;
+
+  public DiscoveryApiClient(ServiceDiscoveryConfig discoveryConfig, AliasService aliasService) {
+    this.config = discoveryConfig;
+    configure(aliasService);
   }
 
   boolean isKerberos() {
     return isKerberos;
   }
 
-  private void configure(ServiceDiscoveryConfig config, AliasService aliasService) {
+  private void configure(AliasService aliasService) {
     String apiAddress = config.getAddress();
     apiAddress += (apiAddress.endsWith("/") ? API_PATH : "/" + API_PATH);
 
