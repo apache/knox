@@ -145,7 +145,7 @@ public class DefaultTokenStateServiceTest {
 
 
   protected static JWTToken createMockToken(final long expiration) {
-    return createMockToken("ABCD1234", expiration);
+    return createMockToken("abcD1234eFGHIJKLmnoPQRSTUVwXYz", expiration);
   }
 
   protected static JWTToken createMockToken(final String payload, final long expiration) {

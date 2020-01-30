@@ -160,6 +160,9 @@ public class TokenResource {
 
     // If server-managed token expiration is configured, set the token store service
     if (Boolean.valueOf(context.getInitParameter(TokenStateService.CONFIG_SERVER_MANAGED))) {
+      String topologyName = getTopologyName();
+      log.serverManagedTokenStateEnabled(topologyName);
+
       GatewayServices services = (GatewayServices) context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
       tokenStateService = services.getService(ServiceType.TOKEN_STATE_SERVICE);
 
@@ -168,7 +171,7 @@ public class TokenResource {
         try {
           renewInterval = Optional.of(Long.parseLong(renewIntervalValue));
         } catch (NumberFormatException e) {
-          log.invalidConfigValue(TOKEN_EXP_RENEWAL_INTERVAL, renewIntervalValue, e);
+          log.invalidConfigValue(topologyName, TOKEN_EXP_RENEWAL_INTERVAL, renewIntervalValue, e);
         }
       }
 
@@ -177,7 +180,7 @@ public class TokenResource {
         try {
           maxTokenLifetime = Optional.of(Long.parseLong(maxLifetimeValue));
         } catch (NumberFormatException e) {
-          log.invalidConfigValue(TOKEN_EXP_RENEWAL_MAX_LIFETIME, maxLifetimeValue, e);
+          log.invalidConfigValue(topologyName, TOKEN_EXP_RENEWAL_MAX_LIFETIME, maxLifetimeValue, e);
         }
       }
 
@@ -187,6 +190,8 @@ public class TokenResource {
         for (String renewer : renewerList.split(",")) {
           allowedRenewers.add(renewer.trim());
         }
+      } else {
+        log.noRenewersConfigured(topologyName);
       }
     }
   }
@@ -234,6 +239,7 @@ public class TokenResource {
                       .entity("{\n  \"renewed\": \"true\",\n  \"expires\": \"" + expiration + "\"\n}\n")
                       .build();
     } else {
+      log.badRenewalRequest(getTopologyName(), error);
       resp = Response.status(Response.Status.BAD_REQUEST)
                      .entity("{\n  \"renewed\": \"false\",\n  \"error\": \"" + error + "\"\n}\n")
                      .build();
@@ -270,6 +276,7 @@ public class TokenResource {
                       .entity("{\n  \"revoked\": \"true\"\n}\n")
                       .build();
     } else {
+      log.badRevocationRequest(getTopologyName(), error);
       resp = Response.status(Response.Status.BAD_REQUEST)
                      .entity("{\n  \"revoked\": \"false\",\n  \"error\": \"" + error + "\"\n}\n")
                      .build();
@@ -384,4 +391,9 @@ public class TokenResource {
     }
     return expiry;
   }
+
+  private String getTopologyName() {
+    return (String) context.getAttribute("org.apache.knox.gateway.gateway.cluster");
+  }
+
 }
