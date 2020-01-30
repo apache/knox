@@ -124,6 +124,11 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
                                                             }
 
                                                             @Override
+                                                            public String getCluster() {
+                                                                return props.getProperty(PROP_CLUSTER_NAME);
+                                                            }
+
+                                                            @Override
                                                             public String getUser() {
                                                                 return props.getProperty(PROP_CLUSTER_USER);
                                                             }

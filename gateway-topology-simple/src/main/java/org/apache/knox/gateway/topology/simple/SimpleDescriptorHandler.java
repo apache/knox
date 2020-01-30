@@ -199,6 +199,7 @@ public class SimpleDescriptorHandler {
 
     private static ServiceDiscovery.Cluster performDiscovery(GatewayConfig config, SimpleDescriptor desc, Service...gatewayServices) {
         DefaultServiceDiscoveryConfig sdc = new DefaultServiceDiscoveryConfig(desc.getDiscoveryAddress());
+        sdc.setCluster(desc.getCluster());
         sdc.setUser(desc.getDiscoveryUser());
         sdc.setPasswordAlias(desc.getDiscoveryPasswordAlias());
 

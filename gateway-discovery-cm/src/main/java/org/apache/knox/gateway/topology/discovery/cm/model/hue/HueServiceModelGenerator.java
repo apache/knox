@@ -31,6 +31,9 @@ public class HueServiceModelGenerator extends AbstractServiceModelGenerator {
   public static final String SERVICE_TYPE = "HUE";
   public static final String ROLE_TYPE = "HUE_SERVER";
 
+  static final String HUE_HTTP_PORT = "hue_http_port";
+  static final String SSL_ENABLED   = "ssl_enable";
+
   @Override
   public String getService() {
     return SERVICE;
@@ -58,14 +61,19 @@ public class HueServiceModelGenerator extends AbstractServiceModelGenerator {
                                       ApiConfigList    roleConfig) {
     String hostname = role.getHostRef().getHostname();
     String scheme;
-    String port = getRoleConfigValue(roleConfig, "hue_http_port");
-    boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, "ssl_enable"));
+    String port = getRoleConfigValue(roleConfig, HUE_HTTP_PORT);
+    boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, SSL_ENABLED));
     if(sslEnabled) {
       scheme = "https";
     } else {
       scheme = "http";
     }
-    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+
+    ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+    model.addRoleProperty(getRoleType(), HUE_HTTP_PORT, port);
+    model.addRoleProperty(getRoleType(), SSL_ENABLED, getRoleConfigValue(roleConfig, SSL_ENABLED));
+
+    return model;
   }
 
 }

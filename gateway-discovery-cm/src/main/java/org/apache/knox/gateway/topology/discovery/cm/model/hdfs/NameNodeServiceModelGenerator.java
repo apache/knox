@@ -31,6 +31,10 @@ public class NameNodeServiceModelGenerator extends AbstractServiceModelGenerator
   public static final String SERVICE_TYPE = "HDFS";
   public static final String ROLE_TYPE    = "NAMENODE";
 
+  static final String AUTOFAILOVER_ENABLED = "autofailover_enabled";
+  static final String NN_NAMESERVICE       = "dfs_federation_namenode_nameservice";
+  static final String NN_PORT              = "namenode_port";
+
   @Override
   public String getServiceType() {
     return SERVICE_TYPE;
@@ -56,17 +60,25 @@ public class NameNodeServiceModelGenerator extends AbstractServiceModelGenerator
                                       ApiServiceConfig serviceConfig,
                                       ApiRole          role,
                                       ApiConfigList    roleConfig) throws ApiException {
-    boolean haEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, "autofailover_enabled"));
+    boolean haEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, AUTOFAILOVER_ENABLED));
     String serviceUrl;
     if(haEnabled) {
-      String nameservice = getRoleConfigValue(roleConfig, "dfs_federation_namenode_nameservice");
+      String nameservice = getRoleConfigValue(roleConfig, NN_NAMESERVICE);
       serviceUrl = String.format(Locale.getDefault(), "hdfs://%s", nameservice);
     } else {
       String hostname = role.getHostRef().getHostname();
-      String port = getRoleConfigValue(roleConfig, "namenode_port");
+      String port = getRoleConfigValue(roleConfig, NN_PORT);
       serviceUrl = String.format(Locale.getDefault(), "hdfs://%s:%s", hostname, port);
     }
-    return createServiceModel(serviceUrl);
+
+    ServiceModel model =  createServiceModel(serviceUrl);
+    model.addRoleProperty(getRoleType(), AUTOFAILOVER_ENABLED, getRoleConfigValue(roleConfig, AUTOFAILOVER_ENABLED));
+    model.addRoleProperty(getRoleType(), NN_PORT, getRoleConfigValue(roleConfig, NN_PORT));
+    if (haEnabled) {
+      model.addRoleProperty(getRoleType(), NN_NAMESERVICE, getRoleConfigValue(roleConfig, NN_NAMESERVICE));
+    }
+
+    return model;
   }
 
 }

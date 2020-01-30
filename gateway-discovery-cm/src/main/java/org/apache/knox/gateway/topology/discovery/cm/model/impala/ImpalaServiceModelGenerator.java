@@ -32,6 +32,9 @@ public class ImpalaServiceModelGenerator extends AbstractServiceModelGenerator {
   public static final String SERVICE_TYPE = "IMPALA";
   public static final String ROLE_TYPE    = "IMPALAD";
 
+  static final String SSL_ENABLED = "client_services_ssl_enabled";
+  static final String HTTP_PORT   = "hs2_http_port";
+
   @Override
   public String getService() {
     return SERVICE;
@@ -53,14 +56,22 @@ public class ImpalaServiceModelGenerator extends AbstractServiceModelGenerator {
   }
 
   @Override
-  public ServiceModel generateService(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) throws ApiException {
+  public ServiceModel generateService(ApiService       service,
+                                      ApiServiceConfig serviceConfig,
+                                      ApiRole          role,
+                                      ApiConfigList    roleConfig) throws ApiException {
     String hostname = role.getHostRef().getHostname();
 
-    boolean sslEnabled = Boolean.parseBoolean(getServiceConfigValue(serviceConfig, "client_services_ssl_enabled"));
+    boolean sslEnabled = Boolean.parseBoolean(getServiceConfigValue(serviceConfig, SSL_ENABLED));
     String scheme = sslEnabled ? "https" : "http";
 
     // Role config properties
-    String port = getRoleConfigValue(roleConfig, "hs2_http_port");
-    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/", scheme, hostname, port));
+    String port = getRoleConfigValue(roleConfig, HTTP_PORT);
+
+    ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/", scheme, hostname, port));
+    model.addServiceProperty(SSL_ENABLED, getServiceConfigValue(serviceConfig, SSL_ENABLED));
+    model.addRoleProperty(getRoleType(), HTTP_PORT, port);
+
+    return model;
   }
 }

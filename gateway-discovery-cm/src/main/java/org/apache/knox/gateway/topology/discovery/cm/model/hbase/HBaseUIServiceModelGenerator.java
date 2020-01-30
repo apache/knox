@@ -31,6 +31,9 @@ public class HBaseUIServiceModelGenerator extends AbstractServiceModelGenerator 
   public static final String SERVICE_TYPE = "HBASE";
   public static final String ROLE_TYPE    = "MASTER";
 
+  static final String SSL_ENABLED      = "hbase_hadoop_ssl_enabled";
+  static final String MASTER_INFO_PORT = "hbase_master_info_port";
+
   @Override
   public String getService() {
     return SERVICE;
@@ -58,14 +61,21 @@ public class HBaseUIServiceModelGenerator extends AbstractServiceModelGenerator 
                                       ApiConfigList    roleConfig) {
     String hostname = role.getHostRef().getHostname();
     String scheme;
-    String port = getRoleConfigValue(roleConfig, "hbase_master_info_port"); // TODO: Is there an SSL port, or is this property re-used?
-    boolean sslEnabled = Boolean.parseBoolean(getServiceConfigValue(serviceConfig, "hbase_hadoop_ssl_enabled"));
+    String port = getRoleConfigValue(roleConfig, MASTER_INFO_PORT); // TODO: Is there an SSL port, or is this property re-used?
+    boolean sslEnabled = Boolean.parseBoolean(getServiceConfigValue(serviceConfig, SSL_ENABLED));
     if(sslEnabled) {
       scheme = "https";
     } else {
       scheme = "http";
     }
-    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+
+    ServiceModel model =
+        createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+
+    model.addServiceProperty(SSL_ENABLED, getServiceConfigValue(serviceConfig, SSL_ENABLED));
+    model.addRoleProperty(getRoleType(), MASTER_INFO_PORT, getRoleConfigValue(roleConfig, MASTER_INFO_PORT));
+
+    return model;
   }
 
 }

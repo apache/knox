@@ -23,9 +23,13 @@ import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
 
+import java.util.Map;
+
 public class WebHdfsServiceModelGenerator extends HdfsUIServiceModelGenerator {
   private static final String SERVICE = "WEBHDFS";
   private static final String WEBHDFS_SUFFIX = "/webhdfs";
+
+  static final String WEBHDFS_ENABLED = "dfs_webhdfs_enabled";
 
   @Override
   public String getService() {
@@ -43,7 +47,7 @@ public class WebHdfsServiceModelGenerator extends HdfsUIServiceModelGenerator {
                          ApiRole          role,
                          ApiConfigList    roleConfig) {
     return super.handles(service, serviceConfig, role, roleConfig) &&
-           Boolean.parseBoolean(getServiceConfigValue(serviceConfig, "dfs_webhdfs_enabled"));
+           Boolean.parseBoolean(getServiceConfigValue(serviceConfig, WEBHDFS_ENABLED));
   }
 
   @Override
@@ -51,9 +55,30 @@ public class WebHdfsServiceModelGenerator extends HdfsUIServiceModelGenerator {
                                       ApiServiceConfig serviceConfig,
                                       ApiRole          role,
                                       ApiConfigList    roleConfig) throws ApiException {
-    String serviceUrl =
-        super.generateService(service, serviceConfig, role, roleConfig).getServiceUrl() + WEBHDFS_SUFFIX;
-    return createServiceModel(serviceUrl);
+    ServiceModel parent = super.generateService(service, serviceConfig, role, roleConfig);
+    String serviceUrl = parent.getServiceUrl() + WEBHDFS_SUFFIX;
+
+    ServiceModel model = createServiceModel(serviceUrl);
+    model.addServiceProperty(WEBHDFS_ENABLED, getServiceConfigValue(serviceConfig, WEBHDFS_ENABLED));
+
+    // Add parent model metadata
+    addParentModelMetadata(model, parent);
+
+    return model;
+  }
+
+  private void addParentModelMetadata(final ServiceModel model, final ServiceModel parent) {
+    // Add parent model properties
+    for (Map.Entry<String, String> parentProp : parent.getServiceProperties().entrySet()) {
+      model.addServiceProperty(parentProp.getKey(), parentProp.getValue());
+    }
+
+    // Add parent role properties
+    for (Map.Entry<String, Map<String, String>> parentProps : parent.getRoleProperties().entrySet()) {
+      for (Map.Entry<String, String> prop : parentProps.getValue().entrySet()) {
+        model.addRoleProperty(parentProps.getKey(), prop.getKey(), prop.getValue());
+      }
+    }
   }
 
 }

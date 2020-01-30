@@ -31,6 +31,10 @@ public class ZeppelinServiceModelGenerator extends AbstractServiceModelGenerator
   public static final String SERVICE_TYPE = "ZEPPELIN";
   public static final String ROLE_TYPE    = "ZEPPELIN_SERVER";
 
+  protected static final String SSL_ENABLED     = "ssl_enabled";
+  protected static final String SERVER_SSL_PORT = "zeppelin_server_ssl_port";
+  protected static final String SERVER_PORT     = "zeppelin_server_port";
+
   @Override
   public String getService() {
     return SERVICE;
@@ -66,19 +70,25 @@ public class ZeppelinServiceModelGenerator extends AbstractServiceModelGenerator
       scheme = "http";
       port = getPort(roleConfig);
     }
-    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+
+    ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+    model.addRoleProperty(getRoleType(), SSL_ENABLED, getRoleConfigValue(roleConfig, SSL_ENABLED));
+    model.addRoleProperty(getRoleType(), SERVER_PORT, getPort(roleConfig));
+    model.addRoleProperty(getRoleType(), SERVER_SSL_PORT, getSSLPort(roleConfig));
+
+    return model;
   }
 
   protected boolean isSSL(ApiConfigList roleConfig) {
-    return Boolean.parseBoolean(getRoleConfigValue(roleConfig, "ssl_enabled"));
+    return Boolean.parseBoolean(getRoleConfigValue(roleConfig, SSL_ENABLED));
   }
 
   protected String getPort(ApiConfigList roleConfig) {
-    return getRoleConfigValue(roleConfig, "zeppelin_server_port");
+    return getRoleConfigValue(roleConfig, SERVER_PORT);
   }
 
   protected String getSSLPort(ApiConfigList roleConfig) {
-    return getRoleConfigValue(roleConfig, "zeppelin_server_ssl_port");
+    return getRoleConfigValue(roleConfig, SERVER_SSL_PORT);
   }
 
 }

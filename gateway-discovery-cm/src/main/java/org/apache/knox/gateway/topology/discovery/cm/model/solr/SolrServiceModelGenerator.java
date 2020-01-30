@@ -30,6 +30,10 @@ public class SolrServiceModelGenerator extends AbstractServiceModelGenerator {
   public static final String SERVICE_TYPE = "SOLR";
   public static final String ROLE_TYPE    = "SOLR_SERVER";
 
+  static final String USE_SSL    = "solr_use_ssl";
+  static final String HTTP_PORT  = "solr_http_port";
+  static final String HTTPS_PORT = "solr_https_port";
+
   @Override
   public String getService() {
     return SERVICE;
@@ -58,15 +62,22 @@ public class SolrServiceModelGenerator extends AbstractServiceModelGenerator {
     String hostname = role.getHostRef().getHostname();
     String scheme;
     String port;
-    boolean sslEnabled = Boolean.parseBoolean(getServiceConfigValue(serviceConfig, "solr_use_ssl"));
-    if(sslEnabled) {
+    String sslEnabled = getServiceConfigValue(serviceConfig, USE_SSL);
+    if(Boolean.parseBoolean(sslEnabled)) {
       scheme = "https";
-      port = getRoleConfigValue(roleConfig, "solr_https_port");
+      port = getRoleConfigValue(roleConfig, HTTPS_PORT);
     } else {
       scheme = "http";
-      port = getRoleConfigValue(roleConfig, "solr_http_port");
+      port = getRoleConfigValue(roleConfig, HTTP_PORT);
     }
-    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/solr/", scheme, hostname, port));
+
+    ServiceModel model =
+        createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/solr/", scheme, hostname, port));
+    model.addServiceProperty(USE_SSL, sslEnabled);
+    model.addRoleProperty(getRoleType(), HTTP_PORT, getRoleConfigValue(roleConfig, HTTP_PORT));
+    model.addRoleProperty(getRoleType(), HTTPS_PORT, getRoleConfigValue(roleConfig, HTTPS_PORT));
+
+    return model;
   }
 
 }

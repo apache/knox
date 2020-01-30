@@ -31,6 +31,9 @@ public class WebHBaseServiceModelGenerator extends AbstractServiceModelGenerator
   public static final String SERVICE_TYPE = "HBASE";
   public static final String ROLE_TYPE    = "HBASERESTSERVER";
 
+  static final String SSL_ENABLED      = "hbase_restserver_ssl_enable";
+  static final String REST_SERVER_PORT = "hbase_restserver_port";
+
   @Override
   public String getService() {
     return SERVICE;
@@ -58,14 +61,20 @@ public class WebHBaseServiceModelGenerator extends AbstractServiceModelGenerator
                                       ApiConfigList    roleConfig) {
     String hostname = role.getHostRef().getHostname();
     String scheme;
-    String port = getRoleConfigValue(roleConfig, "hbase_restserver_port");
-    boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, "hbase_restserver_ssl_enable"));
+    String port = getRoleConfigValue(roleConfig, REST_SERVER_PORT);
+    boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, SSL_ENABLED));
     if(sslEnabled) {
       scheme = "https";
     } else {
       scheme = "http";
     }
-    return createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+
+    ServiceModel model =
+        createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+    model.addRoleProperty(getRoleType(), REST_SERVER_PORT, getRoleConfigValue(roleConfig, REST_SERVER_PORT));
+    model.addRoleProperty(getRoleType(), SSL_ENABLED, getRoleConfigValue(roleConfig, SSL_ENABLED));
+
+    return model;
   }
 
 }

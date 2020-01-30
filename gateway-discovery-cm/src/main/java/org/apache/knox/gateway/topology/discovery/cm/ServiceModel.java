@@ -16,17 +16,32 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Model of a deployed service configuration and metadata for the configuration properties used to create the model
+ * object.
+ */
 public class ServiceModel {
 
   public enum Type {API, UI}
+
+  private static final String NULL_VALUE = "null";
 
   private final Type type;
   private final String service;
   private final String serviceType;
   private final String roleType;
   private final String serviceUrl;
+
+  // The service configuration properties used to created the model
+  private final Map<String, String> serviceConfigProperties = new ConcurrentHashMap<>();
+
+  // The role configuration properties used to created the model
+  private final Map<String, Map<String, String>> roleConfigProperties = new ConcurrentHashMap<>();
 
   /**
    * @param type        The model type
@@ -45,6 +60,28 @@ public class ServiceModel {
     this.serviceType = serviceType;
     this.roleType    = roleType;
     this.serviceUrl  = serviceUrl;
+  }
+
+  public void addServiceProperty(final String name, final String value) {
+    serviceConfigProperties.put(name, (value != null ? value : NULL_VALUE));
+  }
+
+  public void addRoleProperty(final String role, final String name, final String value) {
+    roleConfigProperties.computeIfAbsent(role, m -> new HashMap<>()).put(name, (value != null ? value : NULL_VALUE));
+  }
+
+  /**
+   * @return The service configuration properties employed by the model.
+   */
+  public Map<String, String> getServiceProperties() {
+    return serviceConfigProperties;
+  }
+
+  /**
+   * @return The role configuration properties employed by the model.
+   */
+  public Map<String, Map<String, String>> getRoleProperties() {
+    return roleConfigProperties;
   }
 
   /**
