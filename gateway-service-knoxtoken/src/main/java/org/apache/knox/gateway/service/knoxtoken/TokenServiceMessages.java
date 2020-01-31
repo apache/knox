@@ -22,7 +22,7 @@ import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
 
-@Messages(logger="org.apache.knox.gateway.service.knoxsso")
+@Messages(logger="org.apache.knox.gateway.service.knoxtoken")
 public interface TokenServiceMessages {
   @Message( level = MessageLevel.INFO, text = "About to redirect to original URL: {0}")
   void aboutToRedirectToOriginal(String original);
@@ -48,7 +48,8 @@ public interface TokenServiceMessages {
   @Message( level = MessageLevel.ERROR, text = "Unable to issue token.")
   void unableToIssueToken(@StackTrace( level = MessageLevel.DEBUG) Exception e);
 
-  @Message( level = MessageLevel.WARN, text = "The SSO cookie SecureOnly flag is set to FALSE and is therefore insecure.")
+  @Message( level = MessageLevel.WARN,
+            text = "The SSO cookie SecureOnly flag is set to FALSE and is therefore insecure.")
   void cookieSecureOnly(boolean secureOnly);
 
   @Message( level = MessageLevel.WARN, text = "The SSO cookie max age configuration is invalid: {0} - using default.")
@@ -64,10 +65,29 @@ public interface TokenServiceMessages {
       "not valid according to the configured whitelist: {1}. See documentation for KnoxSSO Whitelisting.")
   void whiteListMatchFail(String original, String whitelist);
 
-  @Message( level = MessageLevel.WARN, text = "Unable to acquire cert for endpoint clients - assume trust will be provisioned separately: {0}.")
+  @Message( level = MessageLevel.WARN,
+            text = "Unable to acquire cert for endpoint clients - assume trust will be provisioned separately: {0}.")
   void unableToAcquireCertForEndpointClients(@StackTrace( level = MessageLevel.DEBUG ) Exception e);
 
-  @Message( level = MessageLevel.ERROR, text = "The specified value for the {0} configuration property is not valid: {1}")
-  void invalidConfigValue(String name, String value, @StackTrace( level = MessageLevel.DEBUG ) Exception e);
+  @Message( level = MessageLevel.ERROR,
+            text = "The specified value for the {1} configuration property is not valid for the \"{0}\" topology: {2}")
+  void invalidConfigValue(String topologyName,
+                          String name,
+                          String value,
+                          @StackTrace( level = MessageLevel.DEBUG ) Exception e);
+
+  @Message( level = MessageLevel.INFO, text = "Server management of token state is enabled for the \"{0}\" topology.")
+  void serverManagedTokenStateEnabled(String topologyName);
+
+  @Message( level = MessageLevel.WARN,
+            text = "There are no token renewers white-listed in the \"{0}\" topology.")
+  void noRenewersConfigured(String topologyName);
+
+  @Message( level = MessageLevel.ERROR, text = "Knox Token service ({0}) rejected a bad token renewal request: {1}")
+  void badRenewalRequest(String topologyName, String error);
+
+  @Message( level = MessageLevel.ERROR, text = "Knox Token service ({0}) rejected a bad token revocation request: {1}")
+  void badRevocationRequest(String topologyName, String error);
+
 
 }
