@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -67,6 +68,9 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
 
   static final String DEFAULT_USER_ALIAS = "cm.discovery.user";
   static final String DEFAULT_PWD_ALIAS  = "cm.discovery.password";
+
+  public static final String CM_SERVICE_TYPE  = "CM";
+  public static final String CM_ROLE_TYPE  = "CM_SERVER";
 
   private static Map<String, List<ServiceModelGenerator>> serviceModelGenerators = new HashMap<>();
   static {
@@ -216,18 +220,40 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
     Set<ServiceModel> serviceModels = new HashSet<>();
 
     ApiServiceList serviceList = getClusterServices(servicesResourceApi, clusterName);
+
+    /* Since Cloudera Manager does not have a service for itself, we will add a skeleton CM
+      service so that we can add CM service to topology when auto-discovery is
+      turned on and CM service is selected in the descriptor */
+    final ApiService cmUIService = new ApiService();
+    cmUIService.setName(CM_SERVICE_TYPE.toLowerCase(Locale.ROOT));
+    cmUIService.setType(CM_SERVICE_TYPE);
+    final ApiService cmAPIService = new ApiService();
+    cmAPIService.setName(CM_SERVICE_TYPE.toLowerCase(Locale.ROOT));
+    cmAPIService.setType(CM_SERVICE_TYPE);
+    serviceList.addItemsItem(cmUIService);
+    serviceList.addItemsItem(cmAPIService);
+
     if (serviceList != null) {
       for (ApiService service : serviceList.getItems()) {
         String serviceName = service.getName();
         log.discoveredService(serviceName, service.getType());
-        ApiServiceConfig serviceConfig =
-            getServiceConfig(servicesResourceApi, clusterName, serviceName);
+        ApiServiceConfig serviceConfig = null;
+        /* no reason to check service config for CM service */
+        if(!CM_SERVICE_TYPE.equals(service.getType())) {
+          serviceConfig =
+              getServiceConfig(servicesResourceApi, clusterName, serviceName);
+        }
         ApiRoleList roleList = getRoles(rolesResourceApi, clusterName, serviceName);
         if (roleList != null) {
           for (ApiRole role : roleList.getItems()) {
             String roleName = role.getName();
             log.discoveredServiceRole(roleName, role.getType());
-            ApiConfigList roleConfig = getRoleConfig(rolesResourceApi, clusterName, serviceName, roleName);
+            ApiConfigList roleConfig = null;
+            /* no reason to check role config for CM service */
+            if(!CM_SERVICE_TYPE.equals(service.getType())) {
+              roleConfig =
+                  getRoleConfig(rolesResourceApi, clusterName, serviceName, roleName);
+            }
 
             List<ServiceModelGenerator> smgList = serviceModelGenerators.get(service.getType());
             if (smgList != null) {
@@ -280,7 +306,17 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
                                       String serviceName) {
     ApiRoleList roles = null;
     try {
-      roles = rolesResourceApi.readRoles(clusterName, serviceName, "", VIEW_SUMMARY);
+      /* Populate roles for CM Service since they are not discoverable */
+      if(CM_SERVICE_TYPE.equalsIgnoreCase(serviceName)) {
+        final ApiRoleList roleList = new ApiRoleList();
+        final ApiRole cmRole = new ApiRole();
+        cmRole.setName(CM_ROLE_TYPE);
+        cmRole.setType(CM_ROLE_TYPE);
+        roleList.addItemsItem(cmRole);
+        return roleList;
+      } else {
+        roles = rolesResourceApi.readRoles(clusterName, serviceName, "", VIEW_SUMMARY);
+      }
     } catch (Exception e) {
       log.failedToAccessServiceRoleConfigs(clusterName, e);
     }

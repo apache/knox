@@ -34,6 +34,7 @@ import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.model.atlas.AtlasAPIServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.atlas.AtlasServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.cm.ClouderaManagerUIServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.hbase.HBaseUIServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.hbase.WebHBaseServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.hdfs.NameNodeServiceModelGenerator;
@@ -68,6 +69,8 @@ import static org.junit.Assert.assertNotNull;
 
 
 public class ClouderaManagerServiceDiscoveryTest {
+
+  private static final String DISCOVERY_URL = "http://localhost:1234";
 
   @Test
   public void testJobTrackerServiceDiscovery() {
@@ -560,6 +563,33 @@ public class ClouderaManagerServiceDiscoveryTest {
   @Test
   public void testNiFiRegistryDiscoverySSL() {
     doTestNiFiRegistryDiscovery(true);
+  }
+
+  @Test
+  public void testCMDiscoveryUI() {
+    doTestCMDiscovery("CM-UI");
+  }
+
+  @Test
+  public void testCMDiscoveryAPI() {
+    doTestCMDiscovery("CM-API");
+  }
+
+  private void doTestCMDiscovery(final String serviceName) {
+    ServiceDiscovery.Cluster cluster = doTestDiscovery("somehost",
+        serviceName+"-1", ClouderaManagerUIServiceModelGenerator.SERVICE_TYPE,
+        serviceName+"-1",
+        ClouderaManagerUIServiceModelGenerator.ROLE_TYPE,
+        Collections.emptyMap(),
+        Collections.emptyMap());
+
+    List<String> urls = cluster.getServiceURLs(serviceName);
+    assertEquals(1, urls.size());
+    if("CM-UI".equals(serviceName)) {
+      assertEquals(DISCOVERY_URL, urls.get(0));
+    } else {
+      assertEquals(DISCOVERY_URL+"/api", urls.get(0));
+    }
   }
 
   private void doTestNiFiRegistryDiscovery(boolean sslEnabled) {
@@ -1071,7 +1101,7 @@ public class ClouderaManagerServiceDiscoveryTest {
 
 
   private static ServiceDiscoveryConfig createMockDiscoveryConfig() {
-    return createMockDiscoveryConfig("http://localhost:1234", "itsme");
+    return createMockDiscoveryConfig(DISCOVERY_URL, "itsme");
   }
 
   private static ServiceDiscoveryConfig createMockDiscoveryConfig(String address, String username) {
