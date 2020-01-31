@@ -29,7 +29,6 @@ import java.util.Map;
 public class WebHdfsServiceModelGenerator extends HdfsUIServiceModelGenerator {
   private static final String SERVICE = "WEBHDFS";
   private static final String WEBHDFS_SUFFIX = "/webhdfs";
-  private static final String CONFIG_NAME_DFS_WEBHDFS_ENABLED = "dfs_webhdfs_enabled";
 
   static final String WEBHDFS_ENABLED = "dfs_webhdfs_enabled";
 
@@ -47,11 +46,11 @@ public class WebHdfsServiceModelGenerator extends HdfsUIServiceModelGenerator {
   public ServiceModelGeneratorHandleResponse handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
     final ServiceModelGeneratorHandleResponse response = super.handles(service, serviceConfig, role, roleConfig);
     if (response.handled()) {
-      final String webHdfsEnabled = getServiceConfigValue(serviceConfig, CONFIG_NAME_DFS_WEBHDFS_ENABLED);
+      final String webHdfsEnabled = getServiceConfigValue(serviceConfig, WEBHDFS_ENABLED);
       if (webHdfsEnabled == null) {
-        response.addConfigurationIssue("Missing configuration: " + CONFIG_NAME_DFS_WEBHDFS_ENABLED);
+        response.addConfigurationIssue("Missing configuration: " + WEBHDFS_ENABLED);
       } else if (!Boolean.parseBoolean(webHdfsEnabled)) {
-        response.addConfigurationIssue("Invalid configuration: " + CONFIG_NAME_DFS_WEBHDFS_ENABLED + ". Expected=true; Found=" + webHdfsEnabled);
+        response.addConfigurationIssue("Invalid configuration: " + WEBHDFS_ENABLED + ". Expected=true; Found=" + webHdfsEnabled);
       }
     }
     return response;

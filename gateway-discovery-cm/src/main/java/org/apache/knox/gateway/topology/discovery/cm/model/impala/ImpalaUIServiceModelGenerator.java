@@ -32,7 +32,6 @@ public class ImpalaUIServiceModelGenerator extends AbstractServiceModelGenerator
   public static final String SERVICE      = "IMPALAUI";
   public static final String SERVICE_TYPE = "IMPALA";
   public static final String ROLE_TYPE    = "IMPALAD";
-  private static final String CONFIG_NAME_IMPLALAD_ENABLE_WEBSERVER = "impalad_enable_webserver";
 
   static final String ENABLE_WEBSERVER = "impalad_enable_webserver";
   static final String SSL_ENABLED      = "client_services_ssl_enabled";
@@ -62,11 +61,11 @@ public class ImpalaUIServiceModelGenerator extends AbstractServiceModelGenerator
   public ServiceModelGeneratorHandleResponse handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
     final ServiceModelGeneratorHandleResponse response = super.handles(service, serviceConfig, role, roleConfig);
     if (response.handled()) {
-      final String impalaWebserverEnabled = getRoleConfigValue(roleConfig, CONFIG_NAME_IMPLALAD_ENABLE_WEBSERVER);
+      final String impalaWebserverEnabled = getRoleConfigValue(roleConfig, ENABLE_WEBSERVER);
       if (impalaWebserverEnabled == null) {
-        response.addConfigurationIssue("Missing configuration: " + CONFIG_NAME_IMPLALAD_ENABLE_WEBSERVER);
+        response.addConfigurationIssue("Missing configuration: " + ENABLE_WEBSERVER);
       } else if (!Boolean.parseBoolean(impalaWebserverEnabled)) {
-        response.addConfigurationIssue("Invalid configuration: " + CONFIG_NAME_IMPLALAD_ENABLE_WEBSERVER + ". Expected=true; Found=" + impalaWebserverEnabled);
+        response.addConfigurationIssue("Invalid configuration: " + ENABLE_WEBSERVER + ". Expected=true; Found=" + impalaWebserverEnabled);
       }
     }
     return response;

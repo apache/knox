@@ -28,7 +28,6 @@ import com.cloudera.api.swagger.model.ApiServiceConfig;
 public class HiveOnTezServiceModelGenerator extends HiveServiceModelGenerator {
 
   public static final String SERVICE_TYPE = "HIVE_ON_TEZ";
-  private static final String CONFIG_NAME_HS2_TRANSPORT_MODE = "hive_server2_transport_mode";
 
   static final String HIVEONTEZ_TRANSPORT_MODE = TRANSPORT_MODE.replaceAll("\\.", "_");
   static final String HIVEONTEZ_HTTP_PORT      = HTTP_PORT.replaceAll("\\.", "_");
@@ -40,11 +39,11 @@ public class HiveOnTezServiceModelGenerator extends HiveServiceModelGenerator {
 
   @Override
   protected void checkHiveServer2HTTPMode(ApiConfigList roleConfig, ServiceModelGeneratorHandleResponse response) {
-    final String hiveServer2TransportMode = getRoleConfigValue(roleConfig, CONFIG_NAME_HS2_TRANSPORT_MODE);
+    final String hiveServer2TransportMode = getRoleConfigValue(roleConfig, HIVEONTEZ_TRANSPORT_MODE);
     if (hiveServer2TransportMode == null) {
-      response.addConfigurationIssue("Missing configuration: " + CONFIG_NAME_HS2_TRANSPORT_MODE);
+      response.addConfigurationIssue("Missing configuration: " + HIVEONTEZ_TRANSPORT_MODE);
     } else if (!TRANSPORT_MODE_HTTP.equals(hiveServer2TransportMode)) {
-      response.addConfigurationIssue("Invalid configuration: " + CONFIG_NAME_HS2_TRANSPORT_MODE + ". Expected=" + TRANSPORT_MODE_HTTP + "; Found=" + hiveServer2TransportMode);
+      response.addConfigurationIssue("Invalid configuration: " + HIVEONTEZ_TRANSPORT_MODE + ". Expected=" + TRANSPORT_MODE_HTTP + "; Found=" + hiveServer2TransportMode);
     }
   }
 
