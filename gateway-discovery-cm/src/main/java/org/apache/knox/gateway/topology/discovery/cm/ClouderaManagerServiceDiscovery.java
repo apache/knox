@@ -221,17 +221,15 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
 
     ApiServiceList serviceList = getClusterServices(servicesResourceApi, clusterName);
 
-    /* Since Cloudera Manager does not have a service for itself, we will add a skeleton CM
-      service so that we can add CM service to topology when auto-discovery is
-      turned on and CM service is selected in the descriptor */
-    final ApiService cmUIService = new ApiService();
-    cmUIService.setName(CM_SERVICE_TYPE.toLowerCase(Locale.ROOT));
-    cmUIService.setType(CM_SERVICE_TYPE);
-    final ApiService cmAPIService = new ApiService();
-    cmAPIService.setName(CM_SERVICE_TYPE.toLowerCase(Locale.ROOT));
-    cmAPIService.setType(CM_SERVICE_TYPE);
-    serviceList.addItemsItem(cmUIService);
-    serviceList.addItemsItem(cmAPIService);
+    /*
+    Since Cloudera Manager does not have a service for itself, we will add a skeleton CM
+    service so that we can add CM service to topology when auto-discovery is
+    turned on and CM service is selected in the descriptor
+    */
+    final ApiService cmService = new ApiService();
+    cmService.setName(CM_SERVICE_TYPE.toLowerCase(Locale.ROOT));
+    cmService.setType(CM_SERVICE_TYPE);
+    serviceList.addItemsItem(cmService);
 
     if (serviceList != null) {
       for (ApiService service : serviceList.getItems()) {
