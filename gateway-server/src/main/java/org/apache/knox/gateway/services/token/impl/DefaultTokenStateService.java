@@ -17,12 +17,14 @@
 package org.apache.knox.gateway.services.token.impl;
 
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -36,6 +38,8 @@ public class DefaultTokenStateService implements TokenStateService {
   protected static final int MAX_RENEWALS = 7;
 
   protected static final long DEFAULT_MAX_LIFETIME = MAX_RENEWALS * DEFAULT_RENEWAL_INTERVAL; // 7 days
+
+  protected static final TokenStateServiceMessages log = MessagesFactory.get(TokenStateServiceMessages.class);
 
   private final Map<String, Long> tokenExpirations = new HashMap<>();
 
@@ -91,6 +95,7 @@ public class DefaultTokenStateService implements TokenStateService {
       tokenExpirations.put(token, expiration);
     }
     setMaxLifetime(token, issueTime, maxLifetimeDuration);
+    log.addedToken(getTokenDisplayText(token));
   }
 
   @Override
@@ -134,7 +139,9 @@ public class DefaultTokenStateService implements TokenStateService {
     if (hasRemainingRenewals(token, renewInterval)) {
       expiration = System.currentTimeMillis() + renewInterval;
       updateExpiration(token, expiration);
+      log.renewedToken(getTokenDisplayText(token));
     } else {
+      log.renewalLimitExceeded(token);
       throw new IllegalArgumentException("The renewal limit for the token has been exceeded");
     }
 
@@ -154,6 +161,7 @@ public class DefaultTokenStateService implements TokenStateService {
   public void revokeToken(final String token) {
     validateToken(token);
     revokedTokens.add(token);
+    log.revokedToken(getTokenDisplayText(token));
   }
 
   @Override
@@ -247,6 +255,7 @@ public class DefaultTokenStateService implements TokenStateService {
 
     // First, make sure the token is one we know about
     if (isUnknown(token)) {
+      log.unknownToken(getTokenDisplayText(token));
       throw new IllegalArgumentException("Unknown token");
     }
 
@@ -254,6 +263,10 @@ public class DefaultTokenStateService implements TokenStateService {
     if (includeRevocation && isRevoked(token)) {
       throw new IllegalArgumentException("The specified token has been revoked");
     }
+  }
+
+  protected String getTokenDisplayText(final String token) {
+    return String.format(Locale.ROOT, "%s...%s", token.substring(0, 10), token.substring(token.length() - 3));
   }
 
 }
