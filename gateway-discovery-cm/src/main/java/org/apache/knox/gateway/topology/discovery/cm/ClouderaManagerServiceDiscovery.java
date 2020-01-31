@@ -227,17 +227,18 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
           for (ApiRole role : roleList.getItems()) {
             String roleName = role.getName();
             log.discoveredServiceRole(roleName, role.getType());
-            ApiConfigList roleConfig =
-                getRoleConfig(rolesResourceApi, clusterName, serviceName, roleName);
+            ApiConfigList roleConfig = getRoleConfig(rolesResourceApi, clusterName, serviceName, roleName);
 
             List<ServiceModelGenerator> smgList = serviceModelGenerators.get(service.getType());
             if (smgList != null) {
               for (ServiceModelGenerator serviceModelGenerator : smgList) {
-                if (serviceModelGenerator != null &&
-                    serviceModelGenerator.handles(service, serviceConfig, role, roleConfig)) {
+                ServiceModelGeneratorHandleResponse response = serviceModelGenerator.handles(service, serviceConfig, role, roleConfig);
+                if (response.handled()) {
                   serviceModelGenerator.setApiClient(client);
                   ServiceModel serviceModel = serviceModelGenerator.generateService(service, serviceConfig, role, roleConfig);
                   serviceModels.add(serviceModel);
+                } else if (!response.getConfigurationIssues().isEmpty()) {
+                  log.serviceRoleHasConfigurationIssues(roleName, String.join(";", response.getConfigurationIssues()));
                 }
               }
             }

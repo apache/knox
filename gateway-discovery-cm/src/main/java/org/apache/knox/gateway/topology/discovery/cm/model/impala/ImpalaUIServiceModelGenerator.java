@@ -22,6 +22,7 @@ import com.cloudera.api.swagger.model.ApiRole;
 import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
+import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGeneratorHandleResponse;
 import org.apache.knox.gateway.topology.discovery.cm.model.AbstractServiceModelGenerator;
 
 import java.util.Locale;
@@ -57,9 +58,17 @@ public class ImpalaUIServiceModelGenerator extends AbstractServiceModelGenerator
   }
 
   @Override
-  public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return super.handles(service, serviceConfig, role, roleConfig) &&
-           Boolean.parseBoolean(getRoleConfigValue(roleConfig, ENABLE_WEBSERVER));
+  public ServiceModelGeneratorHandleResponse handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
+    final ServiceModelGeneratorHandleResponse response = super.handles(service, serviceConfig, role, roleConfig);
+    if (response.handled()) {
+      final String impalaWebserverEnabled = getRoleConfigValue(roleConfig, ENABLE_WEBSERVER);
+      if (impalaWebserverEnabled == null) {
+        response.addConfigurationIssue("Missing configuration: " + ENABLE_WEBSERVER);
+      } else if (!Boolean.parseBoolean(impalaWebserverEnabled)) {
+        response.addConfigurationIssue("Invalid configuration: " + ENABLE_WEBSERVER + ". Expected=true; Found=" + impalaWebserverEnabled);
+      }
+    }
+    return response;
   }
 
   @Override

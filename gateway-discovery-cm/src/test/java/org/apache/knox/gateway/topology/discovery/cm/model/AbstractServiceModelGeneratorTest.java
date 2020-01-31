@@ -74,7 +74,7 @@ public abstract class AbstractServiceModelGeneratorTest extends AbstractCMDiscov
     return generator.handles(createApiServiceMock(serviceType),
                              createApiServiceConfigMock(serviceConfig),
                              createApiRoleMock(roleType),
-                             createApiConfigListMock(roleProps));
+                             createApiConfigListMock(roleProps)).handled();
   }
 
 

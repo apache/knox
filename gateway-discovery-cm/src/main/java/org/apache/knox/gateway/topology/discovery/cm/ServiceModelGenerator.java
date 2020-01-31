@@ -43,14 +43,8 @@ public interface ServiceModelGenerator {
 
   void setApiClient(DiscoveryApiClient client);
 
-  boolean handles(ApiService       service,
-                  ApiServiceConfig serviceConfig,
-                  ApiRole          role,
-                  ApiConfigList    roleConfig);
+  ServiceModelGeneratorHandleResponse handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig);
 
-  ServiceModel generateService(ApiService       service,
-                               ApiServiceConfig serviceConfig,
-                               ApiRole          role,
-                               ApiConfigList    roleConfig) throws ApiException;
+  ServiceModel generateService(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) throws ApiException;
 
 }
