@@ -37,6 +37,9 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   @Message(level = MessageLevel.INFO, text = "Discovered service role: {0} ({1})")
   void discoveredServiceRole(String roleName, String roleType);
 
+  @Message(level = MessageLevel.WARN, text = "Service role {0} has configuration issues: {1}")
+  void serviceRoleHasConfigurationIssues(String roleName, String configurationIssuesText);
+
   @Message(level = MessageLevel.INFO, text = "Attempting to authenticate Knox using {0} ...")
   void attemptingKerberosLogin(String loginConfigPath);
 

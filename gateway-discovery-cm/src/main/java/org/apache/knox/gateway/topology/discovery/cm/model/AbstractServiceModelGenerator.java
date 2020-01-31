@@ -25,6 +25,7 @@ import com.cloudera.api.swagger.model.ApiServiceConfig;
 import org.apache.knox.gateway.topology.discovery.cm.DiscoveryApiClient;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGeneratorHandleResponse;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -81,8 +82,8 @@ public abstract class AbstractServiceModelGenerator implements ServiceModelGener
   }
 
   @Override
-  public boolean handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-    return getServiceType().equals(service.getType()) && getRoleType().equals(role.getType());
+  public ServiceModelGeneratorHandleResponse handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
+    return new ServiceModelGeneratorHandleResponse(getServiceType().equals(service.getType()) && getRoleType().equals(role.getType()));
   }
 
 }

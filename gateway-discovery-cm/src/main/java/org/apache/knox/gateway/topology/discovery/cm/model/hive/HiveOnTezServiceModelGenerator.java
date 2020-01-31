@@ -16,12 +16,14 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm.model.hive;
 
+import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
+import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGeneratorHandleResponse;
+
 import com.cloudera.api.swagger.client.ApiException;
 import com.cloudera.api.swagger.model.ApiConfigList;
 import com.cloudera.api.swagger.model.ApiRole;
 import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
-import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
 
 public class HiveOnTezServiceModelGenerator extends HiveServiceModelGenerator {
 
@@ -36,8 +38,13 @@ public class HiveOnTezServiceModelGenerator extends HiveServiceModelGenerator {
   }
 
   @Override
-  protected boolean checkHiveServer2HTTPMode(ApiConfigList roleConfig) {
-    return TRANSPORT_MODE_HTTP.equals(getRoleConfigValue(roleConfig, HIVEONTEZ_TRANSPORT_MODE));
+  protected void checkHiveServer2HTTPMode(ApiConfigList roleConfig, ServiceModelGeneratorHandleResponse response) {
+    final String hiveServer2TransportMode = getRoleConfigValue(roleConfig, HIVEONTEZ_TRANSPORT_MODE);
+    if (hiveServer2TransportMode == null) {
+      response.addConfigurationIssue("Missing configuration: " + HIVEONTEZ_TRANSPORT_MODE);
+    } else if (!TRANSPORT_MODE_HTTP.equals(hiveServer2TransportMode)) {
+      response.addConfigurationIssue("Invalid configuration: " + HIVEONTEZ_TRANSPORT_MODE + ". Expected=" + TRANSPORT_MODE_HTTP + "; Found=" + hiveServer2TransportMode);
+    }
   }
 
   @Override
