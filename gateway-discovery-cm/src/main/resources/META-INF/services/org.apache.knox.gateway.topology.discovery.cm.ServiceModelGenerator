@@ -49,4 +49,6 @@ org.apache.knox.gateway.topology.discovery.cm.model.zeppelin.ZeppelinUIServiceMo
 org.apache.knox.gateway.topology.discovery.cm.model.zeppelin.ZeppelinWSServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.nifi.NifiServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.nifi.NifiRegistryServiceModelGenerator
+org.apache.knox.gateway.topology.discovery.cm.model.cm.ClouderaManagerAPIServiceModelGenerator
+org.apache.knox.gateway.topology.discovery.cm.model.cm.ClouderaManagerUIServiceModelGenerator
 
