@@ -229,7 +229,9 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
     final ApiService cmService = new ApiService();
     cmService.setName(CM_SERVICE_TYPE.toLowerCase(Locale.ROOT));
     cmService.setType(CM_SERVICE_TYPE);
-    serviceList.addItemsItem(cmService);
+    if(serviceList != null) {
+      serviceList.addItemsItem(cmService);
+    }
 
     if (serviceList != null) {
       for (ApiService service : serviceList.getItems()) {
@@ -306,12 +308,12 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
     try {
       /* Populate roles for CM Service since they are not discoverable */
       if(CM_SERVICE_TYPE.equalsIgnoreCase(serviceName)) {
-        final ApiRoleList roleList = new ApiRoleList();
+        roles = new ApiRoleList();
         final ApiRole cmRole = new ApiRole();
         cmRole.setName(CM_ROLE_TYPE);
         cmRole.setType(CM_ROLE_TYPE);
-        roleList.addItemsItem(cmRole);
-        return roleList;
+        roles.addItemsItem(cmRole);
+        return roles;
       } else {
         roles = rolesResourceApi.readRoles(clusterName, serviceName, "", VIEW_SUMMARY);
       }
