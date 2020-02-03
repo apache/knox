@@ -23,10 +23,8 @@ import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * In-Memory authentication token state management implementation.
@@ -42,8 +40,6 @@ public class DefaultTokenStateService implements TokenStateService {
   protected static final TokenStateServiceMessages log = MessagesFactory.get(TokenStateServiceMessages.class);
 
   private final Map<String, Long> tokenExpirations = new HashMap<>();
-
-  private final Set<String> revokedTokens = new HashSet<>();
 
   private final Map<String, Long> maxTokenLifetimes = new HashMap<>();
 
@@ -160,7 +156,8 @@ public class DefaultTokenStateService implements TokenStateService {
   @Override
   public void revokeToken(final String token) {
     validateToken(token);
-    revokedTokens.add(token);
+    /* no reason to keep revoked tokens around */
+    removeRevokedExpiredToken(token);
     log.revokedToken(getTokenDisplayText(token));
   }
 
@@ -208,6 +205,18 @@ public class DefaultTokenStateService implements TokenStateService {
     }
   }
 
+  protected void removeRevokedExpiredToken(final String token) {
+    if (!isValidIdentifier(token)) {
+      throw new IllegalArgumentException("Token data cannot be null.");
+    }
+    synchronized (tokenExpirations) {
+        tokenExpirations.remove(token);
+    }
+    synchronized (maxTokenLifetimes) {
+      maxTokenLifetimes.remove(token);
+    }
+  }
+
   protected boolean hasRemainingRenewals(final String token, long renewInterval) {
     // Is the current time + 30-second buffer + the renewal interval is less than the max lifetime for the token?
     return ((System.currentTimeMillis() + 30000 + renewInterval) < getMaxLifetime(token));
@@ -222,7 +231,7 @@ public class DefaultTokenStateService implements TokenStateService {
   }
 
   protected boolean isRevoked(final String token) {
-    return revokedTokens.contains(token);
+    return !tokenExpirations.containsKey(token);
   }
 
   protected boolean isValidIdentifier(final String token) {
@@ -256,12 +265,7 @@ public class DefaultTokenStateService implements TokenStateService {
     // First, make sure the token is one we know about
     if (isUnknown(token)) {
       log.unknownToken(getTokenDisplayText(token));
-      throw new IllegalArgumentException("Unknown token");
-    }
-
-    // Then, make sure it has not been revoked
-    if (includeRevocation && isRevoked(token)) {
-      throw new IllegalArgumentException("The specified token has been revoked");
+      throw new IllegalArgumentException("Unknown or revoked token");
     }
   }
 

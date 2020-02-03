@@ -33,7 +33,7 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.DEBUG, text = "Revoked token {0}")
   void revokedToken(String tokenDisplayText);
 
-  @Message(level = MessageLevel.DEBUG, text = "Unknown token {0}")
+  @Message(level = MessageLevel.DEBUG, text = "Unknown or revoked token {0}")
   void unknownToken(String tokenDisplayText);
 
   @Message(level = MessageLevel.ERROR, text = "The renewal limit for the token ({0}) has been exceeded.")
