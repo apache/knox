@@ -155,9 +155,8 @@ public class DefaultTokenStateService implements TokenStateService {
 
   @Override
   public void revokeToken(final String token) {
-    validateToken(token);
     /* no reason to keep revoked tokens around */
-    removeRevokedExpiredToken(token);
+    removeToken(token);
     log.revokedToken(getTokenDisplayText(token));
   }
 
@@ -168,15 +167,15 @@ public class DefaultTokenStateService implements TokenStateService {
 
   @Override
   public boolean isExpired(final String token) {
-    boolean isExpired;
+    boolean isUnknownToken;
 
-    isExpired = isRevoked(token); // Check if it has been revoked first
-    if (!isExpired) {
-      // If it has not been revoked, check its expiration
-      isExpired = (getTokenExpiration(token) <= System.currentTimeMillis());
+    isUnknownToken = isUnknown(token); // Check if the token exist
+    if (!isUnknownToken) {
+      // If it not unknown, check its expiration
+      isUnknownToken = (getTokenExpiration(token) <= System.currentTimeMillis());
     }
 
-    return isExpired;
+    return isUnknownToken;
   }
 
   protected void setMaxLifetime(final String token, long issueTime, long maxLifetimeDuration) {
@@ -205,10 +204,8 @@ public class DefaultTokenStateService implements TokenStateService {
     }
   }
 
-  protected void removeRevokedExpiredToken(final String token) {
-    if (!isValidIdentifier(token)) {
-      throw new IllegalArgumentException("Token data cannot be null.");
-    }
+  protected void removeToken(final String token) {
+    validateToken(token);
     synchronized (tokenExpirations) {
         tokenExpirations.remove(token);
     }
@@ -228,10 +225,6 @@ public class DefaultTokenStateService implements TokenStateService {
       result = maxTokenLifetimes.getOrDefault(token, 0L);
     }
     return result;
-  }
-
-  protected boolean isRevoked(final String token) {
-    return !tokenExpirations.containsKey(token);
   }
 
   protected boolean isValidIdentifier(final String token) {
@@ -265,7 +258,7 @@ public class DefaultTokenStateService implements TokenStateService {
     // First, make sure the token is one we know about
     if (isUnknown(token)) {
       log.unknownToken(getTokenDisplayText(token));
-      throw new IllegalArgumentException("Unknown or revoked token");
+      throw new IllegalArgumentException("Unknown token");
     }
   }
 

@@ -105,14 +105,8 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
   @Override
   public void revokeToken(final String token) {
     /* no reason to keep revoked tokens around */
-    removeRevokedExpiredToken(token);
+    removeToken(token);
     log.revokedToken(getTokenDisplayText(token));
-  }
-
-  @Override
-  protected boolean isRevoked(final String token) {
-    /* since we no longer maintain revoked tokens, revoked tokens are unknown tokens */
-    return isUnknown(token);
   }
 
   @Override
@@ -127,11 +121,8 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
   }
 
   @Override
-  protected void removeRevokedExpiredToken(final String token) {
-    if (isUnknown(token)) {
-      log.unknownToken(getTokenDisplayText(token));
-      throw new IllegalArgumentException("Unknown or revoked token.");
-    }
+  protected void removeToken(final String token) {
+    validateToken(token);
 
     try {
       aliasService.removeAliasForCluster(AliasService.NO_CLUSTER_NAME, token);
@@ -146,7 +137,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
   protected void updateExpiration(final String token, long expiration) {
     if (isUnknown(token)) {
       log.unknownToken(getTokenDisplayText(token));
-      throw new IllegalArgumentException("Unknown or revoked token.");
+      throw new IllegalArgumentException("Unknown token.");
     }
 
     try {
