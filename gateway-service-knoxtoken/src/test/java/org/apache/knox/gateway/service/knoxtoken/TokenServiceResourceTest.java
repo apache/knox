@@ -640,7 +640,7 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRenewal_Enabled_NoRenewersNoSubject() throws Exception {
     Response renewalResponse = doTestTokenRenewal(true, null, null);
-    validateRenewalResponse(renewalResponse, 400, false, "Caller (null) not authorized to renew tokens.");
+    validateRenewalResponse(renewalResponse, 403, false, "Caller (null) not authorized to renew tokens.");
   }
 
   @Test
@@ -648,7 +648,7 @@ public class TokenServiceResourceTest {
     final String caller = "yarn";
     Response renewalResponse = doTestTokenRenewal(true, null, createTestSubject(caller));
     validateRenewalResponse(renewalResponse,
-                            400,
+                            403,
                             false,
                             "Caller (" + caller + ") not authorized to renew tokens.");
   }
@@ -657,7 +657,7 @@ public class TokenServiceResourceTest {
   public void testTokenRenewal_Enabled_WithRenewersNoSubject() throws Exception {
     Response renewalResponse = doTestTokenRenewal(true, "larry, moe,  curly ", null);
     validateRenewalResponse(renewalResponse,
-                            400,
+                            403,
                             false,
                             "Caller (null) not authorized to renew tokens.");
   }
@@ -667,7 +667,7 @@ public class TokenServiceResourceTest {
     final String caller = "shemp";
     Response renewalResponse = doTestTokenRenewal(true, "larry, moe,  curly ", createTestSubject(caller));
     validateRenewalResponse(renewalResponse,
-                            400,
+                            403,
                             false,
                             "Caller (" + caller + ") not authorized to renew tokens.");
   }
@@ -736,7 +736,7 @@ public class TokenServiceResourceTest {
   public void testTokenRevocation_Enabled_NoRenewersNoSubject() throws Exception {
     Response renewalResponse = doTestTokenRevocation(true, null, null);
     validateRevocationResponse(renewalResponse,
-                               400,
+                               403,
                                false,
                                "Caller (null) not authorized to revoke tokens.");
   }
@@ -746,7 +746,7 @@ public class TokenServiceResourceTest {
     final String caller = "yarn";
     Response renewalResponse = doTestTokenRevocation(true, null, createTestSubject(caller));
     validateRevocationResponse(renewalResponse,
-                               400,
+                               403,
                                false,
                                "Caller (" + caller + ") not authorized to revoke tokens.");
   }
@@ -755,7 +755,7 @@ public class TokenServiceResourceTest {
   public void testTokenRevocation_Enabled_WithRenewersNoSubject() throws Exception {
     Response renewalResponse = doTestTokenRevocation(true, "larry, moe,  curly ", null);
     validateRevocationResponse(renewalResponse,
-                               400,
+                               403,
                                false,
                                "Caller (null) not authorized to revoke tokens.");
   }
@@ -765,7 +765,7 @@ public class TokenServiceResourceTest {
     final String caller = "shemp";
     Response renewalResponse = doTestTokenRevocation(true, "larry, moe,  curly ", createTestSubject(caller));
     validateRevocationResponse(renewalResponse,
-                               400,
+                               403,
                                false,
                                "Caller (" + caller + ") not authorized to revoke tokens.");
   }
