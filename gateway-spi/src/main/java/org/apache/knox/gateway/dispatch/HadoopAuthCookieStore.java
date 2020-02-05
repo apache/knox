@@ -41,6 +41,7 @@ public class HadoopAuthCookieStore extends BasicCookieStore {
   private static final String IMPALA_AUTH_COOKIE_NAME = "impala.auth";
 
   private static String knoxPrincipal;
+  private static String shortKnoxPrincipal;
 
   HadoopAuthCookieStore(GatewayConfig config) {
     // Read knoxPrincipal from krb5 login jaas config file
@@ -56,6 +57,8 @@ public class HadoopAuthCookieStore extends BasicCookieStore {
               configuredKnoxPrincipal.length() - 1);
         }
         knoxPrincipal = configuredKnoxPrincipal;
+        // Break out the short principal name from the principal
+        shortKnoxPrincipal = knoxPrincipal.split("/", 2)[0];
       } catch (IOException e) {
         LOG.errorReadingKerberosLoginConfig(krb5Config, e);
       }
@@ -87,7 +90,8 @@ public class HadoopAuthCookieStore extends BasicCookieStore {
     // somewhere in the cookie value.
     if (cookie != null) {
       String value = cookie.getValue();
-      if (value != null && value.contains(knoxPrincipal)) {
+      if (value != null &&
+              (value.contains('=' + knoxPrincipal) || value.contains('=' + shortKnoxPrincipal))) {
         result = true;
       }
     }

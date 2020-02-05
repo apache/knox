@@ -92,7 +92,7 @@ public class HadoopAuthCookieStoreTest {
 
   @Test
   public void testKnoxCookieInclusionDefaultUser() {
-    doTestKnoxCookieExclusion("u=knox&p=anotherUser/myhost.example.com@EXAMPLE.COM&t=kerberos&e=1517900515610&s=HpSXUOhoXR/2wXrsgPz5lSbNuf8=");
+    doTestKnoxCookieInclusion("u=knox&p=anotherUser/myhost.example.com@EXAMPLE.COM&t=kerberos&e=1517900515610&s=HpSXUOhoXR/2wXrsgPz5lSbNuf8=");
   }
 
   @Test
@@ -126,7 +126,7 @@ public class HadoopAuthCookieStoreTest {
 
   @Test
   public void testKnoxCookieInclusionDefaultUserAndMissingPrincipal() {
-    doTestKnoxCookieExclusion("u=knox&t=kerberos&e=1517900515610&s=HpSXUOhoXR/2wXrsgPz5lSbNuf8=");
+    doTestKnoxCookieInclusion("u=knox&t=kerberos&e=1517900515610&s=HpSXUOhoXR/2wXrsgPz5lSbNuf8=");
   }
 
   private void doTestKnoxCookieInclusion(final String cookieValue) {
