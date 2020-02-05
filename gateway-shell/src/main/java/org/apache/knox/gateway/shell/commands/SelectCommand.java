@@ -19,7 +19,10 @@ package org.apache.knox.gateway.shell.commands;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.net.URISyntaxException;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +32,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
-import org.apache.knox.gateway.shell.CredentialCollectionException;
+import org.apache.knox.gateway.shell.CredentialCollector;
 import org.apache.knox.gateway.shell.KnoxDataSource;
 import org.apache.knox.gateway.shell.table.KnoxShellTable;
 import org.codehaus.groovy.tools.shell.Groovysh;
@@ -82,7 +85,7 @@ public class SelectCommand extends AbstractSQLCommandSupport implements KeyListe
   public void keyTyped(KeyEvent event) {
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "PMD.CloseResource"})
   @Override
   public Object execute(List<String> args) {
     boolean ok = false;
@@ -140,30 +143,33 @@ public class SelectCommand extends AbstractSQLCommandSupport implements KeyListe
       //KnoxShellTable.builder().jdbc().connect("jdbc:derby:codejava/webdb1").driver("org.apache.derby.jdbc.EmbeddedDriver").username("lmccay").pwd("xxxx").sql("SELECT * FROM book");
       try {
         if (ok) {
-          if (ds.getAuthnType().equalsIgnoreCase("none")) {
-            table = KnoxShellTable.builder().jdbc()
-                .connectTo(ds.getConnectStr())
-                .driver(ds.getDriver())
-                .sql(sql);
-          }
-          else if (ds.getAuthnType().equalsIgnoreCase("basic")) {
-            KnoxLoginDialog dlg = new KnoxLoginDialog();
-            try {
-              dlg.collect();
-              if (dlg.ok) {
-                table = KnoxShellTable.builder().jdbc()
-                    .connectTo(ds.getConnectStr())
-                    .driver(ds.getDriver())
-                    .username(dlg.username)
-                    .password(new String(dlg.pass))
-                    .sql(sql);
+          System.out.println(sql);
+          try {
+            Connection conn = getConnectionFromSession(ds);
+            if (conn == null || conn.isClosed()) {
+              String username = null;
+              char[] pass = null;
+              if (ds.getAuthnType().equalsIgnoreCase("basic")) {
+                CredentialCollector dlg = login();
+                username = dlg.name();
+                pass = dlg.chars();
               }
-            } catch (CredentialCollectionException | URISyntaxException e) {
-              e.printStackTrace();
+              conn = getConnection(ds, username, new String(pass));
+            }
+            try (Statement statement = conn.createStatement()) {
+              if (statement.execute(sql)) {
+                try (ResultSet resultSet = statement.getResultSet()) {
+                  table = KnoxShellTable.builder().jdbc().resultSet(resultSet);
+                }
+              }
             }
           }
+          catch (SQLException e) {
+            System.out.println("SQL Exception encountered... " + e.getMessage());
+          }
         }
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         e.printStackTrace();
       }
     }
