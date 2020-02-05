@@ -167,15 +167,16 @@ public class DefaultTokenStateService implements TokenStateService {
 
   @Override
   public boolean isExpired(final String token) {
-    boolean isUnknownToken;
-
-    isUnknownToken = isUnknown(token); // Check if the token exist
-    if (!isUnknownToken) {
-      // If it not unknown, check its expiration
-      isUnknownToken = (getTokenExpiration(token) <= System.currentTimeMillis());
+    try {
+      validateToken(token);
+    } catch (final IllegalArgumentException e) {
+      if (e.toString().contains("Token data cannot be null.") || e.toString().contains("Unknown token")) {
+        return true;
+      } else {
+        throw e;
+      }
     }
-
-    return isUnknownToken;
+    return (getTokenExpiration(token) <= System.currentTimeMillis());
   }
 
   protected void setMaxLifetime(final String token, long issueTime, long maxLifetimeDuration) {
