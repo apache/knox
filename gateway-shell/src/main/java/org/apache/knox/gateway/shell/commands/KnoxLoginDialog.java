@@ -84,7 +84,7 @@ public class KnoxLoginDialog implements CredentialCollector {
 
   @Override
   public String name() {
-    return name;
+    return username;
   }
 
   @Override

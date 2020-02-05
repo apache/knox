@@ -25,6 +25,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.knox.gateway.shell.CredentialCollectionException;
+import org.apache.knox.gateway.shell.CredentialCollector;
 import org.apache.knox.gateway.shell.KnoxDataSource;
 import org.apache.knox.gateway.shell.KnoxSession;
 import org.apache.knox.gateway.shell.jdbc.JDBCUtils;
@@ -181,5 +183,29 @@ public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand
       }
     }
     return datasources;
+  }
+
+  @SuppressWarnings("unchecked")
+  public void closeConnections() {
+    // close all JDBC connections in the session - called by shutdown hook
+    HashMap<String, Connection> connections =
+        (HashMap<String, Connection>) getVariables()
+        .getOrDefault(KNOXDATASOURCE_CONNECTIONS,
+            new HashMap<String, Connection>());
+    connections.values().forEach(connection->{
+      try {
+        if (!connection.isClosed()) {
+          connection.close();
+        }
+      } catch (SQLException e) {
+        // nop
+      }
+    });
+  }
+
+  protected CredentialCollector login() throws CredentialCollectionException {
+    KnoxLoginDialog dlg = new KnoxLoginDialog();
+    dlg.collect();
+    return dlg;
   }
 }
