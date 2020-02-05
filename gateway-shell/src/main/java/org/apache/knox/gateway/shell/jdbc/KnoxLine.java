@@ -77,16 +77,19 @@ public class KnoxLine {
           // Configure JDBC connection
           if (datasource != null) {
             System.out.println(sql);
-            try (Statement statement = conn.createStatement()) {
-              if (statement.execute(sql)) {
-                try (ResultSet resultSet = statement.getResultSet()) {
-                  KnoxShellTable table = KnoxShellTable.builder().jdbc().resultSet(resultSet);
-                  System.out.println(table.toString());
-                  System.out.println("\nRows: " + table.getRows().size() + "\n");
+            try {
+              establishConnection();
+              try (Statement statement = conn.createStatement()) {
+                if (statement.execute(sql)) {
+                  try (ResultSet resultSet = statement.getResultSet()) {
+                    KnoxShellTable table = KnoxShellTable.builder().jdbc().resultSet(resultSet);
+                    System.out.println(table.toString());
+                    System.out.println("\nRows: " + table.getRows().size() + "\n");
+                  }
                 }
               }
             }
-            catch(SQLException e) {
+            catch (SQLException e) {
               System.out.println("SQL Exception encountered... " + e.getMessage());
             }
           }
@@ -100,6 +103,7 @@ public class KnoxLine {
 
   private void establishConnection() throws SQLException {
     if (conn == null || conn.isClosed()) {
+      System.out.println("Connecting...");
       conn = JDBCUtils.createConnection(datasource.getConnectStr(), user, pass);
     }
   }

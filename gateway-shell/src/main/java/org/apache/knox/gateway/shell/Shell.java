@@ -19,6 +19,7 @@ package org.apache.knox.gateway.shell;
 
 import groovy.ui.GroovyMain;
 
+import org.apache.knox.gateway.shell.commands.AbstractSQLCommandSupport;
 import org.apache.knox.gateway.shell.commands.CSVCommand;
 import org.apache.knox.gateway.shell.commands.DataSourceCommand;
 import org.apache.knox.gateway.shell.commands.SelectCommand;
@@ -61,6 +62,7 @@ public class Shell {
     System.setProperty( "groovysh.prompt", "knox" );
   }
 
+  @SuppressWarnings("PMD.DoNotUseThreads") // we need to define a Thread to be able to register a shutdown hook
   public static void main( String... args ) throws Exception {
     PropertyConfigurator.configure( System.getProperty( "log4j.configuration" ) );
     if( args.length > 0 ) {
@@ -77,6 +79,16 @@ public class Shell {
       }
     } else {
       Groovysh shell = new Groovysh();
+      Runtime.getRuntime().addShutdownHook(new Thread() {
+        @Override
+        public void run() {
+          System.out.println("Closing any open connections ...");
+          AbstractSQLCommandSupport sqlcmd = (AbstractSQLCommandSupport) shell.getRegistry().getProperty(":ds");
+          sqlcmd.closeConnections();
+          sqlcmd = (AbstractSQLCommandSupport) shell.getRegistry().getProperty(":sql");
+          sqlcmd.closeConnections();
+        }
+      });
       for( String name : IMPORTS ) {
         shell.execute( "import " + name );
       }
