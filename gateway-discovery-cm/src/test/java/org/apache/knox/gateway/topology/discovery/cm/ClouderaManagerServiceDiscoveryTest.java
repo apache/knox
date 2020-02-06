@@ -367,6 +367,18 @@ public class ClouderaManagerServiceDiscoveryTest {
   }
 
   @Test
+  public void testPhoenixDiscoverySSL() {
+    final String hostName    = "phoenix-host";
+    final String port        = "8765";
+    ServiceDiscovery.Cluster cluster = doTestPhoenixDiscovery(hostName, port, true);
+    assertNotNull(cluster);
+    List<String> phoenixURLs = cluster.getServiceURLs("AVATICA");
+    assertNotNull(phoenixURLs);
+    assertEquals(1, phoenixURLs.size());
+    assertEquals("https://" + hostName + ":" + port, phoenixURLs.get(0));
+  }
+
+  @Test
   public void testWebHCatDiscovery() {
     final String hostName = "webhcat-host";
     final String port     = "22222";
