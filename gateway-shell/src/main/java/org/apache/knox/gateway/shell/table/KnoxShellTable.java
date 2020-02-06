@@ -356,7 +356,7 @@ public class KnoxShellTable {
   public KnoxShellTable select(String cols) {
     KnoxShellTable table = new KnoxShellTable();
     List<List<Comparable<? extends Object>>> columns = new ArrayList<>();
-    String[] colnames = cols.split(",");
+    String[] colnames = cols.split(",\\s*");
     for (String colName : colnames) {
       table.header(colName);
       columns.add(values(headers.indexOf(colName)));
