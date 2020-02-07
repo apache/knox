@@ -40,6 +40,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.ServiceType;
@@ -158,8 +159,8 @@ public class TokenResource {
       endpointPublicCert = targetEndpointPublicCert;
     }
 
-    // If server-managed token expiration is configured, set the token store service
-    if (Boolean.valueOf(context.getInitParameter(TokenStateService.CONFIG_SERVER_MANAGED))) {
+    // If server-managed token expiration is configured, set the token state service
+    if (isServerManagedTokenStateEnabled()) {
       String topologyName = getTopologyName();
       log.serverManagedTokenStateEnabled(topologyName);
 
@@ -194,6 +195,25 @@ public class TokenResource {
         log.noRenewersConfigured(topologyName);
       }
     }
+  }
+
+  private boolean isServerManagedTokenStateEnabled() {
+    boolean isServerManaged;
+
+    // First, check for explicit service-level configuration
+    String serviceParamValue = context.getInitParameter(TokenStateService.CONFIG_SERVER_MANAGED);
+
+    // If there is no service-level configuration
+    if (serviceParamValue == null || serviceParamValue.isEmpty()) {
+      // Fall back to the gateway-level default
+      GatewayConfig config = (GatewayConfig) context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+      isServerManaged = (config != null) && config.isServerManagedTokenStateEnabled();
+    } else {
+      // Otherwise, apply the service-level configuration
+      isServerManaged = Boolean.valueOf(serviceParamValue);
+    }
+
+    return isServerManaged;
   }
 
   @GET

@@ -652,4 +652,10 @@ public interface GatewayConfig {
    * @return the monitoring interval (in milliseconds) of Cloudera Manager advanced service discovery configuration
    */
   long getClouderaManagerAdvancedServiceDiscoveryConfigurationMonitoringInterval();
+
+  /**
+   * @return true, if state for tokens issued by the Knox Token service should be managed by Knox.
+   */
+  boolean isServerManagedTokenStateEnabled();
+
 }

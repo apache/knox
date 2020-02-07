@@ -774,4 +774,9 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public long getClouderaManagerAdvancedServiceDiscoveryConfigurationMonitoringInterval() {
     return 0;
   }
+
+  @Override
+  public boolean isServerManagedTokenStateEnabled() {
+    return false;
+  }
 }
