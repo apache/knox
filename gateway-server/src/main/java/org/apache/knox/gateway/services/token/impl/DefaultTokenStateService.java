@@ -23,8 +23,13 @@ import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * In-Memory authentication token state management implementation.
@@ -43,17 +48,28 @@ public class DefaultTokenStateService implements TokenStateService {
 
   private final Map<String, Long> maxTokenLifetimes = new HashMap<>();
 
+  /* token eviction interval in seconds, default is 5 mins */
+  private long tokenEvictionInterval;
+
+  private final ScheduledExecutorService evictionScheduler = Executors.newScheduledThreadPool(1);
+
 
   @Override
   public void init(final GatewayConfig config, final Map<String, String> options) throws ServiceLifecycleException {
+    tokenEvictionInterval = config.getKnoxTokenEvictionInterval();
   }
 
   @Override
   public void start() throws ServiceLifecycleException {
+    if (tokenEvictionInterval > 0) {
+      /* run token eviction task at configured intervals */
+      evictionScheduler.scheduleAtFixedRate(() -> evictExpiredTokens(), tokenEvictionInterval, tokenEvictionInterval, TimeUnit.SECONDS);
+    }
   }
 
   @Override
   public void stop() throws ServiceLifecycleException {
+    evictionScheduler.shutdown();
   }
 
   @Override
@@ -262,6 +278,31 @@ public class DefaultTokenStateService implements TokenStateService {
 
   protected String getTokenDisplayText(final String token) {
     return String.format(Locale.ROOT, "%s...%s", token.substring(0, 10), token.substring(token.length() - 3));
+  }
+
+  /**
+   * Method that deletes expired tokens based on the token timestamp.
+   */
+  protected void evictExpiredTokens() {
+    try {
+      for (final String token : getTokens()) {
+        if (isExpired(token)) {
+          log.evictToken(getTokenDisplayText(token));
+          removeToken(token);
+        }
+      }
+    } catch(final Exception e) {
+      log.failedExpiredTokenEviction(e);
+    }
+  }
+
+  /**
+   * Get a list of tokens
+   *
+   * @return
+   */
+  protected List<String> getTokens() {
+    return tokenExpirations.keySet().stream().collect(Collectors.toList());
   }
 
 }

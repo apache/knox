@@ -658,4 +658,10 @@ public interface GatewayConfig {
    */
   boolean isServerManagedTokenStateEnabled();
 
+
+  /**
+   * Return the configured interval (in seconds) at which token eviction job should run
+   * @return
+   */
+  long getKnoxTokenEvictionInterval();
 }

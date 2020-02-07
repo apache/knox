@@ -48,4 +48,10 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.ERROR, text = "Failed to update token expiration: {0}")
   void failedToUpdateTokenExpiration(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.ERROR, text = "Failed to evict expired tokens: {0}")
+  void failedExpiredTokenEviction(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.DEBUG, text = "Evicting expired token {0}")
+  void evictToken(String tokenDisplayText);
+
 }
