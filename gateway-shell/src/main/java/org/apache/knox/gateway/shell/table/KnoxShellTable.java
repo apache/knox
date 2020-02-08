@@ -65,7 +65,7 @@ public class KnoxShellTable {
   }
 
   public KnoxShellTable header(String header) {
-    headers.add(header);
+    headers.add(header.trim());
     return this;
   }
 
