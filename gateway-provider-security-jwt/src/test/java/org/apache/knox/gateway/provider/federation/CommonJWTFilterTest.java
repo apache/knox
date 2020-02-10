@@ -19,6 +19,7 @@ package org.apache.knox.gateway.provider.federation;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
@@ -33,8 +34,10 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+import static org.easymock.EasyMock.anyObject;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -109,6 +112,59 @@ public class CommonJWTFilterTest {
     return (Boolean) m.invoke(handler, fc);
   }
 
+  @Test
+  public void testIsStillValid() throws Exception {
+    assertTrue("Expected the token to be valid because it has not yet expired.",
+               doTestIsStillValid(System.currentTimeMillis() + 300000)); // 5 minutes later
+  }
+
+  @Test
+  public void testIsStillValidExpired() throws Exception {
+    assertFalse("Expected the token to be invalid because it has already expired.",
+                doTestIsStillValid(System.currentTimeMillis() - 300000)); // 5 minutes ago
+  }
+
+  @Test
+  public void testIsStillValidUnknownToken() throws Exception {
+    TokenStateService tss = EasyMock.createNiceMock(TokenStateService.class);
+    EasyMock.expect(tss.getTokenExpiration(anyObject()))
+            .andThrow(new IllegalArgumentException("Unknown token"))
+            .anyTimes();
+    EasyMock.replay(tss);
+
+    assertFalse("Expected the token to be invalid because it in an unknown token.",
+                doTestIsStillValid(tss));
+  }
+
+  private boolean doTestIsStillValid(final Long expiration) throws Exception {
+    TokenStateService tss = EasyMock.createNiceMock(TokenStateService.class);
+    EasyMock.expect(tss.getTokenExpiration(anyObject()))
+            .andReturn(expiration)
+            .anyTimes();
+    EasyMock.replay(tss);
+    return doTestIsStillValid(tss);
+  }
+
+  private boolean doTestIsStillValid(final TokenStateService tss) throws Exception {
+    GatewayConfig gwConf = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gwConf.isServerManagedTokenStateEnabled()).andReturn(true).anyTimes();
+    EasyMock.replay(gwConf);
+
+    ServletContext sc = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(sc.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gwConf).anyTimes();
+    EasyMock.replay(sc);
+
+    JWT jwt = EasyMock.createNiceMock(JWT.class);
+    EasyMock.replay(jwt);
+
+    Field tokenStateServiceField = AbstractJWTFilter.class.getDeclaredField("tokenStateService");
+    tokenStateServiceField.setAccessible(true);
+    tokenStateServiceField.set(handler, tss);
+
+    Method m = AbstractJWTFilter.class.getDeclaredMethod("tokenIsStillValid", JWT.class);
+    m.setAccessible(true);
+    return (Boolean) m.invoke(handler, jwt);
+  }
 
   static final class TestHandler extends AbstractJWTFilter {
     @Override

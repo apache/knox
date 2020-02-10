@@ -170,7 +170,13 @@ public abstract class AbstractJWTFilter implements Filter {
   protected boolean tokenIsStillValid(JWT jwtToken) {
     Date expires;
     if (tokenStateService != null) {
-      expires = new Date(tokenStateService.getTokenExpiration(jwtToken.toString()));
+      long timestamp = 0;
+      try {
+        timestamp = tokenStateService.getTokenExpiration(jwtToken.toString());
+      } catch (Exception e) {
+        log.unableToVerifyExpiration(e);
+      }
+      expires = new Date(timestamp);
     } else {
       // if there is no expiration date then the lifecycle is tied entirely to
       // the cookie validity - otherwise ensure that the current time is before
@@ -328,8 +334,7 @@ public abstract class AbstractJWTFilter implements Filter {
             handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
                                   "Bad request: missing required token audience");
           }
-        }
-        else {
+        } else {
           log.tokenHasExpired();
           handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
                                 "Bad request: token has expired");

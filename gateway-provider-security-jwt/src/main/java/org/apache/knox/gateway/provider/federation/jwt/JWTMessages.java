@@ -41,7 +41,10 @@ public interface JWTMessages {
   @Message( level = MessageLevel.INFO, text = "Unable to verify token: {0}" )
   void unableToVerifyToken(@StackTrace( level = MessageLevel.ERROR) Exception e);
 
-  @Message( level = MessageLevel.ERROR, text = "Unable to verify token: {0}" )
+  @Message( level = MessageLevel.WARN, text = "Unable to verify token expiration: {0}" )
+  void unableToVerifyExpiration(@StackTrace( level = MessageLevel.DEBUG) Exception e);
+
+  @Message( level = MessageLevel.ERROR, text = "Unable to issue token: {0}" )
   void unableToIssueToken(@StackTrace( level = MessageLevel.DEBUG) Exception e);
 
   @Message( level = MessageLevel.DEBUG, text = "Sending redirect to: {0}" )
