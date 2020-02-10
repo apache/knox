@@ -625,9 +625,31 @@ public class TokenServiceResourceTest {
     assertTrue((expiresDate.getTime() - now.getTime()) < 30000L);
   }
 
+
   @Test
-  public void testTokenRenewal_ServerManagedStateNotConfigured() throws Exception {
-    Response renewalResponse = doTestTokenRenewal(null, null, null);
+  public void testTokenRenewal_ServerManagedStateConfiguredAtGatewayOnly() throws Exception {
+    final String caller = "yarn";
+    Response renewalResponse = doTestTokenRenewal(null, true, caller, null, createTestSubject(caller)).getValue();
+    validateSuccessfulRenewalResponse(renewalResponse);
+  }
+
+  @Test
+  public void testTokenRenewal_ServerManagedStateDisabledAtGatewayWithServiceOverride() throws Exception {
+    final String caller = "yarn";
+    Response renewalResponse = doTestTokenRenewal(true, false, caller, null, createTestSubject(caller)).getValue();
+    validateSuccessfulRenewalResponse(renewalResponse);
+  }
+
+  @Test
+  public void testTokenRenewal_ServerManagedStateEnabledAtGatewayWithServiceOverride() throws Exception {
+    final String caller = "yarn";
+    Response renewalResponse = doTestTokenRenewal(false, true, caller, null, createTestSubject(caller)).getValue();
+    validateRenewalResponse(renewalResponse, 400, false, "Token renewal support is not configured");
+  }
+
+  @Test
+  public void testTokenRenewal_ServerManagedStateNotConfiguredAtAll() throws Exception {
+    Response renewalResponse = doTestTokenRenewal(null, null, null, null, null).getValue();
     validateRenewalResponse(renewalResponse, 400, false, "Token renewal support is not configured");
   }
 
@@ -810,12 +832,38 @@ public class TokenServiceResourceTest {
                                                                         final String  renewers,
                                                                         final Long    maxTokenLifetime,
                                                                         final Subject caller) throws Exception {
+    return doTestTokenRenewal(isTokenStateServerManaged,
+                              null,
+                              renewers,
+                              maxTokenLifetime,
+                              caller);
+  }
+
+  /**
+   *
+   * @param serviceLevelConfig true, if server-side token state management should be enabled; Otherwise, false or null.
+   * @param gatewayLevelConfig true, if server-side token state management should be enabled; Otherwise, false or null.
+   * @param renewers           A comma-delimited list of permitted renewer user names
+   * @param maxTokenLifetime   The maximum duration (milliseconds) for a token's lifetime
+   * @param caller             The user name making the request
+   *
+   * @return The Response from the token renewal request
+   *
+   * @throws Exception
+   */
+  private Map.Entry<TestTokenStateService, Response> doTestTokenRenewal(final Boolean serviceLevelConfig,
+                                                                        final Boolean gatewayLevelConfig,
+                                                                        final String  renewers,
+                                                                        final Long    maxTokenLifetime,
+                                                                        final Subject caller) throws Exception {
     return doTestTokenLifecyle(TokenLifecycleOperation.Renew,
-                               isTokenStateServerManaged,
+                               serviceLevelConfig,
+                               gatewayLevelConfig,
                                renewers,
                                maxTokenLifetime,
                                caller);
   }
+
 
   /**
    *
@@ -851,35 +899,70 @@ public class TokenServiceResourceTest {
   }
 
   /**
-   * @param operation                 A TokenLifecycleOperation
-   * @param isTokenStateServerManaged true, if server-side token state management should be enabled; Otherwise, false or null.
-   * @param renewers                  A comma-delimited list of permitted renewer user names
-   * @param maxTokenLifetime          The maximum lifetime duration for a token.
-   * @param caller                    The user name making the request
+   * @param operation          A TokenLifecycleOperation
+   * @param serviceLevelConfig true, if server-side token state management should be enabled at the service level;
+   *                           Otherwise, false or null.
+   * @param renewers           A comma-delimited list of permitted renewer user names
+   * @param maxTokenLifetime   The maximum lifetime duration for a token.
+   * @param caller             The user name making the request
    *
    * @return The Response from the token revocation request
    *
    * @throws Exception
    */
   private Map.Entry<TestTokenStateService, Response> doTestTokenLifecyle(final TokenLifecycleOperation operation,
-                                                                         final Boolean                 isTokenStateServerManaged,
+                                                                         final Boolean                 serviceLevelConfig,
                                                                          final String                  renewers,
                                                                          final Long                    maxTokenLifetime,
                                                                          final Subject                 caller) throws Exception {
+    return doTestTokenLifecyle(operation, serviceLevelConfig, null, renewers, maxTokenLifetime, caller);
+  }
+
+  /**
+   * @param operation          A TokenLifecycleOperation
+   * @param serviceLevelConfig true, if server-side token state management should be enabled at the service level;
+   *                           Otherwise, false or null.
+   * @param gatewayLevelConfig true, if server-side token state management should be enabled at the gateway level;
+   *                           Otherwise, false or null.
+   * @param renewers           A comma-delimited list of permitted renewer user names
+   * @param maxTokenLifetime   The maximum lifetime duration for a token.
+   * @param caller             The user name making the request
+   *
+   * @return The Response from the token revocation request
+   *
+   * @throws Exception
+   */
+  private Map.Entry<TestTokenStateService, Response> doTestTokenLifecyle(final TokenLifecycleOperation operation,
+                                                                         final Boolean                 serviceLevelConfig,
+                                                                         final Boolean                 gatewayLevelConfig,
+                                                                         final String                  renewers,
+                                                                         final Long                    maxTokenLifetime,
+                                                                         final Subject                 caller) throws Exception {
+
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(context.getInitParameter("knox.token.audiences")).andReturn("recipient1,recipient2");
     EasyMock.expect(context.getInitParameter("knox.token.ttl")).andReturn(String.valueOf(Long.MAX_VALUE));
     EasyMock.expect(context.getInitParameter("knox.token.target.url")).andReturn(null);
     EasyMock.expect(context.getInitParameter("knox.token.client.data")).andReturn(null);
-    if (isTokenStateServerManaged != null) {
+    // Configure the service-level params
+    if (serviceLevelConfig != null) {
       EasyMock.expect(context.getInitParameter("knox.token.exp.server-managed"))
-              .andReturn(String.valueOf(isTokenStateServerManaged));
+              .andReturn(String.valueOf(serviceLevelConfig));
       if (maxTokenLifetime != null) {
-        EasyMock.expect(context.getInitParameter("knox.token.exp.renew-interval")).andReturn(String.valueOf(maxTokenLifetime / 2));
+        EasyMock.expect(context.getInitParameter("knox.token.exp.renew-interval"))
+                .andReturn(String.valueOf(maxTokenLifetime / 2));
         EasyMock.expect(context.getInitParameter("knox.token.exp.max-lifetime")).andReturn(maxTokenLifetime.toString());
       }
     }
     EasyMock.expect(context.getInitParameter("knox.token.renewer.whitelist")).andReturn(renewers);
+
+    // Configure the gateway-level properties
+    GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    if (gatewayLevelConfig != null) {
+      EasyMock.expect(gatewayConfig.isServerManagedTokenStateEnabled()).andReturn(gatewayLevelConfig).anyTimes();
+    }
+    EasyMock.replay(gatewayConfig);
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).anyTimes();
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
