@@ -49,9 +49,9 @@ public class DefaultTokenStateService implements TokenStateService {
 
   private final Map<String, Long> maxTokenLifetimes = new HashMap<>();
 
-  /* token eviction interval in seconds, default is 5 mins */
+  /* token eviction interval in seconds */
   private long tokenEvictionInterval;
-  /* grace period (in seconds) after which an expired token should be evicted, default 5 mins */
+  /* grace period (in seconds) after which an expired token should be evicted */
   private long tokenEvictionGracePeriod;
 
   private final ScheduledExecutorService evictionScheduler = Executors.newScheduledThreadPool(1);
@@ -300,13 +300,7 @@ public class DefaultTokenStateService implements TokenStateService {
    * @return
    */
   protected boolean needsEviction(final String token) {
-    boolean needsEviction;
-    needsEviction = isUnknown(token); // Check if the token exist
-    if (!needsEviction) {
-      /* If it not unknown, check if it is expired and within grace period before evicting */
-      needsEviction = (getTokenExpiration(token) + TimeUnit.SECONDS.toMillis(tokenEvictionGracePeriod)) <= System.currentTimeMillis();
-    }
-    return needsEviction;
+    return ((getTokenExpiration(token) + TimeUnit.SECONDS.toMillis(tokenEvictionGracePeriod)) <= System.currentTimeMillis());
   }
 
   /**
