@@ -51,6 +51,8 @@ public class DefaultTokenStateService implements TokenStateService {
 
   /* token eviction interval in seconds, default is 5 mins */
   private long tokenEvictionInterval;
+  /* grace period (in seconds) after which an expired token should be evicted, default 5 mins */
+  private long tokenEvictionGracePeriod;
 
   private final ScheduledExecutorService evictionScheduler = Executors.newScheduledThreadPool(1);
 
@@ -58,6 +60,7 @@ public class DefaultTokenStateService implements TokenStateService {
   @Override
   public void init(final GatewayConfig config, final Map<String, String> options) throws ServiceLifecycleException {
     tokenEvictionInterval = config.getKnoxTokenEvictionInterval();
+    tokenEvictionGracePeriod = config.getKnoxTokenEvictionGracePeriod();
   }
 
   @Override
@@ -278,16 +281,32 @@ public class DefaultTokenStateService implements TokenStateService {
    * Method that deletes expired tokens based on the token timestamp.
    */
   protected void evictExpiredTokens() {
-    try {
-      for (final String token : getTokens()) {
-        if (isExpired(token)) {
+    for (final String token : getTokens()) {
+      try {
+        if (needsEviction(token)) {
           log.evictToken(getTokenDisplayText(token));
           removeToken(token);
         }
+      } catch (final Exception e) {
+        log.failedExpiredTokenEviction(getTokenDisplayText(token), e);
       }
-    } catch(final Exception e) {
-      log.failedExpiredTokenEviction(e);
     }
+  }
+
+  /**
+   * Method that checks if an expired token is ready to be evicted
+   * by adding configured grace period to the expiry time.
+   * @param token
+   * @return
+   */
+  protected boolean needsEviction(final String token) {
+    boolean needsEviction;
+    needsEviction = isUnknown(token); // Check if the token exist
+    if (!needsEviction) {
+      /* If it not unknown, check if it is expired and within grace period before evicting */
+      needsEviction = (getTokenExpiration(token) + TimeUnit.SECONDS.toMillis(tokenEvictionGracePeriod)) <= System.currentTimeMillis();
+    }
+    return needsEviction;
   }
 
   /**

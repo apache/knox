@@ -661,7 +661,13 @@ public interface GatewayConfig {
 
   /**
    * Return the configured interval (in seconds) at which token eviction job should run
-   * @return
+   * @return eviction job run interval in seconds
    */
   long getKnoxTokenEvictionInterval();
+
+  /**
+   * Return the configured grace period (in seconds) after which an expired token should be evicted
+   * @return eviction grace period in seconds
+   */
+  long getKnoxTokenEvictionGracePeriod();
 }

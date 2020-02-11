@@ -784,4 +784,9 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public long getKnoxTokenEvictionInterval() {
     return 0;
   }
+
+  @Override
+  public long getKnoxTokenEvictionGracePeriod() {
+    return 0;
+  }
 }

@@ -248,7 +248,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final long DEFAULT_CLOUDERA_MANAGER_ADVANCED_SERVICE_DISCOVERY_CONF_MONITOR_INTERVAL = 30000L;
 
   private static final String KNOX_TOKEN_EVICTION_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.eviction.interval";
+  private static final String KNOX_TOKEN_EVICTION_GRACE_PERIOD = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.eviction.grace.period";
   private static final long KNOX_TOKEN_EVICTION_INTERVAL_DEFAULT = TimeUnit.MINUTES.toSeconds(5);
+  private static final long KNOX_TOKEN_EVICTION_GRACE_PERIOD_DEFAULT = TimeUnit.MINUTES.toSeconds(5);
 
   public GatewayConfigImpl() {
     init();
@@ -1124,5 +1126,10 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public long getKnoxTokenEvictionInterval() {
     return getLong(KNOX_TOKEN_EVICTION_INTERVAL, KNOX_TOKEN_EVICTION_INTERVAL_DEFAULT);
+  }
+
+  @Override
+  public long getKnoxTokenEvictionGracePeriod() {
+    return getLong(KNOX_TOKEN_EVICTION_GRACE_PERIOD, KNOX_TOKEN_EVICTION_GRACE_PERIOD_DEFAULT);
   }
 }
