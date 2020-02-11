@@ -135,7 +135,7 @@ public class KnoxShellTableTest {
 
     assertEquals(expectedResult, table.toString());
 
-    table = table.select("Column A,       Column C");
+    table = table.select("      Column A,       Column C      ");
     assertEquals(expectedResult2, table.toString());
   }
 
