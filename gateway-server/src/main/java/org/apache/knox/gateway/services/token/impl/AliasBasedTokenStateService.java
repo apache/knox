@@ -160,7 +160,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
       allAliases = allAliases.stream().filter(a -> a.contains(TOKEN_MAX_LIFETIME_POSTFIX)).map(a -> a.substring(0, a.indexOf(TOKEN_MAX_LIFETIME_POSTFIX)))
           .collect(Collectors.toList());
     } catch (AliasServiceException e) {
-      log.errorAccessingTokenState(e);
+      log.errorEvictingTokens(e);
     }
     return allAliases;
   }
