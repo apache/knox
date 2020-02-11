@@ -22,6 +22,7 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -107,7 +108,7 @@ public class DefaultTokenStateService implements TokenStateService {
       tokenExpirations.put(token, expiration);
     }
     setMaxLifetime(token, issueTime, maxLifetimeDuration);
-    log.addedToken(getTokenDisplayText(token));
+    log.addedToken(getTokenDisplayText(token), getTimestampDisplay(expiration));
   }
 
   @Override
@@ -145,13 +146,13 @@ public class DefaultTokenStateService implements TokenStateService {
   public long renewToken(final String token, long renewInterval) {
     long expiration;
 
-    validateToken(token, true);
+    validateToken(token);
 
     // Make sure the maximum lifetime has not been (and will not be) exceeded
     if (hasRemainingRenewals(token, renewInterval)) {
       expiration = System.currentTimeMillis() + renewInterval;
       updateExpiration(token, expiration);
-      log.renewedToken(getTokenDisplayText(token));
+      log.renewedToken(getTokenDisplayText(token), getTimestampDisplay(expiration));
     } else {
       log.renewalLimitExceeded(token);
       throw new IllegalArgumentException("The renewal limit for the token has been exceeded");
@@ -221,11 +222,12 @@ public class DefaultTokenStateService implements TokenStateService {
   protected void removeToken(final String token) {
     validateToken(token);
     synchronized (tokenExpirations) {
-        tokenExpirations.remove(token);
+      tokenExpirations.remove(token);
     }
     synchronized (maxTokenLifetimes) {
       maxTokenLifetimes.remove(token);
     }
+    log.removedTokenState(getTokenDisplayText(token));
   }
 
   protected boolean hasRemainingRenewals(final String token, long renewInterval) {
@@ -253,18 +255,6 @@ public class DefaultTokenStateService implements TokenStateService {
    * @throws IllegalArgumentException if the specified token in invalid.
    */
   protected void validateToken(final String token) throws IllegalArgumentException {
-    validateToken(token, false);
-  }
-
-  /**
-   * Validate the specified token identifier.
-   *
-   * @param token              The token identifier to validate.
-   * @param includeRevocation  true, if the revocation status of the specified token should be considered in the validation.
-   *
-   * @throws IllegalArgumentException if the specified token in invalid.
-   */
-  protected void validateToken(final String token, boolean includeRevocation) throws IllegalArgumentException {
     if (!isValidIdentifier(token)) {
       throw new IllegalArgumentException("Token data cannot be null.");
     }
@@ -278,6 +268,10 @@ public class DefaultTokenStateService implements TokenStateService {
 
   protected String getTokenDisplayText(final String token) {
     return String.format(Locale.ROOT, "%s...%s", token.substring(0, 10), token.substring(token.length() - 3));
+  }
+
+  protected String getTimestampDisplay(long timestamp) {
+    return Instant.ofEpochMilli(timestamp).toString();
   }
 
   /**

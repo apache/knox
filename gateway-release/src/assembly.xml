@@ -101,7 +101,6 @@
             <excludes>
                 <exclude>org.apache.knox:gateway-*</exclude>
                 <exclude>org.apache.knox:hadoop-examples</exclude>
-                <exclude>org.apache.kerby:*</exclude>
             </excludes>
         </dependencySet>
         <dependencySet>

@@ -52,13 +52,12 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
                        long         expiration,
                        long         maxLifetimeDuration) {
     isValidIdentifier(token);
-
     try {
       aliasService.addAliasForCluster(AliasService.NO_CLUSTER_NAME, token, String.valueOf(expiration));
       setMaxLifetime(token, issueTime, maxLifetimeDuration);
-      log.addedToken(getTokenDisplayText(token));
+      log.addedToken(getTokenDisplayText(token), getTimestampDisplay(expiration));
     } catch (AliasServiceException e) {
-      log.failedToSaveTokenState(e);
+      log.failedToSaveTokenState(getTokenDisplayText(token), e);
     }
   }
 
@@ -69,7 +68,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
                                       token + TOKEN_MAX_LIFETIME_POSTFIX,
                                       String.valueOf(issueTime + maxLifetimeDuration));
     } catch (AliasServiceException e) {
-      log.failedToSaveTokenState(e);
+      log.failedToSaveTokenState(getTokenDisplayText(token), e);
     }
   }
 
@@ -83,7 +82,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
         result = Long.parseLong(new String(maxLifetimeStr));
       }
     } catch (AliasServiceException e) {
-      log.errorAccessingTokenState(e);
+      log.errorAccessingTokenState(getTokenDisplayText(token), e);
     }
     return result;
   }
@@ -100,7 +99,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
         expiration = Long.parseLong(new String(expStr));
       }
     } catch (Exception e) {
-      log.errorAccessingTokenState(e);
+      log.errorAccessingTokenState(getTokenDisplayText(token), e);
     }
 
     return expiration;
@@ -119,7 +118,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     try {
       isUnknown = (aliasService.getPasswordFromAliasForCluster(AliasService.NO_CLUSTER_NAME, token) == null);
     } catch (AliasServiceException e) {
-      log.errorAccessingTokenState(e);
+      log.errorAccessingTokenState(getTokenDisplayText(token), e);
     }
     return isUnknown;
   }
@@ -131,10 +130,10 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     try {
       aliasService.removeAliasForCluster(AliasService.NO_CLUSTER_NAME, token);
       aliasService.removeAliasForCluster(AliasService.NO_CLUSTER_NAME,token + TOKEN_MAX_LIFETIME_POSTFIX);
+      log.removedTokenState(getTokenDisplayText(token));
     } catch (AliasServiceException e) {
-      log.errorAccessingTokenState(e);
+      log.failedToRemoveTokenState(getTokenDisplayText(token), e);
     }
-
   }
 
   @Override
@@ -148,7 +147,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
       aliasService.removeAliasForCluster(AliasService.NO_CLUSTER_NAME, token);
       aliasService.addAliasForCluster(AliasService.NO_CLUSTER_NAME, token, String.valueOf(expiration));
     } catch (AliasServiceException e) {
-      log.failedToUpdateTokenExpiration(e);
+      log.failedToUpdateTokenExpiration(getTokenDisplayText(token), e);
     }
   }
 
