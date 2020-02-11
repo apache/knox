@@ -240,6 +240,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   /* property that specifies list of services for which we need to append service name to the X-Forward-Context header */
   public static final String X_FORWARD_CONTEXT_HEADER_APPEND_SERVICES = GATEWAY_CONFIG_FILE_PREFIX + ".xforwarded.header.context.append.servicename";
 
+  private static final String TOKEN_STATE_SERVER_MANAGED = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.exp.server-managed";
+
   private static final String CLOUDERA_MANAGER_DESCRIPTORS_MONITOR_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.descriptors.monitor.interval";
   private static final long DEFAULT_CLOUDERA_MANAGER_DESCRIPTORS_MONITOR_INTERVAL = 30000L;
   private static final String CLOUDERA_MANAGER_ADVANCED_SERVICE_DISCOVERY_CONF_MONITOR_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.advanced.service.discovery.config.monitor.interval";
@@ -1109,4 +1111,10 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public long getClouderaManagerAdvancedServiceDiscoveryConfigurationMonitoringInterval() {
     return getLong(CLOUDERA_MANAGER_ADVANCED_SERVICE_DISCOVERY_CONF_MONITOR_INTERVAL, DEFAULT_CLOUDERA_MANAGER_ADVANCED_SERVICE_DISCOVERY_CONF_MONITOR_INTERVAL);
   }
+
+  @Override
+  public boolean isServerManagedTokenStateEnabled() {
+    return getBoolean(TOKEN_STATE_SERVER_MANAGED, false);
+  }
+
 }

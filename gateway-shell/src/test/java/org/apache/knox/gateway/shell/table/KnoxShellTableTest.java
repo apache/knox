@@ -638,4 +638,12 @@ public class KnoxShellTableTest {
     KnoxShellTableCallHistory.getInstance().saveCall(table2.getId(), new KnoxShellTableCall("class2", "method2", false, Collections.singletonMap("param2", String.class)));
     assertNotEquals(table1.getCallHistoryList(), table2.getCallHistoryList());
   }
+
+  @Test
+  public void testHeadersStrippingWhitespace() throws Exception {
+    KnoxShellTable table = new KnoxShellTable();
+    table.header(" ColumnA ").header("ColumnB").header("ColumnC");
+
+    assertEquals(table.headers.get(1).indexOf(' '), -1);
+  }
 }
