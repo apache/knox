@@ -121,11 +121,6 @@ public class KnoxShellTableTest {
         + "|    123     |    456     |  344444444   |\n"
         + "|    789     |    012     |  844444444   |\n" + "+------------+------------+--------------+\n";
 
-    String expectedResult2 = "+------------+--------------+\n"
-        + "|  Column A  |   Column C   |\n" + "+------------+--------------+\n"
-        + "|    123     |  344444444   |\n"
-        + "|    789     |  844444444   |\n" + "+------------+--------------+\n";
-
     KnoxShellTable table = new KnoxShellTable();
 
     table.header("Column A").header("Column B").header("Column C");
@@ -135,8 +130,8 @@ public class KnoxShellTableTest {
 
     assertEquals(expectedResult, table.toString());
 
-    table = table.select("Column A,Column C");
-    assertEquals(expectedResult2, table.toString());
+    table = table.select(" Column A   ,   Column B ,  Column C  ");
+    assertEquals(expectedResult, table.toString());
   }
 
   @Test
