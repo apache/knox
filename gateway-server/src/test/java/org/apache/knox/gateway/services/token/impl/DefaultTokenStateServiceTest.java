@@ -25,13 +25,17 @@ import org.junit.Test;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class DefaultTokenStateServiceTest {
+
+  private static long EVICTION_INTERVAL = 2L;
 
   @Test
   public void testGetExpiration() {
@@ -143,6 +147,41 @@ public class DefaultTokenStateServiceTest {
     }
   }
 
+  @Test
+  public void testNegativeTokenEviction() throws InterruptedException {
+    final JWTToken token = createMockToken(System.currentTimeMillis() - 60000);
+    final TokenStateService tss = createTokenStateService();
+
+    // Add the expired token
+    tss.addToken(token, System.currentTimeMillis());
+    assertTrue("Expected the token to have expired.", tss.isExpired(token));
+    /* sleep one sec less than eviction time */
+    Thread.sleep(TimeUnit.SECONDS.toMillis(EVICTION_INTERVAL - 1));
+
+    tss.renewToken(token);
+    assertFalse("Expected the token to have been renewed.", tss.isExpired(token));
+  }
+
+  @Test
+  public void testTokenEviction()
+      throws InterruptedException, ServiceLifecycleException {
+    final JWTToken token = createMockToken(System.currentTimeMillis() - 60000);
+    final TokenStateService tss = createTokenStateService();
+    try {
+      tss.start();
+      // Add the expired token
+      tss.addToken(token, System.currentTimeMillis());
+      assertTrue("Expected the token to have expired.", tss.isExpired(token));
+      /* sleep one sec more than eviction time */
+      Thread.sleep(TimeUnit.SECONDS.toMillis(EVICTION_INTERVAL + 1));
+
+      /* expect the renew call to fail since the token is evicted */
+      final IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> tss.renewToken(token));
+      assertEquals("Unknown token", e.getMessage());
+    } finally {
+      tss.stop();
+    }
+  }
 
   protected static JWTToken createMockToken(final long expiration) {
     return createMockToken("abcD1234eFGHIJKLmnoPQRSTUVwXYz", expiration);
@@ -158,6 +197,9 @@ public class DefaultTokenStateServiceTest {
 
   protected static GatewayConfig createMockGatewayConfig() {
     GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    /* configure token eviction time to be 5 secs for test */
+    EasyMock.expect(config.getKnoxTokenEvictionInterval()).andReturn(EVICTION_INTERVAL).anyTimes();
+    EasyMock.expect(config.getKnoxTokenEvictionGracePeriod()).andReturn(0L).anyTimes();
     EasyMock.replay(config);
     return config;
   }

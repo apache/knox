@@ -21,7 +21,10 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * A TokenStateService implementation based on the AliasService.
@@ -29,6 +32,7 @@ import java.util.Map;
 public class AliasBasedTokenStateService extends DefaultTokenStateService {
 
   private AliasService aliasService;
+  private static final String TOKEN_MAX_LIFETIME_POSTFIX = "--max";
 
   public void setAliasService(AliasService aliasService) {
     this.aliasService = aliasService;
@@ -61,7 +65,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
   protected void setMaxLifetime(final String token, long issueTime, long maxLifetimeDuration) {
     try {
       aliasService.addAliasForCluster(AliasService.NO_CLUSTER_NAME,
-                                      token + "--max",
+                                      token + TOKEN_MAX_LIFETIME_POSTFIX,
                                       String.valueOf(issueTime + maxLifetimeDuration));
     } catch (AliasServiceException e) {
       log.failedToSaveTokenState(getTokenDisplayText(token), e);
@@ -73,7 +77,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     long result = 0;
     try {
       char[] maxLifetimeStr =
-                      aliasService.getPasswordFromAliasForCluster(AliasService.NO_CLUSTER_NAME, token + "--max");
+                      aliasService.getPasswordFromAliasForCluster(AliasService.NO_CLUSTER_NAME, token + TOKEN_MAX_LIFETIME_POSTFIX);
       if (maxLifetimeStr != null) {
         result = Long.parseLong(new String(maxLifetimeStr));
       }
@@ -125,7 +129,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
 
     try {
       aliasService.removeAliasForCluster(AliasService.NO_CLUSTER_NAME, token);
-      aliasService.removeAliasForCluster(AliasService.NO_CLUSTER_NAME,token + "--max");
+      aliasService.removeAliasForCluster(AliasService.NO_CLUSTER_NAME,token + TOKEN_MAX_LIFETIME_POSTFIX);
       log.removedTokenState(getTokenDisplayText(token));
     } catch (AliasServiceException e) {
       log.failedToRemoveTokenState(getTokenDisplayText(token), e);
@@ -145,5 +149,19 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     } catch (AliasServiceException e) {
       log.failedToUpdateTokenExpiration(getTokenDisplayText(token), e);
     }
+  }
+
+  @Override
+  protected List<String> getTokens() {
+    List<String> allAliases = new ArrayList();
+    try {
+      allAliases = aliasService.getAliasesForCluster(AliasService.NO_CLUSTER_NAME);
+      /* only get the aliases that represent tokens and extract the current list of tokens */
+      allAliases = allAliases.stream().filter(a -> a.contains(TOKEN_MAX_LIFETIME_POSTFIX)).map(a -> a.substring(0, a.indexOf(TOKEN_MAX_LIFETIME_POSTFIX)))
+          .collect(Collectors.toList());
+    } catch (AliasServiceException e) {
+      log.errorEvictingTokens(e);
+    }
+    return allAliases;
   }
 }

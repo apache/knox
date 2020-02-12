@@ -54,4 +54,13 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.ERROR, text = "Failed to remove state for token {0} : {1}")
   void failedToRemoveTokenState(String tokenDisplayText, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.ERROR, text = "Failed to evict expired token {0} : {1}")
+  void failedExpiredTokenEviction(String tokenDisplayText, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.DEBUG, text = "Evicting expired token {0}")
+  void evictToken(String tokenDisplayText);
+
+  @Message(level = MessageLevel.ERROR, text = "Error occurred evicting token {0}")
+  void errorEvictingTokens(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
 }
