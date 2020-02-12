@@ -309,25 +309,30 @@ public class DefaultKeystoreService implements KeystoreService, Service {
   @Override
   public char[] getCredentialForCluster(String clusterName, String alias)
       throws KeystoreServiceException {
-    char[] credential = checkCache(clusterName, alias);
-    if (credential == null) {
-      KeyStore ks = getCredentialStoreForCluster(clusterName);
-      if (ks != null) {
-        try {
-          char[] masterSecret = masterService.getMasterSecret();
-          Key credentialKey = ks.getKey( alias, masterSecret );
-          if (credentialKey != null) {
-            byte[] credentialBytes = credentialKey.getEncoded();
-            String credentialString = new String( credentialBytes, StandardCharsets.UTF_8 );
-            credential = credentialString.toCharArray();
-            addToCache(clusterName, alias, credentialString);
-          }
-        } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
-          LOG.failedToGetCredentialForCluster( clusterName, e );
-        }
+    char[] credential;
 
+    synchronized (this) {
+      credential = checkCache(clusterName, alias);
+      if (credential == null) {
+        KeyStore ks = getCredentialStoreForCluster(clusterName);
+        if (ks != null) {
+          try {
+            char[] masterSecret = masterService.getMasterSecret();
+            Key credentialKey = ks.getKey(alias, masterSecret);
+            if (credentialKey != null) {
+              byte[] credentialBytes = credentialKey.getEncoded();
+              String credentialString = new String(credentialBytes, StandardCharsets.UTF_8);
+              credential = credentialString.toCharArray();
+              addToCache(clusterName, alias, credentialString);
+            }
+          } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
+            LOG.failedToGetCredentialForCluster(clusterName, e);
+          }
+
+        }
       }
     }
+
     return credential;
   }
 
