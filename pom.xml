@@ -139,6 +139,8 @@
         <module>gateway-release-common</module>
         <module>gateway-topology-simple</module>
         <module>gateway-cm-integration</module>
+        <module>knox-homepage-backend</module>
+        <module>knox-homepage-ui</module>
     </modules>
 
     <properties>
@@ -230,6 +232,7 @@
         <maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
         <maven-enforcer-plugin.version>3.0.0-M3</maven-enforcer-plugin.version>
         <maven-pmd-plugin.version>3.12.0</maven-pmd-plugin.version>
+        <maven-war-plugin.version>3.2.3</maven-war-plugin.version>
         <metrics.version>4.1.3</metrics.version>
         <mina.version>2.0.21</mina.version>
         <nimbus-jose-jwt.version>8.8</nimbus-jose-jwt.version>
@@ -421,6 +424,10 @@
                         <exclude>**/admin-ui/**/*.js</exclude>
                         <exclude>**/admin-ui/**/*.css</exclude>
                         <exclude>**/admin-ui/**/*.html</exclude>
+                        <exclude>**/knox-homepage-ui/**/*.json</exclude>
+                        <exclude>**/knox-homepage-ui/**/*.js</exclude>
+                        <exclude>**/knox-homepage-ui/**/*.css</exclude>
+                        <exclude>**/knox-homepage-ui/**/*.html</exclude>
                         <exclude>atlassian-ide-plugin.xml</exclude>
                         <exclude>**/PULL_REQUEST_TEMPLATE*</exclude>
                         <exclude>**/new-service-definition-template.xml</exclude>
@@ -659,6 +666,11 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-war-plugin</artifactId>
+               <version>${maven-war-plugin.version}</version>
             </plugin>
             <plugin>
                 <groupId>org.jacoco</groupId>
@@ -1164,6 +1176,17 @@
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-cm-integration</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>knox-homepage-backend</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>knox-homepage-ui</artifactId>
+                <version>${project.version}</version>
+                <type>war</type>
             </dependency>
 
             <dependency>

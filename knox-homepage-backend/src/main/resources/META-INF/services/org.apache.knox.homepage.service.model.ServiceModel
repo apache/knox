@@ -1,0 +1,56 @@
+##########################################################################
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##########################################################################
+org.apache.knox.homepage.service.model.atlas.AtlasAPIServiceModel
+org.apache.knox.homepage.service.model.atlas.AtlasServiceModel
+org.apache.knox.homepage.service.model.cm.ClouderaManagerAPIServiceModel
+org.apache.knox.homepage.service.model.cm.ClouderaManagerUIServiceModel
+org.apache.knox.homepage.service.model.druid.DruidBrokerServiceModel
+org.apache.knox.homepage.service.model.druid.DruidCoordinatorServiceModel
+org.apache.knox.homepage.service.model.druid.DruidCoordinatorUIServiceModel
+org.apache.knox.homepage.service.model.druid.DruidOverlordServiceModel
+org.apache.knox.homepage.service.model.druid.DruidOverlordUIServiceModel
+org.apache.knox.homepage.service.model.druid.DruidRouterServiceModel
+org.apache.knox.homepage.service.model.hbase.HBaseUIServiceModel
+org.apache.knox.homepage.service.model.hbase.WebHBaseServiceModel
+org.apache.knox.homepage.service.model.hive.HiveOnTezServiceModel
+org.apache.knox.homepage.service.model.hdfs.HdfsUIServiceModel
+org.apache.knox.homepage.service.model.hdfs.NameNodeServiceModel
+org.apache.knox.homepage.service.model.hdfs.WebHdfsServiceModel
+org.apache.knox.homepage.service.model.hive.HiveServiceModel
+org.apache.knox.homepage.service.model.hive.WebHCatServiceModel
+org.apache.knox.homepage.service.model.hue.HueServiceModel
+org.apache.knox.homepage.service.model.impala.ImpalaServiceModel
+org.apache.knox.homepage.service.model.impala.ImpalaUIServiceModel
+org.apache.knox.homepage.service.model.kudu.KuduUIServiceModel
+org.apache.knox.homepage.service.model.livy.LivyServiceModel
+org.apache.knox.homepage.service.model.nifi.NifiRegistryServiceModel
+org.apache.knox.homepage.service.model.nifi.NifiServiceModel
+org.apache.knox.homepage.service.model.oozie.OozieServiceModel
+org.apache.knox.homepage.service.model.oozie.OozieUIServiceModel
+org.apache.knox.homepage.service.model.phoenix.PhoenixServiceModel
+org.apache.knox.homepage.service.model.ranger.RangerServiceModel
+org.apache.knox.homepage.service.model.ranger.RangerUIServiceModel
+org.apache.knox.homepage.service.model.solr.SolrServiceModel
+org.apache.knox.homepage.service.model.spark.SparkHistoryUIServiceModel
+org.apache.knox.homepage.service.model.yarn.JobHistoryUIServiceModel
+org.apache.knox.homepage.service.model.yarn.JobTrackerServiceModel
+org.apache.knox.homepage.service.model.yarn.ResourceManagerServiceModel
+org.apache.knox.homepage.service.model.yarn.YarnUIServiceModel
+org.apache.knox.homepage.service.model.yarn.YarnUIV2ServiceModel
+org.apache.knox.homepage.service.model.zeppelin.ZeppelinUIServiceModel
+org.apache.knox.homepage.service.model.zeppelin.ZeppelinWSServiceModel

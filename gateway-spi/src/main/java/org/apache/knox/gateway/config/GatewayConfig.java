@@ -670,4 +670,9 @@ public interface GatewayConfig {
    * @return eviction grace period in seconds
    */
   long getKnoxTokenEvictionGracePeriod();
+
+  /**
+   * @return the list of topologies that should be hidden on Knox homepage
+   */
+  Set<String> getHiddenTopologiesOnHomepage();
 }
