@@ -92,16 +92,16 @@ public class ServiceModel {
 
   @XmlElement
   public String getContext() {
-    return serviceMetadata == null ? "/" + getServiceName().toLowerCase(Locale.ROOT) : serviceMetadata.getContext();
+    return (serviceMetadata == null ? "/" + getServiceName().toLowerCase(Locale.ROOT) : serviceMetadata.getContext()) + "/";
   }
 
   @XmlElement
   public String getServiceUrl() {
     String context = getContext();
-    if (context.indexOf("%BACKEND_HOST") > -1) {
-      context = context.replaceAll("%BACKEND_HOST", getBackendServiceUrl());
+    if (context.indexOf("{{BACKEND_HOST}}") > -1) {
+      context = context.replaceAll("\\{\\{BACKEND_HOST\\}\\}", getBackendServiceUrl());
     }
-    return String.format(Locale.getDefault(), "%s://%s:%s/%s/%s%s/", request.getScheme(), request.getServerName(), request.getServerPort(), gatewayPath, topologyName, context);
+    return String.format(Locale.ROOT, "%s://%s:%s/%s/%s%s", request.getScheme(), request.getServerName(), request.getServerPort(), gatewayPath, topologyName, context);
   }
 
   protected String getBackendServiceUrl() {

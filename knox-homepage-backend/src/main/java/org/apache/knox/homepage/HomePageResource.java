@@ -18,6 +18,7 @@
 package org.apache.knox.homepage;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -28,12 +29,14 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 
@@ -64,7 +67,7 @@ public class HomePageResource {
   private HttpServletRequest request;
 
   @GET
-  @Produces({ APPLICATION_JSON })
+  @Produces({ APPLICATION_JSON, APPLICATION_XML })
   @Path("generalProxyInformation")
   public GeneralProxyInformation getGeneralProxyInformation() {
     final GeneralProxyInformation proxyInfo = new GeneralProxyInformation();
@@ -73,7 +76,8 @@ public class HomePageResource {
       final ServerInfoService serviceInfoService = gatewayServices.getService(ServiceType.SERVER_INFO_SERVICE);
       final String versionInfo = serviceInfoService.getBuildVersion() + " (hash=" + serviceInfoService.getBuildHash() + ")";
       proxyInfo.setVersion(versionInfo);
-      proxyInfo.setAdminApiBookUrl(String.format("https://knox.apache.org/books/knox-%s/user-guide.html#Admin+API", getAdminApiBookVersion(serviceInfoService.getBuildVersion())));
+      proxyInfo.setAdminApiBookUrl(
+          String.format(Locale.ROOT, "https://knox.apache.org/books/knox-%s/user-guide.html#Admin+API", getAdminApiBookVersion(serviceInfoService.getBuildVersion())));
       final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
       final Certificate certificate = getPublicCertificate(gatewayServices, config);
       if (certificate != null) {
@@ -132,9 +136,20 @@ public class HomePageResource {
   }
 
   @GET
-  @Produces({ APPLICATION_JSON })
+  @Produces({ APPLICATION_JSON, APPLICATION_XML })
   @Path("topologies")
   public TopologyInformationWrapper getTopologies() {
+    return getTopologies(null);
+  }
+
+  @GET
+  @Produces({ APPLICATION_JSON, APPLICATION_XML })
+  @Path("topologies/{name}")
+  public TopologyInformationWrapper getTopology(@PathParam("name") String topologyName) {
+    return getTopologies(topologyName);
+  }
+
+  private TopologyInformationWrapper getTopologies(String topologyName) {
     final TopologyInformationWrapper topologies = new TopologyInformationWrapper();
     final GatewayServices gatewayServices = (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
@@ -143,7 +158,7 @@ public class HomePageResource {
     if (gatewayServices != null) {
       final TopologyService topologyService = gatewayServices.getService(ServiceType.TOPOLOGY_SERVICE);
       for (Topology topology : topologyService.getTopologies()) {
-        if (!hiddenTopologies.contains(topology.getName())) {
+        if (!hiddenTopologies.contains(topology.getName()) && (topologyName == null || topology.getName().equalsIgnoreCase(topologyName))) {
           List<ServiceModel> apiServices = new ArrayList<>();
           List<ServiceModel> uiServices = new ArrayList<>();
           for (Service service : topology.getServices()) {

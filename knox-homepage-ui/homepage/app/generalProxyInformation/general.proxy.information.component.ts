@@ -32,12 +32,12 @@ import {GeneralProxyInformation} from './general.proxy.information';
                             <td>{{ getVersion() }}</td>
                         </tr>
                         <tr>
-                            <td>TLS Public Certificate PEM file</td>
-                            <td><a href="{{ getPublicCertPemPath() }}" target="_blank">Click here to download</a></td>
-                        </tr>
-                        <tr>
-                            <td>TLS Public Certificate JKS file</td>
-                            <td><a href="{{ getPublicCertJksPath() }}" target="_blank">Click here to download</a></td>
+                            <td>TLS Public Certificate</td>
+                            <td>
+                                <a href="{{ getPublicCertPemPath() }}" target="_blank">PEM</a>
+                                &nbsp;&nbsp;|&nbsp;&nbsp;
+                                <a href="{{ getPublicCertJksPath() }}" target="_blank">JKS</a>
+                            </td>
                         </tr>
                         <tr>
                             <td>Admin UI URL</td>
