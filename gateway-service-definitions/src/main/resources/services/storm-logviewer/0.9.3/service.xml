@@ -15,6 +15,13 @@
    limitations under the License.
 -->
 <service role="STORM-LOGVIEWER" name="storm-logviewer" version="0.9.3">
+    <metadata>
+        <type>UI</type>
+        <context>/storm/logviewer</context>
+        <shortDesc>Apache Storm LogViewer</shortDesc>
+        <description>Apache Storm includes a helpful feature for debugging and monitoring topologies: the logviewer daemon. 
+            With the log viewer you can easily access a specific worker's log in a web browser by clicking on a worker's port number right from Apache Storm UI.</description>
+    </metadata>
     <routes>
         <route path="/storm/logviewer/**"/>
     </routes>

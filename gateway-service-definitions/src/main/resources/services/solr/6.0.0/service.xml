@@ -16,6 +16,12 @@
    limitations under the License.
 -->
 <service role="SOLR" name="solr" version="6.0.0">
+    <metadata>
+        <type>API</type>
+        <context>/solr</context>
+        <shortDesc>SOLR</shortDesc>
+        <description>Solr is a popular, blazing-fast, open source enterprise search platform built on Apache Lucene™.</description>
+    </metadata>
     <routes>
         <route path="/solr/">
             <rewrite apply="SOLR/solr/inbound/root" to="request.url"/>

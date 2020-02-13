@@ -15,6 +15,13 @@
    limitations under the License.
 -->
 <service role="AVATICA" name="avatica" version="1.9.0">
+    <metadata>
+        <type>API</type>
+        <context>/avatica</context>
+        <shortDesc>Phoenix Query Server</shortDesc>
+        <description>The Phoenix Query Server provides an alternative means for interaction with Phoenix and HBase. Phoenix 4.4 introduces a stand-alone server that exposes Phoenix to “thin” clients. 
+            It is based on the Avatica component of Apache Calcite. Avatica is a framework for building JDBC and ODBC drivers for databases, and an RPC wire protocol.</description>
+    </metadata>
   <routes>
     <route path="/avatica">
         <rewrite apply="AVATICA/avatica/inbound/root" to="request.url"/>

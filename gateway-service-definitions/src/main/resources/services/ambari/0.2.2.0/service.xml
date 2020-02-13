@@ -15,6 +15,12 @@
    limitations under the License.
 -->
 <service role="AMBARI" name="ambari" version="0.2.2.0">
+    <metadata>
+        <type>API</type>
+        <context>/ambari/api</context>
+        <shortDesc>Apache Ambari API</shortDesc>
+        <description>The Ambari API facilitates the management and monitoring of the resources of an Apache Hadoop cluster.</description>
+    </metadata>
     <routes>
         <route path="/ambari/api/v1/**">
             <rewrite apply="AMBARI/ambari/api/outbound" to="response.body"/>

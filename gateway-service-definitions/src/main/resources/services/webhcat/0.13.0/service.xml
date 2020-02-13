@@ -16,6 +16,12 @@
    limitations under the License.
 -->
 <service role="WEBHCAT" name="webhcat" version="0.13.0">
+    <metadata>
+        <type>API</type>
+        <context>/templeton</context>
+        <shortDesc>WebHCat</shortDesc>
+        <description>WebHCat is the REST API for HCatalog, a table and storage management layer for Hadoop.</description>
+    </metadata>
     <routes>
         <route path="/templeton/v1/?**"/>
         <route path="/templeton/v1/**?**"/>

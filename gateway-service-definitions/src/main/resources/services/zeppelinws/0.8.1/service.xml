@@ -16,6 +16,12 @@
    limitations under the License.
 -->
 <service role="ZEPPELINWS" name="zeppelinws" version="0.8.1">
+    <metadata>
+        <type>API</type>
+        <context>/zeppelin/ws</context>
+        <shortDesc>Zeppelin WS API</shortDesc>
+        <description>Apache Zeppelin is a web-based notebook that enables data-driven, interactive data analytics and collaborative documents with SQL, Scala and more.</description>
+    </metadata>
   <routes>
     <route path="/zeppelin/ws">
       <rewrite apply="ZEPPELINWS/zeppelin/ws/inbound" to="request.url"/>

@@ -15,6 +15,12 @@
    limitations under the License.
 -->
 <service role="ATLAS-API" name="atlas-api" version="2.0.0">
+    <metadata>
+        <type>API</type>
+        <context>/atlas/api</context>
+        <shortDesc>Atlas API</shortDesc>
+        <description>Atlas exposes a variety of REST endpoints to work with types, entities, lineage and data discovery.</description>
+    </metadata>
     <routes>
         <route path="/atlas/api/**"/>
     </routes>

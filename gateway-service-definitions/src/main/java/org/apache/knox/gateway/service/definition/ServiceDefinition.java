@@ -33,6 +33,8 @@ public class ServiceDefinition {
 
   private String version;
 
+  private Metadata metadata;
+
   private List<Route> routes;
 
   private List<Policy> policies;
@@ -66,6 +68,15 @@ public class ServiceDefinition {
 
   public void setVersion(String version) {
     this.version = version;
+  }
+
+  @XmlElement(name = "metadata")
+  public Metadata getMetadata() {
+    return metadata;
+  }
+
+  public void setMetadata(Metadata metadata) {
+    this.metadata = metadata;
   }
 
   @XmlElement(name = "route")

@@ -15,6 +15,12 @@
    limitations under the License.
 -->
 <service role="HIVE" name="hive" version="0.13.0">
+    <metadata>
+        <type>API</type>
+        <context>/hive</context>
+        <shortDesc>Hive</shortDesc>
+        <description>The Apache Hive ™ data warehouse software facilitates reading, writing, and managing large datasets residing in distributed storage using SQL. Structure can be projected onto data already in storage. A command line tool and JDBC driver are provided to connect users to Hive.</description>
+    </metadata>
     <routes>
         <route path="/hive"/>
     </routes>

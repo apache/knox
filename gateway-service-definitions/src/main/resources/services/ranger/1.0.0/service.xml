@@ -15,6 +15,13 @@
    limitations under the License.
 -->
 <service role="RANGER" name="ranger" version="1.0.0">
+    <metadata>
+        <type>API</type>
+        <context>/ranger</context>
+        <shortDesc>Ranger Admin REST API</shortDesc>
+        <description>Apache Ranger is a framework to enable, monitor and manage comprehensive data security across the Hadoop platform. 
+            Apache Ranger currently provides a centralized security adminstration, fine grain access control and detailed auditing for user access within Apache Hadoop, Apache Hive, Apache HBase and other Apache components</description>
+    </metadata>
     <routes>
         <route path="/ranger/service/public/**"/>
         <route path="/ranger/service/plugins/**"/>

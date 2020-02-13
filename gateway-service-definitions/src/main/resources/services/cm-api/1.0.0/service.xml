@@ -21,6 +21,12 @@
    This service definition does not cover the web UI.
 -->
 <service role="CM-API" name="cm-api" version="1.0.0">
+    <metadata>
+        <type>API</type>
+        <context>/cm-api</context>
+        <shortDesc>Cloudera Manager REST API</shortDesc>
+        <description>Cloudera Manager's REST API lets you work with existing tools, and programmatically manage your Hadoop clusters. The API is available in both Cloudera Express and Cloudera Enterprise, and comes with open-source client libraries.</description>
+    </metadata>
   <routes>
     <route path="/cm-api/**">
       <rewrite apply="CM-API/cm-api/rest" to="request.url"/>

@@ -35,6 +35,9 @@ public class GeneralProxyInformation {
   @XmlElement
   private String adminUiUrl;
 
+  @XmlElement
+  private String adminApiBookUrl;
+
   public String getVersion() {
     return version;
   }
@@ -65,6 +68,14 @@ public class GeneralProxyInformation {
 
   public void setAdminUiUrl(String adminUiUrl) {
     this.adminUiUrl = adminUiUrl;
+  }
+
+  public String getAdminApiBookUrl() {
+    return adminApiBookUrl;
+  }
+
+  public void setAdminApiBookUrl(String adminApiBookUrl) {
+    this.adminApiBookUrl = adminApiBookUrl;
   }
 
 }

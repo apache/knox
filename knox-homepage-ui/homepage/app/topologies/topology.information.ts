@@ -18,5 +18,6 @@ import {Service} from './service';
 
 export class TopologyInformation {
     topology: string;
-    services: Service[];
+    apiServices: Service[];
+    uiServices: Service[];
 }

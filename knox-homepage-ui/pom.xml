@@ -30,11 +30,6 @@
     <packaging>war</packaging>
     <description>The Knox Home Page UI</description>
 
-    <properties>
-        <frontend-maven-plugin.version>1.9.1</frontend-maven-plugin.version>
-        <nodejs.version>v12.14.1</nodejs.version>
-    </properties>
-
     <build>
         <plugins>
             <plugin>

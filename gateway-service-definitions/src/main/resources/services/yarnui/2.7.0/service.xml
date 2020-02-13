@@ -16,6 +16,12 @@
    limitations under the License.
 -->
 <service role="YARNUI" name="yarn" version="2.7.0">
+    <metadata>
+        <type>UI</type>
+        <context>/yarn</context>
+        <shortDesc>YARN Resource Manager Web UI</shortDesc>
+        <description>YARN Resource Manager Web interface (v1)</description>
+    </metadata>
     <routes>
         <route path="/yarn/ws/**">
             <rewrite apply="YARNUI/yarn/inbound/ws" to="request.url"/>

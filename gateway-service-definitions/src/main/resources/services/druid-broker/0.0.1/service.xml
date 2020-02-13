@@ -15,7 +15,15 @@
    limitations under the License.
 -->
 <service role="DRUID-BROKER" name="druid-broker" version="0.0.1">
-  <routes>
+    <metadata>
+        <type>API</type>
+        <context>/druid-broker/druid</context>
+        <shortDesc>Druid Broker API</shortDesc>
+        <description>The Broker is the process to route queries to if you want to run a distributed cluster. 
+            It understands the metadata published to ZooKeeper about what segments exist on what processes and routes queries such that they hit the right processes. 
+            This process also merges the result sets from all of the individual processes together. On start up, Historical processes announce themselves and the segments they are serving in Zookeeper.</description>
+    </metadata>
+    <routes>
     <route path="druid-broker/druid/broker/v1/{**}?{**}">
         <rewrite apply="DRUID-BROKER/druid-broker/inbound/api"/>
     </route>

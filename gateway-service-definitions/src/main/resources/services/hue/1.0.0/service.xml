@@ -15,6 +15,12 @@
    limitations under the License.
 -->
 <service role="HUE" name="hue" version="1.0.0">
+    <metadata>
+        <type>UI</type>
+        <context>/hue</context>
+        <shortDesc>Hue UI</shortDesc>
+        <description>Hue UI is a Web interface for analyzing data with Apache Hadoop</description>
+    </metadata>
   <routes>
     <!-- Since we don't have to rewrite URLs for all javascript, we single out these 2 exceptions: 1 for workers & the other for the base URL -->
     <route path="/hue/desktop/workers/{**}?{**}">

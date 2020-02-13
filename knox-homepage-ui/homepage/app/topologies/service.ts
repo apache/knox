@@ -21,4 +21,5 @@ export class Service {
     serviceUrl: string;
     shortDesc: string;
     type: string;
+    context: string;
 }

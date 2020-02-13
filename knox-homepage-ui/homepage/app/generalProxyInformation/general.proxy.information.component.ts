@@ -45,12 +45,12 @@ import {GeneralProxyInformation} from './general.proxy.information';
                         </tr>
                         <tr>
                             <td>
-                                Admin API
+                                Admin API Details
                                 <span class="inline-glyph glyphicon glyphicon-info-sign btn btn-xs"
                                 title="{{ getAdminApiDescription() }}" data-toggle="tooltip"></span>
                             </td>
                             <td>
-                                <a href="{{ getAdminApiUrl() }}" target="_blank">{{ getAdminApiUrl() }}</a>
+                                <a href="{{ getAdminApiBookUrl() }}" target="_blank">{{ getAdminApiBookUrl() }}</a>
                             </td>
                         </tr>
                     </tbody>
@@ -90,7 +90,7 @@ export class GeneralProxyInformationComponent implements OnInit {
         if (this.generalProxyInformation) {
             return this.generalProxyInformation.adminUiUrl;
           }
-          return '';
+        return '';
     }
 
     getAdminApiDescription() {
@@ -98,8 +98,11 @@ export class GeneralProxyInformationComponent implements OnInit {
               + 'service definitions as well as fetching the Knox version.';
     }
 
-    getAdminApiUrl() {
-        return 'https://knox.apache.org/books/knox-1-4-0/user-guide.html#Admin+API';
+    getAdminApiBookUrl() {
+        if (this.generalProxyInformation) {
+            return this.generalProxyInformation.adminApiBookUrl;
+          }
+        return '';
     }
 
     ngOnInit(): void {

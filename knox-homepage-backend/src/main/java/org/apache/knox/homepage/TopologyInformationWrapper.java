@@ -26,8 +26,6 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 
-import org.apache.knox.homepage.service.model.ServiceModel;
-
 @XmlAccessorType(XmlAccessType.NONE)
 public class TopologyInformationWrapper {
 
@@ -39,10 +37,11 @@ public class TopologyInformationWrapper {
     return topologies;
   }
 
-  public void addTopology(String name, List<ServiceModel> serviceModels) {
+  public void addTopology(String name, List<ServiceModel> apiServices, List<ServiceModel> uiServices) {
     final TopologyInformation topology = new TopologyInformation();
     topology.setTopologyName(name);
-    topology.setServiceModels(serviceModels);
+    topology.setApiServices(apiServices);
+    topology.setUiServices(uiServices);
     this.topologies.add(topology);
   }
 

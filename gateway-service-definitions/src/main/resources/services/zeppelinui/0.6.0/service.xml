@@ -16,6 +16,12 @@
    limitations under the License.
 -->
 <service role="ZEPPELINUI" name="zeppelinui" version="0.6.0">
+    <metadata>
+        <type>UI</type>
+        <context>/zeppelin</context>
+        <shortDesc>Zeppelin Web UI</shortDesc>
+        <description>Zeppelin's web user interface allows end-users to explore Zeppelin notebooks.</description>
+    </metadata>
   <policies>
     <policy role="webappsec"/>
     <policy role="authentication" name="Anonymous"/>

@@ -15,7 +15,15 @@
    limitations under the License.
 -->
 <service role="DRUID-COORDINATOR" name="druid-coordinator" version="0.0.1">
-  <routes>
+    <metadata>
+        <type>API</type>
+        <context>/druid-coordinator</context>
+        <shortDesc>Druid Coordinator API</shortDesc>
+        <description>The Druid Coordinator process is primarily responsible for segment management and distribution. 
+            More specifically, the Druid Coordinator process communicates to Historical processes to load or drop segments based on configurations. 
+            The Druid Coordinator is responsible for loading new segments, dropping outdated segments, managing segment replication, and balancing segment load.</description>
+    </metadata>
+    <routes>
     <route path="druid-coordinator/status">
       <rewrite apply="DRUID-COORDINATOR/druid-coordinator/inbound/status"/>
     </route>

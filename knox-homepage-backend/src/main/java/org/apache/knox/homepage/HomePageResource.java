@@ -28,6 +28,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -37,19 +38,25 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.service.definition.Metadata;
+import org.apache.knox.gateway.service.definition.ServiceDefinitionPair;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServerInfoService;
 import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.registry.ServiceDefinitionRegistry;
 import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.util.X509CertificateUtil;
-import org.apache.knox.homepage.service.model.ServiceModel;
-import org.apache.knox.homepage.service.model.ServiceModelFactory;
 
 @Path("/v1")
 public class HomePageResource {
+  private static final KnoxHomepageMessages LOG = MessagesFactory.get(KnoxHomepageMessages.class);
+  private static final String SNAPSHOT_VERSION_POSTFIX = "-SNAPSHOT";
+
   private java.nio.file.Path pemFilePath;
   private java.nio.file.Path jksFilePath;
 
@@ -61,38 +68,62 @@ public class HomePageResource {
   @Path("generalProxyInformation")
   public GeneralProxyInformation getGeneralProxyInformation() {
     final GeneralProxyInformation proxyInfo = new GeneralProxyInformation();
-    try {
-      final GatewayServices gatewayServices = (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-      if (gatewayServices != null) {
-        final ServerInfoService serviceInfoService = gatewayServices.getService(ServiceType.SERVER_INFO_SERVICE);
-        final String versionInfo = serviceInfoService.getBuildVersion() + " (hash=" + serviceInfoService.getBuildHash() +")";
-        proxyInfo.setVersion(versionInfo);
-        final KeystoreService keystoreService = gatewayServices.getService(ServiceType.KEYSTORE_SERVICE);
-        final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
-        final Certificate certificate = keystoreService.getKeystoreForGateway().getCertificate(config.getIdentityKeyAlias());
+    final GatewayServices gatewayServices = (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    if (gatewayServices != null) {
+      final ServerInfoService serviceInfoService = gatewayServices.getService(ServiceType.SERVER_INFO_SERVICE);
+      final String versionInfo = serviceInfoService.getBuildVersion() + " (hash=" + serviceInfoService.getBuildHash() + ")";
+      proxyInfo.setVersion(versionInfo);
+      proxyInfo.setAdminApiBookUrl(String.format("https://knox.apache.org/books/knox-%s/user-guide.html#Admin+API", getAdminApiBookVersion(serviceInfoService.getBuildVersion())));
+      final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+      final Certificate certificate = getPublicCertificate(gatewayServices, config);
+      if (certificate != null) {
         generateCertificatePem(certificate, config);
         proxyInfo.setPublicCertPemPath("assets/gateway-client-trust.pem");
         generateCertificateJks(certificate, config);
         proxyInfo.setPublicCertJksPath("assets/gateway-client-trust.jks");
-        proxyInfo.setAdminUiUrl(getBaseGatewayUrl(config) + "/manager/admin-ui/");
+      } else {
+        proxyInfo.setPublicCertPemPath("Could not generate gateway-client-trust.pem");
+        proxyInfo.setPublicCertJksPath("Could not generate gateway-client-trust.jks");
       }
-    } catch (Exception e) {
+      proxyInfo.setAdminUiUrl(getBaseGatewayUrl(config) + "/manager/admin-ui/");
     }
 
     return proxyInfo;
   }
 
-  private void generateCertificatePem(Certificate certificate, GatewayConfig gatewayConfig) throws CertificateEncodingException, IOException {
-    if (pemFilePath == null || !pemFilePath.toFile().exists()) {
-      pemFilePath = Paths.get(gatewayConfig.getGatewayDeploymentDir(), "homepage", "%2Fhome", "assets", "gateway-client-trust.pem");
-      X509CertificateUtil.writeCertificateToFile(certificate, pemFilePath.toFile());
+  private String getAdminApiBookVersion(String buildVersion) {
+    return buildVersion.replaceAll(SNAPSHOT_VERSION_POSTFIX, "").replaceAll("\\.", "-");
+  }
+
+  private Certificate getPublicCertificate(GatewayServices gatewayServices, GatewayConfig config) {
+    try {
+      final KeystoreService keystoreService = gatewayServices.getService(ServiceType.KEYSTORE_SERVICE);
+      return keystoreService.getKeystoreForGateway().getCertificate(config.getIdentityKeyAlias());
+    } catch (KeyStoreException | KeystoreServiceException e) {
+      LOG.failedToFetchPublicCert(e.getMessage(), e);
+      return null;
     }
   }
 
-  private void generateCertificateJks(Certificate certificate, GatewayConfig gatewayConfig) throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
-    if (jksFilePath == null || !jksFilePath.toFile().exists()) {
-      jksFilePath = Paths.get(gatewayConfig.getGatewayDeploymentDir(), "homepage", "%2Fhome", "assets", "gateway-client-trust.jks");
-      X509CertificateUtil.writeCertificateToJks(certificate, jksFilePath.toFile());
+  private void generateCertificatePem(Certificate certificate, GatewayConfig gatewayConfig) {
+    try {
+      if (pemFilePath == null || !pemFilePath.toFile().exists()) {
+        pemFilePath = Paths.get(gatewayConfig.getGatewayDeploymentDir(), "homepage", "%2Fhome", "assets", "gateway-client-trust.pem");
+        X509CertificateUtil.writeCertificateToFile(certificate, pemFilePath.toFile());
+      }
+    } catch (CertificateEncodingException | IOException e) {
+      LOG.failedToGeneratePublicCert("PEM", e.getMessage(), e);
+    }
+  }
+
+  private void generateCertificateJks(Certificate certificate, GatewayConfig gatewayConfig) {
+    try {
+      if (jksFilePath == null || !jksFilePath.toFile().exists()) {
+        jksFilePath = Paths.get(gatewayConfig.getGatewayDeploymentDir(), "homepage", "%2Fhome", "assets", "gateway-client-trust.jks");
+        X509CertificateUtil.writeCertificateToJks(certificate, jksFilePath.toFile());
+      }
+    } catch (IOException | KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
+      LOG.failedToGeneratePublicCert("JKS", e.getMessage(), e);
     }
   }
 
@@ -107,20 +138,45 @@ public class HomePageResource {
     final TopologyInformationWrapper topologies = new TopologyInformationWrapper();
     final GatewayServices gatewayServices = (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    final ServiceDefinitionRegistry serviceDefinitionRegistry = gatewayServices.getService(ServiceType.SERVICE_DEFINITION_REGISTRY);
     final Set<String> hiddenTopologies = config.getHiddenTopologiesOnHomepage();
     if (gatewayServices != null) {
       final TopologyService topologyService = gatewayServices.getService(ServiceType.TOPOLOGY_SERVICE);
       for (Topology topology : topologyService.getTopologies()) {
         if (!hiddenTopologies.contains(topology.getName())) {
-          List<ServiceModel> serviceModels = new ArrayList<>();
+          List<ServiceModel> apiServices = new ArrayList<>();
+          List<ServiceModel> uiServices = new ArrayList<>();
           for (Service service : topology.getServices()) {
-            service.getUrls().forEach(serviceUrl -> serviceModels.add(ServiceModelFactory.getServiceModel(request, config.getGatewayPath(), topology.getName(), service)));
+            service.getUrls().forEach(serviceUrl -> {
+              ServiceModel serviceModel = getServiceModel(request, config.getGatewayPath(), topology.getName(), service, getServiceMetadata(serviceDefinitionRegistry, service));
+              if (ServiceModel.Type.UI == serviceModel.getType()) {
+                uiServices.add(serviceModel);
+              } else {
+                apiServices.add(serviceModel);
+              }
+            });
           }
-          topologies.addTopology(topology.getName(), serviceModels);
+          topologies.addTopology(topology.getName(), apiServices, uiServices);
         }
       }
     }
     return topologies;
+  }
+
+  private Metadata getServiceMetadata(ServiceDefinitionRegistry serviceDefinitionRegistry, Service service) {
+    final Optional<ServiceDefinitionPair> serviceDefinition = serviceDefinitionRegistry.getServiceDefinitions().stream()
+        .filter(serviceDefinitionPair -> serviceDefinitionPair.getService().getRole().equalsIgnoreCase(service.getRole())).findFirst();
+    return serviceDefinition.isPresent() ? serviceDefinition.get().getService().getMetadata() : null;
+  }
+
+  private ServiceModel getServiceModel(HttpServletRequest request, String gatewayPath, String topologyName, Service service, Metadata serviceMetadata) {
+    final ServiceModel serviceModel = new ServiceModel();
+    serviceModel.setRequest(request);
+    serviceModel.setGatewayPath(gatewayPath);
+    serviceModel.setTopologyName(topologyName);
+    serviceModel.setService(service);
+    serviceModel.setServiceMetadata(serviceMetadata);
+    return serviceModel;
   }
 
 }

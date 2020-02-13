@@ -16,6 +16,12 @@
    limitations under the License.
 -->
 <service role="RESOURCEMANAGER" name="resourcemanager" version="2.5.0">
+    <metadata>
+        <type>API</type>
+        <context>/resourcemanager</context>
+        <shortDesc>YARN Resource Manager</shortDesc>
+        <description>The YARN Resource Manager Service (RM) is the central controlling authority for resource management and makes allocation decisions ResourceManager has two main components: Scheduler and ApplicationsManager.</description>
+    </metadata>
     <routes>
         <route path="/resourcemanager/v1/cluster/"/>
         <route path="/resourcemanager/v1/cluster/**?**"/>

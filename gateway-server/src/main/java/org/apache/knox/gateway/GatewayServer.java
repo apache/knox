@@ -933,7 +933,6 @@ public class GatewayServer {
       // API
       activateHomepageContext("/home/api", "homepage/%2F");
     } catch (Throwable e) {
-      e.printStackTrace();
       auditor.audit(Action.DEPLOY, "home", ResourceType.URI, ActionOutcome.FAILURE);
       log.failedToDeployTopology("home", e);
     }

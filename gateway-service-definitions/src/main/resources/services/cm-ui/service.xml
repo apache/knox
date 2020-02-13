@@ -14,28 +14,41 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 -->
-<service role="RANGERUI" name="rangerui" version="1.0.0">
+
+<!--
+   Knox service definition for Cloudera Manager UI
+
+   This service definition requires the use of a default topology or topology
+   port mapping. Paths must be accessed without the "/gateway/<topology>"
+   modifier in the URL.
+-->
+
+<service role="CM-UI" name="cm-ui" version="1.0.0">
     <metadata>
         <type>UI</type>
-        <context>/ranger</context>
-        <shortDesc>Ranger Admin Web UI</shortDesc>
-        <description>Apache Ranger is a framework to enable, monitor and manage comprehensive data security across the Hadoop platform. Ranger Admin Web UI is a web-based tool that provides a way to configure Ranger.</description>
+        <context>/cmf</context>
+        <shortDesc>Cloudera Manager Admin Console</shortDesc>
+        <description>Cloudera Manager Admin Console is the web-based UI that you use to configure, manage, and monitor CDH.</description>
     </metadata>
     <routes>
-        <route path="/ranger">
-            <rewrite apply="RANGERUI/rangerui/inbound/root" to="request.url"/>
-            <rewrite apply="RANGERUI/rangerui/outbound/links" to="response.body"/>
-            <rewrite apply="RANGERUI/rangerui/outbound/headers" to="response.headers"/>
+        <route path="/cmf/**">
+            <rewrite apply="CM-UI/cm-ui/ui/inbound" to="request.url"/>
         </route>
-        <route path="/ranger/**">
-            <rewrite apply="RANGERUI/rangerui/inbound/path" to="request.url"/>
-            <rewrite apply="RANGERUI/rangerui/outbound/links" to="response.body"/>
-            <rewrite apply="RANGERUI/rangerui/outbound/headers" to="response.headers"/>
+
+        <!-- The previous route /cmf/** does not match /cmf/  -->
+        <route path="/cmf/">
+        <rewrite apply="CM-UI/cm-ui/ui/root" to="request.url"/>
         </route>
-        <route path="/ranger/**?**">
-            <rewrite apply="RANGERUI/rangerui/inbound/query" to="request.url"/>
-            <rewrite apply="RANGERUI/rangerui/outbound/links" to="response.body"/>
-            <rewrite apply="RANGERUI/rangerui/outbound/headers" to="response.headers"/>
+        <route path="/static/**">
+            <rewrite apply="CM-UI/cm-ui/static/inbound" to="request.url"/>
+        </route>
+        <route path="/api/**">
+            <rewrite apply="CM-UI/cm-ui/rest" to="request.url"/>
+        </route>
+
+        <!-- For paths that do not start with /cmf, /static or /api -->
+        <route path="/*">
+            <rewrite apply="CM-UI/cm-ui/root" to="request.url"/>
         </route>
     </routes>
     <dispatch classname="org.apache.knox.gateway.dispatch.ConfigurableDispatch"
@@ -46,3 +59,4 @@
         </param>
     </dispatch>
 </service>
+

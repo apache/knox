@@ -15,33 +15,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.homepage.service.model.cm;
+package org.apache.knox.homepage;
 
-import org.apache.knox.homepage.service.model.ServiceModel;
+import org.apache.knox.gateway.i18n.messages.Message;
+import org.apache.knox.gateway.i18n.messages.MessageLevel;
+import org.apache.knox.gateway.i18n.messages.Messages;
+import org.apache.knox.gateway.i18n.messages.StackTrace;
 
-public class ClouderaManagerUIServiceModel extends ServiceModel {
-  private static final String SERVICE = "CM-UI";
-  private static final String SHORT_DESCRIPTION = "Cloudera Manager Admin Console";
-  private static final String DESCRIPTION = "Cloudera Manager Admin Console is the web-based UI that you use to configure, manage, and monitor CDH.";
+@Messages(logger = "org.apache.knox.homepage")
+public interface KnoxHomepageMessages {
 
-  @Override
-  public String getServiceName() {
-    return SERVICE;
-  }
+  @Message(level = MessageLevel.ERROR, text = "Failed to fetch public certificate: {1}")
+  void failedToFetchPublicCert(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
-  @Override
-  public String getShortDescription() {
-    return SHORT_DESCRIPTION;
-  }
-
-  @Override
-  public String getDescription() {
-    return DESCRIPTION;
-  }
-
-  @Override
-  public Type getType() {
-    return Type.UI;
-  }
+  @Message(level = MessageLevel.ERROR, text = "Failed to generate public certificate {0}: {1}")
+  void failedToGeneratePublicCert(String certificateType, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
 }

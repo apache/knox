@@ -1,6 +1,6 @@
 {
   "project": {
-    "version": "1.0.0-beta.22-1",
+    "version": "1.0.0",
     "name": "ng-knox-homepage"
   },
   "apps": [
@@ -23,9 +23,7 @@
       ],
       "scripts": [
         "../node_modules/jquery/dist/jquery.min.js",
-        "../node_modules/bootstrap/dist/js/bootstrap.js",
-        "../node_modules/ace-builds/src-min/ace.js",
-        "../node_modules/ace-builds/src-min/theme-monokai.js"
+        "../node_modules/bootstrap/dist/js/bootstrap.js"
       ],
       "environmentSource": "environments/environment.ts",
       "environments": {

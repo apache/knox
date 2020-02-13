@@ -15,6 +15,12 @@
    limitations under the License.
 -->
 <service role="DRUID-ROUTER" name="druid-router" version="0.0.1">
+    <metadata>
+        <type>API</type>
+        <context>/druid-router</context>
+        <shortDesc>Druid Router API</shortDesc>
+        <description>The Apache Druid Router process can be used to route queries to different Broker processes. By default, the broker routes queries based on how Rules are set up</description>
+    </metadata>
   <policies>
     <policy role="webappsec"/>
     <policy role="authentication" name="Anonymous"/>

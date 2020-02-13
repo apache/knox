@@ -23,8 +23,6 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.apache.knox.homepage.service.model.ServiceModel;
-
 @XmlRootElement(name = "topology")
 public class TopologyInformation {
 
@@ -32,8 +30,12 @@ public class TopologyInformation {
   private String topologyName;
 
   @XmlElement(name = "service")
-  @XmlElementWrapper(name = "services")
-  private List<ServiceModel> serviceModels;
+  @XmlElementWrapper(name = "apiServices")
+  private List<ServiceModel> apiServices;
+
+  @XmlElement(name = "service")
+  @XmlElementWrapper(name = "uiServices")
+  private List<ServiceModel> uiServices;
 
   public String getTopologyName() {
     return topologyName;
@@ -43,12 +45,20 @@ public class TopologyInformation {
     this.topologyName = topologyName;
   }
 
-  public List<ServiceModel> getServiceModels() {
-    return serviceModels;
+  public List<ServiceModel> getApiServices() {
+    return apiServices;
   }
 
-  public void setServiceModels(List<ServiceModel> serviceModels) {
-    this.serviceModels = serviceModels;
+  public void setApiServices(List<ServiceModel> apiServices) {
+    this.apiServices = apiServices;
+  }
+
+  public List<ServiceModel> getUiServices() {
+    return uiServices;
+  }
+
+  public void setUiServices(List<ServiceModel> uiServices) {
+    this.uiServices = uiServices;
   }
 
 }

@@ -15,6 +15,12 @@
    limitations under the License.
 -->
 <service role="AMBARI" name="ambari" version="2.2.0">
+    <metadata>
+        <type>API</type>
+        <context>/ambari/api</context>
+        <shortDesc>Apache Ambari API</shortDesc>
+        <description>The Ambari API facilitates the management and monitoring of the resources of an Apache Hadoop cluster.</description>
+    </metadata>
     <policies>
         <policy role="webappsec"/>
         <policy role="authentication" name="Anonymous"/>

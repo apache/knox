@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.homepage.service.model;
+package org.apache.knox.homepage;
 
 import java.util.Locale;
 
@@ -25,6 +25,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.apache.knox.gateway.service.definition.Metadata;
 import org.apache.knox.gateway.topology.Service;
 
 @XmlRootElement(name = "service")
@@ -39,6 +40,7 @@ public class ServiceModel {
   protected String topologyName;
   protected String gatewayPath;
   protected Service service;
+  protected Metadata serviceMetadata;
 
   public void setRequest(HttpServletRequest request) {
     this.request = request;
@@ -56,6 +58,10 @@ public class ServiceModel {
     this.service = service;
   }
 
+  public void setServiceMetadata(Metadata serviceMetadata) {
+    this.serviceMetadata = serviceMetadata;
+  }
+
   @XmlElement
   public String getServiceName() {
     return this.service == null ? "" : service.getRole();
@@ -63,23 +69,39 @@ public class ServiceModel {
 
   @XmlElement(name = "shortDesc")
   public String getShortDescription() {
-    return getServiceName().substring(0, 1).toUpperCase(Locale.ROOT) + getServiceName().substring(1).toLowerCase(Locale.ROOT);
+    if (serviceMetadata == null) {
+      return getServiceName().substring(0, 1).toUpperCase(Locale.ROOT) + getServiceName().substring(1).toLowerCase(Locale.ROOT);
+    } else {
+      return serviceMetadata.getShortDesc();
+    }
   }
 
   @XmlElement
   public String getDescription() {
-    return getShortDescription() + (Type.API == getType() ? " REST API" : Type.UI == getType() ? " Web User Interface" : "");
+    if (serviceMetadata == null) {
+      return getShortDescription() + (Type.API == getType() ? " REST API" : Type.UI == getType() ? " Web User Interface" : "");
+    } else {
+      return serviceMetadata.getDescription();
+    }
   }
 
   @XmlElement
   public Type getType() {
-    return Type.UNKNOWN;
+    return serviceMetadata == null ? Type.UNKNOWN : Type.valueOf(serviceMetadata.getType());
+  }
+
+  @XmlElement
+  public String getContext() {
+    return serviceMetadata == null ? "/" + getServiceName().toLowerCase(Locale.ROOT) : serviceMetadata.getContext();
   }
 
   @XmlElement
   public String getServiceUrl() {
-    return String.format(Locale.getDefault(), "%s://%s:%s/%s/%s/%s/", request.getScheme(), request.getServerName(), request.getServerPort(), gatewayPath, topologyName,
-        getServiceName().toLowerCase(Locale.ROOT));
+    String context = getContext();
+    if (context.indexOf("%BACKEND_HOST") > -1) {
+      context = context.replaceAll("%BACKEND_HOST", getBackendServiceUrl());
+    }
+    return String.format(Locale.getDefault(), "%s://%s:%s/%s/%s%s/", request.getScheme(), request.getServerName(), request.getServerPort(), gatewayPath, topologyName, context);
   }
 
   protected String getBackendServiceUrl() {

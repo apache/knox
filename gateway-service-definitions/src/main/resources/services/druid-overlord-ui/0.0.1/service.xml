@@ -15,7 +15,13 @@
    limitations under the License.
 -->
 <service role="DRUID-OVERLORD-UI" name="druid-overlord-ui" version="0.0.1">
-  <routes>
+    <metadata>
+        <type>UI</type>
+        <context>/druid-overlord-ui</context>
+        <shortDesc>Druid Overlord Console</shortDesc>
+        <description>The Overlord provides a UI for managing tasks and workers.</description>
+    </metadata>
+    <routes>
     <route path="druid-overlord-ui">
       <rewrite apply="DRUID-OVERLORD-UI/druid-overlord-ui/inbound/root"/>
       <rewrite apply="DRUID-OVERLORD-UI/druid-overlord-ui/outbound/links" to="response.body"/>
