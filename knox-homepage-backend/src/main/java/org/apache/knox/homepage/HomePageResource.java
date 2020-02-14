@@ -28,6 +28,9 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -59,6 +62,7 @@ import org.apache.knox.gateway.util.X509CertificateUtil;
 public class HomePageResource {
   private static final KnoxHomepageMessages LOG = MessagesFactory.get(KnoxHomepageMessages.class);
   private static final String SNAPSHOT_VERSION_POSTFIX = "-SNAPSHOT";
+  private static final Set<String> UNREAL_SERVICES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("NAMENODE", "JOBTRACKER")));
 
   private java.nio.file.Path pemFilePath;
   private java.nio.file.Path jksFilePath;
@@ -68,7 +72,7 @@ public class HomePageResource {
 
   @GET
   @Produces({ APPLICATION_JSON, APPLICATION_XML })
-  @Path("generalProxyInformation")
+  @Path("info")
   public GeneralProxyInformation getGeneralProxyInformation() {
     final GeneralProxyInformation proxyInfo = new GeneralProxyInformation();
     final GatewayServices gatewayServices = (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
@@ -161,7 +165,7 @@ public class HomePageResource {
         if (!hiddenTopologies.contains(topology.getName()) && (topologyName == null || topology.getName().equalsIgnoreCase(topologyName))) {
           List<ServiceModel> apiServices = new ArrayList<>();
           List<ServiceModel> uiServices = new ArrayList<>();
-          for (Service service : topology.getServices()) {
+          topology.getServices().stream().filter(service -> !UNREAL_SERVICES.contains(service.getRole())).forEach(service -> {
             service.getUrls().forEach(serviceUrl -> {
               ServiceModel serviceModel = getServiceModel(request, config.getGatewayPath(), topology.getName(), service, getServiceMetadata(serviceDefinitionRegistry, service));
               if (ServiceModel.Type.UI == serviceModel.getType()) {
@@ -170,7 +174,7 @@ public class HomePageResource {
                 apiServices.add(serviceModel);
               }
             });
-          }
+          });
           topologies.addTopology(topology.getName(), apiServices, uiServices);
         }
       }

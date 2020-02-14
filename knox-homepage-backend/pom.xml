@@ -27,7 +27,7 @@
 
     <artifactId>knox-homepage-backend</artifactId>
     <name>knox-homepage-backend</name>
-    <description>The Knox Home Page BE</description>
+    <description>The Knox Home Page back-end</description>
 
     <dependencies>
         <dependency>
