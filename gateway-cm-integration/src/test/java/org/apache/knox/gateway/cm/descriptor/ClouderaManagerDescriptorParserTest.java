@@ -150,6 +150,7 @@ public class ClouderaManagerDescriptorParserTest {
   }
 
   private void validateTopology1(SimpleDescriptor descriptor) {
+    assertTrue(descriptor.isReadOnly());
     assertEquals("topology1", descriptor.getName());
     assertEquals("ClouderaManager", descriptor.getDiscoveryType());
     assertEquals("http://host:123", descriptor.getDiscoveryAddress());
@@ -168,6 +169,7 @@ public class ClouderaManagerDescriptorParserTest {
   }
 
   private void validateTopology2(SimpleDescriptor descriptor, boolean nifiExpected) {
+    assertTrue(descriptor.isReadOnly());
     assertEquals("topology2", descriptor.getName());
     assertEquals("Ambari", descriptor.getDiscoveryType());
     assertEquals("http://host:456", descriptor.getDiscoveryAddress());

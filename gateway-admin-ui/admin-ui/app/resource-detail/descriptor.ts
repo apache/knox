@@ -23,6 +23,7 @@ export class Descriptor {
     discoveryPassAlias: string;
     discoveryCluster: string;
     providerConfig: string;
+    readOnly: boolean;
     services: Service[];
 
     private dirty = false;

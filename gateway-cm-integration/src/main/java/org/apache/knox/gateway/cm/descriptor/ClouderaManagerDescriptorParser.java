@@ -106,6 +106,7 @@ public class ClouderaManagerDescriptorParser implements AdvancedServiceDiscovery
   private SimpleDescriptor parseXmlDescriptor(String name, String xmlValue) {
     try {
       final SimpleDescriptorImpl descriptor = new SimpleDescriptorImpl();
+      descriptor.setReadOnly(true);
       descriptor.setName(name);
       final String[] configurationPairs = xmlValue.split(";");
       for (String configurationPair : configurationPairs) {

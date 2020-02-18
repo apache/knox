@@ -1,8 +1,9 @@
 <div *ngIf="resourceType && resourceType !== 'Topologies' && resourceType !== 'Service Definitions'" class="panel panel-default">
     <div class="panel-heading">
         <h4 class="panel-title">
-            {{ getTitleSubject() }} Detail <span *ngIf="hasSelectedResource()"
-                                                 class="pull-right">{{resourceService.getResourceDisplayName(resource)}}</span>
+            {{ getTitleSubject() }} Detail
+            <span *ngIf="showEditOptions() == false" style="padding-left: 15%;" class="text-danger text-center"> Read Only (generated file) </span>
+            <span *ngIf="hasSelectedResource()" class="pull-right">{{resourceService.getResourceDisplayName(resource)}}</span>
         </h4>
     </div>
 
@@ -479,7 +480,8 @@
                     title="Remove Descriptor"
                     class="btn btn-default btn-sm pull-left"
                     (click)="deleteConfirmModal.open('md')"
-                    data-toggle="tooltip">
+                    data-toggle="tooltip"
+                    *ngIf="showEditOptions()">
                 <span class="glyphicon glyphicon-trash"></span>
             </button>
             <span class="pull-right">
@@ -488,7 +490,8 @@
                 class="btn btn-default btn-sm"
                 [disabled]="!descriptor.isDirty()"
                 (click)="discardConfirmModal.open('md')"
-                data-toggle="tooltip">
+                data-toggle="tooltip"
+                *ngIf="showEditOptions()">
           <span class="glyphicon glyphicon-refresh"></span>
         </button>
         <span>&nbsp;</span>
@@ -497,7 +500,8 @@
                 class="btn btn-default btn-sm"
                 [disabled]="!descriptor.isDirty()"
                 (click)="persistChanges()"
-                data-toggle="tooltip">
+                data-toggle="tooltip"
+                *ngIf="showEditOptions()">
           <span class="glyphicon glyphicon-floppy-disk"></span>
         </button>
       </span>

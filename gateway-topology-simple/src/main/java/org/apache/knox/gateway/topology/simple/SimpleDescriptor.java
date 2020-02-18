@@ -38,6 +38,8 @@ public interface SimpleDescriptor {
 
     String getProviderConfig();
 
+    boolean isReadOnly();
+
     List<Service> getServices();
 
     Service getService(String serviceName);
