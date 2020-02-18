@@ -175,6 +175,7 @@ export class ResourceDetailComponent implements OnInit {
                     tempDesc.discoveryPassAlias = contentObj['discovery-pwd-alias'];
                     tempDesc.discoveryCluster = contentObj['cluster'];
                     tempDesc.providerConfig = contentObj['provider-config-ref'];
+                    tempDesc.readOnly = contentObj['read-only'];
                     tempDesc.services = contentObj['services'];
                 }
                 this.descriptor = tempDesc;
@@ -556,5 +557,12 @@ export class ResourceDetailComponent implements OnInit {
                 return 'Resource';
             }
         }
+    }
+
+    showEditOptions(): boolean {
+        if (this.resourceType === 'Descriptors' && this.descriptor.readOnly) {
+            return !Boolean(this.descriptor.readOnly);
+        }
+        return true;
     }
 }

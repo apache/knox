@@ -247,6 +247,9 @@ export class ResourceService {
         if (desc.discoveryCluster) {
             tmp['cluster'] = desc.discoveryCluster;
         }
+        if (desc.readOnly) {
+            tmp['read-only'] = desc.readOnly;
+        }
         tmp['provider-config-ref'] = desc.providerConfig;
         tmp['services'] = desc.services;
 

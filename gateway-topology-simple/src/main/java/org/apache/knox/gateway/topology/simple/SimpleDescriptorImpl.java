@@ -42,6 +42,9 @@ public class SimpleDescriptorImpl implements SimpleDescriptor {
     @JsonProperty("provider-config-ref")
     private String providerConfig;
 
+    @JsonProperty("read-only")
+    private boolean readOnly;
+
     @JsonProperty("cluster")
     private String cluster;
 
@@ -114,6 +117,15 @@ public class SimpleDescriptorImpl implements SimpleDescriptor {
     @Override
     public String getProviderConfig() {
         return providerConfig;
+    }
+
+    @Override
+    public boolean isReadOnly() {
+      return readOnly;
+    }
+
+    public void setReadOnly(boolean readOnly) {
+      this.readOnly = readOnly;
     }
 
     public void addService(Service service) {
