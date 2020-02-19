@@ -41,6 +41,8 @@ public class HiveServiceModelGenerator extends AbstractServiceModelGenerator {
   static final String HTTP_PORT      = "hive.server2.thrift.http.port";
   static final String HTTP_PATH      = "hive.server2.thrift.http.path";
 
+  static final String DEFAULT_HTTP_PATH = "cliservice";
+
   @Override
   public String getService() {
     return SERVICE;
@@ -81,6 +83,9 @@ public class HiveServiceModelGenerator extends AbstractServiceModelGenerator {
 
     String port     = getHttpPort(roleConfig);
     String httpPath = getHttpPath(roleConfig);
+    if (httpPath == null) {
+      httpPath = DEFAULT_HTTP_PATH;
+    }
 
     ServiceModel model =
         createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/%s", scheme, hostname, port, httpPath));

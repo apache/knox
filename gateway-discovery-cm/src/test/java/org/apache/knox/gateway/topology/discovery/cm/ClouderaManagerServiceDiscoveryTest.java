@@ -62,6 +62,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -145,22 +146,31 @@ public class ClouderaManagerServiceDiscoveryTest {
   }
 
   @Test
+  public void testHiveServiceDiscoveryCustomThriftPath() {
+    doTestHiveServiceDiscovery("testPath", false);
+  }
+
+  @Test
   public void testHiveServiceDiscoverySSL() {
     doTestHiveServiceDiscovery(true);
   }
 
   private void doTestHiveServiceDiscovery(final boolean enableSSL) {
+    doTestHiveServiceDiscovery(null, enableSSL);
+  }
+
+  private void doTestHiveServiceDiscovery(final String thriftPath, final boolean enableSSL) {
     final String hostName       = "test-host-1";
     final String thriftPort     = "10001";
-    final String thriftPath     = "cliService";
     final String expectedScheme = (enableSSL ? "https" : "http");
+    final String expectedThriftPath = thriftPath != null ? thriftPath : "cliservice";
 
     ServiceDiscovery.Cluster cluster =
         doTestHiveServiceDiscovery(hostName, thriftPort, thriftPath, enableSSL);
     List<String> hiveURLs = cluster.getServiceURLs("HIVE");
     assertNotNull(hiveURLs);
     assertEquals(1, hiveURLs.size());
-    assertEquals((expectedScheme + "://" + hostName + ":" +thriftPort + "/" + thriftPath), hiveURLs.get(0));
+    assertEquals((expectedScheme + "://" + hostName + ":" + thriftPort + "/" + expectedThriftPath), hiveURLs.get(0));
   }
 
   @Test
@@ -169,23 +179,33 @@ public class ClouderaManagerServiceDiscoveryTest {
   }
 
   @Test
+  public void testHiveOnTezDiscoveryCustomThriftPath() {
+    doTestHiveOnTezServiceDiscovery("customPath", false);
+  }
+
+  @Test
   public void testHiveOnTezDiscoverySSL() {
     doTestHiveOnTezServiceDiscovery(true);
   }
 
   private void doTestHiveOnTezServiceDiscovery(final boolean enableSSL) {
+    doTestHiveOnTezServiceDiscovery(null, enableSSL);
+  }
+
+  private void doTestHiveOnTezServiceDiscovery(final String thriftPath, final boolean enableSSL) {
     final String hostName       = "test-host-1";
     final String thriftPort     = "10001";
-    final String thriftPath     = "cliService";
     final String expectedScheme = (enableSSL ? "https" : "http");
+    final String expectedThriftPath = thriftPath != null ? thriftPath : "cliservice";
 
     ServiceDiscovery.Cluster cluster =
         doTestHiveOnTezServiceDiscovery(hostName, thriftPort, thriftPath, enableSSL);
     List<String> hiveURLs = cluster.getServiceURLs("HIVE");
     assertNotNull(hiveURLs);
     assertEquals(1, hiveURLs.size());
-    assertEquals((expectedScheme + "://" + hostName + ":" +thriftPort + "/" + thriftPath), hiveURLs.get(0));
+    assertEquals((expectedScheme + "://" + hostName + ":" + thriftPort + "/" + expectedThriftPath), hiveURLs.get(0));
   }
+
 
   @Test
   public void testWebHDFSServiceDiscovery() {
@@ -883,10 +903,16 @@ public class ClouderaManagerServiceDiscoveryTest {
                                                               final String  thriftPort,
                                                               final String  thriftPath,
                                                               final boolean enableSSL) {
+    final String safetyValveThriftPathFormat =
+        "<property><name>hive.server2.thrift.http.path</name><value>%s</value></property>";
+
+    final String safetyValveThriftPathConfig =
+        thriftPath != null ? String.format(Locale.ROOT, safetyValveThriftPathFormat, thriftPath) : "";
+
     final String hs2SafetyValveValue =
           "<property><name>hive.server2.transport.mode</name><value>http</value></property>\n" +
           "<property><name>hive.server2.thrift.http.port</name><value>" + thriftPort + "</value></property>\n" +
-          "<property><name>hive.server2.thrift.http.path</name><value>" + thriftPath + "</value></property>";
+          safetyValveThriftPathConfig;
 
     // Configure the role
     Map<String, String> roleProperties = new HashMap<>();
@@ -907,8 +933,11 @@ public class ClouderaManagerServiceDiscoveryTest {
                                                                    final String  thriftPort,
                                                                    final String  thriftPath,
                                                                    final boolean enableSSL) {
+
+    final String safetyValveFormat = "<property><name>hive.server2.thrift.http.path</name><value>%s</value></property>";
+
     final String hs2SafetyValveValue =
-        "<property><name>hive.server2.thrift.http.path</name><value>" + thriftPath + "</value></property>";
+        thriftPath != null ? String.format(Locale.ROOT, safetyValveFormat, thriftPath) : null;
 
     // Configure the role
     Map<String, String> roleProperties = new HashMap<>();
