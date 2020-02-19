@@ -64,10 +64,8 @@ public class PhoenixServiceModelGenerator extends AbstractServiceModelGenerator 
     String sslEnabledRaw = getRoleConfigValue(roleConfig, SSL_ENABLED);
     String scheme = "http";
 
-    if (sslEnabledRaw != null) {
-      if (Boolean.parseBoolean(getRoleConfigValue(roleConfig, SSL_ENABLED))) {
-        scheme = "https";
-      }
+    if (Boolean.parseBoolean(sslEnabledRaw)) {
+      scheme = "https";
     }
 
     String port = getRoleConfigValue(roleConfig, QUERY_SERVER_PORT);
