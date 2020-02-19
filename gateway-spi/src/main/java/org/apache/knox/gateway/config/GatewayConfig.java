@@ -675,4 +675,9 @@ public interface GatewayConfig {
    * @return the list of topologies that should be hidden on Knox homepage
    */
   Set<String> getHiddenTopologiesOnHomepage();
+
+  /**
+   * @return returns whether know token permissive failure is enabled
+   */
+  boolean isKnoxTokenPermissiveFailureEnabled();
 }

@@ -794,4 +794,12 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public Set<String> getHiddenTopologiesOnHomepage() {
     return Collections.emptySet();
   }
+
+  /**
+   * @return returns whether know token permissive failure is enabled
+   */
+  @Override
+  public boolean isKnoxTokenPermissiveFailureEnabled() {
+    return false;
+  }
 }
