@@ -31,7 +31,8 @@ public class PhoenixServiceModelGenerator extends AbstractServiceModelGenerator 
   public static final String SERVICE_TYPE = "PHOENIX";
   public static final String ROLE_TYPE    = "PHOENIX_QUERY_SERVER";
 
-  static final String QUERY_SERVER_PORT = "phoenix_query_server_port";
+  static final String SSL_ENABLED         = "ssl_enabled";
+  static final String QUERY_SERVER_PORT   = "phoenix_query_server_port";
 
   @Override
   public String getService() {
@@ -58,14 +59,22 @@ public class PhoenixServiceModelGenerator extends AbstractServiceModelGenerator 
                                       ApiServiceConfig serviceConfig,
                                       ApiRole          role,
                                       ApiConfigList    roleConfig) {
+
     String hostname = role.getHostRef().getHostname();
-    // Phoenix Query Server does not support https
+    String sslEnabledRaw = getRoleConfigValue(roleConfig, SSL_ENABLED);
     String scheme = "http";
+
+    if (Boolean.parseBoolean(sslEnabledRaw)) {
+      scheme = "https";
+    }
+
     String port = getRoleConfigValue(roleConfig, QUERY_SERVER_PORT);
 
     ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
     model.addRoleProperty(getRoleType(), QUERY_SERVER_PORT, port);
-
+    if (sslEnabledRaw != null) {
+        model.addRoleProperty(getRoleType(), SSL_ENABLED, sslEnabledRaw);
+    }
     return model;
   }
 
