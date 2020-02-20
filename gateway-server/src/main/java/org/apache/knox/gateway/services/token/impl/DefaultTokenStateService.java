@@ -20,12 +20,13 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -111,11 +112,11 @@ public class DefaultTokenStateService implements TokenStateService {
       tokenExpirations.put(token, expiration);
     }
     setMaxLifetime(token, issueTime, maxLifetimeDuration);
-    log.addedToken(getTokenDisplayText(token), getTimestampDisplay(expiration));
+    log.addedToken(TokenUtils.getTokenDisplayText(token), getTimestampDisplay(expiration));
   }
 
   @Override
-  public long getTokenExpiration(final String token) {
+  public long getTokenExpiration(final String token) throws UnknownTokenException {
     long expiration;
 
     validateToken(token);
@@ -128,12 +129,12 @@ public class DefaultTokenStateService implements TokenStateService {
   }
 
   @Override
-  public long renewToken(final JWTToken token) {
+  public long renewToken(final JWTToken token) throws UnknownTokenException {
     return renewToken(token, DEFAULT_RENEWAL_INTERVAL);
   }
 
   @Override
-  public long renewToken(final JWTToken token, long renewInterval) {
+  public long renewToken(final JWTToken token, long renewInterval) throws UnknownTokenException {
     if (token == null) {
       throw new IllegalArgumentException("Token data cannot be null.");
     }
@@ -141,12 +142,12 @@ public class DefaultTokenStateService implements TokenStateService {
   }
 
   @Override
-  public long renewToken(final String token) { // Should return new expiration?
+  public long renewToken(final String token) throws UnknownTokenException {
     return renewToken(token, DEFAULT_RENEWAL_INTERVAL);
   }
 
   @Override
-  public long renewToken(final String token, long renewInterval) {
+  public long renewToken(final String token, long renewInterval) throws UnknownTokenException {
     long expiration;
 
     validateToken(token);
@@ -155,7 +156,7 @@ public class DefaultTokenStateService implements TokenStateService {
     if (hasRemainingRenewals(token, renewInterval)) {
       expiration = System.currentTimeMillis() + renewInterval;
       updateExpiration(token, expiration);
-      log.renewedToken(getTokenDisplayText(token), getTimestampDisplay(expiration));
+      log.renewedToken(TokenUtils.getTokenDisplayText(token), getTimestampDisplay(expiration));
     } else {
       log.renewalLimitExceeded(token);
       throw new IllegalArgumentException("The renewal limit for the token has been exceeded");
@@ -165,7 +166,7 @@ public class DefaultTokenStateService implements TokenStateService {
   }
 
   @Override
-  public void revokeToken(final JWTToken token) {
+  public void revokeToken(final JWTToken token) throws UnknownTokenException {
     if (token == null) {
       throw new IllegalArgumentException("Token data cannot be null.");
     }
@@ -174,19 +175,19 @@ public class DefaultTokenStateService implements TokenStateService {
   }
 
   @Override
-  public void revokeToken(final String token) {
+  public void revokeToken(final String token) throws UnknownTokenException {
     /* no reason to keep revoked tokens around */
     removeToken(token);
-    log.revokedToken(getTokenDisplayText(token));
+    log.revokedToken(TokenUtils.getTokenDisplayText(token));
   }
 
   @Override
-  public boolean isExpired(final JWTToken token) {
+  public boolean isExpired(final JWTToken token) throws UnknownTokenException {
     return isExpired(token.getPayload());
   }
 
   @Override
-  public boolean isExpired(final String token) {
+  public boolean isExpired(final String token) throws UnknownTokenException {
     boolean isExpired;
     isExpired = isUnknown(token); // Check if the token exist
     if (!isExpired) {
@@ -222,7 +223,7 @@ public class DefaultTokenStateService implements TokenStateService {
     }
   }
 
-  protected void removeToken(final String token) {
+  protected void removeToken(final String token) throws UnknownTokenException {
     validateToken(token);
     synchronized (tokenExpirations) {
       tokenExpirations.remove(token);
@@ -230,7 +231,7 @@ public class DefaultTokenStateService implements TokenStateService {
     synchronized (maxTokenLifetimes) {
       maxTokenLifetimes.remove(token);
     }
-    log.removedTokenState(getTokenDisplayText(token));
+    log.removedTokenState(TokenUtils.getTokenDisplayText(token));
   }
 
   protected boolean hasRemainingRenewals(final String token, long renewInterval) {
@@ -256,21 +257,18 @@ public class DefaultTokenStateService implements TokenStateService {
    * @param token The token identifier to validate.
    *
    * @throws IllegalArgumentException if the specified token in invalid.
+   * @throws UnknownTokenException if the specified token in valid, but not known to the service.
    */
-  protected void validateToken(final String token) throws IllegalArgumentException {
+  protected void validateToken(final String token) throws IllegalArgumentException, UnknownTokenException {
     if (!isValidIdentifier(token)) {
       throw new IllegalArgumentException("Token data cannot be null.");
     }
 
     // First, make sure the token is one we know about
     if (isUnknown(token)) {
-      log.unknownToken(getTokenDisplayText(token));
-      throw new IllegalArgumentException("Unknown token");
+      log.unknownToken(TokenUtils.getTokenDisplayText(token));
+      throw new UnknownTokenException(token);
     }
-  }
-
-  protected String getTokenDisplayText(final String token) {
-    return String.format(Locale.ROOT, "%s...%s", token.substring(0, 10), token.substring(token.length() - 3));
   }
 
   protected String getTimestampDisplay(long timestamp) {
@@ -284,11 +282,11 @@ public class DefaultTokenStateService implements TokenStateService {
     for (final String token : getTokens()) {
       try {
         if (needsEviction(token)) {
-          log.evictToken(getTokenDisplayText(token));
+          log.evictToken(TokenUtils.getTokenDisplayText(token));
           removeToken(token);
         }
       } catch (final Exception e) {
-        log.failedExpiredTokenEviction(getTokenDisplayText(token), e);
+        log.failedExpiredTokenEviction(TokenUtils.getTokenDisplayText(token), e);
       }
     }
   }
@@ -299,7 +297,7 @@ public class DefaultTokenStateService implements TokenStateService {
    * @param token
    * @return
    */
-  protected boolean needsEviction(final String token) {
+  protected boolean needsEviction(final String token) throws UnknownTokenException {
     return ((getTokenExpiration(token) + TimeUnit.SECONDS.toMillis(tokenEvictionGracePeriod)) <= System.currentTimeMillis());
   }
 

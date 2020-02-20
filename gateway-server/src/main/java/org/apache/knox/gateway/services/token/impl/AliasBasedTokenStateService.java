@@ -20,6 +20,8 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,9 +57,9 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     try {
       aliasService.addAliasForCluster(AliasService.NO_CLUSTER_NAME, token, String.valueOf(expiration));
       setMaxLifetime(token, issueTime, maxLifetimeDuration);
-      log.addedToken(getTokenDisplayText(token), getTimestampDisplay(expiration));
+      log.addedToken(TokenUtils.getTokenDisplayText(token), getTimestampDisplay(expiration));
     } catch (AliasServiceException e) {
-      log.failedToSaveTokenState(getTokenDisplayText(token), e);
+      log.failedToSaveTokenState(TokenUtils.getTokenDisplayText(token), e);
     }
   }
 
@@ -68,7 +70,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
                                       token + TOKEN_MAX_LIFETIME_POSTFIX,
                                       String.valueOf(issueTime + maxLifetimeDuration));
     } catch (AliasServiceException e) {
-      log.failedToSaveTokenState(getTokenDisplayText(token), e);
+      log.failedToSaveTokenState(TokenUtils.getTokenDisplayText(token), e);
     }
   }
 
@@ -82,13 +84,13 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
         result = Long.parseLong(new String(maxLifetimeStr));
       }
     } catch (AliasServiceException e) {
-      log.errorAccessingTokenState(getTokenDisplayText(token), e);
+      log.errorAccessingTokenState(TokenUtils.getTokenDisplayText(token), e);
     }
     return result;
   }
 
   @Override
-  public long getTokenExpiration(final String token) {
+  public long getTokenExpiration(final String token) throws UnknownTokenException {
     long expiration = 0;
 
     validateToken(token);
@@ -99,17 +101,17 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
         expiration = Long.parseLong(new String(expStr));
       }
     } catch (Exception e) {
-      log.errorAccessingTokenState(getTokenDisplayText(token), e);
+      log.errorAccessingTokenState(TokenUtils.getTokenDisplayText(token), e);
     }
 
     return expiration;
   }
 
   @Override
-  public void revokeToken(final String token) {
+  public void revokeToken(final String token) throws UnknownTokenException {
     /* no reason to keep revoked tokens around */
     removeToken(token);
-    log.revokedToken(getTokenDisplayText(token));
+    log.revokedToken(TokenUtils.getTokenDisplayText(token));
   }
 
   @Override
@@ -118,28 +120,28 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     try {
       isUnknown = (aliasService.getPasswordFromAliasForCluster(AliasService.NO_CLUSTER_NAME, token) == null);
     } catch (AliasServiceException e) {
-      log.errorAccessingTokenState(getTokenDisplayText(token), e);
+      log.errorAccessingTokenState(TokenUtils.getTokenDisplayText(token), e);
     }
     return isUnknown;
   }
 
   @Override
-  protected void removeToken(final String token) {
+  protected void removeToken(final String token) throws UnknownTokenException {
     validateToken(token);
 
     try {
       aliasService.removeAliasForCluster(AliasService.NO_CLUSTER_NAME, token);
       aliasService.removeAliasForCluster(AliasService.NO_CLUSTER_NAME,token + TOKEN_MAX_LIFETIME_POSTFIX);
-      log.removedTokenState(getTokenDisplayText(token));
+      log.removedTokenState(TokenUtils.getTokenDisplayText(token));
     } catch (AliasServiceException e) {
-      log.failedToRemoveTokenState(getTokenDisplayText(token), e);
+      log.failedToRemoveTokenState(TokenUtils.getTokenDisplayText(token), e);
     }
   }
 
   @Override
   protected void updateExpiration(final String token, long expiration) {
     if (isUnknown(token)) {
-      log.unknownToken(getTokenDisplayText(token));
+      log.unknownToken(TokenUtils.getTokenDisplayText(token));
       throw new IllegalArgumentException("Unknown token.");
     }
 
@@ -147,7 +149,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
       aliasService.removeAliasForCluster(AliasService.NO_CLUSTER_NAME, token);
       aliasService.addAliasForCluster(AliasService.NO_CLUSTER_NAME, token, String.valueOf(expiration));
     } catch (AliasServiceException e) {
-      log.failedToUpdateTokenExpiration(getTokenDisplayText(token), e);
+      log.failedToUpdateTokenExpiration(TokenUtils.getTokenDisplayText(token), e);
     }
   }
 

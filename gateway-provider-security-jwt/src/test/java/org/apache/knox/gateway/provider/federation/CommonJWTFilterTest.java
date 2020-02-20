@@ -19,6 +19,7 @@ package org.apache.knox.gateway.provider.federation;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.easymock.EasyMock;
 import org.junit.After;
@@ -35,6 +36,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import static org.easymock.EasyMock.anyObject;
@@ -124,16 +126,15 @@ public class CommonJWTFilterTest {
                 doTestIsStillValid(System.currentTimeMillis() - 300000)); // 5 minutes ago
   }
 
-  @Test
+  @Test(expected = UnknownTokenException.class)
   public void testIsStillValidUnknownToken() throws Exception {
     TokenStateService tss = EasyMock.createNiceMock(TokenStateService.class);
     EasyMock.expect(tss.getTokenExpiration(anyObject()))
-            .andThrow(new IllegalArgumentException("Unknown token"))
+            .andThrow(new UnknownTokenException("eyjhbgcioi1234567890neg"))
             .anyTimes();
     EasyMock.replay(tss);
 
-    assertFalse("Expected the token to be invalid because it in an unknown token.",
-                doTestIsStillValid(tss));
+    doTestIsStillValid(tss);
   }
 
   private boolean doTestIsStillValid(final Long expiration) throws Exception {
@@ -163,7 +164,16 @@ public class CommonJWTFilterTest {
 
     Method m = AbstractJWTFilter.class.getDeclaredMethod("tokenIsStillValid", JWT.class);
     m.setAccessible(true);
-    return (Boolean) m.invoke(handler, jwt);
+    try {
+      return (Boolean) m.invoke(handler, jwt);
+    } catch (InvocationTargetException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof Exception) {
+        throw (Exception) cause;
+      } else {
+        throw e;
+      }
+    }
   }
 
   static final class TestHandler extends AbstractJWTFilter {
