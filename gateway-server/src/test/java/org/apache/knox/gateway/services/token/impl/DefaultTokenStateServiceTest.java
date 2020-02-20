@@ -19,6 +19,8 @@ package org.apache.knox.gateway.services.token.impl;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.easymock.EasyMock;
 import org.junit.Test;
@@ -38,7 +40,7 @@ public class DefaultTokenStateServiceTest {
   private static long EVICTION_INTERVAL = 2L;
 
   @Test
-  public void testGetExpiration() {
+  public void testGetExpiration() throws Exception {
     final JWTToken token = createMockToken(System.currentTimeMillis() + 60000);
     final TokenStateService tss = createTokenStateService();
 
@@ -48,27 +50,27 @@ public class DefaultTokenStateServiceTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testGetExpiration_NullToken() {
+  public void testGetExpiration_NullToken() throws Exception {
     // Expecting an IllegalArgumentException because the token is null
     createTokenStateService().getTokenExpiration(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testGetExpiration_EmptyToken() {
+  public void testGetExpiration_EmptyToken() throws Exception {
     // Expecting an IllegalArgumentException because the token is empty
     createTokenStateService().getTokenExpiration("");
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testGetExpiration_InvalidToken() {
+  @Test(expected = UnknownTokenException.class)
+  public void testGetExpiration_InvalidToken() throws Exception {
     final JWTToken token = createMockToken(System.currentTimeMillis() + 60000);
 
-    // Expecting an IllegalArgumentException because the token is not known to the TokenStateService
+    // Expecting an UnknownTokenException because the token is not known to the TokenStateService
     createTokenStateService().getTokenExpiration(token.getPayload());
   }
 
   @Test
-  public void testGetExpiration_AfterRenewal() {
+  public void testGetExpiration_AfterRenewal() throws Exception {
     final JWTToken token = createMockToken(System.currentTimeMillis() + 60000);
     final TokenStateService tss = createTokenStateService();
 
@@ -82,7 +84,7 @@ public class DefaultTokenStateServiceTest {
   }
 
   @Test
-  public void testIsExpired_Negative() {
+  public void testIsExpired_Negative() throws Exception {
     final JWTToken token = createMockToken(System.currentTimeMillis() + 60000);
     final TokenStateService tss = createTokenStateService();
 
@@ -91,7 +93,7 @@ public class DefaultTokenStateServiceTest {
   }
 
   @Test
-  public void testIsExpired_Positive() {
+  public void testIsExpired_Positive() throws Exception {
     final JWTToken token = createMockToken(System.currentTimeMillis() - 60000);
     final TokenStateService tss = createTokenStateService();
 
@@ -101,7 +103,7 @@ public class DefaultTokenStateServiceTest {
 
 
   @Test
-  public void testIsExpired_Revoked() {
+  public void testIsExpired_Revoked() throws Exception {
     final JWTToken token = createMockToken(System.currentTimeMillis() + 60000);
     final TokenStateService tss = createTokenStateService();
 
@@ -114,7 +116,7 @@ public class DefaultTokenStateServiceTest {
 
 
   @Test
-  public void testRenewal() {
+  public void testRenewal() throws Exception {
     final JWTToken token = createMockToken(System.currentTimeMillis() - 60000);
     final TokenStateService tss = createTokenStateService();
 
@@ -128,7 +130,7 @@ public class DefaultTokenStateServiceTest {
 
 
   @Test
-  public void testRenewalBeyondMaxLifetime() {
+  public void testRenewalBeyondMaxLifetime() throws Exception {
     long issueTime = System.currentTimeMillis();
     long expiration = issueTime + 5000;
     final JWTToken token = createMockToken(expiration);
@@ -148,7 +150,7 @@ public class DefaultTokenStateServiceTest {
   }
 
   @Test
-  public void testNegativeTokenEviction() throws InterruptedException {
+  public void testNegativeTokenEviction() throws InterruptedException, UnknownTokenException {
     final JWTToken token = createMockToken(System.currentTimeMillis() - 60000);
     final TokenStateService tss = createTokenStateService();
 
@@ -164,7 +166,7 @@ public class DefaultTokenStateServiceTest {
 
   @Test
   public void testTokenEviction()
-      throws InterruptedException, ServiceLifecycleException {
+      throws InterruptedException, ServiceLifecycleException, UnknownTokenException {
     final JWTToken token = createMockToken(System.currentTimeMillis() - 60000);
     final TokenStateService tss = createTokenStateService();
     try {
@@ -176,8 +178,8 @@ public class DefaultTokenStateServiceTest {
       Thread.sleep(TimeUnit.SECONDS.toMillis(EVICTION_INTERVAL + 1));
 
       /* expect the renew call to fail since the token is evicted */
-      final IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> tss.renewToken(token));
-      assertEquals("Unknown token", e.getMessage());
+      final UnknownTokenException e = assertThrows(UnknownTokenException.class, () -> tss.renewToken(token));
+      assertEquals("Unknown token: " + TokenUtils.getTokenDisplayText(token.getPayload()), e.getMessage());
     } finally {
       tss.stop();
     }

@@ -50,6 +50,7 @@ import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.util.JsonUtils;
 
@@ -287,7 +288,7 @@ public class TokenResource {
       if (allowedRenewers.contains(renewer)) {
         try {
           tokenStateService.revokeToken(token);
-        } catch (IllegalArgumentException e) {
+        } catch (UnknownTokenException e) {
           error = e.getMessage();
         }
       } else {

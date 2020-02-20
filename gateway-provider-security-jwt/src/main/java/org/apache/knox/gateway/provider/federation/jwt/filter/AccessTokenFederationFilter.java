@@ -25,6 +25,7 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
 import javax.security.auth.Subject;
@@ -88,16 +89,21 @@ public class AccessTokenFederationFilter implements Filter {
         log.unableToVerifyToken(e);
       }
       if (verified) {
-        if (!isExpired(token)) {
-          if (((HttpServletRequest) request).getRequestURL().indexOf(token.getAudience().toLowerCase(Locale.ROOT)) != -1) {
-            Subject subject = createSubjectFromToken(token);
-            continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
+        try {
+          if (!isExpired(token)) {
+            if (((HttpServletRequest) request).getRequestURL().indexOf(token.getAudience().toLowerCase(Locale.ROOT)) != -1) {
+              Subject subject = createSubjectFromToken(token);
+              continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
+            } else {
+              log.failedToValidateAudience();
+              sendUnauthorized(response);
+            }
           } else {
-            log.failedToValidateAudience();
+            log.tokenHasExpired();
             sendUnauthorized(response);
           }
-        } else {
-          log.tokenHasExpired();
+        } catch (UnknownTokenException e) {
+          log.unableToVerifyExpiration(e);
           sendUnauthorized(response);
         }
       } else {
@@ -110,7 +116,7 @@ public class AccessTokenFederationFilter implements Filter {
     }
   }
 
-  private boolean isExpired(JWTToken token) {
+  private boolean isExpired(JWTToken token) throws UnknownTokenException {
     return (tokenStateService != null) ? tokenStateService.isExpired(token.toString()) : (Long.parseLong(token.getExpires()) <= System.currentTimeMillis());
   }
 

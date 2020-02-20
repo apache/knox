@@ -59,6 +59,7 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 
 import com.nimbusds.jose.JWSHeader;
@@ -167,16 +168,10 @@ public abstract class AbstractJWTFilter implements Filter {
     return audList;
   }
 
-  protected boolean tokenIsStillValid(JWT jwtToken) {
+  protected boolean tokenIsStillValid(JWT jwtToken) throws UnknownTokenException {
     Date expires;
     if (tokenStateService != null) {
-      long timestamp = 0;
-      try {
-        timestamp = tokenStateService.getTokenExpiration(jwtToken.toString());
-      } catch (Exception e) {
-        log.unableToVerifyExpiration(e);
-      }
-      expires = new Date(timestamp);
+      expires = new Date(tokenStateService.getTokenExpiration(jwtToken.toString()));
     } else {
       // if there is no expiration date then the lifecycle is tied entirely to
       // the cookie validity - otherwise ensure that the current time is before
@@ -317,27 +312,32 @@ public abstract class AbstractJWTFilter implements Filter {
         // if there is no expiration data then the lifecycle is tied entirely to
         // the cookie validity - otherwise ensure that the current time is before
         // the designated expiration time
-        if (tokenIsStillValid(token)) {
-          boolean audValid = validateAudiences(token);
-          if (audValid) {
-              Date nbf = token.getNotBeforeDate();
-              if (nbf == null || new Date().after(nbf)) {
-                return true;
-              } else {
-                log.notBeforeCheckFailed();
-                handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-                                      "Bad request: the NotBefore check failed");
-              }
-          }
-          else {
-            log.failedToValidateAudience();
+        try {
+          if (tokenIsStillValid(token)) {
+            boolean audValid = validateAudiences(token);
+            if (audValid) {
+                Date nbf = token.getNotBeforeDate();
+                if (nbf == null || new Date().after(nbf)) {
+                  return true;
+                } else {
+                  log.notBeforeCheckFailed();
+                  handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+                                        "Bad request: the NotBefore check failed");
+                }
+            }
+            else {
+              log.failedToValidateAudience();
+              handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+                                    "Bad request: missing required token audience");
+            }
+          } else {
+            log.tokenHasExpired();
             handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-                                  "Bad request: missing required token audience");
+                                  "Bad request: token has expired");
           }
-        } else {
-          log.tokenHasExpired();
-          handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-                                "Bad request: token has expired");
+        } catch (UnknownTokenException e) {
+          log.unableToVerifyExpiration(e);
+          handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
         }
       }
       else {
