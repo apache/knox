@@ -27,7 +27,7 @@ import org.apache.http.client.utils.URIBuilder;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
-class Rm {
+public class Rm {
 
   public static class Request extends AbstractRequest<Response> {
 

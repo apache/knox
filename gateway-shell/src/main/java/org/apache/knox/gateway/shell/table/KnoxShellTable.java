@@ -435,6 +435,10 @@ public class KnoxShellTable {
   }
 
   public String toCSV() {
-    return new KnoxShellTableRenderer(this).toCSV();
+    return toCSV(null);
+  }
+
+  public String toCSV(String filePath) {
+    return new KnoxShellTableRenderer(this).toCSV(filePath);
   }
 }

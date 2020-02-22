@@ -34,7 +34,7 @@ import org.apache.http.util.EntityUtils;
 import java.io.File;
 import java.util.concurrent.Callable;
 
-class Put {
+public class Put {
 
   public static class Request extends AbstractRequest<Response> {
 

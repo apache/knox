@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.shell.table;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -38,6 +39,10 @@ class KnoxShellTableRenderer {
   }
 
   String toCSV() {
+    return toCSV(null);
+  }
+
+  String toCSV(String filePath) {
     final StringBuilder csv = new StringBuilder();
     String header;
     for (int i = 0; i < tableToRender.headers.size(); i++) {
@@ -59,8 +64,17 @@ class KnoxShellTableRenderer {
         }
       }
     }
+    String content = csv.toString();
+    if (filePath != null) {
+      try {
+        KnoxShellTableFileUtils.persistToFile(filePath, content);
+      } catch (IOException e) {
+        System.out.println("Persistence of CSV file has failed. " + e.getMessage());
+        e.printStackTrace();
+      }
+    }
 
-    return csv.toString();
+    return content;
   }
 
   @Override
