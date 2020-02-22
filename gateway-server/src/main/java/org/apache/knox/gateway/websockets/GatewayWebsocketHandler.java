@@ -20,11 +20,13 @@ package org.apache.knox.gateway.websockets;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.registry.ServiceDefEntry;
 import org.apache.knox.gateway.services.registry.ServiceDefinitionRegistry;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
+import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
@@ -35,6 +37,7 @@ import javax.websocket.ClientEndpointConfig;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.security.KeyStore;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -80,7 +83,6 @@ public class GatewayWebsocketHandler extends WebSocketHandler
     this.config = config;
     this.services = services;
     pool = Executors.newFixedThreadPool(POOL_SIZE);
-
   }
 
   @Override
@@ -118,13 +120,27 @@ public class GatewayWebsocketHandler extends WebSocketHandler
       LOG.debugLog("Generated backend URL for websocket connection: " + backendURL);
 
       /* Upgrade happens here */
-      return new ProxyWebSocketAdapter
-              (URI.create(backendURL), pool, getClientEndpointConfig(req), config);
+      final ClientEndpointConfig clientConfig = getClientEndpointConfig(req);
+      clientConfig.getUserProperties().put("org.apache.knox.gateway.websockets.truststore", getTruststore());
+      return new ProxyWebSocketAdapter(URI.create(backendURL), pool, clientConfig, config);
     } catch (final Exception e) {
       LOG.failedCreatingWebSocket(e);
-      throw e;
+      throw new RuntimeException(e);
     }
   }
+
+
+  private KeyStore getTruststore() throws KeystoreServiceException {
+    final KeystoreService ks = this.services
+        .getService(ServiceType.KEYSTORE_SERVICE);
+    KeyStore trustKeystore = null;
+    trustKeystore = ks.getTruststoreForHttpClient();
+    if (trustKeystore == null) {
+      trustKeystore = ks.getKeystoreForGateway();
+    }
+    return trustKeystore;
+  }
+
 
   /**
    * Returns a {@link ClientEndpointConfig} config that contains the headers
