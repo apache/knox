@@ -85,7 +85,7 @@
                                 <phase>package</phase>
                                 <goals><goal>run</goal></goals>
                                 <configuration>
-                                    <tasks>
+                                    <target>
                                         <checksum algorithm="SHA-256" fileext=".sha256">
                                             <fileset dir="../target/${project.version}">
                                                 <include name="*.zip" />
@@ -98,7 +98,7 @@
                                                 <include name="*.tar.gz" />
                                             </fileset>
                                         </checksum>
-                                    </tasks>
+                                    </target>
                                 </configuration>
                             </execution>
                         </executions>
