@@ -238,7 +238,7 @@
         <pac4j.version>3.8.3</pac4j.version>
         <protobuf.version>3.11.4</protobuf.version>
         <rest-assured.version>4.2.0</rest-assured.version>
-        <shiro.version>1.4.2</shiro.version>
+        <shiro.version>1.5.1</shiro.version>
         <shrinkwrap.version>1.2.6</shrinkwrap.version>
         <shrinkwrap.descriptors.version>2.0.0</shrinkwrap.descriptors.version>
         <slf4j.version>1.7.30</slf4j.version>
