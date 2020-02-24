@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+  <rule dir="IN" name="SPARK3HISTORYUI/spark3history/inbound/root" pattern="*://*:*/**/spark3history/">
+    <rewrite template="{$serviceUrl[SPARK3HISTORYUI]}/"/>
+  </rule>
+  <rule dir="IN" name="SPARK3HISTORYUI/spark3history/inbound/path" pattern="*://*:*/**/spark3history/{**}">
+    <rewrite template="{$serviceUrl[SPARK3HISTORYUI]}/{**}"/>
+  </rule>
+  <rule dir="IN" name="SPARK3HISTORYUI/spark3history/inbound/simpleQuery" pattern="*://*:*/**/spark3history/?{**}">
+    <rewrite template="{$serviceUrl[SPARK3HISTORYUI]}/?{**}"/>
+  </rule>
+  <rule dir="IN" name="SPARK3HISTORYUI/spark3history/inbound/query" pattern="*://*:*/**/spark3history/{**}?{**}">
+    <rewrite template="{$serviceUrl[SPARK3HISTORYUI]}/{**}?{**}"/>
+  </rule>
+  <rule dir="IN" name="SPARK3HISTORYUI/spark3history/inbound/history" pattern="*://*:*/**/spark3history/history/{**}/?{**}">
+    <rewrite template="{$serviceUrl[SPARK3HISTORYUI]}/history/{**}/?{**}"/>
+  </rule>
+  <rule dir="IN" name="SPARK3HISTORYUI/spark3history/inbound/apps" pattern="*://*:*/**/spark3history/?{page}?{showIncomplete}">
+    <rewrite template="{$serviceUrl[SPARK3HISTORYUI]}/?{page}?{showIncomplete}"/>
+  </rule>
+
+  <rule dir="OUT" name="SPARK3HISTORYUI/spark3history/outbound/history" pattern="/history/{**}">
+    <rewrite template="{$frontend[url]}/spark3history/history/{**}"/>
+  </rule>
+  <rule dir="OUT" name="SPARK3HISTORYUI/spark3history/outbound/history/job" pattern="/history/{**}?{**}">
+    <rewrite template="{$frontend[url]}/spark3history/history/{**}?{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="SPARK3HISTORYUI/spark3history/outbound/apps" pattern="/?{page}?{showIncomplete}">
+    <rewrite template="{$frontend[url]}/spark3history/?{page}?{showIncomplete}"/>
+  </rule>
+
+  <rule dir="OUT" name="SPARK3HISTORYUI/spark3history/outbound/headers/location">
+    <match pattern="*://*:*/history/{**}/?{**}"/>
+    <rewrite template="{$frontend[url]}/spark3history/history/{**}/?{**}"/>
+  </rule>
+  <rule flow="OR" dir="OUT" name="SPARK3HISTORYUI/spark3history/outbound/headers/jobs/location">
+    <match pattern="*://*:*/history/{**}/jobs">
+      <rewrite template="{$frontend[url]}/spark3history/history/{**}/jobs"/>
+    </match>
+    <match pattern="*://*:*/history/{**}/jobs/">
+      <rewrite template="{$frontend[url]}/spark3history/history/{**}/jobs/"/>
+    </match>
+  </rule>
+  <rule dir="IN" name="SPARK3HISTORYUI/spark3history/outbound/rqheaders/xfc">
+    <match pattern="{**}"/>
+    <rewrite template="/{**}/spark3history" />
+  </rule>
+
+  <filter name="SPARK3HISTORYUI/spark3history/outbound/headers">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="SPARK3HISTORYUI/spark3history/outbound/headers/location"/>
+    </content>
+  </filter>
+  <filter name="SPARK3HISTORYUI/spark3history/outbound/headers/jobs">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="SPARK3HISTORYUI/spark3history/outbound/headers/jobs/location"/>
+    </content>
+  </filter>
+  <filter name="SPARK3HISTORYUI/spark3history/outbound/rqheaders">
+    <content type="application/x-http-headers">
+      <apply path="X-Forwarded-Context" rule="SPARK3HISTORYUI/spark3history/outbound/rqheaders/xfc"/>
+    </content>
+  </filter>
+
+  <!-- re-write rule for location when SHS redirects to Knox SSO login page -->
+  <rule dir="OUT" name="SPARK3HISTORYUI/spark3history/outbound/headers/location/sso">
+    <match pattern="{scheme}://{host}:{port}/{gateway}/{knoxsso}/{api}/{v}/websso?originalUrl={**}"/>
+    <rewrite template="{scheme}://{host}:{port}/{gateway}/{knoxsso}/{api}/{v}/websso?originalUrl={$postfix[url,/spark3history/]}"/>
+  </rule>
+  <filter name="SPARK3HISTORYUI/spark3history/outbound/headers/sso/filter">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="SPARK3HISTORYUI/spark3history/outbound/headers/location/sso"/>
+    </content>
+  </filter>
+
+  <!-- re-write rules for yarn container logs -->
+  <rule dir="OUT" name="SPARK3HISTORYUI/spark3history/outbound/yarn/containerlogs" pattern="{scheme}://{host}:{port}/node/containerlogs/{**}">
+    <rewrite template="{$frontend[url]}/yarnuiv2/node/containerlogs/{**}?{scheme}?{host}?{port}"/>
+  </rule>
+
+  <rule dir="OUT" name="SPARK3HISTORYUI/spark3history/outbound/yarn/containerlogs2" pattern="{scheme}://{host}:{port}/node/containerlogs/{**}?{**}">
+    <rewrite template="{$frontend[url]}/yarnuiv2/node/containerlogs/{**}?{**}?{scheme}?{host}?{port}"/>
+  </rule>
+</rules>
