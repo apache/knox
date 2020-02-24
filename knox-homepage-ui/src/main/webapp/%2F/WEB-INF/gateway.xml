@@ -60,9 +60,9 @@
             <class>org.apache.knox.gateway.filter.XForwardedHeaderFilter</class>
         </filter>
         <filter>
-            <role>authentication</role>
-            <name>ShiroProvider</name>
-            <class>org.apache.shiro.web.servlet.ShiroFilter</class>
+            <role>federation</role>
+            <name>SSOCookieProvider</name>
+            <class>org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter</class>
         </filter>
         <filter>
             <role>pivot</role>

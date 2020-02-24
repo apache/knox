@@ -58,8 +58,8 @@ import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.util.X509CertificateUtil;
 
-@Path("/v1")
-public class HomePageResource {
+@Path("/api/v1")
+public class KnoxMetadataResource {
   private static final KnoxHomepageMessages LOG = MessagesFactory.get(KnoxHomepageMessages.class);
   private static final String SNAPSHOT_VERSION_POSTFIX = "-SNAPSHOT";
   private static final Set<String> UNREAL_SERVICES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("NAMENODE", "JOBTRACKER")));

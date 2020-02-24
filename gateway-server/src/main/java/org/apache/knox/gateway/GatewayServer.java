@@ -931,7 +931,7 @@ public class GatewayServer {
       activateHomepageContext("/home", "homepage/%2Fhome");
 
       // API
-      activateHomepageContext("/home/api", "homepage/%2F");
+      activateHomepageContext("/homepage", "homepage/%2F");
     } catch (Throwable e) {
       auditor.audit(Action.DEPLOY, "home", ResourceType.URI, ActionOutcome.FAILURE);
       log.failedToDeployTopology("home", e);

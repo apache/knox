@@ -63,10 +63,6 @@
             <role>federation</role>
             <name>SSOCookieProvider</name>
             <class>org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter</class>
-            <param>
-                <name>gateway.path</name>
-                <value>gateway</value>
-            </param>
         </filter>
 
     </resource>
@@ -117,10 +113,6 @@
             <role>federation</role>
             <name>SSOCookieProvider</name>
             <class>org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter</class>
-            <param>
-                <name>gateway.path</name>
-                <value>gateway</value>
-            </param>
         </filter>
     </resource>
 </gateway>

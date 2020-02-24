@@ -32,7 +32,4 @@
 	<listener>
 		<listener-class>org.apache.knox.gateway.services.GatewayServicesContextListener</listener-class>
 	</listener>
-    <listener>
-      <listener-class>org.apache.shiro.web.env.EnvironmentLoaderListener</listener-class>
-    </listener>
 </web-app>
