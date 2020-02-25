@@ -25,9 +25,8 @@
         <version>1.4.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>knox-homepage-backend</artifactId>
-    <name>knox-homepage-backend</name>
-    <description>The Knox Home Page back-end</description>
+    <artifactId>gateway-service-metadata</artifactId>
+    <name>gateway-service-metadata</name>
 
     <dependencies>
         <dependency>

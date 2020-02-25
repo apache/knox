@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.homepage;
+package org.apache.knox.gateway.service.metadata;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
@@ -60,7 +60,7 @@ import org.apache.knox.gateway.util.X509CertificateUtil;
 
 @Path("/api/v1")
 public class KnoxMetadataResource {
-  private static final KnoxHomepageMessages LOG = MessagesFactory.get(KnoxHomepageMessages.class);
+  private static final MetadataServiceMessages LOG = MessagesFactory.get(MetadataServiceMessages.class);
   private static final String SNAPSHOT_VERSION_POSTFIX = "-SNAPSHOT";
   private static final Set<String> UNREAL_SERVICES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("NAMENODE", "JOBTRACKER")));
 

@@ -443,7 +443,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
-            <artifactId>knox-homepage-backend</artifactId>
+            <artifactId>gateway-service-metadata</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>

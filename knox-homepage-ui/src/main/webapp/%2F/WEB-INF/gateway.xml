@@ -70,7 +70,7 @@
             <class>org.glassfish.jersey.servlet.ServletContainer</class>
             <param>
                 <name>jersey.config.server.provider.packages</name>
-                <value>org.apache.knox.homepage</value>
+                <value>org.apache.knox.gateway.service.metadata</value>
             </param>
         </filter>
     </resource>

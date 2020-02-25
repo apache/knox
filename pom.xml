@@ -139,7 +139,7 @@
         <module>gateway-release-common</module>
         <module>gateway-topology-simple</module>
         <module>gateway-cm-integration</module>
-        <module>knox-homepage-backend</module>
+        <module>gateway-service-metadata</module>
         <module>knox-homepage-ui</module>
     </modules>
 
@@ -1181,7 +1181,7 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.knox</groupId>
-                <artifactId>knox-homepage-backend</artifactId>
+                <artifactId>gateway-service-metadata</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

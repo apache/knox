@@ -15,20 +15,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.homepage;
+package org.apache.knox.gateway.service.metadata;
 
-import org.apache.knox.gateway.i18n.messages.Message;
-import org.apache.knox.gateway.i18n.messages.MessageLevel;
-import org.apache.knox.gateway.i18n.messages.Messages;
-import org.apache.knox.gateway.i18n.messages.StackTrace;
+import org.apache.knox.gateway.jersey.JerseyServiceDeploymentContributorBase;
 
-@Messages(logger = "org.apache.knox.homepage")
-public interface KnoxHomepageMessages {
+public class KnoxMetadataServiceDeploymentContributor extends JerseyServiceDeploymentContributorBase {
 
-  @Message(level = MessageLevel.ERROR, text = "Failed to fetch public certificate: {1}")
-  void failedToFetchPublicCert(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+  @Override
+  public String getRole() {
+    return "KNOX-METADATA";
+  }
 
-  @Message(level = MessageLevel.ERROR, text = "Failed to generate public certificate {0}: {1}")
-  void failedToGeneratePublicCert(String certificateType, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+  @Override
+  public String getName() {
+    return "knox-metadata";
+  }
+
+  @Override
+  protected String[] getPackages() {
+    return new String[] { "org.apache.knox.gateway.service.metadata" };
+  }
+
+  @Override
+  protected String[] getPatterns() {
+    return new String[] { "*/**?**" };
+  }
 
 }
