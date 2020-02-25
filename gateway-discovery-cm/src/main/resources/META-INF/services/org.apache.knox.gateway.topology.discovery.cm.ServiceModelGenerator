@@ -40,6 +40,7 @@ org.apache.knox.gateway.topology.discovery.cm.model.ranger.RangerServiceModelGen
 org.apache.knox.gateway.topology.discovery.cm.model.ranger.RangerUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.solr.SolrServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.spark.SparkHistoryUIServiceModelGenerator
+org.apache.knox.gateway.topology.discovery.cm.model.spark.Spark3HistoryUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.yarn.JobHistoryUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.yarn.ResourceManagerUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.yarn.YarnUIServiceModelGenerator
