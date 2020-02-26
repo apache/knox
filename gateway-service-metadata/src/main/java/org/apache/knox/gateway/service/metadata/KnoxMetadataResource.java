@@ -58,7 +58,7 @@ import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.util.X509CertificateUtil;
 
-@Path("/api/v1")
+@Path("/api/v1/metadata")
 public class KnoxMetadataResource {
   private static final MetadataServiceMessages LOG = MessagesFactory.get(MetadataServiceMessages.class);
   private static final String SNAPSHOT_VERSION_POSTFIX = "-SNAPSHOT";
@@ -140,14 +140,14 @@ public class KnoxMetadataResource {
   }
 
   @GET
-  @Produces({ APPLICATION_JSON, APPLICATION_XML })
+  @Produces({ APPLICATION_XML, APPLICATION_JSON })
   @Path("topologies")
   public TopologyInformationWrapper getTopologies() {
     return getTopologies(null);
   }
 
   @GET
-  @Produces({ APPLICATION_JSON, APPLICATION_XML })
+  @Produces({ APPLICATION_XML, APPLICATION_JSON })
   @Path("topologies/{name}")
   public TopologyInformationWrapper getTopology(@PathParam("name") String topologyName) {
     return getTopologies(topologyName);
