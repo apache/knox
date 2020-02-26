@@ -18,6 +18,7 @@
 export class Service {
     description: string;
     serviceName: string;
+    version: string;
     serviceUrl: string;
     shortDesc: string;
     type: string;

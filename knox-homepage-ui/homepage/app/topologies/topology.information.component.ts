@@ -46,7 +46,7 @@ import {Service} from './service';
                                 <span class="inline-glyph glyphicon glyphicon-info-sign btn btn-xs"
                                 title="{{service.description}}"
                                 data-toggle="tooltip"></span>
-                                {{service.shortDesc}}
+                                {{service.shortDesc}} <span class="small" *ngIf="service.version">(v{{service.version}})</span>
                             </td>
                             <td>
                                 <a href="{{service.serviceUrl}}">{{service.serviceUrl}}</a>
@@ -74,7 +74,7 @@ import {Service} from './service';
                                 <span class="inline-glyph glyphicon glyphicon-info-sign btn btn-xs"
                                 title="{{service.description}}"
                                 data-toggle="tooltip"></span>
-                                {{service.shortDesc}}
+                                {{service.shortDesc}} <span class="small" *ngIf="service.version">(v{{service.version}})</span>
                             </td>
                             <td>
                                 <a href="{{service.serviceUrl}}">{{service.serviceUrl}}</a>

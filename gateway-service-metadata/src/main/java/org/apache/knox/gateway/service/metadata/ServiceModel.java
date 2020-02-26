@@ -67,6 +67,11 @@ public class ServiceModel {
     return this.service == null ? "" : service.getRole();
   }
 
+  @XmlElement
+  public String getVersion() {
+    return this.service == null ? "" : this.service.getVersion() == null ? "" : this.service.getVersion().toString();
+  }
+
   @XmlElement(name = "shortDesc")
   public String getShortDescription() {
     if (serviceMetadata == null) {
