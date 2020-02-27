@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.shell.commands;
 
+import java.io.Console;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -121,7 +122,17 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
       String mountPoint = determineMountPoint(path);
       String targetPath = determineTargetPath(path, mountPoint);
       try {
-        Hdfs.put(sessions.get(mountPoint)).file(localFile).to(targetPath).now().getString();
+        boolean overwrite = false;
+        if (Hdfs.status(sessions.get(mountPoint)).file(targetPath).now().exists()) {
+          if (collectClearCredential(targetPath + "already exists would you like to overwrite (Y/n)").equalsIgnoreCase("y")) {
+            overwrite = true;
+          }
+        }
+        int permission = 755;
+        if (args.size() >= 4) {
+          permission = Integer.parseInt(args.get(3));
+        }
+        Hdfs.put(sessions.get(mountPoint)).file(localFile).to(targetPath).overwrite(overwrite).permission(permission).now().getString();
       } catch (KnoxShellException | IOException e) {
         e.printStackTrace();
       }
@@ -225,6 +236,18 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
       System.out.println(getUsage());
     }
     return "";
+  }
+
+  private String collectClearCredential(String prompt) {
+    Console c = System.console();
+    if (c == null) {
+      System.err.println("No console.");
+      System.exit(1);
+    }
+
+    String value = c.readLine(prompt);
+
+    return value;
   }
 
   private String determineTargetPath(String path, String mountPoint) {
