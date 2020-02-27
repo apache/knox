@@ -17,8 +17,6 @@
 
 export class GeneralProxyInformation {
     version: string;
-    publicCertPemPath: string;
-    publicCertJksPath: string;
     adminUiUrl: string;
     adminApiBookUrl: string;
 }

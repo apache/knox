@@ -928,7 +928,7 @@ public class GatewayServer {
   private synchronized void activateHomeApp() {
     try {
       // UI
-      activateHomepageContext("/home", "homepage/%2Fhome");
+      activateHomepageContext("/", "homepage/%2Fhome");
 
       // API
       activateHomepageContext("/homepage", "homepage/%2F");

@@ -26,8 +26,9 @@ import {TopologyInformation} from './topologies/topology.information';
 @Injectable()
 export class HomepageService {
     apiUrl = window.location.pathname.replace('home', 'homepage');
-    generalProxyInformationUrl = this.apiUrl + 'api/v1/metadata/info';
-    topologiesUrl = this.apiUrl + 'api/v1/metadata/topologies';
+    generalProxyInformationUrl = this.apiUrl + 'homepage/api/v1/metadata/info';
+    publicCertUrl = this.apiUrl + 'homepage/api/v1/metadata/publicCert?type=';
+    topologiesUrl = this.apiUrl + 'homepage/api/v1/metadata/topologies';
 
     constructor(private http: HttpClient) {}
 

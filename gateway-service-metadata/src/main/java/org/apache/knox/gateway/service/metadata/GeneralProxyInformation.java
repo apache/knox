@@ -27,12 +27,6 @@ public class GeneralProxyInformation {
   private String version;
 
   @XmlElement
-  private String publicCertPemPath;
-
-  @XmlElement
-  private String publicCertJksPath;
-
-  @XmlElement
   private String adminUiUrl;
 
   @XmlElement
@@ -44,22 +38,6 @@ public class GeneralProxyInformation {
 
   public void setVersion(String version) {
     this.version = version;
-  }
-
-  public String getPublicCertPemPath() {
-    return publicCertPemPath;
-  }
-
-  public void setPublicCertPemPath(String publicCertPemPath) {
-    this.publicCertPemPath = publicCertPemPath;
-  }
-
-  public String getPublicCertJksPath() {
-    return publicCertJksPath;
-  }
-
-  public void setPublicCertJksPath(String publicCertJksPath) {
-    this.publicCertJksPath = publicCertJksPath;
   }
 
   public String getAdminUiUrl() {

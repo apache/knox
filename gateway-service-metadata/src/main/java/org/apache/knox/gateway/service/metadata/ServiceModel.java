@@ -103,10 +103,15 @@ public class ServiceModel {
   @XmlElement
   public String getServiceUrl() {
     String context = getContext();
-    if (context.indexOf("{{BACKEND_HOST}}") > -1) {
-      context = context.replaceAll("\\{\\{BACKEND_HOST\\}\\}", getBackendServiceUrl());
+    if ("HIVE".equals(getServiceName())) {
+      return String.format(Locale.ROOT, "jdbc:hive2://%s:%d/;?hive.server2.transport.mode=http;hive.server2.thrift.http.path=/%s/%s%s", request.getServerName(),
+          request.getServerPort(), gatewayPath, topologyName, context);
+    } else {
+      if (context.indexOf("{{BACKEND_HOST}}") > -1) {
+        context = context.replaceAll("\\{\\{BACKEND_HOST\\}\\}", getBackendServiceUrl());
+      }
+      return String.format(Locale.ROOT, "%s://%s:%s/%s/%s%s", request.getScheme(), request.getServerName(), request.getServerPort(), gatewayPath, topologyName, context);
     }
-    return String.format(Locale.ROOT, "%s://%s:%s/%s/%s%s", request.getScheme(), request.getServerName(), request.getServerPort(), gatewayPath, topologyName, context);
   }
 
   protected String getBackendServiceUrl() {

@@ -23,7 +23,7 @@ import {Service} from './service';
     selector: 'app-topologies-information',
     template: `
         <hr/>
-        <h3>Topology browsing</h3>
+        <h4>Topologies</h4>
         <ng-container *ngFor="let topology of topologies">
             <div>
               <span [class]="'clickable inline-glyph
@@ -34,14 +34,14 @@ import {Service} from './service';
 
             <div class="table-responsive" *ngIf="this['showTopology_' + topology.topology]">
 
-                <!-- API services -->
-                <table class="table table-hover" [mfData]="topology.apiServices.service" #api="mfDataTable" [mfRowsOnPage]="5">
+                <!-- UI services -->
+                <table class="table table-hover" [mfData]="topology.uiServices.service" #ui="mfDataTable" [mfRowsOnPage]="5">
                     <thead>
-                        <tr *ngIf="topology.apiServices.service.length == 0"><th colspan="2">No API services found</th></tr>
-                        <tr *ngIf="topology.apiServices.service.length > 0"><th colspan="2">API services</th></tr>
+                        <tr *ngIf="topology.uiServices.service.length == 0"><th colspan="2">No UI services found</th></tr>
+                        <tr *ngIf="topology.uiServices.service.length > 0"><th colspan="2">UI services</th></tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let service of api.data">
+                        <tr *ngFor="let service of ui.data">
                             <td>
                                 <span class="inline-glyph glyphicon glyphicon-info-sign btn btn-xs"
                                 title="{{service.description}}"
@@ -62,14 +62,14 @@ import {Service} from './service';
 		            </tfoot>
                 </table>
 
-                <!-- UI services -->
-                <table class="table table-hover" [mfData]="topology.uiServices.service" #ui="mfDataTable" [mfRowsOnPage]="5">
+                <!-- API services -->
+                <table class="table table-hover" [mfData]="topology.apiServices.service" #api="mfDataTable" [mfRowsOnPage]="5">
                     <thead>
-                        <tr *ngIf="topology.uiServices.service.length == 0"><th colspan="2">No UI services found</th></tr>
-                        <tr *ngIf="topology.uiServices.service.length > 0"><th colspan="2">UI services</th></tr>
+                        <tr *ngIf="topology.apiServices.service.length == 0"><th colspan="2">No API services found</th></tr>
+                        <tr *ngIf="topology.apiServices.service.length > 0"><th colspan="2">API services</th></tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let service of ui.data">
+                        <tr *ngFor="let service of api.data">
                             <td>
                                 <span class="inline-glyph glyphicon glyphicon-info-sign btn btn-xs"
                                 title="{{service.description}}"

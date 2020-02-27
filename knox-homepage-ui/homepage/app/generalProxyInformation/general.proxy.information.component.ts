@@ -21,11 +21,9 @@ import {GeneralProxyInformation} from './general.proxy.information';
 @Component({
     selector: 'app-general-proxy-information',
     template: `
+            <h4>General Proxy Information</h4>
             <div class="table-responsive">
                 <table class="table table-striped table-hover">
-                    <thead>
-                        <tr><th colspan="2" align="center">General Proxy Information</th></tr>
-                    </thead>
                     <tbody>
                         <tr>
                             <td>Knox Version</td>
@@ -34,9 +32,9 @@ import {GeneralProxyInformation} from './general.proxy.information';
                         <tr>
                             <td>TLS Public Certificate</td>
                             <td>
-                                <a href="{{ getPublicCertPemPath() }}" target="_blank">PEM</a>
+                                <a href="{{ getMetadataAPIUrl('publicCert?type=pem') }}">PEM</a>
                                 &nbsp;&nbsp;|&nbsp;&nbsp;
-                                <a href="{{ getPublicCertJksPath() }}" target="_blank">JKS</a>
+                                <a href="{{ getMetadataAPIUrl('publicCert?type=jks') }}">JKS</a>
                             </td>
                         </tr>
                         <tr>
@@ -51,6 +49,16 @@ import {GeneralProxyInformation} from './general.proxy.information';
                             </td>
                             <td>
                                 <a href="{{ getAdminApiBookUrl() }}" target="_blank">{{ getAdminApiBookUrl() }}</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Metadata API
+                            </td>
+                            <td>
+                                <a href="{{ getMetadataAPIUrl('info') }}" target="_blank">General Proxy Information</a>
+                                &nbsp;&nbsp;|&nbsp;&nbsp;
+                                <a href="{{ getMetadataAPIUrl('topologies') }}" target="_blank">Topologies</a>
                             </td>
                         </tr>
                     </tbody>
@@ -72,25 +80,16 @@ export class GeneralProxyInformationComponent implements OnInit {
           }
           return '';
     }
-    getPublicCertPemPath() {
-      if (this.generalProxyInformation) {
-        return this.generalProxyInformation.publicCertPemPath;
-      }
-      return '';
-    }
-
-    getPublicCertJksPath() {
-        if (this.generalProxyInformation) {
-          return this.generalProxyInformation.publicCertJksPath;
-        }
-        return '';
-    }
 
     getAdminUiUrl() {
         if (this.generalProxyInformation) {
             return this.generalProxyInformation.adminUiUrl;
           }
         return '';
+    }
+
+    getMetadataAPIUrl(endpoint: string) {
+        return this.getAdminUiUrl().replace('manager/admin-ui/', 'metadata/api/v1/metadata/' + endpoint);
     }
 
     getAdminApiDescription() {

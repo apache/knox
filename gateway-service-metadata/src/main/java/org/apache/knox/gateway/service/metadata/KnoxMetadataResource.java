@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.service.metadata;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 
 import java.io.IOException;
@@ -37,11 +38,16 @@ import java.util.Optional;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.Response.Status;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -83,16 +89,6 @@ public class KnoxMetadataResource {
       proxyInfo.setAdminApiBookUrl(
           String.format(Locale.ROOT, "https://knox.apache.org/books/knox-%s/user-guide.html#Admin+API", getAdminApiBookVersion(serviceInfoService.getBuildVersion())));
       final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
-      final Certificate certificate = getPublicCertificate(gatewayServices, config);
-      if (certificate != null) {
-        generateCertificatePem(certificate, config);
-        proxyInfo.setPublicCertPemPath("assets/gateway-client-trust.pem");
-        generateCertificateJks(certificate, config);
-        proxyInfo.setPublicCertJksPath("assets/gateway-client-trust.jks");
-      } else {
-        proxyInfo.setPublicCertPemPath("Could not generate gateway-client-trust.pem");
-        proxyInfo.setPublicCertJksPath("Could not generate gateway-client-trust.jks");
-      }
       proxyInfo.setAdminUiUrl(getBaseGatewayUrl(config) + "/manager/admin-ui/");
     }
 
@@ -101,6 +97,41 @@ public class KnoxMetadataResource {
 
   private String getAdminApiBookVersion(String buildVersion) {
     return buildVersion.replaceAll(SNAPSHOT_VERSION_POSTFIX, "").replaceAll("\\.", "-");
+  }
+
+  @GET
+  @Produces(APPLICATION_OCTET_STREAM)
+  @Path("publicCert")
+  public Response getPublicCertification(@QueryParam("type") @DefaultValue("pem") String certType) {
+    final GatewayServices gatewayServices = (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    if (gatewayServices != null) {
+      final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+      final Certificate certificate = getPublicCertificate(gatewayServices, config);
+      if (certificate != null) {
+        if ("pem".equals(certType)) {
+          generateCertificatePem(certificate, config);
+          return generateSuccessFileDownloadResponse(pemFilePath);
+        } else if ("jks".equals(certType)) {
+          generateCertificateJks(certificate, config);
+          return generateSuccessFileDownloadResponse(jksFilePath);
+        } else {
+          return generateFailureFileDownloadResponse(Status.BAD_REQUEST, "Invalid certification type provided!");
+        }
+      }
+    }
+    return generateFailureFileDownloadResponse(Status.SERVICE_UNAVAILABLE, "Could not generate public certificate");
+  }
+
+  private Response generateSuccessFileDownloadResponse(java.nio.file.Path publicCertFilePath) {
+    final ResponseBuilder responseBuilder = Response.ok(publicCertFilePath.toFile());
+    responseBuilder.header("Content-Disposition", "attachment;filename=" + publicCertFilePath.getFileName().toString());
+    return responseBuilder.build();
+  }
+
+  private Response generateFailureFileDownloadResponse(Status status, String errorMessage) {
+    final ResponseBuilder responseBuilder = Response.status(status);
+    responseBuilder.entity(errorMessage);
+    return responseBuilder.build();
   }
 
   private Certificate getPublicCertificate(GatewayServices gatewayServices, GatewayConfig config) {
@@ -116,7 +147,7 @@ public class KnoxMetadataResource {
   private void generateCertificatePem(Certificate certificate, GatewayConfig gatewayConfig) {
     try {
       if (pemFilePath == null || !pemFilePath.toFile().exists()) {
-        pemFilePath = Paths.get(gatewayConfig.getGatewayDeploymentDir(), "homepage", "%2Fhome", "assets", "gateway-client-trust.pem");
+        pemFilePath = Paths.get(gatewayConfig.getGatewaySecurityDir(), "gateway-client-trust.pem");
         X509CertificateUtil.writeCertificateToFile(certificate, pemFilePath.toFile());
       }
     } catch (CertificateEncodingException | IOException e) {
@@ -127,7 +158,7 @@ public class KnoxMetadataResource {
   private void generateCertificateJks(Certificate certificate, GatewayConfig gatewayConfig) {
     try {
       if (jksFilePath == null || !jksFilePath.toFile().exists()) {
-        jksFilePath = Paths.get(gatewayConfig.getGatewayDeploymentDir(), "homepage", "%2Fhome", "assets", "gateway-client-trust.jks");
+        jksFilePath = Paths.get(gatewayConfig.getGatewaySecurityDir(), "gateway-client-trust.jks");
         X509CertificateUtil.writeCertificateToJks(certificate, jksFilePath.toFile());
       }
     } catch (IOException | KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
