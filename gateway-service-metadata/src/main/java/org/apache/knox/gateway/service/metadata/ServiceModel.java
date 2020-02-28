@@ -108,7 +108,7 @@ public class ServiceModel {
           request.getServerPort(), gatewayPath, topologyName, context);
     } else {
       if (context.indexOf("{{BACKEND_HOST}}") > -1) {
-        context = context.replaceAll("\\{\\{BACKEND_HOST\\}\\}", getBackendServiceUrl());
+        context = context.replace("{{BACKEND_HOST}}", getBackendServiceUrl());
       }
       return String.format(Locale.ROOT, "%s://%s:%s/%s/%s%s", request.getScheme(), request.getServerName(), request.getServerPort(), gatewayPath, topologyName, context);
     }
