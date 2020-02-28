@@ -83,6 +83,14 @@ public class DefaultHaDispatch extends DefaultDispatch {
     this.haProvider = haProvider;
   }
 
+  public int getMaxFailoverAttempts() {
+    return maxFailoverAttempts;
+  }
+
+  public int getFailoverSleep() {
+    return failoverSleep;
+  }
+
   @Override
   protected void executeRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) throws IOException {
     HttpResponse inboundResponse = null;
