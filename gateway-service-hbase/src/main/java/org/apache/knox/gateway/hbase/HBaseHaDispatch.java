@@ -24,9 +24,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.knox.gateway.dispatch.DefaultDispatch;
+import org.apache.knox.gateway.ha.dispatch.DefaultHaDispatch;
 
-public class HBaseDispatch extends DefaultDispatch {
+public class HBaseHaDispatch extends DefaultHaDispatch {
 
   @Override
   protected void executeRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest,
@@ -40,5 +40,6 @@ public class HBaseDispatch extends DefaultDispatch {
   public URI getDispatchUrl(HttpServletRequest request) {
     return HBaseRequestUtil.decodeUrl(request);
   }
+
 }
 

@@ -174,6 +174,15 @@
   <rule dir="IN" name="HBASEUI/hbase/inbound/logs/files" pattern="*://*:*/**/hbase/webui/logs/{**}?{host}?{port}">
     <rewrite template="{$serviceScheme[HBASEUI]}://{$hostmap(host)}:{port}/logs/{**}"/>
   </rule>
+  <filter name="HBASEUI/hbase/outbound/logs/headers">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="HBASEUI/hbase/outbound/logs/headers-redirect"/>
+    </content>
+  </filter>
+  <rule dir="OUT" name="HBASEUI/hbase/outbound/logs/headers-redirect">
+    <match pattern="{$serviceScheme[HBASEUI]}://{host}:{port}/logs/{dir=**}/?{**}"/>
+    <rewrite template="{$frontend[url]}/hbase/webui/logs/{dir=**}/?host={$inboundurl[host]}?port={$inboundurl[port]}"/>
+  </rule>
   <rule dir="OUT" name="HBASEUI/hbase/outbound/logs" pattern="/logs">
     <rewrite template="{$frontend[url]}/hbase/webui/logs?host={$inboundurl[host]}?port={$inboundurl[port]}"/>
   </rule>
