@@ -16,6 +16,12 @@
    limitations under the License.
 -->
 <service role="SOLRAPI" name="solr" version="5.5.0">
+    <metadata>
+        <type>API</type>
+        <context>/solr</context>
+        <shortDesc>SOLR</shortDesc>
+        <description>Solr is a popular, blazing-fast, open source enterprise search platform built on Apache Lucene™.</description>
+    </metadata>
     <policies>
         <policy role="webappsec"/>
         <policy role="authentication"/>

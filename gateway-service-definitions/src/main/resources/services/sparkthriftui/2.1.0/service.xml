@@ -16,6 +16,12 @@
    limitations under the License.
 -->
 <service role="THRIFTSERVERUI" name="thriftserverui" version="2.1.0">
+    <metadata>
+        <type>UI</type>
+        <context>/thrift</context>
+        <shortDesc>Spark Thrift Server UI</shortDesc>
+        <description>Spark Thrift server is a service that allows JDBC and ODBC clients to run Spark SQL queries. The Spark Thrift server is a variant of HiveServer2.</description>
+    </metadata>
     <routes>
         <route path="/thrift/jobs">
             <rewrite apply="THRIFTSERVERUI/thrift/root/filter/OUT" to="response.body"/>

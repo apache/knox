@@ -34,6 +34,11 @@
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-admin-ui</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>knox-homepage-ui</artifactId>
+            <type>war</type>
+        </dependency>
     </dependencies>
 
     <build>
@@ -57,6 +62,13 @@
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${project.build.outputDirectory}/applications</outputDirectory>
                                     <includes>admin-ui/**</includes>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.apache.knox</groupId>
+                                    <artifactId>knox-homepage-ui</artifactId>
+                                    <type>war</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.outputDirectory}/deployments/homepage</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>

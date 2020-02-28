@@ -16,6 +16,12 @@
    limitations under the License.
 -->
 <service role="OOZIE" name="oozie" version="4.0.0">
+    <metadata>
+        <type>API</type>
+        <context>/oozie</context>
+        <shortDesc>Oozie Web Services API</shortDesc>
+        <description>Oozie is a workflow scheduler system to manage Apache Hadoop jobs. The Oozie Web Services API is a HTTP REST JSON API.</description>
+    </metadata>
     <routes>
         <route path="/oozie/**?**">
             <rewrite apply="OOZIE/oozie/configuration" to="request.body"/>

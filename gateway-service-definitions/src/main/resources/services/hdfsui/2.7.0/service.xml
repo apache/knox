@@ -16,6 +16,12 @@
    limitations under the License.
 -->
 <service role="HDFSUI" name="hdfs" version="2.7.0">
+    <metadata>
+        <type>UI</type>
+        <context>/hdfs/?host={{BACKEND_HOST}}</context>
+        <shortDesc>HDFS Namenode UI</shortDesc>
+        <description>The namenode UI or the namenode web interface is used to monitor the status of the namenode.</description>
+    </metadata>
     <routes>
         <route path="/hdfs/">
             <rewrite apply="HDFSUI/hdfs/outbound/namenode/relative" to="response.body"/>

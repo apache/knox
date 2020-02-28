@@ -16,6 +16,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <service role="IMPALAUI" name="impalaui" version="1.0.0">
+    <metadata>
+        <type>UI</type>
+        <context>/impalaui</context>
+        <shortDesc>Impala UI</shortDesc>
+        <description>Each of the Impala daemons (impalad, statestored, and catalogd) includes a built-in web server that displays diagnostic and status information.</description>
+    </metadata>
   <routes>
     <route path="/impalaui/">
       <rewrite apply="IMPALAUI/impala/inbound/basepath" to="request.url"/>

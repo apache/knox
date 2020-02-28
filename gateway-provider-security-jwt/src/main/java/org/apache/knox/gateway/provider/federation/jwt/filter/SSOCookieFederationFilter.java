@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
@@ -92,9 +93,20 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
     }
 
     // gateway path for deriving an idp url when missing
-    gatewayPath = filterConfig.getInitParameter(GATEWAY_PATH);
+    setGatewayPath(filterConfig);
 
     configureExpectedParameters(filterConfig);
+  }
+
+  private void setGatewayPath(FilterConfig filterConfig) {
+    gatewayPath = filterConfig.getInitParameter(GATEWAY_PATH);
+    if (gatewayPath == null || gatewayPath.isEmpty()) {
+      final GatewayConfig gatewayConfig = filterConfig.getServletContext() == null ? null
+          : (GatewayConfig) filterConfig.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+      if (gatewayConfig != null) {
+        gatewayPath = gatewayConfig.getGatewayPath();
+      }
+    }
   }
 
   @Override

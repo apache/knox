@@ -16,6 +16,12 @@
    limitations under the License.
 -->
 <service role="DATANODE" name="datanode" version="1.0.0">
+    <metadata>
+        <type>API</type>
+        <context>/datanode</context>
+        <shortDesc>Datanode</shortDesc>
+        <description>DataNode works as Slave in Hadoop cluster. This actually stores Business data. This is actual worker node were Read/Write/Data processing is handled. Upon instruction from Master, it performs creation/replication/deletion of data blocks.</description>
+    </metadata>
     <routes>
         <route path="/datanode/">
            <rewrite apply="DATANODE/outbound/datanode/static" to="response.body"/>

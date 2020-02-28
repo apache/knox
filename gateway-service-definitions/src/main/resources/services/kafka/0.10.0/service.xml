@@ -15,6 +15,15 @@
    limitations under the License.
 -->
 <service role="KAFKA" name="kafka" version="0.10.0">
+    <metadata>
+        <type>API</type>
+        <context>/kafka</context>
+        <shortDesc>Apache Kafka API</shortDesc>
+        <description>Apache Kafka is a distributed streaming platform which provides the following three key capabilities: 
+            1.) Publish and subscribe to streams of records, similar to a message queue or enterprise messaging system.
+            2.) Store streams of records in a fault-tolerant durable way.
+            3.) Process streams of records as they occur.</description>
+    </metadata>
   <routes>
     <route path="/kafka/**"/>
   </routes>

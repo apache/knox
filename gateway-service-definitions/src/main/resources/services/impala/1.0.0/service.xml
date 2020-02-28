@@ -15,6 +15,14 @@
    limitations under the License.
 -->
 <service role="IMPALA" name="impala" version="1.0.0">
+    <metadata>
+        <type>API</type>
+        <context>/impala</context>
+        <shortDesc>Impala</shortDesc>
+        <description>Impala provides fast, interactive SQL queries directly on your Apache Hadoop data stored in HDFS, HBase, or the Amazon Simple Storage Service (S3). 
+            In addition to using the same unified storage platform, Impala also uses the same metadata, SQL syntax (Hive SQL), ODBC driver, and user interface (Impala query UI in Hue) as Apache Hive. 
+            This provides a familiar and unified platform for real-time or batch-oriented queries.</description>
+    </metadata>
     <routes>
         <route path="/impala"/>
     </routes>

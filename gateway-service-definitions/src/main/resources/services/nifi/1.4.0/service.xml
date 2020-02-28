@@ -15,6 +15,12 @@
    limitations under the License.
 -->
 <service role="NIFI" name="nifi" version="1.4.0">
+    <metadata>
+        <type>UI</type>
+        <context>/nifi-app</context>
+        <shortDesc>Nifi UI</shortDesc>
+        <description>Apache NiFi supports powerful and scalable directed graphs of data routing, transformation, and system mediation logic.</description>
+    </metadata>
     <routes>
         <route path="/nifi-app/**">
             <rewrite apply="NIFI/nifi/inbound/path" to="request.url"/>

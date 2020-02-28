@@ -15,6 +15,13 @@
    limitations under the License.
 -->
 <service role="STORM" name="storm" version="0.9.3">
+    <metadata>
+        <type>API</type>
+        <context>/storm/api</context>
+        <shortDesc>Apache Storm API</shortDesc>
+        <description>Apache Storm is a free and open source distributed realtime computation system. 
+            Apache Storm makes it easy to reliably process unbounded streams of data, doing for realtime processing what Hadoop did for batch processing.</description>
+    </metadata>
     <routes>
         <route path="/storm/api/**"/>
         <route path="/storm/api/v1/topology/*">

@@ -15,6 +15,13 @@
    limitations under the License.
 -->
 <service role="DRUID-OVERLORD" name="druid-overlord" version="0.0.1">
+    <metadata>
+        <type>API</type>
+        <context>/druid-overlord</context>
+        <shortDesc>Druid Overlord API</shortDesc>
+        <description>The Overlord process is responsible for accepting tasks, coordinating task distribution, creating locks around tasks, and returning statuses to callers. 
+            Overlord can be configured to run in one of two modes - local or remote (local being default).</description>
+    </metadata>
   <routes>
     <route path="druid-overlord/druid/indexer/v1/{**}?{**}">
         <rewrite apply="DRUID-OVERLORD/druid-overlord/inbound/api"/>

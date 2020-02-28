@@ -16,6 +16,14 @@
    limitations under the License.
 -->
 <service role="HBASEUI" name="hbaseui" version="2.1.0">
+    <metadata>
+        <type>UI</type>
+        <context>/hbase/webui</context>
+        <shortDesc>HBase UI</shortDesc>
+        <description>Th﻿e HBase Master web UI is a simple but useful tool, to get an overview of the current status of the cluster. 
+            From its page, you can get the version of the running HBase, its basic configuration, including the root HDFS path and ZooKeeper quorum, 
+            load average of the cluster, and a table, region, and region server list.</description>
+    </metadata>
     <routes>
         <!-- Fixes the stylesheet on the logs servlet -->
         <route path="/hbase/webui/logs/jetty-dir.css">

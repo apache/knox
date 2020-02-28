@@ -16,6 +16,12 @@
    limitations under the License.
 -->
 <service role="WEBHDFS" name="webhdfs" version="2.4.0">
+    <metadata>
+        <type>API</type>
+        <context>/webhdfs</context>
+        <shortDesc>Web HDFS</shortDesc>
+        <description>An HTTP REST API which supports the complete FileSystem interface for HDFS.</description>
+    </metadata>
     <routes>
         <route path="/webhdfs/v1/?**">
             <rewrite apply="WEBHDFS/webhdfs/inbound/namenode/root" to="request.url"/>

@@ -16,6 +16,12 @@
    limitations under the License.
 -->
 <service role="OOZIEUI" name="oozieui" version="4.2.0">
+    <metadata>
+        <type>UI</type>
+        <context>/oozie</context>
+        <shortDesc>Oozie Web Console</shortDesc>
+        <description>Oozie web console is a web-based tool that gives a read-only view about the jobs.</description>
+    </metadata>
     <routes>
         <route path="/oozie?**">
             <rewrite apply="OOZIEUI/oozieui/inbound/request/root" to="request.url"/>

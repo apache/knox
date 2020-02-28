@@ -16,6 +16,12 @@
    limitations under the License.
 -->
 <service role="NODEUI" name="nodeui" version="2.7.1">
+    <metadata>
+        <type>UI</type>
+        <context>/node</context>
+        <shortDesc>YARN NodeManager UI</shortDesc>
+        <description>The NodeManager is responsible for launching and managing containers on a node.</description>
+    </metadata>
     <routes>
         <route path="/node/">
             <rewrite apply="NODEUI/node/root" to="response.body"/>

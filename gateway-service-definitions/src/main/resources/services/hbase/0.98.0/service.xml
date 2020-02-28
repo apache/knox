@@ -15,6 +15,12 @@
    limitations under the License.
 -->
 <service role="WEBHBASE" name="webhbase" version="0.98.0">
+    <metadata>
+        <type>API</type>
+        <context>/hbase</context>
+        <shortDesc>Web HBase</shortDesc>
+        <description>The HBase REST server exposes endpoints that provide CRUD (create, read, update, delete) operations for each HBase process, as well as tables, regions, and namespaces.</description>
+    </metadata>
     <routes>
         <route path="/hbase/?**">
             <rewrite apply="WEBHBASE/webhbase/headers/outbound" to="response.headers"/>

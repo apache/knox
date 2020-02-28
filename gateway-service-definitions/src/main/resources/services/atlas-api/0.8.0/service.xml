@@ -17,6 +17,12 @@
 
 
 <service role="ATLAS-API" name="atlas-api" version="0.8.0">
+    <metadata>
+        <type>API</type>
+        <context>/atlas/api</context>
+        <shortDesc>Atlas API</shortDesc>
+        <description>Atlas exposes a variety of REST endpoints to work with types, entities, lineage and data discovery.</description>
+    </metadata>
     <policies>
         <policy role="webappsec"/>
         <policy role="authentication" name="Anonymous"/>

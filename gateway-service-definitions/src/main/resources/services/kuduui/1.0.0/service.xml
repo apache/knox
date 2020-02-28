@@ -16,6 +16,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <service role="KUDUUI" name="kuduui" version="1.0.0">
+    <metadata>
+        <type>UI</type>
+        <context>/kuduui</context>
+        <shortDesc>Kudu UI</shortDesc>
+        <description>Kudu is a columnar storage manager developed for the Apache Hadoop platform. Kudu shares the common technical properties of Hadoop ecosystem applications: it runs on commodity hardware, is horizontally scalable, and supports highly available operation.</description>
+    </metadata>
   <!-- We could also list the OUT rules that write response.body, but for some
        reason Knox runs them automatically even if we don't list them.
   -->
