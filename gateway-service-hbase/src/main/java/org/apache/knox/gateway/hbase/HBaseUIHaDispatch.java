@@ -17,22 +17,21 @@
  */
 package org.apache.knox.gateway.hbase;
 
-import java.net.URI;
+import java.io.IOException;
+
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-import org.apache.knox.gateway.dispatch.DefaultDispatch;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.knox.gateway.ha.dispatch.DefaultHaDispatch;
 
-/**
- * This used to be a specialized dispatch providing HBase specific features to the
- * default dispatch. Now it is just a marker class for backwards compatibility.
- * @deprecated Use {@link org.apache.knox.gateway.dispatch.DefaultDispatch}
- */
-@Deprecated
-public class HBaseDispatch extends DefaultDispatch {
-  // KNOX-709: HBase can't handle URL encoded paths.
+public class HBaseUIHaDispatch extends DefaultHaDispatch {
   @Override
-  public URI getDispatchUrl(HttpServletRequest request) {
-    return HBaseRequestUtil.decodeUrl(request);
+  protected void executeRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest,
+      HttpServletResponse outboundResponse) throws IOException {
+    // partial workaround for KNOX-799
+    outboundRequest = HBaseRequestUtil.fixTrailingSlash(outboundRequest, inboundRequest);
+    super.executeRequest(outboundRequest, inboundRequest, outboundResponse);
   }
 }
 

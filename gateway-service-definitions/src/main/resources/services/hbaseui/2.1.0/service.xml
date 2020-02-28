@@ -38,12 +38,14 @@
           <rewrite apply="HBASEUI/hbase/inbound/static" to="request.url"/>
         </route>
         <!-- Define explicit routes for endpoints shared across master/regionserver -->
-        <route path="/hbase/webui/logs?{**}">
-            <rewrite apply="HBASEUI/hbase/inbound/logs" to="request.url"/>
-            <rewrite apply="HBASEUI/hbase/outbound/logs" to="response.body"/>
+        <route path="/hbase/webui/logs?">
+           <rewrite apply="HBASEUI/hbase/inbound/logs" to="request.url"/>
+           <rewrite apply="HBASEUI/hbase/outbound/logs" to="response.body"/>
         </route>
-        <route path="/hbase/webui/logs/{**}">
-            <rewrite apply="HBASEUI/hbase/inbound/logs/files" to="request.url"/>
+        <route path="/hbase/webui/logs/**">
+          <rewrite apply="HBASEUI/hbase/outbound/logs" to="response.body"/>
+          <rewrite apply="HBASEUI/hbase/inbound/logs/files" to="request.url"/>
+          <rewrite apply="HBASEUI/hbase/outbound/logs/headers" to="response.headers"/>
         </route>
         <route path="/hbase/webui/logLevel?{**}">
           <rewrite apply="HBASEUI/hbase/inbound/loglevel" to="request.url"/>
@@ -95,5 +97,5 @@
           <rewrite apply="HBASEUI/hbase/outbound/regionserver/children" to="response.body"/>
         </route>
     </routes>
-    <dispatch classname="org.apache.knox.gateway.hbase.HBaseDispatch"/>
+    <dispatch classname="org.apache.knox.gateway.hbase.HBaseUIDispatch" ha-classname="org.apache.knox.gateway.hbase.HBaseUIHaDispatch"/>
 </service>
