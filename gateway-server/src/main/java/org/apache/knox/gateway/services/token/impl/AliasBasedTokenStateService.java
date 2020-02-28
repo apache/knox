@@ -16,7 +16,6 @@
  */
 package org.apache.knox.gateway.services.token.impl;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -97,9 +96,8 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
       validateToken(token);
     } catch (final UnknownTokenException e) {
       /* if token permissiveness is enabled we check JWT token expiration when the token state is unknown */
-      if (permissiveFailureEnabled && StringUtils
-          .containsIgnoreCase(e.toString(), "Unknown token")) {
-        return getJWTTokenExpiration(token);
+      if (permissiveValidationEnabled &&  getJWTTokenExpiration(token).isPresent()) {
+        return getJWTTokenExpiration(token).getAsLong();
       } else {
         throw e;
       }

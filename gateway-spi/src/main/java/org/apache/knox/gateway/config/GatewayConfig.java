@@ -677,7 +677,7 @@ public interface GatewayConfig {
   Set<String> getHiddenTopologiesOnHomepage();
 
   /**
-   * @return returns whether know token permissive failure is enabled
+   * @return returns whether know token permissive validation is enabled
    */
-  boolean isKnoxTokenPermissiveFailureEnabled();
+  boolean isKnoxTokenPermissiveValidationEnabled();
 }

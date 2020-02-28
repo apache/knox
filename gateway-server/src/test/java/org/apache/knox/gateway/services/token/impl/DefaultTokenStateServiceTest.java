@@ -245,7 +245,7 @@ public class DefaultTokenStateServiceTest {
     /* configure token eviction time to be 5 secs for test */
     EasyMock.expect(config.getKnoxTokenEvictionInterval()).andReturn(EVICTION_INTERVAL).anyTimes();
     EasyMock.expect(config.getKnoxTokenEvictionGracePeriod()).andReturn(0L).anyTimes();
-    EasyMock.expect(config.isKnoxTokenPermissiveFailureEnabled()).andReturn(tokenPermissiveness).anyTimes();
+    EasyMock.expect(config.isKnoxTokenPermissiveValidationEnabled()).andReturn(tokenPermissiveness).anyTimes();
     EasyMock.replay(config);
     return config;
   }

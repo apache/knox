@@ -799,7 +799,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
    * @return returns whether know token permissive failure is enabled
    */
   @Override
-  public boolean isKnoxTokenPermissiveFailureEnabled() {
+  public boolean isKnoxTokenPermissiveValidationEnabled() {
     return false;
   }
 }

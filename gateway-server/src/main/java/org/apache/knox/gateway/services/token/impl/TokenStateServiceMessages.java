@@ -66,7 +66,7 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.ERROR, text = "Error occurred while parsing JWT token, cause: {0}")
   void errorParsingToken(String cause);
 
-  @Message(level = MessageLevel.DEBUG, text = "Token permissiveness is enabled, expiration for token {0} is {1}")
+  @Message(level = MessageLevel.DEBUG, text = "Permissive validation for token is enabled, expiration for token {0} is {1}")
   void jwtTokenExpiry(String tokenDisplayText, String expiration);
 
 }
