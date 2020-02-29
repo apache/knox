@@ -63,4 +63,10 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.ERROR, text = "Error occurred evicting token {0}")
   void errorEvictingTokens(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.ERROR, text = "Error occurred while parsing JWT token, cause: {0}")
+  void errorParsingToken(String cause);
+
+  @Message(level = MessageLevel.DEBUG, text = "Permissive validation for token is enabled, expiration for token {0} is {1}")
+  void jwtTokenExpiry(String tokenDisplayText, String expiration);
+
 }

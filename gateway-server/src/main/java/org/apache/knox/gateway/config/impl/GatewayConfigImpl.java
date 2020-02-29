@@ -249,8 +249,10 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final String KNOX_TOKEN_EVICTION_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.eviction.interval";
   private static final String KNOX_TOKEN_EVICTION_GRACE_PERIOD = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.eviction.grace.period";
+  private static final String KNOX_TOKEN_PERMISSIVE_VALIDATION_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.permissive.validation";
   private static final long KNOX_TOKEN_EVICTION_INTERVAL_DEFAULT = TimeUnit.MINUTES.toSeconds(5);
   private static final long KNOX_TOKEN_EVICTION_GRACE_PERIOD_DEFAULT = TimeUnit.MINUTES.toSeconds(5);
+  private static final boolean KNOX_TOKEN_PERMISSIVE_VALIDATION_ENABLED_DEFAULT = false;
 
   private static final String KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES =  "knox.homepage.hidden.topologies";
   private static final Set<String> KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES_DEFAULT = new HashSet<>(Arrays.asList("admin", "manager", "knoxsso", "metadata"));
@@ -1140,5 +1142,14 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public Set<String> getHiddenTopologiesOnHomepage() {
     final Set<String> hiddenTopologies = new HashSet<>(getStringCollection(KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES));
     return hiddenTopologies == null || hiddenTopologies.isEmpty() ? KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES_DEFAULT : hiddenTopologies;
+  }
+
+  /**
+   * @return returns whether know token permissive failure is enabled
+   */
+  @Override
+  public boolean isKnoxTokenPermissiveValidationEnabled() {
+    return getBoolean(KNOX_TOKEN_PERMISSIVE_VALIDATION_ENABLED,
+        KNOX_TOKEN_PERMISSIVE_VALIDATION_ENABLED_DEFAULT);
   }
 }

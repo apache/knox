@@ -16,15 +16,22 @@
  */
 package org.apache.knox.gateway.services.token.impl;
 
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.crypto.RSASSASigner;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.easymock.EasyMock;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.interfaces.RSAPrivateKey;
 import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +45,16 @@ import static org.junit.Assert.fail;
 public class DefaultTokenStateServiceTest {
 
   private static long EVICTION_INTERVAL = 2L;
+  private static RSAPrivateKey privateKey;
+
+  @BeforeClass
+  public static void setUpBeforeClass() throws Exception {
+    KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+    kpg.initialize(2048);
+
+    KeyPair kp = kpg.genKeyPair();
+    privateKey = (RSAPrivateKey) kp.getPrivate();
+  }
 
   @Test
   public void testGetExpiration() throws Exception {
@@ -185,6 +202,32 @@ public class DefaultTokenStateServiceTest {
     }
   }
 
+  @Test
+  public void testTokenPermissiveness() throws UnknownTokenException {
+    final long expiry = System.currentTimeMillis() + 300000;
+    final JWT token = getJWTToken(expiry);
+    TokenStateService tss = new DefaultTokenStateService();
+    try {
+      tss.init(createMockGatewayConfig(true), Collections.emptyMap());
+    } catch (ServiceLifecycleException e) {
+      fail("Error creating TokenStateService: " + e.getMessage());
+    }
+    assertEquals(expiry/1000, tss.getTokenExpiration(token.toString())/1000);
+  }
+
+  @Test
+  public void testTokenPermissivenessNoExpiry() throws UnknownTokenException {
+    final JWT token = getJWTToken(-1);
+    TokenStateService tss = new DefaultTokenStateService();
+    try {
+      tss.init(createMockGatewayConfig(true), Collections.emptyMap());
+    } catch (ServiceLifecycleException e) {
+      fail("Error creating TokenStateService: " + e.getMessage());
+    }
+
+    assertEquals(-1L, tss.getTokenExpiration(token.toString()));
+  }
+
   protected static JWTToken createMockToken(final long expiration) {
     return createMockToken("abcD1234eFGHIJKLmnoPQRSTUVwXYz", expiration);
   }
@@ -197,18 +240,19 @@ public class DefaultTokenStateServiceTest {
     return token;
   }
 
-  protected static GatewayConfig createMockGatewayConfig() {
+  protected static GatewayConfig createMockGatewayConfig(boolean tokenPermissiveness) {
     GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
     /* configure token eviction time to be 5 secs for test */
     EasyMock.expect(config.getKnoxTokenEvictionInterval()).andReturn(EVICTION_INTERVAL).anyTimes();
     EasyMock.expect(config.getKnoxTokenEvictionGracePeriod()).andReturn(0L).anyTimes();
+    EasyMock.expect(config.isKnoxTokenPermissiveValidationEnabled()).andReturn(tokenPermissiveness).anyTimes();
     EasyMock.replay(config);
     return config;
   }
 
   protected void initTokenStateService(TokenStateService tss) {
     try {
-      tss.init(createMockGatewayConfig(), Collections.emptyMap());
+      tss.init(createMockGatewayConfig(false), Collections.emptyMap());
     } catch (ServiceLifecycleException e) {
       fail("Error creating TokenStateService: " + e.getMessage());
     }
@@ -218,6 +262,22 @@ public class DefaultTokenStateServiceTest {
     TokenStateService tss = new DefaultTokenStateService();
     initTokenStateService(tss);
     return tss;
+  }
+
+  /* create a test JWT token */
+  protected JWT getJWTToken(final long expiry) {
+    String[] claims = new String[4];
+    claims[0] = "KNOXSSO";
+    claims[1] = "john.doe@example.com";
+    claims[2] = "https://login.example.com";
+    if(expiry > 0) {
+      claims[3] = Long.toString(expiry);
+    }
+    JWT token = new JWTToken("RS256", claims);
+    // Sign the token
+    JWSSigner signer = new RSASSASigner(privateKey);
+    token.sign(signer);
+    return token;
   }
 
 }

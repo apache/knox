@@ -22,12 +22,16 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
+import java.text.ParseException;
 import java.time.Instant;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -54,6 +58,8 @@ public class DefaultTokenStateService implements TokenStateService {
   private long tokenEvictionInterval;
   /* grace period (in seconds) after which an expired token should be evicted */
   private long tokenEvictionGracePeriod;
+  /* should knox token fail permissively */
+  protected boolean permissiveValidationEnabled;
 
   private final ScheduledExecutorService evictionScheduler = Executors.newScheduledThreadPool(1);
 
@@ -62,6 +68,7 @@ public class DefaultTokenStateService implements TokenStateService {
   public void init(final GatewayConfig config, final Map<String, String> options) throws ServiceLifecycleException {
     tokenEvictionInterval = config.getKnoxTokenEvictionInterval();
     tokenEvictionGracePeriod = config.getKnoxTokenEvictionGracePeriod();
+    permissiveValidationEnabled = config.isKnoxTokenPermissiveValidationEnabled();
   }
 
   @Override
@@ -119,8 +126,17 @@ public class DefaultTokenStateService implements TokenStateService {
   public long getTokenExpiration(final String token) throws UnknownTokenException {
     long expiration;
 
-    validateToken(token);
 
+    try {
+      validateToken(token);
+    } catch (final UnknownTokenException e) {
+      /* if token permissiveness is enabled we check JWT token expiration when the token state is unknown */
+      if (permissiveValidationEnabled && getJWTTokenExpiration(token).isPresent()) {
+        return getJWTTokenExpiration(token).getAsLong();
+      } else {
+        throw e;
+      }
+    }
     synchronized (tokenExpirations) {
       expiration = tokenExpirations.get(token);
     }
@@ -308,6 +324,28 @@ public class DefaultTokenStateService implements TokenStateService {
    */
   protected List<String> getTokens() {
     return tokenExpirations.keySet().stream().collect(Collectors.toList());
+  }
+
+  /**
+   * A function that returns the JWT token expiration. This is only called when
+   * gateway.knox.token.permissive.validation property is set to true.
+   * @param token token to be verified and saved
+   */
+  protected OptionalLong getJWTTokenExpiration(final String token) {
+    JWT jwt;
+    try {
+      jwt = new JWTToken(token);
+    } catch (final ParseException e) {
+      log.errorParsingToken(e.toString());
+      return OptionalLong.empty();
+    }
+    final Date expires = jwt.getExpiresDate();
+    if (expires == null) {
+      log.jwtTokenExpiry(TokenUtils.getTokenDisplayText(token), "-1");
+      return OptionalLong.of(-1);
+    }
+    log.jwtTokenExpiry(TokenUtils.getTokenDisplayText(token), expires.toString());
+    return OptionalLong.of(expires.getTime());
   }
 
 }

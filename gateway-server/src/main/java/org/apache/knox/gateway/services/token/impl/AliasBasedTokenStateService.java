@@ -92,9 +92,16 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
   @Override
   public long getTokenExpiration(final String token) throws UnknownTokenException {
     long expiration = 0;
-
-    validateToken(token);
-
+    try {
+      validateToken(token);
+    } catch (final UnknownTokenException e) {
+      /* if token permissiveness is enabled we check JWT token expiration when the token state is unknown */
+      if (permissiveValidationEnabled &&  getJWTTokenExpiration(token).isPresent()) {
+        return getJWTTokenExpiration(token).getAsLong();
+      } else {
+        throw e;
+      }
+    }
     try {
       char[] expStr = aliasService.getPasswordFromAliasForCluster(AliasService.NO_CLUSTER_NAME, token);
       if (expStr != null) {
