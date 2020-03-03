@@ -45,4 +45,8 @@
     <rewrite template="{$frontend[url]}/yarn/nodemanager/node/containerlogs/{**}?{scheme}?host={$hostmap(host)}?{port}"/>
   </rule>
 
+  <rule dir="OUT" name="LIVYSERVER/livy/outbound/headers/ui" pattern="{scheme}://{host}:{port}/ui/">
+    <rewrite template="{$frontend[url]}/livy/ui/"/>
+  </rule>
+
 </rules>
