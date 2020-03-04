@@ -49,4 +49,10 @@
     <rewrite template="{$frontend[url]}/livy/ui/"/>
   </rule>
 
+  <filter name="LIVYSERVER/livy/outbound/headers">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="LIVYSERVER/livy/outbound/headers/ui"/>
+    </content>
+  </filter>
+
 </rules>
