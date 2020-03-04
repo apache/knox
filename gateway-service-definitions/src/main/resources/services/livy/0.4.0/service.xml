@@ -24,8 +24,12 @@
     </metadata>
   <routes>
     <route path="/livy/**?**"/>
-    <route path="/livy"/>
-    <route path="/livy/"/>
+    <route path="/livy">
+        <rewrite apply="LIVYSERVER/livy/outbound/headers" to="response.headers"/>
+    </route>
+    <route path="/livy/">
+        <rewrite apply="LIVYSERVER/livy/outbound/headers" to="response.headers"/>
+    </route>
   </routes>
   <dispatch classname="org.apache.knox.gateway.livy.LivyDispatch"/>
 </service>
