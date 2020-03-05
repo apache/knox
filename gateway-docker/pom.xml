@@ -94,7 +94,6 @@
                         <version>${dockerfile-maven-plugin.version}</version>
                         <configuration>
                             <contextDirectory>${project.build.outputDirectory}/docker</contextDirectory>
-                            <repository>apache/knox</repository>
                             <buildArgs>
                                 <RELEASE_FILE>knox-${project.version}.zip</RELEASE_FILE>
                             </buildArgs>
@@ -108,7 +107,8 @@
                                     <goal>tag</goal>
                                 </goals>
                                 <configuration>
-                                    <tag>gateway-${project.version}</tag>
+                                    <repository>apache/knox-gateway</repository>
+                                    <tag>${project.version}</tag>
                                     <buildArgs>
                                         <ENTRYPOINT>gateway-entrypoint.sh</ENTRYPOINT>
                                         <EXPOSE_PORT>8443</EXPOSE_PORT>
@@ -123,7 +123,8 @@
                                     <goal>tag</goal>
                                 </goals>
                                 <configuration>
-                                    <tag>ldap-${project.version}</tag>
+                                    <repository>apache/knox-demo-ldap</repository>
+                                    <tag>${project.version}</tag>
                                     <buildArgs>
                                         <ENTRYPOINT>ldap-entrypoint.sh</ENTRYPOINT>
                                         <EXPOSE_PORT>33389</EXPOSE_PORT>
