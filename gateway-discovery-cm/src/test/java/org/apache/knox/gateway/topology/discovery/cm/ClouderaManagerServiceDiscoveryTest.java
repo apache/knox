@@ -961,14 +961,15 @@ public class ClouderaManagerServiceDiscoveryTest {
     // Configure the role
     Map<String, String> roleProperties = new HashMap<>();
     roleProperties.put("hive_hs2_config_safety_valve", hs2SafetyValveValue);
-    roleProperties.put("hive.server2.use.SSL", String.valueOf(enableSSL));
+
+    final Map<String, String> serviceProperties = Collections.singletonMap("hive.server2.use.SSL", String.valueOf(enableSSL));
 
     return doTestDiscovery(hostName,
                            "HIVE-1",
                            HiveServiceModelGenerator.SERVICE_TYPE,
                            "HIVE-1-HIVESERVER2-12345",
                            HiveServiceModelGenerator.ROLE_TYPE,
-                           Collections.emptyMap(),
+                           serviceProperties,
                            roleProperties);
   }
 
@@ -988,14 +989,15 @@ public class ClouderaManagerServiceDiscoveryTest {
     roleProperties.put("hive_server2_thrift_http_port", thriftPort);
     roleProperties.put("hive_server2_transport_mode", "http");
     roleProperties.put("hive_hs2_config_safety_valve", hs2SafetyValveValue);
-    roleProperties.put("hive.server2.use.SSL", String.valueOf(enableSSL));
+
+    final Map<String, String> serviceProperties = Collections.singletonMap("hive.server2.use.SSL", String.valueOf(enableSSL));
 
     return doTestDiscovery(hostName,
                            "HIVE_ON_TEZ-1",
                            HiveOnTezServiceModelGenerator.SERVICE_TYPE,
                            "HIVE_ON_TEZ-1-HIVESERVER2-12345",
                            HiveServiceModelGenerator.ROLE_TYPE,
-                           Collections.emptyMap(),
+                           serviceProperties,
                            roleProperties);
   }
 
@@ -1215,9 +1217,14 @@ public class ClouderaManagerServiceDiscoveryTest {
     ApiServiceConfig serviceConfig = EasyMock.createNiceMock(ApiServiceConfig.class);
     List<ApiConfig> serviceConfigs = new ArrayList<>();
 
+    int i = 0;
     for (Map.Entry<String, String> property : properties.entrySet()) {
       ApiConfig config = EasyMock.createNiceMock(ApiConfig.class);
-      EasyMock.expect(config.getName()).andReturn(property.getKey()).anyTimes();
+      if (i++ % 2 == 0) {
+        EasyMock.expect(config.getName()).andReturn(property.getKey()).anyTimes();
+      } else {
+        EasyMock.expect(config.getRelatedName()).andReturn(property.getKey()).anyTimes();
+      }
       EasyMock.expect(config.getValue()).andReturn(property.getValue()).anyTimes();
       EasyMock.replay(config);
       serviceConfigs.add(config);
@@ -1232,9 +1239,14 @@ public class ClouderaManagerServiceDiscoveryTest {
     ApiConfigList configList = EasyMock.createNiceMock(ApiConfigList.class);
     List<ApiConfig> roleConfigs = new ArrayList<>();
 
+    int i = 0;
     for (Map.Entry<String, String> property : properties.entrySet()) {
       ApiConfig config = EasyMock.createNiceMock(ApiConfig.class);
-      EasyMock.expect(config.getName()).andReturn(property.getKey()).anyTimes();
+      if (i++ % 2 == 0) {
+        EasyMock.expect(config.getName()).andReturn(property.getKey()).anyTimes();
+      } else {
+        EasyMock.expect(config.getRelatedName()).andReturn(property.getKey()).anyTimes();
+      }
       EasyMock.expect(config.getValue()).andReturn(property.getValue()).anyTimes();
       EasyMock.replay(config);
       roleConfigs.add(config);
