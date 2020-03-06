@@ -78,7 +78,7 @@ public class HiveServiceModelGenerator extends AbstractServiceModelGenerator {
                                       ApiRole          role,
                                       ApiConfigList    roleConfig) throws ApiException {
     String hostname = role.getHostRef().getHostname();
-    boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, SSL_ENABLED));
+    boolean sslEnabled = Boolean.parseBoolean(getServiceConfigValue(serviceConfig, SSL_ENABLED));
     String scheme = sslEnabled ? "https" : "http";
 
     String port     = getHttpPort(roleConfig);
@@ -89,7 +89,7 @@ public class HiveServiceModelGenerator extends AbstractServiceModelGenerator {
 
     ServiceModel model =
         createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/%s", scheme, hostname, port, httpPath));
-    model.addRoleProperty(getRoleType(), SSL_ENABLED, getRoleConfigValue(roleConfig, SSL_ENABLED));
+    model.addRoleProperty(getRoleType(), SSL_ENABLED, Boolean.toString(sslEnabled));
     model.addRoleProperty(getRoleType(), SAFETY_VALVE, getRoleConfigValue(roleConfig, SAFETY_VALVE));
 
     return model;

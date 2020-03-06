@@ -54,7 +54,7 @@ public abstract class AbstractServiceModelGenerator implements ServiceModelGener
 
   protected String getConfigValue(String key, List<ApiConfig> items) {
     for (ApiConfig config : items) {
-      if (key.equals(config.getName())) {
+      if (key.equals(config.getName()) || key.equals(config.getRelatedName())) {
         String value = config.getValue();
         if (value != null) {
           return value;
