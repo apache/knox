@@ -19,6 +19,7 @@ package org.apache.knox.gateway.provider.federation;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.easymock.EasyMock;
@@ -109,9 +110,7 @@ public class CommonJWTFilterTest {
     EasyMock.expect(fc.getServletContext()).andReturn(sc).anyTimes();
     EasyMock.replay(fc);
 
-    Method m = AbstractJWTFilter.class.getDeclaredMethod("isServerManagedTokenStateEnabled", FilterConfig.class);
-    m.setAccessible(true);
-    return (Boolean) m.invoke(handler, fc);
+    return TokenUtils.isServerManagedTokenStateEnabled(fc);
   }
 
   @Test
@@ -129,7 +128,7 @@ public class CommonJWTFilterTest {
   @Test(expected = UnknownTokenException.class)
   public void testIsStillValidUnknownToken() throws Exception {
     TokenStateService tss = EasyMock.createNiceMock(TokenStateService.class);
-    EasyMock.expect(tss.getTokenExpiration(anyObject()))
+    EasyMock.expect(tss.getTokenExpiration(anyObject(JWT.class)))
             .andThrow(new UnknownTokenException("eyjhbgcioi1234567890neg"))
             .anyTimes();
     EasyMock.replay(tss);
@@ -139,7 +138,7 @@ public class CommonJWTFilterTest {
 
   private boolean doTestIsStillValid(final Long expiration) throws Exception {
     TokenStateService tss = EasyMock.createNiceMock(TokenStateService.class);
-    EasyMock.expect(tss.getTokenExpiration(anyObject()))
+    EasyMock.expect(tss.getTokenExpiration(anyObject(JWT.class)))
             .andReturn(expiration)
             .anyTimes();
     EasyMock.replay(tss);

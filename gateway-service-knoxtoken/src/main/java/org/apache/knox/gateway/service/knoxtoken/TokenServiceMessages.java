@@ -22,8 +22,19 @@ import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
 
+import java.text.ParseException;
+
 @Messages(logger="org.apache.knox.gateway.service.knoxtoken")
 public interface TokenServiceMessages {
+
+  @Message( level = MessageLevel.INFO, text = "Knox Token service ({0}) issued token {1} ({2})")
+  void issuedToken(String topologyName, String tokenDisplayText, String tokenId);
+
+  @Message( level = MessageLevel.INFO, text = "Knox Token service ({0}) renewed the expiration for token {1} ({2})")
+  void renewedToken(String topologyName, String tokenDisplayText, String tokenId);
+
+  @Message( level = MessageLevel.INFO, text = "Knox Token service ({0}) revoked token {1} ({2})")
+  void revokedToken(String topologyName, String tokenDisplayText, String tokenId);
 
   @Message( level = MessageLevel.ERROR, text = "Unable to issue token.")
   void unableToIssueToken(@StackTrace( level = MessageLevel.DEBUG) Exception e);
@@ -45,15 +56,22 @@ public interface TokenServiceMessages {
   @Message( level = MessageLevel.INFO, text = "Server management of token state is enabled for the \"{0}\" topology.")
   void serverManagedTokenStateEnabled(String topologyName);
 
+  @Message( level = MessageLevel.ERROR, text = "Knox Token service ({0}) could not parse token {1}: {2}")
+  void invalidToken(String topologyName,
+                    String tokenDisplayText,
+                    @StackTrace( level = MessageLevel.DEBUG ) ParseException e);
+
   @Message( level = MessageLevel.WARN,
             text = "There are no token renewers white-listed in the \"{0}\" topology.")
   void noRenewersConfigured(String topologyName);
 
-  @Message( level = MessageLevel.ERROR, text = "Knox Token service ({0}) rejected a bad token renewal request: {1}")
-  void badRenewalRequest(String topologyName, String error);
+  @Message( level = MessageLevel.ERROR, text = "Knox Token service ({0}) rejected a bad renewal request for token {1}: {2}")
+  void badRenewalRequest(String topologyName, String tokenDisplayText, String error);
 
-  @Message( level = MessageLevel.ERROR, text = "Knox Token service ({0}) rejected a bad token revocation request: {1}")
-  void badRevocationRequest(String topologyName, String error);
+  @Message( level = MessageLevel.ERROR, text = "Knox Token service ({0}) rejected a bad revocation request for token {1}: {2}")
+  void badRevocationRequest(String topologyName, String tokenDisplayText, String error);
 
+  @Message( level = MessageLevel.DEBUG, text = "Knox Token service ({0}) stored state for token {1} ({2})")
+  void storedToken(String topologyName, String tokenDisplayText, String tokenId);
 
 }

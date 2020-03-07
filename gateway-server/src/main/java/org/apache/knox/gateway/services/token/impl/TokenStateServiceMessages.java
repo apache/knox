@@ -25,48 +25,46 @@ import org.apache.knox.gateway.i18n.messages.StackTrace;
 public interface TokenStateServiceMessages {
 
   @Message(level = MessageLevel.DEBUG, text = "Added token {0}, expiration {1}")
-  void addedToken(String tokenDisplayText, String expiration);
+  void addedToken(String tokenId, String expiration);
 
   @Message(level = MessageLevel.DEBUG, text = "Renewed token {0}, expiration {1}")
-  void renewedToken(String tokenDisplayText, String expiration);
+  void renewedToken(String tokenId, String expiration);
 
   @Message(level = MessageLevel.DEBUG, text = "Revoked token {0}")
-  void revokedToken(String tokenDisplayText);
+  void revokedToken(String tokenId);
 
   @Message(level = MessageLevel.DEBUG, text = "Removed state for token {0}")
-  void removedTokenState(String tokenDisplayText);
+  void removedTokenState(String tokenId);
 
-  @Message(level = MessageLevel.DEBUG, text = "Unknown token {0}")
-  void unknownToken(String tokenDisplayText);
+  @Message(level = MessageLevel.ERROR, text = "Unknown token {0}")
+  void unknownToken(String tokenId);
 
   @Message(level = MessageLevel.ERROR, text = "The renewal limit for the token ({0}) has been exceeded.")
-  void renewalLimitExceeded(String tokenDisplayText);
+  void renewalLimitExceeded(String tokenId);
 
   @Message(level = MessageLevel.ERROR, text = "Failed to save state for token {0} : {1}")
-  void failedToSaveTokenState(String tokenDisplayText, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+  void failedToSaveTokenState(String tokenId, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.ERROR, text = "Error accessing state for token {0} : {1}")
-  void errorAccessingTokenState(String tokenDisplayText, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+  void errorAccessingTokenState(String tokenId, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.INFO,
+           text = "Referencing the expiration in the token ({0}) because no state could not be found: {1}")
+  void permissiveTokenHandling(String tokenId, String errorMessage);
 
   @Message(level = MessageLevel.ERROR, text = "Failed to update expiration for token {1} : {1}")
-  void failedToUpdateTokenExpiration(String tokenDisplayText, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+  void failedToUpdateTokenExpiration(String tokenId, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.ERROR, text = "Failed to remove state for token {0} : {1}")
-  void failedToRemoveTokenState(String tokenDisplayText, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+  void failedToRemoveTokenState(String tokenId, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.ERROR, text = "Failed to evict expired token {0} : {1}")
-  void failedExpiredTokenEviction(String tokenDisplayText, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+  void failedExpiredTokenEviction(String tokenId, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.DEBUG, text = "Evicting expired token {0}")
-  void evictToken(String tokenDisplayText);
+  void evictToken(String tokenId);
 
   @Message(level = MessageLevel.ERROR, text = "Error occurred evicting token {0}")
   void errorEvictingTokens(@StackTrace(level = MessageLevel.DEBUG) Exception e);
-
-  @Message(level = MessageLevel.ERROR, text = "Error occurred while parsing JWT token, cause: {0}")
-  void errorParsingToken(String cause);
-
-  @Message(level = MessageLevel.DEBUG, text = "Permissive validation for token is enabled, expiration for token {0} is {1}")
-  void jwtTokenExpiry(String tokenDisplayText, String expiration);
 
 }

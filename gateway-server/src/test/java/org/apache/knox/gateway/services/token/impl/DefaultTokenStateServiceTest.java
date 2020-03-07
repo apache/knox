@@ -21,8 +21,8 @@ import com.nimbusds.jose.crypto.RSASSASigner;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
-import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.easymock.EasyMock;
@@ -34,6 +34,7 @@ import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.Collections;
 import java.util.Date;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
@@ -62,14 +63,14 @@ public class DefaultTokenStateServiceTest {
     final TokenStateService tss = createTokenStateService();
 
     tss.addToken(token, System.currentTimeMillis());
-    long expiration = tss.getTokenExpiration(token.getPayload());
+    long expiration = tss.getTokenExpiration(TokenUtils.getTokenId(token));
     assertEquals(token.getExpiresDate().getTime(), expiration);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testGetExpiration_NullToken() throws Exception {
     // Expecting an IllegalArgumentException because the token is null
-    createTokenStateService().getTokenExpiration(null);
+    createTokenStateService().getTokenExpiration((String) null);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -83,7 +84,7 @@ public class DefaultTokenStateServiceTest {
     final JWTToken token = createMockToken(System.currentTimeMillis() + 60000);
 
     // Expecting an UnknownTokenException because the token is not known to the TokenStateService
-    createTokenStateService().getTokenExpiration(token.getPayload());
+    createTokenStateService().getTokenExpiration(TokenUtils.getTokenId(token));
   }
 
   @Test
@@ -92,12 +93,12 @@ public class DefaultTokenStateServiceTest {
     final TokenStateService tss = createTokenStateService();
 
     tss.addToken(token, System.currentTimeMillis());
-    long expiration = tss.getTokenExpiration(token.getPayload());
+    long expiration = tss.getTokenExpiration(TokenUtils.getTokenId(token));
     assertEquals(token.getExpiresDate().getTime(), expiration);
 
     long newExpiration = tss.renewToken(token);
     assertTrue(newExpiration > token.getExpiresDate().getTime());
-    assertTrue(tss.getTokenExpiration(token.getPayload()) > token.getExpiresDate().getTime());
+    assertTrue(tss.getTokenExpiration(TokenUtils.getTokenId(token)) > token.getExpiresDate().getTime());
   }
 
   @Test
@@ -119,7 +120,7 @@ public class DefaultTokenStateServiceTest {
   }
 
 
-  @Test
+  @Test(expected = UnknownTokenException.class)
   public void testIsExpired_Revoked() throws Exception {
     final JWTToken token = createMockToken(System.currentTimeMillis() + 60000);
     final TokenStateService tss = createTokenStateService();
@@ -128,7 +129,7 @@ public class DefaultTokenStateServiceTest {
     assertFalse("Expected the token to be valid.", tss.isExpired(token));
 
     tss.revokeToken(token);
-    assertTrue("Expected the token to have been marked as revoked.", tss.isExpired(token));
+    tss.isExpired(token);
   }
 
 
@@ -154,7 +155,7 @@ public class DefaultTokenStateServiceTest {
     final TokenStateService tss = createTokenStateService();
 
     // Add the token with a short maximum lifetime
-    tss.addToken(token.getPayload(), issueTime, expiration, 5000L);
+    tss.addToken(TokenUtils.getTokenId(token), issueTime, expiration, 5000L);
 
     try {
       // Attempt to renew the token for the default interval, which should exceed the specified short maximum lifetime
@@ -196,7 +197,7 @@ public class DefaultTokenStateServiceTest {
 
       /* expect the renew call to fail since the token is evicted */
       final UnknownTokenException e = assertThrows(UnknownTokenException.class, () -> tss.renewToken(token));
-      assertEquals("Unknown token: " + TokenUtils.getTokenDisplayText(token.getPayload()), e.getMessage());
+      assertEquals("Unknown token: " + TokenUtils.getTokenId(token), e.getMessage());
     } finally {
       tss.stop();
     }
@@ -212,12 +213,12 @@ public class DefaultTokenStateServiceTest {
     } catch (ServiceLifecycleException e) {
       fail("Error creating TokenStateService: " + e.getMessage());
     }
-    assertEquals(expiry/1000, tss.getTokenExpiration(token.toString())/1000);
+    assertEquals(expiry/1000, tss.getTokenExpiration(token)/1000);
   }
 
-  @Test
+  @Test(expected = UnknownTokenException.class)
   public void testTokenPermissivenessNoExpiry() throws UnknownTokenException {
-    final JWT token = getJWTToken(-1);
+    final JWT token = getJWTToken(-1L);
     TokenStateService tss = new DefaultTokenStateService();
     try {
       tss.init(createMockGatewayConfig(true), Collections.emptyMap());
@@ -225,7 +226,7 @@ public class DefaultTokenStateServiceTest {
       fail("Error creating TokenStateService: " + e.getMessage());
     }
 
-    assertEquals(-1L, tss.getTokenExpiration(token.toString()));
+    tss.getTokenExpiration(token);
   }
 
   protected static JWTToken createMockToken(final long expiration) {
@@ -233,8 +234,10 @@ public class DefaultTokenStateServiceTest {
   }
 
   protected static JWTToken createMockToken(final String payload, final long expiration) {
+    UUID tokenUID = UUID.randomUUID();
     JWTToken token = EasyMock.createNiceMock(JWTToken.class);
     EasyMock.expect(token.getPayload()).andReturn(payload).anyTimes();
+    EasyMock.expect(token.getClaim(JWTToken.KNOX_ID_CLAIM)).andReturn(String.valueOf(tokenUID)).anyTimes();
     EasyMock.expect(token.getExpiresDate()).andReturn(new Date(expiration)).anyTimes();
     EasyMock.replay(token);
     return token;
@@ -273,6 +276,7 @@ public class DefaultTokenStateServiceTest {
     if(expiry > 0) {
       claims[3] = Long.toString(expiry);
     }
+
     JWT token = new JWTToken("RS256", claims);
     // Sign the token
     JWSSigner signer = new RSASSASigner(privateKey);

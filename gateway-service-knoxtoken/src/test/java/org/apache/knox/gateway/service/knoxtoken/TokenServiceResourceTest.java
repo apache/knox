@@ -30,6 +30,8 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.easymock.EasyMock;
@@ -58,9 +60,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -113,6 +120,7 @@ public class TokenServiceResourceTest {
   public void testGetToken() throws Exception {
 
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getAttribute("org.apache.knox.gateway.gateway.cluster")).andReturn("test").anyTimes();
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
@@ -129,6 +137,7 @@ public class TokenServiceResourceTest {
     EasyMock.replay(principal, services, context, request);
 
     TokenResource tr = new TokenResource();
+    tr.context = context;
     tr.request = request;
 
     // Issue a token
@@ -147,6 +156,58 @@ public class TokenServiceResourceTest {
     JWT parsedToken = new JWTToken(accessToken);
     assertEquals("alice", parsedToken.getSubject());
     assertTrue(authority.verifyToken(parsedToken));
+  }
+
+  /**
+   * KNOX-2266
+   */
+  @Test
+  public void testConcurrentGetToken() throws Exception {
+
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getAttribute("org.apache.knox.gateway.gateway.cluster")).andReturn("test").anyTimes();
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services).anyTimes();
+
+    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
+    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority).anyTimes();
+
+    EasyMock.replay(principal, services, context, request);
+
+    final TokenResource tr = new TokenResource();
+    tr.context = context;
+    tr.request = request;
+
+    // Request two tokens concurrently
+    Callable<Response> task = tr::doGet;
+    List<Callable<Response>> tasks = Collections.nCopies(2, task);
+    ExecutorService executorService = Executors.newFixedThreadPool(2);
+    List<Future<Response>> futures = executorService.invokeAll(tasks);
+    List<Response> responses = new ArrayList<>(futures.size());
+    for (Future<Response> f : futures) {
+      responses.add(f.get());
+    }
+
+    // Parse the responses
+    String accessToken1 = getTagValue(responses.get(0).getEntity().toString(), "access_token");
+    assertNotNull(accessToken1);
+    JWT jwt1 = new JWTToken(accessToken1);
+
+    String accessToken2 = getTagValue(responses.get(1).getEntity().toString(), "access_token");
+    assertNotNull(accessToken1);
+    JWT jwt2 = new JWTToken(accessToken2);
+
+    // Verify the tokens
+    assertNotEquals("Access tokens should be different.", accessToken1, accessToken2);
+    assertEquals("The token expirations should be the same.", jwt1.getExpires(), jwt2.getExpires());
+    assertNotEquals("Tokens should have unique IDs.", TokenUtils.getTokenId(jwt1), TokenUtils.getTokenId(jwt2));
   }
 
   @Test
@@ -1125,7 +1186,7 @@ public class TokenServiceResourceTest {
 
     @Override
     public void addToken(JWTToken token, long issueTime) {
-      addToken(token.getPayload(), issueTime, token.getExpiresDate().getTime());
+      addToken(TokenUtils.getTokenId(token), issueTime, token.getExpiresDate().getTime());
     }
 
     @Override
@@ -1139,58 +1200,58 @@ public class TokenServiceResourceTest {
     }
 
     @Override
-    public void addToken(String token, long issueTime, long expiration) {
-      addToken(token, issueTime, expiration, getDefaultMaxLifetimeDuration());
+    public void addToken(String tokenId, long issueTime, long expiration) {
+      addToken(tokenId, issueTime, expiration, getDefaultMaxLifetimeDuration());
     }
 
     @Override
-    public void addToken(String token, long issueTime, long expiration, long maxLifetimeDuration) {
-      issueTimes.put(token, issueTime);
-      expirationData.put(token, expiration);
-      maxLifetimes.put(token, issueTime + maxLifetimeDuration);
+    public void addToken(String tokenId, long issueTime, long expiration, long maxLifetimeDuration) {
+      issueTimes.put(tokenId, issueTime);
+      expirationData.put(tokenId, expiration);
+      maxLifetimes.put(tokenId, issueTime + maxLifetimeDuration);
     }
 
     @Override
     public boolean isExpired(JWTToken token) {
-      return isExpired(token.getPayload());
-    }
-
-    @Override
-    public boolean isExpired(String token) {
       return false;
     }
 
     @Override
     public void revokeToken(JWTToken token) {
-      revokeToken(token.getPayload());
+      revokeToken(TokenUtils.getTokenId(token));
     }
 
     @Override
-    public void revokeToken(String token) {
+    public void revokeToken(String tokenId) {
     }
 
     @Override
     public long renewToken(JWTToken token) {
-      return renewToken(token.getPayload());
+      return renewToken(TokenUtils.getTokenId(token));
     }
 
     @Override
-    public long renewToken(String token) {
-      return renewToken(token, 0L);
+    public long renewToken(String tokenId) {
+      return renewToken(tokenId, 0L);
     }
 
     @Override
     public long renewToken(JWTToken token, long renewInterval) {
-      return renewToken(token.getPayload());
+      return renewToken(TokenUtils.getTokenId(token), renewInterval);
     }
 
     @Override
-    public long renewToken(String token, long renewInterval) {
+    public long renewToken(String tokenId, long renewInterval) {
       return 0;
     }
 
     @Override
-    public long getTokenExpiration(String token) {
+    public long getTokenExpiration(JWT token) throws UnknownTokenException {
+      return 0;
+    }
+
+    @Override
+    public long getTokenExpiration(String tokenId) {
       return 0;
     }
 

@@ -25,6 +25,7 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
@@ -59,7 +60,7 @@ public class AccessTokenFederationFilter implements Filter {
     GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     authority = services.getService(ServiceType.TOKEN_SERVICE);
 
-    if (Boolean.valueOf(filterConfig.getInitParameter(TokenStateService.CONFIG_SERVER_MANAGED))) {
+    if (TokenUtils.isServerManagedTokenStateEnabled(filterConfig)) {
       tokenStateService = services.getService(ServiceType.TOKEN_STATE_SERVICE);
     }
   }
@@ -117,14 +118,18 @@ public class AccessTokenFederationFilter implements Filter {
   }
 
   private boolean isExpired(JWTToken token) throws UnknownTokenException {
-    return (tokenStateService != null) ? tokenStateService.isExpired(token.toString()) : (Long.parseLong(token.getExpires()) <= System.currentTimeMillis());
+    return (tokenStateService != null) ? tokenStateService.isExpired(token)
+                                       : (Long.parseLong(token.getExpires()) <= System.currentTimeMillis());
   }
 
   private void sendUnauthorized(ServletResponse response) throws IOException {
     ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
   }
 
-  private void continueWithEstablishedSecurityContext(Subject subject, final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
+  private void continueWithEstablishedSecurityContext(Subject subject,
+                                                      final HttpServletRequest request,
+                                                      final HttpServletResponse response,
+                                                      final FilterChain chain) throws IOException, ServletException {
     try {
       Subject.doAs(
         subject,

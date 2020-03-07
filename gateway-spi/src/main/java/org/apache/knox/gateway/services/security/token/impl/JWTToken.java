@@ -20,6 +20,7 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
@@ -35,6 +36,8 @@ import com.nimbusds.jwt.SignedJWT;
 
 public class JWTToken implements JWT {
   private static JWTProviderMessages log = MessagesFactory.get( JWTProviderMessages.class );
+
+  public static final String KNOX_ID_CLAIM = "knox.id";
 
   SignedJWT jwt;
 
@@ -72,6 +75,9 @@ public class JWTToken implements JWT {
     if(claimsArray[3] != null) {
       builder = builder.expirationTime(new Date(Long.parseLong(claimsArray[3])));
     }
+
+    // Add a private UUID claim for uniqueness
+    builder.claim(KNOX_ID_CLAIM, String.valueOf(UUID.randomUUID()));
 
     claims = builder.build();
 

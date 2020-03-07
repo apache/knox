@@ -18,19 +18,23 @@ package org.apache.knox.gateway.services.security.token;
 
 public class UnknownTokenException extends Exception {
 
-  private String token;
+  private String tokenId;
 
-  public UnknownTokenException(final String token) {
-    this.token = token;
+  /**
+   *
+   * @param tokenId The token unique identifier
+   */
+  public UnknownTokenException(final String tokenId) {
+    this.tokenId = tokenId;
   }
 
-  public String getToken() {
-    return token;
+  public String getTokenId() {
+    return tokenId;
   }
 
   @Override
   public String getMessage() {
-    return "Unknown token: " + TokenUtils.getTokenDisplayText(token);
+    return "Unknown token: " + tokenId;
   }
 
 }
