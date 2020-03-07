@@ -279,7 +279,7 @@ public class AmbariConfigurationMonitorTest {
         Map<String, Map<String, Map<String, String>>> configVersionData = new HashMap<>();
 
         TestableAmbariConfigurationMonitor(GatewayConfig config) {
-            super(config, null);
+            super(config, null, null);
         }
 
         void addTestConfigVersion(String address, String clusterName, String configType, String configVersion) {

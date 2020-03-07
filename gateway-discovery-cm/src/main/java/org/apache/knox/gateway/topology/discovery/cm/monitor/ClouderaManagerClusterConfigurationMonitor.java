@@ -20,6 +20,7 @@ import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerCluster;
@@ -71,7 +72,8 @@ public class ClouderaManagerClusterConfigurationMonitor implements ClusterConfig
   }
 
 
-  ClouderaManagerClusterConfigurationMonitor(final GatewayConfig config, final AliasService aliasService) {
+  ClouderaManagerClusterConfigurationMonitor(final GatewayConfig config, final AliasService aliasService,
+                                             final KeystoreService keystoreService) {
     // Initialize the config cache
     configCache = new ClusterConfigurationCache();
 
@@ -85,7 +87,7 @@ public class ClouderaManagerClusterConfigurationMonitor implements ClusterConfig
     this.executorService = Executors.newSingleThreadExecutor(tf);
 
     // Initialize the internal monitor
-    internalMonitor = new PollingConfigurationAnalyzer(configCache, aliasService, this);
+    internalMonitor = new PollingConfigurationAnalyzer(configCache, aliasService, keystoreService, this);
 
     // Override the default polling interval if it has been configured
     // (org.apache.knox.gateway.topology.discovery.cm.monitor.interval)

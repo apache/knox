@@ -33,6 +33,8 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
+import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.util.TruststoreSSLContextUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -49,23 +51,30 @@ class RESTInvoker {
 
     private AliasService aliasService;
 
+    private KeystoreService keystoreService;
+
     private CloseableHttpClient httpClient;
 
-
-    RESTInvoker(AliasService aliasService) {
-        this(null, aliasService);
+    RESTInvoker(AliasService aliasService, KeystoreService keystoreService) {
+        this(null, aliasService, keystoreService);
     }
 
-
-    RESTInvoker(GatewayConfig config, AliasService aliasService) {
+    RESTInvoker(GatewayConfig config, AliasService aliasService, KeystoreService keystoreService) {
         this.aliasService = aliasService;
+        this.keystoreService = keystoreService;
 
         // Initialize the HTTP client
-        this.httpClient = HttpClientBuilder.create().setDefaultRequestConfig(getRequestConfig(config)).build();
+        this.httpClient = getHttpClient(config);
     }
 
+    private CloseableHttpClient getHttpClient(GatewayConfig config) {
+      return HttpClientBuilder.create()
+                 .setSSLContext(TruststoreSSLContextUtils.getTruststoreSSLContext(keystoreService))
+                 .setDefaultRequestConfig(getRequestConfig(config))
+                 .build();
+    }
 
-    private static RequestConfig getRequestConfig(GatewayConfig config) {
+    private RequestConfig getRequestConfig(GatewayConfig config) {
         RequestConfig.Builder builder = RequestConfig.custom();
         if (config != null) {
             builder.setConnectTimeout(config.getHttpClientConnectionTimeout())
@@ -78,7 +87,6 @@ class RESTInvoker {
         }
         return builder.build();
     }
-
 
     JSONObject invoke(String url, String username, String passwordAlias) {
         JSONObject result = null;
@@ -157,5 +165,4 @@ class RESTInvoker {
         }
         return result;
     }
-
 }

@@ -20,6 +20,7 @@ import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 
 import java.util.HashMap;
@@ -40,8 +41,8 @@ class AmbariClientCommon {
     private RESTInvoker restClient;
 
 
-    AmbariClientCommon(GatewayConfig config, AliasService aliasService) {
-        this(new RESTInvoker(config, aliasService));
+    AmbariClientCommon(GatewayConfig config, AliasService aliasService, KeystoreService keystoreService) {
+        this(new RESTInvoker(config, aliasService, keystoreService));
     }
 
 

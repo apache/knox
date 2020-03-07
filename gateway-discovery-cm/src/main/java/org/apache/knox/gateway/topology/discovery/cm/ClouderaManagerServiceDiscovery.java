@@ -34,6 +34,7 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
@@ -85,6 +86,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
   private boolean debug;
 
   private AliasService aliasService;
+  private KeystoreService keystoreService;
 
   private ClouderaManagerClusterConfigurationMonitor configChangeMonitor;
 
@@ -97,6 +99,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
     GatewayServices gwServices = GatewayServer.getGatewayServices();
     if (gwServices != null) {
       this.aliasService = gwServices.getService(ServiceType.ALIAS_SERVICE);
+      this.keystoreService = gwServices.getService(ServiceType.KEYSTORE_SERVICE);
     }
     this.debug = debug;
     this.configChangeMonitor = getConfigurationChangeMonitor();
@@ -114,9 +117,8 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
       throw new IllegalArgumentException("Missing or invalid discovery address.");
     }
 
-    DiscoveryApiClient client = new DiscoveryApiClient(discoveryConfig, aliasService);
+    DiscoveryApiClient client = new DiscoveryApiClient(discoveryConfig, aliasService, keystoreService);
     client.setDebugging(debug);
-    client.setVerifyingSsl(false);
     return client;
   }
 

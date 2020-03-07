@@ -23,6 +23,7 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.knox.gateway.topology.discovery.GatewayService;
@@ -76,6 +77,9 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
 
     @GatewayService
     private AliasService aliasService;
+
+    @GatewayService
+    private KeystoreService keystoreService;
 
     private RESTInvoker restClient;
     private AmbariClientCommon ambariClient;
@@ -146,7 +150,7 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
     private void init(GatewayConfig config) {
         if (!isInitialized) {
             if (this.restClient == null) {
-                this.restClient = new RESTInvoker(config, aliasService);
+                this.restClient = new RESTInvoker(config, aliasService, keystoreService);
             }
             this.ambariClient = new AmbariClientCommon(restClient);
             this.configChangeMonitor = getConfigurationChangeMonitor();

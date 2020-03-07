@@ -25,10 +25,13 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
+import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.auth.AuthUtils;
 import org.apache.knox.gateway.topology.discovery.cm.auth.SpnegoAuthInterceptor;
+import org.apache.knox.gateway.util.TruststoreSSLContextUtils;
 
+import javax.net.ssl.SSLContext;
 import javax.security.auth.Subject;
 import java.util.List;
 
@@ -48,16 +51,17 @@ public class DiscoveryApiClient extends ApiClient {
 
   private ServiceDiscoveryConfig config;
 
-  public DiscoveryApiClient(ServiceDiscoveryConfig discoveryConfig, AliasService aliasService) {
+  public DiscoveryApiClient(ServiceDiscoveryConfig discoveryConfig, AliasService aliasService,
+                            KeystoreService keystoreService) {
     this.config = discoveryConfig;
-    configure(aliasService);
+    configure(aliasService, keystoreService);
   }
 
   boolean isKerberos() {
     return isKerberos;
   }
 
-  private void configure(AliasService aliasService) {
+  private void configure(AliasService aliasService, KeystoreService keystoreService) {
     String apiAddress = config.getAddress();
     apiAddress += (apiAddress.endsWith("/") ? API_PATH : "/" + API_PATH);
 
@@ -121,6 +125,8 @@ public class DiscoveryApiClient extends ApiClient {
         getHttpClient().interceptors().add(spnegoInterceptor);
       }
     }
+
+    configureTruststore(keystoreService);
   }
 
   @Override
@@ -147,4 +153,12 @@ public class DiscoveryApiClient extends ApiClient {
     return username;
   }
 
+  private void configureTruststore(KeystoreService keystoreService) {
+    SSLContext truststoreSSLContext = TruststoreSSLContextUtils.getTruststoreSSLContext(keystoreService);
+    if (truststoreSSLContext != null) {
+      getHttpClient().setSslSocketFactory(truststoreSSLContext.getSocketFactory());
+    } else {
+      log.failedToConfigureTruststore();
+    }
+  }
 }

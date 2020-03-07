@@ -133,6 +133,7 @@ public class DefaultGatewayServices extends AbstractGatewayServices {
 
     DefaultClusterConfigurationMonitorService ccs = new DefaultClusterConfigurationMonitorService();
     ccs.setAliasService(alias);
+    ccs.setKeystoreService(ks);
     ccs.init(config, options);
     addService(ServiceType.CLUSTER_CONFIGURATION_MONITOR_SERVICE, ccs);
 

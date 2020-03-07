@@ -76,4 +76,7 @@ public interface GatewaySpiMessages {
   @Message( level = MessageLevel.ERROR, text = "Topology {0} cannot be manually overwritten because it was generated from a simple descriptor." )
   void disallowedOverwritingGeneratedTopology(String topologyName);
 
+  @Message(level = MessageLevel.ERROR, text = "Failed to load truststore due to {0}")
+  void failedToLoadTruststore(String message, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
 }

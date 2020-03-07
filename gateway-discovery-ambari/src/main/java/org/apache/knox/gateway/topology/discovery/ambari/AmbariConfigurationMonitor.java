@@ -20,6 +20,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 
@@ -80,9 +81,9 @@ class AmbariConfigurationMonitor implements ClusterConfigurationMonitor {
         return TYPE;
     }
 
-    AmbariConfigurationMonitor(GatewayConfig config, AliasService aliasService) {
+    AmbariConfigurationMonitor(GatewayConfig config, AliasService aliasService, KeystoreService keystoreService) {
         this.gatewayConfig   = config;
-        this.ambariClient    = new AmbariClientCommon(config, aliasService);
+        this.ambariClient    = new AmbariClientCommon(config, aliasService, keystoreService);
         this.internalMonitor = new PollingConfigAnalyzer(this);
 
         // Override the default polling interval if it has been configured

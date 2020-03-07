@@ -18,6 +18,7 @@ package org.apache.knox.gateway.topology.discovery.ambari;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitorProvider;
 
@@ -30,7 +31,8 @@ public class AmbariClusterConfigurationMonitorProvider implements
     }
 
     @Override
-    public ClusterConfigurationMonitor newInstance(GatewayConfig config, AliasService aliasService) {
-        return new AmbariConfigurationMonitor(config, aliasService);
+    public ClusterConfigurationMonitor newInstance(GatewayConfig config, AliasService aliasService,
+                                                   KeystoreService keystoreService) {
+        return new AmbariConfigurationMonitor(config, aliasService, keystoreService);
     }
 }

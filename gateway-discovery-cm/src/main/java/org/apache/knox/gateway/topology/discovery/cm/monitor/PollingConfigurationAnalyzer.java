@@ -31,6 +31,7 @@ import com.cloudera.api.swagger.model.ApiRoleList;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscoveryMessages;
 import org.apache.knox.gateway.topology.discovery.cm.DiscoveryApiClient;
@@ -75,6 +76,8 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
   private AliasService aliasService;
 
+  private KeystoreService keystoreService;
+
   // Polling interval in seconds
   private int interval;
 
@@ -92,18 +95,21 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
   PollingConfigurationAnalyzer(final ClusterConfigurationCache   configCache,
                                final AliasService                aliasService,
+                               final KeystoreService             keystoreService,
                                final ConfigurationChangeListener changeListener) {
-    this(configCache, aliasService, changeListener, DEFAULT_POLLING_INTERVAL);
+    this(configCache, aliasService, keystoreService, changeListener, DEFAULT_POLLING_INTERVAL);
   }
 
   PollingConfigurationAnalyzer(final ClusterConfigurationCache   configCache,
                                final AliasService                aliasService,
+                               final KeystoreService             keystoreService,
                                final ConfigurationChangeListener changeListener,
                                int                               interval) {
-    this.configCache    = configCache;
-    this.aliasService   = aliasService;
-    this.changeListener = changeListener;
-    this.interval       = interval;
+    this.configCache     = configCache;
+    this.aliasService    = aliasService;
+    this.keystoreService = keystoreService;
+    this.changeListener  = changeListener;
+    this.interval        = interval;
   }
 
   void setInterval(int interval) {
@@ -229,7 +235,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
    */
   private DiscoveryApiClient getApiClient(final ServiceDiscoveryConfig discoveryConfig) {
     return clients.computeIfAbsent(discoveryConfig.getAddress(),
-                                   c -> new DiscoveryApiClient(discoveryConfig, aliasService));
+                                   c -> new DiscoveryApiClient(discoveryConfig, aliasService, keystoreService));
   }
 
   /**

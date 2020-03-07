@@ -18,6 +18,7 @@ package org.apache.knox.gateway.topology.discovery.cm.monitor;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitorProvider;
 
@@ -29,8 +30,9 @@ public class ClouderaManagerClusterConfigurationMonitorProvider implements Clust
   }
 
   @Override
-  public ClusterConfigurationMonitor newInstance(GatewayConfig config, AliasService aliasService) {
-    return new ClouderaManagerClusterConfigurationMonitor(config, aliasService);
+  public ClusterConfigurationMonitor newInstance(GatewayConfig config, AliasService aliasService,
+                                                 KeystoreService keystoreService) {
+    return new ClouderaManagerClusterConfigurationMonitor(config, aliasService, keystoreService);
   }
 
 }

@@ -18,10 +18,12 @@ package org.apache.knox.gateway.topology.discovery;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.KeystoreService;
 
 public interface ClusterConfigurationMonitorProvider {
 
     String getType();
 
-    ClusterConfigurationMonitor newInstance(GatewayConfig config, AliasService aliasService);
+    ClusterConfigurationMonitor newInstance(GatewayConfig config, AliasService aliasService,
+                                            KeystoreService keystoreService);
 }

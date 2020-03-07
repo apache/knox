@@ -19,6 +19,7 @@ package org.apache.knox.gateway.services.topology.impl;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitorProvider;
@@ -27,10 +28,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
 
-
 public class DefaultClusterConfigurationMonitorService implements ClusterConfigurationMonitorService {
-
     private AliasService aliasService;
+    private KeystoreService keystoreService;
 
     private Map<String, ClusterConfigurationMonitor> monitors = new HashMap<>();
 
@@ -41,7 +41,7 @@ public class DefaultClusterConfigurationMonitorService implements ClusterConfigu
         for (ClusterConfigurationMonitorProvider provider : providers) {
             // Check the gateway configuration to determine if this type of monitor is enabled
             if (config.isClusterMonitorEnabled(provider.getType())) {
-                ClusterConfigurationMonitor monitor = provider.newInstance(config, aliasService);
+                ClusterConfigurationMonitor monitor = provider.newInstance(config, aliasService, keystoreService);
                 if (monitor != null) {
                     monitors.put(provider.getType(), monitor);
                 }
@@ -86,4 +86,7 @@ public class DefaultClusterConfigurationMonitorService implements ClusterConfigu
         this.aliasService = aliasService;
     }
 
+    public void setKeystoreService(KeystoreService keystoreService) {
+        this.keystoreService = keystoreService;
+    }
 }

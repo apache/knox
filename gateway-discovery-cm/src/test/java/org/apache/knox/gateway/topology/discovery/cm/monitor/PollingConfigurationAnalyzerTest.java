@@ -200,13 +200,13 @@ public class PollingConfigurationAnalyzerTest {
 
     TestablePollingConfigAnalyzer(ClusterConfigurationCache   cache,
                                   ConfigurationChangeListener listener) {
-      super(cache, null, listener);
+      super(cache, null, null, listener);
     }
 
     TestablePollingConfigAnalyzer(ClusterConfigurationCache cache,
                                   ConfigurationChangeListener listener,
                                   int interval) {
-      super(cache, null, listener, interval);
+      super(cache, null, null, listener, interval);
     }
 
     void addRestartEvent(final String service, final ApiEvent restartEvent) {

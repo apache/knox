@@ -30,6 +30,7 @@ import com.cloudera.api.swagger.model.ApiServiceList;
 import com.squareup.okhttp.Call;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.model.atlas.AtlasAPIServiceModelGenerator;
@@ -1141,7 +1142,7 @@ public class ClouderaManagerServiceDiscoveryTest {
     ServiceDiscoveryConfig sdConfig = createMockDiscoveryConfig();
 
     // Create the test client for providing test response content
-    TestDiscoveryApiClient mockClient = new TestDiscoveryApiClient(sdConfig, null);
+    TestDiscoveryApiClient mockClient = new TestDiscoveryApiClient(sdConfig, null, null);
 
     // Prepare the service list response for the cluster
     ApiServiceList serviceList = EasyMock.createNiceMock(ApiServiceList.class);
@@ -1261,8 +1262,9 @@ public class ClouderaManagerServiceDiscoveryTest {
 
     private Map<Type, ApiResponse<?>> responseMap = new HashMap<>();
 
-    TestDiscoveryApiClient(ServiceDiscoveryConfig sdConfig, AliasService aliasService) {
-      super(sdConfig, aliasService);
+    TestDiscoveryApiClient(ServiceDiscoveryConfig sdConfig, AliasService aliasService,
+                           KeystoreService keystoreService) {
+      super(sdConfig, aliasService, keystoreService);
     }
 
     void addResponse(Type type, ApiResponse<?> response) {

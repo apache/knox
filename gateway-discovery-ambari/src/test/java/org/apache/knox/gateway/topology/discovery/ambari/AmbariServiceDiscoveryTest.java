@@ -323,7 +323,7 @@ public class AmbariServiceDiscoveryTest {
         private Map<String, JSONObject> cannedResponses = new HashMap<>();
 
         TestRESTInvoker(String clusterName) {
-            super(null);
+            super(null, null);
 
             cannedResponses.put(AmbariServiceDiscovery.AMBARI_CLUSTERS_URI,
                     (JSONObject) JSONValue.parse(CLUSTERS_JSON_TEMPLATE.replaceAll(CLUSTER_PLACEHOLDER,

@@ -187,4 +187,6 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   @Message(level = MessageLevel.WARN, text = "Failed to create persistence directory {0}")
   void failedToCreatePersistenceDirectory(String path);
 
+  @Message(level = MessageLevel.ERROR, text = "Failed to configure truststore")
+  void failedToConfigureTruststore();
 }
