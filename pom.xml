@@ -236,7 +236,7 @@
         <maven-war-plugin.version>3.2.3</maven-war-plugin.version>
         <metrics.version>4.1.3</metrics.version>
         <mina.version>2.0.21</mina.version>
-        <nimbus-jose-jwt.version>8.8</nimbus-jose-jwt.version>
+        <nimbus-jose-jwt.version>8.9</nimbus-jose-jwt.version>
         <nodejs.version>v12.14.1</nodejs.version>
         <okhttp.version>2.7.5</okhttp.version>
         <opensaml.version>3.4.3</opensaml.version>
