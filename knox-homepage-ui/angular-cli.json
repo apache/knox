@@ -5,8 +5,8 @@
   },
   "apps": [
     {
-      "root": "homepage",
-      "outDir": "target/classes/homepage/app",
+      "root": "home",
+      "outDir": "target/classes/home/app",
       "assets": [
         "assets",
         "favicon.ico"

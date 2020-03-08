@@ -233,7 +233,6 @@
         <maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
         <maven-enforcer-plugin.version>3.0.0-M3</maven-enforcer-plugin.version>
         <maven-pmd-plugin.version>3.12.0</maven-pmd-plugin.version>
-        <maven-war-plugin.version>3.2.3</maven-war-plugin.version>
         <metrics.version>4.1.4</metrics.version>
         <mina.version>2.0.21</mina.version>
         <nimbus-jose-jwt.version>8.9</nimbus-jose-jwt.version>
@@ -668,11 +667,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-               <groupId>org.apache.maven.plugins</groupId>
-               <artifactId>maven-war-plugin</artifactId>
-               <version>${maven-war-plugin.version}</version>
             </plugin>
             <plugin>
                 <groupId>org.jacoco</groupId>
@@ -1188,7 +1182,6 @@
                 <groupId>org.apache.knox</groupId>
                 <artifactId>knox-homepage-ui</artifactId>
                 <version>${project.version}</version>
-                <type>war</type>
             </dependency>
 
             <dependency>

@@ -708,8 +708,6 @@ public class GatewayServer {
     log.monitoringTopologyChangesInDirectory(topologiesDir.getAbsolutePath());
     monitor.startMonitor();
 
-    activateHomeApp();
-
     Runtime.getRuntime().addShutdownHook(new Thread() {
 
       @Override
@@ -922,39 +920,6 @@ public class GatewayServer {
     } catch( Throwable e ) {
       auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE );
       log.failedToDeployTopology( topology.getName(), e );
-    }
-  }
-
-  private synchronized void activateHomeApp() {
-    try {
-      // UI
-      activateHomepageContext("/", "homepage/%2Fhome");
-
-      // API
-      activateHomepageContext("/homepage", "homepage/%2F");
-    } catch (Throwable e) {
-      auditor.audit(Action.DEPLOY, "home", ResourceType.URI, ActionOutcome.FAILURE);
-      log.failedToDeployTopology("home", e);
-    }
-  }
-
-  private void activateHomepageContext(String contextPath, String deploymentFolder) throws Throwable {
-    final WebAppContext context = new WebAppContext();
-    context.setContextPath(contextPath);
-    context.setServer(jetty);
-    SessionCookieConfig sessionCookieConfig = context.getServletContext().getSessionCookieConfig();
-    sessionCookieConfig.setName(KNOXSESSIONCOOKIENAME);
-    final Path homePageDeploymentDir = Paths.get(calculateAbsoluteDeploymentsDir().getAbsolutePath(), deploymentFolder);
-    context.setWar(homePageDeploymentDir.toString());
-    context.setTempDirectory(FileUtils.getFile(homePageDeploymentDir.toFile(), "META-INF", "temp"));
-    context.setErrorHandler(createErrorHandler());
-    context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false");
-    context.setWelcomeFiles(new String[] { "index.html" });
-    context.setAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE, config);
-    contexts.addHandler(context);
-    context.start();
-    if (!context.isAvailable()) {
-      throw context.getUnavailableException();
     }
   }
 
