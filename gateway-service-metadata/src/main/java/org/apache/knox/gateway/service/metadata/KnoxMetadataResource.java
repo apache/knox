@@ -215,7 +215,9 @@ public class KnoxMetadataResource {
 
   private Metadata getServiceMetadata(ServiceDefinitionRegistry serviceDefinitionRegistry, Service service) {
     final Optional<ServiceDefinitionPair> serviceDefinition = serviceDefinitionRegistry.getServiceDefinitions().stream()
-        .filter(serviceDefinitionPair -> serviceDefinitionPair.getService().getRole().equalsIgnoreCase(service.getRole())).findFirst();
+        .filter(serviceDefinitionPair -> serviceDefinitionPair.getService().getRole().equalsIgnoreCase(service.getRole()))
+        .filter(serviceDefinitionPair -> service.getVersion() == null || service.getVersion().toString().equalsIgnoreCase(serviceDefinitionPair.getService().getVersion()))
+        .findFirst();
     return serviceDefinition.isPresent() ? serviceDefinition.get().getService().getMetadata() : null;
   }
 

@@ -18,7 +18,7 @@ limitations under the License.
 <service role="KUDUUI" name="kuduui" version="1.0.0">
     <metadata>
         <type>UI</type>
-        <context>/kuduui</context>
+        <context>/kuduui?scheme={{SCHEME}}&amp;host={{HOST}}&amp;port={{PORT}}</context>
         <shortDesc>Kudu UI</shortDesc>
         <description>Kudu is a columnar storage manager developed for the Apache Hadoop platform. Kudu shares the common technical properties of Hadoop ecosystem applications: it runs on commodity hardware, is horizontally scalable, and supports highly available operation.</description>
     </metadata>

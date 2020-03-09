@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.service.metadata;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Locale;
 
 import javax.servlet.http.HttpServletRequest;
@@ -101,14 +103,21 @@ public class ServiceModel {
   }
 
   @XmlElement
-  public String getServiceUrl() {
+  public String getServiceUrl() throws MalformedURLException {
     String context = getContext();
     if ("HIVE".equals(getServiceName())) {
       return String.format(Locale.ROOT, "jdbc:hive2://%s:%d/;?hive.server2.transport.mode=http;hive.server2.thrift.http.path=/%s/%s%s", request.getServerName(),
           request.getServerPort(), gatewayPath, topologyName, context);
     } else {
+      final String backendUrlString = getBackendServiceUrl();
       if (context.indexOf("{{BACKEND_HOST}}") > -1) {
-        context = context.replace("{{BACKEND_HOST}}", getBackendServiceUrl());
+        context = context.replace("{{BACKEND_HOST}}", backendUrlString);
+      }
+      if (context.indexOf("{{SCHEME}}") > -1 || context.indexOf("{{HOST}}") > -1 || context.indexOf("{{PORT}}") > -1) {
+        final URL backendUrl = new URL(backendUrlString);
+          context = context.replace("{{SCHEME}}", backendUrl.getProtocol());
+          context = context.replace("{{HOST}}", backendUrl.getHost());
+          context = context.replace("{{PORT}}", String.valueOf(backendUrl.getPort()));
       }
       return String.format(Locale.ROOT, "%s://%s:%s/%s/%s%s", request.getScheme(), request.getServerName(), request.getServerPort(), gatewayPath, topologyName, context);
     }
