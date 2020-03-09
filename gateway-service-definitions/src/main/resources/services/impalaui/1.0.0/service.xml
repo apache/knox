@@ -18,7 +18,7 @@ limitations under the License.
 <service role="IMPALAUI" name="impalaui" version="1.0.0">
     <metadata>
         <type>UI</type>
-        <context>/impalaui</context>
+        <context>/impalaui?scheme={{SCHEME}}&amp;host={{HOST}}&amp;port={{PORT}}</context>
         <shortDesc>Impala UI</shortDesc>
         <description>Each of the Impala daemons (impalad, statestored, and catalogd) includes a built-in web server that displays diagnostic and status information.</description>
     </metadata>
