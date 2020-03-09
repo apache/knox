@@ -27,7 +27,6 @@
 
     <artifactId>knox-homepage-ui</artifactId>
     <name>knox-homepage-ui</name>
-    <packaging>war</packaging>
     <description>The Knox Home Page UI</description>
 
     <build>
@@ -42,22 +41,6 @@
                         </fileset>
                     </filesets>
                 </configuration>
-            </plugin>
-            <plugin>
-               <groupId>org.apache.maven.plugins</groupId>
-               <artifactId>maven-war-plugin</artifactId>
-               <configuration>
-                    <failOnMissingWebXml>false</failOnMissingWebXml>
-                    <webResources>
-                        <resource>
-                            <directory>target/classes/homepage/app</directory>
-                            <targetPath>%2Fhome/</targetPath>
-                            <includes>
-                                <include>**</include>
-                            </includes>
-                        </resource>
-                    </webResources>
-               </configuration>
             </plugin>
             <plugin>
                 <groupId>com.github.eirslett</groupId>

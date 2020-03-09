@@ -82,7 +82,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String GATEWAY_DEFAULT_TOPOLOGY_NAME_PARAM = "default.app.topology.name";
-  private static final String GATEWAY_DEFAULT_TOPOLOGY_NAME = null;
+  private static final String GATEWAY_DEFAULT_TOPOLOGY_NAME = "homepage";
 
   private static final GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
@@ -255,7 +255,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final boolean KNOX_TOKEN_PERMISSIVE_VALIDATION_ENABLED_DEFAULT = false;
 
   private static final String KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES =  "knox.homepage.hidden.topologies";
-  private static final Set<String> KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES_DEFAULT = new HashSet<>(Arrays.asList("admin", "manager", "knoxsso", "metadata"));
+  private static final Set<String> KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES_DEFAULT = new HashSet<>(Arrays.asList("admin", "manager", "knoxsso", "metadata", "homepage"));
 
   public GatewayConfigImpl() {
     init();

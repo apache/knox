@@ -37,7 +37,6 @@
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>knox-homepage-ui</artifactId>
-            <type>war</type>
         </dependency>
     </dependencies>
 
@@ -66,9 +65,10 @@
                                 <artifactItem>
                                     <groupId>org.apache.knox</groupId>
                                     <artifactId>knox-homepage-ui</artifactId>
-                                    <type>war</type>
+                                    <type>jar</type>
                                     <overWrite>true</overWrite>
-                                    <outputDirectory>${project.build.outputDirectory}/deployments/homepage</outputDirectory>
+                                    <outputDirectory>${project.build.outputDirectory}/applications</outputDirectory>
+                                    <includes>home/**</includes>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>

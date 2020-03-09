@@ -27,7 +27,6 @@ import java.io.File;
 import java.net.URL;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -83,7 +82,7 @@ public class GatewayGlobalConfigTest {
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
   public void testDefaultTopologyName() {
     GatewayConfigImpl config = new GatewayConfigImpl();
-    assertThat( config.getDefaultTopologyName(), is( nullValue() ) );
+    assertThat( config.getDefaultTopologyName(), is( "homepage" ) );
 
     config.set("default.app.topology.name", "test-topo-name" );
     assertThat( config.getDefaultTopologyName(), is( "test-topo-name" ) );
@@ -92,7 +91,7 @@ public class GatewayGlobalConfigTest {
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
   public void testDefaultAppRedirectPath() {
     GatewayConfigImpl config = new GatewayConfigImpl();
-    assertThat( config.getDefaultAppRedirectPath(), nullValue() );
+    assertThat( config.getDefaultAppRedirectPath(), is ("/gateway/homepage") );
 
     config.set("default.app.topology.name", "test-topo-name" );
     assertThat( config.getDefaultAppRedirectPath(), is("/gateway/test-topo-name") );

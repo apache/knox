@@ -173,7 +173,7 @@ public class GatewayDeployFuncTest {
 
     // Make sure deployment directory is empty.
     assertThat( topoDir.listFiles().length, is( 0 ) );
-    assertThat( deployDir.listFiles().length, is( 1 ) );
+    assertThat( deployDir.listFiles().length, is( 0 ) );
 
     File descriptor = writeTestTopology( "test-cluster", createTopology() );
     long writeTime = System.currentTimeMillis();
@@ -224,7 +224,7 @@ public class GatewayDeployFuncTest {
     // Wait to make sure a second has passed to ensure the the file timestamps are different.
     waitForElapsed( writeTime, 1000, 100 );
 
-    waitForFiles( deployDir, ".*", 1, -1, sleep );
+    waitForFiles( deployDir, ".*", 0, -1, sleep );
 
     // Wait a bit more to make sure undeployment finished.
     Thread.sleep( sleep );
@@ -236,7 +236,7 @@ public class GatewayDeployFuncTest {
 
     // Make sure deployment directory is empty.
     assertThat( topoDir.listFiles().length, is( 0 ) );
-    assertThat( deployDir.listFiles().length, is( 1 ) );
+    assertThat( deployDir.listFiles().length, is( 0 ) );
     LOG_EXIT();
   }
 

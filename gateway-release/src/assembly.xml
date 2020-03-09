@@ -90,13 +90,6 @@
                 <exclude>**/*.bundle.map</exclude>
             </excludes>
         </fileSet>
-        <fileSet>
-            <directory>${project.build.directory}/deployments</directory>
-            <outputDirectory>data/deployments</outputDirectory>
-            <includes>
-                <include>**/%2F*/**/*</include>
-            </includes>
-        </fileSet>
     </fileSets>
     <dependencySets>
         <dependencySet>

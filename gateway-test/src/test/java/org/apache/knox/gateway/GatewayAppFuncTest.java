@@ -18,7 +18,6 @@
 package org.apache.knox.gateway;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -27,8 +26,6 @@ import java.util.Properties;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.NotFileFilter;
-import org.apache.commons.io.filefilter.PrefixFileFilter;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -60,7 +57,6 @@ import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
 public class GatewayAppFuncTest {
   private static final Logger LOG = LoggerFactory.getLogger( GatewayAppFuncTest.class );
   private static final Class<?> DAT = GatewayAppFuncTest.class;
-  private static final FilenameFilter EXCLUDE_HOMEPAGE_DEPLOYMENT_FILE_FILTER = new NotFileFilter(new PrefixFileFilter("homepage"));
 
   private static GatewayTestConfig config;
   private static DefaultGatewayServices services;
@@ -302,7 +298,7 @@ public class GatewayAppFuncTest {
         .get( clusterUrl + "/dynamic-app" );
 
     File deployDir = new File( config.getGatewayDeploymentDir() );
-    assertThat( deployDir.listFiles(EXCLUDE_HOMEPAGE_DEPLOYMENT_FILE_FILTER), is(arrayWithSize(0)) );
+    assertThat( deployDir.listFiles(), is(arrayWithSize(0)) );
 
     LOG_EXIT();
   }
@@ -460,7 +456,7 @@ public class GatewayAppFuncTest {
         .when().get( clusterUrl + "/test.xml" );
 
     File deployDir = new File( config.getGatewayDeploymentDir() );
-    assertThat( deployDir.listFiles(EXCLUDE_HOMEPAGE_DEPLOYMENT_FILE_FILTER), is(arrayWithSize(0)) );
+    assertThat( deployDir.listFiles(), is(arrayWithSize(0)) );
 
     LOG_EXIT();
   }
@@ -485,7 +481,7 @@ public class GatewayAppFuncTest {
       topos.reloadTopologies();
 
       File deployDir = new File( config.getGatewayDeploymentDir() );
-      String[] topoDirs1 = deployDir.list(EXCLUDE_HOMEPAGE_DEPLOYMENT_FILE_FILTER);
+      String[] topoDirs1 = deployDir.list();
       assertThat( topoDirs1, is(arrayWithSize(1)) );
 
       given()
@@ -501,7 +497,7 @@ public class GatewayAppFuncTest {
       FileUtils.touch( topoFile );
 
       topos.reloadTopologies();
-      String[] topoDirs2 = deployDir.list(EXCLUDE_HOMEPAGE_DEPLOYMENT_FILE_FILTER);
+      String[] topoDirs2 = deployDir.list();
       assertThat( topoDirs2, is(arrayWithSize(2)) );
       assertThat( topoDirs2, hasItemInArray(topoDirs1[0]) );
 
@@ -518,7 +514,7 @@ public class GatewayAppFuncTest {
       FileUtils.touch( topoFile );
       topos.reloadTopologies();
 
-      String[] topoDirs3 = deployDir.list(EXCLUDE_HOMEPAGE_DEPLOYMENT_FILE_FILTER);
+      String[] topoDirs3 = deployDir.list();
       assertThat( topoDirs3, is(arrayWithSize(2)) );
       assertThat( topoDirs3, not(hasItemInArray(topoDirs1[0])) );
 
@@ -557,7 +553,7 @@ public class GatewayAppFuncTest {
 
       File deployDir = new File( config.getGatewayDeploymentDir() );
       String[] topoDirs = deployDir.list();
-      assertThat( topoDirs, is(arrayWithSize(2)) );
+      assertThat( topoDirs, is(arrayWithSize(1)) );
 
       String username = "guest";
       String password = "guest-password";
