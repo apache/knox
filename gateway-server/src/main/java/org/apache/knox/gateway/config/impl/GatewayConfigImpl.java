@@ -950,7 +950,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isGatewayServerHeaderEnabled() {
-    return Boolean.parseBoolean(getVar(SERVER_HEADER_ENABLED, "true"));
+    return Boolean.parseBoolean(getVar(SERVER_HEADER_ENABLED, "false"));
   }
 
   @Override

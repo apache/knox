@@ -221,11 +221,11 @@ public class GatewayConfigImplTest {
     boolean serverHeaderEnabled;
 
     serverHeaderEnabled = config.isGatewayServerHeaderEnabled();
-    assertThat( serverHeaderEnabled, is(true));
-
-    config.set( GatewayConfigImpl.SERVER_HEADER_ENABLED, "false");
-    serverHeaderEnabled = config.isGatewayServerHeaderEnabled();
     assertThat( serverHeaderEnabled, is(false));
+
+    config.set( GatewayConfigImpl.SERVER_HEADER_ENABLED, "true");
+    serverHeaderEnabled = config.isGatewayServerHeaderEnabled();
+    assertThat( serverHeaderEnabled, is(true));
   }
 
 
