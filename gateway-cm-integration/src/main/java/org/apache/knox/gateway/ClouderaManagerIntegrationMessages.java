@@ -33,6 +33,9 @@ public interface ClouderaManagerIntegrationMessages {
   @Message(level = MessageLevel.INFO, text = "Found Knox descriptors {0} in {1}")
   void parsedClouderaManagerDescriptor(String descriptorList, String path);
 
+  @Message(level = MessageLevel.INFO, text = "Saved Knox descriptor {0}")
+  void savedSimpleDescriptorDescriptor(String path);
+
   @Message(level = MessageLevel.INFO, text = "Ignoring {0} Knox descriptor update because it did not change.")
   void descriptorDidNotChange(String descriptorName);
 

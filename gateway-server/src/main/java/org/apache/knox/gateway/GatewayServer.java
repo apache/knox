@@ -624,14 +624,6 @@ public class GatewayServer {
         "org.eclipse.jetty.webapp.JettyWebXmlConfiguration",
         "org.eclipse.jetty.annotations.AnnotationConfiguration" );
 
-    final ClouderaManagerDescriptorParser cmDescriptorParser = new ClouderaManagerDescriptorParser();
-    final ClouderaManagerDescriptorMonitor cmDescriptorMonitor = new ClouderaManagerDescriptorMonitor(config, cmDescriptorParser);
-    final AdvancedServiceDiscoveryConfigurationMonitor advancedServiceDiscoveryConfigurationMonitor = new AdvancedServiceDiscoveryConfigurationMonitor(config);
-    advancedServiceDiscoveryConfigurationMonitor.registerListener(cmDescriptorParser);
-    advancedServiceDiscoveryConfigurationMonitor.registerListener(cmDescriptorMonitor);
-    advancedServiceDiscoveryConfigurationMonitor.init();
-    cmDescriptorMonitor.setupMonitor();
-
     // Load the current topologies.
     // Redeploy autodeploy topologies.
     File topologiesDir = calculateAbsoluteTopologiesDir();
@@ -708,6 +700,8 @@ public class GatewayServer {
     log.monitoringTopologyChangesInDirectory(topologiesDir.getAbsolutePath());
     monitor.startMonitor();
 
+    handleClouderaManagerDescriptors();
+
     Runtime.getRuntime().addShutdownHook(new Thread() {
 
       @Override
@@ -719,6 +713,16 @@ public class GatewayServer {
         }
       }
     });
+  }
+
+  private void handleClouderaManagerDescriptors() {
+    final ClouderaManagerDescriptorParser cmDescriptorParser = new ClouderaManagerDescriptorParser();
+    final ClouderaManagerDescriptorMonitor cmDescriptorMonitor = new ClouderaManagerDescriptorMonitor(config, cmDescriptorParser);
+    final AdvancedServiceDiscoveryConfigurationMonitor advancedServiceDiscoveryConfigurationMonitor = new AdvancedServiceDiscoveryConfigurationMonitor(config);
+    advancedServiceDiscoveryConfigurationMonitor.registerListener(cmDescriptorParser);
+    advancedServiceDiscoveryConfigurationMonitor.registerListener(cmDescriptorMonitor);
+    advancedServiceDiscoveryConfigurationMonitor.init();
+    cmDescriptorMonitor.setupMonitor();
   }
 
   public synchronized void stop() throws Exception {
