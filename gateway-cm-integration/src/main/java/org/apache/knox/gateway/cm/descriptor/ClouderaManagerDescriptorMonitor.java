@@ -97,6 +97,7 @@ public class ClouderaManagerDescriptorMonitor implements AdvancedServiceDiscover
         final String simpleDescriptorJsonString = JsonUtils.renderAsJsonString(simpleDescriptor);
         if (isDescriptorChangedOrNew(knoxDescriptorFile, simpleDescriptorJsonString)) {
           FileUtils.writeStringToFile(knoxDescriptorFile, JsonUtils.renderAsJsonString(simpleDescriptor), StandardCharsets.UTF_8);
+          LOG.savedSimpleDescriptorDescriptor(knoxDescriptorFile.getAbsolutePath());
         } else {
           LOG.descriptorDidNotChange(simpleDescriptor.getName());
         }
