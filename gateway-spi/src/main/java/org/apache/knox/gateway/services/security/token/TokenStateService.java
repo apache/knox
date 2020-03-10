@@ -17,6 +17,7 @@
 package org.apache.knox.gateway.services.security.token;
 
 import org.apache.knox.gateway.services.Service;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
 
@@ -44,24 +45,25 @@ public interface TokenStateService extends Service {
    * @param issueTime The time the token was issued.
    */
   void addToken(JWTToken token, long issueTime);
-  /**
-   * Add state for the specified token.
-   *
-   * @param token      The token.
-   * @param issueTime  The time the token was issued.
-   * @param expiration The token expiration time.
-   */
-  void addToken(String token, long issueTime, long expiration);
 
   /**
    * Add state for the specified token.
    *
-   * @param token               The token.
+   * @param tokenId    The token unique identifier.
+   * @param issueTime  The time the token was issued.
+   * @param expiration The token expiration time.
+   */
+  void addToken(String tokenId, long issueTime, long expiration);
+
+  /**
+   * Add state for the specified token.
+   *
+   * @param tokenId             The token unique identifier.
    * @param issueTime           The time the token was issued.
    * @param expiration          The token expiration time.
    * @param maxLifetimeDuration The maximum allowed lifetime for the token.
    */
-  void addToken(String token, long issueTime, long expiration, long maxLifetimeDuration);
+  void addToken(String tokenId, long issueTime, long expiration, long maxLifetimeDuration);
 
   /**
    *
@@ -70,14 +72,6 @@ public interface TokenStateService extends Service {
    * @return true, if the token has expired; Otherwise, false.
    */
   boolean isExpired(JWTToken token) throws UnknownTokenException;
-
-  /**
-   *
-   * @param token The token.
-   *
-   * @return true, if the token has expired; Otherwise, false.
-   */
-  boolean isExpired(String token) throws UnknownTokenException;
 
   /**
    * Disable any subsequent use of the specified token.
@@ -89,9 +83,9 @@ public interface TokenStateService extends Service {
   /**
    * Disable any subsequent use of the specified token.
    *
-   * @param token The token.
+   * @param tokenId The token unique identifier.
    */
-  void revokeToken(String token) throws UnknownTokenException;
+  void revokeToken(String tokenId) throws UnknownTokenException;
 
   /**
    * Extend the lifetime of the specified token by the default amount of time.
@@ -115,21 +109,21 @@ public interface TokenStateService extends Service {
   /**
    * Extend the lifetime of the specified token by the default amount of time.
    *
-   * @param token The token.
+   * @param tokenId The token unique identifier.
    *
    * @return The token's updated expiration time in milliseconds.
    */
-  long renewToken(String token) throws UnknownTokenException;
+  long renewToken(String tokenId) throws UnknownTokenException;
 
   /**
    * Extend the lifetime of the specified token by the specified amount of time.
    *
-   * @param token The token.
+   * @param tokenId The token unique identifier.
    * @param renewInterval The amount of time that should be added to the token's lifetime.
    *
    * @return The token's updated expiration time in milliseconds.
    */
-  long renewToken(String token, long renewInterval) throws UnknownTokenException;
+  long renewToken(String tokenId, long renewInterval) throws UnknownTokenException;
 
   /**
    *
@@ -137,6 +131,14 @@ public interface TokenStateService extends Service {
    *
    * @return The token's expiration time in milliseconds.
    */
-  long getTokenExpiration(String token) throws UnknownTokenException;
+  long getTokenExpiration(JWT token) throws UnknownTokenException;
+
+  /**
+   *
+   * @param tokenId The token unique identifier.
+   *
+   * @return The token's expiration time in milliseconds.
+   */
+  long getTokenExpiration(String tokenId) throws UnknownTokenException;
 
 }

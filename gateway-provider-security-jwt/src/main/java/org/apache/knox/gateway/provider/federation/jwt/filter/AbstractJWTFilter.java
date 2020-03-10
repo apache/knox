@@ -49,7 +49,6 @@ import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
-import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
@@ -59,6 +58,7 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 
@@ -113,33 +113,11 @@ public abstract class AbstractJWTFilter implements Filter {
       GatewayServices services = (GatewayServices) context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
       if (services != null) {
         authority = services.getService(ServiceType.TOKEN_SERVICE);
-        if (isServerManagedTokenStateEnabled(filterConfig)) {
+        if (TokenUtils.isServerManagedTokenStateEnabled(filterConfig)) {
           tokenStateService = services.getService(ServiceType.TOKEN_STATE_SERVICE);
         }
       }
     }
-  }
-
-  protected boolean isServerManagedTokenStateEnabled(FilterConfig filterConfig) {
-    boolean isServerManaged = false;
-
-    // First, check for explicit provider-level configuration
-    String providerParamValue = filterConfig.getInitParameter(TokenStateService.CONFIG_SERVER_MANAGED);
-
-    // If there is no provider-level configuration
-    if (providerParamValue == null || providerParamValue.isEmpty()) {
-      // Fall back to the gateway-level default
-      ServletContext context = filterConfig.getServletContext();
-      if (context != null) {
-        GatewayConfig config = (GatewayConfig) context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
-        isServerManaged = (config != null) && config.isServerManagedTokenStateEnabled();
-      }
-    } else {
-      // Otherwise, apply the provider-level configuration
-      isServerManaged = Boolean.valueOf(providerParamValue);
-    }
-
-    return isServerManaged;
   }
 
   protected void configureExpectedParameters(FilterConfig filterConfig) {
@@ -171,7 +149,7 @@ public abstract class AbstractJWTFilter implements Filter {
   protected boolean tokenIsStillValid(JWT jwtToken) throws UnknownTokenException {
     Date expires;
     if (tokenStateService != null) {
-      expires = new Date(tokenStateService.getTokenExpiration(jwtToken.toString()));
+      expires = new Date(tokenStateService.getTokenExpiration(jwtToken));
     } else {
       // if there is no expiration date then the lifecycle is tied entirely to
       // the cookie validity - otherwise ensure that the current time is before

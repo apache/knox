@@ -25,6 +25,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -78,6 +79,25 @@ public class JWTTokenTest {
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
     assertEquals("https://login.example.com", token.getAudience());
+  }
+
+  @Test
+  public void testPrivateUUIDClaim() throws Exception {
+    String[] claims = new String[4];
+    claims[0] = "KNOXSSO";
+    claims[1] = "john.doe@example.com";
+    claims[2] = "https://login.example.com";
+    claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
+    JWT token = new JWTToken("RS256", claims);
+
+    assertEquals("KNOXSSO", token.getIssuer());
+    assertEquals("john.doe@example.com", token.getSubject());
+    assertEquals("https://login.example.com", token.getAudience());
+
+    String uuidString = token.getClaim(JWTToken.KNOX_ID_CLAIM);
+    assertNotNull(uuidString);
+    UUID uuid = UUID.fromString(uuidString);
+    assertNotNull(uuid);
   }
 
   @Test

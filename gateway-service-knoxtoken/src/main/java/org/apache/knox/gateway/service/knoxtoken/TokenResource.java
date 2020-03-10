@@ -22,6 +22,7 @@ import java.security.Principal;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
@@ -50,8 +51,10 @@ import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.util.JsonUtils;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -246,11 +249,16 @@ public class TokenResource {
       String renewer = SubjectUtils.getCurrentEffectivePrincipalName();
       if (allowedRenewers.contains(renewer)) {
         try {
+          JWTToken jwt = new JWTToken(token);
           // If renewal fails, it should be an exception
-          expiration = tokenStateService.renewToken(token,
+          expiration = tokenStateService.renewToken(jwt,
                                                     renewInterval.orElse(tokenStateService.getDefaultRenewInterval()));
+          log.renewedToken(getTopologyName(), TokenUtils.getTokenDisplayText(token), TokenUtils.getTokenId(jwt));
+        } catch (ParseException e) {
+          log.invalidToken(getTopologyName(), TokenUtils.getTokenDisplayText(token), e);
+          error = safeGetMessage(e);
         } catch (Exception e) {
-          error = e.getMessage();
+          error = safeGetMessage(e);
         }
       } else {
         errorStatus = Response.Status.FORBIDDEN;
@@ -263,7 +271,7 @@ public class TokenResource {
                       .entity("{\n  \"renewed\": \"true\",\n  \"expires\": \"" + expiration + "\"\n}\n")
                       .build();
     } else {
-      log.badRenewalRequest(getTopologyName(), error);
+      log.badRenewalRequest(getTopologyName(), TokenUtils.getTokenDisplayText(token), error);
       resp = Response.status(errorStatus)
                      .entity("{\n  \"renewed\": \"false\",\n  \"error\": \"" + error + "\"\n}\n")
                      .build();
@@ -287,9 +295,14 @@ public class TokenResource {
       String renewer = SubjectUtils.getCurrentEffectivePrincipalName();
       if (allowedRenewers.contains(renewer)) {
         try {
-          tokenStateService.revokeToken(token);
+          JWTToken jwt = new JWTToken(token);
+          tokenStateService.revokeToken(jwt);
+          log.revokedToken(getTopologyName(), TokenUtils.getTokenDisplayText(token), TokenUtils.getTokenId(jwt));
+        } catch (ParseException e) {
+          log.invalidToken(getTopologyName(), TokenUtils.getTokenDisplayText(token), e);
+          error = safeGetMessage(e);
         } catch (UnknownTokenException e) {
-          error = e.getMessage();
+          error = safeGetMessage(e);
         }
       } else {
         errorStatus = Response.Status.FORBIDDEN;
@@ -297,12 +310,12 @@ public class TokenResource {
       }
     }
 
-    if(error.isEmpty()) {
+    if (error.isEmpty()) {
       resp =  Response.status(Response.Status.OK)
                       .entity("{\n  \"revoked\": \"true\"\n}\n")
                       .build();
     } else {
-      log.badRevocationRequest(getTopologyName(), error);
+      log.badRevocationRequest(getTopologyName(), TokenUtils.getTokenDisplayText(token), error);
       resp = Response.status(errorStatus)
                      .entity("{\n  \"revoked\": \"false\",\n  \"error\": \"" + error + "\"\n}\n")
                      .build();
@@ -367,6 +380,9 @@ public class TokenResource {
 
       if (token != null) {
         String accessToken = token.toString();
+        String tokenId = TokenUtils.getTokenId(token);
+        log.issuedToken(getTopologyName(), TokenUtils.getTokenDisplayText(accessToken), tokenId);
+
         HashMap<String, Object> map = new HashMap<>();
         map.put(ACCESS_TOKEN, accessToken);
         map.put(TOKEN_TYPE, BEARER);
@@ -385,10 +401,11 @@ public class TokenResource {
 
         // Optional token store service persistence
         if (tokenStateService != null) {
-          tokenStateService.addToken(accessToken,
+          tokenStateService.addToken(tokenId,
                                      System.currentTimeMillis(),
                                      expires,
                                      maxTokenLifetime.orElse(tokenStateService.getDefaultMaxLifetimeDuration()));
+          log.storedToken(getTopologyName(), TokenUtils.getTokenDisplayText(accessToken), tokenId);
         }
 
         return Response.ok().entity(jsonResponse).build();
@@ -424,6 +441,17 @@ public class TokenResource {
 
   private String getTopologyName() {
     return (String) context.getAttribute("org.apache.knox.gateway.gateway.cluster");
+  }
+
+  /**
+   * Safely get the message from the specified Throwable.
+   *
+   * @param t A Throwable
+   * @return The result of t.getMessage(), or &quot;null&quot; if that result is null.
+   */
+  private String safeGetMessage(Throwable t) {
+    String message = t.getMessage();
+    return message != null ? message : "null";
   }
 
 }
