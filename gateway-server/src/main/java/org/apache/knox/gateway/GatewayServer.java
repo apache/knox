@@ -697,7 +697,6 @@ public class GatewayServer {
     cleanupTopologyDeployments();
 
     // Start the topology monitor.
-    log.monitoringTopologyChangesInDirectory(topologiesDir.getAbsolutePath());
     monitor.startMonitor();
 
     handleClouderaManagerDescriptors();

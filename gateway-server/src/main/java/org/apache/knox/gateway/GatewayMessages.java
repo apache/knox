@@ -72,8 +72,8 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.DEBUG, text = "Loading topology file: {0}" )
   void loadingTopologyFile( String fileName );
 
-  @Message( level = MessageLevel.INFO, text = "Monitoring topologies in directory: {0}" )
-  void monitoringTopologyChangesInDirectory( String topologiesDir );
+  @Message( level = MessageLevel.INFO, text = "Configured monitoring topologies in directory: {0}" )
+  void configuredMonitoringTopologyChangesInDirectory( String topologiesDir );
 
   @Message( level = MessageLevel.INFO, text = "Deploying topology {0} to {1}" )
   void deployingTopology( String clusterName, String warDirName );
@@ -512,11 +512,17 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.WARN, text = "Could not resolve a remote configuration registry client for {0}." )
   void unresolvedClientConfigurationForRemoteMonitoring(String clientName);
 
-  @Message( level = MessageLevel.INFO, text = "Monitoring simple descriptors in directory: {0}" )
-  void monitoringDescriptorChangesInDirectory(String descriptorsDir);
+  @Message( level = MessageLevel.INFO, text = "Configured monitoring simple descriptors in directory: {0}" )
+  void configuredMonitoringDescriptorChangesInDirectory(String descriptorsDir);
 
-  @Message( level = MessageLevel.INFO, text = "Monitoring shared provider configurations in directory: {0}" )
-  void monitoringProviderConfigChangesInDirectory(String sharedProviderDir);
+  @Message( level = MessageLevel.INFO, text = "Configured monitoring shared provider configurations in directory: {0}" )
+  void configuredMonitoringProviderConfigChangesInDirectory(String sharedProviderDir);
+
+  @Message(level = MessageLevel.INFO, text = "Started monitoring {0}")
+  void startedMonitor(String monitorName);
+
+  @Message(level = MessageLevel.INFO, text = "Stopped monitoring {0}")
+  void stoppedMonitor(String monitorName);
 
   @Message( level = MessageLevel.ERROR, text = "Error registering listener for remote configuration path {0} : {1}" )
   void errorAddingRemoteConfigurationListenerForPath(String path,

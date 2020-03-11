@@ -21,6 +21,7 @@ import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.binder.DigesterLoader;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.monitor.FileAlterationListener;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
@@ -43,6 +44,8 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.topology.TopologyService;
+import org.apache.knox.gateway.services.topology.monitor.DescriptorsMonitor;
+import org.apache.knox.gateway.services.topology.monitor.SharedProviderConfigMonitor;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
@@ -56,10 +59,8 @@ import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.monitor.RemoteConfigurationMonitor;
 import org.apache.knox.gateway.topology.monitor.RemoteConfigurationMonitorFactory;
-import org.apache.knox.gateway.topology.simple.ProviderConfigurationParser;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorFactory;
-import org.apache.knox.gateway.topology.simple.SimpleDescriptorHandler;
 import org.apache.knox.gateway.topology.validation.TopologyValidator;
 import org.apache.knox.gateway.topology.xml.AmbariFormatXmlTopologyRules;
 import org.apache.knox.gateway.topology.xml.KnoxFormatXmlTopologyRules;
@@ -84,6 +85,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 
@@ -96,12 +98,12 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
     AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
     AuditConstants.KNOX_COMPONENT_NAME);
 
-  private static final List<String> SUPPORTED_TOPOLOGY_FILE_EXTENSIONS = Arrays.asList("xml", "conf");
+  public static final List<String> SUPPORTED_TOPOLOGY_FILE_EXTENSIONS = Collections.unmodifiableList(Arrays.asList("xml", "conf"));
 
   private static GatewayMessages log = MessagesFactory.get(GatewayMessages.class);
   private static DigesterLoader digesterLoader = newLoader(new KnoxFormatXmlTopologyRules(),
       new AmbariFormatXmlTopologyRules());
-  private List<FileAlterationMonitor> monitors = new ArrayList<>();
+  private Map<String, FileAlterationMonitor> monitors = new ConcurrentHashMap<>();
   private File topologiesDirectory;
   private File sharedProvidersDirectory;
   private File descriptorsDirectory;
@@ -253,20 +255,17 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
     return configDir.getAbsoluteFile();
   }
 
-  private void initListener(FileAlterationMonitor  monitor,
-                            File                   directory,
-                            FileFilter             filter,
-                            FileAlterationListener listener) {
-    monitors.add(monitor);
+  private void initListener(String monitorName, FileAlterationMonitor monitor, File directory, FileFilter filter, FileAlterationListener listener) {
+    monitors.put(monitorName, monitor);
     FileAlterationObserver observer = new FileAlterationObserver(directory, filter);
     observer.addListener(listener);
     monitor.addObserver(observer);
   }
 
-  private void initListener(File directory, FileFilter filter, FileAlterationListener listener) {
+  private void initListener(String monitorName, File directory, FileFilter filter, FileAlterationListener listener) {
     // Increasing the monitoring interval to 5 seconds as profiling has shown
     // this is rather expensive in terms of generated garbage objects.
-    initListener(new FileAlterationMonitor(5000L), directory, filter, listener);
+    initListener(monitorName, new FileAlterationMonitor(5000L), directory, filter, listener);
   }
 
   private Map<File, Topology> loadTopologies(File directory) {
@@ -544,8 +543,9 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
   @Override
   public void startMonitor() throws Exception {
     // Start the local configuration monitors
-    for (FileAlterationMonitor monitor : monitors) {
-      monitor.start();
+    for (Entry<String, FileAlterationMonitor> monitor : monitors.entrySet()) {
+      monitor.getValue().start();
+      log.startedMonitor(monitor.getKey());
     }
 
     // Start the remote configuration monitor, if it has been initialized
@@ -561,8 +561,9 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
   @Override
   public void stopMonitor() throws Exception {
     // Stop the local configuration monitors
-    for (FileAlterationMonitor monitor : monitors) {
-      monitor.stop();
+    for (Entry<String, FileAlterationMonitor> monitor : monitors.entrySet()) {
+      monitor.getValue().stop();
+      log.stoppedMonitor(monitor.getKey());
     }
 
     // Stop the remote configuration monitor, if it has been initialized
@@ -638,19 +639,18 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
       sharedProvidersDirectory = new File(configDirectory, "shared-providers");
 
       // Add support for conf/topologies
-      initListener(topologiesDirectory, this, this);
+      initListener("topologies", topologiesDirectory, this, this);
+      log.configuredMonitoringTopologyChangesInDirectory(topologiesDirectory.getAbsolutePath());
 
       // Add support for conf/descriptors
       descriptorsMonitor = new DescriptorsMonitor(config, topologiesDirectory, aliasService);
-      initListener(descriptorsDirectory,
-                   descriptorsMonitor,
-                   descriptorsMonitor);
-      log.monitoringDescriptorChangesInDirectory(descriptorsDirectory.getAbsolutePath());
+      initListener("simple descriptors", descriptorsDirectory, descriptorsMonitor, descriptorsMonitor);
+      log.configuredMonitoringDescriptorChangesInDirectory(descriptorsDirectory.getAbsolutePath());
 
       // Add support for conf/shared-providers
       SharedProviderConfigMonitor spm = new SharedProviderConfigMonitor(descriptorsMonitor, descriptorsDirectory);
-      initListener(sharedProvidersDirectory, spm, spm);
-      log.monitoringProviderConfigChangesInDirectory(sharedProvidersDirectory.getAbsolutePath());
+      initListener("shared provider configurations", sharedProvidersDirectory, spm, spm);
+      log.configuredMonitoringProviderConfigChangesInDirectory(sharedProvidersDirectory.getAbsolutePath());
 
       // For all the descriptors currently in the descriptors dir at start-up time, determine if topology regeneration
       // is required.
@@ -658,7 +658,7 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
       String[] descriptorFilenames =  descriptorsDirectory.list();
       if (descriptorFilenames != null) {
         for (String descriptorFilename : descriptorFilenames) {
-          if (DescriptorsMonitor.isDescriptorFile(descriptorFilename)) {
+          if (DescriptorsMonitor.SUPPORTED_EXTENSIONS.contains(FilenameUtils.getExtension(descriptorFilename))) {
             String topologyName = FilenameUtils.getBaseName(descriptorFilename);
             File existingDescriptorFile = getExistingFile(descriptorsDirectory, topologyName);
             if (existingDescriptorFile != null) {
@@ -739,15 +739,8 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
    *
    * @return A List of the Files on the directory.
    */
-  private static List<File> listFiles(File directory) {
-    List<File> result;
-    File[] files = directory.listFiles();
-    if (files != null) {
-      result = Arrays.asList(files);
-    } else {
-      result = Collections.emptyList();
-    }
-    return result;
+  private static Collection<File> listFiles(File directory) {
+    return FileUtils.listFiles(directory, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
   }
 
   /**
@@ -798,186 +791,6 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
   /**
    * Change handler for simple descriptors
    */
-  public static class DescriptorsMonitor extends FileAlterationListenerAdaptor
-                                          implements FileFilter {
-
-    static final List<String> SUPPORTED_EXTENSIONS = new ArrayList<>();
-    static {
-      SUPPORTED_EXTENSIONS.add("json");
-      SUPPORTED_EXTENSIONS.add("yml");
-      SUPPORTED_EXTENSIONS.add("yaml");
-    }
-
-    private GatewayConfig gatewayConfig;
-
-    private File topologiesDir;
-
-    private AliasService aliasService;
-
-    private Map<String, List<String>> providerConfigReferences = new HashMap<>();
-
-
-    static boolean isDescriptorFile(String filename) {
-      return SUPPORTED_EXTENSIONS.contains(FilenameUtils.getExtension(filename));
-    }
-
-    public DescriptorsMonitor(GatewayConfig config, File topologiesDir, AliasService aliasService) {
-      this.gatewayConfig  = config;
-      this.topologiesDir  = topologiesDir;
-      this.aliasService   = aliasService;
-    }
-
-    List<String> getReferencingDescriptors(String providerConfigPath) {
-      String normalizedPath = FilenameUtils.normalize(providerConfigPath);
-      return providerConfigReferences.computeIfAbsent(normalizedPath, p -> new ArrayList<>());
-    }
-
-    @Override
-    public void onFileCreate(File file) {
-      onFileChange(file);
-    }
-
-    @Override
-    public void onFileDelete(File file) {
-      // For simple descriptors, we need to make sure to delete any corresponding full topology descriptors to trigger undeployment
-      for (String ext : DefaultTopologyService.SUPPORTED_TOPOLOGY_FILE_EXTENSIONS) {
-        File topologyFile =
-                new File(topologiesDir, FilenameUtils.getBaseName(file.getName()) + "." + ext);
-        if (topologyFile.exists()) {
-          log.deletingTopologyForDescriptorDeletion(topologyFile.getName(), file.getName());
-          topologyFile.delete();
-        }
-      }
-
-      String normalizedFilePath = FilenameUtils.normalize(file.getAbsolutePath());
-      String reference = null;
-      for (Map.Entry<String, List<String>> entry : providerConfigReferences.entrySet()) {
-        if (entry.getValue().contains(normalizedFilePath)) {
-          reference = entry.getKey();
-          break;
-        }
-      }
-
-      if (reference != null) {
-        providerConfigReferences.get(reference).remove(normalizedFilePath);
-        log.removedProviderConfigurationReference(normalizedFilePath, reference);
-      }
-    }
-
-    @Override
-    public void onFileChange(File file) {
-      try {
-        // When a simple descriptor has been created or modified, generate the new topology descriptor
-        Map<String, File> result = SimpleDescriptorHandler.handle(gatewayConfig, file, topologiesDir, aliasService);
-        log.generatedTopologyForDescriptorChange(result.get(SimpleDescriptorHandler.RESULT_TOPOLOGY).getName(),
-            file.getName());
-
-        // Add the provider config reference relationship for handling updates to the provider config
-        String providerConfig =
-            FilenameUtils.normalize(result.get(SimpleDescriptorHandler.RESULT_REFERENCE).getAbsolutePath());
-        if (!providerConfigReferences.containsKey(providerConfig)) {
-          providerConfigReferences.put(providerConfig, new ArrayList<>());
-        }
-        List<String> refs = providerConfigReferences.get(providerConfig);
-        String descriptorName = FilenameUtils.normalize(file.getAbsolutePath());
-        if (!refs.contains(descriptorName)) {
-          // Need to check if descriptor had previously referenced another provider config, so it can be removed
-          for (List<String> descs : providerConfigReferences.values()) {
-            descs.remove(descriptorName);
-          }
-
-          // Add the current reference relationship
-          refs.add(descriptorName);
-          log.addedProviderConfigurationReference(descriptorName, providerConfig);
-        }
-      } catch (IllegalArgumentException e) {
-        log.simpleDescriptorHandlingError(file.getName(), e);
-
-        // If the referenced provider configuration is invalid, remove any existing reference relationships for the
-        // referencing descriptor.
-        String descriptorName = FilenameUtils.normalize(file.getAbsolutePath());
-        // Need to check if descriptor had previously referenced another provider config, so it can be removed
-        for (List<String> descs : providerConfigReferences.values()) {
-          descs.remove(descriptorName);
-        }
-      } catch (Exception e) {
-        log.simpleDescriptorHandlingError(file.getName(), e);
-      }
-    }
-
-    @Override
-    public boolean accept(File file) {
-      boolean accept = false;
-      if (!file.isDirectory() && file.canRead()) {
-        String extension = FilenameUtils.getExtension(file.getName());
-        if (SUPPORTED_EXTENSIONS.contains(extension)) {
-          accept = true;
-        }
-      }
-      return accept;
-    }
-  }
-
-  /**
-   * Change handler for shared provider configurations
-   */
-  public static class SharedProviderConfigMonitor extends FileAlterationListenerAdaptor implements FileFilter {
-
-    static final List<String> SUPPORTED_EXTENSIONS = ProviderConfigurationParser.SUPPORTED_EXTENSIONS;
-
-    private DescriptorsMonitor descriptorsMonitor;
-    private File descriptorsDir;
-
-
-    SharedProviderConfigMonitor(DescriptorsMonitor descMonitor, File descriptorsDir) {
-      this.descriptorsMonitor = descMonitor;
-      this.descriptorsDir     = descriptorsDir;
-    }
-
-    @Override
-    public void onFileCreate(File file) {
-      onFileChange(file);
-    }
-
-    @Override
-    public void onFileDelete(File file) {
-      onFileChange(file);
-    }
-
-    @Override
-    public void onFileChange(File file) {
-      // For shared provider configuration, we need to update any simple descriptors that reference it
-      for (File descriptor : getReferencingDescriptors(file)) {
-        descriptor.setLastModified(System.currentTimeMillis());
-      }
-    }
-
-    private List<File> getReferencingDescriptors(File sharedProviderConfig) {
-      List<File> references = new ArrayList<>();
-
-      for (File descriptor : listFiles(descriptorsDir)) {
-        if (DescriptorsMonitor.SUPPORTED_EXTENSIONS.contains(FilenameUtils.getExtension(descriptor.getName()))) {
-          for (String reference : descriptorsMonitor.getReferencingDescriptors(FilenameUtils.normalize(sharedProviderConfig.getAbsolutePath()))) {
-            references.add(new File(reference));
-          }
-        }
-      }
-
-      return references;
-    }
-
-    @Override
-    public boolean accept(File file) {
-      boolean accept = false;
-      if (!file.isDirectory() && file.canRead()) {
-        String extension = FilenameUtils.getExtension(file.getName());
-        if (SUPPORTED_EXTENSIONS.contains(extension)) {
-          accept = true;
-        }
-      }
-      return accept;
-    }
-  }
 
   /**
    * Listener for Ambari config change events, which will trigger re-generation (including re-discovery) of the
