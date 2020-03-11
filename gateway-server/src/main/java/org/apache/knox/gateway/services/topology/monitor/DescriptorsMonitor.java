@@ -29,6 +29,7 @@ import java.util.Map;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 import org.apache.knox.gateway.GatewayMessages;
+import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -92,7 +93,7 @@ public class DescriptorsMonitor extends FileAlterationListenerAdaptor implements
   public void onFileChange(File file) {
     try {
       // When a simple descriptor has been created or modified, generate the new topology descriptor
-      Map<String, File> result = SimpleDescriptorHandler.handle(gatewayConfig, file, topologiesDir, aliasService);
+      Map<String, File> result = SimpleDescriptorHandler.handle(gatewayConfig, file, topologiesDir, aliasService, GatewayServer.getGatewayServices());
       LOG.generatedTopologyForDescriptorChange(result.get(SimpleDescriptorHandler.RESULT_TOPOLOGY).getName(), file.getName());
 
       // Add the provider config reference relationship for handling updates to the provider config
