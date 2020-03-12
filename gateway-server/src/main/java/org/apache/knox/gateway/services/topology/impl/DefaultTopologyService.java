@@ -789,10 +789,6 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
 
 
   /**
-   * Change handler for simple descriptors
-   */
-
-  /**
    * Listener for Ambari config change events, which will trigger re-generation (including re-discovery) of the
    * affected topologies.
    */
