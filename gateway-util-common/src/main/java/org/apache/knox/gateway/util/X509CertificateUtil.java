@@ -20,12 +20,15 @@ package org.apache.knox.gateway.util;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.net.Socket;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.KeyPair;
@@ -40,6 +43,13 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.knox.gateway.i18n.GatewayUtilCommonMessages;
@@ -383,14 +393,24 @@ public class X509CertificateUtil {
   }
 
   public static void writeCertificateToFile(Certificate cert, final File file)
+          throws CertificateEncodingException, IOException {
+      writeCertificatesToFile(new Certificate[] {cert}, file);
+  }
+
+  public static void writeCertificatesToFile(Certificate[] certs, final File file)
       throws CertificateEncodingException, IOException {
-    byte[] bytes = cert.getEncoded();
-    Base64 encoder = new Base64( 76, "\n".getBytes( StandardCharsets.US_ASCII ) );
+    final Base64 encoder = new Base64( 76, "\n".getBytes( StandardCharsets.US_ASCII ) );
     try(OutputStream out = Files.newOutputStream(file.toPath()) ) {
+        for (Certificate cert : certs) {
+            saveCertificate(out, cert.getEncoded(), encoder);
+        }
+    }
+  }
+
+  private static void saveCertificate(OutputStream out, byte[] bytes, Base64 encoder) throws IOException {
       out.write( "-----BEGIN CERTIFICATE-----\n".getBytes( StandardCharsets.US_ASCII ) );
       out.write( encoder.encodeToString( bytes ).getBytes( StandardCharsets.US_ASCII ) );
       out.write( "-----END CERTIFICATE-----\n".getBytes( StandardCharsets.US_ASCII ) );
-    }
   }
 
   /*
@@ -471,4 +491,62 @@ public class X509CertificateUtil {
       return false;
     }
   }
+
+  public static X509Certificate[] fetchPublicCertsFromServer(String serverUrl, boolean forceReturnCert, PrintStream out) throws Exception {
+      final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+      trustManagerFactory.init((KeyStore) null);
+      final X509TrustManager defaultTrustManager = (X509TrustManager) trustManagerFactory.getTrustManagers()[0];
+      final CertificateChainAwareTrustManager trustManagerWithCertificateChain = new CertificateChainAwareTrustManager(defaultTrustManager);
+      final SSLContext sslContext = SSLContext.getInstance("TLS");
+      sslContext.init(null, new TrustManager[] { trustManagerWithCertificateChain }, null);
+
+      final URL url = new URL(serverUrl);
+      final int port = url.getPort() == -1 ? url.getDefaultPort() : url.getPort();
+      logOutput(out, "Opening connection to " + url.getHost() + ":" + port + "...");
+      try (Socket socket = sslContext.getSocketFactory().createSocket(url.getHost(), port)) {
+        socket.setSoTimeout(10000);
+        logOutput(out, "Starting SSL handshake...");
+        ((SSLSocket) socket).startHandshake();
+        logOutput(out, "No errors, certificate is already trusted");
+        if (!forceReturnCert) {
+            return null; //we already trust the given site's certs; it does not make sense to build a new truststore
+        }
+      } catch (SSLException e) {
+        // NOP; this is expected in case the gateway server's certificate is not in the
+        // trust store the JVM uses
+      }
+
+      return trustManagerWithCertificateChain.serverCertificateChain;
+  }
+
+  private static void logOutput(PrintStream out, String message) {
+      if (out != null) {
+          out.println(message);
+      }
+  }
+
+  private static class CertificateChainAwareTrustManager implements X509TrustManager {
+      private final X509TrustManager defaultTrustManager;
+      private X509Certificate[] serverCertificateChain;
+
+      CertificateChainAwareTrustManager(X509TrustManager tm) {
+        this.defaultTrustManager = tm;
+      }
+
+      @Override
+      public X509Certificate[] getAcceptedIssuers() {
+        return defaultTrustManager.getAcceptedIssuers();
+      }
+
+      @Override
+      public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+        defaultTrustManager.checkClientTrusted(chain, authType);
+      }
+
+      @Override
+      public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+        this.serverCertificateChain = chain;
+        defaultTrustManager.checkServerTrusted(chain, authType);
+      }
+    }
 }

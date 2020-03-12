@@ -31,14 +31,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.net.Socket;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
-import java.security.KeyStore;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -50,13 +46,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
 
 public class KnoxSh {
 
@@ -192,7 +181,7 @@ public class KnoxSh {
     public void execute() throws Exception {
       String result = GATEWAY_CERT_NOT_EXPORTED;
       try {
-        final X509Certificate[] gatewayServerPublicCerts = fetchPublicCertsFromGatewayServer();
+        final X509Certificate[] gatewayServerPublicCerts = X509CertificateUtil.fetchPublicCertsFromServer(gateway, false, out);
         if (gatewayServerPublicCerts != null) {
           final File trustStoreFile = ClientTrustStoreHelper.getClientTrustStoreFile();
           final String trustStorePassword = ClientTrustStoreHelper.getClientTrustStoreFilePassword();
@@ -205,59 +194,9 @@ public class KnoxSh {
       out.println(result);
     }
 
-    private X509Certificate[] fetchPublicCertsFromGatewayServer() throws Exception {
-      final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-      trustManagerFactory.init((KeyStore) null);
-      final X509TrustManager defaultTrustManager = (X509TrustManager) trustManagerFactory.getTrustManagers()[0];
-      final CertificateChainAwareTrustManager trustManagerWithCertificateChain = new CertificateChainAwareTrustManager(defaultTrustManager);
-      final SSLContext sslContext = SSLContext.getInstance("TLS");
-      sslContext.init(null, new TrustManager[] { trustManagerWithCertificateChain }, null);
-
-      final URL url = new URL(gateway);
-      final int port = url.getPort() == -1 ? url.getDefaultPort() : url.getPort();
-      out.println("Opening connection to " + url.getHost() + ":" + port + "...");
-      try (Socket socket = sslContext.getSocketFactory().createSocket(url.getHost(), port)) {
-        socket.setSoTimeout(10000);
-        out.println("Starting SSL handshake...");
-        ((SSLSocket) socket).startHandshake();
-        out.println("No errors, certificate is already trusted");
-        return null; //we already trust the given site's certs; it does not make sense to build a new truststore
-      } catch (SSLException e) {
-        // NOP; this is expected in case the gateway server's certificate is not in the
-        // trust store the JVM uses
-      }
-
-      return trustManagerWithCertificateChain.serverCertificateChain;
-    }
-
     @Override
     public String getUsage() {
       return USAGE + ":\n\n" + DESC;
-    }
-
-    private class CertificateChainAwareTrustManager implements X509TrustManager {
-      private final X509TrustManager defaultTrustManager;
-      private X509Certificate[] serverCertificateChain;
-
-      CertificateChainAwareTrustManager(X509TrustManager tm) {
-        this.defaultTrustManager = tm;
-      }
-
-      @Override
-      public X509Certificate[] getAcceptedIssuers() {
-        return defaultTrustManager.getAcceptedIssuers();
-      }
-
-      @Override
-      public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-        defaultTrustManager.checkClientTrusted(chain, authType);
-      }
-
-      @Override
-      public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-        this.serverCertificateChain = chain;
-        defaultTrustManager.checkServerTrusted(chain, authType);
-      }
     }
   }
 
