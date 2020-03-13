@@ -1,0 +1,36 @@
+/* based on the sample from here: https://codepen.io/surabhi/pen/NNObXw */
+
+mat-grid-tile mat-grid-tile-footer {
+  background: rgba(220,220,220,1);
+  height: 20px;
+  color:black;
+}
+
+mat-grid-tile-footer figcaption {
+  width: 100%;
+}
+
+mat-grid-tile-footer figcaption h3 {
+  margin: 0;
+  font-weight: 700;
+  width: 100%;
+  text-align: center;
+}
+
+.tile-shortDesc {
+  cursor: pointer;
+}
+
+.tile-longDesc {
+  visibility: hidden;
+  opacity: 0;
+  transition: all 0.3s linear;
+  margin-bottom: 20px;
+  word-wrap: break-word;
+}
+
+.tile-shortDesc:hover + .tile-longDesc {
+  opacity: 1;
+  transition: all 0.3s linear;
+  visibility: visible;
+}

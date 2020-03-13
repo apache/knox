@@ -25,36 +25,19 @@
     <div class="table-responsive" *ngIf="this['showTopology_' + topology.topology]">
 
         <!-- UI services -->
-        <table class="table table-hover" [mfData]="topology.uiServices.service" #ui="mfDataTable" [mfRowsOnPage]="5">
-            <colgroup>
-                <col width="30%">
-                <col width="70%">
-            </colgroup>
-            <thead>
-                <tr *ngIf="topology.uiServices.service.length == 0"><th colspan="2">No UI services found</th></tr>
-                <tr *ngIf="topology.uiServices.service.length > 0"><th colspan="2">UI services</th></tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let service of ui.data">
-                    <td>
-                        <span class="inline-glyph glyphicon glyphicon-info-sign btn btn-xs"
-                        title="{{service.description}}"
-                        data-toggle="tooltip"></span>
-                        {{service.shortDesc}} <span class="small" *ngIf="service.version">(v{{service.version}})</span>
-                    </td>
-                    <td>
-                        <a href="{{service.serviceUrl}}" target="_blank">{{service.serviceUrl}}</a>
-                    </td>
-                </tr>
-            </tbody>
-      <tfoot>
-          <tr>
-              <td colspan="4">
-                  <mfBootstrapPaginator [rowsOnPageSet]="[5,10,15]"></mfBootstrapPaginator>
-              </td>
-          </tr>
-      </tfoot>
-        </table>
+        <mat-grid-list cols="4" rowHeight="130px">
+            <mat-grid-tile *ngFor="let service of topology.uiServices.service" [colspan]="1" [rowspan]="1">
+                 <a href="{{service.serviceUrl}}" target="blank">
+                    <img src="assets/service-logos/{{service.serviceName.toLowerCase()}}.png" height="50px" />
+                </a>
+                <mat-grid-tile-footer class="tile-shortDesc">
+                    <h3>{{service.shortDesc}} <span class="small" *ngIf="service.version">(v{{service.version}})</span></h3>
+                </mat-grid-tile-footer>
+                <mat-grid-tile-footer class="tile-longDesc" style="height:100px;">
+                    <h3>{{service.description}}</h3>
+                </mat-grid-tile-footer>
+            </mat-grid-tile>
+        </mat-grid-list>
 
         <!-- API services -->
         <table class="table table-hover" [mfData]="topology.apiServices.service" #api="mfDataTable" [mfRowsOnPage]="5">

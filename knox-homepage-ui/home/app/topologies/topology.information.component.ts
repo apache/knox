@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 import {Component, OnInit} from '@angular/core';
+import {MatGridListModule} from '@angular/material/grid-list';
 import {HomepageService} from '../homepage.service';
 import {TopologyInformation} from './topology.information';
 import {Service} from './service';
@@ -22,6 +23,7 @@ import {Service} from './service';
 @Component({
     selector: 'app-topologies-information',
     templateUrl: './topology.information.component.html',
+    styleUrls: ['./topology.information.component.css'],
     providers: [HomepageService]
 })
 
