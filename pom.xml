@@ -425,10 +425,10 @@
                         <exclude>**/admin-ui/**/*.js</exclude>
                         <exclude>**/admin-ui/**/*.css</exclude>
                         <exclude>**/admin-ui/**/*.html</exclude>
-                        <exclude>**/knox-homepage-ui/**/*.json</exclude>
-                        <exclude>**/knox-homepage-ui/**/*.js</exclude>
-                        <exclude>**/knox-homepage-ui/**/*.css</exclude>
-                        <exclude>**/knox-homepage-ui/**/*.html</exclude>
+                        <exclude>**/home/**/*.json</exclude>
+                        <exclude>**/home/**/*.js</exclude>
+                        <exclude>**/home/**/*.css</exclude>
+                        <exclude>**/home/**/*.html</exclude>
                         <exclude>atlassian-ide-plugin.xml</exclude>
                         <exclude>**/PULL_REQUEST_TEMPLATE*</exclude>
                         <exclude>**/new-service-definition-template.xml</exclude>
