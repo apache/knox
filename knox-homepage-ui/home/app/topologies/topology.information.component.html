@@ -28,7 +28,7 @@
         <mat-grid-list cols="4" rowHeight="130px">
             <mat-grid-tile *ngFor="let service of topology.uiServices.service" [colspan]="1" [rowspan]="1">
                  <a href="{{service.serviceUrl}}" target="blank">
-                    <img src="assets/service-logos/{{service.serviceName.toLowerCase()}}.png" height="50px" />
+                    <img src="assets/service-logos/{{service.serviceName.toLowerCase()}}.png" height="50px" onerror="this.onerror=null; this.src='assets/service-logos/general_logo.png'"/>
                 </a>
                 <mat-grid-tile-footer class="tile-shortDesc">
                     <h3>{{service.shortDesc}} <span class="small" *ngIf="service.version">(v{{service.version}})</span></h3>
