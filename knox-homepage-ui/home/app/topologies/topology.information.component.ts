@@ -42,6 +42,10 @@ export class TopologyInformationsComponent implements OnInit {
         this[propertyName] = !this[propertyName];
     }
 
+    enableServiceText(enableServiceText: string) {
+        this[enableServiceText] = true;
+    }
+
     constructor(private homepageService: HomepageService) {}
 
     ngOnInit(): void {
