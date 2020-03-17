@@ -29,13 +29,22 @@ import com.cloudera.api.swagger.model.ApiEventQueryResult;
 import com.cloudera.api.swagger.model.ApiRole;
 import com.cloudera.api.swagger.model.ApiRoleList;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
+import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.services.topology.TopologyService;
+import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscoveryMessages;
 import org.apache.knox.gateway.topology.discovery.cm.DiscoveryApiClient;
+import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
+import org.apache.knox.gateway.topology.simple.SimpleDescriptorFactory;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -69,6 +78,9 @@ public class PollingConfigurationAnalyzer implements Runnable {
   private static final ClouderaManagerServiceDiscoveryMessages log =
                   MessagesFactory.get(ClouderaManagerServiceDiscoveryMessages.class);
 
+  // Fully-qualified cluster name delimiter
+  private static final String FQCN_DELIM = "::";
+
   private ClusterConfigurationCache configCache;
 
   // Single listener for configuration change events
@@ -77,6 +89,10 @@ public class PollingConfigurationAnalyzer implements Runnable {
   private AliasService aliasService;
 
   private KeystoreService keystoreService;
+
+  private TopologyService topologyService;
+
+  private ClusterConfigurationMonitorService ccms;
 
   // Polling interval in seconds
   private int interval;
@@ -134,10 +150,18 @@ public class PollingConfigurationAnalyzer implements Runnable {
     isActive = true;
 
     while (isActive) {
+      List<String> clustersToStopMonitoring = new ArrayList<>();
+
       for (Map.Entry<String, List<String>> entry : configCache.getClusterNames().entrySet()) {
         String address = entry.getKey();
         for (String clusterName : entry.getValue()) {
           log.checkingClusterConfiguration(clusterName, address);
+
+          // Check here for existing descriptor references, and add to the removal list if there are not any
+          if (!clusterReferencesExist(address, clusterName)) {
+            clustersToStopMonitoring.add(address + FQCN_DELIM + clusterName);
+            continue;
+          }
 
           // Configuration changes don't mean anything without corresponding service restarts. Therefore, monitor
           // restart events, and check the configuration only of the restarted service(s) to identify changes
@@ -202,10 +226,84 @@ public class PollingConfigurationAnalyzer implements Runnable {
         }
       }
 
+      // Remove outdated entries from the cache
+      for (String fqcn : clustersToStopMonitoring) {
+        String[] parts = fqcn.split(FQCN_DELIM);
+        stopMonitoring(parts[0], parts[1]);
+      }
+      clustersToStopMonitoring.clear(); // reset the removal list
+
       waitFor(interval);
     }
 
     log.stoppedClouderaManagerConfigMonitor();
+  }
+
+  private TopologyService getTopologyService() {
+    if (topologyService == null) {
+      GatewayServices gws = GatewayServer.getGatewayServices();
+      if (gws != null) {
+        topologyService = gws.getService(ServiceType.TOPOLOGY_SERVICE);
+      }
+    }
+    return topologyService;
+  }
+
+  private ClusterConfigurationMonitorService getConfigMonitorService() {
+    if (ccms == null) {
+      GatewayServices gws = GatewayServer.getGatewayServices();
+      if (gws != null) {
+        ccms = gws.getService(ServiceType.CLUSTER_CONFIGURATION_MONITOR_SERVICE);
+      }
+    }
+    return ccms;
+  }
+
+  /**
+   * Determine if any descriptors reference the specified discovery source and cluster.
+   *
+   * @param source      A discovery source
+   * @param clusterName A discovery cluster name
+   *
+   * @return true, if at least one descriptor references the specified discovery information; Otherwise, false.
+   */
+  private boolean clusterReferencesExist(final String source, final String clusterName) {
+    boolean remainingClusterRefs = false;
+
+    if (source != null && clusterName != null) {
+      TopologyService ts = getTopologyService();
+      if (ts != null) {
+        for (File f : ts.getDescriptors()) {
+          try {
+            SimpleDescriptor sd = SimpleDescriptorFactory.parse(f.toPath().toAbsolutePath().toString());
+            if (source.equals(sd.getDiscoveryAddress()) && clusterName.equals(sd.getCluster())) {
+              remainingClusterRefs = true;
+              break;
+            }
+          } catch (IOException e) {
+            // Ignore these errors
+          }
+        }
+      } else {
+        remainingClusterRefs = true; // If the TopologyService is unavailable, assume references remain
+      }
+    }
+
+    return remainingClusterRefs;
+  }
+
+  /**
+   * Stop monitoring the specified cluster for configuration changes.
+   *
+   * @param source      The discovery source
+   * @param clusterName The name of the cluster
+   */
+  private void stopMonitoring(final String source, final String clusterName) {
+    ClusterConfigurationMonitorService ms = getConfigMonitorService();
+    if (ms != null) {
+      log.stoppingConfigMonitoring(source, clusterName);
+      ms.clearCache(source, clusterName);
+    }
   }
 
   /**

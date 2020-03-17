@@ -789,7 +789,7 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
 
 
   /**
-   * Listener for Ambari config change events, which will trigger re-generation (including re-discovery) of the
+   * Listener for cluster config change events, which will trigger re-generation (including re-discovery) of the
    * affected topologies.
    */
   private static class TopologyDiscoveryTrigger implements ClusterConfigurationMonitor.ConfigurationChangeListener {
@@ -803,14 +803,14 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
     }
 
     @Override
-    public void onConfigurationChange(String source, String clusterName) {
+    public void onConfigurationChange(final String source, final String clusterName) {
       log.noticedClusterConfigurationChange(source, clusterName);
       try {
         boolean affectedDescriptors = false;
         // Identify any descriptors associated with the cluster configuration change
         for (File descriptor : topologyService.getDescriptors()) {
-          String descriptorContent = FileUtils.readFileToString(descriptor, StandardCharsets.UTF_8);
-          if (descriptorContent.contains(source) && descriptorContent.contains(clusterName)) {
+          SimpleDescriptor sd = SimpleDescriptorFactory.parse(descriptor.getAbsolutePath());
+          if (source.equals(sd.getDiscoveryAddress()) && clusterName.equals(sd.getCluster())) {
             affectedDescriptors = true;
             log.triggeringTopologyRegeneration(source, clusterName, descriptor.getAbsolutePath());
             // 'Touch' the descriptor to trigger re-generation of the associated topology

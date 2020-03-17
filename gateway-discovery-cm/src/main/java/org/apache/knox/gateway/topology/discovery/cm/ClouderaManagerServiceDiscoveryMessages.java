@@ -119,6 +119,10 @@ public interface ClouderaManagerServiceDiscoveryMessages {
       text = "Stopped ClouderaManager cluster configuration monitor")
   void stoppedClouderaManagerConfigMonitor();
 
+  @Message(level = MessageLevel.INFO,
+           text = "Terminating monitoring of {1} @ {0} for configuration changes because there are no referencing descriptors.")
+  void stoppingConfigMonitoring(String discoverySource, String clusterName);
+
   @Message(level = MessageLevel.DEBUG, text = "Checking {0} @ {1} for configuration changes...")
   void checkingClusterConfiguration(String clusterName, String discoveryAddress);
 
