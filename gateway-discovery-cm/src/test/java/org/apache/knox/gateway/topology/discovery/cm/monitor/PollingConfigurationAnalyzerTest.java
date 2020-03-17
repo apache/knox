@@ -20,11 +20,21 @@ import com.cloudera.api.swagger.client.ApiClient;
 import com.cloudera.api.swagger.model.ApiEvent;
 import com.cloudera.api.swagger.model.ApiEventAttribute;
 import com.cloudera.api.swagger.model.ApiEventCategory;
+import org.apache.commons.io.FileUtils;
+import org.apache.knox.gateway.GatewayServer;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.topology.TopologyService;
+import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.model.hdfs.NameNodeServiceModelGenerator;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,6 +46,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor.ConfigurationChangeListener;
+import static org.easymock.EasyMock.getCurrentArguments;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -149,6 +160,128 @@ public class PollingConfigurationAnalyzerTest {
     assertTrue("Expected a change notification", listener.wasNotified(address, clusterName));
   }
 
+
+  @Test
+  public void testClusterConfigMonitorTerminationForNoLongerReferencedClusters() {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster 5";
+
+    final String updatedAddress = "http://host2:1234";
+    final String descContent =
+        "{\n" +
+        "  \"discovery-type\": \"ClouderaManager\",\n" +
+        "  \"discovery-address\": \"" + updatedAddress + "\",\n" +
+        "  \"cluster\": \"" + clusterName + "\",\n" +
+        "  \"provider-config-ref\": \"ldap\",\n" +
+        "  \"services\": [\n" +
+        "    {\n" +
+        "      \"name\": \"WEBHDFS\"\n" +
+        "    }\n" +
+        "  ]\n" +
+        "}";
+
+    File descriptor = null;
+    try {
+      descriptor = File.createTempFile("test", ".json");
+      FileUtils.writeStringToFile(descriptor, descContent, StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    // Mock the service discovery details
+    ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
+    EasyMock.expect(sdc.getCluster()).andReturn(clusterName).anyTimes();
+    EasyMock.expect(sdc.getAddress()).andReturn(address).anyTimes();
+    EasyMock.expect(sdc.getUser()).andReturn("u").anyTimes();
+    EasyMock.expect(sdc.getPasswordAlias()).andReturn("a").anyTimes();
+    EasyMock.replay(sdc);
+
+    final Map<String, List<String>> clusterNames = new HashMap<>();
+    clusterNames.put(address, Collections.singletonList(clusterName));
+
+    // Create the original ServiceConfigurationModel details
+    final Map<String, ServiceConfigurationModel> serviceConfigurationModels = new HashMap<>();
+    final Map<String, String> nnServiceConf = new HashMap<>();
+    final Map<String, Map<String, String>> nnRoleConf = new HashMap<>();
+    nnRoleConf.put(NameNodeServiceModelGenerator.ROLE_TYPE, Collections.emptyMap());
+    serviceConfigurationModels.put(NameNodeServiceModelGenerator.SERVICE_TYPE + "-1", createModel(nnServiceConf, nnRoleConf));
+
+    // Create a ClusterConfigurationCache for the monitor to use
+    final ClusterConfigurationCache configCache = new ClusterConfigurationCache();
+    configCache.addDiscoveryConfig(sdc);
+    configCache.addServiceConfiguration(address, clusterName, serviceConfigurationModels);
+    assertEquals(1, configCache.getClusterNames().get(address).size());
+
+    // Set up GatewayServices
+
+    // TopologyService mock
+    TopologyService ts = EasyMock.createNiceMock(TopologyService.class);
+    EasyMock.expect(ts.getDescriptors()).andReturn(Collections.singletonList(descriptor)).anyTimes();
+
+    // ClusterConfigurationMonitorService mock
+    ClusterConfigurationMonitorService ccms = EasyMock.createNiceMock(ClusterConfigurationMonitorService.class);
+    // Implement the clearing of the cache for the mock
+    ccms.clearCache(address, clusterName);
+    EasyMock.expectLastCall().andAnswer(() -> {
+                                              Object[] args = getCurrentArguments();
+                                              configCache.removeServiceConfiguration((String)args[0], (String)args[1]);
+                                              return null;
+                                            }).once();
+
+    // GatewayServices mock
+    GatewayServices gws = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(gws.getService(ServiceType.TOPOLOGY_SERVICE)).andReturn(ts).anyTimes();
+    EasyMock.expect(gws.getService(ServiceType.CLUSTER_CONFIGURATION_MONITOR_SERVICE)).andReturn(ccms).anyTimes();
+    EasyMock.replay(ts, ccms, gws);
+
+    try {
+      setGatewayServices(gws);
+
+      // Create the monitor
+      TestablePollingConfigAnalyzer pca = new TestablePollingConfigAnalyzer(configCache);
+      pca.setInterval(5);
+
+      // Start the polling thread
+      ExecutorService pollingThreadExecutor = Executors.newSingleThreadExecutor();
+      pollingThreadExecutor.execute(pca);
+      pollingThreadExecutor.shutdown();
+
+      try {
+        pollingThreadExecutor.awaitTermination(10, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        //
+      }
+
+      // Stop the config analyzer thread
+      pca.stop();
+
+      if (descriptor != null && descriptor.exists()) {
+        descriptor.deleteOnExit();
+      }
+
+      assertEquals("Expected the config cache entry for " + clusterName + " to have been removed.",
+                   0,
+                   configCache.getClusterNames().get(address).size());
+    } finally {
+      // Reset the GatewayServices field of GatewayServer
+      setGatewayServices(null);
+    }
+  }
+
+  /**
+   * Set the static GatewayServices field to the specified value.
+   *
+   * @param gws A GatewayServices object, or null.
+   */
+  private void setGatewayServices(final GatewayServices gws) {
+    try {
+      Field gwsField = GatewayServer.class.getDeclaredField("services");
+      gwsField.setAccessible(true);
+      gwsField.set(null, gws);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
 
   private ApiEvent createApiEvent(final ApiEventCategory category, final List<ApiEventAttribute> attrs) {
     ApiEvent event = EasyMock.createNiceMock(ApiEvent.class);
