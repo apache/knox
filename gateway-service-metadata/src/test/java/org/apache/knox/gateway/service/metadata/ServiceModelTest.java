@@ -151,7 +151,7 @@ public class ServiceModelTest {
     serviceModel.setService(service);
     EasyMock.expect(service.getRole()).andReturn(HIVE_SERVICE_NAME).anyTimes();
     EasyMock.replay(service);
-    assertEquals(String.format(Locale.ROOT, HIVE_SERVICE_URL_TEMPLATE, SERVER_NAME, SERVER_PORT, gatewayPath, topologyName, "/hive/"), serviceModel.getServiceUrl());
+    assertEquals(String.format(Locale.ROOT, HIVE_SERVICE_URL_TEMPLATE, SERVER_NAME, SERVER_PORT, gatewayPath, topologyName), serviceModel.getServiceUrl());
   }
 
   public HttpServletRequest setUpHttpRequestMock() {
