@@ -19,6 +19,8 @@ package org.apache.knox.gateway.util;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.util.Tool;
@@ -33,10 +35,10 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.deploy.DeploymentFactory;
 import org.apache.knox.gateway.services.CLIGatewayServices;
-import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -112,7 +114,8 @@ public class KnoxCLI extends Configured implements Tool {
       "   [" + RemoteRegistryUploadDescriptorCommand.USAGE + "]\n" +
       "   [" + RemoteRegistryDeleteProviderConfigCommand.USAGE + "]\n" +
       "   [" + RemoteRegistryDeleteDescriptorCommand.USAGE + "]\n" +
-      "   [" + RemoteRegistryGetACLCommand.USAGE + "]\n";
+      "   [" + RemoteRegistryGetACLCommand.USAGE + "]\n" +
+      "   [" + TopologyConverter.USAGE + "]\n";
 
   /** allows stdout to be captured if necessary */
   public PrintStream out = System.out;
@@ -136,9 +139,18 @@ public class KnoxCLI extends Configured implements Tool {
   private String remoteRegistryClient;
   private String remoteRegistryEntryName;
 
+  private String type;
+  private String topologyName;
+  private String providerName;
+  private String descriptorName;
+  private String outputDir;
+  private String discoveryUrl;
+  private String discoveryUser;
+  private String discoveryPasswordAlias;
+  private String discoveryType;
+
   // For testing only
   private String master;
-  private String type;
 
   @Override
   public int run(String[] args) throws Exception {
@@ -316,6 +328,54 @@ public class KnoxCLI extends Configured implements Tool {
           return -1;
         }
         this.port = args[++i];
+      } else if (args[i].equals("--provider-name")) {
+        if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
+          printKnoxShellUsage();
+          return -1;
+        }
+        this.providerName = args[++i];
+      } else if (args[i].equals("--topology-name")) {
+        if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
+          printKnoxShellUsage();
+          return -1;
+        }
+        this.topologyName = args[++i];
+      } else if (args[i].equals("--descriptor-name")) {
+        if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
+          printKnoxShellUsage();
+          return -1;
+        }
+        this.descriptorName = args[++i];
+      } else if (args[i].equals("--output-dir")) {
+        if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
+          printKnoxShellUsage();
+          return -1;
+        }
+        this.outputDir = args[++i];
+      } else if (args[i].equals("--discovery-url")) {
+        if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
+          printKnoxShellUsage();
+          return -1;
+        }
+        this.discoveryUrl = args[++i];
+      } else if (args[i].equals("--discovery-user")) {
+        if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
+          printKnoxShellUsage();
+          return -1;
+        }
+        this.discoveryUser = args[++i];
+      } else if (args[i].equals("--discovery-pwd-alias")) {
+        if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
+          printKnoxShellUsage();
+          return -1;
+        }
+        this.discoveryPasswordAlias = args[++i];
+      } else if (args[i].equals("--discovery-type")) {
+        if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
+          printKnoxShellUsage();
+          return -1;
+        }
+        this.discoveryType = args[++i];
       } else if (args[i].equals("--master")) {
         // For testing only
         if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
@@ -407,9 +467,16 @@ public class KnoxCLI extends Configured implements Tool {
           printKnoxShellUsage();
           return -1;
         }
+      } else if (args[i].equalsIgnoreCase("convert-topology")) {
+        if (args.length >= 5) {
+          command = new TopologyConverter();
+        }
+        else {
+          printKnoxShellUsage();
+          return -1;
+        }
       } else {
         printKnoxShellUsage();
-        //ToolRunner.printGenericCommandUsage(System.err);
         return -1;
       }
     }
@@ -487,6 +554,9 @@ public class KnoxCLI extends Configured implements Tool {
       out.println();
       out.println( div );
       out.println(RemoteRegistryDeleteDescriptorCommand.USAGE + "\n\n" + RemoteRegistryDeleteDescriptorCommand.DESC);
+      out.println();
+      out.println( div );
+      out.println(TopologyConverter.USAGE + "\n\n" + TopologyConverter.DESC);
       out.println();
       out.println( div );
     }
@@ -2090,6 +2160,103 @@ public class KnoxCLI extends Configured implements Tool {
     }
   }
 
+  public class TopologyConverter extends Command {
+
+    public static final String USAGE =
+        "convert-topology --path \"path/to/topology.xml\" --provider-name my-provider.json [--descriptor-name my-descriptor.json] "
+            + "[--topology-name topologyName] [--output-path \"path/to/configs/\"] [--force] [--cluster clusterName] [--discovery-url url] "
+            + "[--discovery-user discoveryUser] [--discovery-pwd-alias discoveryPasswordAlias] [--discovery-type discoveryType]";
+    public static final String DESC =
+        "Convert Knox topology file to provider and descriptor config files \n"
+            + "Options are as follows: \n"
+            + "--path (required) path to topology xml file \n"
+            + "--provider-name (required) name of the provider json config file (including .json extension) \n"
+            + "--descriptor-name (optional) name of descriptor json config file (including .json extension) \n"
+            + "--topology-name (optional) topology-name can be use instead of --path option, if used, KnoxCLI will attempt to find topology from deployed topologies.\n"
+            + "\t if not provided topology name will be used as descriptor name \n"
+            + "--output-path (optional) output directory to save provider and descriptor config files \n"
+            + "\t if not provided config files will be saved in appropriate Knox config directory \n"
+            + "--force (optional) force rewriting of existing files, if not used, command will fail when the configs files with same name already exist. \n"
+            + "--cluster (optional) cluster name, required for service discovery \n"
+            + "--discovery-url (optional) service discovery URL, required for service discovery \n"
+            + "--discovery-user (optional) service discovery user, required for service discovery \n"
+            + "--discovery-pwd-alias (optional) password alias for service discovery user, required for service discovery \n"
+            + "--discovery-type (optional) service discovery type, required for service discovery \n";
+
+    public TopologyConverter() {
+      super();
+    }
+
+    @Override
+    public void execute() throws Exception {
+      if (StringUtils.isBlank(FilenameUtils.getExtension(providerName))
+          || StringUtils.isBlank(FilenameUtils.getExtension(descriptorName))) {
+        throw new IllegalArgumentException(
+            " JSON extension is required for provider and descriptor file names");
+      }
+
+      final TopologyToDescriptor converter = new TopologyToDescriptor();
+
+      converter.setForce(force);
+      if (!StringUtils.isBlank(topologyName)) {
+        converter.setTopologyPath(
+            getGatewayConfig().getGatewayTopologyDir() + File.separator
+                + topologyName);
+      } else if (!StringUtils.isBlank(path)) {
+        converter.setTopologyPath(path);
+      } else {
+        throw new IllegalArgumentException(
+            "Please specify either --path or --topology-name option");
+      }
+      if (!StringUtils.isBlank(providerName)) {
+        converter.setProviderName(providerName);
+      }
+      if (!StringUtils.isBlank(descriptorName)) {
+        converter.setDescriptorName(descriptorName);
+      }
+      /* if output location is provided then use it */
+      if (!StringUtils.isBlank(outputDir)) {
+        converter.setProviderConfigDir(outputDir);
+        converter.setDescriptorConfigDir(outputDir);
+      } else {
+        converter.setProviderConfigDir(
+            getGatewayConfig().getGatewayProvidersConfigDir());
+        converter.setDescriptorConfigDir(
+            getGatewayConfig().getGatewayDescriptorsDir());
+      }
+      /* set discovery params */
+      if (!StringUtils.isBlank(cluster)) {
+        converter.setCluster(cluster);
+      }
+      if (!StringUtils.isBlank(discoveryUrl)) {
+        converter.setDiscoveryUrl(discoveryUrl);
+      }
+      if (!StringUtils.isBlank(discoveryUser)) {
+        converter.setDiscoveryUser(discoveryUser);
+      }
+      if (!StringUtils.isBlank(discoveryPasswordAlias)) {
+        converter.setDiscoveryPasswordAlias(discoveryPasswordAlias);
+      }
+      if (!StringUtils.isBlank(discoveryType)) {
+        converter.setDiscoveryType(discoveryType);
+      }
+
+      converter.validate();
+      converter.convert();
+
+      final String topoName = StringUtils.isBlank(topologyName) ?  FilenameUtils.getBaseName(path) : topologyName;
+      out.println(
+          "Provider " + providerName + " and descriptor " + descriptorName
+              + " generated for topology " + topoName
+              + "\n");
+    }
+
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+
+  }
 
   private static Properties loadBuildProperties() {
     Properties properties = new Properties();
