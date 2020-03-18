@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway.service.metadata;
 
-import java.util.List;
+import java.util.Set;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -31,11 +31,11 @@ public class TopologyInformation {
 
   @XmlElement(name = "service")
   @XmlElementWrapper(name = "apiServices")
-  private List<ServiceModel> apiServices;
+  private Set<ServiceModel> apiServices;
 
   @XmlElement(name = "service")
   @XmlElementWrapper(name = "uiServices")
-  private List<ServiceModel> uiServices;
+  private Set<ServiceModel> uiServices;
 
   public String getTopologyName() {
     return topologyName;
@@ -45,19 +45,19 @@ public class TopologyInformation {
     this.topologyName = topologyName;
   }
 
-  public List<ServiceModel> getApiServices() {
+  public Set<ServiceModel> getApiServices() {
     return apiServices;
   }
 
-  public void setApiServices(List<ServiceModel> apiServices) {
+  public void setApiServices(Set<ServiceModel> apiServices) {
     this.apiServices = apiServices;
   }
 
-  public List<ServiceModel> getUiServices() {
+  public Set<ServiceModel> getUiServices() {
     return uiServices;
   }
 
-  public void setUiServices(List<ServiceModel> uiServices) {
+  public void setUiServices(Set<ServiceModel> uiServices) {
     this.uiServices = uiServices;
   }
 

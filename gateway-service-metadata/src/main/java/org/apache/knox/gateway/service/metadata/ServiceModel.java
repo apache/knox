@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.service.metadata;
 
+import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Locale;
@@ -27,22 +28,31 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.knox.gateway.service.definition.Metadata;
 import org.apache.knox.gateway.topology.Service;
 
 @XmlRootElement(name = "service")
 @XmlAccessorType(XmlAccessType.NONE)
-public class ServiceModel {
+public class ServiceModel implements Comparable<ServiceModel> {
+
+  static final String SERVICE_URL_TEMPLATE = "%s://%s:%s/%s/%s%s";
+  static final String HIVE_SERVICE_NAME = "HIVE";
+  static final String HIVE_SERVICE_URL_TEMPLATE = "jdbc:hive2://%s:%d/;?hive.server2.transport.mode=http;hive.server2.thrift.http.path=/%s/%s%s";
 
   public enum Type {
     API, UI, UNKNOWN
   };
 
-  protected HttpServletRequest request;
-  protected String topologyName;
-  protected String gatewayPath;
-  protected Service service;
-  protected Metadata serviceMetadata;
+  private HttpServletRequest request;
+  private String topologyName;
+  private String gatewayPath;
+  private Service service;
+  private Metadata serviceMetadata;
+  private String serviceUrl;
 
   public void setRequest(HttpServletRequest request) {
     this.request = request;
@@ -62,6 +72,10 @@ public class ServiceModel {
 
   public void setServiceMetadata(Metadata serviceMetadata) {
     this.serviceMetadata = serviceMetadata;
+  }
+
+  public void setServiceUrl(String serviceUrl) {
+    this.serviceUrl = serviceUrl;
   }
 
   @XmlElement
@@ -103,28 +117,67 @@ public class ServiceModel {
   }
 
   @XmlElement
-  public String getServiceUrl() throws MalformedURLException {
+  public String getServiceUrl() {
     String context = getContext();
-    if ("HIVE".equals(getServiceName())) {
-      return String.format(Locale.ROOT, "jdbc:hive2://%s:%d/;?hive.server2.transport.mode=http;hive.server2.thrift.http.path=/%s/%s%s", request.getServerName(),
-          request.getServerPort(), gatewayPath, topologyName, context);
+    if (HIVE_SERVICE_NAME.equals(getServiceName())) {
+      return String.format(Locale.ROOT, HIVE_SERVICE_URL_TEMPLATE, request.getServerName(), request.getServerPort(), gatewayPath, topologyName, context);
     } else {
       final String backendUrlString = getBackendServiceUrl();
       if (context.indexOf("{{BACKEND_HOST}}") > -1) {
         context = context.replace("{{BACKEND_HOST}}", backendUrlString);
       }
       if (context.indexOf("{{SCHEME}}") > -1 || context.indexOf("{{HOST}}") > -1 || context.indexOf("{{PORT}}") > -1) {
-        final URL backendUrl = new URL(backendUrlString);
+        try {
+          final URL backendUrl = new URL(backendUrlString);
           context = context.replace("{{SCHEME}}", backendUrl.getProtocol());
           context = context.replace("{{HOST}}", backendUrl.getHost());
           context = context.replace("{{PORT}}", String.valueOf(backendUrl.getPort()));
+        } catch (MalformedURLException e) {
+          throw new UncheckedIOException("Error while converting " + backendUrlString + " to a URL", e);
+        }
       }
-      return String.format(Locale.ROOT, "%s://%s:%s/%s/%s%s", request.getScheme(), request.getServerName(), request.getServerPort(), gatewayPath, topologyName, context);
+      return String.format(Locale.ROOT, SERVICE_URL_TEMPLATE, request.getScheme(), request.getServerName(), request.getServerPort(), gatewayPath, topologyName, context);
     }
   }
 
-  protected String getBackendServiceUrl() {
-    final String serviceUrl = service == null ? "" : service.getUrl();
-    return serviceUrl == null ? "" : serviceUrl;
+  String getBackendServiceUrl() {
+    final String backendServiceUrl = serviceUrl == null ? (service == null ? "" : service.getUrl()) : serviceUrl;
+    return backendServiceUrl == null ? "" : backendServiceUrl;
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
+    }
+    if (obj == null || (obj.getClass() != getClass())) {
+      return false;
+    }
+    final ServiceModel serviceModel = (ServiceModel) obj;
+    return new EqualsBuilder().append(topologyName, serviceModel.topologyName).append(gatewayPath, serviceModel.gatewayPath).append(getServiceName(), serviceModel.getServiceName())
+        .append(getVersion(), serviceModel.getVersion()).append(serviceMetadata, serviceModel.serviceMetadata).append(getServiceUrl(), serviceModel.getServiceUrl()).isEquals();
+  }
+
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder(17, 37).append(topologyName).append(gatewayPath).append(getServiceName()).append(getVersion()).append(serviceMetadata).append(getServiceUrl())
+        .toHashCode();
+  }
+
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).append(topologyName).append(gatewayPath).append(getServiceName()).append(getVersion())
+        .append(serviceMetadata).append(getServiceUrl()).toString();
+  }
+
+  @Override
+  public int compareTo(ServiceModel other) {
+    final int byServiceName = getServiceName().compareTo(other.getServiceName());
+    if (byServiceName == 0) {
+      final int byVersion = getVersion().compareTo(getVersion());
+      return byVersion == 0 ? getBackendServiceUrl().compareTo(other.getBackendServiceUrl()) : byVersion;
+    }
+    return byServiceName;
+  }
+
 }
