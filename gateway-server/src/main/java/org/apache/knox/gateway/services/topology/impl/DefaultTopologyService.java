@@ -556,6 +556,11 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
         log.remoteConfigurationMonitorStartFailure(remoteMonitor.getClass().getTypeName(), e.getLocalizedMessage());
       }
     }
+
+    // Trigger descriptor discovery (KNOX-2301)
+    for (File descriptor : getDescriptors()) {
+      descriptor.setLastModified(System.currentTimeMillis()); // 'Touch' the descriptor
+    }
   }
 
   @Override
@@ -606,7 +611,6 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
 
   @Override
   public void start() {
-
   }
 
   @Override
