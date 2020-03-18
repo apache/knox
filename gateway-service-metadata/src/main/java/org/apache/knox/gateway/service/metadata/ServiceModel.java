@@ -41,7 +41,7 @@ public class ServiceModel implements Comparable<ServiceModel> {
 
   static final String SERVICE_URL_TEMPLATE = "%s://%s:%s/%s/%s%s";
   static final String HIVE_SERVICE_NAME = "HIVE";
-  static final String HIVE_SERVICE_URL_TEMPLATE = "jdbc:hive2://%s:%d/;?hive.server2.transport.mode=http;hive.server2.thrift.http.path=/%s/%s%s";
+  static final String HIVE_SERVICE_URL_TEMPLATE = "jdbc:hive2://%s:%d/;ssl=true;transportMode=http;httpPath=%s/%s/hive";
 
   public enum Type {
     API, UI, UNKNOWN
@@ -120,7 +120,7 @@ public class ServiceModel implements Comparable<ServiceModel> {
   public String getServiceUrl() {
     String context = getContext();
     if (HIVE_SERVICE_NAME.equals(getServiceName())) {
-      return String.format(Locale.ROOT, HIVE_SERVICE_URL_TEMPLATE, request.getServerName(), request.getServerPort(), gatewayPath, topologyName, context);
+      return String.format(Locale.ROOT, HIVE_SERVICE_URL_TEMPLATE, request.getServerName(), request.getServerPort(), gatewayPath, topologyName);
     } else {
       final String backendUrlString = getBackendServiceUrl();
       if (context.indexOf("{{BACKEND_HOST}}") > -1) {
