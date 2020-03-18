@@ -17,11 +17,14 @@
  */
 package org.apache.knox.gateway.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
+import org.apache.knox.gateway.model.DescriptorConfiguration;
+import org.apache.knox.gateway.model.ProviderConfiguration;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
@@ -39,6 +42,7 @@ import java.io.PrintStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.containsString;
@@ -1045,6 +1049,84 @@ public class KnoxCLITest {
     assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("test-cluster-good"));
 
 
+  }
+
+  /* Test cli command to convert topology to providers and descriptors */
+  @Test
+  public void testConvertTopology() throws Exception {
+    outContent.reset();
+    Configuration config = new GatewayConfigImpl();
+    URL topologyFileURL = ClassLoader.getSystemResource("token-test.xml");
+    final File topologyFile = Paths.get(topologyFileURL.toURI()).toFile();
+    final File outputDir = createDir();
+    final String providerConfigFileName = "my-provider.json";
+    final String descriptorConfigFileName = "my-descriptor.json";
+    final String clusterName = "myCluster";
+    final String discoveryUrl = "https://localhost:7183";
+    final String discoveryUser = "discoveryUser";
+    final String discoveryType = "ClouderaManager";
+    final String discoveryPwdAlias = "discovery";
+    final ObjectMapper mapper = new ObjectMapper();
+
+    try {
+      KnoxCLI cli = new KnoxCLI();
+      cli.setConf(config);
+
+      // This is only to get the gateway services initialized
+      cli.run(new String[]{"convert-topology", "--master", "master",
+          "--path", topologyFile.getAbsolutePath(),
+          "--provider-name", providerConfigFileName,
+          "--descriptor-name", descriptorConfigFileName,
+          "--output-dir", outputDir.getAbsolutePath(),
+          "--force",
+          "--cluster", clusterName,
+          "--discovery-url", discoveryUrl,
+          "--discovery-user", discoveryUser,
+          "--discovery-pwd-alias", discoveryPwdAlias,
+          "--discovery-type", discoveryType});
+
+      final File providerConfigFile = new File(outputDir+File.separator+providerConfigFileName);
+      final File descriptorConfigFile = new File(outputDir+File.separator+descriptorConfigFileName);
+
+      assertTrue("Provider config file not created", providerConfigFile.exists());
+      assertTrue("Descriptor config file not created", descriptorConfigFile.exists());
+
+      final ProviderConfiguration providerJson = mapper.readValue(providerConfigFile, ProviderConfiguration.class);
+      final DescriptorConfiguration descriptorJson = mapper.readValue(descriptorConfigFile, DescriptorConfiguration.class);
+
+      assertNotNull("Provider config could not be deserialized", providerJson);
+      assertNotNull("Descriptor config could not be deserialized", descriptorJson);
+
+      assertEquals(providerJson.getProviders().size(), 1);
+      assertEquals(providerJson.getProviders().get(0).getParams().size(), 8);
+      assertEquals(providerJson.getProviders().get(0).getName(), "ShiroProvider");
+      assertEquals(providerJson.getProviders().get(0).getRole(), "authentication");
+      assertEquals(providerJson.getProviders().get(0).isEnabled(), "true");
+
+      /* test param order */
+      assertEquals(providerJson.getProviders().get(0).getParams().get(0).getName(), "sessionTimeout");
+      assertEquals(providerJson.getProviders().get(0).getParams().get(3).getName(), "main.ldapRealm.contextFactory");
+      assertEquals(providerJson.getProviders().get(0).getParams().get(3).getName(), "main.ldapRealm.contextFactory");
+      assertEquals(providerJson.getProviders().get(0).getParams().get(5).getValue(), "ldap://localhost:33389");
+      assertEquals(providerJson.getProviders().get(0).getParams().get(7).getValue(), "authcBasic");
+
+      assertEquals(descriptorJson.getDiscoveryType(), discoveryType);
+      assertEquals(descriptorJson.getDiscoveryAddress(), discoveryUrl);
+      assertEquals(descriptorJson.getDiscoveryPasswordAlias(), discoveryPwdAlias);
+      assertEquals(descriptorJson.getDiscoveryUser(), discoveryUser);
+      assertEquals(descriptorJson.getCluster(), clusterName);
+      assertEquals(descriptorJson.getServices().size(), 1);
+      assertEquals(descriptorJson.getServices().get(0).getRole(), "KNOXTOKEN");
+      assertEquals(descriptorJson.getServices().get(0).getParams().size(), 5);
+
+    } finally {
+      FileUtils.deleteQuietly(outputDir);
+    }
+  }
+
+  private File createDir() throws IOException {
+    return TestUtils
+        .createTempDir(this.getClass().getSimpleName() + "-");
   }
 
   private static final String testDescriptorContentJSON = "{\n" +

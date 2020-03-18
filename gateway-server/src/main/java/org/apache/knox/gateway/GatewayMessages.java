@@ -682,4 +682,16 @@ public interface GatewayMessages {
 
   @Message(level = MessageLevel.ERROR, text = "Failed to save gateway status")
   void failedToSaveGatewayStatus();
+
+  @Message(level = MessageLevel.ERROR, text = "Error validating topology {0}")
+  void errorValidatingTopology(String topologyName);
+
+  @Message(level = MessageLevel.ERROR, text = "Error parsing topology {0}")
+  void errorParsingTopology(String topologyName);
+
+  @Message(level = MessageLevel.ERROR, text = "Error creating provider configuration {0} from topology {1}, cause: {2}")
+  void errorSavingProviderConfiguration(String providerPath, String topologyName, String message);
+
+  @Message(level = MessageLevel.ERROR, text = "Error creating provider descriptor {0} from topology {1}, cause: {2}")
+  void errorSavingDescriptorConfiguration(String providerPath, String topologyName, String message);
 }
