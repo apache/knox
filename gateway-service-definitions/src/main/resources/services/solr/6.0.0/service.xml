@@ -17,7 +17,7 @@
 -->
 <service role="SOLR" name="solr" version="6.0.0">
     <metadata>
-        <type>API</type>
+        <type>API_AND_UI</type>
         <context>/solr</context>
         <shortDesc>SOLR</shortDesc>
         <description>Solr is a popular, blazing-fast, open source enterprise search platform built on Apache Lucene™.</description>

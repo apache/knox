@@ -44,7 +44,7 @@ public class ServiceModel implements Comparable<ServiceModel> {
   static final String HIVE_SERVICE_URL_TEMPLATE = "jdbc:hive2://%s:%d/;?hive.server2.transport.mode=http;hive.server2.thrift.http.path=/%s/%s%s";
 
   public enum Type {
-    API, UI, UNKNOWN
+    API, UI, API_AND_UI, UNKNOWN
   };
 
   private HttpServletRequest request;
