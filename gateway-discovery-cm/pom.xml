@@ -27,6 +27,21 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>gateway-discovery-cm</artifactId>
+
+    <repositories>
+        <repository>
+            <id>Cloudera</id>
+            <name>Cloudera</name>
+            <url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+    </repositories>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.knox</groupId>
