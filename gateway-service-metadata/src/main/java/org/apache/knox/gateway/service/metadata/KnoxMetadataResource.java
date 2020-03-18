@@ -201,6 +201,9 @@ public class KnoxMetadataResource {
                   serviceUrl);
               if (ServiceModel.Type.UI == serviceModel.getType()) {
                 uiServices.add(serviceModel);
+              } else if (ServiceModel.Type.API_AND_UI == serviceModel.getType()) {
+                uiServices.add(serviceModel);
+                apiServices.add(serviceModel);
               } else {
                 apiServices.add(serviceModel);
               }
