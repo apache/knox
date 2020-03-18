@@ -507,7 +507,11 @@
                         <configuration>
                             <rules>
                                 <requireMavenVersion>
-                                    <version>[3.0.2,)</version>
+                                    <!--
+                                    Maven 3.6.2 has issues
+                                    https://issues.apache.org/jira/browse/KNOX-2305
+                                    -->
+                                    <version>[3.1.0,3.6.2),(3.6.2,)</version>
                                 </requireMavenVersion>
                                 <requireJavaVersion>
                                     <version>[1.8,)</version>
@@ -2414,17 +2418,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <repositories>
-        <repository>
-            <id>Cloudera</id>
-            <name>Cloudera</name>
-            <url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-        </repository>
-    </repositories>
 </project>
