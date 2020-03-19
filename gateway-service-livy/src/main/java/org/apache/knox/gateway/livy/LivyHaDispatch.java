@@ -74,7 +74,7 @@ public class  LivyHaDispatch extends DefaultHaDispatch {
             LOG.errorConnectingToServer(outboundRequest.getURI().toString(), e);
             failoverRequest(outboundRequest, inboundRequest, outboundResponse, inboundResponse, e);
         }
-    }    
+    }
 
     /**
      * Checks for specific outbound response codes/content to trigger a retry or failover
