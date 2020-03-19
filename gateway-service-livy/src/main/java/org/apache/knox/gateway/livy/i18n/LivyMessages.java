@@ -24,7 +24,7 @@ import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
 
 @Messages(logger = "org.apache.knox.gateway")
-public interface RMMessages extends HaDispatchMessages {
+public interface LivyMessages extends HaDispatchMessages {
 
   @Message(level = MessageLevel.WARN, text = "Received an error from a Livy Server in Standby: {0}")
    void errorReceivedFromStandbyNode(@StackTrace(level = MessageLevel.DEBUG) Exception e);
