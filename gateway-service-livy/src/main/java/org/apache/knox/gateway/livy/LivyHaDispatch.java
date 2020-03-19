@@ -37,8 +37,7 @@ public class  LivyHaDispatch extends DefaultHaDispatch {
     private static final String FAILOVER_COUNTER_ATTRIBUTE = "dispatch.ha.failover.counter";
     private static final String LOCATION = "Location";
     private static final LivyMessages LOG = MessagesFactory.get(LivyMessages.class);
-    private HttpResponse inboundResponse = null;
-
+    private HttpResponse inboundResponse;
 
     public LivyHaDispatch() {
         setServiceRole("LIVYSERVER");
