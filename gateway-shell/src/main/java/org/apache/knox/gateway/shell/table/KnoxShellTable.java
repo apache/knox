@@ -137,8 +137,8 @@ public class KnoxShellTable {
     double[] colArray = new double[col.size()];
     Conversions conversionMethod = null;
     for (int i = 0; i < col.size(); i++) {
-      String v = (String) col.get(i);
-      if (v.trim().isEmpty()) {
+      Object v = col.get(i);
+      if (v instanceof String && ((String) v).trim().isEmpty()) {
         col.set(i, "0");
       }
       if (i == 0) {
