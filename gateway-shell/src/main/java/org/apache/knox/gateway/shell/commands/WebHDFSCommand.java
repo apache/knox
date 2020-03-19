@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.shell.commands;
 
 import java.io.Console;
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -54,9 +55,7 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
                    "  :fs get {from-path} {to-path} \n" +
                    "  :fs put {from-path} {tp-path} \n" +
                    "  :fs rm {target-path} \n" +
-                   "  :fs mkdir {dir-path} \n" +
-                   "  :fs chown {owner} {target-path} \n" +
-                   "  :fs chmod {permissions} {target-path} \n";
+                   "  :fs mkdir {dir-path} \n";
     return usage;
   }
 
@@ -236,6 +235,10 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
         String to = null;
         if (args.size() > 2) {
           to = args.get(2);
+        }
+        else {
+          to = System.getProperty("user.home") + File.separator +
+              path.substring(path.lastIndexOf(File.separator));
         }
         try {
           Hdfs.get(sessions.get(mountPoint)).from(from).file(to).now().getString();
