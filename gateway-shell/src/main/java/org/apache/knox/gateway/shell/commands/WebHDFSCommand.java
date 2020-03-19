@@ -33,13 +33,14 @@ import org.apache.knox.gateway.shell.CredentialCollector;
 import org.apache.knox.gateway.shell.KnoxSession;
 import org.apache.knox.gateway.shell.KnoxShellException;
 import org.apache.knox.gateway.shell.hdfs.Hdfs;
+import org.apache.knox.gateway.shell.hdfs.Status.Response;
 import org.apache.knox.gateway.shell.table.KnoxShellTable;
 import org.apache.knox.gateway.util.JsonUtils;
 import org.codehaus.groovy.tools.shell.Groovysh;
 
 public class WebHDFSCommand extends AbstractKnoxShellCommand {
+  private static final String KNOXMOUNTPOINTS = "__knoxmountpoints";
   private Map<String, KnoxSession> sessions = new HashMap<>();
-  private String currentDir = "";
 
   public WebHDFSCommand(Groovysh shell) {
     super(shell, ":filesystem", ":fs");
@@ -61,49 +62,56 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
 
   @Override
   public Object execute(List<String> args) {
+    Map<String, String> mounts = getMountPoints();
     if (args.isEmpty()) {
       args.add("ls");
     }
     if (args.get(0).equalsIgnoreCase("mount")) {
       String url = args.get(1);
       String mountPoint = args.get(2);
-      CredentialCollector dlg;
-      try {
-        dlg = login();
-      } catch (CredentialCollectionException e) {
-        e.printStackTrace();
-        return "Error: Credential collection failure.";
-      }
-      String username = dlg.name();
-      String password = new String(dlg.chars());
-      KnoxSession session;
-      try {
-        session = KnoxSession.login(url, username, password);
-        sessions.put(mountPoint, session);
-      } catch (URISyntaxException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+      KnoxSession session = establishSession(mountPoint, url);
+      if (session != null) {
+        mounts.put(mountPoint, url);
+        KnoxSession.persistMountPoints(mounts);
+        return url + " mounted as " + mountPoint;
       }
 
-      return url + " mounted as " + mountPoint;
+      return "Failed to mount " + url + " as " + mountPoint;
+    }
+    else if (args.get(0).equalsIgnoreCase("unmount")) {
+      String mountPoint = args.get(1);
+      sessions.remove(mountPoint);
+      mounts.remove(mountPoint);
+      KnoxSession.persistMountPoints(mounts);
+    }
+    else if (args.get(0).equalsIgnoreCase("mounts")) {
+      KnoxShellTable table = new KnoxShellTable();
+      table.header("Mount Point").header("Topology URL");
+      for (String mountPoint : mounts.keySet()) {
+        table.row().value(mountPoint).value(mounts.get(mountPoint));
+      }
+      return table;
     }
     else if (args.get(0).equalsIgnoreCase("ls")) {
-      if (args.size() == 1 && currentDir != null) {
-        args.add(currentDir);
-      }
       String path = args.get(1);
       try {
         String directory;
         String mountPoint = determineMountPoint(path);
         if (mountPoint != null) {
-          directory = determineTargetPath(path, mountPoint);
-          String json = Hdfs.ls(sessions.get(mountPoint)).dir(directory).now().getString();
-          Map<String,HashMap<String, ArrayList<HashMap<String, String>>>> map =
-              JsonUtils.getFileStatusesAsMap(json);
-          if (map != null) {
-            ArrayList<HashMap<String, String>> list = map.get("FileStatuses").get("FileStatus");
-            KnoxShellTable table = buildTableFromListStatus(directory, list);
-            return table;
+          KnoxSession session = getSessionForMountPoint(mounts, mountPoint);
+          if (session != null) {
+            directory = determineTargetPath(path, mountPoint);
+            String json = Hdfs.ls(session).dir(directory).now().getString();
+            Map<String,HashMap<String, ArrayList<HashMap<String, String>>>> map =
+                JsonUtils.getFileStatusesAsMap(json);
+            if (map != null) {
+              ArrayList<HashMap<String, String>> list = map.get("FileStatuses").get("FileStatus");
+              KnoxShellTable table = buildTableFromListStatus(directory, list);
+              return table;
+            }
+          }
+          else {
+            return "No session established for mountPoint: " + mountPoint + " Use :fs mount {topology-url} {mountpoint-name}";
           }
         }
         else {
@@ -120,21 +128,32 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
       String path = args.get(2);
 
       String mountPoint = determineMountPoint(path);
-      String targetPath = determineTargetPath(path, mountPoint);
-      try {
-        boolean overwrite = false;
-        if (Hdfs.status(sessions.get(mountPoint)).file(targetPath).now().exists()) {
-          if (collectClearCredential(targetPath + "already exists would you like to overwrite (Y/n)").equalsIgnoreCase("y")) {
-            overwrite = true;
+      KnoxSession session = getSessionForMountPoint(mounts, mountPoint);
+      if (session != null) {
+        String targetPath = determineTargetPath(path, mountPoint);
+        try {
+          boolean overwrite = false;
+          try {
+            Response response = Hdfs.status(session).file(targetPath).now();
+            if (response.exists()) {
+              if (collectClearInput(targetPath + " already exists would you like to overwrite (Y/n)").equalsIgnoreCase("y")) {
+                overwrite = true;
+              }
+            }
+          } catch (KnoxShellException e) {
+            // NOP
           }
+          int permission = 755;
+          if (args.size() >= 4) {
+            permission = Integer.parseInt(args.get(3));
+          }
+          Hdfs.put(session).file(localFile).to(targetPath).overwrite(overwrite).permission(permission).now().getString();
+        } catch (IOException e) {
+          e.printStackTrace();
         }
-        int permission = 755;
-        if (args.size() >= 4) {
-          permission = Integer.parseInt(args.get(3));
-        }
-        Hdfs.put(sessions.get(mountPoint)).file(localFile).to(targetPath).overwrite(overwrite).permission(permission).now().getString();
-      } catch (KnoxShellException | IOException e) {
-        e.printStackTrace();
+      }
+      else {
+        return "No session established for mountPoint: " + mountPoint + " Use :fs mount {topology-url} {mountpoint-name}";
       }
     }
     else if (args.get(0).equalsIgnoreCase("rm")) {
@@ -143,11 +162,17 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
       String path = args.get(1);
 
       String mountPoint = determineMountPoint(path);
-      String targetPath = determineTargetPath(path, mountPoint);
-      try {
-        Hdfs.rm(sessions.get(mountPoint)).file(targetPath).now().getString();
-      } catch (KnoxShellException | IOException e) {
-        e.printStackTrace();
+      KnoxSession session = getSessionForMountPoint(mounts, mountPoint);
+      if (session != null) {
+        String targetPath = determineTargetPath(path, mountPoint);
+        try {
+          Hdfs.rm(session).file(targetPath).now().getString();
+        } catch (KnoxShellException | IOException e) {
+          e.printStackTrace();
+        }
+      }
+      else {
+        return "No session established for mountPoint: " + mountPoint + " Use :fs mount {topology-url} {mountpoint-name}";
       }
     }
     else if (args.get(0).equalsIgnoreCase("cat")) {
@@ -156,12 +181,18 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
       String path = args.get(1);
 
       String mountPoint = determineMountPoint(path);
-      String targetPath = determineTargetPath(path, mountPoint);
-      try {
-        String contents = Hdfs.get(sessions.get(mountPoint)).from(targetPath).now().getString();
-        return contents;
-      } catch (KnoxShellException | IOException e) {
-        e.printStackTrace();
+      KnoxSession session = getSessionForMountPoint(mounts, mountPoint);
+      if (session != null) {
+        String targetPath = determineTargetPath(path, mountPoint);
+        try {
+          String contents = Hdfs.get(session).from(targetPath).now().getString();
+          return contents;
+        } catch (KnoxShellException | IOException e) {
+          e.printStackTrace();
+        }
+      }
+      else {
+        return "No session established for mountPoint: " + mountPoint + " Use :fs mount {topology-url} {mountpoint-name}";
       }
     }
     else if (args.get(0).equalsIgnoreCase("mkdir")) {
@@ -174,17 +205,23 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
       }
 
       String mountPoint = determineMountPoint(path);
-      String targetPath = determineTargetPath(path, mountPoint);
-      try {
-        if (perms != null) {
-          Hdfs.mkdir(sessions.get(mountPoint)).dir(targetPath).now().getString();
+      KnoxSession session = getSessionForMountPoint(mounts, mountPoint);
+      if (session != null) {
+        String targetPath = determineTargetPath(path, mountPoint);
+        try {
+          if (perms != null) {
+            Hdfs.mkdir(sessions.get(mountPoint)).dir(targetPath).now().getString();
+          }
+          else {
+            Hdfs.mkdir(session).dir(targetPath).perm(perms).now().getString();
+          }
+          return "Successfully created directory: " + targetPath;
+        } catch (KnoxShellException | IOException e) {
+          e.printStackTrace();
         }
-        else {
-          Hdfs.mkdir(sessions.get(mountPoint)).dir(targetPath).perm(perms).now().getString();
-        }
-        return "Successfully created directory: " + targetPath;
-      } catch (KnoxShellException | IOException e) {
-        e.printStackTrace();
+      }
+      else {
+        return "No session established for mountPoint: " + mountPoint + " Use :fs mount {topology-url} {mountpoint-name}";
       }
     }
     else if (args.get(0).equalsIgnoreCase("get")) {
@@ -193,42 +230,21 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
       String path = args.get(1);
 
       String mountPoint = determineMountPoint(path);
-      String from = determineTargetPath(path, mountPoint);
-      String to = null;
-      if (args.size() > 2) {
-        to = args.get(2);
-      }
-      try {
-        Hdfs.get(sessions.get(mountPoint)).from(from).file(to).now().getString();
-      } catch (KnoxShellException | IOException e) {
-        e.printStackTrace();
-      }
-    }
-    else if (args.get(0).equalsIgnoreCase("pwd")) {
-      if (currentDir != null && !currentDir.isEmpty()) {
-        System.out.println(currentDir);
-      }
-    }
-    else if (args.get(0).equalsIgnoreCase("cd")) {
-      String tmp;
-      String path = args.get(1);
-      if (path.startsWith("/")) {
-        // if user supplied path starts at the root then
-        // this is a possible switch to a new mount point
-        String mountPoint = determineMountPoint(path);
-        if (mountPoint != null) {
-          // mountPoint found so check that the path is valid
-          // within the mounted filesystem
-          tmp = stripMountPoint(path, mountPoint);
-          validateChangeDirectory(tmp, "", mountPoint);
+      KnoxSession session = getSessionForMountPoint(mounts, mountPoint);
+      if (session != null) {
+        String from = determineTargetPath(path, mountPoint);
+        String to = null;
+        if (args.size() > 2) {
+          to = args.get(2);
+        }
+        try {
+          Hdfs.get(sessions.get(mountPoint)).from(from).file(to).now().getString();
+        } catch (KnoxShellException | IOException e) {
+          e.printStackTrace();
         }
       }
-      else if (!currentDir.isEmpty()) {
-        tmp = currentDir;
-        if (!tmp.endsWith("/")) {
-          tmp += "/";
-        }
-        validateChangeDirectory(tmp, path, determineMountPoint(tmp));
+      else {
+        return "No session established for mountPoint: " + mountPoint + " Use :fs mount {topology-url} {mountpoint-name}";
       }
     }
     else {
@@ -238,7 +254,38 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
     return "";
   }
 
-  private String collectClearCredential(String prompt) {
+  private KnoxSession getSessionForMountPoint(Map<String, String> mounts, String mountPoint) {
+    KnoxSession session = sessions.get(mountPoint);
+    if (session == null) {
+      String url = mounts.get(mountPoint);
+      if (url != null) {
+        session = establishSession(mountPoint, url);
+      }
+    }
+    return session;
+  }
+
+  private KnoxSession establishSession(String mountPoint, String url) {
+    CredentialCollector dlg;
+    try {
+      dlg = login();
+    } catch (CredentialCollectionException e) {
+      e.printStackTrace();
+      return null;
+    }
+    String username = dlg.name();
+    String password = new String(dlg.chars());
+    KnoxSession session = null;
+    try {
+      session = KnoxSession.login(url, username, password);
+      sessions.put(mountPoint, session);
+    } catch (URISyntaxException e) {
+      e.printStackTrace();
+    }
+    return session;
+  }
+
+  private String collectClearInput(String prompt) {
     Console c = System.console();
     if (c == null) {
       System.err.println("No console.");
@@ -251,34 +298,11 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
   }
 
   private String determineTargetPath(String path, String mountPoint) {
-    String directory;
+    String directory = null;
     if (path.startsWith("/")) {
       directory = stripMountPoint(path, mountPoint);
     }
-    else {
-      directory = "/" + currentDir + path;
-    }
     return directory;
-  }
-
-  private void validateChangeDirectory(String tmp, String path, String mountPoint) {
-    try {
-      int status = Hdfs.status(sessions.get(mountPoint))
-          .file(stripMountPoint(tmp + path, mountPoint))
-          .now()
-          .getStatusCode();
-      if (status == 200) {
-        currentDir = tmp + path;
-      }
-      else if (status == 404) {
-        System.out.println("cd: " + path + ": No such file or directory");
-      }
-      else {
-        System.out.println("cd: " + path + ": Unsuccessful status:" + status);
-      }
-    } catch (KnoxShellException e) {
-      e.printStackTrace();
-    }
   }
 
   private String stripMountPoint(String path, String mountPoint) {
@@ -292,12 +316,6 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
       // does the user supplied path starts at a root
       // if so check for a mountPoint based on the first element of the path
       String[] pathElements = path.split("/");
-      mountPoint = pathElements[1];
-    }
-    else if (!currentDir.isEmpty()) {
-      // if the user supplied path is relative then it is relative
-      // to the current directory with included mountPoint
-      String[] pathElements = currentDir.split("/");
       mountPoint = pathElements[1];
     }
     return mountPoint;
@@ -326,6 +344,25 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
     }
 
     return table;
+  }
+
+  @SuppressWarnings("unchecked")
+  protected Map<String, String> getMountPoints() {
+    Map<String, String> mounts = (Map<String, String>) getVariables().get(KNOXMOUNTPOINTS);
+    if (mounts == null) {
+      try {
+        mounts = KnoxSession.loadMountPoints();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      if (mounts != null) {
+        getVariables().put(KNOXMOUNTPOINTS, mounts);
+      }
+      else {
+        mounts = new HashMap<>();
+      }
+    }
+    return mounts;
   }
 
   public static void main(String[] args) {
