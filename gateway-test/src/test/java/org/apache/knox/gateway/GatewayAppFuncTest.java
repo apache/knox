@@ -115,6 +115,12 @@ public class GatewayAppFuncTest {
     File topoDir = new File( config.getGatewayTopologyDir() );
     topoDir.mkdirs();
 
+    File descDir = new File( config.getGatewayDescriptorsDir() );
+    descDir.mkdirs();
+
+    File provConfDir = new File( config.getGatewayProvidersConfigDir() );
+    provConfDir.mkdirs();
+
     File deployDir = new File( config.getGatewayDeploymentDir() );
     deployDir.mkdirs();
 

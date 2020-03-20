@@ -652,12 +652,12 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public String getGatewayProvidersConfigDir() {
-    return null;
+    return getGatewayConfPath().resolve("shared-providers").toString();
   }
 
   @Override
   public String getGatewayDescriptorsDir() {
-    return null;
+    return getGatewayConfPath().resolve("descriptors").toString();
   }
 
   @Override

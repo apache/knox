@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.topology;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.knox.gateway.service.definition.CustomDispatch;
 
 import java.util.ArrayList;
@@ -24,6 +26,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Service {
 
@@ -122,35 +125,22 @@ public class Service {
       return false;
     }
     Service that = (Service) object;
-    String thatName = that.getName();
-    if (thatName != null && !(thatName.equals(name))) {
-        return false;
-    }
-    String thatRole = that.getRole();
-    if (thatRole != null && !thatRole.equals(role)) {
-        return false;
-    }
-    Version thatVersion = that.getVersion();
-    if (thatVersion != null && !(thatVersion.equals(version))) {
-        return false;
-    }
-    return true;
+    return (new EqualsBuilder()).append(name, that.name)
+                                .append(role, that.role)
+                                .append(version, that.version)
+                                .append(urls.stream().sorted().collect(Collectors.toList()),
+                                        that.urls.stream().sorted().collect(Collectors.toList()))
+                                .append(params, that.params)
+                                .build();
   }
 
   @Override
   public int hashCode() {
-    int hashCode = 17;
-    if (getName() != null) {
-      hashCode *= 31 * getName().hashCode();
-    }
-    if (getRole() != null) {
-      hashCode *= 31 * getRole().hashCode();
-    }
-    if (getVersion() != null) {
-      hashCode *= 31 * getVersion().hashCode();
-    }
-
-    return hashCode;
+    return (new HashCodeBuilder(17, 31)).append(name)
+                                        .append(role)
+                                        .append(version)
+                                        .append(urls)
+                                        .append(params).build();
   }
 
   /**
@@ -172,4 +162,5 @@ public class Service {
   public void addDispatch(CustomDispatch dispatch) {
     this.dispatch = dispatch;
   }
+
 }

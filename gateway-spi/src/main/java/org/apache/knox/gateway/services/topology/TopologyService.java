@@ -22,8 +22,11 @@ import org.apache.knox.gateway.service.definition.ServiceDefinitionChangeListene
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.TopologyListener;
+import org.xml.sax.SAXException;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -62,5 +65,17 @@ public interface TopologyService extends Service, ServiceDefinitionChangeListene
   boolean deleteProviderConfiguration(String name, boolean force);
 
   Map<String, List<String>> getServiceTestURLs(Topology t, GatewayConfig config);
+
+  /**
+   * Parse the specified XML topology content to produce a Topology object.
+   *
+   * @param content The XML content of the topology.
+   *
+   * @return A Topology object based on the specified content.
+   *
+   * @throws IOException
+   * @throws SAXException
+   */
+  Topology parse(InputStream content) throws IOException, SAXException;
 
 }
