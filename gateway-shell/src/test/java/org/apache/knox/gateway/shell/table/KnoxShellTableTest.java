@@ -196,7 +196,6 @@ public class KnoxShellTableTest {
     table.title("From URL");
 
     table.header("\"Column A, Column A1\"").header("Column B").header("Column C");
-
     table.row().value("123").value("456").value("344444444");
     table.row().value("789").value("012").value("844444444");
 
@@ -216,14 +215,6 @@ public class KnoxShellTableTest {
     }
 
     assertEquals(table.headers.get(0), "\"Column A, Column A1\"");
-  }
-
-  @Test
-  public void testCSVQuotedEmbeddedCommaStringToTable() throws IOException {
-    String initialString = "\"colA, colA1\", colB, colC\nvalue1, value2. value3\nvalue4, value5, value6";
-
-    KnoxShellTable table = KnoxShellTable.builder().csv().withHeaders().string(initialString);
-    assertEquals(table.headers.get(0), "\"colA, colA1\"");
   }
 
   @Test
