@@ -191,19 +191,31 @@ public class KnoxShellTableTest {
   }
 
   @Test
-  public void testCSVStringToTable() throws IOException {
-    String initialString = "colA, colB, colC\nvalue1, value2. value3\nvalue4, value5, value6";
-
-    KnoxShellTable table = KnoxShellTable.builder().csv().withHeaders().string(initialString);
-    assertEquals(table.rows.size(), 2);
-  }
-
-  @Test
   public void testCSVQuotedEmbeddedCommaStringToTable() throws IOException {
-    String initialString = "\"colA, colA1\", colB, colC\nvalue1, value2. value3\nvalue4, value5, value6";
+    KnoxShellTable table = new KnoxShellTable();
+    table.title("From URL");
 
-    KnoxShellTable table = KnoxShellTable.builder().csv().withHeaders().string(initialString);
-    assertEquals(table.headers.get(0), "\"colA, colA1\"");
+    table.header("\"Column A, Column A1\"").header("Column B").header("Column C");
+
+    table.row().value("123").value("456").value("344444444");
+    table.row().value("789").value("012").value("844444444");
+
+    String csv = table.toCSV();
+    try {
+      // write file to /tmp to read back in
+      FileUtils.writeStringToFile(new File("/tmp/testtable.csv"), csv, StandardCharsets.UTF_8);
+
+      KnoxShellTable urlTable = KnoxShellTable.builder().csv()
+          .withHeaders()
+          .url("file:///tmp/testtable.csv");
+      urlTable.title("From URL");
+      assertEquals(urlTable.toString(), table.toString());
+
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    assertEquals(table.headers.get(0), "\"Column A, Column A1\"");
   }
 
   @Test
