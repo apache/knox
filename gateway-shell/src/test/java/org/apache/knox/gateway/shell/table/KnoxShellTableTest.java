@@ -191,6 +191,22 @@ public class KnoxShellTableTest {
   }
 
   @Test
+  public void testCSVStringToTable() throws IOException {
+    String initialString = "colA, colB, colC\nvalue1, value2. value3\nvalue4, value5, value6";
+
+    KnoxShellTable table = KnoxShellTable.builder().csv().withHeaders().string(initialString);
+    assertEquals(table.rows.size(), 2);
+  }
+
+  @Test
+  public void testCSVQuotedEmbeddedCommaStringToTable() throws IOException {
+    String initialString = "\"colA, colA1\", colB, colC\nvalue1, value2. value3\nvalue4, value5, value6";
+
+    KnoxShellTable table = KnoxShellTable.builder().csv().withHeaders().string(initialString);
+    assertEquals(table.headers.get(0), "\"colA, colA1\"");
+  }
+
+  @Test
   public void testToAndFromJSON() throws IOException {
     KnoxShellTable table = new KnoxShellTable();
 
