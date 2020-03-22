@@ -375,11 +375,25 @@ public class KnoxShellTable {
     return sort(colName, SortOrder.ASCENDING);
   }
 
+  public KnoxShellTable sortNumeric(String colName) {
+    double[] col = toDoubleArray(colName);
+    ArrayList<Comparable<? extends Object>> column = new ArrayList<>();
+    for(double v : col) {
+      column.add(v);
+   }
+    return sort(column, SortOrder.ASCENDING);
+  }
+
   public KnoxShellTable sort(String colName, SortOrder order) {
+    List<Comparable<? extends Object>> col = values(colName);
+    return sort(col, order);
+  }
+
+  public KnoxShellTable sort(List<Comparable<? extends Object>> col,
+      SortOrder order) {
     KnoxShellTable table = new KnoxShellTable();
 
     Comparable<? extends Object> value;
-    List<Comparable<? extends Object>> col = values(colName);
     List<RowIndex> index = new ArrayList<>();
     for (int i = 0; i < col.size(); i++) {
       value = col.get(i);
