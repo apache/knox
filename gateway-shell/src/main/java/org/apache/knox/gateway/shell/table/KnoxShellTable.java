@@ -357,6 +357,10 @@ public class KnoxShellTable {
     return new KnoxShellTableFilter(this);
   }
 
+  public KnoxShellTableAggregator aggregate() {
+    return new KnoxShellTableAggregator(this);
+  }
+
   public KnoxShellTable select(String cols) {
     KnoxShellTable table = new KnoxShellTable();
     List<List<Comparable<? extends Object>>> columns = new ArrayList<>();
