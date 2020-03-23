@@ -24,13 +24,17 @@ import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.MasterService;
+import org.apache.knox.gateway.services.topology.TopologyService;
+import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.discovery.DefaultServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryFactory;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
@@ -168,11 +172,13 @@ public class SimpleDescriptorHandler {
             }
         }
 
+        GatewayServices gws = getGatewayServices(gatewayServices);
+
         // Provision the query param encryption password here, rather than relying on the random password generated
         // when the topology is deployed. This is to support Knox HA deployments, where multiple Knox instances are
         // generating topologies based on a shared remote descriptor, and they must all be able to encrypt/decrypt
         // query params with the same credentials. (KNOX-1136)
-        if (!provisionQueryParamEncryptionCredential(desc.getName(), getGatewayServices(gatewayServices))) {
+        if (!provisionQueryParamEncryptionCredential(desc.getName(), gws)) {
             log.unableCreatePasswordForEncryption(desc.getName());
         }
 
@@ -185,7 +191,8 @@ public class SimpleDescriptorHandler {
                                 validServiceNames,
                                 serviceVersions,
                                 serviceURLs,
-                                serviceParams);
+                                serviceParams,
+                                gws);
     }
 
     private static GatewayServices getGatewayServices(Service... services) {
@@ -362,7 +369,8 @@ public class SimpleDescriptorHandler {
                                                       final Set<String> validServiceNames,
                                                       final Map<String, String> serviceVersions,
                                                       final Map<String, List<String>> serviceURLs,
-                                                      final Map<String, Map<String, String>> serviceParams) {
+                                                      final Map<String, Map<String, String>> serviceParams,
+                                                      final GatewayServices gwServices) {
         Map<String, File> result = new HashMap<>();
         File topologyDescriptor = null;
         try (StringWriter sw = new StringWriter()) {
@@ -571,13 +579,19 @@ public class SimpleDescriptorHandler {
             if (topologyFilename == null) {
                 topologyFilename = desc.getCluster();
             }
+
             topologyDescriptor = new File(destDirectory, topologyFilename + ".xml");
 
-            try (OutputStream outputStream = Files.newOutputStream(topologyDescriptor.toPath());
-                 OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
-                 BufferedWriter fw = new BufferedWriter(outputStreamWriter)) {
-              fw.write(sw.toString());
-              fw.flush();
+            if (shouldPersistGeneratedTopology(topologyFilename, topologyDescriptor, sw.toString(), gwServices)) {
+                log.persistingGeneratedTopology(topologyFilename);
+                try (OutputStream outputStream = Files.newOutputStream(topologyDescriptor.toPath());
+                     OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
+                     BufferedWriter fw = new BufferedWriter(outputStreamWriter)) {
+                    fw.write(sw.toString());
+                    fw.flush();
+                }
+            } else {
+                log.skippingDeploymentOfGeneratedTopology(topologyFilename); // KNOX-2302
             }
         } catch (IOException e) {
             log.failedToGenerateTopologyFromSimpleDescriptor(topologyDescriptor.getName(), e);
@@ -586,6 +600,53 @@ public class SimpleDescriptorHandler {
 
         result.put(RESULT_TOPOLOGY, topologyDescriptor);
 
+        return result;
+    }
+
+    /**
+     * Determine whether or not the generated content of the specified topology should be persisted.
+     *
+     * @param topologyName     The name of the topology
+     * @param topologyFile     A File reference to the location of the persisted topology
+     * @param generatedContent The generated topology content
+     * @param gwServices       A GatewayServices reference
+     *
+     * @return true, if the generated topology should be persisted; Otherwise, false.
+     */
+    private static boolean shouldPersistGeneratedTopology(final String          topologyName,
+                                                          final File            topologyFile,
+                                                          final String          generatedContent,
+                                                          final GatewayServices gwServices) {
+        boolean result = false;
+
+        // Determine if the topology already exists.
+        if (topologyFile.exists()) {
+            // If it does exist, only overwrite it if it has changed (KNOX-2302)
+            // Compare the generated topology with the in-memory topology
+            Topology existing = null;
+            TopologyService topologyService = gwServices.getService(ServiceType.TOPOLOGY_SERVICE);
+            for (Topology t : topologyService.getTopologies()) {
+                if (topologyName.equals(t.getName())) {
+                    existing = t;
+                    break;
+                }
+            }
+
+            if (existing != null) {
+                try (InputStream in = new ByteArrayInputStream(generatedContent.getBytes(StandardCharsets.UTF_8))) {
+                    Topology generatedTopology = topologyService.parse(in);
+                    generatedTopology.setName(topologyName);
+                    // If the generated toplogy is different from the existing, then it should be persisted
+                    result = !generatedTopology.equals(existing);
+                } catch (Exception e) {
+                    log.errorComparingGeneratedTopology(topologyName, e);
+                }
+            } else {
+                result = true; // If the existing Topology could not be accessed, treat it as a new one
+            }
+        } else {
+            result = true; // It's a new topology, so persist it
+        }
         return result;
     }
 

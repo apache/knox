@@ -21,7 +21,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.monitor.FileAlterationListener;
+import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.topology.impl.DefaultTopologyService;
 import org.apache.knox.gateway.services.topology.monitor.DescriptorsMonitor;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -38,6 +41,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -177,6 +181,17 @@ public class DefaultTopologyServiceTest {
     }
   }
 
+  /**
+   * Set the static GatewayServices field to the specified value.
+   *
+   * @param gws A GatewayServices object, or null.
+   */
+  private void setGatewayServices(final GatewayServices gws) throws Exception {
+    Field gwsField = GatewayServer.class.getDeclaredField("services");
+    gwsField.setAccessible(true);
+    gwsField.set(null, gws);
+  }
+
   /*
    * KNOX-1014
    *
@@ -212,6 +227,12 @@ public class DefaultTopologyServiceTest {
       provider.init(config, c);
       provider.addTopologyChangeListener(topoListener);
       provider.reloadTopologies();
+
+      // GatewayServices mock
+      GatewayServices gws = EasyMock.createNiceMock(GatewayServices.class);
+      EasyMock.expect(gws.getService(ServiceType.TOPOLOGY_SERVICE)).andReturn(provider).anyTimes();
+      EasyMock.replay(gws);
+      setGatewayServices(gws);
 
       // Add a simple descriptor to the descriptors dir to verify topology generation and loading (KNOX-1006)
       AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
@@ -292,6 +313,7 @@ public class DefaultTopologyServiceTest {
       }
     } finally {
       FileUtils.deleteQuietly(dir);
+      setGatewayServices(null);
     }
   }
 
@@ -329,6 +351,12 @@ public class DefaultTopologyServiceTest {
       ts.init(config, c);
       ts.addTopologyChangeListener(topoListener);
       ts.reloadTopologies();
+
+      // GatewayServices mock
+      GatewayServices gws = EasyMock.createNiceMock(GatewayServices.class);
+      EasyMock.expect(gws.getService(ServiceType.TOPOLOGY_SERVICE)).andReturn(ts).anyTimes();
+      EasyMock.replay(gws);
+      setGatewayServices(gws);
 
       java.lang.reflect.Field dmField = ts.getClass().getDeclaredField("descriptorsMonitor");
       dmField.setAccessible(true);
@@ -389,6 +417,7 @@ public class DefaultTopologyServiceTest {
 
     } finally {
       FileUtils.deleteQuietly(dir);
+      setGatewayServices(null);
     }
   }
 
@@ -421,6 +450,12 @@ public class DefaultTopologyServiceTest {
       ts.init(config, c);
       ts.addTopologyChangeListener(topoListener);
       ts.reloadTopologies();
+
+      // GatewayServices mock
+      GatewayServices gws = EasyMock.createNiceMock(GatewayServices.class);
+      EasyMock.expect(gws.getService(ServiceType.TOPOLOGY_SERVICE)).andReturn(ts).anyTimes();
+      EasyMock.replay(gws);
+      setGatewayServices(gws);
 
       java.lang.reflect.Field dmField = ts.getClass().getDeclaredField("descriptorsMonitor");
       dmField.setAccessible(true);
@@ -534,6 +569,7 @@ public class DefaultTopologyServiceTest {
 
     } finally {
       FileUtils.deleteQuietly(dir);
+      setGatewayServices(null);
     }
   }
 

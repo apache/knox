@@ -104,6 +104,12 @@ public class GatewayHealthFuncTest {
     File topoDir = new File(testConfig.getGatewayTopologyDir());
     topoDir.mkdirs();
 
+    File descDir = new File( testConfig.getGatewayDescriptorsDir() );
+    descDir.mkdirs();
+
+    File provConfDir = new File( testConfig.getGatewayProvidersConfigDir() );
+    provConfDir.mkdirs();
+
     File deployDir = new File(testConfig.getGatewayDeploymentDir());
     deployDir.mkdirs();
 

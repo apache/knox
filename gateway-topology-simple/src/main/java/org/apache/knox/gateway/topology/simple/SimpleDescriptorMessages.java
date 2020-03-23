@@ -28,7 +28,7 @@ public interface SimpleDescriptorMessages {
             text = "Unable to complete service discovery for cluster {0}.")
     void failedToDiscoverClusterServices(String descriptorName);
 
-    @Message(level = MessageLevel.ERROR,
+    @Message(level = MessageLevel.WARN,
             text = "No valid URLs were discovered for {0} in the {1} cluster.")
     void failedToDiscoverClusterServiceURLs(String serviceName, String clusterName);
 
@@ -60,5 +60,18 @@ public interface SimpleDescriptorMessages {
     @Message(level = MessageLevel.ERROR,
             text = "Failed to create a password for query string encryption for {0}." )
     void unableCreatePasswordForEncryption(String topologyName);
+
+    @Message(level = MessageLevel.ERROR,
+        text = "Error comparing the generated {0} topology with the existing version: {1}" )
+    void errorComparingGeneratedTopology(String topologyName,
+                                         @StackTrace( level = MessageLevel.DEBUG) Exception e);
+
+    @Message(level = MessageLevel.INFO,
+            text = "Persisting the generated {0} topology because it either does not exist or it has changed." )
+    void persistingGeneratedTopology(String topologyName);
+
+    @Message(level = MessageLevel.INFO,
+            text = "Skipping redeployment of the {0} topology because it already exists and has not changed." )
+    void skippingDeploymentOfGeneratedTopology(String topologyName);
 
 }

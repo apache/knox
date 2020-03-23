@@ -114,6 +114,12 @@ public class AmbariServiceDefinitionTest {
     File deployDir = new File( config.getGatewayDeploymentDir() );
     deployDir.mkdirs();
 
+    File descDir = new File( config.getGatewayDescriptorsDir() );
+    descDir.mkdirs();
+
+    File providerConfigDir = new File( config.getGatewayProvidersConfigDir() );
+    providerConfigDir.mkdirs();
+
     setupMockServers();
     startGatewayServer();
   }

@@ -17,6 +17,9 @@
  */
 package org.apache.knox.gateway.topology;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -80,6 +83,33 @@ public class Provider {
 
   public void setRole( String role ) {
     this.role = role;
+  }
+
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder().append(name)
+                                .append(role)
+                                .append(params)
+                                .append(enabled)
+                                .build();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+
+    if (!(obj instanceof Provider)) {
+      return false;
+    }
+
+    Provider other = (Provider) obj;
+    return (new EqualsBuilder()).append(name, other.name)
+                                .append(role, other.role)
+                                .append(params, other.params)
+                                .append(enabled, other.enabled)
+                                .build();
   }
 
 }
