@@ -137,6 +137,10 @@ public class KnoxShellTable {
     double[] colArray = new double[col.size()];
     Conversions conversionMethod = null;
     for (int i = 0; i < col.size(); i++) {
+      Object v = col.get(i);
+      if (v instanceof String && ((String) v).trim().isEmpty()) {
+        col.set(i, "0");
+      }
       if (i == 0) {
         conversionMethod = getConversion(col.get(i));
       }
@@ -435,6 +439,10 @@ public class KnoxShellTable {
   }
 
   public String toCSV() {
-    return new KnoxShellTableRenderer(this).toCSV();
+    return toCSV(null);
+  }
+
+  public String toCSV(String filePath) {
+    return new KnoxShellTableRenderer(this).toCSV(filePath);
   }
 }

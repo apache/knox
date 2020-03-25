@@ -49,10 +49,24 @@ public class CSVCommand extends AbstractKnoxShellCommand {
 
     try {
       if (withHeaders) {
-        table = KnoxShellTable.builder().csv().withHeaders().url(url);
+        if (url.startsWith("$")) {
+          // a knoxshell variable is a csv file as a string
+          String csvString = (String) getVariables().get(url.substring(1));
+          table = KnoxShellTable.builder().csv().withHeaders().string(csvString);
+        }
+        else {
+          table = KnoxShellTable.builder().csv().withHeaders().url(url);
+        }
       }
       else {
-        table = KnoxShellTable.builder().csv().url(url);
+        if (url.startsWith("$")) {
+          // a knoxshell variable is a csv file as a string
+          String csvString = (String) getVariables().get(url.substring(1));
+          table = KnoxShellTable.builder().csv().string(csvString);
+        }
+        else {
+          table = KnoxShellTable.builder().csv().url(url);
+        }
       }
     } catch (IOException e) {
       e.printStackTrace();

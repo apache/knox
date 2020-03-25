@@ -25,8 +25,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.knox.gateway.shell.CredentialCollectionException;
-import org.apache.knox.gateway.shell.CredentialCollector;
 import org.apache.knox.gateway.shell.KnoxDataSource;
 import org.apache.knox.gateway.shell.KnoxSession;
 import org.apache.knox.gateway.shell.jdbc.JDBCUtils;
@@ -201,11 +199,5 @@ public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand
         // nop
       }
     });
-  }
-
-  protected CredentialCollector login() throws CredentialCollectionException {
-    KnoxLoginDialog dlg = new KnoxLoginDialog();
-    dlg.collect();
-    return dlg;
   }
 }

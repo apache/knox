@@ -141,6 +141,7 @@ public class KnoxSession implements Closeable {
 
   private static final String KNOXSQLHISTORIES_JSON = "knoxsqlhistories.json";
   private static final String KNOXDATASOURCES_JSON = "knoxdatasources.json";
+  private static final String KNOXMOUNTPOINTS_JSON = "knoxmountpoints.json";
 
   public Map<String, String> getHeaders() {
     return headers;
@@ -607,6 +608,16 @@ public class KnoxSession implements Closeable {
    * @param map to persist
    */
   public static <T> void persistDataSourcesToKnoxShell(String fileName, Map<String, T> map) {
+    persistMapToKnoxShell(fileName, map);
+  }
+
+  /**
+   * Persist provided Map to a file within the {user.home}/.knoxshell directory
+   * @param <T> type of the value in the map
+   * @param fileName of persisted file
+   * @param map to persist
+   */
+  public static <T> void persistMapToKnoxShell(String fileName, Map<String, T> map) {
     String s = JsonUtils.renderAsJsonString(map);
     String home = System.getProperty("user.home");
     try {
@@ -641,6 +652,10 @@ public class KnoxSession implements Closeable {
     persistDataSourcesToKnoxShell(KNOXDATASOURCES_JSON, datasources);
   }
 
+  public static void persistMountPoints(Map<String, String> mounts) {
+    persistMapToKnoxShell(KNOXMOUNTPOINTS_JSON, mounts);
+  }
+
   /**
    * Load and return a map of datasource names to sql commands
    * from the {user.home}/.knoxshell/knoxsqlhistories.json file.
@@ -659,6 +674,20 @@ public class KnoxSession implements Closeable {
       sqlHistories = getMapOfStringArrayListsFromJsonString(json);
     }
     return sqlHistories;
+  }
+
+  public static Map<String, String> loadMountPoints() throws IOException {
+    Map<String, String> mounts = new HashMap<>();
+    String home = System.getProperty("user.home");
+
+    File mountFile = new File(
+        home + File.separator +
+        ".knoxshell" + File.separator + KNOXMOUNTPOINTS_JSON);
+    if (mountFile.exists()) {
+      String json = readFileToString(mountFile);
+      mounts = getMapFromJsonString(json);
+    }
+    return mounts;
   }
 
   private static String readFileToString(File file) throws IOException {
@@ -701,6 +730,15 @@ public class KnoxSession implements Closeable {
     JsonFactory factory = new JsonFactory();
     ObjectMapper mapper = new ObjectMapper(factory);
     TypeReference<Map<String, List<String>>> typeRef = new TypeReference<Map<String, List<String>>>() {};
+    obj = mapper.readValue(json, typeRef);
+    return obj;
+  }
+
+  public static <T> Map<String, T> getMapFromJsonString(String json) throws IOException {
+    Map<String, T> obj;
+    JsonFactory factory = new JsonFactory();
+    ObjectMapper mapper = new ObjectMapper(factory);
+    TypeReference<Map<String, T>> typeRef = new TypeReference<Map<String, T>>() {};
     obj = mapper.readValue(json, typeRef);
     return obj;
   }
