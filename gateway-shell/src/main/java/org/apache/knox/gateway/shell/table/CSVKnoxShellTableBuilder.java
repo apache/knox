@@ -51,9 +51,7 @@ public class CSVKnoxShellTableBuilder extends KnoxShellTableBuilder {
   }
 
   public KnoxShellTable string(String csvString) throws IOException {
-    InputStream is = new ByteArrayInputStream(csvString.getBytes(StandardCharsets.UTF_8));
-
-    try (Reader stringStreamReader = new InputStreamReader(is, StandardCharsets.UTF_8);
+    try (InputStream is = new ByteArrayInputStream(csvString.getBytes(StandardCharsets.UTF_8)); Reader stringStreamReader = new InputStreamReader(is, StandardCharsets.UTF_8);
         BufferedReader csvReader = new BufferedReader(stringStreamReader);) {
       buildTableFromCSVReader(csvReader);
     }

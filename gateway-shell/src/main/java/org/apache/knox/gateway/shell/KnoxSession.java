@@ -653,7 +653,7 @@ public class KnoxSession implements Closeable {
   }
 
   public static void persistMountPoints(Map<String, String> mounts) {
-    persistDataSourcesToKnoxShell(KNOXMOUNTPOINTS_JSON, mounts);
+    persistMapToKnoxShell(KNOXMOUNTPOINTS_JSON, mounts);
   }
 
   /**
@@ -677,7 +677,7 @@ public class KnoxSession implements Closeable {
   }
 
   public static Map<String, String> loadMountPoints() throws IOException {
-    Map<String, String> mounts = null;
+    Map<String, String> mounts = new HashMap<>();
     String home = System.getProperty("user.home");
 
     File mountFile = new File(
