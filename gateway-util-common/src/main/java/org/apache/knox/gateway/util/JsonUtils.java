@@ -19,6 +19,7 @@ package org.apache.knox.gateway.util;
 
 import java.io.IOException;
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -94,6 +95,20 @@ public class JsonUtils {
       map = mapper.readValue(json, typeRef);
     } catch (IOException e) {
       LOG.failedToGetMapFromJsonString( json, e );
+    }
+    return map;
+  }
+
+  public static Map<String,HashMap<String, ArrayList<HashMap<String, String>>>> getFileStatusesAsMap(String json) {
+    Map<String,HashMap<String, ArrayList<HashMap<String, String>>>> map = null;
+    JsonFactory factory = new JsonFactory();
+    ObjectMapper mapper = new ObjectMapper(factory);
+    TypeReference<HashMap<String,HashMap<String, ArrayList<HashMap<String, String>>>>> typeRef
+      = new TypeReference<HashMap<String,HashMap<String, ArrayList<HashMap<String, String>>>>>() {};
+    try {
+      map = mapper.readValue(json, typeRef);
+    } catch (IOException e) {
+      //LOG.failedToGetMapFromJsonString( json, e );
     }
     return map;
   }

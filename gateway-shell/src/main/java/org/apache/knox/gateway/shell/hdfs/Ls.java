@@ -26,7 +26,7 @@ import org.apache.http.client.utils.URIBuilder;
 
 import java.util.concurrent.Callable;
 
-class Ls {
+public class Ls {
 
   public static class Request extends AbstractRequest<Response> {
 

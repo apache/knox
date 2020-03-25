@@ -18,10 +18,6 @@
 package org.apache.knox.gateway.shell.table;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
@@ -87,27 +83,10 @@ class KnoxShellTableJSONSerializer {
       } else {
         jsonResult = JsonUtils.renderAsJsonString(KnoxShellTableCallHistory.getInstance().getCallHistory(table.id), null, JSON_DATE_FORMAT.get());
       }
-      final Path jsonFilePath = Paths.get(filePath);
-      if (!Files.exists(jsonFilePath.getParent())) {
-        Files.createDirectories(jsonFilePath.getParent());
-      }
-      Files.deleteIfExists(jsonFilePath);
-      Files.createFile(jsonFilePath);
-      setPermissions(jsonFilePath);
-      Files.write(jsonFilePath, jsonResult.getBytes(StandardCharsets.UTF_8));
+      KnoxShellTableFileUtils.persistToFile(filePath, jsonResult);
       return "Successfully saved into " + filePath;
     } catch (IOException e) {
       throw new KnoxShellException("Error while saving KnoxShellTable JSON into " + filePath, e);
     }
-  }
-
-  private static void setPermissions(Path path) throws IOException {
-    // clear all flags for everybody
-    path.toFile().setReadable(false, false);
-    path.toFile().setWritable(false, false);
-    path.toFile().setExecutable(false, false);
-    // allow owners to read/write
-    path.toFile().setReadable(true, true);
-    path.toFile().setWritable(true, true);
   }
 }

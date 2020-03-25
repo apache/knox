@@ -18,7 +18,9 @@
 package org.apache.knox.gateway.shell.table;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
@@ -39,34 +41,45 @@ public class CSVKnoxShellTableBuilder extends KnoxShellTableBuilder {
   }
 
   public KnoxShellTable url(String url) throws IOException {
-    int rowIndex = 0;
     URL urlToCsv = new URL(url);
     URLConnection connection = urlToCsv.openConnection();
     try (Reader urlConnectionStreamReader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8);
         BufferedReader csvReader = new BufferedReader(urlConnectionStreamReader);) {
-      if (title != null) {
-        this.table.title(title);
-      }
-      String row = null;
-      while ((row = csvReader.readLine()) != null) {
-        boolean addingHeaders = (withHeaders && rowIndex == 0);
-        if (!addingHeaders) {
-          this.table.row();
-        }
-        // handle comma's within quoted string values for single col
-        String[] data = row.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)", -1);
-
-        for (String value : data) {
-          if (addingHeaders) {
-            this.table.header(value);
-          } else {
-            this.table.value(value);
-          }
-        }
-        rowIndex++;
-      }
+      buildTableFromCSVReader(csvReader);
     }
     return this.table;
   }
 
+  public KnoxShellTable string(String csvString) throws IOException {
+    try (InputStream is = new ByteArrayInputStream(csvString.getBytes(StandardCharsets.UTF_8)); Reader stringStreamReader = new InputStreamReader(is, StandardCharsets.UTF_8);
+        BufferedReader csvReader = new BufferedReader(stringStreamReader);) {
+      buildTableFromCSVReader(csvReader);
+    }
+    return this.table;
+  }
+
+  private void buildTableFromCSVReader(BufferedReader csvReader) throws IOException {
+    int rowIndex = 0;
+    if (title != null) {
+      this.table.title(title);
+    }
+    String row = null;
+    while ((row = csvReader.readLine()) != null) {
+      boolean addingHeaders = (withHeaders && rowIndex == 0);
+      if (!addingHeaders) {
+        this.table.row();
+      }
+      // handle comma's within quoted string values for single col
+      String[] data = row.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+
+      for (String value : data) {
+        if (addingHeaders) {
+          this.table.header(value);
+        } else {
+          this.table.value(value);
+        }
+      }
+      rowIndex++;
+    }
+  }
 }

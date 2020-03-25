@@ -18,6 +18,9 @@
 package org.apache.knox.gateway.shell.commands;
 
 import java.util.List;
+
+import org.apache.knox.gateway.shell.CredentialCollectionException;
+import org.apache.knox.gateway.shell.CredentialCollector;
 import org.codehaus.groovy.tools.shell.CommandSupport;
 import org.codehaus.groovy.tools.shell.Groovysh;
 
@@ -42,5 +45,11 @@ public abstract class AbstractKnoxShellCommand extends CommandSupport {
       }
     }
     return variableName;
+  }
+
+  protected CredentialCollector login() throws CredentialCollectionException {
+    KnoxLoginDialog dlg = new KnoxLoginDialog();
+    dlg.collect();
+    return dlg;
   }
 }

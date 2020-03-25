@@ -26,7 +26,7 @@ import org.apache.http.client.utils.URIBuilder;
 
 import java.util.concurrent.Callable;
 
-class Mkdir {
+public class Mkdir {
 
   public static class Request extends AbstractRequest<Response> {
 
