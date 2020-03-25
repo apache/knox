@@ -41,7 +41,6 @@ import org.apache.knox.gateway.util.JsonUtils;
 import org.codehaus.groovy.tools.shell.Groovysh;
 
 public class WebHDFSCommand extends AbstractKnoxShellCommand {
-  private static final String KNOXMOUNTPOINTS = "__knoxmountpoints";
   private Map<String, KnoxSession> sessions = new HashMap<>();
 
   public WebHDFSCommand(Groovysh shell) {
