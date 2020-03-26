@@ -284,6 +284,20 @@ public class KnoxShellTableTest {
   }
 
   @Test
+  public void testSortStringValuesNumerically() throws IOException {
+    KnoxShellTable table = new KnoxShellTable();
+
+    table.header("Column A").header("Column B").header("Column C");
+
+    table.row().value("2").value("012").value("844444444");
+    table.row().value("10").value("456").value("344444444");
+
+    KnoxShellTable table2 = table.sortNumeric("Column A");
+    assertEquals(table2.getRows().get(0).get(0), "2");
+    assertEquals(table2.getRows().get(1).get(0), "10");
+  }
+
+  @Test
   @SuppressWarnings({ "rawtypes", "unchecked" })
   public void testCells() throws IOException {
     KnoxShellTable table = new KnoxShellTable();
