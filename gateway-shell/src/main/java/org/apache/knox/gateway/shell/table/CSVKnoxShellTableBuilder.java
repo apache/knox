@@ -51,7 +51,8 @@ public class CSVKnoxShellTableBuilder extends KnoxShellTableBuilder {
   }
 
   public KnoxShellTable string(String csvString) throws IOException {
-    try (InputStream is = new ByteArrayInputStream(csvString.getBytes(StandardCharsets.UTF_8)); Reader stringStreamReader = new InputStreamReader(is, StandardCharsets.UTF_8);
+    try (InputStream is = new ByteArrayInputStream(csvString.getBytes(StandardCharsets.UTF_8));
+        Reader stringStreamReader = new InputStreamReader(is, StandardCharsets.UTF_8);
         BufferedReader csvReader = new BufferedReader(stringStreamReader);) {
       buildTableFromCSVReader(csvReader);
     }
@@ -69,7 +70,8 @@ public class CSVKnoxShellTableBuilder extends KnoxShellTableBuilder {
       if (!addingHeaders) {
         this.table.row();
       }
-      String[] data = row.split(",", -1);
+      // handle comma's within quoted string values for single col
+      String[] data = row.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)", -1);
 
       for (String value : data) {
         if (addingHeaders) {
