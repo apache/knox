@@ -674,6 +674,36 @@ public class KnoxShellTableTest {
       assertEquals(20.9998, TABLE.min(2), 0.1);
   }
 
+  /*
+knox:000> test.aggregate() columns "A,B,C" functions "min, max, mean, median, mode,sum"
+===> +----------+----------------------+----------+----------+
+|          |          A           |    B     |    C     |
++----------+----------------------+----------+----------+
+|   min    |        100.0         |  200.0   |  300.0   |
+|   max    |        200.0         |  400.0   |  500.0   |
+|   mean   |  166.66666666666666  |  300.0   |  400.0   |
+|  median  |        200.0         |  300.0   |  400.0   |
+|   mode   |        200.0         |  200.0   |  300.0   |
+|   sum    |        500.0         |  900.0   |  1200.0  |
++----------+----------------------+----------+----------+
+   */
+  @Test
+  public void testAggregate() throws Exception {
+
+      KnoxShellTable TABLE = new KnoxShellTable();
+      TABLE.header("A").header("B").header("C");
+      TABLE.row().value(100).value("200").value(300);
+      TABLE.row().value(200).value("300").value(400);
+      TABLE.row().value(200).value("400").value(500);
+      KnoxShellTable report = TABLE.aggregate().columns("A,B,C").functions("min,max,mean,median,mode,sum");
+      assertEquals(100.0, report.cell(1,0).value);
+      assertEquals(200.0, report.cell(1,1).value);
+      assertEquals(166.66666666666666, report.cell(1,2).value);
+      assertEquals(200.0, report.cell(1,3).value);
+      assertEquals(200.0, report.cell(1,4).value);
+      assertEquals(500.0, report.cell(1,5).value);
+  }
+
   @Test
   public void shouldReturnDifferentCallHistoryForDifferentTables() throws Exception {
     final KnoxShellTable table1 = new KnoxShellTable();
