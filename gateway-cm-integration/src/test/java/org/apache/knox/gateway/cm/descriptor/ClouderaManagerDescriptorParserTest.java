@@ -20,7 +20,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -30,53 +34,71 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.topology.discovery.advanced.AdvancedServiceDiscoveryConfig;
+import org.apache.knox.gateway.topology.simple.ProviderConfiguration;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor.Application;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor.Service;
+import org.apache.knox.gateway.util.JsonUtils;
+import org.easymock.EasyMock;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class ClouderaManagerDescriptorParserTest {
 
+  @Rule
+  public TemporaryFolder tempDir = new TemporaryFolder();
+
+  private GatewayConfig gatewayConfigMock;
   private ClouderaManagerDescriptorParser cmDescriptorParser;
+  private File providersDir;
 
   @Before
-  public void setUp() {
-    cmDescriptorParser = new ClouderaManagerDescriptorParser();
+  public void setUp() throws IOException {
+    providersDir = tempDir.newFolder("shared-providers");
+    gatewayConfigMock = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gatewayConfigMock.getGatewayProvidersConfigDir()).andReturn(providersDir.getAbsolutePath()).anyTimes();
+    EasyMock.replay(gatewayConfigMock);
+    cmDescriptorParser = new ClouderaManagerDescriptorParser(gatewayConfigMock);
   }
 
   @Test
   public void testCMDescriptorParser() throws Exception {
     final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptor.xml").getPath();
-    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath);
+    final ClouderaManagerDescriptorParserResult parserResult = cmDescriptorParser.parse(testConfigPath);
+    final Set<SimpleDescriptor> descriptors = parserResult.getDescriptors();
     assertEquals(2, descriptors.size());
     final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
-    validateTopology1(descriptorsIterator.next());
-    validateTopology2(descriptorsIterator.next(), true);
+    validateTopology1Descriptors(descriptorsIterator.next());
+    validateTopology2Descriptors(descriptorsIterator.next(), true);
+    validateTestDescriptorProviderConfigs(parserResult.getProviders(), "ldap://localhost:33389");
   }
 
   @Test
   public void testCMDescriptorParserOnlyTopology2() throws Exception {
     final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptor.xml").getPath();
-    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath, "topology2");
+    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath, "topology2").getDescriptors();
     assertEquals(1, descriptors.size());
-    validateTopology2(descriptors.iterator().next(), true);
+    validateTopology2Descriptors(descriptors.iterator().next(), true);
   }
 
   @Test
   public void testCMDescriptorParserWrongDescriptorContent() throws Exception {
     final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptorConfigurationWithWrongDescriptor.xml").getPath();
-    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath);
+    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath).getDescriptors();
     assertEquals(1, descriptors.size());
     final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
-    validateTopology1(descriptorsIterator.next());
+    validateTopology1Descriptors(descriptorsIterator.next());
   }
 
   @Test
   public void testCMDescriptorParserWrongXMLContent() throws Exception {
     final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptorConfigurationWithNonHadoopStyleConfiguration.xml").getPath();
-    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath);
+    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath).getDescriptors();
     assertTrue(descriptors.isEmpty());
   }
 
@@ -94,7 +116,7 @@ public class ClouderaManagerDescriptorParserTest {
     advancedConfigurationTopology2.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_TOPOLOGY_NAME, "topology2");
     cmDescriptorParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfigurationTopology2);
 
-    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath);
+    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath).getDescriptors();
     assertEquals(2, descriptors.size());
     final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
     SimpleDescriptor topology1 = descriptorsIterator.next();
@@ -105,7 +127,7 @@ public class ClouderaManagerDescriptorParserTest {
     SimpleDescriptor topology2 = descriptorsIterator.next();
     assertNotNull(topology2);
     // topology1 comes with ATLAS and NIFI but the latter one is disabled
-    validateTopology2(topology2, false);
+    validateTopology2Descriptors(topology2, false);
   }
 
   @Test
@@ -115,7 +137,7 @@ public class ClouderaManagerDescriptorParserTest {
     advancedConfiguration.put(buildEnabledParameter("topology1", "oozie"), "true"); //it should not matter if service name is lowercase advanced configuration
     advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_TOPOLOGY_NAME, "topology1");
     cmDescriptorParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfiguration);
-    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath);
+    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath).getDescriptors();
     final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
     SimpleDescriptor descriptor = descriptorsIterator.next();
     assertNotNull(descriptor);
@@ -123,8 +145,52 @@ public class ClouderaManagerDescriptorParserTest {
     assertService(descriptor, "OOZIE", null, null, null);
 
     descriptor = descriptorsIterator.next();
-    validateTopology2(descriptor, true);
+    validateTopology2Descriptors(descriptor, true);
     assertNull(descriptor.getService("OOZIE"));
+  }
+
+  @Test
+  public void testCMDescriptorParserModifyingProviderParams() {
+    String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptor.xml").getPath();
+    ClouderaManagerDescriptorParserResult parserResult = cmDescriptorParser.parse(testConfigPath);
+    validateTestDescriptorProviderConfigs(parserResult.getProviders(), "ldap://localhost:33389");
+
+    //saving admin and knoxsso shared-providers with LDAP authentication provider only
+    parserResult.getProviders().forEach((key, value) -> {
+      final File knoxProviderConfigFile = new File(providersDir, key + ".json");
+      final String providersConfiguration = JsonUtils.renderAsJsonString(value);
+      try {
+        FileUtils.writeStringToFile(knoxProviderConfigFile, providersConfiguration, StandardCharsets.UTF_8);
+      } catch (IOException e) {
+        fail("Could not save " + knoxProviderConfigFile.getAbsolutePath());
+      }
+    });
+
+    //updating LDAP URL from ldap://localhost:33389 to ldaps://localhost:33390 in 'admin'
+    testConfigPath = this.getClass().getClassLoader().getResource("testDescriptorWithAdminProviderConfigUpdatedLdapUrl.xml").getPath();
+    parserResult = cmDescriptorParser.parse(testConfigPath);
+    validateTestDescriptorProviderConfigs(parserResult.getProviders(), "ldaps://localhost:33390", true, true);
+  }
+
+  @Test
+  public void testCMDescriptorParserRemovingProviderParams() {
+    String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptor.xml").getPath();
+    ClouderaManagerDescriptorParserResult parserResult = cmDescriptorParser.parse(testConfigPath);
+    //saving admin and knoxsso shared-providers with LDAP authentication provider only
+    parserResult.getProviders().forEach((key, value) -> {
+      final File knoxProviderConfigFile = new File(providersDir, key + ".json");
+      final String providersConfiguration = JsonUtils.renderAsJsonString(value);
+      try {
+        FileUtils.writeStringToFile(knoxProviderConfigFile, providersConfiguration, StandardCharsets.UTF_8);
+      } catch (IOException e) {
+        fail("Could not save " + knoxProviderConfigFile.getAbsolutePath());
+      }
+    });
+
+    //removed 'main.ldapRealm.userDnTemplate' parameter from 'admin'
+    testConfigPath = this.getClass().getClassLoader().getResource("testDescriptorWithAdminProviderConfigRemovedUserDnTemplate.xml").getPath();
+    parserResult = cmDescriptorParser.parse(testConfigPath);
+    validateTestDescriptorProviderConfigs(parserResult.getProviders(), "ldap://localhost:33389", true, false);
   }
 
   private String buildEnabledParameter(String topologyName, String serviceName) {
@@ -141,7 +207,7 @@ public class ClouderaManagerDescriptorParserTest {
     advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_DISCOVERY_ADDRESS, address);
     advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_DISCOVERY_CLUSTER, cluster);
     cmDescriptorParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfiguration);
-    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath);
+    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath).getDescriptors();
     final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
     SimpleDescriptor descriptor = descriptorsIterator.next();
     assertEquals(address, descriptor.getDiscoveryAddress());
@@ -149,7 +215,7 @@ public class ClouderaManagerDescriptorParserTest {
     assertEquals("ClouderaManager", descriptor.getDiscoveryType());
   }
 
-  private void validateTopology1(SimpleDescriptor descriptor) {
+  private void validateTopology1Descriptors(SimpleDescriptor descriptor) {
     assertTrue(descriptor.isReadOnly());
     assertEquals("topology1", descriptor.getName());
     assertEquals("ClouderaManager", descriptor.getDiscoveryType());
@@ -168,7 +234,7 @@ public class ClouderaManagerDescriptorParserTest {
     assertService(descriptor, "HIVE", "1.0", Collections.singletonList("http://localhost:456"), expectedServiceParameters);
   }
 
-  private void validateTopology2(SimpleDescriptor descriptor, boolean nifiExpected) {
+  private void validateTopology2Descriptors(SimpleDescriptor descriptor, boolean nifiExpected) {
     assertTrue(descriptor.isReadOnly());
     assertEquals("topology2", descriptor.getName());
     assertEquals("Ambari", descriptor.getDiscoveryType());
@@ -219,4 +285,40 @@ public class ClouderaManagerDescriptorParserTest {
     }
   }
 
+  private void validateTestDescriptorProviderConfigs(Map<String, ProviderConfiguration> providers, String expectedLdapUrl) {
+    validateTestDescriptorProviderConfigs(providers, expectedLdapUrl, false, true);
+  }
+
+  private void validateTestDescriptorProviderConfigs(Map<String, ProviderConfiguration> providers, String expectedLdapUrl, boolean onlyAdminIsExpected, boolean expectUserDnTemplateParam) {
+    assertNotNull(providers);
+    assertEquals(onlyAdminIsExpected ? 1 : 2, providers.size());
+    final ProviderConfiguration adminProviderConfig = providers.get("admin");
+    assertTrue(adminProviderConfig.isReadOnly());
+    assertNotNull(adminProviderConfig);
+    assertEquals(1, adminProviderConfig.getProviders().size());
+    final ProviderConfiguration.Provider authenticationProvider = adminProviderConfig.getProviders().iterator().next();
+    assertEquals("authentication", authenticationProvider.getRole());
+    assertEquals("ShiroProvider", authenticationProvider.getName());
+    assertTrue(authenticationProvider.isEnabled());
+    assertEquals(expectUserDnTemplateParam ? 10 : 9, authenticationProvider.getParams().size());
+    assertEquals("30", authenticationProvider.getParams().get("sessionTimeout"));
+    assertEquals("org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory", authenticationProvider.getParams().get("main.ldapContextFactory"));
+    assertEquals("org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm", authenticationProvider.getParams().get("main.ldapRealm"));
+    assertEquals("$ldapContextFactory", authenticationProvider.getParams().get("main.ldapRealm.contextFactory"));
+    assertEquals("simple", authenticationProvider.getParams().get("main.ldapRealm.contextFactory.authenticationMechanism"));
+    assertEquals(expectedLdapUrl, authenticationProvider.getParams().get("main.ldapRealm.contextFactory.url"));
+    assertEquals("uid=guest,ou=people,dc=hadoop,dc=apache,dc=org", authenticationProvider.getParams().get("main.ldapRealm.contextFactory.systemUsername"));
+    assertEquals("${ALIAS=knoxLdapSystemPassword}", authenticationProvider.getParams().get("main.ldapRealm.contextFactory.systemPassword"));
+    if (expectUserDnTemplateParam) {
+      assertEquals("uid={0},ou=people,dc=hadoop,dc=apache,dc=org", authenticationProvider.getParams().get("main.ldapRealm.userDnTemplate"));
+    } else {
+      assertNull(authenticationProvider.getParams().get("main.ldapRealm.userDnTemplate"));
+    }
+    assertEquals("authcBasic", authenticationProvider.getParams().get("urls./**"));
+    if (!onlyAdminIsExpected) {
+      final ProviderConfiguration knoxSsoProviderConfig = providers.get("knoxsso");
+      assertNotNull(knoxSsoProviderConfig);
+      assertEquals(adminProviderConfig, knoxSsoProviderConfig);
+    }
+  }
 }

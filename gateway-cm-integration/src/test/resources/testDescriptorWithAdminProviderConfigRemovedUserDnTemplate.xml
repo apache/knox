@@ -16,31 +16,11 @@ limitations under the License.
 -->
 <configuration>
   <property>
-    <name>topology1</name>
-    <value>
-        discoveryType=ClouderaManager#
-        discoveryAddress=http://host:123#
-        discoveryUser=user#
-        discoveryPasswordAlias=alias#
-        cluster=Cluster 1#
-        providerConfigRef=topology1-provider#
-        app:knoxauth:param1.name=param1.value#
-        app:admin-ui#
-        HIVE:url=http://localhost:456#
-        HIVE:version=1.0#
-        HIVE:httpclient.connectionTimeout=5m#
-        HIVE:httpclient.socketTimeout=100m
-    </value>
-  </property>
-  <property>
-    <name>topology2</name>
-    <value>
-        discoveryType=Ambari#
-        discoveryAddress=http://host:456#
-        cluster=Cluster 2#
-        providerConfigRef=topology2-provider#
-        HDFS:url=http://localhost:456#
-        HDFS:noValueParam <!-- can not be parsed -->
-    </value>
+      <name>providerConfigs:admin</name>
+      <value>
+          role=authentication#
+          authentication.name=ShiroProvider#
+          authentication.param.remove=main.ldapRealm.userDnTemplate
+      </value>
   </property>
 </configuration>

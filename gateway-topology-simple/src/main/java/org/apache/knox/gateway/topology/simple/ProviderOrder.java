@@ -16,29 +16,25 @@
  */
 package org.apache.knox.gateway.topology.simple;
 
+public enum ProviderOrder {
+  WEBAPPSEC(1), AUTHENTICATION(2), FEDERATION(3), IDENTITY_ASSERTION(4), AUTHORIZATION(5), HOSTMAP(6), HA(7);
 
-import java.util.Map;
-import java.util.Set;
+  final int ordinal;
+  final String name;
 
-public interface ProviderConfiguration {
-
-  Set<Provider> getProviders();
-
-  void saveOrUpdateProviders(Set<Provider> providers);
-
-  boolean isReadOnly();
-
-  void setReadOnly(boolean readOnly);
-
-  interface Provider {
-
-    String getRole();
-
-    String getName();
-
-    boolean isEnabled();
-
-    Map<String, String> getParams();
+  ProviderOrder(int ordinal) {
+    this.ordinal = ordinal;
+    this.name = name().replace("_", "-");
   }
 
+  static int getOrdinalForRole(String role) {
+    int count = 0;
+    for (ProviderOrder providerOrder : values()) {
+      count++;
+      if (providerOrder.name.equalsIgnoreCase(role)) {
+        return providerOrder.ordinal;
+      }
+    }
+    return ++count;
+  }
 }

@@ -16,21 +16,31 @@
  */
 package org.apache.knox.gateway.cm.descriptor;
 
+import java.io.File;
 import java.nio.file.Paths;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.knox.gateway.ClouderaManagerIntegrationMessages;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.topology.discovery.advanced.AdvancedServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.advanced.AdvancedServiceDiscoveryConfigChangeListener;
+import org.apache.knox.gateway.topology.simple.JSONProviderConfiguration;
+import org.apache.knox.gateway.topology.simple.JSONProviderConfiguration.JSONProvider;
+import org.apache.knox.gateway.topology.simple.ProviderConfiguration;
+import org.apache.knox.gateway.topology.simple.ProviderConfigurationParser;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorImpl;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorImpl.ApplicationImpl;
@@ -38,6 +48,16 @@ import org.apache.knox.gateway.topology.simple.SimpleDescriptorImpl.ServiceImpl;
 
 public class ClouderaManagerDescriptorParser implements AdvancedServiceDiscoveryConfigChangeListener {
   private static final ClouderaManagerIntegrationMessages log = MessagesFactory.get(ClouderaManagerIntegrationMessages.class);
+
+  //shared provider related constants
+  private static final String CONFIG_NAME_PROVIDER_CONFIGS_PREFIX = "providerConfigs:";
+  private static final String CONFIG_NAME_PROVIDER_CONFIGS_ROLE_PREFIX = "role=";
+  private static final String CONFIG_NAME_PROVIDER_CONFIGS_NAME_PREFIX = "name=";
+  private static final String CONFIG_NAME_PROVIDER_CONFIGS_ENABLED_PREFIX = "enabled=";
+  private static final String CONFIG_NAME_PROVIDER_CONFIGS_PARAM_PREFIX = "param.";
+  private static final String CONFIG_NAME_PROVIDER_CONFIGS_PARAM_REMOVE = "remove";
+
+  //descriptor related constants
   private static final String CONFIG_NAME_DISCOVERY_TYPE = "discoveryType";
   private static final String CONFIG_NAME_DISCOVERY_ADDRESS = "discoveryAddress";
   private static final String CONFIG_NAME_DISCOVERY_USER = "discoveryUser";
@@ -48,10 +68,12 @@ public class ClouderaManagerDescriptorParser implements AdvancedServiceDiscovery
   private static final String CONFIG_NAME_SERVICE_URL = "url";
   private static final String CONFIG_NAME_SERVICE_VERSION = "version";
 
-  private Map<String, AdvancedServiceDiscoveryConfig> advancedServiceDiscoveryConfigMap;
+  private final Map<String, AdvancedServiceDiscoveryConfig> advancedServiceDiscoveryConfigMap;
+  private final String sharedProvidersDir;
 
-  public ClouderaManagerDescriptorParser() {
-    advancedServiceDiscoveryConfigMap = new ConcurrentHashMap<>();
+  public ClouderaManagerDescriptorParser(GatewayConfig gatewayConfig) {
+    this.advancedServiceDiscoveryConfigMap = new ConcurrentHashMap<>();
+    this.sharedProvidersDir = gatewayConfig.getGatewayProvidersConfigDir();
   }
 
   /**
@@ -61,7 +83,7 @@ public class ClouderaManagerDescriptorParser implements AdvancedServiceDiscovery
    *          The path to the configuration file which holds descriptor information in a pre-defined format.
    * @return A SimpleDescriptor based on the contents of the given file.
    */
-  public Set<SimpleDescriptor> parse(String path) {
+  public ClouderaManagerDescriptorParserResult parse(String path) {
     return parse(path, null);
   }
 
@@ -74,33 +96,108 @@ public class ClouderaManagerDescriptorParser implements AdvancedServiceDiscovery
    *          if set, the parser should only parse a descriptor with the same name
    * @return A SimpleDescriptor based on the contents of the given file.
    */
-  public Set<SimpleDescriptor> parse(String path, String topologyName) {
+  public ClouderaManagerDescriptorParserResult parse(String path, String topologyName) {
     try {
       log.parseClouderaManagerDescriptor(path, topologyName == null ? "all topologies" : topologyName);
       final Configuration xmlConfiguration = new Configuration(false);
       xmlConfiguration.addResource(Paths.get(path).toUri().toURL());
       xmlConfiguration.reloadConfiguration();
-      final Set<SimpleDescriptor> descriptors = parseXmlConfig(xmlConfiguration, topologyName);
-      log.parsedClouderaManagerDescriptor(String.join(", ", descriptors.stream().map(descriptor -> descriptor.getName()).collect(Collectors.toSet())), path);
+      final ClouderaManagerDescriptorParserResult descriptors = parseXmlConfig(xmlConfiguration, topologyName);
+      log.parsedClouderaManagerDescriptor(String.join(", ", descriptors.getDescriptors().stream().map(descriptor -> descriptor.getName()).collect(Collectors.toSet())), path);
       return descriptors;
     } catch (Exception e) {
       log.failedToParseXmlConfiguration(path, e.getMessage(), e);
-      return Collections.emptySet();
+      return new ClouderaManagerDescriptorParserResult();
     }
   }
 
-  private Set<SimpleDescriptor> parseXmlConfig(Configuration xmlConfiguration, String topologyName) {
+  private ClouderaManagerDescriptorParserResult parseXmlConfig(Configuration xmlConfiguration, String topologyName) {
+    final Map<String, ProviderConfiguration> providers = new LinkedHashMap<>();
     final Set<SimpleDescriptor> descriptors = new LinkedHashSet<>();
     xmlConfiguration.forEach(xmlDescriptor -> {
-      String descriptorName = xmlDescriptor.getKey();
-      if (topologyName == null || descriptorName.equals(topologyName)) {
-        SimpleDescriptor descriptor = parseXmlDescriptor(descriptorName, xmlDescriptor.getValue());
-        if (descriptor != null) {
-          descriptors.add(descriptor);
+      String xmlConfigurationKey = xmlDescriptor.getKey();
+      if (xmlConfigurationKey.startsWith(CONFIG_NAME_PROVIDER_CONFIGS_PREFIX)) {
+        final String[] providerConfigurations = xmlConfigurationKey.replace(CONFIG_NAME_PROVIDER_CONFIGS_PREFIX, "").split(",");
+        Arrays.asList(providerConfigurations).stream().map(providerConfigurationName -> providerConfigurationName.trim()).forEach(providerConfigurationName -> {
+          final File providerConfigFile = resolveProviderConfiguration(providerConfigurationName);
+          try {
+            final ProviderConfiguration providerConfiguration = getProviderConfiguration(providers, providerConfigFile, providerConfigurationName);
+            providerConfiguration.setReadOnly(true);
+            providerConfiguration.saveOrUpdateProviders(parseProviderConfigurations(xmlDescriptor.getValue(), providerConfiguration));
+            providers.put(providerConfigurationName, providerConfiguration);
+          } catch (Exception e) {
+            log.failedToParseProviderConfiguration(providerConfigurationName, e.getMessage(), e);
+          }
+        });
+      } else {
+        if (topologyName == null || xmlConfigurationKey.equals(topologyName)) {
+          SimpleDescriptor descriptor = parseXmlDescriptor(xmlConfigurationKey, xmlDescriptor.getValue());
+          if (descriptor != null) {
+            descriptors.add(descriptor);
+          }
         }
       }
     });
-    return descriptors;
+    return new ClouderaManagerDescriptorParserResult(providers, descriptors);
+  }
+
+  private ProviderConfiguration getProviderConfiguration(Map<String, ProviderConfiguration> providers, File providerConfigFile, String providerConfigName)
+      throws Exception {
+    if (providers.containsKey(providerConfigName)) {
+      return providers.get(providerConfigName);
+    } else {
+      return providerConfigFile == null ? new JSONProviderConfiguration() : ProviderConfigurationParser.parse(providerConfigFile);
+    }
+  }
+
+  private File resolveProviderConfiguration(String providerConfigurationName) {
+    for (String supportedExtension : ProviderConfigurationParser.SUPPORTED_EXTENSIONS) {
+      File providerConfigFile = new File(sharedProvidersDir, providerConfigurationName + "." + supportedExtension);
+      if (providerConfigFile.exists()) {
+        return providerConfigFile;
+      }
+    }
+    return null;
+  }
+
+  private Set<ProviderConfiguration.Provider> parseProviderConfigurations(String xmlValue, ProviderConfiguration providerConfiguration) {
+    final Set<ProviderConfiguration.Provider> providers = new LinkedHashSet<>();
+    final List<String> configurationPairs = Arrays.asList(xmlValue.split("#"));
+    final Set<String> roles = configurationPairs.stream().filter(configurationPair -> configurationPair.trim().startsWith(CONFIG_NAME_PROVIDER_CONFIGS_ROLE_PREFIX))
+        .map(configurationPair -> configurationPair.replace(CONFIG_NAME_PROVIDER_CONFIGS_ROLE_PREFIX, "").trim()).collect(Collectors.toSet());
+    for (String role : roles) {
+      providers.add(parseProvider(configurationPairs, role, providerConfiguration));
+    }
+    return providers;
+  }
+
+  private ProviderConfiguration.Provider parseProvider(List<String> configurationPairs, String role, ProviderConfiguration providerConfiguration) {
+    final JSONProvider provider = new JSONProvider();
+    provider.setRole(role);
+    getParamsForRole(role, providerConfiguration).forEach((key, value) -> provider.addParam(key, value)); //initializing parameters (if any)
+    provider.setEnabled(true); //may be overwritten later, but defaulting to 'true'
+    final Set<String> roleConfigurations = configurationPairs.stream().filter(configurationPair -> configurationPair.trim().startsWith(role))
+        .map(configurationPair -> configurationPair.replace(role + ".", "").trim()).collect(Collectors.toSet());
+    for (String roleConfiguration : roleConfigurations) {
+      if (roleConfiguration.startsWith(CONFIG_NAME_PROVIDER_CONFIGS_PARAM_PREFIX)) {
+        String[] paramKeyValue = roleConfiguration.replace(CONFIG_NAME_PROVIDER_CONFIGS_PARAM_PREFIX, "").split("=", 2);
+        if (CONFIG_NAME_PROVIDER_CONFIGS_PARAM_REMOVE.equals(paramKeyValue[0])) {
+          provider.removeParam(paramKeyValue[1]);
+        } else {
+          provider.addParam(paramKeyValue[0], paramKeyValue[1]);
+        }
+      } else if (roleConfiguration.startsWith(CONFIG_NAME_PROVIDER_CONFIGS_NAME_PREFIX)) {
+        provider.setName(roleConfiguration.replace(CONFIG_NAME_PROVIDER_CONFIGS_NAME_PREFIX, ""));
+      } else if (roleConfiguration.startsWith(CONFIG_NAME_PROVIDER_CONFIGS_ENABLED_PREFIX)) {
+        provider.setEnabled(Boolean.valueOf(roleConfiguration.replace(CONFIG_NAME_PROVIDER_CONFIGS_ENABLED_PREFIX, "")));
+      }
+    }
+    return provider;
+  }
+
+  private Map<String, String> getParamsForRole(String role, ProviderConfiguration providerConfiguration) {
+    final Optional<ProviderConfiguration.Provider> provider = providerConfiguration.getProviders().stream().filter(p -> p.getRole().equals(role)).findFirst();
+    return provider.isPresent() ? provider.get().getParams() : new TreeMap<>();
   }
 
   private SimpleDescriptor parseXmlDescriptor(String name, String xmlValue) {
@@ -108,7 +205,7 @@ public class ClouderaManagerDescriptorParser implements AdvancedServiceDiscovery
       final SimpleDescriptorImpl descriptor = new SimpleDescriptorImpl();
       descriptor.setReadOnly(true);
       descriptor.setName(name);
-      final String[] configurationPairs = xmlValue.split(";");
+      final String[] configurationPairs = xmlValue.split("#");
       for (String configurationPair : configurationPairs) {
         String[] parameterPairParts = configurationPair.trim().split("=", 2);
         String parameterName = parameterPairParts[0].trim();

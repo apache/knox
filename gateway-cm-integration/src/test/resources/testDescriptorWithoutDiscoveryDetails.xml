@@ -18,10 +18,10 @@ limitations under the License.
   <property>
     <name>topology1</name>
     <value>
-        providerConfigRef=topology1-provider;
-        app:knoxauth:param1.name=param1.value;
-        app:admin-ui;
-        HIVE:url=http://localhost:123;
+        providerConfigRef=topology1-provider#
+        app:knoxauth:param1.name=param1.value#
+        app:admin-ui#
+        HIVE:url=http://localhost:123
     </value>
   </property>
 </configuration>
