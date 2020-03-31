@@ -636,8 +636,8 @@ public class SimpleDescriptorHandler {
                 try (InputStream in = new ByteArrayInputStream(generatedContent.getBytes(StandardCharsets.UTF_8))) {
                     Topology generatedTopology = topologyService.parse(in);
                     generatedTopology.setName(topologyName);
-                    // If the generated toplogy is different from the existing, then it should be persisted
-                    result = !generatedTopology.equals(existing);
+                    // If the generated topology is different from the existing, then it should be persisted
+                    result = !existing.equals(generatedTopology);
                 } catch (Exception e) {
                     log.errorComparingGeneratedTopology(topologyName, e);
                 }

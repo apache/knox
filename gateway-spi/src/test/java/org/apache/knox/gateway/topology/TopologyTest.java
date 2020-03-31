@@ -133,6 +133,27 @@ public class TopologyTest {
   }
 
   @Test
+  public void testTopologiesWithSameServicesWithNullURLs() {
+    final String name = "topologyX";
+
+    final String serviceName1 = "service1";
+    final String serviceRole1 = "role1";
+    Service service1 = createService(serviceName1,
+                                     serviceRole1,
+                                     null,                    // Null URLs
+                                     Collections.emptyMap());
+
+    List<Service> services1 = Collections.singletonList(service1);
+    List<Service> services2 = Collections.singletonList(service1);
+
+    Topology t1 = createTopology(name, Collections.emptyList(), services1, Collections.emptyList());
+    Topology t2 = createTopology(name, Collections.emptyList(), services2, Collections.emptyList());
+
+    assertEquals(t1, t2);
+    assertEquals("hashcode must be equal if objects are equal.", t1.hashCode(), t2.hashCode());
+  }
+
+  @Test
   public void testTopologiesWithSameServicesWithDifferentURLOrder() {
     final String name = "topologyX";
 

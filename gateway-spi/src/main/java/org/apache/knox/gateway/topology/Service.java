@@ -128,8 +128,8 @@ public class Service {
     return (new EqualsBuilder()).append(name, that.name)
                                 .append(role, that.role)
                                 .append(version, that.version)
-                                .append(urls.stream().sorted().collect(Collectors.toList()),
-                                        that.urls.stream().sorted().collect(Collectors.toList()))
+                                .append(getUrls().stream().sorted().collect(Collectors.toList()),
+                                        that.getUrls().stream().sorted().collect(Collectors.toList()))
                                 .append(params, that.params)
                                 .build();
   }
