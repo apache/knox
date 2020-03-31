@@ -182,7 +182,7 @@ public class Topology {
     }
 
     Topology other = (Topology) obj;
-    if (Objects.equals(this.name,other.name)) {
+    if (Objects.equals(this.name, other.name)) {
       // Order is NOT significant for providers, services, and applications
 
       if (equalProviders(other)) {  // Providers
