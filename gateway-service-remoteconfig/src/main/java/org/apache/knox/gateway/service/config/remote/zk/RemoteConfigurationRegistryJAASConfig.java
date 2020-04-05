@@ -164,8 +164,8 @@ class RemoteConfigurationRegistryJAASConfig extends Configuration {
                 }
                 break;
             case Kerberos:
-                opts.put("isUseTicketCache", String.valueOf(config.isUseTicketCache()));
-                opts.put("isUseKeyTab", String.valueOf(config.isUseKeyTab()));
+                opts.put("useTicketCache", String.valueOf(config.isUseTicketCache()));
+                opts.put("useKeyTab", String.valueOf(config.isUseKeyTab()));
                 opts.put("keyTab", config.getKeytab());
                 opts.put("principal", config.getPrincipal());
             default:

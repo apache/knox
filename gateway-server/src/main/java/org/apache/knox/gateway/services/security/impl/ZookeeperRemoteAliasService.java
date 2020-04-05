@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.service.config.remote.zk.ZooKeeperClientService;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
@@ -79,6 +80,35 @@ public class ZookeeperRemoteAliasService implements AliasService {
         }
     };
 
+    /* permissions when kerberos authentication is enabled */
+    private static final RemoteConfigurationRegistryClient.EntryACL KERBEROS_KNOX_ALL =
+        new RemoteConfigurationRegistryClient.EntryACL() {
+            @Override
+            public String getId() {
+                return "knox";
+            }
+
+            @Override
+            public String getType() {
+                return "sasl";
+            }
+
+            @Override
+            public Object getPermissions() {
+                return ZooDefs.Perms.ALL;
+            }
+
+            @Override
+            public boolean canRead() {
+                return true;
+            }
+
+            @Override
+            public boolean canWrite() {
+                return true;
+            }
+        };
+
     private final AliasService localAliasService;
     private final MasterService ms;
     private final RemoteConfigurationRegistryClientService remoteConfigurationRegistryClientService;
@@ -127,9 +157,17 @@ public class ZookeeperRemoteAliasService implements AliasService {
                     // content may not be trustworthy.
                     if (remoteClient.isAuthenticationConfigured()) {
                         LOG.correctingSuspectWritableRemoteConfigurationEntry(path);
-
                         // Replace the existing ACL with one that permits only authenticated users
-                        remoteClient.setACL(path, Collections.singletonList(AUTHENTICATED_USERS_ALL));
+                        if(ZooKeeperClientService.AUTH_TYPE_KERBEROS.equalsIgnoreCase(remoteClient.authenticationType()) &&
+                            !remoteClient.isBackwardsCompatible()) {
+                            // Replace the existing ACL with one that permits only kerberos authenticated knox user
+                            remoteClient.setACL(path,
+                                Collections.singletonList(KERBEROS_KNOX_ALL));
+                        } else {
+                            // Replace the existing ACL with one that permits only authenticated users
+                            remoteClient.setACL(path, Collections
+                                .singletonList(AUTHENTICATED_USERS_ALL));
+                        }
                     }
                 }
             }

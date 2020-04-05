@@ -69,7 +69,7 @@ class DefaultRemoteConfigurationRegistries extends RemoteConfigurationRegistries
         result.setKeytab(properties.get(GatewayConfig.REMOTE_CONFIG_REGISTRY_KEYTAB));
         result.setUseKeytab(Boolean.valueOf(properties.get(GatewayConfig.REMOTE_CONFIG_REGISTRY_USE_KEYTAB)));
         result.setUseTicketCache(Boolean.valueOf(properties.get(GatewayConfig.REMOTE_CONFIG_REGISTRY_USE_TICKET_CACHE)));
-
+        result.setBackwardsCompatible(Boolean.valueOf(properties.getOrDefault(GatewayConfig.ZOOKEEPER_REMOTE_CONFIG_REGISTRY_BACKWARDS_COMPATIBLE, "false")));
         return result;
     }
 

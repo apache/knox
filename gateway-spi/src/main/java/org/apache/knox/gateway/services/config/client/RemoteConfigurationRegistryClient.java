@@ -54,6 +54,10 @@ public interface RemoteConfigurationRegistryClient extends AutoCloseable {
 
     void removeEntryListener(String path) throws Exception;
 
+    String authenticationType();
+
+    boolean isBackwardsCompatible();
+
     interface ChildEntryListener {
 
         enum Type {

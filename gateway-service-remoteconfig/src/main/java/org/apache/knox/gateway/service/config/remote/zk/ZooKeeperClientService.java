@@ -22,4 +22,6 @@ public interface ZooKeeperClientService extends RemoteConfigurationRegistryClien
 
     String TYPE = "ZooKeeper";
 
+    String AUTH_TYPE_KERBEROS = "Kerberos";
+
 }
