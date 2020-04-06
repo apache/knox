@@ -27,10 +27,10 @@
         <!-- UI services -->
         <mat-grid-list cols="4" rowHeight="130px">
             <mat-grid-tile *ngFor="let service of topology.uiServices.service" [colspan]="1" [rowspan]="1">
-                 <a href="{{service.serviceUrl}}" target="blank" *ngIf="!this['enableServiceText_' + service.serviceName.toLowerCase()]">
+                 <a href="{{service.serviceUrl}}" target="_blank" *ngIf="!this['enableServiceText_' + service.serviceName.toLowerCase()]">
                     <img src="assets/service-logos/{{service.serviceName.toLowerCase()}}.png" height="50px" (error)="enableServiceText('enableServiceText_' + service.serviceName.toLowerCase())"/>
                 </a>
-                 <a href="{{service.serviceUrl}}" target="blank" *ngIf="this['enableServiceText_' + service.serviceName.toLowerCase()]">
+                 <a href="{{service.serviceUrl}}" target="_blank" *ngIf="this['enableServiceText_' + service.serviceName.toLowerCase()]">
                     {{service.shortDesc}}
                 </a>
                 <mat-grid-tile-footer class="tile-shortDesc">
