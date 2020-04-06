@@ -308,13 +308,18 @@ public class DefaultTokenStateService implements TokenStateService {
   }
 
   /**
-   * Method that checks if an expired token is ready to be evicted
-   * by adding configured grace period to the expiry time.
-   * @param tokenId
-   * @return
+   * Method that checks if a token's state is a candidate for eviction.
+   *
+   * @param tokenId A unique token identifier
+   *
+   * @return true, if the associated token state can be evicted; Otherwise, false.
    */
   protected boolean needsEviction(final String tokenId) throws UnknownTokenException {
-    return ((getTokenExpiration(tokenId) + TimeUnit.SECONDS.toMillis(tokenEvictionGracePeriod)) <= System.currentTimeMillis());
+    long maxLifetime = getMaxLifetime(tokenId);
+    if (maxLifetime <= 0) {
+      throw new UnknownTokenException(tokenId);
+    }
+    return ((maxLifetime + TimeUnit.SECONDS.toMillis(tokenEvictionGracePeriod)) <= System.currentTimeMillis());
   }
 
   /**

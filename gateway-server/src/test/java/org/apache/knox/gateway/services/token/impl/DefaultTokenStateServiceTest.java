@@ -172,30 +172,45 @@ public class DefaultTokenStateServiceTest {
     final JWTToken token = createMockToken(System.currentTimeMillis() - 60000);
     final TokenStateService tss = createTokenStateService();
 
-    // Add the expired token
-    tss.addToken(token, System.currentTimeMillis());
-    assertTrue("Expected the token to have expired.", tss.isExpired(token));
-    /* sleep one sec less than eviction time */
-    Thread.sleep(TimeUnit.SECONDS.toMillis(EVICTION_INTERVAL - 1));
+    final long evictionInterval = TimeUnit.SECONDS.toMillis(20);
+    final long maxTokenLifetime = TimeUnit.MINUTES.toMillis(2);
 
-    tss.renewToken(token);
+    // Add the expired token
+    tss.addToken(token.getClaim(JWTToken.KNOX_ID_CLAIM),
+                 System.currentTimeMillis(),
+                 token.getExpiresDate().getTime(),
+                 maxTokenLifetime);
+    assertTrue("Expected the token to have expired.", tss.isExpired(token));
+
+    // Sleep to allow the eviction evaluation to be performed prior to the maximum token lifetime
+    Thread.sleep(evictionInterval + 5); // No grace period configured
+
+    // Renewal should succeed because there is sufficient time until max lifetime is exceeded
+    tss.renewToken(token, TimeUnit.SECONDS.toMillis(10));
     assertFalse("Expected the token to have been renewed.", tss.isExpired(token));
   }
 
   @Test
-  public void testTokenEviction()
-      throws InterruptedException, ServiceLifecycleException, UnknownTokenException {
+  public void testTokenEviction() throws InterruptedException, ServiceLifecycleException, UnknownTokenException {
     final JWTToken token = createMockToken(System.currentTimeMillis() - 60000);
     final TokenStateService tss = createTokenStateService();
+
+    final long evictionInterval = TimeUnit.SECONDS.toMillis(30);
+    final long maxTokenLifetime = evictionInterval - 10;
+
     try {
       tss.start();
       // Add the expired token
-      tss.addToken(token, System.currentTimeMillis());
+      tss.addToken(token.getClaim(JWTToken.KNOX_ID_CLAIM),
+                                  System.currentTimeMillis(),
+                                  token.getExpiresDate().getTime(),
+                                  maxTokenLifetime);
       assertTrue("Expected the token to have expired.", tss.isExpired(token));
-      /* sleep one sec more than eviction time */
-      Thread.sleep(TimeUnit.SECONDS.toMillis(EVICTION_INTERVAL + 1));
 
-      /* expect the renew call to fail since the token is evicted */
+      // Sleep to allow the eviction evaluation to be performed
+      Thread.sleep(evictionInterval + 10);
+
+      // Expect the renew call to fail since the token should have been evicted
       final UnknownTokenException e = assertThrows(UnknownTokenException.class, () -> tss.renewToken(token));
       assertEquals("Unknown token: " + TokenUtils.getTokenId(token), e.getMessage());
     } finally {
