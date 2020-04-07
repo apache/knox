@@ -60,11 +60,21 @@ import static org.apache.knox.gateway.topology.discovery.ClusterConfigurationMon
 @SuppressWarnings("PMD.DoNotUseThreads")
 public class PollingConfigurationAnalyzer implements Runnable {
 
+  private static final String COMMAND = "COMMAND";
+
+  private static final String COMMAND_STATUS = "COMMAND_STATUS";
+
+  private static final String STARTED_STATUS = "STARTED";
+
+  private static final String SUCCEEDED_STATUS = "SUCCEEDED";
+
+  private static final String RESTART_COMMAND = "Restart";
+
+  private static final String START_COMMAND = "Start";
+
   // The format of the filter employed when restart events are queried from ClouderaManager
   private static final String RESTART_EVENTS_QUERY_FORMAT =
                                 "category==" + ApiEventCategory.AUDIT_EVENT.getValue() +
-                                ";attributes.command==Restart" +
-                                ";attributes.command_status==SUCCEEDED" +
                                 ";attributes.cluster==\"%s\"%s";
 
   // The format of the timestamp element of the restart events query filter
@@ -365,10 +375,30 @@ public class PollingConfigurationAnalyzer implements Runnable {
                                                clusterName,
                                                lastTimestamp);
     for (ApiEvent event : events) {
-      restartEvents.add(new RestartEvent(event));
+      List<ApiEventAttribute> attributes = event.getAttributes();
+      Map<String,Object> map = getAttributeMap(attributes);
+      addIfRelevantEvent(restartEvents, event, map);
     }
 
     return restartEvents;
+  }
+
+  @SuppressWarnings("unchecked")
+  private void addIfRelevantEvent(List<RestartEvent> restartEvents, ApiEvent event, Map<String, Object> map) {
+    String command = null;
+    String status = null;
+    command = (String) ((List<String>) map.get(COMMAND)).get(0);
+    status = (String) ((List<String>) map.get(COMMAND_STATUS)).get(0);
+    if (START_COMMAND.equals(command) || RESTART_COMMAND.equals(command) &&
+        SUCCEEDED_STATUS.equals(status) || STARTED_STATUS.equals(status)) {
+      restartEvents.add(new RestartEvent(event));
+    }
+  }
+
+  private Map<String, Object> getAttributeMap(List<ApiEventAttribute> attributes) {
+    Map<String,Object> map = new HashMap<>();
+    attributes.forEach(attr -> { map.put(attr.getName(), attr.getValues());});
+    return map;
   }
 
   /**
