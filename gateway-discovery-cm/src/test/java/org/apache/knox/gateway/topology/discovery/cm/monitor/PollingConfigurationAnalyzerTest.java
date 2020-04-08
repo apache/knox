@@ -27,7 +27,9 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
+import org.apache.knox.gateway.topology.discovery.cm.model.cm.ClouderaManagerAPIServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.hdfs.NameNodeServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.hive.HiveOnTezServiceModelGenerator;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
@@ -75,7 +77,7 @@ public class PollingConfigurationAnalyzerTest {
     apiEventAttrs.add(createEventAttribute("SERVICE", service));
     ApiEvent apiEvent = createApiEvent(category, apiEventAttrs);
 
-    PollingConfigurationAnalyzer.RestartEvent restartEvent = new PollingConfigurationAnalyzer.RestartEvent(apiEvent);
+    PollingConfigurationAnalyzer.StartEvent restartEvent = new PollingConfigurationAnalyzer.StartEvent(apiEvent);
     assertNotNull(restartEvent);
     assertEquals(clusterName, restartEvent.getClusterName());
     assertEquals(serviceType, restartEvent.getServiceType());
@@ -145,11 +147,33 @@ public class PollingConfigurationAnalyzerTest {
     restartEventAttrs.add(createEventAttribute("CLUSTER", clusterName));
     restartEventAttrs.add(createEventAttribute("SERVICE_TYPE", NameNodeServiceModelGenerator.SERVICE_TYPE));
     restartEventAttrs.add(createEventAttribute("SERVICE", NameNodeServiceModelGenerator.SERVICE));
+    restartEventAttrs.add(createEventAttribute("COMMAND", "Restart"));
+    restartEventAttrs.add(createEventAttribute("COMMAND_STATUS", "SUCCEEDED"));
     ApiEvent restartEvent = createApiEvent(ApiEventCategory.AUDIT_EVENT, restartEventAttrs);
     pca.addRestartEvent(clusterName, restartEvent);
 
+    // Simulate a service Start event
+    List<ApiEventAttribute> startEventAttrs = new ArrayList<>();
+    startEventAttrs.add(createEventAttribute("CLUSTER", clusterName));
+    startEventAttrs.add(createEventAttribute("SERVICE_TYPE", ClouderaManagerAPIServiceModelGenerator.SERVICE_TYPE));
+    startEventAttrs.add(createEventAttribute("SERVICE", ClouderaManagerAPIServiceModelGenerator.SERVICE));
+    startEventAttrs.add(createEventAttribute("COMMAND", "Start"));
+    startEventAttrs.add(createEventAttribute("COMMAND_STATUS", "STARTED"));
+    ApiEvent startEvent = createApiEvent(ApiEventCategory.AUDIT_EVENT, startEventAttrs);
+    pca.addRestartEvent(clusterName, startEvent);
+
+    // Simulate a failed service Start event
+    startEventAttrs = new ArrayList<>();
+    startEventAttrs.add(createEventAttribute("CLUSTER", clusterName));
+    startEventAttrs.add(createEventAttribute("SERVICE_TYPE", HiveOnTezServiceModelGenerator.SERVICE_TYPE));
+    startEventAttrs.add(createEventAttribute("SERVICE", HiveOnTezServiceModelGenerator.SERVICE));
+    startEventAttrs.add(createEventAttribute("COMMAND", "Start"));
+    startEventAttrs.add(createEventAttribute("COMMAND_STATUS", "FAILED"));
+    ApiEvent failedStartEvent = createApiEvent(ApiEventCategory.AUDIT_EVENT, startEventAttrs);
+    pca.addRestartEvent(clusterName, failedStartEvent);
+
     try {
-      pollingThreadExecutor.awaitTermination(15, TimeUnit.SECONDS);
+      pollingThreadExecutor.awaitTermination(10, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       //
     }
@@ -158,6 +182,7 @@ public class PollingConfigurationAnalyzerTest {
     pca.stop();
 
     assertTrue("Expected a change notification", listener.wasNotified(address, clusterName));
+    assertEquals(2, listener.howManyNotifications(address, clusterName));
   }
 
 
@@ -351,7 +376,7 @@ public class PollingConfigurationAnalyzerTest {
     }
 
     @Override
-    protected List<ApiEvent> queryRestartEvents(ApiClient client, String clusterName, String since) {
+    protected List<ApiEvent> queryEvents(ApiClient client, String clusterName, String since) {
       return restartEvents.computeIfAbsent(clusterName, l -> new ArrayList<>());
     }
 
@@ -370,14 +395,20 @@ public class PollingConfigurationAnalyzerTest {
 
   private static class ChangeListener implements ConfigurationChangeListener {
     private final Map<String, String> notifications = new HashMap<>();
+    private final List<String> events = new ArrayList<>();
 
     @Override
     public void onConfigurationChange(String source, String clusterName) {
       notifications.put(source, clusterName);
+      events.add(source + "+" + clusterName);
     }
 
     boolean wasNotified(final String source, final String clusterName) {
       return clusterName.equals(notifications.get(source));
+    }
+
+    int howManyNotifications(final String source, final String clusterName) {
+      return events.size();
     }
   }
 
