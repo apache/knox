@@ -77,7 +77,7 @@ public class PollingConfigurationAnalyzerTest {
     apiEventAttrs.add(createEventAttribute("SERVICE", service));
     ApiEvent apiEvent = createApiEvent(category, apiEventAttrs);
 
-    PollingConfigurationAnalyzer.RestartEvent restartEvent = new PollingConfigurationAnalyzer.RestartEvent(apiEvent);
+    PollingConfigurationAnalyzer.StartEvent restartEvent = new PollingConfigurationAnalyzer.StartEvent(apiEvent);
     assertNotNull(restartEvent);
     assertEquals(clusterName, restartEvent.getClusterName());
     assertEquals(serviceType, restartEvent.getServiceType());
@@ -376,7 +376,7 @@ public class PollingConfigurationAnalyzerTest {
     }
 
     @Override
-    protected List<ApiEvent> queryRestartEvents(ApiClient client, String clusterName, String since) {
+    protected List<ApiEvent> queryEvents(ApiClient client, String clusterName, String since) {
       return restartEvents.computeIfAbsent(clusterName, l -> new ArrayList<>());
     }
 
