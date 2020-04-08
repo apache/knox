@@ -29,10 +29,6 @@ import org.junit.rules.TemporaryFolder;
 
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
-
-import static org.hamcrest.CoreMatchers.endsWith;
-import static org.hamcrest.CoreMatchers.startsWith;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -40,6 +36,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static org.hamcrest.CoreMatchers.endsWith;
+import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -344,7 +342,7 @@ public class RemoteConfigurationRegistryJAASConfigTest {
         Map<String, ?> entryOpts = entry.getOptions();
         assertEquals(principal, entryOpts.get("principal"));
         assertEquals(keyTab, entryOpts.get("keyTab"));
-        assertEquals(useKeyTab, Boolean.valueOf((String)entryOpts.get("isUseKeyTab")));
-        assertEquals(useTicketCache, Boolean.valueOf((String)entryOpts.get("isUseTicketCache")));
+        assertEquals(useKeyTab, Boolean.valueOf((String)entryOpts.get("useKeyTab")));
+        assertEquals(useTicketCache, Boolean.valueOf((String)entryOpts.get("useTicketCache")));
     }
 }

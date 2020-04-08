@@ -266,6 +266,16 @@ public class LocalFileSystemRemoteConfigurationRegistryClientService implements 
             public void removeEntryListener(String path) throws Exception {
                 // N/A
             }
+
+            @Override
+            public String authenticationType() {
+                return null;
+            }
+
+            @Override
+            public boolean isBackwardsCompatible() {
+                return false;
+            }
         };
     }
 

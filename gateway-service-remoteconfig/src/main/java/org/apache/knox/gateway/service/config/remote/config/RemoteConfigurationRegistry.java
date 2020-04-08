@@ -32,6 +32,8 @@ class RemoteConfigurationRegistry implements RemoteConfigurationRegistryConfig {
     private String keyTab;
     private boolean useKeyTab;
     private boolean useTicketCache;
+    /* If true ensures that the auth scheme used to create znodes is `auth` and not `sasl` */
+    private boolean isBackwardsCompatible;
 
     RemoteConfigurationRegistry() {
     }
@@ -74,6 +76,10 @@ class RemoteConfigurationRegistry implements RemoteConfigurationRegistryConfig {
 
     public void setKeytab(String keytab) {
         this.keyTab = keytab;
+    }
+
+    public void setBackwardsCompatible(boolean backwardsCompatible) {
+        isBackwardsCompatible = backwardsCompatible;
     }
 
     @Override
@@ -130,6 +136,7 @@ class RemoteConfigurationRegistry implements RemoteConfigurationRegistryConfig {
         return useKeyTab;
     }
 
+
     @Override
     @XmlElement(name="keytab")
     public String getKeytab() {
@@ -141,4 +148,9 @@ class RemoteConfigurationRegistry implements RemoteConfigurationRegistryConfig {
         return (getAuthType() != null);
     }
 
+    @Override
+    @XmlElement(name="backwards-compatible")
+    public boolean isBackwardsCompatible() {
+        return isBackwardsCompatible;
+    }
 }

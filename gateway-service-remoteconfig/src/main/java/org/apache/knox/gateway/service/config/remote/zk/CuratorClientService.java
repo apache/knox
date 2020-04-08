@@ -31,12 +31,12 @@ import org.apache.knox.gateway.config.ConfigurationException;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.config.remote.RemoteConfigurationMessages;
-import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient.ChildEntryListener;
-import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient.EntryListener;
-import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
 import org.apache.knox.gateway.service.config.remote.RemoteConfigurationRegistryConfig;
 import org.apache.knox.gateway.service.config.remote.config.RemoteConfigurationRegistriesAccessor;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
+import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient.ChildEntryListener;
+import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient.EntryListener;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.client.ZKClientConfig;
@@ -124,7 +124,13 @@ class CuratorClientService implements ZooKeeperClientService {
         ACLProvider aclProvider;
         if (config.isSecureRegistry()) {
             configureSasl(config);
-            aclProvider = new SASLOwnerACLProvider();
+            if(AUTH_TYPE_KERBEROS.equalsIgnoreCase(config.getAuthType()) &&
+                !config.isBackwardsCompatible()) {
+                aclProvider = new SASLOwnerACLProvider(true);
+            } else {
+                aclProvider = new SASLOwnerACLProvider(false);
+            }
+
         } else {
             // Clear SASL system property
             System.clearProperty(LOGIN_CONTEXT_NAME_PROPERTY);
@@ -136,6 +142,7 @@ class CuratorClientService implements ZooKeeperClientService {
                                                          .retryPolicy(new ExponentialBackoffRetry(1000, 3))
                                                          .aclProvider(aclProvider)
                                                          .build();
+
         client.start();
 
         return (new ClientAdapter(client, config));
@@ -261,6 +268,16 @@ class CuratorClientService implements ZooKeeperClientService {
         }
 
         @Override
+        public String authenticationType() {
+            return config.getAuthType();
+        }
+
+        @Override
+        public boolean isBackwardsCompatible() {
+            return config.isBackwardsCompatible();
+        }
+
+        @Override
         public String getEntryData(String path) {
             return getEntryData(path, StandardCharsets.UTF_8.name());
         }
@@ -347,10 +364,14 @@ class CuratorClientService implements ZooKeeperClientService {
      */
     private static class SASLOwnerACLProvider implements ACLProvider {
 
-        private final List<ACL> saslACL;
+        private final List<ACL> saslACL = new ArrayList();
 
-        SASLOwnerACLProvider() {
-            this.saslACL = ZooDefs.Ids.CREATOR_ALL_ACL; // All permissions for any authenticated user
+        SASLOwnerACLProvider(boolean isKerberos) {
+            if(isKerberos) {
+                saslACL.add(new ACL(ZooDefs.Perms.ALL, new Id("sasl", "knox")));
+            } else {
+                this.saslACL.addAll(ZooDefs.Ids.CREATOR_ALL_ACL); // All permissions for any authenticated user
+            }
         }
 
         @Override

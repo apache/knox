@@ -40,4 +40,7 @@ public interface RemoteConfigurationRegistryConfig {
 
     boolean isUseKeyTab();
 
+    /* If true ensures that the auth scheme used to create znodes is `auth` and not `sasl` */
+    boolean isBackwardsCompatible();
+
 }

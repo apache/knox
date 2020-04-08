@@ -95,8 +95,10 @@ public interface GatewayConfig {
   String REMOTE_CONFIG_REGISTRY_PRINCIPAL = "principal";
   String REMOTE_CONFIG_REGISTRY_CREDENTIAL_ALIAS = "credentialAlias";
   String REMOTE_CONFIG_REGISTRY_KEYTAB = "keytab";
-  String REMOTE_CONFIG_REGISTRY_USE_KEYTAB = "useKeytab";
+  String REMOTE_CONFIG_REGISTRY_USE_KEYTAB = "useKeyTab";
   String REMOTE_CONFIG_REGISTRY_USE_TICKET_CACHE = "useTicketCache";
+  /* If true ensures that the auth scheme used to create znodes is `auth` and not `sasl` */
+  String ZOOKEEPER_REMOTE_CONFIG_REGISTRY_BACKWARDS_COMPATIBLE = "backwardsCompatible";
 
   String PROXYUSER_SERVICES_IGNORE_DOAS = "gateway.proxyuser.services.ignore.doas";
 
