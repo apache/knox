@@ -256,7 +256,7 @@
         <txw2.version>2.4.0-b180830.0438</txw2.version>
         <velocity.version>1.7</velocity.version>
         <woodstox-core.version>6.1.1</woodstox-core.version>
-        <xmlsec.version>2.1.4</xmlsec.version>
+        <xmlsec.version>2.1.5</xmlsec.version>
         <xmltool.version>3.3</xmltool.version>
         <xml-matchers.version>0.10</xml-matchers.version>
         <zookeeper.version>3.5.7</zookeeper.version>
