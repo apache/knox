@@ -214,7 +214,7 @@
         <jaxb.version>2.3.0</jaxb.version>
         <jaxws-ri.version>2.3.2</jaxws-ri.version>
         <jakarta.xml.bind.version>2.3.2</jakarta.xml.bind.version>
-        <java-support.version>8.0.0</java-support.version>
+        <java-support.version>7.5.1</java-support.version>
         <jericho-html.version>3.4</jericho-html.version>
         <jersey.version>2.6</jersey.version>
         <jetty.version>9.4.27.v20200227</jetty.version>
