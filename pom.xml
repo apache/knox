@@ -201,7 +201,6 @@
         <hamcrest-json.version>0.2</hamcrest-json.version>
         <httpclient.version>4.5.12</httpclient.version>
         <httpcore.version>4.4.13</httpcore.version>
-        <j2e-pac4j.version>4.1.0</j2e-pac4j.version>
         <jackson.version>2.11.1</jackson.version>
         <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
         <jansi.version>1.18</jansi.version>
@@ -217,6 +216,7 @@
         <jakarta.xml.bind.version>2.3.2</jakarta.xml.bind.version>
         <jakarta.activation.version>1.2.2</jakarta.activation.version>
         <java-support.version>7.5.1</java-support.version>
+        <jee-pac4j.version>5.0.0</jee-pac4j.version>
         <jericho-html.version>3.4</jericho-html.version>
         <jersey.version>2.6</jersey.version>
         <jetty.version>9.4.30.v20200611</jetty.version>
@@ -241,8 +241,8 @@
         <nimbus-jose-jwt.version>8.14.1</nimbus-jose-jwt.version>
         <nodejs.version>v12.18.2</nodejs.version>
         <okhttp.version>2.7.5</okhttp.version>
-        <opensaml.version>3.4.3</opensaml.version>
-        <pac4j.version>3.8.3</pac4j.version>
+        <opensaml.version>3.4.5</opensaml.version>
+        <pac4j.version>4.0.3</pac4j.version>
         <protobuf.version>3.12.4</protobuf.version>
         <rest-assured.version>4.3.1</rest-assured.version>
         <shiro.version>1.5.3</shiro.version>
@@ -2053,7 +2053,7 @@
             </dependency>
             <dependency>
                 <groupId>org.pac4j</groupId>
-                <artifactId>pac4j-saml</artifactId>
+                <artifactId>pac4j-saml-opensamlv3</artifactId>
                 <version>${pac4j.version}</version>
                 <exclusions>
                     <exclusion>
@@ -2087,8 +2087,8 @@
 
             <dependency>
                 <groupId>org.pac4j</groupId>
-                <artifactId>j2e-pac4j</artifactId>
-                <version>${j2e-pac4j.version}</version>
+                <artifactId>jee-pac4j</artifactId>
+                <version>${jee-pac4j.version}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.pac4j</groupId>

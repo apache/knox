@@ -71,7 +71,7 @@
 
         <dependency>
             <groupId>org.pac4j</groupId>
-            <artifactId>j2e-pac4j</artifactId>
+            <artifactId>jee-pac4j</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>org.pac4j</groupId>
@@ -113,7 +113,7 @@
         </dependency>
         <dependency>
             <groupId>org.pac4j</groupId>
-            <artifactId>pac4j-saml</artifactId>
+            <artifactId>pac4j-saml-opensamlv3</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>ch.qos.logback</groupId>

@@ -34,13 +34,13 @@ import org.pac4j.config.client.PropertiesConfigFactory;
 import org.pac4j.config.client.PropertiesConstants;
 import org.pac4j.core.client.Client;
 import org.pac4j.core.config.Config;
-import org.pac4j.core.context.session.J2ESessionStore;
+import org.pac4j.core.context.session.JEESessionStore;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.util.CommonHelper;
 import org.pac4j.http.client.indirect.IndirectBasicAuthClient;
 import org.pac4j.http.credentials.authenticator.test.SimpleTestUsernamePasswordAuthenticator;
-import org.pac4j.j2e.filter.CallbackFilter;
-import org.pac4j.j2e.filter.SecurityFilter;
+import org.pac4j.jee.filter.CallbackFilter;
+import org.pac4j.jee.filter.SecurityFilter;
 import org.pac4j.oidc.client.AzureAdClient;
 import org.pac4j.saml.client.SAML2Client;
 
@@ -204,8 +204,8 @@ public class Pac4jDispatcherFilter implements Filter {
 
     SessionStore sessionStore;
 
-    if(!StringUtils.isBlank(sessionStoreVar) && J2ESessionStore.class.getName().contains(sessionStoreVar) ) {
-      sessionStore = new J2ESessionStore();
+    if(!StringUtils.isBlank(sessionStoreVar) && JEESessionStore.class.getName().contains(sessionStoreVar) ) {
+      sessionStore = new JEESessionStore();
     } else {
       sessionStore = new KnoxSessionStore(cryptoService, clusterName, domainSuffix);
     }
@@ -253,7 +253,7 @@ public class Pac4jDispatcherFilter implements Filter {
   public void doFilter( ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
 
     final HttpServletRequest request = (HttpServletRequest) servletRequest;
-    request.setAttribute(PAC4J_CONFIG, securityFilter.getConfig());
+    request.setAttribute(PAC4J_CONFIG, securityFilter.getSharedConfig());
 
     // it's a callback from an identity provider
     if (request.getParameter(PAC4J_CALLBACK_PARAMETER) != null || (

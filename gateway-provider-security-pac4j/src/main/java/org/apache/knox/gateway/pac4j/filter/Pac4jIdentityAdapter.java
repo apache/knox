@@ -27,7 +27,7 @@ import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.pac4j.core.config.Config;
-import org.pac4j.core.context.J2EContext;
+import org.pac4j.core.context.JEEContext;
 import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.profile.ProfileManager;
 import org.slf4j.Logger;
@@ -83,7 +83,7 @@ public class Pac4jIdentityAdapter implements Filter {
 
     final HttpServletRequest request = (HttpServletRequest) servletRequest;
     final HttpServletResponse response = (HttpServletResponse) servletResponse;
-    final J2EContext context = new J2EContext(request, response,
+    final JEEContext context = new JEEContext(request, response,
         ((Config)request.getAttribute(PAC4J_CONFIG)).getSessionStore());
     final ProfileManager<CommonProfile> manager = new ProfileManager<>(context);
     final Optional<CommonProfile> optional = manager.get(true);
