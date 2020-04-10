@@ -235,7 +235,7 @@
         <maven-pmd-plugin.version>3.12.0</maven-pmd-plugin.version>
         <metrics.version>4.1.6</metrics.version>
         <mina.version>2.0.21</mina.version>
-        <nimbus-jose-jwt.version>8.9</nimbus-jose-jwt.version>
+        <nimbus-jose-jwt.version>8.14.1</nimbus-jose-jwt.version>
         <nodejs.version>v12.14.1</nodejs.version>
         <okhttp.version>2.7.5</okhttp.version>
         <opensaml.version>3.4.3</opensaml.version>
