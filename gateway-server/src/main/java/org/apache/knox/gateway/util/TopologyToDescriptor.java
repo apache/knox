@@ -118,6 +118,9 @@ public class TopologyToDescriptor {
 
   /**
    * Validate topology
+   *
+   * @throws IOException Exception on validating file.
+   * @throws SAXException Exception on parsing XML.
    */
   public void validate() throws IOException, SAXException {
     validateTopology(SCHEMA_FILE, topologyPath);
@@ -125,6 +128,10 @@ public class TopologyToDescriptor {
 
   /**
    * Convert topology to provider and descriptor
+   *
+   * @throws IOException Exception on validating file.
+   * @throws JAXBException Exception on parsing XML.
+   * @throws SAXException Exception on parsing XML.
    */
   public void convert() throws IOException, JAXBException, SAXException {
     final Topology topology = parseTopology(SCHEMA_FILE, topologyPath);

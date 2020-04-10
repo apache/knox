@@ -26,13 +26,13 @@ import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * In-Memory authentication token state management implementation.
@@ -311,6 +311,7 @@ public class DefaultTokenStateService implements TokenStateService {
    * Method that checks if a token's state is a candidate for eviction.
    *
    * @param tokenId A unique token identifier
+   * @throws UnknownTokenException Exception if token is not found.
    *
    * @return true, if the associated token state can be evicted; Otherwise, false.
    */
@@ -325,10 +326,9 @@ public class DefaultTokenStateService implements TokenStateService {
   /**
    * Get a list of tokens
    *
-   * @return
+   * @return List of tokens
    */
   protected List<String> getTokens() {
-    return tokenExpirations.keySet().stream().collect(Collectors.toList());
+    return new ArrayList<>(tokenExpirations.keySet());
   }
-
 }

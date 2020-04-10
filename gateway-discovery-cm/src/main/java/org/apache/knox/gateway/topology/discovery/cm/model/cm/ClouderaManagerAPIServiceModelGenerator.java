@@ -62,12 +62,12 @@ public class ClouderaManagerAPIServiceModelGenerator
    * discovery client and uses the CM url used by the driver (which was
    * populated by the descriptor).
    *
-   * @param service
-   * @param serviceConfig
-   * @param role
-   * @param roleConfig
-   * @return
-   * @throws ApiException
+   * @param service Service.
+   * @param serviceConfig Service config.
+   * @param role Role.
+   * @param roleConfig Role config.
+   * @return ServiceModel for given service and role.
+   * @throws ApiException Exception interacting with CM.
    */
   @Override
   public ServiceModel generateService(ApiService service,

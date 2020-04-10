@@ -66,8 +66,10 @@ public interface TokenStateService extends Service {
   void addToken(String tokenId, long issueTime, long expiration, long maxLifetimeDuration);
 
   /**
+   * Checks if the token is expired.
    *
    * @param token The token.
+   * @throws UnknownTokenException Exception if token is not found.
    *
    * @return true, if the token has expired; Otherwise, false.
    */
@@ -77,6 +79,7 @@ public interface TokenStateService extends Service {
    * Disable any subsequent use of the specified token.
    *
    * @param token The token.
+   * @throws UnknownTokenException Exception if token is not found.
    */
   void revokeToken(JWTToken token) throws UnknownTokenException;
 
@@ -84,6 +87,7 @@ public interface TokenStateService extends Service {
    * Disable any subsequent use of the specified token.
    *
    * @param tokenId The token unique identifier.
+   * @throws UnknownTokenException Exception if token is not found.
    */
   void revokeToken(String tokenId) throws UnknownTokenException;
 
@@ -91,6 +95,7 @@ public interface TokenStateService extends Service {
    * Extend the lifetime of the specified token by the default amount of time.
    *
    * @param token The token.
+   * @throws UnknownTokenException Exception if token is not found.
    *
    * @return The token's updated expiration time in milliseconds.
    */
@@ -101,6 +106,7 @@ public interface TokenStateService extends Service {
    *
    * @param token The token.
    * @param renewInterval The amount of time that should be added to the token's lifetime.
+   * @throws UnknownTokenException Exception if token is not found.
    *
    * @return The token's updated expiration time in milliseconds.
    */
@@ -110,6 +116,7 @@ public interface TokenStateService extends Service {
    * Extend the lifetime of the specified token by the default amount of time.
    *
    * @param tokenId The token unique identifier.
+   * @throws UnknownTokenException Exception if token is not found.
    *
    * @return The token's updated expiration time in milliseconds.
    */
@@ -120,25 +127,29 @@ public interface TokenStateService extends Service {
    *
    * @param tokenId The token unique identifier.
    * @param renewInterval The amount of time that should be added to the token's lifetime.
+   * @throws UnknownTokenException Exception if token is not found.
    *
    * @return The token's updated expiration time in milliseconds.
    */
   long renewToken(String tokenId, long renewInterval) throws UnknownTokenException;
 
   /**
+   * Get the token expiration.
    *
    * @param token The token.
+   * @throws UnknownTokenException Exception if token is not found.
    *
    * @return The token's expiration time in milliseconds.
    */
   long getTokenExpiration(JWT token) throws UnknownTokenException;
 
   /**
+   * Get the token expiration.
    *
    * @param tokenId The token unique identifier.
+   * @throws UnknownTokenException Exception if token is not found.
    *
    * @return The token's expiration time in milliseconds.
    */
   long getTokenExpiration(String tokenId) throws UnknownTokenException;
-
 }

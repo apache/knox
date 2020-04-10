@@ -158,9 +158,7 @@ public class TokenServiceResourceTest {
     assertTrue(authority.verifyToken(parsedToken));
   }
 
-  /**
-   * KNOX-2266
-   */
+  // KNOX-2266
   @Test
   public void testConcurrentGetToken() throws Exception {
 

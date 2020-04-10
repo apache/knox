@@ -73,8 +73,8 @@ public interface TopologyService extends Service, ServiceDefinitionChangeListene
    *
    * @return A Topology object based on the specified content.
    *
-   * @throws IOException
-   * @throws SAXException
+   * @throws IOException Exception thrown parsing input stream.
+   * @throws SAXException Exception thrown parsing xml.
    */
   Topology parse(InputStream content) throws IOException, SAXException;
 
