@@ -150,8 +150,8 @@
         <maven.compiler.target>8</maven.compiler.target>
 
         <!-- Dependencies sorted alphabetically -->
-        <apacheds.directory.api.version>2.0.0.AM1</apacheds.directory.api.version>
-        <apacheds.directory.server.version>2.0.0.AM25</apacheds.directory.server.version>
+        <apacheds.directory.api.version>2.0.0</apacheds.directory.api.version>
+        <apacheds.directory.server.version>2.0.0.AM26</apacheds.directory.server.version>
         <apacheds-jdbm.version>2.0.0-M5</apacheds-jdbm.version>
         <apache-rat-plugin.version>0.13</apache-rat-plugin.version>
         <ant-nodeps.version>1.8.1</ant-nodeps.version>
