@@ -252,7 +252,7 @@ public class DefaultTokenStateService implements TokenStateService {
 
   protected boolean hasRemainingRenewals(final String tokenId, long renewInterval) {
     // Is the current time + 30-second buffer + the renewal interval is less than the max lifetime for the token?
-    return ((System.currentTimeMillis() + 30000 + renewInterval) < getMaxLifetime(tokenId));
+    return ((System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(30) + renewInterval) < getMaxLifetime(tokenId));
   }
 
   protected long getMaxLifetime(final String tokenId) {
