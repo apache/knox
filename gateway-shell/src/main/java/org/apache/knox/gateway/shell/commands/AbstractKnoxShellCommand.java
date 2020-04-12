@@ -27,9 +27,35 @@ import org.codehaus.groovy.tools.shell.Groovysh;
 public abstract class AbstractKnoxShellCommand extends CommandSupport {
   static final String KNOXSQLHISTORY = "__knoxsqlhistory";
   protected static final String KNOXDATASOURCES = "__knoxdatasources";
+  private String description;
+  private String usage;
+  private String help;
 
   public AbstractKnoxShellCommand(Groovysh shell, String name, String shortcut) {
     super(shell, name, shortcut);
+  }
+
+  public AbstractKnoxShellCommand(Groovysh shell, String name, String shortcut,
+      String desc, String usage, String help) {
+    super(shell, name, shortcut);
+    this.description = desc;
+    this.usage = usage;
+    this.help = help;
+  }
+
+  @Override
+  public String getDescription() {
+      return description;
+  }
+
+  @Override
+  public String getUsage() {
+    return usage;
+  }
+
+  @Override
+  public String getHelp() {
+    return help;
   }
 
   protected String getBindingVariableNameForResultingTable(List<String> args) {

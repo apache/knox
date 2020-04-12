@@ -38,6 +38,8 @@ import org.apache.knox.gateway.shell.table.KnoxShellTable;
 import org.codehaus.groovy.tools.shell.Groovysh;
 
 public class SelectCommand extends AbstractSQLCommandSupport implements KeyListener {
+  private static final String USAGE = ":sql [assign resulting-variable-name]";
+  private static final String DESC = "Build table from SQL ResultSet";
 
   private static final String KNOXDATASOURCE = "__knoxdatasource";
   private JTextArea sqlField;
@@ -45,7 +47,7 @@ public class SelectCommand extends AbstractSQLCommandSupport implements KeyListe
   private int historyIndex = -1;
 
   public SelectCommand(Groovysh shell) {
-    super(shell, ":SQL", ":sql");
+    super(shell, ":SQL", ":sql", DESC, USAGE, DESC);
   }
 
   @Override
