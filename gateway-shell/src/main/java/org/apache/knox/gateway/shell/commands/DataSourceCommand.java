@@ -30,9 +30,11 @@ import org.apache.knox.gateway.shell.table.KnoxShellTable;
 import org.codehaus.groovy.tools.shell.Groovysh;
 
 public class DataSourceCommand extends AbstractSQLCommandSupport {
+  private static final String USAGE = ":ds (add|remove|select) [ds-name, connection-str, driver classname, authntype(none|basic)]";
+  private static final String DESC = "Datasource management commands. Persisted datasources maintain connection details across sessions";
 
   public DataSourceCommand(Groovysh shell) {
-    super(shell, ":datasources", ":ds");
+    super(shell, ":datasources", ":ds", DESC, USAGE, DESC);
   }
 
   @SuppressWarnings({"unchecked", "PMD.CloseResource"})

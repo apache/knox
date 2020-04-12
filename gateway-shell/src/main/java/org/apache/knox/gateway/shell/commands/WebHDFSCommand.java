@@ -41,22 +41,21 @@ import org.apache.knox.gateway.util.JsonUtils;
 import org.codehaus.groovy.tools.shell.Groovysh;
 
 public class WebHDFSCommand extends AbstractKnoxShellCommand {
+  private static final String DESC = "POSIX style commands for Hadoop Filesystems";
+  private static final String USAGE = "Usage: \n" +
+      "  :fs mounts \n" +
+      "  :fs mount target-topology-url mountpoint-name \n" +
+      "  :fs unmount mountpoint-name \n" +
+      "  :fs ls {target-path} \n" +
+      "  :fs cat {target-path} \n" +
+      "  :fs get {from-path} {to-path} \n" +
+      "  :fs put {from-path} {tp-path} \n" +
+      "  :fs rm {target-path} \n" +
+      "  :fs mkdir {dir-path} \n";
   private Map<String, KnoxSession> sessions = new HashMap<>();
 
   public WebHDFSCommand(Groovysh shell) {
-    super(shell, ":filesystem", ":fs");
-  }
-
-  @Override
-  public String getUsage() {
-    String usage = "Usage: \n" +
-                   "  :fs ls {target-path} \n" +
-                   "  :fs cat {target-path} \n" +
-                   "  :fs get {from-path} {to-path} \n" +
-                   "  :fs put {from-path} {tp-path} \n" +
-                   "  :fs rm {target-path} \n" +
-                   "  :fs mkdir {dir-path} \n";
-    return usage;
+    super(shell, ":filesystem", ":fs", DESC, USAGE, DESC);
   }
 
   @Override

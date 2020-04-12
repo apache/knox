@@ -24,11 +24,13 @@ import org.apache.knox.gateway.shell.table.KnoxShellTable;
 import org.codehaus.groovy.tools.shell.Groovysh;
 
 public class CSVCommand extends AbstractKnoxShellCommand {
+  private static final String USAGE = ":csv [withHeaders] file-url||$variable-name [assign resulting-variable-name]";
+  private static final String DESC = "Build table from CSV file located at provided URL or KnoxShell $variable-name";
   private boolean withHeaders;
   private String url;
 
   public CSVCommand(Groovysh shell) {
-    super(shell, ":CSV", ":csv");
+    super(shell, ":CSV", ":csv", DESC, USAGE, DESC);
   }
 
   @SuppressWarnings("unchecked")

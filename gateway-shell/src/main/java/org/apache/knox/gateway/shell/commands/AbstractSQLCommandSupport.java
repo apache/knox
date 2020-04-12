@@ -40,6 +40,11 @@ public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand
     super(shell, name, shortcut);
   }
 
+  public AbstractSQLCommandSupport(Groovysh shell, String name, String shortcut, String desc, String usage,
+      String help) {
+    super(shell, name, shortcut, desc, usage, help);
+  }
+
   @SuppressWarnings("unchecked")
   protected Connection getConnectionFromSession(KnoxDataSource ds) {
     HashMap<String, Connection> connections =
