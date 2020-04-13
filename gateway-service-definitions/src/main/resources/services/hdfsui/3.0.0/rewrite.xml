@@ -133,6 +133,9 @@
   <rule dir="OUT" name="HDFSUI/hdfs/outbound/logshtml" pattern="/logs">
     <rewrite template="{gateway.url}/hdfs/logs/?host={$inboundurl[host]}"/>
   </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/logLevelhtml" pattern="logLevel">
+    <rewrite template="{gateway.url}/hdfs/logLevel/?host={$inboundurl[host]}"/>
+  </rule>
   <rule dir="OUT" name="HDFSUI/hdfs/outbound/jmxhtml" pattern="jmx">
     <rewrite template="{gateway.url}/hdfs/jmx/?host={$inboundurl[host]}"/>
   </rule>
@@ -244,6 +247,7 @@
       <apply path="/webhdfs" rule="HDFSUI/hdfs/outbound/namenode/relative/webhdfs"/>
     </content>
     <content type="*/html">
+      <apply path="logLevel" rule="HDFSUI/hdfs/outbound/logLevelhtml"/>
       <apply path="jmx" rule="HDFSUI/hdfs/outbound/jmxhtml"/>
       <apply path="conf" rule="HDFSUI/hdfs/outbound/confhtml"/>
       <apply path="stacks" rule="HDFSUI/hdfs/outbound/stackshtml"/>
