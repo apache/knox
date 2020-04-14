@@ -1,0 +1,49 @@
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+  <!-- jetty-dir.css is special in that it's not so much a CSS file, but the ResourceHandler
+       will always link to it in the current directory. We can refer to it at the static path though. -->
+  <rule dir="IN" name="HBASEJARS/path/in/css" pattern="*://*:*/**/hbase/maven/jetty-dir.css">
+    <rewrite template="{$serviceUrl[HBASEJARS]}/jetty-dir.css"/>
+  </rule>
+  <rule dir="OUT" name="HBASEJARS/path/out/css" pattern="jetty-dir.css">
+    <rewrite template="{$frontend[url]}/hbase/maven/jetty-dir.css"/>
+  </rule>
+
+  <!-- Root location -->
+  <rule dir="IN" name="HBASEJARS/inbound/jars" pattern="*://*:*/**/hbase/maven">
+    <rewrite template="{$serviceUrl[HBASEJARS]}/"/>
+  </rule>
+  <!-- Jetty ResourceHandler issues HTTP/302 redirects to the same path with trailing slash
+    if there is not one there already -->
+  <filter name="HBASEJARS/outbound/jars/headers">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="HBASEJARS/outbound/jars/headers-redirect"/>
+    </content>
+  </filter>
+  <rule dir="OUT" name="HBASEJARS/outbound/jars/headers-redirect">
+    <match pattern="*://*:*/static/maven/{path=**}?{**}"/>
+    <rewrite template="{$frontend[url]}/hbase/maven/{path=**}/"/>
+  </rule>
+  <!-- Regex to match everything -->
+  <rule dir="IN" name="HBASEJARS/inbound/jars/path" pattern="*://*:*/**/hbase/maven/{**}">
+    <rewrite template="{$serviceUrl[HBASEJARS]}/{**}"/>
+  </rule>
+  <rule dir="OUT" name="HBASEJARS/outbound/jars" pattern="/static/maven/{**}">
+    <rewrite template="{$frontend[url]}/hbase/maven/{**}"/>
+  </rule>
+</rules>
