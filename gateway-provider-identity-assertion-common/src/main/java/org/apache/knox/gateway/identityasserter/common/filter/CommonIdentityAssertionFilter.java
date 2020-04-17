@@ -38,8 +38,8 @@ import java.security.AccessController;
 public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilter {
   private IdentityAsserterMessages LOG = MessagesFactory.get(IdentityAsserterMessages.class);
 
-  private static final String GROUP_PRINCIPAL_MAPPING = "group.principal.mapping";
-  private static final String PRINCIPAL_MAPPING = "principal.mapping";
+  public static final String GROUP_PRINCIPAL_MAPPING = "group.principal.mapping";
+  public static final String PRINCIPAL_MAPPING = "principal.mapping";
   private SimplePrincipalMapper mapper = new SimplePrincipalMapper();
 
   @Override
@@ -94,7 +94,7 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     continueChainAsPrincipal(wrapper, response, chain, mappedPrincipalName, groups);
   }
 
-  private String[] combineGroupMappings(String[] mappedGroups, String[] groups) {
+  protected String[] combineGroupMappings(String[] mappedGroups, String[] groups) {
     if (mappedGroups != null && groups != null) {
       return ArrayUtils.addAll(mappedGroups, groups);
     }

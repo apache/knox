@@ -41,13 +41,8 @@ import java.util.Locale;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-/**
- * @author larry
- *
- */
 public class CommonIdentityAssertionFilterTest {
   private String username;
-  private String[] mappedGroups;
   private Filter filter;
 
   @Before
@@ -61,14 +56,24 @@ public class CommonIdentityAssertionFilterTest {
 
       @Override
       public String[] mapGroupPrincipals(String principalName, Subject subject) {
-        String[] groups = new String[2];
+        String[] groups = new String[4];
         int i = 0;
         for(GroupPrincipal p : subject.getPrincipals(GroupPrincipal.class)) {
           groups[i] = p.getName().toUpperCase(Locale.ROOT);
           i++;
         }
-        mappedGroups = groups;
         return groups;
+      }
+
+      @Override
+      protected String[] combineGroupMappings(String[] mappedGroups, String[] groups) {
+        String[] combined = super.combineGroupMappings(mappedGroups, groups);
+        assertEquals("LARRY", username);
+        assertTrue("Should be greater than 2", combined.length > 2);
+        assertTrue(combined[0], combined[0].equalsIgnoreCase("EVERYONE"));
+        assertTrue(combined[1].equalsIgnoreCase("USERS") || combined[1].equalsIgnoreCase("ADMIN"));
+        assertTrue(combined[2], combined[2].equalsIgnoreCase("USERS") || combined[2].equalsIgnoreCase("ADMIN"));
+        return combined;
       }
     };
   }
@@ -76,6 +81,10 @@ public class CommonIdentityAssertionFilterTest {
   @Test
   public void testSimpleFilter() throws ServletException, IOException {
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
+    EasyMock.expect(config.getInitParameter(CommonIdentityAssertionFilter.GROUP_PRINCIPAL_MAPPING)).
+        andReturn("*=everyone;").once();
+    EasyMock.expect(config.getInitParameter(CommonIdentityAssertionFilter.PRINCIPAL_MAPPING)).
+        andReturn("ljm=lmccay;").once();
     EasyMock.replay( config );
 
     final HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
@@ -101,6 +110,7 @@ public class CommonIdentityAssertionFilterTest {
         new PrivilegedExceptionAction<Object>() {
           @Override
           public Object run() throws Exception {
+            filter.init(config);
             filter.doFilter(request, response, chain);
             return null;
           }
@@ -118,9 +128,5 @@ public class CommonIdentityAssertionFilterTest {
         throw new ServletException(t);
       }
     }
-    assertEquals("LARRY", username);
-    assertEquals(mappedGroups.length, 2);
-    assertTrue(mappedGroups[0].equals("USERS") || mappedGroups[0].equals("ADMIN"));
-    assertTrue(mappedGroups[1], mappedGroups[1].equals("USERS") || mappedGroups[1].equals("ADMIN"));
   }
 }
