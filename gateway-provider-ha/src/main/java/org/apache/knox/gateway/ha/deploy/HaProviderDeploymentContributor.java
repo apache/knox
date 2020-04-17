@@ -123,16 +123,6 @@ public class HaProviderDeploymentContributor extends ProviderDeploymentContribut
             config.setMaxFailoverAttempts(Integer.parseInt(failOverAttempts));
          }
 
-         String retrySleep = serviceLevelParams.get(HaServiceConfigConstants.CONFIG_PARAM_RETRY_SLEEP);
-         if (retrySleep != null) {
-            config.setRetrySleep(Integer.parseInt(retrySleep));
-         }
-
-         String retryAttempts = serviceLevelParams.get(HaServiceConfigConstants.CONFIG_PARAM_MAX_RETRY_ATTEMPTS);
-         if (retryAttempts != null) {
-            config.setMaxRetryAttempts(Integer.parseInt(retryAttempts));
-         }
-
          String zkEnsemble = serviceLevelParams.get(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_ENSEMBLE);
          if (zkEnsemble != null) {
             config.setZookeeperEnsemble(zkEnsemble);

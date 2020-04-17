@@ -45,8 +45,6 @@ export class HaProviderConfig extends DisplayBindingProviderConfig {
             [HaProviderConfig.SERVICE_NAME, 'serviceName'],
             [HaProviderConfig.MAX_FAILOVER_ATTEMPTS, 'maxFailoverAttempts'],
             [HaProviderConfig.FAILOVER_SLEEP, 'failoverSleep'],
-            [HaProviderConfig.MAX_RETRY_ATTEMPTS, 'maxRetryAttempts'],
-            [HaProviderConfig.RETRY_SLEEP, 'retrySleep'],
             [HaProviderConfig.ZK_ENSEMBLE, 'zookeeperEnsemble'],
             [HaProviderConfig.ZK_NAMESPACE, 'zookeeperNamespace']
         ] as [string, string][]);

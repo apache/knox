@@ -29,10 +29,6 @@ public class DefaultHaServiceConfig implements HaServiceConfig, HaServiceConfigC
 
   private int failoverSleep = DEFAULT_FAILOVER_SLEEP;
 
-  private int maxRetryAttempts = DEFAULT_MAX_RETRY_ATTEMPTS;
-
-  private int retrySleep = DEFAULT_RETRY_SLEEP;
-
   private String zookeeperEnsemble;
 
   private String zookeeperNamespace;
@@ -42,7 +38,6 @@ public class DefaultHaServiceConfig implements HaServiceConfig, HaServiceConfigC
   }
 
   @Override
-
   public String getServiceName() {
     return name;
   }
@@ -80,26 +75,6 @@ public class DefaultHaServiceConfig implements HaServiceConfig, HaServiceConfigC
   @Override
   public void setFailoverSleep(int failoverSleep) {
     this.failoverSleep = failoverSleep;
-  }
-
-  @Override
-  public int getMaxRetryAttempts() {
-    return maxRetryAttempts;
-  }
-
-  @Override
-  public void setMaxRetryAttempts(int maxRetryAttempts) {
-    this.maxRetryAttempts = maxRetryAttempts;
-  }
-
-  @Override
-  public int getRetrySleep() {
-    return retrySleep;
-  }
-
-  @Override
-  public void setRetrySleep(int retrySleep) {
-    this.retrySleep = retrySleep;
   }
 
   @Override

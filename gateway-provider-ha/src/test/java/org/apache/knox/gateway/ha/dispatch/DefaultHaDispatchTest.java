@@ -48,7 +48,7 @@ public class DefaultHaDispatchTest {
   public void testConnectivityFailover() throws Exception {
     String serviceName = "OOZIE";
     HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", "2", "1000", null, null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null));
     HaProvider provider = new DefaultHaProvider(descriptor);
     URI uri1 = new URI( "http://unreachable-host.invalid" );
     URI uri2 = new URI( "http://reachable-host.invalid" );
@@ -77,7 +77,7 @@ public class DefaultHaDispatchTest {
     HttpServletResponse outboundResponse = EasyMock.createNiceMock(HttpServletResponse.class);
     EasyMock.expect(outboundResponse.getOutputStream()).andAnswer( new IAnswer<SynchronousServletOutputStreamAdapter>() {
       @Override
-      public SynchronousServletOutputStreamAdapter answer() throws Throwable {
+      public SynchronousServletOutputStreamAdapter answer() {
         return new SynchronousServletOutputStreamAdapter() {
           @Override
           public void write( int b ) throws IOException {

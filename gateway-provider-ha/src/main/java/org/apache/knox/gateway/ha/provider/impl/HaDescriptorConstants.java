@@ -38,10 +38,6 @@ public interface HaDescriptorConstants {
 
    String FAILOVER_SLEEP = "failoverSleep";
 
-   String MAX_RETRY_ATTEMPTS = "maxRetryAttempts";
-
-   String RETRY_SLEEP = "retrySleep";
-
    String ENABLED_ATTRIBUTE = "enabled";
 
    String ZOOKEEPER_ENSEMBLE = "zookeeperEnsemble";

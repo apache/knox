@@ -75,7 +75,7 @@ public class HaProviderDeploymentContributorTest {
       Map<String, String> providerParams = new HashMap<>();
 
       // Specify all the possible params at the HaProvider level for TestRoleTwo
-      providerParams.put("TestRoleOne", getHaProviderParamValue(false, 40, 4, 50, 5, "testRoleOne", "http://host1:2181,http://host2:2181"));
+      providerParams.put("TestRoleOne", getHaProviderParamValue(false, 40, 4, "testRoleOne", "http://host1:2181,http://host2:2181"));
 
       Provider haProvider = createHaProvider(providerParams);
 
@@ -108,7 +108,7 @@ public class HaProviderDeploymentContributorTest {
       assertEquals(1, descriptor.getServiceConfigs().size());
 
       validateServiceHaConfig(descriptor.getServiceConfig("TestRoleOne"),
-                              false, 40, 4, 50, 5, "testRoleOne", "http://host1:2181,http://host2:2181");
+                              false, 40, 4, "testRoleOne", "http://host1:2181,http://host2:2181");
    }
 
    /*
@@ -130,8 +130,6 @@ public class HaProviderDeploymentContributorTest {
       // Specify all the possible params in the TestRoleOne service level
       Map<String, String> testRoleOneParams = new HashMap<>();
       testRoleOneParams.put(Service.HA_ENABLED_PARAM, "true");
-      testRoleOneParams.put(HaServiceConfigConstants.CONFIG_PARAM_MAX_RETRY_ATTEMPTS, "6");
-      testRoleOneParams.put(HaServiceConfigConstants.CONFIG_PARAM_RETRY_SLEEP, "60");
       testRoleOneParams.put(HaServiceConfigConstants.CONFIG_PARAM_MAX_FAILOVER_ATTEMPTS, "8");
       testRoleOneParams.put(HaServiceConfigConstants.CONFIG_PARAM_FAILOVER_SLEEP, "80");
       testRoleOneParams.put(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_NAMESPACE, "testRoleOneOverride");
@@ -163,7 +161,7 @@ public class HaProviderDeploymentContributorTest {
       assertEquals(1, descriptor.getServiceConfigs().size());
 
       validateServiceHaConfig(descriptor.getServiceConfig("TestRoleOne"),
-                              true, 80, 8, 60, 6, "testRoleOneOverride", "http://host3:2181,http://host4:2181");
+                              true, 80, 8, "testRoleOneOverride", "http://host3:2181,http://host4:2181");
    }
 
    /*
@@ -175,7 +173,7 @@ public class HaProviderDeploymentContributorTest {
       Map<String, String> providerParams = new HashMap<>();
 
       // Specify all the possible params at the HaProvider level for TestRoleTwo
-      providerParams.put("TestRoleOne", getHaProviderParamValue(false, 40, 4, -1, 5));
+      providerParams.put("TestRoleOne", getHaProviderParamValue(false, 40, 4));
 
       Provider haProvider = createHaProvider(providerParams);
 
@@ -185,7 +183,6 @@ public class HaProviderDeploymentContributorTest {
       // Specify all the possible params in the TestRoleOne service level
       Map<String, String> testRoleOneParams = new HashMap<>();
       testRoleOneParams.put(Service.HA_ENABLED_PARAM, "true");
-      testRoleOneParams.put(HaServiceConfigConstants.CONFIG_PARAM_RETRY_SLEEP, "60");
       testRoleOneParams.put(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_NAMESPACE, "testRoleOneOverride");
       testRoleOneParams.put(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_ENSEMBLE, "http://host3:2181,http://host4:2181");
 
@@ -215,21 +212,20 @@ public class HaProviderDeploymentContributorTest {
       assertEquals(1, descriptor.getServiceConfigs().size());
 
       validateServiceHaConfig(descriptor.getServiceConfig("TestRoleOne"),
-                              true, 40, 4, 60, 5, "testRoleOneOverride", "http://host3:2181,http://host4:2181");
+                              true, 40, 4, "testRoleOneOverride", "http://host3:2181,http://host4:2181");
    }
 
    @Test
-   public void testServiceLevelParamOverrides_MultipleMixed() throws Exception {
-
+   public void testServiceLevelParamOverrides_MultipleMixed() {
       // Define some provider params
       Map<String, String> providerParams = new HashMap<>();
 
       // Specify a subset of the possible HaProvider-level params for TestRoleOne
-      providerParams.put("TestRoleOne", getHaProviderParamValue(true, 20, 2, 10, 1));
+      providerParams.put("TestRoleOne", getHaProviderParamValue(true, 20, 2));
 
       // Specify all the possible params at the HaProvider level for TestRoleTwo
       providerParams.put("TestRoleTwo",
-                         getHaProviderParamValue(false, 40, 4, 30, 3, "testRoleTwo", "http://host1:2181,http://host2:2181"));
+                         getHaProviderParamValue(false, 40, 4, "testRoleTwo", "http://host1:2181,http://host2:2181"));
 
       Provider testHaProvider = createHaProvider(providerParams);
 
@@ -247,8 +243,6 @@ public class HaProviderDeploymentContributorTest {
       // Override all the possible params in the TestRoleTwo service level
       Map<String, String> testRoleTwoParams = new HashMap<>();
       testRoleTwoParams.put(Service.HA_ENABLED_PARAM, "true");
-      testRoleTwoParams.put(HaServiceConfigConstants.CONFIG_PARAM_MAX_RETRY_ATTEMPTS, "6");
-      testRoleTwoParams.put(HaServiceConfigConstants.CONFIG_PARAM_RETRY_SLEEP, "60");
       testRoleTwoParams.put(HaServiceConfigConstants.CONFIG_PARAM_MAX_FAILOVER_ATTEMPTS, "8");
       testRoleTwoParams.put(HaServiceConfigConstants.CONFIG_PARAM_FAILOVER_SLEEP, "80");
       testRoleTwoParams.put(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_NAMESPACE, "testRoleTwoOverride");
@@ -280,26 +274,22 @@ public class HaProviderDeploymentContributorTest {
 
       // Validate the service with no-overrides, checking that the provider-level defaults are applied
       validateServiceHaConfig(descriptor.getServiceConfig("TestRoleOne"),
-                              true, 20, 2, 10, 1, null, null);
+                              true, 20, 2, null, null);
 
       // Validate the service with all-overrides, checking that the service-level defaults are applied
       validateServiceHaConfig(descriptor.getServiceConfig("TestRoleTwo"),
-                              true, 80, 8, 60, 6, "testRoleTwoOverride", "http://host3:2181,http://host4:2181");
+                              true, 80, 8, "testRoleTwoOverride", "http://host3:2181,http://host4:2181");
+   }
+
+   private static String getHaProviderParamValue(boolean enabled,
+                                                 long    failoverSleep,
+                                                 int     maxFailoverAttempts) {
+      return getHaProviderParamValue(enabled, failoverSleep, maxFailoverAttempts, null, null);
    }
 
    private static String getHaProviderParamValue(boolean enabled,
                                                  long    failoverSleep,
                                                  int     maxFailoverAttempts,
-                                                 long    retrySleep,
-                                                 int     maxRetryAttempts) {
-      return getHaProviderParamValue(enabled, failoverSleep, maxFailoverAttempts, retrySleep, maxRetryAttempts, null, null);
-   }
-
-   private static String getHaProviderParamValue(boolean enabled,
-                                                 long    failoverSleep,
-                                                 int     maxFailoverAttempts,
-                                                 long    retrySleep,
-                                                 int     maxRetryAttempts,
                                                  String  zooKeeperNamespace,
                                                  String  zooKeeperEnsemble) {
       StringBuilder builder = new StringBuilder();
@@ -307,20 +297,6 @@ public class HaProviderDeploymentContributorTest {
       builder.append(HaServiceConfigConstants.CONFIG_PARAM_ENABLED)
           .append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER)
           .append(enabled);
-
-      if (maxRetryAttempts > -1) {
-         builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER)
-             .append(HaServiceConfigConstants.CONFIG_PARAM_MAX_RETRY_ATTEMPTS)
-             .append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER)
-             .append(maxRetryAttempts);
-      }
-
-      if (retrySleep > -1) {
-         builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER)
-             .append(HaServiceConfigConstants.CONFIG_PARAM_RETRY_SLEEP)
-             .append(HaServiceConfigConstants.CONFIG_PAIR_DELIMITER)
-             .append(retrySleep);
-      }
 
       if (maxFailoverAttempts > -1) {
          builder.append(HaServiceConfigConstants.CONFIG_PAIRS_DELIMITER)
@@ -359,8 +335,6 @@ public class HaProviderDeploymentContributorTest {
     * @param isEnabled           The expected enabled param value
     * @param failoverSleep       The expected failoverSleep param value
     * @param maxFailoverAttempts The expected maxFailoverAttempts param value
-    * @param retrySleep          The expected retrySleep param value
-    * @param maxRetryAttempts    The expected maxRetryAttempts param value
     * @param zookeeperNamespace  The expected zookeeperNamespace param value
     * @param zookeeperEnsemble   The expected zookeeperEnsemble param value
     */
@@ -368,16 +342,12 @@ public class HaProviderDeploymentContributorTest {
                                                boolean         isEnabled,
                                                int             failoverSleep,
                                                int             maxFailoverAttempts,
-                                               int             retrySleep,
-                                               int             maxRetryAttempts,
                                                String          zookeeperNamespace,
                                                String          zookeeperEnsemble) {
       assertNotNull(config);
       assertEquals(isEnabled, config.isEnabled());
       assertEquals(failoverSleep, config.getFailoverSleep());
       assertEquals(maxFailoverAttempts, config.getMaxFailoverAttempts());
-      assertEquals(retrySleep, config.getRetrySleep());
-      assertEquals(maxRetryAttempts, config.getMaxRetryAttempts());
 
       if (zookeeperNamespace == null) {
          assertNull(config.getZookeeperNamespace());

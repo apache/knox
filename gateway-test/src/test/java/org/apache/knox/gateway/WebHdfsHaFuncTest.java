@@ -142,7 +142,7 @@ public class WebHdfsHaFuncTest {
             .addTag("name").addText("HaProvider")
             .addTag("param")
             .addTag("name").addText("WEBHDFS")
-            .addTag("value").addText("maxFailoverAttempts=3;failoverSleep=15;maxRetryAttempts=3;retrySleep=10;enabled=true").gotoParent()
+            .addTag("value").addText("maxFailoverAttempts=3;failoverSleep=15;enabled=true").gotoParent()
             .gotoRoot()
             .addTag("service")
             .addTag("role").addText("WEBHDFS")

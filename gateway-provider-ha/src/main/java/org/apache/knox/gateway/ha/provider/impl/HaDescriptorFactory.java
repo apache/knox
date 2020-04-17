@@ -34,24 +34,18 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
       String enabledValue = configMap.get(CONFIG_PARAM_ENABLED);
       String maxFailoverAttempts = configMap.get(CONFIG_PARAM_MAX_FAILOVER_ATTEMPTS);
       String failoverSleep = configMap.get(CONFIG_PARAM_FAILOVER_SLEEP);
-      String maxRetryAttempts = configMap.get(CONFIG_PARAM_MAX_RETRY_ATTEMPTS);
-      String retrySleep = configMap.get(CONFIG_PARAM_RETRY_SLEEP);
       String zookeeperEnsemble = configMap.get(CONFIG_PARAM_ZOOKEEPER_ENSEMBLE);
       String zookeeperNamespace = configMap.get(CONFIG_PARAM_ZOOKEEPER_NAMESPACE);
-      return createServiceConfig(serviceName, enabledValue, maxFailoverAttempts,
-          failoverSleep, maxRetryAttempts, retrySleep,
+      return createServiceConfig(serviceName, enabledValue, maxFailoverAttempts, failoverSleep,
           zookeeperEnsemble, zookeeperNamespace);
    }
 
    public static HaServiceConfig createServiceConfig(String serviceName, String enabledValue,
                                                      String maxFailoverAttemptsValue, String failoverSleepValue,
-                                                     String maxRetryAttemptsValue, String retrySleepValue,
                                                      String zookeeperEnsemble, String zookeeperNamespace) {
       boolean enabled = DEFAULT_ENABLED;
       int maxFailoverAttempts = DEFAULT_MAX_FAILOVER_ATTEMPTS;
       int failoverSleep = DEFAULT_FAILOVER_SLEEP;
-      int maxRetryAttempts = DEFAULT_MAX_RETRY_ATTEMPTS;
-      int retrySleep = DEFAULT_RETRY_SLEEP;
       if (enabledValue != null && !enabledValue.trim().isEmpty()) {
          enabled = Boolean.parseBoolean(enabledValue);
       }
@@ -61,18 +55,11 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
       if (failoverSleepValue != null && !failoverSleepValue.trim().isEmpty()) {
          failoverSleep = Integer.parseInt(failoverSleepValue);
       }
-      if (maxRetryAttemptsValue != null && !maxRetryAttemptsValue.trim().isEmpty()) {
-         maxRetryAttempts = Integer.parseInt(maxRetryAttemptsValue);
-      }
-      if (retrySleepValue != null && !retrySleepValue.trim().isEmpty()) {
-         retrySleep = Integer.parseInt(retrySleepValue);
-      }
+
       DefaultHaServiceConfig serviceConfig = new DefaultHaServiceConfig(serviceName);
       serviceConfig.setEnabled(enabled);
       serviceConfig.setMaxFailoverAttempts(maxFailoverAttempts);
       serviceConfig.setFailoverSleep(failoverSleep);
-      serviceConfig.setMaxRetryAttempts(maxRetryAttempts);
-      serviceConfig.setRetrySleep(retrySleep);
       serviceConfig.setZookeeperEnsemble(zookeeperEnsemble);
       serviceConfig.setZookeeperNamespace(zookeeperNamespace);
       return serviceConfig;
