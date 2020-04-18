@@ -60,6 +60,10 @@ public class HaDescriptorManager implements HaDescriptorConstants {
                if (config.getZookeeperNamespace() != null) {
                  serviceElement.setAttribute(ZOOKEEPER_NAMESPACE, config.getZookeeperNamespace());
                }
+               serviceElement.setAttribute(COOKIE_HA_ENABLED, Boolean.toString(config.isCookieHaEnabled()));
+               if (config.getCookieHaCookieName() != null) {
+                 serviceElement.setAttribute(COOKIE_HA_COOKIE_NAME, config.getCookieHaCookieName());
+               }
                root.appendChild(serviceElement);
             }
          }
@@ -85,7 +89,9 @@ public class HaDescriptorManager implements HaDescriptorConstants {
                      element.getAttribute(MAX_FAILOVER_ATTEMPTS),
                      element.getAttribute(FAILOVER_SLEEP),
                      element.getAttribute(ZOOKEEPER_ENSEMBLE),
-                     element.getAttribute(ZOOKEEPER_NAMESPACE));
+                     element.getAttribute(ZOOKEEPER_NAMESPACE),
+                     element.getAttribute(COOKIE_HA_ENABLED),
+                     element.getAttribute(COOKIE_HA_COOKIE_NAME));
                descriptor.addServiceConfig(config);
             }
          }

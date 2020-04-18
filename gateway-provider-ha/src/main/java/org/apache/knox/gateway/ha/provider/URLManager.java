@@ -33,4 +33,6 @@ public interface URLManager {
   void setURLs(List<String> urls);
 
   void markFailed(String url);
+
+  void makeNextActiveURLAvailable();
 }

@@ -41,4 +41,12 @@ public interface HaServiceConfig {
   String getZookeeperNamespace();
 
   void setZookeeperNamespace(String zookeeperNamespace);
+
+  boolean isCookieHaEnabled();
+
+  void setCookieHaEnabled(boolean cookieHaActive);
+
+  String getCookieHaCookieName();
+
+  void setCookieHaCookieName(String cookieHaCookieName);
 }

@@ -29,6 +29,10 @@ public class DefaultHaServiceConfig implements HaServiceConfig, HaServiceConfigC
 
   private int failoverSleep = DEFAULT_FAILOVER_SLEEP;
 
+  private boolean isCookieHaEnabled = DEFAULT_COOKIE_HA_ENABLED;
+
+  private String cookieHaCookieName = DEFAULT_COOKIE_HA_COOKIE_NAME;
+
   private String zookeeperEnsemble;
 
   private String zookeeperNamespace;
@@ -95,5 +99,25 @@ public class DefaultHaServiceConfig implements HaServiceConfig, HaServiceConfigC
   @Override
   public void setZookeeperNamespace(String zookeeperNamespace) {
     this.zookeeperNamespace = zookeeperNamespace;
+  }
+
+  @Override
+  public boolean isCookieHaEnabled() {
+    return  this.isCookieHaEnabled;
+  }
+
+  @Override
+  public void setCookieHaEnabled(boolean isCookieHaEnabled) {
+    this.isCookieHaEnabled = isCookieHaEnabled;
+  }
+
+  @Override
+  public String getCookieHaCookieName() {
+    return this.cookieHaCookieName;
+  }
+
+  @Override
+  public void setCookieHaCookieName(String cookieHaCookieName) {
+    this.cookieHaCookieName = cookieHaCookieName;
   }
 }
