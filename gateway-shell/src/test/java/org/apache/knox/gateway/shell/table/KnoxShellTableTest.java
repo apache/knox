@@ -115,6 +115,18 @@ public class KnoxShellTableTest {
   }
 
   @Test
+  public void testNullCellRendering() {
+    KnoxShellTable table = new KnoxShellTable();
+
+    table.header("Column A").header("Column B").header("Column C");
+
+    table.row().value(null).value("456").value("344444444");
+    table.row().value("789").value("012").value("844444444");
+
+    table.toString();
+  }
+
+  @Test
   public void testTableSelect() {
     String expectedResult = "+------------+------------+--------------+\n"
         + "|  Column A  |  Column B  |   Column C   |\n" + "+------------+------------+--------------+\n"

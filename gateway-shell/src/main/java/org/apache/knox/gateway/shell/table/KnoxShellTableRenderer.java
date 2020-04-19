@@ -166,7 +166,12 @@ class KnoxShellTableRenderer {
     // cell value length
     for (List<Comparable<? extends Object>> row : tableToRender.rows) {
       for (int i = 0; i < row.size(); i++) {
-        cellValue = ensureEvenLength(row.get(i).toString());
+        Object o = row.get(i);
+        if (o == null) {
+          o = "NULL";
+          row.set(i, (String) o);
+        }
+        cellValue = ensureEvenLength(o.toString());
         if (map.get(i) == null || cellValue.length() > map.get(i)) {
           map.put(i, cellValue.length());
         }
