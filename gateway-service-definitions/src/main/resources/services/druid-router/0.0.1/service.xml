@@ -20,6 +20,27 @@
         <context>/druid-router</context>
         <shortDesc>Druid Router API</shortDesc>
         <description>The Apache Druid Router process can be used to route queries to different Broker processes. By default, the broker routes queries based on how Rules are set up</description>
+        <samples>
+            <sample>
+                <description>Fetch a list of queryable datasources</description>
+                <method>GET</method>
+                <path>druid/v2/datasources</path>
+            </sample>
+             <sample>
+                <description>Fetch the dimensions and metrics of the datasource</description>
+                <method>GET</method>
+                <path>druid/v2/datasources/{dataSourceName}</path>
+            </sample>
+            <sample>
+                <description>Fetch the metrics of the datasource</description>
+                <method>GET</method>
+                <path>druid/v2/datasources/{dataSourceName}/metrics</path>
+            </sample>
+            <sample>
+                <description>You may check out Apache Druid Router's REST API documentation here</description>
+                <value>https://druid.apache.org/docs/latest/operations/api-reference.html#router</value>
+            </sample>
+        </samples>
     </metadata>
   <policies>
     <policy role="webappsec"/>

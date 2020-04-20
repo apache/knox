@@ -21,6 +21,22 @@
         <context>/templeton</context>
         <shortDesc>WebHCat</shortDesc>
         <description>WebHCat is the REST API for HCatalog, a table and storage management layer for Hadoop.</description>
+        <samples>
+            <sample>
+                <description>List HCatalog databases</description>
+                <method>GET</method>
+                <path>ddl/database</path>
+            </sample>
+            <sample>
+                <description>List the tables in an HCatalog database named 'db1'</description>
+                <method>GET</method>
+                <path>ddl/database/db1</path>
+            </sample>
+            <sample>
+                <description>You may check out Apache HCatalog's REST API documentation here</description>
+                <value>https://cwiki.apache.org/confluence/display/Hive/WebHCat+Reference</value>
+            </sample>
+        </samples>
     </metadata>
     <routes>
         <route path="/templeton/v1/?**"/>

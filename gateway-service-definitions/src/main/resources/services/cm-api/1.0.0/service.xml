@@ -26,6 +26,22 @@
         <context>/cm-api</context>
         <shortDesc>Cloudera Manager REST API</shortDesc>
         <description>Cloudera Manager's REST API lets you work with existing tools, and programmatically manage your Hadoop clusters. The API is available in both Cloudera Express and Cloudera Enterprise, and comes with open-source client libraries.</description>
+        <samples>
+            <sample>
+                <description>Fetch all CM-managed clusters</description>
+                <method>GET</method>
+                <path>clusters</path>
+            </sample>
+            <sample>
+                <description>Fetches HDFS service details from cluster named 'c1'</description>
+                <method>GET</method>
+                <path>clusters/c1/services/HDFS</path>
+            </sample>
+            <sample>
+                <description>You can checkout CM's API (v41) document here</description>
+                <value>https://cloudera.github.io/cm_api//</value>
+            </sample>
+        </samples>
     </metadata>
   <routes>
     <route path="/cm-api/**">

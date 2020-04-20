@@ -21,6 +21,22 @@
         <context>/oozie</context>
         <shortDesc>Oozie Web Services API</shortDesc>
         <description>Oozie is a workflow scheduler system to manage Apache Hadoop jobs. The Oozie Web Services API is a HTTP REST JSON API.</description>
+        <samples>
+            <sample>
+                <description>Fetch the supported Oozie protocol versions by the server</description>
+                <method>GET</method>
+                <path>oozie/versions</path>
+            </sample>
+             <sample>
+                <description>Fetch the system status</description>
+                <method>GET</method>
+                <path>oozie/v1/admin/status</path>
+            </sample>
+            <sample>
+                <description>You may check out Apache Oozie's REST API documentation here</description>
+                <value>https://oozie.apache.org/docs/4.0.1/WebServicesAPI.html</value>
+            </sample>
+        </samples>
     </metadata>
     <routes>
         <route path="/oozie/**?**">

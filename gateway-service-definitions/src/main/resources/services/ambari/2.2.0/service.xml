@@ -20,6 +20,32 @@
         <context>/ambari/api</context>
         <shortDesc>Apache Ambari API</shortDesc>
         <description>The Ambari API facilitates the management and monitoring of the resources of an Apache Hadoop cluster.</description>
+        <samples>
+            <sample>
+                <description>Fetch all Ambari-managed clusters</description>
+                <method>GET</method>
+                <path>v1/clusters</path>
+            </sample>
+            <sample>
+                <description>Get the DATANODE component resource for the HDFS service of the cluster named 'c1'</description>
+                <method>GET</method>
+                <path>v1/clusters/c1/services/HDFS/components/DATANODE</path>
+            </sample>
+            <sample>
+                <description>Create the HDFS service.</description>
+                <method>POST</method>
+                <path>v1/clusters/c1/services/HDFS</path>
+            </sample>
+            <sample>
+                <description>Delete the cluster named 'c1'</description>
+                <method>DELETE</method>
+                <path>v1/clusters/c1</path>
+            </sample>
+            <sample>
+                <description>See the Apache Ambari's REST API documentation here</description>
+                <value>https://github.com/apache/ambari/blob/trunk/ambari-server/docs/api/v1/index.md</value>
+            </sample>
+        </samples>
     </metadata>
     <policies>
         <policy role="webappsec"/>
