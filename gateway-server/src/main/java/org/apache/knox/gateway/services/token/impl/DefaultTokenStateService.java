@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class DefaultTokenStateService implements TokenStateService {
 
-  protected static final long DEFAULT_RENEWAL_INTERVAL = 24 * 60 * 60 * 1000L; // 24 hours
+  protected static final long DEFAULT_RENEWAL_INTERVAL = TimeUnit.HOURS.toMillis(24);
 
   protected static final int MAX_RENEWALS = 7;
 
@@ -51,11 +51,13 @@ public class DefaultTokenStateService implements TokenStateService {
 
   private final Map<String, Long> maxTokenLifetimes = new HashMap<>();
 
-  /* token eviction interval in seconds */
+  // Token eviction interval (in seconds)
   private long tokenEvictionInterval;
-  /* grace period (in seconds) after which an expired token should be evicted */
+
+  // Grace period (in seconds) after which an expired token should be evicted
   private long tokenEvictionGracePeriod;
-  /* should knox token fail permissively */
+
+  // Knox token validation permissiveness
   protected boolean permissiveValidationEnabled;
 
   private final ScheduledExecutorService evictionScheduler = Executors.newScheduledThreadPool(1);
@@ -71,8 +73,8 @@ public class DefaultTokenStateService implements TokenStateService {
   @Override
   public void start() throws ServiceLifecycleException {
     if (tokenEvictionInterval > 0) {
-      /* run token eviction task at configured intervals */
-      evictionScheduler.scheduleAtFixedRate(() -> evictExpiredTokens(), tokenEvictionInterval, tokenEvictionInterval, TimeUnit.SECONDS);
+      // Run token eviction task at configured interval
+      evictionScheduler.scheduleAtFixedRate(this::evictExpiredTokens, tokenEvictionInterval, tokenEvictionInterval, TimeUnit.SECONDS);
     }
   }
 
@@ -311,16 +313,14 @@ public class DefaultTokenStateService implements TokenStateService {
    * Method that checks if a token's state is a candidate for eviction.
    *
    * @param tokenId A unique token identifier
-   * @throws UnknownTokenException Exception if token is not found.
+   * @throws UnknownTokenException if token state is not found.
    *
    * @return true, if the associated token state can be evicted; Otherwise, false.
    */
   protected boolean needsEviction(final String tokenId) throws UnknownTokenException {
-    long maxLifetime = getMaxLifetime(tokenId);
-    if (maxLifetime <= 0) {
-      throw new UnknownTokenException(tokenId);
-    }
-    return ((maxLifetime + TimeUnit.SECONDS.toMillis(tokenEvictionGracePeriod)) <= System.currentTimeMillis());
+    // If the expiration time(+ grace period) has already passed, it should be considered expired
+    long expirationWithGrace = getTokenExpiration(tokenId) + TimeUnit.SECONDS.toMillis(tokenEvictionGracePeriod);
+    return (expirationWithGrace <= System.currentTimeMillis());
   }
 
   /**

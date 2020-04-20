@@ -185,7 +185,7 @@ public class DefaultTokenStateServiceTest {
     // Sleep to allow the eviction evaluation to be performed prior to the maximum token lifetime
     Thread.sleep(evictionInterval + (evictionInterval / 2));
 
-    // Renewal should succeed because there is sufficient time until max lifetime is exceeded
+    // Renewal should succeed because there is sufficient time until expiration + grace period is exceeded
     tss.renewToken(token, TimeUnit.SECONDS.toMillis(10));
     assertFalse("Expected the token to have been renewed.", tss.isExpired(token));
   }
@@ -196,7 +196,7 @@ public class DefaultTokenStateServiceTest {
     final TokenStateService tss = createTokenStateService();
 
     final long evictionInterval = TimeUnit.SECONDS.toMillis(3);
-    final long maxTokenLifetime = evictionInterval / 2;
+    final long maxTokenLifetime = evictionInterval * 3;
 
     try {
       tss.start();

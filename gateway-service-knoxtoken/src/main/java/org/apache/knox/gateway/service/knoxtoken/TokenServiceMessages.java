@@ -30,11 +30,11 @@ public interface TokenServiceMessages {
   @Message( level = MessageLevel.INFO, text = "Knox Token service ({0}) issued token {1} ({2})")
   void issuedToken(String topologyName, String tokenDisplayText, String tokenId);
 
-  @Message( level = MessageLevel.INFO, text = "Knox Token service ({0}) renewed the expiration for token {1} ({2})")
-  void renewedToken(String topologyName, String tokenDisplayText, String tokenId);
+  @Message( level = MessageLevel.INFO, text = "Knox Token service ({0}) renewed the expiration for token {1} ({2}) (renewer={3})")
+  void renewedToken(String topologyName, String tokenDisplayText, String tokenId, String renewer);
 
-  @Message( level = MessageLevel.INFO, text = "Knox Token service ({0}) revoked token {1} ({2})")
-  void revokedToken(String topologyName, String tokenDisplayText, String tokenId);
+  @Message( level = MessageLevel.INFO, text = "Knox Token service ({0}) revoked token {1} ({2}) (renewer={3})")
+  void revokedToken(String topologyName, String tokenDisplayText, String tokenId, String renewer);
 
   @Message( level = MessageLevel.ERROR, text = "Unable to issue token.")
   void unableToIssueToken(@StackTrace( level = MessageLevel.DEBUG) Exception e);

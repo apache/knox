@@ -253,7 +253,10 @@ public class TokenResource {
           // If renewal fails, it should be an exception
           expiration = tokenStateService.renewToken(jwt,
                                                     renewInterval.orElse(tokenStateService.getDefaultRenewInterval()));
-          log.renewedToken(getTopologyName(), TokenUtils.getTokenDisplayText(token), TokenUtils.getTokenId(jwt));
+          log.renewedToken(getTopologyName(),
+                           TokenUtils.getTokenDisplayText(token),
+                           TokenUtils.getTokenId(jwt),
+                           renewer);
         } catch (ParseException e) {
           log.invalidToken(getTopologyName(), TokenUtils.getTokenDisplayText(token), e);
           error = safeGetMessage(e);
@@ -297,7 +300,10 @@ public class TokenResource {
         try {
           JWTToken jwt = new JWTToken(token);
           tokenStateService.revokeToken(jwt);
-          log.revokedToken(getTopologyName(), TokenUtils.getTokenDisplayText(token), TokenUtils.getTokenId(jwt));
+          log.revokedToken(getTopologyName(),
+                           TokenUtils.getTokenDisplayText(token),
+                           TokenUtils.getTokenId(jwt),
+                           renewer);
         } catch (ParseException e) {
           log.invalidToken(getTopologyName(), TokenUtils.getTokenDisplayText(token), e);
           error = safeGetMessage(e);
