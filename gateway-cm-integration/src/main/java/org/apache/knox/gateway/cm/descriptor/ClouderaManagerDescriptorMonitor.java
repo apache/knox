@@ -64,6 +64,8 @@ public class ClouderaManagerDescriptorMonitor implements AdvancedServiceDiscover
       final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(new BasicThreadFactory.Builder().namingPattern("ClouderaManagerDescriptorMonitor-%d").build());
       executorService.scheduleAtFixedRate(() -> monitorClouderaManagerDescriptors(null), 0, monitoringInterval, TimeUnit.MILLISECONDS);
       LOG.monitoringClouderaManagerDescriptor(descriptorsDir);
+    } else {
+      LOG.disableMonitoringClouderaManagerDescriptor();
     }
   }
 
