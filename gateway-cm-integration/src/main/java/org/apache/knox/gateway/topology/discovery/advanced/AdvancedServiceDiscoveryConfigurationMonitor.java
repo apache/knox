@@ -71,6 +71,8 @@ public class AdvancedServiceDiscoveryConfigurationMonitor {
       final ScheduledExecutorService executorService = newSingleThreadScheduledExecutor(new BasicThreadFactory.Builder().namingPattern("AdvancedServiceDiscoveryConfigurationMonitor-%d").build());
       executorService.scheduleAtFixedRate(() -> monitorAdvancedServiceConfigurations(), 0, monitoringInterval, TimeUnit.MILLISECONDS);
       LOG.monitorStarted(gatewayConfigurationDir, ADVANCED_CONFIGURATION_FILE_NAME_PREFIX);
+    } else {
+      LOG.disableMonitoring();
     }
   }
 

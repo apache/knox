@@ -243,9 +243,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String TOKEN_STATE_SERVER_MANAGED = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.exp.server-managed";
 
   private static final String CLOUDERA_MANAGER_DESCRIPTORS_MONITOR_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.descriptors.monitor.interval";
-  private static final long DEFAULT_CLOUDERA_MANAGER_DESCRIPTORS_MONITOR_INTERVAL = 30000L;
   private static final String CLOUDERA_MANAGER_ADVANCED_SERVICE_DISCOVERY_CONF_MONITOR_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.advanced.service.discovery.config.monitor.interval";
-  private static final long DEFAULT_CLOUDERA_MANAGER_ADVANCED_SERVICE_DISCOVERY_CONF_MONITOR_INTERVAL = 30000L;
 
   private static final String KNOX_TOKEN_EVICTION_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.eviction.interval";
   private static final String KNOX_TOKEN_EVICTION_GRACE_PERIOD = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.eviction.grace.period";
@@ -1114,12 +1112,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public long getClouderaManagerDescriptorsMonitoringInterval() {
-    return getLong(CLOUDERA_MANAGER_DESCRIPTORS_MONITOR_INTERVAL, DEFAULT_CLOUDERA_MANAGER_DESCRIPTORS_MONITOR_INTERVAL);
+    return getLong(CLOUDERA_MANAGER_DESCRIPTORS_MONITOR_INTERVAL, -1L);
   }
 
   @Override
   public long getClouderaManagerAdvancedServiceDiscoveryConfigurationMonitoringInterval() {
-    return getLong(CLOUDERA_MANAGER_ADVANCED_SERVICE_DISCOVERY_CONF_MONITOR_INTERVAL, DEFAULT_CLOUDERA_MANAGER_ADVANCED_SERVICE_DISCOVERY_CONF_MONITOR_INTERVAL);
+    return getLong(CLOUDERA_MANAGER_ADVANCED_SERVICE_DISCOVERY_CONF_MONITOR_INTERVAL, -1L);
   }
 
   @Override
