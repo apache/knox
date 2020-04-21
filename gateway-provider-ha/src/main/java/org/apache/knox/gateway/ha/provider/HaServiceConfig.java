@@ -34,14 +34,6 @@ public interface HaServiceConfig {
 
   int getFailoverSleep();
 
-  void setMaxRetryAttempts(int limit);
-
-  int getMaxRetryAttempts();
-
-  void setRetrySleep(int sleep);
-
-  int getRetrySleep();
-
   String getZookeeperEnsemble();
 
   void setZookeeperEnsemble(String zookeeperEnsemble);

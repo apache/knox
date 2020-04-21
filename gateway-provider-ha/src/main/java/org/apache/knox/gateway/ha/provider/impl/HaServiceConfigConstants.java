@@ -26,10 +26,6 @@ public interface HaServiceConfigConstants {
 
    String CONFIG_PARAM_FAILOVER_SLEEP = "failoverSleep";
 
-   String CONFIG_PARAM_MAX_RETRY_ATTEMPTS = "maxRetryAttempts";
-
-   String CONFIG_PARAM_RETRY_SLEEP = "retrySleep";
-
    String CONFIG_PARAM_ENABLED = "enabled";
 
    String CONFIG_PARAM_ZOOKEEPER_ENSEMBLE = "zookeeperEnsemble";
@@ -39,10 +35,6 @@ public interface HaServiceConfigConstants {
    int DEFAULT_MAX_FAILOVER_ATTEMPTS = 3;
 
    int DEFAULT_FAILOVER_SLEEP = 1000;
-
-   int DEFAULT_MAX_RETRY_ATTEMPTS = 3;
-
-   int DEFAULT_RETRY_SLEEP = 1000;
 
    boolean DEFAULT_ENABLED = true;
 }

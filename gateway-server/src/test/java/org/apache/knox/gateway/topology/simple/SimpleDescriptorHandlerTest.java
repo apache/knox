@@ -121,10 +121,10 @@ public class SimpleDescriptorHandlerTest {
             "            <role>ha</role>\n" +
             "            <name>HaProvider</name>\n" +
             "            <enabled>true</enabled>\n" +
-            "            <param><name>HIVE</name><value>enabled=auto;retrySleep=20;maxRetryAttempts=3</value></param>\n" +
-            "            <param><name>WEBHDFS</name><value>enabled=true;retrySleep=40;maxRetryAttempts=5</value></param>\n" +
-            "            <param><name>WEBHBASE</name><value>enabled=auto;retrySleep=30;maxRetryAttempts=3;maxFailoverAttempts=2;failoverSleep=10</value></param>\n" +
-            "            <param><name>ATLAS</name><value>enabled=auto;retrySleep=30;maxRetryAttempts=3;maxFailoverAttempts=2;failoverSleep=10</value></param>\n" +
+            "            <param><name>HIVE</name><value>enabled=auto</value></param>\n" +
+            "            <param><name>WEBHDFS</name><value>enabled=true</value></param>\n" +
+            "            <param><name>WEBHBASE</name><value>enabled=auto;maxFailoverAttempts=2;failoverSleep=10</value></param>\n" +
+            "            <param><name>ATLAS</name><value>enabled=auto;maxFailoverAttempts=2;failoverSleep=10</value></param>\n" +
             "            <param><name>ATLAS-API</name><value>enabled=false</value></param>\n" +
             "        </provider>\n" +
             "    </gateway>\n";

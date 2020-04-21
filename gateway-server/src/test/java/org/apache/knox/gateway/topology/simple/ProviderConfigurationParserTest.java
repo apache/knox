@@ -158,7 +158,7 @@ public class ProviderConfigurationParserTest {
     "      \"name\":\"HaProvider\",\n" +
     "      \"enabled\":\"false\",\n" +
     "      \"params\":{\n" +
-    "        \"WEBHDFS\":\"maxFailoverAttempts=3;failoverSleep=1000;maxRetryAttempts=300;retrySleep=1000;enabled=true\",\n" +
+    "        \"WEBHDFS\":\"maxFailoverAttempts=3;failoverSleep=1000;enabled=true\",\n" +
     "        \"HIVE\":\"maxFailoverAttempts=3;failoverSleep=1000;enabled=true\"\n" +
     "      }\n" +
     "    }\n" +
@@ -219,7 +219,7 @@ public class ProviderConfigurationParserTest {
         "    name: HaProvider\n" +
         "    enabled: false\n" +
         "    params:\n" +
-        "      WEBHDFS: maxFailoverAttempts=3;failoverSleep=1000;maxRetryAttempts=300;retrySleep=1000;enabled=true\n" +
+        "      WEBHDFS: maxFailoverAttempts=3;failoverSleep=1000;enabled=true\n" +
         "      HIVE: maxFailoverAttempts=3;failoverSleep=1000;enabled=true";
     ProviderConfiguration pc = doTestParseProviderConfiguration(YAML, "my-providers." + extension);
 
@@ -280,7 +280,7 @@ public class ProviderConfigurationParserTest {
         Map<String, String> params = provider.getParams();
         assertNotNull(params);
         assertEquals(2, params.size());
-        assertEquals(params.get("WEBHDFS"), "maxFailoverAttempts=3;failoverSleep=1000;maxRetryAttempts=300;retrySleep=1000;enabled=true");
+        assertEquals(params.get("WEBHDFS"), "maxFailoverAttempts=3;failoverSleep=1000;enabled=true");
         assertEquals(params.get("HIVE"), "maxFailoverAttempts=3;failoverSleep=1000;enabled=true");
       } else if ("dummy".equals(provider.getRole())) {
         assertEquals("NoParamsDummyProvider", provider.getName());

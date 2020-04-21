@@ -34,23 +34,19 @@ public class HaDescriptorFactoryTest {
 
    @Test
    public void testCreateServiceConfig() {
-      HaServiceConfig serviceConfig = HaDescriptorFactory.createServiceConfig("foo", "enabled=true;maxFailoverAttempts=42;failoverSleep=50;maxRetryAttempts=1;retrySleep=1000");
+      HaServiceConfig serviceConfig = HaDescriptorFactory.createServiceConfig("foo", "enabled=true;maxFailoverAttempts=42;failoverSleep=50");
       assertNotNull(serviceConfig);
       assertTrue(serviceConfig.isEnabled());
       assertEquals("foo", serviceConfig.getServiceName());
       assertEquals(42, serviceConfig.getMaxFailoverAttempts());
       assertEquals(50, serviceConfig.getFailoverSleep());
-      assertEquals(1, serviceConfig.getMaxRetryAttempts());
-      assertEquals(1000, serviceConfig.getRetrySleep());
 
-      serviceConfig = HaDescriptorFactory.createServiceConfig("bar", "false", "3", "1000", "5", "3000", null, null);
+      serviceConfig = HaDescriptorFactory.createServiceConfig("bar", "false", "3", "1000", null, null);
       assertNotNull(serviceConfig);
       assertFalse(serviceConfig.isEnabled());
       assertEquals("bar", serviceConfig.getServiceName());
       assertEquals(3, serviceConfig.getMaxFailoverAttempts());
       assertEquals(1000, serviceConfig.getFailoverSleep());
-      assertEquals(5, serviceConfig.getMaxRetryAttempts());
-      assertEquals(3000, serviceConfig.getRetrySleep());
 
    }
 }
