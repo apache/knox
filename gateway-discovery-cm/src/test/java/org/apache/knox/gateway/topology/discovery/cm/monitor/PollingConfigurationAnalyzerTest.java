@@ -172,6 +172,16 @@ public class PollingConfigurationAnalyzerTest {
     ApiEvent failedStartEvent = createApiEvent(ApiEventCategory.AUDIT_EVENT, startEventAttrs);
     pca.addRestartEvent(clusterName, failedStartEvent);
 
+    // Simulate an event w/o COMMAND and/or COMMAND_STATUS attributes
+    final List<ApiEventAttribute> revisionEventAttrs = new ArrayList<>();
+    revisionEventAttrs.add(createEventAttribute("CLUSTER", clusterName));
+    revisionEventAttrs.add(createEventAttribute("SERVICE_TYPE", HiveOnTezServiceModelGenerator.SERVICE_TYPE));
+    revisionEventAttrs.add(createEventAttribute("SERVICE", HiveOnTezServiceModelGenerator.SERVICE));
+    revisionEventAttrs.add(createEventAttribute("REVISION", "215"));
+    revisionEventAttrs.add(createEventAttribute("EVENTCODE", "EV_REVISION_CREATED"));
+    final ApiEvent revisionEvent = createApiEvent(ApiEventCategory.AUDIT_EVENT, revisionEventAttrs);
+    pca.addRestartEvent(clusterName, revisionEvent);
+
     try {
       pollingThreadExecutor.awaitTermination(10, TimeUnit.SECONDS);
     } catch (InterruptedException e) {

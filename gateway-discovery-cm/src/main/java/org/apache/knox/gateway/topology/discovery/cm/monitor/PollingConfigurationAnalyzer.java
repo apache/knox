@@ -48,12 +48,14 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import static org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor.ConfigurationChangeListener;
 
@@ -385,24 +387,17 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
   @SuppressWarnings("unchecked")
   private boolean isRelevantEvent(ApiEvent event) {
-    boolean rc = false;
-    String command = null;
-    String status = null;
-    List<ApiEventAttribute> attributes = event.getAttributes();
-    Map<String,Object> map = getAttributeMap(attributes);
-    command = (String) ((List<String>) map.get(COMMAND)).get(0);
-    status = (String) ((List<String>) map.get(COMMAND_STATUS)).get(0);
-    if (START_COMMAND.equals(command) || RESTART_COMMAND.equals(command) &&
-        SUCCEEDED_STATUS.equals(status) || STARTED_STATUS.equals(status)) {
-      rc = true;
+    final Map<String, Object> attributeMap = getAttributeMap(event.getAttributes());
+    final String command = attributeMap.containsKey(COMMAND) ? (String) ((List<String>) attributeMap.get(COMMAND)).get(0) : "";
+    final String status = attributeMap.containsKey(COMMAND_STATUS) ? (String) ((List<String>) attributeMap.get(COMMAND_STATUS)).get(0) : "";
+    if ((START_COMMAND.equals(command) || RESTART_COMMAND.equals(command)) && (SUCCEEDED_STATUS.equals(status) || STARTED_STATUS.equals(status))) {
+      return true;
     }
-    return rc;
+    return false;
   }
 
   private Map<String, Object> getAttributeMap(List<ApiEventAttribute> attributes) {
-    Map<String,Object> map = new HashMap<>();
-    attributes.forEach(attr -> { map.put(attr.getName(), attr.getValues());});
-    return map;
+    return attributes == null ? Collections.emptyMap() : attributes.stream().collect(Collectors.toMap(ApiEventAttribute::getName, ApiEventAttribute::getValues));
   }
 
   /**
