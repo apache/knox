@@ -19,25 +19,22 @@
         <type>UI</type>
         <context>/atlas</context>
         <shortDesc>Atlas UI</shortDesc>
-        <description>Apache Atlas provides open metadata management and governance capabilities for organizations to build a catalog of their data assets, 
+        <description>Apache Atlas provides open metadata management and governance capabilities for organizations to build a catalog of their data assets,
             classify and govern these assets and provide collaboration capabilities around these data assets for data scientists, analysts and the data governance team.</description>
     </metadata>
     <routes>
         <route path="/atlas">
             <rewrite apply="ATLAS/atlas/inbound/root" to="request.url"/>
-            <rewrite apply="ATLAS/atlas/outbound/links" to="response.body"/>
             <rewrite apply="ATLAS/atlas/outbound/headers" to="response.headers"/>
         </route>
 
         <route path="/atlas/**">
             <rewrite apply="ATLAS/atlas/inbound/path" to="request.url"/>
-            <rewrite apply="ATLAS/atlas/outbound/links" to="response.body"/>
             <rewrite apply="ATLAS/atlas/outbound/headers" to="response.headers"/>
         </route>
 
         <route path="/atlas/**?**">
             <rewrite apply="ATLAS/atlas/inbound/query" to="request.url"/>
-            <rewrite apply="ATLAS/atlas/outbound/links" to="response.body"/>
             <rewrite apply="ATLAS/atlas/outbound/headers" to="response.headers"/>
         </route>
     </routes>

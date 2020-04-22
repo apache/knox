@@ -28,47 +28,14 @@
         <rewrite template="{$serviceUrl[ATLAS]}/{**}?{**}"/>
     </rule>
 
-    <rule dir="OUT" name="ATLAS/atlas/outbound/links" pattern="css/{**}">
-        <rewrite template="{$frontend[path]}/atlas/css/{**}"/>
-    </rule>
-
-    <rule dir="OUT" name="ATLAS/atlas/outbound/links" pattern="js/{**}">
-        <rewrite template="{$frontend[path]}/atlas/js/{**}"/>
-    </rule>
-
-    <rule dir="OUT" name="ATLAS/atlas/outbound/styles" pattern="img/{**}">
-        <rewrite template="{$frontend[path]}/atlas/img/{**}"/>
-    </rule>
-
     <rule dir="OUT" name="ATLAS/atlas/outbound/contextpath">
         <rewrite template="{$frontend[path]}/atlas/"/>
-    </rule>
-
-    <rule dir="OUT" name="ATLAS/atlas/outbound/extrapath">
-        <rewrite template="{$frontend[topology]}/atlas/j_spring_security_check"/>
-    </rule>
-
-    <rule dir="OUT" name="ATLAS/atlas/outbound/index">
-        <rewrite template="{$frontend[path]}/atlas/index.html"/>
     </rule>
 
     <rule dir="OUT" name="ATLAS/atlas/outbound/login/headers/location">
         <match pattern="*://*:*/login.jsp"/>
         <rewrite template="{$frontend[url]}/atlas/login.jsp"/>
     </rule>
-
-    <filter name="ATLAS/atlas/outbound/links">
-        <content type="*/x-javascript">
-            <apply path="j_spring_security_check" rule="ATLAS/atlas/outbound/extrapath"/>
-            <apply path="index.html" rule="ATLAS/atlas/outbound/index"/>
-        </content>
-        <content type="application/javascript">
-            <apply path="j_spring_security_check" rule="ATLAS/atlas/outbound/extrapath"/>
-            <apply path="index.html" rule="ATLAS/atlas/outbound/index"/>
-        </content>
-        <content type="*/html">
-        </content>
-    </filter>
 
     <filter name="ATLAS/atlas/outbound/headers">
         <content type="application/x-http-headers">
