@@ -249,7 +249,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String KNOX_TOKEN_EVICTION_GRACE_PERIOD = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.eviction.grace.period";
   private static final String KNOX_TOKEN_PERMISSIVE_VALIDATION_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.permissive.validation";
   private static final long KNOX_TOKEN_EVICTION_INTERVAL_DEFAULT = TimeUnit.MINUTES.toSeconds(5);
-  private static final long KNOX_TOKEN_EVICTION_GRACE_PERIOD_DEFAULT = TimeUnit.MINUTES.toSeconds(5);
+  private static final long KNOX_TOKEN_EVICTION_GRACE_PERIOD_DEFAULT = TimeUnit.HOURS.toSeconds(24);
   private static final boolean KNOX_TOKEN_PERMISSIVE_VALIDATION_ENABLED_DEFAULT = false;
 
   private static final String KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES =  "knox.homepage.hidden.topologies";
