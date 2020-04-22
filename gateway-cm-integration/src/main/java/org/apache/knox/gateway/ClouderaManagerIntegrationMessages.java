@@ -27,6 +27,9 @@ public interface ClouderaManagerIntegrationMessages {
   @Message(level = MessageLevel.INFO, text = "Monitoring Cloudera Manager descriptors in {0} ...")
   void monitoringClouderaManagerDescriptor(String path);
 
+  @Message(level = MessageLevel.INFO, text = "Monitoring Cloudera Manager descriptors is disabled.")
+  void disableMonitoringClouderaManagerDescriptor();
+
   @Message(level = MessageLevel.INFO, text = "Parsing Cloudera Manager descriptor {0}. Looking up {1}...")
   void parseClouderaManagerDescriptor(String path, String topologyName);
 
