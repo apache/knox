@@ -39,5 +39,10 @@
           <rewrite apply="HBASEJARS/outbound/jars/headers" to="response.headers"/>
         </route>
     </routes>
+    <!-- This is extremely important yet looks out of place. Knox IN rules ending in {**} will drop a trailing-slash
+         character which will result in the HTTP/302 redirect to a URL with a trailing-slash that Jetty does with
+         the ResourceHandler. Without this custom dispatch to re-add that trailing-slash, Knox will create in
+         redirect-loop when trying to traverse this via the UI. This is only important when traversing the dirlisting
+         via a browser or HTTP client. Maven does not traverse the directory structure when pulling artifacts.-->
     <dispatch classname="org.apache.knox.gateway.hbase.HBaseUIDispatch" ha-classname="org.apache.knox.gateway.hbase.HBaseUIHaDispatch"/>
 </service>
