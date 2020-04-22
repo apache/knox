@@ -27,6 +27,9 @@ public interface AdvanceServiceDiscoveryConfigurationMessages {
   @Message(level = MessageLevel.INFO, text = "Monitoring {0}/{1}* for advanced service discovery configuration changes.")
   void monitorStarted(String directory, String prefix);
 
+  @Message(level = MessageLevel.INFO, text = "Monitoring advanced service discovery configuration changes is disabled.")
+  void disableMonitoring();
+
   @Message(level = MessageLevel.ERROR, text = "Error while monitoring CM advanced configuration: {1}")
   void failedToMonitorClouderaManagerAdvancedConfiguration(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
