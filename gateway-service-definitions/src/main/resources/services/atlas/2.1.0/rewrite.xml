@@ -1,0 +1,45 @@
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+    <!-- inbound rules -->
+    <rule dir="IN" name="ATLAS/atlas/inbound/root" pattern="*://*:*/**/atlas/">
+        <rewrite template="{$serviceUrl[ATLAS]}/"/>
+    </rule>
+
+    <rule dir="IN" name="ATLAS/atlas/inbound/path" pattern="*://*:*/**/atlas/{**}">
+        <rewrite template="{$serviceUrl[ATLAS]}/{**}"/>
+    </rule>
+
+    <rule dir="IN" name="ATLAS/atlas/inbound/query" pattern="*://*:*/**/atlas/{**}?{**}">
+        <rewrite template="{$serviceUrl[ATLAS]}/{**}?{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="ATLAS/atlas/outbound/contextpath">
+        <rewrite template="{$frontend[path]}/atlas/"/>
+    </rule>
+
+    <rule dir="OUT" name="ATLAS/atlas/outbound/login/headers/location">
+        <match pattern="*://*:*/login.jsp"/>
+        <rewrite template="{$frontend[url]}/atlas/login.jsp"/>
+    </rule>
+
+    <filter name="ATLAS/atlas/outbound/headers">
+        <content type="application/x-http-headers">
+            <apply path="Location" rule="ATLAS/atlas/outbound/login/headers/location"/>
+        </content>
+    </filter>
+</rules>
