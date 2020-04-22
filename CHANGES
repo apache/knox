@@ -195,7 +195,7 @@ Release Notes - Apache Knox - Version 1.4.0
     * [KNOX-2050] - Upgrade jackson to 2.10.0
     * [KNOX-2015] - Allow end-users to exclude only certain directives of the SET-COOKIE HTTP header (#154)
     * [KNOX-2024] - Fix testNameMethod test
-    * [KNOX-1996]: Adding changes to remove extra / while generating backedn … (#142)
+    * [KNOX-1996] - Adding changes to remove extra / while generating backedn … (#142)
     * [KNOX-2048] - Upgrade pac4j to 3.8.2
     * [KNOX-2047] - Upgrade dependency-check-maven to 5.2.2
     * [KNOX-2046] - Upgrade hadoop to 3.2.1
@@ -385,6 +385,10 @@ Release Notes - Apache Knox - Version 1.4.0
     * [KNOX-2200] - DefaultKeystoreService can lose entries under concurrent access (#243)
     * [KNOX-2002] - Fix KnoxShellTableTest build errors
     * [KNOX-1742] - Fix javadoc warning
+    * [KNOX-2350] - Handling event types w/o COMMAND and/or COMMAND_STATUS attributes when polling CM events (#318) (#319)
+    * [KNOX-2353] - Disabled CM descriptor monitoring and advanced service discovery changes monitoring by default (#320)
+    * [KNOX-2347] - Disable shellcheck for github actions (#317)
+    * [KNOX-2345] - KnoxShellTable must handle NULL cols
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 1.3.0
