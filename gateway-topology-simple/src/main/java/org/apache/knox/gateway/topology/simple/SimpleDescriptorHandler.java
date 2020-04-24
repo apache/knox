@@ -106,9 +106,14 @@ public class SimpleDescriptorHandler {
         Map<String, Map<String, String>> serviceParams = new HashMap<>();
         Map<String, List<String>> serviceURLs = new HashMap<>();
 
-        ServiceDiscovery.Cluster cluster = performDiscovery(config, desc, gatewayServices);
-        if (cluster == null) {
-            log.failedToDiscoverClusterServices(desc.getName());
+        ServiceDiscovery.Cluster cluster = null;
+        if (shouldPerformDiscovery(desc)) {
+            cluster = performDiscovery(config, desc, gatewayServices);
+            if (cluster == null) {
+                log.failedToDiscoverClusterServices(desc.getName());
+            }
+        } else {
+            log.discoveryNotConfiguredForDescriptor(desc.getName());
         }
 
         for (SimpleDescriptor.Service descService : desc.getServices()) {
@@ -195,6 +200,22 @@ public class SimpleDescriptorHandler {
                                 gws);
     }
 
+    /**
+     * Determine whether discovery should be performed for the specified descriptor.
+     *
+     * @param desc A SimpleDescriptor
+     * @return true, if discovery should be performed for the descriptor; Otherwise, false.
+     */
+    private static boolean shouldPerformDiscovery(final SimpleDescriptor desc) {
+        // If there is a discovery type specified, then discovery should be performed
+        final String discoveryType = desc.getDiscoveryType();
+        if (discoveryType != null && !discoveryType.isEmpty()) {
+            return true;
+        }
+        log.missingDiscoveryTypeInDescriptor(desc.getName());
+        return false;
+    }
+
     private static GatewayServices getGatewayServices(Service... services) {
       for (Service service : services) {
         if (service instanceof GatewayServices) {
@@ -220,6 +241,9 @@ public class SimpleDescriptorHandler {
         ServiceDiscovery sd = discoveryInstances.get(discoveryType);
         if (sd == null) {
             sd = ServiceDiscoveryFactory.get(discoveryType, gatewayServices);
+            if (sd == null) {
+                throw new IllegalArgumentException("Unsupported service discovery type: " + discoveryType);
+            }
             discoveryInstances.put(discoveryType, sd);
         }
 
@@ -624,11 +648,14 @@ public class SimpleDescriptorHandler {
             // If it does exist, only overwrite it if it has changed (KNOX-2302)
             // Compare the generated topology with the in-memory topology
             Topology existing = null;
-            TopologyService topologyService = gwServices.getService(ServiceType.TOPOLOGY_SERVICE);
-            for (Topology t : topologyService.getTopologies()) {
-                if (topologyName.equals(t.getName())) {
-                    existing = t;
-                    break;
+            TopologyService topologyService = null;
+            if (gwServices != null) {
+                topologyService = gwServices.getService(ServiceType.TOPOLOGY_SERVICE);
+                for (Topology t : topologyService.getTopologies()) {
+                    if (topologyName.equals(t.getName())) {
+                        existing = t;
+                        break;
+                    }
                 }
             }
 
