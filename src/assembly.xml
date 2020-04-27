@@ -32,6 +32,7 @@
                 <exclude>**/.settings/**</exclude>
                 <exclude>**/.idea/**</exclude>
                 <exclude>**/*.iml</exclude>
+                <exclude>**/node_modules/**</exclude>
             </excludes>
         </fileSet>
     </fileSets>
