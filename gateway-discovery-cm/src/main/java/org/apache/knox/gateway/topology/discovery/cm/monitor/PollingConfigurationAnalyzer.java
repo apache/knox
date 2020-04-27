@@ -162,93 +162,98 @@ public class PollingConfigurationAnalyzer implements Runnable {
     isActive = true;
 
     while (isActive) {
-      List<String> clustersToStopMonitoring = new ArrayList<>();
+      try {
+        final List<String> clustersToStopMonitoring = new ArrayList<>();
 
-      for (Map.Entry<String, List<String>> entry : configCache.getClusterNames().entrySet()) {
-        String address = entry.getKey();
-        for (String clusterName : entry.getValue()) {
-          log.checkingClusterConfiguration(clusterName, address);
+        for (Map.Entry<String, List<String>> entry : configCache.getClusterNames().entrySet()) {
+          String address = entry.getKey();
+          for (String clusterName : entry.getValue()) {
+            log.checkingClusterConfiguration(clusterName, address);
 
-          // Check here for existing descriptor references, and add to the removal list if there are not any
-          if (!clusterReferencesExist(address, clusterName)) {
-            clustersToStopMonitoring.add(address + FQCN_DELIM + clusterName);
-            continue;
-          }
-
-          // Configuration changes don't mean anything without corresponding service start/restarts. Therefore, monitor
-          // start events, and check the configuration only of the restarted service(s) to identify changes
-          // that should trigger re-discovery.
-          List<StartEvent> relevantEvents = getRelevantEvents(address, clusterName);
-
-          // If there are no recent start events, then nothing to do now
-          if (!relevantEvents.isEmpty()) {
-            boolean configHasChanged = false;
-
-            // If there are start events, then check the previously-recorded properties for the same service to
-            // identify if the configuration has changed
-            Map<String, ServiceConfigurationModel> serviceConfigurations =
-                                    configCache.getClusterServiceConfigurations(address, clusterName);
-
-            // Those services for which a start even has been handled
-            List<String> handledServiceTypes = new ArrayList<>();
-
-            for (StartEvent re : relevantEvents) {
-              String serviceType = re.getServiceType();
-
-              // Determine if we've already handled a start event for this service type
-              if (!handledServiceTypes.contains(serviceType)) {
-
-                // Get the previously-recorded configuration
-                ServiceConfigurationModel serviceConfig = serviceConfigurations.get(re.getServiceType());
-
-                if (serviceConfig != null) {
-                  // Get the current config for the started service, and compare with the previously-recorded config
-                  ServiceConfigurationModel currentConfig =
-                                  getCurrentServiceConfiguration(address, clusterName, re.getService());
-
-                  if (currentConfig != null) {
-                    log.analyzingCurrentServiceConfiguration(re.getService());
-                    try {
-                      configHasChanged = hasConfigurationChanged(serviceConfig, currentConfig);
-                    } catch (Exception e) {
-                      log.errorAnalyzingCurrentServiceConfiguration(re.getService(), e);
-                    }
-                  }
-                } else {
-                  // A new service (no prior config) represent a config change, since a descriptor may have referenced
-                  // the "new" service, but discovery had previously not succeeded because the service had not been
-                  // configured (appropriately) at that time.
-                  log.serviceEnabled(re.getService());
-                  configHasChanged = true;
-                }
-
-                handledServiceTypes.add(serviceType);
-              }
-
-              if (configHasChanged) {
-                break; // No need to continue checking once we've identified one reason to perform discovery again
-              }
+            // Check here for existing descriptor references, and add to the removal list if there are not any
+            if (!clusterReferencesExist(address, clusterName)) {
+              clustersToStopMonitoring.add(address + FQCN_DELIM + clusterName);
+              continue;
             }
 
-            // If a change has occurred, notify the listeners
-            if (configHasChanged) {
-              notifyChangeListener(address, clusterName);
+            // Configuration changes don't mean anything without corresponding service start/restarts. Therefore, monitor
+            // start events, and check the configuration only of the restarted service(s) to identify changes
+            // that should trigger re-discovery.
+            final List<StartEvent> relevantEvents = getRelevantEvents(address, clusterName);
+
+            // If there are no recent start events, then nothing to do now
+            if (!relevantEvents.isEmpty()) {
+              // If a change has occurred, notify the listeners
+              if (hasConfigChanged(address, clusterName, relevantEvents)) {
+                notifyChangeListener(address, clusterName);
+              }
             }
           }
         }
-      }
 
-      // Remove outdated entries from the cache
-      for (String fqcn : clustersToStopMonitoring) {
-        String[] parts = fqcn.split(FQCN_DELIM);
-        stopMonitoring(parts[0], parts[1]);
-      }
-      clustersToStopMonitoring.clear(); // reset the removal list
+        // Remove outdated entries from the cache
+        for (String fqcn : clustersToStopMonitoring) {
+          String[] parts = fqcn.split(FQCN_DELIM);
+          stopMonitoring(parts[0], parts[1]);
+        }
+        clustersToStopMonitoring.clear(); // reset the removal list
 
-      waitFor(interval);
+        waitFor(interval);
+      } catch (Exception e) {
+        log.clouderaManagerConfigurationChangesMonitoringError(e);
+      }
     }
 
     log.stoppedClouderaManagerConfigMonitor();
+  }
+
+  private boolean hasConfigChanged(String address, String clusterName, List<StartEvent> relevantEvents) {
+    // If there are start events, then check the previously-recorded properties for the same service to
+    // identify if the configuration has changed
+    final Map<String, ServiceConfigurationModel> serviceConfigurations = configCache.getClusterServiceConfigurations(address, clusterName);
+
+    // Those services for which a start even has been handled
+    final List<String> handledServiceTypes = new ArrayList<>();
+
+    boolean configHasChanged = false;
+    for (StartEvent re : relevantEvents) {
+      String serviceType = re.getServiceType();
+
+      // Determine if we've already handled a start event for this service type
+      if (!handledServiceTypes.contains(serviceType)) {
+
+        // Get the previously-recorded configuration
+        ServiceConfigurationModel serviceConfig = serviceConfigurations.get(re.getServiceType());
+
+        if (serviceConfig != null) {
+          // Get the current config for the started service, and compare with the previously-recorded config
+          ServiceConfigurationModel currentConfig =
+                          getCurrentServiceConfiguration(address, clusterName, re.getService());
+
+          if (currentConfig != null) {
+            log.analyzingCurrentServiceConfiguration(re.getService());
+            try {
+              configHasChanged = hasConfigurationChanged(serviceConfig, currentConfig);
+            } catch (Exception e) {
+              log.errorAnalyzingCurrentServiceConfiguration(re.getService(), e);
+            }
+          }
+        } else {
+          // A new service (no prior config) represent a config change, since a descriptor may have referenced
+          // the "new" service, but discovery had previously not succeeded because the service had not been
+          // configured (appropriately) at that time.
+          log.serviceEnabled(re.getService());
+          configHasChanged = true;
+        }
+
+        handledServiceTypes.add(serviceType);
+      }
+
+      if (configHasChanged) {
+        break; // No need to continue checking once we've identified one reason to perform discovery again
+      }
+    }
+    return configHasChanged;
   }
 
   private TopologyService getTopologyService() {
