@@ -129,6 +129,70 @@ public class SimpleDescriptorHandlerTest {
             "        </provider>\n" +
             "    </gateway>\n";
 
+
+    @Test
+    public void testSkipDiscovery_NoDiscoveryConfig() throws Exception {
+        // There should be no exception because in this case, discovery should be skipped altogether
+        doTestDiscoveryConfig(null, null, null, null, null);
+    }
+
+    private void doTestDiscoveryConfig(final String discoveryType,
+                                       final String address,
+                                       final String clusterName,
+                                       final String user,
+                                       final String pwdAlias) throws Exception {
+        GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.replay(gc);
+
+        // Write the externalized provider config to a temp file
+        File providerConfig = new File(System.getProperty("java.io.tmpdir"), "test-providers.xml");
+        FileUtils.write(providerConfig, TEST_PROVIDER_CONFIG, StandardCharsets.UTF_8);
+
+        // Mock out the simple descriptor
+        SimpleDescriptor testDescriptor = EasyMock.createNiceMock(SimpleDescriptor.class);
+        EasyMock.expect(testDescriptor.getName()).andReturn("mysimpledescriptor").anyTimes();
+        EasyMock.expect(testDescriptor.getProviderConfig()).andReturn(providerConfig.getAbsolutePath()).anyTimes();
+        EasyMock.expect(testDescriptor.getDiscoveryAddress()).andReturn(address).anyTimes();
+        EasyMock.expect(testDescriptor.getDiscoveryType()).andReturn(discoveryType).anyTimes();
+        EasyMock.expect(testDescriptor.getDiscoveryUser()).andReturn(user).anyTimes();
+        EasyMock.expect(testDescriptor.getDiscoveryPasswordAlias()).andReturn(pwdAlias).anyTimes();
+        EasyMock.expect(testDescriptor.getCluster()).andReturn(clusterName).anyTimes();
+        List<SimpleDescriptor.Service> serviceMocks;
+        SimpleDescriptor.Service svc = EasyMock.createNiceMock(SimpleDescriptor.Service.class);
+        EasyMock.expect(svc.getName()).andReturn("KNOXTOKEN").anyTimes();
+        EasyMock.expect(svc.getVersion()).andReturn(null).anyTimes();
+        EasyMock.expect(svc.getURLs()).andReturn(Collections.emptyList()).anyTimes();
+
+        Map<String, String> serviceParams = new HashMap<>();
+        serviceParams.put("knox.token.ttl", "120000");
+        EasyMock.expect(svc.getParams()).andReturn(serviceParams).anyTimes();
+
+        EasyMock.replay(svc);
+        serviceMocks = Collections.singletonList(svc);
+
+        EasyMock.expect(testDescriptor.getServices()).andReturn(serviceMocks).anyTimes();
+        EasyMock.replay(testDescriptor);
+
+        File destDir = new File(System.getProperty("java.io.tmpdir")).getCanonicalFile();
+        File topologyFile = null;
+
+        try {
+            // Invoke the simple descriptor handler
+            Map<String, File> files =
+                    SimpleDescriptorHandler.handle(gc,
+                            testDescriptor,
+                            providerConfig.getParentFile(), // simple desc co-located with provider config
+                            destDir);
+            topologyFile = files.get("topology");
+            assertTrue(topologyFile.exists());
+        } finally {
+            providerConfig.delete();
+            if (topologyFile != null) {
+                topologyFile.delete();
+            }
+        }
+    }
+
     /*
      * KNOX-1006
      *
