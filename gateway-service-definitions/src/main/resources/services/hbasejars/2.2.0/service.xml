@@ -1,0 +1,48 @@
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<service role="HBASEJARS" name="hbasejars" version="2.2.0">
+    <metadata>
+        <type>API</type>
+        <context>/hbase/maven</context>
+        <shortDesc>Jar hosting for HBase</shortDesc>
+        <description>Static hosting of HBase client jars from the backend HBase UI.</description>
+    </metadata>
+    <routes>
+        <!-- Jetty static resources won't come with the query string -->
+        <route path="/hbase/maven/jetty-dir.css">
+            <rewrite apply="HBASEJARS/path/in/css" to="request.url"/>
+            <rewrite apply="HBASEJARS/path/out/css" to="response.body"/>
+        </route>
+        <!-- Define routes for our embedded maven repo -->
+        <route path="/hbase/maven">
+           <rewrite apply="HBASEJARS/inbound/jars" to="request.url"/>
+           <rewrite apply="HBASEJARS/outbound/jars" to="response.body"/>
+        </route>
+        <route path="/hbase/maven/**">
+          <rewrite apply="HBASEJARS/inbound/jars/path" to="request.url"/>
+          <rewrite apply="HBASEJARS/outbound/jars" to="response.body"/>
+          <!-- For the Jetty HTTP/302 redirects -->
+          <rewrite apply="HBASEJARS/outbound/jars/headers" to="response.headers"/>
+        </route>
+    </routes>
+    <!-- This is extremely important yet looks out of place. Knox IN rules ending in {**} will drop a trailing-slash
+         character which will result in the HTTP/302 redirect to a URL with a trailing-slash that Jetty does with
+         the ResourceHandler. Without this custom dispatch to re-add that trailing-slash, Knox will create in
+         redirect-loop when trying to traverse this via the UI. This is only important when traversing the dirlisting
+         via a browser or HTTP client. Maven does not traverse the directory structure when pulling artifacts.-->
+    <dispatch classname="org.apache.knox.gateway.hbase.HBaseUIDispatch" ha-classname="org.apache.knox.gateway.hbase.HBaseUIHaDispatch"/>
+</service>
