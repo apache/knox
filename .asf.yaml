@@ -1,0 +1,6 @@
+notifications:
+    commits:      commits@knox.apache.org
+    issues:       dev@knox.apache.org
+    pullrequests: dev@knox.apache.org
+    jira_options: link label worklog
+
