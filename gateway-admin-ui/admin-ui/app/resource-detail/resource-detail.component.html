@@ -120,6 +120,7 @@
                     title="Remove Provider Configuration"
                     class="btn btn-default btn-sm pull-left"
                     (click)="deleteConfirmModal.open('md')"
+                    *ngIf="showEditOptions()"
                     data-toggle="tooltip">
                 <span class="glyphicon glyphicon-trash"></span>
             </button>
@@ -129,6 +130,7 @@
                 class="btn btn-default btn-sm"
                 [disabled]="!changedProviders"
                 (click)="discardConfirmModal.open('md')"
+                *ngIf="showEditOptions()"
                 data-toggle="tooltip">
           <span class="glyphicon glyphicon-refresh"></span>
         </button>
@@ -138,6 +140,7 @@
                 class="btn btn-default btn-sm"
                 [disabled]="!changedProviders"
                 (click)="persistChanges()"
+                *ngIf="showEditOptions()"
                 data-toggle="tooltip">
           <span class="glyphicon glyphicon-floppy-disk"></span>
         </button>

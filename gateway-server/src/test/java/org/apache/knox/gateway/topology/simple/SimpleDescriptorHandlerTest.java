@@ -49,6 +49,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -889,8 +890,8 @@ public class SimpleDescriptorHandlerTest {
         assertNotNull(generatedProviderConfiguration);
 
         // Compare the generated ProviderConfiguration to the expected one
-        List<ProviderConfiguration.Provider> expectedProviders = expected.getProviders();
-        List<ProviderConfiguration.Provider> actualProviders = generatedProviderConfiguration.getProviders();
+        Set<ProviderConfiguration.Provider> expectedProviders = expected.getProviders();
+        Set<ProviderConfiguration.Provider> actualProviders = generatedProviderConfiguration.getProviders();
         assertEquals("The number of providers should be the same.", expectedProviders.size(), actualProviders.size());
 
         for (ProviderConfiguration.Provider expectedProvider : expectedProviders) {
@@ -905,7 +906,7 @@ public class SimpleDescriptorHandlerTest {
      * @param expected        A Provider that should be among the specified actual providers
      * @param actualProviders The set of actual providers.
      */
-    private boolean validateProvider(ProviderConfiguration.Provider expected, List<ProviderConfiguration.Provider> actualProviders) {
+    private boolean validateProvider(ProviderConfiguration.Provider expected, Set<ProviderConfiguration.Provider> actualProviders) {
         boolean foundMatch = false;
 
         for (ProviderConfiguration.Provider actual : actualProviders) {

@@ -48,6 +48,7 @@ export class ResourceDetailComponent implements OnInit {
     resourceContent: string;
 
     providers: Array<ProviderConfig>;
+    readOnlyProviderConfig: boolean;
     changedProviders: Array<ProviderConfig>;
 
     descriptor: Descriptor;
@@ -114,11 +115,13 @@ export class ResourceDetailComponent implements OnInit {
                     // Parse the JSON representation
                     contentObj = JSON.parse(this.resourceContent);
                     this.providers = contentObj['providers'];
+                    this.readOnlyProviderConfig = contentObj['readOnly'];
                 } else if (res.name.endsWith('yaml') || res.name.endsWith('yml')) {
                     // Parse the YAML representation
                     let yaml = require('js-yaml');
                     contentObj = yaml.safeLoad(this.resourceContent);
                     this.providers = contentObj['providers'];
+                    this.readOnlyProviderConfig = contentObj['readOnly'];
                 } else if (res.name.endsWith('xml')) {
                     // Parse the XML representation
                     parseString(this.resourceContent,
@@ -146,6 +149,7 @@ export class ResourceDetailComponent implements OnInit {
                                     tempProviders.push(providerConfig);
                                 });
                                 this.providers = tempProviders;
+                                this.readOnlyProviderConfig = result['gateway'].readOnly;
                             }
                         });
                 }
@@ -563,6 +567,11 @@ export class ResourceDetailComponent implements OnInit {
         if (this.resourceType === 'Descriptors' && this.descriptor.readOnly) {
             return !Boolean(this.descriptor.readOnly);
         }
+
+        if (this.resourceType === 'Provider Configurations' && this.readOnlyProviderConfig) {
+          return !this.readOnlyProviderConfig;
+        }
+
         return true;
     }
 }

@@ -48,6 +48,7 @@ public class ClouderaManagerDescriptorMonitor implements AdvancedServiceDiscover
 
   private static final String CM_DESCRIPTOR_FILE_EXTENSION = ".cm";
   private static final ClouderaManagerIntegrationMessages LOG = MessagesFactory.get(ClouderaManagerIntegrationMessages.class);
+  private final String sharedProvidersDir;
   private final String descriptorsDir;
   private final long monitoringInterval;
   private final ClouderaManagerDescriptorParser cmDescriptorParser;
@@ -55,6 +56,7 @@ public class ClouderaManagerDescriptorMonitor implements AdvancedServiceDiscover
 
   public ClouderaManagerDescriptorMonitor(GatewayConfig gatewayConfig, ClouderaManagerDescriptorParser cmDescriptorParser) {
     this.cmDescriptorParser = cmDescriptorParser;
+    this.sharedProvidersDir = gatewayConfig.getGatewayProvidersConfigDir();
     this.descriptorsDir = gatewayConfig.getGatewayDescriptorsDir();
     this.monitoringInterval = gatewayConfig.getClouderaManagerDescriptorsMonitoringInterval();
   }
@@ -93,15 +95,38 @@ public class ClouderaManagerDescriptorMonitor implements AdvancedServiceDiscover
   }
 
   private void processClouderaManagerDescriptor(String descriptorFilePath, String topologyName) {
-    cmDescriptorParser.parse(descriptorFilePath, topologyName).forEach(simpleDescriptor -> {
+    final ClouderaManagerDescriptorParserResult result = cmDescriptorParser.parse(descriptorFilePath, topologyName);
+    processSharedProviders(result);
+    processDescriptors(result);
+  }
+
+  private void processSharedProviders(final ClouderaManagerDescriptorParserResult result) {
+    result.getProviders().forEach((key, value) -> {
+      try {
+        final File knoxProviderConfigFile = new File(sharedProvidersDir, key + ".json");
+        final String providersConfiguration = JsonUtils.renderAsJsonString(value);
+        if (isResourceChangedOrNew(knoxProviderConfigFile, providersConfiguration)) {
+          FileUtils.writeStringToFile(knoxProviderConfigFile, providersConfiguration, StandardCharsets.UTF_8);
+          LOG.savedResource("shared provider", knoxProviderConfigFile.getAbsolutePath());
+        } else {
+          LOG.resourceDidNotChange(key, "shared provider");
+        }
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    });
+  }
+
+  private void processDescriptors(final ClouderaManagerDescriptorParserResult result) {
+    result.getDescriptors().forEach(simpleDescriptor -> {
       try {
         final File knoxDescriptorFile = new File(descriptorsDir, simpleDescriptor.getName() + ".json");
         final String simpleDescriptorJsonString = JsonUtils.renderAsJsonString(simpleDescriptor);
-        if (isDescriptorChangedOrNew(knoxDescriptorFile, simpleDescriptorJsonString)) {
+        if (isResourceChangedOrNew(knoxDescriptorFile, simpleDescriptorJsonString)) {
           FileUtils.writeStringToFile(knoxDescriptorFile, JsonUtils.renderAsJsonString(simpleDescriptor), StandardCharsets.UTF_8);
-          LOG.savedSimpleDescriptorDescriptor(knoxDescriptorFile.getAbsolutePath());
+          LOG.savedResource("descriptor", knoxDescriptorFile.getAbsolutePath());
         } else {
-          LOG.descriptorDidNotChange(simpleDescriptor.getName());
+          LOG.resourceDidNotChange(simpleDescriptor.getName(), "descriptor");
         }
       } catch (IOException e) {
         LOG.failedToProduceKnoxDescriptor(e.getMessage(), e);
@@ -109,7 +134,7 @@ public class ClouderaManagerDescriptorMonitor implements AdvancedServiceDiscover
     });
   }
 
-  private boolean isDescriptorChangedOrNew(File knoxDescriptorFile, String simpleDescriptorJsonString) throws IOException {
+  private boolean isResourceChangedOrNew(File knoxDescriptorFile, String simpleDescriptorJsonString) throws IOException {
     if (knoxDescriptorFile.exists()) {
       final String currentContent = FileUtils.readFileToString(knoxDescriptorFile, StandardCharsets.UTF_8);
       return !simpleDescriptorJsonString.equals(currentContent);

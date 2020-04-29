@@ -18,17 +18,17 @@ limitations under the License.
   <config> <!-- should be property -->
     <name>topology1</name>
     <value>
-        discoveryType=ClouderaManager;
-        discoveryAddress=http://host:123;
-        discoveryUser=user;
-        discoveryPasswordAlias=alias;
-        cluster=Cluster 1;
-        providerConfigRef=topology1-provider;
-        app:knoxauth:param1.name=param1.value;
-        app:admin-ui;
-        HIVE:url=http://localhost:456;
-        HIVE:version=1.0;
-        HIVE:httpclient.connectionTimeout=5m;
+        discoveryType=ClouderaManager#
+        discoveryAddress=http://host:123#
+        discoveryUser=user#
+        discoveryPasswordAlias=alias#
+        cluster=Cluster 1#
+        providerConfigRef=topology1-provider#
+        app:knoxauth:param1.name=param1.value#
+        app:admin-ui#
+        HIVE:url=http://localhost:456#
+        HIVE:version=1.0#
+        HIVE:httpclient.connectionTimeout=5m#
         HIVE:httpclient.socketTimeout=100m
     </value>
   </config>

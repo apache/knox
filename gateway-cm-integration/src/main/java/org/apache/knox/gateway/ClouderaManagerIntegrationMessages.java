@@ -36,11 +36,14 @@ public interface ClouderaManagerIntegrationMessages {
   @Message(level = MessageLevel.INFO, text = "Found Knox descriptors {0} in {1}")
   void parsedClouderaManagerDescriptor(String descriptorList, String path);
 
-  @Message(level = MessageLevel.INFO, text = "Saved Knox descriptor {0}")
-  void savedSimpleDescriptorDescriptor(String path);
+  @Message(level = MessageLevel.INFO, text = "Saved Knox {0} into {1}")
+  void savedResource(String resourceType, String path);
 
-  @Message(level = MessageLevel.INFO, text = "Ignoring {0} Knox descriptor update because it did not change.")
-  void descriptorDidNotChange(String descriptorName);
+  @Message(level = MessageLevel.INFO, text = "Ignoring {0} Knox {1} update because it did not change.")
+  void resourceDidNotChange(String resourceName, String resourceType);
+
+  @Message(level = MessageLevel.ERROR, text = "Parsing Knox shared provider configuration {0} failed: {1}")
+  void failedToParseProviderConfiguration(String name, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.ERROR, text = "Parsing Knox descriptor {0} failed: {1}")
   void failedToParseDescriptor(String name, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);

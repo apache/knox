@@ -18,31 +18,48 @@ limitations under the License.
   <property>
     <name>topology1</name>
     <value>
-        discoveryType=ClouderaManager;
-        discoveryAddress=http://host:123;
-        discoveryUser=user;
-        discoveryPasswordAlias=alias;
-        cluster=Cluster 1;
-        providerConfigRef=topology1-provider;
-        app:knoxauth:param1.name=param1.value;
-        app:admin-ui;
-        HIVE:url=http://localhost:456;
-        HIVE:version=1.0;
-        HIVE:httpclient.connectionTimeout=5m;
+        discoveryType=ClouderaManager#
+        discoveryAddress=http://host:123#
+        discoveryUser=user#
+        discoveryPasswordAlias=alias#
+        cluster=Cluster 1#
+        providerConfigRef=topology1-provider#
+        app:knoxauth:param1.name=param1.value#
+        app:admin-ui#
+        HIVE:url=http://localhost:456#
+        HIVE:version=1.0#
+        HIVE:httpclient.connectionTimeout=5m#
         HIVE:httpclient.socketTimeout=100m
     </value>
   </property>
   <property>
     <name>topology2</name>
     <value>
-        discoveryType=Ambari;
-        discoveryAddress=http://host:456;
-        cluster=Cluster 2;
-        providerConfigRef=topology2-provider;
-        ATLAS-API:url=http://localhost:456;
-        ATLAS-API:httpclient.connectionTimeout=5m;
-        ATLAS-API:httpclient.socketTimeout=100m;
+        discoveryType=Ambari#
+        discoveryAddress=http://host:456#
+        cluster=Cluster 2#
+        providerConfigRef=topology2-provider#
+        ATLAS-API:url=http://localhost:456#
+        ATLAS-API:httpclient.connectionTimeout=5m#
+        ATLAS-API:httpclient.socketTimeout=100m#
         NIFI
     </value>
+  </property>
+  <property>
+      <name>providerConfigs:admin, knoxsso</name>
+      <value>
+          role=authentication#
+          authentication.name=ShiroProvider#
+          authentication.param.sessionTimeout=30#
+          authentication.param.main.ldapRealm=org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm#
+          authentication.param.main.ldapContextFactory=org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory#
+          authentication.param.main.ldapRealm.contextFactory=$ldapContextFactory#
+          authentication.param.main.ldapRealm.contextFactory.authenticationMechanism=simple#
+          authentication.param.main.ldapRealm.contextFactory.url=ldap://localhost:33389#
+          authentication.param.main.ldapRealm.contextFactory.systemUsername=uid=guest,ou=people,dc=hadoop,dc=apache,dc=org#
+          authentication.param.main.ldapRealm.contextFactory.systemPassword=${ALIAS=knoxLdapSystemPassword}#
+          authentication.param.main.ldapRealm.userDnTemplate=uid={0},ou=people,dc=hadoop,dc=apache,dc=org#
+          authentication.param.urls./**=authcBasic
+      </value>
   </property>
 </configuration>
