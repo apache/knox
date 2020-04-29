@@ -48,6 +48,8 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -66,13 +68,20 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
   private static final String COMMAND_STATUS = "COMMAND_STATUS";
 
-  private static final String STARTED_STATUS = "STARTED";
+  static final String SUCCEEDED_STATUS = "SUCCEEDED";
 
-  private static final String SUCCEEDED_STATUS = "SUCCEEDED";
+  static final String RESTART_COMMAND = "Restart";
 
-  private static final String RESTART_COMMAND = "Restart";
+  static final String START_COMMAND = "Start";
 
-  private static final String START_COMMAND = "Start";
+  static final String ROLLING_RESTART_COMMAND = "RollingRestart";
+
+  static final String CM_SERVICE_TYPE = "ManagerServer";
+  static final String CM_SERVICE      = "ClouderaManager";
+
+  // Collection of those commands which represent the potential activation of service configuration changes
+  private static final Collection<String> ACTIVATION_COMMANDS =
+                          Arrays.asList(START_COMMAND, RESTART_COMMAND, ROLLING_RESTART_COMMAND);
 
   // The format of the filter employed when start events are queried from ClouderaManager
   private static final String EVENTS_QUERY_FORMAT =
@@ -210,7 +219,8 @@ public class PollingConfigurationAnalyzer implements Runnable {
   private boolean hasConfigChanged(String address, String clusterName, List<StartEvent> relevantEvents) {
     // If there are start events, then check the previously-recorded properties for the same service to
     // identify if the configuration has changed
-    final Map<String, ServiceConfigurationModel> serviceConfigurations = configCache.getClusterServiceConfigurations(address, clusterName);
+    final Map<String, ServiceConfigurationModel> serviceConfigurations =
+                          configCache.getClusterServiceConfigurations(address, clusterName);
 
     // Those services for which a start even has been handled
     final List<String> handledServiceTypes = new ArrayList<>();
@@ -219,9 +229,15 @@ public class PollingConfigurationAnalyzer implements Runnable {
     for (StartEvent re : relevantEvents) {
       String serviceType = re.getServiceType();
 
-      // Determine if we've already handled a start event for this service type
-      if (!handledServiceTypes.contains(serviceType)) {
+      if (CM_SERVICE_TYPE.equals(serviceType)) {
+        if (CM_SERVICE.equals(re.getService())) {
+          // This is a rolling cluster restart event, so assume configuration has changed
+          configHasChanged = true;
+        }
+      }
 
+      // Determine if we've already handled a start event for this service type
+      if (!configHasChanged && !handledServiceTypes.contains(serviceType)) {
         // Get the previously-recorded configuration
         ServiceConfigurationModel serviceConfig = serviceConfigurations.get(re.getServiceType());
 
@@ -372,15 +388,15 @@ public class PollingConfigurationAnalyzer implements Runnable {
       lastTimestamp = Instant.now().minus(eventQueryDefaultTimestampOffset, ChronoUnit.MILLIS).toString();
     }
 
-    log.queryingRestartEventsFromCluster(clusterName, address, lastTimestamp);
+    log.queryingConfigActivationEventsFromCluster(clusterName, address, lastTimestamp);
 
     // Record the new event query timestamp for this address/cluster
     setEventQueryTimestamp(address, clusterName, Instant.now());
 
     // Query the event log from CM for service/cluster start events
     List<ApiEvent> events = queryEvents(getApiClient(configCache.getDiscoveryConfig(address, clusterName)),
-                                               clusterName,
-                                               lastTimestamp);
+                                        clusterName,
+                                        lastTimestamp);
     for (ApiEvent event : events) {
       if(isRelevantEvent(event)) {
         relevantEvents.add(new StartEvent(event));
@@ -393,12 +409,11 @@ public class PollingConfigurationAnalyzer implements Runnable {
   @SuppressWarnings("unchecked")
   private boolean isRelevantEvent(ApiEvent event) {
     final Map<String, Object> attributeMap = getAttributeMap(event.getAttributes());
-    final String command = attributeMap.containsKey(COMMAND) ? (String) ((List<String>) attributeMap.get(COMMAND)).get(0) : "";
-    final String status = attributeMap.containsKey(COMMAND_STATUS) ? (String) ((List<String>) attributeMap.get(COMMAND_STATUS)).get(0) : "";
-    if ((START_COMMAND.equals(command) || RESTART_COMMAND.equals(command)) && (SUCCEEDED_STATUS.equals(status) || STARTED_STATUS.equals(status))) {
-      return true;
-    }
-    return false;
+    final String command =
+            attributeMap.containsKey(COMMAND) ? ((List<String>) attributeMap.get(COMMAND)).get(0) : "";
+    final String status =
+            attributeMap.containsKey(COMMAND_STATUS) ? ((List<String>) attributeMap.get(COMMAND_STATUS)).get(0) : "";
+    return (ACTIVATION_COMMANDS.contains(command) && SUCCEEDED_STATUS.equals(status));
   }
 
   private Map<String, Object> getAttributeMap(List<ApiEventAttribute> attributes) {
@@ -538,9 +553,9 @@ public class PollingConfigurationAnalyzer implements Runnable {
    */
   static final class StartEvent {
 
-    private static final String ATTR_CLUSTER = "CLUSTER";
+    private static final String ATTR_CLUSTER      = "CLUSTER";
     private static final String ATTR_SERVICE_TYPE = "SERVICE_TYPE";
-    private static final String ATTR_SERVICE = "SERVICE";
+    private static final String ATTR_SERVICE      = "SERVICE";
 
     private static List<String> attrsOfInterest = new ArrayList<>();
 

@@ -27,7 +27,6 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
-import org.apache.knox.gateway.topology.discovery.cm.model.cm.ClouderaManagerAPIServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.hdfs.NameNodeServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.hive.HiveOnTezServiceModelGenerator;
 import org.easymock.EasyMock;
@@ -50,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 import static org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor.ConfigurationChangeListener;
 import static org.easymock.EasyMock.getCurrentArguments;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -58,119 +58,20 @@ public class PollingConfigurationAnalyzerTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testRestartEventWithWrongApiEventCategory() {
-    doTestRestartEvent(ApiEventCategory.LOG_EVENT);
+    doTestStartEvent(ApiEventCategory.LOG_EVENT);
   }
 
   @Test
-  public void testRestartEvent() {
-    doTestRestartEvent(ApiEventCategory.AUDIT_EVENT);
+  public void testStartEvent() {
+    doTestStartEvent(ApiEventCategory.AUDIT_EVENT);
   }
 
-  private void doTestRestartEvent(final ApiEventCategory category) {
-    final String clusterName = "My Cluster";
-    final String serviceType = NameNodeServiceModelGenerator.SERVICE_TYPE;
-    final String service     = NameNodeServiceModelGenerator.SERVICE;
-
-    List<ApiEventAttribute> apiEventAttrs = new ArrayList<>();
-    apiEventAttrs.add(createEventAttribute("CLUSTER", clusterName));
-    apiEventAttrs.add(createEventAttribute("SERVICE_TYPE", serviceType));
-    apiEventAttrs.add(createEventAttribute("SERVICE", service));
-    ApiEvent apiEvent = createApiEvent(category, apiEventAttrs);
-
-    PollingConfigurationAnalyzer.StartEvent restartEvent = new PollingConfigurationAnalyzer.StartEvent(apiEvent);
-    assertNotNull(restartEvent);
-    assertEquals(clusterName, restartEvent.getClusterName());
-    assertEquals(serviceType, restartEvent.getServiceType());
-    assertEquals(service, restartEvent.getService());
-    assertNotNull(restartEvent.getTimestamp());
-  }
-
+  /**
+   * KNOX-2350
+   */
   @Test
-  public void testPollingConfigChangeNotificationForChangedPropertyValue() {
-    final String address = "http://host1:1234";
-    final String clusterName = "Cluster 5";
-
-    final String failoverPropertyName = "autofailover_enabled";
-    final String nsPropertyName = "dfs_federation_namenode_nameservice";
-    final String portPropertyName = "namenode_port";
-
-    // Mock the service discovery details
-    ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
-    EasyMock.expect(sdc.getCluster()).andReturn(clusterName).anyTimes();
-    EasyMock.expect(sdc.getAddress()).andReturn(address).anyTimes();
-    EasyMock.expect(sdc.getUser()).andReturn("u").anyTimes();
-    EasyMock.expect(sdc.getPasswordAlias()).andReturn("a").anyTimes();
-    EasyMock.replay(sdc);
-
-    final Map<String, List<String>> clusterNames = new HashMap<>();
-    clusterNames.put(address, Collections.singletonList(clusterName));
-
-    // Create the original ServiceConfigurationModel details
-    final Map<String, ServiceConfigurationModel> serviceConfigurationModels = new HashMap<>();
-    final Map<String, String> nnServiceConf = new HashMap<>();
-    final Map<String, Map<String, String>> nnRoleConf = new HashMap<>();
-    final Map<String, String> nnRoleProps = new HashMap<>();
-    nnRoleProps.put(failoverPropertyName, "false");
-    nnRoleProps.put(nsPropertyName, "");
-    nnRoleProps.put(portPropertyName, "54321");
-    nnRoleConf.put(NameNodeServiceModelGenerator.ROLE_TYPE, nnRoleProps);
-    serviceConfigurationModels.put(NameNodeServiceModelGenerator.SERVICE_TYPE + "-1", createModel(nnServiceConf, nnRoleConf));
-
-    // Mock a ClusterConfigurationCache for the monitor to use
-    ClusterConfigurationCache configCache = EasyMock.createNiceMock(ClusterConfigurationCache.class);
-    EasyMock.expect(configCache.getDiscoveryConfig(address, clusterName)).andReturn(sdc).anyTimes();
-    EasyMock.expect(configCache.getClusterNames()).andReturn(clusterNames).anyTimes();
-    EasyMock.expect(configCache.getClusterServiceConfigurations(address, clusterName))
-            .andReturn(serviceConfigurationModels)
-            .anyTimes();
-    EasyMock.replay(configCache);
-
-    // Create the monitor, registering a listener so we can verify that change notification works
-    ChangeListener listener = new ChangeListener();
-    TestablePollingConfigAnalyzer pca = new TestablePollingConfigAnalyzer(configCache, listener);
-    pca.setInterval(5);
-
-    // Create another version of the same ServiceConfigurationModel with a modified property value
-    ServiceConfigurationModel updatedNNModel = new ServiceConfigurationModel();
-    updatedNNModel.addRoleProperty(NameNodeServiceModelGenerator.ROLE_TYPE, failoverPropertyName, "false");
-    updatedNNModel.addRoleProperty(NameNodeServiceModelGenerator.ROLE_TYPE, nsPropertyName, "");
-    updatedNNModel.addRoleProperty(NameNodeServiceModelGenerator.ROLE_TYPE, portPropertyName, "12345");
-    pca.addCurrentServiceConfigModel(address, clusterName, NameNodeServiceModelGenerator.SERVICE_TYPE + "-1", updatedNNModel);
-
-    // Start the polling thread
-    ExecutorService pollingThreadExecutor = Executors.newSingleThreadExecutor();
-    pollingThreadExecutor.execute(pca);
-    pollingThreadExecutor.shutdown();
-
-    // Simulate a service restart event
-    List<ApiEventAttribute> restartEventAttrs = new ArrayList<>();
-    restartEventAttrs.add(createEventAttribute("CLUSTER", clusterName));
-    restartEventAttrs.add(createEventAttribute("SERVICE_TYPE", NameNodeServiceModelGenerator.SERVICE_TYPE));
-    restartEventAttrs.add(createEventAttribute("SERVICE", NameNodeServiceModelGenerator.SERVICE));
-    restartEventAttrs.add(createEventAttribute("COMMAND", "Restart"));
-    restartEventAttrs.add(createEventAttribute("COMMAND_STATUS", "SUCCEEDED"));
-    ApiEvent restartEvent = createApiEvent(ApiEventCategory.AUDIT_EVENT, restartEventAttrs);
-    pca.addRestartEvent(clusterName, restartEvent);
-
-    // Simulate a service Start event
-    List<ApiEventAttribute> startEventAttrs = new ArrayList<>();
-    startEventAttrs.add(createEventAttribute("CLUSTER", clusterName));
-    startEventAttrs.add(createEventAttribute("SERVICE_TYPE", ClouderaManagerAPIServiceModelGenerator.SERVICE_TYPE));
-    startEventAttrs.add(createEventAttribute("SERVICE", ClouderaManagerAPIServiceModelGenerator.SERVICE));
-    startEventAttrs.add(createEventAttribute("COMMAND", "Start"));
-    startEventAttrs.add(createEventAttribute("COMMAND_STATUS", "STARTED"));
-    ApiEvent startEvent = createApiEvent(ApiEventCategory.AUDIT_EVENT, startEventAttrs);
-    pca.addRestartEvent(clusterName, startEvent);
-
-    // Simulate a failed service Start event
-    startEventAttrs = new ArrayList<>();
-    startEventAttrs.add(createEventAttribute("CLUSTER", clusterName));
-    startEventAttrs.add(createEventAttribute("SERVICE_TYPE", HiveOnTezServiceModelGenerator.SERVICE_TYPE));
-    startEventAttrs.add(createEventAttribute("SERVICE", HiveOnTezServiceModelGenerator.SERVICE));
-    startEventAttrs.add(createEventAttribute("COMMAND", "Start"));
-    startEventAttrs.add(createEventAttribute("COMMAND_STATUS", "FAILED"));
-    ApiEvent failedStartEvent = createApiEvent(ApiEventCategory.AUDIT_EVENT, startEventAttrs);
-    pca.addRestartEvent(clusterName, failedStartEvent);
+  public void testEventWithoutCommandOrCommandStatus() {
+    final String clusterName = "Cluster T";
 
     // Simulate an event w/o COMMAND and/or COMMAND_STATUS attributes
     final List<ApiEventAttribute> revisionEventAttrs = new ArrayList<>();
@@ -180,26 +81,160 @@ public class PollingConfigurationAnalyzerTest {
     revisionEventAttrs.add(createEventAttribute("REVISION", "215"));
     revisionEventAttrs.add(createEventAttribute("EVENTCODE", "EV_REVISION_CREATED"));
     final ApiEvent revisionEvent = createApiEvent(ApiEventCategory.AUDIT_EVENT, revisionEventAttrs);
-    pca.addRestartEvent(clusterName, revisionEvent);
 
-    try {
-      pollingThreadExecutor.awaitTermination(10, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-      //
-    }
+    doTestEventWithoutConfigChange(revisionEvent, clusterName);
+  }
 
-    // Stop the config analyzer thread
-    pca.stop();
+  /**
+   * Test the restart of an existing service when no relevant configuration has changed.
+   */
+  @Test
+  public void testRestartEventWithoutConfigChange() {
+    final String clusterName = "Cluster 2";
 
+    // Simulate a service restart event
+    ApiEvent restartEvent = createApiEvent(clusterName,
+                                           NameNodeServiceModelGenerator.SERVICE_TYPE,
+                                           NameNodeServiceModelGenerator.SERVICE,
+                                           PollingConfigurationAnalyzer.RESTART_COMMAND,
+                                           PollingConfigurationAnalyzer.SUCCEEDED_STATUS);
+
+    doTestEventWithoutConfigChange(restartEvent, clusterName);
+  }
+
+  /**
+   * Test the restart of an existing service when relevant configuration has changed.
+   */
+  @Test
+  public void testRestartEventWithConfigChange() {
+    final String clusterName = "Cluster 2";
+
+    // Simulate a service restart event
+    ApiEvent restartEvent = createApiEvent(clusterName,
+                                           NameNodeServiceModelGenerator.SERVICE_TYPE,
+                                           NameNodeServiceModelGenerator.SERVICE,
+                                           PollingConfigurationAnalyzer.RESTART_COMMAND,
+                                           PollingConfigurationAnalyzer.SUCCEEDED_STATUS);
+
+    doTestEventWithConfigChange(restartEvent, clusterName);
+  }
+
+  /**
+   * Test the start of a new service.
+   */
+  @Test
+  public void testNewServiceStartEvent() {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster N";
+
+    // Simulate a service Start event
+    ApiEvent startEvent = createApiEvent(clusterName,
+                                         NameNodeServiceModelGenerator.SERVICE_TYPE,
+                                         NameNodeServiceModelGenerator.SERVICE,
+                                         PollingConfigurationAnalyzer.START_COMMAND,
+                                         PollingConfigurationAnalyzer.SUCCEEDED_STATUS);
+
+    ChangeListener listener =
+            doTestEvent(startEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap());
     assertTrue("Expected a change notification", listener.wasNotified(address, clusterName));
-    assertEquals(2, listener.howManyNotifications(address, clusterName));
+  }
+
+  /**
+   * Test the start of an existing service when no relevant configuration has changed.
+   */
+  @Test
+  public void testExistingServiceStartWithoutConfigChange() {
+    final String clusterName = "Cluster E";
+
+    // Simulate a service Start event
+    ApiEvent startEvent = createApiEvent(clusterName,
+                                         NameNodeServiceModelGenerator.SERVICE_TYPE,
+                                         NameNodeServiceModelGenerator.SERVICE,
+                                         PollingConfigurationAnalyzer.START_COMMAND,
+                                         PollingConfigurationAnalyzer.SUCCEEDED_STATUS);
+
+    doTestEventWithoutConfigChange(startEvent, clusterName);
+  }
+
+  /**
+   * Test the start of an existing service when relevant configuration has changed.
+   */
+  @Test
+  public void testExistingServiceStartWithConfigChange() {
+    final String clusterName = "Cluster E";
+
+    // Simulate a service Start event
+    ApiEvent startEvent = createApiEvent(clusterName,
+                                         NameNodeServiceModelGenerator.SERVICE_TYPE,
+                                         NameNodeServiceModelGenerator.SERVICE,
+                                         PollingConfigurationAnalyzer.START_COMMAND,
+                                         PollingConfigurationAnalyzer.SUCCEEDED_STATUS);
+
+    doTestEventWithConfigChange(startEvent, clusterName);
+  }
+
+  /**
+   * Test the rolling restart of an existing service when no relevant configuration has changed.
+   */
+  @Test
+  public void testRollingServiceRestartWithoutConfigChange() {
+    final String clusterName = "Cluster 1";
+
+    // Simulate a successful rolling service restart event
+    ApiEvent rollingRestartEvent = createApiEvent(clusterName,
+                                                  NameNodeServiceModelGenerator.SERVICE_TYPE,
+                                                  NameNodeServiceModelGenerator.SERVICE,
+                                                  PollingConfigurationAnalyzer.ROLLING_RESTART_COMMAND,
+                                                  PollingConfigurationAnalyzer.SUCCEEDED_STATUS,
+                                                  "EV_SERVICE_ROLLING_RESTARTED");
+
+    doTestEventWithoutConfigChange(rollingRestartEvent, clusterName);
+  }
+
+  /**
+   * Test the rolling restart of an existing service when relevant configuration has changed.
+   */
+  @Test
+  public void testRollingServiceRestartWithConfigChange() {
+    final String clusterName = "Cluster 1";
+
+    // Simulate a successful rolling service restart event
+    ApiEvent rollingRestartEvent = createApiEvent(clusterName,
+                                                  NameNodeServiceModelGenerator.SERVICE_TYPE,
+                                                  NameNodeServiceModelGenerator.SERVICE,
+                                                  PollingConfigurationAnalyzer.ROLLING_RESTART_COMMAND,
+                                                  PollingConfigurationAnalyzer.SUCCEEDED_STATUS,
+                                                  "EV_SERVICE_ROLLING_RESTARTED");
+
+    doTestEventWithConfigChange(rollingRestartEvent, clusterName);
+  }
+
+  /**
+   * Test the rolling restart of an entire cluster, for which it should be assumed that configuration has changed.
+   */
+  @Test
+  public void testRollingClusterRestartEvent() {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster 6";
+
+    // Simulate a successful rolling cluster restart event
+    ApiEvent rollingRestartEvent = createApiEvent(clusterName,
+                                                  PollingConfigurationAnalyzer.CM_SERVICE_TYPE,
+                                                  PollingConfigurationAnalyzer.CM_SERVICE,
+                                                  PollingConfigurationAnalyzer.ROLLING_RESTART_COMMAND,
+                                                  PollingConfigurationAnalyzer.SUCCEEDED_STATUS,
+                                                  "EV_CLUSTER_ROLLING_RESTARTED");
+
+    ChangeListener listener =
+            doTestEvent(rollingRestartEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap());
+    assertTrue("Expected a change notification", listener.wasNotified(address, clusterName));
   }
 
 
   @Test
   public void testClusterConfigMonitorTerminationForNoLongerReferencedClusters() {
     final String address = "http://host1:1234";
-    final String clusterName = "Cluster 5";
+    final String clusterName = "Cluster 7";
 
     final String updatedAddress = "http://host2:1234";
     final String descContent =
@@ -231,15 +266,13 @@ public class PollingConfigurationAnalyzerTest {
     EasyMock.expect(sdc.getPasswordAlias()).andReturn("a").anyTimes();
     EasyMock.replay(sdc);
 
-    final Map<String, List<String>> clusterNames = new HashMap<>();
-    clusterNames.put(address, Collections.singletonList(clusterName));
-
     // Create the original ServiceConfigurationModel details
     final Map<String, ServiceConfigurationModel> serviceConfigurationModels = new HashMap<>();
     final Map<String, String> nnServiceConf = new HashMap<>();
     final Map<String, Map<String, String>> nnRoleConf = new HashMap<>();
     nnRoleConf.put(NameNodeServiceModelGenerator.ROLE_TYPE, Collections.emptyMap());
-    serviceConfigurationModels.put(NameNodeServiceModelGenerator.SERVICE_TYPE + "-1", createModel(nnServiceConf, nnRoleConf));
+    serviceConfigurationModels.put(NameNodeServiceModelGenerator.SERVICE_TYPE,
+                                   createModel(nnServiceConf, nnRoleConf));
 
     // Create a ClusterConfigurationCache for the monitor to use
     final ClusterConfigurationCache configCache = new ClusterConfigurationCache();
@@ -303,6 +336,145 @@ public class PollingConfigurationAnalyzerTest {
     }
   }
 
+  private void doTestStartEvent(final ApiEventCategory category) {
+    final String clusterName = "My Cluster";
+    final String serviceType = NameNodeServiceModelGenerator.SERVICE_TYPE;
+    final String service     = NameNodeServiceModelGenerator.SERVICE;
+
+    List<ApiEventAttribute> apiEventAttrs = new ArrayList<>();
+    apiEventAttrs.add(createEventAttribute("CLUSTER", clusterName));
+    apiEventAttrs.add(createEventAttribute("SERVICE_TYPE", serviceType));
+    apiEventAttrs.add(createEventAttribute("SERVICE", service));
+    ApiEvent apiEvent = createApiEvent(category, apiEventAttrs);
+
+    PollingConfigurationAnalyzer.StartEvent restartEvent = new PollingConfigurationAnalyzer.StartEvent(apiEvent);
+    assertNotNull(restartEvent);
+    assertEquals(clusterName, restartEvent.getClusterName());
+    assertEquals(serviceType, restartEvent.getServiceType());
+    assertEquals(service, restartEvent.getService());
+    assertNotNull(restartEvent.getTimestamp());
+  }
+
+  private ChangeListener doTestEvent(final ApiEvent                               event,
+                                     final String                                 address,
+                                     final String                                 clusterName,
+                                     final Map<String, ServiceConfigurationModel> serviceConfigurationModels,
+                                     final Map<String, ServiceConfigurationModel> updatedServiceConfigurationModels) {
+    // Mock the service discovery details
+    ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
+    EasyMock.expect(sdc.getCluster()).andReturn(clusterName).anyTimes();
+    EasyMock.expect(sdc.getAddress()).andReturn(address).anyTimes();
+    EasyMock.expect(sdc.getUser()).andReturn("u").anyTimes();
+    EasyMock.expect(sdc.getPasswordAlias()).andReturn("a").anyTimes();
+    EasyMock.replay(sdc);
+
+    final Map<String, List<String>> clusterNames = new HashMap<>();
+    clusterNames.put(address, Collections.singletonList(clusterName));
+
+    // Mock a ClusterConfigurationCache for the monitor to use
+    ClusterConfigurationCache configCache = EasyMock.createNiceMock(ClusterConfigurationCache.class);
+    EasyMock.expect(configCache.getDiscoveryConfig(address, clusterName)).andReturn(sdc).anyTimes();
+    EasyMock.expect(configCache.getClusterNames()).andReturn(clusterNames).anyTimes();
+    EasyMock.expect(configCache.getClusterServiceConfigurations(address, clusterName))
+            .andReturn(serviceConfigurationModels)
+            .anyTimes();
+    EasyMock.replay(configCache);
+
+    // Create the monitor, registering a listener so we can verify that change notification works
+    ChangeListener listener = new ChangeListener();
+    TestablePollingConfigAnalyzer pca = new TestablePollingConfigAnalyzer(configCache, listener);
+    pca.setInterval(5);
+
+    // Add updated service config models
+    for (String roleType : updatedServiceConfigurationModels.keySet()) {
+      pca.addCurrentServiceConfigModel(address, clusterName, roleType, updatedServiceConfigurationModels.get(roleType));
+    }
+
+    // Start the polling thread
+    ExecutorService pollingThreadExecutor = Executors.newSingleThreadExecutor();
+    pollingThreadExecutor.execute(pca);
+    pollingThreadExecutor.shutdown();
+
+    pca.addRestartEvent(clusterName, event);
+
+    try {
+      pollingThreadExecutor.awaitTermination(10, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      //
+    }
+
+    // Stop the config analyzer thread
+    pca.stop();
+
+    return listener;
+  }
+
+  private void doTestEventWithConfigChange(final ApiEvent event, final String clusterName) {
+    final String address = "http://host1:1234";
+
+    final String failoverPropertyName = "autofailover_enabled";
+    final String nsPropertyName = "dfs_federation_namenode_nameservice";
+    final String portPropertyName = "namenode_port";
+
+    // Create the original ServiceConfigurationModel details
+    final Map<String, ServiceConfigurationModel> serviceConfigurationModels = new HashMap<>();
+    final Map<String, String> nnServiceConf = new HashMap<>();
+    final Map<String, Map<String, String>> nnRoleConf = new HashMap<>();
+    final Map<String, String> nnRoleProps = new HashMap<>();
+    nnRoleProps.put(failoverPropertyName, "false");
+    nnRoleProps.put(nsPropertyName, "");
+    nnRoleProps.put(portPropertyName, "54321");
+    nnRoleConf.put(NameNodeServiceModelGenerator.ROLE_TYPE, nnRoleProps);
+    serviceConfigurationModels.put(NameNodeServiceModelGenerator.SERVICE_TYPE,
+                                   createModel(nnServiceConf, nnRoleConf));
+
+    // Create another version of the same ServiceConfigurationModel with a modified property value
+    ServiceConfigurationModel updatedNNModel = new ServiceConfigurationModel();
+    updatedNNModel.addRoleProperty(NameNodeServiceModelGenerator.ROLE_TYPE, failoverPropertyName, "false");
+    updatedNNModel.addRoleProperty(NameNodeServiceModelGenerator.ROLE_TYPE, nsPropertyName, "");
+    updatedNNModel.addRoleProperty(NameNodeServiceModelGenerator.ROLE_TYPE, portPropertyName, "12345");
+    Map<String, ServiceConfigurationModel> updatedModels = new HashMap<>();
+    updatedModels.put(NameNodeServiceModelGenerator.ROLE_TYPE, updatedNNModel);
+
+    ChangeListener listener = doTestEvent(event, address, clusterName, serviceConfigurationModels, updatedModels);
+    assertTrue("Expected a change notification", listener.wasNotified(address, clusterName));
+  }
+
+  private void doTestEventWithoutConfigChange(final ApiEvent event, final String clusterName) {
+    final String address = "http://host1:1234";
+
+    final String failoverPropertyName = "autofailover_enabled";
+    final String nsPropertyName = "dfs_federation_namenode_nameservice";
+    final String portPropertyName = "namenode_port";
+
+    final String failoverEnabledValue = "false";
+    final String nsValue = "";
+    final String portValue = "54321";
+
+    // Create the original ServiceConfigurationModel details
+    final Map<String, ServiceConfigurationModel> serviceConfigurationModels = new HashMap<>();
+    final Map<String, String> nnServiceConf = new HashMap<>();
+    final Map<String, Map<String, String>> nnRoleConf = new HashMap<>();
+    final Map<String, String> nnRoleProps = new HashMap<>();
+    nnRoleProps.put(failoverPropertyName, failoverEnabledValue);
+    nnRoleProps.put(nsPropertyName, nsValue);
+    nnRoleProps.put(portPropertyName, portValue);
+    nnRoleConf.put(NameNodeServiceModelGenerator.ROLE_TYPE, nnRoleProps);
+    serviceConfigurationModels.put(NameNodeServiceModelGenerator.SERVICE_TYPE,
+                                   createModel(nnServiceConf, nnRoleConf));
+
+    // Create another version of the same ServiceConfigurationModel with unmodified property values
+    ServiceConfigurationModel updatedNNModel = new ServiceConfigurationModel();
+    updatedNNModel.addRoleProperty(NameNodeServiceModelGenerator.ROLE_TYPE, failoverPropertyName, failoverEnabledValue);
+    updatedNNModel.addRoleProperty(NameNodeServiceModelGenerator.ROLE_TYPE, nsPropertyName, nsValue);
+    updatedNNModel.addRoleProperty(NameNodeServiceModelGenerator.ROLE_TYPE, portPropertyName, portValue);
+    Map<String, ServiceConfigurationModel> updatedModels = new HashMap<>();
+    updatedModels.put(NameNodeServiceModelGenerator.ROLE_TYPE, updatedNNModel);
+
+    ChangeListener listener = doTestEvent(event, address, clusterName, serviceConfigurationModels, updatedModels);
+    assertFalse("Unexpected change notification", listener.wasNotified(address, clusterName));
+  }
+
   /**
    * Set the static GatewayServices field to the specified value.
    *
@@ -316,6 +488,31 @@ public class PollingConfigurationAnalyzerTest {
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
+
+  private ApiEvent createApiEvent(final String clusterName,
+                                  final String serviceType,
+                                  final String service,
+                                  final String command,
+                                  final String commandStatues) {
+
+    return createApiEvent(clusterName, serviceType, service, command, commandStatues, "");
+  }
+
+  private ApiEvent createApiEvent(final String clusterName,
+                                  final String serviceType,
+                                  final String service,
+                                  final String command,
+                                  final String commandStatues,
+                                  final String eventCode) {
+    List<ApiEventAttribute> attrs = new ArrayList<>();
+    attrs.add(createEventAttribute("CLUSTER", clusterName));
+    attrs.add(createEventAttribute("SERVICE_TYPE", serviceType));
+    attrs.add(createEventAttribute("SERVICE", service));
+    attrs.add(createEventAttribute("COMMAND", command));
+    attrs.add(createEventAttribute("COMMAND_STATUS", commandStatues));
+    attrs.add(createEventAttribute("EVENTCODE", eventCode));
+    return createApiEvent(ApiEventCategory.AUDIT_EVENT, attrs);
   }
 
   private ApiEvent createApiEvent(final ApiEventCategory category, final List<ApiEventAttribute> attrs) {
@@ -359,8 +556,8 @@ public class PollingConfigurationAnalyzerTest {
    */
   private static class TestablePollingConfigAnalyzer extends PollingConfigurationAnalyzer {
 
-    private Map<String, List<ApiEvent>> restartEvents = new HashMap<>();
-    private Map<String, ServiceConfigurationModel> serviceConfigModels = new HashMap<>();
+    private final Map<String, List<ApiEvent>> restartEvents = new HashMap<>();
+    private final Map<String, ServiceConfigurationModel> serviceConfigModels = new HashMap<>();
 
     TestablePollingConfigAnalyzer(ClusterConfigurationCache cache) {
       this(cache, null);
@@ -369,12 +566,6 @@ public class PollingConfigurationAnalyzerTest {
     TestablePollingConfigAnalyzer(ClusterConfigurationCache   cache,
                                   ConfigurationChangeListener listener) {
       super(cache, null, null, listener);
-    }
-
-    TestablePollingConfigAnalyzer(ClusterConfigurationCache cache,
-                                  ConfigurationChangeListener listener,
-                                  int interval) {
-      super(cache, null, null, listener, interval);
     }
 
     void addRestartEvent(final String service, final ApiEvent restartEvent) {
