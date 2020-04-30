@@ -107,11 +107,11 @@ public class ConfigurableEncryptor {
     rnd.nextBytes(salt);
 
     SecretKey tmp = getKeyFromPassword(new String(passPhrase), salt);
-    /* 
-    * the key should not be constant value, recommend code: 
-    * SecureRandom random = new SecureRandom(); 
+    /*
+    * the key should not be constant value, recommend code:
+    * SecureRandom random = new SecureRandom();
     * String defaultKey = String.valueOf(random.nextInt());
-    * byte[] keyBytes = defaultKey.getBytes(); 
+    * byte[] keyBytes = defaultKey.getBytes();
     * keyBytes = Arrays.copyOf(keyBytes,24);
     * SecretKey secret = new SecretKeySpec(keyBytes, alg);
     */
