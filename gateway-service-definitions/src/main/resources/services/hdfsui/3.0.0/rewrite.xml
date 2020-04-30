@@ -89,6 +89,10 @@
     <rewrite template="{host}/static/{**}?{**}"/>
   </rule>
 
+  <rule dir="IN" name="HDFSUI/inbound/STATIC2" pattern="*://*:*/**/hdfs/static/{**}">
+    <rewrite template="{$serviceUrl[HDFSUI]}/static/{**}"/>
+  </rule>
+
   <!-- Intial refresh -->
   <rule dir="OUT" name="HDFSUI/inbound/namenode/refresh-tag" pattern="*0;url=dfshealth.html">
     <rewrite template="{$prefix[0;url&amp;equals;,url]}/hdfs/dfshealth.html?host={$inboundurl[host]}"/>
