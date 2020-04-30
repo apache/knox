@@ -162,10 +162,11 @@ public interface ClouderaManagerServiceDiscoveryMessages {
                                           String clusterName,
                                           String discoveryAddress);
 
-  @Message(level = MessageLevel.DEBUG, text = "Querying restart events from {0} @ {1} since {2}")
-  void queryingRestartEventsFromCluster(String clusterName,
-                                        String discoveryAddress,
-                                        String sinceTimestamp);
+  @Message(level = MessageLevel.DEBUG,
+          text = "Querying configuration activation events from {0} @ {1} since {2}")
+  void queryingConfigActivationEventsFromCluster(String clusterName,
+                                                 String discoveryAddress,
+                                                 String sinceTimestamp);
 
   @Message(level = MessageLevel.DEBUG, text = "Analyzing current {0} configuration for changes...")
   void analyzingCurrentServiceConfiguration(String serviceName);
