@@ -160,6 +160,7 @@ public class KnoxCLI extends Configured implements Tool {
       if (exitCode != 0) {
         return exitCode;
       }
+
       if (command != null && command.validate()) {
         initializeServices( command instanceof MasterCreateCommand );
         command.execute();
@@ -186,6 +187,9 @@ public class KnoxCLI extends Configured implements Tool {
 
   private void initializeServices(boolean persisting) throws ServiceLifecycleException {
     GatewayConfig config = getGatewayConfig();
+    if (config.isHadoopKerberosSecured()) {
+      configureKerberosSecurity(config);
+    }
     Map<String,String> options = new HashMap<>();
     options.put(GatewayCommandLine.PERSIST_LONG, Boolean.toString(persisting));
     if (master != null) {
@@ -2272,5 +2276,13 @@ public class KnoxCLI extends Configured implements Tool {
     PropertyConfigurator.configure( System.getProperty( "log4j.configuration" ) );
     int res = ToolRunner.run(new GatewayConfigImpl(), new KnoxCLI(), args);
     System.exit(res);
+  }
+
+  private static void configureKerberosSecurity( GatewayConfig config ) {
+    System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "true");
+    System.setProperty(GatewayConfig.KRB5_CONFIG, config.getKerberosConfig());
+    System.setProperty(GatewayConfig.KRB5_DEBUG, Boolean.toString(config.isKerberosDebugEnabled()));
+    System.setProperty(GatewayConfig.KRB5_LOGIN_CONFIG, config.getKerberosLoginConfig());
+    System.setProperty(GatewayConfig.KRB5_USE_SUBJECT_CREDS_ONLY,  "false");
   }
 }
