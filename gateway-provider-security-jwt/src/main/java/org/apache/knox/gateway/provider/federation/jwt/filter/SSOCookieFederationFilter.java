@@ -149,7 +149,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
       }
 
       // There were no valid cookies found so redirect to login url
-      if(!res.isCommitted()) {
+      if(res != null && !res.isCommitted()) {
         sendRedirectToLoginURL(req, res);
       }
     }
