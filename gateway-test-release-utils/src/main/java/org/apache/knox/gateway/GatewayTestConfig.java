@@ -795,6 +795,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return Collections.emptySet();
   }
 
+  @Override
+  public Set<String> getPinnedTopologiesOnHomepage() {
+    return Collections.emptySet();
+  }
+
   /**
    * @return returns whether know token permissive failure is enabled
    */

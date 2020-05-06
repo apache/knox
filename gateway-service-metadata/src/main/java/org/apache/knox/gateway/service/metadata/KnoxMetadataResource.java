@@ -36,6 +36,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -63,12 +64,14 @@ import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.util.X509CertificateUtil;
 
+@Singleton
 @Path("/api/v1/metadata")
 public class KnoxMetadataResource {
   private static final MetadataServiceMessages LOG = MessagesFactory.get(MetadataServiceMessages.class);
   private static final String SNAPSHOT_VERSION_POSTFIX = "-SNAPSHOT";
   private static final Set<String> UNREAL_SERVICES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("NAMENODE", "JOBTRACKER")));
 
+  private Set<String> pinnedTopologies;
   private java.nio.file.Path pemFilePath;
   private java.nio.file.Path jksFilePath;
 
@@ -209,11 +212,18 @@ public class KnoxMetadataResource {
               }
             });
           });
-          topologies.addTopology(topology.getName(), new TreeSet<>(apiServices), new TreeSet<>(uiServices));
+          topologies.addTopology(topology.getName(), isPinnedTopology(topology.getName(), config), new TreeSet<>(apiServices), new TreeSet<>(uiServices));
         }
       }
     }
     return topologies;
+  }
+
+  boolean isPinnedTopology(String topologyName, GatewayConfig config) {
+    if (pinnedTopologies == null) {
+      pinnedTopologies = config.getPinnedTopologiesOnHomepage();
+    }
+    return pinnedTopologies.contains(topologyName);
   }
 
   private Metadata getServiceMetadata(ServiceDefinitionRegistry serviceDefinitionRegistry, Service service) {

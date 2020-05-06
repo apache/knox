@@ -679,6 +679,11 @@ public interface GatewayConfig {
   Set<String> getHiddenTopologiesOnHomepage();
 
   /**
+   * @return the list of pinned topologies on Knox homepage
+   */
+  Set<String> getPinnedTopologiesOnHomepage();
+
+  /**
    * @return returns whether know token permissive validation is enabled
    */
   boolean isKnoxTokenPermissiveValidationEnabled();

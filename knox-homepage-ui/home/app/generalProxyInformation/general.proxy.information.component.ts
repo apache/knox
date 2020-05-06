@@ -28,7 +28,9 @@ export class GeneralProxyInformationComponent implements OnInit {
 
     generalProxyInformation: GeneralProxyInformation;
 
-    constructor(private homepageService: HomepageService) {}
+    constructor(private homepageService: HomepageService) {
+        this['showGeneralProxyInformation'] = false;
+    }
 
     getVersion() {
         if (this.generalProxyInformation) {
@@ -66,4 +68,7 @@ export class GeneralProxyInformationComponent implements OnInit {
                             .then(generalProxyInformation => this.generalProxyInformation = generalProxyInformation);
     }
 
+    toggleBoolean(propertyName: string) {
+        this[propertyName] = !this[propertyName];
+    }
 }

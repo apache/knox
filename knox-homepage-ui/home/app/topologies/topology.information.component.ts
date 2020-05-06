@@ -34,7 +34,7 @@ export class TopologyInformationsComponent implements OnInit {
     setTopologies(topologies: TopologyInformation[]) {
         this.topologies = topologies;
         for (let topology of topologies) {
-            this['showTopology_' + topology.topology] = false;
+            this['showTopology_' + topology.topology] = topology.pinned;
         }
     }
 
@@ -46,7 +46,9 @@ export class TopologyInformationsComponent implements OnInit {
         this[enableServiceText] = true;
     }
 
-    constructor(private homepageService: HomepageService) {}
+    constructor(private homepageService: HomepageService) {
+        this['showTopologies'] = true;
+    }
 
     ngOnInit(): void {
         console.debug('TopologyInformationsComponent --> ngOnInit()');
