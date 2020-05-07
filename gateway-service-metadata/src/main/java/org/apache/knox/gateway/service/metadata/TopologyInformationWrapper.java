@@ -17,8 +17,8 @@
  */
 package org.apache.knox.gateway.service.metadata;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -30,15 +30,16 @@ public class TopologyInformationWrapper {
 
   @XmlElement(name = "topologyInformation")
   @XmlElementWrapper(name = "topologyInformations")
-  private Set<TopologyInformation> topologies = new HashSet<>();
+  private Set<TopologyInformation> topologies = new TreeSet<>();
 
   public Set<TopologyInformation> getTopologies() {
     return topologies;
   }
 
-  public void addTopology(String name, Set<ServiceModel> apiServices, Set<ServiceModel> uiServices) {
+  public void addTopology(String name, boolean pinned, Set<ServiceModel> apiServices, Set<ServiceModel> uiServices) {
     final TopologyInformation topology = new TopologyInformation();
     topology.setTopologyName(name);
+    topology.setPinned(pinned);
     topology.setApiServices(apiServices);
     topology.setUiServices(uiServices);
     this.topologies.add(topology);

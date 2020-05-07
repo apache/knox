@@ -13,13 +13,22 @@
   limitations under the License.
 -->
 <hr/>
-<h4>Topologies</h4>
+<div>
+     <h4 (click)="toggleBoolean('showTopologies')"><span [class]="'clickable inline-glyph glyhpicon glyphicon-' + (this['showTopologies'] ? 'minus' : 'plus')"></span>&nbsp;Topologies</h4>
+</div>
+<div *ngIf="this['showTopologies']">
 <ng-container *ngFor="let topology of topologies">
     <div>
       <span [class]="'clickable inline-glyph
       glyhpicon glyphicon-' + (this['showTopology_' + topology.topology] ? 'minus' : 'plus')"
       (click)="toggleBoolean('showTopology_' + topology.topology)"></span>
       <span (click)="toggleBoolean('showTopology_' + topology.topology)"><strong>{{topology.topology}}</strong></span>
+      <span class="inline-glyph glyphicon glyphicon-pushpin btn btn-xs" *ngIf="topology.pinned"
+            title="You may unpin this topology in gateway-site.xml by removing it from the list declared in 'knox.homepage.pinned.topologies'"
+            data-toggle="tooltip"></span>
+      <span class="inline-glyph glyphicon glyphicon-cog btn btn-xs" *ngIf="!topology.pinned"
+            title="You may pin this topology in gateway-site.xml using the 'knox.homepage.pinned.topologies' property"
+            data-toggle="tooltip"></span>
     </div>
 
     <div class="table-responsive" *ngIf="this['showTopology_' + topology.topology]">
@@ -76,3 +85,4 @@
     </div>
 </ng-container>
 <hr />
+</div>

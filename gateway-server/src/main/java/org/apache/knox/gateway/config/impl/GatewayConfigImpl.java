@@ -39,6 +39,7 @@ import java.net.UnknownHostException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -252,6 +253,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final long KNOX_TOKEN_EVICTION_GRACE_PERIOD_DEFAULT = TimeUnit.HOURS.toSeconds(24);
   private static final boolean KNOX_TOKEN_PERMISSIVE_VALIDATION_ENABLED_DEFAULT = false;
 
+  private static final String KNOX_HOMEPAGE_PINNED_TOPOLOGIES =  "knox.homepage.pinned.topologies";
   private static final String KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES =  "knox.homepage.hidden.topologies";
   private static final Set<String> KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES_DEFAULT = new HashSet<>(Arrays.asList("admin", "manager", "knoxsso", "metadata", "homepage"));
 
@@ -1138,8 +1140,14 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public Set<String> getHiddenTopologiesOnHomepage() {
-    final Set<String> hiddenTopologies = new HashSet<>(getStringCollection(KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES));
+    final Set<String> hiddenTopologies = new HashSet<>(getTrimmedStringCollection(KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES));
     return hiddenTopologies == null || hiddenTopologies.isEmpty() ? KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES_DEFAULT : hiddenTopologies;
+  }
+
+  @Override
+  public Set<String> getPinnedTopologiesOnHomepage() {
+    final Collection<String> pinnedTopologies = getTrimmedStringCollection(KNOX_HOMEPAGE_PINNED_TOPOLOGIES);
+    return pinnedTopologies == null ? Collections.emptySet() : new HashSet<>(pinnedTopologies);
   }
 
   /**

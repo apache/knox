@@ -12,8 +12,10 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<h4>General Proxy Information</h4>
-<div class="table-responsive">
+<div>
+     <h4 (click)="toggleBoolean('showGeneralProxyInformation')"><span [class]="'clickable inline-glyph glyhpicon glyphicon-' + (this['showGeneralProxyInformation'] ? 'minus' : 'plus')"></span>&nbsp;General Proxy Information</h4>
+</div>
+<div class="table-responsive" *ngIf="this['showGeneralProxyInformation']">
     <table class="table table-striped table-hover">
        <colgroup>
             <col width="30%">
