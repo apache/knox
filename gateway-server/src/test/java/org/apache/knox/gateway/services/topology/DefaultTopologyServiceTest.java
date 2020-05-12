@@ -25,9 +25,14 @@ import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.topology.impl.DefaultClusterConfigurationMonitorService;
 import org.apache.knox.gateway.services.topology.impl.DefaultTopologyService;
 import org.apache.knox.gateway.services.topology.monitor.DescriptorsMonitor;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
+import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
+import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
+import org.apache.knox.gateway.topology.simple.SimpleDescriptorFactory;
 import org.apache.knox.test.TestUtils;
 import org.apache.knox.gateway.topology.Param;
 import org.apache.knox.gateway.topology.Provider;
@@ -37,21 +42,25 @@ import org.apache.knox.gateway.topology.TopologyListener;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.easymock.EasyMock.anyObject;
 import static org.hamcrest.CoreMatchers.is;
@@ -70,14 +79,19 @@ public class DefaultTopologyServiceTest {
   }
 
   private File createFile(File parent, String name, String resource, long timestamp) throws IOException {
+    try(InputStream input = ClassLoader.getSystemResourceAsStream(resource)) {
+      return createFile(parent, name, input, timestamp);
+    }
+  }
+
+  private File createFile(File parent, String name, InputStream content, long timestamp) throws IOException {
     File file = new File(parent, name);
     if (!file.exists()) {
       FileUtils.touch(file);
     }
-    try(InputStream input = ClassLoader.getSystemResourceAsStream(resource);
-        OutputStream output = FileUtils.openOutputStream(file)) {
-      assertNotNull(input);
-      IOUtils.copy(input, output);
+    try(OutputStream output = FileUtils.openOutputStream(file)) {
+      assertNotNull(content);
+      IOUtils.copy(content, output);
     }
     file.setLastModified(timestamp);
     assertTrue("Failed to create test file " + file.getAbsolutePath(), file.exists());
@@ -599,6 +613,96 @@ public class DefaultTopologyServiceTest {
     int i = 0;
     while (iter.hasNext()) {
       assertEquals(iter.next(), names[i++]);
+    }
+  }
+
+  /**
+   * KNOX-2371
+   */
+  @Test
+  public void testTopologyDiscoveryTriggerHandlesInvalidDescriptorContent() throws Exception {
+    File dir = createDir();
+    File topologyDir = new File(dir, "topologies");
+    topologyDir.mkdirs();
+
+    File descriptorsDir = new File(dir, "descriptors");
+    descriptorsDir.mkdirs();
+
+    File sharedProvidersDir = new File(dir, "shared-providers");
+    sharedProvidersDir.mkdirs();
+
+    try {
+      GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+      EasyMock.expect(config.getGatewayTopologyDir()).andReturn(topologyDir.getAbsolutePath()).anyTimes();
+      EasyMock.expect(config.getGatewayConfDir()).andReturn(descriptorsDir.getParentFile().getAbsolutePath()).anyTimes();
+      EasyMock.replay(config);
+
+      TopologyService ts = new DefaultTopologyService();
+      ts.init(config, Collections.emptyMap());
+
+      ClusterConfigurationMonitorService ccms = new DefaultClusterConfigurationMonitorService();
+      ccms.init(config, Collections.emptyMap());
+
+      // GatewayServices mock
+      GatewayServices gws = EasyMock.createNiceMock(GatewayServices.class);
+      EasyMock.expect(gws.getService(ServiceType.TOPOLOGY_SERVICE)).andReturn(ts).anyTimes();
+      EasyMock.expect(gws.getService(ServiceType.CLUSTER_CONFIGURATION_MONITOR_SERVICE)).andReturn(ccms).anyTimes();
+      EasyMock.replay(gws);
+      setGatewayServices(gws);
+
+      // Write out the referenced provider config first
+      createFile(sharedProvidersDir,
+                 "provider-config-one.xml",
+                 "org/apache/knox/gateway/topology/file/provider-config-one.xml",
+                 System.currentTimeMillis());
+
+      // Create a valid simple descriptor, which depends on provider-config-one.xml
+      File validDescriptorFile = createFile(descriptorsDir,
+                                            "valid-descriptor.json",
+                                            "org/apache/knox/gateway/topology/file/simple-descriptor-six.json",
+                                            System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1)); // One hour ago
+      long initialValidTimestamp = validDescriptorFile.lastModified();
+
+      // Parse the valid test descriptor
+      final SimpleDescriptor validDescriptor = SimpleDescriptorFactory.parse(validDescriptorFile.getAbsolutePath());
+
+      // Create an invalid simple descriptor
+      final String invalidDescriptorContent = "{\"utter\" = \"nonsense\"}";
+      File invalidDescriptorFile =
+              createFile(descriptorsDir,
+                         "invalid-descriptor.json",
+                         new ByteArrayInputStream(invalidDescriptorContent.getBytes(StandardCharsets.UTF_8)),
+                         System.currentTimeMillis()- TimeUnit.MINUTES.toMillis(45)); // 45 minutes ago
+      long initialInvalidTimestamp = invalidDescriptorFile.lastModified();
+
+      // Hack the DefaultTopologyService class to access the internal TopologyDiscoveryTrigger,
+      // which is what we're actually trying to test
+      ClusterConfigurationMonitor.ConfigurationChangeListener topologyDiscoveryTrigger = null;
+      Class[] classes = DefaultTopologyService.class.getDeclaredClasses();
+      for (Class clazz : classes) {
+        if ("TopologyDiscoveryTrigger".equals(clazz.getSimpleName())) {
+          Constructor ctor =
+                  clazz.getDeclaredConstructor(TopologyService.class, ClusterConfigurationMonitorService.class);
+          ctor.setAccessible(true);
+          topologyDiscoveryTrigger =
+                  (ClusterConfigurationMonitor.ConfigurationChangeListener) ctor.newInstance(ts, ccms);
+          break;
+        }
+      }
+      assertNotNull("Failed to access the cluster configuration change listener under test.", topologyDiscoveryTrigger);
+
+      // Invoke the TopologyDiscoveryTrigger
+      topologyDiscoveryTrigger.onConfigurationChange(validDescriptor.getDiscoveryAddress(), validDescriptor.getCluster());
+
+      assertEquals("Expected the invalid descriptor file's timestamp to have remained unchanged.",
+                   initialInvalidTimestamp,
+                   invalidDescriptorFile.lastModified());
+      assertTrue("Expected the timestamp of the valid descriptor to have been updated.",
+                 (initialValidTimestamp < validDescriptorFile.lastModified()));
+
+    } finally {
+      FileUtils.deleteQuietly(dir);
+      setGatewayServices(null);
     }
   }
 
