@@ -606,9 +606,10 @@ public interface GatewayMessages {
 
 
   @Message(level = MessageLevel.ERROR,
-           text = "Encountered an error while responding to {1} @ {0} configuration change: {2}")
+           text = "Encountered an error processing {2} in response to a {1} @ {0} configuration change: {3}")
   void errorRespondingToConfigChange(String source,
                                      String clusterName,
+                                     String descriptor,
                                      @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.INFO,
