@@ -45,6 +45,9 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.ERROR, text = "Failed to save state for token {0} : {1}")
   void failedToSaveTokenState(String tokenId, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.ERROR, text = "Error accessing token state : {0}")
+  void errorAccessingTokenState(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
   @Message(level = MessageLevel.ERROR, text = "Error accessing state for token {0} : {1}")
   void errorAccessingTokenState(String tokenId, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
@@ -52,19 +55,46 @@ public interface TokenStateServiceMessages {
            text = "Referencing the expiration in the token ({0}) because no state could not be found: {1}")
   void permissiveTokenHandling(String tokenId, String errorMessage);
 
-  @Message(level = MessageLevel.ERROR, text = "Failed to update expiration for token {1} : {1}")
+  @Message(level = MessageLevel.ERROR, text = "Failed to update expiration for token {0} : {1}")
   void failedToUpdateTokenExpiration(String tokenId, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.ERROR, text = "Failed to create token state aliases : {0}")
+  void failedToCreateTokenStateAliases(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
   @Message(level = MessageLevel.ERROR, text = "Failed to remove state for token {0} : {1}")
-  void failedToRemoveTokenState(String tokenId, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+  void failedToRemoveTokenStateAliases(String tokenId, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.ERROR, text = "Failed to remove token state aliases : {0}")
+  void failedToRemoveTokenStateAliases(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.ERROR, text = "Failed to evict expired token {0} : {1}")
   void failedExpiredTokenEviction(String tokenId, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.ERROR, text = "Failed to evict expired tokens : {0}")
+  void failedExpiredTokenEviction(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.INFO, text = "Evicting expired token {0}")
   void evictToken(String tokenId);
 
   @Message(level = MessageLevel.ERROR, text = "Error occurred evicting token {0}")
   void errorEvictingTokens(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.INFO, text = "Creating token state aliases")
+  void creatingTokenStateAliases();
+
+  @Message(level = MessageLevel.DEBUG, text = "Creating token state aliases for {0}")
+  void creatingTokenStateAliases(String tokenId);
+
+  @Message(level = MessageLevel.INFO, text = "Created token state aliases for {0}")
+  void createdTokenStateAliases(String tokenId);
+
+  @Message(level = MessageLevel.INFO, text = "Removing token state aliases")
+  void removingTokenStateAliases();
+
+  @Message(level = MessageLevel.DEBUG, text = "Removing token state aliases for {0}")
+  void removingTokenStateAliases(String tokenId);
+
+  @Message(level = MessageLevel.INFO, text = "Removed token state aliases for {0}")
+  void removedTokenStateAliases(String tokenId);
 
 }

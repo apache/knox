@@ -248,9 +248,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final String KNOX_TOKEN_EVICTION_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.eviction.interval";
   private static final String KNOX_TOKEN_EVICTION_GRACE_PERIOD = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.eviction.grace.period";
+  private static final String KNOX_TOKEN_ALIAS_PERSISTENCE_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.state.alias.persistence.interval";
   private static final String KNOX_TOKEN_PERMISSIVE_VALIDATION_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.permissive.validation";
   private static final long KNOX_TOKEN_EVICTION_INTERVAL_DEFAULT = TimeUnit.MINUTES.toSeconds(5);
   private static final long KNOX_TOKEN_EVICTION_GRACE_PERIOD_DEFAULT = TimeUnit.HOURS.toSeconds(24);
+  private static final long KNOX_TOKEN_ALIAS_PERSISTENCE_INTERVAL_DEFAULT = TimeUnit.SECONDS.toSeconds(15);
   private static final boolean KNOX_TOKEN_PERMISSIVE_VALIDATION_ENABLED_DEFAULT = false;
 
   private static final String KNOX_HOMEPAGE_PINNED_TOPOLOGIES =  "knox.homepage.pinned.topologies";
@@ -1136,6 +1138,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public long getKnoxTokenEvictionGracePeriod() {
     return getLong(KNOX_TOKEN_EVICTION_GRACE_PERIOD, KNOX_TOKEN_EVICTION_GRACE_PERIOD_DEFAULT);
+  }
+
+  @Override
+  public long getKnoxTokenStateAliasPersistenceInterval() {
+    return getLong(KNOX_TOKEN_ALIAS_PERSISTENCE_INTERVAL, KNOX_TOKEN_ALIAS_PERSISTENCE_INTERVAL_DEFAULT);
   }
 
   @Override

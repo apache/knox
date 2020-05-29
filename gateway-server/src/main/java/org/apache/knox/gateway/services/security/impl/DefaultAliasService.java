@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -160,10 +161,28 @@ public class DefaultAliasService implements AliasService {
   }
 
   @Override
+  public void addAliasesForCluster(String clusterName, Map<String, String> aliases) throws AliasServiceException {
+    try {
+      keystoreService.addCredentialsForCluster(clusterName, aliases);
+    } catch (KeystoreServiceException e) {
+      LOG.failedToAddCredentialsForCluster(clusterName, e);
+    }
+  }
+
+  @Override
   public void removeAliasForCluster(String clusterName, String alias)
       throws AliasServiceException {
     try {
       keystoreService.removeCredentialForCluster(clusterName, alias);
+    } catch (KeystoreServiceException e) {
+      throw new AliasServiceException(e);
+    }
+  }
+
+  @Override
+  public void removeAliasesForCluster(String clusterName, Set<String> aliases) throws AliasServiceException {
+    try {
+      keystoreService.removeCredentialsForCluster(clusterName, aliases);
     } catch (KeystoreServiceException e) {
       throw new AliasServiceException(e);
     }

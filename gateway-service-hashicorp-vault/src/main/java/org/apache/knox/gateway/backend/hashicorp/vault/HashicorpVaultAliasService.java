@@ -38,6 +38,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.Set;
 
 public class HashicorpVaultAliasService implements AliasService {
   public static final String TYPE = "hashicorp.vault";
@@ -102,6 +103,13 @@ public class HashicorpVaultAliasService implements AliasService {
   }
 
   @Override
+  public void addAliasesForCluster(String clusterName, Map<String, String> credentials) throws AliasServiceException {
+    for (Map.Entry<String, String> credential : credentials.entrySet()) {
+      addAliasForCluster(clusterName, credential.getKey(), credential.getValue());
+    }
+  }
+
+  @Override
   public void removeAliasForCluster(String clusterName, String alias) throws AliasServiceException {
     // Delete is by default a soft delete with versioned KV in Vault
     // https://learn.hashicorp.com/vault/secrets-management/sm-versioned-kv#step-6-permanently-delete-data
@@ -116,6 +124,13 @@ public class HashicorpVaultAliasService implements AliasService {
       vault.delete(getPath(clusterName, alias));
     } catch (VaultException e) {
       throw new AliasServiceException(e);
+    }
+  }
+
+  @Override
+  public void removeAliasesForCluster(String clusterName, Set<String> aliases) throws AliasServiceException {
+    for (String alias : aliases) {
+      removeAliasForCluster(clusterName, alias);
     }
   }
 

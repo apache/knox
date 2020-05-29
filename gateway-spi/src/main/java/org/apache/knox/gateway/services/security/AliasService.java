@@ -19,6 +19,8 @@ package org.apache.knox.gateway.services.security;
 
 import java.security.cert.Certificate;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.knox.gateway.services.Service;
 
@@ -31,7 +33,13 @@ public interface AliasService extends Service {
   void addAliasForCluster(String clusterName, String alias,
       String value) throws AliasServiceException;
 
+  void addAliasesForCluster(String clusterName,
+      Map<String, String> credentials) throws AliasServiceException;
+
   void removeAliasForCluster(String clusterName, String alias)
+      throws AliasServiceException;
+
+  void removeAliasesForCluster(String clusterName, Set<String> aliases)
       throws AliasServiceException;
 
   char[] getPasswordFromAliasForCluster(String clusterName,
