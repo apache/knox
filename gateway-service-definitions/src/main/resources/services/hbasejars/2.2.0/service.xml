@@ -17,22 +17,20 @@
 <service role="HBASEJARS" name="hbasejars" version="2.2.0">
     <metadata>
         <type>API</type>
-        <context>/hbase/maven</context>
+        <context>/hbase/jars</context>
         <shortDesc>Jar hosting for HBase</shortDesc>
         <description>Static hosting of HBase client jars from the backend HBase UI.</description>
     </metadata>
+    <!-- This service assumes that HBase UI is hosting a "mini" maven repo at
+      http://<hbase-master>:16010/static/maven and we expose this via Knox
+      at https://<knox>/sandbox/topology/hbase/jars -->
     <routes>
-        <!-- Jetty static resources won't come with the query string -->
-        <route path="/hbase/maven/jetty-dir.css">
-            <rewrite apply="HBASEJARS/path/in/css" to="request.url"/>
-            <rewrite apply="HBASEJARS/path/out/css" to="response.body"/>
-        </route>
         <!-- Define routes for our embedded maven repo -->
-        <route path="/hbase/maven">
+        <route path="/hbase/jars">
            <rewrite apply="HBASEJARS/inbound/jars" to="request.url"/>
            <rewrite apply="HBASEJARS/outbound/jars" to="response.body"/>
         </route>
-        <route path="/hbase/maven/**">
+        <route path="/hbase/jars/**">
           <rewrite apply="HBASEJARS/inbound/jars/path" to="request.url"/>
           <rewrite apply="HBASEJARS/outbound/jars" to="response.body"/>
           <!-- For the Jetty HTTP/302 redirects -->
