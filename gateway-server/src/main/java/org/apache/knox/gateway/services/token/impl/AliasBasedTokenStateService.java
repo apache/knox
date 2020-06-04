@@ -100,7 +100,10 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     for (TokenState state : processing) {
       tokenIds.add(state.getTokenId());
       aliases.put(state.getAlias(), state.getAliasValue());
-      log.creatingTokenStateAliases(state.getTokenId());
+    }
+
+    for (String tokenId: tokenIds) {
+      log.creatingTokenStateAliases(tokenId);
     }
 
     // Write aliases in a batch
