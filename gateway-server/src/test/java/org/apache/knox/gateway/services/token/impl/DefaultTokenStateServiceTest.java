@@ -61,7 +61,7 @@ public class DefaultTokenStateServiceTest {
     final JWTToken token = createMockToken(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(60));
     final TokenStateService tss = createTokenStateService();
 
-    tss.addToken(token, System.currentTimeMillis());
+    addToken(tss, token, System.currentTimeMillis());
     long expiration = tss.getTokenExpiration(TokenUtils.getTokenId(token));
     assertEquals(token.getExpiresDate().getTime(), expiration);
   }
@@ -91,7 +91,7 @@ public class DefaultTokenStateServiceTest {
     final JWTToken token = createMockToken(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(60));
     final TokenStateService tss = createTokenStateService();
 
-    tss.addToken(token, System.currentTimeMillis());
+    addToken(tss, token, System.currentTimeMillis());
     long expiration = tss.getTokenExpiration(TokenUtils.getTokenId(token));
     assertEquals(token.getExpiresDate().getTime(), expiration);
 
@@ -105,7 +105,7 @@ public class DefaultTokenStateServiceTest {
     final JWTToken token = createMockToken(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(60));
     final TokenStateService tss = createTokenStateService();
 
-    tss.addToken(token, System.currentTimeMillis());
+    addToken(tss, token, System.currentTimeMillis());
     assertFalse(tss.isExpired(token));
   }
 
@@ -114,23 +114,21 @@ public class DefaultTokenStateServiceTest {
     final JWTToken token = createMockToken(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(60));
     final TokenStateService tss = createTokenStateService();
 
-    tss.addToken(token, System.currentTimeMillis());
+    addToken(tss, token, System.currentTimeMillis());
     assertTrue(tss.isExpired(token));
   }
-
 
   @Test(expected = UnknownTokenException.class)
   public void testIsExpired_Revoked() throws Exception {
     final JWTToken token = createMockToken(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(60));
     final TokenStateService tss = createTokenStateService();
 
-    tss.addToken(token, System.currentTimeMillis());
+    addToken(tss, token, System.currentTimeMillis());
     assertFalse("Expected the token to be valid.", tss.isExpired(token));
 
     tss.revokeToken(token);
     tss.isExpired(token);
   }
-
 
   @Test
   public void testRenewal() throws Exception {
@@ -138,13 +136,12 @@ public class DefaultTokenStateServiceTest {
     final TokenStateService tss = createTokenStateService();
 
     // Add the expired token
-    tss.addToken(token, System.currentTimeMillis());
+    addToken(tss, token, System.currentTimeMillis());
     assertTrue("Expected the token to have expired.", tss.isExpired(token));
 
     tss.renewToken(token);
     assertFalse("Expected the token to have been renewed.", tss.isExpired(token));
   }
-
 
   @Test
   public void testRenewalBeyondMaxLifetime() throws Exception {
@@ -176,10 +173,11 @@ public class DefaultTokenStateServiceTest {
     final long maxTokenLifetime = TimeUnit.MINUTES.toMillis(2);
 
     // Add the expired token
-    tss.addToken(token.getClaim(JWTToken.KNOX_ID_CLAIM),
-                 System.currentTimeMillis(),
-                 token.getExpiresDate().getTime(),
-                 maxTokenLifetime);
+    addToken(tss,
+            token.getClaim(JWTToken.KNOX_ID_CLAIM),
+            System.currentTimeMillis(),
+            token.getExpiresDate().getTime(),
+            maxTokenLifetime);
     assertTrue("Expected the token to have expired.", tss.isExpired(token));
 
     // Sleep to allow the eviction evaluation to be performed prior to the maximum token lifetime
@@ -201,10 +199,11 @@ public class DefaultTokenStateServiceTest {
     try {
       tss.start();
       // Add the expired token
-      tss.addToken(token.getClaim(JWTToken.KNOX_ID_CLAIM),
-                                  System.currentTimeMillis(),
-                                  token.getExpiresDate().getTime(),
-                                  maxTokenLifetime);
+      addToken(tss,
+               token.getClaim(JWTToken.KNOX_ID_CLAIM),
+               System.currentTimeMillis(),
+               token.getExpiresDate().getTime(),
+               maxTokenLifetime);
       assertTrue("Expected the token to have expired.", tss.isExpired(token));
 
       // Sleep to allow the eviction evaluation to be performed
@@ -298,5 +297,13 @@ public class DefaultTokenStateServiceTest {
     JWSSigner signer = new RSASSASigner(privateKey);
     token.sign(signer);
     return token;
+  }
+
+  protected void addToken(TokenStateService tss, JWTToken token, long issueTime) {
+    tss.addToken(token, issueTime);
+  }
+
+  protected void addToken(TokenStateService tss, String tokenId, long issueTime, long expiration, long maxLifetime) {
+    tss.addToken(tokenId, issueTime, expiration, maxLifetime);
   }
 }

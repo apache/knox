@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class RemoteAliasServiceTestProvider implements RemoteAliasServiceProvider {
   @Override
@@ -60,8 +61,22 @@ public class RemoteAliasServiceTestProvider implements RemoteAliasServiceProvide
     }
 
     @Override
+    public void addAliasesForCluster(String clusterName, Map<String, String> credentials) throws AliasServiceException {
+      for (Map.Entry<String, String> credential : credentials.entrySet()) {
+        addAliasForCluster(clusterName, credential.getKey(), credential.getValue());
+      }
+    }
+
+    @Override
     public void removeAliasForCluster(String clusterName, String alias) {
       aliases.getOrDefault(clusterName, new HashMap<>()).remove(alias);
+    }
+
+    @Override
+    public void removeAliasesForCluster(String clusterName, Set<String> aliases) throws AliasServiceException {
+      for (String alias : aliases) {
+        removeAliasForCluster(clusterName, alias);
+      }
     }
 
     @Override

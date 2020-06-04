@@ -80,6 +80,7 @@ public class DefaultTokenAuthorityServiceTest {
     ta.setKeystoreService(ks);
 
     ta.init(config, new HashMap<>());
+    ta.start();
 
     JWT token = ta.issueToken(principal, "RS256");
     assertEquals("KNOXSSO", token.getIssuer());
@@ -126,6 +127,7 @@ public class DefaultTokenAuthorityServiceTest {
     ta.setKeystoreService(ks);
 
     ta.init(config, new HashMap<>());
+    ta.start();
 
     JWT token = ta.issueToken(principal, "https://login.example.com", "RS256");
     assertEquals("KNOXSSO", token.getIssuer());
@@ -173,6 +175,7 @@ public class DefaultTokenAuthorityServiceTest {
     ta.setKeystoreService(ks);
 
     ta.init(config, new HashMap<>());
+    ta.start();
 
     JWT token = ta.issueToken(principal, null, "RS256");
     assertEquals("KNOXSSO", token.getIssuer());
@@ -219,6 +222,7 @@ public class DefaultTokenAuthorityServiceTest {
     ta.setKeystoreService(ks);
 
     ta.init(config, new HashMap<>());
+    ta.start();
 
     JWT token = ta.issueToken(principal, "RS512");
     assertEquals("KNOXSSO", token.getIssuer());

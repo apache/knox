@@ -41,9 +41,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import static org.easymock.EasyMock.capture;
 
@@ -265,40 +267,116 @@ public class ZookeeperRemoteAliasServiceTest {
     }
   }
 
-    @Test
-    @Ignore("should be executed manually in case you'd like to measure how much time alias addition/fetch takes")
-    public void testPerformance() throws Exception {
-        final MasterService masterService = EasyMock.createNiceMock(MasterService.class);
-        EasyMock.expect(masterService.getMasterSecret()).andReturn("ThisIsMyM4sterP4sW0r!d".toCharArray()).anyTimes();
-        EasyMock.replay(masterService);
+  @Test
+  public void testRemoveAliasesForCluster() throws Exception {
+    final String expectedClusterName = "sandbox";
+    final String expectedAlias = "knox.test.alias";
+    final String expectedPassword = "dummyPassword";
 
-        final DefaultKeystoreService keystoreService = new DefaultKeystoreService();
-        keystoreService.init(gc, null);
-        keystoreService.setMasterService(masterService);
-
-        final int rounds = 11;
-        final int numOfAliases = 200;
-        final String cluster = "myTestCluster";
-        for (int round = 0; round < rounds; round++) {
-            //re-creating the alias service every time so that its cache is empty too
-            final DefaultAliasService aliasService = new DefaultAliasService();
-            aliasService.init(gc, null);
-            aliasService.setMasterService(masterService);
-            aliasService.setKeystoreService(keystoreService);
-
-            RemoteConfigurationRegistryClientService clientService = (new ZooKeeperClientServiceProvider()).newInstance();
-            clientService.setAliasService(aliasService);
-            clientService.init(gc, Collections.emptyMap());
-
-            final ZookeeperRemoteAliasService zkAlias = new ZookeeperRemoteAliasService(aliasService, masterService, clientService);
-            zkAlias.init(gc, Collections.emptyMap());
-            zkAlias.start();
-            final long start = System.currentTimeMillis();
-            for (int i = 0; i < numOfAliases; i++) {
-                zkAlias.addAliasForCluster(cluster, "alias" + i, "password" + i);
-                Assert.assertEquals("password" + i, new String(zkAlias.getPasswordFromAliasForCluster(cluster, "alias" + i)));
-            }
-            System.out.println(System.currentTimeMillis() - start);
-        }
+    final int aliasCount = 5;
+    final Set<String> expectedAliases = new HashSet<>();
+    for (int i = 0; i < aliasCount ; i++) {
+      expectedAliases.add(expectedAlias + i);
     }
+
+    final String expectedClusterNameDev = "development";
+    final String expectedAliasDev = "knox.test.alias.dev";
+    final String expectedPasswordDev = "otherDummyPassword";
+
+    final int devAliasCount = 3;
+    final Set<String> expectedDevAliases = new HashSet<>();
+    for (int i = 0; i < 3 ; i++) {
+      expectedDevAliases.add(expectedAliasDev + i);
+    }
+
+    // Mock Alias Service
+    final DefaultAliasService defaultAlias = EasyMock.createNiceMock(DefaultAliasService.class);
+    // Captures for validating the alias creation for a generated topology
+    final Capture<String> capturedCluster = EasyMock.newCapture();
+    final Capture<String> capturedAlias = EasyMock.newCapture();
+    final Capture<String> capturedPwd = EasyMock.newCapture();
+
+    defaultAlias.addAliasForCluster(capture(capturedCluster), capture(capturedAlias), capture(capturedPwd));
+    EasyMock.expectLastCall().anyTimes();
+
+    // defaultAlias.getAliasesForCluster() never returns null
+    EasyMock.expect(defaultAlias.getAliasesForCluster(expectedClusterName))
+            .andReturn(new ArrayList<>()).anyTimes();
+    EasyMock.expect(defaultAlias.getAliasesForCluster(expectedClusterNameDev))
+            .andReturn(new ArrayList<>()).anyTimes();
+
+    EasyMock.replay(defaultAlias);
+
+    final DefaultMasterService ms = EasyMock.createNiceMock(DefaultMasterService.class);
+    EasyMock.expect(ms.getMasterSecret()).andReturn("knox".toCharArray()).anyTimes();
+    EasyMock.replay(ms);
+
+    RemoteConfigurationRegistryClientService clientService = (new ZooKeeperClientServiceProvider()).newInstance();
+    clientService.setAliasService(defaultAlias);
+    clientService.init(gc, Collections.emptyMap());
+
+    final ZookeeperRemoteAliasService zkAlias = new ZookeeperRemoteAliasService(defaultAlias, ms, clientService);
+    zkAlias.init(gc, Collections.emptyMap());
+    zkAlias.start();
+
+    int originalSize = zkAlias.getAliasesForCluster(expectedClusterName).size();
+
+    // Put
+    for (String alias : expectedAliases) {
+      zkAlias.addAliasForCluster(expectedClusterName, alias, expectedPassword);
+    }
+    for (String alias : expectedDevAliases) {
+      zkAlias.addAliasForCluster(expectedClusterNameDev, alias, expectedPasswordDev);
+    }
+
+    Assert.assertEquals(originalSize + aliasCount, zkAlias.getAliasesForCluster(expectedClusterName).size());
+    Assert.assertEquals(devAliasCount, zkAlias.getAliasesForCluster(expectedClusterNameDev).size());
+
+    // Invoke the bulk removal method for the dev cluster
+    zkAlias.removeAliasesForCluster(expectedClusterNameDev, expectedDevAliases);
+    List<String> aliasesDev = zkAlias.getAliasesForCluster(expectedClusterNameDev);
+    Assert.assertEquals("Expected 'knox.test.alias.dev' aliases to have been removed.", 0, aliasesDev.size());
+
+    // Invoke the bulk removal method for the sandbox cluster
+    zkAlias.removeAliasesForCluster(expectedClusterName, expectedAliases);
+    List<String> aliases = zkAlias.getAliasesForCluster(expectedClusterName);
+    Assert.assertEquals("Expected 'knox.test.alias' aliases to have been removed.", originalSize, aliases.size());
+  }
+
+  @Test
+  @Ignore("should be executed manually in case you'd like to measure how much time alias addition/fetch takes")
+  public void testPerformance() throws Exception {
+      final MasterService masterService = EasyMock.createNiceMock(MasterService.class);
+      EasyMock.expect(masterService.getMasterSecret()).andReturn("ThisIsMyM4sterP4sW0r!d".toCharArray()).anyTimes();
+      EasyMock.replay(masterService);
+
+      final DefaultKeystoreService keystoreService = new DefaultKeystoreService();
+      keystoreService.init(gc, null);
+      keystoreService.setMasterService(masterService);
+
+      final int rounds = 11;
+      final int numOfAliases = 200;
+      final String cluster = "myTestCluster";
+      for (int round = 0; round < rounds; round++) {
+          //re-creating the alias service every time so that its cache is empty too
+          final DefaultAliasService aliasService = new DefaultAliasService();
+          aliasService.init(gc, null);
+          aliasService.setMasterService(masterService);
+          aliasService.setKeystoreService(keystoreService);
+
+          RemoteConfigurationRegistryClientService clientService = (new ZooKeeperClientServiceProvider()).newInstance();
+          clientService.setAliasService(aliasService);
+          clientService.init(gc, Collections.emptyMap());
+
+          final ZookeeperRemoteAliasService zkAlias = new ZookeeperRemoteAliasService(aliasService, masterService, clientService);
+          zkAlias.init(gc, Collections.emptyMap());
+          zkAlias.start();
+          final long start = System.currentTimeMillis();
+          for (int i = 0; i < numOfAliases; i++) {
+              zkAlias.addAliasForCluster(cluster, "alias" + i, "password" + i);
+              Assert.assertEquals("password" + i, new String(zkAlias.getPasswordFromAliasForCluster(cluster, "alias" + i)));
+          }
+          System.out.println(System.currentTimeMillis() - start);
+      }
+  }
 }

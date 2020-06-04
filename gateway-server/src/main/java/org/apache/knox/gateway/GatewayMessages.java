@@ -277,6 +277,9 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.ERROR, text = "Failed to add credential for cluster {0}: {1}" )
   void failedToAddCredentialForCluster( String clusterName, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
+  @Message( level = MessageLevel.ERROR, text = "Failed to add credentials for cluster {0}: {1}" )
+  void failedToAddCredentialsForCluster( String clusterName, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
   @Message( level = MessageLevel.ERROR, text = "Failed to get key for Gateway {0}: {1}" )
   void failedToGetKeyForGateway( String alias, @StackTrace( level=MessageLevel.DEBUG ) Exception e );
 

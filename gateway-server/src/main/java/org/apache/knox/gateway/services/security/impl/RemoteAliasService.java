@@ -29,10 +29,14 @@ import org.apache.knox.gateway.util.PasswordUtils;
 
 import java.security.cert.Certificate;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.Set;
 
 /**
  * An {@link AliasService} implementation based on remote service registry.
@@ -93,32 +97,46 @@ public class RemoteAliasService implements AliasService {
 
   @Override
   public void addAliasForCluster(final String clusterName,
-      final String givenAlias, final String value)
-      throws AliasServiceException {
+      final String givenAlias, final String value) throws AliasServiceException {
+    addAliasesForCluster(clusterName, Collections.singletonMap(givenAlias, value));
+  }
 
-    /* convert all alias names to lower case since JDK expects the same behaviour */
-    final String alias = givenAlias.toLowerCase(Locale.ROOT);
+  @Override
+  public void addAliasesForCluster(String clusterName, Map<String, String> credentials) throws AliasServiceException {
+    // Convert all alias names to lower case since JDK expects the same behaviour
+    Map<String, String> loweredCredentials = new HashMap<>();
+    for (Map.Entry<String, String> credential : credentials.entrySet()) {
+      loweredCredentials.put(credential.getKey().toLowerCase(Locale.ROOT), credential.getValue());
+    }
 
-    /* first add the alias to the local keystore */
-    localAliasService.addAliasForCluster(clusterName, alias, value);
+    // First add the alias to the local keystore
+    localAliasService.addAliasesForCluster(clusterName, loweredCredentials);
 
     if (remoteAliasServiceImpl != null) {
-      remoteAliasServiceImpl.addAliasForCluster(clusterName, alias, value);
+      remoteAliasServiceImpl.addAliasesForCluster(clusterName, loweredCredentials);
     }
   }
 
   @Override
   public void removeAliasForCluster(final String clusterName, final String givenAlias)
       throws AliasServiceException {
-    /* convert all alias names to lower case since JDK expects the same behaviour */
-    final String alias = givenAlias.toLowerCase(Locale.ROOT);
+    removeAliasesForCluster(clusterName, Collections.singleton(givenAlias));
+  }
 
-    /* first remove it from the local keystore */
-    localAliasService.removeAliasForCluster(clusterName, alias);
+  @Override
+  public void removeAliasesForCluster(String clusterName, Set<String> aliases) throws AliasServiceException {
+    // Convert all alias names to lower case since JDK expects the same behavior
+    Set<String> loweredAliases = new HashSet<>();
+    for (String alias : aliases) {
+      loweredAliases.add(alias.toLowerCase(Locale.ROOT));
+    }
 
-    /* If we have remote registry configured, query it */
+    // First, remove them from the local keystore
+    localAliasService.removeAliasesForCluster(clusterName, loweredAliases);
+
+    // If we have remote registry configured, remove them there also
     if (remoteAliasServiceImpl != null) {
-      remoteAliasServiceImpl.removeAliasForCluster(clusterName, alias);
+      remoteAliasServiceImpl.removeAliasesForCluster(clusterName, loweredAliases);
     }
   }
 

@@ -674,6 +674,12 @@ public interface GatewayConfig {
   long getKnoxTokenEvictionGracePeriod();
 
   /**
+   * Return the configured token state alias persistence interval (in seconds).
+   * @return Token state alias persistence interval in seconds.
+   */
+  long getKnoxTokenStateAliasPersistenceInterval();
+
+  /**
    * @return the list of topologies that should be hidden on Knox homepage
    */
   Set<String> getHiddenTopologiesOnHomepage();

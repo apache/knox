@@ -158,7 +158,9 @@ public class TokenServiceResourceTest {
     assertTrue(authority.verifyToken(parsedToken));
   }
 
-  // KNOX-2266
+  /**
+   * KNOX-2266
+   */
   @Test
   public void testConcurrentGetToken() throws Exception {
 
@@ -1250,6 +1252,11 @@ public class TokenServiceResourceTest {
 
     @Override
     public long getTokenExpiration(String tokenId) {
+      return 0;
+    }
+
+    @Override
+    public long getTokenExpiration(String tokenId, boolean validate) throws UnknownTokenException {
       return 0;
     }
 

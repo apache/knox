@@ -33,6 +33,7 @@ import java.security.cert.Certificate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 
@@ -60,6 +61,13 @@ public class CryptoServiceTest {
       @Override
       public void addAliasForCluster(String clusterName, String alias,
           String value) {
+      }
+
+      @Override
+      public void addAliasesForCluster(String clusterName, Map<String, String> credentials) throws AliasServiceException {
+        for (Map.Entry<String, String> credential : credentials.entrySet()) {
+          addAliasForCluster(clusterName, credential.getKey(), credential.getValue());
+        }
       }
 
       @Override
@@ -94,6 +102,10 @@ public class CryptoServiceTest {
 
       @Override
       public void removeAliasForCluster(String clusterName, String alias) {
+      }
+
+      @Override
+      public void removeAliasesForCluster(String clusterName, Set<String> aliases) throws AliasServiceException {
       }
 
       @Override
