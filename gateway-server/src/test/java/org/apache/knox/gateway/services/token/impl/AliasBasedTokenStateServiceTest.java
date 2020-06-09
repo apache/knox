@@ -372,10 +372,10 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
         tss.updateExpiration(tokenId, updatedExpiration);
       }
 
+      //invoking with true/false validation flags as it should not affect if values are coming from the cache
+      int count = 0;
       for (String tokenId : tokenExpirations.keySet()) {
-        assertEquals("Expected the cached expiration to have been updated.",
-                     updatedExpiration,
-                     tss.getTokenExpiration(tokenId, false));
+        assertEquals("Expected the cached expiration to have been updated.", updatedExpiration, tss.getTokenExpiration(tokenId, count++ % 2 == 0));
       }
     } finally {
       tss.stop();
