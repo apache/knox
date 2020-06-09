@@ -704,20 +704,54 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRenewal_ServerManagedStateEnabledAtGatewayWithServiceOverride() throws Exception {
     final String caller = "yarn";
-    Response renewalResponse = doTestTokenRenewal(false, true, caller, null, createTestSubject(caller)).getValue();
-    validateRenewalResponse(renewalResponse, 400, false, "Token renewal support is not configured");
+    Map.Entry<TestTokenStateService, Response> result =
+            doTestTokenRenewal(false, true, caller, null, createTestSubject(caller));
+
+    // Make sure the expiration was not recorded by the TokenStateService, since it is disabled for this test
+    TestTokenStateService tss = result.getKey();
+    assertEquals("TokenStateService should be disabled for this test.", 0, tss.expirationData.size());
+
+    Response renewalResponse = result.getValue();
+    validateSuccessfulRenewalResponse(renewalResponse);
+    String responseContent = (String) renewalResponse.getEntity();
+    assertNotNull(responseContent);
+    Map<String, String> json = parseJSONResponse(responseContent);
+    assertTrue(Boolean.parseBoolean(json.get("renewed")));
+    assertNotNull(json.get("expires")); // Should get back the original expiration from the token itself
   }
 
   @Test
   public void testTokenRenewal_ServerManagedStateNotConfiguredAtAll() throws Exception {
-    Response renewalResponse = doTestTokenRenewal(null, null, null, null, null).getValue();
-    validateRenewalResponse(renewalResponse, 400, false, "Token renewal support is not configured");
+    Map.Entry<TestTokenStateService, Response> result = doTestTokenRenewal(null, null, null, null, null);
+
+    // Make sure the expiration was not recorded by the TokenStateService, since it is disabled for this test
+    TestTokenStateService tss = result.getKey();
+    assertEquals("TokenStateService should be disabled for this test.", 0, tss.expirationData.size());
+
+    Response renewalResponse = result.getValue();
+    validateSuccessfulRenewalResponse(renewalResponse);
+    String responseContent = (String) renewalResponse.getEntity();
+    assertNotNull(responseContent);
+    Map<String, String> json = parseJSONResponse(responseContent);
+    assertTrue(Boolean.parseBoolean(json.get("renewed")));
+    assertNotNull(json.get("expires")); // Should get back the original expiration from the token itself
   }
 
   @Test
   public void testTokenRenewal_Disabled() throws Exception {
-    Response renewalResponse = doTestTokenRenewal(false, null, null);
-    validateRenewalResponse(renewalResponse, 400, false, "Token renewal support is not configured");
+    Map.Entry<TestTokenStateService, Response> result = doTestTokenRenewal(false, null, null, null);
+
+    // Make sure the expiration was not recorded by the TokenStateService, since it is disabled for this test
+    TestTokenStateService tss = result.getKey();
+    assertEquals("TokenStateService should be disabled for this test.", 0, tss.expirationData.size());
+
+    Response renewalResponse = result.getValue();
+    validateSuccessfulRenewalResponse(renewalResponse);
+    String responseContent = (String) renewalResponse.getEntity();
+    assertNotNull(responseContent);
+    Map<String, String> json = parseJSONResponse(responseContent);
+    assertTrue(Boolean.parseBoolean(json.get("renewed")));
+    assertNotNull(json.get("expires")); // Should get back the original expiration from the token itself
   }
 
   @Test
