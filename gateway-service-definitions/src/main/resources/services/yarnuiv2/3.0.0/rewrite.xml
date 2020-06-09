@@ -259,7 +259,7 @@
   </rule>
 
   <rule dir="OUT" name="YARNUIV2/yarnuiv2/outbound/proxy" pattern="*://*:*/proxy/{**}">
-    <rewrite template="{$frontend[url]}/yarnuiv2/proxy/{**}"/>
+    <rewrite template="{$frontend[url]}/yarnuiv2/proxy/{**}/"/>
   </rule>
 
   <rule dir="OUT" name="YARNUIV2/yarnuiv2/outbound/cluster/apps" pattern="*://*:*/cluster/app/{**}">
