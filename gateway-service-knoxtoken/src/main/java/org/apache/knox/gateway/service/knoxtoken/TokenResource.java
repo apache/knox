@@ -244,7 +244,17 @@ public class TokenResource {
     Response.Status errorStatus = Response.Status.BAD_REQUEST;
 
     if (tokenStateService == null) {
-      error = "Token renewal support is not configured";
+      // If the token state service is disabled, then return the expiration from the specified token
+      try {
+        JWTToken jwt = new JWTToken(token);
+        log.renewalDisabled(getTopologyName(), TokenUtils.getTokenDisplayText(token), TokenUtils.getTokenId(jwt));
+        expiration = Long.parseLong(jwt.getExpires());
+      } catch (ParseException e) {
+        log.invalidToken(getTopologyName(), TokenUtils.getTokenDisplayText(token), e);
+        error = safeGetMessage(e);
+      } catch (Exception e) {
+        error = safeGetMessage(e);
+      }
     } else {
       String renewer = SubjectUtils.getCurrentEffectivePrincipalName();
       if (allowedRenewers.contains(renewer)) {
