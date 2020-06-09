@@ -166,24 +166,19 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
 
   @Override
   public long getTokenExpiration(String tokenId, boolean validate) throws UnknownTokenException {
-    long expiration = 0;
-
-    if (!validate) {
-      // If validation is not required, then check the in-memory collection first
-      try {
-        expiration = super.getTokenExpiration(tokenId, validate);
-        return expiration;
-      } catch (UnknownTokenException e) {
-        // It's not in memory
-      }
+    // Check the in-memory collection first and return immediately if associated record found there
+    try {
+      return super.getTokenExpiration(tokenId, validate);
+    } catch (UnknownTokenException e) {
+      // It's not in memory
     }
-
-    // If validating, or there is no associated record in the in-memory collection, proceed to check the alias service
 
     if (validate) {
       validateToken(tokenId);
     }
 
+    // If there is no associated record in the in-memory collection, proceed to check the alias service
+    long expiration = 0;
     try {
       char[] expStr = aliasService.getPasswordFromAliasForCluster(AliasService.NO_CLUSTER_NAME, tokenId);
       if (expStr != null) {
