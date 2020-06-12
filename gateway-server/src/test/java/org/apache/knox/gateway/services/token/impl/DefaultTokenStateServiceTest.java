@@ -29,6 +29,7 @@ import org.easymock.EasyMock;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
@@ -165,7 +166,7 @@ public class DefaultTokenStateServiceTest {
   }
 
   @Test
-  public void testNegativeTokenEviction() throws InterruptedException, UnknownTokenException {
+  public void testNegativeTokenEviction() throws Exception {
     final JWTToken token = createMockToken(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(60));
     final TokenStateService tss = createTokenStateService();
 
@@ -189,7 +190,7 @@ public class DefaultTokenStateServiceTest {
   }
 
   @Test
-  public void testTokenEviction() throws InterruptedException, ServiceLifecycleException, UnknownTokenException {
+  public void testTokenEviction() throws Exception {
     final JWTToken token = createMockToken(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(60));
     final TokenStateService tss = createTokenStateService();
 
@@ -218,7 +219,7 @@ public class DefaultTokenStateServiceTest {
   }
 
   @Test
-  public void testTokenPermissiveness() throws UnknownTokenException {
+  public void testTokenPermissiveness() throws Exception {
     final long expiry = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(300);
     final JWT token = getJWTToken(expiry);
     TokenStateService tss = new DefaultTokenStateService();
@@ -232,7 +233,7 @@ public class DefaultTokenStateServiceTest {
   }
 
   @Test(expected = UnknownTokenException.class)
-  public void testTokenPermissivenessNoExpiry() throws UnknownTokenException {
+  public void testTokenPermissivenessNoExpiry() throws Exception {
     final JWT token = getJWTToken(-1L);
     TokenStateService tss = new DefaultTokenStateService();
     try {
@@ -258,17 +259,25 @@ public class DefaultTokenStateServiceTest {
     return token;
   }
 
-  protected static GatewayConfig createMockGatewayConfig(boolean tokenPermissiveness) {
+  protected GatewayConfig createMockGatewayConfig(boolean tokenPermissiveness) throws Exception {
+    return createMockGatewayConfig(tokenPermissiveness, getGatewaySecurityDir(), getTokenStatePersistenceInterval());
+  }
+
+  protected GatewayConfig createMockGatewayConfig(boolean tokenPermissiveness,
+                                                         final String securityDir,
+                                                         long statePersistenceInterval) {
     GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
     /* configure token eviction time to be 2 secs for test */
     EasyMock.expect(config.getKnoxTokenEvictionInterval()).andReturn(2L).anyTimes();
     EasyMock.expect(config.getKnoxTokenEvictionGracePeriod()).andReturn(0L).anyTimes();
     EasyMock.expect(config.isKnoxTokenPermissiveValidationEnabled()).andReturn(tokenPermissiveness).anyTimes();
+    EasyMock.expect(config.getKnoxTokenStateAliasPersistenceInterval()).andReturn(statePersistenceInterval).anyTimes();
+    EasyMock.expect(config.getGatewaySecurityDir()).andReturn(securityDir).anyTimes();
     EasyMock.replay(config);
     return config;
   }
 
-  protected void initTokenStateService(TokenStateService tss) {
+  protected void initTokenStateService(TokenStateService tss) throws Exception {
     try {
       tss.init(createMockGatewayConfig(false), Collections.emptyMap());
     } catch (ServiceLifecycleException e) {
@@ -276,7 +285,15 @@ public class DefaultTokenStateServiceTest {
     }
   }
 
-  protected TokenStateService createTokenStateService() {
+  protected long getTokenStatePersistenceInterval() {
+    return TimeUnit.SECONDS.toMillis(15);
+  }
+
+  protected String getGatewaySecurityDir() throws IOException {
+    return null;
+  }
+
+  protected TokenStateService createTokenStateService() throws Exception {
     TokenStateService tss = new DefaultTokenStateService();
     initTokenStateService(tss);
     return tss;
