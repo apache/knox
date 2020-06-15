@@ -22,6 +22,7 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.services.token.state.JournalEntry;
 import org.apache.knox.gateway.services.token.state.TokenStateJournal;
 import org.apache.knox.gateway.services.token.impl.state.TokenStateJournalFactory;
 import org.easymock.EasyMock;
@@ -43,6 +44,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -564,6 +566,90 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     EasyMock.verify(aliasService);
   }
 
+  @Test
+  public void testLoadTokenStateJournalDuringInitWithInvalidEntries() throws Exception {
+    final int TOKEN_COUNT = 5;
+
+    AliasService aliasService = EasyMock.createMock(AliasService.class);
+    aliasService.getAliasesForCluster(anyString());
+    EasyMock.expectLastCall().andReturn(Collections.emptyList()).anyTimes();
+    EasyMock.replay(aliasService);
+
+    // Create some test tokens
+    final Set<JWTToken> testTokens = new HashSet<>();
+    for (int i = 0; i < TOKEN_COUNT ; i++) {
+      JWTToken token = createMockToken(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(60));
+      testTokens.add(token);
+    }
+
+    // Persist the token state journal entries before initializing the TokenStateService
+    TokenStateJournal journal = TokenStateJournalFactory.create(createMockGatewayConfig(false));
+    for (JWTToken token : testTokens) {
+      journal.add(token.getClaim(JWTToken.KNOX_ID_CLAIM),
+                  System.currentTimeMillis(),
+                  token.getExpiresDate().getTime(),
+                  System.currentTimeMillis() + TimeUnit.HOURS.toMillis(24));
+    }
+
+    // Add an entry with an invalid token identifier
+    journal.add("   ",
+                System.currentTimeMillis(),
+                System.currentTimeMillis(),
+                System.currentTimeMillis());
+
+    // Add an entry with an invalid issue time
+    journal.add(new TestJournalEntry(UUID.randomUUID().toString(),
+                "invalidLongValue",
+                String.valueOf(System.currentTimeMillis()),
+                String.valueOf(System.currentTimeMillis())));
+
+    // Add an entry with an invalid expiration time
+    journal.add(new TestJournalEntry(UUID.randomUUID().toString(),
+                String.valueOf(System.currentTimeMillis()),
+                "invalidLongValue",
+                String.valueOf(System.currentTimeMillis())));
+
+    // Add an entry with an invalid max lifetime
+    journal.add(new TestJournalEntry(UUID.randomUUID().toString(),
+                                     String.valueOf(System.currentTimeMillis()),
+                                     String.valueOf(System.currentTimeMillis()),
+                                     "invalidLongValue"));
+
+    AliasBasedTokenStateService tss = new AliasBasedTokenStateService();
+    tss.setAliasService(aliasService);
+
+    // Initialize the service, and presumably load the previously-persisted journal entries
+    initTokenStateService(tss);
+
+    Field tokenExpirationsField = tss.getClass().getSuperclass().getDeclaredField("tokenExpirations");
+    tokenExpirationsField.setAccessible(true);
+    Map<String, Long> tokenExpirations = (Map<String, Long>) tokenExpirationsField.get(tss);
+
+    Field maxTokenLifetimesField = tss.getClass().getSuperclass().getDeclaredField("maxTokenLifetimes");
+    maxTokenLifetimesField.setAccessible(true);
+    Map<String, Long> maxTokenLifetimes = (Map<String, Long>) maxTokenLifetimesField.get(tss);
+
+    Field unpersistedStateField = tss.getClass().getDeclaredField("unpersistedState");
+    unpersistedStateField.setAccessible(true);
+    List<AliasBasedTokenStateService.TokenState> unpersistedState =
+            (List<AliasBasedTokenStateService.TokenState>) unpersistedStateField.get(tss);
+
+    assertEquals("Expected the tokens expirations to have been added in the base class cache.",
+                 TOKEN_COUNT,
+                 tokenExpirations.size());
+
+    assertEquals("Expected the tokens lifetimes to have been added in the base class cache.",
+                 TOKEN_COUNT,
+                 maxTokenLifetimes.size());
+
+    assertEquals("Expected the unpersisted state to have been added.",
+                 (TOKEN_COUNT * 2), // Two TokenState entries per token (expiration, max lifetime)
+                 unpersistedState.size());
+
+    // Verify that the expected methods were invoked
+    EasyMock.verify(aliasService);
+  }
+
   @Override
   protected TokenStateService createTokenStateService() throws Exception {
     AliasBasedTokenStateService tss = new AliasBasedTokenStateService();
@@ -716,6 +802,46 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
       } catch (Exception e) {
         e.printStackTrace();
       }
+    }
+  }
+
+  private static class TestJournalEntry implements JournalEntry {
+
+    private String tokenId;
+    private String issueTime;
+    private String expiration;
+    private String maxLifetime;
+
+    TestJournalEntry(String tokenId, String issueTime, String expiration, String maxLifetime) {
+      this.tokenId     = tokenId;
+      this.issueTime   = issueTime;
+      this.expiration  = expiration;
+      this.maxLifetime = maxLifetime;
+    }
+
+    @Override
+    public String getTokenId() {
+      return tokenId;
+    }
+
+    @Override
+    public String getIssueTime() {
+      return issueTime;
+    }
+
+    @Override
+    public String getExpiration() {
+      return expiration;
+    }
+
+    @Override
+    public String getMaxLifetime() {
+      return maxLifetime;
+    }
+
+    @Override
+    public String toString() {
+      return tokenId + "," + issueTime + "," + expiration + "," + maxLifetime;
     }
   }
 }

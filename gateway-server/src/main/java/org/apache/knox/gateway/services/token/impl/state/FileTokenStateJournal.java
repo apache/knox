@@ -108,7 +108,11 @@ abstract class FileTokenStateJournal implements TokenStateJournal {
             BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
             String line;
             while ((line = reader.readLine()) != null) {
-                entries.add(FileJournalEntry.parse(line));
+                try {
+                    entries.add(FileJournalEntry.parse(line));
+                } catch (Exception e) {
+                    log.failedToLoadJournalEntry(e);
+                }
             }
         }
 

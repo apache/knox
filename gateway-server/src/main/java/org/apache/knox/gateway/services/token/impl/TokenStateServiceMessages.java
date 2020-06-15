@@ -118,6 +118,12 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.DEBUG, text = "Persisting token state journal entry as {0}")
   void persistingJournalEntry(String journalEntryFilename);
 
+  @Message(level = MessageLevel.ERROR, text = "Failed to load persisted token state journal entry for {0} : {1}")
+  void failedToLoadJournalEntry(String tokenId, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.ERROR, text = "Failed to load persisted token state journal entry : {0}")
+  void failedToLoadJournalEntry(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
   @Message(level = MessageLevel.ERROR, text = "Failed to persisting token state journal entry for {0} : {1}")
   void failedToPersistJournalEntry(String tokenId, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
