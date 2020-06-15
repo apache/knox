@@ -21,7 +21,11 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
+import org.apache.knox.gateway.services.token.state.JournalEntry;
+import org.apache.knox.gateway.services.token.state.TokenStateJournal;
+import org.apache.knox.gateway.services.token.impl.state.TokenStateJournalFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,6 +53,8 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
 
   private final List<TokenState> unpersistedState = new ArrayList<>();
 
+  private TokenStateJournal journal;
+
   public void setAliasService(AliasService aliasService) {
     this.aliasService = aliasService;
   }
@@ -59,6 +65,32 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     if (aliasService == null) {
       throw new ServiceLifecycleException("The required AliasService reference has not been set.");
     }
+
+    try {
+      // Initialize the token state journal
+      journal = TokenStateJournalFactory.create(config);
+
+      // Load any persisted journal entries, and add them to the unpersisted state collection
+      List<JournalEntry> entries = journal.get();
+      for (JournalEntry entry : entries) {
+        String id = entry.getTokenId();
+        long issueTime = Long.parseLong(entry.getIssueTime());
+        long expiration = Long.parseLong(entry.getExpiration());
+        long maxLifetime = Long.parseLong(entry.getMaxLifetime());
+
+        // Add the token state to memory
+        super.addToken(id, issueTime, expiration, maxLifetime);
+
+        synchronized (unpersistedState) {
+          // The max lifetime entry is added by way of the call to super.addToken(),
+          // so only need to add the expiration entry here.
+          unpersistedState.add(new TokenExpiration(id, expiration));
+        }
+      }
+    } catch (IOException e) {
+      throw new ServiceLifecycleException("Failed to load persisted state from the token state journal", e);
+    }
+
     statePersistenceInterval = config.getKnoxTokenStateAliasPersistenceInterval();
     if (statePersistenceInterval > 0) {
       statePersistenceScheduler = Executors.newScheduledThreadPool(1);
@@ -69,7 +101,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
   public void start() throws ServiceLifecycleException {
     super.start();
     if (statePersistenceScheduler != null) {
-      // Run token eviction task at configured interval
+      // Run token persistence task at configured interval
       statePersistenceScheduler.scheduleAtFixedRate(this::persistTokenState,
                                                     statePersistenceInterval,
                                                     statePersistenceInterval,
@@ -83,6 +115,9 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     if (statePersistenceScheduler != null) {
       statePersistenceScheduler.shutdown();
     }
+
+    // Make an attempt to persist any unpersisted token state before shutting down
+    persistTokenState();
   }
 
   protected void persistTokenState() {
@@ -114,6 +149,12 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
         aliasService.addAliasesForCluster(AliasService.NO_CLUSTER_NAME, aliases);
         for (String tokenId : tokenIds) {
           log.createdTokenStateAliases(tokenId);
+          // After the aliases have been successfully persisted, remove their associated state from the journal
+          try {
+            journal.remove(tokenId);
+          } catch (IOException e) {
+            log.failedToRemoveJournalEntry(tokenId, e);
+          }
         }
       } catch (AliasServiceException e) {
         log.failedToCreateTokenStateAliases(e);
@@ -133,6 +174,12 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
 
     synchronized (unpersistedState) {
       unpersistedState.add(new TokenExpiration(tokenId, expiration));
+    }
+
+    try {
+      journal.add(tokenId, issueTime, expiration, maxLifetimeDuration);
+    } catch (IOException e) {
+      log.failedToAddJournalEntry(tokenId, e);
     }
   }
 
@@ -166,8 +213,10 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
 
   @Override
   public long getTokenExpiration(String tokenId, boolean validate) throws UnknownTokenException {
-    // Check the in-memory collection first and return immediately if associated record found there
+    // Check the in-memory collection first, to avoid costly keystore access when possible
     try {
+      // If the token identifier is valid, and the associated state is available from the in-memory cache, then
+      // return the expiration from there.
       return super.getTokenExpiration(tokenId, validate);
     } catch (UnknownTokenException e) {
       // It's not in memory
@@ -177,13 +226,13 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
       validateToken(tokenId);
     }
 
-    // If there is no associated record in the in-memory collection, proceed to check the alias service
+    // If there is no associated state in the in-memory cache, proceed to check the alias service
     long expiration = 0;
     try {
       char[] expStr = aliasService.getPasswordFromAliasForCluster(AliasService.NO_CLUSTER_NAME, tokenId);
       if (expStr != null) {
         expiration = Long.parseLong(new String(expStr));
-        // Update the in-memory record
+        // Update the in-memory cache to avoid subsequent keystore look-ups for the same state
         super.updateExpiration(tokenId, expiration);
       }
     } catch (Exception e) {
@@ -215,6 +264,20 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
 
   @Override
   protected void removeTokens(Set<String> tokenIds) throws UnknownTokenException {
+
+    // If any of the token IDs is represented among the unpersisted state, remove the associated state
+    synchronized (unpersistedState) {
+      List<TokenState> unpersistedToRemove = new ArrayList<>();
+      for (TokenState state : unpersistedState) {
+        if (tokenIds.contains(state.getTokenId())) {
+          unpersistedToRemove.add(state);
+        }
+      }
+      for (TokenState state : unpersistedToRemove) {
+        unpersistedState.remove(state);
+      }
+    }
+
     // Add the max lifetime aliases to the list of aliases to remove
     Set<String> aliasesToRemove = new HashSet<>(tokenIds);
     for (String tokenId : tokenIds) {
@@ -267,7 +330,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     return (tokenIds != null ? tokenIds : Collections.emptyList());
   }
 
-  private interface TokenState {
+  interface TokenState {
     String getTokenId();
     String getAlias();
     String getAliasValue();

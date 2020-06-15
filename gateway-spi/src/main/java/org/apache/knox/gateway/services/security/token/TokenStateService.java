@@ -154,12 +154,15 @@ public interface TokenStateService extends Service {
   long getTokenExpiration(String tokenId) throws UnknownTokenException;
 
   /**
-    *
-    * @param tokenId  The token unique identifier.
-    * @param validate Flag indicating whether the token needs to be validated.
-    *
-    * @return The token's expiration time in milliseconds.
-    */
+   * Get the expiration for the specified token, optionally validating the token prior to accessing its expiration.
+   * In some cases, the token has already been validated, and skipping an additional unnecessary validation improves
+   * performance.
+   *
+   * @param tokenId  The token unique identifier.
+   * @param validate Flag indicating whether the token needs to be validated.
+   *
+   * @return The token's expiration time in milliseconds.
+   */
   long getTokenExpiration(String tokenId, boolean validate) throws UnknownTokenException;
 
 }

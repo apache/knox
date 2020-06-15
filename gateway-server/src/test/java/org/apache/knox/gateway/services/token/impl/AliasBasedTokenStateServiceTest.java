@@ -22,26 +22,58 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.services.token.state.TokenStateJournal;
+import org.apache.knox.gateway.services.token.impl.state.TokenStateJournalFactory;
 import org.easymock.EasyMock;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.anyString;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTest {
+
+  @Rule
+  public final TemporaryFolder testFolder = new TemporaryFolder();
+
+  private Path gatewaySecurityDir;
+
+  private Long tokenStatePersistenceInterval = TimeUnit.SECONDS.toMillis(15);
+
+  @Override
+  protected String getGatewaySecurityDir() throws IOException {
+    if (gatewaySecurityDir == null) {
+      gatewaySecurityDir = testFolder.newFolder().toPath();
+      Files.createDirectories(gatewaySecurityDir);
+    }
+    return gatewaySecurityDir.toString();
+  }
+
+  @Override
+  protected long getTokenStatePersistenceInterval() {
+    return (tokenStatePersistenceInterval != null) ? tokenStatePersistenceInterval : super.getTokenStatePersistenceInterval();
+  }
 
   /**
    * KNOX-2375
@@ -105,8 +137,10 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
 
   @Test
   public void testAddAndRemoveTokenIncludesCache() throws Exception {
+    final int TOKEN_COUNT = 10;
+
     final Set<JWTToken> testTokens = new HashSet<>();
-    for (int i = 0; i < 10 ; i++) {
+    for (int i = 0; i < TOKEN_COUNT ; i++) {
       testTokens.add(createMockToken(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(60)));
     }
 
@@ -161,6 +195,7 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
 
       // Sleep to allow the eviction evaluation to be performed
       Thread.sleep(evictionInterval + (evictionInterval / 4));
+
     } finally {
       tss.stop();
     }
@@ -270,6 +305,8 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
   @Test
   public void testGetMaxLifetimeUsesCache() throws Exception {
     AliasService aliasService = EasyMock.createMock(AliasService.class);
+    aliasService.addAliasesForCluster(anyString(), anyObject());
+    EasyMock.expectLastCall().once(); // Expecting this during shutdown
 
     EasyMock.replay(aliasService);
 
@@ -332,6 +369,8 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     EasyMock.expectLastCall().andVoid().atLeastOnce();
     aliasService.removeAliasForCluster(anyString(), anyObject());
     EasyMock.expectLastCall().andVoid().atLeastOnce();
+    aliasService.addAliasesForCluster(anyString(), anyObject());
+    EasyMock.expectLastCall().andVoid().once(); // Expecting this during shutdown
 
     EasyMock.replay(aliasService);
 
@@ -372,11 +411,14 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
         tss.updateExpiration(tokenId, updatedExpiration);
       }
 
-      //invoking with true/false validation flags as it should not affect if values are coming from the cache
+      // Invoking with true/false validation flags as it should not affect if values are coming from the cache
       int count = 0;
       for (String tokenId : tokenExpirations.keySet()) {
-        assertEquals("Expected the cached expiration to have been updated.", updatedExpiration, tss.getTokenExpiration(tokenId, count++ % 2 == 0));
+        assertEquals("Expected the cached expiration to have been updated.",
+                     updatedExpiration,
+                     tss.getTokenExpiration(tokenId, count++ % 2 == 0));
       }
+
     } finally {
       tss.stop();
     }
@@ -385,8 +427,145 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     EasyMock.verify(aliasService);
   }
 
+  @Test
+  public void testTokenStateJournaling() throws Exception {
+    AliasService aliasService = EasyMock.createMock(AliasService.class);
+    aliasService.getAliasesForCluster(anyString());
+    EasyMock.expectLastCall().andReturn(Collections.emptyList()).anyTimes();
+    aliasService.addAliasesForCluster(anyString(), anyObject());
+    EasyMock.expectLastCall().once();
+    EasyMock.replay(aliasService);
+
+    tokenStatePersistenceInterval = 1L; // Override the persistence interval for this test
+
+    AliasBasedTokenStateService tss = new AliasBasedTokenStateService();
+    tss.setAliasService(aliasService);
+    initTokenStateService(tss);
+
+    Field maxTokenLifetimesField = tss.getClass().getSuperclass().getDeclaredField("maxTokenLifetimes");
+    maxTokenLifetimesField.setAccessible(true);
+    Map<String, Long> maxTokenLifetimes = (Map<String, Long>) maxTokenLifetimesField.get(tss);
+
+    Path journalDir = Paths.get(getGatewaySecurityDir(), "token-state");
+
+    final long evictionInterval = TimeUnit.SECONDS.toMillis(3);
+    final long maxTokenLifetime = evictionInterval * 3;
+
+    final List<String> tokenIds = new ArrayList<>();
+    final Set<JWTToken> testTokens = new HashSet<>();
+    for (int i = 0; i < 10 ; i++) {
+      JWTToken token = createMockToken(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(60));
+      testTokens.add(token);
+      tokenIds.add(token.getClaim(JWTToken.KNOX_ID_CLAIM));
+    }
+
+    try {
+      tss.start();
+
+      // Add the expired tokens
+      for (JWTToken token : testTokens) {
+        tss.addToken(token.getClaim(JWTToken.KNOX_ID_CLAIM),
+                     System.currentTimeMillis(),
+                     token.getExpiresDate().getTime(),
+                     maxTokenLifetime);
+      }
+
+      assertEquals("Expected the tokens lifetimes to have been added in the base class cache.",
+                   10,
+                   maxTokenLifetimes.size());
+
+      // Check for the expected number of files corresponding to journal entries
+      List<Path> listing = Files.list(journalDir).collect(Collectors.toList());
+      assertFalse(listing.isEmpty());
+      assertEquals(10, listing.size());
+
+      // Validate the journal entry file names
+      for (Path p : listing) {
+        Path filename = p.getFileName();
+        String filenameString = filename.toString();
+        assertTrue(filenameString.endsWith(".ts"));
+        String tokenId = filenameString.substring(0, filenameString.length() - 3);
+        assertTrue(tokenIds.contains(tokenId));
+      }
+
+      // Sleep to allow the persistence to be performed
+      Thread.sleep(TimeUnit.SECONDS.toMillis(tokenStatePersistenceInterval) * 2);
+
+    } finally {
+      tss.stop();
+      tokenStatePersistenceInterval = null;
+    }
+
+    // Verify that the expected methods were invoked
+    EasyMock.verify(aliasService);
+
+    // Verify that the journal entries were removed when the aliases were created
+    List<Path> listing = Files.list(journalDir).collect(Collectors.toList());
+    assertTrue(listing.isEmpty());
+  }
+
+  @Test
+  public void testLoadTokenStateJournalDuringInit() throws Exception {
+    final int TOKEN_COUNT = 10;
+
+    AliasService aliasService = EasyMock.createMock(AliasService.class);
+    aliasService.getAliasesForCluster(anyString());
+    EasyMock.expectLastCall().andReturn(Collections.emptyList()).anyTimes();
+    EasyMock.replay(aliasService);
+
+    // Create some test tokens
+    final Set<JWTToken> testTokens = new HashSet<>();
+    for (int i = 0; i < TOKEN_COUNT ; i++) {
+      JWTToken token = createMockToken(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(60));
+      testTokens.add(token);
+    }
+
+    // Persist the token state journal entries before initializing the TokenStateService
+    TokenStateJournal journal = TokenStateJournalFactory.create(createMockGatewayConfig(false));
+    for (JWTToken token : testTokens) {
+      journal.add(token.getClaim(JWTToken.KNOX_ID_CLAIM),
+                  System.currentTimeMillis(),
+                  token.getExpiresDate().getTime(),
+                  System.currentTimeMillis() + TimeUnit.HOURS.toMillis(24));
+    }
+
+    AliasBasedTokenStateService tss = new AliasBasedTokenStateService();
+    tss.setAliasService(aliasService);
+
+    // Initialize the service, and presumably load the previously-persisted journal entries
+    initTokenStateService(tss);
+
+    Field tokenExpirationsField = tss.getClass().getSuperclass().getDeclaredField("tokenExpirations");
+    tokenExpirationsField.setAccessible(true);
+    Map<String, Long> tokenExpirations = (Map<String, Long>) tokenExpirationsField.get(tss);
+
+    Field maxTokenLifetimesField = tss.getClass().getSuperclass().getDeclaredField("maxTokenLifetimes");
+    maxTokenLifetimesField.setAccessible(true);
+    Map<String, Long> maxTokenLifetimes = (Map<String, Long>) maxTokenLifetimesField.get(tss);
+
+    Field unpersistedStateField = tss.getClass().getDeclaredField("unpersistedState");
+    unpersistedStateField.setAccessible(true);
+    List<AliasBasedTokenStateService.TokenState> unpersistedState =
+            (List<AliasBasedTokenStateService.TokenState>) unpersistedStateField.get(tss);
+
+    assertEquals("Expected the tokens expirations to have been added in the base class cache.",
+                 TOKEN_COUNT,
+                 tokenExpirations.size());
+
+    assertEquals("Expected the tokens lifetimes to have been added in the base class cache.",
+                 TOKEN_COUNT,
+                 maxTokenLifetimes.size());
+
+    assertEquals("Expected the unpersisted state to have been added.",
+                 (TOKEN_COUNT * 2), // Two TokenState entries per token (expiration, max lifetime)
+                 unpersistedState.size());
+
+    // Verify that the expected methods were invoked
+    EasyMock.verify(aliasService);
+  }
+
   @Override
-  protected TokenStateService createTokenStateService() {
+  protected TokenStateService createTokenStateService() throws Exception {
     AliasBasedTokenStateService tss = new AliasBasedTokenStateService();
     tss.setAliasService(new TestAliasService());
     initTokenStateService(tss);
