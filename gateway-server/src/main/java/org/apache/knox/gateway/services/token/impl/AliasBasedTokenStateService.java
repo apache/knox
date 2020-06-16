@@ -74,17 +74,21 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
       List<JournalEntry> entries = journal.get();
       for (JournalEntry entry : entries) {
         String id = entry.getTokenId();
-        long issueTime = Long.parseLong(entry.getIssueTime());
-        long expiration = Long.parseLong(entry.getExpiration());
-        long maxLifetime = Long.parseLong(entry.getMaxLifetime());
+        try {
+          long issueTime   = Long.parseLong(entry.getIssueTime());
+          long expiration  = Long.parseLong(entry.getExpiration());
+          long maxLifetime = Long.parseLong(entry.getMaxLifetime());
 
-        // Add the token state to memory
-        super.addToken(id, issueTime, expiration, maxLifetime);
+          // Add the token state to memory
+          super.addToken(id, issueTime, expiration, maxLifetime);
 
-        synchronized (unpersistedState) {
-          // The max lifetime entry is added by way of the call to super.addToken(),
-          // so only need to add the expiration entry here.
-          unpersistedState.add(new TokenExpiration(id, expiration));
+          synchronized (unpersistedState) {
+            // The max lifetime entry is added by way of the call to super.addToken(),
+            // so only need to add the expiration entry here.
+            unpersistedState.add(new TokenExpiration(id, expiration));
+          }
+        } catch (Exception e) {
+          log.failedToLoadJournalEntry(id, e);
         }
       }
     } catch (IOException e) {
