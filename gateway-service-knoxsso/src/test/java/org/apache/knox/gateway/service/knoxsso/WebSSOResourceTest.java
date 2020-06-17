@@ -17,20 +17,37 @@
  */
 package org.apache.knox.gateway.service.knoxsso;
 
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
 import org.apache.http.HttpStatus;
 import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditor;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.TokenServiceException;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.util.RegExUtils;
+import org.easymock.EasyMock;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-import static org.apache.knox.gateway.services.GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
+import javax.security.auth.Subject;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 import java.lang.reflect.Field;
+import java.net.HttpCookie;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
@@ -46,30 +63,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.security.auth.Subject;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-
-import org.apache.knox.gateway.services.GatewayServices;
-import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
-import org.apache.knox.gateway.services.security.token.TokenServiceException;
-import org.apache.knox.gateway.services.security.token.impl.JWT;
-import org.apache.knox.gateway.services.security.token.impl.JWTToken;
-import org.easymock.EasyMock;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.crypto.RSASSASigner;
-import com.nimbusds.jose.crypto.RSASSAVerifier;
+import static org.apache.knox.gateway.services.GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Some tests for the Knox SSO service.
@@ -940,6 +938,7 @@ public class WebSSOResourceTest {
   private static class CookieResponseWrapper extends HttpServletResponseWrapper {
 
     private ServletOutputStream outputStream;
+    private Map<String, String> headers = new HashMap<>();
     private Map<String, Cookie> cookies = new HashMap<>();
 
     CookieResponseWrapper(HttpServletResponse response, ServletOutputStream outputStream) {
@@ -950,6 +949,28 @@ public class WebSSOResourceTest {
     @Override
     public ServletOutputStream getOutputStream() {
         return outputStream;
+    }
+
+    @Override
+    public void setHeader(String name, String value) {
+      headers.put(name, value);
+      /* if we have Set-Cookie header create a cookie for it */
+      if ("Set-Cookie".equalsIgnoreCase(name)) {
+        final List<HttpCookie> clientCookies = HttpCookie.parse(value);
+        clientCookies.forEach(c -> {
+          Cookie cookie = new Cookie(c.getName(), c.getValue());
+          cookie.setSecure(c.getSecure());
+          if (c.getDomain() != null) {
+            cookie.setDomain(c.getDomain());
+          }
+          if (c.getPath() != null) {
+            cookie.setPath(c.getPath());
+          }
+          cookie.setHttpOnly(c.isHttpOnly());
+          cookie.setMaxAge(Math.toIntExact(c.getMaxAge()));
+          this.addCookie(cookie);
+        });
+      }
     }
 
     @Override
