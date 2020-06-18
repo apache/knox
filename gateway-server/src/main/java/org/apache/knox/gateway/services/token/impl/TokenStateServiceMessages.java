@@ -97,7 +97,7 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.INFO, text = "Removed token state aliases for {0}")
   void removedTokenStateAliases(String tokenId);
 
-  @Message(level = MessageLevel.INFO, text = "Loading peristed token state journal entries")
+  @Message(level = MessageLevel.DEBUG, text = "Loading peristed token state journal entries")
   void loadingPersistedJournalEntries();
 
   @Message(level = MessageLevel.DEBUG, text = "Loaded peristed token state journal entry for {0}")
@@ -106,10 +106,10 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.ERROR, text = "The peristed token state journal entry {0} is empty")
   void emptyJournalEntry(String journalEntryName);
 
-  @Message(level = MessageLevel.INFO, text = "Added token state journal entry for {0}")
+  @Message(level = MessageLevel.DEBUG, text = "Added token state journal entry for {0}")
   void addedJournalEntry(String tokenId);
 
-  @Message(level = MessageLevel.INFO, text = "Removed token state journal entry for {0}")
+  @Message(level = MessageLevel.DEBUG, text = "Removed token state journal entry for {0}")
   void removedJournalEntry(String tokenId);
 
   @Message(level = MessageLevel.INFO, text = "Token state journal entry not found for {0}")
@@ -132,5 +132,8 @@ public interface TokenStateServiceMessages {
 
   @Message(level = MessageLevel.ERROR, text = "Failed to remove the token state journal entry for {0} : {1}")
   void failedToRemoveJournalEntry(String tokenId, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.ERROR, text = "Failed to remove the token state journal entries : {0}")
+  void failedToRemoveJournalEntries(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 
 }
