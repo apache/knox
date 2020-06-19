@@ -27,9 +27,13 @@ import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.easymock.EasyMock;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
@@ -47,6 +51,11 @@ import static org.junit.Assert.fail;
 public class DefaultTokenStateServiceTest {
 
   private static RSAPrivateKey privateKey;
+
+  @Rule
+  public final TemporaryFolder testFolder = new TemporaryFolder();
+
+  private Path gatewaySecurityDir;
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
@@ -85,6 +94,14 @@ public class DefaultTokenStateServiceTest {
 
     // Expecting an UnknownTokenException because the token is not known to the TokenStateService
     createTokenStateService().getTokenExpiration(TokenUtils.getTokenId(token));
+  }
+
+  @Test(expected = UnknownTokenException.class)
+  public void testGetExpiration_InvalidToken_WithoutValidation() throws Exception {
+    final JWTToken token = createMockToken(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(60));
+
+    // Expecting an UnknownTokenException because the token is not known to the TokenStateService
+    createTokenStateService().getTokenExpiration(TokenUtils.getTokenId(token), false);
   }
 
   @Test
@@ -290,7 +307,11 @@ public class DefaultTokenStateServiceTest {
   }
 
   protected String getGatewaySecurityDir() throws IOException {
-    return null;
+    if (gatewaySecurityDir == null) {
+      gatewaySecurityDir = testFolder.newFolder().toPath();
+      Files.createDirectories(gatewaySecurityDir);
+    }
+    return gatewaySecurityDir.toString();
   }
 
   protected TokenStateService createTokenStateService() throws Exception {

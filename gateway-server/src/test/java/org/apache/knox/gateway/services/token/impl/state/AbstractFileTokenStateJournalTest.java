@@ -227,4 +227,10 @@ public abstract class AbstractFileTokenStateJournalTest {
         }
     }
 
+    @Test
+    public void testGetUnknownToken() throws Exception {
+        GatewayConfig config = getGatewayConfig();
+        TokenStateJournal journal = createTokenStateJournal(config);
+        assertNull(journal.get(UUID.randomUUID().toString()));
+    }
 }

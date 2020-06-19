@@ -26,11 +26,8 @@ import org.apache.knox.gateway.services.token.state.JournalEntry;
 import org.apache.knox.gateway.services.token.state.TokenStateJournal;
 import org.apache.knox.gateway.services.token.impl.state.TokenStateJournalFactory;
 import org.easymock.EasyMock;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
@@ -56,21 +53,7 @@ import static org.junit.Assert.assertTrue;
 
 public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTest {
 
-  @Rule
-  public final TemporaryFolder testFolder = new TemporaryFolder();
-
-  private Path gatewaySecurityDir;
-
   private Long tokenStatePersistenceInterval = TimeUnit.SECONDS.toMillis(15);
-
-  @Override
-  protected String getGatewaySecurityDir() throws IOException {
-    if (gatewaySecurityDir == null) {
-      gatewaySecurityDir = testFolder.newFolder().toPath();
-      Files.createDirectories(gatewaySecurityDir);
-    }
-    return gatewaySecurityDir.toString();
-  }
 
   @Override
   protected long getTokenStatePersistenceInterval() {
@@ -168,13 +151,8 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     tss.setAliasService(aliasService);
     initTokenStateService(tss);
 
-    Field tokenExpirationsField = tss.getClass().getSuperclass().getDeclaredField("tokenExpirations");
-    tokenExpirationsField.setAccessible(true);
-    Map<String, Long> tokenExpirations = (Map<String, Long>) tokenExpirationsField.get(tss);
-
-    Field maxTokenLifetimesField = tss.getClass().getSuperclass().getDeclaredField("maxTokenLifetimes");
-    maxTokenLifetimesField.setAccessible(true);
-    Map<String, Long> maxTokenLifetimes = (Map<String, Long>) maxTokenLifetimesField.get(tss);
+    Map<String, Long> tokenExpirations = getTokenExpirationsField(tss);
+    Map<String, Long> maxTokenLifetimes = getMaxTokenLifetimesField(tss);
 
     final long evictionInterval = TimeUnit.SECONDS.toMillis(3);
     final long maxTokenLifetime = evictionInterval * 3;
@@ -263,13 +241,8 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     tss.setAliasService(aliasService);
     initTokenStateService(tss);
 
-    Field tokenExpirationsField = tss.getClass().getSuperclass().getDeclaredField("tokenExpirations");
-    tokenExpirationsField.setAccessible(true);
-    Map<String, Long> tokenExpirations = (Map<String, Long>) tokenExpirationsField.get(tss);
-
-    Field maxTokenLifetimesField = tss.getClass().getSuperclass().getDeclaredField("maxTokenLifetimes");
-    maxTokenLifetimesField.setAccessible(true);
-    Map<String, Long> maxTokenLifetimes = (Map<String, Long>) maxTokenLifetimesField.get(tss);
+    Map<String, Long> tokenExpirations = getTokenExpirationsField(tss);
+    Map<String, Long> maxTokenLifetimes = getMaxTokenLifetimesField(tss);
 
     try {
       tss.start();
@@ -316,9 +289,7 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     tss.setAliasService(aliasService);
     initTokenStateService(tss);
 
-    Field maxTokenLifetimesField = tss.getClass().getSuperclass().getDeclaredField("maxTokenLifetimes");
-    maxTokenLifetimesField.setAccessible(true);
-    Map<String, Long> maxTokenLifetimes = (Map<String, Long>) maxTokenLifetimesField.get(tss);
+    Map<String, Long> maxTokenLifetimes = getMaxTokenLifetimesField(tss);
 
     final long evictionInterval = TimeUnit.SECONDS.toMillis(3);
     final long maxTokenLifetime = evictionInterval * 3;
@@ -380,9 +351,7 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     tss.setAliasService(aliasService);
     initTokenStateService(tss);
 
-    Field tokenExpirationsField = tss.getClass().getSuperclass().getDeclaredField("tokenExpirations");
-    tokenExpirationsField.setAccessible(true);
-    Map<String, Long> tokenExpirations = (Map<String, Long>) tokenExpirationsField.get(tss);
+    Map<String, Long> tokenExpirations = getTokenExpirationsField(tss);
 
     final long evictionInterval = TimeUnit.SECONDS.toMillis(3);
     final long maxTokenLifetime = evictionInterval * 3;
@@ -537,18 +506,10 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     // Initialize the service, and presumably load the previously-persisted journal entries
     initTokenStateService(tss);
 
-    Field tokenExpirationsField = tss.getClass().getSuperclass().getDeclaredField("tokenExpirations");
-    tokenExpirationsField.setAccessible(true);
-    Map<String, Long> tokenExpirations = (Map<String, Long>) tokenExpirationsField.get(tss);
+    Map<String, Long> tokenExpirations = getTokenExpirationsField(tss);
+    Map<String, Long> maxTokenLifetimes = getMaxTokenLifetimesField(tss);
 
-    Field maxTokenLifetimesField = tss.getClass().getSuperclass().getDeclaredField("maxTokenLifetimes");
-    maxTokenLifetimesField.setAccessible(true);
-    Map<String, Long> maxTokenLifetimes = (Map<String, Long>) maxTokenLifetimesField.get(tss);
-
-    Field unpersistedStateField = tss.getClass().getDeclaredField("unpersistedState");
-    unpersistedStateField.setAccessible(true);
-    List<AliasBasedTokenStateService.TokenState> unpersistedState =
-            (List<AliasBasedTokenStateService.TokenState>) unpersistedStateField.get(tss);
+    List<AliasBasedTokenStateService.TokenState> unpersistedState = getUnpersistedStateField(tss);
 
     assertEquals("Expected the tokens expirations to have been added in the base class cache.",
                  TOKEN_COUNT,
@@ -621,18 +582,10 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     // Initialize the service, and presumably load the previously-persisted journal entries
     initTokenStateService(tss);
 
-    Field tokenExpirationsField = tss.getClass().getSuperclass().getDeclaredField("tokenExpirations");
-    tokenExpirationsField.setAccessible(true);
-    Map<String, Long> tokenExpirations = (Map<String, Long>) tokenExpirationsField.get(tss);
+    Map<String, Long> tokenExpirations = getTokenExpirationsField(tss);
+    Map<String, Long> maxTokenLifetimes = getMaxTokenLifetimesField(tss);
 
-    Field maxTokenLifetimesField = tss.getClass().getSuperclass().getDeclaredField("maxTokenLifetimes");
-    maxTokenLifetimesField.setAccessible(true);
-    Map<String, Long> maxTokenLifetimes = (Map<String, Long>) maxTokenLifetimesField.get(tss);
-
-    Field unpersistedStateField = tss.getClass().getDeclaredField("unpersistedState");
-    unpersistedStateField.setAccessible(true);
-    List<AliasBasedTokenStateService.TokenState> unpersistedState =
-            (List<AliasBasedTokenStateService.TokenState>) unpersistedStateField.get(tss);
+    List<AliasBasedTokenStateService.TokenState> unpersistedState = getUnpersistedStateField(tss);
 
     assertEquals("Expected the tokens expirations to have been added in the base class cache.",
                  TOKEN_COUNT,
@@ -803,6 +756,26 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
         e.printStackTrace();
       }
     }
+  }
+
+  private static Map<String, Long> getTokenExpirationsField(TokenStateService tss) throws Exception {
+    Field tokenExpirationsField = tss.getClass().getSuperclass().getDeclaredField("tokenExpirations");
+    tokenExpirationsField.setAccessible(true);
+    return (Map<String, Long>) tokenExpirationsField.get(tss);
+  }
+
+  private static Map<String, Long> getMaxTokenLifetimesField(TokenStateService tss) throws Exception {
+    Field maxTokenLifetimesField = tss.getClass().getSuperclass().getDeclaredField("maxTokenLifetimes");
+    maxTokenLifetimesField.setAccessible(true);
+    return (Map<String, Long>) maxTokenLifetimesField.get(tss);
+  }
+
+  private static List<AliasBasedTokenStateService.TokenState> getUnpersistedStateField(TokenStateService tss)
+          throws Exception {
+    Field unpersistedStateField = tss.getClass().getDeclaredField("unpersistedState");
+    unpersistedStateField.setAccessible(true);
+    return (List<AliasBasedTokenStateService.TokenState>) unpersistedStateField.get(tss);
+
   }
 
   private static class TestJournalEntry implements JournalEntry {

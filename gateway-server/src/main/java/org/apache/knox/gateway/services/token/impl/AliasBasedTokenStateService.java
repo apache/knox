@@ -234,11 +234,14 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     long expiration = 0;
     try {
       char[] expStr = aliasService.getPasswordFromAliasForCluster(AliasService.NO_CLUSTER_NAME, tokenId);
-      if (expStr != null) {
-        expiration = Long.parseLong(new String(expStr));
-        // Update the in-memory cache to avoid subsequent keystore look-ups for the same state
-        super.updateExpiration(tokenId, expiration);
+      if (expStr == null) {
+        throw new UnknownTokenException(tokenId);
       }
+      expiration = Long.parseLong(new String(expStr));
+      // Update the in-memory cache to avoid subsequent keystore look-ups for the same state
+      super.updateExpiration(tokenId, expiration);
+    } catch (UnknownTokenException e) {
+      throw e;
     } catch (Exception e) {
       log.errorAccessingTokenState(tokenId, e);
     }
