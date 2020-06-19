@@ -107,7 +107,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
       unAuthPathString = DEFAULT_SSO_UNAUTHENTICATED_PATHS_PARAM;
     }
 
-    final StringTokenizer st = new StringTokenizer(unAuthPathString, ";");
+    final StringTokenizer st = new StringTokenizer(unAuthPathString, ";,");
     while (st.hasMoreTokens()) {
       unAuthenticatedPaths.add(st.nextToken());
     }
@@ -147,19 +147,18 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
           /* This path is configured as an unauthenticated path let the request through */
           final Subject sub = new Subject();
           sub.getPrincipals().add(new PrimaryPrincipal("anonymous"));
-          LOGGER.unAuthenticatePathBypass(path, req.getRequestURI());
+          LOGGER.unauthenticatedPathBypass(path, req.getRequestURI());
           continueWithEstablishedSecurityContext(sub, req, res, chain);
         }
       }
 
-      if (req.getMethod().equals("OPTIONS")) {
+      if ("OPTIONS".equals(req.getMethod())) {
         // CORS preflight requests to determine allowed origins and related config
         // must be able to continue without being redirected
         Subject sub = new Subject();
         sub.getPrincipals().add(new PrimaryPrincipal("anonymous"));
         continueWithEstablishedSecurityContext(sub, req, res, chain);
-      }
-      else {
+      } else {
         sendRedirectToLoginURL(req, res);
       }
     } else {

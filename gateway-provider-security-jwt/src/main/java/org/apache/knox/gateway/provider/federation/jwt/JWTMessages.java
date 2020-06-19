@@ -57,5 +57,5 @@ public interface JWTMessages {
   void jwtAudienceValidated();
 
   @Message( level = MessageLevel.INFO, text = "Path {0} is configured as unauthenticated path, letting the request {1} through" )
-  void unAuthenticatePathBypass(String path, String uri);
+  void unauthenticatedPathBypass(String path, String uri);
 }
