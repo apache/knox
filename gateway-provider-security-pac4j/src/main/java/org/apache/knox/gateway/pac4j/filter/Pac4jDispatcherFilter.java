@@ -20,6 +20,8 @@ package org.apache.knox.gateway.pac4j.filter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.pac4j.Pac4jMessages;
+import org.apache.knox.gateway.pac4j.config.ClientConfigurationDecorator;
+import org.apache.knox.gateway.pac4j.config.Pac4jClientConfigurationDecorator;
 import org.apache.knox.gateway.pac4j.session.KnoxSessionStore;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
@@ -34,7 +36,6 @@ import org.pac4j.core.client.Client;
 import org.pac4j.core.config.Config;
 import org.pac4j.core.context.session.J2ESessionStore;
 import org.pac4j.core.context.session.SessionStore;
-import org.pac4j.core.http.callback.PathParameterCallbackUrlResolver;
 import org.pac4j.core.util.CommonHelper;
 import org.pac4j.http.client.indirect.IndirectBasicAuthClient;
 import org.pac4j.http.credentials.authenticator.test.SimpleTestUsernamePasswordAuthenticator;
@@ -73,6 +74,8 @@ import java.util.Map;
 public class Pac4jDispatcherFilter implements Filter {
 
   private static Pac4jMessages log = MessagesFactory.get(Pac4jMessages.class);
+
+  private static final ClientConfigurationDecorator PAC4J_CLIENT_CONFIGURATION_DECORATOR = new Pac4jClientConfigurationDecorator();
 
   public static final String TEST_BASIC_AUTH = "testBasicAuth";
 
@@ -181,19 +184,11 @@ public class Pac4jDispatcherFilter implements Filter {
         log.atLeastOnePac4jClientMustBeDefined();
         throw new ServletException("At least one pac4j client must be defined.");
       }
-      if (CommonHelper.isBlank(clientNameParameter)) {
-        clientName = clients.get(0).getName();
-      } else {
-        clientName = clientNameParameter;
-      }
 
-      /* special handling for Azure AD, use path separators instead of query params */
-      clients.forEach( client -> {
-        if(client.getName().equalsIgnoreCase(AzureAdClient.class.getSimpleName())) {
-          ((AzureAdClient)client).setCallbackUrlResolver(new PathParameterCallbackUrlResolver());
-        }
-      });
+      clientName = CommonHelper.isBlank(clientNameParameter) ? clients.get(0).getName() : clientNameParameter;
 
+      //decorating client configuration (if needed)
+      PAC4J_CLIENT_CONFIGURATION_DECORATOR.decorateClients(clients, properties);
     }
 
 
