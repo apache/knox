@@ -64,7 +64,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
   private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
 
   /* A semicolon separated list of paths that need to bypass authentication */
-  private static final String SSO_UNAUTHENTICATED_PATHS_PARAM = "gateway.knox.sso.unauthenticated.path.list";
+  private static final String SSO_UNAUTHENTICATED_PATHS_PARAM = "sso.unauthenticated.path.list";
   private static final String DEFAULT_SSO_UNAUTHENTICATED_PATHS_PARAM = "favicon.ico";
   private String cookieName;
   private String authenticationProviderUrl;
