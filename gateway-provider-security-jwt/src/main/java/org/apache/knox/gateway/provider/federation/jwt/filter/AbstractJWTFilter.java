@@ -284,6 +284,8 @@ public abstract class AbstractJWTFilter implements Filter {
       }
     }
 
+    final String tokenId = TokenUtils.getTokenId(token);
+    final String displayableToken = TokenUtils.getTokenDisplayText(token.toString());
     if (verified) {
       // confirm that issue matches intended target
       if (expectedIssuer.equals(token.getIssuer())) {
@@ -304,12 +306,12 @@ public abstract class AbstractJWTFilter implements Filter {
                 }
             }
             else {
-              log.failedToValidateAudience();
+              log.failedToValidateAudience(tokenId, displayableToken);
               handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
                                     "Bad request: missing required token audience");
             }
           } else {
-            log.tokenHasExpired();
+            log.tokenHasExpired(tokenId, displayableToken);
             handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
                                   "Bad request: token has expired");
           }
@@ -323,7 +325,7 @@ public abstract class AbstractJWTFilter implements Filter {
       }
     }
     else {
-      log.failedToVerifyTokenSignature();
+      log.failedToVerifyTokenSignature(tokenId, displayableToken);
       handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
     }
 
