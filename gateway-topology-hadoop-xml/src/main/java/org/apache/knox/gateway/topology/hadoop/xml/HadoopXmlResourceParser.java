@@ -14,7 +14,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.knox.gateway.topology.hadoopxml;
+package org.apache.knox.gateway.topology.hadoop.xml;
 
 import java.io.File;
 import java.nio.file.Paths;

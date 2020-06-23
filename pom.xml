@@ -138,7 +138,7 @@
         <module>gateway-service-hashicorp-vault</module>
         <module>gateway-release-common</module>
         <module>gateway-topology-simple</module>
-        <module>gateway-topology-hadoopxml</module>
+        <module>gateway-topology-hadoop-xml</module>
         <module>gateway-service-metadata</module>
         <module>knox-homepage-ui</module>
     </modules>
@@ -1174,7 +1174,7 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.knox</groupId>
-                <artifactId>gateway-topology-hadoopxml</artifactId>
+                <artifactId>gateway-topology-hadoop-xml</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

@@ -25,8 +25,8 @@
         <version>1.5.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>gateway-topology-hadoopxml</artifactId>
-    <name>gateway-topology-hadoopxml</name>
+    <artifactId>gateway-topology-hadoop-xml</artifactId>
+    <name>gateway-topology-hadoop-xml</name>
     <description>Topology generation using Hadoop style XML resources</description>
 
     <dependencies>
