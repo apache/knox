@@ -14,7 +14,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.knox.gateway;
+package org.apache.knox.gateway.topology.hadoopxml;
 
 import org.apache.knox.gateway.i18n.messages.Message;
 import org.apache.knox.gateway.i18n.messages.MessageLevel;
@@ -22,19 +22,22 @@ import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
 
 @Messages(logger = "org.apache.knox.gateway")
-public interface ClouderaManagerIntegrationMessages {
+public interface HadoopXmlResourceMessages {
 
-  @Message(level = MessageLevel.INFO, text = "Monitoring Cloudera Manager descriptors in {0} ...")
-  void monitoringClouderaManagerDescriptor(String path);
+  @Message(level = MessageLevel.INFO, text = "Monitoring Knox resources in Hadoop style XML configurations in {0} ...")
+  void monitoringHadoopXmlResources(String path);
 
-  @Message(level = MessageLevel.INFO, text = "Monitoring Cloudera Manager descriptors is disabled.")
-  void disableMonitoringClouderaManagerDescriptor();
+  @Message(level = MessageLevel.INFO, text = "Monitoring Knox resources in Hadoop style XML configurations is disabled.")
+  void disableMonitoringHadoopXmlResources();
 
-  @Message(level = MessageLevel.INFO, text = "Parsing Cloudera Manager descriptor {0}. Looking up {1}...")
-  void parseClouderaManagerDescriptor(String path, String topologyName);
+  @Message(level = MessageLevel.INFO, text = "Parsing  Knox resources in Hadoop style XML {0}. Looking up {1}...")
+  void parseHadoopXmlResource(String path, String topologyName);
 
   @Message(level = MessageLevel.INFO, text = "Found Knox descriptors {0} in {1}")
-  void parsedClouderaManagerDescriptor(String descriptorList, String path);
+  void foundKnoxDescriptors(String descriptorList, String path);
+
+  @Message(level = MessageLevel.INFO, text = "Found Knox provider configurations {0} in {1}")
+  void foundKnoxProviderConfigurations(String providerConfigurationList, String path);
 
   @Message(level = MessageLevel.INFO, text = "Saved Knox {0} into {1}")
   void savedResource(String resourceType, String path);
@@ -51,8 +54,8 @@ public interface ClouderaManagerIntegrationMessages {
   @Message(level = MessageLevel.ERROR, text = "Parsing XML configuration {0} failed: {1}")
   void failedToParseXmlConfiguration(String path, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
-  @Message(level = MessageLevel.ERROR, text = "Error while monitoring CM descriptor {0}: {1}")
-  void failedToMonitorClouderaManagerDescriptor(String descriptorPath, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+  @Message(level = MessageLevel.ERROR, text = "Error while monitoring Hadoop style XML configuration {0}: {1}")
+  void failedToMonitorHadoopXmlResource(String descriptorPath, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.ERROR, text = "Error while producing Knox descriptor: {0}")
   void failedToProduceKnoxDescriptor(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);

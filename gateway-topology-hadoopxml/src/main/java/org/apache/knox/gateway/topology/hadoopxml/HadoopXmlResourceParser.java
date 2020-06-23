@@ -14,7 +14,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.knox.gateway.cm.descriptor;
+package org.apache.knox.gateway.topology.hadoopxml;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.knox.gateway.ClouderaManagerIntegrationMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.topology.discovery.advanced.AdvancedServiceDiscoveryConfig;
@@ -46,8 +45,12 @@ import org.apache.knox.gateway.topology.simple.SimpleDescriptorImpl;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorImpl.ApplicationImpl;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorImpl.ServiceImpl;
 
-public class ClouderaManagerDescriptorParser implements AdvancedServiceDiscoveryConfigChangeListener {
-  private static final ClouderaManagerIntegrationMessages log = MessagesFactory.get(ClouderaManagerIntegrationMessages.class);
+/**
+ * Parses Knox descriptors and provider configurations from Hadoop style XML config
+ *
+ */
+public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigChangeListener {
+  private static final HadoopXmlResourceMessages log = MessagesFactory.get(HadoopXmlResourceMessages.class);
 
   //shared provider related constants
   private static final String CONFIG_NAME_PROVIDER_CONFIGS_PREFIX = "providerConfigs:";
@@ -71,7 +74,7 @@ public class ClouderaManagerDescriptorParser implements AdvancedServiceDiscovery
   private final Map<String, AdvancedServiceDiscoveryConfig> advancedServiceDiscoveryConfigMap;
   private final String sharedProvidersDir;
 
-  public ClouderaManagerDescriptorParser(GatewayConfig gatewayConfig) {
+  public HadoopXmlResourceParser(GatewayConfig gatewayConfig) {
     this.advancedServiceDiscoveryConfigMap = new ConcurrentHashMap<>();
     this.sharedProvidersDir = gatewayConfig.getGatewayProvidersConfigDir();
   }
@@ -83,7 +86,7 @@ public class ClouderaManagerDescriptorParser implements AdvancedServiceDiscovery
    *          The path to the configuration file which holds descriptor information in a pre-defined format.
    * @return A SimpleDescriptor based on the contents of the given file.
    */
-  public ClouderaManagerDescriptorParserResult parse(String path) {
+  public HadoopXmlResourceParserResult parse(String path) {
     return parse(path, null);
   }
 
@@ -96,22 +99,31 @@ public class ClouderaManagerDescriptorParser implements AdvancedServiceDiscovery
    *          if set, the parser should only parse a descriptor with the same name
    * @return A SimpleDescriptor based on the contents of the given file.
    */
-  public ClouderaManagerDescriptorParserResult parse(String path, String topologyName) {
+  public HadoopXmlResourceParserResult parse(String path, String topologyName) {
     try {
-      log.parseClouderaManagerDescriptor(path, topologyName == null ? "all topologies" : topologyName);
+      log.parseHadoopXmlResource(path, topologyName == null ? "all topologies" : topologyName);
       final Configuration xmlConfiguration = new Configuration(false);
       xmlConfiguration.addResource(Paths.get(path).toUri().toURL());
       xmlConfiguration.reloadConfiguration();
-      final ClouderaManagerDescriptorParserResult descriptors = parseXmlConfig(xmlConfiguration, topologyName);
-      log.parsedClouderaManagerDescriptor(String.join(", ", descriptors.getDescriptors().stream().map(descriptor -> descriptor.getName()).collect(Collectors.toSet())), path);
-      return descriptors;
+      final HadoopXmlResourceParserResult parserResult = parseXmlConfig(xmlConfiguration, topologyName);
+      logParserResult(path, parserResult);
+      return parserResult;
     } catch (Exception e) {
       log.failedToParseXmlConfiguration(path, e.getMessage(), e);
-      return new ClouderaManagerDescriptorParserResult();
+      return new HadoopXmlResourceParserResult();
     }
   }
 
-  private ClouderaManagerDescriptorParserResult parseXmlConfig(Configuration xmlConfiguration, String topologyName) {
+  private void logParserResult(String path, final HadoopXmlResourceParserResult parserResult) {
+    if (!parserResult.getDescriptors().isEmpty()) {
+      log.foundKnoxDescriptors(String.join(", ", parserResult.getDescriptors().stream().map(descriptor -> descriptor.getName()).collect(Collectors.toSet())), path);
+    }
+    if (!parserResult.getProviders().isEmpty()) {
+      log.foundKnoxProviderConfigurations(String.join(", ", parserResult.getProviders().keySet().stream().collect(Collectors.toSet())), path);
+    }
+  }
+
+  private HadoopXmlResourceParserResult parseXmlConfig(Configuration xmlConfiguration, String topologyName) {
     final Map<String, ProviderConfiguration> providers = new LinkedHashMap<>();
     final Set<SimpleDescriptor> descriptors = new LinkedHashSet<>();
     xmlConfiguration.forEach(xmlDescriptor -> {
@@ -138,7 +150,7 @@ public class ClouderaManagerDescriptorParser implements AdvancedServiceDiscovery
         }
       }
     });
-    return new ClouderaManagerDescriptorParserResult(providers, descriptors);
+    return new HadoopXmlResourceParserResult(providers, descriptors);
   }
 
   private ProviderConfiguration getProviderConfiguration(Map<String, ProviderConfiguration> providers, File providerConfigFile, String providerConfigName)

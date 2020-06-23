@@ -14,7 +14,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.knox.gateway.cm.descriptor;
+package org.apache.knox.gateway.topology.hadoopxml;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -48,13 +48,13 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-public class ClouderaManagerDescriptorParserTest {
+public class HadoopXmlResourceParserTest {
 
   @Rule
   public TemporaryFolder tempDir = new TemporaryFolder();
 
   private GatewayConfig gatewayConfigMock;
-  private ClouderaManagerDescriptorParser cmDescriptorParser;
+  private HadoopXmlResourceParser hadoopXmlResourceParser;
   private File providersDir;
 
   @Before
@@ -63,13 +63,13 @@ public class ClouderaManagerDescriptorParserTest {
     gatewayConfigMock = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfigMock.getGatewayProvidersConfigDir()).andReturn(providersDir.getAbsolutePath()).anyTimes();
     EasyMock.replay(gatewayConfigMock);
-    cmDescriptorParser = new ClouderaManagerDescriptorParser(gatewayConfigMock);
+    hadoopXmlResourceParser = new HadoopXmlResourceParser(gatewayConfigMock);
   }
 
   @Test
   public void testCMDescriptorParser() throws Exception {
     final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptor.xml").getPath();
-    final ClouderaManagerDescriptorParserResult parserResult = cmDescriptorParser.parse(testConfigPath);
+    final HadoopXmlResourceParserResult parserResult = hadoopXmlResourceParser.parse(testConfigPath);
     final Set<SimpleDescriptor> descriptors = parserResult.getDescriptors();
     assertEquals(2, descriptors.size());
     final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
@@ -81,7 +81,7 @@ public class ClouderaManagerDescriptorParserTest {
   @Test
   public void testCMDescriptorParserOnlyTopology2() throws Exception {
     final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptor.xml").getPath();
-    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath, "topology2").getDescriptors();
+    final Set<SimpleDescriptor> descriptors = hadoopXmlResourceParser.parse(testConfigPath, "topology2").getDescriptors();
     assertEquals(1, descriptors.size());
     validateTopology2Descriptors(descriptors.iterator().next(), true);
   }
@@ -89,7 +89,7 @@ public class ClouderaManagerDescriptorParserTest {
   @Test
   public void testCMDescriptorParserWrongDescriptorContent() throws Exception {
     final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptorConfigurationWithWrongDescriptor.xml").getPath();
-    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath).getDescriptors();
+    final Set<SimpleDescriptor> descriptors = hadoopXmlResourceParser.parse(testConfigPath).getDescriptors();
     assertEquals(1, descriptors.size());
     final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
     validateTopology1Descriptors(descriptorsIterator.next());
@@ -98,7 +98,7 @@ public class ClouderaManagerDescriptorParserTest {
   @Test
   public void testCMDescriptorParserWrongXMLContent() throws Exception {
     final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptorConfigurationWithNonHadoopStyleConfiguration.xml").getPath();
-    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath).getDescriptors();
+    final Set<SimpleDescriptor> descriptors = hadoopXmlResourceParser.parse(testConfigPath).getDescriptors();
     assertTrue(descriptors.isEmpty());
   }
 
@@ -109,14 +109,14 @@ public class ClouderaManagerDescriptorParserTest {
     final Properties advancedConfigurationTopology1 = new Properties();
     advancedConfigurationTopology1.put(buildEnabledParameter("topology1", "HIVE"), "false");
     advancedConfigurationTopology1.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_TOPOLOGY_NAME, "topology1");
-    cmDescriptorParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfigurationTopology1);
+    hadoopXmlResourceParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfigurationTopology1);
 
     final Properties advancedConfigurationTopology2 = new Properties();
     advancedConfigurationTopology2.put(buildEnabledParameter("topology2", "NIFI"), "false");
     advancedConfigurationTopology2.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_TOPOLOGY_NAME, "topology2");
-    cmDescriptorParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfigurationTopology2);
+    hadoopXmlResourceParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfigurationTopology2);
 
-    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath).getDescriptors();
+    final Set<SimpleDescriptor> descriptors = hadoopXmlResourceParser.parse(testConfigPath).getDescriptors();
     assertEquals(2, descriptors.size());
     final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
     SimpleDescriptor topology1 = descriptorsIterator.next();
@@ -136,8 +136,8 @@ public class ClouderaManagerDescriptorParserTest {
     final Properties advancedConfiguration = new Properties();
     advancedConfiguration.put(buildEnabledParameter("topology1", "oozie"), "true"); //it should not matter if service name is lowercase advanced configuration
     advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_TOPOLOGY_NAME, "topology1");
-    cmDescriptorParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfiguration);
-    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath).getDescriptors();
+    hadoopXmlResourceParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfiguration);
+    final Set<SimpleDescriptor> descriptors = hadoopXmlResourceParser.parse(testConfigPath).getDescriptors();
     final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
     SimpleDescriptor descriptor = descriptorsIterator.next();
     assertNotNull(descriptor);
@@ -152,7 +152,7 @@ public class ClouderaManagerDescriptorParserTest {
   @Test
   public void testCMDescriptorParserModifyingProviderParams() {
     String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptor.xml").getPath();
-    ClouderaManagerDescriptorParserResult parserResult = cmDescriptorParser.parse(testConfigPath);
+    HadoopXmlResourceParserResult parserResult = hadoopXmlResourceParser.parse(testConfigPath);
     validateTestDescriptorProviderConfigs(parserResult.getProviders(), "ldap://localhost:33389");
 
     //saving admin and knoxsso shared-providers with LDAP authentication provider only
@@ -168,14 +168,14 @@ public class ClouderaManagerDescriptorParserTest {
 
     //updating LDAP URL from ldap://localhost:33389 to ldaps://localhost:33390 in 'admin'
     testConfigPath = this.getClass().getClassLoader().getResource("testDescriptorWithAdminProviderConfigUpdatedLdapUrl.xml").getPath();
-    parserResult = cmDescriptorParser.parse(testConfigPath);
+    parserResult = hadoopXmlResourceParser.parse(testConfigPath);
     validateTestDescriptorProviderConfigs(parserResult.getProviders(), "ldaps://localhost:33390", true, true);
   }
 
   @Test
   public void testCMDescriptorParserRemovingProviderParams() {
     String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptor.xml").getPath();
-    ClouderaManagerDescriptorParserResult parserResult = cmDescriptorParser.parse(testConfigPath);
+    HadoopXmlResourceParserResult parserResult = hadoopXmlResourceParser.parse(testConfigPath);
     //saving admin and knoxsso shared-providers with LDAP authentication provider only
     parserResult.getProviders().forEach((key, value) -> {
       final File knoxProviderConfigFile = new File(providersDir, key + ".json");
@@ -189,7 +189,7 @@ public class ClouderaManagerDescriptorParserTest {
 
     //removed 'main.ldapRealm.userDnTemplate' parameter from 'admin'
     testConfigPath = this.getClass().getClassLoader().getResource("testDescriptorWithAdminProviderConfigRemovedUserDnTemplate.xml").getPath();
-    parserResult = cmDescriptorParser.parse(testConfigPath);
+    parserResult = hadoopXmlResourceParser.parse(testConfigPath);
     validateTestDescriptorProviderConfigs(parserResult.getProviders(), "ldap://localhost:33389", true, false);
   }
 
@@ -206,8 +206,8 @@ public class ClouderaManagerDescriptorParserTest {
     advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_TOPOLOGY_NAME, "topology1");
     advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_DISCOVERY_ADDRESS, address);
     advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_DISCOVERY_CLUSTER, cluster);
-    cmDescriptorParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfiguration);
-    final Set<SimpleDescriptor> descriptors = cmDescriptorParser.parse(testConfigPath).getDescriptors();
+    hadoopXmlResourceParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfiguration);
+    final Set<SimpleDescriptor> descriptors = hadoopXmlResourceParser.parse(testConfigPath).getDescriptors();
     final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
     SimpleDescriptor descriptor = descriptorsIterator.next();
     assertEquals(address, descriptor.getDiscoveryAddress());
