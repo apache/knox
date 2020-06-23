@@ -23,14 +23,14 @@ import org.apache.knox.gateway.i18n.messages.StackTrace;
 
 @Messages(logger="org.apache.knox.gateway.provider.federation.jwt")
 public interface JWTMessages {
-  @Message( level = MessageLevel.WARN, text = "Failed to validate the audience attribute." )
-  void failedToValidateAudience();
+  @Message( level = MessageLevel.WARN, text = "Failed to validate the audience attribute for token {1} ({2})" )
+  void failedToValidateAudience(String tokenDisplayText, String tokenId);
 
-  @Message( level = MessageLevel.WARN, text = "Failed to verify the token signature." )
-  void failedToVerifyTokenSignature();
+  @Message( level = MessageLevel.WARN, text = "Failed to verify the token signature of {1} ({2})" )
+  void failedToVerifyTokenSignature(String tokenDisplayText, String tokenId);
 
-  @Message( level = MessageLevel.INFO, text = "Access token has expired; a new one must be acquired." )
-  void tokenHasExpired();
+  @Message( level = MessageLevel.INFO, text = "Access token {1} ({2}) has expired; a new one must be acquired." )
+  void tokenHasExpired(String tokenDisplayText, String tokenId);
 
   @Message( level = MessageLevel.INFO, text = "The NotBefore check failed." )
   void notBeforeCheckFailed();
