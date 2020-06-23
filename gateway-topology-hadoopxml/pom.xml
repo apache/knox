@@ -25,9 +25,9 @@
         <version>1.5.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>gateway-cm-integration</artifactId>
-    <name>gateway-cm-integration</name>
-    <description>Cloudera Manager integration related resources</description>
+    <artifactId>gateway-topology-hadoopxml</artifactId>
+    <name>gateway-topology-hadoopxml</name>
+    <description>Topology generation using Hadoop style XML resources</description>
 
     <dependencies>
         <dependency>
