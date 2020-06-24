@@ -33,4 +33,14 @@
       <rewrite apply="CM-API/cm-api/rest" to="request.body"/>
     </route>
   </routes>
+  <dispatch classname="org.apache.knox.gateway.dispatch.DefaultDispatch">
+    <param>
+      <name>httpclient.connectionTimeout</name>
+      <value>5m</value>
+    </param>
+    <param>
+      <name>httpclient.socketTimeout</name>
+      <value>5m</value>
+    </param>
+  </dispatch>
 </service>

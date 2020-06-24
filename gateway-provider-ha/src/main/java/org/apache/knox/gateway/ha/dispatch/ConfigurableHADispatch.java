@@ -21,7 +21,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.knox.gateway.config.Configure;
-import org.apache.knox.gateway.config.Optional;
 import org.apache.knox.gateway.dispatch.ConfigurableDispatch;
 import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.ha.dispatch.i18n.HaDispatchMessages;
@@ -52,10 +51,6 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
 
   private HaProvider haProvider;
 
-  @Optional
-  @Configure
-  private String serviceRole;
-
   @Override
   public void init() {
     super.init();
@@ -65,14 +60,6 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
       maxFailoverAttempts = serviceConfig.getMaxFailoverAttempts();
       failoverSleep = serviceConfig.getFailoverSleep();
     }
-  }
-
-  public String getServiceRole() {
-    return serviceRole;
-  }
-
-  public void setServiceRole(String serviceRole) {
-    this.serviceRole = serviceRole;
   }
 
   public HaProvider getHaProvider() {

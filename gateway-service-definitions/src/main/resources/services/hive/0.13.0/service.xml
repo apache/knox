@@ -24,5 +24,14 @@
     <routes>
         <route path="/hive"/>
     </routes>
-    <dispatch classname="org.apache.knox.gateway.hive.HiveDispatch" ha-classname="org.apache.knox.gateway.hive.HiveHaDispatch"/>
+    <dispatch classname="org.apache.knox.gateway.hive.HiveDispatch" ha-classname="org.apache.knox.gateway.hive.HiveHaDispatch">
+      <param>
+        <name>httpclient.connectionTimeout</name>
+        <value>5m</value>
+      </param>
+      <param>
+        <name>httpclient.socketTimeout</name>
+        <value>5m</value>
+      </param>
+    </dispatch>
 </service>

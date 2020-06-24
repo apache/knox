@@ -32,5 +32,5 @@
             <rewrite apply="NIFI-REGISTRY/nifi-registry/inbound/path/query-other" to="request.url"/>
         </route>
     </routes>
-    <dispatch classname="org.apache.knox.gateway.dispatch.NiFiRegistryDispatch" ha-classname="org.apache.knox.gateway.dispatch.NiFiRegistryHaDispatch" />
+    <dispatch classname="org.apache.knox.gateway.dispatch.NiFiRegistryDispatch" ha-classname="org.apache.knox.gateway.dispatch.NiFiRegistryHaDispatch"  use-two-way-ssl="true" />
 </service>

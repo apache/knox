@@ -26,5 +26,14 @@
     <routes>
         <route path="/impala"/>
     </routes>
-    <dispatch classname="org.apache.knox.gateway.impala.ImpalaDispatch" ha-classname="org.apache.knox.gateway.impala.ImpalaHaDispatch"/>
+    <dispatch classname="org.apache.knox.gateway.impala.ImpalaDispatch" ha-classname="org.apache.knox.gateway.impala.ImpalaHaDispatch">
+      <param>
+        <name>httpclient.connectionTimeout</name>
+        <value>5m</value>
+      </param>
+      <param>
+        <name>httpclient.socketTimeout</name>
+        <value>5m</value>
+      </param>
+    </dispatch>
 </service>
