@@ -14,7 +14,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.knox.gateway.cm.descriptor;
+package org.apache.knox.gateway.topology.hadoop.xml;
 
 import java.util.Collections;
 import java.util.Map;
@@ -23,15 +23,15 @@ import java.util.Set;
 import org.apache.knox.gateway.topology.simple.ProviderConfiguration;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
 
-class ClouderaManagerDescriptorParserResult {
+class HadoopXmlResourceParserResult {
   final Map<String, ProviderConfiguration> providers;
   final Set<SimpleDescriptor> descriptors;
 
-  ClouderaManagerDescriptorParserResult() {
+  HadoopXmlResourceParserResult() {
     this(Collections.emptyMap(), Collections.emptySet());
   }
 
-  ClouderaManagerDescriptorParserResult(Map<String, ProviderConfiguration> providers, Set<SimpleDescriptor> descriptors) {
+  HadoopXmlResourceParserResult(Map<String, ProviderConfiguration> providers, Set<SimpleDescriptor> descriptors) {
     this.providers = providers;
     this.descriptors = descriptors;
   }

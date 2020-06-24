@@ -14,7 +14,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.knox.gateway.cm.descriptor;
+package org.apache.knox.gateway.topology.hadoop.xml;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -33,7 +33,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
-import org.apache.knox.gateway.ClouderaManagerIntegrationMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.topology.discovery.advanced.AdvancedServiceDiscoveryConfig;
@@ -41,21 +40,21 @@ import org.apache.knox.gateway.topology.discovery.advanced.AdvancedServiceDiscov
 import org.apache.knox.gateway.util.JsonUtils;
 
 /**
- * Monitoring KNOX_DESCRIPTOR_DIR for *.cm files - which is a Hadoop XML configuration - and processing those files if they were modified
+ * Monitoring KNOX_DESCRIPTOR_DIR for *.hxr files - which is a Hadoop XML configuration - and processing those files if they were modified
  * since the last time it they were processed
  */
-public class ClouderaManagerDescriptorMonitor implements AdvancedServiceDiscoveryConfigChangeListener {
+public class HadoopXmlResourceMonitor implements AdvancedServiceDiscoveryConfigChangeListener {
 
-  private static final String CM_DESCRIPTOR_FILE_EXTENSION = ".cm";
-  private static final ClouderaManagerIntegrationMessages LOG = MessagesFactory.get(ClouderaManagerIntegrationMessages.class);
+  private static final String HADOOP_XML_RESOURCE_FILE_EXTENSION = ".hxr";
+  private static final HadoopXmlResourceMessages LOG = MessagesFactory.get(HadoopXmlResourceMessages.class);
   private final String sharedProvidersDir;
   private final String descriptorsDir;
   private final long monitoringInterval;
-  private final ClouderaManagerDescriptorParser cmDescriptorParser;
+  private final HadoopXmlResourceParser hadoopXmlResourceParser;
   private FileTime lastReloadTime;
 
-  public ClouderaManagerDescriptorMonitor(GatewayConfig gatewayConfig, ClouderaManagerDescriptorParser cmDescriptorParser) {
-    this.cmDescriptorParser = cmDescriptorParser;
+  public HadoopXmlResourceMonitor(GatewayConfig gatewayConfig, HadoopXmlResourceParser hadoopXmlResourceParser) {
+    this.hadoopXmlResourceParser = hadoopXmlResourceParser;
     this.sharedProvidersDir = gatewayConfig.getGatewayProvidersConfigDir();
     this.descriptorsDir = gatewayConfig.getGatewayDescriptorsDir();
     this.monitoringInterval = gatewayConfig.getClouderaManagerDescriptorsMonitoringInterval();
@@ -65,14 +64,14 @@ public class ClouderaManagerDescriptorMonitor implements AdvancedServiceDiscover
     if (monitoringInterval > 0) {
       final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(new BasicThreadFactory.Builder().namingPattern("ClouderaManagerDescriptorMonitor-%d").build());
       executorService.scheduleAtFixedRate(() -> monitorClouderaManagerDescriptors(null), 0, monitoringInterval, TimeUnit.MILLISECONDS);
-      LOG.monitoringClouderaManagerDescriptor(descriptorsDir);
+      LOG.monitoringHadoopXmlResources(descriptorsDir);
     } else {
-      LOG.disableMonitoringClouderaManagerDescriptor();
+      LOG.disableMonitoringHadoopXmlResources();
     }
   }
 
   private void monitorClouderaManagerDescriptors(String topologyName) {
-    final File[] clouderaManagerDescriptorFiles = new File(descriptorsDir).listFiles((FileFilter) new SuffixFileFilter(CM_DESCRIPTOR_FILE_EXTENSION));
+    final File[] clouderaManagerDescriptorFiles = new File(descriptorsDir).listFiles((FileFilter) new SuffixFileFilter(HADOOP_XML_RESOURCE_FILE_EXTENSION));
     for (File clouderaManagerDescriptorFile : clouderaManagerDescriptorFiles) {
       monitorClouderaManagerDescriptor(Paths.get(clouderaManagerDescriptorFile.getAbsolutePath()), topologyName);
     }
@@ -87,20 +86,20 @@ public class ClouderaManagerDescriptorMonitor implements AdvancedServiceDiscover
           processClouderaManagerDescriptor(clouderaManagerDescriptorFile.toString(), topologyName);
         }
       } else {
-        LOG.failedToMonitorClouderaManagerDescriptor(clouderaManagerDescriptorFile.toString(), "File is not readable!", null);
+        LOG.failedToMonitorHadoopXmlResource(clouderaManagerDescriptorFile.toString(), "File is not readable!", null);
       }
     } catch (IOException e) {
-      LOG.failedToMonitorClouderaManagerDescriptor(clouderaManagerDescriptorFile.toString(), e.getMessage(), e);
+      LOG.failedToMonitorHadoopXmlResource(clouderaManagerDescriptorFile.toString(), e.getMessage(), e);
     }
   }
 
   private void processClouderaManagerDescriptor(String descriptorFilePath, String topologyName) {
-    final ClouderaManagerDescriptorParserResult result = cmDescriptorParser.parse(descriptorFilePath, topologyName);
+    final HadoopXmlResourceParserResult result = hadoopXmlResourceParser.parse(descriptorFilePath, topologyName);
     processSharedProviders(result);
     processDescriptors(result);
   }
 
-  private void processSharedProviders(final ClouderaManagerDescriptorParserResult result) {
+  private void processSharedProviders(final HadoopXmlResourceParserResult result) {
     result.getProviders().forEach((key, value) -> {
       try {
         final File knoxProviderConfigFile = new File(sharedProvidersDir, key + ".json");
@@ -117,7 +116,7 @@ public class ClouderaManagerDescriptorMonitor implements AdvancedServiceDiscover
     });
   }
 
-  private void processDescriptors(final ClouderaManagerDescriptorParserResult result) {
+  private void processDescriptors(final HadoopXmlResourceParserResult result) {
     result.getDescriptors().forEach(simpleDescriptor -> {
       try {
         final File knoxDescriptorFile = new File(descriptorsDir, simpleDescriptor.getName() + ".json");

@@ -67,7 +67,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
-            <artifactId>gateway-cm-integration</artifactId>
+            <artifactId>gateway-topology-hadoop-xml</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
