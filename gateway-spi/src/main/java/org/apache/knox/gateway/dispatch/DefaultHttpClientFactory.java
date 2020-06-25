@@ -31,7 +31,9 @@ import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.SpiGatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.metrics.MetricsService;
 import org.apache.http.HttpRequest;
@@ -64,10 +66,13 @@ import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 
 public class DefaultHttpClientFactory implements HttpClientFactory {
+  private static final SpiGatewayMessages LOG = MessagesFactory.get(SpiGatewayMessages.class);
+  private static final String PARAMETER_SERVICE_ROLE = "serviceRole";
   static final String PARAMETER_USE_TWO_WAY_SSL = "useTwoWaySsl";
 
   @Override
   public HttpClient createHttpClient(FilterConfig filterConfig) {
+    final String serviceRole = filterConfig.getInitParameter(PARAMETER_SERVICE_ROLE);
     HttpClientBuilder builder;
     GatewayConfig gatewayConfig = (GatewayConfig) filterConfig.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
     GatewayServices services = (GatewayServices) filterConfig.getServletContext()
@@ -80,7 +85,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     }
 
     // Conditionally set a custom SSLContext
-    SSLContext sslContext = createSSLContext(services, filterConfig);
+    SSLContext sslContext = createSSLContext(services, filterConfig, serviceRole);
     if(sslContext != null) {
       builder.setSSLSocketFactory(new SSLConnectionSocketFactory(sslContext));
     }
@@ -109,7 +114,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     builder.setMaxConnTotal( maxConnections );
     builder.setMaxConnPerRoute( maxConnections );
 
-    builder.setDefaultRequestConfig( getRequestConfig( filterConfig ) );
+    builder.setDefaultRequestConfig(getRequestConfig(filterConfig, serviceRole));
 
     // See KNOX-1530 for details
     builder.disableContentCompression();
@@ -134,9 +139,10 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
    *
    * @param services     the {@link GatewayServices}
    * @param filterConfig a {@link FilterConfig} used to query for parameters for this operation
+   * @param serviceRole the name of the service role to whom this HTTP client is being created for
    * @return a {@link SSLContext} or <code>null</code> if a custom {@link SSLContext} is not needed.
    */
-  SSLContext createSSLContext(GatewayServices services, FilterConfig filterConfig) {
+  SSLContext createSSLContext(GatewayServices services, FilterConfig filterConfig, String serviceRole) {
     KeyStore identityKeystore;
     char[] identityKeyPassphrase;
     KeyStore trustKeystore;
@@ -144,6 +150,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     KeystoreService ks = services.getService(ServiceType.KEYSTORE_SERVICE);
     try {
       if (Boolean.parseBoolean(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL))) {
+        LOG.usingTwoWaySsl(serviceRole);
         AliasService as = services.getService(ServiceType.ALIAS_SERVICE);
 
         // Get the Gateway's configured identity keystore and key passphrase
@@ -191,16 +198,18 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     }
   }
 
-  static RequestConfig getRequestConfig( FilterConfig config ) {
+  static RequestConfig getRequestConfig(FilterConfig config, String serviceRole) {
     RequestConfig.Builder builder = RequestConfig.custom();
     int connectionTimeout = getConnectionTimeout( config );
     if ( connectionTimeout != -1 ) {
       builder.setConnectTimeout( connectionTimeout );
       builder.setConnectionRequestTimeout( connectionTimeout );
+      LOG.setHttpClientConnectionTimeout(connectionTimeout, serviceRole == null ? "N/A" : serviceRole);
     }
     int socketTimeout = getSocketTimeout( config );
     if( socketTimeout != -1 ) {
       builder.setSocketTimeout( socketTimeout );
+      LOG.setHttpClientSocketTimeout(socketTimeout, serviceRole == null ? "N/A" : serviceRole);
     }
 
     // HttpClient 4.5.7 is broken for %2F handling with url normalization.

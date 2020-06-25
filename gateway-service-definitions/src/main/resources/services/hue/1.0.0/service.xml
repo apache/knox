@@ -61,5 +61,13 @@
       <name>responseExcludeHeaders</name>
       <value>WWW-AUTHENTICATE</value>
     </param>
+    <param>
+      <name>httpclient.connectionTimeout</name>
+      <value>5m</value>
+    </param>
+    <param>
+      <name>httpclient.socketTimeout</name>
+      <value>5m</value>
+    </param>
   </dispatch>
 </service>

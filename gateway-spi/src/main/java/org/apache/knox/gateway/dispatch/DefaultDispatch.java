@@ -40,6 +40,7 @@ import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.config.Configure;
 import org.apache.knox.gateway.config.Default;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.config.Optional;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
 import org.apache.knox.gateway.util.MimeTypes;
@@ -72,6 +73,10 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
   private Set<String> outboundResponseExcludeHeaders = Collections.singleton(WWW_AUTHENTICATE);
   private Set<String> outboundResponseExcludedSetCookieHeaderDirectives = Collections.singleton(EXCLUDE_ALL);
 
+  @Optional
+  @Configure
+  private String serviceRole;
+
   //Buffer size in bytes
   private int replayBufferSize = -1;
 
@@ -84,6 +89,14 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       return Math.abs(replayBufferSize/1024);
     }
     return replayBufferSize;
+  }
+
+  public String getServiceRole() {
+    return serviceRole;
+  }
+
+  public void setServiceRole(String serviceRole) {
+    this.serviceRole = serviceRole;
   }
 
   @Configure
@@ -100,6 +113,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       size *= 1024;
     }
     replayBufferSize = size;
+    LOG.setReplayBufferSize(replayBufferSize, getServiceRole());
   }
 
   protected void executeRequest(

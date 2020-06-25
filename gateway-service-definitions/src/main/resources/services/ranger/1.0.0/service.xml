@@ -35,6 +35,10 @@
             <name>responseExcludeHeaders</name>
             <value>WWW-AUTHENTICATE</value>
         </param>
+        <param>
+            <name>replayBufferSize</name>
+            <value>65</value>
+        </param>
     </dispatch>
 </service>
 

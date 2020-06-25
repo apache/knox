@@ -30,6 +30,8 @@ import org.apache.knox.gateway.config.spi.ConfigurationInjector;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Locale;
 
 public class DefaultConfigurationInjector implements ConfigurationInjector {
@@ -49,6 +51,18 @@ public class DefaultConfigurationInjector implements ConfigurationInjector {
   private void injectClass( Class type, Object target, ConfigurationAdapter config, ConfigurationBinding binding )
       throws ConfigurationException {
     Field[] fields = type.getDeclaredFields();
+    Arrays.sort(fields, new Comparator<Field>() {
+      @Override
+      public int compare(Field field1, Field field2) {
+        if ("serviceRole".equals(field1.getName())) {
+          return -1;
+        } else if ("serviceRole".equals(field2.getName())) {
+          return 1;
+        } else {
+          return field1.getName().compareTo(field2.getName());
+        }
+      };
+    });
     for( Field field : fields ) {
       injectFieldValue( field, target, config, binding );
     }
