@@ -212,8 +212,9 @@
         <javax.ws.rs-api.version>2.0</javax.ws.rs-api.version>
         <javax.websocket-api.version>1.1</javax.websocket-api.version>
         <jaxb.version>2.3.0</jaxb.version>
-        <jaxws-ri.version>2.3.2</jaxws-ri.version>
-        <jakarta.xml.bind.version>2.3.2</jakarta.xml.bind.version>
+        <jaxws-ri.version>2.3.3</jaxws-ri.version>
+        <jakarta.xml.bind.version>2.3.3</jakarta.xml.bind.version>
+        <jakarta.activation.version>1.2.2</jakarta.activation.version>
         <java-support.version>7.5.1</java-support.version>
         <jericho-html.version>3.4</jericho-html.version>
         <jersey.version>2.6</jersey.version>
@@ -1324,6 +1325,12 @@
                 <groupId>jakarta.xml.bind</groupId>
                 <artifactId>jakarta.xml.bind-api</artifactId>
                 <version>${jakarta.xml.bind.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.sun.activation</groupId>
+                <artifactId>jakarta.activation</artifactId>
+                <version>${jakarta.activation.version}</version>
             </dependency>
 
             <dependency>
