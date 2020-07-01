@@ -21,6 +21,22 @@
         <shortDesc>Apache Storm API</shortDesc>
         <description>Apache Storm is a free and open source distributed realtime computation system. 
             Apache Storm makes it easy to reliably process unbounded streams of data, doing for realtime processing what Hadoop did for batch processing.</description>
+        <samples>
+            <sample>
+                <description>Fetch the cluster configuration</description>
+                <method>GET</method>
+                <path>api/v1/cluster/configuration</path>
+            </sample>
+            <sample>
+                <description>Fetch summary for a supervisors running on a host named 'supervisor-daemon-host-name'</description>
+                <method>GET</method>
+                <path>api/v1/supervisor?host=supervisor-daemon-host-name</path>
+            </sample>
+            <sample>
+                <description>You may check out Apache Storm's REST API documentation here</description>
+                <value>http://storm.apache.org/releases/current/STORM-UI-REST-API.html</value>
+            </sample>
+        </samples>
     </metadata>
     <routes>
         <route path="/storm/api/**"/>

@@ -14,15 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Sample} from './sample';
 
-export class Service {
+export class Sample {
     description: string;
-    serviceName: string;
-    version: string;
-    serviceUrl: string;
-    shortDesc: string;
-    type: string;
-    context: string;
-    samples: Sample[];
+    value: string;
 }

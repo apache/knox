@@ -33,6 +33,8 @@
 
     <div class="table-responsive" *ngIf="this['showTopology_' + topology.topology]">
 
+        <h5 *ngIf="topology.uiServices.service.length > 0">UI Services</h5>
+
         <!-- UI services -->
         <mat-grid-list cols="4" rowHeight="130px">
             <mat-grid-tile *ngFor="let service of topology.uiServices.service" [colspan]="1" [rowspan]="1">
@@ -51,38 +53,72 @@
             </mat-grid-tile>
         </mat-grid-list>
 
+        <h5 *ngIf="topology.apiServices.service.length > 0">API Services</h5>
+
         <!-- API services -->
-        <table class="table table-hover" [mfData]="topology.apiServices.service" #api="mfDataTable" [mfRowsOnPage]="5">
-            <colgroup>
-                <col width="30%">
-                <col width="70%">
-            </colgroup>
-            <thead>
-                <tr *ngIf="topology.apiServices.service.length == 0"><th colspan="2">No API services found</th></tr>
-                <tr *ngIf="topology.apiServices.service.length > 0"><th colspan="2">API services</th></tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let service of api.data">
-                    <td>
-                        <span class="inline-glyph glyphicon glyphicon-info-sign btn btn-xs"
-                        title="{{service.description}}"
-                        data-toggle="tooltip"></span>
-                        {{service.shortDesc}} <span class="small" *ngIf="service.version">(v{{service.version}})</span>
-                    </td>
-                    <td>
-                        <a href="{{service.serviceUrl}}">{{service.serviceUrl}}</a>
-                    </td>
-                </tr>
-            </tbody>
-      <tfoot>
-          <tr>
-              <td colspan="4">
-                  <mfBootstrapPaginator [rowsOnPageSet]="[5,10,15]"></mfBootstrapPaginator>
-              </td>
-          </tr>
-      </tfoot>
-        </table>
+        <mat-grid-list cols="4" rowHeight="130px">
+            <mat-grid-tile *ngFor="let service of topology.apiServices.service" [colspan]="1" [rowspan]="1">
+                <span *ngIf="!this['enableServiceText_' + service.serviceName.toLowerCase()]" (click)="openApiServiceInformationModal(service)">
+                    <img src="assets/service-logos/{{service.serviceName.toLowerCase()}}.png" height="50px" (error)="enableServiceText('enableServiceText_' + service.serviceName.toLowerCase())"/>
+                </span>
+                <span *ngIf="this['enableServiceText_' + service.serviceName.toLowerCase()]" (click)="openApiServiceInformationModal(service)">
+                    {{service.shortDesc}}
+                </span>
+                <mat-grid-tile-footer class="tile-shortDesc">
+                    <h3>{{service.shortDesc}} <span class="small" *ngIf="service.version">(v{{service.version}})</span></h3>
+                </mat-grid-tile-footer>
+                <mat-grid-tile-footer class="tile-longDesc" style="height:100px;">
+                    <h3>{{service.description}}</h3>
+                </mat-grid-tile-footer>
+            </mat-grid-tile>
+        </mat-grid-list>
     </div>
 </ng-container>
 <hr />
 </div>
+
+<bs-modal #apiServiceInformationModal>
+    <bs-modal-header [showDismiss]="true" *ngIf="selectedApiService">
+        <h4 class="modal-title">{{selectedApiService.shortDesc}}</h4>
+    </bs-modal-header>
+    <bs-modal-body *ngIf="selectedApiService">
+        <div class="panel panel-default table-responsive">
+            <table class="table table-sm">
+                <colgroup>
+                   <col width="25%">
+                   <col width="75%">
+               </colgroup>
+               <tr>
+                   <td style="font-weight: bold;">Knox Service Name</td>
+                   <td>{{selectedApiService.serviceName}} <span class="small" *ngIf="selectedApiService.version">(v{{selectedApiService.version}})</span></td>
+               </tr>
+               <tr>
+                   <td style="font-weight: bold;">Description</td>
+                   <td>{{selectedApiService.description}}</td>
+               </tr>
+               <tr>
+                   <td style="font-weight: bold;">Sample(s)</td>
+                   <td>
+                     <table class="table table-sm">
+                       <div *ngIf="selectedApiService.samples && selectedApiService.samples.sample.length > 0">
+                         <ng-container *ngFor="let sample of selectedApiService.samples.sample">
+                           <tr><td style="font-weight: bold;">{{sample.description}}</td></tr>
+                           <tr style="margin-bottom: 15px"><td>&nbsp;&nbsp;{{sample.value}}</tr>
+                         </ng-container>
+                       </div>
+                       <div *ngIf="!selectedApiService.samples || selectedApiService.samples.sample.length < 1">
+                         <tr><td style="font-weight: bold;">There is no any sample found in service metadata</td></tr>
+                         <tr>
+                           <td>&nbsp;You may check out the service's documentation and find out how to use its REST API. The service's URL is <a href="{{selectedApiService.serviceUrl}}" target="_blank">{{selectedApiService.serviceUrl}}</a></td>
+                         </tr>
+                       </div>
+                     </table>
+                   </td>
+               </tr>
+           </table>
+       </div>
+    </bs-modal-body>
+    <bs-modal-footer>
+        <button type="button" class="btn btn-primary btn-sm" (click)="apiServiceInformationModal.close()">Close</button>
+    </bs-modal-footer>
+</bs-modal>

@@ -21,6 +21,22 @@
         <shortDesc>Druid Overlord API</shortDesc>
         <description>The Overlord process is responsible for accepting tasks, coordinating task distribution, creating locks around tasks, and returning statuses to callers. 
             Overlord can be configured to run in one of two modes - local or remote (local being default).</description>
+        <samples>
+            <sample>
+                <description>Fetch the current leader Overlord of the cluster. If you have multiple Overlords, just one is leading at any given time. The others are on standby</description>
+                <method>GET</method>
+                <path>druid/indexer/v1/leader</path>
+            </sample>
+             <sample>
+                <description>Fetch a list of ALL tasks</description>
+                <method>GET</method>
+                <path>druid/indexer/v1/tasks</path>
+            </sample>
+            <sample>
+                <description>You may check out Apache Druid Overlord's REST API documentation here</description>
+                <value>https://druid.apache.org/docs/latest/operations/api-reference.html#overlord</value>
+            </sample>
+        </samples>
     </metadata>
   <routes>
     <route path="druid-overlord/druid/indexer/v1/{**}?{**}">

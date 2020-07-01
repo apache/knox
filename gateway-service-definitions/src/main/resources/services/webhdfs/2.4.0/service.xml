@@ -21,6 +21,27 @@
         <context>/webhdfs</context>
         <shortDesc>Web HDFS</shortDesc>
         <description>An HTTP REST API which supports the complete FileSystem interface for HDFS.</description>
+        <samples>
+            <sample>
+                <description>List all files under 'testPath'</description>
+                <method>GET</method>
+                <path>v1/testPath?op=LISTSTATUS</path>
+            </sample>
+            <sample>
+                <description>Rename a File/Directory under </description>
+                <method>PUT</method>
+                <path>v1/testPath/testFile?op=RENAME&amp;destination=testPath/renamedFile</path>
+            </sample>
+            <sample>
+                <description>Get Home Directory</description>
+                <method>GET</method>
+                <path>v1/?op=GETHOMEDIRECTORY</path>
+            </sample>
+            <sample>
+                <description>You may check out Apache WebHDFS's REST API documentation here</description>
+                <value>https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/WebHDFS.html</value>
+            </sample>
+        </samples>
     </metadata>
     <routes>
         <route path="/webhdfs/v1/?**">

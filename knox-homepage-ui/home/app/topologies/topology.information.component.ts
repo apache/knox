@@ -14,8 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import {MatGridListModule} from '@angular/material/grid-list';
+import {BsModalComponent} from 'ng2-bs3-modal/ng2-bs3-modal';
 import {HomepageService} from '../homepage.service';
 import {TopologyInformation} from './topology.information';
 import {Service} from './service';
@@ -29,7 +30,11 @@ import {Service} from './service';
 
 export class TopologyInformationsComponent implements OnInit {
 
+    @ViewChild('apiServiceInformationModal')
+    apiServiceInformationModal: BsModalComponent;
+
     topologies: TopologyInformation[];
+    selectedApiService : Service;
 
     setTopologies(topologies: TopologyInformation[]) {
         this.topologies = topologies;
@@ -53,6 +58,11 @@ export class TopologyInformationsComponent implements OnInit {
     ngOnInit(): void {
         console.debug('TopologyInformationsComponent --> ngOnInit()');
         this.homepageService.getTopologies().then(topologies => this.setTopologies(topologies));
+    }
+
+    openApiServiceInformationModal(apiService: Service) {
+        this.selectedApiService = apiService;
+        this.apiServiceInformationModal.open('lg');
     }
 
 }

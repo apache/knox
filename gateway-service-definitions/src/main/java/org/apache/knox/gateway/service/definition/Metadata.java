@@ -17,7 +17,10 @@
  */
 package org.apache.knox.gateway.service.definition;
 
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -32,6 +35,7 @@ public class Metadata {
   private String context;
   private String shortDesc;
   private String description;
+  private List<Sample> samples;
 
   @XmlElement(name = "type")
   public String getType() {
@@ -67,6 +71,16 @@ public class Metadata {
 
   public void setDescription(String description) {
     this.description = description;
+  }
+
+  @XmlElement(name = "sample")
+  @XmlElementWrapper(name = "samples")
+  public List<Sample> getSamples() {
+    return samples;
+  }
+
+  public void setSamples(List<Sample> samples) {
+    this.samples = samples;
   }
 
   @Override
