@@ -19,6 +19,11 @@ limitations under the License.
 <configuration>
 
     <property>
+        <name>gateway.services</name>
+        <value>alias:remote</value>
+        <description>Overriding some of the gateway services so that Knox will use the selected implementation</description>
+    </property>
+    <property>
         <name>gateway.port</name>
         <value>8443</value>
         <description>The HTTP port for the Gateway.</description>

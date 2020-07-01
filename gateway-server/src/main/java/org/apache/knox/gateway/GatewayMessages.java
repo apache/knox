@@ -698,4 +698,10 @@ public interface GatewayMessages {
 
   @Message(level = MessageLevel.ERROR, text = "Error creating provider descriptor {0} from topology {1}, cause: {2}")
   void errorSavingDescriptorConfiguration(String providerPath, String topologyName, String message);
+
+  @Message(level = MessageLevel.ERROR, text = "No service found by type {0}")
+  void noServiceFound(String serviceType);
+
+  @Message(level = MessageLevel.INFO, text = "Using {0} implementation for {1}")
+  void usingServiceImplementation(String implementation, String serviceType);
 }

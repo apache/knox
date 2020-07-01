@@ -38,7 +38,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+  import static org.junit.Assert.assertTrue;
 
 public class GatewayConfigImplTest {
 
@@ -403,6 +403,27 @@ public class GatewayConfigImplTest {
     final Map<String, String> remoteAliasServiceConfiguration = new GatewayConfigImpl().getRemoteAliasServiceConfiguration();
     assertTrue(remoteAliasServiceConfiguration.containsKey(REMOTE_ALIAS_SERVICE_TYPE));
     assertEquals(ZookeeperRemoteAliasService.TYPE, remoteAliasServiceConfiguration.get(REMOTE_ALIAS_SERVICE_TYPE));
+  }
+
+  @Test
+  public void testGetServiceImplementation() throws Exception {
+    final GatewayConfigImpl gatewayConfig = new GatewayConfigImpl();
+
+    // should return an empty string if 'gateway.services' is not set
+    assertEquals("", gatewayConfig.getServiceImplementation("alias"));
+
+    // spaces are left in the value on purpose
+    gatewayConfig.set("gateway.services", "alias:remote , master:cli,  keystore  ");
+
+    // should return an empty string if the given service is not defined
+    assertEquals("", gatewayConfig.getServiceImplementation("notListedService"));
+
+    // should return an empty string if the given service has no declared implementation
+    assertEquals("", gatewayConfig.getServiceImplementation("keystore"));
+
+    // should return the declared implementations
+    assertEquals("remote", gatewayConfig.getServiceImplementation("alias"));
+    assertEquals("cli", gatewayConfig.getServiceImplementation("master"));
   }
 
 }

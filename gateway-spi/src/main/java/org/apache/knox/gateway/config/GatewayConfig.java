@@ -693,4 +693,9 @@ public interface GatewayConfig {
    * @return returns whether know token permissive validation is enabled
    */
   boolean isKnoxTokenPermissiveValidationEnabled();
+
+  /**
+   * @return the implementation for the given service if declared; an empty String otherwise
+   */
+  String getServiceImplementation(String service);
 }

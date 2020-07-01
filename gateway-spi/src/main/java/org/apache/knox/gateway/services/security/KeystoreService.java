@@ -24,7 +24,9 @@ import java.security.cert.Certificate;
 import java.util.Map;
 import java.util.Set;
 
-public interface KeystoreService {
+import org.apache.knox.gateway.services.Service;
+
+public interface KeystoreService extends Service {
 
   void createKeystoreForGateway() throws KeystoreServiceException;
 

@@ -812,4 +812,9 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public boolean isKnoxTokenPermissiveValidationEnabled() {
     return false;
   }
+
+  @Override
+  public String getServiceImplementation(String service) {
+    return "";
+  }
 }

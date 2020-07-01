@@ -71,6 +71,10 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-service-hashicorp-vault</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-i18n</artifactId>
         </dependency>
         <dependency>
