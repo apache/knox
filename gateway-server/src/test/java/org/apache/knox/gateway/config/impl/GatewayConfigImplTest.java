@@ -406,24 +406,21 @@ public class GatewayConfigImplTest {
   }
 
   @Test
-  public void testGetServiceImplementation() throws Exception {
+  public void testGetServiceParameter() throws Exception {
     final GatewayConfigImpl gatewayConfig = new GatewayConfigImpl();
 
-    // should return an empty string if 'gateway.services' is not set
-    assertEquals("", gatewayConfig.getServiceImplementation("alias"));
+    // should return an empty string if 'gateway.service.alias.impl' is not set
+    assertEquals("", gatewayConfig.getServiceParameter("alias", "impl"));
 
-    // spaces are left in the value on purpose
-    gatewayConfig.set("gateway.services", "alias:remote , master:cli,  keystore  ");
+    gatewayConfig.set("gateway.service.alias.impl", "myAliasService");
+    gatewayConfig.set("gateway.service.tokenstate.impl", "myTokenStateService");
 
     // should return an empty string if the given service is not defined
-    assertEquals("", gatewayConfig.getServiceImplementation("notListedService"));
+    assertEquals("", gatewayConfig.getServiceParameter("notListedService", "impl"));
 
-    // should return an empty string if the given service has no declared implementation
-    assertEquals("", gatewayConfig.getServiceImplementation("keystore"));
-
-    // should return the declared implementations
-    assertEquals("remote", gatewayConfig.getServiceImplementation("alias"));
-    assertEquals("cli", gatewayConfig.getServiceImplementation("master"));
+    //should return the declared implementations
+    assertEquals("myAliasService", gatewayConfig.getServiceParameter("alias", "impl"));
+    assertEquals("myTokenStateService", gatewayConfig.getServiceParameter("tokenstate", "impl"));
   }
 
 }

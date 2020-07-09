@@ -19,9 +19,8 @@ limitations under the License.
 <configuration>
 
     <property>
-        <name>gateway.services</name>
-        <value>alias:remote</value>
-        <description>Overriding some of the gateway services so that Knox will use the selected implementation</description>
+        <name>gateway.service.alias.impl</name>
+        <value>org.apache.knox.gateway.services.security.impl.RemoteAliasService</value>
     </property>
     <property>
         <name>gateway.port</name>

@@ -26,6 +26,7 @@ import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
+import org.apache.knox.gateway.services.security.AliasService;
 
 // There are two implementations of 'RemoteConfigurationRegistryClientService':
 // - LocalFileSystemRemoteConfigurationRegistryClientService
@@ -33,13 +34,18 @@ import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistr
 // However, the first one - local - is for test-only purposes
 public class RemoteRegistryClientServiceFactory extends AbstractServiceFactory {
 
+  private final AliasServiceFactory aliasServiceFactory = new AliasServiceFactory();
+
   @Override
   public Service create(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
       throws ServiceLifecycleException {
     Service service = null;
     if (getServiceType() == serviceType) {
       service = RemoteConfigurationRegistryClientServiceFactory.newInstance(gatewayConfig);
-      ((RemoteConfigurationRegistryClientService) service).setAliasService(getAliasService(gatewayServices));
+      //it should be the 'default' alias service
+      final AliasService localAliasService = (AliasService) aliasServiceFactory.create(gatewayServices, ServiceType.ALIAS_SERVICE, gatewayConfig, options, "");
+      localAliasService.init(gatewayConfig, options);
+      ((RemoteConfigurationRegistryClientService) service).setAliasService(localAliasService);
     }
     return service;
   }

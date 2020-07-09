@@ -695,7 +695,7 @@ public interface GatewayConfig {
   boolean isKnoxTokenPermissiveValidationEnabled();
 
   /**
-   * @return the implementation for the given service if declared; an empty String otherwise
+   * @return the value of the given parameter for the given service if declared; an empty String otherwise
    */
-  String getServiceImplementation(String service);
+  String getServiceParameter(String service, String parameter);
 }

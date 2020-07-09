@@ -28,28 +28,23 @@ import org.apache.knox.gateway.services.security.impl.CLIMasterService;
 import org.apache.knox.gateway.services.security.impl.DefaultMasterService;
 
 public class MasterServiceFactory extends AbstractServiceFactory {
-  private static final String DEFAULT_IMPLEMENTATION_NAME = "default";
-  private static final String CLI_IMPLEMENTATION_NAME = "cli";
 
   @Override
   public Service create(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
       throws ServiceLifecycleException {
     Service service = null;
     if (getServiceType() == serviceType) {
-      switch (implementation) {
-      case DEFAULT_IMPLEMENTATION_NAME:
-      case "":
+      if (matchesImplementation(implementation, DefaultMasterService.class, true)) {
         service = new DefaultMasterService();
-        break;
-      case CLI_IMPLEMENTATION_NAME:
+      } else if (matchesImplementation(implementation, CLIMasterService.class)) {
         service = new CLIMasterService();
-        break;
-      default:
+      } else {
         throw new IllegalArgumentException("Invalid Master Service implementation provided: " + implementation);
       }
+
+      logServiceUsage(implementation, serviceType);
     }
 
-    logServiceUsage(implementation, serviceType);
     return service;
   }
 

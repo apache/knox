@@ -43,7 +43,6 @@ public class DefaultGatewayServices extends AbstractGatewayServices {
     //order is important: different service factory implementations may use already added services
     addService(ServiceType.MASTER_SERVICE, gatewayServiceFactory.create(this, ServiceType.MASTER_SERVICE, config, options));
     addService(ServiceType.KEYSTORE_SERVICE, gatewayServiceFactory.create(this, ServiceType.KEYSTORE_SERVICE, config, options));
-    addService(ServiceType.ALIAS_SERVICE, gatewayServiceFactory.create(this, ServiceType.ALIAS_SERVICE, config, options));
 
     /*
     Doesn't make sense for this to be set to the remote alias service since the impl could
@@ -52,6 +51,8 @@ public class DefaultGatewayServices extends AbstractGatewayServices {
     to ZK anyway due to the circular dependency.
      */
     addService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE, gatewayServiceFactory.create(this, ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE, config, options));
+
+    addService(ServiceType.ALIAS_SERVICE, gatewayServiceFactory.create(this, ServiceType.ALIAS_SERVICE, config, options));
 
     addService(ServiceType.CRYPTO_SERVICE, gatewayServiceFactory.create(this, ServiceType.CRYPTO_SERVICE, config, options));
 

@@ -310,7 +310,7 @@ public class BadUrlTest {
         .andReturn(TEST_KEY_ALIAS)
         .anyTimes();
 
-    EasyMock.expect(gatewayConfig.getServiceImplementation(EasyMock.anyString())).andReturn("").anyTimes();
+    EasyMock.expect(gatewayConfig.getServiceParameter(EasyMock.anyString(), EasyMock.anyString())).andReturn("").anyTimes();
 
     EasyMock.replay(gatewayConfig);
 

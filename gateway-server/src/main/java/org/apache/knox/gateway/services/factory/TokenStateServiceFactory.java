@@ -29,28 +29,20 @@ import org.apache.knox.gateway.services.token.impl.DefaultTokenStateService;
 import org.apache.knox.gateway.services.token.impl.JournalBasedTokenStateService;
 
 public class TokenStateServiceFactory extends AbstractServiceFactory {
-  private static final String DEFAULT_IMPLEMENTATION_NAME = "default";
-  private static final String ALIAS_IMPLEMENTATION_NAME = "alias";
-  private static final String JOURNAL_IMPLEMENTATION_NAME = "journal";
 
   @Override
   public Service create(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
       throws ServiceLifecycleException {
     Service service = null;
     if (getServiceType() == serviceType) {
-      switch (implementation) {
-      case DEFAULT_IMPLEMENTATION_NAME:
-      case "":
+      if (matchesImplementation(implementation, DefaultTokenStateService.class, true)) {
         service = new DefaultTokenStateService();
-        break;
-      case ALIAS_IMPLEMENTATION_NAME:
+      } else if (matchesImplementation(implementation, AliasBasedTokenStateService.class)) {
         service = new AliasBasedTokenStateService();
         ((AliasBasedTokenStateService) service).setAliasService(getAliasService(gatewayServices));
-        break;
-      case JOURNAL_IMPLEMENTATION_NAME:
+      } else if (matchesImplementation(implementation, JournalBasedTokenStateService.class)) {
         service = new JournalBasedTokenStateService();
-        break;
-      default:
+      } else {
         throw new IllegalArgumentException("Invalid Token State Service implementation provided: " + implementation);
       }
 

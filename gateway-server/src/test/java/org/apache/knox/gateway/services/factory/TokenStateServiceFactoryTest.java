@@ -43,7 +43,7 @@ public class TokenStateServiceFactoryTest extends ServiceFactoryTest {
 
   @Test
   public void shouldReturnDefaultAliasService() throws Exception {
-    TokenStateService tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, null, null, "default");
+    TokenStateService tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, null, null, DefaultTokenStateService.class.getName());
     assertTrue(tokenStateService instanceof DefaultTokenStateService);
 
     tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, null, null, "");
@@ -52,13 +52,13 @@ public class TokenStateServiceFactoryTest extends ServiceFactoryTest {
 
   @Test
   public void shouldReturnAliasBasedTokenStateService() throws Exception {
-    final TokenStateService tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, null, null, "alias");
+    final TokenStateService tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, null, null, AliasBasedTokenStateService.class.getName());
     assertTrue(tokenStateService instanceof AliasBasedTokenStateService);
     assertTrue(isAliasServiceSet(tokenStateService));
   }
 
   @Test
   public void shouldReturnHJournalTokenStateService() throws Exception {
-    assertTrue(serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, null, null, "journal") instanceof JournalBasedTokenStateService);
+    assertTrue(serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, null, null, JournalBasedTokenStateService.class.getName()) instanceof JournalBasedTokenStateService);
   }
 }

@@ -45,7 +45,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -98,7 +97,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final String[] GATEWAY_CONFIG_FILENAMES = {GATEWAY_CONFIG_FILE_PREFIX + "-default.xml", GATEWAY_CONFIG_FILE_PREFIX + "-site.xml"};
 
-  private static final String GATEWAY_SERVICES = GATEWAY_CONFIG_FILE_PREFIX + ".services";
+  private static final String GATEWAY_SERVICE_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".service.";
   public static final String HTTP_HOST = GATEWAY_CONFIG_FILE_PREFIX + ".host";
   public static final String HTTP_PORT = GATEWAY_CONFIG_FILE_PREFIX + ".port";
   public static final String HTTP_PATH = GATEWAY_CONFIG_FILE_PREFIX + ".path";
@@ -1169,14 +1168,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public String getServiceImplementation(String service) {
-    final Collection<String> gatewayServices = getTrimmedStringCollection(GATEWAY_SERVICES);
-    final Optional<String> gatewayServiceImplPair = gatewayServices.stream().filter(gatewayService -> gatewayService.startsWith(service)).findFirst();
-    if (gatewayServiceImplPair.isPresent()) {
-      final String[] gatewayServiceAndImplParts = gatewayServiceImplPair.get().split(":");
-      return gatewayServiceAndImplParts.length == 1 ? "" : gatewayServiceAndImplParts[1];
-    }
-    return "";
+  public String getServiceParameter(String service, String parameter) {
+    return get(GATEWAY_SERVICE_PREFIX + service + "." + parameter, "");
   }
 
 }

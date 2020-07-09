@@ -814,7 +814,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public String getServiceImplementation(String service) {
+  public String getServiceParameter(String service, String parameter) {
     return "";
   }
 }

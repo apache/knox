@@ -34,6 +34,8 @@ import org.apache.knox.gateway.services.security.MasterService;
 public abstract class AbstractServiceFactory implements ServiceFactory {
 
   private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
+  private static final String IMPLEMENTATION_PARAM_NAME = "impl";
+  private static final String EMPTY_DEFAULT_IMPLEMENTATION = "";
 
   @Override
   public Service create(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options) throws ServiceLifecycleException {
@@ -41,7 +43,19 @@ public abstract class AbstractServiceFactory implements ServiceFactory {
   }
 
   protected String getImplementation(GatewayConfig gatewayConfig) {
-    return gatewayConfig.getServiceImplementation(getServiceType().getShortName());
+    return gatewayConfig.getServiceParameter(getServiceType().getShortName(), IMPLEMENTATION_PARAM_NAME);
+  }
+
+  protected boolean matchesImplementation(String implementation, Class<? extends Object> clazz) {
+    return matchesImplementation(implementation, clazz, false);
+  }
+
+  protected boolean matchesImplementation(String implementation, Class<? extends Object> clazz, boolean acceptEmptyImplementation) {
+    boolean match = clazz.getName().equals(implementation);
+    if (!match && acceptEmptyImplementation) {
+      match = EMPTY_DEFAULT_IMPLEMENTATION.equals(implementation);
+    }
+    return match;
   }
 
   protected abstract ServiceType getServiceType();

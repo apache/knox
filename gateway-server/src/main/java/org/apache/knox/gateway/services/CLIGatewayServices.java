@@ -24,6 +24,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.deploy.DeploymentContext;
 import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
 import org.apache.knox.gateway.descriptor.ResourceDescriptor;
+import org.apache.knox.gateway.services.security.impl.CLIMasterService;
 import org.apache.knox.gateway.topology.Provider;
 
 public class CLIGatewayServices extends AbstractGatewayServices {
@@ -36,9 +37,8 @@ public class CLIGatewayServices extends AbstractGatewayServices {
 
   @Override
   public void init(GatewayConfig config, Map<String,String> options) throws ServiceLifecycleException {
-    addService(ServiceType.MASTER_SERVICE, gatewayServiceFactory.create(this, ServiceType.MASTER_SERVICE, config, options, "cli"));
+    addService(ServiceType.MASTER_SERVICE, gatewayServiceFactory.create(this, ServiceType.MASTER_SERVICE, config, options, CLIMasterService.class.getName()));
     addService(ServiceType.KEYSTORE_SERVICE, gatewayServiceFactory.create(this, ServiceType.KEYSTORE_SERVICE, config, options));
-    addService(ServiceType.ALIAS_SERVICE, gatewayServiceFactory.create(this, ServiceType.ALIAS_SERVICE, config, options));
 
     /*
     Doesn't make sense for this to be set to the remote alias service since the impl could
@@ -47,6 +47,8 @@ public class CLIGatewayServices extends AbstractGatewayServices {
     to ZK anyway due to the circular dependency.
      */
     addService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE, gatewayServiceFactory.create(this, ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE, config, options));
+
+    addService(ServiceType.ALIAS_SERVICE, gatewayServiceFactory.create(this, ServiceType.ALIAS_SERVICE, config, options));
 
     addService(ServiceType.CRYPTO_SERVICE, gatewayServiceFactory.create(this, ServiceType.CRYPTO_SERVICE, config, options));
 

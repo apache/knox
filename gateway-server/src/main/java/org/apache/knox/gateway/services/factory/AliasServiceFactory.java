@@ -28,13 +28,10 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.impl.DefaultAliasService;
 import org.apache.knox.gateway.services.security.impl.RemoteAliasService;
+import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasService;
 import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasServiceProvider;
 
 public class AliasServiceFactory extends AbstractServiceFactory {
-  private static final String DEFAULT_IMPLEMENTATION_NAME = "default";
-  private static final String HASHICORP_IMPLEMENTATION_NAME = "hashicorp";
-  private static final String REMOTE_IMPLEMENTATION_NAME = "remote";
-  private static final String ZK_IMPLEMENTATION_NAME = "zookeeper";
 
   @Override
   public Service create(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
@@ -44,22 +41,17 @@ public class AliasServiceFactory extends AbstractServiceFactory {
       final AliasService defaultAliasService = new DefaultAliasService();
       ((DefaultAliasService) defaultAliasService).setMasterService(getMasterService(gatewayServices));
       ((DefaultAliasService) defaultAliasService).setKeystoreService(getKeystoreService(gatewayServices));
-      defaultAliasService.init(gatewayConfig, options); //invoking init on DefaultAliasService twice is ok (in case implementation is set to 'default')
-      switch (implementation) {
-      case DEFAULT_IMPLEMENTATION_NAME:
-      case "":
+      defaultAliasService.init(gatewayConfig, options); // invoking init on DefaultAliasService twice is ok (in case implementation is set to 'default')
+
+      if (matchesImplementation(implementation, DefaultAliasService.class, true)) {
         service = defaultAliasService;
-        break;
-      case HASHICORP_IMPLEMENTATION_NAME:
+      } else if (matchesImplementation(implementation, HashicorpVaultAliasService.class)) {
         service = new HashicorpVaultAliasService(defaultAliasService);
-        break;
-      case REMOTE_IMPLEMENTATION_NAME:
+      } else if (matchesImplementation(implementation, RemoteAliasService.class)) {
         service = new RemoteAliasService(defaultAliasService, getMasterService(gatewayServices));
-        break;
-      case ZK_IMPLEMENTATION_NAME:
+      } else if (matchesImplementation(implementation, ZookeeperRemoteAliasService.class)) {
         service = new ZookeeperRemoteAliasServiceProvider().newInstance(defaultAliasService, getMasterService(gatewayServices));
-        break;
-      default:
+      } else {
         throw new IllegalArgumentException("Invalid Alias Service implementation provided: " + implementation);
       }
 

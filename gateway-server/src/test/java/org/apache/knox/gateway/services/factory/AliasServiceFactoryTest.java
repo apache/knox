@@ -44,7 +44,7 @@ public class AliasServiceFactoryTest extends ServiceFactoryTest {
 
   @Test
   public void shouldReturnDefaultAliasService() throws Exception {
-    AliasService aliasService = (AliasService) serviceFactory.create(gatewayServices, ServiceType.ALIAS_SERVICE, null, null, "default");
+    AliasService aliasService = (AliasService) serviceFactory.create(gatewayServices, ServiceType.ALIAS_SERVICE, null, null, DefaultAliasService.class.getName());
     assertTrue(aliasService instanceof DefaultAliasService);
     assertTrue(isMasterServiceSet(aliasService));
     assertTrue(isKeystoreServiceSet(aliasService));
@@ -57,17 +57,17 @@ public class AliasServiceFactoryTest extends ServiceFactoryTest {
 
   @Test
   public void shouldReturnHashicorpVaultAliasService() throws Exception {
-    assertTrue(serviceFactory.create(gatewayServices, ServiceType.ALIAS_SERVICE, null, null, "hashicorp") instanceof HashicorpVaultAliasService);
+    assertTrue(serviceFactory.create(gatewayServices, ServiceType.ALIAS_SERVICE, null, null, HashicorpVaultAliasService.class.getName()) instanceof HashicorpVaultAliasService);
   }
 
   @Test
   public void shouldReturnRemoteAliasService() throws Exception {
-    assertTrue(serviceFactory.create(gatewayServices, ServiceType.ALIAS_SERVICE, null, null, "remote") instanceof RemoteAliasService);
+    assertTrue(serviceFactory.create(gatewayServices, ServiceType.ALIAS_SERVICE, null, null, RemoteAliasService.class.getName()) instanceof RemoteAliasService);
   }
 
   @Test
   public void shouldReturnZookeeperAliasService() throws Exception {
-    assertTrue(serviceFactory.create(gatewayServices, ServiceType.ALIAS_SERVICE, null, null, "zookeeper") instanceof ZookeeperRemoteAliasService);
+    assertTrue(serviceFactory.create(gatewayServices, ServiceType.ALIAS_SERVICE, null, null, ZookeeperRemoteAliasService.class.getName()) instanceof ZookeeperRemoteAliasService);
   }
 
 }

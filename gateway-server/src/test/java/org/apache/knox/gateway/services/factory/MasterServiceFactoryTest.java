@@ -42,7 +42,7 @@ public class MasterServiceFactoryTest extends ServiceFactoryTest {
 
   @Test
   public void shouldReturnDefaultMasterService() throws Exception {
-    MasterService masterService = (MasterService) serviceFactory.create(gatewayServices, ServiceType.MASTER_SERVICE, null, null, "default");
+    MasterService masterService = (MasterService) serviceFactory.create(gatewayServices, ServiceType.MASTER_SERVICE, null, null, DefaultMasterService.class.getName());
     assertTrue(masterService instanceof DefaultMasterService);
 
     masterService = (MasterService) serviceFactory.create(gatewayServices, ServiceType.MASTER_SERVICE, null, null, "");
@@ -51,7 +51,7 @@ public class MasterServiceFactoryTest extends ServiceFactoryTest {
 
   @Test
   public void shouldReturnCliMasterService() throws Exception {
-    MasterService masterService = (MasterService) serviceFactory.create(gatewayServices, ServiceType.MASTER_SERVICE, null, null, "cli");
+    MasterService masterService = (MasterService) serviceFactory.create(gatewayServices, ServiceType.MASTER_SERVICE, null, null, CLIMasterService.class.getName());
     assertTrue(masterService instanceof CLIMasterService);
   }
 }
