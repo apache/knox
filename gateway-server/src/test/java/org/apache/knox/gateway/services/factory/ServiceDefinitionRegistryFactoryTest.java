@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.services.factory;
 
+import static org.apache.knox.gateway.services.ServiceType.SERVICE_DEFINITION_REGISTRY;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.knox.gateway.services.ServiceType;
@@ -36,13 +37,13 @@ public class ServiceDefinitionRegistryFactoryTest extends ServiceFactoryTest {
 
   @Test
   public void testBasics() throws Exception {
-    super.testBasics(serviceFactory, ServiceType.MASTER_SERVICE, ServiceType.SERVICE_DEFINITION_REGISTRY);
+    super.testBasics(serviceFactory, ServiceType.MASTER_SERVICE, SERVICE_DEFINITION_REGISTRY);
   }
 
   @Test
   public void shouldReturnDefaultServiceDefinitionRegistry() throws Exception {
-    final ServiceDefinitionRegistry serviceDefinitionRegistry = (ServiceDefinitionRegistry) serviceFactory.create(gatewayServices, ServiceType.SERVICE_DEFINITION_REGISTRY, null,
-        null, null);
+    final ServiceDefinitionRegistry serviceDefinitionRegistry = (ServiceDefinitionRegistry) serviceFactory.create(gatewayServices, SERVICE_DEFINITION_REGISTRY, gatewayConfig,
+        options);
     assertTrue(serviceDefinitionRegistry instanceof DefaultServiceDefinitionRegistry);
   }
 

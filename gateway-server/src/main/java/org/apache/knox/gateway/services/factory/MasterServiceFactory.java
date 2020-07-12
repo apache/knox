@@ -17,6 +17,10 @@
  */
 package org.apache.knox.gateway.services.factory;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
+
+import java.util.Collection;
 import java.util.Map;
 
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -30,16 +34,14 @@ import org.apache.knox.gateway.services.security.impl.DefaultMasterService;
 public class MasterServiceFactory extends AbstractServiceFactory {
 
   @Override
-  public Service create(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
+  protected Service createService(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
       throws ServiceLifecycleException {
     Service service = null;
-    if (getServiceType() == serviceType) {
+    if (shouldCreateService(implementation)) {
       if (matchesImplementation(implementation, DefaultMasterService.class, true)) {
         service = new DefaultMasterService();
       } else if (matchesImplementation(implementation, CLIMasterService.class)) {
         service = new CLIMasterService();
-      } else {
-        throw new IllegalArgumentException("Invalid Master Service implementation provided: " + implementation);
       }
 
       logServiceUsage(implementation, serviceType);
@@ -53,4 +55,8 @@ public class MasterServiceFactory extends AbstractServiceFactory {
     return ServiceType.MASTER_SERVICE;
   }
 
+  @Override
+  protected Collection<String> getKnownImplementations() {
+    return unmodifiableList(asList(DefaultMasterService.class.getName(), CLIMasterService.class.getName()));
+  }
 }

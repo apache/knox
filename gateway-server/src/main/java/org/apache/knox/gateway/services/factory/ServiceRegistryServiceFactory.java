@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.services.factory;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -29,10 +31,10 @@ import org.apache.knox.gateway.services.registry.impl.DefaultServiceRegistryServ
 public class ServiceRegistryServiceFactory extends AbstractServiceFactory {
 
   @Override
-  public Service create(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
+  protected Service createService(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
       throws ServiceLifecycleException {
     Service service = null;
-    if (getServiceType() == serviceType) {
+    if (shouldCreateService(implementation)) {
       service = new DefaultServiceRegistryService();
       ((DefaultServiceRegistryService) service).setCryptoService(gatewayServices.getService(ServiceType.CRYPTO_SERVICE));
     }
@@ -44,4 +46,8 @@ public class ServiceRegistryServiceFactory extends AbstractServiceFactory {
     return ServiceType.SERVICE_REGISTRY_SERVICE;
   }
 
+  @Override
+  protected Collection<String> getKnownImplementations() {
+    return Collections.singleton(DefaultServiceRegistryService.class.getName());
+  }
 }

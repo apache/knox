@@ -38,7 +38,7 @@ public class TokenStateServiceFactoryTest extends ServiceFactoryTest {
 
   @Test
   public void testBasics() throws Exception {
-    super.testBasics(serviceFactory, ServiceType.MASTER_SERVICE, ServiceType.TOKEN_STATE_SERVICE, true);
+    super.testBasics(serviceFactory, ServiceType.MASTER_SERVICE, ServiceType.TOKEN_STATE_SERVICE);
   }
 
   @Test

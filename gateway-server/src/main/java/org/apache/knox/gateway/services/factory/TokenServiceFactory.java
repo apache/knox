@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.services.factory;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -29,10 +31,10 @@ import org.apache.knox.gateway.services.token.impl.DefaultTokenAuthorityService;
 public class TokenServiceFactory extends AbstractServiceFactory {
 
   @Override
-  public Service create(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
+  protected Service createService(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
       throws ServiceLifecycleException {
     Service service = null;
-    if (getServiceType() == serviceType) {
+    if (shouldCreateService(implementation)) {
       service = new DefaultTokenAuthorityService();
       ((DefaultTokenAuthorityService) service).setKeystoreService(getKeystoreService(gatewayServices));
       ((DefaultTokenAuthorityService) service).setAliasService(getAliasService(gatewayServices));
@@ -45,4 +47,8 @@ public class TokenServiceFactory extends AbstractServiceFactory {
     return ServiceType.TOKEN_SERVICE;
   }
 
+  @Override
+  protected Collection<String> getKnownImplementations() {
+    return Collections.singleton(DefaultTokenAuthorityService.class.getName());
+  }
 }

@@ -41,7 +41,7 @@ public class HostMappingServiceFactoryTest extends ServiceFactoryTest {
 
   @Test
   public void shouldReturnDefaultHostMapperService() throws Exception {
-    final HostMapperService hostMapperService = (HostMapperService) serviceFactory.create(gatewayServices, ServiceType.HOST_MAPPING_SERVICE, null, null, null);
+    final HostMapperService hostMapperService = (HostMapperService) serviceFactory.create(gatewayServices, ServiceType.HOST_MAPPING_SERVICE, gatewayConfig, options);
     assertTrue(hostMapperService instanceof DefaultHostMapperService);
   }
 

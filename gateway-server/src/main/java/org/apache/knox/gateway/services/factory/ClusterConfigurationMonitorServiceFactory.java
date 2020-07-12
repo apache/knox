@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.services.factory;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -29,10 +31,10 @@ import org.apache.knox.gateway.services.topology.impl.DefaultClusterConfiguratio
 public class ClusterConfigurationMonitorServiceFactory extends AbstractServiceFactory {
 
   @Override
-  public Service create(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
+  protected Service createService(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
       throws ServiceLifecycleException {
     Service service = null;
-    if (getServiceType() == serviceType) {
+    if (shouldCreateService(implementation)) {
       service = new DefaultClusterConfigurationMonitorService();
       ((DefaultClusterConfigurationMonitorService) service).setAliasService(getAliasService(gatewayServices));
       ((DefaultClusterConfigurationMonitorService) service).setKeystoreService(getKeystoreService(gatewayServices));
@@ -45,4 +47,8 @@ public class ClusterConfigurationMonitorServiceFactory extends AbstractServiceFa
     return ServiceType.CLUSTER_CONFIGURATION_MONITOR_SERVICE;
   }
 
+  @Override
+  protected Collection<String> getKnownImplementations() {
+    return Collections.singleton(DefaultClusterConfigurationMonitorService.class.getName());
+  }
 }

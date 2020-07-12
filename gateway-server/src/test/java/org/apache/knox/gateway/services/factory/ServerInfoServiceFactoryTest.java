@@ -41,7 +41,7 @@ public class ServerInfoServiceFactoryTest extends ServiceFactoryTest {
 
   @Test
   public void shouldReturnDefaultServerInfoService() throws Exception {
-    final ServerInfoService serverInfoService = (ServerInfoService) serviceFactory.create(gatewayServices, ServiceType.SERVER_INFO_SERVICE, null, null, null);
+    final ServerInfoService serverInfoService = (ServerInfoService) serviceFactory.create(gatewayServices, ServiceType.SERVER_INFO_SERVICE, gatewayConfig, options);
     assertTrue(serverInfoService instanceof DefaultServerInfoService);
   }
 

@@ -17,19 +17,26 @@
  */
 package org.apache.knox.gateway.services.factory;
 
+import static org.easymock.EasyMock.anyString;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
+import static org.hamcrest.CoreMatchers.isA;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.Field;
+import java.util.Collections;
 import java.util.Locale;
+import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
+import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.TestService;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.MasterService;
@@ -44,6 +51,8 @@ class ServiceFactoryTest {
   public ExpectedException expectedException = ExpectedException.none();
 
   protected final GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
+  protected final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+  protected final Map<String, String> options = Collections.emptyMap();
 
   protected void initConfig() {
     final MasterService masterService = EasyMock.createNiceMock(MasterService.class);
@@ -53,19 +62,15 @@ class ServiceFactoryTest {
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     expect(gatewayServices.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
     replay(gatewayServices);
+    expect(gatewayConfig.getServiceParameter(anyString(), anyString())).andReturn("").anyTimes();
+    replay(gatewayConfig);
   }
 
   protected void testBasics(AbstractServiceFactory serviceFactory, ServiceType nonMatchingServiceType, ServiceType matchingServiceType) throws Exception {
-    testBasics(serviceFactory, nonMatchingServiceType, matchingServiceType, false);
-  }
-
-  protected void testBasics(AbstractServiceFactory serviceFactory, ServiceType nonMatchingServiceType, ServiceType matchingServiceType, boolean checkUnknownImplementation)
-      throws Exception {
     shouldReturnCorrectServiceType(serviceFactory, matchingServiceType);
     shouldReturnNullForNonMatchingServiceType(serviceFactory, nonMatchingServiceType);
-    if (checkUnknownImplementation) {
-      shouldThrowIllegalArgumentExceptionIfNoMatchingImplementationFound(serviceFactory, matchingServiceType);
-    }
+    shouldReturnCustomImplementation(serviceFactory, matchingServiceType);
+    shouldFailWithClassNotFoundExceptionForUnknownImplementationWithClassNotOnClasspath(serviceFactory, matchingServiceType);
   }
 
   private void shouldReturnCorrectServiceType(AbstractServiceFactory serviceFactory, ServiceType serviceType) {
@@ -73,14 +78,21 @@ class ServiceFactoryTest {
   }
 
   private void shouldReturnNullForNonMatchingServiceType(AbstractServiceFactory serviceFactory, ServiceType serviceType) throws Exception {
-    assertNull(serviceFactory.create(gatewayServices, serviceType, null, null, null));
+    assertNull(serviceFactory.create(gatewayServices, serviceType, gatewayConfig, options));
   }
 
-  private void shouldThrowIllegalArgumentExceptionIfNoMatchingImplementationFound(AbstractServiceFactory serviceFactory, ServiceType serviceType) throws Exception {
-    expectedException.expect(IllegalArgumentException.class);
-    final String serviceName = ServiceType.TOKEN_STATE_SERVICE == serviceType ? "Token State" : StringUtils.capitalize(serviceType.getShortName());
-    expectedException.expectMessage(String.format(Locale.ROOT, "Invalid %s Service implementation provided: unknown", serviceName));
-    serviceFactory.create(gatewayServices, serviceType, null, null, "unknown");
+  private void shouldFailWithClassNotFoundExceptionForUnknownImplementationWithClassNotOnClasspath(AbstractServiceFactory serviceFactory, ServiceType serviceType)
+      throws Exception {
+    expectedException.expect(ServiceLifecycleException.class);
+    final String implementation = "this.is.my.non.existing.Service";
+    expectedException.expectMessage(String.format(Locale.ROOT, "Errror while instantiating %s service implementation %s", serviceType.getShortName(), implementation));
+    expectedException.expectCause(isA(ClassNotFoundException.class));
+    serviceFactory.create(gatewayServices, serviceType, null, null, implementation);
+  }
+
+  private void shouldReturnCustomImplementation(AbstractServiceFactory serviceFactory, ServiceType matchingServiceType) throws Exception {
+    final Service service = serviceFactory.create(gatewayServices, matchingServiceType, null, null, "org.apache.knox.gateway.services.TestService");
+    assertTrue(service instanceof TestService);
   }
 
   protected boolean isMasterServiceSet(Service serviceToCheck) throws Exception {

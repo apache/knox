@@ -40,8 +40,8 @@ public class TopologyServiceFactoryTest extends ServiceFactoryTest {
   }
 
   @Test
-  public void shouldReturnDefaultAliasService() throws Exception {
-    TopologyService topologyService = (TopologyService) serviceFactory.create(gatewayServices, ServiceType.TOPOLOGY_SERVICE, null, null, null);
+  public void shouldReturnDefaultTopologyService() throws Exception {
+    TopologyService topologyService = (TopologyService) serviceFactory.create(gatewayServices, ServiceType.TOPOLOGY_SERVICE, gatewayConfig, null);
     assertTrue(topologyService instanceof DefaultTopologyService);
     assertTrue(isAliasServiceSet(topologyService));
   }

@@ -17,10 +17,14 @@
  */
 package org.apache.knox.gateway.services.factory;
 
+
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.service.config.remote.RemoteConfigurationRegistryClientServiceFactory;
+import org.apache.knox.gateway.service.config.remote.zk.ZooKeeperClientService;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -37,12 +41,12 @@ public class RemoteRegistryClientServiceFactory extends AbstractServiceFactory {
   private final AliasServiceFactory aliasServiceFactory = new AliasServiceFactory();
 
   @Override
-  public Service create(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
+  protected Service createService(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
       throws ServiceLifecycleException {
     Service service = null;
-    if (getServiceType() == serviceType) {
+    if (shouldCreateService(implementation)) {
       service = RemoteConfigurationRegistryClientServiceFactory.newInstance(gatewayConfig);
-      //it should be the 'default' alias service
+      // it should be the 'default' alias service
       final AliasService localAliasService = (AliasService) aliasServiceFactory.create(gatewayServices, ServiceType.ALIAS_SERVICE, gatewayConfig, options, "");
       localAliasService.init(gatewayConfig, options);
       ((RemoteConfigurationRegistryClientService) service).setAliasService(localAliasService);
@@ -53,6 +57,11 @@ public class RemoteRegistryClientServiceFactory extends AbstractServiceFactory {
   @Override
   protected ServiceType getServiceType() {
     return ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE;
+  }
+
+  @Override
+  protected Collection<String> getKnownImplementations() {
+    return Collections.singleton(ZooKeeperClientService.class.getName());
   }
 
 }

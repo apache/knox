@@ -41,7 +41,7 @@ public class MetricsServiceFactoryTest extends ServiceFactoryTest {
 
   @Test
   public void shouldReturnDefaultMetricsService() throws Exception {
-    final MetricsService metricsService = (MetricsService) serviceFactory.create(gatewayServices, ServiceType.METRICS_SERVICE, null, null, null);
+    final MetricsService metricsService = (MetricsService) serviceFactory.create(gatewayServices, ServiceType.METRICS_SERVICE, gatewayConfig, options);
     assertTrue(metricsService instanceof DefaultMetricsService);
   }
 

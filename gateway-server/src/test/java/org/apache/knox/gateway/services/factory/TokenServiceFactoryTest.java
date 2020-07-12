@@ -40,7 +40,7 @@ public class TokenServiceFactoryTest extends ServiceFactoryTest {
 
   @Test
   public void shouldReturnDefaultTokenService() throws Exception {
-    final DefaultTokenAuthorityService keystoreService = (DefaultTokenAuthorityService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_SERVICE, null, null, null);
+    final DefaultTokenAuthorityService keystoreService = (DefaultTokenAuthorityService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_SERVICE, gatewayConfig, options);
     assertTrue(keystoreService instanceof DefaultTokenAuthorityService);
     assertTrue(isKeystoreServiceSet(keystoreService));
     assertTrue(isAliasServiceSet(keystoreService));

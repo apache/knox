@@ -17,6 +17,10 @@
  */
 package org.apache.knox.gateway.services.factory;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
+
+import java.util.Collection;
 import java.util.Map;
 
 import org.apache.knox.gateway.backend.hashicorp.vault.HashicorpVaultAliasService;
@@ -34,10 +38,10 @@ import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasServic
 public class AliasServiceFactory extends AbstractServiceFactory {
 
   @Override
-  public Service create(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
+  protected Service createService(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
       throws ServiceLifecycleException {
     Service service = null;
-    if (getServiceType() == serviceType) {
+    if (shouldCreateService(implementation)) {
       final AliasService defaultAliasService = new DefaultAliasService();
       ((DefaultAliasService) defaultAliasService).setMasterService(getMasterService(gatewayServices));
       ((DefaultAliasService) defaultAliasService).setKeystoreService(getKeystoreService(gatewayServices));
@@ -51,8 +55,6 @@ public class AliasServiceFactory extends AbstractServiceFactory {
         service = new RemoteAliasService(defaultAliasService, getMasterService(gatewayServices));
       } else if (matchesImplementation(implementation, ZookeeperRemoteAliasService.class)) {
         service = new ZookeeperRemoteAliasServiceProvider().newInstance(defaultAliasService, getMasterService(gatewayServices));
-      } else {
-        throw new IllegalArgumentException("Invalid Alias Service implementation provided: " + implementation);
       }
 
       logServiceUsage(implementation, serviceType);
@@ -65,4 +67,9 @@ public class AliasServiceFactory extends AbstractServiceFactory {
     return ServiceType.ALIAS_SERVICE;
   }
 
+  @Override
+  protected Collection<String> getKnownImplementations() {
+    return unmodifiableList(
+        asList(DefaultAliasService.class.getName(), HashicorpVaultAliasService.class.getName(), RemoteAliasService.class.getName(), ZookeeperRemoteAliasService.class.getName()));
+  }
 }

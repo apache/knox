@@ -41,7 +41,7 @@ public class KeystoreServiceFactoryTest extends ServiceFactoryTest {
 
   @Test
   public void shouldReturnDefaultKeystoreService() throws Exception {
-    final KeystoreService keystoreService = (KeystoreService) serviceFactory.create(gatewayServices, ServiceType.KEYSTORE_SERVICE, null, null, null);
+    final KeystoreService keystoreService = (KeystoreService) serviceFactory.create(gatewayServices, ServiceType.KEYSTORE_SERVICE, gatewayConfig, options);
     assertTrue(keystoreService instanceof DefaultKeystoreService);
     assertTrue(isMasterServiceSet(keystoreService));
   }

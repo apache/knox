@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.services.factory;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -29,9 +31,9 @@ import org.apache.knox.gateway.services.ServiceType;
 public class ServerInfoServiceFactory extends AbstractServiceFactory {
 
   @Override
-  public Service create(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
+  protected Service createService(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
       throws ServiceLifecycleException {
-    return getServiceType() == serviceType ? new DefaultServerInfoService() : null;
+    return shouldCreateService(implementation) ? new DefaultServerInfoService() : null;
   }
 
   @Override
@@ -39,4 +41,8 @@ public class ServerInfoServiceFactory extends AbstractServiceFactory {
     return ServiceType.SERVER_INFO_SERVICE;
   }
 
+  @Override
+  protected Collection<String> getKnownImplementations() {
+    return Collections.singleton(DefaultServerInfoService.class.getName());
+  }
 }

@@ -40,7 +40,7 @@ public class CryptoServiceFactoryTest extends ServiceFactoryTest {
 
   @Test
   public void shouldReturnDefaultCryptoService() throws Exception {
-    final CryptoService cryptoService = (CryptoService) serviceFactory.create(gatewayServices, ServiceType.CRYPTO_SERVICE, null, null, null);
+    final CryptoService cryptoService = (CryptoService) serviceFactory.create(gatewayServices, ServiceType.CRYPTO_SERVICE, gatewayConfig, options);
     assertTrue(cryptoService instanceof DefaultCryptoService);
     assertTrue(isKeystoreServiceSet(cryptoService));
     assertTrue(isAliasServiceSet(cryptoService));

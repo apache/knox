@@ -17,8 +17,10 @@
  */
 package org.apache.knox.gateway.services.factory;
 
+import java.util.Collection;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -42,6 +44,25 @@ public abstract class AbstractServiceFactory implements ServiceFactory {
     return create(gatewayServices, serviceType, gatewayConfig, options, getImplementation(gatewayConfig));
   }
 
+  @Override
+  public Service create(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
+      throws ServiceLifecycleException {
+    Service service = null;
+    if (getServiceType() == serviceType) {
+      service = createService(gatewayServices, serviceType, gatewayConfig, options, implementation);
+      if (service == null && StringUtils.isNotBlank(implementation)) {
+        // no known service implementation created, try to create the custom one
+        try {
+          service = Service.class.cast(Class.forName(implementation).newInstance());
+          logServiceUsage(implementation, serviceType);
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+          throw new ServiceLifecycleException("Errror while instantiating " + serviceType.getShortName() + " service implementation " + implementation, e);
+        }
+      }
+    }
+    return service;
+  }
+
   protected String getImplementation(GatewayConfig gatewayConfig) {
     return gatewayConfig.getServiceParameter(getServiceType().getShortName(), IMPLEMENTATION_PARAM_NAME);
   }
@@ -53,12 +74,18 @@ public abstract class AbstractServiceFactory implements ServiceFactory {
   protected boolean matchesImplementation(String implementation, Class<? extends Object> clazz, boolean acceptEmptyImplementation) {
     boolean match = clazz.getName().equals(implementation);
     if (!match && acceptEmptyImplementation) {
-      match = EMPTY_DEFAULT_IMPLEMENTATION.equals(implementation);
+      match = isEmptyDefaultImplementation(implementation);
     }
     return match;
   }
 
-  protected abstract ServiceType getServiceType();
+  private boolean isEmptyDefaultImplementation(String implementation) {
+    return EMPTY_DEFAULT_IMPLEMENTATION.equals(implementation);
+  }
+
+  protected boolean shouldCreateService(String implementation) {
+    return implementation == null || isEmptyDefaultImplementation(implementation) || getKnownImplementations().contains(implementation);
+  }
 
   protected MasterService getMasterService(GatewayServices gatewayServices) {
     return gatewayServices.getService(ServiceType.MASTER_SERVICE);
@@ -75,4 +102,13 @@ public abstract class AbstractServiceFactory implements ServiceFactory {
   protected void logServiceUsage(String implementation, ServiceType serviceType) {
     LOG.usingServiceImplementation("".equals(implementation) ? "default" : implementation, serviceType.getServiceTypeName());
   }
+
+  // abstract methods
+
+  protected abstract Service createService(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options,
+      String implementation) throws ServiceLifecycleException;
+
+  protected abstract ServiceType getServiceType();
+
+  protected abstract Collection<String> getKnownImplementations();
 }

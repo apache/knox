@@ -37,7 +37,7 @@ public class MasterServiceFactoryTest extends ServiceFactoryTest {
 
   @Test
   public void testBasics() throws Exception {
-    super.testBasics(serviceFactory, ServiceType.CLUSTER_CONFIGURATION_MONITOR_SERVICE, ServiceType.MASTER_SERVICE, true);
+    super.testBasics(serviceFactory, ServiceType.CLUSTER_CONFIGURATION_MONITOR_SERVICE, ServiceType.MASTER_SERVICE);
   }
 
   @Test

@@ -17,6 +17,10 @@
  */
 package org.apache.knox.gateway.services.factory;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
+
+import java.util.Collection;
 import java.util.Map;
 
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -31,10 +35,10 @@ import org.apache.knox.gateway.services.token.impl.JournalBasedTokenStateService
 public class TokenStateServiceFactory extends AbstractServiceFactory {
 
   @Override
-  public Service create(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
+  protected Service createService(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
       throws ServiceLifecycleException {
     Service service = null;
-    if (getServiceType() == serviceType) {
+    if (shouldCreateService(implementation)) {
       if (matchesImplementation(implementation, DefaultTokenStateService.class, true)) {
         service = new DefaultTokenStateService();
       } else if (matchesImplementation(implementation, AliasBasedTokenStateService.class)) {
@@ -42,8 +46,6 @@ public class TokenStateServiceFactory extends AbstractServiceFactory {
         ((AliasBasedTokenStateService) service).setAliasService(getAliasService(gatewayServices));
       } else if (matchesImplementation(implementation, JournalBasedTokenStateService.class)) {
         service = new JournalBasedTokenStateService();
-      } else {
-        throw new IllegalArgumentException("Invalid Token State Service implementation provided: " + implementation);
       }
 
       logServiceUsage(implementation, serviceType);
@@ -57,4 +59,8 @@ public class TokenStateServiceFactory extends AbstractServiceFactory {
     return ServiceType.TOKEN_STATE_SERVICE;
   }
 
+  @Override
+  protected Collection<String> getKnownImplementations() {
+    return unmodifiableList(asList(DefaultTokenStateService.class.getName(), AliasBasedTokenStateService.class.getName(), JournalBasedTokenStateService.class.getName()));
+  }
 }

@@ -41,7 +41,7 @@ public class SslServiceFactoryTest extends ServiceFactoryTest {
 
   @Test
   public void shouldReturnJettySslService() throws Exception {
-    final SSLService keystoreService = (SSLService) serviceFactory.create(gatewayServices, ServiceType.SSL_SERVICE, null, null, null);
+    final SSLService keystoreService = (SSLService) serviceFactory.create(gatewayServices, ServiceType.SSL_SERVICE, gatewayConfig, options);
     assertTrue(keystoreService instanceof JettySSLService);
     assertTrue(isKeystoreServiceSet(keystoreService));
     assertTrue(isAliasServiceSet(keystoreService));

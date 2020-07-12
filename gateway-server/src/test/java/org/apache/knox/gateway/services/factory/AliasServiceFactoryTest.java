@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.services.factory;
 
+import static org.apache.knox.gateway.services.ServiceType.ALIAS_SERVICE;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.knox.gateway.backend.hashicorp.vault.HashicorpVaultAliasService;
@@ -39,17 +40,17 @@ public class AliasServiceFactoryTest extends ServiceFactoryTest {
 
   @Test
   public void testBasics() throws Exception {
-    super.testBasics(serviceFactory, ServiceType.MASTER_SERVICE, ServiceType.ALIAS_SERVICE, true);
+    super.testBasics(serviceFactory, ServiceType.MASTER_SERVICE, ServiceType.ALIAS_SERVICE);
   }
 
   @Test
   public void shouldReturnDefaultAliasService() throws Exception {
-    AliasService aliasService = (AliasService) serviceFactory.create(gatewayServices, ServiceType.ALIAS_SERVICE, null, null, DefaultAliasService.class.getName());
+    AliasService aliasService = (AliasService) serviceFactory.create(gatewayServices, ServiceType.ALIAS_SERVICE, gatewayConfig, options, DefaultAliasService.class.getName());
     assertTrue(aliasService instanceof DefaultAliasService);
     assertTrue(isMasterServiceSet(aliasService));
     assertTrue(isKeystoreServiceSet(aliasService));
 
-    aliasService = (AliasService) serviceFactory.create(gatewayServices, ServiceType.ALIAS_SERVICE, null, null, "");
+    aliasService = (AliasService) serviceFactory.create(gatewayServices, ServiceType.ALIAS_SERVICE, gatewayConfig, options, "");
     assertTrue(aliasService instanceof DefaultAliasService);
     assertTrue(isMasterServiceSet(aliasService));
     assertTrue(isKeystoreServiceSet(aliasService));
@@ -57,17 +58,17 @@ public class AliasServiceFactoryTest extends ServiceFactoryTest {
 
   @Test
   public void shouldReturnHashicorpVaultAliasService() throws Exception {
-    assertTrue(serviceFactory.create(gatewayServices, ServiceType.ALIAS_SERVICE, null, null, HashicorpVaultAliasService.class.getName()) instanceof HashicorpVaultAliasService);
+    assertTrue(serviceFactory.create(gatewayServices, ALIAS_SERVICE, gatewayConfig, options, HashicorpVaultAliasService.class.getName()) instanceof HashicorpVaultAliasService);
   }
 
   @Test
   public void shouldReturnRemoteAliasService() throws Exception {
-    assertTrue(serviceFactory.create(gatewayServices, ServiceType.ALIAS_SERVICE, null, null, RemoteAliasService.class.getName()) instanceof RemoteAliasService);
+    assertTrue(serviceFactory.create(gatewayServices, ALIAS_SERVICE, gatewayConfig, options, RemoteAliasService.class.getName()) instanceof RemoteAliasService);
   }
 
   @Test
   public void shouldReturnZookeeperAliasService() throws Exception {
-    assertTrue(serviceFactory.create(gatewayServices, ServiceType.ALIAS_SERVICE, null, null, ZookeeperRemoteAliasService.class.getName()) instanceof ZookeeperRemoteAliasService);
+    assertTrue(serviceFactory.create(gatewayServices, ALIAS_SERVICE, gatewayConfig, options, ZookeeperRemoteAliasService.class.getName()) instanceof ZookeeperRemoteAliasService);
   }
 
 }

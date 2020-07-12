@@ -42,7 +42,7 @@ public class ClusterConfigurationMonitorServiceFactoryTest extends ServiceFactor
   @Test
   public void shouldReturnDefaultClusterConfigurationMonitorService() throws Exception {
     final ClusterConfigurationMonitorService clusterConfigurationMonitorService = (ClusterConfigurationMonitorService) serviceFactory.create(gatewayServices,
-        ServiceType.CLUSTER_CONFIGURATION_MONITOR_SERVICE, null, null, null);
+        ServiceType.CLUSTER_CONFIGURATION_MONITOR_SERVICE, gatewayConfig, options);
     assertTrue(clusterConfigurationMonitorService instanceof DefaultClusterConfigurationMonitorService);
     assertTrue(isAliasServiceSet(clusterConfigurationMonitorService));
     assertTrue(isKeystoreServiceSet(clusterConfigurationMonitorService));
