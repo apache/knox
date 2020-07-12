@@ -236,7 +236,7 @@
         <metrics.version>4.1.6</metrics.version>
         <mina.version>2.0.21</mina.version>
         <nimbus-jose-jwt.version>8.14.1</nimbus-jose-jwt.version>
-        <nodejs.version>v12.14.1</nodejs.version>
+        <nodejs.version>v12.18.2</nodejs.version>
         <okhttp.version>2.7.5</okhttp.version>
         <opensaml.version>3.4.3</opensaml.version>
         <pac4j.version>3.8.3</pac4j.version>
