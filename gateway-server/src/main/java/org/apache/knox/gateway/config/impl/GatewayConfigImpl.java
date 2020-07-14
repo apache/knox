@@ -97,6 +97,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final String[] GATEWAY_CONFIG_FILENAMES = {GATEWAY_CONFIG_FILE_PREFIX + "-default.xml", GATEWAY_CONFIG_FILE_PREFIX + "-site.xml"};
 
+  private static final String GATEWAY_SERVICE_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".service.";
   public static final String HTTP_HOST = GATEWAY_CONFIG_FILE_PREFIX + ".host";
   public static final String HTTP_PORT = GATEWAY_CONFIG_FILE_PREFIX + ".port";
   public static final String HTTP_PATH = GATEWAY_CONFIG_FILE_PREFIX + ".path";
@@ -1165,4 +1166,10 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return getBoolean(KNOX_TOKEN_PERMISSIVE_VALIDATION_ENABLED,
         KNOX_TOKEN_PERMISSIVE_VALIDATION_ENABLED_DEFAULT);
   }
+
+  @Override
+  public String getServiceParameter(String service, String parameter) {
+    return get(GATEWAY_SERVICE_PREFIX + service + "." + parameter, "");
+  }
+
 }

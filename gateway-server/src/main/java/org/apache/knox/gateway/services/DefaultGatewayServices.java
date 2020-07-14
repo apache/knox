@@ -17,37 +17,22 @@
  */
 package org.apache.knox.gateway.services;
 
+import java.util.List;
+import java.util.Map;
+
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.deploy.DeploymentContext;
 import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
 import org.apache.knox.gateway.descriptor.ResourceDescriptor;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.service.config.remote.RemoteConfigurationRegistryClientServiceFactory;
-import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
-import org.apache.knox.gateway.services.registry.impl.DefaultServiceDefinitionRegistry;
-import org.apache.knox.gateway.services.metrics.impl.DefaultMetricsService;
 import org.apache.knox.gateway.services.security.KeystoreService;
-import org.apache.knox.gateway.services.security.impl.RemoteAliasService;
-import org.apache.knox.gateway.services.token.impl.AliasBasedTokenStateService;
-import org.apache.knox.gateway.services.topology.impl.DefaultClusterConfigurationMonitorService;
-import org.apache.knox.gateway.services.topology.impl.DefaultTopologyService;
-import org.apache.knox.gateway.services.hostmap.impl.DefaultHostMapperService;
-import org.apache.knox.gateway.services.registry.impl.DefaultServiceRegistryService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
-import org.apache.knox.gateway.services.security.impl.DefaultAliasService;
-import org.apache.knox.gateway.services.security.impl.DefaultCryptoService;
-import org.apache.knox.gateway.services.security.impl.DefaultKeystoreService;
-import org.apache.knox.gateway.services.security.impl.DefaultMasterService;
-import org.apache.knox.gateway.services.security.impl.JettySSLService;
-import org.apache.knox.gateway.services.token.impl.DefaultTokenAuthorityService;
 import org.apache.knox.gateway.topology.Provider;
-
-import java.util.List;
-import java.util.Map;
 
 public class DefaultGatewayServices extends AbstractGatewayServices {
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
+  private final GatewayServiceFactory gatewayServiceFactory = new GatewayServiceFactory();
 
   public DefaultGatewayServices() {
     super("Services", "GatewayServices");
@@ -55,19 +40,9 @@ public class DefaultGatewayServices extends AbstractGatewayServices {
 
   @Override
   public void init(GatewayConfig config, Map<String,String> options) throws ServiceLifecycleException {
-    DefaultMasterService ms = new DefaultMasterService();
-    ms.init(config, options);
-    addService(ServiceType.MASTER_SERVICE, ms);
-
-    DefaultKeystoreService ks = new DefaultKeystoreService();
-    ks.setMasterService(ms);
-    ks.init(config, options);
-    addService(ServiceType.KEYSTORE_SERVICE, ks);
-
-    final DefaultAliasService defaultAlias = new DefaultAliasService();
-    defaultAlias.setKeystoreService(ks);
-    defaultAlias.setMasterService(ms);
-    defaultAlias.init(config, options);
+    //order is important: different service factory implementations may use already added services
+    addService(ServiceType.MASTER_SERVICE, gatewayServiceFactory.create(this, ServiceType.MASTER_SERVICE, config, options));
+    addService(ServiceType.KEYSTORE_SERVICE, gatewayServiceFactory.create(this, ServiceType.KEYSTORE_SERVICE, config, options));
 
     /*
     Doesn't make sense for this to be set to the remote alias service since the impl could
@@ -75,80 +50,34 @@ public class DefaultGatewayServices extends AbstractGatewayServices {
     IE: If ZK digest auth and using ZK remote alias service, then wouldn't be able to connect
     to ZK anyway due to the circular dependency.
      */
-    final RemoteConfigurationRegistryClientService registryClientService =
-        RemoteConfigurationRegistryClientServiceFactory.newInstance(config);
-    registryClientService.setAliasService(defaultAlias);
-    registryClientService.init(config, options);
-    addService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE, registryClientService);
+    addService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE, gatewayServiceFactory.create(this, ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE, config, options));
 
+    addService(ServiceType.ALIAS_SERVICE, gatewayServiceFactory.create(this, ServiceType.ALIAS_SERVICE, config, options));
 
-    /* create an instance so that it can be passed to other services */
-    final RemoteAliasService alias = new RemoteAliasService(defaultAlias, ms);
-    /*
-     * Setup and initialize remote Alias Service.
-     * NOTE: registryClientService.init() needs to
-     * be called before alias.start();
-     */
-    alias.init(config, options);
-    addService(ServiceType.ALIAS_SERVICE, alias);
+    addService(ServiceType.CRYPTO_SERVICE, gatewayServiceFactory.create(this, ServiceType.CRYPTO_SERVICE, config, options));
 
-    DefaultCryptoService crypto = new DefaultCryptoService();
-    crypto.setKeystoreService(ks);
-    crypto.setAliasService(alias);
-    crypto.init(config, options);
-    addService(ServiceType.CRYPTO_SERVICE, crypto);
-
-    JettySSLService ssl = new JettySSLService();
-    ssl.setAliasService(alias);
-    ssl.setKeystoreService(ks);
-    ssl.init(config, options);
-    addService(ServiceType.SSL_SERVICE, ssl);
+    addService(ServiceType.SSL_SERVICE, gatewayServiceFactory.create(this, ServiceType.SSL_SERVICE, config, options));
 
     // The DefaultTokenAuthorityService needs to be initialized after the JettySSLService to ensure
     // that the signing keystore is available for it.
-    DefaultTokenAuthorityService ts = new DefaultTokenAuthorityService();
-    ts.setAliasService(alias);
-    ts.setKeystoreService(ks);
-    ts.init(config, options);
-    // prolly should not allow the token service to be looked up?
-    addService(ServiceType.TOKEN_SERVICE, ts);
+    // probably should not allow the token service to be looked up?
+    addService(ServiceType.TOKEN_SERVICE, gatewayServiceFactory.create(this, ServiceType.TOKEN_SERVICE, config, options));
 
-    AliasBasedTokenStateService tss = new AliasBasedTokenStateService();
-    tss.setAliasService(alias);
-    tss.init(config, options);
-    addService(ServiceType.TOKEN_STATE_SERVICE, tss);
+    addService(ServiceType.TOKEN_STATE_SERVICE, gatewayServiceFactory.create(this, ServiceType.TOKEN_STATE_SERVICE, config, options));
 
-    DefaultServiceRegistryService sr = new DefaultServiceRegistryService();
-    sr.setCryptoService( crypto );
-    sr.init( config, options );
-    addService(ServiceType.SERVICE_REGISTRY_SERVICE, sr);
+    addService(ServiceType.SERVICE_REGISTRY_SERVICE, gatewayServiceFactory.create(this, ServiceType.SERVICE_REGISTRY_SERVICE, config, options));
 
-    DefaultHostMapperService hm = new DefaultHostMapperService();
-    hm.init( config, options );
-    addService(ServiceType.HOST_MAPPING_SERVICE, hm );
+    addService(ServiceType.HOST_MAPPING_SERVICE, gatewayServiceFactory.create(this, ServiceType.HOST_MAPPING_SERVICE, config, options));
 
-    DefaultServerInfoService sis = new DefaultServerInfoService();
-    sis.init( config, options );
-    addService(ServiceType.SERVER_INFO_SERVICE, sis );
+    addService(ServiceType.SERVER_INFO_SERVICE, gatewayServiceFactory.create(this, ServiceType.SERVER_INFO_SERVICE, config, options));
 
-    DefaultClusterConfigurationMonitorService ccs = new DefaultClusterConfigurationMonitorService();
-    ccs.setAliasService(alias);
-    ccs.setKeystoreService(ks);
-    ccs.init(config, options);
-    addService(ServiceType.CLUSTER_CONFIGURATION_MONITOR_SERVICE, ccs);
+    addService(ServiceType.CLUSTER_CONFIGURATION_MONITOR_SERVICE, gatewayServiceFactory.create(this, ServiceType.CLUSTER_CONFIGURATION_MONITOR_SERVICE, config, options));
 
-    DefaultTopologyService tops = new DefaultTopologyService();
-    tops.setAliasService(alias);
-    tops.init(  config, options  );
-    addService(ServiceType.TOPOLOGY_SERVICE, tops  );
+    addService(ServiceType.TOPOLOGY_SERVICE, gatewayServiceFactory.create(this, ServiceType.TOPOLOGY_SERVICE, config, options));
 
-    DefaultServiceDefinitionRegistry sdr = new DefaultServiceDefinitionRegistry();
-    sdr.init( config, options );
-    addService(ServiceType.SERVICE_DEFINITION_REGISTRY, sdr );
+    addService(ServiceType.SERVICE_DEFINITION_REGISTRY, gatewayServiceFactory.create(this, ServiceType.SERVICE_DEFINITION_REGISTRY, config, options));
 
-    DefaultMetricsService metricsService = new DefaultMetricsService();
-    metricsService.init( config, options );
-    addService(ServiceType.METRICS_SERVICE, metricsService );
+    addService(ServiceType.METRICS_SERVICE, gatewayServiceFactory.create(this, ServiceType.METRICS_SERVICE, config, options));
   }
 
   @Override

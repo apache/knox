@@ -73,8 +73,8 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   private static final GatewayResources RESOURCES = ResourcesFactory.get(GatewayResources.class);
 
   private static final Set<String> SUPPORTED_SIG_ALGS = new HashSet<>();
-  private AliasService as;
-  private KeystoreService ks;
+  private AliasService aliasService;
+  private KeystoreService keystoreService;
   private GatewayConfig config;
 
   private char[] cachedSigningKeyPassphrase;
@@ -92,11 +92,11 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   }
 
   public void setKeystoreService(KeystoreService ks) {
-    this.ks = ks;
+    this.keystoreService = ks;
   }
 
   public void setAliasService(AliasService as) {
-    this.as = as;
+    this.aliasService = as;
   }
 
   @Override
@@ -144,7 +144,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
           throws KeystoreServiceException, TokenServiceException {
 
     if (signingKeystorePassphrase != null) {
-      return (RSAPrivateKey) ks.getSigningKey(signingKeystoreName,
+      return (RSAPrivateKey) keystoreService.getSigningKey(signingKeystoreName,
               getSigningKeyAlias(signingKeystoreAlias),
               getSigningKeyPassphrase(signingKeystorePassphrase));
     }
@@ -217,7 +217,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     PublicKey key;
     try {
       if (publicKey == null) {
-        key = ks.getSigningKeystore().getCertificate(getSigningKeyAlias()).getPublicKey();
+        key = keystoreService.getSigningKeystore().getCertificate(getSigningKeyAlias()).getPublicKey();
       }
       else {
         key = publicKey;
@@ -261,7 +261,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   @Override
   public void init(GatewayConfig config, Map<String, String> options)
       throws ServiceLifecycleException {
-    if (as == null || ks == null) {
+    if (aliasService == null || keystoreService == null) {
       throw new ServiceLifecycleException("Alias or Keystore service is not set");
     }
     this.config = config;
@@ -272,7 +272,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     // Ensure that the default signing keystore is available
     KeyStore keystore;
     try {
-      keystore = ks.getSigningKeystore();
+      keystore = keystoreService.getSigningKeystore();
       if (keystore == null) {
         throw new ServiceLifecycleException(RESOURCES.signingKeystoreNotAvailable(config.getSigningKeystorePath()));
       }
@@ -282,7 +282,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
 
     // Ensure that the password for the signing key is available
     try {
-      cachedSigningKeyPassphrase = as.getSigningKeyPassphrase();
+      cachedSigningKeyPassphrase = aliasService.getSigningKeyPassphrase();
       if (cachedSigningKeyPassphrase == null) {
         throw new ServiceLifecycleException(RESOURCES.signingKeyPassphraseNotAvailable(config.getSigningKeyPassphraseAlias()));
       }

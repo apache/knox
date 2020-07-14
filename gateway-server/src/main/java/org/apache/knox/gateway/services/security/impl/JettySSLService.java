@@ -43,15 +43,15 @@ public class JettySSLService implements SSLService {
   private static final String GATEWAY_CREDENTIAL_STORE_NAME = "__gateway";
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
-  private KeystoreService ks;
-  private AliasService as;
+  private KeystoreService keystoreService;
+  private AliasService aliasService;
 
   public void setAliasService(AliasService as) {
-    this.as = as;
+    this.aliasService = as;
   }
 
   public void setKeystoreService(KeystoreService ks) {
-    this.ks = ks;
+    this.keystoreService = ks;
   }
 
   @Override
@@ -60,9 +60,9 @@ public class JettySSLService implements SSLService {
     // set any JSSE or security related system properties
     System.setProperty(EPHEMERAL_DH_KEY_SIZE_PROPERTY, config.getEphemeralDHKeySize());
     try {
-      if (!ks.isCredentialStoreForClusterAvailable(GATEWAY_CREDENTIAL_STORE_NAME)) {
+      if (!keystoreService.isCredentialStoreForClusterAvailable(GATEWAY_CREDENTIAL_STORE_NAME)) {
         log.creatingCredentialStoreForGateway();
-        ks.createCredentialStoreForCluster(GATEWAY_CREDENTIAL_STORE_NAME);
+        keystoreService.createCredentialStoreForCluster(GATEWAY_CREDENTIAL_STORE_NAME);
         // LET'S NOT GENERATE A DIFFERENT KEY PASSPHRASE BY DEFAULT ANYMORE
         // IF A DEPLOYMENT WANTS TO CHANGE THE KEY PASSPHRASE TO MAKE IT MORE SECURE THEN
         // THEY CAN ADD THE ALIAS EXPLICITLY WITH THE CLI
@@ -76,16 +76,16 @@ public class JettySSLService implements SSLService {
     }
 
     try {
-      if (!ks.isKeystoreForGatewayAvailable()) {
+      if (!keystoreService.isKeystoreForGatewayAvailable()) {
         log.creatingKeyStoreForGateway();
-        ks.createKeystoreForGateway();
+        keystoreService.createKeystoreForGateway();
         char[] passphrase;
         try {
-          passphrase = as.getGatewayIdentityPassphrase();
+          passphrase = aliasService.getGatewayIdentityPassphrase();
         } catch (AliasServiceException e) {
           throw new ServiceLifecycleException("Error accessing credential store for the gateway.", e);
         }
-        ks.addSelfSignedCertForGateway(config.getIdentityKeyAlias(), passphrase);
+        keystoreService.addSelfSignedCertForGateway(config.getIdentityKeyAlias(), passphrase);
       }
       else {
         log.keyStoreForGatewayFoundNotCreating();
@@ -101,7 +101,7 @@ public class JettySSLService implements SSLService {
     Certificate cert;
     final String identityKeyAlias = config.getIdentityKeyAlias();
     try {
-      cert = as.getCertificateForGateway(identityKeyAlias);
+      cert = aliasService.getCertificateForGateway(identityKeyAlias);
     } catch (AliasServiceException e) {
       throw new ServiceLifecycleException("Cannot Retreive Gateway SSL Certificate. Server will not start.", e);
     }
@@ -143,7 +143,7 @@ public class JettySSLService implements SSLService {
 
     char[] keystorePasswordChars;
     try {
-      keystorePasswordChars = as.getGatewayIdentityKeystorePassword();
+      keystorePasswordChars = aliasService.getGatewayIdentityKeystorePassword();
     } catch (AliasServiceException e) {
       log.failedToGetPasswordForGatewayIdentityKeystore(e);
       throw e;
@@ -154,7 +154,7 @@ public class JettySSLService implements SSLService {
 
     char[] keypass;
     try {
-      keypass = as.getGatewayIdentityPassphrase();
+      keypass = aliasService.getGatewayIdentityPassphrase();
     } catch (AliasServiceException e) {
       log.failedToGetPassphraseForGatewayIdentityKey(e);
       throw e;
@@ -175,7 +175,7 @@ public class JettySSLService implements SSLService {
         trustStoreType = config.getTruststoreType();
 
         try {
-          truststorePassword = as.getPasswordFromAliasForGateway(trustStorePasswordAlias);
+          truststorePassword = aliasService.getPasswordFromAliasForGateway(trustStorePasswordAlias);
         } catch (AliasServiceException e) {
           log.failedToGetPasswordForGatewayTruststore(trustStorePasswordAlias, e);
           throw e;
@@ -188,7 +188,7 @@ public class JettySSLService implements SSLService {
         trustStoreType = identityKeystoreType;
 
         try {
-          truststorePassword = as.getGatewayIdentityKeystorePassword();
+          truststorePassword = aliasService.getGatewayIdentityKeystorePassword();
         } catch (AliasServiceException e) {
           log.failedToGetPasswordForGatewayTruststore(config.getIdentityKeystorePasswordAlias(), e);
           throw e;

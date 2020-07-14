@@ -19,6 +19,10 @@ limitations under the License.
 <configuration>
 
     <property>
+        <name>gateway.service.alias.impl</name>
+        <value>org.apache.knox.gateway.services.security.impl.RemoteAliasService</value>
+    </property>
+    <property>
         <name>gateway.port</name>
         <value>8443</value>
         <description>The HTTP port for the Gateway.</description>

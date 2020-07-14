@@ -38,7 +38,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+  import static org.junit.Assert.assertTrue;
 
 public class GatewayConfigImplTest {
 
@@ -403,6 +403,24 @@ public class GatewayConfigImplTest {
     final Map<String, String> remoteAliasServiceConfiguration = new GatewayConfigImpl().getRemoteAliasServiceConfiguration();
     assertTrue(remoteAliasServiceConfiguration.containsKey(REMOTE_ALIAS_SERVICE_TYPE));
     assertEquals(ZookeeperRemoteAliasService.TYPE, remoteAliasServiceConfiguration.get(REMOTE_ALIAS_SERVICE_TYPE));
+  }
+
+  @Test
+  public void testGetServiceParameter() throws Exception {
+    final GatewayConfigImpl gatewayConfig = new GatewayConfigImpl();
+
+    // should return an empty string if 'gateway.service.alias.impl' is not set
+    assertEquals("", gatewayConfig.getServiceParameter("alias", "impl"));
+
+    gatewayConfig.set("gateway.service.alias.impl", "myAliasService");
+    gatewayConfig.set("gateway.service.tokenstate.impl", "myTokenStateService");
+
+    // should return an empty string if the given service is not defined
+    assertEquals("", gatewayConfig.getServiceParameter("notListedService", "impl"));
+
+    //should return the declared implementations
+    assertEquals("myAliasService", gatewayConfig.getServiceParameter("alias", "impl"));
+    assertEquals("myTokenStateService", gatewayConfig.getServiceParameter("tokenstate", "impl"));
   }
 
 }

@@ -17,24 +17,19 @@
  */
 package org.apache.knox.gateway.services;
 
+import java.util.List;
+import java.util.Map;
+
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.deploy.DeploymentContext;
 import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
 import org.apache.knox.gateway.descriptor.ResourceDescriptor;
-import org.apache.knox.gateway.service.config.remote.RemoteConfigurationRegistryClientServiceFactory;
-import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
-import org.apache.knox.gateway.services.security.impl.RemoteAliasService;
-import org.apache.knox.gateway.services.topology.impl.DefaultTopologyService;
-import org.apache.knox.gateway.services.security.impl.DefaultAliasService;
-import org.apache.knox.gateway.services.security.impl.DefaultCryptoService;
-import org.apache.knox.gateway.services.security.impl.DefaultKeystoreService;
 import org.apache.knox.gateway.services.security.impl.CLIMasterService;
 import org.apache.knox.gateway.topology.Provider;
 
-import java.util.List;
-import java.util.Map;
-
 public class CLIGatewayServices extends AbstractGatewayServices {
+
+  private final GatewayServiceFactory gatewayServiceFactory = new GatewayServiceFactory();
 
   public CLIGatewayServices() {
     super("Services", "GatewayServices");
@@ -42,19 +37,8 @@ public class CLIGatewayServices extends AbstractGatewayServices {
 
   @Override
   public void init(GatewayConfig config, Map<String,String> options) throws ServiceLifecycleException {
-    CLIMasterService ms = new CLIMasterService();
-    ms.init(config, options);
-    addService(ServiceType.MASTER_SERVICE, ms);
-
-    DefaultKeystoreService ks = new DefaultKeystoreService();
-    ks.setMasterService(ms);
-    ks.init(config, options);
-    addService(ServiceType.KEYSTORE_SERVICE, ks);
-
-    DefaultAliasService defaultAlias = new DefaultAliasService();
-    defaultAlias.setKeystoreService(ks);
-    defaultAlias.setMasterService(ms);
-    defaultAlias.init(config, options);
+    addService(ServiceType.MASTER_SERVICE, gatewayServiceFactory.create(this, ServiceType.MASTER_SERVICE, config, options, CLIMasterService.class.getName()));
+    addService(ServiceType.KEYSTORE_SERVICE, gatewayServiceFactory.create(this, ServiceType.KEYSTORE_SERVICE, config, options));
 
     /*
     Doesn't make sense for this to be set to the remote alias service since the impl could
@@ -62,32 +46,13 @@ public class CLIGatewayServices extends AbstractGatewayServices {
     IE: If ZK digest auth and using ZK remote alias service, then wouldn't be able to connect
     to ZK anyway due to the circular dependency.
      */
-    final RemoteConfigurationRegistryClientService registryClientService =
-        RemoteConfigurationRegistryClientServiceFactory.newInstance(config);
-    registryClientService.setAliasService(defaultAlias);
-    registryClientService.init(config, options);
-    addService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE, registryClientService);
+    addService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE, gatewayServiceFactory.create(this, ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE, config, options));
 
+    addService(ServiceType.ALIAS_SERVICE, gatewayServiceFactory.create(this, ServiceType.ALIAS_SERVICE, config, options));
 
-    /* create an instance so that it can be passed to other services */
-    final RemoteAliasService alias = new RemoteAliasService(defaultAlias, ms);
-    /*
-     * Setup and initialize remote Alias Service.
-     * NOTE: registryClientService.init() needs to
-     * be called before alias.start();
-     */
-    alias.init(config, options);
-    addService(ServiceType.ALIAS_SERVICE, alias);
+    addService(ServiceType.CRYPTO_SERVICE, gatewayServiceFactory.create(this, ServiceType.CRYPTO_SERVICE, config, options));
 
-    DefaultCryptoService crypto = new DefaultCryptoService();
-    crypto.setKeystoreService(ks);
-    crypto.setAliasService(alias);
-    crypto.init(config, options);
-    addService(ServiceType.CRYPTO_SERVICE, crypto);
-
-    DefaultTopologyService tops = new DefaultTopologyService();
-    tops.init(  config, options  );
-    addService(ServiceType.TOPOLOGY_SERVICE, tops);
+    addService(ServiceType.TOPOLOGY_SERVICE, gatewayServiceFactory.create(this, ServiceType.TOPOLOGY_SERVICE, config, options));
   }
 
   @Override

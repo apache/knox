@@ -336,6 +336,7 @@ public class WebsocketEchoTestBase {
         .andReturn(TEST_KEY_ALIAS)
         .anyTimes();
 
+    EasyMock.expect(gatewayConfig.getServiceParameter(EasyMock.anyString(), EasyMock.anyString())).andReturn("").anyTimes();
 
     EasyMock.replay(gatewayConfig);
 
