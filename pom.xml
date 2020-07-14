@@ -72,6 +72,7 @@
         <module>gateway-spi</module>
         <module>gateway-discovery-ambari</module>
         <module>gateway-discovery-cm</module>
+        <module>gateway-performance-test</module>
         <module>gateway-server</module>
         <module>gateway-server-launcher</module>
         <module>gateway-server-xforwarded-filter</module>
@@ -849,6 +850,11 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-i18n-logging-log4j</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-performance-test</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
