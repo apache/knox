@@ -26,7 +26,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.Field;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -52,7 +52,7 @@ class ServiceFactoryTest {
 
   protected final GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
   protected final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
-  protected final Map<String, String> options = Collections.emptyMap();
+  protected final Map<String, String> options = new HashMap<>();
 
   protected void initConfig() {
     final MasterService masterService = EasyMock.createNiceMock(MasterService.class);

@@ -190,13 +190,18 @@ public class ZookeeperRemoteAliasService implements AliasService {
      *
      * @param clusterName
      *            cluster name
-     * @return List of all the aliases
+     * @return List of all the aliases (an empty list, in case there is no alias for the given cluster)
      */
     @Override
     public List<String> getAliasesForCluster(final String clusterName) throws AliasServiceException {
         final List<String> localAliases = localAliasService.getAliasesForCluster(clusterName);
         if (localAliases == null || localAliases.isEmpty()) {
-          return remoteClient == null ? new ArrayList<>() : remoteClient.listChildEntries(buildClusterEntryName(clusterName));
+          if (remoteClient != null) {
+            final List<String> remoteAliases = remoteClient.listChildEntries(buildClusterEntryName(clusterName));
+            return remoteAliases == null ? new ArrayList<>() : remoteAliases;
+          } else {
+            return new ArrayList<>();
+          }
         } else {
           return localAliases;
         }
@@ -435,7 +440,6 @@ public class ZookeeperRemoteAliasService implements AliasService {
 
         @Override
         public void childEvent(final RemoteConfigurationRegistryClient client, final Type type, final String path) {
-
             final String subPath = StringUtils.substringAfter(path, PATH_KNOX_ALIAS_STORE_TOPOLOGY + PATH_SEPARATOR);
             final String[] paths = StringUtils.split(subPath, '/');
 
@@ -494,11 +498,11 @@ public class ZookeeperRemoteAliasService implements AliasService {
         @Override
         public void entryChanged(final RemoteConfigurationRegistryClient client, final String path, final byte[] data) {
             try {
-                localAliasService.addAliasForCluster(cluster, alias, decrypt(new String(data, StandardCharsets.UTF_8)));
+              localAliasService.addAliasForCluster(cluster, alias, decrypt(new String(data, StandardCharsets.UTF_8)));
             } catch (final Exception e) {
-                /* log and move on */
-                LOG.errorAddingAliasLocally(cluster, alias, e.toString());
-            }
+              /* log and move on */
+              LOG.errorAddingAliasLocally(cluster, alias, e.toString());
+          }
         }
     }
 }
