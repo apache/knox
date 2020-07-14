@@ -235,6 +235,7 @@
         <maven-pmd-plugin.version>3.12.0</maven-pmd-plugin.version>
         <metrics.version>4.1.6</metrics.version>
         <mina.version>2.0.21</mina.version>
+        <netty.version>4.1.51.Final</netty.version>
         <nimbus-jose-jwt.version>8.14.1</nimbus-jose-jwt.version>
         <nodejs.version>v12.18.2</nodejs.version>
         <okhttp.version>2.7.5</okhttp.version>
@@ -1592,6 +1593,12 @@
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-hdfs-client</artifactId>
                 <version>${hadoop.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>${netty.version}</version>
             </dependency>
 
             <dependency>
