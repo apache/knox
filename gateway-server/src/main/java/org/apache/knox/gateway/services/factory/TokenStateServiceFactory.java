@@ -31,6 +31,7 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.token.impl.AliasBasedTokenStateService;
 import org.apache.knox.gateway.services.token.impl.DefaultTokenStateService;
 import org.apache.knox.gateway.services.token.impl.JournalBasedTokenStateService;
+import org.apache.knox.gateway.services.token.impl.ZookeeperTokenStateService;
 
 public class TokenStateServiceFactory extends AbstractServiceFactory {
 
@@ -46,6 +47,8 @@ public class TokenStateServiceFactory extends AbstractServiceFactory {
         ((AliasBasedTokenStateService) service).setAliasService(getAliasService(gatewayServices));
       } else if (matchesImplementation(implementation, JournalBasedTokenStateService.class)) {
         service = new JournalBasedTokenStateService();
+      } else if (matchesImplementation(implementation, ZookeeperTokenStateService.class)) {
+        service = new ZookeeperTokenStateService(gatewayServices);
       }
 
       logServiceUsage(implementation, serviceType);
@@ -61,6 +64,7 @@ public class TokenStateServiceFactory extends AbstractServiceFactory {
 
   @Override
   protected Collection<String> getKnownImplementations() {
-    return unmodifiableList(asList(DefaultTokenStateService.class.getName(), AliasBasedTokenStateService.class.getName(), JournalBasedTokenStateService.class.getName()));
+    return unmodifiableList(asList(DefaultTokenStateService.class.getName(), AliasBasedTokenStateService.class.getName(), JournalBasedTokenStateService.class.getName(),
+        ZookeeperTokenStateService.class.getName()));
   }
 }

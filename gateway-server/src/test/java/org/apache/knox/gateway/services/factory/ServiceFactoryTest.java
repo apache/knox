@@ -26,7 +26,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.Field;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -37,6 +37,7 @@ import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.TestService;
+import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.MasterService;
@@ -52,7 +53,7 @@ class ServiceFactoryTest {
 
   protected final GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
   protected final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
-  protected final Map<String, String> options = Collections.emptyMap();
+  protected final Map<String, String> options = new HashMap<>();
 
   protected void initConfig() {
     final MasterService masterService = EasyMock.createNiceMock(MasterService.class);
@@ -61,6 +62,8 @@ class ServiceFactoryTest {
     expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreservice).anyTimes();
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     expect(gatewayServices.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
+    final RemoteConfigurationRegistryClientService registryClientService = EasyMock.createNiceMock(RemoteConfigurationRegistryClientService.class);
+    expect(gatewayServices.getService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE)).andReturn(registryClientService).anyTimes();
     replay(gatewayServices);
     expect(gatewayConfig.getServiceParameter(anyString(), anyString())).andReturn("").anyTimes();
     replay(gatewayConfig);
@@ -85,7 +88,7 @@ class ServiceFactoryTest {
       throws Exception {
     expectedException.expect(ServiceLifecycleException.class);
     final String implementation = "this.is.my.non.existing.Service";
-    expectedException.expectMessage(String.format(Locale.ROOT, "Errror while instantiating %s service implementation %s", serviceType.getShortName(), implementation));
+    expectedException.expectMessage(String.format(Locale.ROOT, "Error while instantiating %s service implementation %s", serviceType.getShortName(), implementation));
     expectedException.expectCause(isA(ClassNotFoundException.class));
     serviceFactory.create(gatewayServices, serviceType, null, null, implementation);
   }

@@ -24,6 +24,7 @@ import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.token.impl.AliasBasedTokenStateService;
 import org.apache.knox.gateway.services.token.impl.DefaultTokenStateService;
 import org.apache.knox.gateway.services.token.impl.JournalBasedTokenStateService;
+import org.apache.knox.gateway.services.token.impl.ZookeeperTokenStateService;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,23 +43,32 @@ public class TokenStateServiceFactoryTest extends ServiceFactoryTest {
   }
 
   @Test
-  public void shouldReturnDefaultAliasService() throws Exception {
-    TokenStateService tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, null, null, DefaultTokenStateService.class.getName());
+  public void shouldReturnDefaultTopkenStateService() throws Exception {
+    TokenStateService tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, gatewayConfig, options,
+        DefaultTokenStateService.class.getName());
     assertTrue(tokenStateService instanceof DefaultTokenStateService);
 
-    tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, null, null, "");
+    tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, gatewayConfig, options, "");
     assertTrue(tokenStateService instanceof DefaultTokenStateService);
   }
 
   @Test
   public void shouldReturnAliasBasedTokenStateService() throws Exception {
-    final TokenStateService tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, null, null, AliasBasedTokenStateService.class.getName());
+    final TokenStateService tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, gatewayConfig, options,
+        AliasBasedTokenStateService.class.getName());
     assertTrue(tokenStateService instanceof AliasBasedTokenStateService);
     assertTrue(isAliasServiceSet(tokenStateService));
   }
 
   @Test
-  public void shouldReturnHJournalTokenStateService() throws Exception {
-    assertTrue(serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, null, null, JournalBasedTokenStateService.class.getName()) instanceof JournalBasedTokenStateService);
+  public void shouldReturnJournalTokenStateService() throws Exception {
+    assertTrue(serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, gatewayConfig, options,
+        JournalBasedTokenStateService.class.getName()) instanceof JournalBasedTokenStateService);
+  }
+
+  @Test
+  public void shouldReturnZookeeperTokenStateService() throws Exception {
+    assertTrue(serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, gatewayConfig, options,
+        ZookeeperTokenStateService.class.getName()) instanceof ZookeeperTokenStateService);
   }
 }

@@ -54,7 +54,7 @@ public class AliasServiceFactory extends AbstractServiceFactory {
       } else if (matchesImplementation(implementation, RemoteAliasService.class)) {
         service = new RemoteAliasService(defaultAliasService, getMasterService(gatewayServices));
       } else if (matchesImplementation(implementation, ZookeeperRemoteAliasService.class)) {
-        service = new ZookeeperRemoteAliasServiceProvider().newInstance(defaultAliasService, getMasterService(gatewayServices));
+        service = new ZookeeperRemoteAliasServiceProvider().newInstance(gatewayServices, defaultAliasService, getMasterService(gatewayServices));
       }
 
       logServiceUsage(implementation, serviceType);

@@ -53,10 +53,10 @@ public abstract class AbstractServiceFactory implements ServiceFactory {
       if (service == null && StringUtils.isNotBlank(implementation)) {
         // no known service implementation created, try to create the custom one
         try {
-          service = Service.class.cast(Class.forName(implementation).newInstance());
+          service = (Service) Class.forName(implementation).newInstance();
           logServiceUsage(implementation, serviceType);
         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-          throw new ServiceLifecycleException("Errror while instantiating " + serviceType.getShortName() + " service implementation " + implementation, e);
+          throw new ServiceLifecycleException("Error while instantiating " + serviceType.getShortName() + " service implementation " + implementation, e);
         }
       }
     }
