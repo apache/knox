@@ -34,11 +34,16 @@ import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasServic
  */
 public class ZookeeperTokenStateService extends AliasBasedTokenStateService {
 
-  private final AliasServiceFactory aliasServiceFactory = new AliasServiceFactory();
   private final GatewayServices gatewayServices;
+  private final AliasServiceFactory aliasServiceFactory;
 
   public ZookeeperTokenStateService(GatewayServices gatewayServices) {
+    this(gatewayServices, new AliasServiceFactory());
+  }
+
+  public ZookeeperTokenStateService(GatewayServices gatewayServices, AliasServiceFactory aliasServiceFactory) {
     this.gatewayServices = gatewayServices;
+    this.aliasServiceFactory = aliasServiceFactory;
   }
 
   @Override

@@ -19,6 +19,7 @@ package org.apache.knox.gateway.services.security.impl;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.security.RemoteAliasServiceProvider;
+import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.MasterService;
@@ -40,6 +41,11 @@ public class RemoteAliasServiceTestProvider implements RemoteAliasServiceProvide
 
   @Override
   public AliasService newInstance(AliasService localAliasService, MasterService masterService) {
+    return new TestAliasService();
+  }
+
+  @Override
+  public AliasService newInstance(GatewayServices gatewayService, AliasService localAliasService, MasterService masterService) {
     return new TestAliasService();
   }
 

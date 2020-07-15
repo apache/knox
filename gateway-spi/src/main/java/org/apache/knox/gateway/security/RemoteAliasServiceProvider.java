@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.security;
 
+import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.MasterService;
 
@@ -23,4 +24,6 @@ public interface RemoteAliasServiceProvider {
   String getType();
 
   AliasService newInstance(AliasService localAliasService, MasterService masterService);
+
+  AliasService newInstance(GatewayServices gatewayServices, AliasService localAliasService, MasterService masterService);
 }
