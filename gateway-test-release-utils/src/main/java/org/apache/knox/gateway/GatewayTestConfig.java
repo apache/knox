@@ -506,6 +506,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public List<String> getGlobalRulesExcludedServices() {
+    return Collections.emptyList();
+  }
+
+  @Override
   public boolean isWebsocketEnabled() {
     return DEFAULT_WEBSOCKET_FEATURE_ENABLED;
   }

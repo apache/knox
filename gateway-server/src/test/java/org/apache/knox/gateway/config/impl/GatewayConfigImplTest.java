@@ -32,7 +32,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -116,13 +116,13 @@ public class GatewayConfigImplTest {
     List<String> list;
 
     list = config.getIncludedSSLCiphers();
-    assertThat( list, is(nullValue()) );
+    assertThat( list, is(empty()));
 
     config.set( "ssl.include.ciphers", "none" );
-    assertThat( config.getIncludedSSLCiphers(), is(nullValue()) );
+    assertThat( config.getIncludedSSLCiphers(), is(empty()) );
 
     config.set( "ssl.include.ciphers", "" );
-    assertThat( config.getIncludedSSLCiphers(), is(nullValue()) );
+    assertThat( config.getIncludedSSLCiphers(), is(empty()) );
 
     config.set( "ssl.include.ciphers", "ONE" );
     assertThat( config.getIncludedSSLCiphers(), is(hasItems("ONE")) );
@@ -140,13 +140,13 @@ public class GatewayConfigImplTest {
     assertThat( config.getIncludedSSLCiphers(), is(hasItems("ONE","TWO","THREE")) );
 
     list = config.getExcludedSSLCiphers();
-    assertThat( list, is(nullValue()) );
+    assertThat( list, is(empty()) );
 
     config.set( "ssl.exclude.ciphers", "none" );
-    assertThat( config.getExcludedSSLCiphers(), is(nullValue()) );
+    assertThat( config.getExcludedSSLCiphers(), is(empty()) );
 
     config.set( "ssl.exclude.ciphers", "" );
-    assertThat( config.getExcludedSSLCiphers(), is(nullValue()) );
+    assertThat( config.getExcludedSSLCiphers(), is(empty()) );
 
     config.set( "ssl.exclude.ciphers", "ONE" );
     assertThat( config.getExcludedSSLCiphers(), is(hasItems("ONE")) );
@@ -189,6 +189,21 @@ public class GatewayConfigImplTest {
 
     config.set( GatewayConfigImpl.GLOBAL_RULES_SERVICES, " ONE , TWO , THREE " );
     assertThat( config.getGlobalRulesServices(), is(hasItems("ONE","TWO","THREE")) );
+  }
+
+  @Test
+  public void testGlobalRulesExcludedServices() {
+    final GatewayConfigImpl gatewayConfig = new GatewayConfigImpl();
+    assertTrue(gatewayConfig.getGlobalRulesExcludedServices().isEmpty());
+
+    gatewayConfig.set(GatewayConfigImpl.GLOBAL_RULES_EXCLUDED_SERVICES, "");
+    assertTrue(gatewayConfig.getGlobalRulesExcludedServices().isEmpty());
+
+    gatewayConfig.set(GatewayConfigImpl.GLOBAL_RULES_EXCLUDED_SERVICES, "none");
+    assertTrue(gatewayConfig.getGlobalRulesExcludedServices().isEmpty());
+
+    gatewayConfig.set(GatewayConfigImpl.GLOBAL_RULES_EXCLUDED_SERVICES, " S1, S2,    S3 ,  S4 ");
+    assertThat(gatewayConfig.getGlobalRulesExcludedServices(), is(hasItems("S1", "S2", "S3", "S4")));
   }
 
   @Test( timeout = TestUtils.SHORT_TIMEOUT )

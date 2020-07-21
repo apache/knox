@@ -17,11 +17,14 @@
  */
 package org.apache.knox.gateway.filter.rewrite.ext;
 
+import org.apache.knox.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteRuleProcessorHolder;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.util.urltemplate.Matcher;
 import org.apache.knox.gateway.util.urltemplate.Template;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,12 +37,15 @@ import java.util.Map;
 public class ScopedMatcher extends Matcher<UrlRewriteRuleProcessorHolder> {
 
   public static final String GLOBAL_SCOPE = "GLOBAL";
+  private static final UrlRewriteMessages LOG = MessagesFactory.get(UrlRewriteMessages.class);
 
-  private Map<String, Matcher<UrlRewriteRuleProcessorHolder>> matchers;
+  private final Map<String, Matcher<UrlRewriteRuleProcessorHolder>> matchers;
+  private final List<String> globalRulesExcludedServices;
 
-  public ScopedMatcher() {
+  public ScopedMatcher(List<String> globalRulesExcludedServices) {
     super();
-    matchers = new HashMap<>();
+    this.matchers = new HashMap<>();
+    this.globalRulesExcludedServices = globalRulesExcludedServices == null ? Collections.emptyList() : globalRulesExcludedServices;
   }
 
   @Override
@@ -85,10 +91,11 @@ public class ScopedMatcher extends Matcher<UrlRewriteRuleProcessorHolder> {
         }
       }
     }
-    //since no scope match was found return the first global scopeed match
+
+    //since no scope match was found return the first global scoped match
     for ( Match match : matches ) {
       String matchedScope = match.getValue().getScope();
-      if ( matchedScope != null && matchedScope.equals(GLOBAL_SCOPE) ) {
+      if ( matchedScope != null && !shouldExcludeGlobalRule(scope, matchedScope, match.getValue().getRuleName()) ) {
         return match;
       }
     }
@@ -102,7 +109,16 @@ public class ScopedMatcher extends Matcher<UrlRewriteRuleProcessorHolder> {
     if (matchedScope != null && scope != null && !matchedScope.equals(scope) && !matchedScope.equals(GLOBAL_SCOPE)) {
       return null;
     }
-    return match;
+    return shouldExcludeGlobalRule(scope, matchedScope, match.getValue().getRuleName())  ? null : match;
+  }
+
+  private boolean shouldExcludeGlobalRule(String scope, String matchedScope, String matchedRuleName) {
+    final boolean shouldExclude = matchedScope != null && matchedScope.equals(GLOBAL_SCOPE) ? globalRulesExcludedServices.contains(scope)
+        : false;
+    if (shouldExclude) {
+      LOG.excludeGlobalRewriteRule(matchedRuleName, scope);
+    }
+    return shouldExclude;
   }
 
   /**

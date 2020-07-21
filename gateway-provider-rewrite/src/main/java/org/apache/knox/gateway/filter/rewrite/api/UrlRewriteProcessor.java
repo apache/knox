@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.filter.rewrite.api;
 
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.filter.rewrite.ext.ScopedMatcher;
 import org.apache.knox.gateway.filter.rewrite.i18n.UrlRewriteMessages;
 import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteContextImpl;
@@ -31,6 +32,7 @@ import org.apache.knox.gateway.util.urltemplate.Matcher;
 import org.apache.knox.gateway.util.urltemplate.Resolver;
 import org.apache.knox.gateway.util.urltemplate.Template;
 
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -43,8 +45,8 @@ public class UrlRewriteProcessor implements UrlRewriter {
   UrlRewriteEnvironment environment;
   UrlRewriteRulesDescriptor descriptor;
   Map<String,UrlRewriteRuleProcessorHolder> rules = new HashMap<>();
-  ScopedMatcher inbound = new ScopedMatcher();
-  ScopedMatcher outbound = new ScopedMatcher();
+  ScopedMatcher inbound;
+  ScopedMatcher outbound;
   Map<String,UrlRewriteFunctionProcessor> functions = new HashMap<>();
 
   public UrlRewriteProcessor() {
@@ -54,6 +56,10 @@ public class UrlRewriteProcessor implements UrlRewriter {
   public void initialize( UrlRewriteEnvironment environment, UrlRewriteRulesDescriptor descriptor ) {
     this.environment = environment;
     this.descriptor = descriptor;
+    GatewayConfig gatewayConfig = environment.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    List<String> globalRulesExcludedServices = gatewayConfig == null ? Collections.emptyList() : gatewayConfig.getGlobalRulesExcludedServices();
+    this.inbound = new ScopedMatcher(globalRulesExcludedServices);
+    this.outbound = new ScopedMatcher(globalRulesExcludedServices);
     initializeFunctions( descriptor );
     initializeRules( descriptor );
   }
