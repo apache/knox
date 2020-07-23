@@ -76,12 +76,14 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
   static final String ROLLING_RESTART_COMMAND = "RollingRestart";
 
+  static final String RESTART_WAITING_FOR_STALENESS_SUCCESS_COMMAND = "RestartWaitingForStalenessSuccess";
+
   static final String CM_SERVICE_TYPE = "ManagerServer";
   static final String CM_SERVICE      = "ClouderaManager";
 
   // Collection of those commands which represent the potential activation of service configuration changes
-  private static final Collection<String> ACTIVATION_COMMANDS =
-                          Arrays.asList(START_COMMAND, RESTART_COMMAND, ROLLING_RESTART_COMMAND);
+  private static final Collection<String> ACTIVATION_COMMANDS = Arrays.asList(START_COMMAND, RESTART_COMMAND, ROLLING_RESTART_COMMAND,
+      RESTART_WAITING_FOR_STALENESS_SUCCESS_COMMAND);
 
   // The format of the filter employed when start events are queried from ClouderaManager
   private static final String EVENTS_QUERY_FORMAT =
@@ -231,7 +233,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
       if (CM_SERVICE_TYPE.equals(serviceType)) {
         if (CM_SERVICE.equals(re.getService())) {
-          // This is a rolling cluster restart event, so assume configuration has changed
+          // This is a 'rolling cluster restart' or 'restart waiting for staleness' event, so assume configuration has changed
           configHasChanged = true;
         }
       }

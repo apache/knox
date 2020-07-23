@@ -230,6 +230,21 @@ public class PollingConfigurationAnalyzerTest {
     assertTrue("Expected a change notification", listener.wasNotified(address, clusterName));
   }
 
+  /**
+   * Test the restart waiting for staleness, for which it should be assumed that configuration has changed.
+   */
+  @Test
+  public void testRestartWaitingForStalenessSuccessEvent() {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster 8";
+
+    // Simulate a successful restart waiting for staleness event
+    final ApiEvent rollingRestartEvent = createApiEvent(clusterName, PollingConfigurationAnalyzer.CM_SERVICE_TYPE, PollingConfigurationAnalyzer.CM_SERVICE,
+        PollingConfigurationAnalyzer.RESTART_WAITING_FOR_STALENESS_SUCCESS_COMMAND, PollingConfigurationAnalyzer.SUCCEEDED_STATUS, "EV_CLUSTER_RESTARTED");
+
+    final ChangeListener listener = doTestEvent(rollingRestartEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap());
+    assertTrue("Expected a change notification", listener.wasNotified(address, clusterName));
+  }
 
   @Test
   public void testClusterConfigMonitorTerminationForNoLongerReferencedClusters() {
