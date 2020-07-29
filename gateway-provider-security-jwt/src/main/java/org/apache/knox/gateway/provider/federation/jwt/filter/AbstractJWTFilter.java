@@ -61,6 +61,7 @@ import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
 import com.nimbusds.jose.JWSHeader;
 
@@ -229,6 +230,10 @@ public abstract class AbstractJWTFilter implements Filter {
     }
   }
 
+  public Subject createSubjectFromToken(String token) throws ParseException {
+    return createSubjectFromToken(new JWTToken(token));
+  }
+
   protected Subject createSubjectFromToken(JWT token) {
     String principal = token.getSubject();
     String claimvalue = null;
@@ -255,7 +260,7 @@ public abstract class AbstractJWTFilter implements Filter {
     return new Subject(true, principals, emptySet, emptySet);
   }
 
-  protected boolean validateToken(HttpServletRequest request, HttpServletResponse response,
+  public boolean validateToken(HttpServletRequest request, HttpServletResponse response,
       FilterChain chain, JWT token)
       throws IOException, ServletException {
     boolean verified = false;
