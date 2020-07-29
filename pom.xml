@@ -173,7 +173,7 @@
         <commons-digester3.version>3.2</commons-digester3.version>
         <commons-io.version>2.6</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
-        <commons-lang3.version>3.10</commons-lang3.version>
+        <commons-lang3.version>3.11</commons-lang3.version>
         <commons-logging.version>1.2</commons-logging.version>
         <commons-math3.version>3.6.1</commons-math3.version>
         <commons-net.version>3.6</commons-net.version>
