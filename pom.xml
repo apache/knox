@@ -189,6 +189,7 @@
         <eclipselink.version>2.7.6</eclipselink.version>
         <ehcache.version>2.6.11</ehcache.version>
         <exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
+        <fastinfoset.version>1.2.18</fastinfoset.version>
         <findsecbugs-plugin.version>1.10.1</findsecbugs-plugin.version>
         <forbiddenapis.version>2.7</forbiddenapis.version>
         <frontend-maven-plugin.version>1.9.1</frontend-maven-plugin.version>
@@ -212,8 +213,9 @@
         <javax.ws.rs-api.version>2.0</javax.ws.rs-api.version>
         <javax.websocket-api.version>1.1</javax.websocket-api.version>
         <jaxb.version>2.3.0</jaxb.version>
-        <jaxws-ri.version>2.3.2</jaxws-ri.version>
+        <jaxws-ri.version>2.3.3</jaxws-ri.version>
         <jakarta.xml.bind.version>2.3.2</jakarta.xml.bind.version>
+        <jakarta.activation.version>1.2.2</jakarta.activation.version>
         <java-support.version>7.5.1</java-support.version>
         <jericho-html.version>3.4</jericho-html.version>
         <jersey.version>2.6</jersey.version>
@@ -251,6 +253,7 @@
         <spotbugs-maven-plugin.version>4.0.0</spotbugs-maven-plugin.version>
         <spring.version>5.2.5.RELEASE</spring.version>
         <spring-vault.version>2.2.2.RELEASE</spring-vault.version>
+        <stax-ex.version>1.8.3</stax-ex.version>
         <stax2-api.version>4.2</stax2-api.version>
         <taglibs-standard.version>1.2.5</taglibs-standard.version>
         <testcontainers.version>1.13.0</testcontainers.version>
@@ -1327,6 +1330,24 @@
                 <groupId>jakarta.xml.bind</groupId>
                 <artifactId>jakarta.xml.bind-api</artifactId>
                 <version>${jakarta.xml.bind.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.sun.activation</groupId>
+                <artifactId>jakarta.activation</artifactId>
+                <version>${jakarta.activation.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jvnet.staxex</groupId>
+                <artifactId>stax-ex</artifactId>
+                <version>${stax-ex.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.sun.xml.fastinfoset</groupId>
+                <artifactId>FastInfoset</artifactId>
+                <version>${fastinfoset.version}</version>
             </dependency>
 
             <dependency>
