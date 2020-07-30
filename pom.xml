@@ -243,7 +243,7 @@
         <okhttp.version>2.7.5</okhttp.version>
         <opensaml.version>3.4.3</opensaml.version>
         <pac4j.version>3.8.3</pac4j.version>
-        <protobuf.version>3.11.4</protobuf.version>
+        <protobuf.version>3.12.4</protobuf.version>
         <rest-assured.version>4.3.0</rest-assured.version>
         <shiro.version>1.5.3</shiro.version>
         <shrinkwrap.version>1.2.6</shrinkwrap.version>
