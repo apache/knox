@@ -23,6 +23,7 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
 import java.nio.file.Paths;
+import java.security.KeyStore;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -356,7 +357,7 @@ public class GatewayConfigImplTest {
 
     // Validate default options (backwards compatibility)
     assertEquals("gateway-httpclient-truststore-password", config.getHttpClientTruststorePasswordAlias());
-    assertEquals("JKS", config.getHttpClientTruststoreType());
+    assertEquals(KeyStore.getDefaultType(), config.getHttpClientTruststoreType());
     assertNull(config.getHttpClientTruststorePath());
 
     // Validate changed options
@@ -375,7 +376,7 @@ public class GatewayConfigImplTest {
 
     // Validate default options (backwards compatibility)
     assertEquals("gateway-truststore-password", config.getTruststorePasswordAlias());
-    assertEquals("JKS", config.getTruststoreType());
+    assertEquals(KeyStore.getDefaultType(), config.getTruststoreType());
     assertNull(config.getTruststorePath());
 
     // Validate changed options

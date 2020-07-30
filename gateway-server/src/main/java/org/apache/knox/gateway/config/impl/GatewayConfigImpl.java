@@ -37,6 +37,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.file.Paths;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -591,7 +592,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public String getKeystoreType() {
-    return get( KEYSTORE_TYPE, "JKS");
+    return get( KEYSTORE_TYPE, KeyStore.getDefaultType());
   }
 
   @Override
