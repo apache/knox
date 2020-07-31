@@ -19,6 +19,7 @@ package org.apache.knox.gateway.config;
 
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.security.KeyStore;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,7 +61,7 @@ public interface GatewayConfig {
   String IDENTITY_KEYSTORE_TYPE = "gateway.tls.keystore.type";
   String IDENTITY_KEY_ALIAS = "gateway.tls.key.alias";
   String IDENTITY_KEY_PASSPHRASE_ALIAS = "gateway.tls.key.passphrase.alias";
-  String DEFAULT_IDENTITY_KEYSTORE_TYPE = "JKS";
+  String DEFAULT_IDENTITY_KEYSTORE_TYPE = KeyStore.getDefaultType();
   String DEFAULT_IDENTITY_KEYSTORE_PASSWORD_ALIAS = "gateway-identity-keystore-password";
   String DEFAULT_IDENTITY_KEY_ALIAS = "gateway-identity";
   String DEFAULT_IDENTITY_KEY_PASSPHRASE_ALIAS = "gateway-identity-passphrase";
@@ -72,20 +73,20 @@ public interface GatewayConfig {
   String SIGNING_KEY_ALIAS = "gateway.signing.key.alias";
   String SIGNING_KEY_PASSPHRASE_ALIAS = "gateway.signing.key.passphrase.alias";
   String DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS = "signing.keystore.password";
-  String DEFAULT_SIGNING_KEYSTORE_TYPE = "JKS";
+  String DEFAULT_SIGNING_KEYSTORE_TYPE = KeyStore.getDefaultType();
   String DEFAULT_SIGNING_KEY_ALIAS = "gateway-identity";
   String DEFAULT_SIGNING_KEY_PASSPHRASE_ALIAS = "signing.key.passphrase";
 
   String GATEWAY_TRUSTSTORE_PASSWORD_ALIAS = "gateway.truststore.password.alias";
   String GATEWAY_TRUSTSTORE_PATH = "gateway.truststore.path";
   String GATEWAY_TRUSTSTORE_TYPE = "gateway.truststore.type";
-  String DEFAULT_GATEWAY_TRUSTSTORE_TYPE = "JKS";
+  String DEFAULT_GATEWAY_TRUSTSTORE_TYPE = KeyStore.getDefaultType();
   String DEFAULT_GATEWAY_TRUSTSTORE_PASSWORD_ALIAS = "gateway-truststore-password";
 
   String HTTP_CLIENT_TRUSTSTORE_PASSWORD_ALIAS = "gateway.httpclient.truststore.password.alias";
   String HTTP_CLIENT_TRUSTSTORE_PATH = "gateway.httpclient.truststore.path";
   String HTTP_CLIENT_TRUSTSTORE_TYPE = "gateway.httpclient.truststore.type";
-  String DEFAULT_HTTP_CLIENT_TRUSTSTORE_TYPE = "JKS";
+  String DEFAULT_HTTP_CLIENT_TRUSTSTORE_TYPE = KeyStore.getDefaultType();
   String DEFAULT_HTTP_CLIENT_TRUSTSTORE_PASSWORD_ALIAS = "gateway-httpclient-truststore-password";
 
   String REMOTE_CONFIG_REGISTRY_TYPE = "type";
