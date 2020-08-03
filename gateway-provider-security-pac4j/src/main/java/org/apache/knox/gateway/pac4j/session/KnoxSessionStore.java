@@ -25,13 +25,13 @@ import org.apache.knox.gateway.services.security.EncryptionResult;
 import org.apache.knox.gateway.util.Urls;
 import org.pac4j.core.context.ContextHelper;
 import org.pac4j.core.context.Cookie;
-import org.pac4j.core.context.J2EContext;
-import org.pac4j.core.context.Pac4jConstants;
+import org.pac4j.core.context.JEEContext;
 import org.pac4j.core.context.WebContext;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.exception.TechnicalException;
 import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.util.JavaSerializationHelper;
+import org.pac4j.core.util.Pac4jConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +40,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Map;
+import java.util.Optional;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -49,7 +50,7 @@ import java.util.zip.GZIPOutputStream;
  *
  * @since 0.8.0
  */
-public class KnoxSessionStore implements SessionStore {
+public class KnoxSessionStore<C extends WebContext> implements SessionStore<C> {
 
     private static final Logger logger = LoggerFactory.getLogger(KnoxSessionStore.class);
 
@@ -89,7 +90,7 @@ public class KnoxSessionStore implements SessionStore {
                 result.salt);
             if (clear != null) {
                 try {
-                    return javaSerializationHelper.unserializeFromBytes(unCompress(clear));
+                    return javaSerializationHelper.deserializeFromBytes(unCompress(clear));
                 } catch (IOException e) {
                     throw new TechnicalException(e);
                 }
@@ -99,14 +100,14 @@ public class KnoxSessionStore implements SessionStore {
     }
 
     @Override
-    public Object get(WebContext context, String key) {
+    public Optional<Object> get(WebContext context, String key) {
         final Cookie cookie = ContextHelper.getCookie(context, PAC4J_SESSION_PREFIX + key);
         Object value = null;
         if (cookie != null) {
             value = uncompressDecryptBase64(cookie.getValue());
         }
         logger.debug("Get from session: {} = {}", key, value);
-        return value;
+        return Optional.ofNullable(value);
     }
 
     private String compressEncryptBase64(final Object o) {
@@ -162,7 +163,7 @@ public class KnoxSessionStore implements SessionStore {
         cookie.setHttpOnly(true);
         cookie.setSecure(ContextHelper.isHttpsOrSecure(context));
 
-        /**
+        /*
          *  set the correct path for setting pac4j profile cookie.
          *  This is because, Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER in the path
          *  indicates callback when ? cannot be used.
@@ -170,7 +171,7 @@ public class KnoxSessionStore implements SessionStore {
         if (context.getPath() != null && context.getPath()
             .contains(Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER)) {
 
-            final String[] parts = ((J2EContext) context).getRequest().getRequestURI()
+            final String[] parts = ((JEEContext) context).getNativeRequest().getRequestURI()
                 .split(
                     "websso"+ Pac4jDispatcherFilter.URL_PATH_SEPARATOR + Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER);
 
@@ -220,18 +221,18 @@ public class KnoxSessionStore implements SessionStore {
     private Object clearUserProfile(final Object value) {
         if(value instanceof Map<?,?>) {
             final Map<String, CommonProfile> profiles = (Map<String, CommonProfile>) value;
-            profiles.forEach((name, profile) -> profile.clearSensitiveData());
+            profiles.forEach((name, profile) -> profile.removeLoginData());
             return profiles;
         } else {
             final CommonProfile profile = (CommonProfile) value;
-            profile.clearSensitiveData();
+            profile.removeLoginData();
             return profile;
         }
     }
 
     @Override
-    public SessionStore buildFromTrackableSession(WebContext arg0, Object arg1) {
-        return null;
+    public Optional<SessionStore<C>> buildFromTrackableSession(WebContext arg0, Object arg1) {
+        return Optional.empty();
     }
 
     @Override
@@ -240,8 +241,8 @@ public class KnoxSessionStore implements SessionStore {
     }
 
     @Override
-    public Object getTrackableSession(WebContext arg0) {
-        return null;
+    public Optional getTrackableSession(WebContext arg0) {
+        return Optional.empty();
     }
 
     @Override
