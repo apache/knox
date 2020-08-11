@@ -260,7 +260,7 @@ public abstract class AbstractJWTFilter implements Filter {
     return new Subject(true, principals, emptySet, emptySet);
   }
 
-  public boolean validateToken(HttpServletRequest request, HttpServletResponse response,
+  protected boolean validateToken(HttpServletRequest request, HttpServletResponse response,
       FilterChain chain, JWT token)
       throws IOException, ServletException {
     boolean verified = false;

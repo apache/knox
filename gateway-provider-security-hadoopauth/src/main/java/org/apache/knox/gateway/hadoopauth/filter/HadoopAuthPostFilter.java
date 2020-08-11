@@ -79,7 +79,7 @@ public class HadoopAuthPostFilter implements Filter {
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
     Subject subject = null;
-    if (shouldUseJwtFilter(jwtFilter, chain, (HttpServletRequest) request, (HttpServletResponse) response)) {
+    if (shouldUseJwtFilter(jwtFilter, (HttpServletRequest) request)) {
       try {
         subject = jwtFilter.createSubjectFromToken(jwtFilter.getWireToken(request));
       } catch (ParseException e) {

@@ -32,11 +32,9 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
-import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
 import java.io.IOException;
 import java.security.Principal;
-import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -138,7 +136,7 @@ public class HadoopAuthFilter extends
 
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
-    if (shouldUseJwtFilter(jwtFilter, filterChain, (HttpServletRequest) request, (HttpServletResponse) response)) {
+    if (shouldUseJwtFilter(jwtFilter, (HttpServletRequest) request)) {
       LOG.useJwtFilter();
       jwtFilter.doFilter(request, response, filterChain);
     } else {
@@ -148,7 +146,7 @@ public class HadoopAuthFilter extends
 
   @Override
   protected void doFilter(FilterChain filterChain, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-    if (shouldUseJwtFilter(jwtFilter, filterChain, request, response)) {
+    if (shouldUseJwtFilter(jwtFilter, request)) {
       LOG.useJwtFilter();
       jwtFilter.doFilter(request, response, filterChain);
       return;
@@ -206,20 +204,9 @@ public class HadoopAuthFilter extends
     super.doFilter(filterChain, request, response);
   }
 
-  static boolean shouldUseJwtFilter(JWTFederationFilter jwtFilter, FilterChain filterChain, HttpServletRequest request, HttpServletResponse response)
+  static boolean shouldUseJwtFilter(JWTFederationFilter jwtFilter, HttpServletRequest request)
       throws IOException, ServletException {
-    if (jwtFilter != null) {
-      final String wireToken = jwtFilter.getWireToken(request);
-      if (wireToken != null) {
-        try {
-          final JWTToken jwtToken = new JWTToken(wireToken);
-          return jwtFilter.validateToken(request, response, filterChain, jwtToken);
-        } catch (ParseException e) {
-          // NOP: in this case we should continue with HadoopAuth
-        }
-      }
-    }
-    return false;
+    return jwtFilter == null ? false : jwtFilter.getWireToken(request) != null;
   }
 
   /**
