@@ -42,7 +42,7 @@ public class JournalBasedTokenStateService extends DefaultTokenStateService {
             // Initialize the token state journal
             journal = TokenStateJournalFactory.create(config);
 
-            // Load any persisted journal entries, and add them to the unpersisted state collection
+            // Load any persisted journal entries, and add them to the in-memory collection
             List<JournalEntry> entries = journal.get();
             for (JournalEntry entry : entries) {
                 String id = entry.getTokenId();

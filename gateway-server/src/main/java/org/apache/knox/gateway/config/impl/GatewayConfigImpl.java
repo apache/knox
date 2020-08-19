@@ -114,6 +114,10 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String CLIENT_AUTH_NEEDED = GATEWAY_CONFIG_FILE_PREFIX + ".client.auth.needed";
   private static final String CLIENT_AUTH_WANTED = GATEWAY_CONFIG_FILE_PREFIX + ".client.auth.wanted";
   private static final String KEYSTORE_TYPE = GATEWAY_CONFIG_FILE_PREFIX + ".keystore.type";
+  private static final String KEYSTORE_CACHE_LIMIT = GATEWAY_CONFIG_FILE_PREFIX + ".keystore.cache.size.limit";
+  private static final long DEFAULT_KEYSTORE_CACHE_LIMIT = 1000;
+  private static final String KEYSTORE_CACHE_ENTRY_TTL = GATEWAY_CONFIG_FILE_PREFIX + ".keystore.cache.entry.ttl";
+  private static final long DEFAULT_KEYSTORE_CACHE_ENTRY_TTL = 60;
   private static final String XFORWARDED_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".xforwarded.enabled";
   private static final String EPHEMERAL_DH_KEY_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".jdk.tls.ephemeralDHKeySize";
   private static final String HTTP_CLIENT_MAX_CONNECTION = GATEWAY_CONFIG_FILE_PREFIX + ".httpclient.maxConnections";
@@ -1180,4 +1184,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return getBoolean(KNOX_HOMEPAGE_LOGOUT_ENABLED, false);
   }
 
+  @Override
+  public long getKeystoreCacheSizeLimit() {
+    return getLong(KEYSTORE_CACHE_LIMIT, DEFAULT_KEYSTORE_CACHE_LIMIT);
+  }
+
+  @Override
+  public long getKeystoreCacheEntryTimeToLiveInMinutes() {
+    return getLong(KEYSTORE_CACHE_ENTRY_TTL, DEFAULT_KEYSTORE_CACHE_ENTRY_TTL);
+  }
 }

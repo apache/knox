@@ -77,9 +77,7 @@ public class DefaultKeystoreService implements KeystoreService {
   private static GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
   private static GatewayResources RES = ResourcesFactory.get(GatewayResources.class);
 
-  // Let's configure the cache with hard-coded attributes now; we can introduce new gateway configuration later on if
-  // needed visible for testing
-  final Cache<CacheKey, String> cache = Caffeine.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).maximumSize(1000).build();
+  Cache<CacheKey, String> cache;
 
   private GatewayConfig config;
 
@@ -104,6 +102,10 @@ public class DefaultKeystoreService implements KeystoreService {
       } catch (IOException e) {
         throw new ServiceLifecycleException(RES.failedToCreateKeyStoreDirectory(keyStoreDirPath.toString()));
       }
+    }
+
+    if (this.cache == null) {
+      this.cache = Caffeine.newBuilder().expireAfterAccess(config.getKeystoreCacheEntryTimeToLiveInMinutes(), TimeUnit.MINUTES).maximumSize(config.getKeystoreCacheSizeLimit()).build();
     }
   }
 
@@ -330,23 +332,31 @@ public class DefaultKeystoreService implements KeystoreService {
         KeyStore ks = getCredentialStoreForCluster(clusterName);
         if (ks != null) {
           try {
-            char[] masterSecret = masterService.getMasterSecret();
-            Key credentialKey = ks.getKey(alias, masterSecret);
-            if (credentialKey != null) {
-              byte[] credentialBytes = credentialKey.getEncoded();
-              String credentialString = new String(credentialBytes, StandardCharsets.UTF_8);
-              credential = credentialString.toCharArray();
-              addToCache(clusterName, alias, credentialString);
-            }
-          } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
+            credential = getCredentialForCluster(clusterName, alias, ks);
+          } catch (KeystoreServiceException e) {
             LOG.failedToGetCredentialForCluster(clusterName, e);
           }
-
         }
       }
     }
 
     return credential;
+  }
+
+  @Override
+  public char[] getCredentialForCluster(String clusterName, String alias, KeyStore ks) throws KeystoreServiceException {
+    try {
+      char[] credential = null;
+      final Key credentialKey = ks.getKey(alias, masterService.getMasterSecret());
+      if (credentialKey != null) {
+        final String credentialString = new String(credentialKey.getEncoded(), StandardCharsets.UTF_8);
+        credential = credentialString.toCharArray();
+        addToCache(clusterName, alias, credentialString);
+      }
+      return credential;
+    } catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e) {
+      throw new KeystoreServiceException(e);
+    }
   }
 
   @Override
@@ -401,13 +411,6 @@ public class DefaultKeystoreService implements KeystoreService {
     for (String alias : credentials.keySet()) {
       cache.put(CacheKey.of(clusterName, alias), credentials.get(alias));
     }
-  }
-
-  /**
-   * Called only from within critical sections of other methods above.
-   */
-  private void removeFromCache(String clusterName, String alias) {
-    cache.invalidate(CacheKey.of(clusterName, alias));
   }
 
   /**

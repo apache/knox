@@ -22,6 +22,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.RemoteAliasServiceProvider;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.AbstractAliasService;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.MasterService;
@@ -50,7 +51,7 @@ import java.util.Set;
  *
  * @since 1.1.0
  */
-public class RemoteAliasService implements AliasService {
+public class RemoteAliasService extends AbstractAliasService {
   public static final String REMOTE_ALIAS_SERVICE_TYPE = "type";
 
   private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);

@@ -20,6 +20,7 @@ package org.apache.knox.gateway.services.security.impl;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.security.RemoteAliasServiceProvider;
 import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.security.AbstractAliasService;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.MasterService;
@@ -49,7 +50,7 @@ public class RemoteAliasServiceTestProvider implements RemoteAliasServiceProvide
     return new TestAliasService();
   }
 
-  private class TestAliasService implements AliasService {
+  private class TestAliasService extends AbstractAliasService {
     private final Map<String, Map<String, String>> aliases = new HashMap<>();
     private GatewayConfig config;
 
