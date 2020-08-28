@@ -37,7 +37,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
 
   public static final String KNOX_TOKEN_AUDIENCES = "knox.token.audiences";
   public static final String TOKEN_VERIFICATION_PEM = "knox.token.verification.pem";
-  private static final String KNOX_TOKEN_QUERY_PARAM_NAME = "knox.token.query.param.name";
+  public static final String KNOX_TOKEN_QUERY_PARAM_NAME = "knox.token.query.param.name";
   public static final String TOKEN_PRINCIPAL_CLAIM = "knox.token.principal.claim";
   public static final String JWKS_URL = "knox.token.jwks.url";
   private static final String BEARER = "Bearer ";
@@ -85,16 +85,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
-    String header = ((HttpServletRequest) request).getHeader("Authorization");
-    String wireToken;
-    if (header != null && header.startsWith(BEARER)) {
-      // what follows the bearer designator should be the JWT token being used to request or as an access token
-      wireToken = header.substring(BEARER.length());
-    }
-    else {
-      // check for query param
-      wireToken = request.getParameter(paramName);
-    }
+    final String wireToken = getWireToken(request);
 
     if (wireToken != null) {
       try {
@@ -110,6 +101,17 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     else {
       // no token provided in header
       ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
+    }
+  }
+
+  public String getWireToken(ServletRequest request) {
+    final String header = ((HttpServletRequest) request).getHeader("Authorization");
+    if (header != null && header.startsWith(BEARER)) {
+      // what follows the bearer designator should be the JWT token being used to request or as an access token
+      return header.substring(BEARER.length());
+    } else {
+      // check for query param
+      return request.getParameter(paramName);
     }
   }
 
