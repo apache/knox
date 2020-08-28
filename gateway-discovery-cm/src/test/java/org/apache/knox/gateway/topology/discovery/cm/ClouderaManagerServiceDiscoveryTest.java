@@ -77,6 +77,15 @@ public class ClouderaManagerServiceDiscoveryTest {
 
   @Test
   public void testJobTrackerServiceDiscovery() {
+    doTestJobTrackerResourceManagerServiceDiscovery("JOBTRACKER");
+  }
+
+  @Test
+  public void testResourceManagerApiServiceDiscovery() {
+    doTestJobTrackerResourceManagerServiceDiscovery("RESOURCEMANAGERAPI");
+  }
+
+  private void doTestJobTrackerResourceManagerServiceDiscovery(String serviceName) {
     final String hostName = "resourcemanager-host-1";
     final String  port    = "8032";
 
@@ -94,7 +103,7 @@ public class ClouderaManagerServiceDiscoveryTest {
                                                         "RESOURCEMANAGER",
                                                         serviceProperties,
                                                         roleProperties);
-    List<String> urls = cluster.getServiceURLs("JOBTRACKER");
+    List<String> urls = cluster.getServiceURLs(serviceName);
     assertNotNull(urls);
     assertEquals(1, urls.size());
     assertEquals("rpc://" + hostName + ":" + port, urls.get(0));

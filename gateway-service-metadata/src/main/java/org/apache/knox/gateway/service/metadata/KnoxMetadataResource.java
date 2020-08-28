@@ -69,7 +69,7 @@ import org.apache.knox.gateway.util.X509CertificateUtil;
 public class KnoxMetadataResource {
   private static final MetadataServiceMessages LOG = MessagesFactory.get(MetadataServiceMessages.class);
   private static final String SNAPSHOT_VERSION_POSTFIX = "-SNAPSHOT";
-  private static final Set<String> UNREAL_SERVICES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("NAMENODE", "JOBTRACKER")));
+  private static final Set<String> UNREAL_SERVICES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("NAMENODE", "JOBTRACKER", "RESOURCEMANAGERAPI")));
 
   private Set<String> pinnedTopologies;
   private java.nio.file.Path pemFilePath;

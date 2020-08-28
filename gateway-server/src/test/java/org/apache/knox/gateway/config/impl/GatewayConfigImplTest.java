@@ -173,14 +173,14 @@ public class GatewayConfigImplTest {
     list = config.getGlobalRulesServices();
     assertThat( list, is(notNullValue()) );
 
-    assertThat( list, is( CoreMatchers.hasItems("NAMENODE","JOBTRACKER", "WEBHDFS", "WEBHCAT", "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER")));
+    assertThat( list, is( CoreMatchers.hasItems("NAMENODE","JOBTRACKER", "WEBHDFS", "WEBHCAT", "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER", "RESOURCEMANAGERAPI")));
 
 
     config.set( GatewayConfigImpl.GLOBAL_RULES_SERVICES, "none" );
-    assertThat( config.getGlobalRulesServices(), is( CoreMatchers.hasItems("NAMENODE","JOBTRACKER", "WEBHDFS", "WEBHCAT", "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER")) );
+    assertThat( config.getGlobalRulesServices(), is( CoreMatchers.hasItems("NAMENODE","JOBTRACKER", "WEBHDFS", "WEBHCAT", "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER", "RESOURCEMANAGERAPI")) );
 
     config.set( GatewayConfigImpl.GLOBAL_RULES_SERVICES, "" );
-    assertThat( config.getGlobalRulesServices(), is( CoreMatchers.hasItems("NAMENODE","JOBTRACKER", "WEBHDFS", "WEBHCAT", "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER")) );
+    assertThat( config.getGlobalRulesServices(), is( CoreMatchers.hasItems("NAMENODE","JOBTRACKER", "WEBHDFS", "WEBHCAT", "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER", "RESOURCEMANAGERAPI")) );
 
     config.set( GatewayConfigImpl.GLOBAL_RULES_SERVICES, "ONE" );
     assertThat( config.getGlobalRulesServices(), is(hasItems("ONE")) );

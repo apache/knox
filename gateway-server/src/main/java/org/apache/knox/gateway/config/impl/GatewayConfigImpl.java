@@ -238,7 +238,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final List<String> DEFAULT_GLOBAL_RULES_SERVICES = Arrays.asList(
       "NAMENODE", "JOBTRACKER", "WEBHDFS", "WEBHCAT",
-      "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER");
+      "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER",
+      "RESOURCEMANAGERAPI");
 
   /* property that specifies list of services for which we need to append service name to the X-Forward-Context header */
   public static final String X_FORWARD_CONTEXT_HEADER_APPEND_SERVICES = GATEWAY_CONFIG_FILE_PREFIX + ".xforwarded.header.context.append.servicename";
