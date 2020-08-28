@@ -113,7 +113,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
     try {
       final URI requestURI = req.getRequestURI();
-      final String path = requestURI.getPath();
+      final String path = requestURI.getRawPath();
 
       /* URL used to connect to websocket backend */
       final String backendURL = getMatchedBackendURL(path, requestURI);
