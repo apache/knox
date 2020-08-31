@@ -37,6 +37,7 @@ public abstract class AbstractRequest<T> {
   private static final String PARAMETER_NAME_DOAS = "doAs";
 
   private final KnoxSession session;
+  private String knoxToken;
 
   private final String doAsUser;
 
@@ -53,8 +54,16 @@ public abstract class AbstractRequest<T> {
     return session;
   }
 
+  public AbstractRequest<T> knoxToken(String knoxToken) {
+    this.knoxToken = knoxToken;
+    return this;
+  }
+
   protected CloseableHttpResponse execute(HttpRequest request ) throws IOException {
     addHeaders(request, session.getHeaders());
+    if (knoxToken != null) {
+      request.addHeader("Authorization", "Bearer " + knoxToken);
+    }
     return session.executeNow( request );
   }
 

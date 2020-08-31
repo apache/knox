@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.apache.knox</groupId>
+        <artifactId>gateway</artifactId>
+        <version>1.5.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>gateway-performance-test</artifactId>
+    <name>gateway-performance-test</name>
+    <description>A test framework to measure the Knox Gateway's performance</description>
+    
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-i18n</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-i18n-logging-log4j</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-shell</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-spi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-util-common</artifactId>
+        </dependency>
+
+        <dependency>
+           <groupId>com.fasterxml.jackson.core</groupId>
+           <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+           <groupId>com.fasterxml.jackson.dataformat</groupId>
+           <artifactId>jackson-dataformat-yaml</artifactId>
+        </dependency>
+        <dependency>
+           <groupId>commons-io</groupId>
+           <artifactId>commons-io</artifactId>
+        </dependency>
+        <dependency>
+           <groupId>javax.servlet</groupId>
+           <artifactId>javax.servlet-api</artifactId>
+        </dependency>
+        <dependency>
+           <groupId>org.apache.commons</groupId>
+           <artifactId>commons-lang3</artifactId>
+        </dependency>
+        <dependency>
+           <groupId>org.apache.commons</groupId>
+           <artifactId>commons-math3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+        </dependency>
+        <dependency>
+           <groupId>org.apache.httpcomponents</groupId>
+           <artifactId>httpcore</artifactId>
+        </dependency>
+    </dependencies>
+    <profiles>
+        <profile>
+             <id>gateway-performance-test</id>
+             <build>
+                 <plugins>
+                     <plugin>
+                         <groupId>org.codehaus.mojo</groupId>
+                         <artifactId>exec-maven-plugin</artifactId>
+                         <version>${exec-maven-plugin.version}</version>
+                         <executions>
+                             <execution>
+                                <id>run_gateway_performance_test</id>
+                                <phase>test</phase>
+                                <goals>
+                                  <goal>java</goal>
+                                </goals>
+                                <configuration>
+                                    <mainClass>org.apache.knox.gateway.performance.test.PerformanceTestRunner</mainClass>
+                                    <arguments>
+                                        <argument>${basedir}/src/test/resources/performance.test.configuration.properties</argument>
+                                    </arguments>
+                                    <systemProperties>
+                                        <systemProperty>
+                                            <key>perf.test.report.generation.target.folder</key>
+                                            <value>${basedir}/target/testResults</value>
+                                        </systemProperty>
+                                        <systemProperty>
+                                            <key>log4j.configuration</key>
+                                            <value>file:${basedir}/src/test/resources/performanceTest-log4j.properties</value>
+                                        </systemProperty>
+                                    </systemProperties>
+                                </configuration>
+                             </execution>
+                         </executions>
+                     </plugin>
+                 </plugins>
+             </build>
+        </profile>
+    </profiles>
+</project>

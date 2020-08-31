@@ -16,15 +16,7 @@
  */
 package org.apache.knox.gateway.services.token.impl;
 
-import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.apache.knox.gateway.services.security.token.TokenStateService;
-import org.apache.knox.gateway.services.security.token.TokenUtils;
-import org.apache.knox.gateway.services.security.token.UnknownTokenException;
-import org.apache.knox.gateway.services.security.token.impl.JWT;
-import org.apache.knox.gateway.services.security.token.impl.JWTToken;
-
+import java.lang.management.ManagementFactory;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,6 +28,22 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
+
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.services.token.TokenStateServiceStatistics;
 
 /**
  * In-Memory authentication token state management implementation.
@@ -65,12 +73,24 @@ public class DefaultTokenStateService implements TokenStateService {
 
   private final ScheduledExecutorService evictionScheduler = Executors.newScheduledThreadPool(1);
 
+  //token state MBean to store statistics (only initialized and used if JMX reporting is enabled)
+  protected TokenStateServiceStatistics tokenStateServiceStatistics;
+
 
   @Override
   public void init(final GatewayConfig config, final Map<String, String> options) throws ServiceLifecycleException {
     tokenEvictionInterval = config.getKnoxTokenEvictionInterval();
     tokenEvictionGracePeriod = config.getKnoxTokenEvictionGracePeriod();
     permissiveValidationEnabled = config.isKnoxTokenPermissiveValidationEnabled();
+    if (config.isMetricsEnabled() && config.isJmxMetricsReportingEnabled()) {
+      try {
+        tokenStateServiceStatistics = new TokenStateServiceStatistics();
+        final ObjectName objectName = ObjectName.getInstance("metrics:type=Statistics,name=TokenStateService");
+        ManagementFactory.getPlatformMBeanServer().registerMBean(tokenStateServiceStatistics, objectName);
+      } catch (MalformedObjectNameException | InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
+        throw new ServiceLifecycleException("Could not register token state service MBean", e);
+      }
+    }
   }
 
   @Override
@@ -122,6 +142,9 @@ public class DefaultTokenStateService implements TokenStateService {
     }
     setMaxLifetime(tokenId, issueTime, maxLifetimeDuration);
     log.addedToken(tokenId, getTimestampDisplay(expiration));
+    if (tokenStateServiceStatistics != null) {
+      tokenStateServiceStatistics.addToken();
+    }
   }
 
   @Override
@@ -154,17 +177,16 @@ public class DefaultTokenStateService implements TokenStateService {
 
   @Override
   public long getTokenExpiration(String tokenId, boolean validate) throws UnknownTokenException {
-    long expiration;
-
     if (validate) {
       validateToken(tokenId);
     }
 
+    long expiration = -1;
     synchronized (tokenExpirations) {
-      if (!tokenExpirations.containsKey(tokenId)) {
-        throw new UnknownTokenException(tokenId);
-      }
-      expiration = tokenExpirations.get(tokenId);
+      expiration = tokenExpirations.getOrDefault(tokenId, -1L);
+    }
+    if (expiration == -1) {
+      throw new UnknownTokenException(tokenId);
     }
 
     return expiration;
@@ -199,6 +221,9 @@ public class DefaultTokenStateService implements TokenStateService {
       expiration = System.currentTimeMillis() + renewInterval;
       updateExpiration(tokenId, expiration);
       log.renewedToken(tokenId, getTimestampDisplay(expiration));
+      if (tokenStateServiceStatistics != null) {
+        tokenStateServiceStatistics.renewToken();
+      }
     } else {
       log.renewalLimitExceeded(tokenId);
       throw new IllegalArgumentException("The renewal limit for the token has been exceeded");

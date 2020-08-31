@@ -449,5 +449,9 @@
             <groupId>org.apache.knox</groupId>
             <artifactId>knox-homepage-ui</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-service-metadata</artifactId>
+        </dependency>
     </dependencies>
 </project>

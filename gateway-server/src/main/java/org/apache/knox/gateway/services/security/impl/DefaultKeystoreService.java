@@ -69,7 +69,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class DefaultKeystoreService implements KeystoreService {
   private static final String DN_TEMPLATE = "CN={0},OU=Test,O=Hadoop,L=Test,ST=Test,C=US";
-  private static final String CREDENTIALS_SUFFIX = "-credentials.jceks";
+  public static final String CREDENTIALS_SUFFIX = "-credentials.jceks";
   private static final String CREDENTIALS_STORE_TYPE = "JCEKS";
   private static final String CERT_GEN_MODE = "hadoop.gateway.cert.gen.mode";
   private static final String CERT_GEN_MODE_LOCALHOST = "localhost";

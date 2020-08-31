@@ -76,4 +76,8 @@ limitations under the License.
     <Bug pattern="NM_SAME_SIMPLE_NAME_AS_SUPERCLASS" />
   </Match>
 
+  <Match>
+    <Class name="org.apache.knox.gateway.performance.test.PerformanceTestConfiguration" />
+    <Bug pattern="PATH_TRAVERSAL_IN" />
+  </Match>
 </FindBugsFilter>

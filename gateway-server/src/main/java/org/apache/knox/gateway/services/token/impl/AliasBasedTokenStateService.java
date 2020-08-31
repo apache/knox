@@ -20,12 +20,16 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
+import org.apache.knox.gateway.services.security.impl.DefaultKeystoreService;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.token.state.JournalEntry;
 import org.apache.knox.gateway.services.token.state.TokenStateJournal;
+import org.apache.knox.gateway.services.token.TokenStateServiceStatistics;
 import org.apache.knox.gateway.services.token.impl.state.TokenStateJournalFactory;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -54,6 +58,8 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
   private final List<TokenState> unpersistedState = new ArrayList<>();
 
   private TokenStateJournal journal;
+
+  private Path gatewayCredentialsFilePath;
 
   public void setAliasService(AliasService aliasService) {
     this.aliasService = aliasService;
@@ -98,6 +104,11 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     statePersistenceInterval = config.getKnoxTokenStateAliasPersistenceInterval();
     if (statePersistenceInterval > 0) {
       statePersistenceScheduler = Executors.newScheduledThreadPool(1);
+    }
+
+    if (tokenStateServiceStatistics != null) {
+      this.gatewayCredentialsFilePath = Paths.get(config.getGatewayKeystoreDir()).resolve(AliasService.NO_CLUSTER_NAME + DefaultKeystoreService.CREDENTIALS_SUFFIX);
+      tokenStateServiceStatistics.setGatewayCredentialsFileSize(this.gatewayCredentialsFilePath.toFile().length());
     }
   }
 
@@ -151,6 +162,10 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
 
       try {
         aliasService.addAliasesForCluster(AliasService.NO_CLUSTER_NAME, aliases);
+        if (tokenStateServiceStatistics != null) {
+          tokenStateServiceStatistics.interactKeystore(TokenStateServiceStatistics.KeystoreInteraction.SAVE_ALIAS);
+          tokenStateServiceStatistics.setGatewayCredentialsFileSize(this.gatewayCredentialsFilePath.toFile().length());
+        }
         for (String tokenId : tokenIds) {
           log.createdTokenStateAliases(tokenId);
           // After the aliases have been successfully persisted, remove their associated state from the journal
@@ -202,9 +217,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     // If there is no result from the in-memory collection, proceed to check the alias service
     if (result < 1L) {
       try {
-        char[] maxLifetimeStr =
-                aliasService.getPasswordFromAliasForCluster(AliasService.NO_CLUSTER_NAME,
-                        tokenId + TOKEN_MAX_LIFETIME_POSTFIX);
+        char[] maxLifetimeStr = getPasswordUsingAliasService(tokenId + TOKEN_MAX_LIFETIME_POSTFIX);
         if (maxLifetimeStr != null) {
           result = Long.parseLong(new String(maxLifetimeStr));
         }
@@ -213,6 +226,14 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
       }
     }
     return result;
+  }
+
+  private char[] getPasswordUsingAliasService(String tokenId) throws AliasServiceException {
+    char[] password = aliasService.getPasswordFromAliasForCluster(AliasService.NO_CLUSTER_NAME, tokenId);
+    if (tokenStateServiceStatistics != null) {
+      tokenStateServiceStatistics.interactKeystore(TokenStateServiceStatistics.KeystoreInteraction.GET_PASSWORD);
+    }
+    return password;
   }
 
   @Override
@@ -233,7 +254,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     // If there is no associated state in the in-memory cache, proceed to check the alias service
     long expiration = 0;
     try {
-      char[] expStr = aliasService.getPasswordFromAliasForCluster(AliasService.NO_CLUSTER_NAME, tokenId);
+      char[] expStr = getPasswordUsingAliasService(tokenId);
       if (expStr == null) {
         throw new UnknownTokenException(tokenId);
       }
@@ -256,7 +277,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     // If it's not in the cache, then check the underlying alias
     if (isUnknown) {
       try {
-        isUnknown = (aliasService.getPasswordFromAliasForCluster(AliasService.NO_CLUSTER_NAME, tokenId) == null);
+        isUnknown = (getPasswordUsingAliasService(tokenId) == null);
       } catch (AliasServiceException e) {
         log.errorAccessingTokenState(tokenId, e);
       }
@@ -296,6 +317,10 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
       log.removingTokenStateAliases();
       try {
         aliasService.removeAliasesForCluster(AliasService.NO_CLUSTER_NAME, aliasesToRemove);
+        if (tokenStateServiceStatistics != null) {
+          tokenStateServiceStatistics.interactKeystore(TokenStateServiceStatistics.KeystoreInteraction.REMOVE_ALIAS);
+          tokenStateServiceStatistics.setGatewayCredentialsFileSize(this.gatewayCredentialsFilePath.toFile().length());
+        }
         for (String tokenId : tokenIds) {
           log.removedTokenStateAliases(tokenId);
         }
@@ -313,10 +338,16 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     try {
       aliasService.removeAliasForCluster(AliasService.NO_CLUSTER_NAME, tokenId);
       aliasService.addAliasForCluster(AliasService.NO_CLUSTER_NAME, tokenId, String.valueOf(expiration));
+      if (tokenStateServiceStatistics != null) {
+        tokenStateServiceStatistics.interactKeystore(TokenStateServiceStatistics.KeystoreInteraction.REMOVE_ALIAS);
+        tokenStateServiceStatistics.interactKeystore(TokenStateServiceStatistics.KeystoreInteraction.SAVE_ALIAS);
+        tokenStateServiceStatistics.setGatewayCredentialsFileSize(this.gatewayCredentialsFilePath.toFile().length());
+      }
     } catch (AliasServiceException e) {
       log.failedToUpdateTokenExpiration(tokenId, e);
     }
   }
+
 
   @Override
   protected List<String> getTokens() {
@@ -324,12 +355,11 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
 
     try {
       List<String> allAliases = aliasService.getAliasesForCluster(AliasService.NO_CLUSTER_NAME);
-
-      // Filter for the token state aliases, and extract the token ID
-      tokenIds = allAliases.stream()
-                           .filter(a -> a.contains(TOKEN_MAX_LIFETIME_POSTFIX))
-                           .map(a -> a.substring(0, a.indexOf(TOKEN_MAX_LIFETIME_POSTFIX)))
-                           .collect(Collectors.toList());
+      if (tokenStateServiceStatistics != null) {
+        tokenStateServiceStatistics.interactKeystore(TokenStateServiceStatistics.KeystoreInteraction.GET_ALIAS);
+      }
+      // Filter for the token state aliases (exclude aliases ending with TOKEN_MAX_LIFETIME_POSTFIX)
+      tokenIds = allAliases.stream().filter(alias -> !alias.endsWith(TOKEN_MAX_LIFETIME_POSTFIX)).collect(Collectors.toList());
     } catch (AliasServiceException e) {
       log.errorAccessingTokenState(e);
     }
