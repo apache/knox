@@ -141,6 +141,7 @@
         <module>gateway-topology-simple</module>
         <module>gateway-topology-hadoop-xml</module>
         <module>gateway-service-metadata</module>
+        <module>gateway-service-session</module>
         <module>knox-homepage-ui</module>
     </modules>
 
@@ -1190,6 +1191,11 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-metadata</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-service-session</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

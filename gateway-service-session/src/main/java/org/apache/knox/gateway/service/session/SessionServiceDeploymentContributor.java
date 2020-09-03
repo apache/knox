@@ -15,30 +15,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.service.knoxsso.deploy;
+package org.apache.knox.gateway.service.session;
 
 import org.apache.knox.gateway.jersey.JerseyServiceDeploymentContributorBase;
 
-public class KnoxSSOutServiceDeploymentContributor extends JerseyServiceDeploymentContributorBase {
+public class SessionServiceDeploymentContributor extends JerseyServiceDeploymentContributorBase {
 
   @Override
   public String getRole() {
-    return "KNOXSSOUT";
+    return "KNOX-SESSION";
   }
 
   @Override
   public String getName() {
-    return "KnoxSSOutService";
+    return "knox-session";
   }
 
   @Override
   protected String[] getPackages() {
-    return new String[]{ "org.apache.knox.gateway.service.knoxsso" };
+    return new String[] { "org.apache.knox.gateway.service.session" };
   }
 
   @Override
   protected String[] getPatterns() {
-    return new String[]{ "knoxssout/api/**?**" };
+    return new String[] { "session/api/**?**" };
   }
 
 }

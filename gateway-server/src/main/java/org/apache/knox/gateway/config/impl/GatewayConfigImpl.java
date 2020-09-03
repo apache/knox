@@ -261,6 +261,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String KNOX_HOMEPAGE_PINNED_TOPOLOGIES =  "knox.homepage.pinned.topologies";
   private static final String KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES =  "knox.homepage.hidden.topologies";
   private static final Set<String> KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES_DEFAULT = new HashSet<>(Arrays.asList("admin", "manager", "knoxsso", "metadata", "homepage"));
+  private static final String KNOX_HOMEPAGE_LOGOUT_ENABLED =  "knox.homepage.logout.enabled";
 
   public GatewayConfigImpl() {
     init();
@@ -1172,6 +1173,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getServiceParameter(String service, String parameter) {
     return get(GATEWAY_SERVICE_PREFIX + service + "." + parameter, "");
+  }
+
+  @Override
+  public boolean homePageLogoutEnabled() {
+    return getBoolean(KNOX_HOMEPAGE_LOGOUT_ENABLED, false);
   }
 
 }

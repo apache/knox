@@ -22,10 +22,12 @@ import 'rxjs/add/operator/toPromise';
 
 import {GeneralProxyInformation} from './generalProxyInformation/general.proxy.information';
 import {TopologyInformation} from './topologies/topology.information';
+import {SessionInformation} from './sessionInformation/session.information';
 
 @Injectable()
 export class HomepageService {
     apiUrl = window.location.pathname.replace(new RegExp('home/.*'), 'api/v1/metadata/');
+    sessionUrl = window.location.pathname.replace(new RegExp('home/.*'), 'session/api/v1/sessioninfo');
     generalProxyInformationUrl = this.apiUrl + 'info';
     publicCertUrl = this.apiUrl + 'publicCert?type=';
     topologiesUrl = this.apiUrl + 'topologies';
@@ -57,6 +59,38 @@ export class HomepageService {
             .then(response => response['topologyInformations'].topologyInformation as TopologyInformation[])
             .catch((err: HttpErrorResponse) => {
                 console.debug('HomepageService --> getTopologies() --> ' + this.topologiesUrl + '\n  error: ' + err.message);
+                if (err.status === 401) {
+                    window.location.assign(document.location.pathname);
+                } else {
+                    return this.handleError(err);
+                }
+            });
+    }
+
+    getSessionInformation(): Promise<SessionInformation> {
+        let headers = new HttpHeaders();
+        headers = this.addJsonHeaders(headers);
+        return this.http.get(this.sessionUrl, { headers: headers})
+            .toPromise()
+            .then(response => response['sessioninfo'] as SessionInformation)
+            .catch((err: HttpErrorResponse) => {
+                console.debug('HomepageService --> getSessionInformation() --> ' + this.sessionUrl + '\n  error: ' + err.message);
+                if (err.status === 401) {
+                    window.location.assign(document.location.pathname);
+                } else {
+                    return this.handleError(err);
+                }
+            });
+    }
+
+    logout(logoutUrl): Promise<JSON> {
+        let headers = new HttpHeaders();
+        headers = this.addJsonHeaders(headers);
+        return this.http.get(logoutUrl, { headers: headers})
+            .toPromise()
+            .then(response => response['loggedOut'])
+            .catch((err: HttpErrorResponse) => {
+                console.debug('HomepageService --> logout() --> ' + logoutUrl + '\n  error: ' + err.message);
                 if (err.status === 401) {
                     window.location.assign(document.location.pathname);
                 } else {

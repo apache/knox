@@ -54,6 +54,12 @@
       </provider>
    </gateway>
    <service>
+      <role>KNOXSSOUT</role>
+   </service>
+   <service>
+      <role>KNOX-SESSION</role>
+   </service>
+   <service>
       <role>KNOX-METADATA</role>
    </service>
    <application>

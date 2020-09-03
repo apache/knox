@@ -44,7 +44,7 @@ public class WebSSOutResource {
   private static final String SSO_COOKIE_NAME = "knoxsso.cookie.name";
   private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
 
-  static final String RESOURCE_PATH = "/api/v1/webssout";
+  static final String RESOURCE_PATH = "knoxssout/api/v1/webssout";
 
   private String cookieName;
 

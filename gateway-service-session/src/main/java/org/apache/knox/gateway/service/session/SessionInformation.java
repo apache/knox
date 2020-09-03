@@ -15,30 +15,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.service.knoxsso.deploy;
+package org.apache.knox.gateway.service.session;
 
-import org.apache.knox.gateway.jersey.JerseyServiceDeploymentContributorBase;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
-public class KnoxSSOutServiceDeploymentContributor extends JerseyServiceDeploymentContributorBase {
+@XmlRootElement(name = "sessioninfo")
+public class SessionInformation {
+  @XmlElement
+  private String user;
 
-  @Override
-  public String getRole() {
-    return "KNOXSSOUT";
+  @XmlElement
+  private String logoutUrl;
+
+  public String getUser() {
+    return user;
   }
 
-  @Override
-  public String getName() {
-    return "KnoxSSOutService";
+  public void setUser(String user) {
+    this.user = user;
   }
 
-  @Override
-  protected String[] getPackages() {
-    return new String[]{ "org.apache.knox.gateway.service.knoxsso" };
+  public String getLogoutUrl() {
+    return logoutUrl;
   }
 
-  @Override
-  protected String[] getPatterns() {
-    return new String[]{ "knoxssout/api/**?**" };
+  public void setLogoutUrl(String logoutUrl) {
+    this.logoutUrl = logoutUrl;
   }
-
 }
