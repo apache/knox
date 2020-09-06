@@ -699,4 +699,9 @@ public interface GatewayConfig {
    * @return the value of the given parameter for the given service if declared; an empty String otherwise
    */
   String getServiceParameter(String service, String parameter);
+
+  /**
+   * @return the whether logout from the knox home page is enabled or not
+   */
+  boolean homePageLogoutEnabled();
 }

@@ -89,6 +89,13 @@ limitations under the License.
         <description>The interval (in seconds) for polling Ambari for cluster configuration changes.</description>
     </property>
 
+    <!-- @since 1.5.0 homepage logout -->
+    <property>
+        <name>knox.homepage.logout.enabled</name>
+        <value>true</value>
+        <description>Enable/disable logout from the Knox Homepage.</description>
+    </property>
+
     <!-- Knox Admin related config -->
     <property>
         <name>gateway.knox.admin.groups</name>

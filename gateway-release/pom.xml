@@ -451,7 +451,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
-            <artifactId>gateway-service-metadata</artifactId>
+            <artifactId>gateway-service-session</artifactId>
         </dependency>
     </dependencies>
 </project>

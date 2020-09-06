@@ -15,30 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.service.knoxsso.deploy;
+package org.apache.knox.gateway.service.session;
 
-import org.apache.knox.gateway.jersey.JerseyServiceDeploymentContributorBase;
+import org.apache.knox.gateway.i18n.messages.Message;
+import org.apache.knox.gateway.i18n.messages.MessageLevel;
+import org.apache.knox.gateway.i18n.messages.Messages;
 
-public class KnoxSSOutServiceDeploymentContributor extends JerseyServiceDeploymentContributorBase {
+@Messages(logger = "org.apache.knox.gateway.service.session")
+public interface SessionServiceMessages {
 
-  @Override
-  public String getRole() {
-    return "KNOXSSOUT";
-  }
-
-  @Override
-  public String getName() {
-    return "KnoxSSOutService";
-  }
-
-  @Override
-  protected String[] getPackages() {
-    return new String[]{ "org.apache.knox.gateway.service.knoxsso" };
-  }
-
-  @Override
-  protected String[] getPatterns() {
-    return new String[]{ "knoxssout/api/**?**" };
-  }
-
+  @Message(level = MessageLevel.INFO, text = "Homepage Logout is enabled and will use the URL: {0}")
+  void homePageLogoutEnabled(String logUrl);
 }

@@ -22,6 +22,7 @@ import {BsModalModule} from 'ng2-bs3-modal/ng2-bs3-modal';
 
 import {GeneralProxyInformationComponent} from './generalProxyInformation/general.proxy.information.component';
 import {TopologyInformationsComponent} from './topologies/topology.information.component';
+import {SessionInformationComponent} from './sessionInformation/session.information.component';
 import {HomepageService} from './homepage.service';
 
 @NgModule({
@@ -32,11 +33,13 @@ import {HomepageService} from './homepage.service';
         BsModalModule
     ],
     declarations: [GeneralProxyInformationComponent,
-                   TopologyInformationsComponent
+                   TopologyInformationsComponent,
+                   SessionInformationComponent
     ],
     providers: [HomepageService
     ],
-    bootstrap: [GeneralProxyInformationComponent,
+    bootstrap: [SessionInformationComponent,
+                GeneralProxyInformationComponent,
                 TopologyInformationsComponent
     ]
 })
