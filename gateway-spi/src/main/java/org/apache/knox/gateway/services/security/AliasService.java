@@ -54,7 +54,7 @@ public interface AliasService extends Service {
   char[] getPasswordFromAliasForGateway(String alias)
       throws AliasServiceException;
 
-  Map<String, char[]> getPasswordAliasMapForGateway() throws AliasServiceException;
+  Map<String, char[]> getPasswordsForGateway() throws AliasServiceException;
 
   char[] getGatewayIdentityPassphrase() throws AliasServiceException;
 

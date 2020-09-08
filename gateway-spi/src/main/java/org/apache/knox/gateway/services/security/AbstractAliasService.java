@@ -23,7 +23,7 @@ import java.util.Map;
 public abstract class AbstractAliasService implements AliasService {
 
   @Override
-  public Map<String, char[]> getPasswordAliasMapForGateway() throws AliasServiceException {
+  public Map<String, char[]> getPasswordsForGateway() throws AliasServiceException {
     final Map<String, char[]> passwordAliasMap = new HashMap<>();
     for (String alias : getAliasesForCluster(NO_CLUSTER_NAME)) {
       passwordAliasMap.put(alias, getPasswordFromAliasForGateway(alias));

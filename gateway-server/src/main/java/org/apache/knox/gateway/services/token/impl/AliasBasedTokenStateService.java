@@ -141,13 +141,20 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     try {
       log.loadingGatewayCredentialsOnStartup();
       final long start = System.currentTimeMillis();
-      final Map<String, char[]> passwordAliasMap = aliasService.getPasswordAliasMapForGateway();
+      final Map<String, char[]> passwordAliasMap = aliasService.getPasswordsForGateway();
       String alias, tokenId;
       long expiration, maxLifeTime;
       int count = 0;
       for (Map.Entry<String, char[]> passwordAliasMapEntry : passwordAliasMap.entrySet()) {
         alias = passwordAliasMapEntry.getKey();
         if (alias.endsWith(TOKEN_MAX_LIFETIME_POSTFIX)) {
+          // This token state service implementation persists two aliases in __gateway-credentials.jceks (see persistTokenState below):
+          // - an alias which maps a token ID to its expiration time
+          // - another alias with '--max' postfix which maps the maximum lifetime of the token identified by the 1st alias
+          // Given this, we should check aliases ending with '--max' and calculate the token ID from this alias.
+          // If all aliases were blindly processed we would end-up handling aliases that were not persisted via this token state service
+          // implementation -> facing error(s) when trying to parse the expiration/maxLifeTime values and irrelevant data would be loaded in the
+          // in-memory collections in the parent class
           tokenId = alias.substring(0, alias.indexOf(TOKEN_MAX_LIFETIME_POSTFIX));
           expiration = convertCharArrayToLong(passwordAliasMap.get(tokenId));
           maxLifeTime = convertCharArrayToLong(passwordAliasMapEntry.getValue());

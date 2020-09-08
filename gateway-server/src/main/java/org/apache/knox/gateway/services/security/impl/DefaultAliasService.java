@@ -197,7 +197,7 @@ public class DefaultAliasService extends AbstractAliasService {
 
   //Overriding the default behavior as we want to avoid loading the keystore N-times from the file system
   @Override
-  public Map<String, char[]> getPasswordAliasMapForGateway() throws AliasServiceException {
+  public Map<String, char[]> getPasswordsForGateway() throws AliasServiceException {
     final Map<String, char[]> passwordAliasMap = new HashMap<>();
     try {
       final KeyStore gatewayCredentialStore = keystoreService.getCredentialStoreForCluster(NO_CLUSTER_NAME);

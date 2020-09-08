@@ -95,7 +95,7 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     EasyMock.expectLastCall().andVoid().once();
 
     //expecting this call when loading credentials from the keystore on startup
-    EasyMock.expect(aliasService.getPasswordAliasMapForGateway()).andReturn(Collections.emptyMap()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordsForGateway()).andReturn(Collections.emptyMap()).anyTimes();
 
     EasyMock.replay(aliasService);
 
@@ -151,7 +151,7 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     EasyMock.expectLastCall().andVoid().once();
 
     //expecting this call when loading credentials from the keystore on startup
-    EasyMock.expect(aliasService.getPasswordAliasMapForGateway()).andReturn(Collections.emptyMap()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordsForGateway()).andReturn(Collections.emptyMap()).anyTimes();
 
     EasyMock.replay(aliasService);
 
@@ -244,7 +244,7 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     aliasService.getPasswordFromAliasForCluster(AliasService.NO_CLUSTER_NAME, uncachedTokenId);
     EasyMock.expectLastCall().andReturn(String.valueOf(uncachedTokenExpiration).toCharArray()).once();
     //expecting this call when loading credentials from the keystore on startup
-    EasyMock.expect(aliasService.getPasswordAliasMapForGateway()).andReturn(Collections.emptyMap()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordsForGateway()).andReturn(Collections.emptyMap()).anyTimes();
 
     EasyMock.replay(aliasService);
 
@@ -295,7 +295,7 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     EasyMock.expectLastCall().once(); // Expecting this during shutdown
 
     //expecting this call when loading credentials from the keystore on startup
-    EasyMock.expect(aliasService.getPasswordAliasMapForGateway()).andReturn(Collections.emptyMap()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordsForGateway()).andReturn(Collections.emptyMap()).anyTimes();
 
     EasyMock.replay(aliasService);
 
@@ -358,7 +358,7 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     EasyMock.expectLastCall().andVoid().once(); // Expecting this during shutdown
 
     //expecting this call when loading credentials from the keystore on startup
-    EasyMock.expect(aliasService.getPasswordAliasMapForGateway()).andReturn(Collections.emptyMap()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordsForGateway()).andReturn(Collections.emptyMap()).anyTimes();
     EasyMock.replay(aliasService);
 
     AliasBasedTokenStateService tss = new NoEvictionAliasBasedTokenStateService();
@@ -419,7 +419,7 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     EasyMock.expectLastCall().once();
 
     //expecting this call when loading credentials from the keystore on startup
-    EasyMock.expect(aliasService.getPasswordAliasMapForGateway()).andReturn(Collections.emptyMap()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordsForGateway()).andReturn(Collections.emptyMap()).anyTimes();
 
     EasyMock.replay(aliasService);
 

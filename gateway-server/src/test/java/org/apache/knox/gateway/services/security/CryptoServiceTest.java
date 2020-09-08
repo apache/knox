@@ -92,7 +92,7 @@ public class CryptoServiceTest {
       }
 
       @Override
-      public Map<String, char[]> getPasswordAliasMapForGateway() throws AliasServiceException {
+      public Map<String, char[]> getPasswordsForGateway() throws AliasServiceException {
         return null;
       }
 
