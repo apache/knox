@@ -704,4 +704,14 @@ public interface GatewayConfig {
    * @return the whether logout from the knox home page is enabled or not
    */
   boolean homePageLogoutEnabled();
+
+  /**
+   * @return the maximum number of cache entries where keystore entries are stored
+   */
+  long getKeystoreCacheSizeLimit();
+
+  /**
+   * @return the time - in minutes - an entry should be live (i.e. must not expire) in keystore cache
+   */
+  long getKeystoreCacheEntryTimeToLiveInMinutes();
 }

@@ -822,4 +822,15 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public boolean homePageLogoutEnabled() {
     return false;
   }
+
+  @Override
+  public long getKeystoreCacheSizeLimit() {
+    return 0;
+  }
+
+  @Override
+  public long getKeystoreCacheEntryTimeToLiveInMinutes() {
+    return 0;
+  }
+
 }

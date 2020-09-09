@@ -353,6 +353,8 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeystoreType()).andReturn("jks").atLeastOnce();
     EasyMock.expect(config.getSigningKeystorePasswordAlias()).andReturn(GatewayConfig.DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS).anyTimes();
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
+    EasyMock.expect(config.getKeystoreCacheEntryTimeToLiveInMinutes()).andReturn(0L).anyTimes();
+    EasyMock.expect(config.getKeystoreCacheSizeLimit()).andReturn(0L).anyTimes();
 
     MasterService ms = EasyMock.createMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray()).atLeastOnce();
@@ -392,6 +394,8 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeystorePath()).andReturn(basedir + "/target/test-classes/keystores/missing-server-keystore.jks").atLeastOnce();
     EasyMock.expect(config.getSigningKeystoreType()).andReturn("jks").atLeastOnce();
     EasyMock.expect(config.getSigningKeystorePasswordAlias()).andReturn(GatewayConfig.DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS).anyTimes();
+    EasyMock.expect(config.getKeystoreCacheEntryTimeToLiveInMinutes()).andReturn(0L).anyTimes();
+    EasyMock.expect(config.getKeystoreCacheSizeLimit()).andReturn(0L).anyTimes();
 
     MasterService ms = EasyMock.createMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray()).atLeastOnce();
@@ -436,6 +440,8 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeystoreType()).andReturn("jks").atLeastOnce();
     EasyMock.expect(config.getSigningKeystorePasswordAlias()).andReturn(GatewayConfig.DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS).anyTimes();
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
+    EasyMock.expect(config.getKeystoreCacheEntryTimeToLiveInMinutes()).andReturn(0L).anyTimes();
+    EasyMock.expect(config.getKeystoreCacheSizeLimit()).andReturn(0L).anyTimes();
 
     MasterService ms = EasyMock.createMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("invalid_password".toCharArray()).atLeastOnce();
@@ -480,6 +486,8 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeystoreType()).andReturn("jks").atLeastOnce();
     EasyMock.expect(config.getSigningKeystorePasswordAlias()).andReturn(GatewayConfig.DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS).anyTimes();
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("invalid_key").anyTimes();
+    EasyMock.expect(config.getKeystoreCacheEntryTimeToLiveInMinutes()).andReturn(0L).anyTimes();
+    EasyMock.expect(config.getKeystoreCacheSizeLimit()).andReturn(0L).anyTimes();
 
     MasterService ms = EasyMock.createMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray()).atLeastOnce();
@@ -524,6 +532,8 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeystoreType()).andReturn("jks").atLeastOnce();
     EasyMock.expect(config.getSigningKeystorePasswordAlias()).andReturn(GatewayConfig.DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS).anyTimes();
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
+    EasyMock.expect(config.getKeystoreCacheEntryTimeToLiveInMinutes()).andReturn(0L).anyTimes();
+    EasyMock.expect(config.getKeystoreCacheSizeLimit()).andReturn(0L).anyTimes();
 
     MasterService ms = EasyMock.createMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray()).atLeastOnce();

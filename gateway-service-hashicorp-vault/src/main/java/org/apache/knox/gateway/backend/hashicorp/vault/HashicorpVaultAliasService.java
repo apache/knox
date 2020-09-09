@@ -20,6 +20,7 @@ package org.apache.knox.gateway.backend.hashicorp.vault;
 import org.apache.knox.gateway.backend.hashicorp.vault.authentication.HashicorpVaultClientAuthenticationProvider;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.AbstractAliasService;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.util.PasswordUtils;
@@ -40,7 +41,7 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
 
-public class HashicorpVaultAliasService implements AliasService {
+public class HashicorpVaultAliasService extends AbstractAliasService {
   public static final String TYPE = "hashicorp.vault";
   public static final String VAULT_CONFIG_PREFIX = "hashicorp.vault.";
   public static final String VAULT_ADDRESS_KEY = VAULT_CONFIG_PREFIX + "address";

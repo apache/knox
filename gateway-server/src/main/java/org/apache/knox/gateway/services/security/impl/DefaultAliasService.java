@@ -22,6 +22,7 @@ import java.security.KeyStoreException;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,14 +31,14 @@ import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AbstractAliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.util.PasswordUtils;
 
-public class DefaultAliasService implements AliasService {
+public class DefaultAliasService extends AbstractAliasService {
   private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
 
   private KeystoreService keystoreService;
@@ -192,6 +193,24 @@ public class DefaultAliasService implements AliasService {
   public char[] getPasswordFromAliasForGateway(String alias)
       throws AliasServiceException {
     return getPasswordFromAliasForCluster(NO_CLUSTER_NAME, alias);
+  }
+
+  //Overriding the default behavior as we want to avoid loading the keystore N-times from the file system
+  @Override
+  public Map<String, char[]> getPasswordsForGateway() throws AliasServiceException {
+    final Map<String, char[]> passwordAliasMap = new HashMap<>();
+    try {
+      final KeyStore gatewayCredentialStore = keystoreService.getCredentialStoreForCluster(NO_CLUSTER_NAME);
+      final Enumeration<String> aliases = gatewayCredentialStore.aliases();
+      String alias;
+      while (aliases.hasMoreElements()) {
+        alias = aliases.nextElement();
+        passwordAliasMap.put(alias, keystoreService.getCredentialForCluster(NO_CLUSTER_NAME, alias, gatewayCredentialStore));
+      }
+    } catch (KeystoreServiceException | KeyStoreException e) {
+      e.printStackTrace();
+    }
+    return passwordAliasMap;
   }
 
   @Override

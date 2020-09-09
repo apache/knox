@@ -26,6 +26,7 @@ import org.apache.knox.gateway.service.config.remote.zk.ZooKeeperClientService;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
+import org.apache.knox.gateway.services.security.AbstractAliasService;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.EncryptionResult;
@@ -45,7 +46,7 @@ import java.util.Set;
 /**
  * An {@link AliasService} implementation based on zookeeper remote service registry.
  */
-public class ZookeeperRemoteAliasService implements AliasService {
+public class ZookeeperRemoteAliasService extends AbstractAliasService {
     public static final String TYPE = "zookeeper";
     public static final String PATH_KNOX = "/knox";
     public static final String PATH_KNOX_SECURITY = PATH_KNOX + "/security";

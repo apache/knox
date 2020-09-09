@@ -92,6 +92,11 @@ public class CryptoServiceTest {
       }
 
       @Override
+      public Map<String, char[]> getPasswordsForGateway() throws AliasServiceException {
+        return null;
+      }
+
+      @Override
       public void generateAliasForGateway(String alias) {
       }
 

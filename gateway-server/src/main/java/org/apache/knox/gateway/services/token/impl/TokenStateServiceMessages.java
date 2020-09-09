@@ -33,8 +33,8 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.DEBUG, text = "Revoked token {0}")
   void revokedToken(String tokenId);
 
-  @Message(level = MessageLevel.DEBUG, text = "Removed state for token {0}")
-  void removedTokenState(String tokenId);
+  @Message(level = MessageLevel.DEBUG, text = "Removed state for tokens {0}")
+  void removedTokenState(String tokenIds);
 
   @Message(level = MessageLevel.ERROR, text = "Unknown token {0}")
   void unknownToken(String tokenId);
@@ -67,6 +67,9 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.ERROR, text = "Failed to remove token state aliases : {0}")
   void failedToRemoveTokenStateAliases(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.DEBUG, text = "Skipping expired token eviction")
+  void skipEviction();
+
   @Message(level = MessageLevel.ERROR, text = "Failed to evict expired token {0} : {1}")
   void failedExpiredTokenEviction(String tokenId, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
@@ -95,7 +98,7 @@ public interface TokenStateServiceMessages {
   void removingTokenStateAliases(String tokenId);
 
   @Message(level = MessageLevel.INFO, text = "Removed token state aliases for {0}")
-  void removedTokenStateAliases(String tokenId);
+  void removedTokenStateAliases(String tokenIds);
 
   @Message(level = MessageLevel.DEBUG, text = "Loading peristed token state journal entries")
   void loadingPersistedJournalEntries();
@@ -135,5 +138,14 @@ public interface TokenStateServiceMessages {
 
   @Message(level = MessageLevel.ERROR, text = "Failed to remove the token state journal entries : {0}")
   void failedToRemoveJournalEntries(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.INFO, text = "Loading Gateway credentials on startup...")
+  void loadingGatewayCredentialsOnStartup();
+
+  @Message(level = MessageLevel.INFO, text = "Loaded {0} Gateway credentials in {1} milliseonds")
+  void loadedGatewayCredentialsOnStartup(int count, long duration);
+
+  @Message(level = MessageLevel.ERROR, text = "Error while loading Gateway credentials on startup: {0}")
+  void errorWhileLoadingGatewayCredentialsOnStartup(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
 }

@@ -76,5 +76,7 @@ public interface KeystoreService extends Service {
 
   char[] getCredentialForCluster(String clusterName, String alias) throws KeystoreServiceException;
 
+  char[] getCredentialForCluster(String clusterName, String alias, KeyStore ks) throws KeystoreServiceException;
+
   String getKeystorePath();
 }
