@@ -190,7 +190,7 @@
         <easymock.version>4.2</easymock.version>
         <eclipselink.version>2.7.6</eclipselink.version>
         <ehcache.version>2.6.11</ehcache.version>
-        <exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
+        <exec-maven-plugin.version>3.0.0</exec-maven-plugin.version>
         <fastinfoset.version>1.2.18</fastinfoset.version>
         <findsecbugs-plugin.version>1.10.1</findsecbugs-plugin.version>
         <forbiddenapis.version>3.0.1</forbiddenapis.version>
