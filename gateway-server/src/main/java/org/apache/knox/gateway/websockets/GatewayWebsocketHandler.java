@@ -36,8 +36,10 @@ import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 import javax.websocket.ClientEndpointConfig;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.KeyStore;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -113,10 +115,9 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
     try {
       final URI requestURI = req.getRequestURI();
-      final String path = requestURI.getRawPath();
 
       /* URL used to connect to websocket backend */
-      final String backendURL = getMatchedBackendURL(path, requestURI);
+      final String backendURL = getMatchedBackendURL(requestURI);
       LOG.debugLog("Generated backend URL for websocket connection: " + backendURL);
 
       /* Upgrade happens here */
@@ -149,27 +150,36 @@ public class GatewayWebsocketHandler extends WebSocketHandler
    */
   private ClientEndpointConfig getClientEndpointConfig(final ServletUpgradeRequest req) {
 
-    return ClientEndpointConfig.Builder.create().configurator( new ClientEndpointConfig.Configurator() {
+    return ClientEndpointConfig.Builder.create()
+        .configurator(new ClientEndpointConfig.Configurator() {
 
-       @Override
-       public void beforeRequest(final Map<String, List<String>> headers) {
+          @Override
+          public void beforeRequest(final Map<String, List<String>> headers) {
 
-         /* Add request headers */
-         req.getHeaders().forEach(headers::putIfAbsent);
-
-       }
-    }).build();
+            /* Add request headers */
+            req.getHeaders().forEach(headers::putIfAbsent);
+            try {
+              final URI backendURL = new URI(getMatchedBackendURL(req.getRequestURI()));
+              headers.put("Host", Arrays.asList(backendURL.getHost() + ":" + backendURL.getPort()));
+            } catch (final URISyntaxException e) {
+              LOG.onError(String.format(Locale.ROOT,
+                  "Error getting backend url, this could cause 'Host does not match SNI' exception. Cause: ",
+                  e.toString()));
+            }
+          }
+        }).build();
   }
 
   /**
    * This method looks at the context path and returns the backend websocket
    * url. If websocket url is found it is used as is, or we default to
    * ws://{host}:{port} which might or might not be right.
-   * @param path path to match requestURI against
    * @param requestURI url to match
    * @return Websocket backend url
    */
-  protected synchronized String getMatchedBackendURL(final String path, URI requestURI) {
+  protected synchronized String getMatchedBackendURL(final URI requestURI) {
+    final String path = requestURI.getRawPath();
+
     final ServiceRegistry serviceRegistryService = services
         .getService(ServiceType.SERVICE_REGISTRY_SERVICE);
 

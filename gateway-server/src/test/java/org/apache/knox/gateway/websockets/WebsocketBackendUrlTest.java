@@ -70,9 +70,8 @@ public class WebsocketBackendUrlTest extends WebsocketEchoTestBase {
   @Test
   public void testWebsocketBackendUrl() throws Exception {
     URI requestURI = new URI(serverUri.toString() + "gateway/websocket/123foo456bar/channels");
-    final String path = requestURI.getPath();
     GatewayWebsocketHandler gwh = new GatewayWebsocketHandler(gatewayConfig, services);
-    String backendUrl = gwh.getMatchedBackendURL(path, requestURI);
+    String backendUrl = gwh.getMatchedBackendURL(requestURI);
     String expectedBackendUrl = backendServerUri.toString() + "channels";
     assertThat(backendUrl, is(expectedBackendUrl));
   }
