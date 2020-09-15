@@ -158,7 +158,7 @@ public class TokenServiceResourceTest {
     assertTrue(authority.verifyToken(parsedToken));
   }
 
-  /**
+  /*
    * KNOX-2266
    */
   @Test

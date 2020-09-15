@@ -34,6 +34,8 @@ public interface TokenStateJournal {
      * @param issueTime   The issue timestamp
      * @param expiration  The expiration time
      * @param maxLifetime The maximum allowed lifetime
+     *
+     * @throws IOException exception on error
      */
     void add(String tokenId, long issueTime, long expiration, long maxLifetime)
         throws IOException;
@@ -42,6 +44,8 @@ public interface TokenStateJournal {
      * Persist the token state to the journal.
      *
      * @param entry The entry to persist
+     *
+     * @throws IOException exception on error
      */
     void add(JournalEntry entry) throws IOException;
 
@@ -49,6 +53,8 @@ public interface TokenStateJournal {
      * Persist the token state to the journal.
      *
      * @param entries The entries to persist
+     *
+     * @throws IOException exception on error
      */
     void add(List<JournalEntry> entries) throws IOException;
 
@@ -57,12 +63,16 @@ public interface TokenStateJournal {
      *
      * @param tokenId The unique token identifier.
      *
+     * @throws IOException exception on error
+     *
      * @return A JournalEntry with the specified token's journaled state.
      */
     JournalEntry get(String tokenId) throws IOException;
 
     /**
      * Get all the the journaled tokens' state.
+     *
+     * @throws IOException exception on error
      *
      * @return A List of JournalEntry objects.
      */
@@ -72,6 +82,8 @@ public interface TokenStateJournal {
      * Remove the token state for the specified token from the journal
      *
      * @param tokenId The unique token identifier
+     *
+     * @throws IOException exception on error
      */
     void remove(String tokenId) throws IOException;
 
@@ -79,6 +91,8 @@ public interface TokenStateJournal {
      * Remove the token state for the specified tokens from the journal
      *
      * @param tokenIds A set of unique token identifiers
+     *
+     * @throws IOException exception on error
      */
     void remove(Collection<String> tokenIds) throws IOException;
 
@@ -86,6 +100,8 @@ public interface TokenStateJournal {
      * Remove the token state for the specified journal entry
      *
      * @param entry A JournalEntry for the token for which the state should be removed
+     *
+     * @throws IOException exception on error
      */
     void remove(JournalEntry entry) throws IOException;
 

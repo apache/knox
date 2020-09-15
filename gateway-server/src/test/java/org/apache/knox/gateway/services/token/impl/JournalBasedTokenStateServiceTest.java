@@ -131,7 +131,7 @@ public class JournalBasedTokenStateServiceTest extends DefaultTokenStateServiceT
                      maxTokenLifetimes.size());
     }
 
-    /**
+    /*
      * Verify that the token state reaper includes previously-persisted token state, so it's not left in the file
      * system forever.
      */

@@ -616,7 +616,7 @@ public class DefaultTopologyServiceTest {
     }
   }
 
-  /**
+  /*
    * KNOX-2371
    */
   @Test

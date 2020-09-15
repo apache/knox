@@ -610,7 +610,7 @@ public class DefaultKeystoreServiceTest {
     verify(masterService);
   }
 
-  /**
+  /*
    * Test the bulk key removal method, which should only load the keystore file once, and subsequently write the
    * keystore file only once, rather than once each per key.
    */

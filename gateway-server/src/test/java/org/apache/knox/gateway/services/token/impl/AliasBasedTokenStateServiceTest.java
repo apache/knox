@@ -62,7 +62,7 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     return (tokenStatePersistenceInterval != null) ? tokenStatePersistenceInterval : super.getTokenStatePersistenceInterval();
   }
 
-  /**
+  /*
    * KNOX-2375
    */
   @Test
@@ -199,7 +199,7 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
                  maxTokenLifetimes.size());
   }
 
-  /**
+  /*
    * Verify that the token state reaper includes token state which has not been cached, so it's not left in the keystore
    * forever.
    */

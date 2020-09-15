@@ -254,7 +254,7 @@ public class DefaultTokenStateService implements TokenStateService {
   }
 
   /**
-   * @param token
+   * @param token Token to check.
    * @return false, if the service has previously stored the specified token; Otherwise, true.
    */
   protected boolean isUnknown(final String token) {
@@ -275,7 +275,7 @@ public class DefaultTokenStateService implements TokenStateService {
    *
    * @param tokenIds The unique identifiers of the tokens whose state should be removed.
    *
-   * @throws UnknownTokenException
+   * @throws UnknownTokenException if the specified token in valid, but not known to the service.
    */
   protected void removeTokens(final Set<String> tokenIds) throws UnknownTokenException {
     removeTokenState(tokenIds);

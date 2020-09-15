@@ -160,6 +160,7 @@ public interface TokenStateService extends Service {
    *
    * @param tokenId  The token unique identifier.
    * @param validate Flag indicating whether the token needs to be validated.
+   * @throws UnknownTokenException Exception if token is not found.
    *
    * @return The token's expiration time in milliseconds.
    */

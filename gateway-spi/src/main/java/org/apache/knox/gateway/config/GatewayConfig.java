@@ -696,6 +696,9 @@ public interface GatewayConfig {
   boolean isKnoxTokenPermissiveValidationEnabled();
 
   /**
+   * @param service Service to get the parameter for.
+   * @param parameter Parameter key to get the value for.
+   *
    * @return the value of the given parameter for the given service if declared; an empty String otherwise
    */
   String getServiceParameter(String service, String parameter);
