@@ -37,7 +37,7 @@
         <link href="styles/bootstrap.min.css" media="all" rel="stylesheet" type="text/css" id="bootstrap-css">
         <link href="styles/knox.css" media="all" rel="stylesheet" type="text/css" >
 
-        <script src="libs/bower/jquery/js/jquery.js" ></script>
+        <script src="libs/bower/jquery/js/jquery-3.5.1.min.js" ></script>
 
         <script type="text/javascript" src="js/knoxauth.js"></script>
     <%
