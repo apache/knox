@@ -51,6 +51,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Processes simple topology descriptors, producing full topology files, which can subsequently be deployed to the
@@ -88,7 +90,7 @@ public class SimpleDescriptorHandler {
 
     private static Map<String, ServiceDiscovery> discoveryInstances = new HashMap<>();
 
-    private static final Set<String> ALLOWED_SERVICES_WITHOUT_URLS_AND_PARAMS = Collections.singleton("KNOX");
+    private static final Set<String> ALLOWED_SERVICES_WITHOUT_URLS_AND_PARAMS = Collections.unmodifiableSet(Stream.of("KNOX", "KNOX-METADATA", "KNOXSSOUT", "KNOX-SESSION").collect(Collectors.toSet()));
 
     public static Map<String, File> handle(GatewayConfig config, File desc, File destDirectory, Service...gatewayServices) throws IOException {
         return handle(config, SimpleDescriptorFactory.parse(desc.getAbsolutePath()), desc.getParentFile(), destDirectory, gatewayServices);
