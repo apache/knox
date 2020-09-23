@@ -56,6 +56,7 @@ import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.util.JsonUtils;
+import org.apache.knox.gateway.util.Tokens;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
@@ -247,10 +248,10 @@ public class TokenResource {
       // If the token state service is disabled, then return the expiration from the specified token
       try {
         JWTToken jwt = new JWTToken(token);
-        log.renewalDisabled(getTopologyName(), TokenUtils.getTokenDisplayText(token), TokenUtils.getTokenId(jwt));
+        log.renewalDisabled(getTopologyName(), Tokens.getTokenDisplayText(token), TokenUtils.getTokenId(jwt));
         expiration = Long.parseLong(jwt.getExpires());
       } catch (ParseException e) {
-        log.invalidToken(getTopologyName(), TokenUtils.getTokenDisplayText(token), e);
+        log.invalidToken(getTopologyName(), Tokens.getTokenDisplayText(token), e);
         error = safeGetMessage(e);
       } catch (Exception e) {
         error = safeGetMessage(e);
@@ -264,11 +265,11 @@ public class TokenResource {
           expiration = tokenStateService.renewToken(jwt,
                                                     renewInterval.orElse(tokenStateService.getDefaultRenewInterval()));
           log.renewedToken(getTopologyName(),
-                           TokenUtils.getTokenDisplayText(token),
+                           Tokens.getTokenDisplayText(token),
                            TokenUtils.getTokenId(jwt),
                            renewer);
         } catch (ParseException e) {
-          log.invalidToken(getTopologyName(), TokenUtils.getTokenDisplayText(token), e);
+          log.invalidToken(getTopologyName(), Tokens.getTokenDisplayText(token), e);
           error = safeGetMessage(e);
         } catch (Exception e) {
           error = safeGetMessage(e);
@@ -284,7 +285,7 @@ public class TokenResource {
                       .entity("{\n  \"renewed\": \"true\",\n  \"expires\": \"" + expiration + "\"\n}\n")
                       .build();
     } else {
-      log.badRenewalRequest(getTopologyName(), TokenUtils.getTokenDisplayText(token), error);
+      log.badRenewalRequest(getTopologyName(), Tokens.getTokenDisplayText(token), error);
       resp = Response.status(errorStatus)
                      .entity("{\n  \"renewed\": \"false\",\n  \"error\": \"" + error + "\"\n}\n")
                      .build();
@@ -311,11 +312,11 @@ public class TokenResource {
           JWTToken jwt = new JWTToken(token);
           tokenStateService.revokeToken(jwt);
           log.revokedToken(getTopologyName(),
-                           TokenUtils.getTokenDisplayText(token),
+                           Tokens.getTokenDisplayText(token),
                            TokenUtils.getTokenId(jwt),
                            renewer);
         } catch (ParseException e) {
-          log.invalidToken(getTopologyName(), TokenUtils.getTokenDisplayText(token), e);
+          log.invalidToken(getTopologyName(), Tokens.getTokenDisplayText(token), e);
           error = safeGetMessage(e);
         } catch (UnknownTokenException e) {
           error = safeGetMessage(e);
@@ -331,7 +332,7 @@ public class TokenResource {
                       .entity("{\n  \"revoked\": \"true\"\n}\n")
                       .build();
     } else {
-      log.badRevocationRequest(getTopologyName(), TokenUtils.getTokenDisplayText(token), error);
+      log.badRevocationRequest(getTopologyName(), Tokens.getTokenDisplayText(token), error);
       resp = Response.status(errorStatus)
                      .entity("{\n  \"revoked\": \"false\",\n  \"error\": \"" + error + "\"\n}\n")
                      .build();
@@ -397,7 +398,7 @@ public class TokenResource {
       if (token != null) {
         String accessToken = token.toString();
         String tokenId = TokenUtils.getTokenId(token);
-        log.issuedToken(getTopologyName(), TokenUtils.getTokenDisplayText(accessToken), tokenId);
+        log.issuedToken(getTopologyName(), Tokens.getTokenDisplayText(accessToken), tokenId);
 
         HashMap<String, Object> map = new HashMap<>();
         map.put(ACCESS_TOKEN, accessToken);
@@ -421,7 +422,7 @@ public class TokenResource {
                                      System.currentTimeMillis(),
                                      expires,
                                      maxTokenLifetime.orElse(tokenStateService.getDefaultMaxLifetimeDuration()));
-          log.storedToken(getTopologyName(), TokenUtils.getTokenDisplayText(accessToken), tokenId);
+          log.storedToken(getTopologyName(), Tokens.getTokenDisplayText(accessToken), tokenId);
         }
 
         return Response.ok().entity(jsonResponse).build();

@@ -33,7 +33,6 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.performance.test.PerformanceTestConfiguration;
 import org.apache.knox.gateway.performance.test.PerformanceTestMessages;
 import org.apache.knox.gateway.performance.test.ResponseTimeCache;
-import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.shell.ErrorResponse;
 import org.apache.knox.gateway.shell.KnoxSession;
 import org.apache.knox.gateway.shell.KnoxShellException;
@@ -42,6 +41,7 @@ import org.apache.knox.gateway.shell.knox.token.Get;
 import org.apache.knox.gateway.shell.knox.token.Token;
 import org.apache.knox.gateway.shell.knox.token.TokenLifecycleResponse;
 import org.apache.knox.gateway.util.JsonUtils;
+import org.apache.knox.gateway.util.Tokens;
 
 @SuppressWarnings("PMD.DoNotUseThreads")
 public class KnoxTokenWorkerThread implements Runnable {
@@ -139,7 +139,7 @@ public class KnoxTokenWorkerThread implements Runnable {
   private void renewKnoxToken(KnoxSession knoxSession) throws Exception {
     final String knoxTokenToRenew = this.knoxTokenCache.getKnoxToken();
     if (knoxTokenToRenew != null) {
-      LOG.renewKnoxToken(TokenUtils.getTokenDisplayText(knoxTokenToRenew));
+      LOG.renewKnoxToken(Tokens.getTokenDisplayText(knoxTokenToRenew));
       final long renewStart = System.currentTimeMillis();
       final TokenLifecycleResponse renewResponse = Token.renew(knoxSession, knoxTokenToRenew).now();
       final long renewResponseTime = System.currentTimeMillis() - renewStart;
@@ -160,7 +160,7 @@ public class KnoxTokenWorkerThread implements Runnable {
     try {
       final String knoxToken = this.knoxTokenCache.getKnoxToken();
       if (knoxToken != null) {
-        LOG.useKnoxToken(TokenUtils.getTokenDisplayText(knoxToken));
+        LOG.useKnoxToken(Tokens.getTokenDisplayText(knoxToken));
         Hdfs.ls(knoxSession).knoxToken(knoxToken).now();
       } else {
         LOG.nothingToUse();
