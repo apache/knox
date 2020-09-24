@@ -32,6 +32,11 @@ public class ShiroConfig {
     String name;
     String sectionName;
     String value;
+
+    params.putIfAbsent("main.invalidRequest.blockSemicolon", "false");
+    params.putIfAbsent("main.invalidRequest.blockBackslash", "false");
+    params.putIfAbsent("main.invalidRequest.blockNonAscii", "false");
+
     for(Entry<String, String> entry : params.entrySet()) {
       int sectionDot = entry.getKey().indexOf('.');
       if (sectionDot > 0) {
