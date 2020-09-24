@@ -182,15 +182,15 @@ public class GatewayShiroAuthTest {
                     // enable semicolon
                     .addTag("param")
                     .addTag("name").addText("main.invalidRequest.blockSemicolon")
-                    .addTag("value").addText("false")
+                    .addTag("value").addText("true").gotoParent()
                     // enable backslash
                     .addTag("param")
                     .addTag("name").addText("main.invalidRequest.blockBackslash")
-                    .addTag("value").addText("false")
+                    .addTag("value").addText("true").gotoParent()
                     //enable non-ascii
                     .addTag("param")
                     .addTag("name").addText("main.invalidRequest.blockNonAscii")
-                    .addTag("value").addText("false")
+                    .addTag("value").addText("true").gotoParent()
                     .addTag("param")
                     .addTag("name").addText("main.ldapRealm.userDnTemplate")
                     .addTag("value").addText("uid={0},ou=people,dc=hadoop,dc=apache,dc=org").gotoParent()
@@ -233,7 +233,7 @@ public class GatewayShiroAuthTest {
     @Test
     public void testShiroBlockUnsafeCharacters() {
         final String serviceUrl = gatewayUrl + '/' + TOPOLOGY_BLOCK_UNSAFE_CHARS + SERVICE_RESOURCE_NAME +";jsessionid=OI24B9ASD7BSSD";
-        testShiroAuthFailure(serviceUrl);
+        testShiroAuthFailure(HttpStatus.SC_BAD_REQUEST, serviceUrl, "HTTP ERROR 400 Invalid request");
     }
 
     /**
@@ -242,16 +242,16 @@ public class GatewayShiroAuthTest {
     @Test
     public void testInValidShiro() {
         final String serviceUrl = gatewayUrl + '/' + TOPOLOGY_IN_VALID_URL + SERVICE_RESOURCE_NAME;
-        testShiroAuthFailure(serviceUrl);
+        testShiroAuthFailure(HttpStatus.SC_INTERNAL_SERVER_ERROR, serviceUrl, "Unable to determine authenticated user from Shiro, please check that your Knox Shiro configuration is correct");
     }
 
-    private void testShiroAuthFailure(final String serviceUrl) {
+    private void testShiroAuthFailure(final int failure_status_code, final String serviceUrl, final String reason) {
         given()
                 .auth().preemptive().basic(USERNAME, USERNAME)
                 .then()
-                .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+                .statusCode(failure_status_code)
                 .contentType("text/html")
-                .body(containsString("Unable to determine authenticated user from Shiro, please check that your Knox Shiro configuration is correct"))
+                .body(containsString(reason))
                 .when().get(serviceUrl);
     }
 
