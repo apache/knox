@@ -64,6 +64,7 @@ import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
 import com.nimbusds.jose.JWSHeader;
+import org.apache.knox.gateway.util.Tokens;
 
 public abstract class AbstractJWTFilter implements Filter {
   /**
@@ -290,7 +291,7 @@ public abstract class AbstractJWTFilter implements Filter {
     }
 
     final String tokenId = TokenUtils.getTokenId(token);
-    final String displayableToken = TokenUtils.getTokenDisplayText(token.toString());
+    final String displayableToken = Tokens.getTokenDisplayText(token.toString());
     if (verified) {
       // confirm that issue matches intended target
       if (expectedIssuer.equals(token.getIssuer())) {

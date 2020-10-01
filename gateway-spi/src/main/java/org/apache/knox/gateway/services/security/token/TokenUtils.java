@@ -22,22 +22,9 @@ import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
-import java.util.Locale;
 
 
 public class TokenUtils {
-
-  /**
-   * Get a String derived from a JWT String, which is suitable for presentation (e.g., logging) without compromising
-   * security.
-   *
-   * @param token A BASE64-encoded JWT String.
-   *
-   * @return An abbreviated form of the specified JWT String.
-   */
-  public static String getTokenDisplayText(final String token) {
-    return String.format(Locale.ROOT, "%s...%s", token.substring(0, 6), token.substring(token.length() - 6));
-  }
 
   /**
    * Extract the unique Knox token identifier from the specified JWT's claim set.

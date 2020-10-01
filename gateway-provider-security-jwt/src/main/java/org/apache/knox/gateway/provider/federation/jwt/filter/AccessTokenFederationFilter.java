@@ -28,6 +28,7 @@ import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.util.Tokens;
 
 import javax.security.auth.Subject;
 import javax.servlet.Filter;
@@ -91,7 +92,7 @@ public class AccessTokenFederationFilter implements Filter {
       }
 
       final String tokenId = TokenUtils.getTokenId(token);
-      final String displayableToken = TokenUtils.getTokenDisplayText(token.toString());
+      final String displayableToken = Tokens.getTokenDisplayText(token.toString());
       if (verified) {
         try {
           if (!isExpired(token)) {
