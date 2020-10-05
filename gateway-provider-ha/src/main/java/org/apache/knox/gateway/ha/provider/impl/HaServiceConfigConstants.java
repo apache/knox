@@ -32,9 +32,17 @@ public interface HaServiceConfigConstants {
 
    String CONFIG_PARAM_ZOOKEEPER_NAMESPACE = "zookeeperNamespace";
 
+   String CONFIG_COOKIE_HA_ENABLED = "cookieHaEnabled";
+
+   String CONFIG_COOKIE_HA_COOKIE_NAME = "cookieHaCookieName";
+
    int DEFAULT_MAX_FAILOVER_ATTEMPTS = 3;
 
    int DEFAULT_FAILOVER_SLEEP = 1000;
 
    boolean DEFAULT_ENABLED = true;
+
+   boolean DEFAULT_COOKIE_HA_ENABLED = false;
+
+   String DEFAULT_COOKIE_HA_COOKIE_NAME = "KNOX_BACKEND";
 }

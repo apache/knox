@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.ha.dispatch;
 
+import org.apache.http.impl.client.HttpClients;
 import org.apache.knox.gateway.ha.provider.HaDescriptor;
 import org.apache.knox.gateway.ha.provider.HaProvider;
 import org.apache.knox.gateway.ha.provider.HaServletContextListener;
@@ -48,7 +49,7 @@ public class DefaultHaDispatchTest {
   public void testConnectivityFailover() throws Exception {
     String serviceName = "OOZIE";
     HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, null, null));
     HaProvider provider = new DefaultHaProvider(descriptor);
     URI uri1 = new URI( "http://unreachable-host.invalid" );
     URI uri2 = new URI( "http://reachable-host.invalid" );
@@ -105,5 +106,56 @@ public class DefaultHaDispatchTest {
     Assert.assertEquals(uri2.toString(), provider.getActiveURL(serviceName));
     //test to make sure the sleep took place
     Assert.assertTrue(elapsedTime > 1000);
+  }
+
+  @Test
+  public void testConnectivityActive() throws Exception {
+    String serviceName = "OOZIE";
+    HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", null));
+    HaProvider provider = new DefaultHaProvider(descriptor);
+    URI uri1 = new URI( "http://unreachable-host" );
+    URI uri2 = new URI( "http://reachable-host" );
+    ArrayList<String> urlList = new ArrayList<>();
+    urlList.add(uri1.toString());
+    urlList.add(uri2.toString());
+    provider.addHaService(serviceName, urlList);
+    FilterConfig filterConfig = EasyMock.createNiceMock(FilterConfig.class);
+    ServletContext servletContext = EasyMock.createNiceMock(ServletContext.class);
+
+    EasyMock.expect(filterConfig.getServletContext()).andReturn(servletContext).anyTimes();
+    EasyMock.expect(servletContext.getAttribute(HaServletContextListener.PROVIDER_ATTRIBUTE_NAME)).andReturn(provider).anyTimes();
+
+    BasicHttpParams params = new BasicHttpParams();
+
+    HttpUriRequest outboundRequest = EasyMock.createNiceMock(HttpRequestBase.class);
+    EasyMock.expect(outboundRequest.getMethod()).andReturn( "GET" ).anyTimes();
+    EasyMock.expect(outboundRequest.getURI()).andReturn( uri1  ).anyTimes();
+    EasyMock.expect(outboundRequest.getParams()).andReturn( params ).anyTimes();
+
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getRequestURL()).andReturn( new StringBuffer(uri2.toString()) ).once();
+    EasyMock.expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(0)).once();
+    EasyMock.expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(1)).once();
+
+    HttpServletResponse outboundResponse = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(outboundResponse.getOutputStream()).andAnswer( new IAnswer<SynchronousServletOutputStreamAdapter>() {
+      @Override
+      public SynchronousServletOutputStreamAdapter answer() {
+        return new SynchronousServletOutputStreamAdapter() {
+          @Override
+          public void write( int b ) throws IOException {
+            throw new IOException( "unreachable-host" );
+          }
+        };
+      }
+    }).once();
+    EasyMock.replay(filterConfig, servletContext, outboundRequest, inboundRequest, outboundResponse);
+    Assert.assertEquals(uri1.toString(), provider.getActiveURL(serviceName));
+    DefaultHaDispatch dispatch = new DefaultHaDispatch();
+    dispatch.setHttpClient(HttpClients.createDefault());
+    dispatch.setHaProvider(provider);
+    dispatch.setServiceRole(serviceName);
+    dispatch.init();
   }
 }

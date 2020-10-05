@@ -41,12 +41,59 @@ public class HaDescriptorFactoryTest {
       assertEquals(42, serviceConfig.getMaxFailoverAttempts());
       assertEquals(50, serviceConfig.getFailoverSleep());
 
-      serviceConfig = HaDescriptorFactory.createServiceConfig("bar", "false", "3", "1000", null, null);
+      serviceConfig = HaDescriptorFactory.createServiceConfig("bar", "false", "3", "1000", null, null, null, null);
       assertNotNull(serviceConfig);
       assertFalse(serviceConfig.isEnabled());
       assertEquals("bar", serviceConfig.getServiceName());
       assertEquals(3, serviceConfig.getMaxFailoverAttempts());
       assertEquals(1000, serviceConfig.getFailoverSleep());
-
    }
+
+  @Test
+  public void testCreateServiceConfigActive() {
+    HaServiceConfig serviceConfig = HaDescriptorFactory.createServiceConfig("foo", "cookieHaEnabled=true;enabled=true;maxFailoverAttempts=42;failoverSleep=50;maxRetryAttempts=1;retrySleep=1000");
+    assertNotNull(serviceConfig);
+    assertTrue(serviceConfig.isEnabled());
+    assertEquals("foo", serviceConfig.getServiceName());
+    assertEquals(42, serviceConfig.getMaxFailoverAttempts());
+    assertEquals(50, serviceConfig.getFailoverSleep());
+    assertTrue(serviceConfig.isCookieHaEnabled());
+    assertEquals(HaServiceConfigConstants.DEFAULT_COOKIE_HA_COOKIE_NAME, serviceConfig.getCookieHaCookieName());
+
+    serviceConfig = HaDescriptorFactory.createServiceConfig("foo", "cookieHaEnabled=true;enabled=true;maxFailoverAttempts=42;failoverSleep=50;maxRetryAttempts=1;retrySleep=1000;cookieHaCookieName=abc");
+    assertNotNull(serviceConfig);
+    assertTrue(serviceConfig.isEnabled());
+    assertEquals("foo", serviceConfig.getServiceName());
+    assertEquals(42, serviceConfig.getMaxFailoverAttempts());
+    assertEquals(50, serviceConfig.getFailoverSleep());
+    assertTrue(serviceConfig.isCookieHaEnabled());
+    assertEquals("abc", serviceConfig.getCookieHaCookieName());
+
+    serviceConfig = HaDescriptorFactory.createServiceConfig( "bar", "false", "3", "1000", null, null, "true", null);
+    assertNotNull(serviceConfig);
+    assertFalse(serviceConfig.isEnabled());
+    assertEquals("bar", serviceConfig.getServiceName());
+    assertEquals(3, serviceConfig.getMaxFailoverAttempts());
+    assertEquals(1000, serviceConfig.getFailoverSleep());
+    assertTrue(serviceConfig.isCookieHaEnabled());
+    assertEquals(HaServiceConfigConstants.DEFAULT_COOKIE_HA_COOKIE_NAME, serviceConfig.getCookieHaCookieName());
+
+    serviceConfig = HaDescriptorFactory.createServiceConfig( "knox", "false", "4", "3000", null, null, null, null);
+    assertNotNull(serviceConfig);
+    assertFalse(serviceConfig.isEnabled());
+    assertEquals("knox", serviceConfig.getServiceName());
+    assertEquals(4, serviceConfig.getMaxFailoverAttempts());
+    assertEquals(3000, serviceConfig.getFailoverSleep());
+    assertFalse(serviceConfig.isCookieHaEnabled());
+    assertEquals(HaServiceConfigConstants.DEFAULT_COOKIE_HA_COOKIE_NAME, serviceConfig.getCookieHaCookieName());
+
+    serviceConfig = HaDescriptorFactory.createServiceConfig( "bar", "false", "3", "1000", null, null, "true", "abc");
+    assertNotNull(serviceConfig);
+    assertFalse(serviceConfig.isEnabled());
+    assertEquals("bar", serviceConfig.getServiceName());
+    assertEquals(3, serviceConfig.getMaxFailoverAttempts());
+    assertEquals(1000, serviceConfig.getFailoverSleep());
+    assertTrue(serviceConfig.isCookieHaEnabled());
+    assertEquals("abc", serviceConfig.getCookieHaCookieName());
+  }
 }

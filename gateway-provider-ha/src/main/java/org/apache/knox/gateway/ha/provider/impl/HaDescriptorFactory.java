@@ -36,16 +36,21 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
       String failoverSleep = configMap.get(CONFIG_PARAM_FAILOVER_SLEEP);
       String zookeeperEnsemble = configMap.get(CONFIG_PARAM_ZOOKEEPER_ENSEMBLE);
       String zookeeperNamespace = configMap.get(CONFIG_PARAM_ZOOKEEPER_NAMESPACE);
+      String cookieHaEnabled = configMap.get(CONFIG_COOKIE_HA_ENABLED);
+      String cookieHaCookieName = configMap.get(CONFIG_COOKIE_HA_COOKIE_NAME);
       return createServiceConfig(serviceName, enabledValue, maxFailoverAttempts, failoverSleep,
-          zookeeperEnsemble, zookeeperNamespace);
+          zookeeperEnsemble, zookeeperNamespace, cookieHaEnabled, cookieHaCookieName);
    }
 
    public static HaServiceConfig createServiceConfig(String serviceName, String enabledValue,
                                                      String maxFailoverAttemptsValue, String failoverSleepValue,
-                                                     String zookeeperEnsemble, String zookeeperNamespace) {
+                                                     String zookeeperEnsemble, String zookeeperNamespace,
+                                                     String cookieHaEnabledValue, String cookieHaCookieNameValue) {
       boolean enabled = DEFAULT_ENABLED;
       int maxFailoverAttempts = DEFAULT_MAX_FAILOVER_ATTEMPTS;
       int failoverSleep = DEFAULT_FAILOVER_SLEEP;
+      boolean cookieHaEnabled = DEFAULT_COOKIE_HA_ENABLED;
+      String cookieHaCookieName = DEFAULT_COOKIE_HA_COOKIE_NAME;
       if (enabledValue != null && !enabledValue.trim().isEmpty()) {
          enabled = Boolean.parseBoolean(enabledValue);
       }
@@ -55,6 +60,12 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
       if (failoverSleepValue != null && !failoverSleepValue.trim().isEmpty()) {
          failoverSleep = Integer.parseInt(failoverSleepValue);
       }
+      if (cookieHaEnabledValue != null && !cookieHaEnabledValue.trim().isEmpty()) {
+         cookieHaEnabled = Boolean.parseBoolean(cookieHaEnabledValue);
+      }
+      if (cookieHaCookieNameValue != null && !cookieHaCookieNameValue.trim().isEmpty()) {
+         cookieHaCookieName = cookieHaCookieNameValue;
+      }
 
       DefaultHaServiceConfig serviceConfig = new DefaultHaServiceConfig(serviceName);
       serviceConfig.setEnabled(enabled);
@@ -62,6 +73,8 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
       serviceConfig.setFailoverSleep(failoverSleep);
       serviceConfig.setZookeeperEnsemble(zookeeperEnsemble);
       serviceConfig.setZookeeperNamespace(zookeeperNamespace);
+      serviceConfig.setCookieHaEnabled(cookieHaEnabled);
+      serviceConfig.setCookieHaCookieName(cookieHaCookieName);
       return serviceConfig;
    }
 

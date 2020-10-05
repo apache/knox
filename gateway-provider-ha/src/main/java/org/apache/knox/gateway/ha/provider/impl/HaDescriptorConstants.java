@@ -43,4 +43,8 @@ public interface HaDescriptorConstants {
    String ZOOKEEPER_ENSEMBLE = "zookeeperEnsemble";
 
    String ZOOKEEPER_NAMESPACE = "zookeeperNamespace";
+
+   String COOKIE_HA_ENABLED = "cookieHaEnabled";
+
+   String COOKIE_HA_COOKIE_NAME = "cookieHaCookieName";
 }
