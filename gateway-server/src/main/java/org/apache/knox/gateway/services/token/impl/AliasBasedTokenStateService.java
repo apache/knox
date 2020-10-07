@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -114,7 +115,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     }
 
     if (tokenStateServiceStatistics != null) {
-      this.gatewayCredentialsFilePath = Paths.get(config.getGatewayKeystoreDir()).resolve(AliasService.NO_CLUSTER_NAME + DefaultKeystoreService.CREDENTIALS_SUFFIX);
+      this.gatewayCredentialsFilePath = Paths.get(config.getGatewayKeystoreDir()).resolve(AliasService.NO_CLUSTER_NAME + DefaultKeystoreService.CREDENTIALS_SUFFIX + config.getCredentialStoreType().toLowerCase(Locale.ROOT));
       tokenStateServiceStatistics.setGatewayCredentialsFileSize(this.gatewayCredentialsFilePath.toFile().length());
     }
   }

@@ -69,8 +69,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class DefaultKeystoreService implements KeystoreService {
   private static final String DN_TEMPLATE = "CN={0},OU=Test,O=Hadoop,L=Test,ST=Test,C=US";
-  public static final String CREDENTIALS_SUFFIX = "-credentials.jceks";
-  private static final String CREDENTIALS_STORE_TYPE = "JCEKS";
+  public static final String CREDENTIALS_SUFFIX = "-credentials.";
   private static final String CERT_GEN_MODE = "hadoop.gateway.cert.gen.mode";
   private static final String CERT_GEN_MODE_LOCALHOST = "localhost";
   private static final String CERT_GEN_MODE_HOSTNAME = "hostname";
@@ -83,6 +82,9 @@ public class DefaultKeystoreService implements KeystoreService {
 
   private MasterService masterService;
   private Path keyStoreDirPath;
+
+  private String credentialStoreType;
+  private String credentialsSuffix;
 
   public void setMasterService(MasterService ms) {
     this.masterService = ms;
@@ -107,6 +109,8 @@ public class DefaultKeystoreService implements KeystoreService {
     if (this.cache == null) {
       this.cache = Caffeine.newBuilder().expireAfterAccess(config.getKeystoreCacheEntryTimeToLiveInMinutes(), TimeUnit.MINUTES).maximumSize(config.getKeystoreCacheSizeLimit()).build();
     }
+    this.credentialStoreType = config.getCredentialStoreType();
+    this.credentialsSuffix = CREDENTIALS_SUFFIX + this.credentialStoreType.toLowerCase(Locale.ROOT);
   }
 
   @Override
@@ -213,15 +217,14 @@ public class DefaultKeystoreService implements KeystoreService {
 
   @Override
   public void createCredentialStoreForCluster(String clusterName) throws KeystoreServiceException {
-    createKeyStore(keyStoreDirPath.resolve(clusterName + CREDENTIALS_SUFFIX),
-        CREDENTIALS_STORE_TYPE, masterService.getMasterSecret());
+    createKeyStore(keyStoreDirPath.resolve(clusterName + this.credentialsSuffix), this.credentialStoreType, masterService.getMasterSecret());
   }
 
   @Override
   public boolean isCredentialStoreForClusterAvailable(String clusterName) throws KeystoreServiceException {
-    final Path keyStoreFilePath = keyStoreDirPath.resolve(clusterName + CREDENTIALS_SUFFIX);
+    final Path keyStoreFilePath = keyStoreDirPath.resolve(clusterName + this.credentialsSuffix);
     try {
-      return isKeyStoreAvailable(keyStoreFilePath, CREDENTIALS_STORE_TYPE, masterService.getMasterSecret());
+      return isKeyStoreAvailable(keyStoreFilePath, this.credentialStoreType, masterService.getMasterSecret());
     } catch (KeyStoreException | IOException e) {
       throw new KeystoreServiceException(e);
     }
@@ -281,12 +284,10 @@ public class DefaultKeystoreService implements KeystoreService {
   }
 
   @Override
-  public KeyStore getCredentialStoreForCluster(String clusterName)
-      throws KeystoreServiceException {
+  public KeyStore getCredentialStoreForCluster(String clusterName) throws KeystoreServiceException {
     // Do not fail getting the credential store if the keystore file does not exist.  The returned
     // KeyStore will be empty.  This seems like a potential bug, but is the behavior before KNOX-1812
-    return getKeystore(keyStoreDirPath.resolve(clusterName + CREDENTIALS_SUFFIX),
-        CREDENTIALS_STORE_TYPE, null, false);
+    return getKeystore(keyStoreDirPath.resolve(clusterName + this.credentialsSuffix), this.credentialStoreType, null, false);
   }
 
   @Override
@@ -311,7 +312,7 @@ public class DefaultKeystoreService implements KeystoreService {
           }
 
           // Write all the changes once
-          final Path keyStoreFilePath = keyStoreDirPath.resolve(clusterName + CREDENTIALS_SUFFIX);
+          final Path keyStoreFilePath = keyStoreDirPath.resolve(clusterName + this.credentialsSuffix);
           writeKeyStoreToFile(ks, keyStoreFilePath, masterService.getMasterSecret());
           addToCache(clusterName, credentials);
         } catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException e) {
@@ -380,7 +381,7 @@ public class DefaultKeystoreService implements KeystoreService {
           removeFromCache(clusterName, aliases);
 
           // Update the keystore file once to reflect all the alias deletions
-          final Path keyStoreFilePath = keyStoreDirPath.resolve(clusterName + CREDENTIALS_SUFFIX);
+          final Path keyStoreFilePath = keyStoreDirPath.resolve(clusterName + this.credentialsSuffix);
           writeKeyStoreToFile(ks, keyStoreFilePath, masterService.getMasterSecret());
         } catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException e) {
           LOG.failedToRemoveCredentialForCluster(clusterName, e);
@@ -488,8 +489,7 @@ public class DefaultKeystoreService implements KeystoreService {
 
   // Package private for unit test access
   // We need this to be synchronized to prevent multiple threads from using at once
-  synchronized KeyStore createKeyStore(Path keystoreFilePath, String keystoreType, char[] password)
-      throws KeystoreServiceException {
+  synchronized KeyStore createKeyStore(Path keystoreFilePath, String keystoreType, char[] password) throws KeystoreServiceException {
     if (Files.notExists(keystoreFilePath)) {
       // Ensure the parent directory exists...
       try {

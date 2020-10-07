@@ -661,6 +661,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getCredentialStoreType() {
+    return get(CREDENTIAL_STORE_TYPE, DEFAULT_CREDENTIAL_STORE_TYPE);
+  }
+
+  @Override
   public int getThreadPoolMax() {
     int i = getInt( THREAD_POOL_MAX, 254 );
     // Testing has shown that a value lower than 5 prevents Jetty from servicing request.
