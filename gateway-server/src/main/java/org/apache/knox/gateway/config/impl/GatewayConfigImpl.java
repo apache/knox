@@ -661,6 +661,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getCredentialStoreAlgorithm() {
+    return get(CREDENTIAL_STORE_ALG, DEFAULT_CREDENTIAL_STORE_ALG);
+  }
+
+  @Override
   public String getCredentialStoreType() {
     return get(CREDENTIAL_STORE_TYPE, DEFAULT_CREDENTIAL_STORE_TYPE);
   }

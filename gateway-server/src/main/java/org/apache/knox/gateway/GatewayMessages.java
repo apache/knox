@@ -187,6 +187,9 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.INFO, text = "Credential store found for the cluster: {0} - no need to create one." )
   void credentialStoreForClusterFoundNotCreating(String clusterName);
 
+  @Message(level = MessageLevel.WARN, text = "An existing credential store found for the cluster {0} with a different type of {1}")
+  void credentialStoreForClusterFoundWithDifferentType(String clusterName, String existingCredentialStoreType);
+
   @Message( level = MessageLevel.ERROR, text = "Unable to obtain the password for the gateway truststore using the alias {0}: {1}" )
   void failedToGetPasswordForGatewayTruststore(String alias, Exception e);
 

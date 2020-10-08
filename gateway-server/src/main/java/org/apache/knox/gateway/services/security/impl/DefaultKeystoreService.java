@@ -19,6 +19,8 @@ package org.apache.knox.gateway.services.security.impl;
 
 import static org.apache.knox.gateway.services.security.AliasService.NO_CLUSTER_NAME;
 
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.filefilter.PrefixFileFilter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.knox.gateway.GatewayMessages;
@@ -35,6 +37,8 @@ import org.apache.knox.gateway.util.X509CertificateUtil;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
+import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -83,6 +87,7 @@ public class DefaultKeystoreService implements KeystoreService {
   private MasterService masterService;
   private Path keyStoreDirPath;
 
+  private String credentialStoreAlgorithm;
   private String credentialStoreType;
   private String credentialsSuffix;
 
@@ -109,6 +114,8 @@ public class DefaultKeystoreService implements KeystoreService {
     if (this.cache == null) {
       this.cache = Caffeine.newBuilder().expireAfterAccess(config.getKeystoreCacheEntryTimeToLiveInMinutes(), TimeUnit.MINUTES).maximumSize(config.getKeystoreCacheSizeLimit()).build();
     }
+
+    this.credentialStoreAlgorithm = config.getCredentialStoreAlgorithm();
     this.credentialStoreType = config.getCredentialStoreType();
     this.credentialsSuffix = CREDENTIALS_SUFFIX + this.credentialStoreType.toLowerCase(Locale.ROOT);
   }
@@ -217,7 +224,20 @@ public class DefaultKeystoreService implements KeystoreService {
 
   @Override
   public void createCredentialStoreForCluster(String clusterName) throws KeystoreServiceException {
+    checkExistingCredentialStore(clusterName);
     createKeyStore(keyStoreDirPath.resolve(clusterName + this.credentialsSuffix), this.credentialStoreType, masterService.getMasterSecret());
+  }
+
+  private void checkExistingCredentialStore(String clusterName) {
+    final File[] existingClusterCredentialStoreFiles = keyStoreDirPath.toFile().listFiles((FileFilter) new PrefixFileFilter(clusterName + CREDENTIALS_SUFFIX));
+    if (existingClusterCredentialStoreFiles != null) {
+      for (File existingClusterCredentialStoreFile : existingClusterCredentialStoreFiles) {
+        String existingCredentialStoreType = FilenameUtils.getExtension(existingClusterCredentialStoreFile.getName());
+        if (!this.credentialStoreType.equals(existingCredentialStoreType)) {
+          LOG.credentialStoreForClusterFoundWithDifferentType(clusterName, existingCredentialStoreType);
+        }
+      }
+    }
   }
 
   @Override
@@ -307,7 +327,7 @@ public class DefaultKeystoreService implements KeystoreService {
         try {
           // Add all the credential keys to the keystore
           for (Map.Entry<String, String> credential : credentials.entrySet()) {
-            final Key key = new SecretKeySpec(credential.getValue().getBytes(StandardCharsets.UTF_8), "AES");
+            final Key key = new SecretKeySpec(credential.getValue().getBytes(StandardCharsets.UTF_8), this.credentialStoreAlgorithm);
             ks.setKeyEntry(credential.getKey(), key, masterService.getMasterSecret(), null);
           }
 
@@ -348,7 +368,10 @@ public class DefaultKeystoreService implements KeystoreService {
   public char[] getCredentialForCluster(String clusterName, String alias, KeyStore ks) throws KeystoreServiceException {
     try {
       char[] credential = null;
-      final Key credentialKey = ks.getKey(alias, masterService.getMasterSecret());
+      Key credentialKey = ks.getKey(alias, masterService.getMasterSecret());
+      if (credentialKey == null) {
+        credentialKey = ks.getKey(alias.toLowerCase(Locale.ROOT), masterService.getMasterSecret());
+      }
       if (credentialKey != null) {
         final String credentialString = new String(credentialKey.getEncoded(), StandardCharsets.UTF_8);
         credential = credentialString.toCharArray();
