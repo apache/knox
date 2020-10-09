@@ -29,9 +29,13 @@ public class DefaultHaServiceConfig implements HaServiceConfig, HaServiceConfigC
 
   private int failoverSleep = DEFAULT_FAILOVER_SLEEP;
 
-  private boolean isCookieHaEnabled = DEFAULT_COOKIE_HA_ENABLED;
+  private boolean isStickySessionEnabled = DEFAULT_STICKY_SESSIONS_ENABLED;
 
-  private String cookieHaCookieName = DEFAULT_COOKIE_HA_COOKIE_NAME;
+  private boolean isLoadBalancingEnabled = DEFAULT_LOAD_BALANCING_ENABLED;
+
+  private boolean isNoFallbackEnabled = DEFAULT_NO_FALLBACK_ENABLED;
+
+  private String stickySessionCookieName = DEFAULT_STICKY_SESSION_COOKIE_NAME;
 
   private String zookeeperEnsemble;
 
@@ -102,22 +106,42 @@ public class DefaultHaServiceConfig implements HaServiceConfig, HaServiceConfigC
   }
 
   @Override
-  public boolean isCookieHaEnabled() {
-    return  this.isCookieHaEnabled;
+  public boolean isStickySessionEnabled() {
+    return  this.isStickySessionEnabled;
   }
 
   @Override
-  public void setCookieHaEnabled(boolean isCookieHaEnabled) {
-    this.isCookieHaEnabled = isCookieHaEnabled;
+  public void setStickySessionEnabled(boolean stickySessionEnabled) {
+    this.isStickySessionEnabled = stickySessionEnabled;
   }
 
   @Override
-  public String getCookieHaCookieName() {
-    return this.cookieHaCookieName;
+  public String getStickySessionCookieName() {
+    return this.stickySessionCookieName;
   }
 
   @Override
-  public void setCookieHaCookieName(String cookieHaCookieName) {
-    this.cookieHaCookieName = cookieHaCookieName;
+  public void setStickySessionCookieName(String stickySessionCookieName) {
+    this.stickySessionCookieName = stickySessionCookieName;
+  }
+
+  @Override
+  public boolean isLoadBalancingEnabled() {
+    return this.isLoadBalancingEnabled;
+  }
+
+  @Override
+  public void setLoadBalancingEnabled(boolean isLoadBalancingEnabled) {
+    this.isLoadBalancingEnabled = isLoadBalancingEnabled;
+  }
+
+  @Override
+  public boolean isNoFallbackEnabled() {
+    return isNoFallbackEnabled;
+  }
+
+  @Override
+  public void setNoFallbackEnabled(boolean noFallbackEnabled) {
+    isNoFallbackEnabled = noFallbackEnabled;
   }
 }

@@ -44,7 +44,11 @@ public interface HaDescriptorConstants {
 
    String ZOOKEEPER_NAMESPACE = "zookeeperNamespace";
 
-   String COOKIE_HA_ENABLED = "cookieHaEnabled";
+   String ENABLE_LOAD_BALANCING = "enableLoadBalancing";
 
-   String COOKIE_HA_COOKIE_NAME = "cookieHaCookieName";
+   String ENABLE_STICKY_SESSIONS = "enableStickySession";
+
+   String ENABLE_NO_FALLBACK = "noFallback";
+
+   String STICKY_SESSION_COOKIE_NAME = "stickySessionCookieName";
 }

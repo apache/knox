@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -63,8 +64,10 @@ public class DefaultHaDispatch extends DefaultDispatch {
   private int maxFailoverAttempts = HaServiceConfigConstants.DEFAULT_MAX_FAILOVER_ATTEMPTS;
   private int failoverSleep = HaServiceConfigConstants.DEFAULT_FAILOVER_SLEEP;
 
-  private boolean cookieHaEnabled = HaServiceConfigConstants.DEFAULT_COOKIE_HA_ENABLED;
-  private String cookieHaCookieName = HaServiceConfigConstants.DEFAULT_COOKIE_HA_COOKIE_NAME;
+  private boolean stickySessionsEnabled = HaServiceConfigConstants.DEFAULT_STICKY_SESSIONS_ENABLED;
+  private boolean loadBalancingEnabled = HaServiceConfigConstants.DEFAULT_LOAD_BALANCING_ENABLED;
+  private boolean noFallbackEnabled = HaServiceConfigConstants.DEFAULT_NO_FALLBACK_ENABLED;
+  private String stickySessionCookieName = HaServiceConfigConstants.DEFAULT_STICKY_SESSION_COOKIE_NAME;
 
   private HaProvider haProvider;
 
@@ -76,14 +79,16 @@ public class DefaultHaDispatch extends DefaultDispatch {
       HaServiceConfig serviceConfig = haProvider.getHaDescriptor().getServiceConfig(getServiceRole());
       maxFailoverAttempts = serviceConfig.getMaxFailoverAttempts();
       failoverSleep = serviceConfig.getFailoverSleep();
-      cookieHaEnabled = serviceConfig.isCookieHaEnabled();
-      cookieHaCookieName = serviceConfig.getCookieHaCookieName();
+      stickySessionsEnabled = serviceConfig.isStickySessionEnabled();
+      loadBalancingEnabled = serviceConfig.isLoadBalancingEnabled();
+      noFallbackEnabled = serviceConfig.isNoFallbackEnabled();
+      stickySessionCookieName = serviceConfig.getStickySessionCookieName();
       setupUrlHashLookup();
     }
 
     // Suffix the cookie name by the service to make it unique
     // The cookie path is NOT unique since Knox is stripping the service name.
-    cookieHaCookieName = cookieHaCookieName + '-' + getServiceRole();
+    stickySessionCookieName = stickySessionCookieName + '-' + getServiceRole();
   }
 
   private void setupUrlHashLookup() {
@@ -104,26 +109,45 @@ public class DefaultHaDispatch extends DefaultDispatch {
   }
 
   @Override
+  protected void executeRequestWrapper(HttpUriRequest outboundRequest,
+      HttpServletRequest inboundRequest, HttpServletResponse outboundResponse)
+      throws IOException {
+    final Optional<URI> opt = setBackendfromHaCookie(outboundRequest, inboundRequest);
+    if(opt.isPresent()) {
+      ((HttpRequestBase) outboundRequest).setURI(opt.get());
+    }
+    executeRequest(outboundRequest, inboundRequest, outboundResponse);
+    /**
+     * Load balance when
+     * 1. loadbalancing is enabled and sticky sessions are off
+     * 2. sticky sessions are enabled and it is a new session (no url in cookie)
+     */
+    if ( (!opt.isPresent() && stickySessionsEnabled) || loadBalancingEnabled) {
+      haProvider.makeNextActiveURLAvailable(getServiceRole());
+    }
+  }
+
+  @Override
+  protected void outboundResponseWrapper(final HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) {
+    setKnoxHaCookie(inboundRequest, outboundResponse);
+  }
+
+  @Override
   protected void executeRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) throws IOException {
     HttpResponse inboundResponse = null;
     try {
-      setBackendfromHaCookie(outboundRequest, inboundRequest);
       inboundResponse = executeOutboundRequest(outboundRequest);
-      setKnoxHaCookie(inboundRequest, outboundResponse);
       writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
-      if (cookieHaEnabled) {
-        haProvider.makeNextActiveURLAvailable(getServiceRole());
-      }
     } catch ( IOException e ) {
       LOG.errorConnectingToServer(outboundRequest.getURI().toString(), e);
       failoverRequest(outboundRequest, inboundRequest, outboundResponse, inboundResponse, e);
     }
   }
 
-  private void setBackendfromHaCookie(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest) {
-    if (cookieHaEnabled && inboundRequest.getCookies() != null) {
+  private Optional<URI> setBackendfromHaCookie(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest) {
+    if (stickySessionsEnabled && inboundRequest.getCookies() != null) {
       for (Cookie cookie : inboundRequest.getCookies()) {
-        if (cookieHaCookieName.equals(cookie.getName())) {
+        if (stickySessionCookieName.equals(cookie.getName())) {
           String backendURLHash = cookie.getValue();
           String backendURL = hashToUrlLookup.get(backendURLHash);
           // Make sure that the url provided is actually a valid backend url
@@ -135,7 +159,7 @@ public class DefaultHaDispatch extends DefaultDispatch {
               uriBuilder.setHost(cookieUri.getHost());
               uriBuilder.setPort(cookieUri.getPort());
               URI uri = uriBuilder.build();
-              ((HttpRequestBase) outboundRequest).setURI(uri);
+              return Optional.of(uri);
             } catch (URISyntaxException ignore) {
               // The cookie was invalid so we just don't set it. Knox will pick a backend automatically
             }
@@ -143,16 +167,17 @@ public class DefaultHaDispatch extends DefaultDispatch {
         }
       }
     }
+    return Optional.empty();
   }
 
   private void setKnoxHaCookie(HttpServletRequest inboundRequest,
       HttpServletResponse outboundResponse) {
-    if (cookieHaEnabled) {
+    if (stickySessionsEnabled) {
       List<Cookie> serviceHaCookies = Collections.emptyList();
       if(inboundRequest.getCookies() != null) {
         serviceHaCookies = Arrays
             .stream(inboundRequest.getCookies())
-            .filter(cookie -> cookieHaCookieName.equals(cookie.getName()))
+            .filter(cookie -> stickySessionCookieName.equals(cookie.getName()))
             .collect(Collectors.toList());
       }
       /* if the inbound request has a valid hash then no need to set a different hash */
@@ -162,22 +187,28 @@ public class DefaultHaDispatch extends DefaultDispatch {
       } else {
         String url = haProvider.getActiveURL(getServiceRole());
         String cookieValue = urlToHashLookup.get(url);
-        Cookie cookieHaCookie = new Cookie(cookieHaCookieName, cookieValue);
-        cookieHaCookie.setPath(inboundRequest.getContextPath());
-        cookieHaCookie.setMaxAge(-1);
-        cookieHaCookie.setHttpOnly(true);
+        Cookie stickySessionCookie = new Cookie(stickySessionCookieName, cookieValue);
+        stickySessionCookie.setPath(inboundRequest.getContextPath());
+        stickySessionCookie.setMaxAge(-1);
+        stickySessionCookie.setHttpOnly(true);
         GatewayConfig config = (GatewayConfig) inboundRequest
             .getServletContext()
             .getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
         if (config != null) {
-          cookieHaCookie.setSecure(config.isSSLEnabled());
+          stickySessionCookie.setSecure(config.isSSLEnabled());
         }
-        outboundResponse.addCookie(cookieHaCookie);
+        outboundResponse.addCookie(stickySessionCookie);
       }
     }
   }
 
   protected void failoverRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse, HttpResponse inboundResponse, Exception exception) throws IOException {
+    /* check for a case where no fallback is configured */
+    if(noFallbackEnabled && stickySessionsEnabled) {
+      LOG.noFallbackError();
+      outboundResponse.sendError(HttpServletResponse.SC_BAD_GATEWAY, "Service connection error, HA failover disabled");
+      return;
+    }
     LOG.failingOverRequest(outboundRequest.getURI().toString());
     AtomicInteger counter = (AtomicInteger) inboundRequest.getAttribute(FAILOVER_COUNTER_ATTRIBUTE);
     if ( counter == null ) {
@@ -190,7 +221,7 @@ public class DefaultHaDispatch extends DefaultDispatch {
       //null out target url so that rewriters run again
       inboundRequest.setAttribute(AbstractGatewayFilter.TARGET_REQUEST_URL_ATTRIBUTE_NAME, null);
       // Make sure to remove the cookie ha cookie from the request
-      inboundRequest = new CookieHaCookieRemovedRequest(cookieHaCookieName, inboundRequest);
+      inboundRequest = new StickySessionCookieRemovedRequest(stickySessionCookieName, inboundRequest);
       URI uri = getDispatchUrl(inboundRequest);
       ((HttpRequestBase) outboundRequest).setURI(uri);
       if ( failoverSleep > 0 ) {
@@ -219,10 +250,10 @@ public class DefaultHaDispatch extends DefaultDispatch {
   /**
    * Strips out the cookies by the cookie name provided
    */
-  private static class CookieHaCookieRemovedRequest extends HttpServletRequestWrapper {
+  private static class StickySessionCookieRemovedRequest extends HttpServletRequestWrapper {
     private final Cookie[] cookies;
 
-    CookieHaCookieRemovedRequest(String cookieName, HttpServletRequest request) {
+    StickySessionCookieRemovedRequest(String cookieName, HttpServletRequest request) {
       super(request);
       this.cookies = filterCookies(cookieName, request.getCookies());
     }
