@@ -41,4 +41,20 @@ public interface HaServiceConfig {
   String getZookeeperNamespace();
 
   void setZookeeperNamespace(String zookeeperNamespace);
+
+  boolean isLoadBalancingEnabled();
+
+  void setLoadBalancingEnabled(boolean isLoadBalancingEnabled);
+
+  boolean isStickySessionEnabled();
+
+  void setStickySessionEnabled(boolean stickySessionEnabled);
+
+  String getStickySessionCookieName();
+
+  void setStickySessionCookieName(String stickySessionCookieName);
+
+  boolean isNoFallbackEnabled();
+
+  void setNoFallbackEnabled(boolean noFallbackEnabled);
 }

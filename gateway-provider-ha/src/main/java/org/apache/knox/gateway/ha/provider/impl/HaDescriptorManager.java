@@ -60,6 +60,12 @@ public class HaDescriptorManager implements HaDescriptorConstants {
                if (config.getZookeeperNamespace() != null) {
                  serviceElement.setAttribute(ZOOKEEPER_NAMESPACE, config.getZookeeperNamespace());
                }
+               serviceElement.setAttribute(ENABLE_LOAD_BALANCING, Boolean.toString(config.isLoadBalancingEnabled()));
+               serviceElement.setAttribute(ENABLE_STICKY_SESSIONS, Boolean.toString(config.isStickySessionEnabled()));
+               serviceElement.setAttribute(ENABLE_NO_FALLBACK, Boolean.toString(config.isNoFallbackEnabled()));
+               if (config.getStickySessionCookieName() != null) {
+                 serviceElement.setAttribute(STICKY_SESSION_COOKIE_NAME, config.getStickySessionCookieName());
+               }
                root.appendChild(serviceElement);
             }
          }
@@ -85,7 +91,11 @@ public class HaDescriptorManager implements HaDescriptorConstants {
                      element.getAttribute(MAX_FAILOVER_ATTEMPTS),
                      element.getAttribute(FAILOVER_SLEEP),
                      element.getAttribute(ZOOKEEPER_ENSEMBLE),
-                     element.getAttribute(ZOOKEEPER_NAMESPACE));
+                     element.getAttribute(ZOOKEEPER_NAMESPACE),
+                     element.getAttribute(ENABLE_LOAD_BALANCING),
+                     element.getAttribute(ENABLE_STICKY_SESSIONS),
+                     element.getAttribute(STICKY_SESSION_COOKIE_NAME),
+                     element.getAttribute(ENABLE_NO_FALLBACK));
                descriptor.addServiceConfig(config);
             }
          }

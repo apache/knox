@@ -41,4 +41,7 @@ public interface HaDispatchMessages {
 
   @Message(level = MessageLevel.INFO, text = "Error occurred while trying to sleep for failover : {0} {1}")
   void failoverSleepFailed(String service, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.ERROR, text = "noFallback flag is turned on for sticky session so aborting request without retrying")
+  void noFallbackError();
 }

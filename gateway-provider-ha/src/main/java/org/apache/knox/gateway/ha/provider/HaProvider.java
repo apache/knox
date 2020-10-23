@@ -64,4 +64,19 @@ public interface HaProvider {
    */
   void markFailedURL(String serviceName, String url);
 
+  /**
+   * This method puts changes the active URL to
+   * the next available URL for the service.
+   *
+   * @param serviceName the name of the service
+   */
+  void makeNextActiveURLAvailable(String serviceName);
+
+  /**
+   * This method puts gets all the currently
+   * available URLs for the service.
+   *
+   * @param serviceName the name of the service
+   */
+  List<String> getURLs(String serviceName);
 }

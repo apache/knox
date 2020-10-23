@@ -25,6 +25,7 @@ import org.apache.knox.gateway.ha.provider.URLManagerLoader;
 import org.apache.knox.gateway.ha.provider.impl.i18n.HaMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -60,10 +61,7 @@ public class DefaultHaProvider implements HaProvider {
   @Override
   public boolean isHaEnabled(String serviceName) {
     HaServiceConfig config = descriptor.getServiceConfig(serviceName);
-    if ( config != null && config.isEnabled() ) {
-      return true;
-    }
-    return false;
+    return config != null && config.isEnabled();
   }
 
   @Override
@@ -91,6 +89,25 @@ public class DefaultHaProvider implements HaProvider {
       haServices.get(serviceName).markFailed(url);
     } else {
       LOG.noServiceFound(serviceName);
+    }
+  }
+
+  @Override
+  public void makeNextActiveURLAvailable(String serviceName) {
+    if ( haServices.containsKey(serviceName) ) {
+      haServices.get(serviceName).makeNextActiveURLAvailable();
+    } else {
+      LOG.noServiceFound(serviceName);
+    }
+  }
+
+  @Override
+  public List<String> getURLs(String serviceName) {
+    if ( haServices.containsKey(serviceName) ) {
+      return haServices.get(serviceName).getURLs();
+    } else {
+      LOG.noServiceFound(serviceName);
+      return Collections.emptyList();
     }
   }
 }
