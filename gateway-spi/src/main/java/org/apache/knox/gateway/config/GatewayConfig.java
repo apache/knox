@@ -717,4 +717,11 @@ public interface GatewayConfig {
    * @return the time - in minutes - an entry should be live (i.e. must not expire) in keystore cache
    */
   long getKeystoreCacheEntryTimeToLiveInMinutes();
+
+  /**
+   * Indicates whether the embedded Jetty Server support for X-Forwarded Headers should
+   * be enabled.
+   * @return true if incoming X-Forwarded headers are enabled
+   */
+  boolean isGatewayServerIncomingXForwardedSupportEnabled();
 }

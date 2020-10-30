@@ -38,6 +38,8 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.HashSet;
@@ -220,14 +222,18 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
    * @return url to use as login url for redirect
    */
   protected String constructLoginURL(HttpServletRequest request) {
+    String providerURL = null;
     String delimiter = "?";
     if (authenticationProviderUrl == null) {
-      authenticationProviderUrl = deriveDefaultAuthenticationProviderUrl(request);
+      providerURL = deriveDefaultAuthenticationProviderUrl(request);
     }
-    if (authenticationProviderUrl.contains("?")) {
+    else {
+      providerURL = authenticationProviderUrl;
+    }
+    if (providerURL.contains("?")) {
       delimiter = "&";
     }
-    return authenticationProviderUrl + delimiter
+    return providerURL + delimiter
         + ORIGINAL_URL_QUERY_PARAM
         + request.getRequestURL().append(getOriginalQueryString(request));
   }
@@ -239,31 +245,28 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
    * @return url that is based on KnoxSSO endpoint
    */
   public String deriveDefaultAuthenticationProviderUrl(HttpServletRequest request) {
+    String providerURL = null;
     String scheme;
     String host;
     int port;
-    if (!beingProxied(request)) {
-      scheme = request.getScheme();
-      host = request.getServerName();
-      port = request.getServerPort();
-    }
-    else {
-      scheme = request.getHeader(X_FORWARDED_PROTO);
-      host = request.getHeader(X_FORWARDED_HOST);
-      port = Integer.parseInt(request.getHeader(X_FORWARDED_PORT));
-    }
-    StringBuilder sb = new StringBuilder(scheme);
-    sb.append("://").append(host);
-    if (!host.contains(":")) {
-      sb.append(':').append(port);
-    }
-    sb.append('/').append(gatewayPath).append("/knoxsso/api/v1/websso");
+    try {
+      URL url = new URL(request.getRequestURL().toString());
+      scheme = url.getProtocol();
+      host = url.getHost();
+      port = url.getPort();
 
-    return sb.toString();
-  }
+      StringBuilder sb = new StringBuilder(scheme);
+      sb.append("://").append(host);
+      if (!host.contains(":") && port != -1) {
+        sb.append(':').append(port);
+      }
+      sb.append('/').append(gatewayPath).append("/knoxsso/api/v1/websso");
+      providerURL = sb.toString();
+    } catch (MalformedURLException e) {
+      LOGGER.failedToDeriveAuthenticationProviderUrl(e);
+    }
 
-  private boolean beingProxied(HttpServletRequest request) {
-    return (request.getHeader(X_FORWARDED_HOST) != null);
+    return providerURL;
   }
 
   private String getOriginalQueryString(HttpServletRequest request) {

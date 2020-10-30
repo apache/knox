@@ -58,4 +58,7 @@ public interface JWTMessages {
 
   @Message( level = MessageLevel.INFO, text = "Path {0} is configured as unauthenticated path, letting the request {1} through" )
   void unauthenticatedPathBypass(String path, String uri);
+
+  @Message( level = MessageLevel.WARN, text = "Unable to vderive authentication provider url: {0}" )
+  void failedToDeriveAuthenticationProviderUrl(@StackTrace( level = MessageLevel.ERROR) Exception e);
 }
