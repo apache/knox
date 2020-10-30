@@ -832,7 +832,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public long getKeystoreCacheEntryTimeToLiveInMinutes() {
     return 0;
   }
-  
+
   @Override
   public boolean isGatewayServerIncomingXForwardedSupportEnabled() {
     return true;
