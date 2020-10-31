@@ -3478,7 +3478,12 @@ public class GatewayBasicFuncTest {
         .header("X-Forwarded-Proto", scheme)
         .header("X-Forwarded-Port", port)
         .header("X-Forwarded-Context", "/gateway/cluster")
-        .header("X-Forwarded-Server", Matchers.is(oneOf( gatewayHostName, gatewayAddrName ) ))
+        // Since KNOX-2467 enables Jetty's X-Forwarded handling
+        // the following is no longer true and while possibly accurate
+        // in terms of the most recent proxy hostname, it should
+        // represent the host of the X-Forwarded-Host and does not here
+        //.header("X-Forwarded-Server", Matchers.is(oneOf( gatewayHostName, gatewayAddrName ) ))
+        .header("X-Forwarded-Server", host)
         .header("X-Forwarded-For", Matchers.containsString("what, boo"))
         .pathInfo(path)
         .queryParam("user.name", username)
