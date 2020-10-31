@@ -3465,7 +3465,6 @@ public class GatewayBasicFuncTest {
 
     InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
     String gatewayHostName = gatewayAddress.getHostName();
-    String gatewayAddrName = InetAddress.getByName( gatewayHostName ).getHostAddress();
 
     //Test rewriting of body with X-Forwarded headers (using storm)
     String resourceName = "storm/topology-id.json";
