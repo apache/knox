@@ -3463,9 +3463,6 @@ public class GatewayBasicFuncTest {
     String port = "8889";
     String scheme = "https";
 
-    InetSocketAddress gatewayAddress = driver.gateway.getAddresses()[0];
-    String gatewayHostName = gatewayAddress.getHostName();
-
     //Test rewriting of body with X-Forwarded headers (using storm)
     String resourceName = "storm/topology-id.json";
     String path = "/api/v1/topology/WordCount-1-1424792039";
