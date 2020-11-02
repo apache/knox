@@ -386,6 +386,10 @@ public class GatewayServer {
           for (ConnectionFactory x : networkConnector.getConnectionFactories()) {
             if (x instanceof HttpConnectionFactory) {
               ((HttpConnectionFactory) x).getHttpConfiguration().setSendServerVersion(config.isGatewayServerHeaderEnabled());
+              if (config.isGatewayServerIncomingXForwardedSupportEnabled()) {
+                  // Add support for X-Forwarded headers
+                  ((HttpConnectionFactory) x).getHttpConfiguration().addCustomizer(new org.eclipse.jetty.server.ForwardedRequestCustomizer());
+              }
             }
           }
           if (networkConnector.getName() == null) {

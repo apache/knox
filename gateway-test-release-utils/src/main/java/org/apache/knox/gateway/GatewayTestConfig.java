@@ -833,4 +833,8 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return 0;
   }
 
+  @Override
+  public boolean isGatewayServerIncomingXForwardedSupportEnabled() {
+    return true;
+  }
 }

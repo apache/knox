@@ -266,6 +266,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES =  "knox.homepage.hidden.topologies";
   private static final Set<String> KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES_DEFAULT = new HashSet<>(Arrays.asList("admin", "manager", "knoxsso", "metadata", "homepage"));
   private static final String KNOX_HOMEPAGE_LOGOUT_ENABLED =  "knox.homepage.logout.enabled";
+  private static final String KNOX_INCOMING_XFORWARDED_ENABLED = "gateway.incoming.xforwarded.enabled";
 
   public GatewayConfigImpl() {
     init();
@@ -1192,5 +1193,10 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public long getKeystoreCacheEntryTimeToLiveInMinutes() {
     return getLong(KEYSTORE_CACHE_ENTRY_TTL, DEFAULT_KEYSTORE_CACHE_ENTRY_TTL);
+  }
+
+  @Override
+  public boolean isGatewayServerIncomingXForwardedSupportEnabled() {
+    return getBoolean(KNOX_INCOMING_XFORWARDED_ENABLED, true);
   }
 }
