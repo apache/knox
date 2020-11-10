@@ -89,6 +89,11 @@ public interface GatewayConfig {
   String DEFAULT_HTTP_CLIENT_TRUSTSTORE_TYPE = KeyStore.getDefaultType();
   String DEFAULT_HTTP_CLIENT_TRUSTSTORE_PASSWORD_ALIAS = "gateway-httpclient-truststore-password";
 
+  String CREDENTIAL_STORE_ALG = "gateway.credential.store.alg";
+  String DEFAULT_CREDENTIAL_STORE_ALG = "AES";
+  String CREDENTIAL_STORE_TYPE = "gateway.credential.store.type";
+  String DEFAULT_CREDENTIAL_STORE_TYPE = "JCEKS";
+
   String REMOTE_CONFIG_REGISTRY_TYPE = "type";
   String REMOTE_CONFIG_REGISTRY_ADDRESS = "address";
   String REMOTE_CONFIG_REGISTRY_NAMESPACE = "namespace";
@@ -233,6 +238,17 @@ public interface GatewayConfig {
    * @return an alias name
    */
   String getHttpClientTruststorePasswordAlias();
+
+  /**
+   * @return the algorithm that is used when creating a SecretKey when adding an
+   *         alias into a credential store
+   */
+  String getCredentialStoreAlgorithm();
+
+  /**
+   * @return the type of the credential store used by AliasService
+   */
+  String getCredentialStoreType();
 
   int getThreadPoolMax();
 

@@ -50,7 +50,8 @@ public class RemoteAliasServiceTest {
         .andReturn(false).anyTimes();
     String keystoreDir = testFolder.newFolder().getAbsolutePath();
     EasyMock.expect(gc.getGatewayKeystoreDir()).andReturn(keystoreDir).anyTimes();
-
+    EasyMock.expect(gc.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
+    EasyMock.expect(gc.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
     EasyMock.replay(gc);
 
     final String expectedClusterName = "sandbox";
@@ -144,6 +145,8 @@ public class RemoteAliasServiceTest {
         .andReturn(true).anyTimes();
     String keystoreDir = testFolder.newFolder().getAbsolutePath();
     EasyMock.expect(gc.getGatewayKeystoreDir()).andReturn(keystoreDir).anyTimes();
+    EasyMock.expect(gc.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
+    EasyMock.expect(gc.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
 
     EasyMock.replay(gc);
 
@@ -239,6 +242,8 @@ public class RemoteAliasServiceTest {
     GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gc.isRemoteAliasServiceEnabled()).andReturn(true).anyTimes();
     EasyMock.expect(gc.getRemoteAliasServiceConfiguration()).andReturn(remoteAliasConfigs).anyTimes();
+    EasyMock.expect(gc.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
+    EasyMock.expect(gc.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
     EasyMock.replay(gc);
 
     final String expectedClusterName = "sandbox";

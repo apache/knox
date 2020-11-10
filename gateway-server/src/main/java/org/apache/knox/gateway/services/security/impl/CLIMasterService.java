@@ -38,7 +38,7 @@ public class CLIMasterService extends CMFMasterService implements MasterService,
     boolean persisting = options.get( "persist-master").equals("true");
     String securityDir = config.getGatewaySecurityDir();
     String filename = "master";
-    setupMasterSecret(securityDir, filename, persisting);
+    setupMasterSecret(securityDir, filename, persisting, config);
   }
 
   @Override

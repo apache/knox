@@ -412,6 +412,16 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getCredentialStoreAlgorithm() {
+    return DEFAULT_CREDENTIAL_STORE_ALG;
+  }
+
+  @Override
+  public String getCredentialStoreType() {
+    return DEFAULT_CREDENTIAL_STORE_TYPE;
+  }
+
+  @Override
   public int getThreadPoolMax() {
     return 254;
   }
