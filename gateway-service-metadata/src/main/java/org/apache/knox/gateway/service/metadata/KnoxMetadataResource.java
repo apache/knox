@@ -64,6 +64,10 @@ import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.util.X509CertificateUtil;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+
+@Api(value = "metadata",  description = "RESTful API to interact with metadata.")
 @Singleton
 @Path("/api/v1/metadata")
 public class KnoxMetadataResource {
@@ -78,6 +82,7 @@ public class KnoxMetadataResource {
   @Context
   private HttpServletRequest request;
 
+  @ApiOperation(value="Get general proxy information", notes="Get general proxy information such as TLS Public Certificate, Knox Admin UI Url, etc...", response=GeneralProxyInformation.class)
   @GET
   @Produces({ APPLICATION_JSON, APPLICATION_XML })
   @Path("info")

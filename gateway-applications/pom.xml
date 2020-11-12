@@ -38,6 +38,10 @@
             <groupId>org.apache.knox</groupId>
             <artifactId>knox-homepage-ui</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-openapi-ui</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -69,6 +73,14 @@
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${project.build.outputDirectory}/applications</outputDirectory>
                                     <includes>home/**</includes>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.apache.knox</groupId>
+                                    <artifactId>gateway-openapi-ui</artifactId>
+                                    <type>jar</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.outputDirectory}/applications/home/app</outputDirectory>
+                                    <includes>swagger/**</includes>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
