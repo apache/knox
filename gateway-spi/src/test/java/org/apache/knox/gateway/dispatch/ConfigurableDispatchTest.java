@@ -17,6 +17,21 @@
  */
 package org.apache.knox.gateway.dispatch;
 
+import static org.apache.knox.gateway.dispatch.DefaultDispatch.SET_COOKIE;
+import static org.apache.knox.gateway.dispatch.DefaultDispatch.WWW_AUTHENTICATE;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+
+import java.net.URI;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
@@ -28,19 +43,6 @@ import org.apache.knox.test.mock.MockHttpServletResponse;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Test;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.net.URI;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.apache.knox.gateway.dispatch.DefaultDispatch.SET_COOKIE;
-import static org.apache.knox.gateway.dispatch.DefaultDispatch.WWW_AUTHENTICATE;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
 
 public class ConfigurableDispatchTest {
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
@@ -275,6 +277,88 @@ public class ConfigurableDispatchTest {
 
     assertThat(outboundResponse.getHeaderNames().size(), is(1));
     assertThat(outboundResponse.getHeader(SET_COOKIE), is("Secure; Max-Age=1"));
+  }
+
+  /**
+   * When exclude list is defined and set-cookie is not in the list
+   * make sure auth cookies are blocked.
+   * @throws Exception
+   */
+  @Test
+  public void testPreventSetCookieHeaderDirectivesDefault() throws Exception {
+    final Header[] headers = new Header[] {
+        new BasicHeader(SET_COOKIE, "hadoop.auth=\"u=knox&p=knox/knox.local@knox.local&t=kerberos&e=1604347441986c=\"; Path=/; Domain=knox.local; Expires=Fri, 13-Nov-2020 17:26:18 GMT; Secure; HttpOnly[\\r][\\n]")};
+    final HttpResponse inboundResponse = EasyMock.createNiceMock(HttpResponse.class);
+    EasyMock.expect(inboundResponse.getAllHeaders()).andReturn(headers).anyTimes();
+    EasyMock.replay(inboundResponse);
+
+    final ConfigurableDispatch dispatch = new ConfigurableDispatch();
+
+    final String setCookieExludeHeaders = "WWW-AUTHENTICATE";
+    dispatch.setResponseExcludeHeaders(setCookieExludeHeaders);
+
+    final HttpServletResponse outboundResponse = new MockHttpServletResponse();
+    dispatch.copyResponseHeaderFields(outboundResponse, inboundResponse);
+
+    assertThat(outboundResponse.getHeaderNames().size(), is(0));
+  }
+
+  /**
+   * When exclude list is defined and set-cookie is not in the list
+   * make sure non-auth cookies are not blocked.
+   * @throws Exception
+   */
+  @Test
+  public void testAllowSetCookieHeaderDirectivesDefault() throws Exception {
+    final Header[] headers = new Header[] {
+        new BasicHeader(SET_COOKIE, "RANGERADMINSESSIONID=5C0C1805BD3B43BA8E9FC04A63586505; Path=/; Secure; HttpOnly")};
+    final HttpResponse inboundResponse = EasyMock.createNiceMock(HttpResponse.class);
+    EasyMock.expect(inboundResponse.getAllHeaders()).andReturn(headers).anyTimes();
+    EasyMock.replay(inboundResponse);
+
+    final ConfigurableDispatch dispatch = new ConfigurableDispatch();
+
+    final String setCookieExludeHeaders = "WWW-AUTHENTICATE";
+    dispatch.setResponseExcludeHeaders(setCookieExludeHeaders);
+
+    final HttpServletResponse outboundResponse = new MockHttpServletResponse();
+    dispatch.copyResponseHeaderFields(outboundResponse, inboundResponse);
+
+    assertThat(outboundResponse.getHeaderNames().size(), is(1));
+    assertThat(outboundResponse.getHeader(SET_COOKIE), is("Secure; Path=/; RANGERADMINSESSIONID=5C0C1805BD3B43BA8E9FC04A63586505; HttpOnly"));
+  }
+
+  /**
+   * Case where auth cookie can be configured to pass through
+   *
+   * @throws Exception
+   */
+  @Test
+  public void testPassthroughSetCookieHeaderDirectivesDefault()
+      throws Exception {
+    final Header[] headers = new Header[] { new BasicHeader(SET_COOKIE,
+        "hadoop.auth=\"u=knox&p=knox/knox.local@nox.local&t=kerberos&e=1604347441986c=\"; Path=/; Domain=knox.local; Expires=Fri, 13-Nov-2020 17:26:18 GMT; Secure; HttpOnly[\\r][\\n]") };
+    final HttpResponse inboundResponse = EasyMock
+        .createNiceMock(HttpResponse.class);
+    EasyMock.expect(inboundResponse.getAllHeaders()).andReturn(headers)
+        .anyTimes();
+    EasyMock.replay(inboundResponse);
+
+    final ConfigurableDispatch dispatch = new ConfigurableDispatch();
+
+    /**
+     * NOTE: here we are defining what set-cookie attributes we
+     * want to block. We are blocking only 'Secure' attribute
+     * other attributes such as 'hadoop.auth' are free to pass
+     **/
+    final String setCookieExludeHeaders = "WWW-AUTHENTICATE, SET-COOKIE: Secure";
+    dispatch.setResponseExcludeHeaders(setCookieExludeHeaders);
+
+    final HttpServletResponse outboundResponse = new MockHttpServletResponse();
+    dispatch.copyResponseHeaderFields(outboundResponse, inboundResponse);
+
+    assertThat(outboundResponse.getHeaderNames().size(), is(1));
+    assertThat(outboundResponse.getHeader(SET_COOKIE), containsString("hadoop.auth="));
   }
 
 }

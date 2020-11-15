@@ -63,6 +63,9 @@ import java.util.stream.Collectors;
 public class DefaultDispatch extends AbstractGatewayDispatch {
   protected static final String SET_COOKIE = "SET-COOKIE";
   protected static final String WWW_AUTHENTICATE = "WWW-AUTHENTICATE";
+  /* list of cookies that should be blocked when set-cookie header is allowed */
+  protected static final Set<String> EXCLUDE_SET_COOKIES_DEFAULT = new HashSet<>(Arrays.asList("hadoop.auth", "hive.server2.auth", "impala.auth"));
+
 
   protected static final SpiGatewayMessages LOG = MessagesFactory.get(SpiGatewayMessages.class);
   protected static final SpiGatewayResources RES = ResourcesFactory.get(SpiGatewayResources.class);
@@ -330,11 +333,18 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
     excludedHeaderDirectives.put(SET_COOKIE, getOutboundResponseExcludedSetCookieHeaderDirectives());
 
     for (Header header : inboundResponse.getAllHeaders()) {
-      final String responseHeaderValue = calculateResponseHeaderValue(header, excludedHeaderDirectives);
-      if (responseHeaderValue.isEmpty()) {
-        continue;
+      boolean isBlockedAuthHeader = Arrays.stream(header.getElements()).anyMatch(h -> EXCLUDE_SET_COOKIES_DEFAULT.contains(h.getName()) && getOutboundResponseExcludedSetCookieHeaderDirectives().contains(h.getName()) );
+      /* in case auth header is blocked blocked the entire set-cookie part */
+      if(!isBlockedAuthHeader) {
+            final String responseHeaderValue = calculateResponseHeaderValue(header, excludedHeaderDirectives);
+            if (responseHeaderValue.isEmpty()) {
+                continue;
+            }
+            outboundResponse.addHeader(header.getName(), responseHeaderValue);
+            LOG.addedOutboundheader(header.getName(), responseHeaderValue);
+      } else {
+            LOG.skippedOutboundHeader(header.getName(), header.getValue());
       }
-      outboundResponse.addHeader(header.getName(), responseHeaderValue);
     }
   }
 
@@ -349,7 +359,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
           final String separator = SET_COOKIE.equalsIgnoreCase(headerNameToCheck) ? "; " : " ";
           Set<String> headerValuesToCheck = new HashSet<>(Arrays.asList(headerToCheck.getValue().trim().split("\\s+")));
           headerValuesToCheck = headerValuesToCheck.stream().map(h -> h.replaceAll(separator.trim(), "")).collect(Collectors.toSet());
-          headerValuesToCheck.removeAll(excludedHeaderValues);
+          headerValuesToCheck.removeIf(h -> excludedHeaderValues.stream().anyMatch(e -> h.contains(e)));
           return headerValuesToCheck.isEmpty() ? "" : String.join(separator, headerValuesToCheck);
         }
       }
