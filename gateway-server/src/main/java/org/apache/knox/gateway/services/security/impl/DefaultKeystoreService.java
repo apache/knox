@@ -514,11 +514,13 @@ public class DefaultKeystoreService implements KeystoreService {
   // We need this to be synchronized to prevent multiple threads from using at once
   synchronized KeyStore createKeyStore(Path keystoreFilePath, String keystoreType, char[] password) throws KeystoreServiceException {
     if (Files.notExists(keystoreFilePath)) {
-      // Ensure the parent directory exists...
-      try {
+    // Ensure the parent directory exists...
+    // This is symlink safe.
+    Path parentPath = keystoreFilePath.getParent();
+    if (!Files.isDirectory(parentPath)) {
         // This will attempt to create all missing directories.  No failures will occur if the
         // directories already exist.
-        Files.createDirectories(keystoreFilePath.getParent());
+        Files.createDirectories(parentPath);
       } catch (IOException e) {
         LOG.failedToCreateKeystore(keystoreFilePath.toString(), keystoreType, e);
         throw new KeystoreServiceException(e);
