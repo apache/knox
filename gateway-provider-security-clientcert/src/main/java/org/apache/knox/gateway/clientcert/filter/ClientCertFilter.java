@@ -25,7 +25,9 @@ import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.filter.AbstractGatewayFilter;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.util.X500PrincipalParser;
 
 import java.io.IOException;
 import java.security.PrivilegedActionException;
@@ -33,6 +35,7 @@ import java.security.PrivilegedExceptionAction;
 import java.security.cert.X509Certificate;
 
 import javax.security.auth.Subject;
+import javax.security.auth.x500.X500Principal;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -43,14 +46,25 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class ClientCertFilter implements Filter {
+  private static ClientCertMessages log = MessagesFactory.get( ClientCertMessages.class );
+  private static final String CLIENT_CERT_PRINCIPAL_ATTRIBUTE_NAME = "client.cert.principal.attribute.name";
   private static AuditService auditService = AuditServiceFactory.getAuditService();
   private static Auditor auditor = auditService.getAuditor(
       AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
       AuditConstants.KNOX_COMPONENT_NAME );
+  private String principalAttributeName;
 
   @Override
   public void init(FilterConfig filterConfig) {
-
+    principalAttributeName = filterConfig.getInitParameter(CLIENT_CERT_PRINCIPAL_ATTRIBUTE_NAME);
+    if (principalAttributeName == null) {
+      principalAttributeName = "DN";
+    }
+    else if (!"DN".equalsIgnoreCase(principalAttributeName) &&
+        !"CN".equalsIgnoreCase(principalAttributeName)) {
+      log.unknownCertificateAttribute(principalAttributeName);
+      principalAttributeName = "DN";
+    }
   }
 
   @Override
@@ -58,7 +72,7 @@ public class ClientCertFilter implements Filter {
     HttpServletRequest httpRequest = (HttpServletRequest)request;
     X509Certificate cert = extractCertificate(httpRequest);
     if (cert != null) {
-      String principal = cert.getSubjectDN().getName();
+      String principal = extractPrincipalFromCert(cert);
 
       Subject subject = new Subject();
       subject.getPrincipals().add(new PrimaryPrincipal(principal));
@@ -69,6 +83,24 @@ public class ClientCertFilter implements Filter {
     } else {
       ((HttpServletResponse)response).sendError(HttpServletResponse.SC_FORBIDDEN, "User not authenticated");
     }
+  }
+
+  private String extractPrincipalFromCert(X509Certificate cert) {
+    String p = null;
+    if ("DN".equalsIgnoreCase(principalAttributeName)) {
+      p =  cert.getSubjectDN().getName();
+    }
+    else if ("CN".equalsIgnoreCase(principalAttributeName)) {
+      X500Principal x500Principal = cert.getSubjectX500Principal();
+      X500PrincipalParser parser = new X500PrincipalParser(x500Principal);
+      p = parser.getCN();
+    }
+    else {
+      log.unknownCertificateAttribute(principalAttributeName);
+      p =  cert.getSubjectDN().getName();
+    }
+
+    return p;
   }
 
   private X509Certificate extractCertificate(HttpServletRequest req) {
