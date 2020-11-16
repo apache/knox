@@ -516,7 +516,7 @@ public class DefaultKeystoreService implements KeystoreService {
     // Ensure the parent directory exists...
     // This is symlink safe.
     Path parentPath = keystoreFilePath.getParent();
-    if (parentPath == null || !Files.isDirectory(parentPath)) {
+    if (parentPath != null && !Files.isDirectory(parentPath)) {
       try{
         // This will attempt to create all missing directories.  No failures will occur if the
         // directories already exist.
