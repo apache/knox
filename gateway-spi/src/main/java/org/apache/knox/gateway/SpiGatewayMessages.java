@@ -102,4 +102,10 @@ public interface SpiGatewayMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "Using two way SSL in {0}" )
   void usingTwoWaySsl(String serviceRole);
+
+  @Message( level = MessageLevel.DEBUG, text = "Adding outbound header {0} and value {1}" )
+  void addedOutboundheader(String header, String value);
+
+  @Message( level = MessageLevel.DEBUG, text = "Skipped adding outbound header {0} and value {1}" )
+  void skippedOutboundHeader(String header, String value);
 }
