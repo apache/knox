@@ -287,7 +287,14 @@ public class DefaultKeystoreServiceTest {
         .andReturn(null)
         .atLeastOnce();
 
-    replay(keystoreServiceAlt, masterService);
+    DefaultKeystoreService keystoreServiceSymlink = createMockBuilder(DefaultKeystoreService.class)
+        .addMockedMethod("getCredentialForCluster", String.class, String.class)
+        .createMock();
+    expect(keystoreServiceSymlink.getCredentialForCluster(eq(AliasService.NO_CLUSTER_NAME), eq(GatewayConfig.DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS)))
+        .andReturn(null)
+        .atLeastOnce();
+
+    replay(keystoreServiceAlt, keystoreServiceSymlink, masterService);
 
     Path baseDir = testFolder.newFolder().toPath();
     GatewayConfigImpl config = createGatewayConfig(baseDir);
@@ -332,13 +339,54 @@ public class DefaultKeystoreServiceTest {
 
     testSigningKeystore(keystoreServiceAlt, customFile, customKeyAlias, masterPassword);
 
+    /* *******************
+     * Test Symlink Parent
+     */
+    String symlinkFileName = "symlink_signing.jks";
+    Path symlinkSecurityDir = baseDir.resolve("security").resolve("symlink");
+    Path symlinkTarget = baseDir.resolve("symlinkTarget");
+    Path symlinkParentLink = symlinkSecurityDir.resolve("keystores");
+
+    try {
+        //Creating the real path to symlinkParentLink
+        Files.createDirectories(symlinkTarget.resolve("keystores"));
+    } catch (IOException e) {
+        fail("Unable to create symlink target directory.");
+    }
+
+    try {
+        Files.createSymbolicLink(symlinkSecurityDir, symlinkTarget);
+    } catch (IOException e) {
+        fail("Unable to create symlink while instantiating keystores.");
+    }
+
+    Path symlinkFile = symlinkParentLink.resolve(symlinkFileName);
+
+    String symlinkKeyAlias = "symlink_alias";
+
+    config.set(SIGNING_KEYSTORE_NAME, symlinkFileName);
+    config.set(SIGNING_KEY_ALIAS, symlinkKeyAlias);
+    config.set(GatewayConfigImpl.SECURITY_DIR, symlinkSecurityDir.toString());
+
+    keystoreServiceSymlink.setMasterService(masterService);
+
+    // Ensure the signing keystore exists before init-ing the keystore service
+    createKeystore(keystoreService, symlinkFile, symlinkKeyAlias, masterPassword);
+
+    keystoreServiceSymlink.init(config, Collections.emptyMap());
+
+    testSigningKeystore(keystoreServiceSymlink, symlinkFile, symlinkKeyAlias, masterPassword);
+
+
     // Verify the keystore passwords are set properly...
     assertTrue(Files.exists(defaultFile));
     assertNotNull(keystoreService.loadKeyStore(defaultFile, "JKS", masterPassword));
     assertTrue(Files.exists(customFile));
     assertNotNull(keystoreService.loadKeyStore(customFile, "JKS", masterPassword));
+    assertTrue(Files.exists(symlinkFile));
+    assertNotNull(keystoreService.loadKeyStore(symlinkFile, "JKS", masterPassword));
 
-    verify(keystoreServiceAlt, masterService);
+    verify(keystoreServiceAlt, keystoreServiceSymlink, masterService);
   }
 
   @Test
