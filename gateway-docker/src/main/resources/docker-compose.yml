@@ -16,13 +16,13 @@
 version: '3'
 services:
   ldap:
-    image: apache/knox-demo-ldap:1.5.0-SNAPSHOT
+    image: apache/knox-demo-ldap:1.5.0
     ports:
     - "33389:33389"
 
   gateway:
     depends_on:
       - ldap
-    image: apache/knox-gateway:1.5.0-SNAPSHOT
+    image: apache/knox-gateway:1.5.0
     ports:
     - "8443:8443"
