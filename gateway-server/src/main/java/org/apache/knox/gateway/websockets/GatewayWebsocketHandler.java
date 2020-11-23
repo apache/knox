@@ -179,6 +179,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
    */
   protected synchronized String getMatchedBackendURL(final URI requestURI) {
     final String path = requestURI.getRawPath();
+    final String query = requestURI.getRawQuery();
 
     final ServiceRegistry serviceRegistryService = services
         .getService(ServiceType.SERVICE_REGISTRY_SERVICE);
@@ -235,7 +236,12 @@ public class GatewayWebsocketHandler extends WebSocketHandler
         backend.append(serviceUrl.getPort()).append('/');
         backend.append(serviceUrl.getPath());
       }
+      /* in case we have query params */
+      if(!StringUtils.isBlank(query)) {
+        backend.append('?').append(query);
+      }
       backendURL = backend.toString();
+
     } catch (MalformedURLException e){
         LOG.badUrlError(e);
         throw new RuntimeException(e.toString());
