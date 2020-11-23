@@ -113,7 +113,11 @@ public class WebsocketEchoTestBase {
   }
 
   public static void startServers(String type) throws Exception {
-    startWebsocketServer(type);
+    startServers(type, "ws");
+  }
+
+  public static void startServers(final String type, final String context) throws Exception {
+    startWebsocketServer(type, context);
     startGatewayServer();
   }
 
@@ -137,7 +141,7 @@ public class WebsocketEchoTestBase {
    * Start Mock Websocket server that acts as backend.
    * @throws Exception exception on websocket server start
    */
-  private static void startWebsocketServer(String type) throws Exception {
+  private static void startWebsocketServer(final String type, final String contextPath) throws Exception {
 
     backendServer = new Server();
     ServerConnector connector = new ServerConnector(backendServer);
@@ -163,9 +167,9 @@ public class WebsocketEchoTestBase {
     }
     int port = connector.getLocalPort();
     if ("http".equals(type)) {
-      backendServerUri = new URI(String.format(Locale.ROOT, "http://%s:%d/ws", host, port));
+      backendServerUri = new URI(String.format(Locale.ROOT, "http://%s:%d/%s", host, port, contextPath));
     } else {
-      backendServerUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/ws", host, port));
+      backendServerUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/%s", host, port, contextPath));
     }
   }
 
