@@ -139,6 +139,11 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
   }
 
   protected void encodeUnwiseCharacters(StringBuffer str) {
+    int space = str.indexOf(" ");
+    while (space > -1) {
+      str.replace(space, space+1, "%20");
+      space = str.indexOf(" ", space+1);
+    }
     int pipe = str.indexOf("|");
     while (pipe > -1) {
       str.replace(pipe, pipe+1, "%7C");
