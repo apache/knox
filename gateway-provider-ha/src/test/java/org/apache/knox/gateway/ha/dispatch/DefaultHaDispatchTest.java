@@ -287,4 +287,71 @@ public class DefaultHaDispatchTest {
     dispatch.setServiceRole(serviceName);
     dispatch.init();
   }
+
+  /**
+   * test a case where a service might want to mark a host failed without retrying
+   * so the next request that comes goes to the other HA host.
+   * This can be achieved by using maxFailoverAttempsValue=0
+   * @throws Exception
+   */
+  @Test
+  public void testMarkedFailedWithoutRetry() throws Exception {
+    String serviceName = "OOZIE";
+    HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "0", "1000", null, null, null, null, null, null));
+    HaProvider provider = new DefaultHaProvider(descriptor);
+    URI uri1 = new URI( "http://unreachable-host.invalid" );
+    URI uri2 = new URI( "http://reachable-host.invalid" );
+    ArrayList<String> urlList = new ArrayList<>();
+    urlList.add(uri1.toString());
+    urlList.add(uri2.toString());
+    provider.addHaService(serviceName, urlList);
+    FilterConfig filterConfig = EasyMock.createNiceMock(FilterConfig.class);
+    ServletContext servletContext = EasyMock.createNiceMock(ServletContext.class);
+
+    EasyMock.expect(filterConfig.getServletContext()).andReturn(servletContext).anyTimes();
+    EasyMock.expect(servletContext.getAttribute(HaServletContextListener.PROVIDER_ATTRIBUTE_NAME)).andReturn(provider).anyTimes();
+
+    BasicHttpParams params = new BasicHttpParams();
+
+    HttpUriRequest outboundRequest = EasyMock.createNiceMock(HttpRequestBase.class);
+    EasyMock.expect(outboundRequest.getMethod()).andReturn( "GET" ).anyTimes();
+    EasyMock.expect(outboundRequest.getURI()).andReturn( uri1  ).anyTimes();
+    EasyMock.expect(outboundRequest.getParams()).andReturn( params ).anyTimes();
+
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getRequestURL()).andReturn( new StringBuffer(uri2.toString()) ).once();
+    EasyMock.expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(0)).once();
+    EasyMock.expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(1)).once();
+
+    HttpServletResponse outboundResponse = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(outboundResponse.getOutputStream()).andAnswer( new IAnswer<SynchronousServletOutputStreamAdapter>() {
+      @Override
+      public SynchronousServletOutputStreamAdapter answer() {
+        return new SynchronousServletOutputStreamAdapter() {
+          @Override
+          public void write( int b ) throws IOException {
+            throw new IOException( "unreachable-host.invalid" );
+          }
+        };
+      }
+    }).once();
+    EasyMock.replay(filterConfig, servletContext, outboundRequest, inboundRequest, outboundResponse);
+    Assert.assertEquals(uri1.toString(), provider.getActiveURL(serviceName));
+    DefaultHaDispatch dispatch = new DefaultHaDispatch();
+    HttpClientBuilder builder = HttpClientBuilder.create();
+    CloseableHttpClient client = builder.build();
+    dispatch.setHttpClient(client);
+    dispatch.setHaProvider(provider);
+    dispatch.setServiceRole(serviceName);
+    dispatch.init();
+    try {
+      dispatch.executeRequest(outboundRequest, inboundRequest, outboundResponse);
+    } catch (IOException e) {
+      //this is expected after the failover limit is reached
+    }
+    /* make sure active url list got updated */
+    Assert.assertEquals(uri2.toString(), provider.getActiveURL(serviceName));
+  }
+
 }
