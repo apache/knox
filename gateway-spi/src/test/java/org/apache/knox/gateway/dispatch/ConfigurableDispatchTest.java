@@ -325,8 +325,32 @@ public class ConfigurableDispatchTest {
     dispatch.copyResponseHeaderFields(outboundResponse, inboundResponse);
 
     assertThat(outboundResponse.getHeaderNames().size(), is(1));
-    assertThat(outboundResponse.getHeader(SET_COOKIE), is("Secure; Path=/; RANGERADMINSESSIONID=5C0C1805BD3B43BA8E9FC04A63586505; HttpOnly"));
+    assertThat(outboundResponse.getHeader(SET_COOKIE), is("Secure; Path=/; HttpOnly; RANGERADMINSESSIONID=5C0C1805BD3B43BA8E9FC04A63586505"));
   }
+
+    /**
+     * Test a case where SET-COOKIE header does not use spaces
+     * @throws Exception
+     */
+    @Test
+    public void testAllowSetCookieHeaderNoSpaces() throws Exception {
+        final Header[] headers = new Header[] {
+                new BasicHeader(SET_COOKIE, "SESSION=e69d3d08-7452-45cb-90bb-9cdde3fa1342;Path=/;HttpOnly")};
+        final HttpResponse inboundResponse = EasyMock.createNiceMock(HttpResponse.class);
+        EasyMock.expect(inboundResponse.getAllHeaders()).andReturn(headers).anyTimes();
+        EasyMock.replay(inboundResponse);
+
+        final ConfigurableDispatch dispatch = new ConfigurableDispatch();
+
+        final String setCookieExludeHeaders = "WWW-AUTHENTICATE";
+        dispatch.setResponseExcludeHeaders(setCookieExludeHeaders);
+
+        final HttpServletResponse outboundResponse = new MockHttpServletResponse();
+        dispatch.copyResponseHeaderFields(outboundResponse, inboundResponse);
+
+        assertThat(outboundResponse.getHeaderNames().size(), is(1));
+        assertThat(outboundResponse.getHeader(SET_COOKIE), is("SESSION=e69d3d08-7452-45cb-90bb-9cdde3fa1342; Path=/; HttpOnly"));
+    }
 
   /**
    * Case where auth cookie can be configured to pass through
