@@ -205,7 +205,7 @@
         <hibernate.version>5.4.24.Final</hibernate.version>
         <hibernate-jpa.version>1.0.2.Final</hibernate-jpa.version>
         <httpclient.version>4.5.13</httpclient.version>
-        <httpcore.version>4.4.13</httpcore.version>
+        <httpcore.version>4.4.14</httpcore.version>
         <jackson.version>2.11.2</jackson.version>
         <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
         <jansi.version>1.18</jansi.version>
