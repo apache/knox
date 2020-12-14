@@ -257,7 +257,7 @@
         <slf4j.version>1.7.30</slf4j.version>
         <spotbugs.version>4.1.2</spotbugs.version>
         <spotbugs-maven-plugin.version>4.0.4</spotbugs-maven-plugin.version>
-        <spring.version>5.2.8.RELEASE</spring.version>
+        <spring.version>5.3.2</spring.version>
         <spring-vault.version>2.2.2.RELEASE</spring-vault.version>
         <stax-ex.version>1.8.3</stax-ex.version>
         <stax2-api.version>4.2</stax2-api.version>
