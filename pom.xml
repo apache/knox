@@ -195,12 +195,15 @@
         <findsecbugs-plugin.version>1.10.1</findsecbugs-plugin.version>
         <forbiddenapis.version>3.1</forbiddenapis.version>
         <frontend-maven-plugin.version>1.10.0</frontend-maven-plugin.version>
+        <glassfish-jaxb.version>2.3.2</glassfish-jaxb.version>
         <gson.version>2.8.6</gson.version>
         <groovy.version>3.0.5</groovy.version>
         <guava.version>28.2-jre</guava.version>
         <hadoop.version>3.2.1</hadoop.version>
         <hamcrest.version>2.2</hamcrest.version>
         <hamcrest-json.version>0.2</hamcrest-json.version>
+        <hibernate.version>5.4.24.Final</hibernate.version>
+        <hibernate-jpa.version>1.0.2.Final</hibernate-jpa.version>
         <httpclient.version>4.5.12</httpclient.version>
         <httpcore.version>4.4.13</httpcore.version>
         <jackson.version>2.11.2</jackson.version>
@@ -213,11 +216,12 @@
         <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
         <javax.ws.rs-api.version>2.0</javax.ws.rs-api.version>
         <javax.websocket-api.version>1.1</javax.websocket-api.version>
-        <jaxb.version>2.3.0</jaxb.version>
         <jaxws-ri.version>2.3.3</jaxws-ri.version>
         <jakarta.xml.bind.version>2.3.2</jakarta.xml.bind.version>
         <jakarta.activation.version>1.2.2</jakarta.activation.version>
         <java-support.version>7.5.1</java-support.version>
+        <javassist.version>3.27.0-GA</javassist.version>
+        <jboss-logging.version>3.4.1.Final</jboss-logging.version>
         <jee-pac4j.version>5.0.0</jee-pac4j.version>
         <jericho-html.version>3.4</jericho-html.version>
         <jersey.version>2.6</jersey.version>
@@ -264,6 +268,7 @@
         <woodstox-core.version>6.1.1</woodstox-core.version>
         <xmlsec.version>2.1.5</xmlsec.version>
         <xmltool.version>3.3</xmltool.version>
+        <xml-jaxb.version>2.3.0</xml-jaxb.version>
         <xml-matchers.version>0.10</xml-matchers.version>
         <zookeeper.version>3.5.7</zookeeper.version>
     </properties>
@@ -1312,19 +1317,24 @@
             <dependency>
                 <groupId>javax.xml.bind</groupId>
                 <artifactId>jaxb-api</artifactId>
-                <version>${jaxb.version}</version>
+                <version>${xml-jaxb.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.sun.xml.bind</groupId>
                 <artifactId>jaxb-core</artifactId>
-                <version>${jaxb.version}</version>
+                <version>${xml-jaxb.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.sun.xml.bind</groupId>
                 <artifactId>jaxb-impl</artifactId>
-                <version>${jaxb.version}</version>
+                <version>${xml-jaxb.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>jaxb-runtime</artifactId>
+                <version>${glassfish-jaxb.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.glassfish.jaxb</groupId>
                 <artifactId>txw2</artifactId>
@@ -2111,39 +2121,81 @@
 
             <!-- harmonize pac4j-saml dependencies -->
             <dependency>
-	        <groupId>org.opensaml</groupId>
-		<artifactId>opensaml-core</artifactId>
-		<version>${opensaml.version}</version>
-            </dependency>
-	    <dependency>
-	        <groupId>org.opensaml</groupId>
-		<artifactId>opensaml-security-api</artifactId>
-		<version>${opensaml.version}</version>
-            </dependency>
-	    <dependency>
-	        <groupId>org.opensaml</groupId>
-		<artifactId>opensaml-xmlsec-api</artifactId>
-		<version>${opensaml.version}</version>
+                <groupId>org.opensaml</groupId>
+                <artifactId>opensaml-core</artifactId>
+                <version>${opensaml.version}</version>
             </dependency>
             <dependency>
-	        <groupId>org.opensaml</groupId>
-		<artifactId>opensaml-xmlsec-impl</artifactId>
-		<version>${opensaml.version}</version>
+                <groupId>org.opensaml</groupId>
+                <artifactId>opensaml-security-api</artifactId>
+                <version>${opensaml.version}</version>
             </dependency>
-	    <dependency>
-	        <groupId>org.apache.santuario</groupId>
-		<artifactId>xmlsec</artifactId>
-		<version>${xmlsec.version}</version>
+
+            <!--
+            opensaml v3 doesn't have updated hibernate dependency.
+            We can't upgrade to opensaml v4 since it is JDK 11+ only
+            even though it has the hibernate dependency upgrade.
+            This upgrades the hibernate dependency upgrade based on
+            the opensaml v4 commit.
+            - https://issues.shibboleth.net/jira/browse/OSJ-275
+            - https://git.shibboleth.net/view/?p=java-opensaml.git;a=commit;h=3bb2348f3b3ada3a2f27a15ea555f8bb76884082
+            -->
+            <dependency>
+                <groupId>org.opensaml</groupId>
+                <artifactId>opensaml-storage-impl</artifactId>
+                <version>${opensaml.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.hibernate</groupId>
+                        <artifactId>hibernate-entitymanager</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
-	    <dependency>
-	        <groupId>org.cryptacular</groupId>
-		<artifactId>cryptacular</artifactId>
-		<version>${cryptacular.version}</version>
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-core</artifactId>
+                <version>${hibernate.version}</version>
             </dependency>
-	    <dependency>
-	        <groupId>net.shibboleth.utilities</groupId>
-		<artifactId>java-support</artifactId>
-		<version>${java-support.version}</version>
+            <dependency>
+                <groupId>org.hibernate.javax.persistence</groupId>
+                <artifactId>hibernate-jpa-2.1-api</artifactId>
+                <version>${hibernate-jpa.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.javassist</groupId>
+                <artifactId>javassist</artifactId>
+                <version>${javassist.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.logging</groupId>
+                <artifactId>jboss-logging</artifactId>
+                <version>${jboss-logging.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.opensaml</groupId>
+                <artifactId>opensaml-xmlsec-api</artifactId>
+                <version>${opensaml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.opensaml</groupId>
+                <artifactId>opensaml-xmlsec-impl</artifactId>
+                <version>${opensaml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.santuario</groupId>
+                <artifactId>xmlsec</artifactId>
+                <version>${xmlsec.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.cryptacular</groupId>
+                <artifactId>cryptacular</artifactId>
+                <version>${cryptacular.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.shibboleth.utilities</groupId>
+                <artifactId>java-support</artifactId>
+                <version>${java-support.version}</version>
             </dependency>
 
             <dependency>
