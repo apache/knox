@@ -136,6 +136,12 @@
             <artifactId>spring-core</artifactId>
         </dependency>
 
+        <!-- see comment in root pom about why this is needed -->
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-core</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-test-utils</artifactId>
