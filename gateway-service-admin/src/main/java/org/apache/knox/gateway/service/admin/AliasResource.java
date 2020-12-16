@@ -18,6 +18,9 @@
 package org.apache.knox.gateway.service.admin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.swagger.annotations.Api;
+
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -50,6 +53,7 @@ import static javax.ws.rs.core.Response.status;
  * Rest API for Knox Alias Service
  * @since 1.3.0
  */
+@Api(value = "alias",  description = "The Knox Admin API to interact with aliases.")
 @Path("/api/v1")
 public class AliasResource {
   private static final String ALIASES_API_PATH = "aliases";

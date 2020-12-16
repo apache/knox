@@ -20,16 +20,23 @@ package org.apache.knox.gateway.service.metadata;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
 @XmlRootElement(name = "generalProxyInfo")
+@ApiModel(value = "generalProxyInfo", description = "General proxy information holder")
 public class GeneralProxyInformation {
 
   @XmlElement
+  @ApiModelProperty(value = "The version of this Knox Gateway")
   private String version;
 
   @XmlElement
+  @ApiModelProperty(value = "The Admin UI URL")
   private String adminUiUrl;
 
   @XmlElement
+  @ApiModelProperty(value = "The URL referencing the Admin API book in Knox's user guide")
   private String adminApiBookUrl;
 
   public String getVersion() {

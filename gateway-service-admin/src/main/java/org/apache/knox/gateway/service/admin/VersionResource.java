@@ -27,6 +27,9 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.apache.knox.gateway.services.ServiceType;
+
+import io.swagger.annotations.Api;
+
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServerInfoService;
 
@@ -34,6 +37,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.Response.ok;
 
+@Api(value = "version",  description = "The Knox Admin API to interact with versioning information.")
 @Path( "/api/v1" )
 public class VersionResource {
   @Context

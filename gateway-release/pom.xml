@@ -451,6 +451,10 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-openapi-ui</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-service-session</artifactId>
         </dependency>
     </dependencies>

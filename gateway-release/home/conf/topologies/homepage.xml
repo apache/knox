@@ -46,6 +46,14 @@
             <name>strict.transport.enabled</name>
             <value>false</value>
          </param>
+         <param>
+            <name>xframe.options.enabled</name>
+            <value>true</value>
+         </param>
+         <param>
+            <name>xframe.options</name>
+            <value>SAMEORIGIN</value>
+         </param>
       </provider>
       <provider>
          <role>federation</role>

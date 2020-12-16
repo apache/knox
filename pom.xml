@@ -143,6 +143,7 @@
         <module>gateway-service-metadata</module>
         <module>gateway-service-session</module>
         <module>knox-homepage-ui</module>
+        <module>gateway-openapi-ui</module>
     </modules>
 
     <properties>
@@ -261,6 +262,8 @@
         <spring-vault.version>2.2.3.RELEASE</spring-vault.version>
         <stax-ex.version>1.8.3</stax-ex.version>
         <stax2-api.version>4.2</stax2-api.version>
+        <swagger-annotations.version>1.6.2</swagger-annotations.version>
+        <swagger-maven-plugin.version>3.1.7</swagger-maven-plugin.version>
         <taglibs-standard.version>1.2.5</taglibs-standard.version>
         <testcontainers.version>1.15.1</testcontainers.version>
         <txw2.version>2.4.0-b180830.0438</txw2.version>
@@ -1208,7 +1211,11 @@
                 <artifactId>knox-homepage-ui</artifactId>
                 <version>${project.version}</version>
             </dependency>
-
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-openapi-ui</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.glassfish.jersey.containers</groupId>
                 <artifactId>jersey-container-servlet-core</artifactId>
@@ -2028,6 +2035,11 @@
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-jvm</artifactId>
                 <version>${metrics.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger</groupId>
+                <artifactId>swagger-annotations</artifactId>
+                <version>${swagger-annotations.version}</version>
             </dependency>
 
             <!-- pac4j Dependencies -->
