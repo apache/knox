@@ -80,4 +80,14 @@ limitations under the License.
     <Class name="org.apache.knox.gateway.performance.test.PerformanceTestConfiguration" />
     <Bug pattern="PATH_TRAVERSAL_IN" />
   </Match>
+
+  <Match>
+    <Class name="org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationContext" />
+    <Bug pattern="OBJECT_DESERIALIZATION" />
+  </Match>
+
+  <Match>
+    <Class name="org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationService" />
+    <Bug pattern="OBJECT_DESERIALIZATION" />
+  </Match>
 </FindBugsFilter>
