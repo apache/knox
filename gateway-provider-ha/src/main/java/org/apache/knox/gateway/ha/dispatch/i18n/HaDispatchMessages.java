@@ -30,7 +30,7 @@ public interface HaDispatchMessages {
   @Message(level = MessageLevel.INFO, text = "Could not connect to server: {0} {1}")
   void errorConnectingToServer(String uri, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
-  @Message(level = MessageLevel.INFO, text = "Failing over request to a different server: {0}")
+  @Message(level = MessageLevel.INFO, text = "Failing over request to a different server from: {0}")
   void failingOverRequest(String uri);
 
   @Message(level = MessageLevel.INFO, text = "Failed to connect to: {0}")

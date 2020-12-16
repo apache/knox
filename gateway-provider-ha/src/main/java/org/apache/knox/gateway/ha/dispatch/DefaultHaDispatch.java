@@ -108,6 +108,14 @@ public class DefaultHaDispatch extends DefaultDispatch {
     this.haProvider = haProvider;
   }
 
+  public int getMaxFailoverAttempts() {
+    return maxFailoverAttempts;
+  }
+
+  public int getFailoverSleep() {
+    return failoverSleep;
+  }
+
   @Override
   protected void executeRequestWrapper(HttpUriRequest outboundRequest,
       HttpServletRequest inboundRequest, HttpServletResponse outboundResponse)
