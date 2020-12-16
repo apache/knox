@@ -257,7 +257,7 @@
         <shrinkwrap.descriptors.version>2.0.0</shrinkwrap.descriptors.version>
         <slf4j.version>1.7.30</slf4j.version>
         <spotbugs.version>4.1.2</spotbugs.version>
-        <spotbugs-maven-plugin.version>4.0.4</spotbugs-maven-plugin.version>
+        <spotbugs-maven-plugin.version>4.1.4</spotbugs-maven-plugin.version>
         <spring.version>5.3.2</spring.version>
         <spring-vault.version>2.2.3.RELEASE</spring-vault.version>
         <stax-ex.version>1.8.3</stax-ex.version>
