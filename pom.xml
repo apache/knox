@@ -249,7 +249,7 @@
         <nodejs.version>v12.18.2</nodejs.version>
         <okhttp.version>2.7.5</okhttp.version>
         <opensaml.version>3.4.5</opensaml.version>
-        <pac4j.version>4.0.3</pac4j.version>
+        <pac4j.version>4.3.0</pac4j.version>
         <protobuf.version>3.14.0</protobuf.version>
         <rest-assured.version>4.3.3</rest-assured.version>
         <shiro.version>1.7.0</shiro.version>
