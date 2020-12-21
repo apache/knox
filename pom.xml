@@ -183,7 +183,7 @@
         <commons-text.version>1.9</commons-text.version>
         <cors-filter.version>2.9.1</cors-filter.version>
         <cryptacular.version>1.2.4</cryptacular.version>
-        <curator.version>4.3.0</curator.version>
+        <curator.version>5.1.0</curator.version>
         <dependency-check-maven.version>6.0.3</dependency-check-maven.version>
         <derby.db.version>10.14.2.0</derby.db.version> <!-- 10.15.1.3 requires Java 9 -->
         <dockerfile-maven-plugin.version>1.4.13</dockerfile-maven-plugin.version>
@@ -273,7 +273,7 @@
         <xmltool.version>3.3</xmltool.version>
         <xml-jaxb.version>2.3.0</xml-jaxb.version>
         <xml-matchers.version>0.10</xml-matchers.version>
-        <zookeeper.version>3.5.7</zookeeper.version>
+        <zookeeper.version>3.6.2</zookeeper.version>
     </properties>
 
     <profiles>
