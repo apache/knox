@@ -196,7 +196,7 @@
         <findsecbugs-plugin.version>1.11.0</findsecbugs-plugin.version>
         <forbiddenapis.version>3.1</forbiddenapis.version>
         <frontend-maven-plugin.version>1.11.0</frontend-maven-plugin.version>
-        <glassfish-jaxb.version>2.3.2</glassfish-jaxb.version>
+        <glassfish-jaxb.version>2.3.3</glassfish-jaxb.version>
         <gson.version>2.8.6</gson.version>
         <groovy.version>3.0.7</groovy.version>
         <guava.version>28.2-jre</guava.version>
