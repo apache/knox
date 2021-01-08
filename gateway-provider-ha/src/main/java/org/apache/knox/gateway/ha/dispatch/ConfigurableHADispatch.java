@@ -114,9 +114,9 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
   protected void executeRequestWrapper(HttpUriRequest outboundRequest,
           HttpServletRequest inboundRequest, HttpServletResponse outboundResponse)
           throws IOException {
-      final Optional<URI> opt = setBackendfromHaCookie(outboundRequest, inboundRequest);
-      if(opt.isPresent()) {
-          ((HttpRequestBase) outboundRequest).setURI(opt.get());
+      final Optional<URI> backendURI = setBackendfromHaCookie(outboundRequest, inboundRequest);
+      if(backendURI.isPresent()) {
+          ((HttpRequestBase) outboundRequest).setURI(backendURI.get());
       }
       executeRequest(outboundRequest, inboundRequest, outboundResponse);
       /**
@@ -124,7 +124,7 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
        * 1. loadbalancing is enabled and sticky sessions are off
        * 2. sticky sessions are enabled and it is a new session (no url in cookie)
        */
-      if ( (!opt.isPresent() && stickySessionsEnabled) || loadBalancingEnabled) {
+      if ( (!backendURI.isPresent() && stickySessionsEnabled) || loadBalancingEnabled) {
           haProvider.makeNextActiveURLAvailable(getServiceRole());
       }
   }

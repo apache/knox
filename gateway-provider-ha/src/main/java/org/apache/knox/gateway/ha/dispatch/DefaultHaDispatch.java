@@ -21,6 +21,7 @@ package org.apache.knox.gateway.ha.dispatch;
  * Moving forward we should be using ConfigurableHADispatch
  * This class is here just to ensure backwards compatibility.
  */
+@Deprecated
 public class DefaultHaDispatch extends ConfigurableHADispatch {
 
 }
