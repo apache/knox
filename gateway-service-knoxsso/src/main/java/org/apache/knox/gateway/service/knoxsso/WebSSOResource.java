@@ -54,6 +54,7 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.util.CookieUtils;
 import org.apache.knox.gateway.util.RegExUtils;
@@ -98,7 +99,7 @@ public class WebSSOResource {
   private String domainSuffix;
   private List<String> targetAudiences = new ArrayList<>();
   private boolean enableSession;
-  private String signatureAlgorithm = "RS256";
+  private String signatureAlgorithm;
   private List<String> ssoExpectedparams = new ArrayList<>();
   private String clusterName;
 
@@ -112,7 +113,7 @@ public class WebSSOResource {
   ServletContext context;
 
   @PostConstruct
-  public void init() {
+  public void init() throws AliasServiceException {
     clusterName = String.valueOf(context.getAttribute(GATEWAY_CLUSTER_ATTRIBUTE));
 
     handleCookieSetup();
@@ -120,15 +121,19 @@ public class WebSSOResource {
     String enableSessionStr = context.getInitParameter(SSO_ENABLE_SESSION_PARAM);
     this.enableSession = Boolean.parseBoolean(enableSessionStr);
 
-    String sigAlg = context.getInitParameter(SSO_COOKIE_TOKEN_SIG_ALG);
-    if (sigAlg != null) {
-      signatureAlgorithm = sigAlg;
-    }
+    setSignatureAlogrithm();
 
     final String expectedParams = context.getInitParameter(SSO_EXPECTED_PARAM);
     if (expectedParams != null) {
       ssoExpectedparams = Arrays.asList(expectedParams.split(","));
     }
+  }
+
+  private void setSignatureAlogrithm() throws AliasServiceException {
+    final String configuredSigAlg = context.getInitParameter(SSO_COOKIE_TOKEN_SIG_ALG);
+    final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    final GatewayServices services = (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    signatureAlgorithm = TokenUtils.getSignatureAlgorithm(configuredSigAlg, (AliasService) services.getService(ServiceType.ALIAS_SERVICE), config.getSigningKeystoreName());
   }
 
   private void handleCookieSetup() {
@@ -243,7 +248,7 @@ public class WebSSOResource {
     }
 
     AliasService as = services.getService(ServiceType.ALIAS_SERVICE);
-    JWTokenAuthority ts = services.getService(ServiceType.TOKEN_SERVICE);
+    JWTokenAuthority tokenAuthority = services.getService(ServiceType.TOKEN_SERVICE);
     Principal p = request.getUserPrincipal();
 
     try {
@@ -255,8 +260,7 @@ public class WebSSOResource {
         signingKeystorePassphrase = as.getPasswordFromAliasForCluster(clusterName, signingKeystorePassphraseAlias);
       }
 
-      JWT token = ts.issueToken(p, targetAudiences, signatureAlgorithm, getExpiry(),
-          signingKeystoreName,  signingKeystoreAlias, signingKeystorePassphrase);
+      JWT token = tokenAuthority.issueToken(p, targetAudiences, signatureAlgorithm, getExpiry(), signingKeystoreName,  signingKeystoreAlias, signingKeystorePassphrase);
 
       // Coverity CID 1327959
       if( token != null ) {

@@ -146,7 +146,7 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
     };
     JWT token;
     try {
-      token = authority.issueToken(p, serviceName, "RS256", expires);
+      token = authority.issueToken(p, serviceName, signatureAlgorithm, expires);
       // Coverity CID 1327961
       if( token != null ) {
         accessToken = token.toString();

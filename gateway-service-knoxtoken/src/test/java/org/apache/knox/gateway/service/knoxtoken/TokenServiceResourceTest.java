@@ -23,11 +23,14 @@ import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
@@ -79,6 +82,11 @@ public class TokenServiceResourceTest {
   private static RSAPublicKey publicKey;
   private static RSAPrivateKey privateKey;
 
+  private ServletContext context;
+  private HttpServletRequest request;
+  private JWTokenAuthority authority;
+  private TestTokenStateService tss;
+
   private enum TokenLifecycleOperation {
     Renew,
     Revoke
@@ -94,9 +102,62 @@ public class TokenServiceResourceTest {
     privateKey = (RSAPrivateKey) KPair.getPrivate();
   }
 
-  @Test
-  public void testTokenService() {
-    Assert.assertTrue(true);
+  private void configureCommonExpectations(Map<String, String> contextExpectations) throws Exception {
+    configureCommonExpectations(contextExpectations, null, null);
+  }
+
+  private void configureCommonExpectations(Map<String, String> contextExpectations, String expectedSubjectDN) throws Exception {
+    configureCommonExpectations(contextExpectations, expectedSubjectDN, null);
+  }
+
+  private void configureCommonExpectations(Map<String, String> contextExpectations, Boolean serverManagedTssEnabled) throws Exception {
+    configureCommonExpectations(contextExpectations, null, serverManagedTssEnabled);
+  }
+
+  private void configureCommonExpectations(Map<String, String> contextExpectations, String expectedSubjectDN, Boolean serverManagedTssEnabled) throws Exception {
+    context = EasyMock.createNiceMock(ServletContext.class);
+    contextExpectations.forEach((key, value) -> EasyMock.expect(context.getInitParameter(key)).andReturn(value).anyTimes());
+    request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services).anyTimes();
+
+    GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(config).anyTimes();
+    EasyMock.expect(config.getSigningKeystoreName()).andReturn(null).anyTimes();
+    if (serverManagedTssEnabled != null) {
+      if (serverManagedTssEnabled) {
+        EasyMock.expect(config.isServerManagedTokenStateEnabled()).andReturn(true).anyTimes();
+      }
+    }
+    tss = new TestTokenStateService();
+    EasyMock.expect(services.getService(ServiceType.TOKEN_STATE_SERVICE)).andReturn(tss).anyTimes();
+
+    AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TokenUtils.SIGNING_HMAC_SECRET_ALIAS)).andReturn(null).anyTimes();
+
+    authority = new TestJWTokenAuthority(publicKey, privateKey);
+    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority).anyTimes();
+
+    if (StringUtils.isNotBlank(expectedSubjectDN)) {
+      X509Certificate trustedCertMock = EasyMock.createMock(X509Certificate.class);
+      EasyMock.expect(trustedCertMock.getSubjectDN()).andReturn(new PrimaryPrincipal(expectedSubjectDN)).anyTimes();
+      ArrayList<X509Certificate> certArrayList = new ArrayList<>();
+      certArrayList.add(trustedCertMock);
+      X509Certificate[] certs = {};
+      EasyMock.expect(request.getAttribute("javax.servlet.request.X509Certificate")).andReturn(certArrayList.toArray(certs)).anyTimes();
+      EasyMock.replay(trustedCertMock);
+    }
+    else {
+      EasyMock.expect(request.getAttribute("javax.servlet.request.X509Certificate")).andReturn(null).anyTimes();
+    }
+
+    EasyMock.replay(principal, services, context, request, aliasService, config);
   }
 
   @Test
@@ -118,27 +179,12 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testGetToken() throws Exception {
-
-    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
-    EasyMock.expect(context.getAttribute("org.apache.knox.gateway.gateway.cluster")).andReturn("test").anyTimes();
-
-    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
-    Principal principal = EasyMock.createNiceMock(Principal.class);
-    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
-    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
-
-    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
-    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
-
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
-
-    EasyMock.replay(principal, services, context, request);
+    configureCommonExpectations(Collections.singletonMap("org.apache.knox.gateway.gateway.cluster", "test"));
 
     TokenResource tr = new TokenResource();
     tr.context = context;
     tr.request = request;
+    tr.init();
 
     // Issue a token
     Response retResponse = tr.doGet();
@@ -164,26 +210,12 @@ public class TokenServiceResourceTest {
   @Test
   public void testConcurrentGetToken() throws Exception {
 
-    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
-    EasyMock.expect(context.getAttribute("org.apache.knox.gateway.gateway.cluster")).andReturn("test").anyTimes();
-
-    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
-    Principal principal = EasyMock.createNiceMock(Principal.class);
-    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
-    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
-
-    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
-    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services).anyTimes();
-
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority).anyTimes();
-
-    EasyMock.replay(principal, services, context, request);
+    configureCommonExpectations(Collections.singletonMap("org.apache.knox.gateway.gateway.cluster", "test"));
 
     final TokenResource tr = new TokenResource();
     tr.context = context;
     tr.request = request;
+    tr.init();
 
     // Request two tokens concurrently
     Callable<Response> task = tr::doGet;
@@ -212,26 +244,9 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testAudiences() throws Exception {
-
-    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
-    EasyMock.expect(context.getInitParameter("knox.token.audiences")).andReturn("recipient1,recipient2");
-    EasyMock.expect(context.getInitParameter("knox.token.ttl")).andReturn(null);
-    EasyMock.expect(context.getInitParameter("knox.token.target.url")).andReturn(null);
-    EasyMock.expect(context.getInitParameter("knox.token.client.data")).andReturn(null);
-
-    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
-    Principal principal = EasyMock.createNiceMock(Principal.class);
-    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
-    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
-
-    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
-    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
-
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
-
-    EasyMock.replay(principal, services, context, request);
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.audiences", "recipient1,recipient2");
+    configureCommonExpectations(contextExpectations);
 
     TokenResource tr = new TokenResource();
     tr.request = request;
@@ -264,26 +279,9 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testAudiencesWhitespace() throws Exception {
-
-    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
-    EasyMock.expect(context.getInitParameter("knox.token.audiences")).andReturn(" recipient1, recipient2 ");
-    EasyMock.expect(context.getInitParameter("knox.token.ttl")).andReturn(null);
-    EasyMock.expect(context.getInitParameter("knox.token.target.url")).andReturn(null);
-    EasyMock.expect(context.getInitParameter("knox.token.client.data")).andReturn(null);
-
-    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
-    Principal principal = EasyMock.createNiceMock(Principal.class);
-    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
-    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
-
-    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
-    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
-
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
-
-    EasyMock.replay(principal, services, context, request);
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.audiences", " recipient1,recipient2 ");
+    configureCommonExpectations(contextExpectations);
 
     TokenResource tr = new TokenResource();
     tr.request = request;
@@ -316,31 +314,10 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testValidClientCert() throws Exception {
-
-    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
-    EasyMock.expect(context.getInitParameter("knox.token.client.cert.required")).andReturn("true");
-    EasyMock.expect(context.getInitParameter("knox.token.allowed.principals")).andReturn("CN=localhost, OU=Test, O=Hadoop, L=Test, ST=Test, C=US");
-
-    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
-    X509Certificate trustedCertMock = EasyMock.createMock(X509Certificate.class);
-    EasyMock.expect(trustedCertMock.getSubjectDN()).andReturn(new PrimaryPrincipal("CN=localhost,OU=Test, O=Hadoop, L=Test, ST=Test, C=US")).anyTimes();
-    ArrayList<X509Certificate> certArrayList = new ArrayList<>();
-    certArrayList.add(trustedCertMock);
-    X509Certificate[] certs = {};
-    EasyMock.expect(request.getAttribute("javax.servlet.request.X509Certificate")).andReturn(certArrayList.toArray(certs)).anyTimes();
-
-    Principal principal = EasyMock.createNiceMock(Principal.class);
-    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
-    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
-
-    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
-    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
-
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
-
-    EasyMock.replay(principal, services, context, request, trustedCertMock);
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.client.cert.required", "true");
+    contextExpectations.put("knox.token.allowed.principals", "CN=localhost, OU=Test, O=Hadoop, L=Test, ST=Test, C=US");
+    configureCommonExpectations(contextExpectations, "CN=localhost,OU=Test, O=Hadoop, L=Test, ST=Test, C=US");
 
     TokenResource tr = new TokenResource();
     tr.request = request;
@@ -367,31 +344,10 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testValidClientCertWrongUser() throws Exception {
-
-    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
-    EasyMock.expect(context.getInitParameter("knox.token.client.cert.required")).andReturn("true");
-    EasyMock.expect(context.getInitParameter("knox.token.allowed.principals")).andReturn("CN=remotehost, OU=Test, O=Hadoop, L=Test, ST=Test, C=US");
-
-    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
-    X509Certificate trustedCertMock = EasyMock.createMock(X509Certificate.class);
-    EasyMock.expect(trustedCertMock.getSubjectDN()).andReturn(new PrimaryPrincipal("CN=localhost, OU=Test, O=Hadoop, L=Test, ST=Test, C=US")).anyTimes();
-    ArrayList<X509Certificate> certArrayList = new ArrayList<>();
-    certArrayList.add(trustedCertMock);
-    X509Certificate[] certs = {};
-    EasyMock.expect(request.getAttribute("javax.servlet.request.X509Certificate")).andReturn(certArrayList.toArray(certs)).anyTimes();
-
-    Principal principal = EasyMock.createNiceMock(Principal.class);
-    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
-    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
-
-    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
-    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
-
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
-
-    EasyMock.replay(principal, services, context, request, trustedCertMock);
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.client.cert.required", "true");
+    contextExpectations.put("knox.token.allowed.principals", "CN=remotehost, OU=Test, O=Hadoop, L=Test, ST=Test, C=US");
+    configureCommonExpectations(contextExpectations, "CN=localhost,OU=Test, O=Hadoop, L=Test, ST=Test, C=US");
 
     TokenResource tr = new TokenResource();
     tr.request = request;
@@ -406,26 +362,10 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testMissingClientCert() throws Exception {
-
-    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
-    EasyMock.expect(context.getInitParameter("knox.token.client.cert.required")).andReturn("true");
-    EasyMock.expect(context.getInitParameter("knox.token.allowed.principals")).andReturn("CN=remotehost, OU=Test, O=Hadoop, L=Test, ST=Test, C=US");
-
-    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
-    EasyMock.expect(request.getAttribute("javax.servlet.request.X509Certificate")).andReturn(null).anyTimes();
-
-    Principal principal = EasyMock.createNiceMock(Principal.class);
-    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
-    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
-
-    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
-    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
-
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
-
-    EasyMock.replay(principal, services, context, request);
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.client.cert.required", "true");
+    contextExpectations.put("knox.token.allowed.principals", "CN=remotehost, OU=Test, O=Hadoop, L=Test, ST=Test, C=US");
+    configureCommonExpectations(contextExpectations, (String) null);
 
     TokenResource tr = new TokenResource();
     tr.request = request;
@@ -440,26 +380,9 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testSignatureAlgorithm() throws Exception {
-    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
-    EasyMock.expect(context.getInitParameter("knox.token.audiences")).andReturn("recipient1,recipient2");
-    EasyMock.expect(context.getInitParameter("knox.token.ttl")).andReturn(null);
-    EasyMock.expect(context.getInitParameter("knox.token.target.url")).andReturn(null);
-    EasyMock.expect(context.getInitParameter("knox.token.client.data")).andReturn(null);
-    EasyMock.expect(context.getInitParameter("knox.token.sigalg")).andReturn("RS512");
-
-    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
-    Principal principal = EasyMock.createNiceMock(Principal.class);
-    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
-    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
-
-    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
-    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
-
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
-
-    EasyMock.replay(principal, services, context, request);
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.sigalg", "RS512");
+    configureCommonExpectations(contextExpectations);
 
     TokenResource tr = new TokenResource();
     tr.request = request;
@@ -487,25 +410,9 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testDefaultTTL() throws Exception {
-    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
-    EasyMock.expect(context.getInitParameter("knox.token.audiences")).andReturn("recipient1,recipient2");
-    EasyMock.expect(context.getInitParameter("knox.token.ttl")).andReturn(null);
-    EasyMock.expect(context.getInitParameter("knox.token.target.url")).andReturn(null);
-    EasyMock.expect(context.getInitParameter("knox.token.client.data")).andReturn(null);
-
-    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
-    Principal principal = EasyMock.createNiceMock(Principal.class);
-    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
-    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
-
-    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
-    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
-
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
-
-    EasyMock.replay(principal, services, context, request);
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.ttl", null);
+    configureCommonExpectations(contextExpectations);
 
     TokenResource tr = new TokenResource();
     tr.request = request;
@@ -537,25 +444,9 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testCustomTTL() throws Exception {
-    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
-    EasyMock.expect(context.getInitParameter("knox.token.audiences")).andReturn("recipient1,recipient2");
-    EasyMock.expect(context.getInitParameter("knox.token.ttl")).andReturn("60000");
-    EasyMock.expect(context.getInitParameter("knox.token.target.url")).andReturn(null);
-    EasyMock.expect(context.getInitParameter("knox.token.client.data")).andReturn(null);
-
-    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
-    Principal principal = EasyMock.createNiceMock(Principal.class);
-    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
-    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
-
-    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
-    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
-
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
-
-    EasyMock.replay(principal, services, context, request);
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.ttl", "60000");
+    configureCommonExpectations(contextExpectations);
 
     TokenResource tr = new TokenResource();
     tr.request = request;
@@ -588,25 +479,9 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testNegativeTTL() throws Exception {
-    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
-    EasyMock.expect(context.getInitParameter("knox.token.audiences")).andReturn("recipient1,recipient2");
-    EasyMock.expect(context.getInitParameter("knox.token.ttl")).andReturn("-60000");
-    EasyMock.expect(context.getInitParameter("knox.token.target.url")).andReturn(null);
-    EasyMock.expect(context.getInitParameter("knox.token.client.data")).andReturn(null);
-
-    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
-    Principal principal = EasyMock.createNiceMock(Principal.class);
-    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
-    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
-
-    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
-    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
-
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
-
-    EasyMock.replay(principal, services, context, request);
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.ttl", "-60000");
+    configureCommonExpectations(contextExpectations);
 
     TokenResource tr = new TokenResource();
     tr.request = request;
@@ -638,25 +513,9 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testOverflowTTL() throws Exception {
-    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
-    EasyMock.expect(context.getInitParameter("knox.token.audiences")).andReturn("recipient1,recipient2");
-    EasyMock.expect(context.getInitParameter("knox.token.ttl")).andReturn(String.valueOf(Long.MAX_VALUE));
-    EasyMock.expect(context.getInitParameter("knox.token.target.url")).andReturn(null);
-    EasyMock.expect(context.getInitParameter("knox.token.client.data")).andReturn(null);
-
-    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
-    Principal principal = EasyMock.createNiceMock(Principal.class);
-    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
-    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
-
-    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
-    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
-
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority);
-
-    EasyMock.replay(principal, services, context, request);
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.ttl", String.valueOf(Long.MAX_VALUE));
+    configureCommonExpectations(contextExpectations);
 
     TokenResource tr = new TokenResource();
     tr.request = request;
@@ -1034,47 +893,19 @@ public class TokenServiceResourceTest {
                                                                          final Long                    maxTokenLifetime,
                                                                          final Subject                 caller) throws Exception {
 
-    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
-    EasyMock.expect(context.getInitParameter("knox.token.audiences")).andReturn("recipient1,recipient2");
-    EasyMock.expect(context.getInitParameter("knox.token.ttl")).andReturn(String.valueOf(Long.MAX_VALUE));
-    EasyMock.expect(context.getInitParameter("knox.token.target.url")).andReturn(null);
-    EasyMock.expect(context.getInitParameter("knox.token.client.data")).andReturn(null);
-    // Configure the service-level params
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.audiences", "recipient1,recipient2");
+    contextExpectations.put("knox.token.ttl", String.valueOf(Long.MAX_VALUE));
     if (serviceLevelConfig != null) {
-      EasyMock.expect(context.getInitParameter("knox.token.exp.server-managed"))
-              .andReturn(String.valueOf(serviceLevelConfig));
+      contextExpectations.put("knox.token.exp.server-managed", String.valueOf(serviceLevelConfig));
       if (maxTokenLifetime != null) {
-        EasyMock.expect(context.getInitParameter("knox.token.exp.renew-interval"))
-                .andReturn(String.valueOf(maxTokenLifetime / 2));
-        EasyMock.expect(context.getInitParameter("knox.token.exp.max-lifetime")).andReturn(maxTokenLifetime.toString());
+        contextExpectations.put("knox.token.exp.renew-interval", String.valueOf(maxTokenLifetime / 2));
+        contextExpectations.put("knox.token.exp.max-lifetime", maxTokenLifetime.toString());
       }
     }
-    EasyMock.expect(context.getInitParameter("knox.token.renewer.whitelist")).andReturn(renewers);
+    contextExpectations.put("knox.token.renewer.whitelist", renewers);
 
-    // Configure the gateway-level properties
-    GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
-    if (gatewayLevelConfig != null) {
-      EasyMock.expect(gatewayConfig.isServerManagedTokenStateEnabled()).andReturn(gatewayLevelConfig).anyTimes();
-    }
-    EasyMock.replay(gatewayConfig);
-    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).anyTimes();
-
-    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
-    Principal principal = EasyMock.createNiceMock(Principal.class);
-    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
-    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
-
-    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
-    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services).anyTimes();
-
-    JWTokenAuthority authority = new TestJWTokenAuthority(publicKey, privateKey);
-    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority).anyTimes();
-
-    TestTokenStateService tss = new TestTokenStateService();
-    EasyMock.expect(services.getService(ServiceType.TOKEN_STATE_SERVICE)).andReturn(tss).anyTimes();
-
-    EasyMock.replay(principal, services, context, request);
+    configureCommonExpectations(contextExpectations, gatewayLevelConfig);
 
     TokenResource tr = new TokenResource();
     tr.request = request;

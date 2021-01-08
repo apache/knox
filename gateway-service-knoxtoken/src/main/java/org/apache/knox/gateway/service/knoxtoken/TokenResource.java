@@ -46,6 +46,8 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
@@ -92,7 +94,7 @@ public class TokenResource {
   private Map<String, Object> tokenClientDataMap;
   private List<String> allowedDNs = new ArrayList<>();
   private boolean clientCertRequired;
-  private String signatureAlgorithm = "RS256";
+  private String signatureAlgorithm;
   private String endpointPublicCert;
 
   // Optional token store service
@@ -111,7 +113,7 @@ public class TokenResource {
   ServletContext context;
 
   @PostConstruct
-  public void init() {
+  public void init() throws AliasServiceException {
 
     String audiences = context.getInitParameter(TOKEN_AUDIENCES_PARAM);
     if (audiences != null) {
@@ -154,10 +156,7 @@ public class TokenResource {
       addClientDataToMap(tokenClientData, tokenClientDataMap);
     }
 
-    String sigAlg = context.getInitParameter(TOKEN_SIG_ALG);
-    if (sigAlg != null) {
-      signatureAlgorithm = sigAlg;
-    }
+    setSignatureAlogrithm();
 
     String targetEndpointPublicCert = context.getInitParameter(TARGET_ENDPOINT_PULIC_CERT_PEM);
     if (targetEndpointPublicCert != null) {
@@ -200,6 +199,13 @@ public class TokenResource {
         log.noRenewersConfigured(topologyName);
       }
     }
+  }
+
+  private void setSignatureAlogrithm() throws AliasServiceException {
+    final String configuredSigAlg = context.getInitParameter(TOKEN_SIG_ALG);
+    final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    final GatewayServices services = (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    signatureAlgorithm = TokenUtils.getSignatureAlgorithm(configuredSigAlg, (AliasService) services.getService(ServiceType.ALIAS_SERVICE), config.getSigningKeystoreName());
   }
 
   private boolean isServerManagedTokenStateEnabled() {
