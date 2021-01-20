@@ -30,6 +30,9 @@ public class SolrServiceModelGenerator extends AbstractServiceModelGenerator {
   public static final String SERVICE_TYPE = "SOLR";
   public static final String ROLE_TYPE    = "SOLR_SERVER";
 
+  static final String DISCOVERY_SERVICE_NAME         = "discovery-service-name";
+  static final String DISCOVERY_SERVICE_DISPLAY_NAME = "discovery-service-display-name";
+
   static final String USE_SSL    = "solr_use_ssl";
   static final String HTTP_PORT  = "solr_http_port";
   static final String HTTPS_PORT = "solr_https_port";
@@ -76,6 +79,10 @@ public class SolrServiceModelGenerator extends AbstractServiceModelGenerator {
     model.addServiceProperty(USE_SSL, sslEnabled);
     model.addRoleProperty(getRoleType(), HTTP_PORT, getRoleConfigValue(roleConfig, HTTP_PORT));
     model.addRoleProperty(getRoleType(), HTTPS_PORT, getRoleConfigValue(roleConfig, HTTPS_PORT));
+
+    // Add some service details for qualifying the discovery process for this service
+    model.addQualifyingServiceParam(DISCOVERY_SERVICE_NAME, service.getName());
+    model.addQualifyingServiceParam(DISCOVERY_SERVICE_DISPLAY_NAME, service.getDisplayName());
 
     return model;
   }

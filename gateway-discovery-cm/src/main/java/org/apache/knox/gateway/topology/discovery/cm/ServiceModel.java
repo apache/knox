@@ -37,6 +37,9 @@ public class ServiceModel {
   private final String roleType;
   private final String serviceUrl;
 
+  // Metadata for the model object, which is not directly from the service or role configuration
+  private final Map<String, String> qualifyingServiceParams = new ConcurrentHashMap<>();
+
   // The service configuration properties used to created the model
   private final Map<String, String> serviceConfigProperties = new ConcurrentHashMap<>();
 
@@ -62,12 +65,30 @@ public class ServiceModel {
     this.serviceUrl  = serviceUrl;
   }
 
+  public void addQualifyingServiceParam(final String name, final String value) {
+    qualifyingServiceParams.put(name, (value != null ? value : NULL_VALUE));
+  }
+
   public void addServiceProperty(final String name, final String value) {
     serviceConfigProperties.put(name, (value != null ? value : NULL_VALUE));
   }
 
   public void addRoleProperty(final String role, final String name, final String value) {
     roleConfigProperties.computeIfAbsent(role, m -> new HashMap<>()).put(name, (value != null ? value : NULL_VALUE));
+  }
+
+  /**
+   * @return The metadata properties associated with the model, which can be used to qualify service discovery.
+   */
+  public Map<String, String> getQualifyingServiceParams() {
+    return qualifyingServiceParams;
+  }
+
+  /**
+   * @return The value of the metadata property associated with the model, which can be used to qualify service discovery.
+   */
+  public String getQualifyingServiceParam(final String name) {
+    return qualifyingServiceParams.get(name);
   }
 
   /**

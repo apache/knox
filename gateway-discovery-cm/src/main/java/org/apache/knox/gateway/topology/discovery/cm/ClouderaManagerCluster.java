@@ -45,21 +45,35 @@ public class ClouderaManagerCluster implements ServiceDiscovery.Cluster {
 
   @Override
   public List<String> getServiceURLs(String serviceName) {
+    return getServiceURLs(serviceName, null);
+  }
+
+  @Override
+  public List<String> getServiceURLs(String serviceName, Map<String, String> serviceParams) {
     List<String> urls = new ArrayList<>();
+
     if (serviceModels.containsKey(serviceName)) {
       Map<String, List<ServiceModel>> roleModels = new HashMap<>();
       for (ServiceModel model : serviceModels.get(serviceName)) {
-        roleModels.computeIfAbsent(model.getRoleType(), l -> new ArrayList<>()).add(model);
+
+        // Check for discovery qualifier attributes of the service model
+        boolean isMatchingModel = true;
+        if (serviceParams != null) {
+          for (Map.Entry<String, String> serviceParam : serviceParams.entrySet()) {
+            if (!serviceParam.getValue().equals(model.getQualifyingServiceParam(serviceParam.getKey()))) {
+              isMatchingModel = false;
+            }
+          }
+        }
+
+        if (isMatchingModel) {
+          roleModels.computeIfAbsent(model.getRoleType(), l -> new ArrayList<>()).add(model);
+        }
       }
 
       urls.addAll((ServiceURLCollectors.getCollector(serviceName)).collect(roleModels));
     }
     return urls;
-  }
-
-  @Override
-  public List<String> getServiceURLs(String serviceName, Map<String, String> serviceParams) {
-    return getServiceURLs(serviceName); // TODO: PJZ: Support things like HDFS nameservice params for providing the correct URL(s)?
   }
 
   @Override

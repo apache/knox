@@ -94,13 +94,16 @@ public abstract class AbstractServiceModelGeneratorTest extends AbstractCMDiscov
 
   protected void validateServiceModel(ServiceModel        candidate,
                                       Map<String, String> serviceConfig,
-                                      Map<String, String> roleConfig) {
+                                      Map<String, String> roleConfig,
+                                      boolean             validateCounts) {
 
     assertNotNull(candidate);
 
     // Validate the service configuration
     Map<String, String> modelServiceProps = candidate.getServiceProperties();
-    assertEquals(serviceConfig.size(), modelServiceProps.size());
+    if (validateCounts) {
+      assertEquals(serviceConfig.size(), modelServiceProps.size());
+    }
     for (Map.Entry<String, String> serviceProp : serviceConfig.entrySet()) {
       assertTrue(modelServiceProps.containsKey(serviceProp.getKey()));
       assertEquals(serviceConfig.get(serviceProp.getKey()), modelServiceProps.get(serviceProp.getKey()));
@@ -108,11 +111,19 @@ public abstract class AbstractServiceModelGeneratorTest extends AbstractCMDiscov
 
     // Validate the role configuration
     Map<String, String> modelRoleProperties = candidate.getRoleProperties().get(getRoleType());
-    assertEquals(roleConfig.size(), modelRoleProperties.size());
+    if (validateCounts) {
+      assertEquals(roleConfig.size(), modelRoleProperties.size());
+    }
     for (Map.Entry<String, String> roleProp : roleConfig.entrySet()) {
       assertTrue(modelRoleProperties.containsKey(roleProp.getKey()));
       assertEquals(roleConfig.get(roleProp.getKey()), modelRoleProperties.get(roleProp.getKey()));
     }
+  }
+
+  protected void validateServiceModel(ServiceModel        candidate,
+                                      Map<String, String> serviceConfig,
+                                      Map<String, String> roleConfig) {
+    validateServiceModel(candidate, serviceConfig, roleConfig, true);
   }
 
 }

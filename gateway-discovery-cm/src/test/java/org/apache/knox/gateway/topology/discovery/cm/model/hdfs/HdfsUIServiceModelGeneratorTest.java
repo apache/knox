@@ -33,7 +33,7 @@ public class HdfsUIServiceModelGeneratorTest extends AbstractServiceModelGenerat
     roleConfig.put(HdfsUIServiceModelGenerator.HTTP_PORT, "12345");
     roleConfig.put(HdfsUIServiceModelGenerator.HTTPS_PORT, "54321");
 
-    validateServiceModel(createServiceModel(serviceConfig, roleConfig), serviceConfig, roleConfig);
+    validateServiceModel(createServiceModel(serviceConfig, roleConfig), serviceConfig, roleConfig, false);
   }
 
   @Override

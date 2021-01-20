@@ -16,12 +16,15 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm.model.solr;
 
+import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.AbstractServiceModelGeneratorTest;
 import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
 
 public class SolrServiceModelGeneratorTest extends AbstractServiceModelGeneratorTest {
 
@@ -33,7 +36,18 @@ public class SolrServiceModelGeneratorTest extends AbstractServiceModelGenerator
     roleConfig.put(SolrServiceModelGenerator.HTTP_PORT, "2468");
     roleConfig.put(SolrServiceModelGenerator.HTTPS_PORT, "1357");
 
-    validateServiceModel(createServiceModel(serviceConfig, roleConfig), serviceConfig, roleConfig);
+    ServiceModel generated = createServiceModel(serviceConfig, roleConfig);
+    validateServiceModel(generated, serviceConfig, roleConfig);
+
+    // Validate model metadata properties
+    Map<String, String> modelProps = generated.getQualifyingServiceParams();
+    assertEquals("Expected two service model properties", 2, modelProps.size());
+    assertEquals("Expected " + SolrServiceModelGenerator.DISCOVERY_SERVICE_NAME + " model property.",
+            getServiceType() + "-1",
+            modelProps.get(SolrServiceModelGenerator.DISCOVERY_SERVICE_NAME));
+    assertEquals("Expected " + SolrServiceModelGenerator.DISCOVERY_SERVICE_DISPLAY_NAME + " model property.",
+            "null",
+            modelProps.get(SolrServiceModelGenerator.DISCOVERY_SERVICE_DISPLAY_NAME));
   }
 
   @Override

@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm.model.hdfs;
 
+import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.AbstractServiceModelGeneratorTest;
 import org.junit.Test;
@@ -23,6 +24,8 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
 
 public class NameNodeServiceModelGeneratorTest extends AbstractServiceModelGeneratorTest {
 
@@ -34,7 +37,15 @@ public class NameNodeServiceModelGeneratorTest extends AbstractServiceModelGener
     roleConfig.put(NameNodeServiceModelGenerator.NN_NAMESERVICE, "myService");
     roleConfig.put(NameNodeServiceModelGenerator.NN_PORT, "12345");
 
-    validateServiceModel(createServiceModel(serviceConfig, roleConfig), serviceConfig, roleConfig);
+    ServiceModel generated = createServiceModel(serviceConfig, roleConfig);
+    validateServiceModel(generated, serviceConfig, roleConfig);
+
+    // Validate model metadata properties
+    Map<String, String> modelProps = generated.getQualifyingServiceParams();
+    assertEquals("Expected one service model properties", 1, modelProps.size());
+    assertEquals("Expected " + NameNodeServiceModelGenerator.DISCOVERY_NAMESERVICE + " model property.",
+                 roleConfig.get(NameNodeServiceModelGenerator.NN_NAMESERVICE),
+                 modelProps.get(NameNodeServiceModelGenerator.DISCOVERY_NAMESERVICE));
   }
 
   @Test
