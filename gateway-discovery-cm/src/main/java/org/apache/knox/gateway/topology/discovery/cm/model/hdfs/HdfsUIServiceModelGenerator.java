@@ -24,6 +24,7 @@ import com.cloudera.api.swagger.model.ApiServiceConfig;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
 
 import java.util.Locale;
+import java.util.Map;
 
 public class HdfsUIServiceModelGenerator extends NameNodeServiceModelGenerator {
   public static final String SERVICE = "HDFSUI";
@@ -65,7 +66,29 @@ public class HdfsUIServiceModelGenerator extends NameNodeServiceModelGenerator {
     model.addRoleProperty(role.getType(), HTTPS_PORT, getRoleConfigValue(roleConfig, HTTPS_PORT));
     model.addRoleProperty(role.getType(), HTTP_PORT, getRoleConfigValue(roleConfig, HTTP_PORT));
 
+    ServiceModel parent = super.generateService(service, serviceConfig, role, roleConfig);
+    addParentModelMetadata(model, parent);
+
     return model;
+  }
+
+  protected void addParentModelMetadata(final ServiceModel model, final ServiceModel parent) {
+    // Add parent model properties
+    for (Map.Entry<String, String> parentProp : parent.getQualifyingServiceParams().entrySet()) {
+      model.addQualifyingServiceParam(parentProp.getKey(), parentProp.getValue());
+    }
+
+    // Add parent service properties
+    for (Map.Entry<String, String> parentProp : parent.getServiceProperties().entrySet()) {
+      model.addServiceProperty(parentProp.getKey(), parentProp.getValue());
+    }
+
+    // Add parent role properties
+    for (Map.Entry<String, Map<String, String>> parentProps : parent.getRoleProperties().entrySet()) {
+      for (Map.Entry<String, String> prop : parentProps.getValue().entrySet()) {
+        model.addRoleProperty(parentProps.getKey(), prop.getKey(), prop.getValue());
+      }
+    }
   }
 
 }

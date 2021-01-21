@@ -31,6 +31,8 @@ public class NameNodeServiceModelGenerator extends AbstractServiceModelGenerator
   public static final String SERVICE_TYPE = "HDFS";
   public static final String ROLE_TYPE    = "NAMENODE";
 
+  static final String DISCOVERY_NAMESERVICE = "discovery-nameservice";
+
   static final String AUTOFAILOVER_ENABLED = "autofailover_enabled";
   static final String NN_NAMESERVICE       = "dfs_federation_namenode_nameservice";
   static final String NN_PORT              = "namenode_port";
@@ -62,7 +64,7 @@ public class NameNodeServiceModelGenerator extends AbstractServiceModelGenerator
                                       ApiConfigList    roleConfig) throws ApiException {
     boolean haEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, AUTOFAILOVER_ENABLED));
     String serviceUrl;
-    if(haEnabled) {
+    if (haEnabled) {
       String nameservice = getRoleConfigValue(roleConfig, NN_NAMESERVICE);
       serviceUrl = String.format(Locale.getDefault(), "hdfs://%s", nameservice);
     } else {
@@ -76,6 +78,9 @@ public class NameNodeServiceModelGenerator extends AbstractServiceModelGenerator
     model.addRoleProperty(getRoleType(), NN_PORT, getRoleConfigValue(roleConfig, NN_PORT));
     if (haEnabled) {
       model.addRoleProperty(getRoleType(), NN_NAMESERVICE, getRoleConfigValue(roleConfig, NN_NAMESERVICE));
+
+      // Add the nameservice metadata for qualifying the discovery process for this service
+      model.addQualifyingServiceParam(DISCOVERY_NAMESERVICE, model.getRoleProperties().get(getRoleType()).get(NN_NAMESERVICE));
     }
 
     return model;
