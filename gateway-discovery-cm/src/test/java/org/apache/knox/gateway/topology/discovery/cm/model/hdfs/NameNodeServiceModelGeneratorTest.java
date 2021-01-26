@@ -41,11 +41,13 @@ public class NameNodeServiceModelGeneratorTest extends AbstractServiceModelGener
     validateServiceModel(generated, serviceConfig, roleConfig);
 
     // Validate model metadata properties
+    final String qualifyingProperty =
+            ServiceModel.QUALIFYING_SERVICE_PARAM_PREFIX + NameNodeServiceModelGenerator.DISCOVERY_NAMESERVICE;
     Map<String, String> modelProps = generated.getQualifyingServiceParams();
     assertEquals("Expected one service model properties", 1, modelProps.size());
-    assertEquals("Expected " + NameNodeServiceModelGenerator.DISCOVERY_NAMESERVICE + " model property.",
+    assertEquals("Expected " + qualifyingProperty + " model property.",
                  roleConfig.get(NameNodeServiceModelGenerator.NN_NAMESERVICE),
-                 modelProps.get(NameNodeServiceModelGenerator.DISCOVERY_NAMESERVICE));
+                 modelProps.get(qualifyingProperty));
   }
 
   @Test

@@ -24,6 +24,9 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.apache.knox.gateway.topology.discovery.cm.ServiceModel.QUALIFYING_SERVICE_PARAM_PREFIX;
+import static org.apache.knox.gateway.topology.discovery.cm.model.solr.SolrServiceModelGenerator.DISCOVERY_SERVICE_DISPLAY_NAME;
+import static org.apache.knox.gateway.topology.discovery.cm.model.solr.SolrServiceModelGenerator.DISCOVERY_SERVICE_NAME;
 import static org.junit.Assert.assertEquals;
 
 public class SolrServiceModelGeneratorTest extends AbstractServiceModelGeneratorTest {
@@ -40,14 +43,16 @@ public class SolrServiceModelGeneratorTest extends AbstractServiceModelGenerator
     validateServiceModel(generated, serviceConfig, roleConfig);
 
     // Validate model metadata properties
+    final String serviceNameQualifier = QUALIFYING_SERVICE_PARAM_PREFIX + DISCOVERY_SERVICE_NAME;
+    final String displayNameQualifier = QUALIFYING_SERVICE_PARAM_PREFIX + DISCOVERY_SERVICE_DISPLAY_NAME;
     Map<String, String> modelProps = generated.getQualifyingServiceParams();
     assertEquals("Expected two service model properties", 2, modelProps.size());
-    assertEquals("Expected " + SolrServiceModelGenerator.DISCOVERY_SERVICE_NAME + " model property.",
-            getServiceType() + "-1",
-            modelProps.get(SolrServiceModelGenerator.DISCOVERY_SERVICE_NAME));
-    assertEquals("Expected " + SolrServiceModelGenerator.DISCOVERY_SERVICE_DISPLAY_NAME + " model property.",
-            "null",
-            modelProps.get(SolrServiceModelGenerator.DISCOVERY_SERVICE_DISPLAY_NAME));
+    assertEquals("Expected " + serviceNameQualifier + " model property.",
+                 getServiceType() + "-1",
+                 modelProps.get(serviceNameQualifier));
+    assertEquals("Expected " + displayNameQualifier + " model property.",
+                 "null",
+                 modelProps.get(displayNameQualifier));
   }
 
   @Override

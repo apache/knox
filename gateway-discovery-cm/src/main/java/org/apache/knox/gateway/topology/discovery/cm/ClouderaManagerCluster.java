@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm;
 
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.cm.collector.ServiceURLCollectors;
 
@@ -29,6 +30,9 @@ import java.util.Set;
  * ClouderaManager-based service discovery cluster model implementation.
  */
 public class ClouderaManagerCluster implements ServiceDiscovery.Cluster {
+
+  private static final ClouderaManagerServiceDiscoveryMessages log =
+          MessagesFactory.get(ClouderaManagerServiceDiscoveryMessages.class);
 
   private String name;
 
@@ -60,8 +64,17 @@ public class ClouderaManagerCluster implements ServiceDiscovery.Cluster {
         boolean isMatchingModel = true;
         if (serviceParams != null) {
           for (Map.Entry<String, String> serviceParam : serviceParams.entrySet()) {
-            if (!serviceParam.getValue().equals(model.getQualifyingServiceParam(serviceParam.getKey()))) {
-              isMatchingModel = false;
+            String serviceParamKey = serviceParam.getKey();
+            // If it's a qualifying service param, then perform the qualification check
+            if (serviceParamKey.startsWith(ServiceModel.QUALIFYING_SERVICE_PARAM_PREFIX)) {
+              if (!serviceParam.getValue().equals(model.getQualifyingServiceParam(serviceParamKey))) {
+                isMatchingModel = false;
+                log.qualifyingServiceParamMismatch(serviceName,
+                                                   serviceParamKey,
+                                                   serviceParam.getValue(),
+                                                   model.getQualifyingServiceParam(serviceParamKey));
+                break;
+              }
             }
           }
         }

@@ -16,6 +16,8 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm;
 
+import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -28,6 +30,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ServiceModel {
 
   public enum Type {API, UI}
+
+  public static final String QUALIFYING_SERVICE_PARAM_PREFIX = SimpleDescriptor.DISCOVERY_PARAM_PREFIX;
 
   private static final String NULL_VALUE = "null";
 
@@ -66,7 +70,9 @@ public class ServiceModel {
   }
 
   public void addQualifyingServiceParam(final String name, final String value) {
-    qualifyingServiceParams.put(name, (value != null ? value : NULL_VALUE));
+    // Fix the name if it doesn't include the prefix
+    String paramName = name.startsWith(QUALIFYING_SERVICE_PARAM_PREFIX) ? name : QUALIFYING_SERVICE_PARAM_PREFIX + name;
+    qualifyingServiceParams.put(paramName, (value != null ? value : NULL_VALUE));
   }
 
   public void addServiceProperty(final String name, final String value) {
@@ -88,7 +94,8 @@ public class ServiceModel {
    * @return The value of the metadata property associated with the model, which can be used to qualify service discovery.
    */
   public String getQualifyingServiceParam(final String name) {
-    return qualifyingServiceParams.get(name);
+    String paramName = name.startsWith(QUALIFYING_SERVICE_PARAM_PREFIX) ? name : QUALIFYING_SERVICE_PARAM_PREFIX + name;
+    return qualifyingServiceParams.get(paramName);
   }
 
   /**
