@@ -74,11 +74,13 @@ public class WebHdfsServiceModelGeneratorTest extends AbstractServiceModelGenera
     validateServiceModel(generated, serviceConfig, roleConfig, false);
 
     // Validate model metadata properties
+    final String qualifyingProperty =
+            ServiceModel.QUALIFYING_SERVICE_PARAM_PREFIX + WebHdfsServiceModelGenerator.DISCOVERY_NAMESERVICE;
     Map<String, String> modelProps = generated.getQualifyingServiceParams();
     assertEquals("Expected one service model properties", 1, modelProps.size());
-    assertEquals("Expected " + NameNodeServiceModelGenerator.DISCOVERY_NAMESERVICE + " model property.",
+    assertEquals("Expected " + qualifyingProperty + " model property.",
                  roleConfig.get(WebHdfsServiceModelGenerator.NN_NAMESERVICE),
-                 modelProps.get(WebHdfsServiceModelGenerator.DISCOVERY_NAMESERVICE));
+                 modelProps.get(qualifyingProperty));
   }
 
   @Override

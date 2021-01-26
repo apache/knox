@@ -31,7 +31,7 @@ public class NameNodeServiceModelGenerator extends AbstractServiceModelGenerator
   public static final String SERVICE_TYPE = "HDFS";
   public static final String ROLE_TYPE    = "NAMENODE";
 
-  static final String DISCOVERY_NAMESERVICE = "discovery-nameservice";
+  static final String DISCOVERY_NAMESERVICE = "nameservice";
 
   static final String AUTOFAILOVER_ENABLED = "autofailover_enabled";
   static final String NN_NAMESERVICE       = "dfs_federation_namenode_nameservice";

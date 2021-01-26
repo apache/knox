@@ -101,6 +101,10 @@ public interface ClouderaManagerServiceDiscoveryMessages {
            text = "No password configured for Cloudera Manager service discovery.")
   void aliasServicePasswordNotFound();
 
+  @Message(level = MessageLevel.INFO,
+          text = "The value of the qualifying parameter {1} for service {0} does not match: Expected={2}, Actual={3}")
+  void qualifyingServiceParamMismatch(String serviceName, String paramName, String expectedValue, String actualValue);
+
   @Message(level = MessageLevel.ERROR,
            text = "Unable to access the ClouderaManager Configuration Change Monitor: {0}")
   void errorAccessingConfigurationChangeMonitor(@StackTrace(level = MessageLevel.DEBUG) Exception e);

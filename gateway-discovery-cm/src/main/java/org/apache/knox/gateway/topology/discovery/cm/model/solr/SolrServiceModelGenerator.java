@@ -30,8 +30,8 @@ public class SolrServiceModelGenerator extends AbstractServiceModelGenerator {
   public static final String SERVICE_TYPE = "SOLR";
   public static final String ROLE_TYPE    = "SOLR_SERVER";
 
-  static final String DISCOVERY_SERVICE_NAME         = "discovery-service-name";
-  static final String DISCOVERY_SERVICE_DISPLAY_NAME = "discovery-service-display-name";
+  public static final String DISCOVERY_SERVICE_NAME         = "service-name";
+  public static final String DISCOVERY_SERVICE_DISPLAY_NAME = "service-display-name";
 
   static final String USE_SSL    = "solr_use_ssl";
   static final String HTTP_PORT  = "solr_http_port";

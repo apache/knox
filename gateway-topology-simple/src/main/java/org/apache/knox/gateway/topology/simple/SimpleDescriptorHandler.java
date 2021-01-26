@@ -86,9 +86,7 @@ public class SimpleDescriptorHandler {
 
     private static final SimpleDescriptorMessages log = MessagesFactory.get(SimpleDescriptorMessages.class);
 
-    private static final String DISCOVERY_PARAM_PREFIX = "discovery-";
-
-    private static Map<String, ServiceDiscovery> discoveryInstances = new HashMap<>();
+    private static final Map<String, ServiceDiscovery> discoveryInstances = new HashMap<>();
 
     private static final Set<String> ALLOWED_SERVICES_WITHOUT_URLS_AND_PARAMS = Collections.unmodifiableSet(Stream.of("KNOX", "KNOX-METADATA", "KNOXSSOUT", "KNOX-SESSION").collect(Collectors.toSet()));
 
@@ -162,7 +160,7 @@ public class SimpleDescriptorHandler {
                 boolean hasNonDiscoveryParams = false;
                 // Determine if there are any params which are not discovery-only
                 for (String paramName : descriptorServiceParams.keySet()) {
-                    if (!paramName.startsWith(DISCOVERY_PARAM_PREFIX)) {
+                    if (!paramName.startsWith(SimpleDescriptor.DISCOVERY_PARAM_PREFIX)) {
                         hasNonDiscoveryParams = true;
                         break;
                     }
@@ -556,7 +554,7 @@ public class SimpleDescriptorHandler {
                 Map<String, String> svcParams = serviceParams.get(serviceName);
                 if (svcParams != null) {
                     for (Entry<String, String> svcParam : svcParams.entrySet()) {
-                        if (!(svcParam.getKey().toLowerCase(Locale.ROOT)).startsWith(DISCOVERY_PARAM_PREFIX)) {
+                        if (!(svcParam.getKey().toLowerCase(Locale.ROOT)).startsWith(SimpleDescriptor.DISCOVERY_PARAM_PREFIX)) {
                             sw.write("        <param>\n");
                             sw.write("            <name>" + svcParam.getKey() + "</name>\n");
                             sw.write("            <value>" + svcParam.getValue() + "</value>\n");
