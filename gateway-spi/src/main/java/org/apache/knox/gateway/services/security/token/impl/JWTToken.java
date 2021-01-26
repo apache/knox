@@ -91,6 +91,11 @@ public class JWTToken implements JWT {
   }
 
   @Override
+  public JWSAlgorithm getSignatureAlgorithm() {
+    return jwt.getHeader().getAlgorithm();
+  }
+
+  @Override
   public String getClaims() {
     String c = null;
     JWTClaimsSet claims;

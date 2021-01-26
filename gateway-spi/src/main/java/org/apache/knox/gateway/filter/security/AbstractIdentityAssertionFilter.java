@@ -17,11 +17,17 @@
  */
 package org.apache.knox.gateway.filter.security;
 
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.GatewaySpiMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.principal.PrincipalMapper;
 import org.apache.knox.gateway.security.principal.PrincipalMappingException;
 import org.apache.knox.gateway.security.principal.SimplePrincipalMapper;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AliasServiceException;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterConfig;
@@ -30,7 +36,9 @@ import javax.servlet.ServletException;
 public abstract class AbstractIdentityAssertionFilter extends AbstractIdentityAssertionBase implements Filter {
 
   private static final GatewaySpiMessages LOG = MessagesFactory.get( GatewaySpiMessages.class );
+  private static final String PARAM_NAME_SIGNATURE_ALG = "signature.algorithm";
   protected PrincipalMapper mapper = new SimplePrincipalMapper();
+  protected String signatureAlgorithm;
 
   public AbstractIdentityAssertionFilter() {
     super();
@@ -51,8 +59,21 @@ public abstract class AbstractIdentityAssertionFilter extends AbstractIdentityAs
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
-    // load principal mappings
     loadPrincipalMappings(filterConfig);
+
+    setSignatureAlgorithm(filterConfig);
+  }
+
+  private void setSignatureAlgorithm(FilterConfig filterConfig) throws ServletException {
+    try {
+      final String configuredSignatureAlgorithm = filterConfig.getInitParameter(PARAM_NAME_SIGNATURE_ALG);
+      final GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+      final GatewayConfig gatewayConfig = (GatewayConfig) filterConfig.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+      final AliasService aliasService = services.getService(ServiceType.ALIAS_SERVICE);
+      this.signatureAlgorithm = TokenUtils.getSignatureAlgorithm(configuredSignatureAlgorithm, aliasService, gatewayConfig.getSigningKeystoreName());
+    } catch(AliasServiceException e) {
+      throw new ServletException(e);
+    }
   }
 
   @Override

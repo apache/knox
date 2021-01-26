@@ -129,9 +129,6 @@ public abstract class AbstractJWTFilter implements Filter {
     }
 
     expectedSigAlg = filterConfig.getInitParameter(JWT_EXPECTED_SIGALG);
-    if (expectedSigAlg == null) {
-      expectedSigAlg = JWT_DEFAULT_SIGALG;
-    }
   }
 
   protected List<String> parseExpectedAudiences(String expectedAudiences) {
@@ -277,10 +274,10 @@ public abstract class AbstractJWTFilter implements Filter {
       log.unableToVerifyToken(e);
     }
 
-    // Check received signature algorithm
-    if (verified) {
+    // Check received signature algorithm if expectation is configured
+    if (verified && expectedSigAlg != null) {
       try {
-        String receivedSigAlg = JWSHeader.parse(token.getHeader()).getAlgorithm().getName();
+        final String receivedSigAlg = JWSHeader.parse(token.getHeader()).getAlgorithm().getName();
         if (!receivedSigAlg.equals(expectedSigAlg)) {
           verified = false;
         }
@@ -325,12 +322,10 @@ public abstract class AbstractJWTFilter implements Filter {
           log.unableToVerifyExpiration(e);
           handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
         }
-      }
-      else {
+      } else {
         handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
       }
-    }
-    else {
+    } else {
       log.failedToVerifyTokenSignature(tokenId, displayableToken);
       handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
     }

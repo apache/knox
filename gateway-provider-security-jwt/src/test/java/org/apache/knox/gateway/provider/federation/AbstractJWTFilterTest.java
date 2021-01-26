@@ -849,6 +849,7 @@ public abstract class AbstractJWTFilterTest  {
   public void testInvalidSignatureAlgorithm() throws Exception {
     try {
       Properties props = getProperties();
+      props.put(AbstractJWTFilter.JWT_EXPECTED_SIGALG, AbstractJWTFilter.JWT_DEFAULT_SIGALG);
       handler.init(new TestFilterConfig(props));
 
       SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice", new Date(new Date().getTime() + 5000),
