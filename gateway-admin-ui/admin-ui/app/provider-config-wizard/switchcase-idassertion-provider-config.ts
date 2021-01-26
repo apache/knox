@@ -19,7 +19,7 @@ import {IdentityAssertionProviderConfig} from './identity-assertion-provider-con
 
 export class SwitchCaseAssertionProviderConfig extends IdentityAssertionProviderConfig {
 
-    private static CASE_VALUES: string[] = ['upper', 'lower'];
+    private static CASE_VALUES: string[] = ['upper', 'lower', 'none'];
 
     private static PRINCIPAL_CASE = 'Principal Case';
     private static GROUP_PRINCIPAL_CASE = 'Group Principal Case';
