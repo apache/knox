@@ -246,9 +246,13 @@
 </rule>
 
 
-<rule dir="OUT" name="YARNUI/yarn/outbound/apps/history">
-    <match pattern="*://*:*/proxy/{**}"/>
-    <rewrite template="{$frontend[url]}/yarn/proxy/{**}/"/>
+<rule flow="OR" dir="OUT" name="YARNUI/yarn/outbound/apps/history">
+    <match pattern="*://*:*/proxy/{**}">
+        <rewrite template="{$frontend[url]}/yarn/proxy/{**}/"/>
+    </match>
+    <match pattern="/proxy/{**}">
+        <rewrite template="{$frontend[url]}/yarn/proxy/{**}/"/>
+    </match>
 </rule>
 <rule dir="OUT" name="YARNUI/yarn/outbound/apps/history1">
     <match pattern="/proxy/{**}?{**}"/>
