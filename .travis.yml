@@ -22,13 +22,22 @@ matrix:
   include:
     - env: IMAGE=maven:3-jdk-8
     - env: IMAGE=maven:3-jdk-11
+    - name: Linux ARM64
+      env: IMAGE=maven:3-jdk-11
+      arch: arm64-graviton2
+      virt: lxd
+      group: edge
+      os: linux
+      dist: focal
     
 env:
   global:
-  - DOCKERRUN="docker run -it --rm -v $PWD:/src -v $HOME/.m2:/root/.m2 -v /var/run/docker.sock:/var/run/docker.sock -w /src"
+  - DOCKERRUN="docker run --rm -v $PWD:/src -v $HOME/.m2:/root/.m2 -v /var/run/docker.sock:/var/run/docker.sock -w /src"
 services:
   - docker
 before_install:
+  - lscpu
+  - sudo apt-get -y install shellcheck
   - docker pull $IMAGE
 script:
   - $DOCKERRUN $IMAGE mvn -T.75C clean verify -U -Dsurefire.useFile=false -Djavax.net.ssl.trustStorePassword=changeit -B -V
