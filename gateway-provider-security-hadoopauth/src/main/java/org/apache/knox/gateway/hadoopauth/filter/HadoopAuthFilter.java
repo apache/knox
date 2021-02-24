@@ -22,7 +22,6 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authorize.AuthorizationException;
 import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.hadoop.util.HttpExceptionUtils;
-import org.apache.knox.gateway.GatewayFilter;
 import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.hadoopauth.HadoopAuthMessages;
@@ -77,7 +76,6 @@ public class HadoopAuthFilter extends
   private static final String QUERY_PARAMETER_DOAS = "doAs";
   private static final String PROXYUSER_PREFIX = "hadoop.proxyuser";
   static final String SUPPORT_JWT = "support.jwt";
-  static final String JWT_PREFIX = "jwt.";
 
   private static final HadoopAuthMessages LOG = MessagesFactory.get(HadoopAuthMessages.class);
 
@@ -128,7 +126,6 @@ public class HadoopAuthFilter extends
     final boolean jwtSupported = Boolean.parseBoolean(supportJwt == null ? "false" : supportJwt);
     if (jwtSupported) {
       jwtFilter = new JWTFederationFilter();
-      ((GatewayFilter.Holder)filterConfig).removeParamPrefix(JWT_PREFIX);
       jwtFilter.init(filterConfig);
       LOG.initializedJwtFilter();
     }
