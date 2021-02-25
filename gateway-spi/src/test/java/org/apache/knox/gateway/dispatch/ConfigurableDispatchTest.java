@@ -280,6 +280,28 @@ public class ConfigurableDispatchTest {
   }
 
   /**
+   * Make sure that SET-COOKIE attributes order is maintained
+   */
+  @Test
+  public void testSetCookieHeaderOrder() {
+    final String SET_COOKIE_VALUE = "JSESSIONID=ba760126-414f-406d-baa1-99e14eb47656; zx=yz; SameSite=none; Secure; Path=/; HttpOnly; a=b; c=d";
+    final String EXPECTED_SET_COOKIE_VALUE = "JSESSIONID=ba760126-414f-406d-baa1-99e14eb47656; zx=yz; SameSite=none; Path=/; HttpOnly; a=b; c=d";
+    final Header[] headers = new Header[] { new BasicHeader(SET_COOKIE, SET_COOKIE_VALUE) };
+    final HttpResponse inboundResponse = EasyMock.createNiceMock(HttpResponse.class);
+    EasyMock.expect(inboundResponse.getAllHeaders()).andReturn(headers).anyTimes();
+    EasyMock.replay(inboundResponse);
+
+    final ConfigurableDispatch dispatch = new ConfigurableDispatch();
+    final String setCookieExludeHeaders = SET_COOKIE + ": Secure";
+    dispatch.setResponseExcludeHeaders(setCookieExludeHeaders);
+
+    final HttpServletResponse outboundResponse = new MockHttpServletResponse();
+    dispatch.copyResponseHeaderFields(outboundResponse, inboundResponse);
+
+    assertThat(outboundResponse.getHeader(SET_COOKIE), is(EXPECTED_SET_COOKIE_VALUE));
+  }
+
+  /**
    * When exclude list is defined and set-cookie is not in the list
    * make sure auth cookies are blocked.
    * @throws Exception
@@ -310,8 +332,9 @@ public class ConfigurableDispatchTest {
    */
   @Test
   public void testAllowSetCookieHeaderDirectivesDefault() throws Exception {
+    final String SET_COOKIE_VALUE = "RANGERADMINSESSIONID=5C0C1805BD3B43BA8E9FC04A63586505; Path=/; Secure; HttpOnly";
     final Header[] headers = new Header[] {
-        new BasicHeader(SET_COOKIE, "RANGERADMINSESSIONID=5C0C1805BD3B43BA8E9FC04A63586505; Path=/; Secure; HttpOnly")};
+        new BasicHeader(SET_COOKIE, SET_COOKIE_VALUE)};
     final HttpResponse inboundResponse = EasyMock.createNiceMock(HttpResponse.class);
     EasyMock.expect(inboundResponse.getAllHeaders()).andReturn(headers).anyTimes();
     EasyMock.replay(inboundResponse);
@@ -325,7 +348,7 @@ public class ConfigurableDispatchTest {
     dispatch.copyResponseHeaderFields(outboundResponse, inboundResponse);
 
     assertThat(outboundResponse.getHeaderNames().size(), is(1));
-    assertThat(outboundResponse.getHeader(SET_COOKIE), is("Secure; Path=/; HttpOnly; RANGERADMINSESSIONID=5C0C1805BD3B43BA8E9FC04A63586505"));
+    assertThat(outboundResponse.getHeader(SET_COOKIE), is(SET_COOKIE_VALUE));
   }
 
     /**
