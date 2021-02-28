@@ -35,16 +35,19 @@ public class JWTAsHTTPBasicCredsFederationFilterTest extends AbstractJWTFilterTe
       ((TestJWTFederationFilter) handler).setTokenService(new TestJWTokenAuthority(publicKey));
     }
 
+    @Override
     protected void setTokenOnRequest(final HttpServletRequest request, final SignedJWT jwt) {
         final String token = "Basic " + Base64.getEncoder().encodeToString(("Token:" + jwt.serialize()).getBytes(StandardCharsets.UTF_8));
         EasyMock.expect((Object)request.getHeader("Authorization")).andReturn((Object)token);
     }
 
+    @Override
     protected void setGarbledTokenOnRequest(final HttpServletRequest request, final SignedJWT jwt) {
         final String token = "Basic " + Base64.getEncoder().encodeToString(("Token: ljm" + jwt.serialize()).getBytes(StandardCharsets.UTF_8));
         EasyMock.expect((Object)request.getHeader("Authorization")).andReturn((Object)token);
     }
 
+    @Override
     protected String getAudienceProperty() {
         return "knox.token.audiences";
     }
@@ -55,6 +58,7 @@ public class JWTAsHTTPBasicCredsFederationFilterTest extends AbstractJWTFilterTe
       }
     }
 
+    @Override
     protected String getVerificationPemProperty() {
         return "knox.token.verification.pem";
     }
