@@ -116,12 +116,12 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       String token = null;
       final String header = ((HttpServletRequest)request).getHeader("Authorization");
       if (header != null) {
-          if (header.startsWith("Bearer ")) {
+          if (header.startsWith(BEARER)) {
               // what follows the bearer designator should be the JWT token being used
             // to request or as an access token
               token = header.substring(BEARER.length());
           }
-          else if (header.toLowerCase(Locale.ROOT).startsWith("Basic".toLowerCase(Locale.ROOT))) {
+          else if (header.toLowerCase(Locale.ROOT).startsWith(BASIC.toLowerCase(Locale.ROOT))) {
               // what follows the Basic designator should be the JWT token being used
             // to request or as an access token
               token = this.parseFromHTTPBasicCredentials(token, header);
