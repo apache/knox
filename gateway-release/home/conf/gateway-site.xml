@@ -132,7 +132,7 @@ limitations under the License.
         <value>(objectclass=groupOfNames)</value>
     </property>
     <property>
-        <name>hgateway.group.config.adoop.security.group.mapping.ldap.search.attr.member</name>
+        <name>gateway.group.config.hadoop.security.group.mapping.ldap.search.attr.member</name>
         <value>member</value>
     </property>
     <property>
