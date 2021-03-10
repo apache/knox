@@ -73,6 +73,16 @@ public class ConfigurableDispatchTest {
     assertThat( uri.toASCIIString(), is( "http://test-host:42/test,path" ) );
 
     path = "http://test-host:42/test%2Cpath";
+    query = "service_config_version_note.matches(Updated%20Kerberos-related%20configurations";
+    request = EasyMock.createNiceMock( HttpServletRequest.class );
+    EasyMock.expect( request.getRequestURI() ).andReturn( path ).anyTimes();
+    EasyMock.expect( request.getRequestURL() ).andReturn( new StringBuffer( path ) ).anyTimes();
+    EasyMock.expect( request.getQueryString() ).andReturn( query ).anyTimes();
+    EasyMock.replay( request );
+    uri = dispatch.getDispatchUrl( request );
+    assertThat( uri.toASCIIString(), is( "http://test-host:42/test%2Cpath?service_config_version_note.matches(Updated%20Kerberos-related%20configurations" ) );
+
+    path = "http://test-host:42/test%2Cpath";
     request = EasyMock.createNiceMock( HttpServletRequest.class );
     EasyMock.expect( request.getRequestURI() ).andReturn( path ).anyTimes();
     EasyMock.expect( request.getRequestURL() ).andReturn( new StringBuffer( path ) ).anyTimes();
@@ -129,6 +139,17 @@ public class ConfigurableDispatchTest {
     EasyMock.replay( request );
     uri = dispatch.getDispatchUrl( request );
     assertThat( uri.toASCIIString(), is( "http://test-host:42/test%2Cpath" ) );
+
+    // encoding in query %20 is not removed
+    path = "http://test-host:42/test%2Cpath";
+    query = "service_config_version_note.matches(Updated%20Kerberos-related%20configurations";
+    request = EasyMock.createNiceMock( HttpServletRequest.class );
+    EasyMock.expect( request.getRequestURI() ).andReturn( path ).anyTimes();
+    EasyMock.expect( request.getRequestURL() ).andReturn( new StringBuffer( path ) ).anyTimes();
+    EasyMock.expect( request.getQueryString() ).andReturn( query ).anyTimes();
+    EasyMock.replay( request );
+    uri = dispatch.getDispatchUrl( request );
+    assertThat( uri.toASCIIString(), is( "http://test-host:42/test%2Cpath?service_config_version_note.matches(Updated%20Kerberos-related%20configurations" ) );
 
     // encoding in query string is removed
     path = "http://test-host:42/test%2Cpath";
