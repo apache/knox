@@ -261,6 +261,53 @@ public abstract class AbstractJWTFilter implements Filter {
   protected boolean validateToken(HttpServletRequest request, HttpServletResponse response,
       FilterChain chain, JWT token)
       throws IOException, ServletException {
+    final String tokenId = TokenUtils.getTokenId(token);
+    final String displayableToken = Tokens.getTokenDisplayText(token.toString());
+    // confirm that issuer matches the intended target
+    if (expectedIssuer.equals(token.getIssuer())) {
+      // if there is no expiration data then the lifecycle is tied entirely to
+      // the cookie validity - otherwise ensure that the current time is before
+      // the designated expiration time
+      try {
+        if (tokenIsStillValid(token)) {
+          // Verify the token signature
+          if (verifyToken(token)) {
+            boolean audValid = validateAudiences(token);
+            if (audValid) {
+              Date nbf = token.getNotBeforeDate();
+              if (nbf == null || new Date().after(nbf)) {
+                return true;
+              } else {
+                log.notBeforeCheckFailed();
+                handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+                        "Bad request: the NotBefore check failed");
+              }
+            } else {
+              log.failedToValidateAudience(tokenId, displayableToken);
+              handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+                      "Bad request: missing required token audience");
+            }
+          } else {
+            log.failedToVerifyTokenSignature(tokenId, displayableToken);
+            handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
+          }
+        } else {
+          log.tokenHasExpired(tokenId, displayableToken);
+          handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+                                "Bad request: token has expired");
+        }
+      } catch (UnknownTokenException e) {
+        log.unableToVerifyExpiration(e);
+        handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+      }
+    } else {
+      handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
+    }
+
+    return false;
+  }
+
+  private boolean verifyToken(final JWT token) {
     boolean verified = false;
     try {
       if (publicKey != null) {
@@ -286,51 +333,7 @@ public abstract class AbstractJWTFilter implements Filter {
         verified = false;
       }
     }
-
-    final String tokenId = TokenUtils.getTokenId(token);
-    final String displayableToken = Tokens.getTokenDisplayText(token.toString());
-    if (verified) {
-      // confirm that issue matches intended target
-      if (expectedIssuer.equals(token.getIssuer())) {
-        // if there is no expiration data then the lifecycle is tied entirely to
-        // the cookie validity - otherwise ensure that the current time is before
-        // the designated expiration time
-        try {
-          if (tokenIsStillValid(token)) {
-            boolean audValid = validateAudiences(token);
-            if (audValid) {
-                Date nbf = token.getNotBeforeDate();
-                if (nbf == null || new Date().after(nbf)) {
-                  return true;
-                } else {
-                  log.notBeforeCheckFailed();
-                  handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-                                        "Bad request: the NotBefore check failed");
-                }
-            }
-            else {
-              log.failedToValidateAudience(tokenId, displayableToken);
-              handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-                                    "Bad request: missing required token audience");
-            }
-          } else {
-            log.tokenHasExpired(tokenId, displayableToken);
-            handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-                                  "Bad request: token has expired");
-          }
-        } catch (UnknownTokenException e) {
-          log.unableToVerifyExpiration(e);
-          handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
-        }
-      } else {
-        handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
-      }
-    } else {
-      log.failedToVerifyTokenSignature(tokenId, displayableToken);
-      handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
-    }
-
-    return false;
+    return verified;
   }
 
   protected abstract void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status,

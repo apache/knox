@@ -67,6 +67,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.fail;
 
@@ -620,8 +621,11 @@ public abstract class AbstractJWTFilterTest  {
       Properties props = getProperties();
       handler.init(new TestFilterConfig(props));
 
-      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "bob",
-                             new Date(new Date().getTime() + 5000), (RSAPrivateKey)kp.getPrivate());
+      // Create a token with an expiration such that it's valid at test time, so the signature will be verified
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER,
+                             "bob",
+                             new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)),
+                             (RSAPrivateKey)kp.getPrivate());
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
@@ -677,7 +681,7 @@ public abstract class AbstractJWTFilterTest  {
       handler.init(new TestFilterConfig(props));
 
       SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice",
-                             new Date(new Date().getTime() + 50000), privateKey);
+                             new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)), privateKey);
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
@@ -806,8 +810,12 @@ public abstract class AbstractJWTFilterTest  {
       props.put(AbstractJWTFilter.JWT_EXPECTED_SIGALG, "RS512");
       handler.init(new TestFilterConfig(props));
 
-      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice", new Date(new Date().getTime() + 5000),
-                             new Date(), privateKey, JWSAlgorithm.RS512.getName());
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER,
+                             "alice",
+                             new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)),
+                             new Date(),
+                             privateKey,
+                             JWSAlgorithm.RS512.getName());
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
@@ -852,8 +860,13 @@ public abstract class AbstractJWTFilterTest  {
       props.put(AbstractJWTFilter.JWT_EXPECTED_SIGALG, AbstractJWTFilter.JWT_DEFAULT_SIGALG);
       handler.init(new TestFilterConfig(props));
 
-      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice", new Date(new Date().getTime() + 5000),
-                             new Date(), privateKey, JWSAlgorithm.RS384.getName());
+      // Create a token with an expiration such that it's valid at test time, so the signature will be verified
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER,
+                             "alice",
+                             new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)),
+                             new Date(),
+                             privateKey,
+                             JWSAlgorithm.RS384.getName());
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
