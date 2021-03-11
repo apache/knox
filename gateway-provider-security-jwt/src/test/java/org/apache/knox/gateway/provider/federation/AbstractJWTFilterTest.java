@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.provider.federation;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
@@ -31,6 +32,7 @@ import org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederatio
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.util.X509CertificateUtil;
 import org.easymock.EasyMock;
 import org.junit.After;
@@ -49,6 +51,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
@@ -67,11 +70,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.fail;
 
 public abstract class AbstractJWTFilterTest  {
-  private static final String SERVICE_URL = "https://localhost:8888/resource";
+  protected static final String SERVICE_URL = "https://localhost:8888/resource";
   private static final String dnTemplate = "CN={0},OU=Test,O=Hadoop,L=Test,ST=Test,C=US";
 
   protected AbstractJWTFilter handler;
@@ -620,8 +625,11 @@ public abstract class AbstractJWTFilterTest  {
       Properties props = getProperties();
       handler.init(new TestFilterConfig(props));
 
-      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "bob",
-                             new Date(new Date().getTime() + 5000), (RSAPrivateKey)kp.getPrivate());
+      // Create a token with an expiration such that it's valid at test time, so the signature will be verified
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER,
+                             "bob",
+                             new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)),
+                             (RSAPrivateKey)kp.getPrivate());
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
@@ -677,7 +685,7 @@ public abstract class AbstractJWTFilterTest  {
       handler.init(new TestFilterConfig(props));
 
       SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice",
-                             new Date(new Date().getTime() + 50000), privateKey);
+                             new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)), privateKey);
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
@@ -806,8 +814,12 @@ public abstract class AbstractJWTFilterTest  {
       props.put(AbstractJWTFilter.JWT_EXPECTED_SIGALG, "RS512");
       handler.init(new TestFilterConfig(props));
 
-      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice", new Date(new Date().getTime() + 5000),
-                             new Date(), privateKey, JWSAlgorithm.RS512.getName());
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER,
+                             "alice",
+                             new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)),
+                             new Date(),
+                             privateKey,
+                             JWSAlgorithm.RS512.getName());
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
@@ -852,8 +864,13 @@ public abstract class AbstractJWTFilterTest  {
       props.put(AbstractJWTFilter.JWT_EXPECTED_SIGALG, AbstractJWTFilter.JWT_DEFAULT_SIGALG);
       handler.init(new TestFilterConfig(props));
 
-      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice", new Date(new Date().getTime() + 5000),
-                             new Date(), privateKey, JWSAlgorithm.RS384.getName());
+      // Create a token with an expiration such that it's valid at test time, so the signature will be verified
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER,
+                             "alice",
+                             new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)),
+                             new Date(),
+                             privateKey,
+                             JWSAlgorithm.RS384.getName());
 
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
@@ -934,6 +951,119 @@ public abstract class AbstractJWTFilterTest  {
     }
   }
 
+  @Test
+  public void testVerificationOptimization() throws Exception {
+    try {
+
+      final String principalAlice = "alice";
+      final String principalBob   = "bob";
+
+      final SignedJWT jwt_alice = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER,
+                                         principalAlice,
+                                         new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)),
+                                         new Date(),
+                                         privateKey,
+                                         JWSAlgorithm.RS512.getName());
+
+      final SignedJWT jwt_bob = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER,
+                                       principalBob,
+                                       new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)),
+                                       new Date(),
+                                       privateKey,
+                                       JWSAlgorithm.RS512.getName());
+
+      Properties props = getProperties();
+      props.put(AbstractJWTFilter.JWT_EXPECTED_SIGALG, "RS512");
+      props.put(AbstractJWTFilter.JWT_VERIFIED_CACHE_MAX, "1");
+      handler.init(new TestFilterConfig(props));
+      Assert.assertEquals("Expected no token verification calls yet.",
+                          0, ((TokenVerificationCounter) handler).getVerificationCount());
+
+      HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+      setTokenOnRequest(request, jwt_alice);
+
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getQueryString()).andReturn(null);
+      HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
+        @Override
+        public void write(int b) {
+        }
+
+        @Override
+        public void setWriteListener(WriteListener arg0) {
+        }
+
+        @Override
+        public boolean isReady() {
+          return false;
+        }
+      }).anyTimes();
+      EasyMock.replay(request, response);
+
+      doTestVerificationOptimization(request, response, principalAlice);
+      Assert.assertEquals("Expected token verification to have been performed.",
+                          1, ((TokenVerificationCounter) handler).getVerificationCount());
+
+      // Do it again, and the verification should just use the cached result
+      doRepeatTestVerificationOptimization(request, response, jwt_alice, principalAlice);
+      Assert.assertEquals("Expected token verification to have been skipped the second time.",
+                          1, ((TokenVerificationCounter) handler).getVerificationCount());
+
+      // Do it again, with a different token
+      doRepeatTestVerificationOptimization(request, response, jwt_bob, principalBob);
+      Assert.assertEquals("Expected token verification to have been skipped the second time.",
+                          2, ((TokenVerificationCounter) handler).getVerificationCount());
+
+
+      // Wait for the first token verification record to be evicted
+      evictVerifiedTokenRecords();
+
+      // Do it again, and the verification should be performed again for the first token since it should have been
+      // removed from the verified tokens cache (since the max size is 1)
+      doRepeatTestVerificationOptimization(request, response, jwt_alice, principalAlice);
+      Assert.assertEquals("Expected verification to have been performed for the token evicted from the verified cache.",
+                          3, ((TokenVerificationCounter) handler).getVerificationCount());
+
+    } catch (ServletException se) {
+      fail("Should NOT have thrown a ServletException.");
+    }
+  }
+
+  private void doRepeatTestVerificationOptimization(final HttpServletRequest request,
+                                                    final HttpServletResponse response,
+                                                    final SignedJWT jwt,
+                                                    final String expectedPrincipal) throws Exception {
+    EasyMock.reset(request, response);
+    setTokenOnRequest(request, jwt);
+    EasyMock.replay(request, response);
+
+    doTestVerificationOptimization(request, response, expectedPrincipal);
+  }
+
+  private void doTestVerificationOptimization(final HttpServletRequest request,
+                                              final HttpServletResponse response,
+                                              final String expectedPrincipal) throws Exception {
+
+    TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+    Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
+    Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
+    Assert.assertTrue("No PrimaryPrincipal", !principals.isEmpty());
+    Assert.assertEquals("Not the expected principal", expectedPrincipal, ((Principal)principals.toArray()[0]).getName());
+  }
+
+  /**
+   * Wait for the size limit enforcement, such that the Least-Recently-Used verified token record(s) will be evicted.
+   */
+  private void evictVerifiedTokenRecords() throws Exception {
+    Field f = handler.getClass().getSuperclass().getSuperclass().getDeclaredField("verifiedTokens");
+    f.setAccessible(true);
+    Cache<String, Boolean> cache = (Cache<String, Boolean>) f.get(handler);
+    cache.cleanUp();
+  }
+
   protected Properties getProperties() {
     Properties props = new Properties();
     props.setProperty(
@@ -968,6 +1098,7 @@ public abstract class AbstractJWTFilterTest  {
     .expirationTime(expires)
     .notBeforeTime(nbf)
     .claim("scope", "openid")
+    .claim(JWTToken.KNOX_ID_CLAIM, String.valueOf(UUID.randomUUID()))
     .build();
 
     JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.parse(signatureAlgorithm)).build();
@@ -1089,4 +1220,9 @@ public abstract class AbstractJWTFilterTest  {
       subject = Subject.getSubject( AccessController.getContext() );
     }
   }
+
+  protected interface TokenVerificationCounter {
+    int getVerificationCount();
+  }
+
 }

@@ -22,7 +22,6 @@ import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilte
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.easymock.EasyMock;
 import org.junit.Before;
-import org.junit.Test;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -50,9 +49,22 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
     return TestJWTFederationFilter.KNOX_TOKEN_AUDIENCES;
   }
 
-  private static class TestJWTFederationFilter extends JWTFederationFilter {
-    void setTokenService(JWTokenAuthority ts) {
+  private static class TestJWTFederationFilter extends JWTFederationFilter implements TokenVerificationCounter {
+    private int verificationCount;
+
+    void setTokenService(final JWTokenAuthority ts) {
       authority = ts;
+    }
+
+    @Override
+    protected void recordTokenVerification(final String tokenId) {
+      super.recordTokenVerification(tokenId);
+      verificationCount++;
+    }
+
+    @Override
+    public int getVerificationCount() {
+      return verificationCount;
     }
   }
 
@@ -61,8 +73,4 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
     return TestJWTFederationFilter.TOKEN_VERIFICATION_PEM;
   }
 
-  @Test
-  public void doTest() {
-    // TODO
-  }
 }

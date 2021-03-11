@@ -41,6 +41,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.AuditContext;
@@ -81,6 +83,9 @@ public abstract class AbstractJWTFilter implements Filter {
   public static final String JWT_EXPECTED_SIGALG = "jwt.expected.sigalg";
   public static final String JWT_DEFAULT_SIGALG = "RS256";
 
+  public static final String JWT_VERIFIED_CACHE_MAX = "jwt.verified.cache.max";
+  public static final int    JWT_VERIFIED_CACHE_MAX_DEFAULT = 100;
+
   static JWTMessages log = MessagesFactory.get( JWTMessages.class );
   private static AuditService auditService = AuditServiceFactory.getAuditService();
   private static Auditor auditor = auditService.getAuditor(
@@ -90,6 +95,7 @@ public abstract class AbstractJWTFilter implements Filter {
   protected List<String> audiences;
   protected JWTokenAuthority authority;
   protected RSAPublicKey publicKey;
+  protected Cache<String, Boolean> verifiedTokens;
   private String expectedIssuer;
   private String expectedSigAlg;
   protected String expectedPrincipalClaim;
@@ -120,6 +126,29 @@ public abstract class AbstractJWTFilter implements Filter {
         }
       }
     }
+
+    // Setup the verified tokens cache
+    initializeVerifiedTokensCache(filterConfig);
+  }
+
+  /**
+   * Initialize the cache for token verifications records.
+   *
+   * @param config The filter configuration
+   */
+  private void initializeVerifiedTokensCache(final FilterConfig config) {
+    int maxCacheSize = JWT_VERIFIED_CACHE_MAX_DEFAULT;
+
+    String configValue = config.getInitParameter(JWT_VERIFIED_CACHE_MAX);
+    if (configValue != null && !configValue.isEmpty()) {
+      try {
+        maxCacheSize = Integer.parseInt(configValue);
+      } catch (NumberFormatException e) {
+        log.invalidVerificationCacheMaxConfiguration(configValue);
+      }
+    }
+
+    verifiedTokens = Caffeine.newBuilder().maximumSize(maxCacheSize).build();
   }
 
   protected void configureExpectedParameters(FilterConfig filterConfig) {
@@ -261,76 +290,113 @@ public abstract class AbstractJWTFilter implements Filter {
   protected boolean validateToken(HttpServletRequest request, HttpServletResponse response,
       FilterChain chain, JWT token)
       throws IOException, ServletException {
-    boolean verified = false;
-    try {
-      if (publicKey != null) {
-        verified = authority.verifyToken(token, publicKey);
-      } else if (expectedJWKSUrl != null) {
-        verified = authority.verifyToken(token, expectedJWKSUrl, expectedSigAlg);
-      } else {
-        verified = authority.verifyToken(token);
-      }
-    } catch (TokenServiceException e) {
-      log.unableToVerifyToken(e);
-    }
-
-    // Check received signature algorithm if expectation is configured
-    if (verified && expectedSigAlg != null) {
-      try {
-        final String receivedSigAlg = JWSHeader.parse(token.getHeader()).getAlgorithm().getName();
-        if (!receivedSigAlg.equals(expectedSigAlg)) {
-          verified = false;
-        }
-      } catch (ParseException e) {
-        log.unableToVerifyToken(e);
-        verified = false;
-      }
-    }
-
     final String tokenId = TokenUtils.getTokenId(token);
     final String displayableToken = Tokens.getTokenDisplayText(token.toString());
-    if (verified) {
-      // confirm that issue matches intended target
-      if (expectedIssuer.equals(token.getIssuer())) {
-        // if there is no expiration data then the lifecycle is tied entirely to
-        // the cookie validity - otherwise ensure that the current time is before
-        // the designated expiration time
-        try {
-          if (tokenIsStillValid(token)) {
+    // confirm that issuer matches the intended target
+    if (expectedIssuer.equals(token.getIssuer())) {
+      // if there is no expiration data then the lifecycle is tied entirely to
+      // the cookie validity - otherwise ensure that the current time is before
+      // the designated expiration time
+      try {
+        if (tokenIsStillValid(token)) {
+          // Verify the token signature
+          if (verifyToken(token)) {
             boolean audValid = validateAudiences(token);
             if (audValid) {
-                Date nbf = token.getNotBeforeDate();
-                if (nbf == null || new Date().after(nbf)) {
-                  return true;
-                } else {
-                  log.notBeforeCheckFailed();
-                  handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-                                        "Bad request: the NotBefore check failed");
-                }
-            }
-            else {
+              Date nbf = token.getNotBeforeDate();
+              if (nbf == null || new Date().after(nbf)) {
+                return true;
+              } else {
+                log.notBeforeCheckFailed();
+                handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+                        "Bad request: the NotBefore check failed");
+              }
+            } else {
               log.failedToValidateAudience(tokenId, displayableToken);
               handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-                                    "Bad request: missing required token audience");
+                      "Bad request: missing required token audience");
             }
           } else {
-            log.tokenHasExpired(tokenId, displayableToken);
-            handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-                                  "Bad request: token has expired");
+            log.failedToVerifyTokenSignature(tokenId, displayableToken);
+            handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
           }
-        } catch (UnknownTokenException e) {
-          log.unableToVerifyExpiration(e);
-          handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+        } else {
+          log.tokenHasExpired(tokenId, displayableToken);
+          handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+                                "Bad request: token has expired");
         }
-      } else {
-        handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
+      } catch (UnknownTokenException e) {
+        log.unableToVerifyExpiration(e);
+        handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
       }
     } else {
-      log.failedToVerifyTokenSignature(tokenId, displayableToken);
       handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
     }
 
     return false;
+  }
+
+  protected boolean verifyToken(final JWT token) {
+    boolean verified;
+
+    String tokenId = TokenUtils.getTokenId(token);
+
+    // Check if the token has already been verified
+    verified = hasTokenBeenVerified(tokenId);
+
+    // If it has not yet been verified, then perform the verification now
+    if (!verified) {
+      try {
+        if (publicKey != null) {
+          verified = authority.verifyToken(token, publicKey);
+        } else if (expectedJWKSUrl != null) {
+          verified = authority.verifyToken(token, expectedJWKSUrl, expectedSigAlg);
+        } else {
+          verified = authority.verifyToken(token);
+        }
+      } catch (TokenServiceException e) {
+        log.unableToVerifyToken(e);
+      }
+
+      // Check received signature algorithm if expectation is configured
+      if (verified && expectedSigAlg != null) {
+        try {
+          final String receivedSigAlg = JWSHeader.parse(token.getHeader()).getAlgorithm().getName();
+          if (!receivedSigAlg.equals(expectedSigAlg)) {
+            verified = false;
+          }
+        } catch (ParseException e) {
+          log.unableToVerifyToken(e);
+          verified = false;
+        }
+      }
+
+      if (verified) { // If successful, record the verification for future reference
+        recordTokenVerification(tokenId);
+      }
+    }
+
+    return verified;
+  }
+
+  /**
+   * Determine if the specified token has previously been successfully verified.
+   *
+   * @param tokenId The unique identifier for a token.
+   *
+   * @return true, if the specified token has been previously verified; Otherwise, false.
+   */
+  protected boolean hasTokenBeenVerified(final String tokenId) {
+    return (verifiedTokens.getIfPresent(tokenId) != null);
+  }
+
+  /**
+   * Record a successful token verification.
+   *
+   * @param tokenId The unique identifier for the token which has been successfully verified.
+   */
+  protected void recordTokenVerification(final String tokenId) {
+    verifiedTokens.put(tokenId, true);
   }
 
   protected abstract void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status,

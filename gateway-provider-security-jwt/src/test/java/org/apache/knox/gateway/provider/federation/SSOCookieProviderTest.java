@@ -297,7 +297,10 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
     return SSOCookieFederationFilter.SSO_VERIFICATION_PEM;
   }
 
-  private static class TestSSOCookieFederationProvider extends SSOCookieFederationFilter {
+  private static class TestSSOCookieFederationProvider extends SSOCookieFederationFilter
+                                                       implements TokenVerificationCounter {
+    private int verificationCount;
+
     @Override
     public String constructLoginURL(HttpServletRequest req) {
       return super.constructLoginURL(req);
@@ -305,6 +308,17 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
 
     void setTokenService(JWTokenAuthority ts) {
       authority = ts;
+    }
+
+    @Override
+    protected void recordTokenVerification(String tokenId) {
+      super.recordTokenVerification(tokenId);
+      verificationCount++;
+    }
+
+    @Override
+    public int getVerificationCount() {
+      return verificationCount;
     }
   }
 }
