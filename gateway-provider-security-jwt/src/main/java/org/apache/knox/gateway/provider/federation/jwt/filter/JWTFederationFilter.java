@@ -38,15 +38,15 @@ import java.util.Locale;
 
 public class JWTFederationFilter extends AbstractJWTFilter {
 
-    public static final String KNOX_TOKEN_AUDIENCES = "knox.token.audiences";
-    public static final String TOKEN_VERIFICATION_PEM = "knox.token.verification.pem";
-    public static final String KNOX_TOKEN_QUERY_PARAM_NAME = "knox.token.query.param.name";
-    public static final String TOKEN_PRINCIPAL_CLAIM = "knox.token.principal.claim";
-    public static final String JWKS_URL = "knox.token.jwks.url";
-    private static final String BEARER = "Bearer ";
-    private static final String BASIC = "Basic";
-    private static final String TOKEN = "Token";
-    private String paramName;
+  public static final String KNOX_TOKEN_AUDIENCES = "knox.token.audiences";
+  public static final String TOKEN_VERIFICATION_PEM = "knox.token.verification.pem";
+  public static final String KNOX_TOKEN_QUERY_PARAM_NAME = "knox.token.query.param.name";
+  public static final String TOKEN_PRINCIPAL_CLAIM = "knox.token.principal.claim";
+  public static final String JWKS_URL = "knox.token.jwks.url";
+  private static final String BEARER = "Bearer ";
+  private static final String BASIC = "Basic";
+  private static final String TOKEN = "Token";
+  private String paramName;
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
@@ -154,4 +154,5 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       response.sendError(status);
     }
   }
+
 }

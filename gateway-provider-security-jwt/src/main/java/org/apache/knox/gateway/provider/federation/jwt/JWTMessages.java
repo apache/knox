@@ -59,6 +59,11 @@ public interface JWTMessages {
   @Message( level = MessageLevel.INFO, text = "Path {0} is configured as unauthenticated path, letting the request {1} through" )
   void unauthenticatedPathBypass(String path, String uri);
 
-  @Message( level = MessageLevel.WARN, text = "Unable to vderive authentication provider url: {0}" )
+  @Message( level = MessageLevel.WARN, text = "Unable to derive authentication provider URL: {0}" )
   void failedToDeriveAuthenticationProviderUrl(@StackTrace( level = MessageLevel.ERROR) Exception e);
+
+  @Message( level = MessageLevel.ERROR,
+            text = "The configuration value ({0}) for maximum token verification cache is invalid; Using the default value." )
+  void invalidVerificationCacheMaxConfiguration(String value);
+
 }

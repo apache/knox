@@ -52,9 +52,22 @@ public class JWTAsHTTPBasicCredsFederationFilterTest extends AbstractJWTFilterTe
         return "knox.token.audiences";
     }
 
-    private static class TestJWTFederationFilter extends JWTFederationFilter {
+    private static class TestJWTFederationFilter extends JWTFederationFilter implements TokenVerificationCounter {
+      private int verifiedCount;
+
       void setTokenService(JWTokenAuthority ts) {
         authority = ts;
+      }
+
+      @Override
+      protected void recordTokenVerification(String tokenId) {
+        super.recordTokenVerification(tokenId);
+        verifiedCount++;
+      }
+
+      @Override
+      public int getVerificationCount() {
+        return verifiedCount;
       }
     }
 

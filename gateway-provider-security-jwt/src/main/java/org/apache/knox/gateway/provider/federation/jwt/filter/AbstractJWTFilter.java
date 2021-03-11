@@ -41,6 +41,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.AuditContext;
@@ -81,6 +83,9 @@ public abstract class AbstractJWTFilter implements Filter {
   public static final String JWT_EXPECTED_SIGALG = "jwt.expected.sigalg";
   public static final String JWT_DEFAULT_SIGALG = "RS256";
 
+  public static final String JWT_VERIFIED_CACHE_MAX = "jwt.verified.cache.max";
+  public static final int    JWT_VERIFIED_CACHE_MAX_DEFAULT = 100;
+
   static JWTMessages log = MessagesFactory.get( JWTMessages.class );
   private static AuditService auditService = AuditServiceFactory.getAuditService();
   private static Auditor auditor = auditService.getAuditor(
@@ -90,6 +95,7 @@ public abstract class AbstractJWTFilter implements Filter {
   protected List<String> audiences;
   protected JWTokenAuthority authority;
   protected RSAPublicKey publicKey;
+  protected Cache<String, Boolean> verifiedTokens;
   private String expectedIssuer;
   private String expectedSigAlg;
   protected String expectedPrincipalClaim;
@@ -120,6 +126,29 @@ public abstract class AbstractJWTFilter implements Filter {
         }
       }
     }
+
+    // Setup the verified tokens cache
+    initializeVerifiedTokensCache(filterConfig);
+  }
+
+  /**
+   * Initialize the cache for token verifications records.
+   *
+   * @param config The filter configuration
+   */
+  private void initializeVerifiedTokensCache(final FilterConfig config) {
+    int maxCacheSize = JWT_VERIFIED_CACHE_MAX_DEFAULT;
+
+    String configValue = config.getInitParameter(JWT_VERIFIED_CACHE_MAX);
+    if (configValue != null && !configValue.isEmpty()) {
+      try {
+        maxCacheSize = Integer.parseInt(configValue);
+      } catch (NumberFormatException e) {
+        log.invalidVerificationCacheMaxConfiguration(configValue);
+      }
+    }
+
+    verifiedTokens = Caffeine.newBuilder().maximumSize(maxCacheSize).build();
   }
 
   protected void configureExpectedParameters(FilterConfig filterConfig) {
@@ -307,33 +336,67 @@ public abstract class AbstractJWTFilter implements Filter {
     return false;
   }
 
-  private boolean verifyToken(final JWT token) {
-    boolean verified = false;
-    try {
-      if (publicKey != null) {
-        verified = authority.verifyToken(token, publicKey);
-      } else if (expectedJWKSUrl != null) {
-        verified = authority.verifyToken(token, expectedJWKSUrl, expectedSigAlg);
-      } else {
-        verified = authority.verifyToken(token);
-      }
-    } catch (TokenServiceException e) {
-      log.unableToVerifyToken(e);
-    }
+  protected boolean verifyToken(final JWT token) {
+    boolean verified;
 
-    // Check received signature algorithm if expectation is configured
-    if (verified && expectedSigAlg != null) {
+    String tokenId = TokenUtils.getTokenId(token);
+
+    // Check if the token has already been verified
+    verified = hasTokenBeenVerified(tokenId);
+
+    // If it has not yet been verified, then perform the verification now
+    if (!verified) {
       try {
-        final String receivedSigAlg = JWSHeader.parse(token.getHeader()).getAlgorithm().getName();
-        if (!receivedSigAlg.equals(expectedSigAlg)) {
+        if (publicKey != null) {
+          verified = authority.verifyToken(token, publicKey);
+        } else if (expectedJWKSUrl != null) {
+          verified = authority.verifyToken(token, expectedJWKSUrl, expectedSigAlg);
+        } else {
+          verified = authority.verifyToken(token);
+        }
+      } catch (TokenServiceException e) {
+        log.unableToVerifyToken(e);
+      }
+
+      // Check received signature algorithm if expectation is configured
+      if (verified && expectedSigAlg != null) {
+        try {
+          final String receivedSigAlg = JWSHeader.parse(token.getHeader()).getAlgorithm().getName();
+          if (!receivedSigAlg.equals(expectedSigAlg)) {
+            verified = false;
+          }
+        } catch (ParseException e) {
+          log.unableToVerifyToken(e);
           verified = false;
         }
-      } catch (ParseException e) {
-        log.unableToVerifyToken(e);
-        verified = false;
+      }
+
+      if (verified) { // If successful, record the verification for future reference
+        recordTokenVerification(tokenId);
       }
     }
+
     return verified;
+  }
+
+  /**
+   * Determine if the specified token has previously been successfully verified.
+   *
+   * @param tokenId The unique identifier for a token.
+   *
+   * @return true, if the specified token has been previously verified; Otherwise, false.
+   */
+  protected boolean hasTokenBeenVerified(final String tokenId) {
+    return (verifiedTokens.getIfPresent(tokenId) != null);
+  }
+
+  /**
+   * Record a successful token verification.
+   *
+   * @param tokenId The unique identifier for the token which has been successfully verified.
+   */
+  protected void recordTokenVerification(final String tokenId) {
+    verifiedTokens.put(tokenId, true);
   }
 
   protected abstract void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status,
