@@ -1031,6 +1031,91 @@ public abstract class AbstractJWTFilterTest  {
     }
   }
 
+  @Test
+  public void testExpiredTokensEvictedFromSignatureVerificationCache() throws Exception {
+    try {
+
+      final String principalAlice = "alice";
+
+      Properties props = getProperties();
+      props.put(AbstractJWTFilter.JWT_EXPECTED_SIGALG, "RS512");
+      props.put(AbstractJWTFilter.JWT_VERIFIED_CACHE_MAX, "1");
+      handler.init(new TestFilterConfig(props));
+      Assert.assertEquals("Expected no token verification calls yet.",
+                          0, ((TokenVerificationCounter) handler).getVerificationCount());
+
+      long expiration = new Date().getTime() + TimeUnit.SECONDS.toMillis(2);
+      final SignedJWT jwt_alice = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER,
+                                         principalAlice,
+                                         new Date(expiration),
+                                         new Date(),
+                                         privateKey,
+                                         JWSAlgorithm.RS512.getName());
+
+      HttpServletRequest request = createMockRequest(jwt_alice);
+      HttpServletResponse response = createMockResponse();
+      EasyMock.replay(request, response);
+
+      TestFilterChain chain = new TestFilterChain();
+      handler.doFilter(request, response, chain);
+      Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled);
+      Assert.assertEquals("The signature verification record for the token should have been added.",
+                          1, getSignatureVerificationCacheSize());
+
+      // Do it again, after the token has expired
+      request = createMockRequest(jwt_alice);
+      response = createMockResponse();
+      EasyMock.replay(request, response);
+
+      // Wait for the token to expire
+      while (System.currentTimeMillis() < expiration) {
+        try {
+          Thread.sleep(500);
+        } catch (InterruptedException e) {
+          //
+        }
+      }
+
+      chain = new TestFilterChain();
+      handler.doFilter(request, response, chain);
+      Assert.assertFalse("doFilterCalled should be false since the token is expired.", chain.doFilterCalled);
+
+      Assert.assertEquals("The signature verification record for the expired token should have been removed.",
+                          0, getSignatureVerificationCacheSize());
+
+    } catch (ServletException se) {
+      fail("Should NOT have thrown a ServletException.");
+    }
+  }
+
+  private HttpServletRequest createMockRequest(final SignedJWT jwt) {
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    setTokenOnRequest(request, jwt);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null).anyTimes();
+    return request;
+  }
+
+  private HttpServletResponse createMockResponse() throws Exception {
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+    EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
+      @Override
+      public void write(int b) {
+      }
+
+      @Override
+      public void setWriteListener(WriteListener arg0) {
+      }
+
+      @Override
+      public boolean isReady() {
+        return false;
+      }
+    }).anyTimes();
+    return response;
+  }
+
   private void doRepeatTestVerificationOptimization(final HttpServletRequest request,
                                                     final HttpServletResponse response,
                                                     final SignedJWT jwt,
@@ -1062,6 +1147,13 @@ public abstract class AbstractJWTFilterTest  {
     f.setAccessible(true);
     Cache<String, Boolean> cache = (Cache<String, Boolean>) f.get(handler);
     cache.cleanUp();
+  }
+
+  private long getSignatureVerificationCacheSize() throws Exception {
+    Field f = handler.getClass().getSuperclass().getSuperclass().getDeclaredField("verifiedTokens");
+    f.setAccessible(true);
+    Cache<String, Boolean> cache = (Cache<String, Boolean>) f.get(handler);
+    return cache.estimatedSize();
   }
 
   protected Properties getProperties() {
