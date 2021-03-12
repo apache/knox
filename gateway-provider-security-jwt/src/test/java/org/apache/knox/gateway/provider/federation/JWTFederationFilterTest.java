@@ -57,8 +57,8 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
     }
 
     @Override
-    protected void recordTokenVerification(final String tokenId) {
-      super.recordTokenVerification(tokenId);
+    protected void recordSignatureVerification(final String tokenId) {
+      super.recordSignatureVerification(tokenId);
       verificationCount++;
     }
 

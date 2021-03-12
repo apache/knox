@@ -311,8 +311,8 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
     }
 
     @Override
-    protected void recordTokenVerification(String tokenId) {
-      super.recordTokenVerification(tokenId);
+    protected void recordSignatureVerification(String tokenId) {
+      super.recordSignatureVerification(tokenId);
       verificationCount++;
     }
 

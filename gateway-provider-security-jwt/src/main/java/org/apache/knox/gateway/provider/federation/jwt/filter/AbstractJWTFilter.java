@@ -84,7 +84,7 @@ public abstract class AbstractJWTFilter implements Filter {
   public static final String JWT_DEFAULT_SIGALG = "RS256";
 
   public static final String JWT_VERIFIED_CACHE_MAX = "jwt.verified.cache.max";
-  public static final int    JWT_VERIFIED_CACHE_MAX_DEFAULT = 100;
+  public static final int    JWT_VERIFIED_CACHE_MAX_DEFAULT = 250;
 
   static JWTMessages log = MessagesFactory.get( JWTMessages.class );
   private static AuditService auditService = AuditServiceFactory.getAuditService();
@@ -299,31 +299,37 @@ public abstract class AbstractJWTFilter implements Filter {
       // the designated expiration time
       try {
         if (tokenIsStillValid(token)) {
-          // Verify the token signature
-          if (verifyToken(token)) {
-            boolean audValid = validateAudiences(token);
-            if (audValid) {
-              Date nbf = token.getNotBeforeDate();
-              if (nbf == null || new Date().after(nbf)) {
+          boolean audValid = validateAudiences(token);
+          if (audValid) {
+            Date nbf = token.getNotBeforeDate();
+            if (nbf == null || new Date().after(nbf)) {
+              if (verifyTokenSignature(token)) {
                 return true;
               } else {
-                log.notBeforeCheckFailed();
-                handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-                        "Bad request: the NotBefore check failed");
+                log.failedToVerifyTokenSignature(tokenId, displayableToken);
+                handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
               }
             } else {
-              log.failedToValidateAudience(tokenId, displayableToken);
+              log.notBeforeCheckFailed();
               handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-                      "Bad request: missing required token audience");
+                      "Bad request: the NotBefore check failed");
             }
           } else {
-            log.failedToVerifyTokenSignature(tokenId, displayableToken);
-            handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
+            log.failedToValidateAudience(tokenId, displayableToken);
+            handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+                    "Bad request: missing required token audience");
           }
         } else {
           log.tokenHasExpired(tokenId, displayableToken);
+
+          // Explicitly evict the record of this token's signature verification (if present).
+          // There is no value in keeping this record for expired tokens, and explicitly removing them may prevent
+          // records for other valid tokens from being prematurely evicted from the cache.
+          removeSignatureVerificationRecord(tokenId);
+
           handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
                                 "Bad request: token has expired");
+
         }
       } catch (UnknownTokenException e) {
         log.unableToVerifyExpiration(e);
@@ -336,13 +342,13 @@ public abstract class AbstractJWTFilter implements Filter {
     return false;
   }
 
-  protected boolean verifyToken(final JWT token) {
+  protected boolean verifyTokenSignature(final JWT token) {
     boolean verified;
 
     String tokenId = TokenUtils.getTokenId(token);
 
     // Check if the token has already been verified
-    verified = hasTokenBeenVerified(tokenId);
+    verified = hasSignatureBeenVerified(tokenId);
 
     // If it has not yet been verified, then perform the verification now
     if (!verified) {
@@ -372,7 +378,7 @@ public abstract class AbstractJWTFilter implements Filter {
       }
 
       if (verified) { // If successful, record the verification for future reference
-        recordTokenVerification(tokenId);
+        recordSignatureVerification(tokenId);
       }
     }
 
@@ -380,23 +386,32 @@ public abstract class AbstractJWTFilter implements Filter {
   }
 
   /**
-   * Determine if the specified token has previously been successfully verified.
+   * Determine if the specified token signature has previously been successfully verified.
    *
    * @param tokenId The unique identifier for a token.
    *
    * @return true, if the specified token has been previously verified; Otherwise, false.
    */
-  protected boolean hasTokenBeenVerified(final String tokenId) {
+  protected boolean hasSignatureBeenVerified(final String tokenId) {
     return (verifiedTokens.getIfPresent(tokenId) != null);
   }
 
   /**
-   * Record a successful token verification.
+   * Record a successful token signature verification.
    *
    * @param tokenId The unique identifier for the token which has been successfully verified.
    */
-  protected void recordTokenVerification(final String tokenId) {
+  protected void recordSignatureVerification(final String tokenId) {
     verifiedTokens.put(tokenId, true);
+  }
+
+  /**
+   * Explicitly evict the signature verification record from the cache if it exists.
+   *
+   * @param tokenId The token whose signature verification record should be evicted.
+   */
+  protected void removeSignatureVerificationRecord(final String tokenId) {
+    verifiedTokens.asMap().remove(tokenId);
   }
 
   protected abstract void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status,
