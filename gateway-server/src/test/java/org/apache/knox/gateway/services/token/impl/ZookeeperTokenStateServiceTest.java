@@ -48,6 +48,7 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.MasterService;
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.easymock.EasyMock;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -115,6 +116,13 @@ public class ZookeeperTokenStateServiceTest {
     final long expiration = zktokenStateServiceNode2.getTokenExpiration("node1Token");
     Thread.sleep(LONG_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL * 1000);
     assertEquals(2000L, expiration);
+
+    final String userName = "testUser";
+    final String comment = "This is my test comment";
+    zktokenStateServiceNode1.addMetadata("node1Token", new TokenMetadata(userName, comment));
+    Thread.sleep(LONG_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL * 1000);
+    assertEquals(userName, zktokenStateServiceNode2.getTokenMetadata("node1Token").getUserName());
+    assertEquals(comment, zktokenStateServiceNode2.getTokenMetadata("node1Token").getComment());
   }
 
   @Test

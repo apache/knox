@@ -16,20 +16,13 @@
  */
 package org.apache.knox.gateway.services.token.impl;
 
-import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.crypto.RSASSASigner;
-import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.apache.knox.gateway.services.security.token.TokenStateService;
-import org.apache.knox.gateway.services.security.token.TokenUtils;
-import org.apache.knox.gateway.services.security.token.impl.JWT;
-import org.apache.knox.gateway.services.security.token.UnknownTokenException;
-import org.apache.knox.gateway.services.security.token.impl.JWTToken;
-import org.easymock.EasyMock;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -42,11 +35,22 @@ import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
+import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.easymock.EasyMock;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.crypto.RSASSASigner;
 
 public class DefaultTokenStateServiceTest {
 
@@ -260,6 +264,26 @@ public class DefaultTokenStateServiceTest {
     }
 
     tss.getTokenExpiration(token);
+  }
+
+  @Test
+  public void testAddTokenMetadata() throws Exception {
+    final JWT token = getJWTToken(System.currentTimeMillis());
+    final String tokenId = token.getClaim(JWTToken.KNOX_ID_CLAIM);
+    final TokenStateService tss = new DefaultTokenStateService();
+    tss.addToken((JWTToken) token, System.currentTimeMillis());
+    assertNull(tss.getTokenMetadata(tokenId));
+
+    final String userName = "testUser";
+    tss.addMetadata(token.getClaim(JWTToken.KNOX_ID_CLAIM), new TokenMetadata(userName));
+    assertNotNull(tss.getTokenMetadata(tokenId));
+    assertEquals(tss.getTokenMetadata(tokenId).getUserName(), userName);
+    assertTrue(tss.getTokenMetadata(tokenId).getComment().isEmpty());
+
+    final String comment = "this is my test comment";
+    tss.addMetadata(token.getClaim(JWTToken.KNOX_ID_CLAIM), new TokenMetadata(userName, comment));
+    assertNotNull(tss.getTokenMetadata(tokenId));
+    assertEquals(tss.getTokenMetadata(tokenId).getComment(), comment);
   }
 
   protected static JWTToken createMockToken(final long expiration) {

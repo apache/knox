@@ -79,7 +79,7 @@ public abstract class AbstractFileTokenStateJournalTest {
         long issueTime = System.currentTimeMillis();
         long expiration = issueTime + TimeUnit.MINUTES.toMillis(5);
         long maxLifetime = issueTime + (5 * TimeUnit.MINUTES.toMillis(5));
-        journal.add(tokenId, issueTime, expiration, maxLifetime);
+        journal.add(tokenId, issueTime, expiration, maxLifetime, null);
 
         // Get the token state from the journal, and validate its contents
         JournalEntry entry = journal.get(tokenId);
@@ -109,7 +109,7 @@ public abstract class AbstractFileTokenStateJournalTest {
         long issueTime = System.currentTimeMillis();
         long expiration = issueTime + TimeUnit.MINUTES.toMillis(5);
         long maxLifetime = issueTime + (5 * TimeUnit.MINUTES.toMillis(5));
-        journal.add(tokenId, issueTime, expiration, maxLifetime);
+        journal.add(tokenId, issueTime, expiration, maxLifetime, null);
 
         // Get the token state from the journal, and validate its contents
         JournalEntry entry = journal.get(tokenId);
@@ -120,7 +120,7 @@ public abstract class AbstractFileTokenStateJournalTest {
         assertEquals(maxLifetime, Long.parseLong(entry.getMaxLifetime()));
 
         long updatedExpiration = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5);
-        journal.add(tokenId, issueTime, updatedExpiration, maxLifetime);
+        journal.add(tokenId, issueTime, updatedExpiration, maxLifetime, null);
 
         // Get and validate the updated token state
         entry = journal.get(tokenId);

@@ -42,6 +42,7 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.impl.DefaultKeystoreService;
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.token.TokenStateServiceStatistics;
 import org.apache.knox.gateway.services.token.impl.state.TokenStateJournalFactory;
@@ -55,6 +56,7 @@ import org.apache.knox.gateway.util.ExecutorServiceUtils;
 public class AliasBasedTokenStateService extends DefaultTokenStateService implements TokenStatePeristerMonitorListener {
 
   static final String TOKEN_MAX_LIFETIME_POSTFIX = "--max";
+  static final String TOKEN_META_POSTFIX = "--meta";
 
   protected AliasService aliasService;
 
@@ -157,6 +159,9 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService implem
           super.updateExpiration(tokenId, expiration);
           super.setMaxLifetime(tokenId, maxLifeTime);
           count+=2;
+        } else if (alias.endsWith(TOKEN_META_POSTFIX)) {
+          tokenId = alias.substring(0, alias.indexOf(TOKEN_META_POSTFIX));
+          super.addMetadata(tokenId, TokenMetadata.fromJSON(new String(passwordAliasMapEntry.getValue())));
         }
 
         // log some progress (it's very useful in case a huge amount of token related aliases in __gateway-credentials.jceks)
@@ -265,7 +270,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService implem
     }
 
     try {
-      journal.add(tokenId, issueTime, expiration, maxLifetimeDuration);
+      journal.add(tokenId, issueTime, expiration, maxLifetimeDuration, null);
     } catch (IOException e) {
       log.failedToAddJournalEntry(tokenId, e);
     }
@@ -419,8 +424,45 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService implem
     super.updateExpiration(tokenId, expiration);
   }
 
+  @Override
+  public void addMetadata(String tokenId, TokenMetadata metadata) {
+    addMetadataInMemory(tokenId, metadata);
+    try {
+      final JournalEntry entry = journal.get(tokenId);
+      if (entry != null) {
+        journal.add(entry.getTokenId(), Long.parseLong(entry.getIssueTime()), Long.parseLong(entry.getExpiration()), Long.parseLong(entry.getMaxLifetime()), metadata);
+      }
+    } catch (IOException e) {
+      log.failedToAddJournalEntry(tokenId, e);
+    }
+
+    synchronized (unpersistedState) {
+      unpersistedState.add(new TokenMetadataState(tokenId, metadata));
+    }
+  }
+
+  protected void addMetadataInMemory(String tokenId, TokenMetadata metadata) {
+    super.addMetadata(tokenId, metadata);
+  }
+
+  @Override
+  public TokenMetadata getTokenMetadata(String tokenId) {
+    TokenMetadata tokenMetadata = super.getTokenMetadata(tokenId);
+    if (tokenMetadata == null) {
+      try {
+        final char[] tokenMetadataAliasValue = getPasswordUsingAliasService(tokenId + TOKEN_META_POSTFIX);
+        if (tokenMetadataAliasValue != null) {
+          tokenMetadata = TokenMetadata.fromJSON(new String(tokenMetadataAliasValue));
+        }
+      } catch (AliasServiceException e) {
+        log.errorAccessingTokenState(tokenId, e);
+      }
+    }
+    return tokenMetadata;
+  }
+
   enum TokenStateType {
-    EXP(1), MAX(2);
+    EXP(1), MAX(2), META(3);
 
     private final int id;
 
@@ -535,6 +577,37 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService implem
       }
       final TokenExpiration rhs = (TokenExpiration) obj;
       return new EqualsBuilder().append(this.tokenId, rhs.tokenId).append(this.getType().id, rhs.getType().id).isEquals();
+    }
+  }
+
+  private static final class TokenMetadataState implements TokenState {
+
+    private final String tokenId;
+    private final TokenMetadata metadata;
+
+    TokenMetadataState(String tokenId, TokenMetadata metadata) {
+      this.tokenId = tokenId;
+      this.metadata = metadata;
+    }
+
+    @Override
+    public String getTokenId() {
+      return tokenId;
+    }
+
+    @Override
+    public String getAlias() {
+      return tokenId + TOKEN_META_POSTFIX;
+    }
+
+    @Override
+    public String getAliasValue() {
+      return metadata.toJSON();
+    }
+
+    @Override
+    public TokenStateType getType() {
+      return TokenStateType.META;
     }
   }
 

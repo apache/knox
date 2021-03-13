@@ -21,6 +21,7 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AbstractAliasService;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.services.token.state.JournalEntry;
@@ -511,7 +512,8 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
       journal.add(token.getClaim(JWTToken.KNOX_ID_CLAIM),
                   System.currentTimeMillis(),
                   token.getExpiresDate().getTime(),
-                  System.currentTimeMillis() + TimeUnit.HOURS.toMillis(24));
+                  System.currentTimeMillis() + TimeUnit.HOURS.toMillis(24),
+                  null);
     }
 
     AliasBasedTokenStateService tss = new NoEvictionAliasBasedTokenStateService();
@@ -563,32 +565,37 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
       journal.add(token.getClaim(JWTToken.KNOX_ID_CLAIM),
                   System.currentTimeMillis(),
                   token.getExpiresDate().getTime(),
-                  System.currentTimeMillis() + TimeUnit.HOURS.toMillis(24));
+                  System.currentTimeMillis() + TimeUnit.HOURS.toMillis(24),
+                  null);
     }
 
     // Add an entry with an invalid token identifier
     journal.add("   ",
                 System.currentTimeMillis(),
                 System.currentTimeMillis(),
-                System.currentTimeMillis());
+                System.currentTimeMillis(),
+                null);
 
     // Add an entry with an invalid issue time
     journal.add(new TestJournalEntry(UUID.randomUUID().toString(),
                 "invalidLongValue",
                 String.valueOf(System.currentTimeMillis()),
-                String.valueOf(System.currentTimeMillis())));
+                String.valueOf(System.currentTimeMillis()),
+                new TokenMetadata("testUser")));
 
     // Add an entry with an invalid expiration time
     journal.add(new TestJournalEntry(UUID.randomUUID().toString(),
                 String.valueOf(System.currentTimeMillis()),
                 "invalidLongValue",
-                String.valueOf(System.currentTimeMillis())));
+                String.valueOf(System.currentTimeMillis()),
+                new TokenMetadata("testUser")));
 
     // Add an entry with an invalid max lifetime
     journal.add(new TestJournalEntry(UUID.randomUUID().toString(),
                                      String.valueOf(System.currentTimeMillis()),
                                      String.valueOf(System.currentTimeMillis()),
-                                     "invalidLongValue"));
+                                     "invalidLongValue",
+                                     new TokenMetadata("testUser")));
 
     AliasBasedTokenStateService tss = new NoEvictionAliasBasedTokenStateService();
     tss.setAliasService(aliasService);
@@ -844,12 +851,14 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     private String issueTime;
     private String expiration;
     private String maxLifetime;
+    private TokenMetadata tokenMetadata;
 
-    TestJournalEntry(String tokenId, String issueTime, String expiration, String maxLifetime) {
+    TestJournalEntry(String tokenId, String issueTime, String expiration, String maxLifetime, TokenMetadata tokenMetadata) {
       this.tokenId     = tokenId;
       this.issueTime   = issueTime;
       this.expiration  = expiration;
       this.maxLifetime = maxLifetime;
+      this.tokenMetadata = tokenMetadata;
     }
 
     @Override
@@ -870,6 +879,11 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     @Override
     public String getMaxLifetime() {
       return maxLifetime;
+    }
+
+    @Override
+    public TokenMetadata getTokenMetadata() {
+      return tokenMetadata;
     }
 
     @Override

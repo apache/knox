@@ -18,15 +18,15 @@
  */
 package org.apache.knox.gateway.services.token.impl.state;
 
-import org.apache.knox.gateway.services.token.state.JournalEntry;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import org.apache.knox.gateway.services.token.state.JournalEntry;
+import org.junit.Test;
 
 public class FileTokenStateJournalTest {
 
@@ -40,14 +40,14 @@ public class FileTokenStateJournalTest {
         doTestParseJournalEntry(tokenId, issueTime, expiration, maxLifetime);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testParseJournalEntry_MissingMaxLifetime() {
         final String tokenId     = UUID.randomUUID().toString();
         final Long   issueTime   = System.currentTimeMillis();
         final Long   expiration  = issueTime + TimeUnit.HOURS.toMillis(1);
         final Long   maxLifetime = null;
 
-        doTestParseJournalEntry(tokenId, issueTime, expiration, maxLifetime);
+        doTestParseJournalEntry(tokenId, issueTime, expiration, maxLifetime, "user", null);
     }
 
     @Test
@@ -76,57 +76,65 @@ public class FileTokenStateJournalTest {
     }
 
     @Test
+    public void tesParseTokenMetadata() throws Exception {
+      doTestParseJournalEntry("", "", "", "", "userName", "");
+      doTestParseJournalEntry("", "", "", "", "", "comment");
+    }
+
+    @Test
     public void testParseJournalEntry_AllMissing() {
-        doTestParseJournalEntry(null, null, null, " ");
+        doTestParseJournalEntry(null, null, null, " ", null, null);
+    }
+
+    private void doTestParseJournalEntry(final String tokenId, final Long issueTime, final Long expiration, final Long maxLifetime) {
+      doTestParseJournalEntry(tokenId, issueTime, expiration, maxLifetime, null, null);
     }
 
     private void doTestParseJournalEntry(final String tokenId,
                                          final Long   issueTime,
                                          final Long   expiration,
-                                         final Long   maxLifetime) {
+                                         final Long   maxLifetime,
+                                         final String userName,
+                                         final String comment) {
         doTestParseJournalEntry(tokenId,
                                 (issueTime != null ? issueTime.toString() : null),
                                 (expiration != null ? expiration.toString() : null),
-                                (maxLifetime != null ? maxLifetime.toString() : null));
+                                (maxLifetime != null ? maxLifetime.toString() : null),
+                                userName, comment);
     }
 
     private void doTestParseJournalEntry(final String tokenId,
                                          final String issueTime,
                                          final String expiration,
-                                         final String maxLifetime) {
+                                         final String maxLifetime,
+                                         final String userName,
+                                         final String comment) {
         StringBuilder entryStringBuilder =
             new StringBuilder(tokenId != null ? tokenId : "").append(',')
                                                              .append(issueTime != null ? issueTime : "")
                                                              .append(',')
                                                              .append(expiration != null ? expiration : "")
                                                              .append(',')
-                                                             .append(maxLifetime != null ? maxLifetime : "");
+                                                             .append(maxLifetime != null ? maxLifetime : "")
+                                                             .append(",").append(userName == null ? "" : userName)
+                                                             .append(",").append(comment == null ? "" : comment);
 
         JournalEntry entry = FileTokenStateJournal.FileJournalEntry.parse(entryStringBuilder.toString());
         assertNotNull(entry);
-        if (tokenId != null && !tokenId.trim().isEmpty()) {
-            assertEquals(tokenId, entry.getTokenId());
-        } else {
-            assertNull(entry.getTokenId());
-        }
+        assertJournalEntryField(tokenId, entry.getTokenId());
+        assertJournalEntryField(issueTime, entry.getIssueTime());
+        assertJournalEntryField(expiration, entry.getExpiration());
+        assertJournalEntryField(maxLifetime, entry.getMaxLifetime());
+        assertJournalEntryField(userName, entry.getTokenMetadata().getUserName());
+        assertJournalEntryField(comment, entry.getTokenMetadata().getComment());
+    }
 
-        if (issueTime != null && !issueTime.trim().isEmpty()) {
-            assertEquals(issueTime, entry.getIssueTime());
-        } else {
-            assertNull(entry.getIssueTime());
-        }
-
-        if (expiration != null && !expiration.trim().isEmpty()) {
-            assertEquals(expiration, entry.getExpiration());
-        } else {
-            assertNull(entry.getExpiration());
-        }
-
-        if (maxLifetime != null && !maxLifetime.trim().isEmpty()) {
-            assertEquals(maxLifetime, entry.getMaxLifetime());
-        } else {
-            assertNull(entry.getMaxLifetime());
-        }
+    private void assertJournalEntryField(String received, String parsed) {
+      if (received != null && !received.trim().isEmpty()) {
+        assertEquals(received, parsed);
+      } else {
+        assertNull(parsed);
+      }
     }
 
 

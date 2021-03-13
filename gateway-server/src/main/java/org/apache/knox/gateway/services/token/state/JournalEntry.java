@@ -18,6 +18,8 @@
  */
 package org.apache.knox.gateway.services.token.state;
 
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
+
 /**
  * An entry in the TokenStateJournal
  */
@@ -48,4 +50,10 @@ public interface JournalEntry {
      * @return The token's maximum allowed lifetime
      */
     String getMaxLifetime();
+
+    /**
+     * @return The metadata belongs to this token
+     */
+    TokenMetadata getTokenMetadata();
+
 }
