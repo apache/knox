@@ -29,6 +29,9 @@ import com.cloudera.api.swagger.model.ApiEventQueryResult;
 import com.cloudera.api.swagger.model.ApiRole;
 import com.cloudera.api.swagger.model.ApiRoleList;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+
 import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
@@ -57,6 +60,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor.ConfigurationChangeListener;
@@ -98,8 +102,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
   private static final int DEFAULT_POLLING_INTERVAL = 60;
 
-  private static final ClouderaManagerServiceDiscoveryMessages log =
-                  MessagesFactory.get(ClouderaManagerServiceDiscoveryMessages.class);
+  private static final ClouderaManagerServiceDiscoveryMessages log = MessagesFactory.get(ClouderaManagerServiceDiscoveryMessages.class);
 
   // Fully-qualified cluster name delimiter
   private static final String FQCN_DELIM = "::";
@@ -120,17 +123,18 @@ public class PollingConfigurationAnalyzer implements Runnable {
   // Polling interval in seconds
   private int interval;
 
+  private final Cache<String, Long> processedEvents;
+
   // Cache of ClouderaManager API clients, keyed by discovery address
   private final Map<String, DiscoveryApiClient> clients = new ConcurrentHashMap<>();
 
   // Timestamp records of the most recent start event query per discovery address
-  private Map<String, String> eventQueryTimestamps = new ConcurrentHashMap<>();
+  private Map<String, Instant> eventQueryTimestamps = new ConcurrentHashMap<>();
 
   // The amount of time before "now" to will check for start events the first time
   private long eventQueryDefaultTimestampOffset = DEFAULT_EVENT_QUERY_DEFAULT_TIMESTAMP_OFFSET;
 
   private boolean isActive;
-
 
   PollingConfigurationAnalyzer(final ClusterConfigurationCache   configCache,
                                final AliasService                aliasService,
@@ -149,6 +153,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
     this.keystoreService = keystoreService;
     this.changeListener  = changeListener;
     this.interval        = interval;
+    this.processedEvents = Caffeine.newBuilder().expireAfterAccess(interval * 3, TimeUnit.SECONDS).maximumSize(1000).build();
   }
 
   void setInterval(int interval) {
@@ -229,6 +234,11 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
     boolean configHasChanged = false;
     for (StartEvent re : relevantEvents) {
+      if (processedEvents.getIfPresent(re.auditEvent.getId()) != null) {
+        log.activationEventAlreadyProcessed(re.auditEvent.getId());
+        continue;
+      }
+
       String serviceType = re.getServiceType();
 
       if (CM_SERVICE_TYPE.equals(serviceType)) {
@@ -271,6 +281,10 @@ public class PollingConfigurationAnalyzer implements Runnable {
         break; // No need to continue checking once we've identified one reason to perform discovery again
       }
     }
+
+    // these events should not be processed again even if the next CM query result contains them
+    relevantEvents.forEach(re -> processedEvents.put(re.auditEvent.getId(), 1L));
+
     return configHasChanged;
   }
 
@@ -354,10 +368,10 @@ public class PollingConfigurationAnalyzer implements Runnable {
   }
 
   void setEventQueryTimestamp(final String address, final String cluster, final Instant timestamp) {
-    eventQueryTimestamps.put((address + ":" + cluster), timestamp.toString());
+    eventQueryTimestamps.put((address + ":" + cluster), timestamp);
   }
 
-  private String getEventQueryTimestamp(final String address, final String cluster) {
+  private Instant getEventQueryTimestamp(final String address, final String cluster) {
     return eventQueryTimestamps.get(address + ":" + cluster);
   }
 
@@ -383,25 +397,31 @@ public class PollingConfigurationAnalyzer implements Runnable {
     List<StartEvent> relevantEvents = new ArrayList<>();
 
     // Get the last event query timestamp
-    String lastTimestamp = getEventQueryTimestamp(address, clusterName);
+    Instant lastTimestamp = getEventQueryTimestamp(address, clusterName);
 
     // If this is the first query, then define the last timestamp
     if (lastTimestamp == null) {
-      lastTimestamp = Instant.now().minus(eventQueryDefaultTimestampOffset, ChronoUnit.MILLIS).toString();
+      lastTimestamp = Instant.now().minus(eventQueryDefaultTimestampOffset, ChronoUnit.MILLIS);
     }
 
-    log.queryingConfigActivationEventsFromCluster(clusterName, address, lastTimestamp);
+    // Go back in time an '2 x interval' more to mitigate the chance of losing a relevant audit event
+    lastTimestamp = lastTimestamp.minus(interval * 2, ChronoUnit.SECONDS);
+
+    log.queryingConfigActivationEventsFromCluster(clusterName, address, lastTimestamp.toString());
 
     // Record the new event query timestamp for this address/cluster
     setEventQueryTimestamp(address, clusterName, Instant.now());
 
     // Query the event log from CM for service/cluster start events
-    List<ApiEvent> events = queryEvents(getApiClient(configCache.getDiscoveryConfig(address, clusterName)),
-                                        clusterName,
-                                        lastTimestamp);
-    for (ApiEvent event : events) {
-      if(isRelevantEvent(event)) {
-        relevantEvents.add(new StartEvent(event));
+    final List<ApiEvent> events = queryEvents(getApiClient(configCache.getDiscoveryConfig(address, clusterName)), clusterName, lastTimestamp.toString());
+
+    if (events.isEmpty()) {
+      log.noActivationEventFound();
+    } else {
+      for (ApiEvent event : events) {
+        if(isRelevantEvent(event)) {
+          relevantEvents.add(new StartEvent(event));
+        }
       }
     }
 
@@ -436,16 +456,13 @@ public class PollingConfigurationAnalyzer implements Runnable {
     List<ApiEvent> events = new ArrayList<>();
 
     // Setup the query for events
-    String timeFilter =
-        (since != null) ? String.format(Locale.ROOT, EVENTS_QUERY_TIMESTAMP_FORMAT, since) : "";
+    String timeFilter = (since != null) ? String.format(Locale.ROOT, EVENTS_QUERY_TIMESTAMP_FORMAT, since) : "";
 
-    String queryString = String.format(Locale.ROOT,
-                                       EVENTS_QUERY_FORMAT,
-                                       clusterName,
-                                       timeFilter);
+    String queryString = String.format(Locale.ROOT, EVENTS_QUERY_FORMAT, clusterName, timeFilter);
 
     try {
-      ApiEventQueryResult eventsResult = (new EventsResourceApi(client)).readEvents(20, queryString, 0);
+      // giving 'null' as maximum result size results in fetching all events from CM within the given time interval
+      ApiEventQueryResult eventsResult = (new EventsResourceApi(client)).readEvents(null, queryString, 0);
       events.addAll(eventsResult.getItems());
     } catch (ApiException e) {
       log.clouderaManagerEventsAPIError(e);
