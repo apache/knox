@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.hadoopauth.filter;
 
-import static org.apache.knox.gateway.hadoopauth.filter.HadoopAuthFilter.JWT_PREFIX;
 import static org.apache.knox.gateway.hadoopauth.filter.HadoopAuthFilter.SUPPORT_JWT;
 import static org.apache.knox.gateway.hadoopauth.filter.HadoopAuthFilter.shouldUseJwtFilter;
 
@@ -46,7 +45,6 @@ import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.hadoopauth.HadoopAuthMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
-import org.apache.knox.gateway.GatewayFilter;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.Auditor;
@@ -67,7 +65,6 @@ public class HadoopAuthPostFilter implements Filter {
     final boolean jwtSupported = Boolean.parseBoolean(supportJwt == null ? "false" : supportJwt);
     if (jwtSupported) {
       jwtFilter = new JWTFederationFilter();
-      ((GatewayFilter.Holder)filterConfig).removeParamPrefix(JWT_PREFIX);
       jwtFilter.init(filterConfig);
     }
   }

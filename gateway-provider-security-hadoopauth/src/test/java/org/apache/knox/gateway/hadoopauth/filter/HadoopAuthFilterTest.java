@@ -22,7 +22,6 @@ import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.createMockBuilder;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.getCurrentArguments;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
@@ -165,8 +164,6 @@ public class HadoopAuthFilterTest {
     expect(filterConfig.getInitParameter("support.jwt")).andReturn(supportJwt).anyTimes();
     final boolean isJwtSupported = Boolean.parseBoolean(supportJwt);
     if (isJwtSupported) {
-      filterConfig.removeParamPrefix("jwt.");
-      expectLastCall();
       expect(filterConfig.getInitParameter(JWTFederationFilter.KNOX_TOKEN_AUDIENCES)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(JWTFederationFilter.KNOX_TOKEN_QUERY_PARAM_NAME)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(JWTFederationFilter.JWKS_URL)).andReturn(null).anyTimes();

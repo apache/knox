@@ -328,21 +328,6 @@ public class GatewayFilter implements Filter {
       return value;
     }
 
-    public void removeParamPrefix(String prefix) {
-      if (params != null) {
-        final Set<String> relevantParams = new HashSet<>();
-        params.entrySet().forEach(paramEntry -> {
-          if (paramEntry.getKey().startsWith(prefix)) {
-            relevantParams.add(paramEntry.getKey());
-          }
-        });
-        relevantParams.forEach(param -> {
-          String value = params.remove(param);
-          params.put(param.replace(prefix, ""), value);
-        });
-      }
-    }
-
     @Override
     public Enumeration<String> getInitParameterNames() {
       Enumeration<String> names = null;
