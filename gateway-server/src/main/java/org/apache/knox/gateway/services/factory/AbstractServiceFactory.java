@@ -79,7 +79,7 @@ public abstract class AbstractServiceFactory implements ServiceFactory {
     return match;
   }
 
-  private boolean isEmptyDefaultImplementation(String implementation) {
+  protected boolean isEmptyDefaultImplementation(String implementation) {
     return EMPTY_DEFAULT_IMPLEMENTATION.equals(implementation);
   }
 
@@ -100,7 +100,7 @@ public abstract class AbstractServiceFactory implements ServiceFactory {
   }
 
   protected void logServiceUsage(String implementation, ServiceType serviceType) {
-    LOG.usingServiceImplementation("".equals(implementation) ? "default" : implementation, serviceType.getServiceTypeName());
+    LOG.usingServiceImplementation(isEmptyDefaultImplementation(implementation) ? "default" : implementation, serviceType.getServiceTypeName());
   }
 
   // abstract methods

@@ -43,13 +43,17 @@ public class TokenStateServiceFactoryTest extends ServiceFactoryTest {
   }
 
   @Test
-  public void shouldReturnDefaultTopkenStateService() throws Exception {
+  public void shouldReturnDefaultTokenStateService() throws Exception {
     TokenStateService tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, gatewayConfig, options,
         DefaultTokenStateService.class.getName());
     assertTrue(tokenStateService instanceof DefaultTokenStateService);
+  }
 
-    tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, gatewayConfig, options, "");
-    assertTrue(tokenStateService instanceof DefaultTokenStateService);
+  @Test
+  public void shouldReturnAliasBasedTokenStateServiceByDefault() throws Exception {
+    TokenStateService tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, gatewayConfig, options, "");
+    assertTrue(tokenStateService instanceof AliasBasedTokenStateService);
+    assertTrue(isAliasServiceSet(tokenStateService));
   }
 
   @Test
