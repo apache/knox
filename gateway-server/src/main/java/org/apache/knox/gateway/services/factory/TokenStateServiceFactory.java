@@ -40,9 +40,9 @@ public class TokenStateServiceFactory extends AbstractServiceFactory {
       throws ServiceLifecycleException {
     Service service = null;
     if (shouldCreateService(implementation)) {
-      if (matchesImplementation(implementation, DefaultTokenStateService.class, true)) {
+      if (matchesImplementation(implementation, DefaultTokenStateService.class)) {
         service = new DefaultTokenStateService();
-      } else if (matchesImplementation(implementation, AliasBasedTokenStateService.class)) {
+      } else if (matchesImplementation(implementation, AliasBasedTokenStateService.class, true)) {
         service = new AliasBasedTokenStateService();
         ((AliasBasedTokenStateService) service).setAliasService(getAliasService(gatewayServices));
       } else if (matchesImplementation(implementation, JournalBasedTokenStateService.class)) {
@@ -51,7 +51,7 @@ public class TokenStateServiceFactory extends AbstractServiceFactory {
         service = new ZookeeperTokenStateService(gatewayServices);
       }
 
-      logServiceUsage(implementation, serviceType);
+      logServiceUsage(isEmptyDefaultImplementation(implementation) ? AliasBasedTokenStateService.class.getName() : implementation, serviceType);
     }
 
     return service;

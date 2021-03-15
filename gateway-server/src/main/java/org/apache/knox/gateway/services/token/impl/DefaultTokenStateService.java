@@ -274,10 +274,8 @@ public class DefaultTokenStateService implements TokenStateService {
    * Bulk removal of the specified tokens.
    *
    * @param tokenIds The unique identifiers of the tokens whose state should be removed.
-   *
-   * @throws UnknownTokenException if the specified token in valid, but not known to the service.
    */
-  protected void removeTokens(final Set<String> tokenIds) throws UnknownTokenException {
+  protected void removeTokens(final Set<String> tokenIds) {
     removeTokenState(tokenIds);
   }
 
@@ -343,11 +341,7 @@ public class DefaultTokenStateService implements TokenStateService {
       }
 
       if (!tokensToEvict.isEmpty()) {
-        try {
-          removeTokens(tokensToEvict);
-        } catch (UnknownTokenException e) {
-          log.failedExpiredTokenEviction(e);
-        }
+        removeTokens(tokensToEvict);
       }
     } else {
       log.skipEviction();
@@ -377,7 +371,7 @@ public class DefaultTokenStateService implements TokenStateService {
    *
    * @return
    */
-  private List<String> getTokenIds() {
+  protected List<String> getTokenIds() {
     return tokenExpirations.keySet().stream().collect(Collectors.toList());
   }
 

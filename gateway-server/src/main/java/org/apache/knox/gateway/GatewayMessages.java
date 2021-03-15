@@ -626,6 +626,9 @@ public interface GatewayMessages {
            text = "Error adding alias {1} for cluster {0} locally (local keystore), cause: {2} ")
   void errorAddingAliasLocally(String cluster, String alias, String cause);
 
+  @Message(level = MessageLevel.ERROR, text = "Error adding remote alias entry listener for cluster {0} and alias {1}, cause: {2} ")
+  void errorAddingRemoteAliasEntryListener(String cluster, String alias, String cause);
+
   @Message(level = MessageLevel.INFO,
            text = "Remove alias {1} for cluster {0} locally (local keystore) ")
   void removeAliasLocally(String cluster, String alias);

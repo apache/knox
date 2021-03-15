@@ -26,11 +26,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -47,21 +47,22 @@ import org.apache.knox.gateway.services.token.TokenStateServiceStatistics;
 import org.apache.knox.gateway.services.token.impl.state.TokenStateJournalFactory;
 import org.apache.knox.gateway.services.token.state.JournalEntry;
 import org.apache.knox.gateway.services.token.state.TokenStateJournal;
+import org.apache.knox.gateway.util.ExecutorServiceUtils;
 
 /**
  * A TokenStateService implementation based on the AliasService.
  */
-public class AliasBasedTokenStateService extends DefaultTokenStateService {
+public class AliasBasedTokenStateService extends DefaultTokenStateService implements TokenStatePeristerMonitorListener {
 
   static final String TOKEN_MAX_LIFETIME_POSTFIX = "--max";
 
-  private AliasService aliasService;
+  protected AliasService aliasService;
 
-  private long statePersistenceInterval = TimeUnit.SECONDS.toSeconds(15);
+  protected long statePersistenceInterval = TimeUnit.SECONDS.toSeconds(15);
 
   private ScheduledExecutorService statePersistenceScheduler;
 
-  private final List<TokenState> unpersistedState = new ArrayList<>();
+  private final Set<TokenState> unpersistedState = new HashSet<>();
 
   private final AtomicBoolean readyForEviction = new AtomicBoolean(false);
 
@@ -110,9 +111,6 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     }
 
     statePersistenceInterval = config.getKnoxTokenStateAliasPersistenceInterval();
-    if (statePersistenceInterval > 0) {
-      statePersistenceScheduler = Executors.newScheduledThreadPool(1);
-    }
 
     if (tokenStateServiceStatistics != null) {
       this.gatewayCredentialsFilePath = Paths.get(config.getGatewayKeystoreDir()).resolve(AliasService.NO_CLUSTER_NAME + DefaultKeystoreService.CREDENTIALS_SUFFIX + config.getCredentialStoreType().toLowerCase(Locale.ROOT));
@@ -123,24 +121,21 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
   @Override
   public void start() throws ServiceLifecycleException {
     super.start();
-    if (statePersistenceScheduler != null) {
-      // Run token persistence task at configured interval
-      statePersistenceScheduler.scheduleAtFixedRate(this::persistTokenState,
-                                                    statePersistenceInterval,
-                                                    statePersistenceInterval,
-                                                    TimeUnit.SECONDS);
+    if (statePersistenceInterval > 0) {
+      //first schedule event; only happen if the feature is not disabled via persistence interval settings
+      scheduleTokenStatePersistence();
     }
 
     // Loading ALL entries from __gateway-credentials.jceks could be VERY time-consuming (it took a bit more than 19 minutes to load 12k aliases
     // during my tests).
     // Therefore, it's safer to do it in a background thread than just make the service start hang until it's finished
-    final ExecutorService gatewayCredentialsLoader = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder().namingPattern("GatewayCredentialsLoader").build());
-    gatewayCredentialsLoader.execute(this::loadGatewayCredentialsOnStartup);
+    final ExecutorService gatewayCredentialsLoader = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder().namingPattern("PersistenceStoreLoader").build());
+    gatewayCredentialsLoader.execute(this::loadTokenAliasesFromPersistenceStore);
   }
 
-  private void loadGatewayCredentialsOnStartup() {
+  protected void loadTokenAliasesFromPersistenceStore() {
     try {
-      log.loadingGatewayCredentialsOnStartup();
+      log.loadingTokenAliasesFromPersistenceStore();
       final long start = System.currentTimeMillis();
       final Map<String, char[]> passwordAliasMap = aliasService.getPasswordsForGateway();
       String alias, tokenId;
@@ -161,12 +156,17 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
           maxLifeTime = convertCharArrayToLong(passwordAliasMapEntry.getValue());
           super.updateExpiration(tokenId, expiration);
           super.setMaxLifetime(tokenId, maxLifeTime);
-          count++;
+          count+=2;
+        }
+
+        // log some progress (it's very useful in case a huge amount of token related aliases in __gateway-credentials.jceks)
+        if (count % 100 == 0) {
+          log.loadedTokenAliasesFromPersistenceStore(count, System.currentTimeMillis() - start);
         }
       }
-      log.loadedGatewayCredentialsOnStartup(count * 2, System.currentTimeMillis() - start);  //count is multiplied by two: tokenId + tokenId--max
+      log.loadedTokenAliasesFromPersistenceStore(count * 2, System.currentTimeMillis() - start);  //count is multiplied by two: tokenId + tokenId--max
     } catch (AliasServiceException e) {
-      log.errorWhileLoadingGatewayCredentialsOnStartup(e.getMessage(), e);
+      log.errorWhileLoadingTokenAliasesFromPersistenceStore(e.getMessage(), e);
     } finally {
       readyForEviction.set(true);
     }
@@ -186,6 +186,22 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
 
     // Make an attempt to persist any unpersisted token state before shutting down
     persistTokenState();
+  }
+
+  private void scheduleTokenStatePersistence() {
+    if (statePersistenceScheduler != null) {
+      ExecutorServiceUtils.shutdownAndAwaitTermination(statePersistenceScheduler, 10, TimeUnit.SECONDS);
+    }
+    statePersistenceScheduler = Executors.newSingleThreadScheduledExecutor(new BasicThreadFactory.Builder().namingPattern("TokenStatePerister-%d").build());
+    final ScheduledFuture<?> persistTokenStateTask = statePersistenceScheduler.scheduleAtFixedRate(this::persistTokenState, statePersistenceInterval, statePersistenceInterval, TimeUnit.SECONDS);
+    log.runningTokenStateAliasePersisterTask(statePersistenceInterval, TimeUnit.SECONDS.toString());
+    final TokenStatePersisterMonitor taskMonitor = new TokenStatePersisterMonitor(persistTokenStateTask, this);
+    taskMonitor.startMonitor();
+  }
+
+  @Override
+  public void onTokenStatePeristerTaskError(Throwable error) {
+    scheduleTokenStatePersistence();
   }
 
   protected void persistTokenState() {
@@ -281,15 +297,15 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     return result;
   }
 
-  private char[] getPasswordUsingAliasService(String tokenId) throws AliasServiceException {
-    char[] password = aliasService.getPasswordFromAliasForCluster(AliasService.NO_CLUSTER_NAME, tokenId);
+  protected char[] getPasswordUsingAliasService(String alias) throws AliasServiceException {
+    char[] password = aliasService.getPasswordFromAliasForCluster(AliasService.NO_CLUSTER_NAME, alias);
     if (tokenStateServiceStatistics != null) {
       tokenStateServiceStatistics.interactKeystore(TokenStateServiceStatistics.KeystoreInteraction.GET_PASSWORD);
     }
     return password;
   }
 
-  private long convertCharArrayToLong(char[] charArray) {
+  protected long convertCharArrayToLong(char[] charArray) {
     return Long.parseLong(new String(charArray));
   }
 
@@ -348,7 +364,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
   }
 
   @Override
-  protected void removeTokens(Set<String> tokenIds) throws UnknownTokenException {
+  protected void removeTokens(Set<String> tokenIds) {
 
     // If any of the token IDs is represented among the unpersisted state, remove the associated state
     synchronized (unpersistedState) {
@@ -381,21 +397,35 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
       }
     }
 
+    removeTokensFromMemory(tokenIds);
+  }
+
+  protected void removeTokensFromMemory(Set<String> tokenIds) {
     super.removeTokens(tokenIds);
   }
 
   @Override
   protected void updateExpiration(final String tokenId, long expiration) {
     //Update in-memory
-    super.updateExpiration(tokenId, expiration);
+    updateExpirationInMemory(tokenId, expiration);
 
     //Update the in-memory representation of unpersisted states that will be processed by the state persistence thread
     synchronized (unpersistedState) {
-      final Optional<TokenState> tokenStateToRemove = unpersistedState.stream().filter(tokenState -> tokenState.getTokenId().equals(tokenId)).findFirst();
-      if (tokenStateToRemove.isPresent()) {
-        unpersistedState.remove(tokenStateToRemove.get());
-      }
       unpersistedState.add(new TokenExpiration(tokenId, expiration));
+    }
+  }
+
+  protected void updateExpirationInMemory(final String tokenId, long expiration) {
+    super.updateExpiration(tokenId, expiration);
+  }
+
+  enum TokenStateType {
+    EXP(1), MAX(2);
+
+    private final int id;
+
+    TokenStateType(int id) {
+      this.id = id;
     }
   }
 
@@ -403,6 +433,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     String getTokenId();
     String getAlias();
     String getAliasValue();
+    TokenStateType getType();
   }
 
   private static final class TokenMaxLifetime implements TokenState {
@@ -432,13 +463,28 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     }
 
     @Override
+    public TokenStateType getType() {
+      return TokenStateType.MAX;
+    }
+
+    @Override
     public int hashCode() {
-      return HashCodeBuilder.reflectionHashCode(this);
+      return new HashCodeBuilder().append(tokenId).append(getType().id).toHashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
-      return EqualsBuilder.reflectionEquals(this, obj);
+      if (obj == null) {
+        return false;
+      }
+      if (obj == this) {
+        return true;
+      }
+      if (obj.getClass() != getClass()) {
+        return false;
+      }
+      final TokenMaxLifetime rhs = (TokenMaxLifetime) obj;
+      return new EqualsBuilder().append(this.tokenId, rhs.tokenId).append(this.getType().id, rhs.getType().id).isEquals();
     }
   }
 
@@ -467,13 +513,28 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     }
 
     @Override
+    public TokenStateType getType() {
+      return TokenStateType.EXP;
+    }
+
+    @Override
     public int hashCode() {
-      return HashCodeBuilder.reflectionHashCode(this);
+      return new HashCodeBuilder().append(tokenId).append(getType().id).toHashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
-      return EqualsBuilder.reflectionEquals(this, obj);
+      if (obj == null) {
+        return false;
+      }
+      if (obj == this) {
+        return true;
+      }
+      if (obj.getClass() != getClass()) {
+        return false;
+      }
+      final TokenExpiration rhs = (TokenExpiration) obj;
+      return new EqualsBuilder().append(this.tokenId, rhs.tokenId).append(this.getType().id, rhs.getType().id).isEquals();
     }
   }
 
