@@ -31,6 +31,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
@@ -42,7 +43,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.security.auth.Subject;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
@@ -60,7 +60,6 @@ import java.security.KeyPairGenerator;
 import java.security.Principal;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -762,63 +761,27 @@ public class WebSSOResourceTest {
     }
 
     @Override
-    public JWT issueToken(Subject subject, String algorithm)
-      throws TokenServiceException {
-      Principal p = (Principal) subject.getPrincipals().toArray()[0];
-      return issueToken(p, algorithm);
-    }
-
-    @Override
-    public JWT issueToken(Principal p, String algorithm)
-      throws TokenServiceException {
-      return issueToken(p, null, algorithm);
-    }
-
-    @Override
-    public JWT issueToken(Principal p, String audience, String algorithm)
-      throws TokenServiceException {
-      return issueToken(p, audience, algorithm, -1);
-    }
-
-    @Override
     public boolean verifyToken(JWT token) throws TokenServiceException {
       return verifyToken(token, this.publicKey);
     }
 
     @Override
-    public JWT issueToken(Principal p, String audience, String algorithm,
-                               long expires) throws TokenServiceException {
-      List<String> audiences = null;
-      if (audience != null) {
-        audiences = new ArrayList<>();
-        audiences.add(audience);
-      }
-      return issueToken(p, audiences, algorithm, expires);
-    }
-
-    @Override
-    public JWT issueToken(Principal p, List<String> audiences, String algorithm,
-                          long expires) throws TokenServiceException {
-      return issueToken(p, audiences, algorithm, expires, null, null, null);
-    }
-
-    @Override
-    public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires,
-                          String signingKeystoreName, String signingKeystoreAlias, char[] signingKeystorePassphrase)
+    public JWT issueToken(JWTokenAttributes jwtAttributes)
         throws TokenServiceException {
       String[] claimArray = new String[4];
       claimArray[0] = "KNOXSSO";
-      claimArray[1] = p.getName();
+      claimArray[1] = jwtAttributes.getPrincipal().getName();
       claimArray[2] = null;
-      if (expires == -1) {
+      if (jwtAttributes.getExpires() == -1) {
         claimArray[3] = null;
       } else {
-        claimArray[3] = String.valueOf(expires);
+        claimArray[3] = String.valueOf(jwtAttributes.getExpires());
       }
 
-      JWT token = new JWTToken(algorithm, claimArray, audiences);
+      JWT token = new JWTToken(jwtAttributes.getAlgorithm(), claimArray, jwtAttributes.getAudiences());
       try {
-        JWSSigner signer = useHMAC ? new MACSigner(HMAC_SECRET) :  new RSASSASigner(getPrivateKey(signingKeystoreName, signingKeystoreAlias, signingKeystorePassphrase));
+        JWSSigner signer = useHMAC ? new MACSigner(HMAC_SECRET)
+            : new RSASSASigner(getPrivateKey(jwtAttributes.getSigningKeystoreName(), jwtAttributes.getSigningKeystoreAlias(), jwtAttributes.getSigningKeystorePassphrase()));
         token.sign(signer);
       } catch (KeyLengthException e) {
         throw new TokenServiceException(e);
@@ -838,12 +801,6 @@ public class WebSSOResourceTest {
         return (RSAPrivateKey)signingKey.get("privateKey");
       }
       return privateKey;
-    }
-
-    @Override
-    public JWT issueToken(Principal p, String algorithm, long expiry)
-        throws TokenServiceException {
-      return issueToken(p, Collections.emptyList(), algorithm, expiry);
     }
 
     @Override

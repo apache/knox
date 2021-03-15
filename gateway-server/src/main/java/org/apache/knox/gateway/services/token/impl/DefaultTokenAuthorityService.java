@@ -24,21 +24,16 @@ import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.Principal;
 import java.security.PublicKey;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import javax.security.auth.Subject;
 
 import org.apache.knox.gateway.GatewayResources;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -49,6 +44,7 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
@@ -99,65 +95,25 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   }
 
   @Override
-  public JWT issueToken(Subject subject, String algorithm) throws TokenServiceException {
-    Principal p = (Principal) subject.getPrincipals().toArray()[0];
-    return issueToken(p, algorithm);
-  }
-
-  @Override
-  public JWT issueToken(Principal p, String algorithm) throws TokenServiceException {
-    return issueToken(p, null, algorithm);
-  }
-
-  @Override
-  public JWT issueToken(Principal p, String algorithm, long expires) throws TokenServiceException {
-    return issueToken(p, (String)null, algorithm, expires);
-  }
-
-  @Override
-  public JWT issueToken(Principal p, String audience, String algorithm)
-      throws TokenServiceException {
-    return issueToken(p, audience, algorithm, -1);
-  }
-
-  @Override
-  public JWT issueToken(Principal p, String audience, String algorithm, long expires)
-      throws TokenServiceException {
-    List<String> audiences = null;
-    if (audience != null) {
-      audiences = new ArrayList<>();
-      audiences.add(audience);
-    }
-    return issueToken(p, audiences, algorithm, expires);
-  }
-
-  @Override
-  public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires)
-      throws TokenServiceException {
-    return issueToken(p, audiences, algorithm, expires, null, null, null);
-  }
-
-  @Override
-  public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires,
-                        String signingKeystoreName, String signingKeystoreAlias, char[] signingKeystorePassphrase)
-      throws TokenServiceException {
+  public JWT issueToken(JWTokenAttributes jwtAttributes) throws TokenServiceException {
     String[] claimArray = new String[4];
     claimArray[0] = "KNOXSSO";
-    claimArray[1] = p.getName();
+    claimArray[1] = jwtAttributes.getPrincipal().getName();
     claimArray[2] = null;
-    if (expires == -1) {
+    if (jwtAttributes.getExpires() == -1) {
       claimArray[3] = null;
     }
     else {
-      claimArray[3] = String.valueOf(expires);
+      claimArray[3] = String.valueOf(jwtAttributes.getExpires());
     }
 
-    final JWT token = SUPPORTED_PKI_SIG_ALGS.contains(algorithm) || SUPPORTED_HMAC_SIG_ALGS.contains(algorithm) ? new JWTToken(algorithm, claimArray, audiences) : null;
+    final String algorithm = jwtAttributes.getAlgorithm();
+    final JWT token = SUPPORTED_PKI_SIG_ALGS.contains(algorithm) || SUPPORTED_HMAC_SIG_ALGS.contains(algorithm) ? new JWTToken(algorithm, claimArray, jwtAttributes.getAudiences(), jwtAttributes.isManaged()) : null;
     if (token != null) {
       if (SUPPORTED_HMAC_SIG_ALGS.contains(algorithm)) {
         signTokenWithHMAC(token);
       } else {
-        signTokenWithRSA(token, signingKeystoreName, signingKeystoreAlias, signingKeystorePassphrase);
+        signTokenWithRSA(token, jwtAttributes.getSigningKeystoreName(), jwtAttributes.getSigningKeystoreAlias(), jwtAttributes.getSigningKeystorePassphrase());
       }
       return token;
     } else {

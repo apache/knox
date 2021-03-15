@@ -30,6 +30,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
@@ -1246,46 +1247,13 @@ public abstract class AbstractJWTFilterTest  {
     }
 
     @Override
-    public JWT issueToken(Subject subject, String algorithm) {
-      return null;
-    }
-
-    @Override
-    public JWT issueToken(Principal p, String algorithm) {
-      return null;
-    }
-
-    @Override
-    public JWT issueToken(Principal p, String audience, String algorithm) {
-      return null;
-    }
-
-    @Override
     public boolean verifyToken(JWT token) {
       JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey) verifyingKey);
       return token.verify(verifier);
     }
 
     @Override
-    public JWT issueToken(Principal p, String audience, String algorithm,
-        long expires) {
-      return null;
-    }
-
-    @Override
-    public JWT issueToken(Principal p, List<String> audiences, String algorithm,
-        long expires) {
-      return null;
-    }
-
-    @Override
-    public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires,
-                          String signingKeystoreName, String signingKeystoreAlias, char[] signingKeystorePassphrase) {
-      return null;
-    }
-
-    @Override
-    public JWT issueToken(Principal p, String algorithm, long expires) {
+    public JWT issueToken(JWTokenAttributes jwtAttributes) {
       return null;
     }
 

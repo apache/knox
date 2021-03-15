@@ -50,6 +50,8 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
@@ -70,6 +72,7 @@ public class TokenResource {
   private static final String TOKEN_TYPE = "token_type";
   private static final String ACCESS_TOKEN = "access_token";
   private static final String TOKEN_ID = "token_id";
+  private static final String MANAGED_TOKEN = "managed";
   private static final String TARGET_URL = "target_url";
   private static final String ENDPOINT_PUBLIC_CERT = "endpoint_public_cert";
   private static final String BEARER = "Bearer";
@@ -395,11 +398,16 @@ public class TokenResource {
     }
 
     try {
+      final boolean managedToken = tokenStateService != null;
       JWT token;
+      JWTokenAttributes jwtAttributes;
       if (targetAudiences.isEmpty()) {
-        token = ts.issueToken(p, signatureAlgorithm, expires);
+        jwtAttributes = new JWTokenAttributesBuilder().setPrincipal(p).setAlgorithm(signatureAlgorithm).setExpires(expires).setManaged(managedToken).build();
+        token = ts.issueToken(jwtAttributes);
       } else {
-        token = ts.issueToken(p, targetAudiences, signatureAlgorithm, expires);
+        jwtAttributes = new JWTokenAttributesBuilder().setPrincipal(p).setAudiences(targetAudiences).setAlgorithm(signatureAlgorithm).setExpires(expires)
+            .setManaged(managedToken).build();
+        token = ts.issueToken(jwtAttributes);
       }
 
       if (token != null) {
@@ -410,6 +418,7 @@ public class TokenResource {
         HashMap<String, Object> map = new HashMap<>();
         map.put(ACCESS_TOKEN, accessToken);
         map.put(TOKEN_ID, tokenId);
+        map.put(MANAGED_TOKEN, String.valueOf(managedToken));
         map.put(TOKEN_TYPE, BEARER);
         map.put(EXPIRES_IN, expires);
         if (tokenTargetUrl != null) {
