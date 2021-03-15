@@ -19,12 +19,15 @@ package org.apache.knox.gateway.services.token.impl;
 
 import static org.apache.knox.gateway.services.ServiceType.ALIAS_SERVICE;
 
+import java.time.Instant;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.factory.AliasServiceFactory;
+import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasService;
 
 /**
@@ -55,5 +58,41 @@ public class ZookeeperTokenStateService extends AliasBasedTokenStateService {
     super.setAliasService(zookeeperAliasService);
     super.init(config, options);
     options.remove(ZookeeperRemoteAliasService.OPTION_NAME_SHOULD_CREATE_TOKENS_SUB_NODE);
+  }
+
+  @Override
+  protected char[] getPasswordUsingAliasService(String tokenId) throws AliasServiceException {
+    char[] password = super.getPasswordUsingAliasService(tokenId);
+
+    if (password == null) {
+      password = retry(tokenId);
+    }
+    return password;
+  }
+
+  /*
+   * In HA scenarios, it might happen, that node1 generated a token but the state
+   * persister thread saves that token in ZK a bit later. If there is a subsequent
+   * call to this token on another node - e.g. node2 - before it's persisted in ZK
+   * the token would be considered unknown. (see CDPD-22225)
+   *
+   * To avoid this issue, the ZK token state service should retry to fetch the
+   * token from ZK in every second until the token is found or the number of
+   * retries exceeded the configured persistence interval
+   */
+  private char[] retry(String tokenId) throws AliasServiceException {
+    char[] password = null;
+    final Instant timeLimit = Instant.now().plusSeconds(statePersistenceInterval).plusSeconds(1); // an addition of 1 second as grace period
+
+    while (password == null && timeLimit.isAfter(Instant.now())) {
+      try {
+        TimeUnit.SECONDS.sleep(1);
+        log.retryZkFetchAlias(tokenId);
+        password = super.getPasswordUsingAliasService(tokenId);
+      } catch (InterruptedException e) {
+        log.failedRetryZkFetchAlias(tokenId, e.getMessage(), e);
+      }
+    }
+    return password;
   }
 }

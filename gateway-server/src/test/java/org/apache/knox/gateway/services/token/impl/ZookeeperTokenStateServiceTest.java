@@ -21,9 +21,11 @@ import static org.apache.knox.gateway.config.GatewayConfig.REMOTE_CONFIG_REGISTR
 import static org.apache.knox.gateway.config.GatewayConfig.REMOTE_CONFIG_REGISTRY_TYPE;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -39,10 +41,12 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.service.config.remote.zk.ZooKeeperClientService;
 import org.apache.knox.gateway.service.config.remote.zk.ZooKeeperClientServiceProvider;
 import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.MasterService;
 import org.easymock.EasyMock;
 import org.junit.AfterClass;
@@ -57,7 +61,8 @@ public class ZookeeperTokenStateServiceTest {
   public static final TemporaryFolder testFolder = new TemporaryFolder();
 
   private static final String CONFIG_MONITOR_NAME = "remoteConfigMonitorClient";
-  private static final long TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL = 2L;
+  private static final long SHORT_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL = 2L;
+  private static final long LONG_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL = 5L;
   private static TestingCluster zkNodes;
 
   @BeforeClass
@@ -88,6 +93,31 @@ public class ZookeeperTokenStateServiceTest {
 
   @Test
   public void testStoringTokenAliasesInZookeeper() throws Exception {
+    final ZookeeperTokenStateService zktokenStateService = setupZkTokenStateService(SHORT_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL);
+
+    assertFalse(zkNodeExists("/knox/security/topology/__gateway/tokens/a0/a0-token1"));
+    assertFalse(zkNodeExists("/knox/security/topology/__gateway/tokens/a0/a0-token1--max"));
+
+    zktokenStateService.addToken("token1", 1L, 2L);
+
+    // give some time for the token state service to persist the token aliases in ZK (doubled the persistence interval)
+    Thread.sleep(2 * SHORT_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL * 1000);
+
+    assertTrue(zkNodeExists("/knox/security/topology/__gateway/tokens/a0/a0-token1"));
+    assertTrue(zkNodeExists("/knox/security/topology/__gateway/tokens/a0/a0-token1--max"));
+  }
+
+  @Test
+  public void testRetry() throws Exception {
+    final ZookeeperTokenStateService zktokenStateServiceNode1 = setupZkTokenStateService(LONG_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL);
+    final ZookeeperTokenStateService zktokenStateServiceNode2 = setupZkTokenStateService(LONG_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL);
+    zktokenStateServiceNode1.addToken("node1Token", 10L, 2000L);
+    final long expiration = zktokenStateServiceNode2.getTokenExpiration("node1Token");
+    Thread.sleep(LONG_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL * 1000);
+    assertEquals(2000L, expiration);
+  }
+
+  private ZookeeperTokenStateService setupZkTokenStateService(long persistenceInterval) throws IOException, KeystoreServiceException, ServiceLifecycleException {
     // mocking GatewayConfig
     final GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
     expect(gc.getRemoteRegistryConfigurationNames()).andReturn(Collections.singletonList(CONFIG_MONITOR_NAME)).anyTimes();
@@ -96,7 +126,7 @@ public class ZookeeperTokenStateServiceTest {
     expect(gc.getRemoteConfigurationMonitorClientName()).andReturn(CONFIG_MONITOR_NAME).anyTimes();
     expect(gc.getAlgorithm()).andReturn("AES").anyTimes();
     expect(gc.isRemoteAliasServiceEnabled()).andReturn(true).anyTimes();
-    expect(gc.getKnoxTokenStateAliasPersistenceInterval()).andReturn(TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL).anyTimes();
+    expect(gc.getKnoxTokenStateAliasPersistenceInterval()).andReturn(persistenceInterval).anyTimes();
     final Path baseFolder = Paths.get(testFolder.newFolder().getAbsolutePath());
     expect(gc.getGatewayDataDir()).andReturn(Paths.get(baseFolder.toString(), "data").toString()).anyTimes();
     expect(gc.getGatewayKeystoreDir()).andReturn(Paths.get(baseFolder.toString(), "data", "keystores").toString()).anyTimes();
@@ -122,17 +152,7 @@ public class ZookeeperTokenStateServiceTest {
     final ZookeeperTokenStateService zktokenStateService = new ZookeeperTokenStateService(gatewayServices);
     zktokenStateService.init(gc, new HashMap<>());
     zktokenStateService.start();
-
-    assertFalse(zkNodeExists("/knox/security/topology/__gateway/tokens/to/token1"));
-    assertFalse(zkNodeExists("/knox/security/topology/__gateway/tokens/to/token1--max"));
-
-    zktokenStateService.addToken("token1", 1L, 2L);
-
-    // give some time for the token state service to persist the token aliases in ZK (doubled the persistence interval)
-    Thread.sleep(2 * TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL * 1000);
-
-    assertTrue(zkNodeExists("/knox/security/topology/__gateway/tokens/to/token1"));
-    assertTrue(zkNodeExists("/knox/security/topology/__gateway/tokens/to/token1--max"));
+    return zktokenStateService;
   }
 
   private boolean zkNodeExists(String nodeName) {

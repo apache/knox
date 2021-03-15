@@ -57,7 +57,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
 
   private AliasService aliasService;
 
-  private long statePersistenceInterval = TimeUnit.SECONDS.toSeconds(15);
+  protected long statePersistenceInterval = TimeUnit.SECONDS.toSeconds(15);
 
   private ScheduledExecutorService statePersistenceScheduler;
 
@@ -281,7 +281,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     return result;
   }
 
-  private char[] getPasswordUsingAliasService(String tokenId) throws AliasServiceException {
+  protected char[] getPasswordUsingAliasService(String tokenId) throws AliasServiceException {
     char[] password = aliasService.getPasswordFromAliasForCluster(AliasService.NO_CLUSTER_NAME, tokenId);
     if (tokenStateServiceStatistics != null) {
       tokenStateServiceStatistics.interactKeystore(TokenStateServiceStatistics.KeystoreInteraction.GET_PASSWORD);

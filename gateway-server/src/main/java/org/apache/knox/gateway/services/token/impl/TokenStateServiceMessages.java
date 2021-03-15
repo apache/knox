@@ -148,4 +148,9 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.ERROR, text = "Error while loading Gateway credentials on startup: {0}")
   void errorWhileLoadingGatewayCredentialsOnStartup(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.INFO, text = "Trying to fetch value for {0} from Zookeeper...")
+  void retryZkFetchAlias(String alias);
+
+  @Message(level = MessageLevel.ERROR, text = "Error while fetching value for {0} from Zookeeper: {1}")
+  void failedRetryZkFetchAlias(String alias, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 }
