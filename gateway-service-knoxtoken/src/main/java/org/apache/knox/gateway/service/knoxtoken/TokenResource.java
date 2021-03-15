@@ -69,6 +69,7 @@ public class TokenResource {
   private static final String EXPIRES_IN = "expires_in";
   private static final String TOKEN_TYPE = "token_type";
   private static final String ACCESS_TOKEN = "access_token";
+  private static final String TOKEN_ID = "token_id";
   private static final String TARGET_URL = "target_url";
   private static final String ENDPOINT_PUBLIC_CERT = "endpoint_public_cert";
   private static final String BEARER = "Bearer";
@@ -408,6 +409,7 @@ public class TokenResource {
 
         HashMap<String, Object> map = new HashMap<>();
         map.put(ACCESS_TOKEN, accessToken);
+        map.put(TOKEN_ID, tokenId);
         map.put(TOKEN_TYPE, BEARER);
         map.put(EXPIRES_IN, expires);
         if (tokenTargetUrl != null) {
