@@ -20,6 +20,7 @@ package org.apache.knox.gateway.services.token.impl;
 import static org.apache.knox.gateway.services.ServiceType.ALIAS_SERVICE;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -29,13 +30,14 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.factory.AliasServiceFactory;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasService;
+import org.apache.knox.gateway.services.token.RemoteTokenStateChangeListener;
 
 /**
  * A Zookeeper Token State Service is actually an Alias based TSS where the 'alias service' happens to be the 'zookeeper' implementation.
  * This means the only important thing that should be overridden here is the init method where the underlying alias service is configured
  * properly.
  */
-public class ZookeeperTokenStateService extends AliasBasedTokenStateService {
+public class ZookeeperTokenStateService extends AliasBasedTokenStateService implements RemoteTokenStateChangeListener {
 
   private final GatewayServices gatewayServices;
   private final AliasServiceFactory aliasServiceFactory;
@@ -54,18 +56,33 @@ public class ZookeeperTokenStateService extends AliasBasedTokenStateService {
     final ZookeeperRemoteAliasService zookeeperAliasService = (ZookeeperRemoteAliasService) aliasServiceFactory.create(gatewayServices, ALIAS_SERVICE, config, options,
         ZookeeperRemoteAliasService.class.getName());
     options.put(ZookeeperRemoteAliasService.OPTION_NAME_SHOULD_CREATE_TOKENS_SUB_NODE, "true");
+    options.put(ZookeeperRemoteAliasService.OPTION_NAME_SHOULD_USE_LOCAL_ALIAS, "false");
+    zookeeperAliasService.registerRemoteTokenStateChangeListener(this);
     zookeeperAliasService.init(config, options);
     super.setAliasService(zookeeperAliasService);
     super.init(config, options);
     options.remove(ZookeeperRemoteAliasService.OPTION_NAME_SHOULD_CREATE_TOKENS_SUB_NODE);
+    options.remove(ZookeeperRemoteAliasService.OPTION_NAME_SHOULD_USE_LOCAL_ALIAS);
   }
 
   @Override
-  protected char[] getPasswordUsingAliasService(String tokenId) throws AliasServiceException {
-    char[] password = super.getPasswordUsingAliasService(tokenId);
+  protected void loadTokenAliasesFromPersistenceStore() {
+    // NOP : registering 'knox/security/topology' child entry listener in ZKRemoteAliasService ends-up reading existing ZK nodes
+    // and with the help of RemoteTokenStateChangeListener notifications in-memory collections will be populated
+    // without loading them here directly
+  }
+
+  @Override
+  protected boolean readyForEviction() {
+    return true;
+  }
+
+  @Override
+  protected char[] getPasswordUsingAliasService(String alias) throws AliasServiceException {
+    char[] password = super.getPasswordUsingAliasService(alias);
 
     if (password == null) {
-      password = retry(tokenId);
+      password = retry(alias);
     }
     return password;
   }
@@ -80,19 +97,53 @@ public class ZookeeperTokenStateService extends AliasBasedTokenStateService {
    * token from ZK in every second until the token is found or the number of
    * retries exceeded the configured persistence interval
    */
-  private char[] retry(String tokenId) throws AliasServiceException {
+  private char[] retry(String alias) throws AliasServiceException {
     char[] password = null;
     final Instant timeLimit = Instant.now().plusSeconds(statePersistenceInterval).plusSeconds(1); // an addition of 1 second as grace period
 
     while (password == null && timeLimit.isAfter(Instant.now())) {
       try {
         TimeUnit.SECONDS.sleep(1);
-        log.retryZkFetchAlias(tokenId);
-        password = super.getPasswordUsingAliasService(tokenId);
+        log.retryZkFetchAlias(alias);
+        password = super.getPasswordUsingAliasService(alias);
       } catch (InterruptedException e) {
-        log.failedRetryZkFetchAlias(tokenId, e.getMessage(), e);
+        log.failedRetryZkFetchAlias(alias, e.getMessage(), e);
       }
     }
     return password;
+  }
+
+  @Override
+  public void onChanged(String alias, String updatedState) {
+    processAlias(alias, updatedState);
+    log.onRemoteTokenStateChanged(alias);
+  }
+
+  @Override
+  public void onRemoved(String alias) {
+    final String tokenId = getTokenIdFromAlias(alias);
+    removeTokensFromMemory(Collections.singleton(tokenId));
+    log.onRemoteTokenStateRemoval(alias);
+  }
+
+  private void processAlias(String alias, String value) {
+    if (!ZookeeperRemoteAliasService.TOKENS_SUB_NODE_NAME.equals(alias)) {
+      try {
+        final String tokenId = getTokenIdFromAlias(alias);
+        if (alias.endsWith(TOKEN_MAX_LIFETIME_POSTFIX)) {
+          final long maxLifeTime = Long.parseLong(value);
+          setMaxLifetime(tokenId, maxLifeTime);
+        } else {
+          final long expiration = Long.parseLong(value);
+          updateExpirationInMemory(tokenId, expiration);
+        }
+      } catch (Throwable e) {
+        log.errorWhileProcessingTokenAlias(alias, e.getMessage(), e);
+      }
+    }
+  }
+
+  private String getTokenIdFromAlias(String alias) {
+    return alias.indexOf("--") == -1 ? alias : alias.substring(0, alias.indexOf("--")); // both --max and --unused starts with '--';
   }
 }

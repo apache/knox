@@ -98,7 +98,7 @@ public class ZookeeperTokenStateServiceTest {
     assertFalse(zkNodeExists("/knox/security/topology/__gateway/tokens/a0/a0-token1"));
     assertFalse(zkNodeExists("/knox/security/topology/__gateway/tokens/a0/a0-token1--max"));
 
-    zktokenStateService.addToken("token1", 1L, 2L);
+    zktokenStateService.addToken("a0-token1", 1L, 2L);
 
     // give some time for the token state service to persist the token aliases in ZK (doubled the persistence interval)
     Thread.sleep(2 * SHORT_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL * 1000);

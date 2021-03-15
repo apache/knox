@@ -54,7 +54,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
 
   static final String TOKEN_MAX_LIFETIME_POSTFIX = "--max";
 
-  private AliasService aliasService;
+  protected AliasService aliasService;
 
   protected long statePersistenceInterval = TimeUnit.SECONDS.toSeconds(15);
 
@@ -133,13 +133,13 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     // Loading ALL entries from __gateway-credentials.jceks could be VERY time-consuming (it took a bit more than 19 minutes to load 12k aliases
     // during my tests).
     // Therefore, it's safer to do it in a background thread than just make the service start hang until it's finished
-    final ExecutorService gatewayCredentialsLoader = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder().namingPattern("GatewayCredentialsLoader").build());
-    gatewayCredentialsLoader.execute(this::loadGatewayCredentialsOnStartup);
+    final ExecutorService gatewayCredentialsLoader = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder().namingPattern("PersistenceStoreLoader").build());
+    gatewayCredentialsLoader.execute(this::loadTokenAliasesFromPersistenceStore);
   }
 
-  private void loadGatewayCredentialsOnStartup() {
+  protected void loadTokenAliasesFromPersistenceStore() {
     try {
-      log.loadingGatewayCredentialsOnStartup();
+      log.loadingTokenAliasesFromPersistenceStore();
       final long start = System.currentTimeMillis();
       final Map<String, char[]> passwordAliasMap = aliasService.getPasswordsForGateway();
       String alias, tokenId;
@@ -160,12 +160,17 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
           maxLifeTime = convertCharArrayToLong(passwordAliasMapEntry.getValue());
           super.updateExpiration(tokenId, expiration);
           super.setMaxLifetime(tokenId, maxLifeTime);
-          count++;
+          count+=2;
+        }
+
+        // log some progress (it's very useful in case a huge amount of token related aliases in __gateway-credentials.jceks)
+        if (count % 100 == 0) {
+          log.loadedTokenAliasesFromPersistenceStore(count, System.currentTimeMillis() - start);
         }
       }
-      log.loadedGatewayCredentialsOnStartup(count * 2, System.currentTimeMillis() - start);  //count is multiplied by two: tokenId + tokenId--max
+      log.loadedTokenAliasesFromPersistenceStore(count * 2, System.currentTimeMillis() - start);  //count is multiplied by two: tokenId + tokenId--max
     } catch (AliasServiceException e) {
-      log.errorWhileLoadingGatewayCredentialsOnStartup(e.getMessage(), e);
+      log.errorWhileLoadingTokenAliasesFromPersistenceStore(e.getMessage(), e);
     } finally {
       readyForEviction.set(true);
     }
@@ -280,15 +285,15 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     return result;
   }
 
-  protected char[] getPasswordUsingAliasService(String tokenId) throws AliasServiceException {
-    char[] password = aliasService.getPasswordFromAliasForCluster(AliasService.NO_CLUSTER_NAME, tokenId);
+  protected char[] getPasswordUsingAliasService(String alias) throws AliasServiceException {
+    char[] password = aliasService.getPasswordFromAliasForCluster(AliasService.NO_CLUSTER_NAME, alias);
     if (tokenStateServiceStatistics != null) {
       tokenStateServiceStatistics.interactKeystore(TokenStateServiceStatistics.KeystoreInteraction.GET_PASSWORD);
     }
     return password;
   }
 
-  private long convertCharArrayToLong(char[] charArray) {
+  protected long convertCharArrayToLong(char[] charArray) {
     return Long.parseLong(new String(charArray));
   }
 
@@ -347,7 +352,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
   }
 
   @Override
-  protected void removeTokens(Set<String> tokenIds) throws UnknownTokenException {
+  protected void removeTokens(Set<String> tokenIds) {
 
     // If any of the token IDs is represented among the unpersisted state, remove the associated state
     synchronized (unpersistedState) {
@@ -380,18 +385,26 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
       }
     }
 
+    removeTokensFromMemory(tokenIds);
+  }
+
+  protected void removeTokensFromMemory(Set<String> tokenIds) {
     super.removeTokens(tokenIds);
   }
 
   @Override
   protected void updateExpiration(final String tokenId, long expiration) {
     //Update in-memory
-    super.updateExpiration(tokenId, expiration);
+    updateExpirationInMemory(tokenId, expiration);
 
     //Update the in-memory representation of unpersisted states that will be processed by the state persistence thread
     synchronized (unpersistedState) {
       unpersistedState.add(new TokenExpiration(tokenId, expiration));
     }
+  }
+
+  protected void updateExpirationInMemory(final String tokenId, long expiration) {
+    super.updateExpiration(tokenId, expiration);
   }
 
   enum TokenStateType {

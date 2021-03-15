@@ -139,18 +139,33 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.ERROR, text = "Failed to remove the token state journal entries : {0}")
   void failedToRemoveJournalEntries(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 
-  @Message(level = MessageLevel.INFO, text = "Loading Gateway credentials on startup...")
-  void loadingGatewayCredentialsOnStartup();
+  @Message(level = MessageLevel.INFO, text = "Loading token aliases from persistence store on startup...")
+  void loadingTokenAliasesFromPersistenceStore();
 
-  @Message(level = MessageLevel.INFO, text = "Loaded {0} Gateway credentials in {1} milliseonds")
-  void loadedGatewayCredentialsOnStartup(int count, long duration);
+  @Message(level = MessageLevel.INFO, text = "Processing {0} aliases from persistence store on startup...")
+  void processingAliases(int count);
 
-  @Message(level = MessageLevel.ERROR, text = "Error while loading Gateway credentials on startup: {0}")
-  void errorWhileLoadingGatewayCredentialsOnStartup(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+  @Message(level = MessageLevel.INFO, text = "Loaded {0} token aliases from persistence store in {1} milliseonds")
+  void loadedTokenAliasesFromPersistenceStore(int count, long duration);
+
+  @Message(level = MessageLevel.ERROR, text = "Error while loading token aliases from persistence store on startup: {0}")
+  void errorWhileLoadingTokenAliasesFromPersistenceStore(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Throwable e);
+
+  @Message(level = MessageLevel.ERROR, text = "Error while processing token alias {0} : {1}")
+  void errorWhileProcessingTokenAlias(String alias, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Throwable e);
+
+  @Message(level = MessageLevel.DEBUG, text = "Invalid alias value for {0}; it has very likely been evicted in the meantime")
+  void invalidAliasValue(String alias);
 
   @Message(level = MessageLevel.INFO, text = "Trying to fetch value for {0} from Zookeeper...")
   void retryZkFetchAlias(String alias);
 
   @Message(level = MessageLevel.ERROR, text = "Error while fetching value for {0} from Zookeeper: {1}")
   void failedRetryZkFetchAlias(String alias, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.INFO, text = "Processed alias {0} on receiving signal from Zookeeper ")
+  void onRemoteTokenStateChanged(String alias);
+
+  @Message(level = MessageLevel.INFO, text = "Removed related token alias {0} on receiving signal from Zookeeper ")
+  void onRemoteTokenStateRemoval(String alias);
 }

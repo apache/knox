@@ -130,7 +130,7 @@ public class JournalBasedTokenStateService extends DefaultTokenStateService {
     }
 
     @Override
-    protected void removeTokens(final Set<String> tokenIds) throws UnknownTokenException {
+    protected void removeTokens(final Set<String> tokenIds) {
         super.removeTokens(tokenIds);
         try {
             journal.remove(tokenIds);
