@@ -523,7 +523,7 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     Map<String, Long> tokenExpirations = getTokenExpirationsField(tss);
     Map<String, Long> maxTokenLifetimes = getMaxTokenLifetimesField(tss);
 
-    List<AliasBasedTokenStateService.TokenState> unpersistedState = getUnpersistedStateField(tss);
+    Set<AliasBasedTokenStateService.TokenState> unpersistedState = getUnpersistedStateField(tss);
 
     assertEquals("Expected the tokens expirations to have been added in the base class cache.",
                  TOKEN_COUNT,
@@ -599,7 +599,7 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     Map<String, Long> tokenExpirations = getTokenExpirationsField(tss);
     Map<String, Long> maxTokenLifetimes = getMaxTokenLifetimesField(tss);
 
-    List<AliasBasedTokenStateService.TokenState> unpersistedState = getUnpersistedStateField(tss);
+    Set<AliasBasedTokenStateService.TokenState> unpersistedState = getUnpersistedStateField(tss);
 
     assertEquals("Expected the tokens expirations to have been added in the base class cache.",
                  TOKEN_COUNT,
@@ -615,6 +615,42 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
 
     // Verify that the expected methods were invoked
     EasyMock.verify(aliasService);
+  }
+
+  @Test
+  public void ensureAliases() throws Exception {
+    final int tokenCount = 1000;
+    final Set<JWTToken> testTokens = new HashSet<>();
+    for (int i = 0; i < tokenCount ; i++) {
+      JWTToken token = createMockToken(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(60));
+      testTokens.add(token);
+    }
+
+    final AliasBasedTokenStateService tss = (AliasBasedTokenStateService) createTokenStateService();
+    final long issueTime = System.currentTimeMillis();
+    int count = 0;
+    for (JWTToken token : testTokens) {
+      tss.addToken(token, issueTime);
+      tss.renewToken(token);
+    }
+
+    final List<AliasBasedTokenStateService.TokenState> unpersistedTokenStates = new ArrayList<>(getUnpersistedStateField(tss, false));
+    final int expectedAliasCount = 2 * tokenCount; //expiration + max for each token
+    assertEquals(expectedAliasCount, unpersistedTokenStates.size());
+    for (JWTToken token : testTokens) {
+      String tokenId = token.getClaim(JWTToken.KNOX_ID_CLAIM);
+      assertTrue(containsAlias(unpersistedTokenStates, tokenId));
+      assertTrue(containsAlias(unpersistedTokenStates, tokenId + AliasBasedTokenStateService.TOKEN_MAX_LIFETIME_POSTFIX));
+    }
+  }
+
+  private boolean containsAlias(List<AliasBasedTokenStateService.TokenState> unpersistedTokenStates, String expectedAlias) {
+    for(AliasBasedTokenStateService.TokenState tokenState : unpersistedTokenStates) {
+      if (tokenState.getAlias().equals(expectedAlias)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -793,12 +829,14 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     return (Map<String, Long>) maxTokenLifetimesField.get(tss);
   }
 
-  private static List<AliasBasedTokenStateService.TokenState> getUnpersistedStateField(TokenStateService tss)
-          throws Exception {
-    Field unpersistedStateField = tss.getClass().getSuperclass().getDeclaredField("unpersistedState");
-    unpersistedStateField.setAccessible(true);
-    return (List<AliasBasedTokenStateService.TokenState>) unpersistedStateField.get(tss);
+  private static Set<AliasBasedTokenStateService.TokenState> getUnpersistedStateField(TokenStateService tss) throws Exception {
+    return getUnpersistedStateField(tss, true);
+  }
 
+  private static Set<AliasBasedTokenStateService.TokenState> getUnpersistedStateField(TokenStateService tss, boolean fromParent) throws Exception {
+    Field unpersistedStateField = fromParent ? tss.getClass().getSuperclass().getDeclaredField("unpersistedState") : tss.getClass().getDeclaredField("unpersistedState");
+    unpersistedStateField.setAccessible(true);
+    return (Set<AliasBasedTokenStateService.TokenState>) unpersistedStateField.get(tss);
   }
 
   private static class TestJournalEntry implements JournalEntry {

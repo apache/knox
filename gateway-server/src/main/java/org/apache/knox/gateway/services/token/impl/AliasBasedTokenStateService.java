@@ -26,7 +26,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -61,7 +60,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
 
   private ScheduledExecutorService statePersistenceScheduler;
 
-  private final List<TokenState> unpersistedState = new ArrayList<>();
+  private final Set<TokenState> unpersistedState = new HashSet<>();
 
   private final AtomicBoolean readyForEviction = new AtomicBoolean(false);
 
@@ -391,11 +390,17 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
 
     //Update the in-memory representation of unpersisted states that will be processed by the state persistence thread
     synchronized (unpersistedState) {
-      final Optional<TokenState> tokenStateToRemove = unpersistedState.stream().filter(tokenState -> tokenState.getTokenId().equals(tokenId)).findFirst();
-      if (tokenStateToRemove.isPresent()) {
-        unpersistedState.remove(tokenStateToRemove.get());
-      }
       unpersistedState.add(new TokenExpiration(tokenId, expiration));
+    }
+  }
+
+  enum TokenStateType {
+    EXP(1), MAX(2);
+
+    private final int id;
+
+    TokenStateType(int id) {
+      this.id = id;
     }
   }
 
@@ -403,6 +408,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     String getTokenId();
     String getAlias();
     String getAliasValue();
+    TokenStateType getType();
   }
 
   private static final class TokenMaxLifetime implements TokenState {
@@ -432,13 +438,28 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     }
 
     @Override
+    public TokenStateType getType() {
+      return TokenStateType.MAX;
+    }
+
+    @Override
     public int hashCode() {
-      return HashCodeBuilder.reflectionHashCode(this);
+      return new HashCodeBuilder().append(tokenId).append(getType().id).toHashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
-      return EqualsBuilder.reflectionEquals(this, obj);
+      if (obj == null) {
+        return false;
+      }
+      if (obj == this) {
+        return true;
+      }
+      if (obj.getClass() != getClass()) {
+        return false;
+      }
+      final TokenMaxLifetime rhs = (TokenMaxLifetime) obj;
+      return new EqualsBuilder().append(this.tokenId, rhs.tokenId).append(this.getType().id, rhs.getType().id).isEquals();
     }
   }
 
@@ -467,13 +488,28 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     }
 
     @Override
+    public TokenStateType getType() {
+      return TokenStateType.EXP;
+    }
+
+    @Override
     public int hashCode() {
-      return HashCodeBuilder.reflectionHashCode(this);
+      return new HashCodeBuilder().append(tokenId).append(getType().id).toHashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
-      return EqualsBuilder.reflectionEquals(this, obj);
+      if (obj == null) {
+        return false;
+      }
+      if (obj == this) {
+        return true;
+      }
+      if (obj.getClass() != getClass()) {
+        return false;
+      }
+      final TokenExpiration rhs = (TokenExpiration) obj;
+      return new EqualsBuilder().append(this.tokenId, rhs.tokenId).append(this.getType().id, rhs.getType().id).isEquals();
     }
   }
 
