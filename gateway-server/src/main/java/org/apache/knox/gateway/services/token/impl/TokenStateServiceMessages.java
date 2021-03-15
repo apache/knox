@@ -82,6 +82,15 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.ERROR, text = "Error occurred evicting token {0}")
   void errorEvictingTokens(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.INFO, text = "Running token state alias persister task in every {0} {1}")
+  void runningTokenStateAliasePersisterTask(long interval, String timeUnit);
+
+  @Message(level = MessageLevel.INFO, text = "Canceling token state alias persister task")
+  void cancelingTokenStateAliasePersisterTask();
+
+  @Message(level = MessageLevel.ERROR, text = "An error occurred while running token state alias persister task: {0}")
+  void errorRunningTokenStateAliasePersisterTask(@StackTrace(level = MessageLevel.DEBUG) Throwable e);
+
   @Message(level = MessageLevel.INFO, text = "Creating token state aliases")
   void creatingTokenStateAliases();
 

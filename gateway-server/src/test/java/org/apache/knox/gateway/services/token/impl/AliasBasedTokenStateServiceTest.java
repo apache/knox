@@ -628,7 +628,6 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
 
     final AliasBasedTokenStateService tss = (AliasBasedTokenStateService) createTokenStateService();
     final long issueTime = System.currentTimeMillis();
-    int count = 0;
     for (JWTToken token : testTokens) {
       tss.addToken(token, issueTime);
       tss.renewToken(token);

@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -46,11 +47,12 @@ import org.apache.knox.gateway.services.token.TokenStateServiceStatistics;
 import org.apache.knox.gateway.services.token.impl.state.TokenStateJournalFactory;
 import org.apache.knox.gateway.services.token.state.JournalEntry;
 import org.apache.knox.gateway.services.token.state.TokenStateJournal;
+import org.apache.knox.gateway.util.ExecutorServiceUtils;
 
 /**
  * A TokenStateService implementation based on the AliasService.
  */
-public class AliasBasedTokenStateService extends DefaultTokenStateService {
+public class AliasBasedTokenStateService extends DefaultTokenStateService implements TokenStatePeristerMonitorListener {
 
   static final String TOKEN_MAX_LIFETIME_POSTFIX = "--max";
 
@@ -109,9 +111,6 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
     }
 
     statePersistenceInterval = config.getKnoxTokenStateAliasPersistenceInterval();
-    if (statePersistenceInterval > 0) {
-      statePersistenceScheduler = Executors.newScheduledThreadPool(1);
-    }
 
     if (tokenStateServiceStatistics != null) {
       this.gatewayCredentialsFilePath = Paths.get(config.getGatewayKeystoreDir()).resolve(AliasService.NO_CLUSTER_NAME + DefaultKeystoreService.CREDENTIALS_SUFFIX + config.getCredentialStoreType().toLowerCase(Locale.ROOT));
@@ -122,12 +121,9 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
   @Override
   public void start() throws ServiceLifecycleException {
     super.start();
-    if (statePersistenceScheduler != null) {
-      // Run token persistence task at configured interval
-      statePersistenceScheduler.scheduleAtFixedRate(this::persistTokenState,
-                                                    statePersistenceInterval,
-                                                    statePersistenceInterval,
-                                                    TimeUnit.SECONDS);
+    if (statePersistenceInterval > 0) {
+      //first schedule event; only happen if the feature is not disabled via persistence interval settings
+      scheduleTokenStatePersistence();
     }
 
     // Loading ALL entries from __gateway-credentials.jceks could be VERY time-consuming (it took a bit more than 19 minutes to load 12k aliases
@@ -190,6 +186,22 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService {
 
     // Make an attempt to persist any unpersisted token state before shutting down
     persistTokenState();
+  }
+
+  private void scheduleTokenStatePersistence() {
+    if (statePersistenceScheduler != null) {
+      ExecutorServiceUtils.shutdownAndAwaitTermination(statePersistenceScheduler, 10, TimeUnit.SECONDS);
+    }
+    statePersistenceScheduler = Executors.newSingleThreadScheduledExecutor(new BasicThreadFactory.Builder().namingPattern("TokenStatePerister-%d").build());
+    final ScheduledFuture<?> persistTokenStateTask = statePersistenceScheduler.scheduleAtFixedRate(this::persistTokenState, statePersistenceInterval, statePersistenceInterval, TimeUnit.SECONDS);
+    log.runningTokenStateAliasePersisterTask(statePersistenceInterval, TimeUnit.SECONDS.toString());
+    final TokenStatePersisterMonitor taskMonitor = new TokenStatePersisterMonitor(persistTokenStateTask, this);
+    taskMonitor.startMonitor();
+  }
+
+  @Override
+  public void onTokenStatePeristerTaskError(Throwable error) {
+    scheduleTokenStatePersistence();
   }
 
   protected void persistTokenState() {
