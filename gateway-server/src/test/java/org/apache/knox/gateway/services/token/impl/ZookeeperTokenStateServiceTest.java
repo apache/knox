@@ -109,6 +109,7 @@ public class ZookeeperTokenStateServiceTest {
     expect(masterService.getMasterSecret()).andReturn(masterSecret).anyTimes();
     expect(gatewayServices.getService(ServiceType.MASTER_SERVICE)).andReturn(masterService).anyTimes();
     final KeystoreService keystoreservice = EasyMock.createNiceMock(KeystoreService.class);
+    expect(keystoreservice.getCredentialStoreForCluster(AliasService.NO_CLUSTER_NAME)).andReturn(null).anyTimes();
     expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreservice).anyTimes();
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     expect(gatewayServices.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
@@ -116,22 +117,22 @@ public class ZookeeperTokenStateServiceTest {
     clientService.setAliasService(aliasService);
     clientService.init(gc, Collections.emptyMap());
     expect(gatewayServices.getService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE)).andReturn(clientService).anyTimes();
-    replay(gatewayServices, masterService);
+    replay(gatewayServices, masterService, keystoreservice);
 
     final ZookeeperTokenStateService zktokenStateService = new ZookeeperTokenStateService(gatewayServices);
     zktokenStateService.init(gc, new HashMap<>());
     zktokenStateService.start();
 
-    assertFalse(zkNodeExists("/knox/security/topology/__gateway/token1"));
-    assertFalse(zkNodeExists("/knox/security/topology/__gateway/token1--max"));
+    assertFalse(zkNodeExists("/knox/security/topology/__gateway/tokens/to/token1"));
+    assertFalse(zkNodeExists("/knox/security/topology/__gateway/tokens/to/token1--max"));
 
     zktokenStateService.addToken("token1", 1L, 2L);
 
     // give some time for the token state service to persist the token aliases in ZK (doubled the persistence interval)
     Thread.sleep(2 * TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL * 1000);
 
-    assertTrue(zkNodeExists("/knox/security/topology/__gateway/token1"));
-    assertTrue(zkNodeExists("/knox/security/topology/__gateway/token1--max"));
+    assertTrue(zkNodeExists("/knox/security/topology/__gateway/tokens/to/token1"));
+    assertTrue(zkNodeExists("/knox/security/topology/__gateway/tokens/to/token1--max"));
   }
 
   private boolean zkNodeExists(String nodeName) {

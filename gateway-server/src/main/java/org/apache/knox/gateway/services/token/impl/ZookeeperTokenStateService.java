@@ -50,8 +50,10 @@ public class ZookeeperTokenStateService extends AliasBasedTokenStateService {
   public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
     final ZookeeperRemoteAliasService zookeeperAliasService = (ZookeeperRemoteAliasService) aliasServiceFactory.create(gatewayServices, ALIAS_SERVICE, config, options,
         ZookeeperRemoteAliasService.class.getName());
+    options.put(ZookeeperRemoteAliasService.OPTION_NAME_SHOULD_CREATE_TOKENS_SUB_NODE, "true");
     zookeeperAliasService.init(config, options);
     super.setAliasService(zookeeperAliasService);
     super.init(config, options);
+    options.remove(ZookeeperRemoteAliasService.OPTION_NAME_SHOULD_CREATE_TOKENS_SUB_NODE);
   }
 }
