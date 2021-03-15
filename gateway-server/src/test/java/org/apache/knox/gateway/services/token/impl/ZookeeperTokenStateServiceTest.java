@@ -117,6 +117,25 @@ public class ZookeeperTokenStateServiceTest {
     assertEquals(2000L, expiration);
   }
 
+  @Test
+  public void testRenewal() throws Exception {
+    final ZookeeperTokenStateService zktokenStateServiceNode1 = setupZkTokenStateService(SHORT_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL);
+    final ZookeeperTokenStateService zktokenStateServiceNode2 = setupZkTokenStateService(SHORT_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL);
+    final String tokenId = "a1-token";
+    final long issueTime = System.currentTimeMillis();
+    final long tokenTTL = 1000L;
+    final long renewInterval = 2000L;
+
+    zktokenStateServiceNode1.addToken(tokenId, issueTime, issueTime + tokenTTL);
+    Thread.sleep(SHORT_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL * 1500);
+    assertEquals(zktokenStateServiceNode1.getTokenExpiration(tokenId), zktokenStateServiceNode2.getTokenExpiration(tokenId));
+
+    //now renew token on node 1 and check if renewal is reflected on node2
+    zktokenStateServiceNode1.renewToken(tokenId, renewInterval);
+    Thread.sleep(SHORT_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL * 1500);
+    assertEquals(zktokenStateServiceNode1.getTokenExpiration(tokenId), zktokenStateServiceNode2.getTokenExpiration(tokenId));
+  }
+
   private ZookeeperTokenStateService setupZkTokenStateService(long persistenceInterval) throws IOException, KeystoreServiceException, ServiceLifecycleException {
     // mocking GatewayConfig
     final GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);

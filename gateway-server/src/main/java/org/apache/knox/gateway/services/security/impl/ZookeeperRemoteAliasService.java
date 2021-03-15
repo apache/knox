@@ -248,7 +248,11 @@ public class ZookeeperRemoteAliasService extends AbstractAliasService {
             checkPathsExist(remoteClient);
             ensureEntry(buildClusterEntryName(clusterName), remoteClient);
             try {
+              if (remoteClient.entryExists(aliasEntryPath)) {
+                remoteClient.setEntryData(aliasEntryPath, encrypt(value));
+              } else {
                 remoteClient.createEntry(aliasEntryPath, encrypt(value));
+              }
             } catch (Exception e) {
                 throw new AliasServiceException(e);
             }
