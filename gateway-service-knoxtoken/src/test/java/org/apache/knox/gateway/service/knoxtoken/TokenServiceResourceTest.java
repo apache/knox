@@ -31,6 +31,7 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
@@ -179,7 +180,7 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testGetToken() throws Exception {
-    configureCommonExpectations(Collections.singletonMap("org.apache.knox.gateway.gateway.cluster", "test"));
+    configureCommonExpectations(Collections.singletonMap("org.apache.knox.gateway.gateway.cluster", "test"), Boolean.TRUE);
 
     TokenResource tr = new TokenResource();
     tr.context = context;
@@ -199,6 +200,7 @@ public class TokenServiceResourceTest {
     assertNotNull(expiry);
 
     assertNotNull(getTagValue(retString, "token_id"));
+    assertTrue(Boolean.parseBoolean(getTagValue(retString, "managed")));
 
     // Verify the token
     JWT parsedToken = new JWTToken(accessToken);
@@ -1151,67 +1153,30 @@ public class TokenServiceResourceTest {
     }
 
     @Override
-    public JWT issueToken(Subject subject, String algorithm) {
-      Principal p = (Principal) subject.getPrincipals().toArray()[0];
-      return issueToken(p, algorithm);
-    }
-
-    @Override
-    public JWT issueToken(Principal p, String algorithm) {
-      return issueToken(p, null, algorithm);
-    }
-
-    @Override
-    public JWT issueToken(Principal p, String audience, String algorithm) {
-      return issueToken(p, audience, algorithm, -1);
-    }
-
-    @Override
     public boolean verifyToken(JWT token) {
       JWSVerifier verifier = new RSASSAVerifier(publicKey);
       return token.verify(verifier);
     }
 
     @Override
-    public JWT issueToken(Principal p, String audience, String algorithm,
-                               long expires) {
-      ArrayList<String> audiences = null;
-      if (audience != null) {
-        audiences = new ArrayList<>();
-        audiences.add(audience);
-      }
-      return issueToken(p, audiences, algorithm, expires);
-    }
-
-    @Override
-    public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires,
-                          String signingkeyName, String signingkeyAlias, char[] signingkeyPassphrase) {
-      return issueToken(p, audiences, algorithm, expires);
-    }
-
-    @Override
-    public JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires) {
+    public JWT issueToken(JWTokenAttributes jwtAttributes) {
       String[] claimArray = new String[4];
       claimArray[0] = "KNOXSSO";
-      claimArray[1] = p.getName();
+      claimArray[1] = jwtAttributes.getPrincipal().getName();
       claimArray[2] = null;
-      if (expires == -1) {
+      if (jwtAttributes.getExpires() == -1) {
         claimArray[3] = null;
       } else {
-        claimArray[3] = String.valueOf(expires);
+        claimArray[3] = String.valueOf(jwtAttributes.getExpires());
       }
 
-      JWT token = new JWTToken(algorithm, claimArray, audiences);
+      JWT token = new JWTToken(jwtAttributes.getAlgorithm(), claimArray, jwtAttributes.getAudiences());
       JWSSigner signer = new RSASSASigner(privateKey);
       token.sign(signer);
 
       return token;
     }
 
-    @Override
-    public JWT issueToken(Principal p, String algorithm, long expiry) {
-      return issueToken(p, Collections.emptyList(), algorithm, expiry);
-    }
 
     @Override
     public boolean verifyToken(JWT token, RSAPublicKey publicKey) {

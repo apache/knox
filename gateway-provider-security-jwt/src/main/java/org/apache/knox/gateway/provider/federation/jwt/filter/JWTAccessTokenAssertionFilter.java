@@ -38,6 +38,8 @@ import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
@@ -146,7 +148,8 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
     };
     JWT token;
     try {
-      token = authority.issueToken(p, serviceName, signatureAlgorithm, expires);
+      final JWTokenAttributes jwtAttributes = new JWTokenAttributesBuilder().setPrincipal(p).setAudiences(serviceName).setAlgorithm(signatureAlgorithm).setExpires(expires).build();
+      token = authority.issueToken(jwtAttributes);
       // Coverity CID 1327961
       if( token != null ) {
         accessToken = token.toString();

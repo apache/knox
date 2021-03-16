@@ -32,6 +32,7 @@ import org.apache.knox.gateway.filter.security.AbstractIdentityAssertionFilter;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
@@ -64,7 +65,7 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
     principalName = mapper.mapUserPrincipal(principalName);
     JWT authCode;
     try {
-      authCode = authority.issueToken(subject, signatureAlgorithm);
+      authCode = authority.issueToken(new JWTokenAttributesBuilder().setPrincipal(subject).setAlgorithm(signatureAlgorithm).build());
       // get the url for the token service
       String url = null;
       if (sr != null) {

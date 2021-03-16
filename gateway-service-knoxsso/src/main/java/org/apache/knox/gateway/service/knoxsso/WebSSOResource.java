@@ -52,6 +52,8 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
@@ -260,7 +262,9 @@ public class WebSSOResource {
         signingKeystorePassphrase = as.getPasswordFromAliasForCluster(clusterName, signingKeystorePassphraseAlias);
       }
 
-      JWT token = tokenAuthority.issueToken(p, targetAudiences, signatureAlgorithm, getExpiry(), signingKeystoreName,  signingKeystoreAlias, signingKeystorePassphrase);
+      final JWTokenAttributes jwtAttributes = new JWTokenAttributesBuilder().setPrincipal(p).setAudiences(targetAudiences).setAlgorithm(signatureAlgorithm).setExpires(getExpiry())
+          .setSigningKeystoreName(signingKeystoreName).setSigningKeystoreAlias(signingKeystoreAlias).setSigningKeystorePassphrase(signingKeystorePassphrase).build();
+      JWT token = tokenAuthority.issueToken(jwtAttributes);
 
       // Coverity CID 1327959
       if( token != null ) {

@@ -38,6 +38,7 @@ public class JWTToken implements JWT {
   private static JWTProviderMessages log = MessagesFactory.get( JWTProviderMessages.class );
 
   public static final String KNOX_ID_CLAIM = "knox.id";
+  public static final String MANAGED_TOKEN_CLAIM = "managed.token";
 
   SignedJWT jwt;
 
@@ -59,6 +60,10 @@ public class JWTToken implements JWT {
   }
 
   public JWTToken(String alg, String[] claimsArray, List<String> audiences) {
+    this(alg, claimsArray, audiences, false);
+  }
+
+  public JWTToken(String alg, String[] claimsArray, List<String> audiences, boolean managed) {
     JWSHeader header = new JWSHeader(new JWSAlgorithm(alg));
 
     if (claimsArray[2] != null) {
@@ -78,6 +83,8 @@ public class JWTToken implements JWT {
 
     // Add a private UUID claim for uniqueness
     builder.claim(KNOX_ID_CLAIM, String.valueOf(UUID.randomUUID()));
+
+    builder.claim(MANAGED_TOKEN_CLAIM, String.valueOf(managed));
 
     claims = builder.build();
 

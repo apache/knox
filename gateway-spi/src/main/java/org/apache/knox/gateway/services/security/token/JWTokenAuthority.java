@@ -17,40 +17,17 @@
  */
 package org.apache.knox.gateway.services.security.token;
 
-import java.security.Principal;
 import java.security.interfaces.RSAPublicKey;
-import java.util.List;
-
-import javax.security.auth.Subject;
 
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 
 public interface JWTokenAuthority {
 
-  JWT issueToken(Subject subject, String algorithm)
-      throws TokenServiceException;
-
-  JWT issueToken(Principal p, String algorithm)
-      throws TokenServiceException;
-
-  JWT issueToken(Principal p, String audience,
-      String algorithm) throws TokenServiceException;
+  JWT issueToken(JWTokenAttributes jwtAttributes) throws TokenServiceException;
 
   boolean verifyToken(JWT token) throws TokenServiceException;
 
   boolean verifyToken(JWT token, RSAPublicKey publicKey) throws TokenServiceException;
 
-  boolean verifyToken(JWT token, String jwksurl ,String algorithm ) throws TokenServiceException;
-
-  JWT issueToken(Principal p, String algorithm, long expires) throws TokenServiceException;
-
-  JWT issueToken(Principal p, String audience, String algorithm,
-      long expires) throws TokenServiceException;
-
-  JWT issueToken(Principal p, List<String> audiences, String algorithm,
-      long expires) throws TokenServiceException;
-
-  JWT issueToken(Principal p, List<String> audiences, String algorithm, long expires,
-                 String signingKeystoreName, String signingKeystoreAlias, char[] signingKeystorePassphrase)
-      throws TokenServiceException;
+  boolean verifyToken(JWT token, String jwksurl, String algorithm) throws TokenServiceException;
 }

@@ -29,6 +29,9 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.services.security.impl.DefaultKeystoreService;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 
 import org.easymock.EasyMock;
@@ -84,9 +87,10 @@ public class DefaultTokenAuthorityServiceTest {
     ta.init(config, new HashMap<>());
     ta.start();
 
-    JWT token = ta.issueToken(principal, "RS256");
+    JWT token = ta.issueToken(new JWTokenAttributesBuilder().setPrincipal(principal).setAlgorithm("RS256").setManaged(true).build());
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
+    assertTrue(Boolean.parseBoolean(token.getClaim(JWTToken.MANAGED_TOKEN_CLAIM)));
 
     assertTrue(ta.verifyToken(token));
   }
@@ -133,7 +137,8 @@ public class DefaultTokenAuthorityServiceTest {
     ta.init(config, new HashMap<>());
     ta.start();
 
-    JWT token = ta.issueToken(principal, "https://login.example.com", "RS256");
+    JWT token = ta
+        .issueToken(new JWTokenAttributesBuilder().setPrincipal(principal).setAudiences("https://login.example.com").setAlgorithm("RS256").build());
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
     assertEquals("https://login.example.com", token.getAudience());
@@ -183,7 +188,7 @@ public class DefaultTokenAuthorityServiceTest {
     ta.init(config, new HashMap<>());
     ta.start();
 
-    JWT token = ta.issueToken(principal, null, "RS256");
+    JWT token = ta.issueToken(new JWTokenAttributesBuilder().setPrincipal(principal).setAlgorithm("RS256").build());
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
 
@@ -232,7 +237,7 @@ public class DefaultTokenAuthorityServiceTest {
     ta.init(config, new HashMap<>());
     ta.start();
 
-    JWT token = ta.issueToken(principal, "RS512");
+    JWT token = ta.issueToken(new JWTokenAttributesBuilder().setPrincipal(principal).setAlgorithm("RS512").build());
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
     assertTrue(token.getHeader().contains("RS512"));
@@ -280,7 +285,7 @@ public class DefaultTokenAuthorityServiceTest {
     ta.setKeystoreService(ks);
 
     ta.init(config, new HashMap<>());
-    ta.issueToken(principal, "none");
+    ta.issueToken(new JWTokenAttributesBuilder().setPrincipal(principal).setAlgorithm("none").build());
   }
 
   @Test
@@ -333,8 +338,9 @@ public class DefaultTokenAuthorityServiceTest {
     ta.setKeystoreService(ks);
     ta.init(config, new HashMap<>());
 
-    JWT token = ta.issueToken(principal, Collections.emptyList(), "RS256", -1,
-        customSigningKeyName, customSigningKeyAlias, customSigningKeyPassphrase.toCharArray());
+    final JWTokenAttributes jwtAttributes = new JWTokenAttributesBuilder().setPrincipal(principal).setAudiences(Collections.emptyList()).setAlgorithm("RS256").setExpires(-1)
+        .setSigningKeystoreName(customSigningKeyName).setSigningKeystoreAlias(customSigningKeyAlias).setSigningKeystorePassphrase(customSigningKeyPassphrase.toCharArray()).build();
+    JWT token = ta.issueToken(jwtAttributes);
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
 
