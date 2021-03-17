@@ -31,6 +31,7 @@ public class DerbyDatabase implements Database {
   public static final String PROTOCOL = "jdbc:derby:";
   private static final String CREATE_ATTRIBUTE = ";create=true";
   private static final String SHUTDOWN_ATTRIBUTE = ";shutdown=true";
+  private static final String DEFAULT_SCHEMA_NAME = "APP";
 
   private final String dbUri;
 
@@ -87,7 +88,7 @@ public class DerbyDatabase implements Database {
 
   @Override
   public boolean hasTable(String tableName) throws SQLException {
-    return hasTable(null, tableName);
+    return hasTable(DEFAULT_SCHEMA_NAME, tableName);
   }
 
   @Override

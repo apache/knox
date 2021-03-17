@@ -853,4 +853,25 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public Map<String, Collection<String>> getHomePageProfiles() {
     return null;
   }
+
+  @Override
+  public String getDatabaseType() {
+    return null;
+  }
+
+  @Override
+  public String getDatabaseHost() {
+    return null;
+  }
+
+  @Override
+  public int getDatabasePort() {
+    return 0;
+  }
+
+  @Override
+  public String getDatabaseName() {
+    return null;
+  }
+
 }
