@@ -68,8 +68,8 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
   private static final Map<String, String> urlToHashLookup = new HashMap<>();
   private static final Map<String, String> hashToUrlLookup = new HashMap<>();
 
-  private boolean stickySessionsEnabled = HaServiceConfigConstants.DEFAULT_STICKY_SESSIONS_ENABLED;
   private boolean loadBalancingEnabled = HaServiceConfigConstants.DEFAULT_LOAD_BALANCING_ENABLED;
+  private boolean stickySessionsEnabled = HaServiceConfigConstants.DEFAULT_STICKY_SESSIONS_ENABLED;
   private boolean noFallbackEnabled = HaServiceConfigConstants.DEFAULT_NO_FALLBACK_ENABLED;
   private String stickySessionCookieName = HaServiceConfigConstants.DEFAULT_STICKY_SESSION_COOKIE_NAME;
 
@@ -81,10 +81,14 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
       HaServiceConfig serviceConfig = haProvider.getHaDescriptor().getServiceConfig(getServiceRole());
       maxFailoverAttempts = serviceConfig.getMaxFailoverAttempts();
       failoverSleep = serviceConfig.getFailoverSleep();
-      stickySessionsEnabled = serviceConfig.isStickySessionEnabled();
       loadBalancingEnabled = serviceConfig.isLoadBalancingEnabled();
-      noFallbackEnabled = serviceConfig.isNoFallbackEnabled();
-      stickySessionCookieName = serviceConfig.getStickySessionCookieName();
+
+      /* enforce dependency */
+      stickySessionsEnabled = loadBalancingEnabled && serviceConfig.isStickySessionEnabled();
+      noFallbackEnabled = stickySessionsEnabled && serviceConfig.isNoFallbackEnabled();
+      if(stickySessionsEnabled) {
+        stickySessionCookieName = serviceConfig.getStickySessionCookieName();
+      }
       setupUrlHashLookup();
     }
 
@@ -120,12 +124,25 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
       }
       executeRequest(outboundRequest, inboundRequest, outboundResponse);
       /**
-       * Load balance when
-       * 1. loadbalancing is enabled and sticky sessions are off
-       * 2. sticky sessions are enabled and it is a new session (no url in cookie)
+       * 1. Load balance when loadbalancing is enabled.
+       * 2. Loadbalance only when sticky session is enabled but cookie not detected
+       *    i.e. when loadbalancing is enabled every request that does not have BACKEND cookie
+       *    needs to be loadbalanced. If a request has BACKEND coookie and Loadbalance=on then
+       *    there should be no loadbalancing.
        */
-      if ( (!backendURI.isPresent() && stickySessionsEnabled) || loadBalancingEnabled) {
+      if (loadBalancingEnabled) {
+        /* check sticky session enabled */
+        if(stickySessionsEnabled) {
+          /* loadbalance only when sticky session enabled and no backend url cookie */
+          if(!backendURI.isPresent()) {
+            haProvider.makeNextActiveURLAvailable(getServiceRole());
+          } else{
+            /* sticky session enabled and backend url cookie is valid no need to loadbalance */
+            /* do nothing */
+          }
+        } else {
           haProvider.makeNextActiveURLAvailable(getServiceRole());
+        }
       }
   }
 
@@ -148,7 +165,7 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
   }
 
   private Optional<URI> setBackendfromHaCookie(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest) {
-      if (stickySessionsEnabled && inboundRequest.getCookies() != null) {
+      if (loadBalancingEnabled && stickySessionsEnabled && inboundRequest.getCookies() != null) {
           for (Cookie cookie : inboundRequest.getCookies()) {
               if (stickySessionCookieName.equals(cookie.getName())) {
                   String backendURLHash = cookie.getValue();
@@ -207,7 +224,7 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
 
   protected void failoverRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse, HttpResponse inboundResponse, Exception exception) throws IOException {
     /* check for a case where no fallback is configured */
-    if(noFallbackEnabled && stickySessionsEnabled) {
+    if(stickySessionsEnabled && noFallbackEnabled) {
       LOG.noFallbackError();
       outboundResponse.sendError(HttpServletResponse.SC_BAD_GATEWAY, "Service connection error, HA failover disabled");
       return;
