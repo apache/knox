@@ -77,4 +77,7 @@ public interface TokenServiceMessages {
   @Message( level = MessageLevel.WARN,
           text = "Renewal is disabled for the Knox Token service ({0}). Responding with the expiration from the token {1} ({2})")
   void renewalDisabled(String topologyName, String tokenDisplayText, String tokenId);
+
+  @Message( level = MessageLevel.WARN, text = "Invalid number used for JWT token lifespan ({0}) using the configured TTL for KnoxToken service")
+  void invalidLifetimeValue(String lifetimeStr);
 }

@@ -68,6 +68,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 @Singleton
 @Path(TokenResource.RESOURCE_PATH)
 public class TokenResource {
+  private static final String LIFESPAN_DAYS = "lifespan";
   private static final String EXPIRES_IN = "expires_in";
   private static final String TOKEN_TYPE = "token_type";
   private static final String ACCESS_TOKEN = "access_token";
@@ -91,6 +92,7 @@ public class TokenResource {
   static final String RENEW_PATH = "/renew";
   static final String REVOKE_PATH = "/revoke";
   private static final String TARGET_ENDPOINT_PULIC_CERT_PEM = "knox.token.target.endpoint.cert.pem";
+  private static final long MILLIS_IN_DAY = 86400000L;
   private static TokenServiceMessages log = MessagesFactory.get(TokenServiceMessages.class);
   private long tokenTTL = TOKEN_TTL_DEFAULT;
   private List<String> targetAudiences = new ArrayList<>();
@@ -464,12 +466,31 @@ public class TokenResource {
   }
 
   private long getExpiry() {
-    long expiry;
-    if (tokenTTL == -1) {
-      expiry = -1;
-    } else {
-      expiry = System.currentTimeMillis() + tokenTTL;
+    long expiry = 0L;
+    long millis = 0L;
+
+    String lifetimeStr = request.getParameter(LIFESPAN_DAYS);
+    if (lifetimeStr == null || lifetimeStr.isEmpty()) {
+      if (tokenTTL == -1) {
+        return -1;
+      }
+      millis = tokenTTL;
     }
+    else {
+      try {
+        // lifetime is in days
+        long lifetime = Long.parseLong(lifetimeStr);
+        if (lifetime * MILLIS_IN_DAY <= tokenTTL) {
+          millis = lifetime * MILLIS_IN_DAY;
+        }
+      }
+      catch (NumberFormatException e) {
+        log.invalidLifetimeValue(lifetimeStr);
+        millis = tokenTTL;
+      }
+    }
+    expiry = System.currentTimeMillis() + millis;
+
     return expiry;
   }
 
