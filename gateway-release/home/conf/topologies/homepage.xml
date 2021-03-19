@@ -83,7 +83,7 @@
       </param>
       <param>
          <name>knox.token.target.url</name>
-         <value>cdp-proxy-token/</value>
+         <value>proxy-token/</value>
       </param>
    </service>
    <application>
