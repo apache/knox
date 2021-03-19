@@ -60,6 +60,11 @@
          <name>SSOCookieProvider</name>
          <enabled>true</enabled>
       </provider>
+      <provider>
+         <role>identity-assertion</role>
+         <name>Default</name>
+         <enabled>true</enabled>
+      </provider>
    </gateway>
    <service>
       <role>KNOXSSOUT</role>
@@ -70,6 +75,20 @@
    <service>
       <role>KNOX-METADATA</role>
    </service>
+   <service>
+      <role>KNOXTOKEN</role>
+      <param>
+         <name>knox.token.ttl</name>
+         <value>604800000</value>
+      </param>
+      <param>
+         <name>knox.token.target.url</name>
+         <value>cdp-proxy-token/</value>
+      </param>
+   </service>
+   <application>
+      <name>tokengen</name>
+   </application>
    <application>
       <name>home</name>
    </application>

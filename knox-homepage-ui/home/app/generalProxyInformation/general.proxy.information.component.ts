@@ -62,6 +62,10 @@ export class GeneralProxyInformationComponent implements OnInit {
         return '';
     }
 
+    getTokenGenerationUrl() {
+        return this.getAdminUiUrl().replace(new RegExp('manager/admin-ui/*'), 'homepage/tokengen/index.html');
+    }
+
     ngOnInit(): void {
         console.debug('GeneralProxyInformationComponent --> ngOnInit() --> ');
         this.homepageService.getGeneralProxyInformation()
