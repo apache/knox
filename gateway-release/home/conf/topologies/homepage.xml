@@ -79,11 +79,15 @@
       <role>KNOXTOKEN</role>
       <param>
          <name>knox.token.ttl</name>
-         <value>604800000</value>
+         <value>10368000000</value>
       </param>
       <param>
          <name>knox.token.target.url</name>
          <value>proxy-token/</value>
+      </param>
+      <param>
+         <name>knox.token.client.data</name>
+         <value>homepage_url=homepage/home/</value>
       </param>
    </service>
    <application>
