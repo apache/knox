@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
+
 /**
  *
  */
@@ -34,10 +36,11 @@ public interface TokenStateJournal {
      * @param issueTime   The issue timestamp
      * @param expiration  The expiration time
      * @param maxLifetime The maximum allowed lifetime
+     * @param tokenMetafata The associated token metadata
      *
      * @throws IOException exception on error
      */
-    void add(String tokenId, long issueTime, long expiration, long maxLifetime)
+    void add(String tokenId, long issueTime, long expiration, long maxLifetime, TokenMetadata tokenMetadata)
         throws IOException;
 
     /**

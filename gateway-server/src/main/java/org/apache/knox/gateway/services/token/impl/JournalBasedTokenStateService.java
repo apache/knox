@@ -20,6 +20,7 @@ package org.apache.knox.gateway.services.token.impl;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.token.impl.state.TokenStateJournalFactory;
 import org.apache.knox.gateway.services.token.state.JournalEntry;
@@ -68,7 +69,7 @@ public class JournalBasedTokenStateService extends DefaultTokenStateService {
         super.addToken(tokenId, issueTime, expiration, maxLifetimeDuration);
 
         try {
-            journal.add(tokenId, issueTime, expiration, maxLifetimeDuration);
+            journal.add(tokenId, issueTime, expiration, maxLifetimeDuration, null);
         } catch (IOException e) {
             log.failedToAddJournalEntry(tokenId, e);
         }
@@ -151,7 +152,8 @@ public class JournalBasedTokenStateService extends DefaultTokenStateService {
                 journal.add(entry.getTokenId(),
                             Long.parseLong(entry.getIssueTime()),
                             expiration,
-                            Long.parseLong(entry.getMaxLifetime()));
+                            Long.parseLong(entry.getMaxLifetime()),
+                            entry.getTokenMetadata());
             }
         } catch (IOException e) {
             log.errorAccessingTokenState(e);
@@ -170,4 +172,18 @@ public class JournalBasedTokenStateService extends DefaultTokenStateService {
         return (entry == null);
     }
 
+  @Override
+  public void addMetadata(String tokenId, TokenMetadata metadata) {
+    super.addMetadata(tokenId, metadata);
+    try {
+      JournalEntry entry = journal.get(tokenId);
+      if (entry == null) {
+        log.journalEntryNotFound(tokenId);
+      } else {
+        journal.add(entry.getTokenId(), Long.parseLong(entry.getIssueTime()), Long.parseLong(entry.getExpiration()), Long.parseLong(entry.getMaxLifetime()), metadata);
+      }
+    } catch (IOException e) {
+      log.errorAccessingTokenState(e);
+    }
+  }
 }

@@ -166,4 +166,22 @@ public interface TokenStateService extends Service {
    */
   long getTokenExpiration(String tokenId, boolean validate) throws UnknownTokenException;
 
+  /**
+   * Adds metadata to the token identified by the given ID
+   *
+   * @param tokenId
+   *          The token's unique identifier.
+   * @param metadata
+   *          The metadata to be added
+   */
+  void addMetadata(String tokenId, TokenMetadata metadata);
+
+  /**
+   *
+   * @param tokenId
+   *          The token's unique identifier.
+   * @return The associated token metadata
+   */
+  TokenMetadata getTokenMetadata(String tokenId);
+
 }

@@ -53,6 +53,7 @@ import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
@@ -441,6 +442,7 @@ public class TokenResource {
                                      System.currentTimeMillis(),
                                      expires,
                                      maxTokenLifetime.orElse(tokenStateService.getDefaultMaxLifetimeDuration()));
+          tokenStateService.addMetadata(tokenId, new TokenMetadata(p.getName()));
           log.storedToken(getTopologyName(), Tokens.getTokenDisplayText(accessToken), tokenId);
         }
 

@@ -19,6 +19,7 @@
 package org.apache.knox.gateway.services.token.impl.state;
 
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.token.state.JournalEntry;
 
 import java.io.BufferedWriter;
@@ -53,8 +54,8 @@ class MultiFileTokenStateJournal extends FileTokenStateJournal {
     }
 
     @Override
-    public void add(final String tokenId, long issueTime, long expiration, long maxLifetime) throws IOException {
-        add(Collections.singletonList(new FileJournalEntry(tokenId, issueTime, expiration, maxLifetime)));
+    public void add(final String tokenId, long issueTime, long expiration, long maxLifetime, TokenMetadata tokenMetadata) throws IOException {
+        add(Collections.singletonList(new FileJournalEntry(tokenId, issueTime, expiration, maxLifetime, tokenMetadata)));
     }
 
     @Override
