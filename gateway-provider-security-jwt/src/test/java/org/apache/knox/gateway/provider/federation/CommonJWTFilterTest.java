@@ -131,6 +131,9 @@ public class CommonJWTFilterTest {
     EasyMock.expect(tss.getTokenExpiration(anyObject(JWT.class)))
             .andThrow(new UnknownTokenException("eyjhbgcioi1234567890neg"))
             .anyTimes();
+    EasyMock.expect(tss.getTokenExpiration(anyObject(String.class)))
+            .andThrow(new UnknownTokenException("eyjhbgcioi1234567890neg"))
+            .anyTimes();
     EasyMock.replay(tss);
 
     doTestIsStillValid(tss);
@@ -139,6 +142,9 @@ public class CommonJWTFilterTest {
   private boolean doTestIsStillValid(final Long expiration) throws Exception {
     TokenStateService tss = EasyMock.createNiceMock(TokenStateService.class);
     EasyMock.expect(tss.getTokenExpiration(anyObject(JWT.class)))
+            .andReturn(expiration)
+            .anyTimes();
+    EasyMock.expect(tss.getTokenExpiration(anyObject(String.class)))
             .andReturn(expiration)
             .anyTimes();
     EasyMock.replay(tss);

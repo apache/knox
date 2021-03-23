@@ -64,10 +64,8 @@ import java.security.cert.Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.Set;
@@ -129,33 +127,18 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
 
-      EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
-          SERVICE_URL);
-      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
-        @Override
-        public void write(int b) {
-        }
-
-        @Override
-        public void setWriteListener(WriteListener arg0) {
-        }
-
-        @Override
-        public boolean isReady() {
-          return false;
-        }
-      }).anyTimes();
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+      EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
       EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
       Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
-      Assert.assertTrue("No PrimaryPrincipal", !principals.isEmpty());
+      Assert.assertFalse("No PrimaryPrincipal", principals.isEmpty());
       Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -175,33 +158,18 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
 
-      EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
-          SERVICE_URL);
-      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
-        @Override
-        public void write(int b) {
-        }
-
-        @Override
-        public void setWriteListener(WriteListener arg0) {
-        }
-
-        @Override
-        public boolean isReady() {
-          return false;
-        }
-      }).anyTimes();
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+      EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
       EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
       Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
-      Assert.assertTrue("No PrimaryPrincipal", !principals.isEmpty());
+      Assert.assertFalse("No PrimaryPrincipal", principals.isEmpty());
       Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -223,31 +191,16 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
 
-      EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
-          SERVICE_URL);
-      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
-        @Override
-        public void write(int b) {
-        }
-
-        @Override
-        public void setWriteListener(WriteListener arg0) {
-        }
-
-        @Override
-        public boolean isReady() {
-          return false;
-        }
-      }).anyTimes();
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+      EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
       EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be true.", !chain.doFilterCalled);
+      Assert.assertFalse("doFilterCalled should not be true.", chain.doFilterCalled);
       Assert.assertNull("No Subject should be returned.", chain.subject);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -267,33 +220,18 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
 
-      EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
-          SERVICE_URL);
-      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
-        @Override
-        public void write(int b) {
-        }
-
-        @Override
-        public void setWriteListener(WriteListener arg0) {
-        }
-
-        @Override
-        public boolean isReady() {
-          return false;
-        }
-      }).anyTimes();
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+      EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
       EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
       Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
-      Assert.assertTrue("No PrimaryPrincipal", !principals.isEmpty());
+      Assert.assertFalse("No PrimaryPrincipal", principals.isEmpty());
       Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -313,31 +251,16 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
 
-      EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
-          SERVICE_URL);
-      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
-        @Override
-        public void write(int b) {
-        }
-
-        @Override
-        public void setWriteListener(WriteListener arg0) {
-        }
-
-        @Override
-        public boolean isReady() {
-          return false;
-        }
-      }).anyTimes();
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+      EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
       EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be true.", !chain.doFilterCalled);
+      Assert.assertFalse("doFilterCalled should not be true.", chain.doFilterCalled);
       Assert.assertNull("No Subject should be returned.", chain.subject);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -356,33 +279,18 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
 
-      EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
-          SERVICE_URL);
-      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
-        @Override
-        public void write(int b) {
-        }
-
-        @Override
-        public void setWriteListener(WriteListener arg0) {
-        }
-
-        @Override
-        public boolean isReady() {
-          return false;
-        }
-      }).anyTimes();
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+      EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
       EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
       Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
-      Assert.assertTrue("No PrimaryPrincipal", !principals.isEmpty());
+      Assert.assertFalse("No PrimaryPrincipal", principals.isEmpty());
       Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -402,33 +310,18 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
 
-      EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
-          SERVICE_URL);
-      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
-        @Override
-        public void write(int b) {
-        }
-
-        @Override
-        public void setWriteListener(WriteListener arg0) {
-        }
-
-        @Override
-        public boolean isReady() {
-          return false;
-        }
-      }).anyTimes();
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+      EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
       EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
       Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
-      Assert.assertTrue("No PrimaryPrincipal", !principals.isEmpty());
+      Assert.assertFalse("No PrimaryPrincipal", principals.isEmpty());
       Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -451,33 +344,18 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
 
-      EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
-          SERVICE_URL);
-      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
-        @Override
-        public void write(int b) {
-        }
-
-        @Override
-        public void setWriteListener(WriteListener arg0) {
-        }
-
-        @Override
-        public boolean isReady() {
-          return false;
-        }
-      }).anyTimes();
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+      EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
       EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
       Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
-      Assert.assertTrue("No PrimaryPrincipal", !principals.isEmpty());
+      Assert.assertFalse("No PrimaryPrincipal", principals.isEmpty());
       Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -496,31 +374,16 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
 
-      EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
-          SERVICE_URL);
-      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
-        @Override
-        public void write(int b) {
-        }
-
-        @Override
-        public void setWriteListener(WriteListener arg0) {
-        }
-
-        @Override
-        public boolean isReady() {
-          return false;
-        }
-      }).anyTimes();
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+      EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
       EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be false.", !chain.doFilterCalled);
+      Assert.assertFalse("doFilterCalled should not be false.", chain.doFilterCalled);
       Assert.assertNull("No Subject should be returned.", chain.subject);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -538,33 +401,18 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
 
-      EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
-          SERVICE_URL).anyTimes();
-      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
-        @Override
-        public void write(int b) {
-        }
-
-        @Override
-        public void setWriteListener(WriteListener arg0) {
-        }
-
-        @Override
-        public boolean isReady() {
-          return false;
-        }
-      }).anyTimes();
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL).anyTimes();
+      EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
       EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
       Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
-      Assert.assertTrue("No PrimaryPrincipal", !principals.isEmpty());
+      Assert.assertFalse("No PrimaryPrincipal", principals.isEmpty());
       Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -583,31 +431,16 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setGarbledTokenOnRequest(request, jwt);
 
-      EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
-          SERVICE_URL).anyTimes();
-      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
-        @Override
-        public void write(int b) {
-        }
-
-        @Override
-        public void setWriteListener(WriteListener arg0) {
-        }
-
-        @Override
-        public boolean isReady() {
-          return false;
-        }
-      }).anyTimes();
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL).anyTimes();
+      EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
       EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be true.", !chain.doFilterCalled);
+      Assert.assertFalse("doFilterCalled should not be true.", chain.doFilterCalled);
       Assert.assertNull("No Subject should be returned.", chain.subject);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -635,31 +468,16 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
 
-      EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
-          SERVICE_URL).anyTimes();
-      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
-        @Override
-        public void write(int b) {
-        }
-
-        @Override
-        public void setWriteListener(WriteListener arg0) {
-        }
-
-        @Override
-        public boolean isReady() {
-          return false;
-        }
-      }).anyTimes();
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL).anyTimes();
+      EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
       EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be true.", !chain.doFilterCalled);
+      Assert.assertFalse("doFilterCalled should not be true.", chain.doFilterCalled);
       Assert.assertNull("No Subject should be returned.", chain.subject);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -691,25 +509,11 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
 
-      EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
-      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
-        @Override
-        public void write(int b) {
-        }
-
-        @Override
-        public void setWriteListener(WriteListener arg0) {
-        }
-
-        @Override
-        public boolean isReady() {
-          return false;
-        }
-      }).anyTimes();
+      EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
       EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
@@ -732,31 +536,16 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
 
-      EasyMock.expect(request.getRequestURL()).andReturn(
-         new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
-          SERVICE_URL);
-      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
-        @Override
-        public void write(int b) {
-        }
-
-        @Override
-        public void setWriteListener(WriteListener arg0) {
-        }
-
-        @Override
-        public boolean isReady() {
-          return false;
-        }
-      }).anyTimes();
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+      EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
       EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be true.", !chain.doFilterCalled);
+      Assert.assertFalse("doFilterCalled should not be true.", chain.doFilterCalled);
       Assert.assertNull("No Subject should be returned.", chain.subject);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -775,33 +564,18 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
 
-      EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
-          SERVICE_URL);
-      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
-        @Override
-        public void write(int b) {
-        }
-
-        @Override
-        public void setWriteListener(WriteListener arg0) {
-        }
-
-        @Override
-        public boolean isReady() {
-          return false;
-        }
-      }).anyTimes();
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+      EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
       EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled);
       Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
-      Assert.assertTrue("No PrimaryPrincipal", !principals.isEmpty());
+      Assert.assertFalse("No PrimaryPrincipal", principals.isEmpty());
       Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -825,33 +599,18 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
 
-      EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
-          SERVICE_URL);
-      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
-        @Override
-        public void write(int b) {
-        }
-
-        @Override
-        public void setWriteListener(WriteListener arg0) {
-        }
-
-        @Override
-        public boolean isReady() {
-          return false;
-        }
-      }).anyTimes();
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+      EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
       EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
       Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
       Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
-      Assert.assertTrue("No PrimaryPrincipal", !principals.isEmpty());
+      Assert.assertFalse("No PrimaryPrincipal", principals.isEmpty());
       Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -876,31 +635,16 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
 
-      EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
-          SERVICE_URL);
-      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
-        @Override
-        public void write(int b) {
-        }
-
-        @Override
-        public void setWriteListener(WriteListener arg0) {
-        }
-
-        @Override
-        public boolean isReady() {
-          return false;
-        }
-      }).anyTimes();
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+      EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
       EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be false.", !chain.doFilterCalled );
+      Assert.assertFalse("doFilterCalled should not be false.", chain.doFilterCalled );
       Assert.assertNull("No Subject should be returned.", chain.subject);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -921,31 +665,16 @@ public abstract class AbstractJWTFilterTest  {
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
 
-      EasyMock.expect(request.getRequestURL()).andReturn(
-          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
-          SERVICE_URL);
-      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
-        @Override
-        public void write(int b) {
-        }
-
-        @Override
-        public void setWriteListener(WriteListener arg0) {
-        }
-
-        @Override
-        public boolean isReady() {
-          return false;
-        }
-      }).anyTimes();
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+      EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
       EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
       handler.doFilter(request, response, chain);
-      Assert.assertTrue("doFilterCalled should not be false.", !chain.doFilterCalled);
+      Assert.assertFalse("doFilterCalled should not be false.", chain.doFilterCalled);
       Assert.assertNull("No Subject should be returned.", chain.subject);
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
@@ -987,20 +716,7 @@ public abstract class AbstractJWTFilterTest  {
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
-      EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
-        @Override
-        public void write(int b) {
-        }
-
-        @Override
-        public void setWriteListener(WriteListener arg0) {
-        }
-
-        @Override
-        public boolean isReady() {
-          return false;
-        }
-      }).anyTimes();
+      EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
       EasyMock.replay(request, response);
 
       doTestVerificationOptimization(request, response, principalAlice);
@@ -1100,20 +816,7 @@ public abstract class AbstractJWTFilterTest  {
   private HttpServletResponse createMockResponse() throws Exception {
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
-    EasyMock.expect(response.getOutputStream()).andAnswer(() -> new ServletOutputStream() {
-      @Override
-      public void write(int b) {
-      }
-
-      @Override
-      public void setWriteListener(WriteListener arg0) {
-      }
-
-      @Override
-      public boolean isReady() {
-        return false;
-      }
-    }).anyTimes();
+    EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
     return response;
   }
 
@@ -1136,7 +839,7 @@ public abstract class AbstractJWTFilterTest  {
     handler.doFilter(request, response, chain);
     Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
     Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
-    Assert.assertTrue("No PrimaryPrincipal", !principals.isEmpty());
+    Assert.assertFalse("No PrimaryPrincipal", principals.isEmpty());
     Assert.assertEquals("Not the expected principal", expectedPrincipal, ((Principal)principals.toArray()[0]).getName());
   }
 
@@ -1179,20 +882,15 @@ public abstract class AbstractJWTFilterTest  {
   protected SignedJWT getJWT(String issuer, String sub, String aud, Date expires, Date nbf, RSAPrivateKey privateKey,
                              String signatureAlgorithm)
       throws Exception {
-    List<String> audiences = new ArrayList<>();
-    if (aud != null) {
-      audiences.add(aud);
-    }
-
     JWTClaimsSet claims = new JWTClaimsSet.Builder()
-    .issuer(issuer)
-    .subject(sub)
-    .audience(aud)
-    .expirationTime(expires)
-    .notBeforeTime(nbf)
-    .claim("scope", "openid")
-    .claim(JWTToken.KNOX_ID_CLAIM, String.valueOf(UUID.randomUUID()))
-    .build();
+                                          .issuer(issuer)
+                                          .subject(sub)
+                                          .audience(aud)
+                                          .expirationTime(expires)
+                                          .notBeforeTime(nbf)
+                                          .claim("scope", "openid")
+                                          .claim(JWTToken.KNOX_ID_CLAIM, String.valueOf(UUID.randomUUID()))
+                                          .build();
 
     JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.parse(signatureAlgorithm)).build();
 
@@ -1283,6 +981,21 @@ public abstract class AbstractJWTFilterTest  {
 
   protected interface TokenVerificationCounter {
     int getVerificationCount();
+  }
+
+  static class DummyServletOutputStream extends ServletOutputStream {
+      @Override
+      public void write(int b) {
+      }
+
+      @Override
+      public void setWriteListener(WriteListener arg0) {
+      }
+
+      @Override
+      public boolean isReady() {
+        return false;
+      }
   }
 
 }

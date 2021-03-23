@@ -32,6 +32,9 @@ public interface JWTMessages {
   @Message( level = MessageLevel.INFO, text = "Access token {0} ({1}) has expired; a new one must be acquired." )
   void tokenHasExpired(String tokenDisplayText, String tokenId);
 
+  @Message( level = MessageLevel.INFO, text = "Access token {0} has expired; a new one must be acquired." )
+  void tokenHasExpired(String tokenId);
+
   @Message( level = MessageLevel.INFO, text = "The NotBefore check failed." )
   void notBeforeCheckFailed();
 

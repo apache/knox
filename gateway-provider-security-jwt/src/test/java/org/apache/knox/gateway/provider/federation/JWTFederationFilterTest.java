@@ -18,13 +18,12 @@
 package org.apache.knox.gateway.provider.federation;
 
 import com.nimbusds.jwt.SignedJWT;
-import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
-import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.easymock.EasyMock;
 import org.junit.Before;
 
 import javax.servlet.http.HttpServletRequest;
 
+@SuppressWarnings("PMD.TestClassWithoutTestCases")
 public class JWTFederationFilterTest extends AbstractJWTFilterTest {
   @Before
   public void setUp() {
@@ -33,39 +32,8 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
   }
 
   @Override
-  protected void setTokenOnRequest(HttpServletRequest request, SignedJWT jwt) {
-    String token = "Bearer " + jwt.serialize();
-    EasyMock.expect(request.getHeader("Authorization")).andReturn(token);
-  }
-
-  @Override
-  protected void setGarbledTokenOnRequest(HttpServletRequest request, SignedJWT jwt) {
-    String token = "Bearer " + "ljm" + jwt.serialize();
-    EasyMock.expect(request.getHeader("Authorization")).andReturn(token);
-  }
-
-  @Override
   protected String getAudienceProperty() {
     return TestJWTFederationFilter.KNOX_TOKEN_AUDIENCES;
-  }
-
-  private static class TestJWTFederationFilter extends JWTFederationFilter implements TokenVerificationCounter {
-    private int verificationCount;
-
-    void setTokenService(final JWTokenAuthority ts) {
-      authority = ts;
-    }
-
-    @Override
-    protected void recordSignatureVerification(final String tokenId) {
-      super.recordSignatureVerification(tokenId);
-      verificationCount++;
-    }
-
-    @Override
-    public int getVerificationCount() {
-      return verificationCount;
-    }
   }
 
   @Override
@@ -73,4 +41,15 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
     return TestJWTFederationFilter.TOKEN_VERIFICATION_PEM;
   }
 
+  @Override
+  protected void setTokenOnRequest(HttpServletRequest request, SignedJWT jwt) {
+    String token = TestJWTFederationFilter.BEARER + " " + jwt.serialize();
+    EasyMock.expect(request.getHeader("Authorization")).andReturn(token);
+  }
+
+  @Override
+  protected void setGarbledTokenOnRequest(HttpServletRequest request, SignedJWT jwt) {
+    String token = TestJWTFederationFilter.BEARER + " ljm" + jwt.serialize();
+    EasyMock.expect(request.getHeader("Authorization")).andReturn(token);
+  }
 }

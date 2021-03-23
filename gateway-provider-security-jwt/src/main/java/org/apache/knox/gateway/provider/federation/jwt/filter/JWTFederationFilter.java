@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.util.CertificateUtils;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
@@ -38,14 +39,19 @@ import java.util.Locale;
 
 public class JWTFederationFilter extends AbstractJWTFilter {
 
+  public enum TokenType {
+    JWT, Passcode;
+  }
+
   public static final String KNOX_TOKEN_AUDIENCES = "knox.token.audiences";
   public static final String TOKEN_VERIFICATION_PEM = "knox.token.verification.pem";
   public static final String KNOX_TOKEN_QUERY_PARAM_NAME = "knox.token.query.param.name";
   public static final String TOKEN_PRINCIPAL_CLAIM = "knox.token.principal.claim";
   public static final String JWKS_URL = "knox.token.jwks.url";
-  private static final String BEARER = "Bearer ";
-  private static final String BASIC = "Basic";
-  private static final String TOKEN = "Token";
+  public static final String BEARER   = "Bearer ";
+  public static final String BASIC    = "Basic";
+  public static final String TOKEN    = "Token";
+  public static final String PASSCODE = "Passcode";
   private String paramName;
 
   @Override
@@ -93,55 +99,74 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
-    final String wireToken = getWireToken(request);
+    final Pair<TokenType, String> wireToken = getWireToken(request);
 
     if (wireToken != null) {
-      try {
-        JWT token = new JWTToken(wireToken);
-        if (validateToken((HttpServletRequest)request, (HttpServletResponse)response, chain, token)) {
-          Subject subject = createSubjectFromToken(token);
-          continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
+      TokenType tokenType  = wireToken.getLeft();
+      String    tokenValue = wireToken.getRight();
+
+      if (TokenType.JWT.equals(tokenType)) {
+        try {
+          JWT token = new JWTToken(tokenValue);
+          if (validateToken((HttpServletRequest) request, (HttpServletResponse) response, chain, token)) {
+            Subject subject = createSubjectFromToken(token);
+            continueWithEstablishedSecurityContext(subject, (HttpServletRequest) request, (HttpServletResponse) response, chain);
+          }
+        } catch (ParseException ex) {
+          ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
         }
-      } catch (ParseException ex) {
-        ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
+      } else if (TokenType.Passcode.equals(tokenType)) {
+        // Validate the token based on the server-managed metadata
+        if (validateToken((HttpServletRequest) request, (HttpServletResponse) response, chain, tokenValue)) {
+          Subject subject = createSubjectFromTokenIdentifier(tokenValue);
+          continueWithEstablishedSecurityContext(subject, (HttpServletRequest) request, (HttpServletResponse) response, chain);
+        }
       }
-    }
-    else {
+    } else {
       // no token provided in header
       ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
     }
   }
 
-  public String getWireToken(final ServletRequest request) {
+  public Pair<TokenType, String> getWireToken(final ServletRequest request) {
+      Pair<TokenType, String> parsed = null;
       String token = null;
       final String header = ((HttpServletRequest)request).getHeader("Authorization");
       if (header != null) {
           if (header.startsWith(BEARER)) {
               // what follows the bearer designator should be the JWT token being used
-            // to request or as an access token
+              // to request or as an access token
               token = header.substring(BEARER.length());
-          }
-          else if (header.toLowerCase(Locale.ROOT).startsWith(BASIC.toLowerCase(Locale.ROOT))) {
-              // what follows the Basic designator should be the JWT token being used
-            // to request or as an access token
-              token = this.parseFromHTTPBasicCredentials(token, header);
+              parsed = Pair.of(TokenType.JWT, token);
+          } else if (header.toLowerCase(Locale.ROOT).startsWith(BASIC.toLowerCase(Locale.ROOT))) {
+              // what follows the Basic designator should be the JWT token or the unique token ID being used
+              // to request or as an access token
+              parsed = parseFromHTTPBasicCredentials(header);
           }
       }
-      if (token == null) {
+
+      if (parsed == null) {
           token = request.getParameter(this.paramName);
+          if (token != null) {
+            parsed = Pair.of(TokenType.JWT, token);
+          }
       }
-      return token;
+
+      return parsed;
   }
 
-  private String parseFromHTTPBasicCredentials(String token, final String header) {
+    private Pair<TokenType, String> parseFromHTTPBasicCredentials(final String header) {
+      Pair<TokenType, String> parsed = null;
       final String base64Credentials = header.substring(BASIC.length()).trim();
       final byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
       final String credentials = new String(credDecoded, StandardCharsets.UTF_8);
       final String[] values = credentials.split(":", 2);
-      if (values[0].equalsIgnoreCase(TOKEN)) {
-          token = values[1];
+      String username = values[0];
+      if (TOKEN.equalsIgnoreCase(username) || PASSCODE.equalsIgnoreCase(username)) {
+          parsed = Pair.of(TOKEN.equalsIgnoreCase(username) ? TokenType.JWT : TokenType.Passcode, values[1]);
       }
-      return token;
+
+      return parsed;
   }
 
   @Override
