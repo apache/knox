@@ -282,6 +282,91 @@ public class ConfigurableDispatchTest {
     assertThat(outboundResponse.getHeader(WWW_AUTHENTICATE), is("negotiate"));
   }
 
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void testRequestAppendHeadersConfig() {
+    ConfigurableDispatch dispatch = new ConfigurableDispatch();
+    dispatch.setRequestAppendHeaders("{\"a\":\"b\",\"c\":\"d\"}");
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put(HttpHeaders.AUTHORIZATION, "Basic ...");
+    headers.put(HttpHeaders.ACCEPT, "abc");
+    headers.put("TEST", "test");
+
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getHeaderNames()).andReturn(Collections.enumeration(headers.keySet())).anyTimes();
+    Capture<String> capturedArgument = Capture.newInstance();
+    EasyMock.expect(inboundRequest.getHeader(EasyMock.capture(capturedArgument)))
+            .andAnswer(() -> headers.get(capturedArgument.getValue())).anyTimes();
+    EasyMock.replay(inboundRequest);
+
+    HttpUriRequest outboundRequest = new HttpGet();
+    dispatch.copyRequestHeaderFields(outboundRequest, inboundRequest);
+
+    Header[] outboundRequestHeaders = outboundRequest.getAllHeaders();
+    assertThat(outboundRequestHeaders.length, is(4));
+    assertThat(outboundRequestHeaders[0].getName(), is(HttpHeaders.ACCEPT));
+    assertThat(outboundRequestHeaders[1].getName(), is("TEST"));
+    assertThat(outboundRequestHeaders[2].getName(), is("a"));
+    assertThat(outboundRequestHeaders[3].getName(), is("c"));
+  }
+
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void testRequestExcludeAndAppendHeadersConfig() {
+    ConfigurableDispatch dispatch = new ConfigurableDispatch();
+    dispatch.setRequestAppendHeaders("{\"a\":\"b\",\"c\":\"d\"}");
+    dispatch.setRequestExcludeHeaders(String.join(",", Arrays.asList(HttpHeaders.ACCEPT, "TEST")));
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put(HttpHeaders.AUTHORIZATION, "Basic ...");
+    headers.put(HttpHeaders.ACCEPT, "abc");
+    headers.put("TEST", "test");
+
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getHeaderNames()).andReturn(Collections.enumeration(headers.keySet())).anyTimes();
+    Capture<String> capturedArgument = Capture.newInstance();
+    EasyMock.expect(inboundRequest.getHeader(EasyMock.capture(capturedArgument)))
+            .andAnswer(() -> headers.get(capturedArgument.getValue())).anyTimes();
+    EasyMock.replay(inboundRequest);
+
+    HttpUriRequest outboundRequest = new HttpGet();
+    dispatch.copyRequestHeaderFields(outboundRequest, inboundRequest);
+
+    Header[] outboundRequestHeaders = outboundRequest.getAllHeaders();
+    assertThat(outboundRequestHeaders.length, is(3));
+    assertThat(outboundRequestHeaders[0].getName(), is(HttpHeaders.AUTHORIZATION));
+    assertThat(outboundRequestHeaders[1].getName(), is("a"));
+    assertThat(outboundRequestHeaders[2].getName(), is("c"));
+  }
+
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void testRequestExcludeAndAppendWithDifferentValueHeadersConfig() {
+    ConfigurableDispatch dispatch = new ConfigurableDispatch();
+    dispatch.setRequestAppendHeaders("{\"a\":\"b\",\"TEST\":\"xyz\"}");
+    dispatch.setRequestExcludeHeaders(String.join(",", Arrays.asList(HttpHeaders.ACCEPT, "TEST")));
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put(HttpHeaders.AUTHORIZATION, "Basic ...");
+    headers.put(HttpHeaders.ACCEPT, "abc");
+    headers.put("TEST", "test");
+
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getHeaderNames()).andReturn(Collections.enumeration(headers.keySet())).anyTimes();
+    Capture<String> capturedArgument = Capture.newInstance();
+    EasyMock.expect(inboundRequest.getHeader(EasyMock.capture(capturedArgument)))
+            .andAnswer(() -> headers.get(capturedArgument.getValue())).anyTimes();
+    EasyMock.replay(inboundRequest);
+
+    HttpUriRequest outboundRequest = new HttpGet();
+    dispatch.copyRequestHeaderFields(outboundRequest, inboundRequest);
+
+    Header[] outboundRequestHeaders = outboundRequest.getAllHeaders();
+    assertThat(outboundRequestHeaders.length, is(3));
+    assertThat(outboundRequestHeaders[0].getName(), is(HttpHeaders.AUTHORIZATION));
+    assertThat(outboundRequestHeaders[1].getName(), is("a"));
+    assertThat(outboundRequestHeaders[2].getName(), is("TEST"));
+    assertThat(outboundRequestHeaders[2].getValue(), is("xyz"));
+  }
+
   @Test
   public void shouldExcludeCertainPartsFromSetCookieHeader() throws Exception {
     final Header[] headers = new Header[] { new BasicHeader(SET_COOKIE, "Domain=localhost; Secure; HttpOnly; Max-Age=1") };

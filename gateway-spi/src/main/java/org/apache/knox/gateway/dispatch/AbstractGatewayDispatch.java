@@ -30,8 +30,10 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public abstract class AbstractGatewayDispatch implements Dispatch {
@@ -132,10 +134,20 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
         outboundRequest.addHeader( name, value );
       }
     }
+
+    //If there are some headers to be appended, append them
+    Map<String, String> extraHeaders = getOutboundRequestAppendHeaders();
+    if(null != extraHeaders){
+      extraHeaders.keySet().forEach(header -> outboundRequest.addHeader(header, extraHeaders.get(header)));
+    }
   }
 
   public Set<String> getOutboundRequestExcludeHeaders() {
     return REQUEST_EXCLUDE_HEADERS;
+  }
+
+  public Map<String, String> getOutboundRequestAppendHeaders() {
+    return Collections.emptyMap();
   }
 
   protected void encodeUnwiseCharacters(StringBuffer str) {
