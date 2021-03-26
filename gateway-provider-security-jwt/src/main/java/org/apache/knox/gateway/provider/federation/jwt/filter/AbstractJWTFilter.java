@@ -58,6 +58,7 @@ import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
@@ -174,17 +175,31 @@ public abstract class AbstractJWTFilter implements Filter {
     return audList;
   }
 
-  protected boolean tokenIsStillValid(JWT jwtToken) throws UnknownTokenException {
-    Date expires;
-    if (tokenStateService != null) {
-      expires = new Date(tokenStateService.getTokenExpiration(jwtToken));
-    } else {
+  protected boolean tokenIsStillValid(final JWT jwtToken) throws UnknownTokenException {
+    Date expires = getServerManagedStateExpiration(TokenUtils.getTokenId(jwtToken));
+    if (expires == null) {
       // if there is no expiration date then the lifecycle is tied entirely to
       // the cookie validity - otherwise ensure that the current time is before
       // the designated expiration time
       expires = jwtToken.getExpiresDate();
     }
     return expires == null || new Date().before(expires);
+  }
+
+  protected boolean tokenIsStillValid(final String tokenId) throws UnknownTokenException {
+    Date expires = getServerManagedStateExpiration(tokenId);
+    return expires == null || (new Date().before(expires));
+  }
+
+  private Date getServerManagedStateExpiration(final String tokenId) throws UnknownTokenException {
+    Date expires = null;
+    if (tokenStateService != null) {
+      long value = tokenStateService.getTokenExpiration(tokenId);
+      if (value > 0) {
+        expires = new Date(value);
+      }
+    }
+    return expires;
   }
 
   /**
@@ -196,7 +211,7 @@ public abstract class AbstractJWTFilter implements Filter {
    *          the JWT token where the allowed audiences will be found
    * @return true if an expected audience is present, otherwise false
    */
-  protected boolean validateAudiences(JWT jwtToken) {
+  protected boolean validateAudiences(final JWT jwtToken) {
     boolean valid = false;
 
     String[] tokenAudienceList = jwtToken.getAudienceClaims();
@@ -220,7 +235,7 @@ public abstract class AbstractJWTFilter implements Filter {
     return valid;
   }
 
-  protected void continueWithEstablishedSecurityContext(Subject subject, final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
+  protected void continueWithEstablishedSecurityContext(final Subject subject, final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
     Principal principal = (Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0];
     AuditContext context = auditService.getContext();
     if (context != null) {
@@ -257,24 +272,42 @@ public abstract class AbstractJWTFilter implements Filter {
     }
   }
 
-  public Subject createSubjectFromToken(String token) throws ParseException {
+  public Subject createSubjectFromToken(final String token) throws ParseException {
     return createSubjectFromToken(new JWTToken(token));
   }
 
-  protected Subject createSubjectFromToken(JWT token) {
+  protected Subject createSubjectFromToken(final JWT token) {
     String principal = token.getSubject();
     String claimvalue = null;
     if (expectedPrincipalClaim != null) {
       claimvalue = token.getClaim(expectedPrincipalClaim);
     }
+    // The newly constructed Sets check whether this Subject has been set read-only
+    // before permitting subsequent modifications. The newly created Sets also prevent
+    // illegal modifications by ensuring that callers have sufficient permissions.
+    //
+    // To modify the Principals Set, the caller must have AuthPermission("modifyPrincipals").
+    // To modify the public credential Set, the caller must have AuthPermission("modifyPublicCredentials").
+    // To modify the private credential Set, the caller must have AuthPermission("modifyPrivateCredentials").
+    return createSubjectFromTokenData(principal, claimvalue);
+  }
 
-    if (claimvalue != null) {
-      principal = claimvalue.toLowerCase(Locale.ROOT);
+  public Subject createSubjectFromTokenIdentifier(final String tokenId) {
+    TokenMetadata metadata = tokenStateService.getTokenMetadata(tokenId);
+    if (metadata != null) {
+      return createSubjectFromTokenData(metadata.getUserName(), null);
     }
+    return null;
+  }
+
+  protected Subject createSubjectFromTokenData(final String principal, final String expectedPrincipalClaimValue) {
+    String claimValue =
+              (expectedPrincipalClaimValue != null) ? expectedPrincipalClaimValue.toLowerCase(Locale.ROOT) : null;
+
     @SuppressWarnings("rawtypes")
     HashSet emptySet = new HashSet();
     Set<Principal> principals = new HashSet<>();
-    Principal p = new PrimaryPrincipal(principal);
+    Principal p = new PrimaryPrincipal(claimValue != null ? claimValue : principal);
     principals.add(p);
 
     // The newly constructed Sets check whether this Subject has been set read-only
@@ -287,8 +320,9 @@ public abstract class AbstractJWTFilter implements Filter {
     return new Subject(true, principals, emptySet, emptySet);
   }
 
-  protected boolean validateToken(HttpServletRequest request, HttpServletResponse response,
-      FilterChain chain, JWT token)
+
+  protected boolean validateToken(final HttpServletRequest request, final HttpServletResponse response,
+      final FilterChain chain, final JWT token)
       throws IOException, ServletException {
     final String tokenId = TokenUtils.getTokenId(token);
     final String displayableToken = Tokens.getTokenDisplayText(token.toString());
@@ -320,7 +354,7 @@ public abstract class AbstractJWTFilter implements Filter {
                     "Bad request: missing required token audience");
           }
         } else {
-          log.tokenHasExpired(tokenId, displayableToken);
+          log.tokenHasExpired(displayableToken, tokenId);
 
           // Explicitly evict the record of this token's signature verification (if present).
           // There is no value in keeping this record for expired tokens, and explicitly removing them may prevent
@@ -342,7 +376,31 @@ public abstract class AbstractJWTFilter implements Filter {
     return false;
   }
 
-  protected boolean verifyTokenSignature(final JWT token) {
+  protected boolean validateToken(final HttpServletRequest request,
+                                  final HttpServletResponse response,
+                                  final FilterChain chain,
+                                  final String tokenId)
+          throws IOException, ServletException {
+
+    if (tokenStateService != null) {
+      try {
+        if (tokenIsStillValid(tokenId)) {
+          return true;
+        } else {
+          log.tokenHasExpired(tokenId);
+          handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+                                "Bad request: token has expired");
+        }
+      } catch (UnknownTokenException e) {
+        log.unableToVerifyExpiration(e);
+        handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+      }
+    }
+
+    return false;
+  }
+
+    protected boolean verifyTokenSignature(final JWT token) {
     boolean verified;
 
     String tokenId = TokenUtils.getTokenId(token);

@@ -36,6 +36,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.audit.api.AuditService;
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
@@ -78,7 +79,14 @@ public class HadoopAuthPostFilter implements Filter {
     Subject subject = null;
     if (shouldUseJwtFilter(jwtFilter, (HttpServletRequest) request)) {
       try {
-        subject = jwtFilter.createSubjectFromToken(jwtFilter.getWireToken(request));
+        Pair<JWTFederationFilter.TokenType, String> wireToken = jwtFilter.getWireToken(request);
+        JWTFederationFilter.TokenType tokenType = wireToken.getLeft();
+        String token = wireToken.getRight();
+        if (JWTFederationFilter.TokenType.JWT.equals(tokenType)) {
+          subject = jwtFilter.createSubjectFromToken(token);
+        } else if (JWTFederationFilter.TokenType.Passcode.equals(tokenType)) {
+          subject = jwtFilter.createSubjectFromTokenIdentifier(token);
+        }
       } catch (ParseException e) {
         // NOP: subject remains null -> SC_FORBIDDEN will be returned
       }
