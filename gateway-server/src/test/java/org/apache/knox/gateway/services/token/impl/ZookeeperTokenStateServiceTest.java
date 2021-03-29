@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.curator.test.InstanceSpec;
 import org.apache.curator.test.TestingCluster;
@@ -112,17 +113,18 @@ public class ZookeeperTokenStateServiceTest {
   public void testRetry() throws Exception {
     final ZookeeperTokenStateService zktokenStateServiceNode1 = setupZkTokenStateService(LONG_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL);
     final ZookeeperTokenStateService zktokenStateServiceNode2 = setupZkTokenStateService(LONG_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL);
-    zktokenStateServiceNode1.addToken("node1Token", 10L, 2000L);
-    final long expiration = zktokenStateServiceNode2.getTokenExpiration("node1Token");
+    final String tokenId = UUID.randomUUID().toString();
+    zktokenStateServiceNode1.addToken(tokenId, 10L, 2000L);
+    final long expiration = zktokenStateServiceNode2.getTokenExpiration(tokenId);
     Thread.sleep(LONG_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL * 1000);
     assertEquals(2000L, expiration);
 
     final String userName = "testUser";
     final String comment = "This is my test comment";
-    zktokenStateServiceNode1.addMetadata("node1Token", new TokenMetadata(userName, comment));
+    zktokenStateServiceNode1.addMetadata(tokenId, new TokenMetadata(userName, comment));
     Thread.sleep(LONG_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL * 1000);
-    assertEquals(userName, zktokenStateServiceNode2.getTokenMetadata("node1Token").getUserName());
-    assertEquals(comment, zktokenStateServiceNode2.getTokenMetadata("node1Token").getComment());
+    assertEquals(userName, zktokenStateServiceNode2.getTokenMetadata(tokenId).getUserName());
+    assertEquals(comment, zktokenStateServiceNode2.getTokenMetadata(tokenId).getComment());
   }
 
   @Test

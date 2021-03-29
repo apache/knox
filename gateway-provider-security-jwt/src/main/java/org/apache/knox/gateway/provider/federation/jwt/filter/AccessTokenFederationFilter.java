@@ -92,6 +92,7 @@ public class AccessTokenFederationFilter implements Filter {
       }
 
       final String tokenId = TokenUtils.getTokenId(token);
+      final String displayableTokenId = Tokens.getTokenIDDisplayText(tokenId);
       final String displayableToken = Tokens.getTokenDisplayText(token.toString());
       if (verified) {
         try {
@@ -100,11 +101,11 @@ public class AccessTokenFederationFilter implements Filter {
               Subject subject = createSubjectFromToken(token);
               continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
             } else {
-              log.failedToValidateAudience(tokenId, displayableToken);
+              log.failedToValidateAudience(displayableToken, displayableTokenId);
               sendUnauthorized(response);
             }
           } else {
-            log.tokenHasExpired(tokenId, displayableToken);
+            log.tokenHasExpired(displayableToken, displayableTokenId);
             sendUnauthorized(response);
           }
         } catch (UnknownTokenException e) {
@@ -112,7 +113,7 @@ public class AccessTokenFederationFilter implements Filter {
           sendUnauthorized(response);
         }
       } else {
-        log.failedToVerifyTokenSignature(tokenId, displayableToken);
+        log.failedToVerifyTokenSignature(displayableToken, displayableTokenId);
         sendUnauthorized(response);
       }
     } else {

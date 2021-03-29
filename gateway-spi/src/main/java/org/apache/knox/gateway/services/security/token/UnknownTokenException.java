@@ -16,9 +16,12 @@
  */
 package org.apache.knox.gateway.services.security.token;
 
+import org.apache.knox.gateway.util.Tokens;
+
 public class UnknownTokenException extends Exception {
 
-  private String tokenId;
+  private final String tokenId;
+  private final String tokenIdDisplay;
 
   /**
    *
@@ -26,6 +29,7 @@ public class UnknownTokenException extends Exception {
    */
   public UnknownTokenException(final String tokenId) {
     this.tokenId = tokenId;
+    this.tokenIdDisplay = Tokens.getTokenIDDisplayText(tokenId);
   }
 
   public String getTokenId() {
@@ -34,7 +38,7 @@ public class UnknownTokenException extends Exception {
 
   @Override
   public String getMessage() {
-    return "Unknown token: " + tokenId;
+    return "Unknown token: " + tokenIdDisplay;
   }
 
 }

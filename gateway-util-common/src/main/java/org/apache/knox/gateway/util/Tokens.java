@@ -39,4 +39,23 @@ public class Tokens {
         return displayText;
     }
 
+    /**
+     * Get a String derived from a Knox token UUID String, which is suitable for presentation (e.g., logging) without
+     * compromising security.
+     *
+     * @param uuid A Knox token UUID String.
+     *
+     * @return An abbreviated form of the specified UUID String.
+     */
+    public static String getTokenIDDisplayText(final String uuid) {
+        String displayText = null;
+        if (uuid != null && uuid.length() == 36 && uuid.contains("-")) {
+            displayText = String.format(Locale.ROOT,
+                                        "%s...%s",
+                                        uuid.substring(0, uuid.indexOf('-')),
+                                        uuid.substring(uuid.lastIndexOf('-') + 1));
+        }
+        return displayText;
+    }
+
 }
