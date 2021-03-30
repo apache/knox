@@ -27,6 +27,8 @@ import java.util.List;
 import javax.net.ssl.SSLContext;
 import javax.servlet.FilterConfig;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -69,6 +71,11 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
   private static final SpiGatewayMessages LOG = MessagesFactory.get(SpiGatewayMessages.class);
   private static final String PARAMETER_SERVICE_ROLE = "serviceRole";
   static final String PARAMETER_USE_TWO_WAY_SSL = "useTwoWaySsl";
+  /* retry in case of NoHttpResponseException */
+  static final String PARAMETER_RETRY_COUNT = "retryCount";
+  static final String PARAMETER_RETRY_NON_SAFE_REQUEST = "retryNonSafeRequest";
+  /* do not retry non-idempotent requests OOTB */
+  static final boolean DEFAULT_PARAMETER_RETRY_NON_SAFE_REQUEST = false;
 
   @Override
   public HttpClient createHttpClient(FilterConfig filterConfig) {
@@ -119,7 +126,25 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     // See KNOX-1530 for details
     builder.disableContentCompression();
 
+    if (doesRetryParamExist(filterConfig)) {
+      int retryCount = Integer.parseInt(filterConfig.getInitParameter(PARAMETER_RETRY_COUNT));
+      /* do we want to retry non-idempotent requests? default no */
+      boolean retryNonIdempotent = DEFAULT_PARAMETER_RETRY_NON_SAFE_REQUEST;
+      if (filterConfig.getInitParameter(PARAMETER_RETRY_NON_SAFE_REQUEST)
+          != null) {
+        retryNonIdempotent = Boolean.parseBoolean(
+            filterConfig.getInitParameter(PARAMETER_RETRY_NON_SAFE_REQUEST));
+      }
+      builder.setRetryHandler(new DefaultHttpRequestRetryHandler(retryCount,
+          retryNonIdempotent));
+    }
     return builder.build();
+  }
+
+  private boolean doesRetryParamExist(final FilterConfig filterConfig) {
+    return filterConfig.getInitParameter(PARAMETER_RETRY_COUNT) != null
+        && StringUtils
+        .isNumeric(filterConfig.getInitParameter(PARAMETER_RETRY_COUNT));
   }
 
   /**
@@ -342,5 +367,4 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     Period p = Period.parse( s, f );
     return p.toStandardDuration().getMillis();
   }
-
 }

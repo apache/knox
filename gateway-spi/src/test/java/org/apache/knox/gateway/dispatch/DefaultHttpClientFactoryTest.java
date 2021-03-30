@@ -76,6 +76,7 @@ public class DefaultHttpClientFactoryTest {
     expect(filterConfig.getInitParameter("httpclient.connectionTimeout")).andReturn(null).once();
     expect(filterConfig.getInitParameter("httpclient.socketTimeout")).andReturn(null).once();
     expect(filterConfig.getInitParameter("serviceRole")).andReturn(null).once();
+    expect(filterConfig.getInitParameter("retryCount")).andReturn(null).once();
 
     replay(keystoreService, gatewayConfig, gatewayServices, servletContext, filterConfig);
 
@@ -233,5 +234,55 @@ public class DefaultHttpClientFactoryTest {
       keyStore.load(input, password.toCharArray());
     }
     return keyStore;
+  }
+
+  @Test
+  public void testHttpRetriesValues() throws Exception {
+    KeystoreService keystoreService = createMock(KeystoreService.class);
+    expect(keystoreService.getTruststoreForHttpClient()).andReturn(null).anyTimes();
+
+    GatewayConfig gatewayConfig = createMock(GatewayConfig.class);
+    expect(gatewayConfig.isMetricsEnabled()).andReturn(false).anyTimes();
+    expect(gatewayConfig.getHttpClientMaxConnections()).andReturn(32).anyTimes();
+    expect(gatewayConfig.getHttpClientConnectionTimeout()).andReturn(20000).anyTimes();
+    expect(gatewayConfig.getHttpClientSocketTimeout()).andReturn(20000).anyTimes();
+
+    GatewayServices gatewayServices = createMock(GatewayServices.class);
+    expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).anyTimes();
+
+    ServletContext servletContext = createMock(ServletContext.class);
+    expect(servletContext.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).atLeastOnce();
+    expect(servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(gatewayServices).atLeastOnce();
+
+    FilterConfig filterConfigSafe = createMock(FilterConfig.class);
+    expect(filterConfigSafe.getServletContext()).andReturn(servletContext).atLeastOnce();
+    expect(filterConfigSafe.getInitParameter("useTwoWaySsl")).andReturn("false").once();
+    expect(filterConfigSafe.getInitParameter("httpclient.maxConnections")).andReturn(null).once();
+    expect(filterConfigSafe.getInitParameter("httpclient.connectionTimeout")).andReturn(null).once();
+    expect(filterConfigSafe.getInitParameter("httpclient.socketTimeout")).andReturn(null).once();
+    expect(filterConfigSafe.getInitParameter("serviceRole")).andReturn(null).once();
+    expect(filterConfigSafe.getInitParameter("retryCount")).andReturn("3").anyTimes();
+    expect(filterConfigSafe.getInitParameter("retryNonSafeRequest")).andReturn(null).anyTimes();
+
+    FilterConfig filterConfigUnSafe = createMock(FilterConfig.class);
+    expect(filterConfigUnSafe.getServletContext()).andReturn(servletContext).atLeastOnce();
+    expect(filterConfigUnSafe.getInitParameter("useTwoWaySsl")).andReturn("false").once();
+    expect(filterConfigUnSafe.getInitParameter("httpclient.maxConnections")).andReturn(null).once();
+    expect(filterConfigUnSafe.getInitParameter("httpclient.connectionTimeout")).andReturn(null).once();
+    expect(filterConfigUnSafe.getInitParameter("httpclient.socketTimeout")).andReturn(null).once();
+    expect(filterConfigUnSafe.getInitParameter("serviceRole")).andReturn(null).once();
+    expect(filterConfigUnSafe.getInitParameter("retryCount")).andReturn("3").anyTimes();
+    expect(filterConfigUnSafe.getInitParameter("retryNonSafeRequest")).andReturn("true").anyTimes();
+
+    replay(keystoreService, gatewayConfig, gatewayServices, servletContext, filterConfigSafe, filterConfigUnSafe);
+
+    DefaultHttpClientFactory factory = new DefaultHttpClientFactory();
+    HttpClient clientSafe = factory.createHttpClient(filterConfigSafe);
+    assertNotNull(clientSafe);
+
+    HttpClient clientUnSafe = factory.createHttpClient(filterConfigUnSafe);
+    assertNotNull(clientUnSafe);
+
+    verify(keystoreService, gatewayConfig, gatewayServices, servletContext, filterConfigSafe, filterConfigUnSafe);
   }
 }
