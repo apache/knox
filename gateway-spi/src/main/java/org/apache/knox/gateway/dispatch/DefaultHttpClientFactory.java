@@ -126,20 +126,25 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     // See KNOX-1530 for details
     builder.disableContentCompression();
 
-    if (filterConfig.getInitParameter(PARAMETER_RETRY_COUNT) != null
-        && StringUtils
-        .isNumeric(filterConfig.getInitParameter(PARAMETER_RETRY_COUNT))) {
+    if (doesRetryParamExist(filterConfig)) {
+      int retryCount = Integer.parseInt(filterConfig.getInitParameter(PARAMETER_RETRY_COUNT));
       /* do we want to retry non-idempotent requests? default no */
       boolean retryNonIdempotent = DEFAULT_PARAMETER_RETRY_NON_SAFE_REQUEST;
       if (filterConfig.getInitParameter(PARAMETER_RETRY_NON_SAFE_REQUEST)
           != null) {
         retryNonIdempotent = Boolean.parseBoolean(
             filterConfig.getInitParameter(PARAMETER_RETRY_NON_SAFE_REQUEST));
-      } builder.setRetryHandler(new DefaultHttpRequestRetryHandler(Integer
-          .parseInt(filterConfig.getInitParameter(PARAMETER_RETRY_COUNT)),
+      }
+      builder.setRetryHandler(new DefaultHttpRequestRetryHandler(retryCount,
           retryNonIdempotent));
     }
     return builder.build();
+  }
+
+  private boolean doesRetryParamExist(final FilterConfig filterConfig) {
+    return filterConfig.getInitParameter(PARAMETER_RETRY_COUNT) != null
+        && StringUtils
+        .isNumeric(filterConfig.getInitParameter(PARAMETER_RETRY_COUNT));
   }
 
   /**
