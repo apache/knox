@@ -385,7 +385,10 @@ public class DefaultTokenStateService implements TokenStateService {
   }
 
   @Override
-  public TokenMetadata getTokenMetadata(String tokenId) {
+  public TokenMetadata getTokenMetadata(String tokenId) throws UnknownTokenException {
+    if (!metadataMap.containsKey(tokenId)) {
+      throw new UnknownTokenException(tokenId);
+    }
     return metadataMap.get(tokenId);
   }
 }

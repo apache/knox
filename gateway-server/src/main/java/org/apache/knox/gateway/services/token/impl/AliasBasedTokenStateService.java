@@ -446,13 +446,22 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService implem
   }
 
   @Override
-  public TokenMetadata getTokenMetadata(String tokenId) {
-    TokenMetadata tokenMetadata = super.getTokenMetadata(tokenId);
+  public TokenMetadata getTokenMetadata(String tokenId) throws UnknownTokenException {
+    TokenMetadata tokenMetadata = null;
+    try {
+      tokenMetadata = super.getTokenMetadata(tokenId);
+    } catch (UnknownTokenException e) {
+      // This is expected if the metadata is not yet part of the in-memory record. In this case, the metadata will
+      // be retrieved from the alias store.
+    }
+
     if (tokenMetadata == null) {
       try {
         final char[] tokenMetadataAliasValue = getPasswordUsingAliasService(tokenId + TOKEN_META_POSTFIX);
         if (tokenMetadataAliasValue != null) {
           tokenMetadata = TokenMetadata.fromJSON(new String(tokenMetadataAliasValue));
+        } else {
+          throw new UnknownTokenException(tokenId);
         }
       } catch (AliasServiceException e) {
         log.errorAccessingTokenState(tokenId, e);

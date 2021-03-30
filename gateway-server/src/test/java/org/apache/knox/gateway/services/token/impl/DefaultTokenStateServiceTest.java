@@ -19,7 +19,6 @@ package org.apache.knox.gateway.services.token.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -107,6 +106,14 @@ public class DefaultTokenStateServiceTest {
 
     // Expecting an UnknownTokenException because the token is not known to the TokenStateService
     createTokenStateService().getTokenExpiration(TokenUtils.getTokenId(token), false);
+  }
+
+  @Test(expected = UnknownTokenException.class)
+  public void testGetMetadata_InvalidToken() throws Exception {
+    final JWTToken token = createMockToken(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(60));
+
+    // Expecting an UnknownTokenException because the token is not known to the TokenStateService
+    createTokenStateService().getTokenMetadata(TokenUtils.getTokenId(token));
   }
 
   @Test
@@ -267,13 +274,19 @@ public class DefaultTokenStateServiceTest {
     tss.getTokenExpiration(token);
   }
 
+  @SuppressWarnings("PMD.JUnitUseExpected")
   @Test
   public void testAddTokenMetadata() throws Exception {
     final JWT token = getJWTToken(System.currentTimeMillis());
     final String tokenId = token.getClaim(JWTToken.KNOX_ID_CLAIM);
     final TokenStateService tss = new DefaultTokenStateService();
     tss.addToken((JWTToken) token, System.currentTimeMillis());
-    assertNull(tss.getTokenMetadata(tokenId));
+    try {
+      tss.getTokenMetadata(tokenId);
+      fail("Expected exception since there is no metadata for the token ID.");
+    } catch (UnknownTokenException e) {
+      // Expected
+    }
 
     final String userName = "testUser";
     tss.addMetadata(token.getClaim(JWTToken.KNOX_ID_CLAIM), new TokenMetadata(userName));

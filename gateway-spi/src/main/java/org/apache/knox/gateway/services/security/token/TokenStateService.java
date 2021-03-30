@@ -182,6 +182,6 @@ public interface TokenStateService extends Service {
    *          The token's unique identifier.
    * @return The associated token metadata
    */
-  TokenMetadata getTokenMetadata(String tokenId);
+  TokenMetadata getTokenMetadata(String tokenId) throws UnknownTokenException;
 
 }

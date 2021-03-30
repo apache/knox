@@ -1135,7 +1135,7 @@ public class TokenServiceResourceTest {
     }
 
     @Override
-    public TokenMetadata getTokenMetadata(String tokenId) {
+    public TokenMetadata getTokenMetadata(String tokenId) throws UnknownTokenException {
       return null;
     }
 

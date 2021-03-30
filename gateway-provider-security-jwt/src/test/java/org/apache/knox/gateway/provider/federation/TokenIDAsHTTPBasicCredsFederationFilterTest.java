@@ -412,7 +412,10 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
         }
 
         @Override
-        public TokenMetadata getTokenMetadata(String tokenId) {
+        public TokenMetadata getTokenMetadata(String tokenId) throws UnknownTokenException {
+            if (!tokenMetadata.containsKey(tokenId)) {
+                throw new UnknownTokenException(tokenId);
+            }
             return tokenMetadata.get(tokenId);
         }
     }
