@@ -43,6 +43,7 @@ import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.util.Tokens;
 import org.easymock.EasyMock;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -233,7 +234,7 @@ public class DefaultTokenStateServiceTest {
 
       // Expect the renew call to fail since the token should have been evicted
       final UnknownTokenException e = assertThrows(UnknownTokenException.class, () -> tss.renewToken(token));
-      assertEquals("Unknown token: " + TokenUtils.getTokenId(token), e.getMessage());
+      assertEquals("Unknown token: " + Tokens.getTokenIDDisplayText(TokenUtils.getTokenId(token)), e.getMessage());
     } finally {
       tss.stop();
     }

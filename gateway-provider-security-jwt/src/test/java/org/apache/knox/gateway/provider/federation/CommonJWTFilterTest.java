@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.UUID;
 
 import static org.easymock.EasyMock.anyObject;
 import static org.junit.Assert.assertFalse;
@@ -128,11 +129,12 @@ public class CommonJWTFilterTest {
   @Test(expected = UnknownTokenException.class)
   public void testIsStillValidUnknownToken() throws Exception {
     TokenStateService tss = EasyMock.createNiceMock(TokenStateService.class);
+    final String tokenId = UUID.randomUUID().toString();
     EasyMock.expect(tss.getTokenExpiration(anyObject(JWT.class)))
-            .andThrow(new UnknownTokenException("eyjhbgcioi1234567890neg"))
+            .andThrow(new UnknownTokenException(tokenId))
             .anyTimes();
     EasyMock.expect(tss.getTokenExpiration(anyObject(String.class)))
-            .andThrow(new UnknownTokenException("eyjhbgcioi1234567890neg"))
+            .andThrow(new UnknownTokenException(tokenId))
             .anyTimes();
     EasyMock.replay(tss);
 

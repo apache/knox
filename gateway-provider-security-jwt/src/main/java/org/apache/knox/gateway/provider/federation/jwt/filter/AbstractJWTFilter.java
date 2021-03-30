@@ -325,6 +325,7 @@ public abstract class AbstractJWTFilter implements Filter {
       final FilterChain chain, final JWT token)
       throws IOException, ServletException {
     final String tokenId = TokenUtils.getTokenId(token);
+    final String displayableTokenId = Tokens.getTokenIDDisplayText(tokenId);
     final String displayableToken = Tokens.getTokenDisplayText(token.toString());
     // confirm that issuer matches the intended target
     if (expectedIssuer.equals(token.getIssuer())) {
@@ -340,7 +341,7 @@ public abstract class AbstractJWTFilter implements Filter {
               if (verifyTokenSignature(token)) {
                 return true;
               } else {
-                log.failedToVerifyTokenSignature(tokenId, displayableToken);
+                log.failedToVerifyTokenSignature(displayableToken, displayableTokenId);
                 handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
               }
             } else {
@@ -349,12 +350,12 @@ public abstract class AbstractJWTFilter implements Filter {
                       "Bad request: the NotBefore check failed");
             }
           } else {
-            log.failedToValidateAudience(tokenId, displayableToken);
+            log.failedToValidateAudience(displayableToken, displayableTokenId);
             handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
                     "Bad request: missing required token audience");
           }
         } else {
-          log.tokenHasExpired(displayableToken, tokenId);
+          log.tokenHasExpired(displayableToken, displayableTokenId);
 
           // Explicitly evict the record of this token's signature verification (if present).
           // There is no value in keeping this record for expired tokens, and explicitly removing them may prevent
@@ -387,7 +388,7 @@ public abstract class AbstractJWTFilter implements Filter {
         if (tokenIsStillValid(tokenId)) {
           return true;
         } else {
-          log.tokenHasExpired(tokenId);
+          log.tokenHasExpired(Tokens.getTokenIDDisplayText(tokenId));
           handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
                                 "Bad request: token has expired");
         }
