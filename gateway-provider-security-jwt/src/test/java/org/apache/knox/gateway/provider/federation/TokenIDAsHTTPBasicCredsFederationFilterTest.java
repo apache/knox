@@ -37,6 +37,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.text.ParseException;
+import java.time.Instant;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
@@ -224,6 +225,16 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
     }
 
     @Override
+    public void testJWTWithoutKnoxUUIDClaim() throws Exception {
+        // Override to disable N/A test
+    }
+
+    @Override
+    public void testExpiredJWTWithoutKnoxUUIDClaim() throws Exception {
+        // Override to disable N/A test
+    }
+
+    @Override
     public void testInvalidAudienceJWT() throws Exception {
         // Override to disable N/A test
     }
@@ -339,23 +350,34 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
             if (expiration == null || expiration.isEmpty()) {
                 expiration = "0";
             }
-            tokenExpirations.put(TokenUtils.getTokenId(token), Long.parseLong(expiration));
+            addToken(TokenUtils.getTokenId(token), Instant.now().toEpochMilli(), Long.parseLong(expiration));
+        }
+
+        private void addToken(String tokenId, long expiration) {
+            tokenExpirations.put(tokenId, expiration);
         }
 
         @Override
         public void addToken(String tokenId, long issueTime, long expiration) {
-            tokenExpirations.put(tokenId, expiration);
+            addToken(tokenId, expiration);
         }
 
         @Override
         public void addToken(String tokenId, long issueTime, long expiration, long maxLifetimeDuration) {
-            tokenExpirations.put(tokenId, expiration);
+            addToken(tokenId, expiration);
         }
 
         @Override
         public boolean isExpired(JWTToken token) throws UnknownTokenException {
-            Long expiration = tokenExpirations.get(TokenUtils.getTokenId(token));
-            return (new Date(expiration).before(new Date()));
+            Long expiration;
+            String tokenId = TokenUtils.getTokenId(token);
+            if (tokenId != null) {
+                expiration = tokenExpirations.get(tokenId);
+            } else {
+                expiration = Long.parseLong(token.getExpires());
+            }
+
+            return Instant.ofEpochMilli(expiration).isBefore(Instant.now());
         }
 
         @Override

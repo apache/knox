@@ -167,8 +167,9 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       final String credentials = new String(credDecoded, StandardCharsets.UTF_8);
       final String[] values = credentials.split(":", 2);
       String username = values[0];
+      String passcode = values[1].isEmpty() ? null : values[1];
       if (TOKEN.equalsIgnoreCase(username) || PASSCODE.equalsIgnoreCase(username)) {
-          parsed = Pair.of(TOKEN.equalsIgnoreCase(username) ? TokenType.JWT : TokenType.Passcode, values[1]);
+          parsed = Pair.of(TOKEN.equalsIgnoreCase(username) ? TokenType.JWT : TokenType.Passcode, passcode);
       }
 
       return parsed;
