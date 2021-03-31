@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.util.CertificateUtils;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
@@ -112,14 +113,18 @@ public class JWTFederationFilter extends AbstractJWTFilter {
             Subject subject = createSubjectFromToken(token);
             continueWithEstablishedSecurityContext(subject, (HttpServletRequest) request, (HttpServletResponse) response, chain);
           }
-        } catch (ParseException ex) {
+        } catch (ParseException | UnknownTokenException ex) {
           ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
         }
       } else if (TokenType.Passcode.equals(tokenType)) {
         // Validate the token based on the server-managed metadata
         if (validateToken((HttpServletRequest) request, (HttpServletResponse) response, chain, tokenValue)) {
-          Subject subject = createSubjectFromTokenIdentifier(tokenValue);
-          continueWithEstablishedSecurityContext(subject, (HttpServletRequest) request, (HttpServletResponse) response, chain);
+          try {
+            Subject subject = createSubjectFromTokenIdentifier(tokenValue);
+            continueWithEstablishedSecurityContext(subject, (HttpServletRequest) request, (HttpServletResponse) response, chain);
+          } catch (UnknownTokenException e) {
+            ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
+          }
         }
       }
     } else {

@@ -22,6 +22,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.util.CertificateUtils;
@@ -175,7 +176,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
             // we found a valid cookie we don't need to keep checking anymore
             return;
           }
-        } catch (ParseException ignore) {
+        } catch (ParseException | UnknownTokenException ignore) {
           // Ignore the error since cookie was invalid
           // Fall through to keep checking if there are more cookies
         }

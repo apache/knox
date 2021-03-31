@@ -49,6 +49,7 @@ import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilte
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.Auditor;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 
 public class HadoopAuthPostFilter implements Filter {
 
@@ -87,7 +88,7 @@ public class HadoopAuthPostFilter implements Filter {
         } else if (JWTFederationFilter.TokenType.Passcode.equals(tokenType)) {
           subject = jwtFilter.createSubjectFromTokenIdentifier(token);
         }
-      } catch (ParseException e) {
+      } catch (ParseException | UnknownTokenException e) {
         // NOP: subject remains null -> SC_FORBIDDEN will be returned
       }
     } else {

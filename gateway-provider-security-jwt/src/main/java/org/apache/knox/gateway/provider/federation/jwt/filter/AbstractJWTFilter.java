@@ -272,11 +272,11 @@ public abstract class AbstractJWTFilter implements Filter {
     }
   }
 
-  public Subject createSubjectFromToken(final String token) throws ParseException {
+  public Subject createSubjectFromToken(final String token) throws ParseException, UnknownTokenException {
     return createSubjectFromToken(new JWTToken(token));
   }
 
-  protected Subject createSubjectFromToken(final JWT token) {
+  protected Subject createSubjectFromToken(final JWT token) throws UnknownTokenException {
     String principal = token.getSubject();
     String claimvalue = null;
     if (expectedPrincipalClaim != null) {
@@ -292,7 +292,7 @@ public abstract class AbstractJWTFilter implements Filter {
     return createSubjectFromTokenData(principal, claimvalue);
   }
 
-  public Subject createSubjectFromTokenIdentifier(final String tokenId) {
+  public Subject createSubjectFromTokenIdentifier(final String tokenId) throws UnknownTokenException {
     TokenMetadata metadata = tokenStateService.getTokenMetadata(tokenId);
     if (metadata != null) {
       return createSubjectFromTokenData(metadata.getUserName(), null);
