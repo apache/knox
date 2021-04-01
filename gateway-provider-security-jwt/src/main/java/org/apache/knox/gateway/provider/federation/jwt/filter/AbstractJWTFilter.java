@@ -357,10 +357,12 @@ public abstract class AbstractJWTFilter implements Filter {
         } else {
           log.tokenHasExpired(displayableToken, displayableTokenId);
 
-          // Explicitly evict the record of this token's signature verification (if present).
-          // There is no value in keeping this record for expired tokens, and explicitly removing them may prevent
-          // records for other valid tokens from being prematurely evicted from the cache.
-          removeSignatureVerificationRecord(tokenId);
+          if (tokenId != null) {
+            // Explicitly evict the record of this token's signature verification (if present).
+            // There is no value in keeping this record for expired tokens, and explicitly removing them may prevent
+            // records for other valid tokens from being prematurely evicted from the cache.
+            removeSignatureVerificationRecord(tokenId);
+          }
 
           handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
                                 "Bad request: token has expired");
@@ -385,12 +387,18 @@ public abstract class AbstractJWTFilter implements Filter {
 
     if (tokenStateService != null) {
       try {
-        if (tokenIsStillValid(tokenId)) {
-          return true;
+        if (tokenId != null) {
+          if (tokenIsStillValid(tokenId)) {
+            return true;
+          } else {
+            log.tokenHasExpired(Tokens.getTokenIDDisplayText(tokenId));
+            handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+                    "Bad request: token has expired");
+          }
         } else {
-          log.tokenHasExpired(Tokens.getTokenIDDisplayText(tokenId));
+          log.missingTokenPasscode();
           handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-                                "Bad request: token has expired");
+                                "Bad request: missing token passcode.");
         }
       } catch (UnknownTokenException e) {
         log.unableToVerifyExpiration(e);
@@ -407,7 +415,7 @@ public abstract class AbstractJWTFilter implements Filter {
     String tokenId = TokenUtils.getTokenId(token);
 
     // Check if the token has already been verified
-    verified = hasSignatureBeenVerified(tokenId);
+    verified = (tokenId != null) && hasSignatureBeenVerified(tokenId);
 
     // If it has not yet been verified, then perform the verification now
     if (!verified) {
@@ -436,7 +444,7 @@ public abstract class AbstractJWTFilter implements Filter {
         }
       }
 
-      if (verified) { // If successful, record the verification for future reference
+      if (verified && tokenId != null) { // If successful, record the verification for future reference
         recordSignatureVerification(tokenId);
       }
     }

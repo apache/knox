@@ -69,4 +69,8 @@ public interface JWTMessages {
             text = "The configuration value ({0}) for maximum token verification cache is invalid; Using the default value." )
   void invalidVerificationCacheMaxConfiguration(String value);
 
+  @Message( level = MessageLevel.ERROR,
+            text = "Missing token passcode." )
+  void missingTokenPasscode();
+
 }

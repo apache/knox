@@ -64,6 +64,7 @@ import java.security.cert.Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.text.MessageFormat;
+import java.time.Instant;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Locale;
@@ -115,6 +116,50 @@ public abstract class AbstractJWTFilterTest  {
     handler.destroy();
   }
 
+  /**
+   * KNOX-2566
+   */
+  @Test
+  public void testJWTWithoutKnoxUUIDClaim() throws Exception {
+    doTestJWTWithoutKnoxUUIDClaim(Instant.now().toEpochMilli() + 5000);
+  }
+
+  /**
+   * KNOX-2566
+   * Covers the explicit removal of signature verification cache records for expired tokens.
+   */
+  @Test
+  public void testExpiredJWTWithoutKnoxUUIDClaim() throws Exception {
+    doTestJWTWithoutKnoxUUIDClaim(Instant.now().toEpochMilli() - 5000);
+  }
+
+  private void doTestJWTWithoutKnoxUUIDClaim(final long expiration) throws Exception {
+    Properties props = getProperties();
+    handler.init(new TestFilterConfig(props));
+
+    SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER,
+                           "alice",
+                           "bar",
+                           new Date(expiration),
+                           new Date(),
+                           privateKey,
+                           JWSAlgorithm.RS256.getName(),
+                           null); // null knox ID so the claim will be omitted from the token
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    setTokenOnRequest(request, jwt);
+
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+    EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
+    EasyMock.replay(request, response);
+
+    TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+  }
+
   @Test
   public void testValidJWT() throws Exception {
     try {
@@ -154,7 +199,6 @@ public abstract class AbstractJWTFilterTest  {
 
       SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice",
                              new Date(new Date().getTime() + 5000), privateKey);
-
       HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
       setTokenOnRequest(request, jwt);
 
@@ -880,17 +924,30 @@ public abstract class AbstractJWTFilterTest  {
   }
 
   protected SignedJWT getJWT(String issuer, String sub, String aud, Date expires, Date nbf, RSAPrivateKey privateKey,
-                             String signatureAlgorithm)
+                             String signatureAlgorithm) throws Exception {
+    return getJWT(issuer, sub, aud, expires, nbf, privateKey, signatureAlgorithm, String.valueOf(UUID.randomUUID()));
+  }
+
+  protected SignedJWT getJWT(final String issuer,
+                             final String sub,
+                             final String aud,
+                             final Date expires,
+                             final Date nbf,
+                             final RSAPrivateKey privateKey,
+                             final String signatureAlgorithm,
+                             final String knoxId)
       throws Exception {
-    JWTClaimsSet claims = new JWTClaimsSet.Builder()
-                                          .issuer(issuer)
-                                          .subject(sub)
-                                          .audience(aud)
-                                          .expirationTime(expires)
-                                          .notBeforeTime(nbf)
-                                          .claim("scope", "openid")
-                                          .claim(JWTToken.KNOX_ID_CLAIM, String.valueOf(UUID.randomUUID()))
-                                          .build();
+    JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
+    builder.issuer(issuer)
+            .subject(sub)
+            .audience(aud)
+            .expirationTime(expires)
+            .notBeforeTime(nbf)
+            .claim("scope", "openid");
+    if (knoxId != null) {
+      builder.claim(JWTToken.KNOX_ID_CLAIM, knoxId);
+    }
+    JWTClaimsSet claims = builder.build();
 
     JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.parse(signatureAlgorithm)).build();
 
