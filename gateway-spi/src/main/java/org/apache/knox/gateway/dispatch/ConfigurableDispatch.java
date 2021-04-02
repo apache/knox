@@ -20,6 +20,8 @@ package org.apache.knox.gateway.dispatch;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.collections.MapUtils;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.config.Configure;
 import org.apache.knox.gateway.config.Default;
@@ -31,7 +33,6 @@ import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -47,7 +48,7 @@ import java.util.stream.Collectors;
 public class ConfigurableDispatch extends DefaultDispatch {
   private Set<String> requestExcludeHeaders = super.getOutboundRequestExcludeHeaders();
   private Set<String> responseExcludeHeaders = super.getOutboundResponseExcludeHeaders();
-  private Map<String, String> requestAppendHeaders = new HashMap<>();
+  private Map<String, String> requestAppendHeaders = Collections.emptyMap();
   private Set<String> responseExcludeSetCookieHeaderDirectives = super.getOutboundResponseExcludedSetCookieHeaderDirectives();
   private Boolean removeUrlEncoding = false;
 
@@ -117,6 +118,18 @@ public class ConfigurableDispatch extends DefaultDispatch {
   }
 
   @Override
+  public void copyRequestHeaderFields(HttpUriRequest outboundRequest,
+                                      HttpServletRequest inboundRequest) {
+    super.copyRequestHeaderFields(outboundRequest, inboundRequest);
+
+    //If there are some headers to be appended, append them
+    Map<String, String> extraHeaders = getOutboundRequestAppendHeaders();
+    if(MapUtils.isNotEmpty(extraHeaders)){
+      extraHeaders.forEach(outboundRequest::addHeader);
+    }
+  }
+
+  @Override
   public Set<String> getOutboundResponseExcludeHeaders() {
     return responseExcludeHeaders == null ? Collections.emptySet() : responseExcludeHeaders;
   }
@@ -131,7 +144,6 @@ public class ConfigurableDispatch extends DefaultDispatch {
     return requestExcludeHeaders == null ? Collections.emptySet() : requestExcludeHeaders;
   }
 
-  @Override
   public Map<String, String> getOutboundRequestAppendHeaders() {
     return requestAppendHeaders == null ? Collections.emptyMap() : requestAppendHeaders;
   }
