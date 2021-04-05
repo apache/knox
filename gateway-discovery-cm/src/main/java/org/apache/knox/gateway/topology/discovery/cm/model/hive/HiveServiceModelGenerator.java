@@ -34,6 +34,7 @@ public class HiveServiceModelGenerator extends AbstractServiceModelGenerator {
   public static final String ROLE_TYPE    = "HIVESERVER2";
 
   static final String TRANSPORT_MODE_HTTP = "http";
+  static final String TRANSPORT_MODE_ALL  = "all";
 
   static final String SAFETY_VALVE   = "hive_hs2_config_safety_valve";
   static final String SSL_ENABLED    = "hive.server2.use.SSL";
@@ -114,12 +115,19 @@ public class HiveServiceModelGenerator extends AbstractServiceModelGenerator {
 
   protected void checkHiveServer2HTTPMode(ApiConfigList roleConfig, ServiceModelGeneratorHandleResponse response) {
     final String hiveServer2SafetyValve = getRoleConfigValue(roleConfig, SAFETY_VALVE);
-    final String hiveServer2TransportMode = hiveServer2SafetyValve == null ? null : getSafetyValveValue(hiveServer2SafetyValve, TRANSPORT_MODE);
-    if (hiveServer2TransportMode == null ) {
-      response.addConfigurationIssue("Missing configuration: " + TRANSPORT_MODE);
-    } else if (!TRANSPORT_MODE_HTTP.equals(hiveServer2TransportMode)) {
-      response.addConfigurationIssue("Invalid configuration: " + TRANSPORT_MODE + ". Expected=" + TRANSPORT_MODE_HTTP + "; Found=" + hiveServer2TransportMode);
-    }
+    final String hiveServer2TransportMode =
+            hiveServer2SafetyValve == null ? null : getSafetyValveValue(hiveServer2SafetyValve, TRANSPORT_MODE);
+    validateTransportMode(TRANSPORT_MODE, hiveServer2TransportMode, response);
   }
 
+  protected void validateTransportMode(final String configPropName,
+                                       final String transportMode,
+                                       final ServiceModelGeneratorHandleResponse response) {
+    if (transportMode == null ) {
+      response.addConfigurationIssue("Missing configuration: " + configPropName);
+    } else if (!TRANSPORT_MODE_HTTP.equalsIgnoreCase(transportMode) && !TRANSPORT_MODE_ALL.equalsIgnoreCase(transportMode)) {
+      response.addConfigurationIssue("Invalid configuration: " + configPropName +
+              ". Expected=" + TRANSPORT_MODE_HTTP + " or " + TRANSPORT_MODE_ALL +"; Found=" + transportMode);
+    }
+  }
 }
