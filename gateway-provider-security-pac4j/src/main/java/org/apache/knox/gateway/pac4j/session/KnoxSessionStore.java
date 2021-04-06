@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import javax.servlet.http.HttpSession;
 
 /**
  * Specific session store where data are saved into cookies (and not in memory).
@@ -57,6 +58,8 @@ public class KnoxSessionStore<C extends WebContext> implements SessionStore<C> {
     public static final String PAC4J_PASSWORD = "pac4j.password";
 
     public static final String PAC4J_SESSION_PREFIX = "pac4j.session.";
+
+    private static final String CODE_VERIFIER_SESSION_PARAMETER = "$codeVerifierSessionParameter";
 
     private final JavaSerializationHelper javaSerializationHelper;
 
@@ -99,8 +102,16 @@ public class KnoxSessionStore<C extends WebContext> implements SessionStore<C> {
         return null;
     }
 
+    protected HttpSession getNativeSession(final WebContext context) {
+        return ((JEEContext) context).getNativeRequest().getSession();
+    }
+
     @Override
     public Optional<Object> get(WebContext context, String key) {
+        if (key.endsWith(CODE_VERIFIER_SESSION_PARAMETER)) {
+            return Optional.ofNullable(getNativeSession(context).getAttribute(key));
+        }
+
         final Cookie cookie = ContextHelper.getCookie(context, PAC4J_SESSION_PREFIX + key);
         Object value = null;
         if (cookie != null) {
@@ -136,6 +147,11 @@ public class KnoxSessionStore<C extends WebContext> implements SessionStore<C> {
 
     @Override
     public void set(WebContext context, String key, Object value) {
+        if (key.endsWith(CODE_VERIFIER_SESSION_PARAMETER)) {
+            getNativeSession(context).setAttribute(key, value);
+            return;
+        }
+
         Object profile = value;
         Cookie cookie;
 
