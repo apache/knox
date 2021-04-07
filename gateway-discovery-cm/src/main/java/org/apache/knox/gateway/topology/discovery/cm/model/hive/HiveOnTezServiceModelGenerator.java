@@ -40,11 +40,7 @@ public class HiveOnTezServiceModelGenerator extends HiveServiceModelGenerator {
   @Override
   protected void checkHiveServer2HTTPMode(ApiConfigList roleConfig, ServiceModelGeneratorHandleResponse response) {
     final String hiveServer2TransportMode = getRoleConfigValue(roleConfig, HIVEONTEZ_TRANSPORT_MODE);
-    if (hiveServer2TransportMode == null) {
-      response.addConfigurationIssue("Missing configuration: " + HIVEONTEZ_TRANSPORT_MODE);
-    } else if (!TRANSPORT_MODE_HTTP.equals(hiveServer2TransportMode)) {
-      response.addConfigurationIssue("Invalid configuration: " + HIVEONTEZ_TRANSPORT_MODE + ". Expected=" + TRANSPORT_MODE_HTTP + "; Found=" + hiveServer2TransportMode);
-    }
+    validateTransportMode(HIVEONTEZ_TRANSPORT_MODE, hiveServer2TransportMode, response);
   }
 
   @Override
