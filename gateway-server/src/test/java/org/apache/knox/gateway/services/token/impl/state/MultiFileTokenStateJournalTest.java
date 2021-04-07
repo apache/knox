@@ -20,14 +20,53 @@ package org.apache.knox.gateway.services.token.impl.state;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.token.state.TokenStateJournal;
+import org.junit.Test;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.UUID;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class MultiFileTokenStateJournalTest extends AbstractFileTokenStateJournalTest {
 
     @Override
     TokenStateJournal createTokenStateJournal(GatewayConfig config) throws IOException {
         return new MultiFileTokenStateJournal(config);
+    }
+
+    @Test
+    public void testGetDisplayableJournalFilepathWithoutID() throws Exception {
+        final String dirPath = "/tmp/test/tokens/journal/";
+        final String tokenId = UUID.randomUUID().toString();
+        final String entryFilePath = dirPath + tokenId + MultiFileTokenStateJournal.ENTRY_FILE_EXT;
+        MultiFileTokenStateJournal journal = (MultiFileTokenStateJournal) createTokenStateJournal(getGatewayConfig());
+        Method m = MultiFileTokenStateJournal.class.getDeclaredMethod("getDisplayableJournalFilepath", String.class);
+        assertNotNull(m);
+        m.setAccessible(true);
+        String displayablePath = (String) m.invoke(journal, entryFilePath);
+        assertNotNull(displayablePath);
+        assertTrue(displayablePath.length() < entryFilePath.length());
+        assertFalse(displayablePath.contains(tokenId));
+    }
+
+    @Test
+    public void testGetDisplayableJournalFilepathWithID() throws Exception {
+        final String dirPath = "/tmp/test/tokens/journal/";
+        final String tokenId = UUID.randomUUID().toString();
+        final String entryFilePath = dirPath + tokenId + MultiFileTokenStateJournal.ENTRY_FILE_EXT;
+        MultiFileTokenStateJournal journal = (MultiFileTokenStateJournal) createTokenStateJournal(getGatewayConfig());
+        Method m = MultiFileTokenStateJournal.class.getDeclaredMethod("getDisplayableJournalFilepath",
+                                                                      String.class,
+                                                                      String.class);
+        assertNotNull(m);
+        m.setAccessible(true);
+        String displayablePath = (String) m.invoke(journal, tokenId, entryFilePath);
+        assertNotNull(displayablePath);
+        assertTrue(displayablePath.length() < entryFilePath.length());
+        assertFalse(displayablePath.contains(tokenId));
     }
 
 }

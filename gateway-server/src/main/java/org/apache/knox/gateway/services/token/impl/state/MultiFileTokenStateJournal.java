@@ -21,6 +21,7 @@ package org.apache.knox.gateway.services.token.impl.state;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.token.state.JournalEntry;
+import org.apache.knox.gateway.util.Tokens;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -63,7 +64,7 @@ class MultiFileTokenStateJournal extends FileTokenStateJournal {
         // Persist each journal entry as an individual file in the journal directory
         for (JournalEntry entry : entries) {
             final Path entryFile = journalDir.resolve(entry.getTokenId() + ENTRY_FILE_EXT);
-            log.persistingJournalEntry(entryFile.toString());
+            log.persistingJournalEntry(getDisplayableJournalFilepath(entry.getTokenId(), entryFile.toString()));
             try (FileChannel fileChannel = FileChannel.open(entryFile, StandardOpenOption.WRITE,
                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
                 fileChannel.lock();
@@ -73,9 +74,9 @@ class MultiFileTokenStateJournal extends FileTokenStateJournal {
                     writer.newLine();
                     writer.flush();
                 }
-                log.addedJournalEntry(entry.getTokenId());
+                log.addedJournalEntry(Tokens.getTokenIDDisplayText(entry.getTokenId()));
             } catch (IOException e){
-                log.failedToPersistJournalEntry(entry.getTokenId(), e);
+                log.failedToPersistJournalEntry(Tokens.getTokenIDDisplayText(entry.getTokenId()), e);
                 throw e;
             }
         }
@@ -91,13 +92,13 @@ class MultiFileTokenStateJournal extends FileTokenStateJournal {
                 fileChannel.lock(0L, Long.MAX_VALUE, true);
                 List<FileJournalEntry> entries = loadJournal(fileChannel);
                 if (entries.isEmpty()) {
-                    log.journalEntryNotFound(tokenId);
+                    log.journalEntryNotFound(Tokens.getTokenIDDisplayText(tokenId));
                 } else {
                     result = entries.get(0);
                 }
             }
         } else {
-            log.journalEntryNotFound(tokenId);
+            log.journalEntryNotFound(Tokens.getTokenIDDisplayText(tokenId));
         }
 
         return result;
@@ -110,7 +111,7 @@ class MultiFileTokenStateJournal extends FileTokenStateJournal {
             Path entryFilePath = journalDir.resolve(tokenId + ENTRY_FILE_EXT);
             if (Files.exists(entryFilePath)) {
                 Files.delete(entryFilePath);
-                log.removedJournalEntry(tokenId);
+                log.removedJournalEntry(Tokens.getTokenIDDisplayText(tokenId));
             }
         }
     }
@@ -128,10 +129,10 @@ class MultiFileTokenStateJournal extends FileTokenStateJournal {
                         fileChannel.lock(0L, Long.MAX_VALUE, true);
                         entries.addAll(loadJournal(fileChannel));
                         if (entries.isEmpty()) {
-                            log.emptyJournalEntry(entryFilePath.toString());
+                            log.emptyJournalEntry(getDisplayableJournalFilepath(entryFilePath.toString()));
                         } else {
                             // Should only be a single entry for this implementation
-                            log.loadedPersistedJournalEntry(entries.get(0).getTokenId());
+                            log.loadedPersistedJournalEntry(Tokens.getTokenIDDisplayText(entries.get(0).getTokenId()));
                         }
                     }
                 }
@@ -139,5 +140,21 @@ class MultiFileTokenStateJournal extends FileTokenStateJournal {
         }
 
         return entries;
+    }
+
+    private String getDisplayableJournalFilepath(final String tokenId, final String path) {
+        int idIndex = path.indexOf(tokenId);
+        return getDisplayableJournalFilepath(path, idIndex);
+    }
+
+    private String getDisplayableJournalFilepath(final String path) {
+        int extIndex = path.indexOf(ENTRY_FILE_EXT);
+        int idIndex = extIndex - 36; // 36 = UUID length
+        return getDisplayableJournalFilepath(path, idIndex);
+    }
+
+    private String getDisplayableJournalFilepath(final String path, int idIndex) {
+        String displayableTokenId = Tokens.getTokenIDDisplayText(path.substring(idIndex, path.indexOf(ENTRY_FILE_EXT)));
+        return path.substring(0, idIndex) + displayableTokenId + ENTRY_FILE_EXT;
     }
 }

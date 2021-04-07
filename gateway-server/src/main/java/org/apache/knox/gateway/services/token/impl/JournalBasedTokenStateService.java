@@ -25,6 +25,7 @@ import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.token.impl.state.TokenStateJournalFactory;
 import org.apache.knox.gateway.services.token.state.JournalEntry;
 import org.apache.knox.gateway.services.token.state.TokenStateJournal;
+import org.apache.knox.gateway.util.Tokens;
 
 import java.io.IOException;
 import java.util.List;
@@ -56,7 +57,7 @@ public class JournalBasedTokenStateService extends DefaultTokenStateService {
                     super.addToken(id, issueTime, expiration, maxLifetime);
 
                 } catch (Exception e) {
-                    log.failedToLoadJournalEntry(id, e);
+                    log.failedToLoadJournalEntry(Tokens.getTokenIDDisplayText(id), e);
                 }
             }
         } catch (IOException e) {
@@ -71,7 +72,7 @@ public class JournalBasedTokenStateService extends DefaultTokenStateService {
         try {
             journal.add(tokenId, issueTime, expiration, maxLifetimeDuration, null);
         } catch (IOException e) {
-            log.failedToAddJournalEntry(tokenId, e);
+            log.failedToAddJournalEntry(Tokens.getTokenIDDisplayText(tokenId), e);
         }
     }
 
@@ -146,7 +147,7 @@ public class JournalBasedTokenStateService extends DefaultTokenStateService {
         try {
             JournalEntry entry = journal.get(tokenId);
             if (entry == null) {
-                log.journalEntryNotFound(tokenId);
+                log.journalEntryNotFound(Tokens.getTokenIDDisplayText(tokenId));
             } else {
                 // Adding will overwrite the existing journal entry, thus updating it with the new expiration
                 journal.add(entry.getTokenId(),
@@ -178,7 +179,7 @@ public class JournalBasedTokenStateService extends DefaultTokenStateService {
     try {
       JournalEntry entry = journal.get(tokenId);
       if (entry == null) {
-        log.journalEntryNotFound(tokenId);
+        log.journalEntryNotFound(Tokens.getTokenIDDisplayText(tokenId));
       } else {
         journal.add(entry.getTokenId(), Long.parseLong(entry.getIssueTime()), Long.parseLong(entry.getExpiration()), Long.parseLong(entry.getMaxLifetime()), metadata);
       }

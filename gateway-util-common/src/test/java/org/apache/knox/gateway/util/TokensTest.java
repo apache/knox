@@ -20,6 +20,8 @@ package org.apache.knox.gateway.util;
 
 import org.junit.Test;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -66,6 +68,21 @@ public class TokensTest {
         doTestTokenDisplay(new String(invalid), true);
     }
 
+    @Test
+    public void testDisplayableTokenIDSet() throws Exception {
+        final Set<String> tokenIDs = new HashSet<>();
+        for (int i=0 ; i < 5; i++) {
+            tokenIDs.add(UUID.randomUUID().toString());
+        }
+
+        Set<String> displayableTokenIDs = Tokens.getDisplayableTokenIDsText(tokenIDs);
+
+        for (String displayable : displayableTokenIDs) {
+            assertTrue(displayable.length() < 36);
+            assertTrue(displayable.contains("..."));
+        }
+    }
+
     private void doTestTokenDisplay(final String tokenId) {
         doTestTokenDisplay(tokenId, false);
     }
@@ -82,4 +99,5 @@ public class TokensTest {
                          displayableTokenId);
         }
     }
+
 }

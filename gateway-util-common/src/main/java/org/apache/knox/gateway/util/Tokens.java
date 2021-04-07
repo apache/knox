@@ -16,7 +16,9 @@
  */
 package org.apache.knox.gateway.util;
 
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 
 public class Tokens {
 
@@ -56,6 +58,14 @@ public class Tokens {
                                         uuid.substring(uuid.lastIndexOf('-') + 1));
         }
         return displayText;
+    }
+
+    public static Set<String> getDisplayableTokenIDsText(final Set<String> tokenIds) {
+        Set<String> displayableTokenIds = new HashSet<>();
+        for (String tokenId : tokenIds) {
+            displayableTokenIds.add(Tokens.getTokenIDDisplayText(tokenId));
+        }
+        return displayableTokenIds;
     }
 
 }
