@@ -35,10 +35,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.cert.Certificate;
 import java.security.interfaces.RSAPublicKey;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -47,7 +48,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 @Path(JWKSResource.RESOURCE_PATH)
 public class JWKSResource {
 
-  static final String RESOURCE_PATH = "knoxtoken/api/v1/.well-known";
+  static final String RESOURCE_PATH = "knoxtoken/api/v1";
   static final String JWKS_PATH = "/jwks.json";
   @Context
   HttpServletRequest request;
@@ -73,6 +74,12 @@ public class JWKSResource {
     JWKSet jwks;
     try {
       final RSAPublicKey rsa = getPublicKey(keystore);
+      /* no public cert found, return empty set */
+      if(rsa == null) {
+        return Response.ok()
+            .entity(new JWKSet().toJSONObject().toString()).build();
+      }
+
       final RSAKey.Builder builder = new RSAKey.Builder(rsa)
           .keyUse(KeyUse.SIGNATURE)
           .algorithm(new JWSAlgorithm(rsa.getAlgorithm()))
@@ -94,8 +101,9 @@ public class JWKSResource {
 
   protected RSAPublicKey getPublicKey(final String keystore)
       throws KeystoreServiceException, KeyStoreException {
-    return (RSAPublicKey) keystoreService.getSigningKeystore(keystore)
-        .getCertificate(getSigningKeyAlias()).getPublicKey();
+    final KeyStore ks = keystoreService.getSigningKeystore(keystore);
+    final Certificate cert = ks.getCertificate(getSigningKeyAlias());
+    return (cert != null) ? (RSAPublicKey) cert.getPublicKey() : null;
   }
 
   private String getSigningKeyAlias() {

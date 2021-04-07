@@ -111,7 +111,7 @@ public class JWKSResourceTest {
       JOSEException {
     init();
     /* get a signed JWT token */
-    final JWT testToken = getTestToken();
+    final JWT testToken = getTestToken("RS256");
     /* get JWKS keyset */
     final Response retResponse = jwksResource.getJwksResponse();
 
@@ -126,14 +126,13 @@ public class JWKSResourceTest {
         testToken.verify(verifier));
   }
 
-  private JWT getTestToken() {
+  private JWT getTestToken(final String algorithm) {
     String[] claimArray = new String[4];
     claimArray[0] = "KNOXSSO";
     claimArray[1] = "joe@example.com";
     claimArray[2] = null;
     claimArray[3] = null;
 
-    final String algorithm = "RS256";
     final JWT token = new JWTToken(algorithm, claimArray,
         Collections.singletonList("aud"), false);
     final JWSSigner signer = new RSASSASigner(privateKey, true);
