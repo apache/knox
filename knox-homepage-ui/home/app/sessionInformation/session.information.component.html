@@ -12,24 +12,5 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<div class="table-responsive">
-    <table class="table table-striped table-hover">
-       <colgroup>
-            <col width="90%">
-            <col width="5%">
-            <col width="5%">
-        </colgroup>
-        <tbody>
-            <tr>
-                <td></td>
-                <td>Welcome</td>
-                <td>{{ getUser() }}</td>
-	        </tr>
-	        <tr *ngIf="logoutSupported">
-                <td></td>
-                <td></td>
-                <td><a class="btn btn-primary" (click)="logout()">logout</a></td>
-            </tr>
-        </tbody>
-    </table>
-</div>
+<div style="text-align: right; color: rgb(130, 180, 93);">Welcome {{ getUser() }}</div>
+<div *ngIf="logoutSupported" style="text-align: right;"><a class="btn btn-primary" (click)="logout()">logout</a></div>

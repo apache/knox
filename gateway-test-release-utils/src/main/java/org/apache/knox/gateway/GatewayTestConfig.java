@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -846,5 +847,10 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public boolean isGatewayServerIncomingXForwardedSupportEnabled() {
     return true;
+  }
+
+  @Override
+  public Map<String, Collection<String>> getHomePageProfiles() {
+    return null;
   }
 }

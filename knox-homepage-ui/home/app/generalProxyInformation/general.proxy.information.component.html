@@ -22,11 +22,11 @@
             <col width="70%">
         </colgroup>
         <tbody>
-            <tr>
+            <tr *ngIf="this['showKnoxVersion']">
                 <td>Knox Version</td>
                 <td>{{ getVersion() }}</td>
             </tr>
-            <tr>
+            <tr *ngIf="this['showPublicCerts']">
                 <td>TLS Public Certificate</td>
                 <td>
                     <a href="{{ getMetadataAPIUrl('publicCert?type=pem') }}">PEM</a>
@@ -34,11 +34,11 @@
                     <a href="{{ getMetadataAPIUrl('publicCert?type=jks') }}">JKS</a>
                 </td>
             </tr>
-            <tr>
+            <tr *ngIf="this['showAdminUI']">
                 <td>Admin UI URL</td>
                 <td><a href="{{ getAdminUiUrl() }}" target="_blank">{{ getAdminUiUrl() }}</a></td>
             </tr>
-            <tr>
+            <tr *ngIf="this['showAdminAPI']">
                 <td>
                     Admin API Details
                     <span class="inline-glyph glyphicon glyphicon-info-sign btn btn-xs"
@@ -48,7 +48,7 @@
                     <a href="{{ getAdminApiBookUrl() }}" target="_blank">{{ getAdminApiBookUrl() }}</a>
                 </td>
             </tr>
-            <tr>
+            <tr *ngIf="this['showMetadataAPI']">
                 <td>
                     Metadata API
                 </td>
@@ -58,7 +58,7 @@
                     <a href="{{ getMetadataAPIUrl('topologies') }}" target="_blank">Topologies</a>
                 </td>
             </tr>
-            <tr>
+            <tr *ngIf="this['showTokens']">
                 <td>
                     Integration Tokens
                 </td>

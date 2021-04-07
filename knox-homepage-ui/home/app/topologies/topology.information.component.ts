@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 import {Component, OnInit, ViewChild} from '@angular/core';
+import {ActivatedRoute} from '@angular/router';
 import {MatGridListModule} from '@angular/material/grid-list';
 import {BsModalComponent} from 'ng2-bs3-modal/ng2-bs3-modal';
 import {HomepageService} from '../homepage.service';
@@ -34,10 +35,12 @@ export class TopologyInformationsComponent implements OnInit {
     apiServiceInformationModal: BsModalComponent;
 
     topologies: TopologyInformation[];
+    desiredTopologies: string[];
     selectedApiService : Service;
 
     setTopologies(topologies: TopologyInformation[]) {
         this.topologies = topologies;
+        this.filterTopologies();
         for (let topology of topologies) {
             this['showTopology_' + topology.topology] = topology.pinned;
         }
@@ -51,13 +54,51 @@ export class TopologyInformationsComponent implements OnInit {
         this[enableServiceText] = true;
     }
 
-    constructor(private homepageService: HomepageService) {
+    constructor(private homepageService: HomepageService, private route: ActivatedRoute) {
         this['showTopologies'] = true;
     }
 
     ngOnInit(): void {
         console.debug('TopologyInformationsComponent --> ngOnInit()');
         this.homepageService.getTopologies().then(topologies => this.setTopologies(topologies));
+        this.route.queryParams.subscribe(params => {
+            let topologiesParam = params['topologies'];
+            console.debug('Topologies query param name = ' + topologiesParam)
+            if (topologiesParam) {
+                this.desiredTopologies = topologiesParam.split(',');
+                this.filterTopologies();
+            } else {
+	        	    let profileName = params['profile'];
+	            console.debug('Profile name = ' + profileName)
+	            if (profileName) {
+	            	    console.debug('Fetching profile information...');
+	            	    this.homepageService.getProfile(profileName).then(profile => this.setDesiredTopologiesFromProfile(profile));
+	            }
+            }
+        });
+    }
+
+    setDesiredTopologiesFromProfile(profile: JSON) {
+      let topologiesInProfile = profile['topologies'];
+      if (topologiesInProfile !== "") {
+         this.desiredTopologies = topologiesInProfile.split(',');
+         this.filterTopologies();
+      }
+    }
+
+    filterTopologies() {
+      if (this.topologies && this.desiredTopologies && this.desiredTopologies.length > 0) {
+      console.debug('Filtering topologies...');
+         let filteredTopologies = [];
+         for (let desiredTopology of this.desiredTopologies) {
+	         for (let topology of this.topologies) {
+	            if (topology.topology === desiredTopology) {
+	                filteredTopologies.push(topology);
+	            }
+	         }
+         }
+         this.topologies = filteredTopologies;
+      }
     }
 
     openApiServiceInformationModal(apiService: Service) {

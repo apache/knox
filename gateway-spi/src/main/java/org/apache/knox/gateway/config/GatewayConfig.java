@@ -20,6 +20,7 @@ package org.apache.knox.gateway.config;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.security.KeyStore;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -740,4 +741,10 @@ public interface GatewayConfig {
    * @return true if incoming X-Forwarded headers are enabled
    */
   boolean isGatewayServerIncomingXForwardedSupportEnabled();
+
+  /**
+   * Gets the home page profiles (pre-configured and user-defined profiles too).
+   * It's important that keys in the returned map are converted to lowercase strings.
+   */
+  Map<String, Collection<String>> getHomePageProfiles();
 }

@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 import {Component, OnInit} from '@angular/core';
+import {ActivatedRoute} from '@angular/router';
 import {HomepageService} from '../homepage.service';
 import {GeneralProxyInformation} from './general.proxy.information';
 
@@ -27,9 +28,16 @@ import {GeneralProxyInformation} from './general.proxy.information';
 export class GeneralProxyInformationComponent implements OnInit {
 
     generalProxyInformation: GeneralProxyInformation;
+    profile: JSON;
 
-    constructor(private homepageService: HomepageService) {
+    constructor(private homepageService: HomepageService, private route: ActivatedRoute) {
         this['showGeneralProxyInformation'] = false;
+        this['showKnoxVersion'] = true;
+        this['showPublicCerts'] = true;
+        this['showAdminUI'] = true;
+        this['showAdminAPI'] = true;
+        this['showMetadataAPI'] = true;
+        this['showTokens'] = true;
     }
 
     getVersion() {
@@ -70,6 +78,25 @@ export class GeneralProxyInformationComponent implements OnInit {
         console.debug('GeneralProxyInformationComponent --> ngOnInit() --> ');
         this.homepageService.getGeneralProxyInformation()
                             .then(generalProxyInformation => this.generalProxyInformation = generalProxyInformation);
+        let profileName;
+        this.route.queryParams.subscribe(params => {
+        	    profileName = params['profile'];
+            console.debug('Profile name = ' + profileName)
+            if (profileName) {
+            	    console.debug('Fetching profile information...');
+            	    this.homepageService.getProfile(profileName).then(profile => this.setProfileFlags(profile));
+            }
+        });
+    }
+
+    setProfileFlags(profile: JSON) {
+    	    console.debug('Setting GPI profile flags...');
+        this['showKnoxVersion'] = (profile['gpi_version'] === 'true');
+        this['showPublicCerts'] = (profile['gpi_cert'] === 'true');
+        this['showAdminUI'] = (profile['gpi_admin_ui'] === 'true');
+        this['showAdminAPI'] = (profile['gpi_admin_api'] === 'true');
+        this['showMetadataAPI'] = (profile['gpi_md_api'] === 'true');
+        this['showTokens'] = (profile['gpi_tokens'] === 'true');
     }
 
     toggleBoolean(propertyName: string) {

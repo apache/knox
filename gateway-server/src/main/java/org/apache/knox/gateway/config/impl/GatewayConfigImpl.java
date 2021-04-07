@@ -23,6 +23,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.dto.HomePageProfile;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasService;
 import org.joda.time.Period;
@@ -42,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -262,6 +264,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final long KNOX_TOKEN_ALIAS_PERSISTENCE_INTERVAL_DEFAULT = TimeUnit.SECONDS.toSeconds(15);
   private static final boolean KNOX_TOKEN_PERMISSIVE_VALIDATION_ENABLED_DEFAULT = false;
 
+  private static final String KNOX_HOMEPAGE_PROFILE_PREFIX =  "knox.homepage.profile.";
   private static final String KNOX_HOMEPAGE_PINNED_TOPOLOGIES =  "knox.homepage.pinned.topologies";
   private static final String KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES =  "knox.homepage.hidden.topologies";
   private static final Set<String> KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES_DEFAULT = new HashSet<>(Arrays.asList("admin", "manager", "knoxsso", "metadata", "homepage"));
@@ -1208,5 +1211,24 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public boolean isGatewayServerIncomingXForwardedSupportEnabled() {
     return getBoolean(KNOX_INCOMING_XFORWARDED_ENABLED, true);
+  }
+
+  @Override
+  public Map<String, Collection<String>> getHomePageProfiles() {
+    final Map<String, Collection<String>> profiles = getPreConfiguredProfiles(); // pre-configured profiles might be overwritten
+    this.forEach(config -> {
+      if (config.getKey().startsWith(KNOX_HOMEPAGE_PROFILE_PREFIX)) {
+        profiles.put(config.getKey().substring(KNOX_HOMEPAGE_PROFILE_PREFIX.length()).toLowerCase(Locale.getDefault()), getTrimmedStringCollection(config.getKey()));
+      }
+    });
+    return profiles;
+  }
+
+  private Map<String, Collection<String>> getPreConfiguredProfiles() {
+    final Map<String, Collection<String>> profiles = new HashMap<>();
+    profiles.put("full", HomePageProfile.getFullProfileElements());
+    profiles.put("thin", HomePageProfile.getThinProfileElemens());
+    profiles.put("token", HomePageProfile.getTokenProfileElements());
+    return profiles;
   }
 }
