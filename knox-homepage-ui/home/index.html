@@ -22,6 +22,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Custom styles for this template -->
     <link href="assets/sticky-footer.css" rel="stylesheet">
+	<script>
+	  window['base-href'] = window.location.pathname;
+	  console.log(window['base-href']);
+	</script>
 </head>
 <body>
 <div class="navbar-wrapper">
@@ -38,12 +42,12 @@
                     </button>
                     <a class="navbar-brand" href="#"> <img style="max-width:200px; margin-top: -9px;" src="assets/knox-logo-transparent.gif" alt="Apache Knox Home"></a>
                 </div>
+                <app-session-information></app-session-information>
             </div>
         </nav>
     </div>
 
     <div class="container-fluid">
-        <app-session-information></app-session-information>
         <app-general-proxy-information></app-general-proxy-information>
         <app-topologies-information></app-topologies-information>
     </div>

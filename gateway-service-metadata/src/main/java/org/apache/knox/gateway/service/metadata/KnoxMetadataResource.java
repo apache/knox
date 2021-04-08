@@ -29,9 +29,11 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -50,6 +52,7 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.dto.HomePageProfile;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.definition.Metadata;
 import org.apache.knox.gateway.service.definition.ServiceDefinitionPair;
@@ -62,6 +65,7 @@ import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
+import org.apache.knox.gateway.util.JsonUtils;
 import org.apache.knox.gateway.util.X509CertificateUtil;
 
 import io.swagger.annotations.Api;
@@ -248,6 +252,20 @@ public class KnoxMetadataResource {
     serviceModel.setServiceMetadata(serviceMetadata);
     serviceModel.setServiceUrl(serviceUrl);
     return serviceModel;
+  }
+
+  @GET
+  @Produces({ APPLICATION_JSON })
+  @Path("profiles/{profile}")
+  public String getProfile(@PathParam("profile") String profileName) {
+    final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    final Map<String, Collection<String>> configuredProfiles = config.getHomePageProfiles();
+    if (configuredProfiles.containsKey(profileName.toLowerCase(Locale.getDefault()))) {
+      final HomePageProfile profile = new HomePageProfile(configuredProfiles.get(profileName));
+      return JsonUtils.renderAsJsonString(profile.getProfileElements());
+    } else {
+      return JsonUtils.renderAsJsonString(Collections.emptyMap());
+    }
   }
 
 }

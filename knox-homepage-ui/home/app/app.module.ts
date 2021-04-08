@@ -19,6 +19,8 @@ import {BrowserModule} from '@angular/platform-browser';
 import {HttpClientModule, HttpClientXsrfModule} from '@angular/common/http';
 import {MatGridListModule} from '@angular/material/grid-list';
 import {BsModalModule} from 'ng2-bs3-modal/ng2-bs3-modal';
+import {Routes, RouterModule}  from '@angular/router';
+import {APP_BASE_HREF} from '@angular/common';
 
 import {GeneralProxyInformationComponent} from './generalProxyInformation/general.proxy.information.component';
 import {TopologyInformationsComponent} from './topologies/topology.information.component';
@@ -30,13 +32,18 @@ import {HomepageService} from './homepage.service';
         HttpClientModule,
         HttpClientXsrfModule,
         MatGridListModule,
-        BsModalModule
+        BsModalModule,
+        RouterModule.forRoot([])
     ],
     declarations: [GeneralProxyInformationComponent,
                    TopologyInformationsComponent,
                    SessionInformationComponent
     ],
-    providers: [HomepageService
+    providers: [HomepageService,
+      {
+        provide: APP_BASE_HREF,
+        useValue: window['base-href']
+      }
     ],
     bootstrap: [SessionInformationComponent,
                 GeneralProxyInformationComponent,

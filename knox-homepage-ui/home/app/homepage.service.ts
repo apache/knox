@@ -99,6 +99,22 @@ export class HomepageService {
             });
     }
 
+    getProfile(profileName): Promise<JSON> {
+        let headers = new HttpHeaders();
+        headers = this.addJsonHeaders(headers);
+        return this.http.get(this.apiUrl + '/profiles/' + profileName, { headers: headers})
+            .toPromise()
+            .then(response => response)
+            .catch((err: HttpErrorResponse) => {
+                console.debug('HomepageService --> getProfile() --> ' + this.apiUrl + '/profiles/' + profileName + '\n  error: ' + err.message);
+                if (err.status === 401) {
+                    window.location.assign(document.location.pathname);
+                } else {
+                    return this.handleError(err);
+                }
+            });
+    }
+
     addJsonHeaders(headers: HttpHeaders): HttpHeaders {
         return this.addCsrfHeaders(headers.append('Accept', 'application/json').append('Content-Type', 'application/json'));
     }
