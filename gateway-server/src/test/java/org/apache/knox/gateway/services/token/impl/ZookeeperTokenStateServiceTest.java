@@ -26,6 +26,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -98,7 +99,7 @@ public class ZookeeperTokenStateServiceTest {
     final ZookeeperTokenStateService zktokenStateService = setupZkTokenStateService(SHORT_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL);
 
     assertFalse(zkNodeExists("/knox/security/topology/__gateway/tokens/a0/a0-token1"));
-    assertFalse(zkNodeExists("/knox/security/topology/__gateway/tokens/a0/a0-token1--max"));
+    assertFalse(zkNodeExists("/knox/security/topology/__gateway/tokens/a0/a0-token1" + AliasBasedTokenStateService.TOKEN_MAX_LIFETIME_POSTFIX));
 
     zktokenStateService.addToken("a0-token1", 1L, 2L);
 
@@ -106,7 +107,7 @@ public class ZookeeperTokenStateServiceTest {
     Thread.sleep(2 * SHORT_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL * 1000);
 
     assertTrue(zkNodeExists("/knox/security/topology/__gateway/tokens/a0/a0-token1"));
-    assertTrue(zkNodeExists("/knox/security/topology/__gateway/tokens/a0/a0-token1--max"));
+    assertTrue(zkNodeExists("/knox/security/topology/__gateway/tokens/a0/a0-token1" + AliasBasedTokenStateService.TOKEN_MAX_LIFETIME_POSTFIX));
   }
 
   @Test
@@ -144,6 +145,36 @@ public class ZookeeperTokenStateServiceTest {
     zktokenStateServiceNode1.renewToken(tokenId, renewInterval);
     Thread.sleep(SHORT_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL * 1500);
     assertEquals(zktokenStateServiceNode1.getTokenExpiration(tokenId), zktokenStateServiceNode2.getTokenExpiration(tokenId));
+  }
+
+  @Test
+  public void testTokenIDDisplayText() throws Exception {
+    ZookeeperTokenStateService tss = setupZkTokenStateService(SHORT_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL);
+    Method m = tss.getClass().getDeclaredMethod("getDisplayableAliasText", String.class);
+    m.setAccessible(true);
+    final String uuid = UUID.randomUUID().toString();
+    final String maxAlias = uuid + ZookeeperTokenStateService.TOKEN_MAX_LIFETIME_POSTFIX;
+    final String metaAlias = uuid + ZookeeperTokenStateService.TOKEN_META_POSTFIX;
+
+    // Check an expiration alias
+    String displayableUUID = (String) m.invoke(tss, uuid);
+    assertTrue(displayableUUID.length() < uuid.length());
+    assertEquals(8, displayableUUID.indexOf("..."));
+
+    // Check a max lifetime alias
+    String displayableMaxAlias = (String) m.invoke(tss, maxAlias);
+    assertFalse(displayableMaxAlias.contains(uuid));
+    assertTrue(displayableMaxAlias.length() < maxAlias.length());
+    assertEquals(8, displayableMaxAlias.indexOf("..."));
+    assertTrue(displayableMaxAlias.endsWith(ZookeeperTokenStateService.TOKEN_MAX_LIFETIME_POSTFIX));
+
+    // Check a metadata alias
+    String displayableMetaAlias = (String) m.invoke(tss, metaAlias);
+    assertFalse(displayableMetaAlias.contains(uuid));
+    assertTrue(displayableMetaAlias.length() < metaAlias.length());
+    assertEquals(8, displayableMetaAlias.indexOf("..."));
+    assertTrue(displayableMetaAlias.endsWith(ZookeeperTokenStateService.TOKEN_META_POSTFIX));
+
   }
 
   private ZookeeperTokenStateService setupZkTokenStateService(long persistenceInterval) throws IOException, KeystoreServiceException, ServiceLifecycleException {

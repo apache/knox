@@ -32,6 +32,7 @@ import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasService;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.token.RemoteTokenStateChangeListener;
+import org.apache.knox.gateway.util.Tokens;
 
 /**
  * A Zookeeper Token State Service is actually an Alias based TSS where the 'alias service' happens to be the 'zookeeper' implementation.
@@ -105,10 +106,10 @@ public class ZookeeperTokenStateService extends AliasBasedTokenStateService impl
     while (password == null && timeLimit.isAfter(Instant.now())) {
       try {
         TimeUnit.SECONDS.sleep(1);
-        log.retryZkFetchAlias(alias);
+        log.retryZkFetchAlias(getDisplayableAliasText(alias));
         password = super.getPasswordUsingAliasService(alias);
       } catch (InterruptedException e) {
-        log.failedRetryZkFetchAlias(alias, e.getMessage(), e);
+        log.failedRetryZkFetchAlias(getDisplayableAliasText(alias), e.getMessage(), e);
       }
     }
     return password;
@@ -117,14 +118,14 @@ public class ZookeeperTokenStateService extends AliasBasedTokenStateService impl
   @Override
   public void onChanged(String alias, String updatedState) {
     processAlias(alias, updatedState);
-    log.onRemoteTokenStateChanged(alias);
+    log.onRemoteTokenStateChanged(getDisplayableAliasText(alias));
   }
 
   @Override
   public void onRemoved(String alias) {
     final String tokenId = getTokenIdFromAlias(alias);
     removeTokensFromMemory(Collections.singleton(tokenId));
-    log.onRemoteTokenStateRemoval(alias);
+    log.onRemoteTokenStateRemoval(getDisplayableAliasText(alias));
   }
 
   private void processAlias(String alias, String value) {
@@ -141,12 +142,18 @@ public class ZookeeperTokenStateService extends AliasBasedTokenStateService impl
           updateExpirationInMemory(tokenId, expiration);
         }
       } catch (Throwable e) {
-        log.errorWhileProcessingTokenAlias(alias, e.getMessage(), e);
+        log.errorWhileProcessingTokenAlias(getDisplayableAliasText(alias), e.getMessage(), e);
       }
     }
   }
 
-  private String getTokenIdFromAlias(String alias) {
-    return alias.indexOf("--") == -1 ? alias : alias.substring(0, alias.indexOf("--")); // both --max and --unused starts with '--';
+  private String getTokenIdFromAlias(final String alias) {
+    return alias.contains(TOKEN_ALIAS_SUFFIX_DELIM) ? alias.substring(0, alias.indexOf(TOKEN_ALIAS_SUFFIX_DELIM)) : alias;
+  }
+
+  private String getDisplayableAliasText(final String alias) {
+    String tokenId = getTokenIdFromAlias(alias);
+    String suffix = alias.length() > tokenId.length() ? alias.substring(tokenId.length()) : "";
+    return Tokens.getTokenIDDisplayText(tokenId) + suffix;
   }
 }
