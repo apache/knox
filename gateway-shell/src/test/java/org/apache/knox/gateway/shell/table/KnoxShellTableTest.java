@@ -479,7 +479,7 @@ public class KnoxShellTableTest {
     try {
       derbyDatabase = prepareDerbyDatabase(derbyDatabaseFolder);
       assertTrue(derbyDatabase.hasTable("BOOKS"));
-      final KnoxShellTable table = KnoxShellTable.builder().jdbc().driver(DerbyDatabase.DRIVER).connectTo(DerbyDatabase.PROTOCOL + derbyDatabaseFolder.toString())
+      final KnoxShellTable table = KnoxShellTable.builder().jdbc().driver(DerbyDatabase.EMBEDDED_DRIVER).connectTo(DerbyDatabase.PROTOCOL + derbyDatabaseFolder.toString())
           .sql("select * from books");
       assertEquals(2, table.getRows().size());
       assertTrue(table.values("TITLE").containsAll(Arrays.asList("Apache Knox: The Definitive Guide", "Apache Knox: The Definitive Guide 2nd Edition")));

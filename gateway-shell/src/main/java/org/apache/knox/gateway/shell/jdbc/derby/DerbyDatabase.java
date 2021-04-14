@@ -27,7 +27,8 @@ import org.apache.knox.gateway.shell.jdbc.Database;
 
 public class DerbyDatabase implements Database {
 
-  public static final String DRIVER = "org.apache.derby.jdbc.EmbeddedDriver";
+  public static final String EMBEDDED_DRIVER = "org.apache.derby.jdbc.EmbeddedDriver";
+  public static final String NETWORK_SERVER_DRIVER = "org.apache.derby.jdbc.ClientDriver";
   public static final String PROTOCOL = "jdbc:derby:";
   private static final String CREATE_ATTRIBUTE = ";create=true";
   private static final String SHUTDOWN_ATTRIBUTE = ";shutdown=true";
@@ -44,8 +45,12 @@ public class DerbyDatabase implements Database {
    *           if the database engine can not be load for some reasons
    */
   public DerbyDatabase(String directory) throws DerbyDatabaseException {
-    this.dbUri = PROTOCOL + directory;
-    loadDriver();
+    this(directory, false);
+  }
+
+  public DerbyDatabase(String directory, boolean networkServer) throws DerbyDatabaseException {
+    this.dbUri = PROTOCOL + (networkServer ? "//localhost:1527/" : "") + directory;
+    loadDriver(networkServer);
   }
 
   @Override
@@ -104,15 +109,16 @@ public class DerbyDatabase implements Database {
     return result;
   }
 
-  private void loadDriver() throws DerbyDatabaseException {
+  private void loadDriver(boolean networkServer) throws DerbyDatabaseException {
+    final String driverToLoad = networkServer ? NETWORK_SERVER_DRIVER : EMBEDDED_DRIVER;
     try {
-      Class.forName(DRIVER).newInstance();
+      Class.forName(driverToLoad).newInstance();
     } catch (ClassNotFoundException e) {
-      throw new DerbyDatabaseException("Unable to load the JDBC driver " + DRIVER + ". Check your CLASSPATH.", e);
+      throw new DerbyDatabaseException("Unable to load the JDBC driver " + driverToLoad + ". Check your CLASSPATH.", e);
     } catch (InstantiationException e) {
-      throw new DerbyDatabaseException("Unable to instantiate the JDBC driver " + DRIVER, e);
+      throw new DerbyDatabaseException("Unable to instantiate the JDBC driver " + driverToLoad, e);
     } catch (IllegalAccessException e) {
-      throw new DerbyDatabaseException("Not allowed to access the JDBC driver " + DRIVER, e);
+      throw new DerbyDatabaseException("Not allowed to access the JDBC driver " + driverToLoad, e);
     }
   }
 

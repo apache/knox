@@ -79,10 +79,21 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
       // It's not in memory
     }
 
+    if (validate) {
+      validateToken(tokenId);
+    }
+
     long expiration = 0;
     try {
       expiration = tokenDatabase.getTokenExpiration(tokenId);
-      log.fetchedExpirationFromDatabase(Tokens.getTokenIDDisplayText(tokenId), expiration);
+      if (expiration > 0) {
+        log.fetchedExpirationFromDatabase(Tokens.getTokenIDDisplayText(tokenId), expiration);
+
+        // Update the in-memory cache to avoid subsequent DB look-ups for the same state
+        super.updateExpiration(tokenId, expiration);
+      } else {
+        throw new UnknownTokenException(tokenId);
+      }
     } catch (SQLException e) {
       log.errorFetchingExpirationFromDatabase(Tokens.getTokenIDDisplayText(tokenId), e.getMessage(), e);
     }
@@ -140,6 +151,21 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
   }
 
   @Override
+  protected void removeToken(String tokenId) throws UnknownTokenException {
+    try {
+      final boolean removed = tokenDatabase.removeToken(Tokens.getTokenIDDisplayText(tokenId));
+      if (removed) {
+        super.removeToken(tokenId);
+        log.removedTokenFromDatabase(Tokens.getTokenIDDisplayText(tokenId));
+      } else {
+        throw new UnknownTokenException(tokenId);
+      }
+    } catch (SQLException e) {
+      log.errorRemovingTokenFromDatabase(Tokens.getTokenIDDisplayText(tokenId), e.getMessage(), e);
+    }
+  }
+
+  @Override
   protected void evictExpiredTokens() {
     try {
       int numOfExpiredTokens = tokenDatabase.deleteExpiredTokens(TimeUnit.SECONDS.toMillis(tokenEvictionGracePeriod));
@@ -169,5 +195,33 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
       log.errorUpdatingMetadataInDatabase(Tokens.getTokenIDDisplayText(tokenId), e.getMessage(), e);
       throw new TokenStateServiceException("An error occurred while updating metadata for " + Tokens.getTokenIDDisplayText(tokenId) + " in the database", e);
     }
+  }
+
+  @Override
+  public TokenMetadata getTokenMetadata(String tokenId) throws UnknownTokenException {
+    TokenMetadata tokenMetadata = null;
+    try {
+      tokenMetadata = super.getTokenMetadata(tokenId);
+    } catch (UnknownTokenException e) {
+      // This is expected if the metadata is not yet part of the in-memory record. In this case, the metadata will
+      // be retrieved from the database.
+    }
+
+    if (tokenMetadata == null) {
+      try {
+        tokenMetadata = tokenDatabase.getTokenMetadata(tokenId);
+
+        if (tokenMetadata != null) {
+          log.fetchedMetadataFromDatabase(Tokens.getTokenIDDisplayText(tokenId));
+          // Update the in-memory cache to avoid subsequent DB look-ups for the same state
+          super.addMetadata(tokenId, tokenMetadata);
+        } else {
+          throw new UnknownTokenException(tokenId);
+        }
+      } catch (SQLException e) {
+        log.errorFetchingMetadataFromDatabase(Tokens.getTokenIDDisplayText(tokenId), e.getMessage(), e);
+      }
+    }
+    return tokenMetadata;
   }
 }

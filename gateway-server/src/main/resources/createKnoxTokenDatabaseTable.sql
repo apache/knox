@@ -21,4 +21,4 @@ CREATE TABLE KNOX_TOKENS (
    username varchar(128),
    comment varchar(256),
    PRIMARY KEY (token_id)
-);
+)

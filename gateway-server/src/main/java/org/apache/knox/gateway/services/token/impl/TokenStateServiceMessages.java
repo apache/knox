@@ -187,6 +187,12 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.ERROR, text = "An error occurred while saving token {0} in the database : {1}")
   void errorSavingTokenInDatabase(String tokenId, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.DEBUG, text = "Token {0} has been removed from the database")
+  void removedTokenFromDatabase(String tokenId);
+
+  @Message(level = MessageLevel.ERROR, text = "An error occurred while removing token {0} from the database : {1}")
+  void errorRemovingTokenFromDatabase(String tokenId, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
   @Message(level = MessageLevel.DEBUG, text = "{0} expired tokens have been removed from the database")
   void removedTokensFromDatabase(int size);
 
@@ -222,4 +228,10 @@ public interface TokenStateServiceMessages {
 
   @Message(level = MessageLevel.ERROR, text = "An error occurred while updating metadata for {0} in the database : {1}")
   void errorUpdatingMetadataInDatabase(String tokenId, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.DEBUG, text = "Fetched metadata for {0} from the database")
+  void fetchedMetadataFromDatabase(String tokenId);
+
+  @Message(level = MessageLevel.ERROR, text = "An error occurred while fetching metadata for {0} from the database : {1}")
+  void errorFetchingMetadataFromDatabase(String tokenId, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 }

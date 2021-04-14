@@ -26,10 +26,10 @@ import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.postgresql.ds.PGSimpleDataSource;
 
 public class JDBCUtils {
-  private static final String POSTGRES_DB_TYPE = "postgres";
-  private static final String DERBY_DB_TYPE = "derbydb";
-  private static final String DATABASE_USER_ALIAS_NAME = "gateway_database_user";
-  private static final String DATABASE_PASSWORD_ALIAS_NAME = "gateway_database_password";
+  public static final String POSTGRES_DB_TYPE = "postgres";
+  public static final String DERBY_DB_TYPE = "derbydb";
+  public static final String DATABASE_USER_ALIAS_NAME = "gateway_database_user";
+  public static final String DATABASE_PASSWORD_ALIAS_NAME = "gateway_database_password";
 
   public static DataSource getDataSource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException {
     if (POSTGRES_DB_TYPE.equalsIgnoreCase(gatewayConfig.getDatabaseType())) {
