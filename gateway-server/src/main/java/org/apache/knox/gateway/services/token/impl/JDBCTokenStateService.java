@@ -52,11 +52,13 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
 
   @Override
   public void addToken(String tokenId, long issueTime, long expiration, long maxLifetimeDuration) {
-    super.addToken(tokenId, issueTime, expiration, maxLifetimeDuration);
     try {
       final boolean added = tokenDatabase.addToken(tokenId, issueTime, expiration, maxLifetimeDuration);
       if (added) {
         log.savedTokenInDatabase(Tokens.getTokenIDDisplayText(tokenId));
+
+        //add in-memory
+        super.addToken(tokenId, issueTime, expiration, maxLifetimeDuration);
       } else {
         log.failedToSaveTokenInDatabase(Tokens.getTokenIDDisplayText(tokenId));
       }
@@ -86,13 +88,13 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
 
   @Override
   protected void updateExpiration(String tokenId, long expiration) {
-    // Update in-memory
-    super.updateExpiration(tokenId, expiration);
-
     try {
       final boolean updated = tokenDatabase.updateExpiration(tokenId, expiration);
       if (updated) {
         log.updatedExpirationInDatabase(Tokens.getTokenIDDisplayText(tokenId), expiration);
+
+        // Update in-memory
+        super.updateExpiration(tokenId, expiration);
       } else {
         log.failedToUpdateExpirationInDatabase(Tokens.getTokenIDDisplayText(tokenId), expiration);
       }
@@ -137,23 +139,23 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
     try {
       int numOfExpiredTokens = tokenDatabase.deleteExpiredTokens(TimeUnit.SECONDS.toMillis(tokenEvictionGracePeriod));
       log.removedTokensFromDatabase(numOfExpiredTokens);
+
+      // remove from in-memory collections
+      super.evictExpiredTokens();
     } catch (SQLException e) {
       log.errorRemovingTokensFromDatabase(e.getMessage(), e);
     }
-
-    //remove from in-memory collections
-    super.evictExpiredTokens();
   }
 
   @Override
   public void addMetadata(String tokenId, TokenMetadata metadata) {
-    // Update in-memory
-    super.addMetadata(tokenId, metadata);
-
     try {
       final boolean added = tokenDatabase.addMetadata(tokenId, metadata);
       if (added) {
         log.updatedMetadataInDatabase(Tokens.getTokenIDDisplayText(tokenId));
+
+        // Update in-memory
+        super.addMetadata(tokenId, metadata);
       } else {
         log.failedToUpdateMetadataInDatabase(Tokens.getTokenIDDisplayText(tokenId));
       }
