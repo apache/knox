@@ -187,14 +187,11 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.ERROR, text = "An error occurred while saving token {0} in the database : {1}")
   void errorSavingTokenInDatabase(String tokenId, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
-  @Message(level = MessageLevel.DEBUG, text = "{0} tokens have been removed from the database")
+  @Message(level = MessageLevel.DEBUG, text = "{0} expired tokens have been removed from the database")
   void removedTokensFromDatabase(int size);
 
-  @Message(level = MessageLevel.ERROR, text = "Failed to remove {0} tokens from the database")
-  void failedToRemoveTokensFromDatabase(int size);
-
-  @Message(level = MessageLevel.ERROR, text = "An error occurred while removing {0} tokens from the database : {1}")
-  void errorRemovingTokensFromDatabase(int size, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+  @Message(level = MessageLevel.ERROR, text = "An error occurred while removing expired tokens from the database : {1}")
+  void errorRemovingTokensFromDatabase(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.DEBUG, text = "Fetched expiration for {0} from the database : {1}")
   void fetchedExpirationFromDatabase(String tokenId, long expiration);
@@ -216,12 +213,6 @@ public interface TokenStateServiceMessages {
 
   @Message(level = MessageLevel.ERROR, text = "An error occurred while fetching max lifetime for {0} from the database : {1}")
   void errorFetchingMaxLifetimeFromDatabase(String tokenId, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
-
-  @Message(level = MessageLevel.DEBUG, text = "Fetched all {0} token IDs from the database")
-  void fetchedAllTokenIdsFromDatabase(int size);
-
-  @Message(level = MessageLevel.ERROR, text = "An error occurred while fetching all token IDs from the database : {0}")
-  void errorFetchingAllTokenIdsFromDatabase(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.DEBUG, text = "Updated metadata for {0} in the database")
   void updatedMetadataInDatabase(String tokenId);

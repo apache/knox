@@ -70,7 +70,7 @@ public class DefaultTokenStateService implements TokenStateService {
   private long tokenEvictionInterval;
 
   // Grace period (in seconds) after which an expired token should be evicted
-  private long tokenEvictionGracePeriod;
+  protected long tokenEvictionGracePeriod;
 
   // Knox token validation permissiveness
   protected boolean permissiveValidationEnabled;
@@ -332,18 +332,7 @@ public class DefaultTokenStateService implements TokenStateService {
    */
   protected void evictExpiredTokens() {
     if (readyForEviction()) {
-      final Set<String> tokensToEvict = new HashSet<>();
-
-      for (final String tokenId : getTokenIds()) {
-        try {
-          if (needsEviction(tokenId)) {
-            log.evictToken(Tokens.getTokenIDDisplayText(tokenId));
-            tokensToEvict.add(tokenId); // Add the token to the set of tokens to evict
-          }
-        } catch (final Exception e) {
-          log.failedExpiredTokenEviction(Tokens.getTokenIDDisplayText(tokenId), e);
-        }
-      }
+      final Set<String> tokensToEvict = getExpiredTokens();
 
       if (!tokensToEvict.isEmpty()) {
         removeTokens(tokensToEvict);
@@ -355,6 +344,21 @@ public class DefaultTokenStateService implements TokenStateService {
 
   protected boolean readyForEviction() {
     return true;
+  }
+
+  protected Set<String> getExpiredTokens() {
+    final Set<String> expiredTokens = new HashSet<>();
+    for (final String tokenId : getTokenIds()) {
+      try {
+        if (needsEviction(tokenId)) {
+          log.evictToken(Tokens.getTokenIDDisplayText(tokenId));
+          expiredTokens.add(tokenId); // Add the token to the set of tokens to evict
+        }
+      } catch (final Exception e) {
+        log.failedExpiredTokenEviction(Tokens.getTokenIDDisplayText(tokenId), e);
+      }
+    }
+    return expiredTokens;
   }
 
   /**
