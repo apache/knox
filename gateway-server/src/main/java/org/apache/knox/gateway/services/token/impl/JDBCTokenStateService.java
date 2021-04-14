@@ -25,6 +25,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
+import org.apache.knox.gateway.services.security.token.TokenStateServiceException;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.util.JDBCUtils;
 import org.apache.knox.gateway.util.Tokens;
@@ -57,13 +58,15 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
       if (added) {
         log.savedTokenInDatabase(Tokens.getTokenIDDisplayText(tokenId));
 
-        //add in-memory
+        // add in-memory
         super.addToken(tokenId, issueTime, expiration, maxLifetimeDuration);
       } else {
         log.failedToSaveTokenInDatabase(Tokens.getTokenIDDisplayText(tokenId));
+        throw new TokenStateServiceException("Failed to save token " + Tokens.getTokenIDDisplayText(tokenId) + " in the database");
       }
     } catch (SQLException e) {
       log.errorSavingTokenInDatabase(Tokens.getTokenIDDisplayText(tokenId), e.getMessage(), e);
+      throw new TokenStateServiceException("An error occurred while saving token " + Tokens.getTokenIDDisplayText(tokenId) + " in the database", e);
     }
   }
 
@@ -97,9 +100,11 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
         super.updateExpiration(tokenId, expiration);
       } else {
         log.failedToUpdateExpirationInDatabase(Tokens.getTokenIDDisplayText(tokenId), expiration);
+        throw new TokenStateServiceException("Failed to updated expiration for " + Tokens.getTokenIDDisplayText(tokenId) + " in the database");
       }
     } catch (SQLException e) {
       log.errorUpdatingExpirationInDatabase(Tokens.getTokenIDDisplayText(tokenId), e.getMessage(), e);
+      throw new TokenStateServiceException("An error occurred while updating expiration for " + Tokens.getTokenIDDisplayText(tokenId) + " in the database", e);
     }
   }
 
@@ -158,9 +163,11 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
         super.addMetadata(tokenId, metadata);
       } else {
         log.failedToUpdateMetadataInDatabase(Tokens.getTokenIDDisplayText(tokenId));
+        throw new TokenStateServiceException("Failed to update metadata for " + Tokens.getTokenIDDisplayText(tokenId) + " in the database");
       }
     } catch (SQLException e) {
       log.errorUpdatingMetadataInDatabase(Tokens.getTokenIDDisplayText(tokenId), e.getMessage(), e);
+      throw new TokenStateServiceException("An error occurred while updating metadata for " + Tokens.getTokenIDDisplayText(tokenId) + " in the database", e);
     }
   }
 }
