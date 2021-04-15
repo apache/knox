@@ -69,11 +69,13 @@ public class JWTTokenTest {
 
   @Test
   public void testTokenCreation() throws Exception {
-    String[] claims = new String[4];
+    String[] claims = new String[6];
     claims[0] = "KNOXSSO";
     claims[1] = "john.doe@example.com";
     claims[2] = "https://login.example.com";
     claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
+    claims[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
+    claims[5] = null;
     JWT token = new JWTToken("RS256", claims);
 
     assertEquals("KNOXSSO", token.getIssuer());
@@ -83,11 +85,13 @@ public class JWTTokenTest {
 
   @Test
   public void testPrivateUUIDClaim() throws Exception {
-    String[] claims = new String[4];
+    String[] claims = new String[6];
     claims[0] = "KNOXSSO";
     claims[1] = "john.doe@example.com";
     claims[2] = "https://login.example.com";
     claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
+    claims[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
+    claims[5] = null;
     JWT token = new JWTToken("RS256", claims);
 
     assertEquals("KNOXSSO", token.getIssuer());
@@ -102,11 +106,13 @@ public class JWTTokenTest {
 
   @Test
   public void testTokenCreationWithAudienceListSingle() throws Exception {
-    String[] claims = new String[4];
+    String[] claims = new String[6];
     claims[0] = "KNOXSSO";
     claims[1] = "john.doe@example.com";
     claims[2] = null;
     claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
+    claims[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
+    claims[5] = null;
     List<String> audiences = new ArrayList<>();
     audiences.add("https://login.example.com");
 
@@ -120,11 +126,13 @@ public class JWTTokenTest {
 
   @Test
   public void testTokenCreationWithAudienceListMultiple() throws Exception {
-    String[] claims = new String[4];
+    String[] claims = new String[6];
     claims[0] = "KNOXSSO";
     claims[1] = "john.doe@example.com";
     claims[2] = null;
     claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
+    claims[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
+    claims[5] = null;
     List<String> audiences = new ArrayList<>();
     audiences.add("https://login.example.com");
     audiences.add("KNOXSSO");
@@ -139,11 +147,13 @@ public class JWTTokenTest {
 
   @Test
   public void testTokenCreationWithAudienceListCombined() throws Exception {
-    String[] claims = new String[4];
+    String[] claims = new String[6];
     claims[0] = "KNOXSSO";
     claims[1] = "john.doe@example.com";
     claims[2] = "LJM";
     claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
+    claims[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
+    claims[5] = null;
     ArrayList<String> audiences = new ArrayList<>();
     audiences.add("https://login.example.com");
     audiences.add("KNOXSSO");
@@ -158,11 +168,13 @@ public class JWTTokenTest {
 
   @Test
   public void testTokenCreationWithNullAudienceList() throws Exception {
-    String[] claims = new String[4];
+    String[] claims = new String[6];
     claims[0] = "KNOXSSO";
     claims[1] = "john.doe@example.com";
     claims[2] = null;
     claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
+    claims[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
+    claims[5] = null;
     List<String> audiences = null;
 
     JWT token = new JWTToken("RS256", claims, audiences);
@@ -175,11 +187,13 @@ public class JWTTokenTest {
 
   @Test
   public void testTokenCreationRS512() throws Exception {
-    String[] claims = new String[4];
+    String[] claims = new String[6];
     claims[0] = "KNOXSSO";
     claims[1] = "john.doe@example.com";
     claims[2] = "https://login.example.com";
     claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
+    claims[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
+    claims[5] = null;
     JWTToken token = new JWTToken(JWSAlgorithm.RS512.getName(), claims);
 
     assertEquals("KNOXSSO", token.getIssuer());
@@ -190,11 +204,13 @@ public class JWTTokenTest {
 
   @Test
   public void testTokenSignature() throws Exception {
-    String[] claims = new String[4];
+    String[] claims = new String[6];
     claims[0] = "KNOXSSO";
     claims[1] = "john.doe@example.com";
     claims[2] = "https://login.example.com";
     claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
+    claims[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
+    claims[5] = null;
     JWT token = new JWTToken("RS256", claims);
 
     assertEquals("KNOXSSO", token.getIssuer());
@@ -213,11 +229,13 @@ public class JWTTokenTest {
 
   @Test
   public void testTokenSignatureRS512() throws Exception {
-    String[] claims = new String[4];
+    String[] claims = new String[6];
     claims[0] = "KNOXSSO";
     claims[1] = "john.doe@example.com";
     claims[2] = "https://login.example.com";
     claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
+    claims[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
+    claims[5] = null;
     JWT token = new JWTToken(JWSAlgorithm.RS512.getName(), claims);
 
     assertEquals("KNOXSSO", token.getIssuer());
@@ -237,11 +255,13 @@ public class JWTTokenTest {
 
   @Test
   public void testTokenExpiry() throws Exception {
-    String[] claims = new String[4];
+    String[] claims = new String[6];
     claims[0] = "KNOXSSO";
     claims[1] = "john.doe@example.com";
     claims[2] = "https://login.example.com";
     claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
+    claims[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
+    claims[5] = null;
     JWT token = new JWTToken("RS256", claims);
 
     assertNotNull(token.getExpires());

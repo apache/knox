@@ -89,7 +89,8 @@ public class TokenResource {
   private static final String TOKEN_EXP_RENEWAL_MAX_LIFETIME = "knox.token.exp.max-lifetime";
   private static final String TOKEN_RENEWER_WHITELIST = "knox.token.renewer.whitelist";
   private static final long TOKEN_TTL_DEFAULT = 30000L;
-  static final String RESOURCE_PATH = "knoxtoken/api/v1/token";
+  static final String TOKEN_API_PATH = "knoxtoken/api/v1";
+  static final String RESOURCE_PATH = TOKEN_API_PATH + "/token";
   static final String RENEW_PATH = "/renew";
   static final String REVOKE_PATH = "/revoke";
   private static final String TARGET_ENDPOINT_PULIC_CERT_PEM = "knox.token.target.endpoint.cert.pem";
@@ -391,7 +392,6 @@ public class TokenResource {
         try {
           Certificate cert = ks.getCertificateForGateway();
           byte[] bytes = cert.getEncoded();
-          //Base64 encoder = new Base64(76, "\n".getBytes("ASCII"));
           endpointPublicCert = Base64.encodeBase64String(bytes);
         } catch (KeyStoreException | KeystoreServiceException | CertificateEncodingException e) {
           // assuming that certs will be properly provisioned across all clients
@@ -400,18 +400,30 @@ public class TokenResource {
       }
     }
 
+    String jku = null;
+    /* remove .../token and replace it with ..../jwks.json */
+    final int idx = request.getRequestURL().lastIndexOf("/");
+    if(idx > 1) {
+      jku = request.getRequestURL().substring(0, idx) + JWKSResource.JWKS_PATH;
+    }
+
     try {
       final boolean managedToken = tokenStateService != null;
       JWT token;
       JWTokenAttributes jwtAttributes;
-      if (targetAudiences.isEmpty()) {
-        jwtAttributes = new JWTokenAttributesBuilder().setPrincipal(p).setAlgorithm(signatureAlgorithm).setExpires(expires).setManaged(managedToken).build();
-        token = ts.issueToken(jwtAttributes);
-      } else {
-        jwtAttributes = new JWTokenAttributesBuilder().setPrincipal(p).setAudiences(targetAudiences).setAlgorithm(signatureAlgorithm).setExpires(expires)
-            .setManaged(managedToken).build();
-        token = ts.issueToken(jwtAttributes);
+      final JWTokenAttributesBuilder jwtAttributesBuilder = new JWTokenAttributesBuilder();
+      jwtAttributesBuilder
+          .setPrincipal(p)
+          .setAlgorithm(signatureAlgorithm)
+          .setExpires(expires)
+          .setManaged(managedToken)
+          .setJku(jku);
+      if (!targetAudiences.isEmpty()) {
+        jwtAttributesBuilder.setAudiences(targetAudiences);
       }
+
+      jwtAttributes = jwtAttributesBuilder.build();
+      token = ts.issueToken(jwtAttributes);
 
       if (token != null) {
         String accessToken = token.toString();

@@ -16,6 +16,10 @@
  */
 package org.apache.knox.gateway.services.security.token;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.jwk.KeyType;
+import com.nimbusds.jose.jwk.ThumbprintUtils;
+import com.nimbusds.jose.util.Base64URL;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -25,7 +29,8 @@ import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
-
+import java.security.interfaces.RSAPublicKey;
+import java.util.LinkedHashMap;
 
 public class TokenUtils {
   public static final String SIGNING_HMAC_SECRET_ALIAS = "gateway.signing.hmac.secret";
@@ -84,6 +89,22 @@ public class TokenUtils {
       final char[] hmacSecret = aliasService.getPasswordFromAliasForGateway(SIGNING_HMAC_SECRET_ALIAS);
       return useHMAC(hmacSecret == null ? null : hmacSecret, signingKeystoreName) ? DEFAULT_HMAC_SIG_ALG : DEFAULT_RSA_SIG_ALG;
     }
+  }
+
+  /**
+   * Utility method to calculate public key thumbprint
+   * @param publicKey
+   * @param hashAlgorithm
+   * @return
+   * @throws JOSEException
+   */
+  public static String getThumbprint(final RSAPublicKey publicKey, final String hashAlgorithm)
+      throws JOSEException {
+    LinkedHashMap<String,String> params = new LinkedHashMap<>();
+    params.put("e", Base64URL.encode(publicKey.getPublicExponent()).toString());
+    params.put("kty", KeyType.RSA.getValue());
+    params.put("n", Base64URL.encode(publicKey.getModulus()).toString());
+    return ThumbprintUtils.compute(hashAlgorithm, params).toString();
   }
 
   /**

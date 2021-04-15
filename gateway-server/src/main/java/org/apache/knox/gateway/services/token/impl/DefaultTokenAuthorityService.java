@@ -33,10 +33,12 @@ import java.text.ParseException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.knox.gateway.GatewayResources;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -73,6 +75,7 @@ import com.nimbusds.jwt.proc.JWTClaimsSetVerifier;
 
 public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   private static final GatewayResources RESOURCES = ResourcesFactory.get(GatewayResources.class);
+  private static final TokenAuthorityServiceMessages LOG = MessagesFactory.get(TokenAuthorityServiceMessages.class);
 
   // Only standard RSA and HMAC signature algorithms are accepted
   // https://tools.ietf.org/html/rfc7518
@@ -86,6 +89,8 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   private byte[] cachedSigningHmacSecret;
   private RSAPrivateKey signingKey;
 
+  private Optional<String> cachedSigningKeyKID = Optional.empty();
+
   public void setKeystoreService(KeystoreService ks) {
     this.keystoreService = ks;
   }
@@ -96,7 +101,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
 
   @Override
   public JWT issueToken(JWTokenAttributes jwtAttributes) throws TokenServiceException {
-    String[] claimArray = new String[4];
+    String[] claimArray = new String[6];
     claimArray[0] = "KNOXSSO";
     claimArray[1] = jwtAttributes.getPrincipal().getName();
     claimArray[2] = null;
@@ -106,8 +111,14 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     else {
       claimArray[3] = String.valueOf(jwtAttributes.getExpires());
     }
-
     final String algorithm = jwtAttributes.getAlgorithm();
+    if(SUPPORTED_HMAC_SIG_ALGS.contains(algorithm)) {
+      claimArray[4] = null;
+      claimArray[5] = null;
+    } else {
+      claimArray[4] = cachedSigningKeyKID.isPresent() ? cachedSigningKeyKID.get() : null;
+      claimArray[5] = jwtAttributes.getJku();
+    }
     final JWT token = SUPPORTED_PKI_SIG_ALGS.contains(algorithm) || SUPPORTED_HMAC_SIG_ALGS.contains(algorithm) ? new JWTToken(algorithm, claimArray, jwtAttributes.getAudiences(), jwtAttributes.isManaged()) : null;
     if (token != null) {
       if (SUPPORTED_HMAC_SIG_ALGS.contains(algorithm)) {
@@ -289,8 +300,13 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
       else if (! (publicKey instanceof  RSAPublicKey)) {
         throw new ServiceLifecycleException(RESOURCES.publicSigningKeyWrongType(signingKeyAlias));
       }
+      cachedSigningKeyKID = Optional.of(TokenUtils.getThumbprint((RSAPublicKey) publicKey, "SHA-256"));
     } catch (KeyStoreException e) {
       throw new ServiceLifecycleException(RESOURCES.publicSigningKeyNotFound(signingKeyAlias), e);
+    } catch (final JOSEException e) {
+      /* in case there is an error getting KID log and move one */
+      LOG.errorGettingKid(e.toString());
+      cachedSigningKeyKID = Optional.empty();
     }
 
     // Ensure that the private signing keys is available
@@ -310,5 +326,9 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
 
   @Override
   public void stop() throws ServiceLifecycleException {
+  }
+
+  protected Optional<String> getCachedSigningKeyKID() {
+    return cachedSigningKeyKID;
   }
 }

@@ -360,14 +360,15 @@ public class DefaultTokenStateServiceTest {
 
   /* create a test JWT token */
   protected JWT getJWTToken(final long expiry) {
-    String[] claims = new String[4];
+    String[] claims = new String[6];
     claims[0] = "KNOXSSO";
     claims[1] = "john.doe@example.com";
     claims[2] = "https://login.example.com";
     if(expiry > 0) {
       claims[3] = Long.toString(expiry);
     }
-
+    claims[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
+    claims[5] = null;
     JWT token = new JWTToken("RS256", claims);
     // Sign the token
     JWSSigner signer = new RSASSASigner(privateKey);

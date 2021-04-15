@@ -27,6 +27,7 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
@@ -47,9 +48,9 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 @Singleton
 @Path(JWKSResource.RESOURCE_PATH)
 public class JWKSResource {
-
+  public static final String JWKS_PATH = "/jwks.json";
   static final String RESOURCE_PATH = "knoxtoken/api/v1";
-  static final String JWKS_PATH = "/jwks.json";
+
   @Context
   HttpServletRequest request;
   @Context
@@ -80,10 +81,11 @@ public class JWKSResource {
             .entity(new JWKSet().toJSONObject().toString()).build();
       }
 
+      final String kid = TokenUtils.getThumbprint(rsa, "SHA-256");
       final RSAKey.Builder builder = new RSAKey.Builder(rsa)
           .keyUse(KeyUse.SIGNATURE)
           .algorithm(new JWSAlgorithm(rsa.getAlgorithm()))
-          .keyIDFromThumbprint();
+          .keyID(kid);
 
       jwks = new JWKSet(builder.build());
 
