@@ -17,9 +17,6 @@
  */
 package org.apache.knox.gateway.dispatch;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.collections.MapUtils;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
@@ -38,6 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -56,14 +54,22 @@ public class ConfigurableDispatch extends DefaultDispatch {
     return headers == null ?  Collections.emptySet(): new HashSet<>(Arrays.asList(headers.split("\\s*,\\s*")));
   }
 
-  private Map<String, String> convertJSONHeadersToMap(String headers) {
+  /**
+   * This function converts header string to a Map(String, String)
+   * Header String format: a:b,c:d --> this will translate to Map({a=b,c=d})
+   */
+  private Map<String, String> convertCommaDelimitedHeadersToMap(String headers) {
     if(null == headers){
       return Collections.emptyMap();
     }
     try {
-      return (new ObjectMapper()).readValue(headers, new TypeReference<Map<String, String>>(){});
-    } catch (JsonProcessingException e) {
-      auditor.audit("deserialize headers", headers, "header", ActionOutcome.FAILURE, e.getMessage());
+      Map<String, String> extraHeaders = new HashMap<>();
+      Arrays.stream(headers.split("\\s*;\\s*"))
+              .forEach(keyValuePair -> extraHeaders.putIfAbsent(keyValuePair.split("\\s*:\\s*")[0], keyValuePair.split("\\s*:\\s*")[1]));
+      return extraHeaders;
+    } catch (Exception e) {
+      auditor.audit("deserialize headers", headers, "header",
+              ActionOutcome.WARNING, "Extra Headers are skipped because of "+e.getMessage());
       return Collections.emptyMap();
     }
   }
@@ -87,7 +93,7 @@ public class ConfigurableDispatch extends DefaultDispatch {
   @Configure
   protected void setRequestAppendHeaders(@Default(" ") String extraHeaders) {
     if(!" ".equals(extraHeaders)) {
-      this.requestAppendHeaders = convertJSONHeadersToMap(extraHeaders);
+      this.requestAppendHeaders = convertCommaDelimitedHeadersToMap(extraHeaders);
     }
   }
 

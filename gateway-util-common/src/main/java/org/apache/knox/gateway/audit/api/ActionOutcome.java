@@ -31,5 +31,6 @@ public abstract class ActionOutcome {
   public static final String SUCCESS = "success";
   public static final String FAILURE = "failure";
   public static final String UNAVAILABLE = "unavailable";
+  public static final String WARNING = "warning";
 
 }
