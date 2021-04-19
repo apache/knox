@@ -153,7 +153,7 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
   @Override
   protected void removeToken(String tokenId) throws UnknownTokenException {
     try {
-      final boolean removed = tokenDatabase.removeToken(Tokens.getTokenIDDisplayText(tokenId));
+      final boolean removed = tokenDatabase.removeToken(tokenId);
       if (removed) {
         super.removeToken(tokenId);
         log.removedTokenFromDatabase(Tokens.getTokenIDDisplayText(tokenId));
