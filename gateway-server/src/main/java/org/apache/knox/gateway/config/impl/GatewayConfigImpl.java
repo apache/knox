@@ -17,19 +17,6 @@
  */
 package org.apache.knox.gateway.config.impl;
 
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-import org.apache.knox.gateway.GatewayMessages;
-import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.dto.HomePageProfile;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasService;
-import org.joda.time.Period;
-import org.joda.time.format.PeriodFormatter;
-import org.joda.time.format.PeriodFormatterBuilder;
-
 import static org.apache.knox.gateway.services.security.impl.RemoteAliasService.REMOTE_ALIAS_SERVICE_TYPE;
 
 import java.io.File;
@@ -51,6 +38,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.knox.gateway.GatewayMessages;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.dto.HomePageProfile;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasService;
+import org.joda.time.Period;
+import org.joda.time.format.PeriodFormatter;
+import org.joda.time.format.PeriodFormatterBuilder;
+
 
 /**
  * The configuration for the Gateway.
@@ -270,6 +271,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final Set<String> KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES_DEFAULT = new HashSet<>(Arrays.asList("admin", "manager", "knoxsso", "metadata", "homepage"));
   private static final String KNOX_HOMEPAGE_LOGOUT_ENABLED =  "knox.homepage.logout.enabled";
   private static final String KNOX_INCOMING_XFORWARDED_ENABLED = "gateway.incoming.xforwarded.enabled";
+
+  //Gateway Database related properties
+  private static final String GATEWAY_DATABASE_TYPE = GATEWAY_CONFIG_FILE_PREFIX + ".database.type";
+  private static final String GATEWAY_DATABASE_HOST =  GATEWAY_CONFIG_FILE_PREFIX + ".database.host";
+  private static final String GATEWAY_DATABASE_PORT =  GATEWAY_CONFIG_FILE_PREFIX + ".database.port";
+  private static final String GATEWAY_DATABASE_NAME =  GATEWAY_CONFIG_FILE_PREFIX + ".database.name";
 
   public GatewayConfigImpl() {
     init();
@@ -1230,5 +1237,25 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     profiles.put("thin", HomePageProfile.getThinProfileElemens());
     profiles.put("token", HomePageProfile.getTokenProfileElements());
     return profiles;
+  }
+
+  @Override
+  public String getDatabaseType() {
+    return get(GATEWAY_DATABASE_TYPE, "none");
+  }
+
+  @Override
+  public String getDatabaseHost() {
+    return get(GATEWAY_DATABASE_HOST);
+  }
+
+  @Override
+  public int getDatabasePort() {
+    return getInt(GATEWAY_DATABASE_PORT, 0);
+  }
+
+  @Override
+  public String getDatabaseName() {
+    return get(GATEWAY_DATABASE_NAME, "GATEWAY_DATABASE");
   }
 }
