@@ -68,6 +68,10 @@ public class JWTToken implements JWT {
   public JWTToken(String alg, String[] claimsArray, List<String> audiences, boolean managed) {
     JWSHeader header = new JWSHeader(new JWSAlgorithm(alg));
 
+    if(claimsArray == null || claimsArray.length < 6) {
+      log.missingClaims(claimsArray.length);
+    }
+
     if (claimsArray[2] != null) {
       if (audiences == null) {
         audiences = new ArrayList<>();

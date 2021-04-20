@@ -89,7 +89,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   private byte[] cachedSigningHmacSecret;
   private RSAPrivateKey signingKey;
 
-  private Optional<String> cachedSigningKeyKID = Optional.empty();
+  private Optional<String> cachedSigningKeyID = Optional.empty();
 
   public void setKeystoreService(KeystoreService ks) {
     this.keystoreService = ks;
@@ -116,7 +116,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
       claimArray[4] = null;
       claimArray[5] = null;
     } else {
-      claimArray[4] = cachedSigningKeyKID.isPresent() ? cachedSigningKeyKID.get() : null;
+      claimArray[4] = cachedSigningKeyID.isPresent() ? cachedSigningKeyID.get() : null;
       claimArray[5] = jwtAttributes.getJku();
     }
     final JWT token = SUPPORTED_PKI_SIG_ALGS.contains(algorithm) || SUPPORTED_HMAC_SIG_ALGS.contains(algorithm) ? new JWTToken(algorithm, claimArray, jwtAttributes.getAudiences(), jwtAttributes.isManaged()) : null;
@@ -300,13 +300,13 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
       else if (! (publicKey instanceof  RSAPublicKey)) {
         throw new ServiceLifecycleException(RESOURCES.publicSigningKeyWrongType(signingKeyAlias));
       }
-      cachedSigningKeyKID = Optional.of(TokenUtils.getThumbprint((RSAPublicKey) publicKey, "SHA-256"));
+      cachedSigningKeyID = Optional.of(TokenUtils.getThumbprint((RSAPublicKey) publicKey, "SHA-256"));
     } catch (KeyStoreException e) {
       throw new ServiceLifecycleException(RESOURCES.publicSigningKeyNotFound(signingKeyAlias), e);
     } catch (final JOSEException e) {
       /* in case there is an error getting KID log and move one */
       LOG.errorGettingKid(e.toString());
-      cachedSigningKeyKID = Optional.empty();
+      cachedSigningKeyID = Optional.empty();
     }
 
     // Ensure that the private signing keys is available
@@ -328,7 +328,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   public void stop() throws ServiceLifecycleException {
   }
 
-  protected Optional<String> getCachedSigningKeyKID() {
-    return cachedSigningKeyKID;
+  protected Optional<String> getCachedSigningKeyID() {
+    return cachedSigningKeyID;
   }
 }

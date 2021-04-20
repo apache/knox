@@ -630,7 +630,7 @@ public class DefaultTokenAuthorityServiceTest {
 
     /* negative test */
     /* expectation that that the exception is eaten up in case where there was an exception getting kid */
-    Optional<String> opt = ta.getCachedSigningKeyKID();
+    Optional<String> opt = ta.getCachedSigningKeyID();
     assertFalse(opt.isPresent());
 
     /* now test for cases where we expect to get kid */
@@ -640,7 +640,7 @@ public class DefaultTokenAuthorityServiceTest {
     ta.init(config, new HashMap<>());
     ta.start();
 
-    opt = ta.getCachedSigningKeyKID();
+    opt = ta.getCachedSigningKeyID();
     assertTrue("Missing expected KID value", opt.isPresent());
   }
 }
