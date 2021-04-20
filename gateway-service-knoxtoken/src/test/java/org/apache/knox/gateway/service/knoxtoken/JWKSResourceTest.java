@@ -127,11 +127,13 @@ public class JWKSResourceTest {
   }
 
   private JWT getTestToken(final String algorithm) {
-    String[] claimArray = new String[4];
+    String[] claimArray = new String[6];
     claimArray[0] = "KNOXSSO";
     claimArray[1] = "joe@example.com";
     claimArray[2] = null;
     claimArray[3] = null;
+    claimArray[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
+    claimArray[5] = null;
 
     final JWT token = new JWTToken(algorithm, claimArray,
         Collections.singletonList("aud"), false);

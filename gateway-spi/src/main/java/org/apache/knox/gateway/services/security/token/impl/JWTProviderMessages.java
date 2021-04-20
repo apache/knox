@@ -55,4 +55,7 @@ public interface JWTProviderMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Unable to verify JWT token: {0}" )
   void unableToVerifyToken(JOSEException e);
+
+  @Message( level = MessageLevel.ERROR, text = "Missing claims, expected 6 found : {0}" )
+  void missingClaims(int length);
 }

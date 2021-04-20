@@ -84,6 +84,10 @@ public class TokenServiceResourceTest {
   private static RSAPublicKey publicKey;
   private static RSAPrivateKey privateKey;
 
+  private static String TOKEN_API_PATH = "https://gateway-host:8443/gateway/sandbox/knoxtoken/api/v1";
+  private static String TOKEN_PATH = "/token";
+  private static String JKWS_PATH = "/jwks.json";
+
   private ServletContext context;
   private HttpServletRequest request;
   private JWTokenAuthority authority;
@@ -124,6 +128,7 @@ public class TokenServiceResourceTest {
     Principal principal = EasyMock.createNiceMock(Principal.class);
     EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
     EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(TOKEN_API_PATH+TOKEN_PATH)).anyTimes();
 
     GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services).anyTimes();
@@ -759,6 +764,35 @@ public class TokenServiceResourceTest {
     validateSuccessfulRevocationResponse(renewalResponse);
   }
 
+  @Test
+  public void testKidJkuClaims() throws Exception {
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.ttl", "60000");
+    configureCommonExpectations(contextExpectations);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    // Issue a token
+    Response retResponse = tr.doGet();
+
+    assertEquals(200, retResponse.getStatus());
+
+    // Parse the response
+    final String retString = retResponse.getEntity().toString();
+    final String accessToken = getTagValue(retString, "access_token");
+    assertNotNull(accessToken);
+
+    // Verify the token
+    final JWT parsedToken = new JWTToken(accessToken);
+    assertEquals("alice", parsedToken.getSubject());
+    assertTrue(authority.verifyToken(parsedToken));
+
+    assertNotNull(parsedToken.getClaim("kid"));
+    assertEquals(TOKEN_API_PATH+JKWS_PATH, parsedToken.getClaim("jku"));
+  }
 
   /**
    *
@@ -1170,7 +1204,7 @@ public class TokenServiceResourceTest {
 
     @Override
     public JWT issueToken(JWTokenAttributes jwtAttributes) {
-      String[] claimArray = new String[4];
+      String[] claimArray = new String[6];
       claimArray[0] = "KNOXSSO";
       claimArray[1] = jwtAttributes.getPrincipal().getName();
       claimArray[2] = null;
@@ -1179,6 +1213,8 @@ public class TokenServiceResourceTest {
       } else {
         claimArray[3] = String.valueOf(jwtAttributes.getExpires());
       }
+      claimArray[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
+      claimArray[5] = jwtAttributes.getJku();
 
       JWT token = new JWTToken(jwtAttributes.getAlgorithm(), claimArray, jwtAttributes.getAudiences());
       JWSSigner signer = new RSASSASigner(privateKey);

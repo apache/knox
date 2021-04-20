@@ -768,7 +768,7 @@ public class WebSSOResourceTest {
     @Override
     public JWT issueToken(JWTokenAttributes jwtAttributes)
         throws TokenServiceException {
-      String[] claimArray = new String[4];
+      String[] claimArray = new String[6];
       claimArray[0] = "KNOXSSO";
       claimArray[1] = jwtAttributes.getPrincipal().getName();
       claimArray[2] = null;
@@ -777,6 +777,8 @@ public class WebSSOResourceTest {
       } else {
         claimArray[3] = String.valueOf(jwtAttributes.getExpires());
       }
+      claimArray[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
+      claimArray[5] = null;
 
       JWT token = new JWTToken(jwtAttributes.getAlgorithm(), claimArray, jwtAttributes.getAudiences());
       try {

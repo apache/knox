@@ -22,6 +22,7 @@ import java.security.Principal;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Optional;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -337,6 +338,7 @@ public class DefaultTokenAuthorityServiceTest {
     ta.setAliasService(as);
     ta.setKeystoreService(ks);
     ta.init(config, new HashMap<>());
+    ta.start();
 
     final JWTokenAttributes jwtAttributes = new JWTokenAttributesBuilder().setPrincipal(principal).setAudiences(Collections.emptyList()).setAlgorithm("RS256").setExpires(-1)
         .setSigningKeystoreName(customSigningKeyName).setSigningKeystoreAlias(customSigningKeyAlias).setSigningKeystorePassphrase(customSigningKeyPassphrase.toCharArray()).build();
@@ -583,5 +585,62 @@ public class DefaultTokenAuthorityServiceTest {
     ta.start();
 
     EasyMock.verify(config, ms, as);
+  }
+
+  /**
+   * Test getSigningCertKid() function
+   * @throws Exception
+   */
+  @Test
+  public void testGetSigningCertKid() throws Exception {
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("john.doe@example.com");
+
+    GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    String basedir = System.getProperty("basedir");
+    if (basedir == null) {
+      basedir = new File(".").getCanonicalPath();
+    }
+
+    EasyMock.expect(config.getGatewaySecurityDir()).andReturn(basedir + "/target/test-classes").anyTimes();
+    EasyMock.expect(config.getGatewayKeystoreDir()).andReturn(basedir + "/target/test-classes/keystores").anyTimes();
+    EasyMock.expect(config.getSigningKeystoreName()).andReturn("server-keystore.jks").anyTimes();
+    EasyMock.expect(config.getSigningKeystorePath()).andReturn(basedir + "/target/test-classes/keystores/server-keystore.jks").anyTimes();
+    EasyMock.expect(config.getSigningKeystorePasswordAlias()).andReturn(GatewayConfig.DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS).anyTimes();
+    EasyMock.expect(config.getSigningKeyPassphraseAlias()).andReturn(GatewayConfig.DEFAULT_SIGNING_KEY_PASSPHRASE_ALIAS).anyTimes();
+    EasyMock.expect(config.getSigningKeystoreType()).andReturn("jks").anyTimes();
+    EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
+    EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
+    EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
+
+    MasterService ms = EasyMock.createNiceMock(MasterService.class);
+    EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray());
+
+    AliasService as = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(as.getSigningKeyPassphrase()).andReturn("horton".toCharArray()).anyTimes();
+
+    EasyMock.replay(principal, config, ms, as);
+
+    DefaultKeystoreService ks = new DefaultKeystoreService();
+    ks.setMasterService(ms);
+
+    ks.init(config, new HashMap<>());
+
+    DefaultTokenAuthorityService ta = new DefaultTokenAuthorityService();
+
+    /* negative test */
+    /* expectation that that the exception is eaten up in case where there was an exception getting kid */
+    Optional<String> opt = ta.getCachedSigningKeyID();
+    assertFalse(opt.isPresent());
+
+    /* now test for cases where we expect to get kid */
+    ta.setAliasService(as);
+    ta.setKeystoreService(ks);
+
+    ta.init(config, new HashMap<>());
+    ta.start();
+
+    opt = ta.getCachedSigningKeyID();
+    assertTrue("Missing expected KID value", opt.isPresent());
   }
 }

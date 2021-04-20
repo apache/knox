@@ -33,6 +33,7 @@ public class JWTokenAttributesBuilder {
   private String signingKeystoreAlias;
   private char[] signingKeystorePassphrase;
   private boolean managed;
+  private String jku;
 
   public JWTokenAttributesBuilder setPrincipal(Subject subject) {
     return setPrincipal((Principal) subject.getPrincipals().toArray()[0]);
@@ -82,9 +83,14 @@ public class JWTokenAttributesBuilder {
     return this;
   }
 
+  public JWTokenAttributesBuilder setJku(String jku) {
+    this.jku = jku;
+    return this;
+  }
+
   public JWTokenAttributes build() {
     return new JWTokenAttributes(principal, (audiences == null ? Collections.emptyList() : audiences), algorithm, expires, signingKeystoreName, signingKeystoreAlias,
-        signingKeystorePassphrase, managed);
+        signingKeystorePassphrase, managed, jku);
   }
 
 }
