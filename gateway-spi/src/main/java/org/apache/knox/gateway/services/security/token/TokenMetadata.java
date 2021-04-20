@@ -30,6 +30,7 @@ public class TokenMetadata {
   public static final String USER_NAME = "userName";
   public static final String COMMENT = "comment";
   public static final String ENABLED = "enabled";
+  public static final String PASSCODE = "passcode";
 
   private final Map<String, String> metadataMap = new HashMap<>();
 
@@ -76,6 +77,14 @@ public class TokenMetadata {
 
   public boolean isEnabled() {
     return Boolean.parseBoolean(metadataMap.get(ENABLED));
+  }
+
+  public void setPasscode(String passcode) {
+    saveMetadata(PASSCODE, passcode);
+  }
+
+  public String getPasscode() {
+    return metadataMap.get(PASSCODE);
   }
 
   public String toJSON() {

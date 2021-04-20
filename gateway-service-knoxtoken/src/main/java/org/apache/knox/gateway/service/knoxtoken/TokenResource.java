@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.service.knoxtoken;
 
+import java.nio.charset.StandardCharsets;
 import java.security.KeyStoreException;
 import java.security.Principal;
 import java.security.cert.Certificate;
@@ -30,6 +31,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
@@ -49,6 +51,7 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
@@ -63,6 +66,7 @@ import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
 import org.apache.knox.gateway.util.JsonUtils;
 import org.apache.knox.gateway.util.Tokens;
 
@@ -78,6 +82,7 @@ public class TokenResource {
   private static final String TOKEN_TYPE = "token_type";
   private static final String ACCESS_TOKEN = "access_token";
   private static final String TOKEN_ID = "token_id";
+  private static final String PASSCODE = "passcode";
   private static final String MANAGED_TOKEN = "managed";
   private static final String TARGET_URL = "target_url";
   private static final String ENDPOINT_PUBLIC_CERT = "endpoint_public_cert";
@@ -118,6 +123,7 @@ public class TokenResource {
 
   // Optional token store service
   private TokenStateService tokenStateService;
+  private TokenMAC tokenMAC;
   private final Map<String, String> tokenStateServiceStatusMap = new HashMap<>();
 
   private Optional<Long> renewInterval = Optional.empty();
@@ -133,7 +139,7 @@ public class TokenResource {
   ServletContext context;
 
   @PostConstruct
-  public void init() throws AliasServiceException {
+  public void init() throws AliasServiceException, ServiceLifecycleException {
 
     String audiences = context.getInitParameter(TOKEN_AUDIENCES_PARAM);
     if (audiences != null) {
@@ -190,6 +196,9 @@ public class TokenResource {
 
       GatewayServices services = (GatewayServices) context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
       tokenStateService = services.getService(ServiceType.TOKEN_STATE_SERVICE);
+      final GatewayConfig gatewayConfig = (GatewayConfig) context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+      final AliasService aliasService = services.getService(ServiceType.ALIAS_SERVICE);
+      tokenMAC = new TokenMAC(gatewayConfig.getKnoxTokenHashAlgorithm(), aliasService.getPasswordFromAliasForGateway(TokenMAC.KNOX_TOKEN_HASH_KEY_ALIAS_NAME));
 
       String renewIntervalValue = context.getInitParameter(TOKEN_EXP_RENEWAL_INTERVAL);
       if (renewIntervalValue != null && !renewIntervalValue.isEmpty()) {
@@ -528,7 +537,7 @@ public class TokenResource {
         String tokenId = TokenUtils.getTokenId(token);
         log.issuedToken(getTopologyName(), Tokens.getTokenDisplayText(accessToken), Tokens.getTokenIDDisplayText(tokenId));
 
-        HashMap<String, Object> map = new HashMap<>();
+        final HashMap<String, Object> map = new HashMap<>();
         map.put(ACCESS_TOKEN, accessToken);
         map.put(TOKEN_ID, tokenId);
         map.put(MANAGED_TOKEN, String.valueOf(managedToken));
@@ -543,17 +552,22 @@ public class TokenResource {
         if (endpointPublicCert != null) {
           map.put(ENDPOINT_PUBLIC_CERT, endpointPublicCert);
         }
+        final String passcode = UUID.randomUUID().toString();
+        map.put(PASSCODE, generatePasscodeField(tokenId, passcode));
 
         String jsonResponse = JsonUtils.renderAsJsonString(map);
 
         // Optional token store service persistence
         if (tokenStateService != null) {
+          final long issueTime = System.currentTimeMillis();
           tokenStateService.addToken(tokenId,
-                                     System.currentTimeMillis(),
+                                     issueTime,
                                      expires,
                                      maxTokenLifetime.orElse(tokenStateService.getDefaultMaxLifetimeDuration()));
           final String comment = request.getParameter(COMMENT);
-          tokenStateService.addMetadata(tokenId, new TokenMetadata(p.getName(), StringUtils.isBlank(comment) ? null : comment));
+          final TokenMetadata tokenMetadata = new TokenMetadata(p.getName(), StringUtils.isBlank(comment) ? null : comment);
+          tokenMetadata.setPasscode(tokenMAC.hash(tokenId, issueTime, p.getName(), passcode));
+          tokenStateService.addMetadata(tokenId, tokenMetadata);
           log.storedToken(getTopologyName(), Tokens.getTokenDisplayText(accessToken), Tokens.getTokenIDDisplayText(tokenId));
         }
 
@@ -565,6 +579,11 @@ public class TokenResource {
       log.unableToIssueToken(e);
     }
     return Response.ok().entity("{ \"Unable to acquire token.\" }").build();
+  }
+
+  private String generatePasscodeField(String tokenId, String passcode) {
+    final String base64TokenIdPasscode = Base64.encodeBase64String(tokenId.getBytes(StandardCharsets.UTF_8)) + "::" + Base64.encodeBase64String(passcode.getBytes(StandardCharsets.UTF_8));
+    return Base64.encodeBase64String(base64TokenIdPasscode.getBytes(StandardCharsets.UTF_8));
   }
 
   void addClientDataToMap(String[] tokenClientData,

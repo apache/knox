@@ -524,6 +524,7 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
 
     Map<String, Long> tokenExpirations = getTokenExpirationsField(tss);
     Map<String, Long> maxTokenLifetimes = getMaxTokenLifetimesField(tss);
+    Map<String, Long> tokenIssueTimes = getTokenIssueTimesField(tss, true);
 
     Set<AliasBasedTokenStateService.TokenState> unpersistedState = getUnpersistedStateField(tss);
 
@@ -535,8 +536,12 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
                  TOKEN_COUNT,
                  maxTokenLifetimes.size());
 
+    assertEquals("Expected the tokens issue times to have been added in the base class cache.",
+                 TOKEN_COUNT,
+                 tokenIssueTimes.size());
+
     assertEquals("Expected the unpersisted state to have been added.",
-                 (TOKEN_COUNT * 2), // Two TokenState entries per token (expiration, max lifetime)
+                 (TOKEN_COUNT * 3), // Two TokenState entries per token (expiration, max lifetime, issue time)
                  unpersistedState.size());
 
     // Verify that the expected methods were invoked
@@ -605,6 +610,7 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
 
     Map<String, Long> tokenExpirations = getTokenExpirationsField(tss);
     Map<String, Long> maxTokenLifetimes = getMaxTokenLifetimesField(tss);
+    Map<String, Long> tokenIssueTimes = getTokenIssueTimesField(tss, true);
 
     Set<AliasBasedTokenStateService.TokenState> unpersistedState = getUnpersistedStateField(tss);
 
@@ -616,8 +622,12 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
                  TOKEN_COUNT,
                  maxTokenLifetimes.size());
 
+    assertEquals("Expected the tokens issue times to have been added in the base class cache.",
+                 TOKEN_COUNT,
+                 tokenIssueTimes.size());
+
     assertEquals("Expected the unpersisted state to have been added.",
-                 (TOKEN_COUNT * 2), // Two TokenState entries per token (expiration, max lifetime)
+                 (TOKEN_COUNT * 3), // Two TokenState entries per token (expiration, max lifetime, issue time)
                  unpersistedState.size());
 
     // Verify that the expected methods were invoked
@@ -641,7 +651,7 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     }
 
     final List<AliasBasedTokenStateService.TokenState> unpersistedTokenStates = new ArrayList<>(getUnpersistedStateField(tss, false));
-    final int expectedAliasCount = 2 * tokenCount; //expiration + max for each token
+    final int expectedAliasCount = 3 * tokenCount; //expiration + max + issue time for each token
     assertEquals(expectedAliasCount, unpersistedTokenStates.size());
     for (JWTToken token : testTokens) {
       String tokenId = token.getClaim(JWTToken.KNOX_ID_CLAIM);
@@ -833,6 +843,13 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     Field maxTokenLifetimesField = clazz.getDeclaredField("maxTokenLifetimes");
     maxTokenLifetimesField.setAccessible(true);
     return (Map<String, Long>) maxTokenLifetimesField.get(tss);
+  }
+
+  private static Map<String, Long> getTokenIssueTimesField(TokenStateService tss, boolean fromGrandParent) throws Exception {
+    final Class<TokenStateService> clazz = (Class<TokenStateService>) (fromGrandParent ? tss.getClass().getSuperclass().getSuperclass() : tss.getClass().getSuperclass());
+    Field tokenIssueTimesField = clazz.getDeclaredField("tokenIssueTimes");
+    tokenIssueTimesField.setAccessible(true);
+    return (Map<String, Long>) tokenIssueTimesField.get(tss);
   }
 
   private static Set<AliasBasedTokenStateService.TokenState> getUnpersistedStateField(TokenStateService tss) throws Exception {

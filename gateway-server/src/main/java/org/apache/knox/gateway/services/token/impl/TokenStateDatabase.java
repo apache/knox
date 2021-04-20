@@ -32,6 +32,7 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 
@@ -43,6 +44,7 @@ public class TokenStateDatabase {
   private static final String ADD_TOKEN_SQL = "INSERT INTO " + TOKENS_TABLE_NAME + "(token_id, issue_time, expiration, max_lifetime) VALUES(?, ?, ?, ?)";
   private static final String REMOVE_TOKEN_SQL = "DELETE FROM " + TOKENS_TABLE_NAME + " WHERE token_id = ?";
   private static final String REMOVE_EXPIRED_TOKENS_SQL = "DELETE FROM " + TOKENS_TABLE_NAME + " WHERE expiration < ?";
+  static final String GET_TOKEN_ISSUE_TIME_SQL = "SELECT issue_time FROM " + TOKENS_TABLE_NAME + " WHERE token_id = ?";
   static final String GET_TOKEN_EXPIRATION_SQL = "SELECT expiration FROM " + TOKENS_TABLE_NAME + " WHERE token_id = ?";
   private static final String UPDATE_TOKEN_EXPIRATION_SQL = "UPDATE " + TOKENS_TABLE_NAME + " SET expiration = ? WHERE token_id = ?";
   static final String GET_MAX_LIFETIME_SQL = "SELECT max_lifetime FROM " + TOKENS_TABLE_NAME + " WHERE token_id = ?";
@@ -101,6 +103,15 @@ public class TokenStateDatabase {
     }
   }
 
+  long getTokenIssueTime(String tokenId) throws SQLException {
+    try (Connection connection = dataSource.getConnection(); PreparedStatement getTokenExpirationStatement = connection.prepareStatement(GET_TOKEN_ISSUE_TIME_SQL)) {
+      getTokenExpirationStatement.setString(1, tokenId);
+      try (ResultSet rs = getTokenExpirationStatement.executeQuery()) {
+        return rs.next() ? rs.getLong(1) : -1;
+      }
+    }
+  }
+
   long getTokenExpiration(String tokenId) throws SQLException {
     try (Connection connection = dataSource.getConnection(); PreparedStatement getTokenExpirationStatement = connection.prepareStatement(GET_TOKEN_EXPIRATION_SQL)) {
       getTokenExpirationStatement.setString(1, tokenId);
@@ -136,7 +147,7 @@ public class TokenStateDatabase {
 
   boolean updateMetadata(String tokenId, String metadataName, String metadataValue) throws SQLException {
     try (Connection connection = dataSource.getConnection(); PreparedStatement updateMetadataStatement = connection.prepareStatement(UPDATE_METADATA_SQL)) {
-      updateMetadataStatement.setString(1, metadataValue);
+      updateMetadataStatement.setString(1, metadataName.equals(TokenMetadata.PASSCODE) ? Base64.encodeBase64String(metadataValue.getBytes(UTF_8)) : metadataValue);
       updateMetadataStatement.setString(2, tokenId);
       updateMetadataStatement.setString(3, metadataName);
       return updateMetadataStatement.executeUpdate() == 1;
@@ -147,7 +158,7 @@ public class TokenStateDatabase {
     try (Connection connection = dataSource.getConnection(); PreparedStatement addMetadataStatement = connection.prepareStatement(ADD_METADATA_SQL)) {
       addMetadataStatement.setString(1, tokenId);
       addMetadataStatement.setString(2, metadataName);
-      addMetadataStatement.setString(3, metadataValue);
+      addMetadataStatement.setString(3, metadataName.equals(TokenMetadata.PASSCODE) ? Base64.encodeBase64String(metadataValue.getBytes(UTF_8)) : metadataValue);
       return addMetadataStatement.executeUpdate() == 1;
     }
   }
@@ -158,7 +169,8 @@ public class TokenStateDatabase {
       try (ResultSet rs = getMaxLifetimeStatement.executeQuery()) {
         final Map<String, String> metadataMap = new HashMap<>();
         while (rs.next()) {
-          metadataMap.put(rs.getString(1), rs.getString(2));
+          String metadataName = rs.getString(1);
+          metadataMap.put(metadataName, metadataName.equals(TokenMetadata.PASSCODE) ? new String(Base64.decodeBase64(rs.getString(2).getBytes(UTF_8)), UTF_8) : rs.getString(2));
         }
         return metadataMap.isEmpty() ? null : new TokenMetadata(metadataMap);
       }

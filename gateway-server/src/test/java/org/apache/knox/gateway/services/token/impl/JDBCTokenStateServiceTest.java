@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.services.token.impl;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -30,11 +31,14 @@ import java.sql.SQLException;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.derby.drda.NetworkServerControl;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
+import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
 import org.apache.knox.gateway.shell.jdbc.Database;
 import org.apache.knox.gateway.shell.jdbc.derby.DerbyDatabase;
 import org.apache.knox.gateway.util.JDBCUtils;
@@ -59,6 +63,7 @@ public class JDBCTokenStateServiceTest {
   private static NetworkServerControl derbyNetworkServerControl;
   private static Database derbyDatabase;
   private static JDBCTokenStateService jdbcTokenStateService;
+  private static TokenMAC tokenMAC;
 
   @SuppressWarnings("PMD.JUnit4TestShouldUseBeforeAnnotation")
   @BeforeClass
@@ -85,7 +90,10 @@ public class JDBCTokenStateServiceTest {
     jdbcTokenStateService = new JDBCTokenStateService();
     jdbcTokenStateService.setAliasService(aliasService);
     jdbcTokenStateService.init(gatewayConfig, null);
+
     assertTrue(derbyDatabase.hasTable(TokenStateDatabase.TOKENS_TABLE_NAME));
+
+    tokenMAC = new TokenMAC(HmacAlgorithms.HMAC_SHA_256.getName(), "sPj8FCgQhCEi6G18kBfpswxYSki33plbelGLs0hMSbk".toCharArray());
   }
 
   private static Database prepareDerbyDatabase(Path derbyDatabaseFolder) throws SQLException {
@@ -143,17 +151,24 @@ public class JDBCTokenStateServiceTest {
   @Test(expected = UnknownTokenException.class)
   public void testAddMetadata() throws Exception {
     final String tokenId = UUID.randomUUID().toString();
+    final String passcode = UUID.randomUUID().toString();
+    final String passcodeMac = tokenMAC.hash(tokenId, 1, "sampleUser", passcode);
     final TokenMetadata tokenMetadata = new TokenMetadata("sampleUser", "my test comment", false);
+    tokenMetadata.setPasscode(passcodeMac);
     jdbcTokenStateService.addToken(tokenId, 1, 1, 1);
     jdbcTokenStateService.addMetadata(tokenId, tokenMetadata);
 
     assertEquals("sampleUser", jdbcTokenStateService.getTokenMetadata(tokenId).getUserName());
     assertEquals("my test comment", jdbcTokenStateService.getTokenMetadata(tokenId).getComment());
     assertFalse(jdbcTokenStateService.getTokenMetadata(tokenId).isEnabled());
+    final String storedPasscode = jdbcTokenStateService.getTokenMetadata(tokenId).getPasscode();
+    assertEquals(passcodeMac, storedPasscode);
 
     assertEquals("sampleUser", getStringTokenAttributeFromDatabase(tokenId, getSelectMetadataSql(TokenMetadata.USER_NAME)));
     assertEquals("my test comment", getStringTokenAttributeFromDatabase(tokenId, getSelectMetadataSql(TokenMetadata.COMMENT)));
     assertEquals("false", getStringTokenAttributeFromDatabase(tokenId, getSelectMetadataSql(TokenMetadata.ENABLED)));
+    final String storedPasscodeInDb = new String(Base64.decodeBase64(getStringTokenAttributeFromDatabase(tokenId, getSelectMetadataSql(TokenMetadata.PASSCODE))), UTF_8);
+    assertEquals(passcodeMac, storedPasscodeInDb);
 
     //enable the token (it was disabled)
     tokenMetadata.setEnabled(true);

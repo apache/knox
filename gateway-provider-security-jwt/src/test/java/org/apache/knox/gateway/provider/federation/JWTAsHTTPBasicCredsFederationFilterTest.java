@@ -41,7 +41,7 @@ import static org.junit.Assert.fail;
 public class JWTAsHTTPBasicCredsFederationFilterTest extends AbstractJWTFilterTest {
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception{
       handler = new TestJWTFederationFilter();
       ((TestJWTFederationFilter) handler).setTokenService(new TestJWTokenAuthority(publicKey));
     }

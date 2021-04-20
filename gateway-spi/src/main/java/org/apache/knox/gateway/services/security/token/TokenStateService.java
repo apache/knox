@@ -66,6 +66,15 @@ public interface TokenStateService extends Service {
   void addToken(String tokenId, long issueTime, long expiration, long maxLifetimeDuration);
 
   /**
+   * @param tokenId
+   *          The token unique identifier.
+   * @return The time the token was issued.
+   * @throws UnknownTokenException
+   *           if token is not found.
+   */
+  long getTokenIssueTime(String tokenId) throws UnknownTokenException;
+
+  /**
    * Checks if the token is expired.
    *
    * @param token The token.

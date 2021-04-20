@@ -199,6 +199,12 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.ERROR, text = "An error occurred while removing expired tokens from the database : {1}")
   void errorRemovingTokensFromDatabase(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.DEBUG, text = "Fetched issue time for {0} from the database : {1}")
+  void fetchedIssueTimeFromDatabase(String tokenId, long issueTime);
+
+  @Message(level = MessageLevel.ERROR, text = "An error occurred while fetching issue time for {0} from the database : {1}")
+  void errorFetchingIssueTimeFromDatabase(String tokenId, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
   @Message(level = MessageLevel.DEBUG, text = "Fetched expiration for {0} from the database : {1}")
   void fetchedExpirationFromDatabase(String tokenId, long expiration);
 
