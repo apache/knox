@@ -17,20 +17,15 @@
  */
 package org.apache.knox.gateway.services.token.impl;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.apache.commons.io.FileUtils.readFileToString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -86,20 +81,16 @@ public class JDBCTokenStateServiceTest {
     EasyMock.replay(gatewayConfig, aliasService);
 
     derbyDatabase = prepareDerbyDatabase(derbyDatabaseFolder);
-    assertTrue(derbyDatabase.hasTable(TokenStateDatabase.TOKENS_TABLE_NAME));
 
     jdbcTokenStateService = new JDBCTokenStateService();
     jdbcTokenStateService.setAliasService(aliasService);
     jdbcTokenStateService.init(gatewayConfig, null);
+    assertTrue(derbyDatabase.hasTable(TokenStateDatabase.TOKENS_TABLE_NAME));
   }
 
-  private static Database prepareDerbyDatabase(Path derbyDatabaseFolder) throws SQLException, IOException {
+  private static Database prepareDerbyDatabase(Path derbyDatabaseFolder) throws SQLException {
     final Database derbyDatabase = new DerbyDatabase(derbyDatabaseFolder.toString(), true);
     derbyDatabase.create();
-    final String createTableSql = readFileToString(new File(JDBCTokenStateServiceTest.class.getClassLoader().getResource("createKnoxTokenDatabaseTable.sql").getFile()), UTF_8);
-    try (Connection connection = derbyDatabase.getConnection(); Statement createTableStatment = connection.createStatement();) {
-      createTableStatment.execute(createTableSql);
-    }
     return derbyDatabase;
   }
 
