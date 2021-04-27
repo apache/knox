@@ -17,16 +17,23 @@
  */
 package org.apache.knox.gateway.services.token.impl;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import java.io.InputStream;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Locale;
 
 import javax.sql.DataSource;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 
 public class TokenStateDatabase {
+  private static final String TOKENS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenDatabaseTable.sql";
   static final String TOKENS_TABLE_NAME = "KNOX_TOKENS";
   private static final String ADD_TOKEN_SQL = "INSERT INTO " + TOKENS_TABLE_NAME + "(token_id, issue_time, expiration, max_lifetime) VALUES(?, ?, ?, ?)";
   private static final String REMOVE_TOKEN_SQL = "DELETE FROM " + TOKENS_TABLE_NAME + " WHERE token_id = ?";
@@ -41,6 +48,33 @@ public class TokenStateDatabase {
 
   TokenStateDatabase(DataSource dataSource) throws Exception {
     this.dataSource = dataSource;
+    createKnoxTokensTableIfNotExists();
+  }
+
+  private void createKnoxTokensTableIfNotExists() throws Exception {
+    if (!isKnoxTokensTableExist()) {
+      createKnoxTokensTable();
+    }
+  }
+
+  private boolean isKnoxTokensTableExist() throws SQLException {
+    boolean exists = false;
+    try (Connection connection = dataSource.getConnection()) {
+      final DatabaseMetaData dbMetadata = connection.getMetaData();
+      final String tableNameToCheck = dbMetadata.storesUpperCaseIdentifiers() ? TOKENS_TABLE_NAME : TOKENS_TABLE_NAME.toLowerCase(Locale.ROOT);
+      try (ResultSet tables = dbMetadata.getTables(connection.getCatalog(), null, tableNameToCheck, null)) {
+        exists = tables.next();
+      }
+    }
+    return exists;
+  }
+
+  private void createKnoxTokensTable() throws Exception {
+    final InputStream is = TokenStateDatabase.class.getClassLoader().getResourceAsStream(TOKENS_TABLE_CREATE_SQL_FILE_NAME);
+    final String createTableSql = IOUtils.toString(is, UTF_8);
+    try (Connection connection = dataSource.getConnection(); Statement createTableStatment = connection.createStatement();) {
+      createTableStatment.execute(createTableSql);
+    }
   }
 
   boolean addToken(String tokenId, long issueTime, long expiration, long maxLifetimeDuration) throws SQLException {
