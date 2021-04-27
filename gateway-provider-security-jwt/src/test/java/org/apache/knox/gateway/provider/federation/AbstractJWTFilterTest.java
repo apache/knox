@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.provider.federation;
 
-import com.github.benmanes.caffeine.cache.Cache;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
@@ -29,6 +28,7 @@ import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter;
+import org.apache.knox.gateway.provider.federation.jwt.filter.SignatureVerificationCache;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
@@ -43,8 +43,6 @@ import org.junit.Test;
 
 import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.ServletRequest;
@@ -66,7 +64,6 @@ import java.security.interfaces.RSAPublicKey;
 import java.text.MessageFormat;
 import java.time.Instant;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.Set;
@@ -113,6 +110,12 @@ public abstract class AbstractJWTFilterTest  {
 
   @After
   public void tearDown() {
+    try {
+      clearSignatureVerificationCache();
+    } catch (Exception e) {
+      //
+    }
+
     handler.destroy();
   }
 
@@ -725,30 +728,63 @@ public abstract class AbstractJWTFilterTest  {
     }
   }
 
+  /**
+   * KNOX-2544
+   * Verify the behavior of the token signature verification optimization, with the internal Knox token identifier
+   * included in the JWTs.
+   */
   @Test
   public void testVerificationOptimization() throws Exception {
+    doTestVerificationOptimization(true);
+  }
+
+  /**
+   * KNOX-2544
+   * Verify the behavior of the token signature verification optimization, with the internal Knox token identifier
+   * omitted from the JWTs (e.g., third-party JWTs).
+   */
+  @Test
+  public void testVerificationOptimization_NoTokenID() throws Exception {
+    doTestVerificationOptimization(false);
+  }
+
+  /**
+   * KNOX-2544
+   * Verify the behavior of the token signature verification optimization, with or without the internal Knox token
+   * identifier.
+   *
+   * @param includeTokenId Flag indicating whether the test JWTs should include the internal Knox token identifier.
+   */
+  public void doTestVerificationOptimization(boolean includeTokenId) throws Exception {
     try {
 
       final String principalAlice = "alice";
       final String principalBob   = "bob";
 
+      final String tokenId = (includeTokenId ? String.valueOf(UUID.randomUUID()) : null);
+
       final SignedJWT jwt_alice = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER,
                                          principalAlice,
+                                         "myAudience",
                                          new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)),
                                          new Date(),
                                          privateKey,
-                                         JWSAlgorithm.RS512.getName());
+                                         JWSAlgorithm.RS512.getName(),
+                                         tokenId);
 
       final SignedJWT jwt_bob = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER,
                                        principalBob,
+                                       "myAudience",
                                        new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)),
                                        new Date(),
                                        privateKey,
-                                       JWSAlgorithm.RS512.getName());
+                                       JWSAlgorithm.RS512.getName(),
+                                       tokenId);
 
       Properties props = getProperties();
       props.put(AbstractJWTFilter.JWT_EXPECTED_SIGALG, "RS512");
-      props.put(AbstractJWTFilter.JWT_VERIFIED_CACHE_MAX, "1");
+      props.put(SignatureVerificationCache.JWT_VERIFIED_CACHE_MAX, "1");
+      props.put(TestFilterConfig.TOPOLOGY_NAME_PROP, "jwt-verification-optimization-test");
       handler.init(new TestFilterConfig(props));
       Assert.assertEquals("Expected no token verification calls yet.",
                           0, ((TokenVerificationCounter) handler).getVerificationCount());
@@ -800,7 +836,8 @@ public abstract class AbstractJWTFilterTest  {
 
       Properties props = getProperties();
       props.put(AbstractJWTFilter.JWT_EXPECTED_SIGALG, "RS512");
-      props.put(AbstractJWTFilter.JWT_VERIFIED_CACHE_MAX, "1");
+      props.put(SignatureVerificationCache.JWT_VERIFIED_CACHE_MAX, "1");
+      props.put(TestFilterConfig.TOPOLOGY_NAME_PROP, "jwt-eviction-test");
       handler.init(new TestFilterConfig(props));
       Assert.assertEquals("Expected no token verification calls yet.",
                           0, ((TokenVerificationCounter) handler).getVerificationCount());
@@ -878,7 +915,6 @@ public abstract class AbstractJWTFilterTest  {
   private void doTestVerificationOptimization(final HttpServletRequest request,
                                               final HttpServletResponse response,
                                               final String expectedPrincipal) throws Exception {
-
     TestFilterChain chain = new TestFilterChain();
     handler.doFilter(request, response, chain);
     Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled );
@@ -891,17 +927,24 @@ public abstract class AbstractJWTFilterTest  {
    * Wait for the size limit enforcement, such that the Least-Recently-Used verified token record(s) will be evicted.
    */
   private void evictVerifiedTokenRecords() throws Exception {
-    Field f = handler.getClass().getSuperclass().getSuperclass().getDeclaredField("verifiedTokens");
-    f.setAccessible(true);
-    Cache<String, Boolean> cache = (Cache<String, Boolean>) f.get(handler);
-    cache.cleanUp();
+    SignatureVerificationCache cache = getSignatureVerificationCache(handler);
+    cache.performMaintenance();
   }
 
   private long getSignatureVerificationCacheSize() throws Exception {
-    Field f = handler.getClass().getSuperclass().getSuperclass().getDeclaredField("verifiedTokens");
+    SignatureVerificationCache cache = getSignatureVerificationCache(handler);
+    return cache.getSize();
+  }
+
+  private void clearSignatureVerificationCache() throws Exception {
+    SignatureVerificationCache cache = getSignatureVerificationCache(handler);
+    cache.clear();
+  }
+
+  private static SignatureVerificationCache getSignatureVerificationCache(final AbstractJWTFilter filter) throws Exception {
+    Field f = filter.getClass().getSuperclass().getSuperclass().getDeclaredField("signatureVerificationCache");
     f.setAccessible(true);
-    Cache<String, Boolean> cache = (Cache<String, Boolean>) f.get(handler);
-    return cache.estimatedSize();
+    return (SignatureVerificationCache) f.get(filter);
   }
 
   protected Properties getProperties() {
@@ -957,40 +1000,6 @@ public abstract class AbstractJWTFilterTest  {
     signedJWT.sign(signer);
 
     return signedJWT;
-  }
-
-  protected static class TestFilterConfig implements FilterConfig {
-    Properties props;
-
-    public TestFilterConfig(Properties props) {
-      this.props = props;
-    }
-
-    @Override
-    public String getFilterName() {
-      return null;
-    }
-
-    @Override
-    public ServletContext getServletContext() {
-//      JWTokenAuthority authority = EasyMock.createNiceMock(JWTokenAuthority.class);
-//      GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
-//      EasyMock.expect(services.getService("TokenService").andReturn(authority));
-//      ServletContext context = EasyMock.createNiceMock(ServletContext.class);
-//      EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE).andReturn(new DefaultGatewayServices()));
-      return null;
-    }
-
-    @Override
-    public String getInitParameter(String name) {
-      return props.getProperty(name, null);
-    }
-
-    @Override
-    public Enumeration<String> getInitParameterNames() {
-      return null;
-    }
-
   }
 
   protected static class TestJWTokenAuthority implements JWTokenAuthority {

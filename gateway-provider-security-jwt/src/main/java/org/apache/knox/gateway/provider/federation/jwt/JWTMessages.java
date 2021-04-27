@@ -73,4 +73,7 @@ public interface JWTMessages {
             text = "Missing token passcode." )
   void missingTokenPasscode();
 
+  @Message( level = MessageLevel.INFO, text = "Initialized token signature verification cache for the {0} topology." )
+  void initializedSignatureVerificationCache(String topology);
+
 }

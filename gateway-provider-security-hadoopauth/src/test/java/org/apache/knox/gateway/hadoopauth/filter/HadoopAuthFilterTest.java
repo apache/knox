@@ -33,6 +33,7 @@ import org.apache.knox.gateway.GatewayFilter;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
+import org.apache.knox.gateway.provider.federation.jwt.filter.SignatureVerificationCache;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.topology.Topology;
@@ -171,10 +172,11 @@ public class HadoopAuthFilterTest {
       expect(filterConfig.getInitParameter(JWTFederationFilter.TOKEN_VERIFICATION_PEM)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(AbstractJWTFilter.JWT_EXPECTED_ISSUER)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(AbstractJWTFilter.JWT_EXPECTED_SIGALG)).andReturn(null).anyTimes();
-      expect(filterConfig.getInitParameter(AbstractJWTFilter.JWT_VERIFIED_CACHE_MAX)).andReturn(null).anyTimes();
+      expect(filterConfig.getInitParameter(SignatureVerificationCache.JWT_VERIFIED_CACHE_MAX)).andReturn(null).anyTimes();
     }
 
     final ServletContext servletContext = createMock(ServletContext.class);
+    expect(servletContext.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).andReturn("test").anyTimes();
     expect(servletContext.getAttribute("signer.secret.provider.object")).andReturn(null).atLeastOnce();
     if (isJwtSupported) {
       expect(servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(null).anyTimes();
