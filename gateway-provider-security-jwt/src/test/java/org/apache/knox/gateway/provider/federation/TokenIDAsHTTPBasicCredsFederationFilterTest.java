@@ -120,6 +120,7 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
             setTokenOnRequest(request, jwt, JWTFederationFilter.PASSCODE.toLowerCase(Locale.ROOT));
 
             EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+            EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
             EasyMock.expect(request.getQueryString()).andReturn(null);
             HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
             EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -147,6 +148,7 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
             setTokenOnRequest(request, jwt, "InvalidBasicAuthUsername");
 
             EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+            EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
             EasyMock.expect(request.getQueryString()).andReturn(null);
             HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
             EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -178,6 +180,7 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
             setTokenOnRequest(request, jwt, JWTFederationFilter.TOKEN);
 
             EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+            EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
             EasyMock.expect(request.getQueryString()).andReturn(null);
             HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
             EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -209,6 +212,7 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
             setTokenOnRequest(request, JWTFederationFilter.PASSCODE, jwt.serialize());
 
             EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+            EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
             EasyMock.expect(request.getQueryString()).andReturn(null);
             HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
             EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);

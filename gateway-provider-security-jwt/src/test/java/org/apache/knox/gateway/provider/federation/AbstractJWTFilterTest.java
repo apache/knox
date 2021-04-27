@@ -150,6 +150,7 @@ public abstract class AbstractJWTFilterTest  {
     setTokenOnRequest(request, jwt);
 
     EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
     EasyMock.expect(request.getQueryString()).andReturn(null);
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -173,6 +174,7 @@ public abstract class AbstractJWTFilterTest  {
       setTokenOnRequest(request, jwt);
 
       EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -203,6 +205,7 @@ public abstract class AbstractJWTFilterTest  {
       setTokenOnRequest(request, jwt);
 
       EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -236,6 +239,7 @@ public abstract class AbstractJWTFilterTest  {
       setTokenOnRequest(request, jwt);
 
       EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -265,6 +269,7 @@ public abstract class AbstractJWTFilterTest  {
       setTokenOnRequest(request, jwt);
 
       EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -296,6 +301,7 @@ public abstract class AbstractJWTFilterTest  {
       setTokenOnRequest(request, jwt);
 
       EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -324,6 +330,7 @@ public abstract class AbstractJWTFilterTest  {
       setTokenOnRequest(request, jwt);
 
       EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -355,6 +362,7 @@ public abstract class AbstractJWTFilterTest  {
       setTokenOnRequest(request, jwt);
 
       EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -389,6 +397,7 @@ public abstract class AbstractJWTFilterTest  {
       setTokenOnRequest(request, jwt);
 
       EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -419,6 +428,7 @@ public abstract class AbstractJWTFilterTest  {
       setTokenOnRequest(request, jwt);
 
       EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -446,6 +456,7 @@ public abstract class AbstractJWTFilterTest  {
       setTokenOnRequest(request, jwt);
 
       EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL).anyTimes();
@@ -476,6 +487,7 @@ public abstract class AbstractJWTFilterTest  {
       setGarbledTokenOnRequest(request, jwt);
 
       EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL).anyTimes();
@@ -513,6 +525,7 @@ public abstract class AbstractJWTFilterTest  {
       setTokenOnRequest(request, jwt);
 
       EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL).anyTimes();
@@ -554,6 +567,7 @@ public abstract class AbstractJWTFilterTest  {
       setTokenOnRequest(request, jwt);
 
       EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -581,6 +595,7 @@ public abstract class AbstractJWTFilterTest  {
       setTokenOnRequest(request, jwt);
 
       EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -609,6 +624,7 @@ public abstract class AbstractJWTFilterTest  {
       setTokenOnRequest(request, jwt);
 
       EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -644,6 +660,7 @@ public abstract class AbstractJWTFilterTest  {
       setTokenOnRequest(request, jwt);
 
       EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -680,6 +697,7 @@ public abstract class AbstractJWTFilterTest  {
       setTokenOnRequest(request, jwt);
 
       EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -710,6 +728,7 @@ public abstract class AbstractJWTFilterTest  {
       setTokenOnRequest(request, jwt);
 
       EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -757,6 +776,7 @@ public abstract class AbstractJWTFilterTest  {
       setTokenOnRequest(request, jwt_alice);
 
       EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
       EasyMock.expect(request.getQueryString()).andReturn(null);
       HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
       EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -815,6 +835,7 @@ public abstract class AbstractJWTFilterTest  {
 
       HttpServletRequest request = createMockRequest(jwt_alice);
       HttpServletResponse response = createMockResponse();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
       EasyMock.replay(request, response);
 
       TestFilterChain chain = new TestFilterChain();
@@ -826,6 +847,7 @@ public abstract class AbstractJWTFilterTest  {
       // Do it again, after the token has expired
       request = createMockRequest(jwt_alice);
       response = createMockResponse();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
       EasyMock.replay(request, response);
 
       // Wait for the token to expire
@@ -869,6 +891,7 @@ public abstract class AbstractJWTFilterTest  {
                                                     final SignedJWT jwt,
                                                     final String expectedPrincipal) throws Exception {
     EasyMock.reset(request, response);
+    EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
     setTokenOnRequest(request, jwt);
     EasyMock.replay(request, response);
 

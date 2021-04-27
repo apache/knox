@@ -18,15 +18,18 @@ package org.apache.knox.gateway.provider.federation;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
+import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.easymock.EasyMock;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
@@ -39,6 +42,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.AccessController;
 import java.util.UUID;
 
 import static org.easymock.EasyMock.anyObject;
@@ -48,6 +52,8 @@ import static org.junit.Assert.assertTrue;
 public class CommonJWTFilterTest {
 
   private AbstractJWTFilter handler;
+  private static final String SERVICE_URL = "https://localhost:8888/gateway/sandbox";
+  private static final String JWKS_PATH = "/knoxtoken/api/v1/jwks.json";
 
   @Before
   public void setUp() {
@@ -139,6 +145,42 @@ public class CommonJWTFilterTest {
     EasyMock.replay(tss);
 
     doTestIsStillValid(tss);
+  }
+
+  @Test
+  public void testUnauthenticatedList() throws Exception {
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    FilterConfig filterConfig = EasyMock.createNiceMock(FilterConfig.class);
+
+    EasyMock.expect(request.getPathInfo()).andReturn(JWKS_PATH).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+    EasyMock.expect(response.getOutputStream()).andAnswer(
+        AbstractJWTFilterTest.DummyServletOutputStream::new).anyTimes();
+    EasyMock.replay(request, response, filterConfig);
+
+
+    JWTFederationFilter jwtFilter = new JWTFederationFilter();
+    DummyFilterChain chain = new DummyFilterChain();
+
+    jwtFilter.init(filterConfig);
+    jwtFilter.doFilter(request, response, chain);
+    Assert.assertTrue("doFilterCalled should be true.", chain.doFilterCalled );
+    /* make sure the principal is anonymous */
+    Assert.assertEquals("anonymous", chain.subject.getPrincipals().stream().findFirst().get().getName());
+  }
+
+  public static class DummyFilterChain implements FilterChain {
+    boolean doFilterCalled;
+    Subject subject;
+
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response)
+        throws IOException {
+      doFilterCalled = true;
+      subject = Subject.getSubject( AccessController.getContext() );
+    }
   }
 
   private boolean doTestIsStillValid(final Long expiration) throws Exception {

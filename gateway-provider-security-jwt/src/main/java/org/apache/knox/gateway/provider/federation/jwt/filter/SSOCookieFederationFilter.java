@@ -68,7 +68,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
 
   /* A semicolon separated list of paths that need to bypass authentication */
   private static final String SSO_UNAUTHENTICATED_PATHS_PARAM = "sso.unauthenticated.path.list";
-  private static final String DEFAULT_SSO_UNAUTHENTICATED_PATHS_PARAM = "favicon.ico";
+  private static final String DEFAULT_SSO_UNAUTHENTICATED_PATHS_PARAM = "favicon.ico;/knoxtoken/api/v1/jwks.json";
   private String cookieName;
   private String authenticationProviderUrl;
   private String gatewayPath;
@@ -146,11 +146,11 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
     if (ssoCookies.isEmpty()) {
       /* check for unauthenticated paths to bypass */
       for (final String path : unAuthenticatedPaths) {
-        if (req.getRequestURI().contains(path)) {
+        if (req.getPathInfo().equals(path)) {
           /* This path is configured as an unauthenticated path let the request through */
           final Subject sub = new Subject();
           sub.getPrincipals().add(new PrimaryPrincipal("anonymous"));
-          LOGGER.unauthenticatedPathBypass(path, req.getRequestURI());
+          LOGGER.unauthenticatedPathBypass(req.getRequestURI(), unAuthenticatedPaths.toString());
           continueWithEstablishedSecurityContext(sub, req, res, chain);
         }
       }

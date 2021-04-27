@@ -17,31 +17,33 @@
  */
 package org.apache.knox.gateway.hadoopauth.filter;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authorize.AuthorizationException;
 import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.hadoop.util.HttpExceptionUtils;
 import org.apache.knox.gateway.GatewayServer;
+import org.apache.knox.gateway.audit.api.Action;
+import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.AuditContext;
+import org.apache.knox.gateway.audit.api.AuditService;
+import org.apache.knox.gateway.audit.api.AuditServiceFactory;
+import org.apache.knox.gateway.audit.api.Auditor;
+import org.apache.knox.gateway.audit.api.ResourceType;
+import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.hadoopauth.HadoopAuthMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
+import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 
-import java.io.IOException;
-import java.security.Principal;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Properties;
-import java.util.Set;
-
+import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
@@ -50,6 +52,18 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.security.Principal;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Properties;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 /*
  * see http://hadoop.apache.org/docs/current/hadoop-auth/Configuration.html
@@ -79,8 +93,17 @@ public class HadoopAuthFilter extends
 
   private static final HadoopAuthMessages LOG = MessagesFactory.get(HadoopAuthMessages.class);
 
+  /* A semicolon separated list of paths that need to bypass authentication */
+  private static final String HADOOP_AUTH_UNAUTHENTICATED_PATHS_PARAM = "hadoop.auth.unauthenticated.path.list";
+  private static final String DEFAULT_HADOOP_AUTH_UNAUTHENTICATED_PATHS_PARAM = "/knoxtoken/api/v1/jwks.json";
+  private static AuditService auditService = AuditServiceFactory.getAuditService();
+  private static Auditor auditor = auditService.getAuditor(
+      AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
+      AuditConstants.KNOX_COMPONENT_NAME );
+
   private final Set<String> ignoreDoAs = new HashSet<>();
   private JWTFederationFilter jwtFilter;
+  private Set<String> unAuthenticatedPaths = new HashSet(20);
 
   @Override
   protected Properties getConfiguration(String configPrefix, FilterConfig filterConfig) throws ServletException {
@@ -129,10 +152,27 @@ public class HadoopAuthFilter extends
       jwtFilter.init(filterConfig);
       LOG.initializedJwtFilter();
     }
+
+    /* get unauthenticated paths list */
+    String unAuthPathString = filterConfig.getInitParameter(HADOOP_AUTH_UNAUTHENTICATED_PATHS_PARAM);
+    /* if no list specified use default value */
+    if (StringUtils.isBlank(unAuthPathString)) {
+      unAuthPathString = DEFAULT_HADOOP_AUTH_UNAUTHENTICATED_PATHS_PARAM;
+    }
+
+    final StringTokenizer st = new StringTokenizer(unAuthPathString, ";,");
+    while (st.hasMoreTokens()) {
+      unAuthenticatedPaths.add(st.nextToken());
+    }
   }
 
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
+    /* check for unauthenticated paths to bypass */
+    if(doesRequestContainUnauthPath(request)) {
+      checkForUnauthenticatedPaths(request, response, filterChain);
+      return;
+    }
     if (shouldUseJwtFilter(jwtFilter, (HttpServletRequest) request)) {
       LOG.useJwtFilter();
       jwtFilter.doFilter(request, response, filterChain);
@@ -143,6 +183,11 @@ public class HadoopAuthFilter extends
 
   @Override
   protected void doFilter(FilterChain filterChain, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+    /* check for unauthenticated paths to bypass */
+    if(doesRequestContainUnauthPath(request)) {
+      checkForUnauthenticatedPaths(request, response, filterChain);
+      return;
+    }
     if (shouldUseJwtFilter(jwtFilter, request)) {
       LOG.useJwtFilter();
       jwtFilter.doFilter(request, response, filterChain);
@@ -199,6 +244,86 @@ public class HadoopAuthFilter extends
     }
 
     super.doFilter(filterChain, request, response);
+  }
+
+  /**
+   * A helper method that checks whether request contains
+   * unauthenticated path
+   * @param request
+   * @return
+   */
+  private boolean doesRequestContainUnauthPath(final ServletRequest request) {
+    for (final String path : unAuthenticatedPaths) {
+      /* make sure the path matches EXACTLY to prevent auth bypass */
+      if (((HttpServletRequest) request).getPathInfo().equals(path)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * A function that let's configured unauthenticated path requests to
+   * pass through without requiring authentication.
+   * An anonymous subject is created and the request is audited.
+   *
+   * Fail gracefully by logging error message.
+   * @param request
+   * @param response
+   * @param chain
+   */
+  private void checkForUnauthenticatedPaths(final ServletRequest request,
+      final ServletResponse response, final FilterChain chain) {
+    try {
+      /* This path is configured as an unauthenticated path let the request through */
+      final Subject sub = new Subject();
+      sub.getPrincipals().add(new PrimaryPrincipal("anonymous"));
+      LOG.unauthenticatedPathBypass(((HttpServletRequest) request).getRequestURI(), unAuthenticatedPaths.toString());
+      continueWithEstablishedSecurityContext(sub, (HttpServletRequest) request,
+          (HttpServletResponse) response, chain);
+
+    } catch (final Exception e) {
+      /* in case anything fails here log and move on */
+      LOG.unauthenticatedPathError(
+          ((HttpServletRequest) request).getRequestURI(), e.toString());
+    }
+  }
+
+  protected void continueWithEstablishedSecurityContext(final Subject subject, final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
+    Principal principal = (Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0];
+    AuditContext context = auditService.getContext();
+    if (context != null) {
+      context.setUsername( principal.getName() );
+      String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
+      if (sourceUri != null) {
+        auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
+      }
+    }
+
+    try {
+      Subject.doAs(
+          subject,
+          new PrivilegedExceptionAction<Object>() {
+            @Override
+            public Object run() throws Exception {
+              chain.doFilter(request, response);
+              return null;
+            }
+          }
+      );
+    }
+    catch (PrivilegedActionException e) {
+      Throwable t = e.getCause();
+      if (t instanceof IOException) {
+        throw (IOException) t;
+      }
+      else if (t instanceof ServletException) {
+        throw (ServletException) t;
+      }
+      else {
+        throw new ServletException(t);
+      }
+    }
   }
 
   static boolean shouldUseJwtFilter(JWTFederationFilter jwtFilter, HttpServletRequest request)

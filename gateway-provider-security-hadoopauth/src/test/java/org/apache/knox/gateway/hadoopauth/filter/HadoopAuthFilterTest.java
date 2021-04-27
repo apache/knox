@@ -18,10 +18,13 @@
 package org.apache.knox.gateway.hadoopauth.filter;
 
 import static org.easymock.EasyMock.anyString;
+import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.captureInt;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.createMockBuilder;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.getCurrentArguments;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
@@ -36,16 +39,32 @@ import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilte
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.topology.Topology;
+import org.easymock.Capture;
+import org.easymock.EasyMock;
+import org.junit.Assert;
 import org.junit.Test;
 
+import javax.security.auth.Subject;
+import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.WriteListener;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.security.AccessController;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
 public class HadoopAuthFilterTest {
+  private static final String SERVICE_URL = "https://localhost:8888/gateway/sandbox";
+  private static final String JWKS_PATH = "/knoxtoken/api/v1/jwks.json";
+
   @Test
   public void testHadoopAuthFilterAliases() throws Exception {
     String aliasKey = "signature.secret";
@@ -104,6 +123,7 @@ public class HadoopAuthFilterTest {
         .atLeastOnce();
     expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
     expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
+    expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(null).anyTimes();
 
     Properties configProperties = createMock(Properties.class);
     expect(configProperties.getProperty("signature.secret.file")).andReturn("signature.secret.file").atLeastOnce();
@@ -156,12 +176,370 @@ public class HadoopAuthFilterTest {
     testIfJwtSupported("true");
   }
 
+  @Test
+  public void testUnauthenticatedList() throws Exception {
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+
+    GatewayFilter.Holder filterConfig = createMock(GatewayFilter.Holder.class);
+    expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(Collections.emptyList()));
+    expect(filterConfig.getInitParameter(GatewayConfig.PROXYUSER_SERVICES_IGNORE_DOAS)).andReturn("service").atLeastOnce();
+    expect(filterConfig.getInitParameter("config.prefix")).andReturn("some.prefix").atLeastOnce();
+    expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
+    expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(null).anyTimes();
+
+
+    EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+    EasyMock.expect(response.getOutputStream()).andAnswer(
+        DummyServletOutputStream::new).anyTimes();
+    EasyMock.expect(request.getPathInfo()).andReturn(JWKS_PATH).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+
+    final ServletContext servletContext = createMock(ServletContext.class);
+    expect(servletContext.getAttribute("signer.secret.provider.object")).andReturn(null).atLeastOnce();
+    expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
+
+    final HadoopAuthFilter hadoopAuthFilter = createMockBuilder(HadoopAuthFilter.class).addMockedMethod("getConfiguration", String.class, FilterConfig.class).withConstructor()
+        .createMock();
+    final Properties config = new Properties();
+    config.put("type", "simple");
+    expect(hadoopAuthFilter.getConfiguration(eq("some.prefix."), eq(filterConfig))).andReturn(config).atLeastOnce();
+
+    replay(servletContext, filterConfig, hadoopAuthFilter, request, response);
+
+    hadoopAuthFilter.init(filterConfig);
+    DummyFilterChain chain = new DummyFilterChain();
+    hadoopAuthFilter.doFilter(request, response, chain);
+    Assert.assertTrue("doFilterCalled should be true.", chain.doFilterCalled );
+    /* make sure the principal is anonymous */
+    Assert.assertEquals("anonymous", chain.subject.getPrincipals().stream().findFirst().get().getName());
+  }
+
+  /**
+   * Test to check if this can be used to bypass authentication
+   * @throws Exception
+   */
+  @Test
+  public void testNegativeUnauthenticatedListSemicolon() throws Exception {
+    final String request_semicolon_path = "/knoxtoken/api/v1/jwks.json;favicon.ico";
+    final Capture<Integer> capturedError = EasyMock.newCapture();
+    final Capture<String> capturedErrorMessage = EasyMock.newCapture();
+
+    HttpServletRequest request_semicolon = EasyMock.createNiceMock(HttpServletRequest.class);
+
+    GatewayFilter.Holder filterConfig = createMock(GatewayFilter.Holder.class);
+    expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(Collections.emptyList()));
+    expect(filterConfig.getInitParameter(GatewayConfig.PROXYUSER_SERVICES_IGNORE_DOAS)).andReturn("service").atLeastOnce();
+    expect(filterConfig.getInitParameter("config.prefix")).andReturn("some.prefix").atLeastOnce();
+    expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
+    /* update the default list to use favicon.ico */
+    expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(request_semicolon_path).anyTimes();
+
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    /* capture errors */
+    response.sendError(captureInt(capturedError), capture(capturedErrorMessage));
+    expectLastCall().anyTimes();
+    EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+    EasyMock.expect(response.getOutputStream()).andAnswer(
+        DummyServletOutputStream::new).anyTimes();
+
+
+    replay(response);
+
+    EasyMock.expect(request_semicolon.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL+request_semicolon_path)).anyTimes();
+    /* try attaching favicon.ico in path */
+    EasyMock.expect(request_semicolon.getPathInfo()).andReturn("/knoxtoken/api/v1/token;favicon.ico").anyTimes();
+    EasyMock.expect(request_semicolon.getQueryString()).andReturn(null);
+
+
+    final ServletContext servletContext = createMock(ServletContext.class);
+    expect(servletContext.getAttribute("signer.secret.provider.object")).andReturn(null).atLeastOnce();
+    expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
+
+    final HadoopAuthFilter hadoopAuthFilter = createMockBuilder(HadoopAuthFilter.class).addMockedMethod("getConfiguration", String.class, FilterConfig.class).withConstructor()
+        .createMock();
+    final Properties config = new Properties();
+    config.put("type", "simple");
+    expect(hadoopAuthFilter.getConfiguration(eq("some.prefix."), eq(filterConfig))).andReturn(config).atLeastOnce();
+
+    replay(servletContext, filterConfig, hadoopAuthFilter, request_semicolon);
+
+    hadoopAuthFilter.init(filterConfig);
+    DummyFilterChain chain = new DummyFilterChain();
+    hadoopAuthFilter.doFilter(request_semicolon, response, chain);
+    Assert.assertFalse("doFilterCalled should be false.", chain.doFilterCalled );
+    /* make sure we get 403 */
+    Assert.assertEquals(403, capturedError.getValue().intValue());
+    Assert.assertEquals("Authentication required", capturedErrorMessage.getValue());
+  }
+
+  /**
+   * Test to check if this can be used to bypass authentication
+   * @throws Exception
+   */
+  @Test
+  public void testNegativeUnauthenticatedListQuery() throws Exception {
+    final String request_semicolon_path = "/knoxtoken/api/v1/jwks.json?favicon.ico";
+    final Capture<Integer> capturedError = EasyMock.newCapture();
+    final Capture<String> capturedErrorMessage = EasyMock.newCapture();
+
+    HttpServletRequest request_query = EasyMock.createNiceMock(HttpServletRequest.class);
+
+    GatewayFilter.Holder filterConfig = createMock(GatewayFilter.Holder.class);
+    expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(Collections.emptyList()));
+    expect(filterConfig.getInitParameter(GatewayConfig.PROXYUSER_SERVICES_IGNORE_DOAS)).andReturn("service").atLeastOnce();
+    expect(filterConfig.getInitParameter("config.prefix")).andReturn("some.prefix").atLeastOnce();
+    expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
+    /* update the default list to use favicon.ico */
+    expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(request_semicolon_path).anyTimes();
+
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    /* capture errors */
+    response.sendError(captureInt(capturedError), capture(capturedErrorMessage));
+    expectLastCall().anyTimes();
+    EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+    EasyMock.expect(response.getOutputStream()).andAnswer(
+        DummyServletOutputStream::new).anyTimes();
+
+
+    replay(response);
+
+    EasyMock.expect(request_query.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL+request_semicolon_path)).anyTimes();
+    /* try attaching favicon.ico in path */
+    EasyMock.expect(request_query.getPathInfo()).andReturn("/knoxtoken/api/v1/token;favicon.ico").anyTimes();
+    EasyMock.expect(request_query.getQueryString()).andReturn(null);
+
+
+    final ServletContext servletContext = createMock(ServletContext.class);
+    expect(servletContext.getAttribute("signer.secret.provider.object")).andReturn(null).atLeastOnce();
+    expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
+
+    final HadoopAuthFilter hadoopAuthFilter = createMockBuilder(HadoopAuthFilter.class).addMockedMethod("getConfiguration", String.class, FilterConfig.class).withConstructor()
+        .createMock();
+    final Properties config = new Properties();
+    config.put("type", "simple");
+    expect(hadoopAuthFilter.getConfiguration(eq("some.prefix."), eq(filterConfig))).andReturn(config).atLeastOnce();
+
+    replay(servletContext, filterConfig, hadoopAuthFilter, request_query);
+
+    hadoopAuthFilter.init(filterConfig);
+    DummyFilterChain chain = new DummyFilterChain();
+    hadoopAuthFilter.doFilter(request_query, response, chain);
+    Assert.assertFalse("doFilterCalled should be false.", chain.doFilterCalled );
+    /* make sure we get 403 */
+    Assert.assertEquals(403, capturedError.getValue().intValue());
+    Assert.assertEquals("Authentication required", capturedErrorMessage.getValue());
+  }
+
+  /**
+   * Test to check if this can be used to bypass authentication
+   * @throws Exception
+   */
+  @Test
+  public void testNegativeUnauthenticatedListAmpersand() throws Exception {
+    final String request_semicolon_path = "/knoxtoken/api/v1/jwks.json&favicon.ico";
+    final Capture<Integer> capturedError = EasyMock.newCapture();
+    final Capture<String> capturedErrorMessage = EasyMock.newCapture();
+
+    HttpServletRequest request_ampersand = EasyMock.createNiceMock(HttpServletRequest.class);
+
+    GatewayFilter.Holder filterConfig = createMock(GatewayFilter.Holder.class);
+    expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(Collections.emptyList()));
+    expect(filterConfig.getInitParameter(GatewayConfig.PROXYUSER_SERVICES_IGNORE_DOAS)).andReturn("service").atLeastOnce();
+    expect(filterConfig.getInitParameter("config.prefix")).andReturn("some.prefix").atLeastOnce();
+    expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
+    /* update the default list to use favicon.ico */
+    expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(request_semicolon_path).anyTimes();
+
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    /* capture errors */
+    response.sendError(captureInt(capturedError), capture(capturedErrorMessage));
+    expectLastCall().anyTimes();
+    EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+    EasyMock.expect(response.getOutputStream()).andAnswer(
+        DummyServletOutputStream::new).anyTimes();
+
+
+    replay(response);
+
+    EasyMock.expect(request_ampersand.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL+request_semicolon_path)).anyTimes();
+    /* try attaching favicon.ico in path */
+    EasyMock.expect(request_ampersand.getPathInfo()).andReturn("/knoxtoken/api/v1/token;favicon.ico").anyTimes();
+    EasyMock.expect(request_ampersand.getQueryString()).andReturn(null);
+
+
+    final ServletContext servletContext = createMock(ServletContext.class);
+    expect(servletContext.getAttribute("signer.secret.provider.object")).andReturn(null).atLeastOnce();
+    expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
+
+    final HadoopAuthFilter hadoopAuthFilter = createMockBuilder(HadoopAuthFilter.class).addMockedMethod("getConfiguration", String.class, FilterConfig.class).withConstructor()
+        .createMock();
+    final Properties config = new Properties();
+    config.put("type", "simple");
+    expect(hadoopAuthFilter.getConfiguration(eq("some.prefix."), eq(filterConfig))).andReturn(config).atLeastOnce();
+
+    replay(servletContext, filterConfig, hadoopAuthFilter, request_ampersand);
+
+    hadoopAuthFilter.init(filterConfig);
+    DummyFilterChain chain = new DummyFilterChain();
+    hadoopAuthFilter.doFilter(request_ampersand, response, chain);
+    Assert.assertFalse("doFilterCalled should be false.", chain.doFilterCalled );
+    /* make sure we get 403 */
+    Assert.assertEquals(403, capturedError.getValue().intValue());
+    Assert.assertEquals("Authentication required", capturedErrorMessage.getValue());
+  }
+
+  /**
+   * Test to check if this can be used to bypass authentication
+   * @throws Exception
+   */
+  @Test
+  public void testNegativeUnauthenticatedListDash() throws Exception {
+    final String request_semicolon_path = "/knoxtoken/api/v1/jwks.json-favicon.ico";
+    final Capture<Integer> capturedError = EasyMock.newCapture();
+    final Capture<String> capturedErrorMessage = EasyMock.newCapture();
+
+    HttpServletRequest request_dash = EasyMock.createNiceMock(HttpServletRequest.class);
+
+    GatewayFilter.Holder filterConfig = createMock(GatewayFilter.Holder.class);
+    expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(Collections.emptyList()));
+    expect(filterConfig.getInitParameter(GatewayConfig.PROXYUSER_SERVICES_IGNORE_DOAS)).andReturn("service").atLeastOnce();
+    expect(filterConfig.getInitParameter("config.prefix")).andReturn("some.prefix").atLeastOnce();
+    expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
+    /* update the default list to use favicon.ico */
+    expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(request_semicolon_path).anyTimes();
+
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    /* capture errors */
+    response.sendError(captureInt(capturedError), capture(capturedErrorMessage));
+    expectLastCall().anyTimes();
+    EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+    EasyMock.expect(response.getOutputStream()).andAnswer(
+        DummyServletOutputStream::new).anyTimes();
+
+
+    replay(response);
+
+    EasyMock.expect(request_dash.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL+request_semicolon_path)).anyTimes();
+    /* try attaching favicon.ico in path */
+    EasyMock.expect(request_dash.getPathInfo()).andReturn("/knoxtoken/api/v1/token;favicon.ico").anyTimes();
+    EasyMock.expect(request_dash.getQueryString()).andReturn(null);
+
+
+    final ServletContext servletContext = createMock(ServletContext.class);
+    expect(servletContext.getAttribute("signer.secret.provider.object")).andReturn(null).atLeastOnce();
+    expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
+
+    final HadoopAuthFilter hadoopAuthFilter = createMockBuilder(HadoopAuthFilter.class).addMockedMethod("getConfiguration", String.class, FilterConfig.class).withConstructor()
+        .createMock();
+    final Properties config = new Properties();
+    config.put("type", "simple");
+    expect(hadoopAuthFilter.getConfiguration(eq("some.prefix."), eq(filterConfig))).andReturn(config).atLeastOnce();
+
+    replay(servletContext, filterConfig, hadoopAuthFilter, request_dash);
+
+    hadoopAuthFilter.init(filterConfig);
+    DummyFilterChain chain = new DummyFilterChain();
+    hadoopAuthFilter.doFilter(request_dash, response, chain);
+    Assert.assertFalse("doFilterCalled should be false.", chain.doFilterCalled );
+    /* make sure we get 403 */
+    Assert.assertEquals(403, capturedError.getValue().intValue());
+    Assert.assertEquals("Authentication required", capturedErrorMessage.getValue());
+  }
+
+  /**
+   * Test to check if this can be used to bypass authentication
+   * @throws Exception
+   */
+  @Test
+  public void testNegativeUnauthenticatedListSpace() throws Exception {
+    final String request_semicolon_path = "/knoxtoken/api/v1/jwks.json favicon.ico";
+    final Capture<Integer> capturedError = EasyMock.newCapture();
+    final Capture<String> capturedErrorMessage = EasyMock.newCapture();
+
+    HttpServletRequest request_space = EasyMock.createNiceMock(HttpServletRequest.class);
+
+
+    GatewayFilter.Holder filterConfig = createMock(GatewayFilter.Holder.class);
+    expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(Collections.emptyList()));
+    expect(filterConfig.getInitParameter(GatewayConfig.PROXYUSER_SERVICES_IGNORE_DOAS)).andReturn("service").atLeastOnce();
+    expect(filterConfig.getInitParameter("config.prefix")).andReturn("some.prefix").atLeastOnce();
+    expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
+    /* update the default list to use favicon.ico */
+    expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(request_semicolon_path).anyTimes();
+
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    /* capture errors */
+    response.sendError(captureInt(capturedError), capture(capturedErrorMessage));
+    expectLastCall().anyTimes();
+    EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+    EasyMock.expect(response.getOutputStream()).andAnswer(
+        DummyServletOutputStream::new).anyTimes();
+
+
+    replay(response);
+
+    EasyMock.expect(request_space.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL+request_semicolon_path)).anyTimes();
+    /* try attaching favicon.ico in path */
+    EasyMock.expect(request_space.getPathInfo()).andReturn("/knoxtoken/api/v1/token;favicon.ico").anyTimes();
+    EasyMock.expect(request_space.getQueryString()).andReturn(null);
+
+
+    final ServletContext servletContext = createMock(ServletContext.class);
+    expect(servletContext.getAttribute("signer.secret.provider.object")).andReturn(null).atLeastOnce();
+    expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
+
+    final HadoopAuthFilter hadoopAuthFilter = createMockBuilder(HadoopAuthFilter.class).addMockedMethod("getConfiguration", String.class, FilterConfig.class).withConstructor()
+        .createMock();
+    final Properties config = new Properties();
+    config.put("type", "simple");
+    expect(hadoopAuthFilter.getConfiguration(eq("some.prefix."), eq(filterConfig))).andReturn(config).atLeastOnce();
+
+    replay(servletContext, filterConfig, hadoopAuthFilter, request_space);
+
+    hadoopAuthFilter.init(filterConfig);
+    DummyFilterChain chain = new DummyFilterChain();
+    hadoopAuthFilter.doFilter(request_space, response, chain);
+    Assert.assertFalse("doFilterCalled should be false.", chain.doFilterCalled );
+    /* make sure we get 403 */
+    Assert.assertEquals(403, capturedError.getValue().intValue());
+    Assert.assertEquals("Authentication required", capturedErrorMessage.getValue());
+  }
+
+  public static class DummyFilterChain implements FilterChain {
+    boolean doFilterCalled;
+    Subject subject;
+
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response)
+        throws IOException {
+      doFilterCalled = true;
+      subject = Subject.getSubject( AccessController.getContext() );
+    }
+  }
+
+  static class DummyServletOutputStream extends ServletOutputStream {
+    @Override
+    public void write(int b) {
+    }
+
+    @Override
+    public void setWriteListener(WriteListener arg0) {
+    }
+
+    @Override
+    public boolean isReady() {
+      return false;
+    }
+  }
+
   private HadoopAuthFilter testIfJwtSupported(String supportJwt) throws Exception {
     final GatewayFilter.Holder filterConfig = createMock(GatewayFilter.Holder.class);
     expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(Collections.emptyList()));
     expect(filterConfig.getInitParameter(GatewayConfig.PROXYUSER_SERVICES_IGNORE_DOAS)).andReturn("service").atLeastOnce();
     expect(filterConfig.getInitParameter("config.prefix")).andReturn("some.prefix").atLeastOnce();
     expect(filterConfig.getInitParameter("support.jwt")).andReturn(supportJwt).anyTimes();
+    expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(null).anyTimes();
     final boolean isJwtSupported = Boolean.parseBoolean(supportJwt);
     if (isJwtSupported) {
       expect(filterConfig.getInitParameter(JWTFederationFilter.KNOX_TOKEN_AUDIENCES)).andReturn(null).anyTimes();
@@ -169,6 +547,7 @@ public class HadoopAuthFilterTest {
       expect(filterConfig.getInitParameter(JWTFederationFilter.JWKS_URL)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(JWTFederationFilter.TOKEN_PRINCIPAL_CLAIM)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(JWTFederationFilter.TOKEN_VERIFICATION_PEM)).andReturn(null).anyTimes();
+      expect(filterConfig.getInitParameter(JWTFederationFilter.JWT_UNAUTHENTICATED_PATHS_PARAM)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(AbstractJWTFilter.JWT_EXPECTED_ISSUER)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(AbstractJWTFilter.JWT_EXPECTED_SIGALG)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(AbstractJWTFilter.JWT_VERIFIED_CACHE_MAX)).andReturn(null).anyTimes();
