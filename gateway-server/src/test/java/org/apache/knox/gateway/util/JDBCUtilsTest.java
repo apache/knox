@@ -33,7 +33,7 @@ public class JDBCUtilsTest {
   @Test
   public void shouldReturnPostgresDataSource() throws Exception {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
-    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(JDBCUtils.POSTGRES_DB_TYPE).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(JDBCUtils.POSTGRESQL_DB_TYPE).anyTimes();
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(EasyMock.anyString())).andReturn(null).anyTimes();
     EasyMock.replay(gatewayConfig, aliasService);
@@ -43,7 +43,7 @@ public class JDBCUtilsTest {
   @Test
   public void postgresDataSourceShouldHaveProperConnectionProperties() throws AliasServiceException {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
-    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(JDBCUtils.POSTGRES_DB_TYPE).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(JDBCUtils.POSTGRESQL_DB_TYPE).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseHost()).andReturn("localhost").anyTimes();
     EasyMock.expect(gatewayConfig.getDatabasePort()).andReturn(5432).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("sampleDatabase");
