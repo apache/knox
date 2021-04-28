@@ -23,7 +23,9 @@ import static java.util.Collections.unmodifiableList;
 import java.util.Collection;
 import java.util.Map;
 
+import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -35,6 +37,8 @@ import org.apache.knox.gateway.services.token.impl.JournalBasedTokenStateService
 import org.apache.knox.gateway.services.token.impl.ZookeeperTokenStateService;
 
 public class TokenStateServiceFactory extends AbstractServiceFactory {
+
+  private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
 
   @Override
   protected Service createService(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
@@ -51,8 +55,15 @@ public class TokenStateServiceFactory extends AbstractServiceFactory {
       } else if (matchesImplementation(implementation, ZookeeperTokenStateService.class)) {
         service = new ZookeeperTokenStateService(gatewayServices);
       } else if (matchesImplementation(implementation, JDBCTokenStateService.class)) {
-        service = new JDBCTokenStateService();
-       ((JDBCTokenStateService) service).setAliasService(getAliasService(gatewayServices));
+        try {
+          service = new JDBCTokenStateService();
+          ((JDBCTokenStateService) service).setAliasService(getAliasService(gatewayServices));
+          service.init(gatewayConfig, options);
+        } catch (ServiceLifecycleException e) {
+          LOG.errorInitializingService(implementation, e.getMessage(), e);
+          service = new AliasBasedTokenStateService();
+          ((AliasBasedTokenStateService) service).setAliasService(getAliasService(gatewayServices));
+        }
       }
 
       logServiceUsage(isEmptyDefaultImplementation(implementation) ? AliasBasedTokenStateService.class.getName() : implementation, serviceType);
