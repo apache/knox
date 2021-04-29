@@ -73,6 +73,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 @Path(TokenResource.RESOURCE_PATH)
 public class TokenResource {
   static final String LIFESPAN = "lifespan";
+  static final String COMMENT = "comment";
   private static final String EXPIRES_IN = "expires_in";
   private static final String TOKEN_TYPE = "token_type";
   private static final String ACCESS_TOKEN = "access_token";
@@ -508,7 +509,8 @@ public class TokenResource {
                                      System.currentTimeMillis(),
                                      expires,
                                      maxTokenLifetime.orElse(tokenStateService.getDefaultMaxLifetimeDuration()));
-          tokenStateService.addMetadata(tokenId, new TokenMetadata(p.getName()));
+          final String comment = request.getParameter(COMMENT);
+          tokenStateService.addMetadata(tokenId, new TokenMetadata(p.getName(), StringUtils.isBlank(comment) ? null : comment));
           log.storedToken(getTopologyName(), Tokens.getTokenDisplayText(accessToken), Tokens.getTokenIDDisplayText(tokenId));
         }
 

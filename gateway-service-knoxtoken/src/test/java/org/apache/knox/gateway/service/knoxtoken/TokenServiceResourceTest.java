@@ -855,6 +855,7 @@ public class TokenServiceResourceTest {
     }
   }
 
+  @Test
   public void testGettingTokenWithLifespanLessThanConfiguredTTL() throws Exception {
     final Map<String, String> contextExpectations = new HashMap<>();
     contextExpectations.put("knox.token.ttl", "172800000"); // 2 days
