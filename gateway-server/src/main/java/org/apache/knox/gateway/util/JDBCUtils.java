@@ -24,12 +24,15 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.postgresql.ds.PGSimpleDataSource;
+import org.postgresql.jdbc.SslMode;
+import org.postgresql.ssl.NonValidatingFactory;
 
 public class JDBCUtils {
   public static final String POSTGRESQL_DB_TYPE = "postgresql";
   public static final String DERBY_DB_TYPE = "derbydb";
   public static final String DATABASE_USER_ALIAS_NAME = "gateway_database_user";
   public static final String DATABASE_PASSWORD_ALIAS_NAME = "gateway_database_password";
+  public static final String DATABASE_TRUSTSTORE_PASSWORD_ALIAS_NAME = "gateway_database_ssl_truststore_password";
 
   public static DataSource getDataSource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException {
     if (POSTGRESQL_DB_TYPE.equalsIgnoreCase(gatewayConfig.getDatabaseType())) {
@@ -47,7 +50,21 @@ public class JDBCUtils {
     postgresDataSource.setPortNumbers(new int[] { gatewayConfig.getDatabasePort() });
     postgresDataSource.setUser(getDatabaseUser(aliasService));
     postgresDataSource.setPassword(getDatabasePassword(aliasService));
+    configurePostgreSQLSsl(gatewayConfig, aliasService, postgresDataSource);
     return postgresDataSource;
+  }
+
+  private static void configurePostgreSQLSsl(GatewayConfig gatewayConfig, AliasService aliasService, PGSimpleDataSource postgresDataSource) throws AliasServiceException {
+    if (gatewayConfig.isDatabaseSslEnabled()) {
+      postgresDataSource.setSsl(true);
+      postgresDataSource.setSslMode(SslMode.VERIFY_FULL.value);
+      if (gatewayConfig.verifyDatabaseSslServerCertificate()) {
+        postgresDataSource.setSslRootCert(gatewayConfig.getDatabaseSslTruststoreFileName());
+        postgresDataSource.setSslPassword(getDatabaseAlias(aliasService, DATABASE_TRUSTSTORE_PASSWORD_ALIAS_NAME));
+      } else {
+        postgresDataSource.setSslfactory(NonValidatingFactory.class.getCanonicalName());
+      }
+    }
   }
 
   private static DataSource createDerbyDatasource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException {

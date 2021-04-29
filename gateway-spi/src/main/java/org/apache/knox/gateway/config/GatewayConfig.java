@@ -756,4 +756,10 @@ public interface GatewayConfig {
 
   String getDatabaseName();
 
+  boolean isDatabaseSslEnabled();
+
+  boolean verifyDatabaseSslServerCertificate();
+
+  String getDatabaseSslTruststoreFileName();
+
 }
