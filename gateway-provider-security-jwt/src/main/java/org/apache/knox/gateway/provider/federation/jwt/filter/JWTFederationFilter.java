@@ -126,7 +126,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       throws IOException, ServletException {
     /* check for unauthenticated paths to bypass */
     if(doesRequestContainUnauthPath(request)) {
-      checkForUnauthenticatedPaths(request, response, chain);
+      continueWithAnonymousSubject(request, response, chain);
       return;
     }
     final Pair<TokenType, String> wireToken = getWireToken(request);
@@ -240,8 +240,9 @@ public class JWTFederationFilter extends AbstractJWTFilter {
    * @param response
    * @param chain
    */
-  private void checkForUnauthenticatedPaths(final ServletRequest request,
-      final ServletResponse response, final FilterChain chain) {
+  private void continueWithAnonymousSubject(final ServletRequest request,
+      final ServletResponse response, final FilterChain chain)
+      throws ServletException, IOException {
     try {
       /* This path is configured as an unauthenticated path let the request through */
       final Subject sub = new Subject();
@@ -251,9 +252,9 @@ public class JWTFederationFilter extends AbstractJWTFilter {
           (HttpServletResponse) response, chain);
 
     } catch (final Exception e) {
-      /* in case anything fails here log and move on */
       LOGGER.unauthenticatedPathError(
           ((HttpServletRequest) request).getRequestURI(), e.toString());
+      throw e;
     }
   }
 

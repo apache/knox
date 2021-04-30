@@ -170,7 +170,7 @@ public class HadoopAuthFilter extends
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
     /* check for unauthenticated paths to bypass */
     if(doesRequestContainUnauthPath(request)) {
-      checkForUnauthenticatedPaths(request, response, filterChain);
+      continueWithAnonymousSubject(request, response, filterChain);
       return;
     }
     if (shouldUseJwtFilter(jwtFilter, (HttpServletRequest) request)) {
@@ -185,7 +185,7 @@ public class HadoopAuthFilter extends
   protected void doFilter(FilterChain filterChain, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
     /* check for unauthenticated paths to bypass */
     if(doesRequestContainUnauthPath(request)) {
-      checkForUnauthenticatedPaths(request, response, filterChain);
+      continueWithAnonymousSubject(request, response, filterChain);
       return;
     }
     if (shouldUseJwtFilter(jwtFilter, request)) {
@@ -272,8 +272,9 @@ public class HadoopAuthFilter extends
    * @param response
    * @param chain
    */
-  private void checkForUnauthenticatedPaths(final ServletRequest request,
-      final ServletResponse response, final FilterChain chain) {
+  private void continueWithAnonymousSubject(final ServletRequest request,
+      final ServletResponse response, final FilterChain chain)
+      throws ServletException, IOException {
     try {
       /* This path is configured as an unauthenticated path let the request through */
       final Subject sub = new Subject();
@@ -283,9 +284,9 @@ public class HadoopAuthFilter extends
           (HttpServletResponse) response, chain);
 
     } catch (final Exception e) {
-      /* in case anything fails here log and move on */
       LOG.unauthenticatedPathError(
           ((HttpServletRequest) request).getRequestURI(), e.toString());
+      throw e;
     }
   }
 
