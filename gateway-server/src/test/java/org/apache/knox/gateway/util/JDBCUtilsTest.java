@@ -106,6 +106,24 @@ public class JDBCUtilsTest {
   }
 
   @Test
+  public void testGetPostgreSqlDatasourceFromJdbcConnectionUrl() throws AliasServiceException {
+    final String connectionUrl = "jdbc:postgresql://postgresql_host:1234/testDb?user=smolnar&password=secret&ssl=true&sslmode=verify-ca&sslrootcert=/var/lib/knox/gateway/conf/postgresql/root.crt";
+    final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(JDBCUtils.POSTGRESQL_DB_TYPE).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseConnectionUrl()).andReturn(connectionUrl).anyTimes();
+    EasyMock.replay(gatewayConfig);
+    final PGSimpleDataSource dataSource = (PGSimpleDataSource) JDBCUtils.getDataSource(gatewayConfig, null);
+    assertEquals("postgresql_host", dataSource.getServerNames()[0]);
+    assertEquals(1234, dataSource.getPortNumbers()[0]);
+    assertEquals("testDb", dataSource.getDatabaseName());
+    assertEquals("smolnar", dataSource.getUser());
+    assertEquals("secret", dataSource.getPassword());
+    assertTrue(dataSource.isSsl());
+    assertEquals(dataSource.getSslRootCert(), "/var/lib/knox/gateway/conf/postgresql/root.crt");
+    EasyMock.verify(gatewayConfig);
+  }
+
+  @Test
   public void shouldReturnDerbyDataSource() throws Exception {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(JDBCUtils.DERBY_DB_TYPE).anyTimes();
