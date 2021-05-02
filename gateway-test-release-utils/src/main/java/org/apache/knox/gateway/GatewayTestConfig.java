@@ -874,4 +874,22 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return null;
   }
 
+
+  @Override
+  public boolean isDatabaseSslEnabled() {
+    return false;
+  }
+
+
+  @Override
+  public boolean verifyDatabaseSslServerCertificate() {
+    return false;
+  }
+
+
+  @Override
+  public String getDatabaseSslTruststoreFileName() {
+    return null;
+  }
+
 }
