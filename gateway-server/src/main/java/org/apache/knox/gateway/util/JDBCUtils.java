@@ -45,12 +45,16 @@ public class JDBCUtils {
 
   private static DataSource createPostgresDataSource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException {
     final PGSimpleDataSource postgresDataSource = new PGSimpleDataSource();
-    postgresDataSource.setDatabaseName(gatewayConfig.getDatabaseName());
-    postgresDataSource.setServerNames(new String[] { gatewayConfig.getDatabaseHost() });
-    postgresDataSource.setPortNumbers(new int[] { gatewayConfig.getDatabasePort() });
-    postgresDataSource.setUser(getDatabaseUser(aliasService));
-    postgresDataSource.setPassword(getDatabasePassword(aliasService));
-    configurePostgreSQLSsl(gatewayConfig, aliasService, postgresDataSource);
+    if (gatewayConfig.getDatabaseConnectionUrl() != null) {
+      postgresDataSource.setUrl(gatewayConfig.getDatabaseConnectionUrl());
+    } else {
+      postgresDataSource.setDatabaseName(gatewayConfig.getDatabaseName());
+      postgresDataSource.setServerNames(new String[] { gatewayConfig.getDatabaseHost() });
+      postgresDataSource.setPortNumbers(new int[] { gatewayConfig.getDatabasePort() });
+      postgresDataSource.setUser(getDatabaseUser(aliasService));
+      postgresDataSource.setPassword(getDatabasePassword(aliasService));
+      configurePostgreSQLSsl(gatewayConfig, aliasService, postgresDataSource);
+    }
     return postgresDataSource;
   }
 
