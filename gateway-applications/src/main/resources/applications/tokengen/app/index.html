@@ -46,14 +46,18 @@
         </script>
 
     </head>
-    <body class="login" style="">
+    <body class="login" style="" onload="setTokenStateServiceStatus()">
         <!-- Page content
         ================================================== -->
+
         <section id="signin-container" style="margin-top: 4.5px;">
             <form action="" method="get" accept-charset="utf-8">
                 <fieldset>
                     <div class="fields">
                         <h3>Token Generation</h3>
+                        <label id="tokenStateServiceStatusInfo" style="color: green;"></label>
+                        <label id="tokenStateServiceStatusError" style="color: red;"></label>
+                        <label id="tokenStateServiceStatusWarning" style="color: yellow;"></label>
                         <label><i class="icon-info"></i> Token Generation enables integration and API invocations by using the
                          token as an authorization bearer token. Copy the JWT token from the resulting text area and protect it
                          securely from others as this token represents your identity and is active until expired.</label>

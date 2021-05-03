@@ -20,6 +20,9 @@ package org.apache.knox.gateway.services.token.impl;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -33,6 +36,8 @@ import org.apache.knox.gateway.util.Tokens;
 public class JDBCTokenStateService extends DefaultTokenStateService {
   private AliasService aliasService; // connection username/pw is stored here
   private TokenStateDatabase tokenDatabase;
+  private AtomicBoolean initialized = new AtomicBoolean(false);
+  private Lock initLock = new ReentrantLock(true);
 
   public void setAliasService(AliasService aliasService) {
     this.aliasService = aliasService;
@@ -40,14 +45,22 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
 
   @Override
   public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
-    super.init(config, options);
-    if (aliasService == null) {
-      throw new ServiceLifecycleException("The required AliasService reference has not been set.");
-    }
-    try {
-      this.tokenDatabase = new TokenStateDatabase(JDBCUtils.getDataSource(config, aliasService));
-    } catch (Exception e) {
-      throw new ServiceLifecycleException("Error while initiating JDBCTokenStateService: " + e, e);
+    if (!initialized.get()) {
+      initLock.lock();
+      try {
+        super.init(config, options);
+        if (aliasService == null) {
+          throw new ServiceLifecycleException("The required AliasService reference has not been set.");
+        }
+        try {
+          this.tokenDatabase = new TokenStateDatabase(JDBCUtils.getDataSource(config, aliasService));
+          initialized.set(true);
+        } catch (Exception e) {
+          throw new ServiceLifecycleException("Error while initiating JDBCTokenStateService: " + e, e);
+        }
+      } finally {
+        initLock.unlock();
+      }
     }
   }
 

@@ -41,6 +41,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.SubjectUtils;
@@ -87,10 +88,16 @@ public class TokenResource {
   private static final String TOKEN_SIG_ALG = "knox.token.sigalg";
   private static final String TOKEN_EXP_RENEWAL_INTERVAL = "knox.token.exp.renew-interval";
   private static final String TOKEN_EXP_RENEWAL_MAX_LIFETIME = "knox.token.exp.max-lifetime";
+  private static final String TOKEN_EXP_TOKENGEN_ALLOWED_TSS_BACKENDS = "knox.token.exp.tokengen.allowed.tss.backends";
   private static final String TOKEN_RENEWER_WHITELIST = "knox.token.renewer.whitelist";
+  private static final String TSS_STATUS_IS_MANAGEMENT_ENABLED = "tokenManagementEnabled";
+  private static final String TSS_STATUS_CONFIFURED_BACKEND = "configuredTssBackend";
+  private static final String TSS_STATUS_ACTUAL_BACKEND = "actualTssBackend";
+  private static final String TSS_ALLOWED_BACKEND_FOR_TOKENGEN = "allowedTssForTokengen";
   private static final long TOKEN_TTL_DEFAULT = 30000L;
   static final String TOKEN_API_PATH = "knoxtoken/api/v1";
   static final String RESOURCE_PATH = TOKEN_API_PATH + "/token";
+  static final String GET_TSS_STATUS_PATH = "/getTssStatus";
   static final String RENEW_PATH = "/renew";
   static final String REVOKE_PATH = "/revoke";
   private static final String TARGET_ENDPOINT_PULIC_CERT_PEM = "knox.token.target.endpoint.cert.pem";
@@ -107,6 +114,7 @@ public class TokenResource {
 
   // Optional token store service
   private TokenStateService tokenStateService;
+  private final Map<String, String> tokenStateServiceStatusMap = new HashMap<>();
 
   private Optional<Long> renewInterval = Optional.empty();
 
@@ -207,6 +215,42 @@ public class TokenResource {
         log.noRenewersConfigured(topologyName);
       }
     }
+    setTokenStateServiceStatusMap();
+  }
+
+  private void setTokenStateServiceStatusMap() {
+    if (isServerManagedTokenStateEnabled()) {
+      tokenStateServiceStatusMap.put(TSS_STATUS_IS_MANAGEMENT_ENABLED, "true");
+      final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+      final String configuredTokenStateServiceImpl = config.getServiceParameter(ServiceType.TOKEN_STATE_SERVICE.getShortName(), "impl");
+      final String configuredTokenServiceName = StringUtils.isBlank(configuredTokenStateServiceImpl) ? ""
+          : configuredTokenStateServiceImpl.substring(configuredTokenStateServiceImpl.lastIndexOf('.') + 1);
+      final String actualTokenStateServiceImpl = tokenStateService.getClass().getCanonicalName();
+      final String actualTokenServiceName = actualTokenStateServiceImpl.substring(actualTokenStateServiceImpl.lastIndexOf('.') + 1);
+      tokenStateServiceStatusMap.put(TSS_STATUS_CONFIFURED_BACKEND, configuredTokenServiceName);
+      tokenStateServiceStatusMap.put(TSS_STATUS_ACTUAL_BACKEND, actualTokenServiceName);
+      populateAllowedTokenStateBackendForTokenGenApp(actualTokenServiceName);
+    } else {
+      tokenStateServiceStatusMap.put(TSS_STATUS_IS_MANAGEMENT_ENABLED, "false");
+    }
+  }
+
+  private void populateAllowedTokenStateBackendForTokenGenApp(final String actualTokenServiceName) {
+    tokenStateServiceStatusMap.put(TSS_ALLOWED_BACKEND_FOR_TOKENGEN, "false");
+    final String allowedTssBackends = context.getInitParameter(TOKEN_EXP_TOKENGEN_ALLOWED_TSS_BACKENDS);
+    if (allowedTssBackends != null && !allowedTssBackends.isEmpty()) {
+      for (String allowedTssBackend : allowedTssBackends.split(",")) {
+        if (allowedTssBackend.trim().equals(actualTokenServiceName)) {
+          tokenStateServiceStatusMap.put(TSS_ALLOWED_BACKEND_FOR_TOKENGEN, "true");
+          break;
+        }
+      }
+    } else {
+      //if there is no custom configuration in the topology, then we allow keystore and DB back-end for the tokengen application
+      if ("AliasBasedTokenStateService".equals(actualTokenServiceName) || "JDBCTokenStateService".equals(actualTokenServiceName)) {
+        tokenStateServiceStatusMap.put(TSS_ALLOWED_BACKEND_FOR_TOKENGEN, "true");
+      }
+    }
   }
 
   private void setSignatureAlogrithm() throws AliasServiceException {
@@ -245,6 +289,13 @@ public class TokenResource {
   @Produces({APPLICATION_JSON, APPLICATION_XML})
   public Response doPost() {
     return getAuthenticationToken();
+  }
+
+  @GET
+  @Path(GET_TSS_STATUS_PATH)
+  @Produces({ APPLICATION_JSON })
+  public Response getTokenStateServiceStatus() {
+    return Response.status(Response.Status.OK).entity(JsonUtils.renderAsJsonString(tokenStateServiceStatusMap)).build();
   }
 
   @POST
