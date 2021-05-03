@@ -307,7 +307,7 @@ public class HadoopAuthFilter extends
           new PrivilegedExceptionAction<Object>() {
             @Override
             public Object run() throws Exception {
-              chain.doFilter(request, response);
+              chain.doFilter(new AnonymousRequest(request, principal), response);
               return null;
             }
           }
@@ -405,5 +405,35 @@ public class HadoopAuthFilter extends
 
   boolean isJwtSupported() {
     return jwtFilter != null;
+  }
+
+  /**
+   * A wrapper around the request that returns anonymous subject.
+   */
+  private class AnonymousRequest extends HttpServletRequestWrapper {
+    private Principal principal;
+
+    AnonymousRequest(HttpServletRequest req, Principal principal) {
+      super(req);
+      this.principal = principal;
+    }
+
+    /**
+     * The default behavior of this method is to return getRemoteUser()
+     * on the wrapped request object.
+     */
+    @Override
+    public String getRemoteUser() {
+      return principal.getName();
+    }
+
+    /**
+     * The default behavior of this method is to return getUserPrincipal()
+     * on the wrapped request object.
+     */
+    @Override
+    public Principal getUserPrincipal() {
+      return principal;
+    }
   }
 }
