@@ -103,6 +103,8 @@ public class TokenResource {
   static final String GET_TSS_STATUS_PATH = "/getTssStatus";
   static final String RENEW_PATH = "/renew";
   static final String REVOKE_PATH = "/revoke";
+  static final String ENABLE_PATH = "/enable";
+  static final String DISABLE_PATH = "/disable";
   private static final String TARGET_ENDPOINT_PULIC_CERT_PEM = "knox.token.target.endpoint.cert.pem";
   private static TokenServiceMessages log = MessagesFactory.get(TokenServiceMessages.class);
   private long tokenTTL = TOKEN_TTL_DEFAULT;
@@ -408,6 +410,47 @@ public class TokenResource {
     }
 
     return resp;
+  }
+
+  @POST
+  @Path(ENABLE_PATH)
+  @Produces({ APPLICATION_JSON })
+  public Response enable(String tokenId) {
+    return setTokenEnabledFlag(tokenId, true);
+  }
+
+  @POST
+  @Path(DISABLE_PATH)
+  @Produces({ APPLICATION_JSON })
+  public Response disable(String tokenId) {
+    return setTokenEnabledFlag(tokenId, false);
+  }
+
+  private Response setTokenEnabledFlag(String tokenId, boolean enabled) {
+    String error = "";
+    if (tokenStateService == null) {
+      error = "Unable to " + (enabled ? "enable" : "disable") + " tokens because token management is not configured";
+    } else {
+      try {
+        final TokenMetadata tokenMetadata = tokenStateService.getTokenMetadata(tokenId);
+        if (enabled && tokenMetadata.isEnabled()) {
+          error = "Token is already enabled";
+        } else if (!enabled && !tokenMetadata.isEnabled()) {
+          error = "Token is already disabled";
+        } else {
+          tokenMetadata.setEnabled(enabled);
+          tokenStateService.addMetadata(tokenId, tokenMetadata);
+        }
+      } catch (UnknownTokenException e) {
+        error = safeGetMessage(e);
+      }
+    }
+    if (error.isEmpty()) {
+      return Response.status(Response.Status.OK).entity("{\n  \"setEnabledFlag\": \"true\",\n  \"isEnabled\": \"" + enabled + "\"\n}\n").build();
+    } else {
+      log.badSetEnabledFlagRequest(getTopologyName(), Tokens.getTokenIDDisplayText(tokenId), error);
+      return Response.status(Response.Status.BAD_REQUEST).entity("{\n  \"setEnabledFlag\": \"false\",\n  \"error\": \"" + error + "\"\n}\n").build();
+    }
   }
 
   private X509Certificate extractCertificate(HttpServletRequest req) {

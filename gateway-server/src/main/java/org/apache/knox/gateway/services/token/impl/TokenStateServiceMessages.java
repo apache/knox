@@ -223,7 +223,7 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.DEBUG, text = "Updated metadata for {0} in the database")
   void updatedMetadataInDatabase(String tokenId);
 
-  @Message(level = MessageLevel.DEBUG, text = "Failed to update metadata for {0} in the database")
+  @Message(level = MessageLevel.DEBUG, text = "Failed to save/update metadata for {0} in the database")
   void failedToUpdateMetadataInDatabase(String tokenId);
 
   @Message(level = MessageLevel.ERROR, text = "An error occurred while updating metadata for {0} in the database : {1}")

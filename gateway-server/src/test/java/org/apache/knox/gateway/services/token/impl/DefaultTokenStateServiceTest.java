@@ -19,6 +19,7 @@ package org.apache.knox.gateway.services.token.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -292,12 +293,13 @@ public class DefaultTokenStateServiceTest {
     tss.addMetadata(token.getClaim(JWTToken.KNOX_ID_CLAIM), new TokenMetadata(userName));
     assertNotNull(tss.getTokenMetadata(tokenId));
     assertEquals(tss.getTokenMetadata(tokenId).getUserName(), userName);
-    assertTrue(tss.getTokenMetadata(tokenId).getComment().isEmpty());
+    assertNull(tss.getTokenMetadata(tokenId).getComment());
 
     final String comment = "this is my test comment";
-    tss.addMetadata(token.getClaim(JWTToken.KNOX_ID_CLAIM), new TokenMetadata(userName, comment));
+    tss.addMetadata(token.getClaim(JWTToken.KNOX_ID_CLAIM), new TokenMetadata(userName, comment, true));
     assertNotNull(tss.getTokenMetadata(tokenId));
     assertEquals(tss.getTokenMetadata(tokenId).getComment(), comment);
+    assertTrue(tss.getTokenMetadata(tokenId).isEnabled());
   }
 
   protected static JWTToken createMockToken(final long expiration) {

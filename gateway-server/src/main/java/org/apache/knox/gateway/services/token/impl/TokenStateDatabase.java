@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.services.token.impl;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -25,7 +26,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.sql.DataSource;
 
@@ -34,34 +37,38 @@ import org.apache.knox.gateway.services.security.token.TokenMetadata;
 
 public class TokenStateDatabase {
   private static final String TOKENS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenDatabaseTable.sql";
+  private static final String TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenMetadataDatabaseTable.sql";
   static final String TOKENS_TABLE_NAME = "KNOX_TOKENS";
+  static final String TOKEN_METADATA_TABLE_NAME = "KNOX_TOKEN_METADATA";
   private static final String ADD_TOKEN_SQL = "INSERT INTO " + TOKENS_TABLE_NAME + "(token_id, issue_time, expiration, max_lifetime) VALUES(?, ?, ?, ?)";
   private static final String REMOVE_TOKEN_SQL = "DELETE FROM " + TOKENS_TABLE_NAME + " WHERE token_id = ?";
   private static final String REMOVE_EXPIRED_TOKENS_SQL = "DELETE FROM " + TOKENS_TABLE_NAME + " WHERE expiration < ?";
   static final String GET_TOKEN_EXPIRATION_SQL = "SELECT expiration FROM " + TOKENS_TABLE_NAME + " WHERE token_id = ?";
   private static final String UPDATE_TOKEN_EXPIRATION_SQL = "UPDATE " + TOKENS_TABLE_NAME + " SET expiration = ? WHERE token_id = ?";
   static final String GET_MAX_LIFETIME_SQL = "SELECT max_lifetime FROM " + TOKENS_TABLE_NAME + " WHERE token_id = ?";
-  private static final String ADD_METADATA_SQL = "UPDATE " + TOKENS_TABLE_NAME + " SET username = ?, comment = ? WHERE token_id = ?";
-  private static final String GET_METADATA_SQL = "SELECT username, comment FROM " + TOKENS_TABLE_NAME + " WHERE token_id = ?";
+  private static final String ADD_METADATA_SQL = "INSERT INTO " + TOKEN_METADATA_TABLE_NAME + "(token_id, md_name, md_value) VALUES(?, ?, ?)";
+  private static final String UPDATE_METADATA_SQL = "UPDATE " + TOKEN_METADATA_TABLE_NAME + " SET md_value = ? WHERE token_id = ? AND md_name = ?";
+  private static final String GET_METADATA_SQL = "SELECT md_name, md_value FROM " + TOKEN_METADATA_TABLE_NAME + " WHERE token_id = ?";
 
   private final DataSource dataSource;
 
   TokenStateDatabase(DataSource dataSource) throws Exception {
     this.dataSource = dataSource;
-    createKnoxTokensTableIfNotExists();
+    createTableIfNotExists(TOKENS_TABLE_NAME, TOKENS_TABLE_CREATE_SQL_FILE_NAME);
+    createTableIfNotExists(TOKEN_METADATA_TABLE_NAME, TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME);
   }
 
-  private void createKnoxTokensTableIfNotExists() throws Exception {
-    if (!isKnoxTokensTableExist()) {
-      createKnoxTokensTable();
+  private void createTableIfNotExists(String tableName, String createSqlFileName) throws Exception {
+    if (!isTableExists(tableName)) {
+      createTable(createSqlFileName);
     }
   }
 
-  private boolean isKnoxTokensTableExist() throws SQLException {
+  private boolean isTableExists(String tableName) throws SQLException {
     boolean exists = false;
     try (Connection connection = dataSource.getConnection()) {
       final DatabaseMetaData dbMetadata = connection.getMetaData();
-      final String tableNameToCheck = dbMetadata.storesUpperCaseIdentifiers() ? TOKENS_TABLE_NAME : TOKENS_TABLE_NAME.toLowerCase(Locale.ROOT);
+      final String tableNameToCheck = dbMetadata.storesUpperCaseIdentifiers() ? tableName : tableName.toLowerCase(Locale.ROOT);
       try (ResultSet tables = dbMetadata.getTables(connection.getCatalog(), null, tableNameToCheck, null)) {
         exists = tables.next();
       }
@@ -69,8 +76,8 @@ public class TokenStateDatabase {
     return exists;
   }
 
-  private void createKnoxTokensTable() throws Exception {
-    final InputStream is = TokenStateDatabase.class.getClassLoader().getResourceAsStream(TOKENS_TABLE_CREATE_SQL_FILE_NAME);
+  private void createTable(String createSqlFileName) throws Exception {
+    final InputStream is = TokenStateDatabase.class.getClassLoader().getResourceAsStream(createSqlFileName);
     final String createTableSql = IOUtils.toString(is, UTF_8);
     try (Connection connection = dataSource.getConnection(); Statement createTableStatment = connection.createStatement();) {
       createTableStatment.execute(createTableSql);
@@ -127,11 +134,20 @@ public class TokenStateDatabase {
     }
   }
 
-  boolean addMetadata(String tokenId, TokenMetadata metadata) throws SQLException {
+  boolean updateMetadata(String tokenId, String metadataName, String metadataValue) throws SQLException {
+    try (Connection connection = dataSource.getConnection(); PreparedStatement updateMetadataStatement = connection.prepareStatement(UPDATE_METADATA_SQL)) {
+      updateMetadataStatement.setString(1, metadataValue);
+      updateMetadataStatement.setString(2, tokenId);
+      updateMetadataStatement.setString(3, metadataName);
+      return updateMetadataStatement.executeUpdate() == 1;
+    }
+  }
+
+  boolean addMetadata(String tokenId, String metadataName, String metadataValue) throws SQLException {
     try (Connection connection = dataSource.getConnection(); PreparedStatement addMetadataStatement = connection.prepareStatement(ADD_METADATA_SQL)) {
-      addMetadataStatement.setString(1, metadata.getUserName());
-      addMetadataStatement.setString(2, metadata.getComment());
-      addMetadataStatement.setString(3, tokenId);
+      addMetadataStatement.setString(1, tokenId);
+      addMetadataStatement.setString(2, metadataName);
+      addMetadataStatement.setString(3, metadataValue);
       return addMetadataStatement.executeUpdate() == 1;
     }
   }
@@ -140,7 +156,11 @@ public class TokenStateDatabase {
     try (Connection connection = dataSource.getConnection(); PreparedStatement getMaxLifetimeStatement = connection.prepareStatement(GET_METADATA_SQL)) {
       getMaxLifetimeStatement.setString(1, tokenId);
       try (ResultSet rs = getMaxLifetimeStatement.executeQuery()) {
-        return rs.next() ? new TokenMetadata(rs.getString(1), rs.getString(2)) : null;
+        final Map<String, String> metadataMap = new HashMap<>();
+        while (rs.next()) {
+          metadataMap.put(rs.getString(1), rs.getString(2));
+        }
+        return metadataMap.isEmpty() ? null : new TokenMetadata(metadataMap);
       }
     }
   }

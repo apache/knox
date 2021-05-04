@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.services.token.impl;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.nio.file.Path;
@@ -47,9 +48,8 @@ import org.junit.rules.TemporaryFolder;
 public class JDBCTokenStateServiceTest {
 
   private static final String GET_TOKENS_COUNT_SQL = "SELECT count(*) FROM " + TokenStateDatabase.TOKENS_TABLE_NAME;
-  private static final String GET_USERNAME_SQL = "SELECT username FROM " + TokenStateDatabase.TOKENS_TABLE_NAME + " WHERE token_id = ?";
-  private static final String GET_COMMENT_SQL = "SELECT comment FROM " + TokenStateDatabase.TOKENS_TABLE_NAME + " WHERE token_id = ?";
-  private static final String TRUNCATE_KNOX_TOKENS_SQL = "TRUNCATE TABLE " + TokenStateDatabase.TOKENS_TABLE_NAME;
+  private static final String TRUNCATE_KNOX_TOKENS_SQL = "DELETE FROM " + TokenStateDatabase.TOKENS_TABLE_NAME;
+  private static final String TRUNCATE_KNOX_TOKEN_METADATA_SQL = "DELETE FROM " + TokenStateDatabase.TOKEN_METADATA_TABLE_NAME;
 
   @ClassRule
   public static final TemporaryFolder testFolder = new TemporaryFolder();
@@ -143,15 +143,25 @@ public class JDBCTokenStateServiceTest {
   @Test(expected = UnknownTokenException.class)
   public void testAddMetadata() throws Exception {
     final String tokenId = UUID.randomUUID().toString();
+    final TokenMetadata tokenMetadata = new TokenMetadata("sampleUser", "my test comment", false);
     jdbcTokenStateService.addToken(tokenId, 1, 1, 1);
-    jdbcTokenStateService.addMetadata(tokenId, new TokenMetadata("sampleUser", "my test comment"));
+    jdbcTokenStateService.addMetadata(tokenId, tokenMetadata);
 
     assertEquals("sampleUser", jdbcTokenStateService.getTokenMetadata(tokenId).getUserName());
     assertEquals("my test comment", jdbcTokenStateService.getTokenMetadata(tokenId).getComment());
+    assertFalse(jdbcTokenStateService.getTokenMetadata(tokenId).isEnabled());
 
-    assertEquals("sampleUser", getStringTokenAttributeFromDatabase(tokenId, GET_USERNAME_SQL));
-    assertEquals("my test comment", getStringTokenAttributeFromDatabase(tokenId, GET_COMMENT_SQL));
+    assertEquals("sampleUser", getStringTokenAttributeFromDatabase(tokenId, getSelectMetadataSql(TokenMetadata.USER_NAME)));
+    assertEquals("my test comment", getStringTokenAttributeFromDatabase(tokenId, getSelectMetadataSql(TokenMetadata.COMMENT)));
+    assertEquals("false", getStringTokenAttributeFromDatabase(tokenId, getSelectMetadataSql(TokenMetadata.ENABLED)));
 
+    //enable the token (it was disabled)
+    tokenMetadata.setEnabled(true);
+    jdbcTokenStateService.addMetadata(tokenId, tokenMetadata);
+    assertTrue(jdbcTokenStateService.getTokenMetadata(tokenId).isEnabled());
+    assertEquals("true", getStringTokenAttributeFromDatabase(tokenId, getSelectMetadataSql(TokenMetadata.ENABLED)));
+
+    //remove and get -> expect UnknownTokenException
     jdbcTokenStateService.removeToken(tokenId);
     jdbcTokenStateService.getTokenMetadata(tokenId);
   }
@@ -190,9 +200,17 @@ public class JDBCTokenStateServiceTest {
   }
 
   private void truncateDatabase() throws SQLException {
+    try (Connection conn = derbyDatabase.getConnection(); PreparedStatement stmt = conn.prepareStatement(TRUNCATE_KNOX_TOKEN_METADATA_SQL)) {
+      stmt.executeUpdate();
+    }
+
     try (Connection conn = derbyDatabase.getConnection(); PreparedStatement stmt = conn.prepareStatement(TRUNCATE_KNOX_TOKENS_SQL)) {
       stmt.executeUpdate();
     }
+  }
+
+  private String getSelectMetadataSql(String metadataName) {
+    return "SELECT md_value FROM " + TokenStateDatabase.TOKEN_METADATA_TABLE_NAME + " WHERE token_id = ? AND md_name = '" + metadataName + "'";
   }
 
 }

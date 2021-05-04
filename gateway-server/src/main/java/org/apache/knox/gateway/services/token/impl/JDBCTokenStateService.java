@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -38,6 +39,7 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
   private TokenStateDatabase tokenDatabase;
   private AtomicBoolean initialized = new AtomicBoolean(false);
   private Lock initLock = new ReentrantLock(true);
+  private Lock addMetadataLock = new ReentrantLock(true);
 
   public void setAliasService(AliasService aliasService) {
     this.aliasService = aliasService;
@@ -194,7 +196,8 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
   @Override
   public void addMetadata(String tokenId, TokenMetadata metadata) {
     try {
-      final boolean added = tokenDatabase.addMetadata(tokenId, metadata);
+      boolean added = saveMetadataMapInDatabase(tokenId, metadata.getMetadataMap());
+
       if (added) {
         log.updatedMetadataInDatabase(Tokens.getTokenIDDisplayText(tokenId));
 
@@ -207,6 +210,31 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
     } catch (SQLException e) {
       log.errorUpdatingMetadataInDatabase(Tokens.getTokenIDDisplayText(tokenId), e.getMessage(), e);
       throw new TokenStateServiceException("An error occurred while updating metadata for " + Tokens.getTokenIDDisplayText(tokenId) + " in the database", e);
+    }
+  }
+
+  private boolean saveMetadataMapInDatabase(String tokenId, Map<String, String> metadataMap) throws SQLException {
+    addMetadataLock.lock();
+    try {
+      boolean saved = false;
+      for (Map.Entry<String, String> metadataMapEntry : metadataMap.entrySet()) {
+        if (StringUtils.isNotBlank(metadataMapEntry.getValue())) {
+          if (upsertTokenMetadata(tokenId, metadataMapEntry.getKey(), metadataMapEntry.getValue())) {
+            saved = true;
+          }
+        }
+      }
+      return saved;
+    } finally {
+      addMetadataLock.unlock();
+    }
+  }
+
+  private boolean upsertTokenMetadata(String tokenId, String metadataName, String metadataValue) throws SQLException {
+    if (!tokenDatabase.updateMetadata(tokenId, metadataName, metadataValue)) {
+      return tokenDatabase.addMetadata(tokenId, metadataName, metadataValue);
+    } else {
+      return true; //successfully updated
     }
   }
 
