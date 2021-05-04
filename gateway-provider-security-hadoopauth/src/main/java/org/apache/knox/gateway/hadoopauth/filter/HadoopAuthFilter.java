@@ -42,6 +42,7 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
+import org.apache.knox.gateway.util.AuthFilterUtils;
 
 import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
@@ -64,6 +65,8 @@ import java.util.Locale;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
+
+import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM;
 
 /*
  * see http://hadoop.apache.org/docs/current/hadoop-auth/Configuration.html
@@ -95,7 +98,6 @@ public class HadoopAuthFilter extends
 
   /* A semicolon separated list of paths that need to bypass authentication */
   private static final String HADOOP_AUTH_UNAUTHENTICATED_PATHS_PARAM = "hadoop.auth.unauthenticated.path.list";
-  private static final String DEFAULT_HADOOP_AUTH_UNAUTHENTICATED_PATHS_PARAM = "/knoxtoken/api/v1/jwks.json";
   private static AuditService auditService = AuditServiceFactory.getAuditService();
   private static Auditor auditor = auditService.getAuditor(
       AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
@@ -153,23 +155,23 @@ public class HadoopAuthFilter extends
       LOG.initializedJwtFilter();
     }
 
-    /* get unauthenticated paths list */
-    String unAuthPathString = filterConfig.getInitParameter(HADOOP_AUTH_UNAUTHENTICATED_PATHS_PARAM);
-    /* if no list specified use default value */
-    if (StringUtils.isBlank(unAuthPathString)) {
-      unAuthPathString = DEFAULT_HADOOP_AUTH_UNAUTHENTICATED_PATHS_PARAM;
-    }
+    /* add default unauthenticated paths list */
+    AuthFilterUtils.parseAndAddUnauthPathList(unAuthenticatedPaths, DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM);
 
-    final StringTokenizer st = new StringTokenizer(unAuthPathString, ";,");
-    while (st.hasMoreTokens()) {
-      unAuthenticatedPaths.add(st.nextToken());
+    /* add provided unauthenticated paths list if specified */
+    final String unAuthPathString = filterConfig
+        .getInitParameter(HADOOP_AUTH_UNAUTHENTICATED_PATHS_PARAM);
+    /* if list specified add it */
+    if (!StringUtils.isBlank(unAuthPathString)) {
+      AuthFilterUtils.parseAndAddUnauthPathList(unAuthenticatedPaths, unAuthPathString);
     }
   }
 
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
     /* check for unauthenticated paths to bypass */
-    if(doesRequestContainUnauthPath(request)) {
+
+    if(AuthFilterUtils.doesRequestContainUnauthPath(unAuthenticatedPaths, request)) {
       continueWithAnonymousSubject(request, response, filterChain);
       return;
     }
@@ -184,7 +186,7 @@ public class HadoopAuthFilter extends
   @Override
   protected void doFilter(FilterChain filterChain, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
     /* check for unauthenticated paths to bypass */
-    if(doesRequestContainUnauthPath(request)) {
+    if(AuthFilterUtils.doesRequestContainUnauthPath(unAuthenticatedPaths, request)) {
       continueWithAnonymousSubject(request, response, filterChain);
       return;
     }
@@ -244,22 +246,6 @@ public class HadoopAuthFilter extends
     }
 
     super.doFilter(filterChain, request, response);
-  }
-
-  /**
-   * A helper method that checks whether request contains
-   * unauthenticated path
-   * @param request
-   * @return
-   */
-  private boolean doesRequestContainUnauthPath(final ServletRequest request) {
-    for (final String path : unAuthenticatedPaths) {
-      /* make sure the path matches EXACTLY to prevent auth bypass */
-      if (((HttpServletRequest) request).getPathInfo().equals(path)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   /**

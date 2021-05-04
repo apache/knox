@@ -25,6 +25,7 @@ import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.CertificateUtils;
 import org.apache.knox.gateway.util.CookieUtils;
 import org.eclipse.jetty.http.MimeTypes;
@@ -47,6 +48,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
+
+import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM;
 
 public class SSOCookieFederationFilter extends AbstractJWTFilter {
   private static final JWTMessages LOGGER = MessagesFactory.get( JWTMessages.class );
@@ -103,16 +106,14 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
       publicKey = CertificateUtils.parseRSAPublicKey(verificationPEM);
     }
 
-    /* get unauthenticated paths list */
-    String unAuthPathString = filterConfig.getInitParameter(SSO_UNAUTHENTICATED_PATHS_PARAM);
-    /* if no list specified use default value */
-    if (StringUtils.isBlank(unAuthPathString)) {
-      unAuthPathString = DEFAULT_SSO_UNAUTHENTICATED_PATHS_PARAM;
-    }
-
-    final StringTokenizer st = new StringTokenizer(unAuthPathString, ";,");
-    while (st.hasMoreTokens()) {
-      unAuthenticatedPaths.add(st.nextToken());
+    /* add default unauthenticated paths list */
+    AuthFilterUtils.parseAndAddUnauthPathList(unAuthenticatedPaths, DEFAULT_SSO_UNAUTHENTICATED_PATHS_PARAM);
+    /* add provided unauthenticated paths list if specified */
+    final String unAuthPathString = filterConfig
+        .getInitParameter(SSO_UNAUTHENTICATED_PATHS_PARAM);
+    /* if list specified add it */
+    if (!StringUtils.isBlank(unAuthPathString)) {
+      AuthFilterUtils.parseAndAddUnauthPathList(unAuthenticatedPaths, unAuthPathString);
     }
 
     // gateway path for deriving an idp url when missing
@@ -145,14 +146,12 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
     List<Cookie> ssoCookies = CookieUtils.getCookiesForName(req, cookieName);
     if (ssoCookies.isEmpty()) {
       /* check for unauthenticated paths to bypass */
-      for (final String path : unAuthenticatedPaths) {
-        if (req.getPathInfo().equals(path)) {
-          /* This path is configured as an unauthenticated path let the request through */
-          final Subject sub = new Subject();
-          sub.getPrincipals().add(new PrimaryPrincipal("anonymous"));
-          LOGGER.unauthenticatedPathBypass(req.getRequestURI(), unAuthenticatedPaths.toString());
-          continueWithEstablishedSecurityContext(sub, req, res, chain);
-        }
+      if(AuthFilterUtils.doesRequestContainUnauthPath(unAuthenticatedPaths, request)) {
+        /* This path is configured as an unauthenticated path let the request through */
+        final Subject sub = new Subject();
+        sub.getPrincipals().add(new PrimaryPrincipal("anonymous"));
+        LOGGER.unauthenticatedPathBypass(req.getRequestURI(), unAuthenticatedPaths.toString());
+        continueWithEstablishedSecurityContext(sub, req, res, chain);
       }
 
       if ("OPTIONS".equals(req.getMethod())) {

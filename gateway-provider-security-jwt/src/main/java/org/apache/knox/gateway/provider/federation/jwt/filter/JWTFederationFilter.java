@@ -25,6 +25,7 @@ import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.CertificateUtils;
 
 import javax.security.auth.Subject;
@@ -44,12 +45,13 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.StringTokenizer;
 
+import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM;
+
 public class JWTFederationFilter extends AbstractJWTFilter {
 
   private static final JWTMessages LOGGER = MessagesFactory.get( JWTMessages.class );
   /* A semicolon separated list of paths that need to bypass authentication */
   public static final String JWT_UNAUTHENTICATED_PATHS_PARAM = "jwt.unauthenticated.path.list";
-  public static final String DEFAULT_JWT_UNAUTHENTICATED_PATHS_PARAM = "/knoxtoken/api/v1/jwks.json";
 
   public enum TokenType {
     JWT, Passcode;
@@ -102,16 +104,15 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       publicKey = CertificateUtils.parseRSAPublicKey(verificationPEM);
     }
 
-    /* get unauthenticated paths list */
-    String unAuthPathString = filterConfig.getInitParameter(JWT_UNAUTHENTICATED_PATHS_PARAM);
-    /* if no list specified use default value */
-    if (StringUtils.isBlank(unAuthPathString)) {
-      unAuthPathString = DEFAULT_JWT_UNAUTHENTICATED_PATHS_PARAM;
-    }
+    /* add default unauthenticated paths list */
+    AuthFilterUtils.parseAndAddUnauthPathList(unAuthenticatedPaths, DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM);
 
-    final StringTokenizer st = new StringTokenizer(unAuthPathString, ";,");
-    while (st.hasMoreTokens()) {
-      unAuthenticatedPaths.add(st.nextToken());
+    /* add provided unauthenticated paths list if specified */
+    final String unAuthPathString = filterConfig
+        .getInitParameter(JWT_UNAUTHENTICATED_PATHS_PARAM);
+    /* if list specified add it */
+    if (!StringUtils.isBlank(unAuthPathString)) {
+      AuthFilterUtils.parseAndAddUnauthPathList(unAuthenticatedPaths, unAuthPathString);
     }
 
     configureExpectedParameters(filterConfig);
@@ -125,7 +126,8 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
     /* check for unauthenticated paths to bypass */
-    if(doesRequestContainUnauthPath(request)) {
+    if(AuthFilterUtils
+        .doesRequestContainUnauthPath(unAuthenticatedPaths, request)) {
       continueWithAnonymousSubject(request, response, chain);
       return;
     }
@@ -213,21 +215,6 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     else {
       response.sendError(status);
     }
-  }
-
-  /**
-   * A helper method that checks whether request contains
-   * unauthenticated path
-   * @param request
-   * @return
-   */
-  private boolean doesRequestContainUnauthPath(final ServletRequest request) {
-    for (final String path : unAuthenticatedPaths) {
-      if (((HttpServletRequest) request).getPathInfo().equals(path)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   /**
