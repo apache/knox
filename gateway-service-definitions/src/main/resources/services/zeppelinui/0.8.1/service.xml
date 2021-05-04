@@ -98,5 +98,10 @@
     </route>
 
   </routes>
-  <dispatch classname="org.apache.knox.gateway.dispatch.DefaultDispatch"/>
+  <dispatch classname="org.apache.knox.gateway.dispatch.ConfigurableDispatch" ha-classname="org.apache.knox.gateway.ha.dispatch.ConfigurableHADispatch" use-two-way-ssl="false">
+    <param>
+      <name>responseExcludeHeaders</name>
+      <value>WWW-AUTHENTICATE</value>
+    </param>
+  </dispatch>
 </service>
