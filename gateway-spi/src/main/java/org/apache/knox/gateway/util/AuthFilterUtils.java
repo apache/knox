@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.util;
 
+import org.apache.commons.lang3.StringUtils;
+
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Set;
@@ -43,10 +45,26 @@ public class AuthFilterUtils {
    * @param unAuthenticatedPaths
    * @param list
    */
-  public static void parseAndAddUnauthPathList(final Set<String> unAuthenticatedPaths, final String list) {
+  public static void parseStringThenAdd(final Set<String> unAuthenticatedPaths, final String list) {
     final StringTokenizer tokenizer = new StringTokenizer(list, ";,");
     while (tokenizer.hasMoreTokens()) {
       unAuthenticatedPaths.add(tokenizer.nextToken());
+    }
+  }
+
+  /**
+   * A method that parses a string (delimiters = ;,) and adds them to the
+   * provided un-authenticated path set.
+   * @param unAuthenticatedPaths
+   * @param list
+   * @param defaultList
+   */
+  public static void addUnauthPaths(final Set<String> unAuthenticatedPaths, final String list, final String defaultList) {
+    /* add default unauthenticated paths list */
+    parseStringThenAdd(unAuthenticatedPaths, defaultList);
+    /* add provided unauthenticated paths list if specified */
+    if (!StringUtils.isBlank(list)) {
+      AuthFilterUtils.parseStringThenAdd(unAuthenticatedPaths, list);
     }
   }
 }

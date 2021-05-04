@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
@@ -47,9 +46,6 @@ import java.text.ParseException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.StringTokenizer;
-
-import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM;
 
 public class SSOCookieFederationFilter extends AbstractJWTFilter {
   private static final JWTMessages LOGGER = MessagesFactory.get( JWTMessages.class );
@@ -106,15 +102,10 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
       publicKey = CertificateUtils.parseRSAPublicKey(verificationPEM);
     }
 
-    /* add default unauthenticated paths list */
-    AuthFilterUtils.parseAndAddUnauthPathList(unAuthenticatedPaths, DEFAULT_SSO_UNAUTHENTICATED_PATHS_PARAM);
-    /* add provided unauthenticated paths list if specified */
     final String unAuthPathString = filterConfig
         .getInitParameter(SSO_UNAUTHENTICATED_PATHS_PARAM);
-    /* if list specified add it */
-    if (!StringUtils.isBlank(unAuthPathString)) {
-      AuthFilterUtils.parseAndAddUnauthPathList(unAuthenticatedPaths, unAuthPathString);
-    }
+    /* prepare a list of allowed unauthenticated paths */
+    AuthFilterUtils.addUnauthPaths(unAuthenticatedPaths, unAuthPathString, DEFAULT_SSO_UNAUTHENTICATED_PATHS_PARAM);
 
     // gateway path for deriving an idp url when missing
     setGatewayPath(filterConfig);
