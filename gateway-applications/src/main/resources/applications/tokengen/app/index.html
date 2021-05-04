@@ -61,18 +61,19 @@
                         <label><i class="icon-info"></i> Token Generation enables integration and API invocations by using the
                          token as an authorization bearer token. Copy the JWT token from the resulting text area and protect it
                          securely from others as this token represents your identity and is active until expired.</label>
-                        <!--
+
                         <label><i class="icon-comment"></i> Comment:</label>
-                        <input type="text" name="comment" id="comment" tabindex="1" onkeypress=keypressed(event) autofocus>
-                        -->
-                        <label><i class="icon-time"></i> Lifetime (days):</label>
-                        <select name="lifespan" id="lifespan" tabindex="1" onkeypress=keypressed(event)>
-                        	<option value="1">1 days</option>
-                        	<option value="7">7 days</option>
-                        	<option value="30">30 days</option>
-                        	<option value="90">90 days</option>
-                        	<option value="120">120 days</option>
-                       	</select>
+                        <input type="text" name="comment" id="comment" tabindex="1" onkeypress=keypressed(event) autofocus size="255">
+
+                        <label><i class="icon-time"></i> Lifetime (days, hours, mins):</label>
+                        <table>
+                            <tr>
+                                <td><input type="number" id="lt_days" name="lt_days" step="1" min="0" max="3650" value="1" size="3"></td> <!-- 10 years limit -->
+                                <td><input type="number" id="lt_hours" name="lt_hours" step="1" min="0" max="23" value="0" size="3"></td>
+                                <td><input type="number" id="lt_mins" name="lt_mins" step="1" min="0" max="59" value="0" size="3"></td>
+                            </tr>
+                        </table>
+                        <label style="display: none; color: red;" id="invalidLifetimeText"><i class="icon-warning"></i>Invalid lifetime!</label>
                     </div>
                     <span id="errorBox" class="help-inline" style="color:white;display:none;"><span class="errorMsg"></span>
                         <i class="icon-warning-sign" style="color:#ae2817;"></i>

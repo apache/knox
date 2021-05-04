@@ -110,6 +110,7 @@ function setTokenStateServiceStatus() {
 }
 
 var gen = function() {
+	$('#invalidLifetimeText').hide();
     var pathname = window.location.pathname;
     var topologyContext = pathname.replace(loginPageSuffix, "");;
     var baseURL = topologyContext.substring(0, topologyContext.lastIndexOf('/'));
@@ -117,13 +118,15 @@ var gen = function() {
     var tokenURL = topologyContext + knoxtokenURL;
     var form = document.forms[0];
     //var comment = form.comment.value;
-    var lifespan = form.lifespan.value;
+    var lt_days = form.lt_days.value;
+    var lt_hours = form.lt_hours.value;
+    var lt_mins = form.lt_mins.value;
     var _gen = function() {
         var apiUrl = tokenURL;
         //Instantiate HTTP Request
-        var params = '';
-        if (lifespan != '') {
-        	params = '?lifespan=' + lifespan;
+        var params = '?lifespan=P' + lt_days + "DT" + lt_hours + "H" + lt_mins + "M";  //we need to support Java's Duration pattern
+        if (form.comment.value != '') {
+            params = params + '&comment=' + encodeURIComponent(form.comment.value);
         }
         var request = ((window.XMLHttpRequest) ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP"));
         request.open("GET", apiUrl + params, true);
@@ -161,5 +164,9 @@ var gen = function() {
         }
     }
 
-    _gen();
+    if (lt_days == '0' && lt_hours == '0' && lt_mins == '0') {
+        $('#invalidLifetimeText').show();
+    } else {
+        _gen();
+    }
 }
