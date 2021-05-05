@@ -41,4 +41,10 @@ public interface HadoopAuthMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "Using JWT filter to serve the request" )
   void useJwtFilter();
+
+  @Message( level = MessageLevel.INFO, text = "Request {0} matches unauthenticated path list {1}, letting it through" )
+  void unauthenticatedPathBypass(String uri, String unauthPathList);
+
+  @Message( level = MessageLevel.ERROR, text = "Error while checking whether path {0} should be allowed unauthenticated access : {1}" )
+  void unauthenticatedPathError(String path, String error);
 }

@@ -18,10 +18,14 @@
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
+import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
-import org.apache.knox.gateway.services.security.token.impl.JWTToken;
-import org.apache.knox.gateway.util.CertificateUtils;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.util.AuthFilterUtils;
+import org.apache.knox.gateway.util.CertificateUtils;
 
 import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
@@ -31,14 +35,21 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
+
+import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM;
 
 public class JWTFederationFilter extends AbstractJWTFilter {
+
+  private static final JWTMessages LOGGER = MessagesFactory.get( JWTMessages.class );
+  /* A semicolon separated list of paths that need to bypass authentication */
+  public static final String JWT_UNAUTHENTICATED_PATHS_PARAM = "jwt.unauthenticated.path.list";
 
   public enum TokenType {
     JWT, Passcode;
@@ -54,6 +65,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   public static final String TOKEN    = "Token";
   public static final String PASSCODE = "Passcode";
   private String paramName;
+  private Set<String> unAuthenticatedPaths = new HashSet(20);
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
@@ -90,6 +102,11 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       publicKey = CertificateUtils.parseRSAPublicKey(verificationPEM);
     }
 
+    final String unAuthPathString = filterConfig
+        .getInitParameter(JWT_UNAUTHENTICATED_PATHS_PARAM);
+    /* prepare a list of allowed unauthenticated paths */
+    AuthFilterUtils.addUnauthPaths(unAuthenticatedPaths, unAuthPathString, DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM);
+
     configureExpectedParameters(filterConfig);
   }
 
@@ -100,6 +117,12 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
+    /* check for unauthenticated paths to bypass */
+    if(AuthFilterUtils
+        .doesRequestContainUnauthPath(unAuthenticatedPaths, request)) {
+      continueWithAnonymousSubject(request, response, chain);
+      return;
+    }
     final Pair<TokenType, String> wireToken = getWireToken(request);
 
     if (wireToken != null) {
@@ -183,6 +206,34 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     }
     else {
       response.sendError(status);
+    }
+  }
+
+  /**
+   * A function that let's configured unauthenticated path requests to
+   * pass through without requiring authentication.
+   * An anonymous subject is created and the request is audited.
+   *
+   * Fail gracefully by logging error message.
+   * @param request
+   * @param response
+   * @param chain
+   */
+  private void continueWithAnonymousSubject(final ServletRequest request,
+      final ServletResponse response, final FilterChain chain)
+      throws ServletException, IOException {
+    try {
+      /* This path is configured as an unauthenticated path let the request through */
+      final Subject sub = new Subject();
+      sub.getPrincipals().add(new PrimaryPrincipal("anonymous"));
+      LOGGER.unauthenticatedPathBypass(((HttpServletRequest) request).getRequestURI(), unAuthenticatedPaths.toString());
+      continueWithEstablishedSecurityContext(sub, (HttpServletRequest) request,
+          (HttpServletResponse) response, chain);
+
+    } catch (final Exception e) {
+      LOGGER.unauthenticatedPathError(
+          ((HttpServletRequest) request).getRequestURI(), e.toString());
+      throw e;
     }
   }
 

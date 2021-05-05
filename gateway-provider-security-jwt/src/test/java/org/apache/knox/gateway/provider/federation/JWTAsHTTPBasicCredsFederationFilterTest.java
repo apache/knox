@@ -96,6 +96,7 @@ public class JWTAsHTTPBasicCredsFederationFilterTest extends AbstractJWTFilterTe
             setTokenOnRequest(request, JWTFederationFilter.TOKEN.toLowerCase(Locale.ROOT), jwt.serialize());
 
             EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+            EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
             EasyMock.expect(request.getQueryString()).andReturn(null);
             HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
             EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);

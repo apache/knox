@@ -59,8 +59,11 @@ public interface JWTMessages {
   @Message( level = MessageLevel.DEBUG, text = "Audience claim has been validated." )
   void jwtAudienceValidated();
 
-  @Message( level = MessageLevel.INFO, text = "Path {0} is configured as unauthenticated path, letting the request {1} through" )
-  void unauthenticatedPathBypass(String path, String uri);
+  @Message( level = MessageLevel.INFO, text = "Request {0} matches unauthenticated path list {1}, letting it through" )
+  void unauthenticatedPathBypass(String uri, String unauthPathList);
+
+  @Message( level = MessageLevel.ERROR, text = "Error while checking whether path {0} should be allowed unauthenticated access : {1}" )
+  void unauthenticatedPathError(String path, String error);
 
   @Message( level = MessageLevel.WARN, text = "Unable to derive authentication provider URL: {0}" )
   void failedToDeriveAuthenticationProviderUrl(@StackTrace( level = MessageLevel.ERROR) Exception e);
