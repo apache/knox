@@ -50,8 +50,9 @@ abstract class FileTokenStateJournal implements TokenStateJournal {
     protected static final int INDEX_ISSUE_TIME   = 1;
     protected static final int INDEX_EXPIRATION   = 2;
     protected static final int INDEX_MAX_LIFETIME = 3;
-    protected static final int INDEX_USERNAME     = 4;
-    protected static final int INDEX_COMMENT      = 5;
+    protected static final int INDEX_ENABLED      = 4;
+    protected static final int INDEX_USERNAME     = 5;
+    protected static final int INDEX_COMMENT      = 6;
 
     protected static final TokenStateServiceMessages log = MessagesFactory.get(TokenStateServiceMessages.class);
 
@@ -190,7 +191,7 @@ abstract class FileTokenStateJournal implements TokenStateJournal {
 
         @Override
         public String toString() {
-            String[] elements = new String[6];
+            String[] elements = new String[7];
 
             elements[INDEX_TOKEN_ID] = getTokenId();
 
@@ -203,6 +204,9 @@ abstract class FileTokenStateJournal implements TokenStateJournal {
             String maxLifetime = getMaxLifetime();
             elements[INDEX_MAX_LIFETIME] = (maxLifetime != null) ? maxLifetime : "";
 
+            String enabled = getTokenMetadata() == null ? "" : String.valueOf(getTokenMetadata().isEnabled());
+            elements[INDEX_ENABLED] = enabled;
+
             String userName = getTokenMetadata() == null ? "" : (getTokenMetadata().getUserName() == null ? "" : getTokenMetadata().getUserName());
             elements[INDEX_USERNAME] = userName;
 
@@ -210,11 +214,12 @@ abstract class FileTokenStateJournal implements TokenStateJournal {
             elements[INDEX_COMMENT] = comment;
 
             return String.format(Locale.ROOT,
-                                 "%s,%s,%s,%s,%s,%s",
+                                 "%s,%s,%s,%s,%s,%s,%s",
                                  elements[INDEX_TOKEN_ID],
                                  elements[INDEX_ISSUE_TIME],
                                  elements[INDEX_EXPIRATION],
                                  elements[INDEX_MAX_LIFETIME],
+                                 elements[INDEX_ENABLED],
                                  elements[INDEX_USERNAME],
                                  elements[INDEX_COMMENT]);
         }
@@ -228,7 +233,7 @@ abstract class FileTokenStateJournal implements TokenStateJournal {
           */
         static FileJournalEntry parse(final String entry) {
             String[] elements = entry.split(",", -1);
-            if (elements.length < 6) {
+            if (elements.length < 7) {
                 throw new IllegalArgumentException("Invalid journal entry: " + entry);
             }
 
@@ -236,6 +241,7 @@ abstract class FileTokenStateJournal implements TokenStateJournal {
             String issueTime   = elements[INDEX_ISSUE_TIME].trim();
             String expiration  = elements[INDEX_EXPIRATION].trim();
             String maxLifetime = elements[INDEX_MAX_LIFETIME].trim();
+            String enabled     = elements[INDEX_ENABLED].trim();
             String userName    = elements[INDEX_USERNAME].trim();
             String comment     = elements[INDEX_COMMENT].trim();
 
@@ -243,7 +249,7 @@ abstract class FileTokenStateJournal implements TokenStateJournal {
                                         issueTime.isEmpty() ? null : issueTime,
                                         expiration.isEmpty() ? null : expiration,
                                         maxLifetime.isEmpty() ? null : maxLifetime,
-                                        new TokenMetadata(userName.isEmpty() ? null : userName, comment.isEmpty() ? null : comment));
+                                        new TokenMetadata(userName.isEmpty() ? null : userName, comment.isEmpty() ? null : comment, Boolean.parseBoolean(enabled)));
         }
 
     }

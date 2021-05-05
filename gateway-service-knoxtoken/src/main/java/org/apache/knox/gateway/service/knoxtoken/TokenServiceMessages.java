@@ -71,6 +71,9 @@ public interface TokenServiceMessages {
   @Message( level = MessageLevel.ERROR, text = "Knox Token service ({0}) rejected a bad revocation request for token {1}: {2}")
   void badRevocationRequest(String topologyName, String tokenDisplayText, String error);
 
+  @Message( level = MessageLevel.ERROR, text = "Knox Token service ({0}) rejected a bad set enabled flag request for token {1}: {2}")
+  void badSetEnabledFlagRequest(String topologyName, String tokenId, String error);
+
   @Message( level = MessageLevel.DEBUG, text = "Knox Token service ({0}) stored state for token {1} ({2})")
   void storedToken(String topologyName, String tokenDisplayText, String tokenId);
 

@@ -19,6 +19,7 @@ package org.apache.knox.gateway.services.security.token;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -26,41 +27,65 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.knox.gateway.util.JsonUtils;
 
 public class TokenMetadata {
-  private static final String JSON_ELEMENT_USER_NAME = "userName";
-  private static final String JSON_ELEMENT_COMMENT = "comment";
-  private static final String EMPTY_COMMENT = "";
+  public static final String USER_NAME = "userName";
+  public static final String COMMENT = "comment";
+  public static final String ENABLED = "enabled";
 
-  private final String userName;
-  private final String comment;
+  private final Map<String, String> metadataMap = new HashMap<>();
 
   public TokenMetadata(String userName) {
-    this(userName, EMPTY_COMMENT);
+    this(userName, null);
   }
 
   public TokenMetadata(String userName, String comment) {
-    this.userName = userName;
-    this.comment = comment;
+    this(userName, comment, true);
+  }
+
+  public TokenMetadata(String userName, String comment, boolean enabled) {
+    saveMetadata(USER_NAME, userName);
+    saveMetadata(COMMENT, comment);
+    setEnabled(enabled);
+  }
+
+  private void saveMetadata(String key, String value) {
+    if (StringUtils.isNotBlank(value)) {
+      this.metadataMap.put(key, value);
+    }
+  }
+
+  public TokenMetadata(Map<String, String> metadataMap) {
+    this.metadataMap.clear();
+    this.metadataMap.putAll(metadataMap);
+  }
+
+  public Map<String, String> getMetadataMap() {
+    return new HashMap<String, String>(this.metadataMap);
   }
 
   public String getUserName() {
-    return userName;
+    return metadataMap.get(USER_NAME);
   }
 
   public String getComment() {
-    return comment;
+    return metadataMap.get(COMMENT);
+  }
+
+  public void setEnabled(boolean enabled) {
+    saveMetadata(ENABLED, String.valueOf(enabled));
+  }
+
+  public boolean isEnabled() {
+    return Boolean.parseBoolean(metadataMap.get(ENABLED));
   }
 
   public String toJSON() {
-    final Map<String, String> metadataMap = new HashMap<>();
-    metadataMap.put(JSON_ELEMENT_USER_NAME, getUserName());
-    metadataMap.put(JSON_ELEMENT_COMMENT, getComment() == null ? EMPTY_COMMENT : getComment());
     return JsonUtils.renderAsJsonString(metadataMap);
   }
 
   public static TokenMetadata fromJSON(String json) {
     final Map<String, String> metadataMap = JsonUtils.getMapFromJsonString(json);
     if (metadataMap != null) {
-      return new TokenMetadata(metadataMap.get(JSON_ELEMENT_USER_NAME), metadataMap.get(JSON_ELEMENT_COMMENT));
+      return new TokenMetadata(metadataMap);
     }
     throw new IllegalArgumentException("Invalid metadata JSON: " + json);
   }
