@@ -35,7 +35,7 @@ import org.apache.knox.gateway.util.JDBCUtils;
 import org.apache.knox.gateway.util.Tokens;
 
 public class JDBCTokenStateService extends DefaultTokenStateService {
-  private AliasService aliasService; // connection username/pw is stored here
+  private AliasService aliasService; // connection username/pw and passcode HMAC secret are stored here
   private TokenStateDatabase tokenDatabase;
   private AtomicBoolean initialized = new AtomicBoolean(false);
   private Lock initLock = new ReentrantLock(true);
@@ -86,9 +86,35 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
   }
 
   @Override
+  public long getTokenIssueTime(String tokenId) throws UnknownTokenException {
+    try {
+      // check the in-memory cache first
+      return super.getTokenIssueTime(tokenId);
+    } catch (UnknownTokenException e) {
+      // It's not in memory
+    }
+
+    long issueTime = 0;
+    try {
+      issueTime = tokenDatabase.getTokenIssueTime(tokenId);
+      if (issueTime > 0) {
+        log.fetchedIssueTimeFromDatabase(Tokens.getTokenIDDisplayText(tokenId), issueTime);
+
+        // Update the in-memory cache to avoid subsequent DB look-ups for the same state
+        super.setIssueTime(tokenId, issueTime);
+      } else {
+        throw new UnknownTokenException(tokenId);
+      }
+    } catch (SQLException e) {
+      log.errorFetchingIssueTimeFromDatabase(Tokens.getTokenIDDisplayText(tokenId), e.getMessage(), e);
+    }
+    return issueTime;
+  }
+
+  @Override
   public long getTokenExpiration(String tokenId, boolean validate) throws UnknownTokenException {
     try {
-      // check the in-memory cache, then
+      // check the in-memory cache first
       return super.getTokenExpiration(tokenId, validate);
     } catch (UnknownTokenException e) {
       // It's not in memory

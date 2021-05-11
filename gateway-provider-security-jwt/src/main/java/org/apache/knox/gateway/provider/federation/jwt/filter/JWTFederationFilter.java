@@ -17,15 +17,15 @@
  */
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
-import org.apache.knox.gateway.security.PrimaryPrincipal;
-import org.apache.knox.gateway.services.security.token.UnknownTokenException;
-import org.apache.knox.gateway.services.security.token.impl.JWT;
-import org.apache.knox.gateway.services.security.token.impl.JWTToken;
-import org.apache.knox.gateway.util.AuthFilterUtils;
-import org.apache.knox.gateway.util.CertificateUtils;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM;
+
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.Base64;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 
 import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
@@ -35,15 +35,16 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.text.ParseException;
-import java.util.Base64;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Set;
 
-import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
+import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.util.AuthFilterUtils;
+import org.apache.knox.gateway.util.CertificateUtils;
 
 public class JWTFederationFilter extends AbstractJWTFilter {
 
@@ -65,7 +66,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   public static final String TOKEN    = "Token";
   public static final String PASSCODE = "Passcode";
   private String paramName;
-  private Set<String> unAuthenticatedPaths = new HashSet(20);
+  private Set<String> unAuthenticatedPaths = new HashSet<>(20);
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
@@ -141,9 +142,21 @@ public class JWTFederationFilter extends AbstractJWTFilter {
         }
       } else if (TokenType.Passcode.equals(tokenType)) {
         // Validate the token based on the server-managed metadata
-        if (validateToken((HttpServletRequest) request, (HttpServletResponse) response, chain, tokenValue)) {
+        // The received token value must be a Base64 encoded value of Base64(tokenId)::Base64(rawPasscode)
+        String tokenId = null, passcode = null;
+        try {
+          final String[] base64DecodedTokenIdAndPasscode = decodeBase64(tokenValue).split("::");
+          tokenId = decodeBase64(base64DecodedTokenIdAndPasscode[0]);
+          passcode = decodeBase64(base64DecodedTokenIdAndPasscode[1]);
+        } catch (Exception e) {
+          log.failedToParsePasscodeToken(e);
+          handleValidationError((HttpServletRequest) request, (HttpServletResponse) response, HttpServletResponse.SC_UNAUTHORIZED,
+              "Error while parsing the received passcode token");
+        }
+
+        if (validateToken((HttpServletRequest) request, (HttpServletResponse) response, chain, tokenId, passcode)) {
           try {
-            Subject subject = createSubjectFromTokenIdentifier(tokenValue);
+            Subject subject = createSubjectFromTokenIdentifier(tokenId);
             continueWithEstablishedSecurityContext(subject, (HttpServletRequest) request, (HttpServletResponse) response, chain);
           } catch (UnknownTokenException e) {
             ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
@@ -154,6 +167,10 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       // no token provided in header
       ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
     }
+  }
+
+  private String decodeBase64(String toBeDecoded) {
+    return new String(Base64.getDecoder().decode(toBeDecoded.getBytes(UTF_8)), UTF_8);
   }
 
   public Pair<TokenType, String> getWireToken(final ServletRequest request) {
@@ -187,7 +204,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       Pair<TokenType, String> parsed = null;
       final String base64Credentials = header.substring(BASIC.length()).trim();
       final byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
-      final String credentials = new String(credDecoded, StandardCharsets.UTF_8);
+      final String credentials = new String(credDecoded, UTF_8);
       final String[] values = credentials.split(":", 2);
       String username = values[0];
       String passcode = values[1].isEmpty() ? null : values[1];

@@ -137,6 +137,8 @@ public class ZookeeperTokenStateService extends AliasBasedTokenStateService impl
           setMaxLifetime(tokenId, maxLifeTime);
         } else if (alias.endsWith(TOKEN_META_POSTFIX)) {
           addMetadataInMemory(tokenId, TokenMetadata.fromJSON(value));
+        } else if (alias.endsWith(TOKEN_ISSUE_TIME_POSTFIX)) {
+          setIssueTimeInMemory(tokenId, Long.parseLong(value));
         } else {
           final long expiration = Long.parseLong(value);
           updateExpirationInMemory(tokenId, expiration);

@@ -698,6 +698,11 @@ public interface GatewayConfig {
   long getKnoxTokenStateAliasPersistenceInterval();
 
   /**
+   * @return the HMAC algorithm name to be used to sign generated Knox Token content (e.g. the token.id claim)
+   */
+  String getKnoxTokenHashAlgorithm();
+
+  /**
    * @return the list of topologies that should be hidden on Knox homepage
    */
   Set<String> getHiddenTopologiesOnHomepage();

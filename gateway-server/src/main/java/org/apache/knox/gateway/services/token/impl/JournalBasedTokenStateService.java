@@ -77,6 +77,33 @@ public class JournalBasedTokenStateService extends DefaultTokenStateService {
     }
 
     @Override
+    public long getTokenIssueTime(String tokenId) throws UnknownTokenException {
+      try {
+        // Check the in-memory collection first, to avoid file access when possible
+        return super.getTokenIssueTime(tokenId);
+      } catch (UnknownTokenException e) {
+        // It's not in memory
+      }
+
+      validateToken(tokenId);
+
+      // If there is no associated state in the in-memory cache, proceed to check the journal
+      long issueTime = 0;
+      try {
+        JournalEntry entry = journal.get(tokenId);
+        if (entry == null) {
+          throw new UnknownTokenException(tokenId);
+        }
+
+        issueTime = Long.parseLong(entry.getIssueTime());
+      } catch (IOException e) {
+        log.failedToLoadJournalEntry(e);
+      }
+
+      return issueTime;
+    }
+
+    @Override
     public long getTokenExpiration(final String tokenId, boolean validate) throws UnknownTokenException {
         // Check the in-memory collection first, to avoid file access when possible
         try {

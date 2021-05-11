@@ -19,6 +19,9 @@
 package org.apache.knox.gateway.provider.federation;
 
 import com.nimbusds.jwt.SignedJWT;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
@@ -29,6 +32,7 @@ import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
 import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Test;
@@ -36,12 +40,15 @@ import org.junit.Test;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -51,18 +58,33 @@ import static org.junit.Assert.fail;
 public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicCredsFederationFilterTest {
 
     TestTokenStateService tss;
+    TokenMAC tokenMAC;
 
     @Override
-    public void setUp() {
+    public void setUp() throws Exception {
         super.setUp();
         tss = new TestTokenStateService();
         ((TestJWTFederationFilter) handler).setTokenStateService(tss);
+        tokenMAC = new TokenMAC(HmacAlgorithms.HMAC_SHA_256.getName(), "sPj8FCgQhCEi6G18kBfpswxYSki33plbelGLs0hMSbk".toCharArray());
+        ((TestJWTFederationFilter) handler).setTokenMac(tokenMAC);
     }
 
     @Override
     protected void setTokenOnRequest(final HttpServletRequest request, final SignedJWT jwt) {
-        addTokenState(jwt);
-        setTokenOnRequest(request, TestJWTFederationFilter.PASSCODE, getTokenId(jwt));
+      try {
+        final long issueTime = System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5);
+        final String subject = (String) jwt.getJWTClaimsSet().getClaim(JWTToken.SUBJECT);
+        final String passcode = UUID.randomUUID().toString();
+        addTokenState(jwt, issueTime, subject, passcode);
+        setTokenOnRequest(request, TestJWTFederationFilter.PASSCODE, generatePasscodeField(getTokenId(jwt), passcode));
+      } catch(ParseException e) {
+        Assert.fail(e.getMessage());
+      }
+    }
+
+    private String generatePasscodeField(String tokenId, String passcode) {
+      final String base64TokenIdPasscode = Base64.encodeBase64String(tokenId.getBytes(StandardCharsets.UTF_8)) + "::" + Base64.encodeBase64String(passcode.getBytes(StandardCharsets.UTF_8));
+      return Base64.encodeBase64String(base64TokenIdPasscode.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -76,8 +98,15 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
     protected void setTokenOnRequest(final HttpServletRequest request,
                                      final SignedJWT          jwt,
                                      final String             authUsername) {
-        addTokenState(jwt);
-        setTokenOnRequest(request, authUsername, getTokenId(jwt));
+      try {
+        final long issueTime = System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5);
+        final String subject = (String) jwt.getJWTClaimsSet().getClaim(JWTToken.SUBJECT);
+        final String passcode = UUID.randomUUID().toString();
+        addTokenState(jwt, issueTime, subject, passcode);
+        setTokenOnRequest(request, authUsername, generatePasscodeField(getTokenId(jwt), passcode));
+      } catch(ParseException e) {
+        Assert.fail(e.getMessage());
+      }
     }
 
     @Override
@@ -95,13 +124,14 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
         return tokenId;
     }
 
-    private void addTokenState(final SignedJWT jwt) {
+    private void addTokenState(final SignedJWT jwt, long issueTime, String subject, String passcode) {
         try {
             JWTToken token = new JWTToken(jwt.serialize());
-            tss.addToken(token, System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5));
+            tss.addToken(token, issueTime);
 
-            String subject = (String) jwt.getJWTClaimsSet().getClaim(JWTToken.SUBJECT);
-            tss.addMetadata(TokenUtils.getTokenId(token), new TokenMetadata(subject));
+            final TokenMetadata metadata = new TokenMetadata(subject);
+            metadata.setPasscode(tokenMAC.hash(TokenUtils.getTokenId(token), issueTime, subject, passcode));
+            tss.addMetadata(TokenUtils.getTokenId(token), metadata);
         } catch (ParseException e) {
             Assert.fail(e.getMessage());
         }
@@ -328,6 +358,7 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
      */
     private static class TestTokenStateService implements TokenStateService {
 
+        private final Map<String, Long> tokenIssueTimes = new ConcurrentHashMap<>();
         private final Map<String, Long> tokenExpirations = new ConcurrentHashMap<>();
         private final Map<String, TokenMetadata> tokenMetadata = new ConcurrentHashMap<>();
 
@@ -359,7 +390,7 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
             if (expiration == null || expiration.isEmpty()) {
                 expiration = "0";
             }
-            addToken(TokenUtils.getTokenId(token), Instant.now().toEpochMilli(), Long.parseLong(expiration));
+            addToken(TokenUtils.getTokenId(token), issueTime, Long.parseLong(expiration));
         }
 
         private void addToken(String tokenId, long expiration) {
@@ -369,11 +400,18 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
         @Override
         public void addToken(String tokenId, long issueTime, long expiration) {
             addToken(tokenId, expiration);
+            tokenIssueTimes.put(tokenId, issueTime);
         }
 
         @Override
         public void addToken(String tokenId, long issueTime, long expiration, long maxLifetimeDuration) {
             addToken(tokenId, expiration);
+            tokenIssueTimes.put(tokenId, issueTime);
+        }
+
+        @Override
+        public long getTokenIssueTime(String tokenId) throws UnknownTokenException {
+        return tokenIssueTimes.getOrDefault(tokenId, 0L);
         }
 
         @Override

@@ -30,6 +30,7 @@ import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 
+import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
@@ -45,6 +46,7 @@ import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
 import org.apache.knox.gateway.services.token.impl.JDBCTokenStateService;
 import org.apache.knox.gateway.util.JsonUtils;
 import org.easymock.EasyMock;
@@ -154,12 +156,14 @@ public class TokenServiceResourceTest {
     if (contextExpectations.containsKey(tokenStateServiceType)) {
       EasyMock.expect(config.getServiceParameter(tokenStateServiceType, "impl")).andReturn(contextExpectations.get(tokenStateServiceType)).anyTimes();
     }
+    EasyMock.expect(config.getKnoxTokenHashAlgorithm()).andReturn(HmacAlgorithms.HMAC_SHA_256.getName()).anyTimes();
     tss = new TestTokenStateService();
     EasyMock.expect(services.getService(ServiceType.TOKEN_STATE_SERVICE)).andReturn(tss).anyTimes();
 
     AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TokenUtils.SIGNING_HMAC_SECRET_ALIAS)).andReturn(null).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TokenMAC.KNOX_TOKEN_HASH_KEY_ALIAS_NAME)).andReturn("sPj8FCgQhCEi6G18kBfpswxYSki33plbelGLs0hMSbk".toCharArray()).anyTimes();
 
     authority = new TestJWTokenAuthority(publicKey, privateKey);
     EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority).anyTimes();
@@ -1220,8 +1224,9 @@ public class TokenServiceResourceTest {
       return maxLifetimes.get(token);
     }
 
-    long getExpiration(final String token) {
-      return expirationData.get(token);
+    @Override
+    public long getTokenIssueTime(String tokenId) throws UnknownTokenException {
+      return issueTimes.getOrDefault(tokenId, 0L);
     }
 
     @Override
@@ -1292,7 +1297,7 @@ public class TokenServiceResourceTest {
 
     @Override
     public long getTokenExpiration(String tokenId) {
-      return 0;
+      return expirationData.getOrDefault(tokenId, 0L);
     }
 
     @Override

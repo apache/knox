@@ -35,6 +35,9 @@ public interface JWTMessages {
   @Message( level = MessageLevel.INFO, text = "Access token {0} has expired; a new one must be acquired." )
   void tokenHasExpired(String tokenId);
 
+  @Message(level = MessageLevel.ERROR, text = "Received wrong passcode token for {0}")
+  void wrongPasscodeToken(String tokenId);
+
   @Message( level = MessageLevel.INFO, text = "The NotBefore check failed." )
   void notBeforeCheckFailed();
 
@@ -78,5 +81,8 @@ public interface JWTMessages {
 
   @Message( level = MessageLevel.INFO, text = "Initialized token signature verification cache for the {0} topology." )
   void initializedSignatureVerificationCache(String topology);
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to parse passcode token: {0}" )
+  void failedToParsePasscodeToken(@StackTrace( level = MessageLevel.ERROR) Exception e);
 
 }

@@ -300,6 +300,13 @@ public class DefaultTokenStateServiceTest {
     assertNotNull(tss.getTokenMetadata(tokenId));
     assertEquals(tss.getTokenMetadata(tokenId).getComment(), comment);
     assertTrue(tss.getTokenMetadata(tokenId).isEnabled());
+
+    final String passcode = "myPasscode";
+    final TokenMetadata metadata = new TokenMetadata(userName, comment, true);
+    metadata.setPasscode(passcode);
+    tss.addMetadata(token.getClaim(JWTToken.KNOX_ID_CLAIM), metadata);
+    assertNotNull(tss.getTokenMetadata(tokenId));
+    assertEquals(tss.getTokenMetadata(tokenId).getPasscode(), passcode);
   }
 
   protected static JWTToken createMockToken(final long expiration) {

@@ -21,6 +21,7 @@ package org.apache.knox.gateway.provider.federation;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
 
 import java.lang.reflect.Field;
 
@@ -40,6 +41,12 @@ public class TestJWTFederationFilter extends JWTFederationFilter
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    void setTokenMac(TokenMAC tokenMAC) throws Exception {
+      final Field tokenMacField = getClass().getSuperclass().getSuperclass().getDeclaredField("tokenMAC");
+      tokenMacField.setAccessible(true);
+      tokenMacField.set(this, tokenMAC);
     }
 
     @Override

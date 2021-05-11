@@ -142,7 +142,7 @@ var gen = function() {
                     $('#accessToken').text(accessToken);
                     var decodedToken = b64DecodeUnicode(accessToken.split(".")[1]);
                     var jwtjson = JSON.parse(decodedToken);
-                    $('#accessPasscode').text(jwtjson["knox.id"]);
+                    $('#accessPasscode').text(resp.passcode);
                     var date = new Date(resp.expires_in);
                     $('#expiry').text(date.toLocaleString());
                     $('#user').text(jwtjson.sub);
