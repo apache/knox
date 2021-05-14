@@ -382,7 +382,7 @@ public abstract class AbstractJWTFilter implements Filter {
       try {
         if (tokenId != null) {
           if (tokenIsStillValid(tokenId)) {
-            if (validatePasscode(tokenId, passcode)) {
+            if (hasSignatureBeenVerified(passcode) || validatePasscode(tokenId, passcode)) {
               return true;
             } else {
               log.wrongPasscodeToken(tokenId);
@@ -390,6 +390,10 @@ public abstract class AbstractJWTFilter implements Filter {
             }
           } else {
             log.tokenHasExpired(Tokens.getTokenIDDisplayText(tokenId));
+            // Explicitly evict the record of this token's signature verification (if present).
+            // There is no value in keeping this record for expired tokens, and explicitly removing them may prevent
+            // records for other valid tokens from being prematurely evicted from the cache.
+            removeSignatureVerificationRecord(passcode);
             handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
                     "Bad request: token has expired");
           }
@@ -412,7 +416,11 @@ public abstract class AbstractJWTFilter implements Filter {
     final TokenMetadata tokenMetadata = tokenStateService.getTokenMetadata(tokenId);
     final String userName = tokenMetadata == null ? "" : tokenMetadata.getUserName();
     final byte[] storedPasscode = tokenMetadata == null ? null : tokenMetadata.getPasscode().getBytes(UTF_8);
-    return Arrays.equals(tokenMAC.hash(tokenId, issueTime, userName, passcode).getBytes(UTF_8), storedPasscode);
+    final boolean validPasscode = Arrays.equals(tokenMAC.hash(tokenId, issueTime, userName, passcode).getBytes(UTF_8), storedPasscode);
+    if (validPasscode) {
+      recordSignatureVerification(passcode);
+    }
+    return validPasscode;
   }
 
   protected boolean verifyTokenSignature(final JWT token) {
@@ -459,32 +467,32 @@ public abstract class AbstractJWTFilter implements Filter {
   }
 
   /**
-   * Determine if the specified JWT signature has previously been successfully verified.
+   * Determine if the specified JWT or Passcode token signature has previously been successfully verified.
    *
-   * @param jwt A serialized JWT String.
+   * @param token A serialized JWT String or Passcode token.
    *
    * @return true, if the specified token has been previously verified; Otherwise, false.
    */
-  protected boolean hasSignatureBeenVerified(final String jwt) {
-    return signatureVerificationCache.hasSignatureBeenVerified(jwt);
+  protected boolean hasSignatureBeenVerified(final String token) {
+    return signatureVerificationCache.hasSignatureBeenVerified(token);
   }
 
   /**
-   * Record a successful JWT signature verification.
+   * Record a successful JWT or Passcode token signature verification.
    *
-   * @param jwt The serialized String for a JWT which has been successfully verified.
+   * @param token The serialized String for a JWT or Passcode token which has been successfully verified.
    */
-  protected void recordSignatureVerification(final String jwt) {
-    signatureVerificationCache.recordSignatureVerification(jwt);
+  protected void recordSignatureVerification(final String token) {
+    signatureVerificationCache.recordSignatureVerification(token);
   }
 
   /**
    * Explicitly evict the signature verification record for the specified JWT from the cache if it exists.
    *
-   * @param jwt The serialized String for a JWT whose signature verification record should be evicted.
+   * @param token The serialized String for a JWT or Passcode token whose signature verification record should be evicted.
    */
-  protected void removeSignatureVerificationRecord(final String jwt) {
-    signatureVerificationCache.removeSignatureVerificationRecord(jwt);
+  protected void removeSignatureVerificationRecord(final String token) {
+    signatureVerificationCache.removeSignatureVerificationRecord(token);
   }
 
   protected abstract void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status,

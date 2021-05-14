@@ -18,7 +18,21 @@
  */
 package org.apache.knox.gateway.provider.federation;
 
-import com.nimbusds.jwt.SignedJWT;
+import static org.junit.Assert.fail;
+
+import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
+import java.time.Instant;
+import java.util.Date;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.HmacAlgorithms;
@@ -37,22 +51,7 @@ import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import java.nio.charset.StandardCharsets;
-import java.text.ParseException;
-import java.time.Instant;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.fail;
+import com.nimbusds.jwt.SignedJWT;
 
 @SuppressWarnings({"PMD.JUnit4TestShouldUseBeforeAnnotation", "PMD.JUnit4TestShouldUseTestAnnotation"})
 public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicCredsFederationFilterTest {
@@ -74,7 +73,7 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
       try {
         final long issueTime = System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5);
         final String subject = (String) jwt.getJWTClaimsSet().getClaim(JWTToken.SUBJECT);
-        final String passcode = UUID.randomUUID().toString();
+        final String passcode = (String) jwt.getJWTClaimsSet().getClaims().get(PASSCODE_CLAIM);
         addTokenState(jwt, issueTime, subject, passcode);
         setTokenOnRequest(request, TestJWTFederationFilter.PASSCODE, generatePasscodeField(getTokenId(jwt), passcode));
       } catch(ParseException e) {
@@ -101,7 +100,7 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
       try {
         final long issueTime = System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5);
         final String subject = (String) jwt.getJWTClaimsSet().getClaim(JWTToken.SUBJECT);
-        final String passcode = UUID.randomUUID().toString();
+        final String passcode = (String) jwt.getJWTClaimsSet().getClaims().get(PASSCODE_CLAIM);
         addTokenState(jwt, issueTime, subject, passcode);
         setTokenOnRequest(request, authUsername, generatePasscodeField(getTokenId(jwt), passcode));
       } catch(ParseException e) {
@@ -335,11 +334,6 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
 
     @Override
     public void testNotBeforeJWT() throws Exception {
-        // Override to disable N/A test
-    }
-
-    @Override
-    public void testVerificationOptimization() throws Exception {
         // Override to disable N/A test
     }
 

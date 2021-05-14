@@ -30,8 +30,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class SignatureVerificationCache {
 
-    public static final String JWT_VERIFIED_CACHE_MAX = "jwt.verified.cache.max";
-    public static final int    JWT_VERIFIED_CACHE_MAX_DEFAULT = 250;
+    public static final String TOKENS_VERIFIED_CACHE_MAX = "tokens.verified.cache.max";
+    private static final int   TOKENS_VERIFIED_CACHE_MAX_DEFAULT = 250;
 
     static final String DEFAULT_CACHE_ID = "default-cache";
 
@@ -71,9 +71,9 @@ public class SignatureVerificationCache {
      * @param config The configuration of the provider employing this cache.
      */
     private void initializeVerifiedTokensCache(final FilterConfig config) {
-        int maxCacheSize = JWT_VERIFIED_CACHE_MAX_DEFAULT;
+        int maxCacheSize = TOKENS_VERIFIED_CACHE_MAX_DEFAULT;
 
-        String configValue = config.getInitParameter(JWT_VERIFIED_CACHE_MAX);
+        String configValue = config.getInitParameter(TOKENS_VERIFIED_CACHE_MAX);
         if (configValue != null && !configValue.isEmpty()) {
             try {
                 maxCacheSize = Integer.parseInt(configValue);
@@ -86,32 +86,32 @@ public class SignatureVerificationCache {
     }
 
     /**
-     * Determine if the specified JWT's signature has previously been successfully verified.
+     * Determine if the specified token's signature has previously been successfully verified.
      *
-     * @param jwt A serialized JWT.
+     * @param token A serialized JWT or Passcode token.
      *
      * @return true, if the specified token has been previously verified; Otherwise, false.
      */
-    public boolean hasSignatureBeenVerified(final String jwt) {
-        return (verifiedTokens.getIfPresent(jwt) != null);
+    public boolean hasSignatureBeenVerified(final String token) {
+        return (verifiedTokens.getIfPresent(token) != null);
     }
 
     /**
      * Record a successful token signature verification.
      *
-     * @param jwt A serialized JWT for which the signature has been successfully verified.
+     * @param token A serialized JWT or Passcode token for which the signature has been successfully verified.
      */
-    public void recordSignatureVerification(final String jwt) {
-        verifiedTokens.put(jwt, true);
+    public void recordSignatureVerification(final String token) {
+        verifiedTokens.put(token, true);
     }
 
     /**
      * Explicitly evict the signature verification record from the cache if it exists.
      *
-     * @param jwt The serialized JWT for which the associated signature verification record should be evicted.
+     * @param token The serialized JWT or Passcode token for which the associated signature verification record should be evicted.
      */
-    public void removeSignatureVerificationRecord(final String jwt) {
-         verifiedTokens.asMap().remove(jwt);
+    public void removeSignatureVerificationRecord(final String token) {
+         verifiedTokens.asMap().remove(token);
     }
 
     /**

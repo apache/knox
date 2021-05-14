@@ -143,7 +143,8 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       } else if (TokenType.Passcode.equals(tokenType)) {
         // Validate the token based on the server-managed metadata
         // The received token value must be a Base64 encoded value of Base64(tokenId)::Base64(rawPasscode)
-        String tokenId = null, passcode = null;
+        String tokenId = null;
+        String passcode = null;
         try {
           final String[] base64DecodedTokenIdAndPasscode = decodeBase64(tokenValue).split("::");
           tokenId = decodeBase64(base64DecodedTokenIdAndPasscode[0]);
