@@ -75,6 +75,7 @@ import static org.junit.Assert.fail;
 public abstract class AbstractJWTFilterTest  {
   protected static final String SERVICE_URL = "https://localhost:8888/resource";
   private static final String dnTemplate = "CN={0},OU=Test,O=Hadoop,L=Test,ST=Test,C=US";
+  protected static final String PASSCODE_CLAIM = "passcode";
 
   protected AbstractJWTFilter handler;
   protected static RSAPublicKey publicKey;
@@ -802,7 +803,7 @@ public abstract class AbstractJWTFilterTest  {
 
       Properties props = getProperties();
       props.put(AbstractJWTFilter.JWT_EXPECTED_SIGALG, "RS512");
-      props.put(SignatureVerificationCache.JWT_VERIFIED_CACHE_MAX, "1");
+      props.put(SignatureVerificationCache.TOKENS_VERIFIED_CACHE_MAX, "1");
       props.put(TestFilterConfig.TOPOLOGY_NAME_PROP, "jwt-verification-optimization-test");
       handler.init(new TestFilterConfig(props));
       Assert.assertEquals("Expected no token verification calls yet.",
@@ -856,7 +857,7 @@ public abstract class AbstractJWTFilterTest  {
 
       Properties props = getProperties();
       props.put(AbstractJWTFilter.JWT_EXPECTED_SIGALG, "RS512");
-      props.put(SignatureVerificationCache.JWT_VERIFIED_CACHE_MAX, "1");
+      props.put(SignatureVerificationCache.TOKENS_VERIFIED_CACHE_MAX, "1");
       props.put(TestFilterConfig.TOPOLOGY_NAME_PROP, "jwt-eviction-test");
       handler.init(new TestFilterConfig(props));
       Assert.assertEquals("Expected no token verification calls yet.",
@@ -1009,7 +1010,8 @@ public abstract class AbstractJWTFilterTest  {
             .audience(aud)
             .expirationTime(expires)
             .notBeforeTime(nbf)
-            .claim("scope", "openid");
+            .claim("scope", "openid")
+            .claim(PASSCODE_CLAIM, UUID.randomUUID().toString());
     if (knoxId != null) {
       builder.claim(JWTToken.KNOX_ID_CLAIM, knoxId);
     }

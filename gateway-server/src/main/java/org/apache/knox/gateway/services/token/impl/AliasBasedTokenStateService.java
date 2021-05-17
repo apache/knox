@@ -353,7 +353,7 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService implem
       }
       issueTime = convertCharArrayToLong(issueTimeStr);
       // Update the in-memory cache to avoid subsequent keystore look-ups for the same state
-      super.setIssueTime(tokenId, issueTime);
+      setIssueTimeInMemory(tokenId, issueTime);
     } catch (UnknownTokenException e) {
       throw e;
     } catch (Exception e) {
