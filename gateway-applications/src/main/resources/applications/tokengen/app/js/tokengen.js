@@ -109,6 +109,30 @@ function setTokenStateServiceStatus() {
     }
 }
 
+function validateLifespan(days, hours, mins) {
+    //show possible contraint violations
+    days.reportValidity();
+    hours.reportValidity();
+    mins.reportValidity();
+
+    //check basic contraint validations (less than/ greater then)
+    var valid = days.checkValidity() && hours.checkValidity() && mins.checkValidity();
+
+    if (days.value == '0' && hours.value == '0' && mins.value == '0') {
+        valid = false;
+    }
+
+    if (days.value == '' || hours.value == '' || mins.value == '') {
+        valid = false;
+    }
+
+    if (!valid) {
+        $('#invalidLifetimeText').show();
+    }
+
+    return valid;
+}
+
 var gen = function() {
 	$('#invalidLifetimeText').hide();
     var pathname = window.location.pathname;
@@ -117,7 +141,6 @@ var gen = function() {
     baseURL = baseURL.substring(0, baseURL.lastIndexOf('/') + 1);
     var tokenURL = topologyContext + knoxtokenURL;
     var form = document.forms[0];
-    //var comment = form.comment.value;
     var lt_days = form.lt_days.value;
     var lt_hours = form.lt_hours.value;
     var lt_mins = form.lt_mins.value;
@@ -164,9 +187,7 @@ var gen = function() {
         }
     }
 
-    if (lt_days == '0' && lt_hours == '0' && lt_mins == '0') {
-        $('#invalidLifetimeText').show();
-    } else {
+    if (validateLifespan(form.lt_days, form.lt_hours, form.lt_mins)) {
         _gen();
     }
 }
