@@ -104,6 +104,9 @@ function setTokenStateServiceStatus() {
                 } else {
                     disableTokenGen('Token management is disabled');
                 }
+
+                $('#maximumLifetimeText').text(resp.maximumLifetimeText);
+                $('#maximumLifetimeSeconds').text(resp.maximumLifetimeSeconds);
             }
         }
     }
@@ -131,6 +134,20 @@ function validateLifespan(days, hours, mins) {
     }
 
     return valid;
+}
+
+function maximumLifetimeExceeded(maximumLifetime, days, hours, mins) {
+	if (maximumLifetime == -1) {
+		return false;
+	}
+
+    var daysInSeconds = days * 86400;
+    var hoursInSeconds = hours * 3600;
+    var minsInSeconds = mins * 60;
+    var suppliedLifetime = daysInSeconds + hoursInSeconds + minsInSeconds;
+    //console.debug("Supplied lifetime in seconds = " + suppliedLifetime);
+    //console.debug("Maximum lifetime = " + maximumLifetime);
+    return suppliedLifetime > maximumLifetime;
 }
 
 var gen = function() {
@@ -188,6 +205,21 @@ var gen = function() {
     }
 
     if (validateLifespan(form.lt_days, form.lt_hours, form.lt_mins)) {
-        _gen();
+        if (maximumLifetimeExceeded(form.maximumLifetimeSeconds.textContent, lt_days, lt_hours, lt_mins)) {
+            swal({
+                title: "Warning",
+                text: "You are trying to generate a token with a lifetime that exceeds the configured maximum. In this case the generated token's lifetime will be limited to the configured maximum.",
+                icon: "warning",
+                buttons: ["Adjust request lifetime", "Generate token anyway"],
+                dangerMode: true
+              })
+              .then((willGenerateToken) => {
+                if (willGenerateToken) {
+                    _gen();
+                }
+              });
+          } else {
+              _gen();
+          }
     }
 }
