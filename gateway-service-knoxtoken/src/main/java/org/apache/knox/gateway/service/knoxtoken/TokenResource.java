@@ -102,6 +102,8 @@ public class TokenResource {
   private static final String TSS_STATUS_CONFIFURED_BACKEND = "configuredTssBackend";
   private static final String TSS_STATUS_ACTUAL_BACKEND = "actualTssBackend";
   private static final String TSS_ALLOWED_BACKEND_FOR_TOKENGEN = "allowedTssForTokengen";
+  private static final String TSS_MAXIMUM_LIFETIME_SECONDS = "maximumLifetimeSeconds";
+  private static final String TSS_MAXIMUM_LIFETIME_TEXT = "maximumLifetimeText";
   private static final long TOKEN_TTL_DEFAULT = 30000L;
   static final String TOKEN_API_PATH = "knoxtoken/api/v1";
   static final String RESOURCE_PATH = TOKEN_API_PATH + "/token";
@@ -113,6 +115,7 @@ public class TokenResource {
   private static final String TARGET_ENDPOINT_PULIC_CERT_PEM = "knox.token.target.endpoint.cert.pem";
   private static TokenServiceMessages log = MessagesFactory.get(TokenServiceMessages.class);
   private long tokenTTL = TOKEN_TTL_DEFAULT;
+  private String tokenTTLAsText;
   private List<String> targetAudiences = new ArrayList<>();
   private String tokenTargetUrl;
   private Map<String, Object> tokenClientDataMap;
@@ -172,6 +175,7 @@ public class TokenResource {
         log.invalidTokenTTLEncountered(ttl);
       }
     }
+    tokenTTLAsText = getTokenTTLAsText();
 
     tokenTargetUrl = context.getInitParameter(TOKEN_TARGET_URL);
 
@@ -231,6 +235,32 @@ public class TokenResource {
     setTokenStateServiceStatusMap();
   }
 
+  private String getTokenTTLAsText() {
+    if (tokenTTL == -1) {
+      return "Unlimited lifetime";
+    }
+
+    final Duration tokenTTLDuration = Duration.ofMillis(tokenTTL);
+    long daysPart = tokenTTLDuration.toDays();
+    long hoursPart = daysPart > 0 ? tokenTTLDuration.minusDays(daysPart).toHours() : tokenTTLDuration.toHours();
+    long minutesPart = tokenTTLDuration.toHours() > 0 ? tokenTTLDuration.minusHours(tokenTTLDuration.toHours()).toMinutes() : tokenTTLDuration.toMinutes();
+    long secondsPart = tokenTTLDuration.toMinutes() > 0 ? tokenTTLDuration.minusMinutes(tokenTTLDuration.toMinutes()).getSeconds() : tokenTTLDuration.getSeconds();
+    final StringBuilder sb = new StringBuilder(32);
+    if (daysPart > 0) {
+      sb.append(daysPart).append(" days ");
+    }
+    if (hoursPart > 0) {
+      sb.append(hoursPart).append(" hours ");
+    }
+    if (minutesPart > 0) {
+      sb.append(minutesPart).append(" minutes ");
+    }
+    if (secondsPart > 0) {
+      sb.append(secondsPart).append(" seconds");
+    }
+    return sb.toString();
+  }
+
   private void setTokenStateServiceStatusMap() {
     if (isServerManagedTokenStateEnabled()) {
       tokenStateServiceStatusMap.put(TSS_STATUS_IS_MANAGEMENT_ENABLED, "true");
@@ -243,6 +273,8 @@ public class TokenResource {
       tokenStateServiceStatusMap.put(TSS_STATUS_CONFIFURED_BACKEND, configuredTokenServiceName);
       tokenStateServiceStatusMap.put(TSS_STATUS_ACTUAL_BACKEND, actualTokenServiceName);
       populateAllowedTokenStateBackendForTokenGenApp(actualTokenServiceName);
+      tokenStateServiceStatusMap.put(TSS_MAXIMUM_LIFETIME_SECONDS, String.valueOf(tokenTTL == -1 ? tokenTTL : (tokenTTL / 1000)));
+      tokenStateServiceStatusMap.put(TSS_MAXIMUM_LIFETIME_TEXT, tokenTTLAsText);
     } else {
       tokenStateServiceStatusMap.put(TSS_STATUS_IS_MANAGEMENT_ENABLED, "false");
     }
@@ -610,7 +642,11 @@ public class TokenResource {
     else {
       try {
         long lifetime = Duration.parse(lifetimeStr).toMillis();
-        if (lifetime <= tokenTTL) {
+        if (tokenTTL == -1) {
+          // if TTL is set to -1 the topology owner grants unlimited lifetime therefore no additional check is needed on lifespan
+          millis = lifetime;
+        } else if (lifetime <= tokenTTL) {
+          //this is expected due to security reasons: the configured TTL acts as an upper limit regardless of the supplied lifespan
           millis = lifetime;
         }
       }
