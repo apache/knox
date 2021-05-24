@@ -80,7 +80,7 @@ public class JWTToken implements JWT {
       null,
       null,
       null,
-       claimsArray[4] != null ? claimsArray[4] : null, // KID
+      claimsArray[4] != null ? claimsArray[4] : null, // KID
       null,
       null);
     } catch (URISyntaxException e) {
