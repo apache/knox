@@ -16,6 +16,8 @@
  */
 package org.apache.knox.gateway.services.security.token.impl;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.ArrayList;
@@ -66,7 +68,25 @@ public class JWTToken implements JWT {
   }
 
   public JWTToken(String alg, String[] claimsArray, List<String> audiences, boolean managed) {
-    JWSHeader header = new JWSHeader(new JWSAlgorithm(alg));
+    JWSHeader header = null;
+    try {
+      header = new JWSHeader(new JWSAlgorithm(alg),
+      null,
+      null,
+      null,
+      claimsArray[5] != null ? new URI(claimsArray[5]) : null, // JKU
+      null,
+      null,
+      null,
+      null,
+      null,
+      claimsArray[4] != null ? claimsArray[4] : null, // KID
+      null,
+      null);
+    } catch (URISyntaxException e) {
+      /* in event of bad URI exception fall back to using just algo in header */
+      header = new JWSHeader(new JWSAlgorithm(alg));
+    }
 
     if(claimsArray == null || claimsArray.length < 6) {
       log.missingClaims(claimsArray.length);
