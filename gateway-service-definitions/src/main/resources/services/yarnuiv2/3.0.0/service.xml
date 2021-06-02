@@ -18,7 +18,7 @@
 <service role="YARNUIV2" name="yarnuiv2" version="3.0.0">
      <metadata>
         <type>UI</type>
-        <context>/yarnuiv2</context>
+        <context>/yarnuiv2/</context>
         <shortDesc>YARN Resource Manager Web UI V2</shortDesc>
         <description>YARN Resource Manager Web interface (v2)</description>
     </metadata>

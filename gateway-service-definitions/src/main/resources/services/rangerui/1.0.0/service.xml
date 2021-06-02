@@ -17,7 +17,7 @@
 <service role="RANGERUI" name="rangerui" version="1.0.0">
     <metadata>
         <type>UI</type>
-        <context>/ranger</context>
+        <context>/ranger/</context>
         <shortDesc>Ranger Admin Web UI</shortDesc>
         <description>Apache Ranger is a framework to enable, monitor and manage comprehensive data security across the Hadoop platform. Ranger Admin Web UI is a web-based tool that provides a way to configure Ranger.</description>
     </metadata>

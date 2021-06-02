@@ -17,7 +17,7 @@
 <service role="NIFI-REGISTRY" name="nifi-registry" version="0.5.0">
     <metadata>
         <type>UI</type>
-        <context>/nifi-registry-app/nifi-registry</context>
+        <context>/nifi-registry-app/nifi-registry/</context>
         <shortDesc>Nifi Registry UI</shortDesc>
         <description>Registry — a subproject of Apache NiFi — is a complementary application that provides a central location for storage and management of shared resources across one or more instances of NiFi and/or MiNiFi.</description>
     </metadata>

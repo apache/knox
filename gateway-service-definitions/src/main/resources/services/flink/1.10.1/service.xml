@@ -17,7 +17,7 @@
 -->
 <service name="flink" role="FLINK" version="1.10.1">
     <metadata>
-        <context>/flink</context>
+        <context>/flink/</context>
         <description>The Flink Dashboard acts as a single UI for all the Flink jobs running on the YARN cluster.</description>
         <shortDesc>Flink Dashboard</shortDesc>
         <type>UI</type>

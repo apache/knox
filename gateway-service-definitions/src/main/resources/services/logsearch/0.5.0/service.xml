@@ -18,7 +18,7 @@
 <service role="LOGSEARCH" name="logsearch" version="0.5.0">
     <metadata>
         <type>UI</type>
-        <context>/logsearch</context>
+        <context>/logsearch/</context>
         <shortDesc>Ambari LogSearch UI</shortDesc>
         <description>The Ambari Log Search UI is a purpose-built web application used to search HDP component logs. 
             The UI is focussed on helping operators quickly access and search logs from a single location. Logs can be filtered by log level, time, component, and can be searched by keyword.</description>
