@@ -136,6 +136,19 @@ function validateLifespan(days, hours, mins) {
     return valid;
 }
 
+function validateComment(comment) {
+    var valid = true;
+    if (comment.value != '') {
+        comment.reportValidity();
+        valid = comment.checkValidity();
+        if (!valid) {
+            $('#invalidCommentText').show();
+        }
+    }
+
+    return valid;
+}
+
 function maximumLifetimeExceeded(maximumLifetime, days, hours, mins) {
 	if (maximumLifetime == -1) {
 		return false;
@@ -204,7 +217,7 @@ var gen = function() {
         }
     }
 
-    if (validateLifespan(form.lt_days, form.lt_hours, form.lt_mins)) {
+    if (validateLifespan(form.lt_days, form.lt_hours, form.lt_mins) && validateComment(form.comment)) {
         if (maximumLifetimeExceeded(form.maximumLifetimeSeconds.textContent, lt_days, lt_hours, lt_mins)) {
             swal({
                 title: "Warning",
