@@ -18,7 +18,7 @@
 <service role="SPARKHISTORYUI" name="sparkhistory" version="2.3.0">
     <metadata>
         <type>UI</type>
-        <context>/sparkhistory</context>
+        <context>/sparkhistory/</context>
         <shortDesc>Spark History Server Web UI</shortDesc>
         <description>Spark History Server Web UI provides a comprehensive view of: A list of scheduler stages and tasks - A summary of RDD sizes and memory usage - Environmental information - Information about the running executors.</description>
     </metadata>

@@ -18,7 +18,7 @@
 <service role="ZEPPELINUI" name="zeppelinui" version="0.8.1">
     <metadata>
         <type>UI</type>
-        <context>/zeppelin</context>
+        <context>/zeppelin/</context>
         <shortDesc>Zeppelin Web UI</shortDesc>
         <description>Zeppelin's web user interface allows end-users to explore Zeppelin notebooks.</description>
     </metadata>

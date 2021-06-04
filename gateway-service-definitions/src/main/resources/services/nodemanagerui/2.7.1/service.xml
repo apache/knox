@@ -18,7 +18,7 @@
 <service role="NODEUI" name="nodeui" version="2.7.1">
     <metadata>
         <type>UI</type>
-        <context>/node</context>
+        <context>/node/</context>
         <shortDesc>YARN NodeManager UI</shortDesc>
         <description>The NodeManager is responsible for launching and managing containers on a node.</description>
     </metadata>

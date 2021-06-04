@@ -18,7 +18,7 @@
 <service role="LIVYSERVER" name="livy" version="0.4.0">
     <metadata>
         <type>API_AND_UI</type>
-        <context>/livy</context>
+        <context>/livy/</context>
         <shortDesc>Livy Server</shortDesc>
         <description>Apache Livy is a service that enables easy interaction with a Spark cluster over a REST interface.</description>
     </metadata>

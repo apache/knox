@@ -119,7 +119,7 @@ public class ServiceModel implements Comparable<ServiceModel> {
 
   @XmlElement
   public String getContext() {
-    return (serviceMetadata == null ? "/" + getServiceName().toLowerCase(Locale.ROOT) : serviceMetadata.getContext()) + "/";
+    return serviceMetadata == null ? ("/" + getServiceName().toLowerCase(Locale.ROOT)) : serviceMetadata.getContext();
   }
 
   @XmlElement

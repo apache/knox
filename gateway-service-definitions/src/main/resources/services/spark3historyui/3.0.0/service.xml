@@ -18,7 +18,7 @@
 <service role="SPARK3HISTORYUI" name="spark3history" version="3.0.0">
     <metadata>
         <type>UI</type>
-        <context>/spark3history</context>
+        <context>/spark3history/</context>
         <shortDesc>Spark3 History Server Web UI</shortDesc>
         <description>Spark3 History Server Web UI provides a comprehensive view of: A list of scheduler stages and tasks - A summary of RDD sizes and memory usage - Environmental information - Information about the running executors.</description>
     </metadata>

@@ -26,7 +26,7 @@
 <service role="CM-UI" name="cm-ui" version="1.0.0">
     <metadata>
         <type>UI</type>
-        <context>/cmf</context>
+        <context>/cmf/</context>
         <shortDesc>Cloudera Manager Admin Console</shortDesc>
         <description>Cloudera Manager Admin Console is the web-based UI that you use to configure, manage, and monitor CDH.</description>
     </metadata>

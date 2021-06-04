@@ -18,7 +18,7 @@
 <service role="HDFSUI" name="hdfs" version="3.0.0">
     <metadata>
         <type>UI</type>
-        <context>/hdfs</context>
+        <context>/hdfs/</context>
         <shortDesc>HDFS Namenode UI</shortDesc>
         <description>The namenode UI or the namenode web interface is used to monitor the status of the namenode.</description>
     </metadata>
