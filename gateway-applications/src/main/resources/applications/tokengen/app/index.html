@@ -48,10 +48,7 @@
 
     </head>
     <body class="login" style="" onload="setTokenStateServiceStatus()">
-        <!-- Page content
-        ================================================== -->
-
-        <section id="signin-container" style="margin-top: 4.5px;">
+        <div style="margin-left: 1.75%; margin-right: 1.75%; margin-top: 4.5px">
             <form action="" method="get" accept-charset="utf-8">
                 <fieldset>
                     <div class="fields">
@@ -83,27 +80,47 @@
                     <span id="errorBox" class="help-inline" style="color:white;display:none;"><span class="errorMsg"></span>
                         <i class="icon-warning-sign" style="color:#ae2817;"></i>
                     </span>
-                    <button type="button" class="btn btn-primary btn-block" id="genToken" tabindex="2" onkeypress="keypressed(event)" onclick="gen();">
-                        Generate Token
-                    </button>
+                    <div style="align-content: center; width: 25%;">
+                        <button type="button" class="btn btn-primary btn-block" id="genToken" tabindex="2" onkeypress="keypressed(event)" onclick="gen();">
+                            Generate Token
+                        </button>
+                    </div>
                 </fieldset>
             </form>
-        </section>
-        <section id="signin-container" style="margin-top: 4.5px;">
-            <span id="resultBox" class="help-inline" style="color:black;display:none;">
-               <label><i class="icon-copy"></i> JWT Token:</label>
-               <textarea id="accessToken" name="accessToken" rows="5" cols="80"></textarea>
-               <label><i class="icon-copy"></i> Passcode Token:</label>
-               <textarea id="accessPasscode" name="accessPasscode" rows="1" cols="80"></textarea>
+        </div>
+        <div style="margin-left: 1.75%; margin-right: 1.75%; margin-top: 10px">
+            <span id="resultBox" style="color:black; display:none; margin-left: 1.75%; margin-right: 1.75%;">
+
+               <label id="jwtAccessTokenLabel" onclick="copyAccessTokenToClipBoard();"><i class="icon-copy"></i> JWT Token:</label>
+               <div class="tokenResultDisplay">
+                   <span id="accessToken" name="accessToken" style="word-wrap: break-word"></span>
+               </div>
+
+               <label id="jwtPasscodeTokenLabel" onclick="copyPasscodeTokenToClipBoard();"><i class="icon-copy"></i> Passcode Token:</label>
+               <div class="tokenResultDisplay">
+                   <span id="accessPasscode" name="accessPasscode"></span>
+               </div>
+
                <label><i class="icon-info"></i> Expiration:</label>
-               <span id="expiry" name="expiry"><i style="color:#000000;"></i></span>
+               <div class="tokenResultDisplay">
+                   <span id="expiry" name="expiry"></span>
+               </div>
+
                <label><i class="icon-info"></i> User:</label>
-               <span id="user" name="user"><i style="color:#000000;"></i></span>
+               <div class="tokenResultDisplay">
+                   <span id="user" name="user"></span>
+               </div>
+
+               <label id="targetBaseUrlLabel" onclick="copyBaseUrlToClipBoard();"><i class="icon-copy"></i> Target Base URL:</label>
+               <div class="tokenResultDisplay">
+                   <span id="target_url" name="target_url"></span>
+               </div>
+
                <label><i class="icon-link"></i> Homepage:</label>
-               <div id="homepage_url" name="homepage_url"><i style="color:#000000;"></i></div>
-               <label><i class="icon-info"></i> Target URL:</label>
-               <div id="target_url" name="target_url"><i style="color:#000000;"></i></div>
+               <div class="tokenResultDisplay">
+                   <span id="homepage_url" name="homepage_url"></span>
+               </div>
             </span>
-        </section>
+        </div>
     </body>
 </html>
