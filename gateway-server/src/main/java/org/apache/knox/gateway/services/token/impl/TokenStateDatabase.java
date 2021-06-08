@@ -27,8 +27,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import javax.sql.DataSource;
 
@@ -43,6 +45,7 @@ public class TokenStateDatabase {
   static final String TOKEN_METADATA_TABLE_NAME = "KNOX_TOKEN_METADATA";
   private static final String ADD_TOKEN_SQL = "INSERT INTO " + TOKENS_TABLE_NAME + "(token_id, issue_time, expiration, max_lifetime) VALUES(?, ?, ?, ?)";
   private static final String REMOVE_TOKEN_SQL = "DELETE FROM " + TOKENS_TABLE_NAME + " WHERE token_id = ?";
+  private static final String GET_EXPIRED_TOKENS_SQL = "SELECT token_id FROM " + TOKENS_TABLE_NAME + " WHERE expiration < ?";
   private static final String REMOVE_EXPIRED_TOKENS_SQL = "DELETE FROM " + TOKENS_TABLE_NAME + " WHERE expiration < ?";
   static final String GET_TOKEN_ISSUE_TIME_SQL = "SELECT issue_time FROM " + TOKENS_TABLE_NAME + " WHERE token_id = ?";
   static final String GET_TOKEN_EXPIRATION_SQL = "SELECT expiration FROM " + TOKENS_TABLE_NAME + " WHERE token_id = ?";
@@ -138,9 +141,22 @@ public class TokenStateDatabase {
     }
   }
 
-  int deleteExpiredTokens(long tokenEvictionGracePeriod) throws SQLException {
+  Set<String> getExpiredTokenIds(long expirationLimit) throws SQLException {
+    final Set<String> expiredTokenIds = new HashSet<>();
+    try (Connection connection = dataSource.getConnection(); PreparedStatement getExpiredTokenIdsStatement = connection.prepareStatement(GET_EXPIRED_TOKENS_SQL)) {
+      getExpiredTokenIdsStatement.setLong(1, expirationLimit);
+      try (ResultSet rs = getExpiredTokenIdsStatement.executeQuery()) {
+        while(rs.next()) {
+          expiredTokenIds.add(rs.getString(1));
+        }
+        return expiredTokenIds;
+      }
+    }
+  }
+
+  int deleteExpiredTokens(long expirationLimit) throws SQLException {
     try (Connection connection = dataSource.getConnection(); PreparedStatement deleteExpiredTokensStatement = connection.prepareStatement(REMOVE_EXPIRED_TOKENS_SQL)) {
-      deleteExpiredTokensStatement.setLong(1, System.currentTimeMillis() - tokenEvictionGracePeriod);
+      deleteExpiredTokensStatement.setLong(1, expirationLimit);
       return deleteExpiredTokensStatement.executeUpdate();
     }
   }

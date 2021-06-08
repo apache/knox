@@ -19,10 +19,12 @@ package org.apache.knox.gateway.services.token.impl;
 
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -209,11 +211,17 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
   @Override
   protected void evictExpiredTokens() {
     try {
-      int numOfExpiredTokens = tokenDatabase.deleteExpiredTokens(TimeUnit.SECONDS.toMillis(tokenEvictionGracePeriod));
-      log.removedTokensFromDatabase(numOfExpiredTokens);
+      final long expirationLimit = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(tokenEvictionGracePeriod);
+      final Set<String> expiredTokenIds = tokenDatabase.getExpiredTokenIds(expirationLimit);
+      if (!expiredTokenIds.isEmpty()) {
+        log.removingExpiredTokensFromDatabase(expiredTokenIds.size(),
+            String.join(", ", expiredTokenIds.stream().map(tokenId -> Tokens.getTokenIDDisplayText(tokenId)).collect(Collectors.toSet())));
+        final int numOfExpiredTokens = tokenDatabase.deleteExpiredTokens(expirationLimit);
+        log.removedTokensFromDatabase(numOfExpiredTokens);
 
-      // remove from in-memory collections
-      super.evictExpiredTokens();
+        // remove from in-memory collections
+        super.evictExpiredTokens();
+      }
     } catch (SQLException e) {
       log.errorRemovingTokensFromDatabase(e.getMessage(), e);
     }

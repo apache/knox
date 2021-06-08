@@ -193,6 +193,9 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.ERROR, text = "An error occurred while removing token {0} from the database : {1}")
   void errorRemovingTokenFromDatabase(String tokenId, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.INFO, text = "Removing {0} expired token(s) from the database: {1}")
+  void removingExpiredTokensFromDatabase(int size, String expiredTokensList);
+
   @Message(level = MessageLevel.DEBUG, text = "{0} expired tokens have been removed from the database")
   void removedTokensFromDatabase(int size);
 
