@@ -25,6 +25,8 @@ import com.nimbusds.jose.jwk.RSAKey;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
@@ -50,18 +52,23 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 public class JWKSResource {
   public static final String JWKS_PATH = "/jwks.json";
   static final String RESOURCE_PATH = "knoxtoken/api/v1";
+  private static final String TOKEN_SIG_ALG = "knox.token.sigalg";
 
   @Context
   HttpServletRequest request;
   @Context
   ServletContext context;
   private KeystoreService keystoreService;
+  private String signatureAlgorithm;
 
   @PostConstruct
-  public void init() {
-    final GatewayServices services = (GatewayServices) context
-        .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+  public void init() throws AliasServiceException {
+    final GatewayServices services = (GatewayServices) context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     keystoreService = services.getService(ServiceType.KEYSTORE_SERVICE);
+
+    final String configuredSigAlg = context.getInitParameter(TOKEN_SIG_ALG);
+    final GatewayConfig config = (GatewayConfig) context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    this.signatureAlgorithm = TokenUtils.getSignatureAlgorithm(configuredSigAlg, (AliasService) services.getService(ServiceType.ALIAS_SERVICE), config.getSigningKeystoreName());
   }
 
   @GET
@@ -84,7 +91,7 @@ public class JWKSResource {
       final String kid = TokenUtils.getThumbprint(rsa, "SHA-256");
       final RSAKey.Builder builder = new RSAKey.Builder(rsa)
           .keyUse(KeyUse.SIGNATURE)
-          .algorithm(new JWSAlgorithm(rsa.getAlgorithm()))
+          .algorithm(new JWSAlgorithm(this.signatureAlgorithm))
           .keyID(kid);
 
       jwks = new JWKSet(builder.build());
@@ -101,16 +108,14 @@ public class JWKSResource {
         .entity(jwks.toJSONObject().toString()).build();
   }
 
-  protected RSAPublicKey getPublicKey(final String keystore)
-      throws KeystoreServiceException, KeyStoreException {
+  protected RSAPublicKey getPublicKey(final String keystore) throws KeystoreServiceException, KeyStoreException {
     final KeyStore ks = keystoreService.getSigningKeystore(keystore);
     final Certificate cert = ks.getCertificate(getSigningKeyAlias());
     return (cert != null) ? (RSAPublicKey) cert.getPublicKey() : null;
   }
 
   private String getSigningKeyAlias() {
-    final GatewayConfig config = (GatewayConfig) request.getServletContext()
-        .getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    final GatewayConfig config = (GatewayConfig) context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
     final String alias = config.getSigningKeyAlias();
     return (alias == null) ? GatewayConfig.DEFAULT_SIGNING_KEY_ALIAS : alias;
   }
