@@ -223,8 +223,17 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
   }
 
   protected void failoverRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse, HttpResponse inboundResponse, Exception exception) throws IOException {
-    /* check for a case where no fallback is configured */
-    if(stickySessionsEnabled && noFallbackEnabled) {
+    // Check whether the session cookie is present
+    Optional<Cookie> sessionCookie = Optional.empty();
+    if (inboundRequest.getCookies() != null) {
+        sessionCookie =
+                Arrays.stream(inboundRequest.getCookies())
+                      .findFirst()
+                      .filter(cookie -> stickySessionCookieName.equals(cookie.getName()));
+    }
+
+    // Check for a case where no fallback is configured
+    if(stickySessionsEnabled && noFallbackEnabled && sessionCookie.isPresent()) {
       LOG.noFallbackError();
       outboundResponse.sendError(HttpServletResponse.SC_BAD_GATEWAY, "Service connection error, HA failover disabled");
       return;
