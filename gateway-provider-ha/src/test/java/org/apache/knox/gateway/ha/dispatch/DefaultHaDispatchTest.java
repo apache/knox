@@ -30,12 +30,15 @@ import org.apache.knox.gateway.ha.provider.HaProvider;
 import org.apache.knox.gateway.ha.provider.HaServletContextListener;
 import org.apache.knox.gateway.ha.provider.impl.DefaultHaProvider;
 import org.apache.knox.gateway.ha.provider.impl.HaDescriptorFactory;
+import org.apache.knox.gateway.ha.provider.impl.HaServiceConfigConstants;
 import org.apache.knox.gateway.servlet.SynchronousServletOutputStreamAdapter;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.params.BasicHttpParams;
+import org.easymock.Capture;
+import org.easymock.CaptureType;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.junit.Assert;
@@ -52,6 +55,8 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.easymock.EasyMock.anyString;
 
 public class DefaultHaDispatchTest {
 
@@ -540,10 +545,172 @@ public class DefaultHaDispatchTest {
   }
 
   /**
-   * Test the case where sticky session is on (and loadbalancing is on)
-   * Expected behavior: When
-   * @throws Exception
+   * Test the case where loadbalancing is on, sticky sessions is on, fallback is disabled, and the initial request
+   * fails.
+   *
+   * Expected behavior: Failover should occur until the initial session has been established, regardless of the
+   * noFallback setting.
+   *
+   * KNOX-2619
    */
+  @Test
+  public void testFailoverStickyOnFallbackOff() throws Exception {
+    doTestFailoverStickyOnFallbackOff(false);
+  }
+
+  /**
+   * Test the case where loadbalancing is on, sticky sessions is on, fallback is disabled, and the initial request
+   * fails.
+   *
+   * Expected behavior: Failover should occur until the initial session has been established, regardless of the
+   * noFallback setting.
+   *
+   * KNOX-2619
+   */
+  @Test
+  public void testFailoverStickyOnFallbackOff_SessionEstablished() throws Exception {
+    doTestFailoverStickyOnFallbackOff(true);
+  }
+
+  private void doTestFailoverStickyOnFallbackOff(final Boolean withCookie)
+          throws Exception {
+    final String enableLoadBalancing = "true"; // load-balancing is required for sticky sessions to be enabled
+    final String enableStickySession = "true";
+    final String noFallback          = "true";
+
+    final String serviceName = "OOZIE";
+
+    HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName,
+                                                                        "true",
+                                                                        "1",
+                                                                        "1000",
+                                                                        null,
+                                                                        null,
+                                                                        enableLoadBalancing,
+                                                                        enableStickySession,
+                                                                        null,
+                                                                        noFallback));
+    final HaProvider provider = new DefaultHaProvider(descriptor);
+    final URI uri1 = new URI( "http://host1.valid" );
+    final URI uri2 = new URI( "http://host2.valid" );
+    final ArrayList<String> urlList = new ArrayList<>();
+    urlList.add(uri1.toString());
+    urlList.add(uri2.toString());
+    provider.addHaService(serviceName, urlList);
+    FilterConfig filterConfig = EasyMock.createNiceMock(FilterConfig.class);
+    ServletContext servletContext = EasyMock.createNiceMock(ServletContext.class);
+
+    EasyMock.expect(filterConfig.getServletContext()).andReturn(servletContext).anyTimes();
+    EasyMock.expect(servletContext.getAttribute(HaServletContextListener.PROVIDER_ATTRIBUTE_NAME)).andReturn(provider).anyTimes();
+
+    BasicHttpParams params = new BasicHttpParams();
+
+    HttpUriRequest outboundRequest = EasyMock.createNiceMock(HttpRequestBase.class);
+    EasyMock.expect(outboundRequest.getMethod()).andReturn( "GET" ).anyTimes();
+    EasyMock.expect(outboundRequest.getURI()).andReturn( uri1  ).anyTimes();
+    EasyMock.expect(outboundRequest.getParams()).andReturn( params ).anyTimes();
+    // Capture the last request URI to be set on the request
+    Capture<URI> requestURICapture = EasyMock.newCapture(CaptureType.LAST);
+    ((HttpRequestBase) outboundRequest).setURI(EasyMock.capture(requestURICapture));
+    EasyMock.expectLastCall().anyTimes();
+
+    /* backend request */
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getRequestURL()).andReturn( new StringBuffer(uri2.toString()) ).once();
+    EasyMock.expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(0)).once();
+    EasyMock.expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(1)).once();
+    if (withCookie) {
+      inboundRequest.getCookies();
+      EasyMock.expectLastCall()
+              .andReturn(new Cookie[] { new Cookie(HaServiceConfigConstants.DEFAULT_STICKY_SESSION_COOKIE_NAME + "-" + serviceName,
+                                                   "59973e253ae20de796c6ef413608ec1c80fca24310a4cbdecc0ff97aeea55745") })
+              .anyTimes();
+    } else {
+      EasyMock.expect(inboundRequest.getCookies()).andReturn(null).anyTimes();
+    }
+
+    /* backend response */
+    CloseableHttpResponse inboundResponse = EasyMock.createNiceMock(CloseableHttpResponse.class);
+    final StatusLine statusLine = EasyMock.createNiceMock(StatusLine.class);
+    final HttpEntity entity = EasyMock.createNiceMock(HttpEntity.class);
+    final Header header = EasyMock.createNiceMock(Header.class);
+    final ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    final GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    final ByteArrayInputStream backendResponse = new ByteArrayInputStream("knox-backend".getBytes(StandardCharsets.UTF_8));
+
+    EasyMock.expect(inboundResponse.getStatusLine()).andReturn(statusLine).anyTimes();
+    EasyMock.expect(statusLine.getStatusCode()).andReturn(HttpStatus.SC_OK).anyTimes();
+    EasyMock.expect(inboundResponse.getEntity()).andReturn(entity).anyTimes();
+    EasyMock.expect(inboundResponse.getAllHeaders()).andReturn(new Header[0]).anyTimes();
+    EasyMock.expect(inboundRequest.getServletContext()).andReturn(context).anyTimes();
+    EasyMock.expect(entity.getContent()).andReturn(backendResponse).anyTimes();
+    EasyMock.expect(entity.getContentType()).andReturn(header).anyTimes();
+    EasyMock.expect(header.getElements()).andReturn(new HeaderElement[]{}).anyTimes();
+    EasyMock.expect(entity.getContentLength()).andReturn(4L).anyTimes();
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(config).anyTimes();
+
+    HttpServletResponse outboundResponse = EasyMock.createNiceMock(HttpServletResponse.class);
+    // Capture the status code when it is set on the response
+    Capture<Integer> statusCodeCapture = EasyMock.newCapture(CaptureType.FIRST);
+    if (withCookie) {
+      outboundResponse.sendError(EasyMock.captureInt(statusCodeCapture), anyString());
+    } else {
+      outboundResponse.setStatus(EasyMock.captureInt(statusCodeCapture));
+    }
+    EasyMock.expectLastCall().once();
+    EasyMock.expect(outboundResponse.getOutputStream())
+            .andAnswer((IAnswer<SynchronousServletOutputStreamAdapter>) () -> new SynchronousServletOutputStreamAdapter() {
+              @Override
+              public void write( int b ) throws IOException {
+                throw new IOException( "unreachable-host" ); // Fail-over condition
+              }
+            }).once();
+
+    CloseableHttpClient mockHttpClient = EasyMock.createNiceMock(CloseableHttpClient.class);
+    EasyMock.expect(mockHttpClient.execute(outboundRequest)).andReturn(inboundResponse).anyTimes();
+
+    EasyMock.replay(filterConfig,
+                    servletContext,
+                    outboundRequest,
+                    inboundRequest,
+                    outboundResponse,
+                    mockHttpClient,
+                    inboundResponse,
+                    statusLine,
+                    entity,
+                    header,
+                    context,
+                    config);
+
+    Assert.assertEquals(uri1.toString(), provider.getActiveURL(serviceName));
+    ConfigurableHADispatch dispatch = new ConfigurableHADispatch();
+    dispatch.setHttpClient(mockHttpClient);
+    dispatch.setHaProvider(provider);
+    dispatch.setServiceRole(serviceName);
+    dispatch.init();
+    try {
+      dispatch.executeRequestWrapper(outboundRequest, inboundRequest, outboundResponse);
+    } catch (IOException e) {
+      //this is expected after the failover limit is reached
+    }
+
+    if (withCookie) {
+      Assert.assertEquals("Expected no fail-over because the initial request contained a session cookie.",
+                          HttpStatus.SC_BAD_GATEWAY,
+                          statusCodeCapture.getValue().intValue());
+    } else {
+      // The request should have failed over
+      Assert.assertEquals("Expected the request to have failed-over to the alternate host.", uri2, requestURICapture.getValue());
+      Assert.assertEquals("Expected the failed-over request to succeed.", HttpStatus.SC_OK, statusCodeCapture.getValue().intValue());
+    }
+  }
+
+    /**
+     * Test the case where sticky session is on (and loadbalancing is on)
+     * Expected behavior: When
+     * @throws Exception
+     */
   @Test
   public void testStickyOn() throws Exception {
     String serviceName = "OOZIE";
