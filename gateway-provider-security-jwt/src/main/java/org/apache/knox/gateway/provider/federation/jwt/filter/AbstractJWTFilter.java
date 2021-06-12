@@ -356,8 +356,7 @@ public abstract class AbstractJWTFilter implements Filter {
           // records for other valid tokens from being prematurely evicted from the cache.
           removeSignatureVerificationRecord(token.toString());
 
-          handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-                                "Bad request: token has expired");
+          handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, "Token has expired");
 
         }
       } catch (UnknownTokenException e) {
@@ -386,7 +385,7 @@ public abstract class AbstractJWTFilter implements Filter {
               return true;
             } else {
               log.wrongPasscodeToken(tokenId);
-              handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST, "Bad request: wrong passcode");
+              handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid passcode");
             }
           } else {
             log.tokenHasExpired(Tokens.getTokenIDDisplayText(tokenId));
@@ -394,13 +393,11 @@ public abstract class AbstractJWTFilter implements Filter {
             // There is no value in keeping this record for expired tokens, and explicitly removing them may prevent
             // records for other valid tokens from being prematurely evicted from the cache.
             removeSignatureVerificationRecord(passcode);
-            handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-                    "Bad request: token has expired");
+            handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, "Token has expired");
           }
         } else {
           log.missingTokenPasscode();
-          handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-                                "Bad request: missing token passcode.");
+          handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST, "Bad request: missing token passcode.");
         }
       } catch (UnknownTokenException e) {
         log.unableToVerifyExpiration(e);
