@@ -170,9 +170,9 @@ public class UrlRewriteResponseTest {
     Path outputFile = Files.createTempFile("output", "test");
     try {
       try(OutputStream outputStream = Files.newOutputStream(inputFile);
-          OutputStream outStream = contentType.equalsIgnoreCase("gzip") ?
+          OutputStream outStream = "gzip".equalsIgnoreCase(contentType) ?
                   new GZIPOutputStream( outputStream ) :
-                  contentType.equalsIgnoreCase("deflate") ? new DeflaterOutputStream( outputStream ) : outputStream) {
+                  "deflate".equalsIgnoreCase(contentType) ? new DeflaterOutputStream( outputStream ) : outputStream) {
         outStream.write(content.getBytes(StandardCharsets.UTF_8));
       }
 
@@ -182,9 +182,9 @@ public class UrlRewriteResponseTest {
       }
 
       try(InputStream inputStream = Files.newInputStream(outputFile);
-          InputStream inStream = contentType.equalsIgnoreCase("gzip") ?
+          InputStream inStream = "gzip".equalsIgnoreCase(contentType) ?
                   new GZIPInputStream(inputStream) :
-                  contentType.equalsIgnoreCase("deflate") ? new InflaterInputStream(inputStream) : inputStream) {
+                  "deflate".equalsIgnoreCase(contentType) ? new InflaterInputStream(inputStream) : inputStream) {
         assertThat(String.valueOf(IOUtils.toCharArray(inStream, StandardCharsets.UTF_8)), is(content));
       }
     } finally {
