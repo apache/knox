@@ -126,7 +126,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
   }
 
   private void setContentEncoding(String name, String value) {
-    if (name.equalsIgnoreCase("Content-Encoding")) {
+    if ("Content-Encoding".equalsIgnoreCase(name)) {
       contentEncoding = value;
     }
   }
@@ -187,10 +187,10 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
       inBuffer.reset();
 
       final InputStream unFilteredStream;
-      if(isGzip || contentEncoding.equalsIgnoreCase("gzip")) {
+      if(isGzip || "gzip".equalsIgnoreCase(contentEncoding)) {
         unFilteredStream = new GzipCompressorInputStream(inBuffer, true);
         outStream = new GZIPOutputStream(output, STREAM_BUFFER_SIZE);
-      } else if (contentEncoding.equalsIgnoreCase("deflate")) {
+      } else if ("deflate".equalsIgnoreCase(contentEncoding)) {
         unFilteredStream = new InflaterInputStream(inBuffer);
         outStream = new DeflaterOutputStream(output);
       } else {
