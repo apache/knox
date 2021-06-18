@@ -35,8 +35,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.zip.DeflaterOutputStream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import java.util.zip.InflaterInputStream;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -135,7 +137,7 @@ public class UrlRewriteResponseTest {
 
     UrlRewriteResponse rewriteResponse = new UrlRewriteResponse(config, request, response);
     String content = "<?xml version=\"1.0\" standalone=\"no\"?><data>abc-大数据</data>";
-    testStreamResponse(content, rewriteResponse, false);
+    testStreamResponse(content, rewriteResponse, "");
   }
 
   @Test
@@ -158,16 +160,19 @@ public class UrlRewriteResponseTest {
     UrlRewriteResponse rewriteResponse = new UrlRewriteResponse( config, request, response );
 
     String content = "content to test gzip streaming";
-    testStreamResponse(content, rewriteResponse, false);
-    testStreamResponse(content, rewriteResponse, true);
+    testStreamResponse(content, rewriteResponse, "");
+    testStreamResponse(content, rewriteResponse, "gzip");
+    testStreamResponse(content, rewriteResponse, "deflate");
   }
 
-  private void testStreamResponse(String content, UrlRewriteResponse rewriteResponse, boolean isGzip) throws IOException {
+  private void testStreamResponse(String content, UrlRewriteResponse rewriteResponse, String contentType) throws IOException {
     Path inputFile = Files.createTempFile("input", "test");
     Path outputFile = Files.createTempFile("output", "test");
     try {
       try(OutputStream outputStream = Files.newOutputStream(inputFile);
-          OutputStream outStream = isGzip ? new GZIPOutputStream( outputStream ) : outputStream) {
+          OutputStream outStream = contentType.equalsIgnoreCase("gzip") ?
+                  new GZIPOutputStream( outputStream ) :
+                  contentType.equalsIgnoreCase("deflate") ? new DeflaterOutputStream( outputStream ) : outputStream) {
         outStream.write(content.getBytes(StandardCharsets.UTF_8));
       }
 
@@ -177,7 +182,9 @@ public class UrlRewriteResponseTest {
       }
 
       try(InputStream inputStream = Files.newInputStream(outputFile);
-          InputStream inStream = isGzip ? new GZIPInputStream(inputStream) : inputStream) {
+          InputStream inStream = contentType.equalsIgnoreCase("gzip") ?
+                  new GZIPInputStream(inputStream) :
+                  contentType.equalsIgnoreCase("deflate") ? new InflaterInputStream(inputStream) : inputStream) {
         assertThat(String.valueOf(IOUtils.toCharArray(inStream, StandardCharsets.UTF_8)), is(content));
       }
     } finally {
