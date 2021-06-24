@@ -27,6 +27,7 @@ import org.apache.knox.gateway.services.registry.ServiceDefinitionRegistry;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
+import org.apache.knox.gateway.webshell.WebshellWebSocketAdapter;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
@@ -111,16 +112,21 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
   @Override
   public Object createWebSocket(ServletUpgradeRequest req,
-      ServletUpgradeResponse resp) {
+                                ServletUpgradeResponse resp) {
 
     try {
       final URI requestURI = req.getRequestURI();
 
-      /* URL used to connect to websocket backend */
+      if (StringUtils.endsWith(requestURI.getRawPath(), "/webshell/webshellws")) {
+        LOG.debugLog("received websocket request for webshhell: "+ requestURI.toString());
+        return new WebshellWebSocketAdapter(req, pool);
+      }
+
+      // URL used to connect to websocket backend
       final String backendURL = getMatchedBackendURL(requestURI);
       LOG.debugLog("Generated backend URL for websocket connection: " + backendURL);
 
-      /* Upgrade happens here */
+      // Upgrade happens here
       final ClientEndpointConfig clientConfig = getClientEndpointConfig(req);
       clientConfig.getUserProperties().put("org.apache.knox.gateway.websockets.truststore", getTruststore());
       return new ProxyWebSocketAdapter(URI.create(backendURL), pool, clientConfig, config);

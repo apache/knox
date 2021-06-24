@@ -36,6 +36,10 @@ public class GeneralProxyInformation {
   private String adminUiUrl;
 
   @XmlElement
+  @ApiModelProperty(value = "The Web Shell URL")
+  private String webShellUrl;
+
+  @XmlElement
   @ApiModelProperty(value = "The URL referencing the Admin API book in Knox's user guide")
   private String adminApiBookUrl;
 
@@ -54,6 +58,15 @@ public class GeneralProxyInformation {
   public void setAdminUiUrl(String adminUiUrl) {
     this.adminUiUrl = adminUiUrl;
   }
+
+  public String getWebShellUrl() {
+    return webShellUrl;
+  }
+
+  public void setWebShellUrl(String webShellUrl) {
+    this.webShellUrl = webShellUrl;
+  }
+
 
   public String getAdminApiBookUrl() {
     return adminApiBookUrl;

@@ -107,4 +107,7 @@
    <application>
       <name>token-management</name>
    </application>
+   <application>      
+      <name>webshell</name>
+   </application>
 </topology>

@@ -441,6 +441,7 @@
                         <exclude>**/.project/**</exclude>
                         <exclude>**/.settings/**</exclude>
                         <exclude>**/.classpath/**</exclude>
+                        <exclude>**/.idea/**</exclude>
                         <exclude>src/stage.txt</exclude>
                         <exclude>src/vote.txt</exclude>
                         <exclude>**/*.iml</exclude>

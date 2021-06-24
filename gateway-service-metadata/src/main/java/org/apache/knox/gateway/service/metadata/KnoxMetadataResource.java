@@ -101,6 +101,7 @@ public class KnoxMetadataResource {
           String.format(Locale.ROOT, "https://knox.apache.org/books/knox-%s/user-guide.html#Admin+API", getAdminApiBookVersion(serviceInfoService.getBuildVersion())));
       final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
       proxyInfo.setAdminUiUrl(getBaseGatewayUrl(config) + "/manager/admin-ui/");
+      proxyInfo.setWebShellUrl(getBaseGatewayUrl(config) + "/homepage/webshell/index.html");
     }
 
     return proxyInfo;
