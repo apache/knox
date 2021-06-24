@@ -67,15 +67,18 @@
                         <label><i class="icon-info"></i> Configured maximum lifetime: </label>
                         <label id="maximumLifetimeText"></label>
                         <input type="number" id="maximumLifetimeSeconds" name="maximumLifetimeSeconds" style="display: none;">
-                        <label><i class="icon-time"></i> Lifetime (days, hours, mins):</label>
-                        <table>
-                            <tr>
-                                <td><input type="number" id="lt_days" name="lt_days" step="1" min="0" max="3650" value="1" size="3"></td> <!-- 10 years limit -->
-                                <td><input type="number" id="lt_hours" name="lt_hours" step="1" min="0" max="23" value="0" size="3"></td>
-                                <td><input type="number" id="lt_mins" name="lt_mins" step="1" min="0" max="59" value="0" size="3"></td>
-                            </tr>
-                        </table>
-                        <label style="display: none; color: red;" id="invalidLifetimeText"><i class="icon-warning"></i>Invalid lifetime!</label>
+                        <div id="lifespanFields" style="display: none;">
+                            <input id="lifespanInputEnabled" name="lifespanInputEnabled" type="text" style="display: none" value="false" />
+                            <label><i class="icon-time"></i> Lifetime (days, hours, mins):</label>
+                            <table>
+                                <tr>
+                                    <td><input type="number" id="lt_days" name="lt_days" step="1" min="0" max="3650" value="0" size="3"></td> <!-- 10 years limit -->
+                                    <td><input type="number" id="lt_hours" name="lt_hours" step="1" min="0" max="23" value="1" size="3"></td>
+                                    <td><input type="number" id="lt_mins" name="lt_mins" step="1" min="0" max="59" value="0" size="3"></td>
+                                </tr>
+                            </table>
+                            <label style="display: none; color: red;" id="invalidLifetimeText"><i class="icon-warning"></i>Invalid lifetime!</label>
+                        </div>
                     </div>
                     <span id="errorBox" class="help-inline" style="color:white;display:none;"><span class="errorMsg"></span>
                         <i class="icon-warning-sign" style="color:#ae2817;"></i>

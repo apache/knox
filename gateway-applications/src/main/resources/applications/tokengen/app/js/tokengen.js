@@ -107,12 +107,21 @@ function setTokenStateServiceStatus() {
 
                 $('#maximumLifetimeText').text(resp.maximumLifetimeText);
                 $('#maximumLifetimeSeconds').text(resp.maximumLifetimeSeconds);
+
+                if (resp.lifespanInputEnabled === "true") {
+                    $('#lifespanFields').show();
+                    document.getElementById("lifespanInputEnabled").value = "true";
+                }
             }
         }
     }
 }
 
-function validateLifespan(days, hours, mins) {
+function validateLifespan(lifespanInputEnabled, days, hours, mins) {
+    if (lifespanInputEnabled === "false") {
+        return true;
+    }
+
     //show possible contraint violations
     days.reportValidity();
     hours.reportValidity();
@@ -174,12 +183,16 @@ var gen = function() {
     var lt_days = form.lt_days.value;
     var lt_hours = form.lt_hours.value;
     var lt_mins = form.lt_mins.value;
+    var lifespanInputEnabled = form.lifespanInputEnabled.value;
     var _gen = function() {
         var apiUrl = tokenURL;
-        //Instantiate HTTP Request
-        var params = '?lifespan=P' + lt_days + "DT" + lt_hours + "H" + lt_mins + "M";  //we need to support Java's Duration pattern
+        var params = "";
+        if (lifespanInputEnabled === "true") {
+            params = params + '?lifespan=P' + lt_days + "DT" + lt_hours + "H" + lt_mins + "M";  //we need to support Java's Duration pattern
+        }
+
         if (form.comment.value != '') {
-            params = params + '&comment=' + encodeURIComponent(form.comment.value);
+            params = params + (lifespanInputEnabled === "true" ? "&" : "?") + 'comment=' + encodeURIComponent(form.comment.value);
         }
         var request = ((window.XMLHttpRequest) ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP"));
         request.open("GET", apiUrl + params, true);
@@ -217,7 +230,7 @@ var gen = function() {
         }
     }
 
-    if (validateLifespan(form.lt_days, form.lt_hours, form.lt_mins) && validateComment(form.comment)) {
+    if (validateLifespan(lifespanInputEnabled, form.lt_days, form.lt_hours, form.lt_mins) && validateComment(form.comment)) {
         if (maximumLifetimeExceeded(form.maximumLifetimeSeconds.textContent, lt_days, lt_hours, lt_mins)) {
             swal({
                 title: "Warning",
