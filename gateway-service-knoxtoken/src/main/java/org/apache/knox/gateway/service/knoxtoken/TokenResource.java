@@ -104,6 +104,8 @@ public class TokenResource {
   private static final String TSS_ALLOWED_BACKEND_FOR_TOKENGEN = "allowedTssForTokengen";
   private static final String TSS_MAXIMUM_LIFETIME_SECONDS = "maximumLifetimeSeconds";
   private static final String TSS_MAXIMUM_LIFETIME_TEXT = "maximumLifetimeText";
+  private static final String LIFESPAN_INPUT_ENABLED_PARAM = "knox.token.lifespan.input.enabled";
+  private static final String LIFESPAN_INPUT_ENABLED_TEXT = "lifespanInputEnabled";
   private static final long TOKEN_TTL_DEFAULT = 30000L;
   static final String TOKEN_API_PATH = "knoxtoken/api/v1";
   static final String RESOURCE_PATH = TOKEN_API_PATH + "/token";
@@ -278,6 +280,9 @@ public class TokenResource {
     } else {
       tokenStateServiceStatusMap.put(TSS_STATUS_IS_MANAGEMENT_ENABLED, "false");
     }
+    final String lifespanInputEnabledValue = context.getInitParameter(LIFESPAN_INPUT_ENABLED_PARAM);
+    final Boolean lifespanInputEnabled = lifespanInputEnabledValue == null ? Boolean.TRUE : Boolean.parseBoolean(lifespanInputEnabledValue);
+    tokenStateServiceStatusMap.put(LIFESPAN_INPUT_ENABLED_TEXT, lifespanInputEnabled.toString());
   }
 
   private void populateAllowedTokenStateBackendForTokenGenApp(final String actualTokenServiceName) {

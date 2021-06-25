@@ -857,6 +857,7 @@ public class TokenServiceResourceTest {
     if (expectedAllowedTssFlag != null) {
       assertEquals(statusMap.get("allowedTssForTokengen"), expectedAllowedTssFlag);
     }
+    assertTrue(Boolean.parseBoolean(statusMap.get("lifespanInputEnabled")));
   }
 
   @Test
