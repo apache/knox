@@ -23,10 +23,12 @@ import static org.junit.Assert.fail;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -40,6 +42,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.token.KnoxToken;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
@@ -480,6 +483,20 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
                 throw new UnknownTokenException(tokenId);
             }
             return tokenMetadata.get(tokenId);
+        }
+
+        @Override
+        public Collection<KnoxToken> getTokens(String userName) {
+          final Collection<KnoxToken> tokens = new TreeSet<>();
+          tokenMetadata.entrySet().stream().filter(entry -> entry.getValue().getUserName().equals(userName)).forEach(metadata -> {
+            String tokenId = metadata.getKey();
+            try {
+              tokens.add(new KnoxToken(tokenId, getTokenIssueTime(tokenId), getTokenExpiration(tokenId), 0L, metadata.getValue()));
+            } catch (UnknownTokenException e) {
+              // NOP
+            }
+          });
+          return tokens;
         }
     }
 }

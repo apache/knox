@@ -332,11 +332,16 @@ public abstract class AbstractJWTFilter implements Filter {
           if (audValid) {
             Date nbf = token.getNotBeforeDate();
             if (nbf == null || new Date().after(nbf)) {
-              if (verifyTokenSignature(token)) {
-                return true;
+              if (isTokenEnabled(tokenId)) {
+                if (verifyTokenSignature(token)) {
+                  return true;
+                } else {
+                  log.failedToVerifyTokenSignature(displayableToken, displayableTokenId);
+                  handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
+                }
               } else {
-                log.failedToVerifyTokenSignature(displayableToken, displayableTokenId);
-                handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
+                log.disabledToken(displayableTokenId);
+                handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, "Token " + displayableTokenId + " is disabled");
               }
             } else {
               log.notBeforeCheckFailed();
@@ -370,6 +375,11 @@ public abstract class AbstractJWTFilter implements Filter {
     return false;
   }
 
+  private boolean isTokenEnabled(String tokenId) throws UnknownTokenException {
+    final TokenMetadata tokenMetadata = tokenStateService == null ? null : tokenStateService.getTokenMetadata(tokenId);
+    return tokenMetadata == null ? true : tokenMetadata.isEnabled();
+  }
+
   protected boolean validateToken(final HttpServletRequest request,
                                   final HttpServletResponse response,
                                   final FilterChain chain,
@@ -380,15 +390,21 @@ public abstract class AbstractJWTFilter implements Filter {
     if (tokenStateService != null) {
       try {
         if (tokenId != null) {
+          final String displayableTokenId = Tokens.getTokenIDDisplayText(tokenId);
           if (tokenIsStillValid(tokenId)) {
-            if (hasSignatureBeenVerified(passcode) || validatePasscode(tokenId, passcode)) {
-              return true;
+            if (isTokenEnabled(tokenId)) {
+              if (hasSignatureBeenVerified(passcode) || validatePasscode(tokenId, passcode)) {
+                return true;
+              } else {
+                log.wrongPasscodeToken(tokenId);
+                handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid passcode");
+              }
             } else {
-              log.wrongPasscodeToken(tokenId);
-              handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid passcode");
+              log.disabledToken(displayableTokenId);
+              handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, "Token " + displayableTokenId + " is disabled");
             }
           } else {
-            log.tokenHasExpired(Tokens.getTokenIDDisplayText(tokenId));
+            log.tokenHasExpired(displayableTokenId);
             // Explicitly evict the record of this token's signature verification (if present).
             // There is no value in keeping this record for expired tokens, and explicitly removing them may prevent
             // records for other valid tokens from being prematurely evicted from the cache.

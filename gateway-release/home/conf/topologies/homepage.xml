@@ -89,11 +89,22 @@
          <name>knox.token.client.data</name>
          <value>homepage_url=homepage/home/</value>
       </param>
+      <param>
+         <name>knox.token.exp.server-managed</name>
+         <value>true</value>
+      </param>
+      <param>
+          <name>knox.token.renewer.whitelist</name>
+          <value>admin</value>
+      </param>
    </service>
    <application>
       <name>tokengen</name>
    </application>
    <application>
       <name>home</name>
+   </application>
+   <application>
+      <name>token-management</name>
    </application>
 </topology>

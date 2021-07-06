@@ -18,11 +18,13 @@ package org.apache.knox.gateway.services.token.impl;
 
 import java.lang.management.ManagementFactory;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -38,6 +40,7 @@ import javax.management.ObjectName;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.token.KnoxToken;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
@@ -413,5 +416,20 @@ public class DefaultTokenStateService implements TokenStateService {
       throw new UnknownTokenException(tokenId);
     }
     return metadataMap.get(tokenId);
+  }
+
+  @Override
+  public Collection<KnoxToken> getTokens(String userName) {
+    final Collection<KnoxToken> tokens = new TreeSet<>();
+    metadataMap.entrySet().stream().filter(entry -> entry.getValue().getUserName().equals(userName)).forEach(metadata -> {
+      String tokenId = metadata.getKey();
+      try {
+        tokens.add(new KnoxToken(tokenId, getTokenIssueTime(tokenId), getTokenExpiration(tokenId), getMaxLifetime(tokenId), metadata.getValue()));
+      } catch (UnknownTokenException e) {
+        // NOP: since this is coming from memory the only reason an UTE is thrown that the token got removed/revoked.
+        // In that case we would not want to return it anyway
+      }
+    });
+    return tokens;
   }
 }
