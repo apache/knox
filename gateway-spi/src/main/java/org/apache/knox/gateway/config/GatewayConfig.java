@@ -703,6 +703,14 @@ public interface GatewayConfig {
   String getKnoxTokenHashAlgorithm();
 
   /**
+   * @return the maximum number of tokens a user can manage at the same time. -1
+   *         means that users are allowed to create/manage as many tokens as they
+   *         want. This configuration only applies when server-managed token state
+   *         is enabled either in gateway-site or at the topology level.
+   */
+  int getMaximumNumberOfTokensPerUser();
+
+  /**
    * @return the list of topologies that should be hidden on Knox homepage
    */
   Set<String> getHiddenTopologiesOnHomepage();

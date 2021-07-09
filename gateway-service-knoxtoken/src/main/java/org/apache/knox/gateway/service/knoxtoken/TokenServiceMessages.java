@@ -83,4 +83,7 @@ public interface TokenServiceMessages {
 
   @Message( level = MessageLevel.WARN, text = "Invalid duration used for JWT token lifespan ({0}) using the configured TTL for KnoxToken service")
   void invalidLifetimeValue(String lifetimeStr);
+
+  @Message( level = MessageLevel.ERROR, text = "Unable to get token for user {0}: token limit exceeded")
+  void tokenLimitExceeded(String userName);
 }

@@ -141,6 +141,8 @@ public class TokenResource {
 
   private Optional<Long> maxTokenLifetime = Optional.empty();
 
+  private int tokenLimitPerUser;
+
   private List<String> allowedRenewers;
 
   @Context
@@ -211,6 +213,8 @@ public class TokenResource {
       final GatewayConfig gatewayConfig = (GatewayConfig) context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
       final AliasService aliasService = services.getService(ServiceType.ALIAS_SERVICE);
       tokenMAC = new TokenMAC(gatewayConfig.getKnoxTokenHashAlgorithm(), aliasService.getPasswordFromAliasForGateway(TokenMAC.KNOX_TOKEN_HASH_KEY_ALIAS_NAME));
+
+      tokenLimitPerUser = gatewayConfig.getMaximumNumberOfTokensPerUser();
 
       String renewIntervalValue = context.getInitParameter(TOKEN_EXP_RENEWAL_INTERVAL);
       if (renewIntervalValue != null && !renewIntervalValue.isEmpty()) {
@@ -583,6 +587,15 @@ public class TokenResource {
     final int idx = request.getRequestURL().lastIndexOf("/");
     if(idx > 1) {
       jku = request.getRequestURL().substring(0, idx) + JWKSResource.JWKS_PATH;
+    }
+
+    if (tokenStateService != null) {
+      if (tokenLimitPerUser != -1) { // if -1 => unlimited tokens for all users
+        if (tokenStateService.getTokens(p.getName()).size() == tokenLimitPerUser) {
+          log.tokenLimitExceeded(p.getName());
+          return Response.status(Response.Status.FORBIDDEN).entity("{ \"Unable to get token - token limit exceeded.\" }").build();
+        }
+      }
     }
 
     try {

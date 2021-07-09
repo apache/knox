@@ -17,11 +17,14 @@
  */
 package org.apache.knox.gateway.service.knoxtoken;
 
+import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.KNOX_TOKEN_USER_LIMIT;
+import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.KNOX_TOKEN_USER_LIMIT_DEFAULT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -81,7 +84,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -94,9 +99,10 @@ public class TokenServiceResourceTest {
   private static RSAPublicKey publicKey;
   private static RSAPrivateKey privateKey;
 
-  private static String TOKEN_API_PATH = "https://gateway-host:8443/gateway/sandbox/knoxtoken/api/v1";
-  private static String TOKEN_PATH = "/token";
-  private static String JKWS_PATH = "/jwks.json";
+  private static final String TOKEN_API_PATH = "https://gateway-host:8443/gateway/sandbox/knoxtoken/api/v1";
+  private static final String TOKEN_PATH = "/token";
+  private static final String JKWS_PATH = "/jwks.json";
+  private static final String USER_NAME = "alice";
 
   private ServletContext context;
   private HttpServletRequest request;
@@ -136,7 +142,7 @@ public class TokenServiceResourceTest {
     request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
     Principal principal = EasyMock.createNiceMock(Principal.class);
-    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(principal.getName()).andReturn(USER_NAME).anyTimes();
     EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
     EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(TOKEN_API_PATH+TOKEN_PATH)).anyTimes();
     if (contextExpectations.containsKey(TokenResource.LIFESPAN)) {
@@ -159,6 +165,8 @@ public class TokenServiceResourceTest {
       EasyMock.expect(config.getServiceParameter(tokenStateServiceType, "impl")).andReturn(contextExpectations.get(tokenStateServiceType)).anyTimes();
     }
     EasyMock.expect(config.getKnoxTokenHashAlgorithm()).andReturn(HmacAlgorithms.HMAC_SHA_256.getName()).anyTimes();
+    EasyMock.expect(config.getMaximumNumberOfTokensPerUser())
+        .andReturn(contextExpectations.containsKey(KNOX_TOKEN_USER_LIMIT) ? Integer.parseInt(contextExpectations.get(KNOX_TOKEN_USER_LIMIT)) : -1).anyTimes();
     tss = new TestTokenStateService();
     EasyMock.expect(services.getService(ServiceType.TOKEN_STATE_SERVICE)).andReturn(tss).anyTimes();
 
@@ -937,6 +945,48 @@ public class TokenServiceResourceTest {
     assertTrue((expiresDate.getTime() - now.getTime()) < oneMinute); // the configured TTL was used even if lifespan was supplied
   }
 
+  @Test
+  public void testConfiguredTokenLimitPerUser() throws Exception {
+    testLimitingTokensPerUser(String.valueOf(KNOX_TOKEN_USER_LIMIT_DEFAULT), KNOX_TOKEN_USER_LIMIT_DEFAULT);
+  }
+
+  @Test
+  public void testUnlimitedTokensPerUser() throws Exception {
+    testLimitingTokensPerUser(String.valueOf("-1"), 100);
+  }
+
+  @Test
+  public void tesTokenLimitPerUserExceeded() throws Exception {
+    try {
+      testLimitingTokensPerUser(String.valueOf("10"), 11);
+      fail("Exception should have been thrown");
+    } catch (Exception e) {
+      assertTrue(e.getMessage().contains("Unable to get token - token limit exceeded."));
+    }
+  }
+
+  private void testLimitingTokensPerUser(String configuredLimit, int numberOfTokens) throws Exception {
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put(KNOX_TOKEN_USER_LIMIT, configuredLimit);
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+
+    final TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    for (int i = 0; i < numberOfTokens; i++) {
+      final Response getTokenResponse = tr.doGet();
+      if (getTokenResponse.getStatus() != Response.Status.OK.getStatusCode()) {
+        throw new Exception(getTokenResponse.getEntity().toString());
+      }
+    }
+    final Response getKnoxTokensResponse = tr.getUserTokens(USER_NAME);
+    final Collection<String> tokens = ((Map<String, Collection<String>>) JsonUtils.getObjectFromJsonString(getKnoxTokensResponse.getEntity().toString()))
+        .get("tokens");
+    assertEquals(tokens.size(), numberOfTokens);
+  }
+
   /**
    *
    * @param isTokenStateServerManaged true, if server-side token state management should be enabled; Otherwise, false or null.
@@ -1218,6 +1268,7 @@ public class TokenServiceResourceTest {
     private Map<String, Long> expirationData = new HashMap<>();
     private Map<String, Long> issueTimes = new HashMap<>();
     private Map<String, Long> maxLifetimes = new HashMap<>();
+    private final Map<String, TokenMetadata> tokenMetadata = new ConcurrentHashMap<>();
 
     long getIssueTime(final String token) {
       return issueTimes.get(token);
@@ -1310,16 +1361,26 @@ public class TokenServiceResourceTest {
 
     @Override
     public void addMetadata(String tokenId, TokenMetadata metadata) {
+      tokenMetadata.put(tokenId, metadata);
     }
 
     @Override
     public TokenMetadata getTokenMetadata(String tokenId) throws UnknownTokenException {
-      return null;
+      return tokenMetadata.get(tokenId);
     }
 
     @Override
     public Collection<KnoxToken> getTokens(String userName) {
-      return null;
+      final Collection<KnoxToken> tokens = new TreeSet<>();
+      tokenMetadata.entrySet().stream().filter(entry -> entry.getValue().getUserName().equals(userName)).forEach(metadata -> {
+        String tokenId = metadata.getKey();
+        try {
+          tokens.add(new KnoxToken(tokenId, getTokenIssueTime(tokenId), getTokenExpiration(tokenId), 0L, metadata.getValue()));
+        } catch (UnknownTokenException e) {
+          // NOP
+        }
+      });
+      return tokens;
     }
 
     @Override

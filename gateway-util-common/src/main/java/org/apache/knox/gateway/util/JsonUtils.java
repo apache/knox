@@ -73,10 +73,10 @@ public class JsonUtils {
   }
 
   public static Object getObjectFromJsonString(String json) {
-    Map<String, String> obj = null;
+    Map<String, Object> obj = null;
     JsonFactory factory = new JsonFactory();
     ObjectMapper mapper = new ObjectMapper(factory);
-    TypeReference<Map<String, String>> typeRef = new TypeReference<Map<String, String>>() {};
+    TypeReference<Map<String, Object>> typeRef = new TypeReference<Map<String, Object>>() {};
     try {
       obj = mapper.readValue(json, typeRef);
     } catch (IOException e) {
