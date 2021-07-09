@@ -431,10 +431,12 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService implem
       unpersistedState.removeAll(unpersistedToRemove);
     }
 
-    // Add the max lifetime aliases to the list of aliases to remove
+    // Add the max lifetime, metadata and issue time aliases to the list of aliases to remove
     Set<String> aliasesToRemove = new HashSet<>(tokenIds);
     for (String tokenId : tokenIds) {
       aliasesToRemove.add(tokenId + TOKEN_MAX_LIFETIME_POSTFIX);
+      aliasesToRemove.add(tokenId + TOKEN_META_POSTFIX);
+      aliasesToRemove.add(tokenId + TOKEN_ISSUE_TIME_POSTFIX);
     }
 
     if (!aliasesToRemove.isEmpty()) {
