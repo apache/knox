@@ -18,8 +18,11 @@
 package org.apache.knox.gateway.services.token.impl;
 
 import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
@@ -30,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.token.KnoxToken;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenStateServiceException;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
@@ -198,7 +202,7 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
     try {
       final boolean removed = tokenDatabase.removeToken(tokenId);
       if (removed) {
-        super.removeToken(tokenId);
+        super.removeTokens(Collections.singleton(tokenId));
         log.removedTokenFromDatabase(Tokens.getTokenIDDisplayText(tokenId));
       } else {
         throw new UnknownTokenException(tokenId);
@@ -299,4 +303,19 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
     }
     return tokenMetadata;
   }
+
+  @Override
+  public Collection<KnoxToken> getTokens(String userName) {
+    final Collection<KnoxToken> tokens = new TreeSet<>();
+    try {
+      tokens.addAll(tokenDatabase.getTokens(userName));
+      for (KnoxToken token : tokens) {
+        token.setMetadata(tokenDatabase.getTokenMetadata(token.getTokenId()));
+      }
+    } catch (SQLException e) {
+      log.errorFetchingTokensForUserFromDatabase(userName, e.getMessage(), e);
+    }
+    return tokens;
+  }
+
 }

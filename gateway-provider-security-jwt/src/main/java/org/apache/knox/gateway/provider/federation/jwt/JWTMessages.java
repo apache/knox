@@ -85,4 +85,6 @@ public interface JWTMessages {
   @Message( level = MessageLevel.ERROR, text = "Failed to parse passcode token: {0}" )
   void failedToParsePasscodeToken(@StackTrace( level = MessageLevel.ERROR) Exception e);
 
+  @Message( level = MessageLevel.ERROR, text = "Token is disabled: {0}" )
+  void disabledToken(String tokenId);
 }

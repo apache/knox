@@ -16,6 +16,8 @@
  */
 package org.apache.knox.gateway.services.security.token;
 
+import java.util.Collection;
+
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
@@ -192,5 +194,13 @@ public interface TokenStateService extends Service {
    * @return The associated token metadata
    */
   TokenMetadata getTokenMetadata(String tokenId) throws UnknownTokenException;
+
+  /**
+   * @param userName The name of the user to get tokens for
+   * @return a collection of tokens associated to the given user; it's an empty
+   *         collection if there is no associated token found in the underlying
+   *         token management backend
+   */
+  Collection<KnoxToken> getTokens(String userName);
 
 }

@@ -26,6 +26,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.knox.gateway.util.JsonUtils;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class TokenMetadata {
   public static final String USER_NAME = "userName";
   public static final String COMMENT = "comment";
@@ -59,6 +61,7 @@ public class TokenMetadata {
     this.metadataMap.putAll(metadataMap);
   }
 
+  @JsonIgnore
   public Map<String, String> getMetadataMap() {
     return new HashMap<String, String>(this.metadataMap);
   }
@@ -83,6 +86,7 @@ public class TokenMetadata {
     saveMetadata(PASSCODE, passcode);
   }
 
+  @JsonIgnore
   public String getPasscode() {
     return metadataMap.get(PASSCODE);
   }

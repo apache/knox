@@ -27,6 +27,8 @@ import java.text.ParseException;
 import java.time.Duration;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
@@ -39,8 +41,10 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
@@ -59,6 +63,7 @@ import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.KnoxToken;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
@@ -109,6 +114,7 @@ public class TokenResource {
   private static final long TOKEN_TTL_DEFAULT = 30000L;
   static final String TOKEN_API_PATH = "knoxtoken/api/v1";
   static final String RESOURCE_PATH = TOKEN_API_PATH + "/token";
+  static final String GET_USER_TOKENS = "/getUserTokens";
   static final String GET_TSS_STATUS_PATH = "/getTssStatus";
   static final String RENEW_PATH = "/renew";
   static final String REVOKE_PATH = "/revoke";
@@ -342,6 +348,18 @@ public class TokenResource {
   }
 
   @GET
+  @Path(GET_USER_TOKENS)
+  @Produces({APPLICATION_JSON, APPLICATION_XML})
+  public Response getUserTokens(@QueryParam("userName") String userName) {
+    if (tokenStateService == null) {
+      return Response.status(Response.Status.SERVICE_UNAVAILABLE).entity("{\n  \"error\": \"Token management is not configured\"\n}\n").build();
+    } else {
+      final Collection<KnoxToken> tokens = tokenStateService.getTokens(userName);
+      return Response.status(Response.Status.OK).entity(JsonUtils.renderAsJsonString(Collections.singletonMap("tokens", tokens))).build();
+    }
+  }
+
+  @GET
   @Path(GET_TSS_STATUS_PATH)
   @Produces({ APPLICATION_JSON })
   public Response getTokenStateServiceStatus() {
@@ -426,11 +444,11 @@ public class TokenResource {
       String renewer = SubjectUtils.getCurrentEffectivePrincipalName();
       if (allowedRenewers.contains(renewer)) {
         try {
-          JWTToken jwt = new JWTToken(token);
-          tokenStateService.revokeToken(jwt);
+          final String tokenId = getTokenId(token);
+          tokenStateService.revokeToken(tokenId);
           log.revokedToken(getTopologyName(),
                            Tokens.getTokenDisplayText(token),
-                           Tokens.getTokenIDDisplayText(TokenUtils.getTokenId(jwt)),
+                           Tokens.getTokenIDDisplayText(tokenId),
                            renewer);
         } catch (ParseException e) {
           log.invalidToken(getTopologyName(), Tokens.getTokenDisplayText(token), e);
@@ -458,14 +476,30 @@ public class TokenResource {
     return resp;
   }
 
-  @POST
+  /*
+   * If the supplied 'token' conforms the UUID string representation, we consider
+   * that as the token ID; otherwise we expect that 'token' is the entire JWT and
+   * we get the token ID from it
+   */
+  private String getTokenId(String token) throws ParseException {
+    try {
+      UUID.fromString(token);
+      return token;
+    } catch (IllegalArgumentException e) {
+      //NOP: the supplied token is not a UUID, we expect the entire JWT
+    }
+    final JWTToken jwt = new JWTToken(token);
+    return TokenUtils.getTokenId(jwt);
+  }
+
+  @PUT
   @Path(ENABLE_PATH)
   @Produces({ APPLICATION_JSON })
   public Response enable(String tokenId) {
     return setTokenEnabledFlag(tokenId, true);
   }
 
-  @POST
+  @PUT
   @Path(DISABLE_PATH)
   @Produces({ APPLICATION_JSON })
   public Response disable(String tokenId) {
