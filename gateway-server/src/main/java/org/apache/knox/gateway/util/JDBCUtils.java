@@ -17,8 +17,8 @@
  */
 package org.apache.knox.gateway.util;
 
-import javax.sql.DataSource;
-
+import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.jdbc.MysqlDataSource;
 import org.apache.derby.jdbc.ClientDataSource;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -27,18 +27,24 @@ import org.postgresql.ds.PGSimpleDataSource;
 import org.postgresql.jdbc.SslMode;
 import org.postgresql.ssl.NonValidatingFactory;
 
+import javax.sql.DataSource;
+import java.sql.SQLException;
+
 public class JDBCUtils {
   public static final String POSTGRESQL_DB_TYPE = "postgresql";
+  public static final String MYSQL_DB_TYPE = "mysql";
   public static final String DERBY_DB_TYPE = "derbydb";
   public static final String DATABASE_USER_ALIAS_NAME = "gateway_database_user";
   public static final String DATABASE_PASSWORD_ALIAS_NAME = "gateway_database_password";
   public static final String DATABASE_TRUSTSTORE_PASSWORD_ALIAS_NAME = "gateway_database_ssl_truststore_password";
 
-  public static DataSource getDataSource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException {
+  public static DataSource getDataSource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException, SQLException {
     if (POSTGRESQL_DB_TYPE.equalsIgnoreCase(gatewayConfig.getDatabaseType())) {
       return createPostgresDataSource(gatewayConfig, aliasService);
     } else if (DERBY_DB_TYPE.equalsIgnoreCase(gatewayConfig.getDatabaseType())) {
       return createDerbyDatasource(gatewayConfig, aliasService);
+    } else if (MYSQL_DB_TYPE.equalsIgnoreCase(gatewayConfig.getDatabaseType())) {
+      return createMySqlDataSource(gatewayConfig, aliasService);
     }
     throw new IllegalArgumentException("Invalid database type: " + gatewayConfig.getDatabaseType());
   }
@@ -79,6 +85,36 @@ public class JDBCUtils {
     derbyDatasource.setUser(getDatabaseUser(aliasService));
     derbyDatasource.setPassword(getDatabasePassword(aliasService));
     return derbyDatasource;
+  }
+
+  private static DataSource createMySqlDataSource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException, SQLException {
+    MysqlDataSource dataSource = new MysqlDataSource();
+    if (gatewayConfig.getDatabaseConnectionUrl() != null) {
+      dataSource.setUrl(gatewayConfig.getDatabaseConnectionUrl());
+    } else {
+      dataSource.setDatabaseName(gatewayConfig.getDatabaseName());
+      dataSource.setServerName(gatewayConfig.getDatabaseHost());
+      dataSource.setPortNumber(gatewayConfig.getDatabasePort());
+      dataSource.setUser(getDatabaseUser(aliasService));
+      dataSource.setPassword(getDatabasePassword(aliasService));
+      configureMysqlSsl(gatewayConfig, aliasService, dataSource);
+    }
+    return dataSource;
+  }
+
+  private static void configureMysqlSsl(GatewayConfig gatewayConfig, AliasService aliasService, MysqlDataSource dataSource) throws AliasServiceException, SQLException {
+    if (gatewayConfig.isDatabaseSslEnabled()) {
+      dataSource.setUseSSL(true);
+      if (gatewayConfig.verifyDatabaseSslServerCertificate()) {
+        dataSource.setSslMode(PropertyDefinitions.SslMode.VERIFY_CA.name());
+        dataSource.setVerifyServerCertificate(true);
+        dataSource.setTrustCertificateKeyStoreType("JKS");
+        dataSource.setTrustCertificateKeyStoreUrl("file:"+ gatewayConfig.getDatabaseSslTruststoreFileName());
+        dataSource.setTrustCertificateKeyStorePassword(getDatabaseAlias(aliasService, DATABASE_TRUSTSTORE_PASSWORD_ALIAS_NAME));
+      } else {
+        dataSource.setVerifyServerCertificate(false);
+      }
+    }
   }
 
   private static String getDatabaseUser(AliasService aliasService) throws AliasServiceException {
