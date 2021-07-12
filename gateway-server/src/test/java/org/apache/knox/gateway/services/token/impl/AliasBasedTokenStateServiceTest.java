@@ -135,20 +135,22 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
       testTokens.add(createMockToken(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(60)));
     }
 
-    List<String> testTokenStateAliases = new ArrayList<>();
+    Set<String> testTokenStateAliases = new HashSet<>();
     for (JWTToken token : testTokens) {
       String tokenId = token.getClaim(JWTToken.KNOX_ID_CLAIM);
       testTokenStateAliases.add(tokenId);
       testTokenStateAliases.add(tokenId + AliasBasedTokenStateService.TOKEN_MAX_LIFETIME_POSTFIX);
+      testTokenStateAliases.add(tokenId + AliasBasedTokenStateService.TOKEN_META_POSTFIX);
+      testTokenStateAliases.add(tokenId + AliasBasedTokenStateService.TOKEN_ISSUE_TIME_POSTFIX);
     }
 
     // Create a mock AliasService so we can verify that the expected bulk removal method is invoked (and that the
     // individual removal method is NOT invoked) when the token state reaper runs.
     AliasService aliasService = EasyMock.createMock(AliasService.class);
-    EasyMock.expect(aliasService.getAliasesForCluster(AliasService.NO_CLUSTER_NAME)).andReturn(testTokenStateAliases).anyTimes();
+    EasyMock.expect(aliasService.getAliasesForCluster(AliasService.NO_CLUSTER_NAME)).andReturn(new ArrayList<>(testTokenStateAliases)).anyTimes();
     // Expecting the bulk alias removal method to be invoked only once, rather than the individual alias removal method
     // invoked twice for every expired token.
-    aliasService.removeAliasesForCluster(anyString(), anyObject());
+    aliasService.removeAliasesForCluster((EasyMock.eq(AliasService.NO_CLUSTER_NAME)), EasyMock.eq(testTokenStateAliases));
     EasyMock.expectLastCall().andVoid().once();
 
     //expecting this call when loading credentials from the keystore on startup
@@ -162,6 +164,8 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
 
     Map<String, Long> tokenExpirations = getTokenExpirationsField(tss, false);
     Map<String, Long> maxTokenLifetimes = getMaxTokenLifetimesField(tss, false);
+    Map<String, Map<String, TokenMetadata>> metadata = getMetadataMapField(tss, false);
+    Map<String, Long> tokenIssueTimes = getTokenIssueTimesField(tss, false);
 
     final long evictionInterval = TimeUnit.SECONDS.toMillis(3);
     final long maxTokenLifetime = evictionInterval * 3;
@@ -175,12 +179,15 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
                      System.currentTimeMillis(),
                      token.getExpiresDate().getTime(),
                      maxTokenLifetime);
+        tss.addMetadata(token.getClaim(JWTToken.KNOX_ID_CLAIM), new TokenMetadata("alice"));
       }
 
-      assertEquals("Expected the tokens to have been added in the base class cache.", 10, tokenExpirations.size());
+      assertEquals("Expected the tokens to have been added in the base class cache.", TOKEN_COUNT, tokenExpirations.size());
       assertEquals("Expected the tokens lifetimes to have been added in the base class cache.",
-                   10,
+                   TOKEN_COUNT,
                    maxTokenLifetimes.size());
+      assertEquals("Expected the token metadata to have been added in the base class cache.", TOKEN_COUNT, metadata.size());
+      assertEquals("Expected the token issue times to have been added in the base class cache.", TOKEN_COUNT, tokenIssueTimes.size());
 
       // Sleep to allow the eviction evaluation to be performed
       Thread.sleep(evictionInterval + (evictionInterval / 4));
@@ -198,6 +205,12 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     assertEquals("Expected the tokens lifetimes to have been removed from the base class cache as a result of eviction.",
                  0,
                  maxTokenLifetimes.size());
+    assertEquals("Expected the token metadata to have been removed from the base class cache as a result of eviction.",
+                 0,
+                 metadata.size());
+    assertEquals("Expected the token issue times to have been removed from the base class cache as a result of eviction.",
+                 0,
+                 tokenIssueTimes.size());
   }
 
   /*
@@ -850,6 +863,13 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     Field tokenIssueTimesField = clazz.getDeclaredField("tokenIssueTimes");
     tokenIssueTimesField.setAccessible(true);
     return (Map<String, Long>) tokenIssueTimesField.get(tss);
+  }
+
+  private static Map<String, Map<String, TokenMetadata>> getMetadataMapField(TokenStateService tss, boolean fromGrandParent) throws Exception {
+    final Class<TokenStateService> clazz = (Class<TokenStateService>) (fromGrandParent ? tss.getClass().getSuperclass().getSuperclass() : tss.getClass().getSuperclass());
+    Field metadataMapField = clazz.getDeclaredField("metadataMap");
+    metadataMapField.setAccessible(true);
+    return (Map<String, Map<String, TokenMetadata>>) metadataMapField.get(tss);
   }
 
   private static Set<AliasBasedTokenStateService.TokenState> getUnpersistedStateField(TokenStateService tss) throws Exception {
