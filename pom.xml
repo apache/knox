@@ -385,6 +385,32 @@
     </profiles>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>dev.dimlight</groupId>
+                    <artifactId>shellcheck-maven-plugin</artifactId>
+                    <version>0.3.1</version>
+                    <executions>
+                        <execution>
+                            <id>shellcheck_verification</id>
+                            <phase>validate</phase>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                            <configuration>
+                                <args>
+                                    <arg>-x</arg>
+                                    <arg>--source-path=${project.parent.basedir}/gateway-release-common/home/bin</arg>
+                                </args>
+                                <failBuildIfWarnings>true</failBuildIfWarnings>
+                                <binaryResolutionMethod>download</binaryResolutionMethod>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.rat</groupId>

@@ -37,10 +37,9 @@ services:
   - docker
 before_install:
   - lscpu
-  - sudo apt-get -y install shellcheck
   - docker pull $IMAGE
 script:
-  - $DOCKERRUN $IMAGE mvn -T.75C clean verify -U  -Dshellcheck=true -Dsurefire.useFile=false -Djavax.net.ssl.trustStorePassword=changeit -B -V
+  - $DOCKERRUN $IMAGE mvn -T.75C clean verify -U -Dshellcheck=true -Dsurefire.useFile=false -Djavax.net.ssl.trustStorePassword=changeit -B -V
 git:
   depth: 1000
 cache:

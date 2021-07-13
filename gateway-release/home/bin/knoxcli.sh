@@ -26,11 +26,9 @@ APP_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # The app's jar name
 APP_JAR="$APP_BIN_DIR/knoxcli.jar"
 
-# shellcheck source=../gateway-release-common/home/bin/knox-env.sh
 # Setup the common environment
 . "$APP_BIN_DIR"/knox-env.sh
 
-# shellcheck source=../gateway-release-common/home/bin/knox-functions.sh
 # Source common functions
 . "$APP_BIN_DIR"/knox-functions.sh
 
