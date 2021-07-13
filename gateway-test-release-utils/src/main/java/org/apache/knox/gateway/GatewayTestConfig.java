@@ -812,6 +812,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public int getMaximumNumberOfTokensPerUser() {
+    return 0;
+  }
+
+  @Override
   public Set<String> getHiddenTopologiesOnHomepage() {
     return Collections.emptySet();
   }

@@ -262,9 +262,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String KNOX_TOKEN_ALIAS_PERSISTENCE_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.state.alias.persistence.interval";
   private static final String KNOX_TOKEN_PERMISSIVE_VALIDATION_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.permissive.validation";
   private static final String KNOX_TOKEN_HASH_ALGORITHM = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.hash.algorithm";
+  public static final String KNOX_TOKEN_USER_LIMIT = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.limit.per.user";
   private static final long KNOX_TOKEN_EVICTION_INTERVAL_DEFAULT = TimeUnit.MINUTES.toSeconds(5);
   private static final long KNOX_TOKEN_EVICTION_GRACE_PERIOD_DEFAULT = TimeUnit.HOURS.toSeconds(24);
   private static final long KNOX_TOKEN_ALIAS_PERSISTENCE_INTERVAL_DEFAULT = TimeUnit.SECONDS.toSeconds(15);
+  public static final int KNOX_TOKEN_USER_LIMIT_DEFAULT = 10;
   private static final boolean KNOX_TOKEN_PERMISSIVE_VALIDATION_ENABLED_DEFAULT = false;
 
   private static final String KNOX_HOMEPAGE_PROFILE_PREFIX =  "knox.homepage.profile.";
@@ -1183,6 +1185,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getKnoxTokenHashAlgorithm() {
     return get(KNOX_TOKEN_HASH_ALGORITHM, HmacAlgorithms.HMAC_SHA_256.getName());
+  }
+
+  @Override
+  public int getMaximumNumberOfTokensPerUser() {
+    return getInt(KNOX_TOKEN_USER_LIMIT, KNOX_TOKEN_USER_LIMIT_DEFAULT);
   }
 
   @Override
