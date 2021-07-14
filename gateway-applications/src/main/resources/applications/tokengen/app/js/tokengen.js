@@ -250,28 +250,13 @@ var gen = function() {
     }
 }
 
-function copyAccessTokenToClipBoard() {
-  var range = document.createRange();
-  range.selectNode(document.getElementById("accessToken"));
-  copyTokenToClipboard(range);
-}
-
-function copyPasscodeTokenToClipBoard() {
-  var range = document.createRange();
-  range.selectNode(document.getElementById("accessPasscode"));
-  copyTokenToClipboard(range);
-}
-
-function copyBaseUrlToClipBoard() {
-  var range = document.createRange();
-  range.selectNode(document.getElementById("target_url"));
-  copyTokenToClipboard(range);
-}
-
-function copyTokenToClipboard(rangeWithSelectedNode) {
-  window.getSelection().removeAllRanges(); // clear current selection
-  window.getSelection().addRange(rangeWithSelectedNode); // to select text
-  document.execCommand("copy");
-  window.getSelection().removeAllRanges();// to deselect
-  swal("Copied to clipboard!", {buttons: false, timer: 1000});
+function copyTextToClipboard(elementId) {
+    var toBeCopied = document.getElementById(elementId).innerText.trim();
+    const tempTextArea = document.createElement('textarea');
+    tempTextArea.value = toBeCopied;
+    document.body.appendChild(tempTextArea);
+    tempTextArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(tempTextArea);
+    swal("Copied to clipboard!", {buttons: false, timer: 1000});
 }

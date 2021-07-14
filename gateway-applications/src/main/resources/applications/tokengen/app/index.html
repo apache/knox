@@ -94,12 +94,12 @@
         <div style="margin-left: 1.75%; margin-right: 1.75%; margin-top: 10px">
             <span id="resultBox" style="color:black; display:none; margin-left: 1.75%; margin-right: 1.75%;">
 
-               <label id="jwtAccessTokenLabel" onclick="copyAccessTokenToClipBoard();"><i class="icon-copy"></i> JWT Token:</label>
+               <label id="jwtAccessTokenLabel" onclick="copyTextToClipboard('accessToken');"><i class="icon-copy"></i> JWT Token:</label>
                <div class="tokenResultDisplay">
                    <span id="accessToken" name="accessToken" style="word-wrap: break-word"></span>
                </div>
 
-               <label id="jwtPasscodeTokenLabel" onclick="copyPasscodeTokenToClipBoard();"><i class="icon-copy"></i> Passcode Token:</label>
+               <label id="jwtPasscodeTokenLabel" onclick="copyTextToClipboard('accessPasscode');"><i class="icon-copy"></i> Passcode Token:</label>
                <div class="tokenResultDisplay">
                    <span id="accessPasscode" name="accessPasscode"></span>
                </div>
@@ -114,7 +114,7 @@
                    <span id="user" name="user"></span>
                </div>
 
-               <label id="targetBaseUrlLabel" onclick="copyBaseUrlToClipBoard();"><i class="icon-copy"></i> Target Base URL:</label>
+               <label id="targetBaseUrlLabel" onclick="copyTextToClipboard('target_url');"><i class="icon-copy"></i> Target Base URL:</label>
                <div class="tokenResultDisplay">
                    <span id="target_url" name="target_url"></span>
                </div>
