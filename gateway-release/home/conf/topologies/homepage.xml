@@ -87,7 +87,7 @@
       </param>
       <param>
          <name>knox.token.client.data</name>
-         <value>homepage_url=homepage/home/</value>
+         <value>homepage_url=homepage/home?profile=token&amp;topologies=sandbox</value>
       </param>
       <param>
          <name>knox.token.exp.server-managed</name>
