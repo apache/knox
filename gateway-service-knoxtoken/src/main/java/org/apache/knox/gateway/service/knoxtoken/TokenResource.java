@@ -95,7 +95,7 @@ public class TokenResource {
   private static final String TOKEN_TTL_PARAM = "knox.token.ttl";
   private static final String TOKEN_AUDIENCES_PARAM = "knox.token.audiences";
   private static final String TOKEN_TARGET_URL = "knox.token.target.url";
-  private static final String TOKEN_CLIENT_DATA = "knox.token.client.data";
+  static final String TOKEN_CLIENT_DATA = "knox.token.client.data";
   private static final String TOKEN_CLIENT_CERT_REQUIRED = "knox.token.client.cert.required";
   private static final String TOKEN_ALLOWED_PRINCIPALS = "knox.token.allowed.principals";
   private static final String TOKEN_SIG_ALG = "knox.token.sigalg";
@@ -674,7 +674,8 @@ public class TokenResource {
       Map<String,Object> map) {
     String[] kv;
     for (String tokenClientDatum : tokenClientData) {
-      kv = tokenClientDatum.split("=");
+      //client data value may contain the '=' itself. For instance "homepage_url=homepage/home?profile=token&amp;topologies=sandbox"
+      kv = tokenClientDatum.split("=", 2);
       if (kv.length == 2) {
         map.put(kv[0], kv[1]);
       }

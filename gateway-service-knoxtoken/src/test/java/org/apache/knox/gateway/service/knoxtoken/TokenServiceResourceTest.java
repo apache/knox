@@ -213,7 +213,10 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testGetToken() throws Exception {
-    configureCommonExpectations(Collections.singletonMap("org.apache.knox.gateway.gateway.cluster", "test"), Boolean.TRUE);
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("org.apache.knox.gateway.gateway.cluster", "test");
+    contextExpectations.put(TokenResource.TOKEN_CLIENT_DATA, "sampleClientData=param1=value1&param2=value2");
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
 
     TokenResource tr = new TokenResource();
     tr.context = context;
@@ -234,6 +237,7 @@ public class TokenServiceResourceTest {
 
     assertNotNull(getTagValue(retString, "token_id"));
     assertTrue(Boolean.parseBoolean(getTagValue(retString, "managed")));
+    assertEquals(getTagValue(retString, "sampleClientData"), "param1=value1&param2=value2");
 
     // Verify the token
     JWT parsedToken = new JWTToken(accessToken);
