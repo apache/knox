@@ -144,7 +144,7 @@ public class BadUrlTest {
         new URI(serverUri.toString() + "gateway/websocket/ws"));
 
     client.awaitClose(CloseReason.CloseCodes.UNEXPECTED_CONDITION.getCode(),
-        1000, TimeUnit.MILLISECONDS);
+        5000, TimeUnit.MILLISECONDS);
 
     Assert.assertThat(client.close.getCloseCode().getCode(),
         CoreMatchers.is(CloseReason.CloseCodes.UNEXPECTED_CONDITION.getCode()));
