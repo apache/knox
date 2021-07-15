@@ -23,6 +23,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 
+import com.mysql.cj.jdbc.MysqlDataSource;
 import org.apache.derby.jdbc.ClientDataSource;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -45,7 +46,7 @@ public class JDBCUtilsTest {
   }
 
   @Test
-  public void postgresDataSourceShouldHaveProperConnectionProperties() throws AliasServiceException {
+  public void postgresDataSourceShouldHaveProperConnectionProperties() throws Exception {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     setBasicPostgresExpectations(gatewayConfig, aliasService);
@@ -106,7 +107,7 @@ public class JDBCUtilsTest {
   }
 
   @Test
-  public void testGetPostgreSqlDatasourceFromJdbcConnectionUrl() throws AliasServiceException {
+  public void testGetPostgreSqlDatasourceFromJdbcConnectionUrl() throws Exception {
     final String connectionUrl = "jdbc:postgresql://postgresql_host:1234/testDb?user=smolnar&password=secret&ssl=true&sslmode=verify-ca&sslrootcert=/var/lib/knox/gateway/conf/postgresql/root.crt";
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(JDBCUtils.POSTGRESQL_DB_TYPE).anyTimes();
@@ -134,7 +135,7 @@ public class JDBCUtilsTest {
   }
 
   @Test
-  public void derbyDataSourceShouldHaveProperConnectionProperties() throws AliasServiceException {
+  public void derbyDataSourceShouldHaveProperConnectionProperties() throws Exception {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(JDBCUtils.DERBY_DB_TYPE).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseHost()).andReturn("localhost").anyTimes();
@@ -150,5 +151,48 @@ public class JDBCUtilsTest {
     assertEquals("sampleDatabase", dataSource.getDatabaseName());
     assertEquals("user", dataSource.getUser());
     assertEquals("password", dataSource.getPassword());
+  }
+
+  @Test
+  public void shouldReturnMySqlDataSource() throws Exception {
+    final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(JDBCUtils.MYSQL_DB_TYPE).anyTimes();
+    final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(EasyMock.anyString())).andReturn(null).anyTimes();
+    EasyMock.replay(gatewayConfig, aliasService);
+    assertTrue(JDBCUtils.getDataSource(gatewayConfig, aliasService) instanceof MysqlDataSource);
+  }
+
+  @Test
+  public void testMysqlDataSourceShouldHaveProperConnectionProperties() throws Exception {
+    GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(JDBCUtils.MYSQL_DB_TYPE).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseHost()).andReturn("localhost").anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabasePort()).andReturn(5432).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("sampleDatabase");
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(JDBCUtils.DATABASE_USER_ALIAS_NAME)).andReturn("user".toCharArray()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(JDBCUtils.DATABASE_PASSWORD_ALIAS_NAME)).andReturn("password".toCharArray()).anyTimes();
+    EasyMock.replay(gatewayConfig, aliasService);
+    MysqlDataSource dataSource = (MysqlDataSource) JDBCUtils.getDataSource(gatewayConfig, aliasService);
+    assertEquals("localhost", dataSource.getServerName());
+    assertEquals(5432, dataSource.getPortNumber());
+    assertEquals("sampleDatabase", dataSource.getDatabaseName());
+    assertEquals("user", dataSource.getUser());
+    assertEquals("password", dataSource.getPassword());
+    assertTrue(dataSource.getUseSSL());
+    EasyMock.verify(gatewayConfig);
+  }
+
+  @Test
+  public void testGetMySqlDatasourceFromJdbcConnectionUrl() throws Exception {
+    String connectionUrl = "jdbc:mysql://mysql_host:1234/testDb?user=user&password=secret&ssl=true&sslmode=verify-ca&sslrootcert=/var/lib/knox/gateway/conf/postgresql/root.crt";
+    GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(JDBCUtils.MYSQL_DB_TYPE).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseConnectionUrl()).andReturn(connectionUrl).anyTimes();
+    EasyMock.replay(gatewayConfig);
+    MysqlDataSource dataSource = (MysqlDataSource) JDBCUtils.getDataSource(gatewayConfig, null);
+    assertEquals(connectionUrl, dataSource.getUrl());
+    EasyMock.verify(gatewayConfig);
   }
 }
