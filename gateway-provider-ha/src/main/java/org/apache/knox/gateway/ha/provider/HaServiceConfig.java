@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.ha.provider;
 
+import java.util.List;
+
 public interface HaServiceConfig {
   void setServiceName(String name);
 
@@ -57,4 +59,8 @@ public interface HaServiceConfig {
   boolean isNoFallbackEnabled();
 
   void setNoFallbackEnabled(boolean noFallbackEnabled);
+
+  void setDisableStickySessionForUserAgents(List<String> disableStickySessionForUserAgents);
+
+  List<String> getStickySessionDisabledUserAgents();
 }

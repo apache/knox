@@ -804,6 +804,303 @@ public class DefaultHaDispatchTest {
     Assert.assertEquals(uri1.toString(), provider.getActiveURL(serviceName));
   }
 
+  /**
+   * Test a case where loadbalancing is turned off for a <b>default</b> list of useragents
+   * should failover.
+   * @throws Exception
+   */
+  @Test
+  public void testDisableLBDefaultUserAgent() throws Exception {
+    String userAgent = "ClouderaODBCDriverforApacheHive/2.6.11.1011 Thrift/0.9.0 (C++/THttpClient)[\\r][\\n]";
+    String serviceName = "HIVE";
+    HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", "true", null, null));
+    HaProvider provider = new DefaultHaProvider(descriptor);
+    URI uri1 = new URI( "http://host1.valid" );
+    URI uri2 = new URI( "http://host2.valid" );
+    ArrayList<String> urlList = new ArrayList<>();
+    urlList.add(uri1.toString());
+    urlList.add(uri2.toString());
+    provider.addHaService(serviceName, urlList);
+    FilterConfig filterConfig = EasyMock.createNiceMock(FilterConfig.class);
+    ServletContext servletContext = EasyMock.createNiceMock(ServletContext.class);
+
+    EasyMock.expect(filterConfig.getServletContext()).andReturn(servletContext).anyTimes();
+    EasyMock.expect(servletContext.getAttribute(HaServletContextListener.PROVIDER_ATTRIBUTE_NAME)).andReturn(provider).anyTimes();
+
+    BasicHttpParams params = new BasicHttpParams();
+
+    HttpUriRequest outboundRequest = EasyMock.createNiceMock(HttpRequestBase.class);
+    EasyMock.expect(outboundRequest.getMethod()).andReturn( "GET" ).anyTimes();
+    EasyMock.expect(outboundRequest.getURI()).andReturn( uri1  ).anyTimes();
+    EasyMock.expect(outboundRequest.getParams()).andReturn( params ).anyTimes();
+
+    /* backend request with cookie for url2 */
+    Cookie[] cookie = new Cookie[] { new Cookie("KNOX_BACKEND-OOZIE","59973e253ae20de796c6ef413608ec1c80fca24310a4cbdecc0ff97aeea55745")};
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getRequestURL()).andReturn( new StringBuffer(uri2.toString()) ).once();
+    EasyMock.expect(inboundRequest.getCookies()).andReturn( cookie ).anyTimes();
+    EasyMock.expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(0)).once();
+    EasyMock.expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(1)).once();
+    EasyMock.expect(inboundRequest.getHeader("User-Agent")).andReturn(userAgent).anyTimes();
+
+    /* backend response */
+    CloseableHttpResponse inboundResponse = EasyMock.createNiceMock(CloseableHttpResponse.class);
+    final StatusLine statusLine = EasyMock.createNiceMock(StatusLine.class);
+    final HttpEntity entity = EasyMock.createNiceMock(HttpEntity.class);
+    final Header header = EasyMock.createNiceMock(Header.class);
+    final ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    final GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    final ByteArrayInputStream backendResponse = new ByteArrayInputStream("knox-backend".getBytes(
+            StandardCharsets.UTF_8));
+
+
+    EasyMock.expect(inboundResponse.getStatusLine()).andReturn(statusLine).anyTimes();
+    EasyMock.expect(statusLine.getStatusCode()).andReturn(HttpStatus.SC_OK).anyTimes();
+    EasyMock.expect(inboundResponse.getEntity()).andReturn(entity).anyTimes();
+    EasyMock.expect(inboundResponse.getAllHeaders()).andReturn(new Header[0]).anyTimes();
+    EasyMock.expect(inboundRequest.getServletContext()).andReturn(context).anyTimes();
+    EasyMock.expect(entity.getContent()).andReturn(backendResponse).anyTimes();
+    EasyMock.expect(entity.getContentType()).andReturn(header).anyTimes();
+    EasyMock.expect(header.getElements()).andReturn(new HeaderElement[]{}).anyTimes();
+    EasyMock.expect(entity.getContentLength()).andReturn(4L).anyTimes();
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(config).anyTimes();
+
+
+    HttpServletResponse outboundResponse = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(outboundResponse.getOutputStream()).andAnswer( new IAnswer<SynchronousServletOutputStreamAdapter>() {
+      @Override
+      public SynchronousServletOutputStreamAdapter answer() {
+        return new SynchronousServletOutputStreamAdapter() {
+          @Override
+          public void write( int b ) throws IOException {
+            /* do nothing */
+          }
+        };
+      }
+    }).once();
+
+    CloseableHttpClient mockHttpClient = EasyMock.createNiceMock(CloseableHttpClient.class);
+    EasyMock.expect(mockHttpClient.execute(outboundRequest)).andReturn(inboundResponse).anyTimes();
+
+    EasyMock.replay(filterConfig, servletContext, outboundRequest, inboundRequest,
+            outboundResponse, mockHttpClient, inboundResponse,
+            statusLine, entity, header, context, config);
+
+
+    Assert.assertEquals(uri1.toString(), provider.getActiveURL(serviceName));
+    ConfigurableHADispatch dispatch = new ConfigurableHADispatch();
+    dispatch.setHttpClient(mockHttpClient);
+    dispatch.setHaProvider(provider);
+    dispatch.setServiceRole(serviceName);
+    dispatch.init();
+    try {
+      dispatch.executeRequestWrapper(outboundRequest, inboundRequest, outboundResponse);
+    } catch (IOException e) {
+      //this is expected after the failover limit is reached
+    }
+    /* Make sure thee was no LB'ing */
+    Assert.assertEquals(uri1.toString(), provider.getActiveURL(serviceName));
+  }
+
+  /**
+   * Test a case where loadbalancing is ON when the request user-agent
+   * does not match list of useragents configured to disable loadbalancing
+   * should failover.
+   * @throws Exception
+   */
+  @Test
+  public void testDisableLBDefaultUserAgentNegativeCase() throws Exception {
+    String userAgent = "JDBCDriverforApacheHive/2.6.11.1011 [\\r][\\n]";
+    String serviceName = "HIVE";
+    HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", "true", null, null));
+    HaProvider provider = new DefaultHaProvider(descriptor);
+    URI uri1 = new URI( "http://host1.valid" );
+    URI uri2 = new URI( "http://host2.valid" );
+    ArrayList<String> urlList = new ArrayList<>();
+    urlList.add(uri1.toString());
+    urlList.add(uri2.toString());
+    provider.addHaService(serviceName, urlList);
+    FilterConfig filterConfig = EasyMock.createNiceMock(FilterConfig.class);
+    ServletContext servletContext = EasyMock.createNiceMock(ServletContext.class);
+
+    EasyMock.expect(filterConfig.getServletContext()).andReturn(servletContext).anyTimes();
+    EasyMock.expect(servletContext.getAttribute(HaServletContextListener.PROVIDER_ATTRIBUTE_NAME)).andReturn(provider).anyTimes();
+
+    BasicHttpParams params = new BasicHttpParams();
+
+    HttpUriRequest outboundRequest = EasyMock.createNiceMock(HttpRequestBase.class);
+    EasyMock.expect(outboundRequest.getMethod()).andReturn( "GET" ).anyTimes();
+    EasyMock.expect(outboundRequest.getURI()).andReturn( uri1  ).anyTimes();
+    EasyMock.expect(outboundRequest.getParams()).andReturn( params ).anyTimes();
+
+    /* backend request with cookie for url2 */
+    Cookie[] cookie = new Cookie[] { new Cookie("KNOX_BACKEND-OOZIE","59973e253ae20de796c6ef413608ec1c80fca24310a4cbdecc0ff97aeea55745")};
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getRequestURL()).andReturn( new StringBuffer(uri2.toString()) ).once();
+    EasyMock.expect(inboundRequest.getCookies()).andReturn( cookie ).anyTimes();
+    EasyMock.expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(0)).once();
+    EasyMock.expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(1)).once();
+    EasyMock.expect(inboundRequest.getHeader("User-Agent")).andReturn(userAgent).anyTimes();
+
+    /* backend response */
+    CloseableHttpResponse inboundResponse = EasyMock.createNiceMock(CloseableHttpResponse.class);
+    final StatusLine statusLine = EasyMock.createNiceMock(StatusLine.class);
+    final HttpEntity entity = EasyMock.createNiceMock(HttpEntity.class);
+    final Header header = EasyMock.createNiceMock(Header.class);
+    final ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    final GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    final ByteArrayInputStream backendResponse = new ByteArrayInputStream("knox-backend".getBytes(
+            StandardCharsets.UTF_8));
+
+
+    EasyMock.expect(inboundResponse.getStatusLine()).andReturn(statusLine).anyTimes();
+    EasyMock.expect(statusLine.getStatusCode()).andReturn(HttpStatus.SC_OK).anyTimes();
+    EasyMock.expect(inboundResponse.getEntity()).andReturn(entity).anyTimes();
+    EasyMock.expect(inboundResponse.getAllHeaders()).andReturn(new Header[0]).anyTimes();
+    EasyMock.expect(inboundRequest.getServletContext()).andReturn(context).anyTimes();
+    EasyMock.expect(entity.getContent()).andReturn(backendResponse).anyTimes();
+    EasyMock.expect(entity.getContentType()).andReturn(header).anyTimes();
+    EasyMock.expect(header.getElements()).andReturn(new HeaderElement[]{}).anyTimes();
+    EasyMock.expect(entity.getContentLength()).andReturn(4L).anyTimes();
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(config).anyTimes();
+
+
+    HttpServletResponse outboundResponse = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(outboundResponse.getOutputStream()).andAnswer( new IAnswer<SynchronousServletOutputStreamAdapter>() {
+      @Override
+      public SynchronousServletOutputStreamAdapter answer() {
+        return new SynchronousServletOutputStreamAdapter() {
+          @Override
+          public void write( int b ) throws IOException {
+            /* do nothing */
+          }
+        };
+      }
+    }).once();
+
+    CloseableHttpClient mockHttpClient = EasyMock.createNiceMock(CloseableHttpClient.class);
+    EasyMock.expect(mockHttpClient.execute(outboundRequest)).andReturn(inboundResponse).anyTimes();
+
+    EasyMock.replay(filterConfig, servletContext, outboundRequest, inboundRequest,
+            outboundResponse, mockHttpClient, inboundResponse,
+            statusLine, entity, header, context, config);
+
+
+    Assert.assertEquals(uri1.toString(), provider.getActiveURL(serviceName));
+    ConfigurableHADispatch dispatch = new ConfigurableHADispatch();
+    dispatch.setHttpClient(mockHttpClient);
+    dispatch.setHaProvider(provider);
+    dispatch.setServiceRole(serviceName);
+    dispatch.init();
+    try {
+      dispatch.executeRequestWrapper(outboundRequest, inboundRequest, outboundResponse);
+    } catch (IOException e) {
+      //this is expected after the failover limit is reached
+    }
+    /* Make sure loadbalancing is working */
+    Assert.assertEquals(uri2.toString(), provider.getActiveURL(serviceName));
+  }
+
+  /**
+   * Test a case where loadbalancing is turned off for a <b>configured/b> list of useragents
+   * should failover.
+   * @throws Exception
+   */
+  @Test
+  public void testDisableLBDefaultUserAgentConfiguration() throws Exception {
+    String userAgent = "Test User Agent v0.0.1 [\\r][\\n]";
+    String serviceName = "HIVE";
+    HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "enableStickySession=true;enableLoadBalancing=true;enabled=true;maxFailoverAttempts=42;failoverSleep=50;maxRetryAttempts=1;disableLoadBalancingForUserAgents=Test User Agent, Test User Agent2,Test User Agent3 ,Test User Agent4 ;retrySleep=1000"));
+    HaProvider provider = new DefaultHaProvider(descriptor);
+    URI uri1 = new URI( "http://host1.valid" );
+    URI uri2 = new URI( "http://host2.valid" );
+    ArrayList<String> urlList = new ArrayList<>();
+    urlList.add(uri1.toString());
+    urlList.add(uri2.toString());
+    provider.addHaService(serviceName, urlList);
+    FilterConfig filterConfig = EasyMock.createNiceMock(FilterConfig.class);
+    ServletContext servletContext = EasyMock.createNiceMock(ServletContext.class);
+
+    EasyMock.expect(filterConfig.getServletContext()).andReturn(servletContext).anyTimes();
+    EasyMock.expect(servletContext.getAttribute(HaServletContextListener.PROVIDER_ATTRIBUTE_NAME)).andReturn(provider).anyTimes();
+
+    BasicHttpParams params = new BasicHttpParams();
+
+    HttpUriRequest outboundRequest = EasyMock.createNiceMock(HttpRequestBase.class);
+    EasyMock.expect(outboundRequest.getMethod()).andReturn( "GET" ).anyTimes();
+    EasyMock.expect(outboundRequest.getURI()).andReturn( uri1  ).anyTimes();
+    EasyMock.expect(outboundRequest.getParams()).andReturn( params ).anyTimes();
+
+    /* backend request with cookie for url2 */
+    Cookie[] cookie = new Cookie[] { new Cookie("KNOX_BACKEND-OOZIE","59973e253ae20de796c6ef413608ec1c80fca24310a4cbdecc0ff97aeea55745")};
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getRequestURL()).andReturn( new StringBuffer(uri2.toString()) ).once();
+    EasyMock.expect(inboundRequest.getCookies()).andReturn( cookie ).anyTimes();
+    EasyMock.expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(0)).once();
+    EasyMock.expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(1)).once();
+    EasyMock.expect(inboundRequest.getHeader("User-Agent")).andReturn(userAgent).anyTimes();
+
+    /* backend response */
+    CloseableHttpResponse inboundResponse = EasyMock.createNiceMock(CloseableHttpResponse.class);
+    final StatusLine statusLine = EasyMock.createNiceMock(StatusLine.class);
+    final HttpEntity entity = EasyMock.createNiceMock(HttpEntity.class);
+    final Header header = EasyMock.createNiceMock(Header.class);
+    final ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    final GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    final ByteArrayInputStream backendResponse = new ByteArrayInputStream("knox-backend".getBytes(
+            StandardCharsets.UTF_8));
+
+
+    EasyMock.expect(inboundResponse.getStatusLine()).andReturn(statusLine).anyTimes();
+    EasyMock.expect(statusLine.getStatusCode()).andReturn(HttpStatus.SC_OK).anyTimes();
+    EasyMock.expect(inboundResponse.getEntity()).andReturn(entity).anyTimes();
+    EasyMock.expect(inboundResponse.getAllHeaders()).andReturn(new Header[0]).anyTimes();
+    EasyMock.expect(inboundRequest.getServletContext()).andReturn(context).anyTimes();
+    EasyMock.expect(entity.getContent()).andReturn(backendResponse).anyTimes();
+    EasyMock.expect(entity.getContentType()).andReturn(header).anyTimes();
+    EasyMock.expect(header.getElements()).andReturn(new HeaderElement[]{}).anyTimes();
+    EasyMock.expect(entity.getContentLength()).andReturn(4L).anyTimes();
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(config).anyTimes();
+
+
+    HttpServletResponse outboundResponse = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(outboundResponse.getOutputStream()).andAnswer( new IAnswer<SynchronousServletOutputStreamAdapter>() {
+      @Override
+      public SynchronousServletOutputStreamAdapter answer() {
+        return new SynchronousServletOutputStreamAdapter() {
+          @Override
+          public void write( int b ) throws IOException {
+            /* do nothing */
+          }
+        };
+      }
+    }).once();
+
+    CloseableHttpClient mockHttpClient = EasyMock.createNiceMock(CloseableHttpClient.class);
+    EasyMock.expect(mockHttpClient.execute(outboundRequest)).andReturn(inboundResponse).anyTimes();
+
+    EasyMock.replay(filterConfig, servletContext, outboundRequest, inboundRequest,
+            outboundResponse, mockHttpClient, inboundResponse,
+            statusLine, entity, header, context, config);
+
+
+    Assert.assertEquals(uri1.toString(), provider.getActiveURL(serviceName));
+    ConfigurableHADispatch dispatch = new ConfigurableHADispatch();
+    dispatch.setHttpClient(mockHttpClient);
+    dispatch.setHaProvider(provider);
+    dispatch.setServiceRole(serviceName);
+    dispatch.init();
+    try {
+      dispatch.executeRequestWrapper(outboundRequest, inboundRequest, outboundResponse);
+    } catch (IOException e) {
+      //this is expected after the failover limit is reached
+    }
+    /* Make sure thee was no LB'ing */
+    Assert.assertEquals(uri1.toString(), provider.getActiveURL(serviceName));
+  }
 
   @Test
   public void testConnectivityActive() throws Exception {

@@ -17,33 +17,63 @@
  */
 package org.apache.knox.gateway.ha.provider.impl;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.ha.provider.HaDescriptor;
 import org.apache.knox.gateway.ha.provider.HaServiceConfig;
-
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
 
-   public static HaDescriptor createDescriptor() {
-      return new DefaultHaDescriptor();
-   }
+  public static HaDescriptor createDescriptor() {
+    return new DefaultHaDescriptor();
+  }
 
-   public static HaServiceConfig createServiceConfig(String serviceName, String config) {
-      Map<String, String> configMap = parseHaConfiguration(config);
-      String enabledValue = configMap.get(CONFIG_PARAM_ENABLED);
-      String maxFailoverAttempts = configMap.get(CONFIG_PARAM_MAX_FAILOVER_ATTEMPTS);
-      String failoverSleep = configMap.get(CONFIG_PARAM_FAILOVER_SLEEP);
-      String zookeeperEnsemble = configMap.get(CONFIG_PARAM_ZOOKEEPER_ENSEMBLE);
-      String zookeeperNamespace = configMap.get(CONFIG_PARAM_ZOOKEEPER_NAMESPACE);
-      String stickySessionEnabled = configMap.get(CONFIG_STICKY_SESSIONS_ENABLED);
-      String loadBalancingEnabled = configMap.get(CONFIG_LOAD_BALANCING_ENABLED);
-      String stickySessionCookieName = configMap.get(STICKY_SESSION_COOKIE_NAME);
-      String noFallbackEnabled = configMap.get(CONFIG_NO_FALLBACK_ENABLED);
-      return createServiceConfig(serviceName, enabledValue, maxFailoverAttempts, failoverSleep,
-          zookeeperEnsemble, zookeeperNamespace, loadBalancingEnabled, stickySessionEnabled, stickySessionCookieName, noFallbackEnabled);
-   }
+  public static HaServiceConfig createServiceConfig(String serviceName, String config) {
+    final Map<String, String> configMap = parseHaConfiguration(config);
 
+    final String zookeeperEnsemble = configMap.get(CONFIG_PARAM_ZOOKEEPER_ENSEMBLE);
+    final String zookeeperNamespace = configMap.get(CONFIG_PARAM_ZOOKEEPER_NAMESPACE);
+
+    final boolean enabled = Boolean.parseBoolean(configMap.getOrDefault(CONFIG_PARAM_ENABLED, Boolean.toString(DEFAULT_ENABLED)));
+    final int maxFailoverAttempts = Integer.parseInt(configMap.getOrDefault(CONFIG_PARAM_MAX_FAILOVER_ATTEMPTS, Integer.toString(DEFAULT_MAX_FAILOVER_ATTEMPTS)));
+    final int failoverSleep = Integer.parseInt(configMap.getOrDefault(CONFIG_PARAM_FAILOVER_SLEEP, Integer.toString(DEFAULT_FAILOVER_SLEEP)));
+    final boolean stickySessionsEnabled = Boolean.parseBoolean(configMap.getOrDefault(CONFIG_STICKY_SESSIONS_ENABLED, Boolean.toString(DEFAULT_STICKY_SESSIONS_ENABLED)));
+    final boolean loadBalancingEnabled = Boolean.parseBoolean(configMap.getOrDefault(CONFIG_LOAD_BALANCING_ENABLED, Boolean.toString(DEFAULT_LOAD_BALANCING_ENABLED)));
+    final boolean noFallbackEnabled = Boolean.parseBoolean(configMap.getOrDefault(CONFIG_NO_FALLBACK_ENABLED, Boolean.toString(DEFAULT_NO_FALLBACK_ENABLED)));
+    final String stickySessionCookieName = configMap.getOrDefault(STICKY_SESSION_COOKIE_NAME, DEFAULT_STICKY_SESSION_COOKIE_NAME);
+
+    final String disableLoadBalancingForUserAgentsConfig = configMap.getOrDefault(DISABLE_LB_USER_AGENTS, DEFAULT_DISABLE_LB_USER_AGENTS);
+    /* configured user agents are comma separate list which *can* contain whitespaces */
+    List<String> disableLoadBalancingForUserAgents = Collections.EMPTY_LIST;
+    if(StringUtils.isNotBlank(disableLoadBalancingForUserAgentsConfig)) {
+      disableLoadBalancingForUserAgents = Arrays.asList(disableLoadBalancingForUserAgentsConfig
+              .trim()
+              .split("\\s*,\\s*"));
+    }
+    return createServiceConfig(serviceName, enabled, maxFailoverAttempts, failoverSleep, zookeeperEnsemble, zookeeperNamespace, stickySessionsEnabled, loadBalancingEnabled,
+            stickySessionCookieName, noFallbackEnabled, disableLoadBalancingForUserAgents);
+  }
+
+  /**
+   * This method should only be used by older tests.
+   * new tests should use the createServiceConfig(String serviceName, String config) method
+   * @param serviceName
+   * @param enabledValue
+   * @param maxFailoverAttemptsValue
+   * @param failoverSleepValue
+   * @param zookeeperEnsemble
+   * @param zookeeperNamespace
+   * @param loadBalancingEnabledValue
+   * @param stickySessionsEnabledValue
+   * @param stickySessionCookieNameValue
+   * @param noFallbackEnabledValue
+   * @return
+   */
+   @Deprecated
    public static HaServiceConfig createServiceConfig(String serviceName, String enabledValue,
                                                      String maxFailoverAttemptsValue, String failoverSleepValue,
                                                      String zookeeperEnsemble, String zookeeperNamespace,
@@ -79,18 +109,29 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
          noFallbackEnabled = Boolean.parseBoolean(noFallbackEnabledValue);
       }
 
-      DefaultHaServiceConfig serviceConfig = new DefaultHaServiceConfig(serviceName);
-      serviceConfig.setEnabled(enabled);
-      serviceConfig.setMaxFailoverAttempts(maxFailoverAttempts);
-      serviceConfig.setFailoverSleep(failoverSleep);
-      serviceConfig.setZookeeperEnsemble(zookeeperEnsemble);
-      serviceConfig.setZookeeperNamespace(zookeeperNamespace);
-      serviceConfig.setStickySessionEnabled(stickySessionsEnabled);
-      serviceConfig.setLoadBalancingEnabled(loadBalancingEnabled);
-      serviceConfig.setStickySessionCookieName(stickySessionCookieName);
-      serviceConfig.setNoFallbackEnabled(noFallbackEnabled);
-      return serviceConfig;
+     return createServiceConfig(serviceName, enabled, maxFailoverAttempts, failoverSleep, zookeeperEnsemble, zookeeperNamespace, stickySessionsEnabled, loadBalancingEnabled,
+             stickySessionCookieName, noFallbackEnabled, Arrays.asList(DEFAULT_DISABLE_LB_USER_AGENTS));
    }
+
+  private static DefaultHaServiceConfig createServiceConfig(final String serviceName, final boolean enabled,
+          final int maxFailoverAttempts, final int failoverSleepValue,
+          final String zookeeperEnsemble, final String zookeeperNamespace,
+          final boolean stickySessionsEnabled, final boolean loadBalancingEnabled,
+          final String stickySessionCookieName,
+          final boolean noFallbackEnabled, final List<String> disableStickySessionForUserAgents) {
+    DefaultHaServiceConfig serviceConfig = new DefaultHaServiceConfig(serviceName);
+    serviceConfig.setEnabled(enabled);
+    serviceConfig.setMaxFailoverAttempts(maxFailoverAttempts);
+    serviceConfig.setFailoverSleep(failoverSleepValue);
+    serviceConfig.setZookeeperEnsemble(zookeeperEnsemble);
+    serviceConfig.setZookeeperNamespace(zookeeperNamespace);
+    serviceConfig.setStickySessionEnabled(stickySessionsEnabled);
+    serviceConfig.setLoadBalancingEnabled(loadBalancingEnabled);
+    serviceConfig.setStickySessionCookieName(stickySessionCookieName);
+    serviceConfig.setNoFallbackEnabled(noFallbackEnabled);
+    serviceConfig.setDisableStickySessionForUserAgents(disableStickySessionForUserAgents);
+    return serviceConfig;
+  }
 
    private static Map<String, String> parseHaConfiguration(String configuration) {
       Map<String, String> parameters = new HashMap<>();
