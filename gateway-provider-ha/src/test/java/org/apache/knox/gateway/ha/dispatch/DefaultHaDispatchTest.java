@@ -51,6 +51,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -901,6 +902,60 @@ public class DefaultHaDispatchTest {
     }
     /* Make sure thee was no LB'ing */
     Assert.assertEquals(uri1.toString(), provider.getActiveURL(serviceName));
+  }
+
+  @Test
+  public void testDisableLBDActiveURL() throws Exception {
+    final String serviceName1 = "HIVE";
+    final String serviceName2 = "OOZIE";
+    HaDescriptor descriptor1 = HaDescriptorFactory.createDescriptor();
+    descriptor1.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName1, "enableStickySession=true;enableLoadBalancing=true;enabled=true;maxFailoverAttempts=42;failoverSleep=50;maxRetryAttempts=1;disableLoadBalancingForUserAgents=Test User Agent, Test User Agent2,Test User Agent3 ,Test User Agent4 ;retrySleep=1000"));
+
+    HaDescriptor descriptor2 = HaDescriptorFactory.createDescriptor();
+    descriptor2.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName2, "enableStickySession=true;enableLoadBalancing=true;enabled=true;maxFailoverAttempts=42;failoverSleep=50;maxRetryAttempts=1;disableLoadBalancingForUserAgents=Test User Agent, Test User Agent2,Test User Agent3 ,Test User Agent4 ;retrySleep=1000"));
+
+
+    HaProvider provider1 = new DefaultHaProvider(descriptor1);
+    HaProvider provider2 = new DefaultHaProvider(descriptor2);
+
+    URI uri1 = new URI( "http://provider1-url1.valid" );
+    URI uri2 = new URI( "http://provider1-url2.valid" );
+    ArrayList<String> urlListProvider1 = new ArrayList<>();
+    urlListProvider1.add(uri1.toString());
+    urlListProvider1.add(uri2.toString());
+    provider1.addHaService(serviceName1, urlListProvider1);
+
+    URI uri3 = new URI( "http://provider2-url1.valid" );
+    URI uri4 = new URI( "http://provider2-url2.valid" );
+    ArrayList<String> urlListProvider2 = new ArrayList<>();
+    urlListProvider2.add(uri3.toString());
+    urlListProvider2.add(uri4.toString());
+    provider2.addHaService(serviceName2, urlListProvider2);
+
+    Class haDispatchClass = ConfigurableHADispatch.class;
+    Field activeURLField = haDispatchClass.getDeclaredField("activeURL");
+    activeURLField.setAccessible(true);
+
+    CloseableHttpClient mockHttpClient = EasyMock.createNiceMock(CloseableHttpClient.class);
+    EasyMock.replay(mockHttpClient);
+
+    ConfigurableHADispatch dispatch1 = new ConfigurableHADispatch();
+    dispatch1.setHttpClient(mockHttpClient);
+    dispatch1.setHaProvider(provider1);
+    dispatch1.setServiceRole(serviceName1);
+    dispatch1.init();
+
+    ConfigurableHADispatch dispatch2 = new ConfigurableHADispatch();
+    dispatch2.setHttpClient(mockHttpClient);
+    dispatch2.setHaProvider(provider2);
+    dispatch2.setServiceRole(serviceName2);
+    dispatch2.init();
+
+    /* make sure active URL is what is supposed to be */
+    Assert.assertEquals(provider1.getActiveURL(serviceName1), activeURLField.get(dispatch1));
+    /* make sure active URL is what is supposed to be */
+    Assert.assertEquals(provider2.getActiveURL(serviceName2), activeURLField.get(dispatch2));
+
   }
 
   /**

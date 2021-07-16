@@ -76,7 +76,7 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
   private List<String> disableLoadBalancingForUserAgents = Arrays.asList(HaServiceConfigConstants.DEFAULT_DISABLE_LB_USER_AGENTS);
 
   /**
-   *  This staticURL is used to track urls when LB is turned off for some clients
+   *  This activeURL is used to track urls when LB is turned off for some clients
    *  The problem we have with selectively turning off LB is that other clients
    *  that use LB can change the state from under the current session where LB is
    *  turned off.
@@ -86,7 +86,7 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
    *  connection which will be an issue.
    *  This variable keeps track of non-LB'ed url and updated upon failover.
    */
-  private static String activeURL;
+  private String activeURL;
 
   @Override
   public void init() {
