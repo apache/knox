@@ -44,4 +44,10 @@ public interface HaDispatchMessages {
 
   @Message(level = MessageLevel.ERROR, text = "noFallback flag is turned on for sticky session so aborting request without retrying")
   void noFallbackError();
+
+  @Message(level = MessageLevel.INFO, text = "Knox HA loadbalancing disabled, detected user-agent: {0}, configured user-agents to disable loadbalancing: {1}")
+  void disableHALoadbalancinguserAgent(String userAgent, String configuration);
+
+  @Message(level = MessageLevel.ERROR, text = "Error setting non-loadbalanced url to outbound request")
+  void errorSettingActiveUrl();
 }

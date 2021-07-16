@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.ha.provider.impl;
 
+import java.util.List;
+
 import org.apache.knox.gateway.ha.provider.HaServiceConfig;
 
 public class DefaultHaServiceConfig implements HaServiceConfig, HaServiceConfigConstants {
@@ -40,6 +42,8 @@ public class DefaultHaServiceConfig implements HaServiceConfig, HaServiceConfigC
   private String zookeeperEnsemble;
 
   private String zookeeperNamespace;
+
+  private List<String> disableStickySessionForUserAgents;
 
   public DefaultHaServiceConfig(String name) {
     this.name = name;
@@ -143,5 +147,15 @@ public class DefaultHaServiceConfig implements HaServiceConfig, HaServiceConfigC
   @Override
   public void setNoFallbackEnabled(boolean noFallbackEnabled) {
     isNoFallbackEnabled = noFallbackEnabled;
+  }
+
+  @Override
+  public void setDisableStickySessionForUserAgents(List<String> disableStickySessionForUserAgents) {
+    this.disableStickySessionForUserAgents = disableStickySessionForUserAgents;
+  }
+
+  @Override
+  public List<String> getStickySessionDisabledUserAgents() {
+    return disableStickySessionForUserAgents;
   }
 }
