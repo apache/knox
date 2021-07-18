@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 /**
@@ -87,6 +88,7 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
    *  This variable keeps track of non-LB'ed url and updated upon failover.
    */
   private String activeURL;
+  private final ReentrantLock activeURLlock = new ReentrantLock();
 
   @Override
   public void init() {
@@ -111,7 +113,12 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
     }
 
     /* setup the active URL for non-LB case */
-    activeURL = haProvider.getActiveURL(getServiceRole());
+    activeURLlock.lock();
+    try {
+      activeURL = haProvider.getActiveURL(getServiceRole());
+    } finally {
+      activeURLlock.unlock();
+    }
 
     // Suffix the cookie name by the service to make it unique
     // The cookie path is NOT unique since Knox is stripping the service name.
@@ -143,17 +150,17 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
       final String userAgentFromBrowser = StringUtils.isBlank(inboundRequest.getHeader("User-Agent")) ? "" : inboundRequest.getHeader("User-Agent");
 
       /* disable loadblancing override */
-      boolean disableLB = false;
+      boolean userAgentDisabled = false;
 
       /* disable loadbalancing in case a configured user agent is detected to disable LB */
       if(disableLoadBalancingForUserAgents.stream().anyMatch(c -> userAgentFromBrowser.contains(c))  ) {
-        disableLB = true;
+        userAgentDisabled = true;
         LOG.disableHALoadbalancinguserAgent(userAgentFromBrowser, disableLoadBalancingForUserAgents.toString());
       }
 
       /* if disable LB is set don't bother setting backend from cookie */
       Optional<URI> backendURI = Optional.empty();
-      if(!disableLB) {
+      if(!userAgentDisabled) {
         backendURI = setBackendfromHaCookie(outboundRequest, inboundRequest);
         if(backendURI.isPresent()) {
           ((HttpRequestBase) outboundRequest).setURI(backendURI.get());
@@ -165,11 +172,14 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
        * and we have a HTTP request configured not to use LB
        * use the activeURL
       */
-      if(loadBalancingEnabled && disableLB) {
+      if(loadBalancingEnabled && userAgentDisabled) {
+        activeURLlock.lock();
         try {
           ((HttpRequestBase) outboundRequest).setURI(updateHostURL(outboundRequest.getURI(), activeURL));
         } catch (final URISyntaxException e) {
           LOG.errorSettingActiveUrl();
+        } finally {
+          activeURLlock.unlock();
         }
       }
 
@@ -181,7 +191,7 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
        *    needs to be loadbalanced. If a request has BACKEND coookie and Loadbalance=on then
        *    there should be no loadbalancing.
        */
-      if (loadBalancingEnabled && !disableLB) {
+      if (loadBalancingEnabled && !userAgentDisabled) {
         /* check sticky session enabled */
         if(stickySessionsEnabled) {
           /* loadbalance only when sticky session enabled and no backend url cookie */
@@ -308,7 +318,12 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
       LOG.failingOverRequest(outboundRequest.getURI().toString());
 
       /* in case of failover update the activeURL variable */
-      activeURL = outboundRequest.getURI().toString();
+      activeURLlock.lock();
+      try {
+        activeURL = outboundRequest.getURI().toString();
+      } finally {
+        activeURLlock.unlock();
+      }
       executeRequest(outboundRequest, inboundRequest, outboundResponse);
     } else {
       LOG.maxFailoverAttemptsReached(maxFailoverAttempts, getServiceRole());
