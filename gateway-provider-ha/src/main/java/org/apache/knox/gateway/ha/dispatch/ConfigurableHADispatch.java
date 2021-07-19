@@ -48,7 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -87,9 +87,7 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
    *  connection which will be an issue.
    *  This variable keeps track of non-LB'ed url and updated upon failover.
    */
-  private String activeURL;
-  private final ReentrantLock activeURLlock = new ReentrantLock();
-
+  private AtomicReference<String> activeURL =  new AtomicReference();
   @Override
   public void init() {
     super.init();
@@ -113,12 +111,7 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
     }
 
     /* setup the active URL for non-LB case */
-    activeURLlock.lock();
-    try {
-      activeURL = haProvider.getActiveURL(getServiceRole());
-    } finally {
-      activeURLlock.unlock();
-    }
+    activeURL.set(haProvider.getActiveURL(getServiceRole()));
 
     // Suffix the cookie name by the service to make it unique
     // The cookie path is NOT unique since Knox is stripping the service name.
@@ -173,13 +166,10 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
        * use the activeURL
       */
       if(loadBalancingEnabled && userAgentDisabled) {
-        activeURLlock.lock();
         try {
-          ((HttpRequestBase) outboundRequest).setURI(updateHostURL(outboundRequest.getURI(), activeURL));
+          ((HttpRequestBase) outboundRequest).setURI(updateHostURL(outboundRequest.getURI(), activeURL.get()));
         } catch (final URISyntaxException e) {
           LOG.errorSettingActiveUrl();
-        } finally {
-          activeURLlock.unlock();
         }
       }
 
@@ -318,12 +308,8 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
       LOG.failingOverRequest(outboundRequest.getURI().toString());
 
       /* in case of failover update the activeURL variable */
-      activeURLlock.lock();
-      try {
-        activeURL = outboundRequest.getURI().toString();
-      } finally {
-        activeURLlock.unlock();
-      }
+      activeURL.set(outboundRequest.getURI().toString());
+
       executeRequest(outboundRequest, inboundRequest, outboundResponse);
     } else {
       LOG.maxFailoverAttemptsReached(maxFailoverAttempts, getServiceRole());

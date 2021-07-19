@@ -56,6 +56,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.easymock.EasyMock.anyString;
 
@@ -952,9 +953,9 @@ public class DefaultHaDispatchTest {
     dispatch2.init();
 
     /* make sure active URL is what is supposed to be */
-    Assert.assertEquals(provider1.getActiveURL(serviceName1), activeURLField.get(dispatch1));
+    Assert.assertEquals(provider1.getActiveURL(serviceName1), ((AtomicReference<String>)activeURLField.get(dispatch1)).get());
     /* make sure active URL is what is supposed to be */
-    Assert.assertEquals(provider2.getActiveURL(serviceName2), activeURLField.get(dispatch2));
+    Assert.assertEquals(provider2.getActiveURL(serviceName2), ((AtomicReference<String>)activeURLField.get(dispatch2)).get());
 
   }
 
