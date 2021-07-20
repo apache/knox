@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.ha.dispatch;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -47,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -72,7 +74,20 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
   private boolean stickySessionsEnabled = HaServiceConfigConstants.DEFAULT_STICKY_SESSIONS_ENABLED;
   private boolean noFallbackEnabled = HaServiceConfigConstants.DEFAULT_NO_FALLBACK_ENABLED;
   private String stickySessionCookieName = HaServiceConfigConstants.DEFAULT_STICKY_SESSION_COOKIE_NAME;
+  private List<String> disableLoadBalancingForUserAgents = Arrays.asList(HaServiceConfigConstants.DEFAULT_DISABLE_LB_USER_AGENTS);
 
+  /**
+   *  This activeURL is used to track urls when LB is turned off for some clients
+   *  The problem we have with selectively turning off LB is that other clients
+   *  that use LB can change the state from under the current session where LB is
+   *  turned off.
+   *  e.g.
+   *  ODBC Connection established where LB is off. JDBC connection is established
+   *  next where LB is enabled. This changes the active URL under the existing ODBC
+   *  connection which will be an issue.
+   *  This variable keeps track of non-LB'ed url and updated upon failover.
+   */
+  private AtomicReference<String> activeURL =  new AtomicReference();
   @Override
   public void init() {
     super.init();
@@ -89,8 +104,14 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
       if(stickySessionsEnabled) {
         stickySessionCookieName = serviceConfig.getStickySessionCookieName();
       }
+
+      disableLoadBalancingForUserAgents = serviceConfig.getStickySessionDisabledUserAgents();
+
       setupUrlHashLookup();
     }
+
+    /* setup the active URL for non-LB case */
+    activeURL.set(haProvider.getActiveURL(getServiceRole()));
 
     // Suffix the cookie name by the service to make it unique
     // The cookie path is NOT unique since Knox is stripping the service name.
@@ -118,19 +139,49 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
   protected void executeRequestWrapper(HttpUriRequest outboundRequest,
           HttpServletRequest inboundRequest, HttpServletResponse outboundResponse)
           throws IOException {
-      final Optional<URI> backendURI = setBackendfromHaCookie(outboundRequest, inboundRequest);
-      if(backendURI.isPresent()) {
-          ((HttpRequestBase) outboundRequest).setURI(backendURI.get());
+
+      final String userAgentFromBrowser = StringUtils.isBlank(inboundRequest.getHeader("User-Agent")) ? "" : inboundRequest.getHeader("User-Agent");
+
+      /* disable loadblancing override */
+      boolean userAgentDisabled = false;
+
+      /* disable loadbalancing in case a configured user agent is detected to disable LB */
+      if(disableLoadBalancingForUserAgents.stream().anyMatch(c -> userAgentFromBrowser.contains(c))  ) {
+        userAgentDisabled = true;
+        LOG.disableHALoadbalancinguserAgent(userAgentFromBrowser, disableLoadBalancingForUserAgents.toString());
       }
+
+      /* if disable LB is set don't bother setting backend from cookie */
+      Optional<URI> backendURI = Optional.empty();
+      if(!userAgentDisabled) {
+        backendURI = setBackendfromHaCookie(outboundRequest, inboundRequest);
+        if(backendURI.isPresent()) {
+          ((HttpRequestBase) outboundRequest).setURI(backendURI.get());
+        }
+      }
+
+      /**
+       * case where loadbalancing is enabled
+       * and we have a HTTP request configured not to use LB
+       * use the activeURL
+      */
+      if(loadBalancingEnabled && userAgentDisabled) {
+        try {
+          ((HttpRequestBase) outboundRequest).setURI(updateHostURL(outboundRequest.getURI(), activeURL.get()));
+        } catch (final URISyntaxException e) {
+          LOG.errorSettingActiveUrl();
+        }
+      }
+
       executeRequest(outboundRequest, inboundRequest, outboundResponse);
       /**
-       * 1. Load balance when loadbalancing is enabled.
+       * 1. Load balance when loadbalancing is enabled and there are no overrides (disableLB)
        * 2. Loadbalance only when sticky session is enabled but cookie not detected
        *    i.e. when loadbalancing is enabled every request that does not have BACKEND cookie
        *    needs to be loadbalanced. If a request has BACKEND coookie and Loadbalance=on then
        *    there should be no loadbalancing.
        */
-      if (loadBalancingEnabled) {
+      if (loadBalancingEnabled && !userAgentDisabled) {
         /* check sticky session enabled */
         if(stickySessionsEnabled) {
           /* loadbalance only when sticky session enabled and no backend url cookie */
@@ -173,13 +224,7 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
                   // Make sure that the url provided is actually a valid backend url
                   if (haProvider.getURLs(getServiceRole()).contains(backendURL)) {
                       try {
-                          URI cookieUri = new URI(backendURL);
-                          URIBuilder uriBuilder = new URIBuilder(outboundRequest.getURI());
-                          uriBuilder.setScheme(cookieUri.getScheme());
-                          uriBuilder.setHost(cookieUri.getHost());
-                          uriBuilder.setPort(cookieUri.getPort());
-                          URI uri = uriBuilder.build();
-                          return Optional.of(uri);
+                        return Optional.of(updateHostURL(outboundRequest.getURI(), backendURL));
                       } catch (URISyntaxException ignore) {
                           // The cookie was invalid so we just don't set it. Knox will pick a backend automatically
                       }
@@ -261,6 +306,10 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
         }
       }
       LOG.failingOverRequest(outboundRequest.getURI().toString());
+
+      /* in case of failover update the activeURL variable */
+      activeURL.set(outboundRequest.getURI().toString());
+
       executeRequest(outboundRequest, inboundRequest, outboundResponse);
     } else {
       LOG.maxFailoverAttemptsReached(maxFailoverAttempts, getServiceRole());
@@ -304,6 +353,23 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
     public Cookie[] getCookies() {
       return cookies;
     }
+  }
+
+  /**
+   * A helper function that updates the schema, host and port
+   * of the URI with the provided string URL and returnes a new
+   * URI object
+   * @param source
+   * @param host
+   * @return
+   */
+  private URI updateHostURL(final URI source, final String host) throws URISyntaxException {
+    final URI newUri = new URI(host);
+    final URIBuilder uriBuilder = new URIBuilder(source);
+    uriBuilder.setScheme(newUri.getScheme());
+    uriBuilder.setHost(newUri.getHost());
+    uriBuilder.setPort(newUri.getPort());
+    return uriBuilder.build();
   }
 
 }
