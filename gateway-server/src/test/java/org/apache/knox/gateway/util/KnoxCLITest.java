@@ -17,22 +17,16 @@
  */
 package org.apache.knox.gateway.util;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mycila.xmltool.XMLDoc;
-import com.mycila.xmltool.XMLTag;
-import org.apache.commons.io.FileUtils;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
-import org.apache.knox.gateway.model.DescriptorConfiguration;
-import org.apache.knox.gateway.model.ProviderConfiguration;
-import org.apache.knox.gateway.services.ServiceType;
-import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
-import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
-import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.MasterService;
-import org.apache.knox.test.TestUtils;
-import org.junit.Before;
-import org.junit.Test;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -45,16 +39,25 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.UUID;
 
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import org.apache.commons.io.FileUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
+import org.apache.knox.gateway.model.DescriptorConfiguration;
+import org.apache.knox.gateway.model.ProviderConfiguration;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
+import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.MasterService;
+import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
+import org.apache.knox.test.TestUtils;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mycila.xmltool.XMLDoc;
+import com.mycila.xmltool.XMLTag;
+import com.nimbusds.jose.JWSAlgorithm;
 
 /**
  * @author larry
@@ -1123,6 +1126,62 @@ public class KnoxCLITest {
       FileUtils.deleteQuietly(outputDir);
     }
   }
+
+  @Test
+  public void testGeneratingJwkInvalidAlgorithm() throws Exception {
+    outContent.reset();
+    final KnoxCLI cli = new KnoxCLI();
+    cli.run(new String[] { "generate-jwk", "--jwkAlg", "HS255", "--master", "master" });
+    // confirm that the output is the help message
+    assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("generate-jwk [--jwkAlg HS256|HS384|HS512]"));
+    outContent.reset();
+  }
+
+  @Test
+  public void testGeneratingJwk256() throws Exception {
+    testGeneratingJWK(JWSAlgorithm.HS256);
+  }
+
+  @Test
+  public void testGeneratingJwk256SavingAsAlias() throws Exception {
+    testGeneratingJWK(JWSAlgorithm.HS256, TokenMAC.KNOX_TOKEN_HASH_KEY_ALIAS_NAME);
+  }
+
+  @Test
+  public void testGeneratingJwk384() throws Exception {
+    testGeneratingJWK(JWSAlgorithm.HS384);
+  }
+
+  @Test
+  public void testGeneratingJwk512() throws Exception {
+    testGeneratingJWK(JWSAlgorithm.HS512);
+  }
+
+  private void testGeneratingJWK(JWSAlgorithm jwkAlgorithm) throws Exception {
+    testGeneratingJWK(jwkAlgorithm, null);
+  }
+
+  private void testGeneratingJWK(JWSAlgorithm jwkAlgorithm, String alias) throws Exception {
+    outContent.reset();
+    final KnoxCLI cli = new KnoxCLI();
+    final String[] args = alias == null ? new String[] { "generate-jwk", "--jwkAlg", jwkAlgorithm.getName(), "--master", "master" }
+        : new String[] { "generate-jwk", "--jwkAlg", jwkAlgorithm.getName(), "--master", "master", "--saveAlias", alias };
+    cli.run(args);
+    final String commandOutput = outContent.toString(StandardCharsets.UTF_8.name());
+    outContent.reset();
+
+    if (alias == null) {
+      // confirm that the output is a generated secret and *NOT* the help message
+      assertThat(commandOutput, not(containsString("generate-jwk [--jwkAlg HS256|HS384|HS512]")));
+    } else {
+      assertThat(commandOutput, containsString(alias + " has been successfully created."));
+
+      final AliasService aliasService = KnoxCLI.getGatewayServices().getService(ServiceType.ALIAS_SERVICE);
+      assertNotNull(new String(aliasService.getPasswordFromAliasForGateway(alias)));
+    }
+
+  }
+
 
   private File createDir() throws IOException {
     return TestUtils
