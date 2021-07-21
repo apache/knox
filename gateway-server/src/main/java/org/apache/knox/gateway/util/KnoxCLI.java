@@ -17,6 +17,36 @@
  */
 package org.apache.knox.gateway.util;
 
+import java.io.BufferedReader;
+import java.io.Console;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.KeyStoreException;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.net.ssl.SSLException;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -63,34 +93,15 @@ import org.eclipse.persistence.oxm.MediaType;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 
-import javax.net.ssl.SSLException;
-import java.io.BufferedReader;
-import java.io.Console;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.KeyStoreException;
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.UUID;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.jwk.OctetSequenceKey;
+import com.nimbusds.jose.jwk.gen.OctetSequenceKeyGenerator;
 
 public class KnoxCLI extends Configured implements Tool {
 
+  private static final Collection<String> SUPPORTED_JWK_ALGORITHMS = Stream
+      .of(JWSAlgorithm.HS256.getName(), JWSAlgorithm.HS384.getName(), JWSAlgorithm.HS512.getName()).collect(Collectors.toSet());
   private static final String USAGE_PREFIX = "KnoxCLI {cmd} [options]";
   private static final String COMMANDS =
       "   [--help]\n" +
@@ -115,7 +126,8 @@ public class KnoxCLI extends Configured implements Tool {
       "   [" + RemoteRegistryDeleteProviderConfigCommand.USAGE + "]\n" +
       "   [" + RemoteRegistryDeleteDescriptorCommand.USAGE + "]\n" +
       "   [" + RemoteRegistryGetACLCommand.USAGE + "]\n" +
-      "   [" + TopologyConverter.USAGE + "]\n";
+      "   [" + TopologyConverter.USAGE + "]\n" +
+      "   [" + JWKGenerator.USAGE  + "]\n";
 
   /** allows stdout to be captured if necessary */
   public PrintStream out = System.out;
@@ -135,6 +147,8 @@ public class KnoxCLI extends Configured implements Tool {
   private String user;
   private String pass;
   private boolean groups;
+  private JWSAlgorithm jwsAlgorithm = JWSAlgorithm.HS256;
+  private String alias;
 
   private String remoteRegistryClient;
   private String remoteRegistryEntryName;
@@ -479,6 +493,18 @@ public class KnoxCLI extends Configured implements Tool {
           printKnoxShellUsage();
           return -1;
         }
+      } else if (args[i].equalsIgnoreCase("generate-jwk")) {
+        command = new JWKGenerator();
+      } else if (args[i].equalsIgnoreCase("--jwkAlg")) {
+        final String algName = args[++i];
+        if (!SUPPORTED_JWK_ALGORITHMS.contains(algName)) {
+          printKnoxShellUsage();
+          return -1;
+        } else {
+          jwsAlgorithm = JWSAlgorithm.parse(algName);
+        }
+      } else if (args[i].equalsIgnoreCase("--saveAlias")) {
+        alias = args[++i];
       } else {
         printKnoxShellUsage();
         return -1;
@@ -561,6 +587,9 @@ public class KnoxCLI extends Configured implements Tool {
       out.println();
       out.println( div );
       out.println(TopologyConverter.USAGE + "\n\n" + TopologyConverter.DESC);
+      out.println();
+      out.println( div );
+      out.println(JWKGenerator.USAGE + "\n\n" + JWKGenerator.DESC);
       out.println();
       out.println( div );
     }
@@ -2260,6 +2289,43 @@ public class KnoxCLI extends Configured implements Tool {
       return USAGE + ":\n\n" + DESC;
     }
 
+  }
+
+  public class JWKGenerator extends Command {
+
+    public static final String USAGE = "generate-jwk [--jwkAlg HS256|HS384|HS512] [--saveAlias alias] [--topology topology]";
+    public static final String DESC =
+        "Generates a JSON Web Key using the supplied algorithm name and prints the generated key value on the screen. \n"
+            + "As an alternative to displaying this possibly sensitive information on the screen you may want to save it as an alias.\n"
+            + "Options are as follows: \n"
+            + "--jwkAlg (optional) defines the name of the desired JSON Web Signature algorithm name; defaults to HS256. Other accepted values are HS384 and HS512 \n"
+            + "--saveAlias (optional) if this is set, the given alias name is used to save the generated JWK instead of printing it on the screen \n"
+            + "--topology (optional) the name of the topology (aka. cluster) to be used when saving the JWK as an alias. If none specified, the alias is going to be saved for the Gateway \n";
+
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+
+    @Override
+    public void execute() throws Exception {
+      final int keyLength = Integer.parseInt(jwsAlgorithm.getName().substring(2));
+      try {
+        final OctetSequenceKey jwk = new OctetSequenceKeyGenerator(keyLength).keyID(UUID.randomUUID().toString()).algorithm(jwsAlgorithm).generate();
+        final String jwkAsText = jwk.getKeyValue().toJSONString().replace("\"", "");
+        if (alias != null) {
+          if (cluster == null) {
+            cluster = "__gateway";
+          }
+          getAliasService().addAliasForCluster(cluster, alias, jwkAsText);
+          out.println(alias + " has been successfully created.");
+        } else {
+          out.println(jwkAsText);
+        }
+      } catch (JOSEException e) {
+        throw new RuntimeException("Error while generating " + keyLength + " bits JWK secret", e);
+      }
+    }
   }
 
   private static Properties loadBuildProperties() {
