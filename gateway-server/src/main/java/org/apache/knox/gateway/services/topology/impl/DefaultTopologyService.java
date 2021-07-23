@@ -45,7 +45,6 @@ import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.services.topology.monitor.DescriptorsMonitor;
 import org.apache.knox.gateway.services.topology.monitor.SharedProviderConfigMonitor;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
-import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.TopologyEvent;
@@ -160,20 +159,9 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
         topology.setUri(file.toURI());
         topology.setName(FilenameUtils.removeExtension(file.getName()));
         topology.setTimestamp(file.lastModified());
-        addShiroProperties(topology);
       }
     }
     return topology;
-  }
-
-  private void addShiroProperties(Topology topology) {
-    Provider shiro = topology.getProvider("authentication", "ShiroProvider");
-    if (shiro != null) {
-      Map<String, String> params = shiro.getParams();
-      params.putIfAbsent("main.invalidRequest.blockSemicolon", "false");
-      params.putIfAbsent("main.invalidRequest.blockBackslash", "false");
-      params.putIfAbsent("main.invalidRequest.blockNonAscii", "false");
-    }
   }
 
   private void redeployTopology(Topology topology) {
