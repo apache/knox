@@ -175,7 +175,7 @@ public class Pac4jDispatcherFilter implements Filter {
       addDefaultConfig(clientNameParameter, properties);
       while (names.hasMoreElements()) {
         final String key = names.nextElement();
-        properties.put(key, filterConfig.getInitParameter(key));
+        properties.put(key, resolveAlias(clusterName, key, filterConfig.getInitParameter(key)));
       }
       final PropertiesConfigFactory propertiesConfigFactory = new PropertiesConfigFactory(pac4jCallbackUrl, properties);
       config = propertiesConfigFactory.build();
@@ -212,6 +212,18 @@ public class Pac4jDispatcherFilter implements Filter {
 
     config.setSessionStore(sessionStore);
 
+  }
+
+  private String resolveAlias(String clusterName, String key, String value) throws ServletException {
+    if (value.startsWith("${ALIAS=") && value.endsWith("}")) {
+      String alias = value.substring("${ALIAS=".length());
+      try {
+        return new String(aliasService.getPasswordFromAliasForCluster(clusterName, alias.substring(0, alias.length() - 1)));
+      } catch (AliasServiceException e) {
+        throw new ServletException("Unable to retrieve alias for config: " + key, e);
+      }
+    }
+    return value;
   }
 
   private void addDefaultConfig(String clientNameParameter, Map<String, String> properties) {
