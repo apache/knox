@@ -404,7 +404,7 @@ public class Pac4jProviderTest {
         private ServletContext context;
         private Properties properties = new Properties();
 
-        public FilterConfigStub(ServletContext context) {
+        FilterConfigStub(ServletContext context) {
             this.context = context;
         }
 
