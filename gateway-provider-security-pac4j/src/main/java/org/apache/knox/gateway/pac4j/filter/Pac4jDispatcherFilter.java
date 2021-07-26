@@ -23,8 +23,8 @@ import org.apache.knox.gateway.pac4j.Pac4jMessages;
 import org.apache.knox.gateway.pac4j.config.ClientConfigurationDecorator;
 import org.apache.knox.gateway.pac4j.config.Pac4jClientConfigurationDecorator;
 import org.apache.knox.gateway.pac4j.session.KnoxSessionStore;
-import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.CryptoService;
@@ -72,7 +72,7 @@ import java.util.Map;
  * @since 0.8.0
  */
 public class Pac4jDispatcherFilter implements Filter {
-
+  private static final String ALIAS_PREFIX = "${ALIAS=";
   private static Pac4jMessages log = MessagesFactory.get(Pac4jMessages.class);
 
   private static final ClientConfigurationDecorator PAC4J_CLIENT_CONFIGURATION_DECORATOR = new Pac4jClientConfigurationDecorator();
@@ -215,8 +215,8 @@ public class Pac4jDispatcherFilter implements Filter {
   }
 
   private String resolveAlias(String clusterName, String key, String value) throws ServletException {
-    if (value.startsWith("${ALIAS=") && value.endsWith("}")) {
-      String alias = value.substring("${ALIAS=".length(), value.length() - 1);
+    if (value.startsWith(ALIAS_PREFIX) && value.endsWith("}")) {
+      String alias = value.substring(ALIAS_PREFIX.length(), value.length() - 1);
       try {
         return new String(aliasService.getPasswordFromAliasForCluster(clusterName, alias));
       } catch (AliasServiceException e) {
