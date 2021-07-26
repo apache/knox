@@ -216,9 +216,9 @@ public class Pac4jDispatcherFilter implements Filter {
 
   private String resolveAlias(String clusterName, String key, String value) throws ServletException {
     if (value.startsWith("${ALIAS=") && value.endsWith("}")) {
-      String alias = value.substring("${ALIAS=".length());
+      String alias = value.substring("${ALIAS=".length(), value.length() - 1);
       try {
-        return new String(aliasService.getPasswordFromAliasForCluster(clusterName, alias.substring(0, alias.length() - 1)));
+        return new String(aliasService.getPasswordFromAliasForCluster(clusterName, alias));
       } catch (AliasServiceException e) {
         throw new ServletException("Unable to retrieve alias for config: " + key, e);
       }
