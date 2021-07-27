@@ -19,6 +19,8 @@ package org.apache.knox.gateway.service.metadata;
 
 import static org.apache.knox.gateway.service.metadata.ServiceModel.HIVE_SERVICE_NAME;
 import static org.apache.knox.gateway.service.metadata.ServiceModel.HIVE_SERVICE_URL_TEMPLATE;
+import static org.apache.knox.gateway.service.metadata.ServiceModel.IMPALA_SERVICE_NAME;
+import static org.apache.knox.gateway.service.metadata.ServiceModel.IMPALA_SERVICE_URL_TEMPLATE;
 import static org.apache.knox.gateway.service.metadata.ServiceModel.SERVICE_URL_TEMPLATE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -157,6 +159,21 @@ public class ServiceModelTest {
     EasyMock.expect(service.getRole()).andReturn(HIVE_SERVICE_NAME).anyTimes();
     EasyMock.replay(service);
     assertEquals(String.format(Locale.ROOT, HIVE_SERVICE_URL_TEMPLATE, SERVER_NAME, SERVER_PORT, gatewayPath, topologyName), serviceModel.getServiceUrl());
+  }
+
+  @Test
+  public void shouldReturnProperImpalaServiceUrl() throws Exception {
+    final ServiceModel serviceModel = new ServiceModel();
+    final String gatewayPath = "gateway";
+    final String topologyName = "sandbox";
+    serviceModel.setGatewayPath(gatewayPath);
+    serviceModel.setTopologyName(topologyName);
+    serviceModel.setRequest(setUpHttpRequestMock());
+    final Service service = EasyMock.createNiceMock(Service.class);
+    serviceModel.setService(service);
+    EasyMock.expect(service.getRole()).andReturn(IMPALA_SERVICE_NAME).anyTimes();
+    EasyMock.replay(service);
+    assertEquals(String.format(Locale.ROOT, IMPALA_SERVICE_URL_TEMPLATE, SERVER_NAME, SERVER_PORT, gatewayPath, topologyName), serviceModel.getServiceUrl());
   }
 
   public HttpServletRequest setUpHttpRequestMock() {

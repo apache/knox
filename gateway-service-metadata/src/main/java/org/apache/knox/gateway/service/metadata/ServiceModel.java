@@ -48,6 +48,8 @@ public class ServiceModel implements Comparable<ServiceModel> {
   static final String CURL_SAMPLE_TEMPLATE = "curl -iv -X %s \"%s%s\"";
   static final String HIVE_SERVICE_NAME = "HIVE";
   static final String HIVE_SERVICE_URL_TEMPLATE = "jdbc:hive2://%s:%d/;ssl=true;transportMode=http;httpPath=%s/%s/hive";
+  static final String IMPALA_SERVICE_NAME = "IMPALA";
+  static final String IMPALA_SERVICE_URL_TEMPLATE = "jdbc:impala://%s:%d/;ssl=1;transportMode=http;httpPath=%s/%s/impala;AuthMech=3";
 
   public enum Type {
     API, UI, API_AND_UI, UNKNOWN
@@ -127,6 +129,8 @@ public class ServiceModel implements Comparable<ServiceModel> {
     String context = getContext();
     if (HIVE_SERVICE_NAME.equals(getServiceName())) {
       return String.format(Locale.ROOT, HIVE_SERVICE_URL_TEMPLATE, request.getServerName(), request.getServerPort(), gatewayPath, topologyName);
+    } else if (IMPALA_SERVICE_NAME.equals(getServiceName())) {
+      return String.format(Locale.ROOT, IMPALA_SERVICE_URL_TEMPLATE, request.getServerName(), request.getServerPort(), gatewayPath, topologyName);
     } else {
       return getServiceUrl(context);
     }
