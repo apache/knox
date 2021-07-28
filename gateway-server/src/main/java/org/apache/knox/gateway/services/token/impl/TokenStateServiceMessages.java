@@ -154,7 +154,7 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.INFO, text = "Processing {0} aliases from persistence store on startup...")
   void processingAliases(int count);
 
-  @Message(level = MessageLevel.INFO, text = "Loaded {0} token aliases from persistence store in {1} milliseonds")
+  @Message(level = MessageLevel.INFO, text = "Loaded {0} token aliases from persistence store in {1} milliseconds")
   void loadedTokenAliasesFromPersistenceStore(int count, long duration);
 
   @Message(level = MessageLevel.ERROR, text = "Error while loading token aliases from persistence store on startup: {0}")
