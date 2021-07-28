@@ -28,7 +28,7 @@ public class ShiroConfig {
   private Map<String, Map<String, String>> sections = new LinkedHashMap<>();
 
   public ShiroConfig(Provider provider, String clusterName) {
-    Map<String, String> params = provider.getParams();
+    Map<String, String> params = new LinkedHashMap<>(provider.getParams()); // make a copy since we modify the map
     String name;
     String sectionName;
     String value;
