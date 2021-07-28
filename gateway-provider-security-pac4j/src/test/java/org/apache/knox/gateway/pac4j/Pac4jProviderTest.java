@@ -36,9 +36,11 @@ import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
@@ -367,4 +369,68 @@ public class Pac4jProviderTest {
         assertEquals(USERNAME, adapter.getTestIdentifier());
     }
 
+    @Test
+    public void testResolvesAlias() throws Exception {
+        final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+        EasyMock.expect(aliasService.getPasswordFromAliasForCluster(CLUSTER_NAME, KnoxSessionStore.PAC4J_PASSWORD, true))
+                .andReturn(PAC4J_PASSWORD.toCharArray()).anyTimes();
+        EasyMock.expect(aliasService.getPasswordFromAliasForCluster(CLUSTER_NAME, KnoxSessionStore.PAC4J_PASSWORD))
+                .andReturn(PAC4J_PASSWORD.toCharArray()).anyTimes();
+        EasyMock.expect(aliasService.getPasswordFromAliasForCluster(CLUSTER_NAME, "my-secret-alias"))
+                .andReturn("my-oidc-secret".toCharArray()).atLeastOnce();
+        EasyMock.replay(aliasService);
+
+        GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+        EasyMock.expect(services.getService(ServiceType.CRYPTO_SERVICE)).andReturn(new DefaultCryptoService());
+        EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService);
+        EasyMock.replay(services);
+
+        ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+        EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+        EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).andReturn(CLUSTER_NAME);
+        EasyMock.replay(context);
+
+        new Pac4jDispatcherFilter().init(
+            new FilterConfigStub(context)
+                .addInitParam(Pac4jDispatcherFilter.PAC4J_CALLBACK_URL, PAC4J_CALLBACK_URL)
+                .addInitParam("clientName", "OidcClient")
+                .addInitParam("oidc.secret", "${ALIAS=my-secret-alias}")
+                .addInitParam("oidc.id", "test-id")
+        );
+        EasyMock.verify(aliasService);
+    }
+
+    private class FilterConfigStub implements FilterConfig {
+        private ServletContext context;
+        private Properties properties = new Properties();
+
+        FilterConfigStub(ServletContext context) {
+            this.context = context;
+        }
+
+        public FilterConfigStub addInitParam(String name, String value) {
+            properties.setProperty(name, value);
+            return this;
+        }
+
+        @Override
+        public String getFilterName() {
+            return null;
+        }
+
+        @Override
+        public ServletContext getServletContext() {
+            return context;
+        }
+
+        @Override
+        public String getInitParameter(String s) {
+            return properties.getProperty(s, null);
+        }
+
+        @Override
+        public Enumeration<String> getInitParameterNames() {
+            return (Enumeration<String>) properties.propertyNames();
+        }
+    }
 }
