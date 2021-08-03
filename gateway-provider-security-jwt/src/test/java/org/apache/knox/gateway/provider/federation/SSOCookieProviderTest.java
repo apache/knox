@@ -113,6 +113,37 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
   }
 
   @Test
+  public void testMissingCookie() throws Exception {
+    try {
+      Properties props = getProperties();
+      props.put("sso.cookie.name", "jowt");
+      handler.init(new TestFilterConfig(props));
+
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice",
+                             new Date(new Date().getTime() + 5000), privateKey);
+
+      HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+      EasyMock.expect(request.getCookies()).andReturn(null);
+      EasyMock.expect(request.getRequestURL()).andReturn(
+          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getQueryString()).andReturn(null);
+      HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
+          SERVICE_URL);
+      EasyMock.replay(request);
+
+      TestFilterChain chain = new TestFilterChain();
+      handler.doFilter(request, response, chain);
+      Assert.assertFalse("doFilterCalled should be false.", chain.doFilterCalled );
+      Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
+      Assert.assertTrue("No PrimaryPrincipal returned.", principals.isEmpty());
+      Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
+    } catch (ServletException se) {
+      fail("Should NOT have thrown a ServletException.");
+    }
+  }
+
+  @Test
   public void testNoProviderURLJWT() {
     try {
       Properties props = getProperties();

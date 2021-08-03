@@ -16,6 +16,7 @@
  */
 import {Injectable} from '@angular/core';
 import {HttpClient, HttpErrorResponse, HttpHeaders} from '@angular/common/http';
+import {ActivatedRoute} from '@angular/router';
 import swal from 'sweetalert';
 
 import 'rxjs/add/operator/toPromise';
@@ -32,7 +33,7 @@ export class HomepageService {
     publicCertUrl = this.apiUrl + 'publicCert?type=';
     topologiesUrl = this.apiUrl + 'topologies';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private route: ActivatedRoute) {}
 
     getGeneralProxyInformation(): Promise<GeneralProxyInformation> {
         let headers = new HttpHeaders();
@@ -128,6 +129,20 @@ export class HomepageService {
     }
 
     private handleError(error: HttpErrorResponse): Promise<any> {
+        //location.reload();
+        let refresh;
+        this.route.queryParams.subscribe(params => {
+          refresh = params['refresh'];
+          console.debug('refresh = ' + refresh)
+          if (refresh) {
+            console.debug('Refreshing page...', window.location.href);
+            var url = window.location.pathname.replace(new RegExp('refresh=1/.*'), '?');
+            //var url = window.location.pathname;
+            
+            //window.location.assign(url);
+            window.location.reload();
+          }
+        });
         swal('Oops!', 'Something went wrong!\n' + (error.error ? error.error : error.statusText), 'error');
         return Promise.reject(error.message || error);
     }
