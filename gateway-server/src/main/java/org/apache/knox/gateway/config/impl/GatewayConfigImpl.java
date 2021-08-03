@@ -1223,7 +1223,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public boolean homePageLogoutEnabled() {
     return getBoolean(KNOX_HOMEPAGE_LOGOUT_ENABLED, false);
   }
-  
+
   @Override
   public String getGlobalLogoutPageUrl() {
     return get(GLOBAL_LOGOUT_PAGE_URL);

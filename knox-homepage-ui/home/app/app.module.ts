@@ -26,8 +26,6 @@ import {GeneralProxyInformationComponent} from './generalProxyInformation/genera
 import {TopologyInformationsComponent} from './topologies/topology.information.component';
 import {SessionInformationComponent} from './sessionInformation/session.information.component';
 import {HomepageService} from './homepage.service';
-import {HTTP_INTERCEPTORS} from '@angular/common/http';
-import {AppInterceptor} from './app.interceptor';
 
 @NgModule({
     imports: [BrowserModule,
@@ -45,12 +43,7 @@ import {AppInterceptor} from './app.interceptor';
       {
         provide: APP_BASE_HREF,
         useValue: window['base-href']
-      },
-      {
-        provide: HTTP_INTERCEPTORS,
-        useClass: AppInterceptor,
-        multi: true,
-      },
+      }
     ],
     bootstrap: [SessionInformationComponent,
                 GeneralProxyInformationComponent,

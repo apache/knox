@@ -62,7 +62,7 @@ public class SessionResource {
   }
 
   private String getBaseGatewayUrl(GatewayConfig config) {
-    return request.getRequestURL().substring(0, 
+    return request.getRequestURL().substring(0,
         request.getRequestURL().length() - request.getRequestURI().length()) +
         "/" + config.getGatewayPath();
   }

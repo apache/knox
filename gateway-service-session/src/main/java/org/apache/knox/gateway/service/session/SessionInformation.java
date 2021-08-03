@@ -27,10 +27,10 @@ public class SessionInformation {
 
   @XmlElement
   private String logoutUrl;
-  
+
   @XmlElement
   private String logoutPageUrl;
-  
+
   @XmlElement
   private String globalLogoutPageUrl;
 

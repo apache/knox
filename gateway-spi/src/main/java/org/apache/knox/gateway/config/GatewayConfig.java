@@ -742,7 +742,7 @@ public interface GatewayConfig {
    * @return the Global Logout Page for Federated IDPs
    */
   String getGlobalLogoutPageUrl();
-  
+
   /**
    * @return the maximum number of cache entries where keystore entries are stored
    */
