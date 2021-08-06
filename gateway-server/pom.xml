@@ -418,11 +418,6 @@
             <artifactId>jsch</artifactId>
             <version>0.1.54</version>
 	</dependency>
-	<dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-        </dependency>
-
         <!-- ********** ********** ********** ********** ********** ********** -->
         <!-- ********** Test Dependencies                           ********** -->
         <!-- ********** ********** ********** ********** ********** ********** -->
@@ -485,6 +480,5 @@
             <artifactId>curator-test</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 </project>

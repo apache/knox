@@ -38,7 +38,7 @@ public class WebshellWebSocketAdapter extends WebSocketAdapter {
 
     private final ExecutorService pool;
 
-    private ConnectInfo connectInfo;
+    private ConnectionInfo connectionInfo;
 
     public static final String OPERATION_CONNECT = "connect";
     public static final String OPERATION_COMMAND = "command";
@@ -53,8 +53,8 @@ public class WebshellWebSocketAdapter extends WebSocketAdapter {
     public void onWebSocketConnect(final Session session) {
         this.session = session;
         //todo: process based works on mac but not on Centos 7, use JSch to connect for now
-        //this.connectInfo = new ProcessConnectInfo();
-        this.connectInfo = new JSchConnectInfo();
+        //this.connectionInfo = new ProcessConnectionInfo();
+        this.connectionInfo = new JSchConnectionInfo();
         LOG.info("websocket connected.");
     }
 
@@ -74,7 +74,7 @@ public class WebshellWebSocketAdapter extends WebSocketAdapter {
         }
 
         if (OPERATION_CONNECT.equals(webShellData.getOperation())) {
-            connectInfo.connect(webShellData.getUsername());
+            connectionInfo.connect(webShellData.getUsername());
             pool.execute(new Runnable() {
                 @Override
                 public void run(){
@@ -97,7 +97,7 @@ public class WebshellWebSocketAdapter extends WebSocketAdapter {
         int i;
         try {
             // blocks until data comes in
-            while ((i = connectInfo.getInputStream().read(buffer)) != -1) {
+            while ((i = connectionInfo.getInputStream().read(buffer)) != -1) {
                 transToClient(new String(buffer, 0, i, StandardCharsets.UTF_8));
             }
         } catch (IOException e){
@@ -109,8 +109,8 @@ public class WebshellWebSocketAdapter extends WebSocketAdapter {
     private void transToHost (String command){
         LOG.info("sending to host: "+command);
         try {
-            connectInfo.getOutputStream().write(command.getBytes(StandardCharsets.UTF_8));
-            connectInfo.getOutputStream().flush();
+            connectionInfo.getOutputStream().write(command.getBytes(StandardCharsets.UTF_8));
+            connectionInfo.getOutputStream().flush();
         }catch (IOException e){
             LOG.error("Error sending message to host");
             throw new RuntimeIOException(e);
@@ -157,6 +157,6 @@ public class WebshellWebSocketAdapter extends WebSocketAdapter {
         if(session != null && !session.isOpen()) {
             session.close();
         }
-        if (connectInfo != null) connectInfo.disconnect();
+        if (connectionInfo != null) connectionInfo.disconnect();
     }
 }

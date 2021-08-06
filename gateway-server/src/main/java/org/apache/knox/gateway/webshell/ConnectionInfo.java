@@ -20,7 +20,7 @@ package org.apache.knox.gateway.webshell;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public abstract class ConnectInfo {
+public abstract class ConnectionInfo {
     protected InputStream inputStream;
     protected OutputStream outputStream;
 

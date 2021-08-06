@@ -28,11 +28,11 @@ import java.nio.charset.StandardCharsets;
 /**
 * data structure to store a connection session
 */
-public class ProcessConnectInfo extends ConnectInfo {
+public class ProcessConnectionInfo extends ConnectionInfo {
 
 
     private Process process;
-    private static final Logger LOG = LoggerFactory.getLogger(ProcessConnectInfo.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ProcessConnectionInfo.class);
 
     @SuppressForbidden
     @Override

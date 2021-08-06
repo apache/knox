@@ -34,13 +34,13 @@ import java.util.Properties;
 /**
  * data structure to store a connection session
  */
-public class JSchConnectInfo extends ConnectInfo {
+public class JSchConnectionInfo extends ConnectionInfo {
 
     private JSch jsch;
     private Channel channel;
     private Session jschSession;
-    private static final Logger LOG = LoggerFactory.getLogger(JSchConnectInfo.class);
-    public JSchConnectInfo(){
+    private static final Logger LOG = LoggerFactory.getLogger(JSchConnectionInfo.class);
+    public JSchConnectionInfo(){
         try {
             jsch = new JSch();
             Properties config = new Properties();

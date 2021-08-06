@@ -21,7 +21,7 @@ function WebShellClient() {
 
 
 WebShellClient.prototype.connect = function (callbackFuncs) {
-    var endpoint = 'wss://localhost:8443/gateway/homepage/webshell/webshellws';
+    var endpoint = 'wss://127.0.0.1:8443/gateway/homepage/webshell/webshellws';
     console.log('connecting websocket endpoint:' + endpoint);
 
     if (window.WebSocket) {
