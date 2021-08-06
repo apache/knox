@@ -48,6 +48,10 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.KeyLengthException;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.util.ByteUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -152,7 +156,7 @@ public class TokenResource {
   ServletContext context;
 
   @PostConstruct
-  public void init() throws AliasServiceException, ServiceLifecycleException {
+  public void init() throws AliasServiceException, ServiceLifecycleException, KeyLengthException {
 
     String audiences = context.getInitParameter(TOKEN_AUDIENCES_PARAM);
     if (audiences != null) {
@@ -313,11 +317,21 @@ public class TokenResource {
     }
   }
 
-  private void setSignatureAlogrithm() throws AliasServiceException {
+  private void setSignatureAlogrithm() throws AliasServiceException, KeyLengthException {
     final String configuredSigAlg = context.getInitParameter(TOKEN_SIG_ALG);
     final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
     final GatewayServices services = (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    signatureAlgorithm = TokenUtils.getSignatureAlgorithm(configuredSigAlg, (AliasService) services.getService(ServiceType.ALIAS_SERVICE), config.getSigningKeystoreName());
+    AliasService aliasService = services.getService(ServiceType.ALIAS_SERVICE);
+    signatureAlgorithm = TokenUtils.getSignatureAlgorithm(configuredSigAlg, aliasService, config.getSigningKeystoreName());
+    char[] hmacSecret = aliasService.getPasswordFromAliasForGateway(TokenUtils.SIGNING_HMAC_SECRET_ALIAS);
+    if (hmacSecret != null && !isAlgCompatibleWithSecret(signatureAlgorithm, hmacSecret)) {
+      throw new KeyLengthException(JWSAlgorithm.parse(signatureAlgorithm));
+    }
+  }
+
+  private boolean isAlgCompatibleWithSecret(String algName, char[] secret) {
+    return MACSigner.getCompatibleAlgorithms(ByteUtils.bitLength(secret.length))
+            .contains(JWSAlgorithm.parse(algName));
   }
 
   private boolean isServerManagedTokenStateEnabled() {
