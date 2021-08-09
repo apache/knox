@@ -28,8 +28,10 @@ import static org.junit.Assert.fail;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.KeyLengthException;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 
@@ -108,6 +110,7 @@ public class TokenServiceResourceTest {
   private HttpServletRequest request;
   private JWTokenAuthority authority;
   private TestTokenStateService tss;
+  private char[] hmacSecret;
 
   private enum TokenLifecycleOperation {
     Renew,
@@ -172,7 +175,7 @@ public class TokenServiceResourceTest {
 
     AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TokenUtils.SIGNING_HMAC_SECRET_ALIAS)).andReturn(null).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TokenUtils.SIGNING_HMAC_SECRET_ALIAS)).andReturn(hmacSecret).anyTimes();
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TokenMAC.KNOX_TOKEN_HASH_KEY_ALIAS_NAME)).andReturn("sPj8FCgQhCEi6G18kBfpswxYSki33plbelGLs0hMSbk".toCharArray()).anyTimes();
 
     authority = new TestJWTokenAuthority(publicKey, privateKey);
@@ -192,6 +195,30 @@ public class TokenServiceResourceTest {
     }
 
     EasyMock.replay(principal, services, context, request, aliasService, config);
+  }
+
+  @Test(expected = KeyLengthException.class)
+  public void testInvalidHmacSecretThrowsException() throws Exception {
+    final Map<String, String> contextExpectations = new HashMap<>();
+    hmacSecret = "1234".toCharArray();
+    contextExpectations.put("knox.token.sigalg", JWSAlgorithm.HS256.getName());
+    configureCommonExpectations(contextExpectations);
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+  }
+
+  @Test
+  public void testValidHmacSecretNoException() throws Exception {
+    final Map<String, String> contextExpectations = new HashMap<>();
+    hmacSecret = "12345678123456781234567812345678".toCharArray();
+    contextExpectations.put("knox.token.sigalg", JWSAlgorithm.HS256.getName());
+    configureCommonExpectations(contextExpectations);
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
   }
 
   @Test
