@@ -140,7 +140,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
    * to modify any outgoing
    * response i.e. cookies
    */
-  protected void outboundResponseWrapper(final HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) {
+  protected void outboundResponseWrapper(final HttpUriRequest outboundRequest, final HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) {
     /* no-op */
   }
 
@@ -188,7 +188,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
 
   protected void writeOutboundResponse(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse, HttpResponse inboundResponse) throws IOException {
     /* in case any changes to outbound response are needed */
-    outboundResponseWrapper(inboundRequest, outboundResponse);
+    outboundResponseWrapper(outboundRequest, inboundRequest, outboundResponse);
     // Copy the client respond header to the server respond.
     outboundResponse.setStatus(inboundResponse.getStatusLine().getStatusCode());
     copyResponseHeaderFields(outboundResponse, inboundResponse);
