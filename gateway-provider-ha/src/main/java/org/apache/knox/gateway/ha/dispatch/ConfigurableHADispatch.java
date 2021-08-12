@@ -384,6 +384,4 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
     uriBuilder.setPort(newUri.getPort());
     return uriBuilder.build();
   }
-  
-
 }
