@@ -50,4 +50,7 @@ public interface HaDispatchMessages {
 
   @Message(level = MessageLevel.ERROR, text = "Error setting non-loadbalanced url to outbound request")
   void errorSettingActiveUrl();
+
+  @Message(level = MessageLevel.ERROR, text = "Unsupported encoding, cause: {0}")
+  void unsupportedEncodingException(String cause);
 }

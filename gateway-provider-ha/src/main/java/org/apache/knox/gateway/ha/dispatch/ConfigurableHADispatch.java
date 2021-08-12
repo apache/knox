@@ -198,8 +198,8 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
   }
 
   @Override
-  protected void outboundResponseWrapper(final HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) {
-      setKnoxHaCookie(inboundRequest, outboundResponse);
+  protected void outboundResponseWrapper(final HttpUriRequest outboundRequest, final HttpServletRequest inboundRequest, final HttpServletResponse outboundResponse) {
+      setKnoxHaCookie(outboundRequest, inboundRequest, outboundResponse);
   }
 
   @Override
@@ -235,8 +235,8 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
       return Optional.empty();
   }
 
-  private void setKnoxHaCookie(HttpServletRequest inboundRequest,
-          HttpServletResponse outboundResponse) {
+  private void setKnoxHaCookie(final HttpUriRequest outboundRequest, final HttpServletRequest inboundRequest,
+          final HttpServletResponse outboundResponse) {
       if (stickySessionsEnabled) {
           List<Cookie> serviceHaCookies = Collections.emptyList();
           if(inboundRequest.getCookies() != null) {
@@ -250,8 +250,21 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
                   && hashToUrlLookup.containsKey(serviceHaCookies.get(0).getValue())) {
               return;
           } else {
-              String url = haProvider.getActiveURL(getServiceRole());
-              String cookieValue = urlToHashLookup.get(url);
+
+              /**
+              * Due to concurrency issues haProvider.getActiveURL() will not return the accurate list
+              * This will cause issues where original request goes to host-1 and cookie is set for host-2 - because
+              * haProvider.getActiveURL() returned host-2. To prevent this from happening we need to make sure
+              * we set cookie for the endpoint that was served and not rely on haProvider.getActiveURL().
+              * let LBing logic take care of rotating urls.
+              **/
+              final List<String> urls = haProvider.getURLs(getServiceRole())
+                      .stream()
+                      .filter(u -> u.contains(outboundRequest.getURI().getHost()))
+                      .collect(Collectors.toList());
+
+              final String cookieValue = urlToHashLookup.get(urls.get(0));
+
               Cookie stickySessionCookie = new Cookie(stickySessionCookieName, cookieValue);
               stickySessionCookie.setPath(inboundRequest.getContextPath());
               stickySessionCookie.setMaxAge(-1);
@@ -371,5 +384,6 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
     uriBuilder.setPort(newUri.getPort());
     return uriBuilder.build();
   }
+  
 
 }

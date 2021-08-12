@@ -17,6 +17,11 @@
  */
 package org.apache.knox.gateway.ha.provider.impl;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import org.apache.knox.gateway.ha.provider.HaDescriptor;
 import org.apache.knox.gateway.ha.provider.HaProvider;
 import org.apache.knox.gateway.ha.provider.HaServiceConfig;
@@ -25,10 +30,6 @@ import org.apache.knox.gateway.ha.provider.URLManagerLoader;
 import org.apache.knox.gateway.ha.provider.impl.i18n.HaMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-
 public class DefaultHaProvider implements HaProvider {
 
   private static final HaMessages LOG = MessagesFactory.get(HaMessages.class);
@@ -36,6 +37,8 @@ public class DefaultHaProvider implements HaProvider {
   private HaDescriptor descriptor;
 
   private ConcurrentHashMap<String, URLManager> haServices;
+
+  private ReentrantReadWriteLock rwl = new ReentrantReadWriteLock(true);
 
   public DefaultHaProvider(HaDescriptor descriptor) {
     if ( descriptor == null ) {
@@ -66,38 +69,59 @@ public class DefaultHaProvider implements HaProvider {
 
   @Override
   public String getActiveURL(String serviceName) {
-    if ( haServices.containsKey(serviceName) ) {
-      return haServices.get(serviceName).getActiveURL();
+    rwl.readLock().lock();
+    try {
+      if (haServices.containsKey(serviceName)) {
+        return haServices.get(serviceName).getActiveURL();
+      }
+      LOG.noActiveUrlFound(serviceName);
+      return null;
+    } finally {
+      rwl.readLock().unlock();
     }
-    LOG.noActiveUrlFound(serviceName);
-    return null;
   }
 
   @Override
   public void setActiveURL(String serviceName, String url) {
-    if ( haServices.containsKey(serviceName) ) {
-      haServices.get(serviceName).setActiveURL(url);
-    } else {
-      LOG.noServiceFound(serviceName);
+    rwl.writeLock().lock();
+    try {
+      if (haServices.containsKey(serviceName)) {
+        haServices.get(serviceName).setActiveURL(url);
+      } else {
+        LOG.noServiceFound(serviceName);
+      }
+    }
+    finally {
+      rwl.writeLock().unlock();
     }
 
   }
 
   @Override
   public void markFailedURL(String serviceName, String url) {
-    if ( haServices.containsKey(serviceName) ) {
-      haServices.get(serviceName).markFailed(url);
-    } else {
-      LOG.noServiceFound(serviceName);
+    rwl.writeLock().lock();
+    try {
+      if (haServices.containsKey(serviceName)) {
+        haServices.get(serviceName).markFailed(url);
+      } else {
+        LOG.noServiceFound(serviceName);
+      }
+    } finally {
+      rwl.writeLock().unlock();
     }
   }
 
   @Override
   public void makeNextActiveURLAvailable(String serviceName) {
-    if ( haServices.containsKey(serviceName) ) {
-      haServices.get(serviceName).makeNextActiveURLAvailable();
-    } else {
-      LOG.noServiceFound(serviceName);
+    rwl.writeLock().lock();
+    try {
+      if (haServices.containsKey(serviceName)) {
+        haServices.get(serviceName).makeNextActiveURLAvailable();
+      } else {
+        LOG.noServiceFound(serviceName);
+      }
+    } finally {
+      rwl.writeLock().unlock();
     }
   }
 
