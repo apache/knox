@@ -35,7 +35,7 @@ public interface KnoxShiroMessages {
   @Message(level = MessageLevel.INFO, text = "Could not login: {0}")
   void failedLoginInfo(AuthenticationToken token);
 
-  @Message( level = MessageLevel.DEBUG, text = "Failed to Authenticate with LDAP server: {1}" )
+  @Message( level = MessageLevel.DEBUG, text = "Failed to Authenticate with LDAP server: {0}" )
   void failedLoginStackTrace( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
   @Message(level = MessageLevel.INFO, text = "Successfully logged in: {0}, {1}")
