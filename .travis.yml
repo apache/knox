@@ -41,7 +41,7 @@ before_install:
 script:
   - $DOCKERRUN $IMAGE mvn -T.75C clean verify -U -Dshellcheck=true -Dsurefire.useFile=false -Djavax.net.ssl.trustStorePassword=changeit -Dmaven.wagon.http.retryHandler.count=5 -Dmaven.wagon.http.retryHandler.class=default -Dmaven.wagon.http.retryHandler.nonRetryableClasses=java.io.InterruptedIOException -Dhttp.keepAlive=false -B -V
 git:
-  depth: 1000
+  depth: 3
 cache:
   directories:
     - $HOME/.m2
