@@ -25,7 +25,7 @@ import org.apache.knox.gateway.i18n.messages.StackTrace;
 @Messages(logger = "org.apache.knox.gateway.service.metadata")
 public interface MetadataServiceMessages {
 
-  @Message(level = MessageLevel.ERROR, text = "Failed to fetch public certificate: {1}")
+  @Message(level = MessageLevel.ERROR, text = "Failed to fetch public certificate: {0}")
   void failedToFetchPublicCert(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.ERROR, text = "Failed to generate public certificate {0}: {1}")
