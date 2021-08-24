@@ -987,6 +987,30 @@ public class TokenServiceResourceTest {
   }
 
   @Test
+  public void testTokenLimitChangeAfterAlreadyHavingTokens() throws Exception {
+    Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put(KNOX_TOKEN_USER_LIMIT, "-1");
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+    // already have N tokens
+    int numberOfPreExistingTokens = 5;
+    for (int i = 0; i < numberOfPreExistingTokens; i++) {
+      tr.doGet();
+    }
+    Response getKnoxTokensResponse = tr.getUserTokens(USER_NAME);
+    Collection<String> tokens = ((Map<String, Collection<String>>) JsonUtils.getObjectFromJsonString(getKnoxTokensResponse.getEntity().toString()))
+            .get("tokens");
+    assertEquals(tokens.size(), numberOfPreExistingTokens);
+    // change the limit and try generate one more
+    tr.setTokenLimitPerUser(numberOfPreExistingTokens -1);
+    Response response = tr.doGet();
+    assertTrue(response.getEntity().toString().contains("Unable to get token - token limit exceeded."));
+  }
+
+  @Test
   public void tesTokenLimitPerUserExceeded() throws Exception {
     try {
       testLimitingTokensPerUser(String.valueOf("10"), 11);

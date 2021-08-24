@@ -605,7 +605,7 @@ public class TokenResource {
 
     if (tokenStateService != null) {
       if (tokenLimitPerUser != -1) { // if -1 => unlimited tokens for all users
-        if (tokenStateService.getTokens(p.getName()).size() == tokenLimitPerUser) {
+        if (tokenStateService.getTokens(p.getName()).size() >= tokenLimitPerUser) {
           log.tokenLimitExceeded(p.getName());
           return Response.status(Response.Status.FORBIDDEN).entity("{ \"Unable to get token - token limit exceeded.\" }").build();
         }
@@ -741,4 +741,7 @@ public class TokenResource {
     return message != null ? message : "null";
   }
 
+  void setTokenLimitPerUser(int tokenLimitPerUser) { // visible for testing
+    this.tokenLimitPerUser = tokenLimitPerUser;
+  }
 }
