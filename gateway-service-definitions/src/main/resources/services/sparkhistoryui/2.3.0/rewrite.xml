@@ -98,4 +98,16 @@
   <rule dir="OUT" name="SPARKHISTORYUI/sparkhistory/outbound/yarn/containerlogs2" pattern="{scheme}://{host}:{port}/node/containerlogs/{**}?{**}">
     <rewrite template="{$frontend[url]}/yarnuiv2/node/containerlogs/{**}?{**}?{scheme}?{host}?{port}"/>
   </rule>
+
+  <!-- rewrite JSON response for log locations -->
+  <rule dir="IN" name="SPARKHISTORYUI/sparkhistory/inbound/json/body/jhslogs">
+    <match pattern="{scheme}://{host}:{port}/jobhistory/logs/{**}?{**}"/>
+    <rewrite template="{$frontend[url]}/jobhistory/joblogs/{**}?{**}"/>
+  </rule>
+  <filter name="SPARKHISTORYUI/sparkhistory/inbound/json/body">
+    <content type="*/json">
+      <apply path="$[*]['executorLogs']['stderr']" rule="SPARKHISTORYUI/sparkhistory/inbound/json/body/jhslogs"/>
+      <apply path="$[*]['executorLogs']['stdout']" rule="SPARKHISTORYUI/sparkhistory/inbound/json/body/jhslogs"/>
+    </content>
+  </filter>
 </rules>
