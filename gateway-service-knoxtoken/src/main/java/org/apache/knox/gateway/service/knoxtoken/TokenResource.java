@@ -740,8 +740,4 @@ public class TokenResource {
     String message = t.getMessage();
     return message != null ? message : "null";
   }
-
-  void setTokenLimitPerUser(int tokenLimitPerUser) { // visible for testing
-    this.tokenLimitPerUser = tokenLimitPerUser;
-  }
 }

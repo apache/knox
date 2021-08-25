@@ -109,7 +109,7 @@ public class TokenServiceResourceTest {
   private ServletContext context;
   private HttpServletRequest request;
   private JWTokenAuthority authority;
-  private TestTokenStateService tss;
+  private TestTokenStateService tss = new TestTokenStateService();
   private char[] hmacSecret;
 
   private enum TokenLifecycleOperation {
@@ -170,7 +170,6 @@ public class TokenServiceResourceTest {
     EasyMock.expect(config.getKnoxTokenHashAlgorithm()).andReturn(HmacAlgorithms.HMAC_SHA_256.getName()).anyTimes();
     EasyMock.expect(config.getMaximumNumberOfTokensPerUser())
         .andReturn(contextExpectations.containsKey(KNOX_TOKEN_USER_LIMIT) ? Integer.parseInt(contextExpectations.get(KNOX_TOKEN_USER_LIMIT)) : -1).anyTimes();
-    tss = new TestTokenStateService();
     EasyMock.expect(services.getService(ServiceType.TOKEN_STATE_SERVICE)).andReturn(tss).anyTimes();
 
     AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
@@ -1005,13 +1004,17 @@ public class TokenServiceResourceTest {
             .get("tokens");
     assertEquals(tokens.size(), numberOfPreExistingTokens);
     // change the limit and try generate one more
-    tr.setTokenLimitPerUser(numberOfPreExistingTokens -1);
+    contextExpectations.put(KNOX_TOKEN_USER_LIMIT, Integer.toString(numberOfPreExistingTokens -1));
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+    tr.request = request;
+    tr.context = context;
+    tr.init();
     Response response = tr.doGet();
     assertTrue(response.getEntity().toString().contains("Unable to get token - token limit exceeded."));
   }
 
   @Test
-  public void tesTokenLimitPerUserExceeded() throws Exception {
+  public void testTokenLimitPerUserExceeded() throws Exception {
     try {
       testLimitingTokensPerUser(String.valueOf("10"), 11);
       fail("Exception should have been thrown");
