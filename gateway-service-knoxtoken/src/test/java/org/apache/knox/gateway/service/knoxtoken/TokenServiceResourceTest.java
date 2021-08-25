@@ -109,7 +109,7 @@ public class TokenServiceResourceTest {
   private ServletContext context;
   private HttpServletRequest request;
   private JWTokenAuthority authority;
-  private TestTokenStateService tss;
+  private TestTokenStateService tss = new TestTokenStateService();
   private char[] hmacSecret;
 
   private enum TokenLifecycleOperation {
@@ -170,7 +170,6 @@ public class TokenServiceResourceTest {
     EasyMock.expect(config.getKnoxTokenHashAlgorithm()).andReturn(HmacAlgorithms.HMAC_SHA_256.getName()).anyTimes();
     EasyMock.expect(config.getMaximumNumberOfTokensPerUser())
         .andReturn(contextExpectations.containsKey(KNOX_TOKEN_USER_LIMIT) ? Integer.parseInt(contextExpectations.get(KNOX_TOKEN_USER_LIMIT)) : -1).anyTimes();
-    tss = new TestTokenStateService();
     EasyMock.expect(services.getService(ServiceType.TOKEN_STATE_SERVICE)).andReturn(tss).anyTimes();
 
     AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
@@ -987,7 +986,35 @@ public class TokenServiceResourceTest {
   }
 
   @Test
-  public void tesTokenLimitPerUserExceeded() throws Exception {
+  public void testTokenLimitChangeAfterAlreadyHavingTokens() throws Exception {
+    Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put(KNOX_TOKEN_USER_LIMIT, "-1");
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+    // already have N tokens
+    int numberOfPreExistingTokens = 5;
+    for (int i = 0; i < numberOfPreExistingTokens; i++) {
+      tr.doGet();
+    }
+    Response getKnoxTokensResponse = tr.getUserTokens(USER_NAME);
+    Collection<String> tokens = ((Map<String, Collection<String>>) JsonUtils.getObjectFromJsonString(getKnoxTokensResponse.getEntity().toString()))
+            .get("tokens");
+    assertEquals(tokens.size(), numberOfPreExistingTokens);
+    // change the limit and try generate one more
+    contextExpectations.put(KNOX_TOKEN_USER_LIMIT, Integer.toString(numberOfPreExistingTokens -1));
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+    Response response = tr.doGet();
+    assertTrue(response.getEntity().toString().contains("Unable to get token - token limit exceeded."));
+  }
+
+  @Test
+  public void testTokenLimitPerUserExceeded() throws Exception {
     try {
       testLimitingTokensPerUser(String.valueOf("10"), 11);
       fail("Exception should have been thrown");
