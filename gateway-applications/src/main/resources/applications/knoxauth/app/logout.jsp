@@ -92,7 +92,7 @@
             return;
           }
         }
-       	else if (("1".equals(request.getParameter("globalLogout")))) {
+        else if (("1".equals(request.getParameter("globalLogout")))) {
           Cookie c = new Cookie(cookieName, null);
           c.setMaxAge(0);
           c.setPath("/");
