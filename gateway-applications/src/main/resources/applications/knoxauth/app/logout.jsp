@@ -18,6 +18,9 @@
 <%@ page import="org.apache.knox.gateway.topology.Service" %>
 <%@ page import="org.apache.knox.gateway.util.RegExUtils" %>
 <%@ page import="org.apache.knox.gateway.util.WhitelistUtils" %>
+<%@ page import="org.apache.knox.gateway.config.GatewayConfig" %>
+<%@ page import="java.net.MalformedURLException" %>
+<%@ page import="org.apache.knox.gateway.util.Urls" %>
 
 <!DOCTYPE html>
 <!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"><![endif]-->
@@ -47,12 +50,22 @@
         String originalUrl = request.getParameter("originalUrl");
         Topology topology = (Topology)request.getSession().getServletContext().getAttribute("org.apache.knox.gateway.topology");
         String whitelist = null;
-        Collection services = topology.getServices();
+        String cookieName = null;
+        GatewayConfig gatewayConfig =
+                (GatewayConfig) request.getServletContext().
+                getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+        String globalLogoutPageURL = gatewayConfig.getGlobalLogoutPageUrl();
+        Collection<Service> services = topology.getServices();
         for (Object service : services) {
           Service svc = (Service)service;
           if (svc.getRole().equals("KNOXSSO")) {
             Map<String, String> params = svc.getParams();
             whitelist = params.get("knoxsso.redirect.whitelist.regex");
+            // LJM TODO: get cookie name and possibly domain prefix info for use in logout
+            cookieName = params.get("knoxsso.cookie.name");
+            if (cookieName == null) {
+                cookieName = "hadoop-jwt";
+            }
           }
           break;
         }
@@ -62,15 +75,41 @@
                 whitelist = "";
             }
         }
+
+        boolean validRedirect = false;
         String origUrl = request.getParameter("originalUrl");
         String del = "?";
-        if (origUrl.contains("?")) {
+        if (origUrl != null && origUrl.contains("?")) {
           del = "&";
         }
-        boolean validRedirect = RegExUtils.checkWhitelist(whitelist, origUrl);
-        if (("1".equals(request.getParameter("returnToApp"))) && validRedirect) {
-          response.setStatus(response.SC_MOVED_PERMANENTLY);
-          response.setHeader("Location",originalUrl + del + "refresh=1");
+        if (origUrl != null) {
+          validRedirect = RegExUtils.checkWhitelist(whitelist, origUrl);
+        }
+        if (("1".equals(request.getParameter("returnToApp")))) {
+          if (validRedirect) {
+          	response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+          	response.setHeader("Location",originalUrl + del + "refresh=1");
+            return;
+          }
+        }
+       	else if (("1".equals(request.getParameter("globalLogout")))) {
+          Cookie c = new Cookie(cookieName, null);
+          c.setMaxAge(0);
+          c.setPath("/");
+          try {
+            String domainName = Urls.getDomainName(request.getRequestURL().toString(), null);
+            if(domainName != null) {
+              c.setDomain(domainName);
+            }
+          } catch (MalformedURLException e) {
+            // we are probably not going to be able to
+            // remove the cookie due to this error but it
+            // isn't necessarily not going to work.
+          }
+          response.addCookie(c);
+
+          response.setStatus(HttpServletResponse.SC_SEE_OTHER);
+          response.setHeader("Location", globalLogoutPageURL);
           return;
         }
     %>
@@ -91,20 +130,25 @@
                 that is participating in SSO. You may establish a new session by returning to
                 the application. If your previously established SSO session is still valid then
                 you will likely be automatically logged into your application. Otherwise, you
-                will be required to reauthenticate.
+                will be required to login again.
                 <a href="?returnToApp=1&originalUrl=<%= originalUrl %>" >Return to Application</a>
               </p>
+        <%
+            if (globalLogoutPageURL != null && !globalLogoutPageURL.isEmpty()) {
+        %>
               <p style="color: white;display: block">
-                If you would like to logout of the SSO session globally, you need to do so from
+                If you would like to logout of the Knox SSO session, you need to do so from
                 the configured SSO provider. Subsequently, authentication will be required to access
                 any SSO protected resources. Note that this may or may not invalidate any previously
                 established application sessions. Application sessions are subject to their application
                 specific session cookies and timeouts.
-                <a href="#" >Global Logout</a>
+                <a href="<%= request.getRequestURI() %>?globalLogout=1" >Global Logout</a>
               </p>
           </div>
         <%
-        } else {
+            }
+        } 
+        else {
         %>
         <div style="background: gray;text-color: white;text-align:center;">
           <h1 style="color: red;">ERROR</h1>
