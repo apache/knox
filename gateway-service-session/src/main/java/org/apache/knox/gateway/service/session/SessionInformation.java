@@ -28,6 +28,12 @@ public class SessionInformation {
   @XmlElement
   private String logoutUrl;
 
+  @XmlElement
+  private String logoutPageUrl;
+
+  @XmlElement
+  private String globalLogoutPageUrl;
+
   public String getUser() {
     return user;
   }
@@ -43,4 +49,21 @@ public class SessionInformation {
   public void setLogoutUrl(String logoutUrl) {
     this.logoutUrl = logoutUrl;
   }
+
+  public String getLogoutPageUrl() {
+    return logoutPageUrl;
+  }
+
+  public void setLogoutPageUrl(String logoutPageUrl) {
+    this.logoutPageUrl = logoutPageUrl;
+  }
+
+  public String getGlobalLogoutPageUrl() {
+    return globalLogoutPageUrl;
+  }
+
+  public void setGlobalLogoutPageUrl(String globalLogoutPageUrl) {
+    this.globalLogoutPageUrl = globalLogoutPageUrl;
+  }
+
 }

@@ -274,6 +274,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES =  "knox.homepage.hidden.topologies";
   private static final Set<String> KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES_DEFAULT = new HashSet<>(Arrays.asList("admin", "manager", "knoxsso", "metadata", "homepage"));
   private static final String KNOX_HOMEPAGE_LOGOUT_ENABLED =  "knox.homepage.logout.enabled";
+  private static final String GLOBAL_LOGOUT_PAGE_URL = "knox.global.logout.page.url";
   private static final String KNOX_INCOMING_XFORWARDED_ENABLED = "gateway.incoming.xforwarded.enabled";
 
   //Gateway Database related properties
@@ -1222,6 +1223,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public boolean homePageLogoutEnabled() {
     return getBoolean(KNOX_HOMEPAGE_LOGOUT_ENABLED, false);
   }
+
+  @Override
+  public String getGlobalLogoutPageUrl() {
+    return get(GLOBAL_LOGOUT_PAGE_URL);
+  }
+
 
   @Override
   public long getKeystoreCacheSizeLimit() {

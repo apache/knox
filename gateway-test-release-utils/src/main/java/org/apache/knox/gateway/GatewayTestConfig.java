@@ -845,6 +845,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getGlobalLogoutPageUrl() {
+    return null;
+  }
+
+  @Override
   public long getKeystoreCacheSizeLimit() {
     return 0;
   }

@@ -44,6 +44,10 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-spi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
             <artifactId>knox-token-management-ui</artifactId>
         </dependency>
     </dependencies>

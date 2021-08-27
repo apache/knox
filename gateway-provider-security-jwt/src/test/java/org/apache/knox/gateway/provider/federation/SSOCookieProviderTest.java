@@ -113,6 +113,40 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
   }
 
   @Test
+  public void testMissingCookie() throws Exception {
+    try {
+      Properties props = getProperties();
+      handler.init(new TestFilterConfig(props));
+
+      HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+      EasyMock.expect(request.getCookies()).andReturn(null);
+      EasyMock.expect(request.getRequestURL()).andReturn(
+          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getQueryString()).andReturn(null);
+      HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
+          SERVICE_URL);
+      response.sendRedirect(EasyMock.anyObject(String.class));
+      EasyMock.expectLastCall()
+      .andAnswer(() -> {
+          String newLocation = (String) EasyMock.getCurrentArguments()[0];
+          Assert.assertEquals("Not the expected principal", newLocation,
+              "https://localhost:8443/authserver?originalUrl=https://localhost:8888/resource");
+          return null;
+      });
+      EasyMock.replay(request);
+      EasyMock.replay(response);
+
+      TestFilterChain chain = new TestFilterChain();
+      handler.doFilter(request, response, chain);
+      Assert.assertFalse("doFilterCalled should be false.", chain.doFilterCalled );
+      Assert.assertNull("Subject should be null.", chain.subject);
+    } catch (ServletException se) {
+      fail("Should NOT have thrown a ServletException.");
+    }
+  }
+
+  @Test
   public void testNoProviderURLJWT() {
     try {
       Properties props = getProperties();

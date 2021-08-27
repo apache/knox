@@ -35,10 +35,11 @@ export class SessionInformationComponent implements OnInit {
 
     getUser() {
         if (this.sessionInformation) {
-            console.debug('SessionInformationComponent --> getUser() --> ' + this.sessionInformation.user);
-            return this.sessionInformation.user;
+          console.debug('SessionInformationComponent --> getUser() --> ' + this.sessionInformation.user);
+          return this.sessionInformation.user;
         }
         console.debug('SessionInformationComponent --> getUser() --> dr.who');
+
         return 'dr.who';
     }
 
@@ -50,8 +51,15 @@ export class SessionInformationComponent implements OnInit {
         return null;
     }
 
+    getLogoutPageUrl() {
+        if (this.sessionInformation) {
+            console.debug('SessionInformationComponent --> getLogoutPageUrl() --> ' + this.sessionInformation.logoutPageUrl);
+            return this.sessionInformation.logoutPageUrl;
+        }
+        return null;
+    }
+
     logout() {
-        // window.alert('Are you sure???');
         console.debug('SessionInformationComponent --> attempting logout() --> ');
         if (this.sessionInformation) {
             if (!this.logoutSupported) {
@@ -59,7 +67,7 @@ export class SessionInformationComponent implements OnInit {
             }
             else {
                 this.homepageService.logout(this.getLogoutUrl())
-                                        .then(() => location.reload());
+                                        .then(() => window.location.assign(this.sessionInformation.logoutPageUrl));
             }
         }
     }
