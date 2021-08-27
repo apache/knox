@@ -17,18 +17,6 @@
  */
 package org.apache.knox.gateway.services.token.impl;
 
-import java.sql.SQLException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -39,6 +27,17 @@ import org.apache.knox.gateway.services.security.token.TokenStateServiceExceptio
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.util.JDBCUtils;
 import org.apache.knox.gateway.util.Tokens;
+
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 public class JDBCTokenStateService extends DefaultTokenStateService {
   private AliasService aliasService; // connection username/pw and passcode HMAC secret are stored here
@@ -297,16 +296,11 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
 
   @Override
   public Collection<KnoxToken> getTokens(String userName) {
-    final Collection<KnoxToken> tokens = new TreeSet<>();
     try {
-      tokens.addAll(tokenDatabase.getTokens(userName));
-      for (KnoxToken token : tokens) {
-        token.setMetadata(tokenDatabase.getTokenMetadata(token.getTokenId()));
-      }
+      return tokenDatabase.getTokens(userName);
     } catch (SQLException e) {
       log.errorFetchingTokensForUserFromDatabase(userName, e.getMessage(), e);
+      return Collections.emptyList();
     }
-    return tokens;
   }
-
 }

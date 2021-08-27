@@ -117,4 +117,8 @@ public class TokenMetadata {
   public int hashCode() {
     return HashCodeBuilder.reflectionHashCode(this);
   }
+
+  public void add(String name, String value) {
+    metadataMap.put(name, value);
+  }
 }

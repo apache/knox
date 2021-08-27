@@ -19,13 +19,15 @@ package org.apache.knox.gateway.services.security.token;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Locale;
 
-public class KnoxToken implements Comparable<KnoxToken> {
+public class KnoxToken implements Comparable<KnoxToken>{
+  public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
   // SimpleDateFormat is not thread safe must use as a ThreadLocal
   private static final ThreadLocal<DateFormat> KNOX_TOKEN_TS_FORMAT = ThreadLocal
-      .withInitial(() -> new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.getDefault()));
+      .withInitial(() -> new SimpleDateFormat(DATE_FORMAT, Locale.getDefault()));
 
   private final String tokenId;
   private final long issueTime;
@@ -34,7 +36,7 @@ public class KnoxToken implements Comparable<KnoxToken> {
   private TokenMetadata metadata;
 
   public KnoxToken(String tokenId, long issueTime, long expiration, long maxLifetimeDuration) {
-    this(tokenId, issueTime, expiration, maxLifetimeDuration, null);
+    this(tokenId, issueTime, expiration, maxLifetimeDuration, new TokenMetadata(Collections.emptyMap()));
   }
 
   public KnoxToken(String tokenId, long issueTime, long expiration, long maxLifetime, TokenMetadata metadata) {
@@ -84,5 +86,9 @@ public class KnoxToken implements Comparable<KnoxToken> {
   @Override
   public int compareTo(KnoxToken other) {
     return Long.compare(this.issueTime, other.issueTime);
+  }
+
+  public void addMetadata(String name, String value) {
+    metadata.add(name, value);
   }
 }
