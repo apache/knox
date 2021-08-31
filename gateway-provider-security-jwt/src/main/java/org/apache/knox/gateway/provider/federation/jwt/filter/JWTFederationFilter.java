@@ -166,6 +166,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       }
     } else {
       // no token provided in header
+      log.missingTokenFromHeader(wireToken);
       ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
     }
   }
