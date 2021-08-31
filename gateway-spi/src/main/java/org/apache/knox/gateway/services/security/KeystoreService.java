@@ -21,8 +21,12 @@ import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.cert.Certificate;
+import java.util.Map;
+import java.util.Set;
 
-public interface KeystoreService {
+import org.apache.knox.gateway.services.Service;
+
+public interface KeystoreService extends Service {
 
   void createKeystoreForGateway() throws KeystoreServiceException;
 
@@ -64,9 +68,15 @@ public interface KeystoreService {
 
   void addCredentialForCluster(String clusterName, String alias, String key) throws KeystoreServiceException;
 
+  void addCredentialsForCluster(String clusterName, Map<String, String> credentials) throws KeystoreServiceException;
+
   void removeCredentialForCluster(String clusterName, String alias) throws KeystoreServiceException;
 
+  void removeCredentialsForCluster(String clusterName, Set<String> aliases) throws KeystoreServiceException;
+
   char[] getCredentialForCluster(String clusterName, String alias) throws KeystoreServiceException;
+
+  char[] getCredentialForCluster(String clusterName, String alias, KeyStore ks) throws KeystoreServiceException;
 
   String getKeystorePath();
 }

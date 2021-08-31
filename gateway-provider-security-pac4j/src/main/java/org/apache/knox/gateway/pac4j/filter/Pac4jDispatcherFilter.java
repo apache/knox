@@ -20,9 +20,11 @@ package org.apache.knox.gateway.pac4j.filter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.pac4j.Pac4jMessages;
+import org.apache.knox.gateway.pac4j.config.ClientConfigurationDecorator;
+import org.apache.knox.gateway.pac4j.config.Pac4jClientConfigurationDecorator;
 import org.apache.knox.gateway.pac4j.session.KnoxSessionStore;
-import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.CryptoService;
@@ -32,14 +34,13 @@ import org.pac4j.config.client.PropertiesConfigFactory;
 import org.pac4j.config.client.PropertiesConstants;
 import org.pac4j.core.client.Client;
 import org.pac4j.core.config.Config;
-import org.pac4j.core.context.session.J2ESessionStore;
+import org.pac4j.core.context.session.JEESessionStore;
 import org.pac4j.core.context.session.SessionStore;
-import org.pac4j.core.http.callback.PathParameterCallbackUrlResolver;
 import org.pac4j.core.util.CommonHelper;
 import org.pac4j.http.client.indirect.IndirectBasicAuthClient;
 import org.pac4j.http.credentials.authenticator.test.SimpleTestUsernamePasswordAuthenticator;
-import org.pac4j.j2e.filter.CallbackFilter;
-import org.pac4j.j2e.filter.SecurityFilter;
+import org.pac4j.jee.filter.CallbackFilter;
+import org.pac4j.jee.filter.SecurityFilter;
 import org.pac4j.oidc.client.AzureAdClient;
 import org.pac4j.saml.client.SAML2Client;
 
@@ -71,8 +72,10 @@ import java.util.Map;
  * @since 0.8.0
  */
 public class Pac4jDispatcherFilter implements Filter {
-
+  private static final String ALIAS_PREFIX = "${ALIAS=";
   private static Pac4jMessages log = MessagesFactory.get(Pac4jMessages.class);
+
+  private static final ClientConfigurationDecorator PAC4J_CLIENT_CONFIGURATION_DECORATOR = new Pac4jClientConfigurationDecorator();
 
   public static final String TEST_BASIC_AUTH = "testBasicAuth";
 
@@ -172,7 +175,7 @@ public class Pac4jDispatcherFilter implements Filter {
       addDefaultConfig(clientNameParameter, properties);
       while (names.hasMoreElements()) {
         final String key = names.nextElement();
-        properties.put(key, filterConfig.getInitParameter(key));
+        properties.put(key, resolveAlias(clusterName, key, filterConfig.getInitParameter(key)));
       }
       final PropertiesConfigFactory propertiesConfigFactory = new PropertiesConfigFactory(pac4jCallbackUrl, properties);
       config = propertiesConfigFactory.build();
@@ -181,19 +184,11 @@ public class Pac4jDispatcherFilter implements Filter {
         log.atLeastOnePac4jClientMustBeDefined();
         throw new ServletException("At least one pac4j client must be defined.");
       }
-      if (CommonHelper.isBlank(clientNameParameter)) {
-        clientName = clients.get(0).getName();
-      } else {
-        clientName = clientNameParameter;
-      }
 
-      /* special handling for Azure AD, use path separators instead of query params */
-      clients.forEach( client -> {
-        if(client.getName().equalsIgnoreCase(AzureAdClient.class.getSimpleName())) {
-          ((AzureAdClient)client).setCallbackUrlResolver(new PathParameterCallbackUrlResolver());
-        }
-      });
+      clientName = CommonHelper.isBlank(clientNameParameter) ? clients.get(0).getName() : clientNameParameter;
 
+      //decorating client configuration (if needed)
+      PAC4J_CLIENT_CONFIGURATION_DECORATOR.decorateClients(clients, properties);
     }
 
 
@@ -209,14 +204,26 @@ public class Pac4jDispatcherFilter implements Filter {
 
     SessionStore sessionStore;
 
-    if(!StringUtils.isBlank(sessionStoreVar) && J2ESessionStore.class.getName().contains(sessionStoreVar) ) {
-      sessionStore = new J2ESessionStore();
+    if(!StringUtils.isBlank(sessionStoreVar) && JEESessionStore.class.getName().contains(sessionStoreVar) ) {
+      sessionStore = new JEESessionStore();
     } else {
       sessionStore = new KnoxSessionStore(cryptoService, clusterName, domainSuffix);
     }
 
     config.setSessionStore(sessionStore);
 
+  }
+
+  private String resolveAlias(String clusterName, String key, String value) throws ServletException {
+    if (value.startsWith(ALIAS_PREFIX) && value.endsWith("}")) {
+      String alias = value.substring(ALIAS_PREFIX.length(), value.length() - 1);
+      try {
+        return new String(aliasService.getPasswordFromAliasForCluster(clusterName, alias));
+      } catch (AliasServiceException e) {
+        throw new ServletException("Unable to retrieve alias for config: " + key, e);
+      }
+    }
+    return value;
   }
 
   private void addDefaultConfig(String clientNameParameter, Map<String, String> properties) {
@@ -258,7 +265,7 @@ public class Pac4jDispatcherFilter implements Filter {
   public void doFilter( ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
 
     final HttpServletRequest request = (HttpServletRequest) servletRequest;
-    request.setAttribute(PAC4J_CONFIG, securityFilter.getConfig());
+    request.setAttribute(PAC4J_CONFIG, securityFilter.getSharedConfig());
 
     // it's a callback from an identity provider
     if (request.getParameter(PAC4J_CALLBACK_PARAMETER) != null || (

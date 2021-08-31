@@ -21,6 +21,22 @@
         <context>/resourcemanager</context>
         <shortDesc>YARN Resource Manager</shortDesc>
         <description>The YARN Resource Manager Service (RM) is the central controlling authority for resource management and makes allocation decisions ResourceManager has two main components: Scheduler and ApplicationsManager.</description>
+        <samples>
+            <sample>
+                <description>Fetch cluster info</description>
+                <method>GET</method>
+                <path>ws/v1/cluster/info</path>
+            </sample>
+            <sample>
+                <description>Fetch cluster metrics</description>
+                <method>GET</method>
+                <path>ws/v1/cluster/metrics</path>
+            </sample>
+            <sample>
+                <description>You may check out Apache YARN Resource Manager's REST API documentation here</description>
+                <value>https://hadoop.apache.org/docs/current/hadoop-yarn/hadoop-yarn-site/ResourceManagerRest.html</value>
+            </sample>
+        </samples>
     </metadata>
     <routes>
         <route path="/resourcemanager/v1/cluster/"/>

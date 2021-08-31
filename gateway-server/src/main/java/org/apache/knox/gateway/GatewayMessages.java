@@ -187,6 +187,9 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.INFO, text = "Credential store found for the cluster: {0} - no need to create one." )
   void credentialStoreForClusterFoundNotCreating(String clusterName);
 
+  @Message(level = MessageLevel.WARN, text = "An existing credential store found for the cluster {0} with a different type of {1}")
+  void credentialStoreForClusterFoundWithDifferentType(String clusterName, String existingCredentialStoreType);
+
   @Message( level = MessageLevel.ERROR, text = "Unable to obtain the password for the gateway truststore using the alias {0}: {1}" )
   void failedToGetPasswordForGatewayTruststore(String alias, Exception e);
 
@@ -276,6 +279,9 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Failed to add credential for cluster {0}: {1}" )
   void failedToAddCredentialForCluster( String clusterName, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to add credentials for cluster {0}: {1}" )
+  void failedToAddCredentialsForCluster( String clusterName, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
   @Message( level = MessageLevel.ERROR, text = "Failed to get key for Gateway {0}: {1}" )
   void failedToGetKeyForGateway( String alias, @StackTrace( level=MessageLevel.DEBUG ) Exception e );
@@ -606,9 +612,10 @@ public interface GatewayMessages {
 
 
   @Message(level = MessageLevel.ERROR,
-           text = "Encountered an error while responding to {1} @ {0} configuration change: {2}")
+           text = "Encountered an error processing {2} in response to a {1} @ {0} configuration change: {3}")
   void errorRespondingToConfigChange(String source,
                                      String clusterName,
+                                     String descriptor,
                                      @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.INFO,
@@ -618,6 +625,9 @@ public interface GatewayMessages {
   @Message(level = MessageLevel.ERROR,
            text = "Error adding alias {1} for cluster {0} locally (local keystore), cause: {2} ")
   void errorAddingAliasLocally(String cluster, String alias, String cause);
+
+  @Message(level = MessageLevel.ERROR, text = "Error adding remote alias entry listener for cluster {0} and alias {1}, cause: {2} ")
+  void errorAddingRemoteAliasEntryListener(String cluster, String alias, String cause);
 
   @Message(level = MessageLevel.INFO,
            text = "Remove alias {1} for cluster {0} locally (local keystore) ")
@@ -656,12 +666,6 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.ERROR, text = "The path to the keystore is not accessible: {0}" )
   void keystoreFileIsNotAccessible(String path);
 
-  @Message( level = MessageLevel.ERROR, text = "Failed to add credential: {1}" )
-  void failedToAddCredential( @StackTrace( level = MessageLevel.DEBUG ) Exception e );
-
-  @Message(level = MessageLevel.ERROR, text = "Failed to remove credential: {1}")
-  void failedToRemoveCredential(@StackTrace(level = MessageLevel.DEBUG) Exception e);
-
   @Message(level = MessageLevel.INFO, text = "Starting service: {0}")
   void startingService(String serviceTypeName);
 
@@ -694,4 +698,13 @@ public interface GatewayMessages {
 
   @Message(level = MessageLevel.ERROR, text = "Error creating provider descriptor {0} from topology {1}, cause: {2}")
   void errorSavingDescriptorConfiguration(String providerPath, String topologyName, String message);
+
+  @Message(level = MessageLevel.ERROR, text = "No service found by type {0}")
+  void noServiceFound(String serviceType);
+
+  @Message(level = MessageLevel.INFO, text = "Using {0} implementation for {1}")
+  void usingServiceImplementation(String implementation, String serviceType);
+
+  @Message(level = MessageLevel.ERROR, text = "Error while initiatalizing {0}: {1}")
+  void errorInitializingService(String implementation, String error, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 }

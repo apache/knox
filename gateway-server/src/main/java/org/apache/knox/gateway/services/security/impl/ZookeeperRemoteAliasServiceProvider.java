@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.services.security.impl;
 
+import java.util.Locale;
+
 import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.config.ConfigurationException;
 import org.apache.knox.gateway.security.RemoteAliasServiceProvider;
@@ -28,8 +30,6 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.util.KnoxCLI;
 
-import java.util.Locale;
-
 public class ZookeeperRemoteAliasServiceProvider implements RemoteAliasServiceProvider {
   @Override
   public String getType() {
@@ -38,16 +38,24 @@ public class ZookeeperRemoteAliasServiceProvider implements RemoteAliasServicePr
 
   @Override
   public AliasService newInstance(AliasService localAliasService, MasterService ms) {
+    return newInstance(null, localAliasService, ms);
+  }
 
-    final GatewayServices services = GatewayServer.getGatewayServices() != null ? GatewayServer.getGatewayServices() : KnoxCLI.getGatewayServices();
-
-    if(services != null) {
-      final RemoteConfigurationRegistryClientService registryClientService = services
-          .getService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE);
-
-      return new ZookeeperRemoteAliasService(localAliasService, ms, registryClientService);
+  @Override
+  public AliasService newInstance(GatewayServices gatewayServices, AliasService localAliasService, MasterService masterService) {
+    final RemoteConfigurationRegistryClientService registryClientService = getRemoteConfigRegistryClientService(gatewayServices);
+    if (registryClientService != null) {
+      return new ZookeeperRemoteAliasService(localAliasService, masterService, registryClientService);
     }
 
-    throw new ConfigurationException(String.format(Locale.ROOT,"%s service not configured", ZooKeeperClientService.TYPE));
+    throw new ConfigurationException(String.format(Locale.ROOT, "%s service not configured", ZooKeeperClientService.TYPE));
+  }
+
+  private RemoteConfigurationRegistryClientService getRemoteConfigRegistryClientService(GatewayServices gatewayServices) {
+    GatewayServices services = gatewayServices;
+    if (gatewayServices == null) {
+      services = GatewayServer.getGatewayServices() != null ? GatewayServer.getGatewayServices() : KnoxCLI.getGatewayServices();
+    }
+    return services == null ? null : services.getService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE);
   }
 }

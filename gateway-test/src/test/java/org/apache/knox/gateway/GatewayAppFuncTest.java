@@ -18,6 +18,7 @@
 package org.apache.knox.gateway;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -88,7 +89,7 @@ public class GatewayAppFuncTest {
 
   @After
   public void cleanupTest() throws Exception {
-    FileUtils.cleanDirectory( new File( config.getGatewayTopologyDir() ) );
+    cleanTopologyDir();
     // Test run should not fail if deleting deployment files is not successful.
     // Deletion has been already done by TopologyService.
     FileUtils.deleteQuietly( new File( config.getGatewayDeploymentDir() ) );
@@ -536,6 +537,7 @@ public class GatewayAppFuncTest {
     } finally {
       gateway.stop();
       config.setGatewayDeploymentsBackupAgeLimit( oldVersionLimit );
+      cleanTopologyDir();
       startGatewayServer();
     }
 
@@ -646,9 +648,14 @@ public class GatewayAppFuncTest {
     } finally {
       gateway.stop();
       config.setDefaultTopologyName( null );
+      cleanTopologyDir();
       startGatewayServer();
     }
 
     LOG_EXIT();
+  }
+
+  private void cleanTopologyDir() throws IOException {
+    FileUtils.cleanDirectory(new File(config.getGatewayTopologyDir()));
   }
 }

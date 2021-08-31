@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.apache.knox</groupId>
         <artifactId>gateway</artifactId>
-        <version>1.5.0-SNAPSHOT</version>
+        <version>1.6.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>gateway-applications</artifactId>
@@ -37,6 +37,18 @@
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>knox-homepage-ui</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-openapi-ui</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-spi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>knox-token-management-ui</artifactId>
         </dependency>
     </dependencies>
 
@@ -69,6 +81,22 @@
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${project.build.outputDirectory}/applications</outputDirectory>
                                     <includes>home/**</includes>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.apache.knox</groupId>
+                                    <artifactId>gateway-openapi-ui</artifactId>
+                                    <type>jar</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.outputDirectory}/applications/home/app</outputDirectory>
+                                    <includes>swagger/**</includes>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.apache.knox</groupId>
+                                    <artifactId>knox-token-management-ui</artifactId>
+                                    <type>jar</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.outputDirectory}/applications</outputDirectory>
+                                    <includes>token-management/**</includes>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>

@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.backend.hashicorp.vault;
 
 import org.apache.knox.gateway.security.RemoteAliasServiceProvider;
+import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.MasterService;
 
@@ -29,6 +30,11 @@ public class HashicorpVaultRemoteAliasServiceProvider implements RemoteAliasServ
 
   @Override
   public AliasService newInstance(AliasService localAliasService, MasterService ms) {
+    return newInstance(null, localAliasService, ms);
+  }
+
+  @Override
+  public AliasService newInstance(GatewayServices gatewayServices, AliasService localAliasService, MasterService masterService) {
     return new HashicorpVaultAliasService(localAliasService);
   }
 }

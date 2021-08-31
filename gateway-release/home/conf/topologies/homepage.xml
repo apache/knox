@@ -46,17 +46,65 @@
             <name>strict.transport.enabled</name>
             <value>false</value>
          </param>
+         <param>
+            <name>xframe.options.enabled</name>
+            <value>true</value>
+         </param>
+         <param>
+            <name>xframe.options</name>
+            <value>SAMEORIGIN</value>
+         </param>
       </provider>
       <provider>
          <role>federation</role>
          <name>SSOCookieProvider</name>
          <enabled>true</enabled>
       </provider>
+      <provider>
+         <role>identity-assertion</role>
+         <name>Default</name>
+         <enabled>true</enabled>
+      </provider>
    </gateway>
+   <service>
+      <role>KNOXSSOUT</role>
+   </service>
+   <service>
+      <role>KNOX-SESSION</role>
+   </service>
    <service>
       <role>KNOX-METADATA</role>
    </service>
+   <service>
+      <role>KNOXTOKEN</role>
+      <param>
+         <name>knox.token.ttl</name>
+         <value>10368000000</value>
+      </param>
+      <param>
+         <name>knox.token.target.url</name>
+         <value>proxy-token/</value>
+      </param>
+      <param>
+         <name>knox.token.client.data</name>
+         <value>homepage_url=homepage/home?profile=token&amp;topologies=sandbox</value>
+      </param>
+      <param>
+         <name>knox.token.exp.server-managed</name>
+         <value>true</value>
+      </param>
+      <param>
+          <name>knox.token.renewer.whitelist</name>
+          <value>admin</value>
+      </param>
+   </service>
+   <application>
+      <name>tokengen</name>
+   </application>
    <application>
       <name>home</name>
+   </application>
+   <application>
+      <name>token-management</name>
    </application>
 </topology>

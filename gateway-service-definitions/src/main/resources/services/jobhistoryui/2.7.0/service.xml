@@ -18,7 +18,7 @@
 <service role="JOBHISTORYUI" name="jobhistory" version="2.7.0">
     <metadata>
         <type>UI</type>
-        <context>/jobhistory</context>
+        <context>/jobhistory/</context>
         <shortDesc>JobHistory Server Web UI</shortDesc>
         <description>Web User Interface for YARN Jobhistory Server</description>
     </metadata>

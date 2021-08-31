@@ -37,10 +37,11 @@
         <link href="styles/bootstrap.min.css" media="all" rel="stylesheet" type="text/css" id="bootstrap-css">
         <link href="styles/knox.css" media="all" rel="stylesheet" type="text/css" >
 
-        <script src="libs/bower/jquery/js/jquery.js" ></script>
+        <script src="libs/bower/jquery/js/jquery-3.5.1.min.js" ></script>
 
         <script type="text/javascript" src="js/knoxauth.js"></script>
     <%
+        String originalUrl = request.getParameter("originalUrl");
         Topology topology = (Topology)request.getSession().getServletContext().getAttribute("org.apache.knox.gateway.topology");
         String whitelist = null;
         Collection services = topology.getServices();
@@ -57,14 +58,14 @@
                 whitelist = "";
             }
         }
-        boolean validRedirect = RegExUtils.checkWhitelist(whitelist, request.getParameter("originalUrl"));
+        boolean validRedirect = RegExUtils.checkWhitelist(whitelist, originalUrl);
         if (validRedirect) {
     %>
     <script>
     document.addEventListener("load", redirectOnLoad());
-    
+
     function redirectOnLoad() {
-      var originalUrl = get("originalUrl");
+      var originalUrl = <%= originalUrl %>;
       if (originalUrl != null) {
         redirect(originalUrl);
       }
@@ -74,7 +75,7 @@
     }
     %>
   </head>
-  
+ 
   <body>
         <section id="signin-container" style="margin-top: 80px;">
         <%
@@ -85,7 +86,7 @@
           <div style="background: white;" class="l-logo">
                 <img src="images/loading.gif" alt="Knox logo" style="text-align:center;width: 2%; height: 2%">
             </div>
-              <p style="color: white;display: block">Loading should complete in few a seconds. If not, click <a href="#" onclick='redirect(get("originalUrl"));' >here</a></p>
+              <p style="color: white;display: block">Loading should complete in few a seconds. If not, click <a href="<%= originalUrl %>">here</a></p>
         <%
         } else {
         %>

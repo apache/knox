@@ -16,6 +16,8 @@
  */
 package org.apache.knox.gateway.services.security.token.impl;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.ArrayList;
@@ -38,6 +40,9 @@ public class JWTToken implements JWT {
   private static JWTProviderMessages log = MessagesFactory.get( JWTProviderMessages.class );
 
   public static final String KNOX_ID_CLAIM = "knox.id";
+  public static final String MANAGED_TOKEN_CLAIM = "managed.token";
+  public static final String KNOX_KID_CLAIM = "kid";
+  public static final String KNOX_JKU_CLAIM = "jku";
 
   SignedJWT jwt;
 
@@ -59,7 +64,33 @@ public class JWTToken implements JWT {
   }
 
   public JWTToken(String alg, String[] claimsArray, List<String> audiences) {
-    JWSHeader header = new JWSHeader(new JWSAlgorithm(alg));
+    this(alg, claimsArray, audiences, false);
+  }
+
+  public JWTToken(String alg, String[] claimsArray, List<String> audiences, boolean managed) {
+    JWSHeader header = null;
+    try {
+      header = new JWSHeader(new JWSAlgorithm(alg),
+      null,
+      null,
+      null,
+      claimsArray[5] != null ? new URI(claimsArray[5]) : null, // JKU
+      null,
+      null,
+      null,
+      null,
+      null,
+      claimsArray[4] != null ? claimsArray[4] : null, // KID
+      null,
+      null);
+    } catch (URISyntaxException e) {
+      /* in event of bad URI exception fall back to using just algo in header */
+      header = new JWSHeader(new JWSAlgorithm(alg));
+    }
+
+    if(claimsArray == null || claimsArray.length < 6) {
+      log.missingClaims(claimsArray.length);
+    }
 
     if (claimsArray[2] != null) {
       if (audiences == null) {
@@ -75,10 +106,17 @@ public class JWTToken implements JWT {
     if(claimsArray[3] != null) {
       builder = builder.expirationTime(new Date(Long.parseLong(claimsArray[3])));
     }
+    if(claimsArray[4] != null) {
+      builder.claim(KNOX_KID_CLAIM, claimsArray[4]);
+    }
+    if(claimsArray[5] != null) {
+      builder.claim(KNOX_JKU_CLAIM, claimsArray[5]);
+    }
 
     // Add a private UUID claim for uniqueness
     builder.claim(KNOX_ID_CLAIM, String.valueOf(UUID.randomUUID()));
 
+    builder.claim(MANAGED_TOKEN_CLAIM, String.valueOf(managed));
     claims = builder.build();
 
     jwt = new SignedJWT(header, claims);
@@ -88,6 +126,11 @@ public class JWTToken implements JWT {
   public String getHeader() {
     JWSHeader header = jwt.getHeader();
     return header.toString();
+  }
+
+  @Override
+  public JWSAlgorithm getSignatureAlgorithm() {
+    return jwt.getHeader().getAlgorithm();
   }
 
   @Override

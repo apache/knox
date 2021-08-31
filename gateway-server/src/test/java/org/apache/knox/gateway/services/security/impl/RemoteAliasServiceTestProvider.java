@@ -19,6 +19,8 @@ package org.apache.knox.gateway.services.security.impl;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.security.RemoteAliasServiceProvider;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.security.AbstractAliasService;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.MasterService;
@@ -30,6 +32,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class RemoteAliasServiceTestProvider implements RemoteAliasServiceProvider {
   @Override
@@ -42,7 +45,12 @@ public class RemoteAliasServiceTestProvider implements RemoteAliasServiceProvide
     return new TestAliasService();
   }
 
-  private class TestAliasService implements AliasService {
+  @Override
+  public AliasService newInstance(GatewayServices gatewayService, AliasService localAliasService, MasterService masterService) {
+    return new TestAliasService();
+  }
+
+  private class TestAliasService extends AbstractAliasService {
     private final Map<String, Map<String, String>> aliases = new HashMap<>();
     private GatewayConfig config;
 
@@ -60,8 +68,22 @@ public class RemoteAliasServiceTestProvider implements RemoteAliasServiceProvide
     }
 
     @Override
+    public void addAliasesForCluster(String clusterName, Map<String, String> credentials) throws AliasServiceException {
+      for (Map.Entry<String, String> credential : credentials.entrySet()) {
+        addAliasForCluster(clusterName, credential.getKey(), credential.getValue());
+      }
+    }
+
+    @Override
     public void removeAliasForCluster(String clusterName, String alias) {
       aliases.getOrDefault(clusterName, new HashMap<>()).remove(alias);
+    }
+
+    @Override
+    public void removeAliasesForCluster(String clusterName, Set<String> aliases) throws AliasServiceException {
+      for (String alias : aliases) {
+        removeAliasForCluster(clusterName, alias);
+      }
     }
 
     @Override

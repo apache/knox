@@ -20,6 +20,27 @@
         <context>/atlas/api</context>
         <shortDesc>Atlas API</shortDesc>
         <description>Atlas exposes a variety of REST endpoints to work with types, entities, lineage and data discovery.</description>
+        <samples>
+            <sample>
+                <description>Retrieve data for the specified attribute search query</description>
+                <method>GET</method>
+                <path>v2/search/attribute</path>
+            </sample>
+            <sample>
+                <description>Attribute based search for entities satisfying the search parameters</description>
+                <method>POST</method>
+                <path>v2/search/basic</path>
+            </sample>
+            <sample>
+                <description>Bulk API to delete list of entities identified by its GUIDs</description>
+                <method>DELETE</method>
+                <path>v2/entity/bulk</path>
+            </sample>
+            <sample>
+                <description>You can check out Apache Atlas's REST API documentation (including a Swagger UI representation) here</description>
+                <value>https://atlas.apache.org/api/v2/</value>
+            </sample>
+        </samples>
     </metadata>
     <routes>
         <route path="/atlas/api/**"/>

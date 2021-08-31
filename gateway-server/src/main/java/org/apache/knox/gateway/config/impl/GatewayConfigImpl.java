@@ -17,18 +17,6 @@
  */
 package org.apache.knox.gateway.config.impl;
 
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-import org.apache.knox.gateway.GatewayMessages;
-import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasService;
-import org.joda.time.Period;
-import org.joda.time.format.PeriodFormatter;
-import org.joda.time.format.PeriodFormatterBuilder;
-
 import static org.apache.knox.gateway.services.security.impl.RemoteAliasService.REMOTE_ALIAS_SERVICE_TYPE;
 
 import java.io.File;
@@ -37,9 +25,12 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.file.Paths;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -47,6 +38,21 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.codec.digest.HmacAlgorithms;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.knox.gateway.GatewayMessages;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.dto.HomePageProfile;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasService;
+import org.joda.time.Period;
+import org.joda.time.format.PeriodFormatter;
+import org.joda.time.format.PeriodFormatterBuilder;
+
 
 /**
  * The configuration for the Gateway.
@@ -96,6 +102,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final String[] GATEWAY_CONFIG_FILENAMES = {GATEWAY_CONFIG_FILE_PREFIX + "-default.xml", GATEWAY_CONFIG_FILE_PREFIX + "-site.xml"};
 
+  private static final String GATEWAY_SERVICE_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".service.";
   public static final String HTTP_HOST = GATEWAY_CONFIG_FILE_PREFIX + ".host";
   public static final String HTTP_PORT = GATEWAY_CONFIG_FILE_PREFIX + ".port";
   public static final String HTTP_PATH = GATEWAY_CONFIG_FILE_PREFIX + ".path";
@@ -111,6 +118,10 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String CLIENT_AUTH_NEEDED = GATEWAY_CONFIG_FILE_PREFIX + ".client.auth.needed";
   private static final String CLIENT_AUTH_WANTED = GATEWAY_CONFIG_FILE_PREFIX + ".client.auth.wanted";
   private static final String KEYSTORE_TYPE = GATEWAY_CONFIG_FILE_PREFIX + ".keystore.type";
+  private static final String KEYSTORE_CACHE_LIMIT = GATEWAY_CONFIG_FILE_PREFIX + ".keystore.cache.size.limit";
+  private static final long DEFAULT_KEYSTORE_CACHE_LIMIT = 1000;
+  private static final String KEYSTORE_CACHE_ENTRY_TTL = GATEWAY_CONFIG_FILE_PREFIX + ".keystore.cache.entry.ttl";
+  private static final long DEFAULT_KEYSTORE_CACHE_ENTRY_TTL = 60;
   private static final String XFORWARDED_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".xforwarded.enabled";
   private static final String EPHEMERAL_DH_KEY_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".jdk.tls.ephemeralDHKeySize";
   private static final String HTTP_CLIENT_MAX_CONNECTION = GATEWAY_CONFIG_FILE_PREFIX + ".httpclient.maxConnections";
@@ -235,7 +246,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final List<String> DEFAULT_GLOBAL_RULES_SERVICES = Arrays.asList(
       "NAMENODE", "JOBTRACKER", "WEBHDFS", "WEBHCAT",
-      "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER");
+      "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER",
+      "RESOURCEMANAGERAPI");
 
   /* property that specifies list of services for which we need to append service name to the X-Forward-Context header */
   public static final String X_FORWARD_CONTEXT_HEADER_APPEND_SERVICES = GATEWAY_CONFIG_FILE_PREFIX + ".xforwarded.header.context.append.servicename";
@@ -243,19 +255,37 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String TOKEN_STATE_SERVER_MANAGED = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.exp.server-managed";
 
   private static final String CLOUDERA_MANAGER_DESCRIPTORS_MONITOR_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.descriptors.monitor.interval";
-  private static final long DEFAULT_CLOUDERA_MANAGER_DESCRIPTORS_MONITOR_INTERVAL = 30000L;
   private static final String CLOUDERA_MANAGER_ADVANCED_SERVICE_DISCOVERY_CONF_MONITOR_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.advanced.service.discovery.config.monitor.interval";
-  private static final long DEFAULT_CLOUDERA_MANAGER_ADVANCED_SERVICE_DISCOVERY_CONF_MONITOR_INTERVAL = 30000L;
 
   private static final String KNOX_TOKEN_EVICTION_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.eviction.interval";
   private static final String KNOX_TOKEN_EVICTION_GRACE_PERIOD = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.eviction.grace.period";
+  private static final String KNOX_TOKEN_ALIAS_PERSISTENCE_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.state.alias.persistence.interval";
   private static final String KNOX_TOKEN_PERMISSIVE_VALIDATION_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.permissive.validation";
+  private static final String KNOX_TOKEN_HASH_ALGORITHM = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.hash.algorithm";
+  public static final String KNOX_TOKEN_USER_LIMIT = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.limit.per.user";
   private static final long KNOX_TOKEN_EVICTION_INTERVAL_DEFAULT = TimeUnit.MINUTES.toSeconds(5);
-  private static final long KNOX_TOKEN_EVICTION_GRACE_PERIOD_DEFAULT = TimeUnit.MINUTES.toSeconds(5);
+  private static final long KNOX_TOKEN_EVICTION_GRACE_PERIOD_DEFAULT = TimeUnit.HOURS.toSeconds(24);
+  private static final long KNOX_TOKEN_ALIAS_PERSISTENCE_INTERVAL_DEFAULT = TimeUnit.SECONDS.toSeconds(15);
+  public static final int KNOX_TOKEN_USER_LIMIT_DEFAULT = 10;
   private static final boolean KNOX_TOKEN_PERMISSIVE_VALIDATION_ENABLED_DEFAULT = false;
 
+  private static final String KNOX_HOMEPAGE_PROFILE_PREFIX =  "knox.homepage.profile.";
+  private static final String KNOX_HOMEPAGE_PINNED_TOPOLOGIES =  "knox.homepage.pinned.topologies";
   private static final String KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES =  "knox.homepage.hidden.topologies";
   private static final Set<String> KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES_DEFAULT = new HashSet<>(Arrays.asList("admin", "manager", "knoxsso", "metadata", "homepage"));
+  private static final String KNOX_HOMEPAGE_LOGOUT_ENABLED =  "knox.homepage.logout.enabled";
+  private static final String GLOBAL_LOGOUT_PAGE_URL = "knox.global.logout.page.url";
+  private static final String KNOX_INCOMING_XFORWARDED_ENABLED = "gateway.incoming.xforwarded.enabled";
+
+  //Gateway Database related properties
+  private static final String GATEWAY_DATABASE_TYPE = GATEWAY_CONFIG_FILE_PREFIX + ".database.type";
+  private static final String GATEWAY_DATABASE_CONN_URL = GATEWAY_CONFIG_FILE_PREFIX + ".database.connection.url";
+  private static final String GATEWAY_DATABASE_HOST =  GATEWAY_CONFIG_FILE_PREFIX + ".database.host";
+  private static final String GATEWAY_DATABASE_PORT =  GATEWAY_CONFIG_FILE_PREFIX + ".database.port";
+  private static final String GATEWAY_DATABASE_NAME =  GATEWAY_CONFIG_FILE_PREFIX + ".database.name";
+  private static final String GATEWAY_DATABASE_SSL_ENABLED =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.enabled";
+  private static final String GATEWAY_DATABASE_VERIFY_SERVER_CERT =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.verify.server.cert";
+  private static final String GATEWAY_DATABASE_TRUSTSTORE_FILE =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.truststore.file";
 
   public GatewayConfigImpl() {
     init();
@@ -588,7 +618,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public String getKeystoreType() {
-    return get( KEYSTORE_TYPE, "JKS");
+    return get( KEYSTORE_TYPE, KeyStore.getDefaultType());
   }
 
   @Override
@@ -647,6 +677,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getHttpClientTruststorePasswordAlias() {
     return get(HTTP_CLIENT_TRUSTSTORE_PASSWORD_ALIAS, DEFAULT_HTTP_CLIENT_TRUSTSTORE_PASSWORD_ALIAS);
+  }
+
+  @Override
+  public String getCredentialStoreAlgorithm() {
+    return get(CREDENTIAL_STORE_ALG, DEFAULT_CREDENTIAL_STORE_ALG);
+  }
+
+  @Override
+  public String getCredentialStoreType() {
+    return get(CREDENTIAL_STORE_TYPE, DEFAULT_CREDENTIAL_STORE_TYPE);
   }
 
   @Override
@@ -1114,12 +1154,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public long getClouderaManagerDescriptorsMonitoringInterval() {
-    return getLong(CLOUDERA_MANAGER_DESCRIPTORS_MONITOR_INTERVAL, DEFAULT_CLOUDERA_MANAGER_DESCRIPTORS_MONITOR_INTERVAL);
+    return getLong(CLOUDERA_MANAGER_DESCRIPTORS_MONITOR_INTERVAL, -1L);
   }
 
   @Override
   public long getClouderaManagerAdvancedServiceDiscoveryConfigurationMonitoringInterval() {
-    return getLong(CLOUDERA_MANAGER_ADVANCED_SERVICE_DISCOVERY_CONF_MONITOR_INTERVAL, DEFAULT_CLOUDERA_MANAGER_ADVANCED_SERVICE_DISCOVERY_CONF_MONITOR_INTERVAL);
+    return getLong(CLOUDERA_MANAGER_ADVANCED_SERVICE_DISCOVERY_CONF_MONITOR_INTERVAL, -1L);
   }
 
   @Override
@@ -1139,9 +1179,30 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public long getKnoxTokenStateAliasPersistenceInterval() {
+    return getLong(KNOX_TOKEN_ALIAS_PERSISTENCE_INTERVAL, KNOX_TOKEN_ALIAS_PERSISTENCE_INTERVAL_DEFAULT);
+  }
+
+  @Override
+  public String getKnoxTokenHashAlgorithm() {
+    return get(KNOX_TOKEN_HASH_ALGORITHM, HmacAlgorithms.HMAC_SHA_256.getName());
+  }
+
+  @Override
+  public int getMaximumNumberOfTokensPerUser() {
+    return getInt(KNOX_TOKEN_USER_LIMIT, KNOX_TOKEN_USER_LIMIT_DEFAULT);
+  }
+
+  @Override
   public Set<String> getHiddenTopologiesOnHomepage() {
-    final Set<String> hiddenTopologies = new HashSet<>(getStringCollection(KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES));
+    final Set<String> hiddenTopologies = new HashSet<>(getTrimmedStringCollection(KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES));
     return hiddenTopologies == null || hiddenTopologies.isEmpty() ? KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES_DEFAULT : hiddenTopologies;
+  }
+
+  @Override
+  public Set<String> getPinnedTopologiesOnHomepage() {
+    final Collection<String> pinnedTopologies = getTrimmedStringCollection(KNOX_HOMEPAGE_PINNED_TOPOLOGIES);
+    return pinnedTopologies == null ? Collections.emptySet() : new HashSet<>(pinnedTopologies);
   }
 
   /**
@@ -1152,4 +1213,95 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return getBoolean(KNOX_TOKEN_PERMISSIVE_VALIDATION_ENABLED,
         KNOX_TOKEN_PERMISSIVE_VALIDATION_ENABLED_DEFAULT);
   }
+
+  @Override
+  public String getServiceParameter(String service, String parameter) {
+    return get(GATEWAY_SERVICE_PREFIX + service + "." + parameter, "");
+  }
+
+  @Override
+  public boolean homePageLogoutEnabled() {
+    return getBoolean(KNOX_HOMEPAGE_LOGOUT_ENABLED, false);
+  }
+
+  @Override
+  public String getGlobalLogoutPageUrl() {
+    return get(GLOBAL_LOGOUT_PAGE_URL);
+  }
+
+
+  @Override
+  public long getKeystoreCacheSizeLimit() {
+    return getLong(KEYSTORE_CACHE_LIMIT, DEFAULT_KEYSTORE_CACHE_LIMIT);
+  }
+
+  @Override
+  public long getKeystoreCacheEntryTimeToLiveInMinutes() {
+    return getLong(KEYSTORE_CACHE_ENTRY_TTL, DEFAULT_KEYSTORE_CACHE_ENTRY_TTL);
+  }
+
+  @Override
+  public boolean isGatewayServerIncomingXForwardedSupportEnabled() {
+    return getBoolean(KNOX_INCOMING_XFORWARDED_ENABLED, true);
+  }
+
+  @Override
+  public Map<String, Collection<String>> getHomePageProfiles() {
+    final Map<String, Collection<String>> profiles = getPreConfiguredProfiles(); // pre-configured profiles might be overwritten
+    this.forEach(config -> {
+      if (config.getKey().startsWith(KNOX_HOMEPAGE_PROFILE_PREFIX)) {
+        profiles.put(config.getKey().substring(KNOX_HOMEPAGE_PROFILE_PREFIX.length()).toLowerCase(Locale.getDefault()), getTrimmedStringCollection(config.getKey()));
+      }
+    });
+    return profiles;
+  }
+
+  private Map<String, Collection<String>> getPreConfiguredProfiles() {
+    final Map<String, Collection<String>> profiles = new HashMap<>();
+    profiles.put("full", HomePageProfile.getFullProfileElements());
+    profiles.put("thin", HomePageProfile.getThinProfileElemens());
+    profiles.put("token", HomePageProfile.getTokenProfileElements());
+    return profiles;
+  }
+
+  @Override
+  public String getDatabaseType() {
+    return get(GATEWAY_DATABASE_TYPE, "none");
+  }
+
+  @Override
+  public String getDatabaseConnectionUrl() {
+    return get(GATEWAY_DATABASE_CONN_URL);
+  }
+
+  @Override
+  public String getDatabaseHost() {
+    return get(GATEWAY_DATABASE_HOST);
+  }
+
+  @Override
+  public int getDatabasePort() {
+    return getInt(GATEWAY_DATABASE_PORT, 0);
+  }
+
+  @Override
+  public String getDatabaseName() {
+    return get(GATEWAY_DATABASE_NAME, "GATEWAY_DATABASE");
+  }
+
+  @Override
+  public boolean isDatabaseSslEnabled() {
+    return getBoolean(GATEWAY_DATABASE_SSL_ENABLED, false);
+  }
+
+  @Override
+  public boolean verifyDatabaseSslServerCertificate() {
+    return getBoolean(GATEWAY_DATABASE_VERIFY_SERVER_CERT, true);
+  }
+
+  @Override
+  public String getDatabaseSslTruststoreFileName() {
+    return get(GATEWAY_DATABASE_TRUSTSTORE_FILE);
+  }
+
 }

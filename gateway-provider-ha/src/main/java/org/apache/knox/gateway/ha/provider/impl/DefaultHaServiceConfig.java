@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.ha.provider.impl;
 
+import java.util.List;
+
 import org.apache.knox.gateway.ha.provider.HaServiceConfig;
 
 public class DefaultHaServiceConfig implements HaServiceConfig, HaServiceConfigConstants {
@@ -29,9 +31,19 @@ public class DefaultHaServiceConfig implements HaServiceConfig, HaServiceConfigC
 
   private int failoverSleep = DEFAULT_FAILOVER_SLEEP;
 
+  private boolean isStickySessionEnabled = DEFAULT_STICKY_SESSIONS_ENABLED;
+
+  private boolean isLoadBalancingEnabled = DEFAULT_LOAD_BALANCING_ENABLED;
+
+  private boolean isNoFallbackEnabled = DEFAULT_NO_FALLBACK_ENABLED;
+
+  private String stickySessionCookieName = DEFAULT_STICKY_SESSION_COOKIE_NAME;
+
   private String zookeeperEnsemble;
 
   private String zookeeperNamespace;
+
+  private List<String> disableStickySessionForUserAgents;
 
   public DefaultHaServiceConfig(String name) {
     this.name = name;
@@ -95,5 +107,55 @@ public class DefaultHaServiceConfig implements HaServiceConfig, HaServiceConfigC
   @Override
   public void setZookeeperNamespace(String zookeeperNamespace) {
     this.zookeeperNamespace = zookeeperNamespace;
+  }
+
+  @Override
+  public boolean isStickySessionEnabled() {
+    return  this.isStickySessionEnabled;
+  }
+
+  @Override
+  public void setStickySessionEnabled(boolean stickySessionEnabled) {
+    this.isStickySessionEnabled = stickySessionEnabled;
+  }
+
+  @Override
+  public String getStickySessionCookieName() {
+    return this.stickySessionCookieName;
+  }
+
+  @Override
+  public void setStickySessionCookieName(String stickySessionCookieName) {
+    this.stickySessionCookieName = stickySessionCookieName;
+  }
+
+  @Override
+  public boolean isLoadBalancingEnabled() {
+    return this.isLoadBalancingEnabled;
+  }
+
+  @Override
+  public void setLoadBalancingEnabled(boolean isLoadBalancingEnabled) {
+    this.isLoadBalancingEnabled = isLoadBalancingEnabled;
+  }
+
+  @Override
+  public boolean isNoFallbackEnabled() {
+    return isNoFallbackEnabled;
+  }
+
+  @Override
+  public void setNoFallbackEnabled(boolean noFallbackEnabled) {
+    isNoFallbackEnabled = noFallbackEnabled;
+  }
+
+  @Override
+  public void setDisableStickySessionForUserAgents(List<String> disableStickySessionForUserAgents) {
+    this.disableStickySessionForUserAgents = disableStickySessionForUserAgents;
+  }
+
+  @Override
+  public List<String> getStickySessionDisabledUserAgents() {
+    return disableStickySessionForUserAgents;
   }
 }

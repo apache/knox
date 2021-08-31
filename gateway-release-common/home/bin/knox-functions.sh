@@ -22,6 +22,7 @@
 ############################
 
 # The app's home dir
+# shellcheck disable=SC2153
 APP_HOME_DIR=$(dirname "$APP_BIN_DIR")
 export APP_HOME_DIR
 

@@ -24,10 +24,13 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "topology")
-public class TopologyInformation {
+public class TopologyInformation implements Comparable<TopologyInformation>{
 
   @XmlElement(name = "topology")
   private String topologyName;
+
+  @XmlElement(name = "pinned")
+  private boolean pinned;
 
   @XmlElement(name = "service")
   @XmlElementWrapper(name = "apiServices")
@@ -45,6 +48,14 @@ public class TopologyInformation {
     this.topologyName = topologyName;
   }
 
+  public boolean isPinned() {
+    return pinned;
+  }
+
+  public void setPinned(boolean pinned) {
+    this.pinned = pinned;
+  }
+
   public Set<ServiceModel> getApiServices() {
     return apiServices;
   }
@@ -59,6 +70,12 @@ public class TopologyInformation {
 
   public void setUiServices(Set<ServiceModel> uiServices) {
     this.uiServices = uiServices;
+  }
+
+  @Override
+  public int compareTo(TopologyInformation other) {
+    final int byPinned =  Boolean.compare(other.pinned, pinned);
+    return byPinned == 0 ? topologyName.compareTo(other.topologyName) : byPinned;
   }
 
 }

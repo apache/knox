@@ -23,6 +23,7 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
 import java.nio.file.Paths;
+import java.security.KeyStore;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -38,7 +39,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+  import static org.junit.Assert.assertTrue;
 
 public class GatewayConfigImplTest {
 
@@ -172,14 +173,14 @@ public class GatewayConfigImplTest {
     list = config.getGlobalRulesServices();
     assertThat( list, is(notNullValue()) );
 
-    assertThat( list, is( CoreMatchers.hasItems("NAMENODE","JOBTRACKER", "WEBHDFS", "WEBHCAT", "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER")));
+    assertThat( list, is( CoreMatchers.hasItems("NAMENODE","JOBTRACKER", "WEBHDFS", "WEBHCAT", "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER", "RESOURCEMANAGERAPI")));
 
 
     config.set( GatewayConfigImpl.GLOBAL_RULES_SERVICES, "none" );
-    assertThat( config.getGlobalRulesServices(), is( CoreMatchers.hasItems("NAMENODE","JOBTRACKER", "WEBHDFS", "WEBHCAT", "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER")) );
+    assertThat( config.getGlobalRulesServices(), is( CoreMatchers.hasItems("NAMENODE","JOBTRACKER", "WEBHDFS", "WEBHCAT", "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER", "RESOURCEMANAGERAPI")) );
 
     config.set( GatewayConfigImpl.GLOBAL_RULES_SERVICES, "" );
-    assertThat( config.getGlobalRulesServices(), is( CoreMatchers.hasItems("NAMENODE","JOBTRACKER", "WEBHDFS", "WEBHCAT", "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER")) );
+    assertThat( config.getGlobalRulesServices(), is( CoreMatchers.hasItems("NAMENODE","JOBTRACKER", "WEBHDFS", "WEBHCAT", "OOZIE", "WEBHBASE", "HIVE", "RESOURCEMANAGER", "RESOURCEMANAGERAPI")) );
 
     config.set( GatewayConfigImpl.GLOBAL_RULES_SERVICES, "ONE" );
     assertThat( config.getGlobalRulesServices(), is(hasItems("ONE")) );
@@ -356,7 +357,7 @@ public class GatewayConfigImplTest {
 
     // Validate default options (backwards compatibility)
     assertEquals("gateway-httpclient-truststore-password", config.getHttpClientTruststorePasswordAlias());
-    assertEquals("JKS", config.getHttpClientTruststoreType());
+    assertEquals(KeyStore.getDefaultType(), config.getHttpClientTruststoreType());
     assertNull(config.getHttpClientTruststorePath());
 
     // Validate changed options
@@ -375,7 +376,7 @@ public class GatewayConfigImplTest {
 
     // Validate default options (backwards compatibility)
     assertEquals("gateway-truststore-password", config.getTruststorePasswordAlias());
-    assertEquals("JKS", config.getTruststoreType());
+    assertEquals(KeyStore.getDefaultType(), config.getTruststoreType());
     assertNull(config.getTruststorePath());
 
     // Validate changed options
@@ -403,6 +404,24 @@ public class GatewayConfigImplTest {
     final Map<String, String> remoteAliasServiceConfiguration = new GatewayConfigImpl().getRemoteAliasServiceConfiguration();
     assertTrue(remoteAliasServiceConfiguration.containsKey(REMOTE_ALIAS_SERVICE_TYPE));
     assertEquals(ZookeeperRemoteAliasService.TYPE, remoteAliasServiceConfiguration.get(REMOTE_ALIAS_SERVICE_TYPE));
+  }
+
+  @Test
+  public void testGetServiceParameter() throws Exception {
+    final GatewayConfigImpl gatewayConfig = new GatewayConfigImpl();
+
+    // should return an empty string if 'gateway.service.alias.impl' is not set
+    assertEquals("", gatewayConfig.getServiceParameter("alias", "impl"));
+
+    gatewayConfig.set("gateway.service.alias.impl", "myAliasService");
+    gatewayConfig.set("gateway.service.tokenstate.impl", "myTokenStateService");
+
+    // should return an empty string if the given service is not defined
+    assertEquals("", gatewayConfig.getServiceParameter("notListedService", "impl"));
+
+    //should return the declared implementations
+    assertEquals("myAliasService", gatewayConfig.getServiceParameter("alias", "impl"));
+    assertEquals("myTokenStateService", gatewayConfig.getServiceParameter("tokenstate", "impl"));
   }
 
 }

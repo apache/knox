@@ -21,7 +21,7 @@
     <parent>
         <groupId>org.apache.knox</groupId>
         <artifactId>gateway</artifactId>
-        <version>1.5.0-SNAPSHOT</version>
+        <version>1.6.0-SNAPSHOT</version>
     </parent>
     
     <artifactId>gateway-provider-security-hadoopauth</artifactId>
@@ -32,6 +32,10 @@
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-i18n</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-provider-security-jwt</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
@@ -59,6 +63,11 @@
         <dependency>
             <groupId>org.jboss.shrinkwrap</groupId>
             <artifactId>shrinkwrap-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
         </dependency>
 
         <dependency>

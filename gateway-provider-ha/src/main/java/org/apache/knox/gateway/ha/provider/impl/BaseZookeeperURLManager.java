@@ -57,9 +57,10 @@ public abstract class BaseZookeeperURLManager implements URLManager {
    */
   private static final int TIMEOUT = 5000;
 
+  private final ConcurrentLinkedQueue<String> urls = new ConcurrentLinkedQueue<>();
+
   private String zooKeeperEnsemble;
   private String zooKeeperNamespace;
-  private ConcurrentLinkedQueue<String> urls = new ConcurrentLinkedQueue<>();
 
   // -------------------------------------------------------------------------------------
   // URLManager interface methods
@@ -112,6 +113,12 @@ public abstract class BaseZookeeperURLManager implements URLManager {
 
     // Show failed URL and new URL
     LOG.markedFailedUrl(topURL, getActiveURL());
+  }
+
+  @Override
+  public void makeNextActiveURLAvailable() {
+    String head = urls.poll();
+    urls.offer(head);
   }
 
   @Override

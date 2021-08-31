@@ -107,6 +107,7 @@ function main {
          fi
          checkEnv
          export TEST_APP_STATUS=true
+         # shellcheck disable=SC2119
          appStart
          ;;
       stop)   

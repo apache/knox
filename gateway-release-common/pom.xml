@@ -21,7 +21,7 @@
   <parent>
         <groupId>org.apache.knox</groupId>
         <artifactId>gateway</artifactId>
-        <version>1.5.0-SNAPSHOT</version>
+        <version>1.6.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>gateway-release-common</artifactId>
@@ -41,29 +41,30 @@
            </activation>
            <build>
                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>${exec-maven-plugin.version}</version>
-                        <executions>
-                            <execution>
-                                <id>shellcheck_verification</id>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <executable>shellcheck</executable>
-                            <arguments>
-                                <argument>-x</argument>
-                                <!-- for any reason *.sh does not work if I run it from Maven; it's ok to do it in the command line -->
-                                <argument>${project.basedir}/home/bin/knox-functions.sh</argument>
-                                <argument>${project.basedir}/home/bin/knox-env.sh</argument>
-                            </arguments>
-                        </configuration>
-                    </plugin>
+                   <plugin>
+                       <groupId>dev.dimlight</groupId>
+                       <artifactId>shellcheck-maven-plugin</artifactId>
+                       <executions>
+                           <execution>
+                               <id>shellcheck_verification</id>
+                               <phase>validate</phase>
+                               <goals>
+                                   <goal>check</goal>
+                               </goals>
+                               <configuration>
+                                   <sourceDirs>
+                                       <sourceDir>
+                                           <directory>${project.basedir}/home/bin/</directory>
+                                           <includes>
+                                               <include>knox-functions.sh</include>
+                                               <include>knox-env.sh</include>
+                                           </includes>
+                                       </sourceDir>
+                                   </sourceDirs>
+                               </configuration>
+                           </execution>
+                       </executions>
+                   </plugin>
                </plugins>
            </build>
         </profile>

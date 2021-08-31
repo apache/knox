@@ -32,9 +32,33 @@ public interface HaServiceConfigConstants {
 
    String CONFIG_PARAM_ZOOKEEPER_NAMESPACE = "zookeeperNamespace";
 
+   String CONFIG_STICKY_SESSIONS_ENABLED = "enableStickySession";
+
+   String CONFIG_LOAD_BALANCING_ENABLED = "enableLoadBalancing";
+
+   String CONFIG_NO_FALLBACK_ENABLED = "noFallback";
+
+   String STICKY_SESSION_COOKIE_NAME = "stickySessionCookieName";
+
+   /**
+    * Disable loadbalancing feature based on user agent.
+    * The code will look for "contains" match
+    */
+   String DISABLE_LB_USER_AGENTS = "disableLoadBalancingForUserAgents";
+
    int DEFAULT_MAX_FAILOVER_ATTEMPTS = 3;
 
    int DEFAULT_FAILOVER_SLEEP = 1000;
 
    boolean DEFAULT_ENABLED = true;
+
+   boolean DEFAULT_STICKY_SESSIONS_ENABLED = false;
+
+   boolean DEFAULT_LOAD_BALANCING_ENABLED = false;
+
+   boolean DEFAULT_NO_FALLBACK_ENABLED = false;
+
+   String DEFAULT_STICKY_SESSION_COOKIE_NAME = "KNOX_BACKEND";
+
+   String DEFAULT_DISABLE_LB_USER_AGENTS = "ClouderaODBCDriverforApacheHive";
 }

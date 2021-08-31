@@ -29,13 +29,16 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -49,6 +52,7 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.dto.HomePageProfile;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.definition.Metadata;
 import org.apache.knox.gateway.service.definition.ServiceDefinitionPair;
@@ -61,20 +65,28 @@ import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
+import org.apache.knox.gateway.util.JsonUtils;
 import org.apache.knox.gateway.util.X509CertificateUtil;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+
+@Api(value = "metadata",  description = "RESTful API to interact with metadata.")
+@Singleton
 @Path("/api/v1/metadata")
 public class KnoxMetadataResource {
   private static final MetadataServiceMessages LOG = MessagesFactory.get(MetadataServiceMessages.class);
   private static final String SNAPSHOT_VERSION_POSTFIX = "-SNAPSHOT";
-  private static final Set<String> UNREAL_SERVICES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("NAMENODE", "JOBTRACKER")));
+  private static final Set<String> UNREAL_SERVICES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("NAMENODE", "JOBTRACKER", "RESOURCEMANAGERAPI")));
 
+  private Set<String> pinnedTopologies;
   private java.nio.file.Path pemFilePath;
   private java.nio.file.Path jksFilePath;
 
   @Context
   private HttpServletRequest request;
 
+  @ApiOperation(value="Get general proxy information", notes="Get general proxy information such as TLS Public Certificate, Knox Admin UI Url, etc...", response=GeneralProxyInformation.class)
   @GET
   @Produces({ APPLICATION_JSON, APPLICATION_XML })
   @Path("info")
@@ -209,11 +221,18 @@ public class KnoxMetadataResource {
               }
             });
           });
-          topologies.addTopology(topology.getName(), new TreeSet<>(apiServices), new TreeSet<>(uiServices));
+          topologies.addTopology(topology.getName(), isPinnedTopology(topology.getName(), config), new TreeSet<>(apiServices), new TreeSet<>(uiServices));
         }
       }
     }
     return topologies;
+  }
+
+  boolean isPinnedTopology(String topologyName, GatewayConfig config) {
+    if (pinnedTopologies == null) {
+      pinnedTopologies = config.getPinnedTopologiesOnHomepage();
+    }
+    return pinnedTopologies.contains(topologyName);
   }
 
   private Metadata getServiceMetadata(ServiceDefinitionRegistry serviceDefinitionRegistry, Service service) {
@@ -233,6 +252,20 @@ public class KnoxMetadataResource {
     serviceModel.setServiceMetadata(serviceMetadata);
     serviceModel.setServiceUrl(serviceUrl);
     return serviceModel;
+  }
+
+  @GET
+  @Produces({ APPLICATION_JSON })
+  @Path("profiles/{profile}")
+  public String getProfile(@PathParam("profile") String profileName) {
+    final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    final Map<String, Collection<String>> configuredProfiles = config.getHomePageProfiles();
+    if (configuredProfiles.containsKey(profileName.toLowerCase(Locale.getDefault()))) {
+      final HomePageProfile profile = new HomePageProfile(configuredProfiles.get(profileName));
+      return JsonUtils.renderAsJsonString(profile.getProfileElements());
+    } else {
+      return JsonUtils.renderAsJsonString(Collections.emptyMap());
+    }
   }
 
 }

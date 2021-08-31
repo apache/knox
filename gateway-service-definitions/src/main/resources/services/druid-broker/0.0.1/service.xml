@@ -22,6 +22,27 @@
         <description>The Broker is the process to route queries to if you want to run a distributed cluster. 
             It understands the metadata published to ZooKeeper about what segments exist on what processes and routes queries such that they hit the right processes. 
             This process also merges the result sets from all of the individual processes together. On start up, Historical processes announce themselves and the segments they are serving in Zookeeper.</description>
+        <samples>
+            <sample>
+                <description>Fetch a list of queryable datasources</description>
+                <method>GET</method>
+                <path>druid/v2/datasources</path>
+            </sample>
+            <sample>
+                <description>Fetch the dimensions and metrics of the datasource</description>
+                <method>GET</method>
+                <path>druid/v2/datasources/{dataSourceName}</path>
+            </sample>
+            <sample>
+                <description>Fetch the metrics of the datasource</description>
+                <method>GET</method>
+                <path>druid/v2/datasources/{dataSourceName}/metrics</path>
+            </sample>
+            <sample>
+                <description>You may check out Apache Druid Broker's REST API documentation here</description>
+                <value>https://druid.apache.org/docs/latest/operations/api-reference.html#broker</value>
+            </sample>
+        </samples>
     </metadata>
     <routes>
     <route path="druid-broker/druid/broker/v1/{**}?{**}">

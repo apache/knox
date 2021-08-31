@@ -18,3 +18,4 @@
 
 org.apache.knox.gateway.hdfs.NameNodeDeploymentContributor
 org.apache.knox.gateway.hdfs.JobTrackerDeploymentContributor
+org.apache.knox.gateway.hdfs.ResourceManagerApiDeploymentContributor

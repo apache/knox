@@ -22,6 +22,28 @@
         <description>The Druid Coordinator process is primarily responsible for segment management and distribution. 
             More specifically, the Druid Coordinator process communicates to Historical processes to load or drop segments based on configurations. 
             The Druid Coordinator is responsible for loading new segments, dropping outdated segments, managing segment replication, and balancing segment load.</description>
+        <samples>
+            <sample>
+                <description>Fetch the current leader coordinator of the cluster</description>
+                <method>GET</method>
+                <path>druid/coordinator/v1/leader</path>
+            </sample>
+             <sample>
+                <description>Fetch the percentage of segments actually loaded in the cluster versus segments that should be loaded in the cluster</description>
+                <method>GET</method>
+                <path>druid/coordinator/v1/loadstatus</path>
+            </sample>
+            <sample>
+                <description>Marks as unused all segments belonging to a data source. Returns a JSON object of the form {"numChangedSegments": &lt;number&gt;} 
+                    with the number of segments in the database whose state has been changed (that is, the segments were marked as unused) as the result of this API call</description>
+                <method>DELETE</method>
+                <path>druid/coordinator/v1/datasources/{dataSourceName}</path>
+            </sample>
+            <sample>
+                <description>You may check out Apache Druid Coordinator's REST API documentation here</description>
+                <value>https://druid.apache.org/docs/latest/operations/api-reference.html#coordinator</value>
+            </sample>
+        </samples>
     </metadata>
     <routes>
     <route path="druid-coordinator/status">

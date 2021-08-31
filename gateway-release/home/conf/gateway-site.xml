@@ -19,6 +19,10 @@ limitations under the License.
 <configuration>
 
     <property>
+        <name>gateway.service.alias.impl</name>
+        <value>org.apache.knox.gateway.services.security.impl.RemoteAliasService</value>
+    </property>
+    <property>
         <name>gateway.port</name>
         <value>8443</value>
         <description>The HTTP port for the Gateway.</description>
@@ -85,6 +89,20 @@ limitations under the License.
         <description>The interval (in seconds) for polling Ambari for cluster configuration changes.</description>
     </property>
 
+    <!-- @since 1.5.0 homepage logout -->
+    <property>
+        <name>knox.homepage.logout.enabled</name>
+        <value>true</value>
+        <description>Enable/disable logout from the Knox Homepage.</description>
+    </property>
+
+    <!-- @since 1.6.0 token management related properties -->
+    <property>
+        <name>gateway.knox.token.eviction.grace.period</name>
+        <value>0</value>
+        <description>A duration (in seconds) beyond a token’s expiration to wait before evicting its state. This configuration only applies when server-managed token state is enabled either in gateway-site or at the topology level.</description>
+    </property>
+
     <!-- Knox Admin related config -->
     <property>
         <name>gateway.knox.admin.groups</name>
@@ -121,7 +139,7 @@ limitations under the License.
         <value>(objectclass=groupOfNames)</value>
     </property>
     <property>
-        <name>hgateway.group.config.adoop.security.group.mapping.ldap.search.attr.member</name>
+        <name>gateway.group.config.hadoop.security.group.mapping.ldap.search.attr.member</name>
         <value>member</value>
     </property>
     <property>

@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.dispatch;
 
+import static java.util.stream.Collectors.toCollection;
+
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -24,9 +26,9 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpOptions;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ContentType;
 import org.apache.knox.gateway.SpiGatewayMessages;
@@ -40,6 +42,7 @@ import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.config.Configure;
 import org.apache.knox.gateway.config.Default;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.config.Optional;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
 import org.apache.knox.gateway.util.MimeTypes;
@@ -57,11 +60,14 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
+import java.util.LinkedHashSet;
 
 public class DefaultDispatch extends AbstractGatewayDispatch {
   protected static final String SET_COOKIE = "SET-COOKIE";
   protected static final String WWW_AUTHENTICATE = "WWW-AUTHENTICATE";
+  /* list of cookies that should be blocked when set-cookie header is allowed */
+  protected static final Set<String> EXCLUDE_SET_COOKIES_DEFAULT = new HashSet<>(Arrays.asList("hadoop.auth", "hive.server2.auth", "impala.auth"));
+
 
   protected static final SpiGatewayMessages LOG = MessagesFactory.get(SpiGatewayMessages.class);
   protected static final SpiGatewayResources RES = ResourcesFactory.get(SpiGatewayResources.class);
@@ -71,6 +77,10 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
   protected static final String EXCLUDE_ALL = "*";
   private Set<String> outboundResponseExcludeHeaders = Collections.singleton(WWW_AUTHENTICATE);
   private Set<String> outboundResponseExcludedSetCookieHeaderDirectives = Collections.singleton(EXCLUDE_ALL);
+
+  @Optional
+  @Configure
+  private String serviceRole;
 
   //Buffer size in bytes
   private int replayBufferSize = -1;
@@ -84,6 +94,14 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       return Math.abs(replayBufferSize/1024);
     }
     return replayBufferSize;
+  }
+
+  public String getServiceRole() {
+    return serviceRole;
+  }
+
+  public void setServiceRole(String serviceRole) {
+    this.serviceRole = serviceRole;
   }
 
   @Configure
@@ -100,6 +118,30 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       size *= 1024;
     }
     replayBufferSize = size;
+    LOG.setReplayBufferSize(replayBufferSize, getServiceRole());
+  }
+
+  /**
+   * Wrapper around execute request to accommodate any
+   * request processing such as additional HA logic.
+   * @param outboundRequest
+   * @param inboundRequest
+   * @param outboundResponse
+   * @throws IOException
+   */
+  protected void executeRequestWrapper(HttpUriRequest outboundRequest,
+      HttpServletRequest inboundRequest, HttpServletResponse outboundResponse)
+      throws IOException {
+    executeRequest(outboundRequest, inboundRequest, outboundResponse);
+  }
+
+  /**
+   * A outbound response wrapper used by classes extending this class
+   * to modify any outgoing
+   * response i.e. cookies
+   */
+  protected void outboundResponseWrapper(final HttpUriRequest outboundRequest, final HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) {
+    /* no-op */
   }
 
   protected void executeRequest(
@@ -145,6 +187,8 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
   }
 
   protected void writeOutboundResponse(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse, HttpResponse inboundResponse) throws IOException {
+    /* in case any changes to outbound response are needed */
+    outboundResponseWrapper(outboundRequest, inboundRequest, outboundResponse);
     // Copy the client respond header to the server respond.
     outboundResponse.setStatus(inboundResponse.getStatusLine().getStatusCode());
     copyResponseHeaderFields(outboundResponse, inboundResponse);
@@ -253,14 +297,14 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       // and setting params here causes configuration setup there to be ignored there.
       // method.getParams().setBooleanParameter("http.protocol.handle-redirects", false);
       copyRequestHeaderFields(method, request);
-      executeRequest(method, request, response);
+     executeRequestWrapper(method, request, response);
    }
 
    @Override
    public void doOptions(URI url, HttpServletRequest request, HttpServletResponse response)
          throws IOException {
       HttpOptions method = new HttpOptions(url);
-      executeRequest(method, request, response);
+     executeRequestWrapper(method, request, response);
    }
 
    @Override
@@ -270,7 +314,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       HttpEntity entity = createRequestEntity(request);
       method.setEntity(entity);
       copyRequestHeaderFields(method, request);
-      executeRequest(method, request, response);
+     executeRequestWrapper(method, request, response);
    }
 
    @Override
@@ -280,7 +324,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       HttpEntity entity = createRequestEntity(request);
       method.setEntity(entity);
       copyRequestHeaderFields(method, request);
-      executeRequest(method, request, response);
+     executeRequestWrapper(method, request, response);
    }
 
    @Override
@@ -290,7 +334,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       HttpEntity entity = createRequestEntity(request);
       method.setEntity(entity);
       copyRequestHeaderFields(method, request);
-      executeRequest(method, request, response);
+     executeRequestWrapper(method, request, response);
    }
 
    @Override
@@ -298,7 +342,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
          throws IOException {
       HttpDelete method = new HttpDelete(url);
       copyRequestHeaderFields(method, request);
-      executeRequest(method, request, response);
+     executeRequestWrapper(method, request, response);
    }
 
   @Override
@@ -306,7 +350,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       throws IOException {
     final HttpHead method = new HttpHead(url);
     copyRequestHeaderFields(method, request);
-    executeRequest(method, request, response);
+    executeRequestWrapper(method, request, response);
   }
 
   public void copyResponseHeaderFields(HttpServletResponse outboundResponse, HttpResponse inboundResponse) {
@@ -316,11 +360,18 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
     excludedHeaderDirectives.put(SET_COOKIE, getOutboundResponseExcludedSetCookieHeaderDirectives());
 
     for (Header header : inboundResponse.getAllHeaders()) {
-      final String responseHeaderValue = calculateResponseHeaderValue(header, excludedHeaderDirectives);
-      if (responseHeaderValue.isEmpty()) {
-        continue;
+      boolean isBlockedAuthHeader = Arrays.stream(header.getElements()).anyMatch(h -> EXCLUDE_SET_COOKIES_DEFAULT.contains(h.getName()) && getOutboundResponseExcludedSetCookieHeaderDirectives().contains(h.getName()) );
+      /* in case auth header is blocked blocked the entire set-cookie part */
+      if(!isBlockedAuthHeader) {
+            final String responseHeaderValue = calculateResponseHeaderValue(header, excludedHeaderDirectives);
+            if (responseHeaderValue.isEmpty()) {
+                continue;
+            }
+            outboundResponse.addHeader(header.getName(), responseHeaderValue);
+            LOG.addedOutboundheader(header.getName(), responseHeaderValue);
+      } else {
+            LOG.skippedOutboundHeader(header.getName(), header.getValue());
       }
-      outboundResponse.addHeader(header.getName(), responseHeaderValue);
     }
   }
 
@@ -333,9 +384,25 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
           return ""; // we should exclude all -> there should not be any value added with this header
         } else {
           final String separator = SET_COOKIE.equalsIgnoreCase(headerNameToCheck) ? "; " : " ";
-          Set<String> headerValuesToCheck = new HashSet<>(Arrays.asList(headerToCheck.getValue().trim().split("\\s+")));
-          headerValuesToCheck = headerValuesToCheck.stream().map(h -> h.replaceAll(separator.trim(), "")).collect(Collectors.toSet());
-          headerValuesToCheck.removeAll(excludedHeaderValues);
+          /**
+           *  special attention needs to be given to make sure we maintain
+           *  the attribute order else bad things can happen.
+           *  1. String.split() always maintains the order in generated array
+           *  2. LinkedHashSet is an ordered set
+           *  3. *.stream().map() maintains the order *iff* the collection type is ordered
+           *  4. *.collect() needs to be ordered as well to make sure the generated set is ordered
+           */
+          LinkedHashSet<String> headerValuesToCheck;
+          if(headerToCheck.getName().equalsIgnoreCase(SET_COOKIE)) {
+              /* make sure we maintain the order */
+              headerValuesToCheck = new LinkedHashSet<>(Arrays.asList(headerToCheck.getValue().trim().split(";")));
+              /* trim */
+              headerValuesToCheck = headerValuesToCheck.stream().map(String::trim).collect(toCollection(LinkedHashSet::new));
+          } else {
+              headerValuesToCheck = new LinkedHashSet<>(Arrays.asList(headerToCheck.getValue().trim().split("\\s+")));
+          }
+          headerValuesToCheck = headerValuesToCheck.stream().map(h -> h.replaceAll(separator.trim(), "")).collect(toCollection(LinkedHashSet::new));
+          headerValuesToCheck.removeIf(h -> excludedHeaderValues.stream().anyMatch(e -> h.contains(e)));
           return headerValuesToCheck.isEmpty() ? "" : String.join(separator, headerValuesToCheck);
         }
       }

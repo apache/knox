@@ -38,7 +38,7 @@ public class KnoxSSOutServiceDeploymentContributor extends JerseyServiceDeployme
 
   @Override
   protected String[] getPatterns() {
-    return new String[]{ "api/**?**" };
+    return new String[]{ "knoxssout/api/**?**" };
   }
 
 }

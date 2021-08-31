@@ -17,7 +17,7 @@
 <service role="HUE" name="hue" version="1.0.0">
     <metadata>
         <type>UI</type>
-        <context>/hue</context>
+        <context>/hue/</context>
         <shortDesc>Hue UI</shortDesc>
         <description>Hue UI is a Web interface for analyzing data with Apache Hadoop</description>
     </metadata>
@@ -60,6 +60,14 @@
     <param>
       <name>responseExcludeHeaders</name>
       <value>WWW-AUTHENTICATE</value>
+    </param>
+    <param>
+      <name>httpclient.connectionTimeout</name>
+      <value>5m</value>
+    </param>
+    <param>
+      <name>httpclient.socketTimeout</name>
+      <value>5m</value>
     </param>
   </dispatch>
 </service>

@@ -55,7 +55,7 @@ import com.mycila.xmltool.XMLTag;
 /**
  * This class was created to reduce much of the duplication and boiler plate that was ending up in the GatewayBasicFuncTest class.
  * It basically does a number of different things.
- * 1) Creates a GATEWAY_HOME starts a gateway instance and deployes a test topology.
+ * 1) Creates a GATEWAY_HOME starts a gateway instance and deploys a test topology.
  * 2) Provides a registry of mock Hadoop services.
  * 3) Provides "bundled" methods for common Hadoop operations to avoid duplication in tests.
  * 4) Provides methods to access test resources.

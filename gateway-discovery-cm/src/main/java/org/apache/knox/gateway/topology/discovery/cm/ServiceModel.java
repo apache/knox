@@ -16,6 +16,8 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm;
 
+import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -29,6 +31,8 @@ public class ServiceModel {
 
   public enum Type {API, UI}
 
+  public static final String QUALIFYING_SERVICE_PARAM_PREFIX = SimpleDescriptor.DISCOVERY_PARAM_PREFIX;
+
   private static final String NULL_VALUE = "null";
 
   private final Type type;
@@ -36,6 +40,9 @@ public class ServiceModel {
   private final String serviceType;
   private final String roleType;
   private final String serviceUrl;
+
+  // Metadata for the model object, which is not directly from the service or role configuration
+  private final Map<String, String> qualifyingServiceParams = new ConcurrentHashMap<>();
 
   // The service configuration properties used to created the model
   private final Map<String, String> serviceConfigProperties = new ConcurrentHashMap<>();
@@ -62,12 +69,33 @@ public class ServiceModel {
     this.serviceUrl  = serviceUrl;
   }
 
+  public void addQualifyingServiceParam(final String name, final String value) {
+    // Fix the name if it doesn't include the prefix
+    String paramName = name.startsWith(QUALIFYING_SERVICE_PARAM_PREFIX) ? name : QUALIFYING_SERVICE_PARAM_PREFIX + name;
+    qualifyingServiceParams.put(paramName, (value != null ? value : NULL_VALUE));
+  }
+
   public void addServiceProperty(final String name, final String value) {
     serviceConfigProperties.put(name, (value != null ? value : NULL_VALUE));
   }
 
   public void addRoleProperty(final String role, final String name, final String value) {
     roleConfigProperties.computeIfAbsent(role, m -> new HashMap<>()).put(name, (value != null ? value : NULL_VALUE));
+  }
+
+  /**
+   * @return The metadata properties associated with the model, which can be used to qualify service discovery.
+   */
+  public Map<String, String> getQualifyingServiceParams() {
+    return qualifyingServiceParams;
+  }
+
+  /**
+   * @return The value of the metadata property associated with the model, which can be used to qualify service discovery.
+   */
+  public String getQualifyingServiceParam(final String name) {
+    String paramName = name.startsWith(QUALIFYING_SERVICE_PARAM_PREFIX) ? name : QUALIFYING_SERVICE_PARAM_PREFIX + name;
+    return qualifyingServiceParams.get(paramName);
   }
 
   /**

@@ -43,7 +43,7 @@ class NiFiRequestUtil {
     final Header originalXForwardedContextHeader = outboundRequest.getFirstHeader(NiFiHeaders.X_FORWARDED_CONTEXT);
     if (originalXForwardedContextHeader != null) {
       String xForwardedContextHeaderValue = originalXForwardedContextHeader.getValue();
-      if (xForwardedContextHeaderValue != null && !xForwardedContextHeaderValue.isEmpty()) {
+      if (xForwardedContextHeaderValue != null && !xForwardedContextHeaderValue.isEmpty() && !xForwardedContextHeaderValue.contains("nifi-app")) {
         // Inspect the inbound request and outbound request to determine the additional context path from the rewrite
         // rules that needs to be added to the X-Forwarded-Context header to allow proper proxying to NiFi.
         //

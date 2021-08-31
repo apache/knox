@@ -36,9 +36,14 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryFactory;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+
+@Api(value = "serviceDiscovery",  description = "The Knox Admin API to interact with service discovery information.")
 @Path("/api/v1")
 public class ServiceDiscoveryResource {
 
+  @ApiOperation(value="Get available service discoveries", notes="Get available service discoveriy types (Ambari, ClouderaManager, etc...) and their implementation classes", response=ServiceDiscoveryWrapper.class)
   @GET
   @Produces({ APPLICATION_JSON, APPLICATION_XML })
   @Path("servicediscoveries")

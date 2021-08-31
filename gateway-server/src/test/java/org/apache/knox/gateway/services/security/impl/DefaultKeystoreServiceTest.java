@@ -71,8 +71,10 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -285,7 +287,14 @@ public class DefaultKeystoreServiceTest {
         .andReturn(null)
         .atLeastOnce();
 
-    replay(keystoreServiceAlt, masterService);
+    DefaultKeystoreService keystoreServiceSymlink = createMockBuilder(DefaultKeystoreService.class)
+        .addMockedMethod("getCredentialForCluster", String.class, String.class)
+        .createMock();
+    expect(keystoreServiceSymlink.getCredentialForCluster(eq(AliasService.NO_CLUSTER_NAME), eq(GatewayConfig.DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS)))
+        .andReturn(null)
+        .atLeastOnce();
+
+    replay(keystoreServiceAlt, keystoreServiceSymlink, masterService);
 
     Path baseDir = testFolder.newFolder().toPath();
     GatewayConfigImpl config = createGatewayConfig(baseDir);
@@ -330,13 +339,54 @@ public class DefaultKeystoreServiceTest {
 
     testSigningKeystore(keystoreServiceAlt, customFile, customKeyAlias, masterPassword);
 
+    /* *******************
+     * Test Symlink Parent
+     */
+    String symlinkFileName = "symlink_signing.jks";
+    Path symlinkSecurityDir = baseDir.resolve("security").resolve("symlink");
+    Path symlinkTarget = baseDir.resolve("symlinkTarget");
+    Path symlinkParentLink = symlinkSecurityDir.resolve("keystores");
+
+    try {
+        //Creating the real path to symlinkParentLink
+        Files.createDirectories(symlinkTarget.resolve("keystores"));
+    } catch (IOException e) {
+        fail("Unable to create symlink target directory.");
+    }
+
+    try {
+        Files.createSymbolicLink(symlinkSecurityDir, symlinkTarget);
+    } catch (IOException e) {
+        fail("Unable to create symlink while instantiating keystores.");
+    }
+
+    Path symlinkFile = symlinkParentLink.resolve(symlinkFileName);
+
+    String symlinkKeyAlias = "symlink_alias";
+
+    config.set(SIGNING_KEYSTORE_NAME, symlinkFileName);
+    config.set(SIGNING_KEY_ALIAS, symlinkKeyAlias);
+    config.set(GatewayConfigImpl.SECURITY_DIR, symlinkSecurityDir.toString());
+
+    keystoreServiceSymlink.setMasterService(masterService);
+
+    // Ensure the signing keystore exists before init-ing the keystore service
+    createKeystore(keystoreService, symlinkFile, symlinkKeyAlias, masterPassword);
+
+    keystoreServiceSymlink.init(config, Collections.emptyMap());
+
+    testSigningKeystore(keystoreServiceSymlink, symlinkFile, symlinkKeyAlias, masterPassword);
+
+
     // Verify the keystore passwords are set properly...
     assertTrue(Files.exists(defaultFile));
     assertNotNull(keystoreService.loadKeyStore(defaultFile, "JKS", masterPassword));
     assertTrue(Files.exists(customFile));
     assertNotNull(keystoreService.loadKeyStore(customFile, "JKS", masterPassword));
+    assertTrue(Files.exists(symlinkFile));
+    assertNotNull(keystoreService.loadKeyStore(symlinkFile, "JKS", masterPassword));
 
-    verify(keystoreServiceAlt, masterService);
+    verify(keystoreServiceAlt, keystoreServiceSymlink, masterService);
   }
 
   @Test
@@ -608,6 +658,59 @@ public class DefaultKeystoreServiceTest {
     verify(masterService);
   }
 
+  /*
+   * Test the bulk key removal method, which should only load the keystore file once, and subsequently write the
+   * keystore file only once, rather than once each per key.
+   */
+  @Test
+  public void testRemoveCredentialsForCluster() throws Exception {
+    char[] masterPassword = "master_password".toCharArray();
+
+    MasterService masterService = createMock(MasterService.class);
+    expect(masterService.getMasterSecret()).andReturn(masterPassword).anyTimes();
+
+    replay(masterService);
+
+    Path baseDir = testFolder.newFolder().toPath();
+    GatewayConfigImpl config = createGatewayConfig(baseDir);
+
+    CountingDefaultKeystoreService keystoreService = new CountingDefaultKeystoreService();
+    keystoreService.setMasterService(masterService);
+    keystoreService.init(config, Collections.emptyMap());
+
+    String clusterName = "cluster";
+
+    Map<String, String> testAliases = new HashMap<>();
+    testAliases.put("alias1", "value1");
+    testAliases.put("alias2", "value2");
+    testAliases.put("alias3", "value3");
+
+    Set<String> aliases = testAliases.keySet();
+
+    keystoreService.createCredentialStoreForCluster(clusterName);
+
+    for (String alias : aliases) {
+      keystoreService.addCredentialForCluster(clusterName, alias, testAliases.get(alias));
+      assertEquals(testAliases.get(alias), String.valueOf(keystoreService.getCredentialForCluster(clusterName, alias)));
+    }
+
+    // Clear the counts recorded from adding the credentials
+    keystoreService.clearCounts();
+
+    // Invoke the bulk removal method
+    keystoreService.removeCredentialsForCluster(clusterName, aliases);
+
+    // Validate the number of loads/writes of the keystore file
+    assertEquals("Expected only a single load of the keystore file.", 1, keystoreService.loadCount);
+    assertEquals("Expected only a single write to the keystore file.", 1, keystoreService.storeCount);
+
+    for (String alias : aliases) {
+      assertNull(keystoreService.getCredentialForCluster(clusterName, alias));
+    }
+
+    verify(masterService);
+  }
+
   private void testAddSelfSignedCertForGateway(String hostname) throws Exception {
     char[] masterPassword = "master_password".toCharArray();
 
@@ -731,5 +834,29 @@ public class DefaultKeystoreServiceTest {
         new java.security.cert.Certificate[]{cert});
 
     keystoreService.writeKeyStoreToFile(keystore, keystoreFilePath, password);
+  }
+
+
+  private static class CountingDefaultKeystoreService extends DefaultKeystoreService {
+
+    int loadCount;
+    int storeCount;
+
+    void clearCounts() {
+      loadCount  = 0;
+      storeCount = 0;
+    }
+
+    @Override
+    synchronized KeyStore loadKeyStore(Path keyStoreFilePath, String storeType, char[] password) throws KeystoreServiceException {
+      loadCount++;
+      return super.loadKeyStore(keyStoreFilePath, storeType, password);
+    }
+
+    @Override
+    synchronized void writeKeyStoreToFile(KeyStore keyStore, Path path, char[] password) throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
+      storeCount++;
+      super.writeKeyStoreToFile(keyStore, path, password);
+    }
   }
 }

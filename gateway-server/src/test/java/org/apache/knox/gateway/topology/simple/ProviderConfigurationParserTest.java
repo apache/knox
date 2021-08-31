@@ -29,8 +29,8 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -84,7 +84,7 @@ public class ProviderConfigurationParserTest {
     ProviderConfiguration pc = doTestParseProviderConfiguration(XML, "my-providers.xml");
     assertNotNull(pc);
 
-    List<ProviderConfiguration.Provider> providers = pc.getProviders();
+    Set<ProviderConfiguration.Provider> providers = pc.getProviders();
     assertNotNull(providers);
     assertFalse(providers.isEmpty());
     assertEquals(3, providers.size());
@@ -130,13 +130,13 @@ public class ProviderConfigurationParserTest {
     "      \"name\":\"ShiroProvider\",\n" +
     "      \"enabled\":\"true\",\n" +
     "      \"params\":{\n" +
-    "        \"sessionTimeout\":\"30\",\n" +
-    "        \"main.ldapRealm\":\"org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm\",\n" +
     "        \"main.ldapContextFactory\":\"org.apache.hadoop.gateway.shirorealm.KnoxLdapContextFactory\",\n" +
+    "        \"main.ldapRealm\":\"org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm\",\n" +
     "        \"main.ldapRealm.contextFactory\":\"$ldapContextFactory\",\n" +
     "        \"main.ldapRealm.userDnTemplate\":\"uid={0},ou=people,dc=hadoop,dc=apache,dc=org\",\n" +
     "        \"main.ldapRealm.contextFactory.url\":\"ldap://localhost:33389\",\n" +
     "        \"main.ldapRealm.contextFactory.authenticationMechanism\":\"simple\",\n" +
+    "        \"sessionTimeout\":\"30\",\n" +
     "        \"urls./**\":\"authcBasic\"\n" +
     "      }\n" +
     "    },\n" +
@@ -158,8 +158,8 @@ public class ProviderConfigurationParserTest {
     "      \"name\":\"HaProvider\",\n" +
     "      \"enabled\":\"false\",\n" +
     "      \"params\":{\n" +
-    "        \"WEBHDFS\":\"maxFailoverAttempts=3;failoverSleep=1000;enabled=true\",\n" +
-    "        \"HIVE\":\"maxFailoverAttempts=3;failoverSleep=1000;enabled=true\"\n" +
+    "        \"HIVE\":\"maxFailoverAttempts=3;failoverSleep=1000;enabled=true\",\n" +
+    "        \"WEBHDFS\":\"maxFailoverAttempts=3;failoverSleep=1000;enabled=true\"\n" +
     "      }\n" +
     "    }\n" +
     "  ]\n" +
@@ -168,7 +168,7 @@ public class ProviderConfigurationParserTest {
     ProviderConfiguration pc = doTestParseProviderConfiguration(JSON, "my-providers." + "json");
     assertNotNull(pc);
 
-    List<ProviderConfiguration.Provider> providers = pc.getProviders();
+    Set<ProviderConfiguration.Provider> providers = pc.getProviders();
     assertNotNull(providers);
     assertFalse(providers.isEmpty());
     assertEquals(4, providers.size());
@@ -225,7 +225,7 @@ public class ProviderConfigurationParserTest {
 
     assertNotNull(pc);
 
-    List<ProviderConfiguration.Provider> providers = pc.getProviders();
+    Set<ProviderConfiguration.Provider> providers = pc.getProviders();
     assertNotNull(providers);
     assertFalse(providers.isEmpty());
     assertEquals(4, providers.size());
@@ -235,7 +235,7 @@ public class ProviderConfigurationParserTest {
   }
 
 
-  private void validateParsedProviders(List<ProviderConfiguration.Provider> providers) throws Exception {
+  private void validateParsedProviders(Set<ProviderConfiguration.Provider> providers) throws Exception {
     // Validate the providers
     for (ProviderConfiguration.Provider provider : providers) {
       String role = provider.getRole();
@@ -255,13 +255,13 @@ public class ProviderConfigurationParserTest {
         assertEquals(params.get("urls./**"), "authcBasic");
 
         // Verify the param order was maintained during parsing (KNOX-1188)
-        String[] expectedParameterOrder = new String[] {"sessionTimeout",
+        String[] expectedParameterOrder = new String[] {"main.ldapContextFactory",
                                                         "main.ldapRealm",
-                                                        "main.ldapContextFactory",
                                                         "main.ldapRealm.contextFactory",
-                                                        "main.ldapRealm.userDnTemplate",
-                                                        "main.ldapRealm.contextFactory.url",
                                                         "main.ldapRealm.contextFactory.authenticationMechanism",
+                                                        "main.ldapRealm.contextFactory.url",
+                                                        "main.ldapRealm.userDnTemplate",
+                                                        "sessionTimeout",
                                                         "urls./**"};
         int index = 0;
         for (String name : params.keySet()) {

@@ -18,7 +18,7 @@
 <service role="ATLAS" name="atlas" version="0.8.0">
     <metadata>
         <type>UI</type>
-        <context>/atlas</context>
+        <context>/atlas/</context>
         <shortDesc>Atlas UI</shortDesc>
         <description>Apache Atlas provides open metadata management and governance capabilities for organizations to build a catalog of their data assets, 
             classify and govern these assets and provide collaboration capabilities around these data assets for data scientists, analysts and the data governance team.</description>

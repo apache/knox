@@ -52,8 +52,11 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.util.CookieUtils;
 import org.apache.knox.gateway.util.RegExUtils;
@@ -98,7 +101,7 @@ public class WebSSOResource {
   private String domainSuffix;
   private List<String> targetAudiences = new ArrayList<>();
   private boolean enableSession;
-  private String signatureAlgorithm = "RS256";
+  private String signatureAlgorithm;
   private List<String> ssoExpectedparams = new ArrayList<>();
   private String clusterName;
 
@@ -112,7 +115,7 @@ public class WebSSOResource {
   ServletContext context;
 
   @PostConstruct
-  public void init() {
+  public void init() throws AliasServiceException {
     clusterName = String.valueOf(context.getAttribute(GATEWAY_CLUSTER_ATTRIBUTE));
 
     handleCookieSetup();
@@ -120,15 +123,19 @@ public class WebSSOResource {
     String enableSessionStr = context.getInitParameter(SSO_ENABLE_SESSION_PARAM);
     this.enableSession = Boolean.parseBoolean(enableSessionStr);
 
-    String sigAlg = context.getInitParameter(SSO_COOKIE_TOKEN_SIG_ALG);
-    if (sigAlg != null) {
-      signatureAlgorithm = sigAlg;
-    }
+    setSignatureAlogrithm();
 
     final String expectedParams = context.getInitParameter(SSO_EXPECTED_PARAM);
     if (expectedParams != null) {
       ssoExpectedparams = Arrays.asList(expectedParams.split(","));
     }
+  }
+
+  private void setSignatureAlogrithm() throws AliasServiceException {
+    final String configuredSigAlg = context.getInitParameter(SSO_COOKIE_TOKEN_SIG_ALG);
+    final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    final GatewayServices services = (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    signatureAlgorithm = TokenUtils.getSignatureAlgorithm(configuredSigAlg, (AliasService) services.getService(ServiceType.ALIAS_SERVICE), config.getSigningKeystoreName());
   }
 
   private void handleCookieSetup() {
@@ -243,7 +250,7 @@ public class WebSSOResource {
     }
 
     AliasService as = services.getService(ServiceType.ALIAS_SERVICE);
-    JWTokenAuthority ts = services.getService(ServiceType.TOKEN_SERVICE);
+    JWTokenAuthority tokenAuthority = services.getService(ServiceType.TOKEN_SERVICE);
     Principal p = request.getUserPrincipal();
 
     try {
@@ -255,8 +262,9 @@ public class WebSSOResource {
         signingKeystorePassphrase = as.getPasswordFromAliasForCluster(clusterName, signingKeystorePassphraseAlias);
       }
 
-      JWT token = ts.issueToken(p, targetAudiences, signatureAlgorithm, getExpiry(),
-          signingKeystoreName,  signingKeystoreAlias, signingKeystorePassphrase);
+      final JWTokenAttributes jwtAttributes = new JWTokenAttributesBuilder().setPrincipal(p).setAudiences(targetAudiences).setAlgorithm(signatureAlgorithm).setExpires(getExpiry())
+          .setSigningKeystoreName(signingKeystoreName).setSigningKeystoreAlias(signingKeystoreAlias).setSigningKeystorePassphrase(signingKeystorePassphrase).build();
+      JWT token = tokenAuthority.issueToken(jwtAttributes);
 
       // Coverity CID 1327959
       if( token != null ) {
@@ -350,26 +358,37 @@ public class WebSSOResource {
 
   private void addJWTHadoopCookie(String original, JWT token) {
     LOGGER.addingJWTCookie(token.toString());
-    Cookie c = new Cookie(cookieName,  token.toString());
-    c.setPath("/");
+    /*
+     * In order to account for google chrome changing default value
+     * of SameSite from None to Lax we need to craft Set-Cookie
+     * header to prevent issues with hadoop-jwt cookie.
+     * NOTE: this would have been easier if javax.servlet.http.Cookie supported
+     * SameSite param. Change this back to Cookie impl. after
+     * SameSite header is supported by javax.servlet.http.Cookie.
+     */
+    final StringBuilder setCookie = new StringBuilder(50);
     try {
-      String domain = Urls.getDomainName(original, domainSuffix);
+      setCookie.append(cookieName).append('=').append(token.toString());
+      setCookie.append("; Path=/");
+      final String domain = Urls.getDomainName(original, domainSuffix);
       if (domain != null) {
-        c.setDomain(domain);
+        setCookie.append("; Domain=").append(domain);
       }
-      c.setHttpOnly(true);
+      setCookie.append("; HttpOnly");
       if (secureOnly) {
-        c.setSecure(true);
+        setCookie.append("; Secure");
       }
       if (maxAge != -1) {
-        c.setMaxAge(maxAge);
+        setCookie.append("; Max-Age=").append(maxAge);
       }
-      response.addCookie(c);
+      setCookie.append("; SameSite=None");
+      response.setHeader("Set-Cookie", setCookie.toString());
       LOGGER.addedJWTCookie();
-    }
-    catch(Exception e) {
-      LOGGER.unableAddCookieToResponse(e.getMessage(), Arrays.toString(e.getStackTrace()));
-      throw new WebApplicationException("Unable to add JWT cookie to response.");
+    } catch (Exception e) {
+      LOGGER.unableAddCookieToResponse(e.getMessage(),
+          Arrays.toString(e.getStackTrace()));
+      throw new WebApplicationException(
+          "Unable to add JWT cookie to response.");
     }
   }
 

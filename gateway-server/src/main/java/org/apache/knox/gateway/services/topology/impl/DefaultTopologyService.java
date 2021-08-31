@@ -37,8 +37,8 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.definition.ServiceDefinition;
 import org.apache.knox.gateway.service.definition.ServiceDefinitionChangeListener;
 import org.apache.knox.gateway.services.GatewayServices;
-import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.topology.TopologyService;
@@ -89,14 +89,14 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
 
   private static final JAXBContext jaxbContext = getJAXBContext();
 
-  private static Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(
+  private static final Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(
     AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
     AuditConstants.KNOX_COMPONENT_NAME);
 
   public static final List<String> SUPPORTED_TOPOLOGY_FILE_EXTENSIONS = Collections.unmodifiableList(Arrays.asList("xml", "conf"));
 
-  private static GatewayMessages log = MessagesFactory.get(GatewayMessages.class);
-  private Map<String, FileAlterationMonitor> monitors = new ConcurrentHashMap<>();
+  private static final GatewayMessages log = MessagesFactory.get(GatewayMessages.class);
+  private final Map<String, FileAlterationMonitor> monitors = new ConcurrentHashMap<>();
   private File topologiesDirectory;
   private File sharedProvidersDirectory;
   private File descriptorsDirectory;
@@ -193,7 +193,6 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
             } else {
               Thread.sleep(10);
               elapsed = System.currentTimeMillis() - start;
-              continue;
             }
           } else {
             auditor.audit(Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY,
@@ -759,8 +758,8 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
    */
   private static class TopologyDiscoveryTrigger implements ClusterConfigurationMonitor.ConfigurationChangeListener {
 
-    private TopologyService topologyService;
-    private ClusterConfigurationMonitorService ccms;
+    private final TopologyService topologyService;
+    private final ClusterConfigurationMonitorService ccms;
 
     TopologyDiscoveryTrigger(TopologyService topologyService, ClusterConfigurationMonitorService ccms) {
       this.topologyService = topologyService;
@@ -770,10 +769,11 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
     @Override
     public void onConfigurationChange(final String source, final String clusterName) {
       log.noticedClusterConfigurationChange(source, clusterName);
-      try {
-        boolean affectedDescriptors = false;
-        // Identify any descriptors associated with the cluster configuration change
-        for (File descriptor : topologyService.getDescriptors()) {
+      boolean affectedDescriptors = false;
+
+      // Identify any descriptors associated with the cluster configuration change
+      for (File descriptor : topologyService.getDescriptors()) {
+        try {
           SimpleDescriptor sd = SimpleDescriptorFactory.parse(descriptor.getAbsolutePath());
           if (source.equals(sd.getDiscoveryAddress()) && clusterName.equals(sd.getCluster())) {
             affectedDescriptors = true;
@@ -781,14 +781,14 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
             // 'Touch' the descriptor to trigger re-generation of the associated topology
             descriptor.setLastModified(System.currentTimeMillis());
           }
+        } catch (IOException e) {
+          log.errorRespondingToConfigChange(source, clusterName, descriptor.getName(), e);
         }
+      }
 
-        if (!affectedDescriptors) {
-          // If no descriptors are affected by this configuration, then clear the cache to prevent future notifications
-          ccms.clearCache(source, clusterName);
-        }
-      } catch (Exception e) {
-        log.errorRespondingToConfigChange(source, clusterName, e);
+      if (!affectedDescriptors) {
+        // If no descriptors are affected by this configuration, then clear the cache to prevent future notifications
+        ccms.clearCache(source, clusterName);
       }
     }
   }

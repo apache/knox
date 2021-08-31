@@ -39,6 +39,14 @@ public class HiveServiceModelGeneratorTest extends AbstractServiceModelGenerator
   }
 
   @Test
+  public void testHandlesTransportModeAll() {
+    Map<String, String> roleConfig = new HashMap<>();
+    roleConfig.put(HiveServiceModelGenerator.SAFETY_VALVE,
+                   getSafetyValveConfig(HiveServiceModelGenerator.TRANSPORT_MODE_ALL));
+    assertTrue(doTestHandles(newGenerator(), getServiceType(), Collections.emptyMap(), getRoleType(), roleConfig));
+  }
+
+  @Test
   public void testHandlesWhenTransportModeIsBinary() {
     Map<String, String> roleConfig = new HashMap<>();
     roleConfig.put(HiveServiceModelGenerator.SAFETY_VALVE, getSafetyValveConfig("binary"));
@@ -53,6 +61,18 @@ public class HiveServiceModelGeneratorTest extends AbstractServiceModelGenerator
     roleConfig.put(HiveServiceModelGenerator.SSL_ENABLED, "false");
     roleConfig.put(HiveServiceModelGenerator.SAFETY_VALVE,
                    getSafetyValveConfig(HiveServiceModelGenerator.TRANSPORT_MODE_HTTP));
+
+    validateServiceModel(createServiceModel(serviceConfig, roleConfig), serviceConfig, roleConfig);
+  }
+
+  @Test
+  public void testServiceModelMetadataTransportModeAll() {
+    final Map<String, String> serviceConfig = Collections.emptyMap();
+
+    final Map<String, String> roleConfig = new HashMap<>();
+    roleConfig.put(HiveServiceModelGenerator.SSL_ENABLED, "false");
+    roleConfig.put(HiveServiceModelGenerator.SAFETY_VALVE,
+                   getSafetyValveConfig(HiveServiceModelGenerator.TRANSPORT_MODE_ALL));
 
     validateServiceModel(createServiceModel(serviceConfig, roleConfig), serviceConfig, roleConfig);
   }

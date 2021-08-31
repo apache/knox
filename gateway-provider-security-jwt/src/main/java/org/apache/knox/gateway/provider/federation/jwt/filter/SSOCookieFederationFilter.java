@@ -21,8 +21,10 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.CertificateUtils;
 import org.apache.knox.gateway.util.CookieUtils;
 import org.eclipse.jetty.http.MimeTypes;
@@ -37,9 +39,13 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class SSOCookieFederationFilter extends AbstractJWTFilter {
   private static final JWTMessages LOGGER = MessagesFactory.get( JWTMessages.class );
@@ -59,9 +65,13 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
   private static final String ORIGINAL_URL_QUERY_PARAM = "originalUrl=";
   private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
 
+  /* A semicolon separated list of paths that need to bypass authentication */
+  private static final String SSO_UNAUTHENTICATED_PATHS_PARAM = "sso.unauthenticated.path.list";
+  private static final String DEFAULT_SSO_UNAUTHENTICATED_PATHS_PARAM = "/favicon.ico;/knoxtoken/api/v1/jwks.json";
   private String cookieName;
   private String authenticationProviderUrl;
   private String gatewayPath;
+  private Set<String> unAuthenticatedPaths = new HashSet(20);
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
@@ -92,6 +102,11 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
       publicKey = CertificateUtils.parseRSAPublicKey(verificationPEM);
     }
 
+    final String unAuthPathString = filterConfig
+        .getInitParameter(SSO_UNAUTHENTICATED_PATHS_PARAM);
+    /* prepare a list of allowed unauthenticated paths */
+    AuthFilterUtils.addUnauthPaths(unAuthenticatedPaths, unAuthPathString, DEFAULT_SSO_UNAUTHENTICATED_PATHS_PARAM);
+
     // gateway path for deriving an idp url when missing
     setGatewayPath(filterConfig);
 
@@ -121,7 +136,16 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
 
     List<Cookie> ssoCookies = CookieUtils.getCookiesForName(req, cookieName);
     if (ssoCookies.isEmpty()) {
-      if (req.getMethod().equals("OPTIONS")) {
+      /* check for unauthenticated paths to bypass */
+      if(AuthFilterUtils.doesRequestContainUnauthPath(unAuthenticatedPaths, request)) {
+        /* This path is configured as an unauthenticated path let the request through */
+        final Subject sub = new Subject();
+        sub.getPrincipals().add(new PrimaryPrincipal("anonymous"));
+        LOGGER.unauthenticatedPathBypass(req.getRequestURI(), unAuthenticatedPaths.toString());
+        continueWithEstablishedSecurityContext(sub, req, res, chain);
+      }
+
+      if ("OPTIONS".equals(req.getMethod())) {
         // CORS preflight requests to determine allowed origins and related config
         // must be able to continue without being redirected
         Subject sub = new Subject();
@@ -142,14 +166,16 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
             // we found a valid cookie we don't need to keep checking anymore
             return;
           }
-        } catch (ParseException ignore) {
+        } catch (ParseException | UnknownTokenException ignore) {
           // Ignore the error since cookie was invalid
           // Fall through to keep checking if there are more cookies
         }
       }
 
       // There were no valid cookies found so redirect to login url
-      sendRedirectToLoginURL(req, res);
+      if(res != null && !res.isCommitted()) {
+        sendRedirectToLoginURL(req, res);
+      }
     }
   }
 
@@ -187,14 +213,18 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
    * @return url to use as login url for redirect
    */
   protected String constructLoginURL(HttpServletRequest request) {
+    String providerURL = null;
     String delimiter = "?";
     if (authenticationProviderUrl == null) {
-      authenticationProviderUrl = deriveDefaultAuthenticationProviderUrl(request);
+      providerURL = deriveDefaultAuthenticationProviderUrl(request);
     }
-    if (authenticationProviderUrl.contains("?")) {
+    else {
+      providerURL = authenticationProviderUrl;
+    }
+    if (providerURL.contains("?")) {
       delimiter = "&";
     }
-    return authenticationProviderUrl + delimiter
+    return providerURL + delimiter
         + ORIGINAL_URL_QUERY_PARAM
         + request.getRequestURL().append(getOriginalQueryString(request));
   }
@@ -206,31 +236,28 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
    * @return url that is based on KnoxSSO endpoint
    */
   public String deriveDefaultAuthenticationProviderUrl(HttpServletRequest request) {
+    String providerURL = null;
     String scheme;
     String host;
     int port;
-    if (!beingProxied(request)) {
-      scheme = request.getScheme();
-      host = request.getServerName();
-      port = request.getServerPort();
-    }
-    else {
-      scheme = request.getHeader(X_FORWARDED_PROTO);
-      host = request.getHeader(X_FORWARDED_HOST);
-      port = Integer.parseInt(request.getHeader(X_FORWARDED_PORT));
-    }
-    StringBuilder sb = new StringBuilder(scheme);
-    sb.append("://").append(host);
-    if (!host.contains(":")) {
-      sb.append(':').append(port);
-    }
-    sb.append('/').append(gatewayPath).append("/knoxsso/api/v1/websso");
+    try {
+      URL url = new URL(request.getRequestURL().toString());
+      scheme = url.getProtocol();
+      host = url.getHost();
+      port = url.getPort();
 
-    return sb.toString();
-  }
+      StringBuilder sb = new StringBuilder(scheme);
+      sb.append("://").append(host);
+      if (!host.contains(":") && port != -1) {
+        sb.append(':').append(port);
+      }
+      sb.append('/').append(gatewayPath).append("/knoxsso/api/v1/websso");
+      providerURL = sb.toString();
+    } catch (MalformedURLException e) {
+      LOGGER.failedToDeriveAuthenticationProviderUrl(e);
+    }
 
-  private boolean beingProxied(HttpServletRequest request) {
-    return (request.getHeader(X_FORWARDED_HOST) != null);
+    return providerURL;
   }
 
   private String getOriginalQueryString(HttpServletRequest request) {

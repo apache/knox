@@ -21,6 +21,27 @@
         <context>/zeppelin/ws</context>
         <shortDesc>Zeppelin WS API</shortDesc>
         <description>Apache Zeppelin is a web-based notebook that enables data-driven, interactive data analytics and collaborative documents with SQL, Scala and more.</description>
+        <samples>
+            <sample>
+                <description>Fetch the available notebooks on your server</description>
+                <method>GET</method>
+                <path>api/notebook</path>
+            </sample>
+            <sample>
+                <description>Fetch the status of all paragraphs by the given note id (e.g. 'note1')</description>
+                <method>GET</method>
+                <path>api/notebook/job/note1</path>
+            </sample>
+            <sample>
+                <description>Delete a note by the given note id (e.g. 'note1')</description>
+                <method>DELETE</method>
+                <path>api/notebook/note1</path>
+            </sample>
+            <sample>
+                <description>You may check out Apache Zeppelin WS's REST API documentation here</description>
+                <value>http://zeppelin.apache.org/docs/0.8.1/usage/rest_api/notebook.html</value>
+            </sample>
+        </samples>
     </metadata>
   <routes>
     <route path="/zeppelin/ws">

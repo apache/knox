@@ -20,6 +20,32 @@
         <context>/hbase</context>
         <shortDesc>Web HBase</shortDesc>
         <description>The HBase REST server exposes endpoints that provide CRUD (create, read, update, delete) operations for each HBase process, as well as tables, regions, and namespaces.</description>
+        <samples>
+            <sample>
+                <description>List all namespaces</description>
+                <method>GET</method>
+                <path>namespaces</path>
+            </sample>
+            <sample>
+                <description>Describe a specific namespace</description>
+                <method>GET</method>
+                <path>namespaces/special_ns</path>
+            </sample>
+            <sample>
+                <description>Create a new namespace</description>
+                <method>POST</method>
+                <path>namespaces/special_ns</path>
+            </sample>
+            <sample>
+                <description>Delete a namespace. The namespace must be empty.</description>
+                <method>DELETE</method>
+                <path>namespaces/special_ns</path>
+            </sample>
+            <sample>
+                <description>You may check out Apache Web HBase's REST API documentation here</description>
+                <value>https://hbase.apache.org/book.html#_using_rest_endpointsl</value>
+            </sample>
+        </samples>
     </metadata>
     <routes>
         <route path="/hbase/?**">

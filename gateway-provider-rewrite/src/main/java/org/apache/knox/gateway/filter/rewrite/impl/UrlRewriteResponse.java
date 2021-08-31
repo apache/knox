@@ -55,7 +55,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.zip.DeflaterOutputStream;
 import java.util.zip.GZIPOutputStream;
+import java.util.zip.InflaterInputStream;
 
 import static org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteUtil.getRewriteFilterConfig;
 import static org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteUtil.pickFirstRuleWithEqualsIgnoreCasePathMatch;
@@ -90,6 +92,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
   private String xForwardedHostname;
   private String xForwardedPort;
   private String xForwardedScheme;
+  private String contentEncoding;
 
   public UrlRewriteResponse( FilterConfig config, HttpServletRequest request, HttpServletResponse response ) {
     super( response );
@@ -102,6 +105,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
     this.bodyFilterName = config.getInitParameter( UrlRewriteServletFilter.RESPONSE_BODY_FILTER_PARAM );
     this.headersFilterName = config.getInitParameter( UrlRewriteServletFilter.RESPONSE_HEADERS_FILTER_PARAM );
     this.headersFilterConfig = getRewriteFilterConfig( rewriter.getConfig(), headersFilterName, UrlRewriteServletFilter.HEADERS_MIME_TYPE );
+    this.contentEncoding = "";
   }
 
   protected boolean ignoreHeader( String name ) {
@@ -121,11 +125,18 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
     return value;
   }
 
+  private void setContentEncoding(String name, String value) {
+    if ("Content-Encoding".equalsIgnoreCase(name)) {
+      contentEncoding = value;
+    }
+  }
+
   // Ignore the Content-Length from the dispatch respond since the respond body may be rewritten.
   @Override
   public void setHeader( String name, String value ) {
     if( !ignoreHeader( name) ) {
       value = rewriteValue( value, pickFirstRuleWithEqualsIgnoreCasePathMatch( headersFilterConfig, name ) );
+      setContentEncoding(name, value);
       super.setHeader( name, value );
     }
   }
@@ -136,6 +147,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
     if( !ignoreHeader( name ) ) {
       String rule = pickFirstRuleWithEqualsIgnoreCasePathMatch( headersFilterConfig, name );
       value = rewriteValue( value, rule );
+      setContentEncoding(name, value);
       super.addHeader( name, value );
     }
   }
@@ -175,14 +187,18 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
       inBuffer.reset();
 
       final InputStream unFilteredStream;
-      if(isGzip) {
+      if(isGzip || "gzip".equalsIgnoreCase(contentEncoding)) {
         unFilteredStream = new GzipCompressorInputStream(inBuffer, true);
+        outStream = new GZIPOutputStream(output, STREAM_BUFFER_SIZE);
+      } else if ("deflate".equalsIgnoreCase(contentEncoding)) {
+        unFilteredStream = new InflaterInputStream(inBuffer);
+        outStream = new DeflaterOutputStream(output);
       } else {
         unFilteredStream = inBuffer;
+        outStream = output;
       }
       String charset = MimeTypes.getCharset( mimeType, StandardCharsets.UTF_8.name() );
       inStream = filter.filter( unFilteredStream, charset, rewriter, this, UrlRewriter.Direction.OUT, filterContentConfig );
-      outStream = (isGzip) ? new GZIPOutputStream(output, STREAM_BUFFER_SIZE) : output;
     } else {
       inStream = input;
       outStream = output;

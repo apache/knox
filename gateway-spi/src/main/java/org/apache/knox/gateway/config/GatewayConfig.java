@@ -19,6 +19,8 @@ package org.apache.knox.gateway.config;
 
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.security.KeyStore;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,7 +62,7 @@ public interface GatewayConfig {
   String IDENTITY_KEYSTORE_TYPE = "gateway.tls.keystore.type";
   String IDENTITY_KEY_ALIAS = "gateway.tls.key.alias";
   String IDENTITY_KEY_PASSPHRASE_ALIAS = "gateway.tls.key.passphrase.alias";
-  String DEFAULT_IDENTITY_KEYSTORE_TYPE = "JKS";
+  String DEFAULT_IDENTITY_KEYSTORE_TYPE = KeyStore.getDefaultType();
   String DEFAULT_IDENTITY_KEYSTORE_PASSWORD_ALIAS = "gateway-identity-keystore-password";
   String DEFAULT_IDENTITY_KEY_ALIAS = "gateway-identity";
   String DEFAULT_IDENTITY_KEY_PASSPHRASE_ALIAS = "gateway-identity-passphrase";
@@ -72,21 +74,26 @@ public interface GatewayConfig {
   String SIGNING_KEY_ALIAS = "gateway.signing.key.alias";
   String SIGNING_KEY_PASSPHRASE_ALIAS = "gateway.signing.key.passphrase.alias";
   String DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS = "signing.keystore.password";
-  String DEFAULT_SIGNING_KEYSTORE_TYPE = "JKS";
+  String DEFAULT_SIGNING_KEYSTORE_TYPE = KeyStore.getDefaultType();
   String DEFAULT_SIGNING_KEY_ALIAS = "gateway-identity";
   String DEFAULT_SIGNING_KEY_PASSPHRASE_ALIAS = "signing.key.passphrase";
 
   String GATEWAY_TRUSTSTORE_PASSWORD_ALIAS = "gateway.truststore.password.alias";
   String GATEWAY_TRUSTSTORE_PATH = "gateway.truststore.path";
   String GATEWAY_TRUSTSTORE_TYPE = "gateway.truststore.type";
-  String DEFAULT_GATEWAY_TRUSTSTORE_TYPE = "JKS";
+  String DEFAULT_GATEWAY_TRUSTSTORE_TYPE = KeyStore.getDefaultType();
   String DEFAULT_GATEWAY_TRUSTSTORE_PASSWORD_ALIAS = "gateway-truststore-password";
 
   String HTTP_CLIENT_TRUSTSTORE_PASSWORD_ALIAS = "gateway.httpclient.truststore.password.alias";
   String HTTP_CLIENT_TRUSTSTORE_PATH = "gateway.httpclient.truststore.path";
   String HTTP_CLIENT_TRUSTSTORE_TYPE = "gateway.httpclient.truststore.type";
-  String DEFAULT_HTTP_CLIENT_TRUSTSTORE_TYPE = "JKS";
+  String DEFAULT_HTTP_CLIENT_TRUSTSTORE_TYPE = KeyStore.getDefaultType();
   String DEFAULT_HTTP_CLIENT_TRUSTSTORE_PASSWORD_ALIAS = "gateway-httpclient-truststore-password";
+
+  String CREDENTIAL_STORE_ALG = "gateway.credential.store.alg";
+  String DEFAULT_CREDENTIAL_STORE_ALG = "AES";
+  String CREDENTIAL_STORE_TYPE = "gateway.credential.store.type";
+  String DEFAULT_CREDENTIAL_STORE_TYPE = "JCEKS";
 
   String REMOTE_CONFIG_REGISTRY_TYPE = "type";
   String REMOTE_CONFIG_REGISTRY_ADDRESS = "address";
@@ -232,6 +239,17 @@ public interface GatewayConfig {
    * @return an alias name
    */
   String getHttpClientTruststorePasswordAlias();
+
+  /**
+   * @return the algorithm that is used when creating a SecretKey when adding an
+   *         alias into a credential store
+   */
+  String getCredentialStoreAlgorithm();
+
+  /**
+   * @return the type of the credential store used by AliasService
+   */
+  String getCredentialStoreType();
 
   int getThreadPoolMax();
 
@@ -674,12 +692,94 @@ public interface GatewayConfig {
   long getKnoxTokenEvictionGracePeriod();
 
   /**
+   * Return the configured token state alias persistence interval (in seconds).
+   * @return Token state alias persistence interval in seconds.
+   */
+  long getKnoxTokenStateAliasPersistenceInterval();
+
+  /**
+   * @return the HMAC algorithm name to be used to sign generated Knox Token content (e.g. the token.id claim)
+   */
+  String getKnoxTokenHashAlgorithm();
+
+  /**
+   * @return the maximum number of tokens a user can manage at the same time. -1
+   *         means that users are allowed to create/manage as many tokens as they
+   *         want. This configuration only applies when server-managed token state
+   *         is enabled either in gateway-site or at the topology level.
+   */
+  int getMaximumNumberOfTokensPerUser();
+
+  /**
    * @return the list of topologies that should be hidden on Knox homepage
    */
   Set<String> getHiddenTopologiesOnHomepage();
 
   /**
+   * @return the list of pinned topologies on Knox homepage
+   */
+  Set<String> getPinnedTopologiesOnHomepage();
+
+  /**
    * @return returns whether know token permissive validation is enabled
    */
   boolean isKnoxTokenPermissiveValidationEnabled();
+
+  /**
+   * @param service Service to get the parameter for.
+   * @param parameter Parameter key to get the value for.
+   *
+   * @return the value of the given parameter for the given service if declared; an empty String otherwise
+   */
+  String getServiceParameter(String service, String parameter);
+
+  /**
+   * @return the whether logout from the knox home page is enabled or not
+   */
+  boolean homePageLogoutEnabled();
+
+  /**
+   * @return the Global Logout Page for Federated IDPs
+   */
+  String getGlobalLogoutPageUrl();
+
+  /**
+   * @return the maximum number of cache entries where keystore entries are stored
+   */
+  long getKeystoreCacheSizeLimit();
+
+  /**
+   * @return the time - in minutes - an entry should be live (i.e. must not expire) in keystore cache
+   */
+  long getKeystoreCacheEntryTimeToLiveInMinutes();
+
+  /**
+   * Indicates whether the embedded Jetty Server support for X-Forwarded Headers should
+   * be enabled.
+   * @return true if incoming X-Forwarded headers are enabled
+   */
+  boolean isGatewayServerIncomingXForwardedSupportEnabled();
+
+  /**
+   * Gets the home page profiles (pre-configured and user-defined profiles too).
+   * It's important that keys in the returned map are converted to lowercase strings.
+   */
+  Map<String, Collection<String>> getHomePageProfiles();
+
+  String getDatabaseType();
+
+  String getDatabaseConnectionUrl();
+
+  String getDatabaseHost();
+
+  int getDatabasePort();
+
+  String getDatabaseName();
+
+  boolean isDatabaseSslEnabled();
+
+  boolean verifyDatabaseSslServerCertificate();
+
+  String getDatabaseSslTruststoreFileName();
+
 }

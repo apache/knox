@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm.model.hdfs;
 
+import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.AbstractServiceModelGeneratorTest;
 import org.junit.Test;
@@ -24,6 +25,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -54,7 +56,31 @@ public class WebHdfsServiceModelGeneratorTest extends AbstractServiceModelGenera
     roleConfig.put(WebHdfsServiceModelGenerator.HTTP_PORT, "12345");
     roleConfig.put(WebHdfsServiceModelGenerator.HTTPS_PORT, "54321");
 
-    validateServiceModel(createServiceModel(serviceConfig, roleConfig), serviceConfig, roleConfig);
+    validateServiceModel(createServiceModel(serviceConfig, roleConfig), serviceConfig, roleConfig, false);
+  }
+
+  @Test
+  public void testServiceModelMetadataWithNameService() {
+    final Map<String, String> serviceConfig = new HashMap<>();
+    serviceConfig.put(WebHdfsServiceModelGenerator.WEBHDFS_ENABLED, "true");
+    serviceConfig.put(WebHdfsServiceModelGenerator.SSL_ENABLED, "false");
+
+    final Map<String, String> roleConfig = new HashMap<>();
+    roleConfig.put(WebHdfsServiceModelGenerator.AUTOFAILOVER_ENABLED, "true");
+    roleConfig.put(WebHdfsServiceModelGenerator.NN_NAMESERVICE, "myService");
+    roleConfig.put(WebHdfsServiceModelGenerator.NN_PORT, "12345");
+
+    ServiceModel generated = createServiceModel(serviceConfig, roleConfig);
+    validateServiceModel(generated, serviceConfig, roleConfig, false);
+
+    // Validate model metadata properties
+    final String qualifyingProperty =
+            ServiceModel.QUALIFYING_SERVICE_PARAM_PREFIX + WebHdfsServiceModelGenerator.DISCOVERY_NAMESERVICE;
+    Map<String, String> modelProps = generated.getQualifyingServiceParams();
+    assertEquals("Expected one service model properties", 1, modelProps.size());
+    assertEquals("Expected " + qualifyingProperty + " model property.",
+                 roleConfig.get(WebHdfsServiceModelGenerator.NN_NAMESERVICE),
+                 modelProps.get(qualifyingProperty));
   }
 
   @Override

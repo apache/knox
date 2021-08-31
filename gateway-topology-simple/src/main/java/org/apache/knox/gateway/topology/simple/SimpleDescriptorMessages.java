@@ -21,8 +21,16 @@ import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
 
-@Messages(logger="org.apache.gateway.topology.simple")
+@Messages(logger="org.apache.knox.gateway.topology.simple")
 public interface SimpleDescriptorMessages {
+
+    @Message(level = MessageLevel.INFO,
+            text = "Skipping service discovery for the \"{0}\" descriptor because its contents do not indicate it is intended.")
+    void discoveryNotConfiguredForDescriptor(String descriptorName);
+
+    @Message(level = MessageLevel.INFO,
+            text = "The \"{0}\" descriptor does not include discovery-type.")
+    void missingDiscoveryTypeInDescriptor(String descriptorName);
 
     @Message(level = MessageLevel.ERROR,
             text = "Unable to complete service discovery for cluster {0}.")

@@ -22,6 +22,7 @@ import java.security.Principal;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Optional;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -29,6 +30,9 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.services.security.impl.DefaultKeystoreService;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 
 import org.easymock.EasyMock;
@@ -61,6 +65,8 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeyPassphraseAlias()).andReturn(GatewayConfig.DEFAULT_SIGNING_KEY_PASSPHRASE_ALIAS).anyTimes();
     EasyMock.expect(config.getSigningKeystoreType()).andReturn("jks").anyTimes();
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
+    EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
+    EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
 
     MasterService ms = EasyMock.createNiceMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray());
@@ -80,10 +86,12 @@ public class DefaultTokenAuthorityServiceTest {
     ta.setKeystoreService(ks);
 
     ta.init(config, new HashMap<>());
+    ta.start();
 
-    JWT token = ta.issueToken(principal, "RS256");
+    JWT token = ta.issueToken(new JWTokenAttributesBuilder().setPrincipal(principal).setAlgorithm("RS256").setManaged(true).build());
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
+    assertTrue(Boolean.parseBoolean(token.getClaim(JWTToken.MANAGED_TOKEN_CLAIM)));
 
     assertTrue(ta.verifyToken(token));
   }
@@ -107,6 +115,8 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeyPassphraseAlias()).andReturn(GatewayConfig.DEFAULT_SIGNING_KEY_PASSPHRASE_ALIAS).anyTimes();
     EasyMock.expect(config.getSigningKeystoreType()).andReturn("jks").anyTimes();
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
+    EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
+    EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
 
     MasterService ms = EasyMock.createNiceMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray());
@@ -126,8 +136,10 @@ public class DefaultTokenAuthorityServiceTest {
     ta.setKeystoreService(ks);
 
     ta.init(config, new HashMap<>());
+    ta.start();
 
-    JWT token = ta.issueToken(principal, "https://login.example.com", "RS256");
+    JWT token = ta
+        .issueToken(new JWTokenAttributesBuilder().setPrincipal(principal).setAudiences("https://login.example.com").setAlgorithm("RS256").build());
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
     assertEquals("https://login.example.com", token.getAudience());
@@ -154,6 +166,8 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeyPassphraseAlias()).andReturn(GatewayConfig.DEFAULT_SIGNING_KEY_PASSPHRASE_ALIAS).anyTimes();
     EasyMock.expect(config.getSigningKeystoreType()).andReturn("jks").anyTimes();
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
+    EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
+    EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
 
     MasterService ms = EasyMock.createNiceMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray());
@@ -173,8 +187,9 @@ public class DefaultTokenAuthorityServiceTest {
     ta.setKeystoreService(ks);
 
     ta.init(config, new HashMap<>());
+    ta.start();
 
-    JWT token = ta.issueToken(principal, null, "RS256");
+    JWT token = ta.issueToken(new JWTokenAttributesBuilder().setPrincipal(principal).setAlgorithm("RS256").build());
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
 
@@ -200,6 +215,8 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeyPassphraseAlias()).andReturn(GatewayConfig.DEFAULT_SIGNING_KEY_PASSPHRASE_ALIAS).anyTimes();
     EasyMock.expect(config.getSigningKeystoreType()).andReturn("jks").anyTimes();
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
+    EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
+    EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
 
     MasterService ms = EasyMock.createNiceMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray());
@@ -219,8 +236,9 @@ public class DefaultTokenAuthorityServiceTest {
     ta.setKeystoreService(ks);
 
     ta.init(config, new HashMap<>());
+    ta.start();
 
-    JWT token = ta.issueToken(principal, "RS512");
+    JWT token = ta.issueToken(new JWTokenAttributesBuilder().setPrincipal(principal).setAlgorithm("RS512").build());
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
     assertTrue(token.getHeader().contains("RS512"));
@@ -247,6 +265,8 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeyPassphraseAlias()).andReturn(GatewayConfig.DEFAULT_SIGNING_KEY_PASSPHRASE_ALIAS).anyTimes();
     EasyMock.expect(config.getSigningKeystoreType()).andReturn("jks").anyTimes();
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
+    EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
+    EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
 
     MasterService ms = EasyMock.createNiceMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray());
@@ -266,7 +286,7 @@ public class DefaultTokenAuthorityServiceTest {
     ta.setKeystoreService(ks);
 
     ta.init(config, new HashMap<>());
-    ta.issueToken(principal, "none");
+    ta.issueToken(new JWTokenAttributesBuilder().setPrincipal(principal).setAlgorithm("none").build());
   }
 
   @Test
@@ -300,6 +320,8 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeyPassphraseAlias()).andReturn(GatewayConfig.DEFAULT_SIGNING_KEY_PASSPHRASE_ALIAS).anyTimes();
     EasyMock.expect(config.getSigningKeystoreType()).andReturn("jks").anyTimes();
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
+    EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
+    EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
 
     MasterService ms = EasyMock.createNiceMock(MasterService.class);
 
@@ -316,9 +338,11 @@ public class DefaultTokenAuthorityServiceTest {
     ta.setAliasService(as);
     ta.setKeystoreService(ks);
     ta.init(config, new HashMap<>());
+    ta.start();
 
-    JWT token = ta.issueToken(principal, Collections.emptyList(), "RS256", -1,
-        customSigningKeyName, customSigningKeyAlias, customSigningKeyPassphrase.toCharArray());
+    final JWTokenAttributes jwtAttributes = new JWTokenAttributesBuilder().setPrincipal(principal).setAudiences(Collections.emptyList()).setAlgorithm("RS256").setExpires(-1)
+        .setSigningKeystoreName(customSigningKeyName).setSigningKeystoreAlias(customSigningKeyAlias).setSigningKeystorePassphrase(customSigningKeyPassphrase.toCharArray()).build();
+    JWT token = ta.issueToken(jwtAttributes);
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
 
@@ -349,6 +373,10 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeystoreType()).andReturn("jks").atLeastOnce();
     EasyMock.expect(config.getSigningKeystorePasswordAlias()).andReturn(GatewayConfig.DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS).anyTimes();
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
+    EasyMock.expect(config.getKeystoreCacheEntryTimeToLiveInMinutes()).andReturn(0L).anyTimes();
+    EasyMock.expect(config.getKeystoreCacheSizeLimit()).andReturn(0L).anyTimes();
+    EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
+    EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
 
     MasterService ms = EasyMock.createMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray()).atLeastOnce();
@@ -388,6 +416,10 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeystorePath()).andReturn(basedir + "/target/test-classes/keystores/missing-server-keystore.jks").atLeastOnce();
     EasyMock.expect(config.getSigningKeystoreType()).andReturn("jks").atLeastOnce();
     EasyMock.expect(config.getSigningKeystorePasswordAlias()).andReturn(GatewayConfig.DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS).anyTimes();
+    EasyMock.expect(config.getKeystoreCacheEntryTimeToLiveInMinutes()).andReturn(0L).anyTimes();
+    EasyMock.expect(config.getKeystoreCacheSizeLimit()).andReturn(0L).anyTimes();
+    EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
+    EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
 
     MasterService ms = EasyMock.createMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray()).atLeastOnce();
@@ -432,6 +464,10 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeystoreType()).andReturn("jks").atLeastOnce();
     EasyMock.expect(config.getSigningKeystorePasswordAlias()).andReturn(GatewayConfig.DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS).anyTimes();
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
+    EasyMock.expect(config.getKeystoreCacheEntryTimeToLiveInMinutes()).andReturn(0L).anyTimes();
+    EasyMock.expect(config.getKeystoreCacheSizeLimit()).andReturn(0L).anyTimes();
+    EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
+    EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
 
     MasterService ms = EasyMock.createMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("invalid_password".toCharArray()).atLeastOnce();
@@ -476,6 +512,10 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeystoreType()).andReturn("jks").atLeastOnce();
     EasyMock.expect(config.getSigningKeystorePasswordAlias()).andReturn(GatewayConfig.DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS).anyTimes();
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("invalid_key").anyTimes();
+    EasyMock.expect(config.getKeystoreCacheEntryTimeToLiveInMinutes()).andReturn(0L).anyTimes();
+    EasyMock.expect(config.getKeystoreCacheSizeLimit()).andReturn(0L).anyTimes();
+    EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
+    EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
 
     MasterService ms = EasyMock.createMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray()).atLeastOnce();
@@ -520,6 +560,10 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeystoreType()).andReturn("jks").atLeastOnce();
     EasyMock.expect(config.getSigningKeystorePasswordAlias()).andReturn(GatewayConfig.DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS).anyTimes();
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
+    EasyMock.expect(config.getKeystoreCacheEntryTimeToLiveInMinutes()).andReturn(0L).anyTimes();
+    EasyMock.expect(config.getKeystoreCacheSizeLimit()).andReturn(0L).anyTimes();
+    EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
+    EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
 
     MasterService ms = EasyMock.createMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray()).atLeastOnce();
@@ -541,5 +585,62 @@ public class DefaultTokenAuthorityServiceTest {
     ta.start();
 
     EasyMock.verify(config, ms, as);
+  }
+
+  /**
+   * Test getSigningCertKid() function
+   * @throws Exception
+   */
+  @Test
+  public void testGetSigningCertKid() throws Exception {
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("john.doe@example.com");
+
+    GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    String basedir = System.getProperty("basedir");
+    if (basedir == null) {
+      basedir = new File(".").getCanonicalPath();
+    }
+
+    EasyMock.expect(config.getGatewaySecurityDir()).andReturn(basedir + "/target/test-classes").anyTimes();
+    EasyMock.expect(config.getGatewayKeystoreDir()).andReturn(basedir + "/target/test-classes/keystores").anyTimes();
+    EasyMock.expect(config.getSigningKeystoreName()).andReturn("server-keystore.jks").anyTimes();
+    EasyMock.expect(config.getSigningKeystorePath()).andReturn(basedir + "/target/test-classes/keystores/server-keystore.jks").anyTimes();
+    EasyMock.expect(config.getSigningKeystorePasswordAlias()).andReturn(GatewayConfig.DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS).anyTimes();
+    EasyMock.expect(config.getSigningKeyPassphraseAlias()).andReturn(GatewayConfig.DEFAULT_SIGNING_KEY_PASSPHRASE_ALIAS).anyTimes();
+    EasyMock.expect(config.getSigningKeystoreType()).andReturn("jks").anyTimes();
+    EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
+    EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
+    EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
+
+    MasterService ms = EasyMock.createNiceMock(MasterService.class);
+    EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray());
+
+    AliasService as = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(as.getSigningKeyPassphrase()).andReturn("horton".toCharArray()).anyTimes();
+
+    EasyMock.replay(principal, config, ms, as);
+
+    DefaultKeystoreService ks = new DefaultKeystoreService();
+    ks.setMasterService(ms);
+
+    ks.init(config, new HashMap<>());
+
+    DefaultTokenAuthorityService ta = new DefaultTokenAuthorityService();
+
+    /* negative test */
+    /* expectation that that the exception is eaten up in case where there was an exception getting kid */
+    Optional<String> opt = ta.getCachedSigningKeyID();
+    assertFalse(opt.isPresent());
+
+    /* now test for cases where we expect to get kid */
+    ta.setAliasService(as);
+    ta.setKeystoreService(ks);
+
+    ta.init(config, new HashMap<>());
+    ta.start();
+
+    opt = ta.getCachedSigningKeyID();
+    assertTrue("Missing expected KID value", opt.isPresent());
   }
 }

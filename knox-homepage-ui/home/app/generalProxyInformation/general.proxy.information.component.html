@@ -12,19 +12,21 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<h4>General Proxy Information</h4>
-<div class="table-responsive">
+<div>
+     <h4 (click)="toggleBoolean('showGeneralProxyInformation')"><span [class]="'clickable inline-glyph glyhpicon glyphicon-' + (this['showGeneralProxyInformation'] ? 'minus' : 'plus')"></span>&nbsp;General Proxy Information</h4>
+</div>
+<div class="table-responsive" *ngIf="this['showGeneralProxyInformation']">
     <table class="table table-striped table-hover">
        <colgroup>
             <col width="30%">
             <col width="70%">
         </colgroup>
         <tbody>
-            <tr>
+            <tr *ngIf="this['showKnoxVersion']">
                 <td>Knox Version</td>
                 <td>{{ getVersion() }}</td>
             </tr>
-            <tr>
+            <tr *ngIf="this['showPublicCerts']">
                 <td>TLS Public Certificate</td>
                 <td>
                     <a href="{{ getMetadataAPIUrl('publicCert?type=pem') }}">PEM</a>
@@ -32,11 +34,11 @@
                     <a href="{{ getMetadataAPIUrl('publicCert?type=jks') }}">JKS</a>
                 </td>
             </tr>
-            <tr>
+            <tr *ngIf="this['showAdminUI']">
                 <td>Admin UI URL</td>
                 <td><a href="{{ getAdminUiUrl() }}" target="_blank">{{ getAdminUiUrl() }}</a></td>
             </tr>
-            <tr>
+            <tr *ngIf="this['showAdminAPI']">
                 <td>
                     Admin API Details
                     <span class="inline-glyph glyphicon glyphicon-info-sign btn btn-xs"
@@ -46,7 +48,7 @@
                     <a href="{{ getAdminApiBookUrl() }}" target="_blank">{{ getAdminApiBookUrl() }}</a>
                 </td>
             </tr>
-            <tr>
+            <tr *ngIf="this['showMetadataAPI']">
                 <td>
                     Metadata API
                 </td>
@@ -56,6 +58,16 @@
                     <a href="{{ getMetadataAPIUrl('topologies') }}" target="_blank">Topologies</a>
                 </td>
             </tr>
-        </tbody>
+            <tr *ngIf="this['showTokens']">
+                <td>
+                    Integration Tokens
+                </td>
+                <td>
+                    <a href="{{ getTokenManagementUrl() }}" target="_blank">Token Management</a>
+                    &nbsp;&nbsp;|&nbsp;&nbsp;
+                    <a href="{{ getTokenGenerationUrl() }}" target="_blank">Token Generation</a>
+                </td>
+            </tr>
+         </tbody>
     </table>
 </div>

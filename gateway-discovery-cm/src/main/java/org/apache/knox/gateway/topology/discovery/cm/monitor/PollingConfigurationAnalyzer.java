@@ -29,6 +29,9 @@ import com.cloudera.api.swagger.model.ApiEventQueryResult;
 import com.cloudera.api.swagger.model.ApiRole;
 import com.cloudera.api.swagger.model.ApiRoleList;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+
 import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
@@ -48,6 +51,8 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -55,6 +60,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor.ConfigurationChangeListener;
@@ -66,13 +72,22 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
   private static final String COMMAND_STATUS = "COMMAND_STATUS";
 
-  private static final String STARTED_STATUS = "STARTED";
+  static final String SUCCEEDED_STATUS = "SUCCEEDED";
 
-  private static final String SUCCEEDED_STATUS = "SUCCEEDED";
+  static final String RESTART_COMMAND = "Restart";
 
-  private static final String RESTART_COMMAND = "Restart";
+  static final String START_COMMAND = "Start";
 
-  private static final String START_COMMAND = "Start";
+  static final String ROLLING_RESTART_COMMAND = "RollingRestart";
+
+  static final String RESTART_WAITING_FOR_STALENESS_SUCCESS_COMMAND = "RestartWaitingForStalenessSuccess";
+
+  static final String CM_SERVICE_TYPE = "ManagerServer";
+  static final String CM_SERVICE      = "ClouderaManager";
+
+  // Collection of those commands which represent the potential activation of service configuration changes
+  private static final Collection<String> ACTIVATION_COMMANDS = Arrays.asList(START_COMMAND, RESTART_COMMAND, ROLLING_RESTART_COMMAND,
+      RESTART_WAITING_FOR_STALENESS_SUCCESS_COMMAND);
 
   // The format of the filter employed when start events are queried from ClouderaManager
   private static final String EVENTS_QUERY_FORMAT =
@@ -87,8 +102,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
   private static final int DEFAULT_POLLING_INTERVAL = 60;
 
-  private static final ClouderaManagerServiceDiscoveryMessages log =
-                  MessagesFactory.get(ClouderaManagerServiceDiscoveryMessages.class);
+  private static final ClouderaManagerServiceDiscoveryMessages log = MessagesFactory.get(ClouderaManagerServiceDiscoveryMessages.class);
 
   // Fully-qualified cluster name delimiter
   private static final String FQCN_DELIM = "::";
@@ -109,17 +123,18 @@ public class PollingConfigurationAnalyzer implements Runnable {
   // Polling interval in seconds
   private int interval;
 
+  private final Cache<String, Long> processedEvents;
+
   // Cache of ClouderaManager API clients, keyed by discovery address
   private final Map<String, DiscoveryApiClient> clients = new ConcurrentHashMap<>();
 
   // Timestamp records of the most recent start event query per discovery address
-  private Map<String, String> eventQueryTimestamps = new ConcurrentHashMap<>();
+  private Map<String, Instant> eventQueryTimestamps = new ConcurrentHashMap<>();
 
   // The amount of time before "now" to will check for start events the first time
   private long eventQueryDefaultTimestampOffset = DEFAULT_EVENT_QUERY_DEFAULT_TIMESTAMP_OFFSET;
 
   private boolean isActive;
-
 
   PollingConfigurationAnalyzer(final ClusterConfigurationCache   configCache,
                                final AliasService                aliasService,
@@ -138,6 +153,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
     this.keystoreService = keystoreService;
     this.changeListener  = changeListener;
     this.interval        = interval;
+    this.processedEvents = Caffeine.newBuilder().expireAfterAccess(interval * 3, TimeUnit.SECONDS).maximumSize(1000).build();
   }
 
   void setInterval(int interval) {
@@ -162,93 +178,114 @@ public class PollingConfigurationAnalyzer implements Runnable {
     isActive = true;
 
     while (isActive) {
-      List<String> clustersToStopMonitoring = new ArrayList<>();
+      try {
+        final List<String> clustersToStopMonitoring = new ArrayList<>();
 
-      for (Map.Entry<String, List<String>> entry : configCache.getClusterNames().entrySet()) {
-        String address = entry.getKey();
-        for (String clusterName : entry.getValue()) {
-          log.checkingClusterConfiguration(clusterName, address);
+        for (Map.Entry<String, List<String>> entry : configCache.getClusterNames().entrySet()) {
+          String address = entry.getKey();
+          for (String clusterName : entry.getValue()) {
+            log.checkingClusterConfiguration(clusterName, address);
 
-          // Check here for existing descriptor references, and add to the removal list if there are not any
-          if (!clusterReferencesExist(address, clusterName)) {
-            clustersToStopMonitoring.add(address + FQCN_DELIM + clusterName);
-            continue;
-          }
-
-          // Configuration changes don't mean anything without corresponding service start/restarts. Therefore, monitor
-          // start events, and check the configuration only of the restarted service(s) to identify changes
-          // that should trigger re-discovery.
-          List<StartEvent> relevantEvents = getRelevantEvents(address, clusterName);
-
-          // If there are no recent start events, then nothing to do now
-          if (!relevantEvents.isEmpty()) {
-            boolean configHasChanged = false;
-
-            // If there are start events, then check the previously-recorded properties for the same service to
-            // identify if the configuration has changed
-            Map<String, ServiceConfigurationModel> serviceConfigurations =
-                                    configCache.getClusterServiceConfigurations(address, clusterName);
-
-            // Those services for which a start even has been handled
-            List<String> handledServiceTypes = new ArrayList<>();
-
-            for (StartEvent re : relevantEvents) {
-              String serviceType = re.getServiceType();
-
-              // Determine if we've already handled a start event for this service type
-              if (!handledServiceTypes.contains(serviceType)) {
-
-                // Get the previously-recorded configuration
-                ServiceConfigurationModel serviceConfig = serviceConfigurations.get(re.getServiceType());
-
-                if (serviceConfig != null) {
-                  // Get the current config for the started service, and compare with the previously-recorded config
-                  ServiceConfigurationModel currentConfig =
-                                  getCurrentServiceConfiguration(address, clusterName, re.getService());
-
-                  if (currentConfig != null) {
-                    log.analyzingCurrentServiceConfiguration(re.getService());
-                    try {
-                      configHasChanged = hasConfigurationChanged(serviceConfig, currentConfig);
-                    } catch (Exception e) {
-                      log.errorAnalyzingCurrentServiceConfiguration(re.getService(), e);
-                    }
-                  }
-                } else {
-                  // A new service (no prior config) represent a config change, since a descriptor may have referenced
-                  // the "new" service, but discovery had previously not succeeded because the service had not been
-                  // configured (appropriately) at that time.
-                  log.serviceEnabled(re.getService());
-                  configHasChanged = true;
-                }
-
-                handledServiceTypes.add(serviceType);
-              }
-
-              if (configHasChanged) {
-                break; // No need to continue checking once we've identified one reason to perform discovery again
-              }
+            // Check here for existing descriptor references, and add to the removal list if there are not any
+            if (!clusterReferencesExist(address, clusterName)) {
+              clustersToStopMonitoring.add(address + FQCN_DELIM + clusterName);
+              continue;
             }
 
-            // If a change has occurred, notify the listeners
-            if (configHasChanged) {
-              notifyChangeListener(address, clusterName);
+            // Configuration changes don't mean anything without corresponding service start/restarts. Therefore, monitor
+            // start events, and check the configuration only of the restarted service(s) to identify changes
+            // that should trigger re-discovery.
+            final List<StartEvent> relevantEvents = getRelevantEvents(address, clusterName);
+
+            // If there are no recent start events, then nothing to do now
+            if (!relevantEvents.isEmpty()) {
+              // If a change has occurred, notify the listeners
+              if (hasConfigChanged(address, clusterName, relevantEvents)) {
+                notifyChangeListener(address, clusterName);
+              }
             }
           }
         }
-      }
 
-      // Remove outdated entries from the cache
-      for (String fqcn : clustersToStopMonitoring) {
-        String[] parts = fqcn.split(FQCN_DELIM);
-        stopMonitoring(parts[0], parts[1]);
-      }
-      clustersToStopMonitoring.clear(); // reset the removal list
+        // Remove outdated entries from the cache
+        for (String fqcn : clustersToStopMonitoring) {
+          String[] parts = fqcn.split(FQCN_DELIM);
+          stopMonitoring(parts[0], parts[1]);
+        }
+        clustersToStopMonitoring.clear(); // reset the removal list
 
-      waitFor(interval);
+        waitFor(interval);
+      } catch (Exception e) {
+        log.clouderaManagerConfigurationChangesMonitoringError(e);
+      }
     }
 
     log.stoppedClouderaManagerConfigMonitor();
+  }
+
+  private boolean hasConfigChanged(String address, String clusterName, List<StartEvent> relevantEvents) {
+    // If there are start events, then check the previously-recorded properties for the same service to
+    // identify if the configuration has changed
+    final Map<String, ServiceConfigurationModel> serviceConfigurations =
+                          configCache.getClusterServiceConfigurations(address, clusterName);
+
+    // Those services for which a start even has been handled
+    final List<String> handledServiceTypes = new ArrayList<>();
+
+    boolean configHasChanged = false;
+    for (StartEvent re : relevantEvents) {
+      if (processedEvents.getIfPresent(re.auditEvent.getId()) != null) {
+        log.activationEventAlreadyProcessed(re.auditEvent.getId());
+        continue;
+      }
+
+      String serviceType = re.getServiceType();
+
+      if (CM_SERVICE_TYPE.equals(serviceType)) {
+        if (CM_SERVICE.equals(re.getService())) {
+          // This is a 'rolling cluster restart' or 'restart waiting for staleness' event, so assume configuration has changed
+          configHasChanged = true;
+        }
+      }
+
+      // Determine if we've already handled a start event for this service type
+      if (!configHasChanged && !handledServiceTypes.contains(serviceType)) {
+        // Get the previously-recorded configuration
+        ServiceConfigurationModel serviceConfig = serviceConfigurations.get(re.getServiceType());
+
+        if (serviceConfig != null) {
+          // Get the current config for the started service, and compare with the previously-recorded config
+          ServiceConfigurationModel currentConfig =
+                          getCurrentServiceConfiguration(address, clusterName, re.getService());
+
+          if (currentConfig != null) {
+            log.analyzingCurrentServiceConfiguration(re.getService());
+            try {
+              configHasChanged = hasConfigurationChanged(serviceConfig, currentConfig);
+            } catch (Exception e) {
+              log.errorAnalyzingCurrentServiceConfiguration(re.getService(), e);
+            }
+          }
+        } else {
+          // A new service (no prior config) represent a config change, since a descriptor may have referenced
+          // the "new" service, but discovery had previously not succeeded because the service had not been
+          // configured (appropriately) at that time.
+          log.serviceEnabled(re.getService());
+          configHasChanged = true;
+        }
+
+        handledServiceTypes.add(serviceType);
+      }
+
+      if (configHasChanged) {
+        break; // No need to continue checking once we've identified one reason to perform discovery again
+      }
+    }
+
+    // these events should not be processed again even if the next CM query result contains them
+    relevantEvents.forEach(re -> processedEvents.put(re.auditEvent.getId(), 1L));
+
+    return configHasChanged;
   }
 
   private TopologyService getTopologyService() {
@@ -331,10 +368,10 @@ public class PollingConfigurationAnalyzer implements Runnable {
   }
 
   void setEventQueryTimestamp(final String address, final String cluster, final Instant timestamp) {
-    eventQueryTimestamps.put((address + ":" + cluster), timestamp.toString());
+    eventQueryTimestamps.put((address + ":" + cluster), timestamp);
   }
 
-  private String getEventQueryTimestamp(final String address, final String cluster) {
+  private Instant getEventQueryTimestamp(final String address, final String cluster) {
     return eventQueryTimestamps.get(address + ":" + cluster);
   }
 
@@ -360,25 +397,31 @@ public class PollingConfigurationAnalyzer implements Runnable {
     List<StartEvent> relevantEvents = new ArrayList<>();
 
     // Get the last event query timestamp
-    String lastTimestamp = getEventQueryTimestamp(address, clusterName);
+    Instant lastTimestamp = getEventQueryTimestamp(address, clusterName);
 
     // If this is the first query, then define the last timestamp
     if (lastTimestamp == null) {
-      lastTimestamp = Instant.now().minus(eventQueryDefaultTimestampOffset, ChronoUnit.MILLIS).toString();
+      lastTimestamp = Instant.now().minus(eventQueryDefaultTimestampOffset, ChronoUnit.MILLIS);
     }
 
-    log.queryingRestartEventsFromCluster(clusterName, address, lastTimestamp);
+    // Go back in time an '2 x interval' more to mitigate the chance of losing a relevant audit event
+    lastTimestamp = lastTimestamp.minus(interval * 2, ChronoUnit.SECONDS);
+
+    log.queryingConfigActivationEventsFromCluster(clusterName, address, lastTimestamp.toString());
 
     // Record the new event query timestamp for this address/cluster
     setEventQueryTimestamp(address, clusterName, Instant.now());
 
     // Query the event log from CM for service/cluster start events
-    List<ApiEvent> events = queryEvents(getApiClient(configCache.getDiscoveryConfig(address, clusterName)),
-                                               clusterName,
-                                               lastTimestamp);
-    for (ApiEvent event : events) {
-      if(isRelevantEvent(event)) {
-        relevantEvents.add(new StartEvent(event));
+    final List<ApiEvent> events = queryEvents(getApiClient(configCache.getDiscoveryConfig(address, clusterName)), clusterName, lastTimestamp.toString());
+
+    if (events.isEmpty()) {
+      log.noActivationEventFound();
+    } else {
+      for (ApiEvent event : events) {
+        if(isRelevantEvent(event)) {
+          relevantEvents.add(new StartEvent(event));
+        }
       }
     }
 
@@ -388,12 +431,11 @@ public class PollingConfigurationAnalyzer implements Runnable {
   @SuppressWarnings("unchecked")
   private boolean isRelevantEvent(ApiEvent event) {
     final Map<String, Object> attributeMap = getAttributeMap(event.getAttributes());
-    final String command = attributeMap.containsKey(COMMAND) ? (String) ((List<String>) attributeMap.get(COMMAND)).get(0) : "";
-    final String status = attributeMap.containsKey(COMMAND_STATUS) ? (String) ((List<String>) attributeMap.get(COMMAND_STATUS)).get(0) : "";
-    if ((START_COMMAND.equals(command) || RESTART_COMMAND.equals(command)) && (SUCCEEDED_STATUS.equals(status) || STARTED_STATUS.equals(status))) {
-      return true;
-    }
-    return false;
+    final String command =
+            attributeMap.containsKey(COMMAND) ? ((List<String>) attributeMap.get(COMMAND)).get(0) : "";
+    final String status =
+            attributeMap.containsKey(COMMAND_STATUS) ? ((List<String>) attributeMap.get(COMMAND_STATUS)).get(0) : "";
+    return (ACTIVATION_COMMANDS.contains(command) && SUCCEEDED_STATUS.equals(status));
   }
 
   private Map<String, Object> getAttributeMap(List<ApiEventAttribute> attributes) {
@@ -414,16 +456,13 @@ public class PollingConfigurationAnalyzer implements Runnable {
     List<ApiEvent> events = new ArrayList<>();
 
     // Setup the query for events
-    String timeFilter =
-        (since != null) ? String.format(Locale.ROOT, EVENTS_QUERY_TIMESTAMP_FORMAT, since) : "";
+    String timeFilter = (since != null) ? String.format(Locale.ROOT, EVENTS_QUERY_TIMESTAMP_FORMAT, since) : "";
 
-    String queryString = String.format(Locale.ROOT,
-                                       EVENTS_QUERY_FORMAT,
-                                       clusterName,
-                                       timeFilter);
+    String queryString = String.format(Locale.ROOT, EVENTS_QUERY_FORMAT, clusterName, timeFilter);
 
     try {
-      ApiEventQueryResult eventsResult = (new EventsResourceApi(client)).readEvents(20, queryString, 0);
+      // giving 'null' as maximum result size results in fetching all events from CM within the given time interval
+      ApiEventQueryResult eventsResult = (new EventsResourceApi(client)).readEvents(null, queryString, 0);
       events.addAll(eventsResult.getItems());
     } catch (ApiException e) {
       log.clouderaManagerEventsAPIError(e);
@@ -533,9 +572,9 @@ public class PollingConfigurationAnalyzer implements Runnable {
    */
   static final class StartEvent {
 
-    private static final String ATTR_CLUSTER = "CLUSTER";
+    private static final String ATTR_CLUSTER      = "CLUSTER";
     private static final String ATTR_SERVICE_TYPE = "SERVICE_TYPE";
-    private static final String ATTR_SERVICE = "SERVICE";
+    private static final String ATTR_SERVICE      = "SERVICE";
 
     private static List<String> attrsOfInterest = new ArrayList<>();
 

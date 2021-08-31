@@ -15,28 +15,38 @@
  * limitations under the License.
  */
 import {NgModule} from '@angular/core';
-import {DataTableModule} from 'angular2-datatable';
 import {BrowserModule} from '@angular/platform-browser';
 import {HttpClientModule, HttpClientXsrfModule} from '@angular/common/http';
 import {MatGridListModule} from '@angular/material/grid-list';
+import {BsModalModule} from 'ng2-bs3-modal/ng2-bs3-modal';
+import {Routes, RouterModule}  from '@angular/router';
+import {APP_BASE_HREF} from '@angular/common';
 
 import {GeneralProxyInformationComponent} from './generalProxyInformation/general.proxy.information.component';
 import {TopologyInformationsComponent} from './topologies/topology.information.component';
+import {SessionInformationComponent} from './sessionInformation/session.information.component';
 import {HomepageService} from './homepage.service';
 
 @NgModule({
     imports: [BrowserModule,
         HttpClientModule,
         HttpClientXsrfModule,
-        DataTableModule,
-        MatGridListModule
+        MatGridListModule,
+        BsModalModule,
+        RouterModule.forRoot([])
     ],
     declarations: [GeneralProxyInformationComponent,
-                   TopologyInformationsComponent
+                   TopologyInformationsComponent,
+                   SessionInformationComponent
     ],
-    providers: [HomepageService
+    providers: [HomepageService,
+      {
+        provide: APP_BASE_HREF,
+        useValue: window['base-href']
+      }
     ],
-    bootstrap: [GeneralProxyInformationComponent,
+    bootstrap: [SessionInformationComponent,
+                GeneralProxyInformationComponent,
                 TopologyInformationsComponent
     ]
 })

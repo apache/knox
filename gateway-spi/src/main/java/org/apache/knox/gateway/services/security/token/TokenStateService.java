@@ -16,6 +16,8 @@
  */
 package org.apache.knox.gateway.services.security.token;
 
+import java.util.Collection;
+
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
@@ -64,6 +66,15 @@ public interface TokenStateService extends Service {
    * @param maxLifetimeDuration The maximum allowed lifetime for the token.
    */
   void addToken(String tokenId, long issueTime, long expiration, long maxLifetimeDuration);
+
+  /**
+   * @param tokenId
+   *          The token unique identifier.
+   * @return The time the token was issued.
+   * @throws UnknownTokenException
+   *           if token is not found.
+   */
+  long getTokenIssueTime(String tokenId) throws UnknownTokenException;
 
   /**
    * Checks if the token is expired.
@@ -152,4 +163,44 @@ public interface TokenStateService extends Service {
    * @return The token's expiration time in milliseconds.
    */
   long getTokenExpiration(String tokenId) throws UnknownTokenException;
+
+  /**
+   * Get the expiration for the specified token, optionally validating the token prior to accessing its expiration.
+   * In some cases, the token has already been validated, and skipping an additional unnecessary validation improves
+   * performance.
+   *
+   * @param tokenId  The token unique identifier.
+   * @param validate Flag indicating whether the token needs to be validated.
+   * @throws UnknownTokenException Exception if token is not found.
+   *
+   * @return The token's expiration time in milliseconds.
+   */
+  long getTokenExpiration(String tokenId, boolean validate) throws UnknownTokenException;
+
+  /**
+   * Adds metadata to the token identified by the given ID
+   *
+   * @param tokenId
+   *          The token's unique identifier.
+   * @param metadata
+   *          The metadata to be added
+   */
+  void addMetadata(String tokenId, TokenMetadata metadata);
+
+  /**
+   *
+   * @param tokenId
+   *          The token's unique identifier.
+   * @return The associated token metadata
+   */
+  TokenMetadata getTokenMetadata(String tokenId) throws UnknownTokenException;
+
+  /**
+   * @param userName The name of the user to get tokens for
+   * @return a collection of tokens associated to the given user; it's an empty
+   *         collection if there is no associated token found in the underlying
+   *         token management backend
+   */
+  Collection<KnoxToken> getTokens(String userName);
+
 }

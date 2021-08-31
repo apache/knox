@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+  <!-- These should be removed at some point since Livy
+       doesn't have /v1 in the REST API specification -->
+  <rule dir="IN" name="LIVYSERVER/livy/root/v1/inbound/" pattern="*://*:*/**/livy/v1">
+    <rewrite template="{$serviceUrl[LIVYSERVER]}"/>
+  </rule>
+  <rule dir="IN" name="LIVYSERVER/livy/path/v1/inbound" pattern="*://*:*/**/livy/v1/{path=**}?{**}">
+    <rewrite template="{$serviceUrl[LIVYSERVER]}/{path=**}?{**}"/>
+  </rule>
+
+  <!-- Prefer these rules without v1 in the url -->
+  <rule dir="IN" name="LIVYSERVER/livy/root/inbound" pattern="*://*:*/**/livy">
+    <rewrite template="{$serviceUrl[LIVYSERVER]}"/>
+  </rule>
+  <rule dir="IN" name="LIVYSERVER/livy/path/inbound" pattern="*://*:*/**/livy/{path=**}?{**}">
+    <rewrite template="{$serviceUrl[LIVYSERVER]}/{path=**}?{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="LIVYSERVER/livy/outbound/sparkurl" pattern="*://*:*/proxy/{**}">
+    <rewrite template="{$frontend[url]}/yarnuiv2/proxy/{**}"/>
+  </rule>
+
+  <rule dir="OUT" name="LIVYSERVER/livy/outbound/logs" pattern="{scheme}://{host}:{port}/node/containerlogs/{**}?{**}">
+    <rewrite template="{$frontend[url]}/yarnuiv2/node/containerlogs/{**}?{**}?{scheme}?host={$hostmap(host)}?{port}"/>
+  </rule>
+
+  <rule dir="OUT" name="LIVYSERVER/livy/outbound/logs2" pattern="{scheme}://{host}:{port}/node/containerlogs/{**}">
+    <rewrite template="{$frontend[url]}/yarnuiv2/node/containerlogs/{**}?{scheme}?host={$hostmap(host)}?{port}"/>
+  </rule>
+
+  <rule dir="OUT" name="LIVYSERVER/livy/outbound/headers/ui" pattern="{scheme}://{host}:{port}/ui/">
+    <rewrite template="{$frontend[url]}/livy/ui/"/>
+  </rule>
+
+  <filter name="LIVYSERVER/livy/outbound/headers">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="LIVYSERVER/livy/outbound/headers/ui"/>
+    </content>
+  </filter>
+
+</rules>

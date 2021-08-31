@@ -62,6 +62,7 @@ export class NewDescWizardComponent implements OnInit {
         'RANGER',
         'RANGERUI',
         'RESOURCEMANAGER',
+        'RESOURCEMANAGERAPI',
         'SOLR',
         'SPARKHISTORYUI',
         'SPARK3HISTORYUI',

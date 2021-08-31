@@ -39,6 +39,14 @@ public class HiveOnTezServiceModelGeneratorTest extends AbstractServiceModelGene
   }
 
   @Test
+  public void testHandlesTransportModeAll() {
+    Map<String, String> roleConfig = new HashMap<>();
+    roleConfig.put(HiveOnTezServiceModelGenerator.HIVEONTEZ_TRANSPORT_MODE,
+                   HiveOnTezServiceModelGenerator.TRANSPORT_MODE_ALL);
+    assertTrue(doTestHandles(newGenerator(), getServiceType(), Collections.emptyMap(), getRoleType(), roleConfig));
+  }
+
+  @Test
   public void testHandlesWhenTransportModeIsBinary() {
     Map<String, String> roleConfig = new HashMap<>();
     roleConfig.put(HiveOnTezServiceModelGenerator.HIVEONTEZ_TRANSPORT_MODE, "binary");
@@ -53,6 +61,20 @@ public class HiveOnTezServiceModelGeneratorTest extends AbstractServiceModelGene
     roleConfig.put(HiveOnTezServiceModelGenerator.SSL_ENABLED, "false");
     roleConfig.put(HiveOnTezServiceModelGenerator.HIVEONTEZ_TRANSPORT_MODE,
                    HiveOnTezServiceModelGenerator.TRANSPORT_MODE_HTTP);
+    roleConfig.put(HiveOnTezServiceModelGenerator.HIVEONTEZ_HTTP_PORT, "12345");
+    roleConfig.put(HiveOnTezServiceModelGenerator.SAFETY_VALVE, "null");
+
+    validateServiceModel(createServiceModel(serviceConfig, roleConfig), serviceConfig, roleConfig);
+  }
+
+  @Test
+  public void testServiceModelMetadataTransportModeAll() {
+    final Map<String, String> serviceConfig = Collections.emptyMap();
+
+    final Map<String, String> roleConfig = new HashMap<>();
+    roleConfig.put(HiveOnTezServiceModelGenerator.SSL_ENABLED, "false");
+    roleConfig.put(HiveOnTezServiceModelGenerator.HIVEONTEZ_TRANSPORT_MODE,
+                   HiveOnTezServiceModelGenerator.TRANSPORT_MODE_ALL);
     roleConfig.put(HiveOnTezServiceModelGenerator.HIVEONTEZ_HTTP_PORT, "12345");
     roleConfig.put(HiveOnTezServiceModelGenerator.SAFETY_VALVE, "null");
 

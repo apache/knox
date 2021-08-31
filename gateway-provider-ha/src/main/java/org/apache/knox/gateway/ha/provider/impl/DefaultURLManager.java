@@ -31,8 +31,7 @@ public class DefaultURLManager implements URLManager {
 
   private static final HaMessages LOG = MessagesFactory.get(HaMessages.class);
 
-  private ConcurrentLinkedQueue<String> urls = new ConcurrentLinkedQueue<>();
-
+  private final ConcurrentLinkedQueue<String> urls = new ConcurrentLinkedQueue<>();
 
   @Override
   public boolean supportsConfig(HaServiceConfig config) {
@@ -96,5 +95,11 @@ public class DefaultURLManager implements URLManager {
         LOG.markedFailedUrl(failed, urls.peek());
       }
     }
+  }
+
+  @Override
+  public synchronized void makeNextActiveURLAvailable() {
+    String head = urls.poll();
+    urls.offer(head);
   }
 }

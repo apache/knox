@@ -51,6 +51,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Processes simple topology descriptors, producing full topology files, which can subsequently be deployed to the
@@ -84,11 +86,9 @@ public class SimpleDescriptorHandler {
 
     private static final SimpleDescriptorMessages log = MessagesFactory.get(SimpleDescriptorMessages.class);
 
-    private static final String DISCOVERY_PARAM_PREFIX = "discovery-";
+    private static final Map<String, ServiceDiscovery> discoveryInstances = new HashMap<>();
 
-    private static Map<String, ServiceDiscovery> discoveryInstances = new HashMap<>();
-
-    private static final Set<String> ALLOWED_SERVICES_WITHOUT_URLS_AND_PARAMS = Collections.singleton("KNOX");
+    private static final Set<String> ALLOWED_SERVICES_WITHOUT_URLS_AND_PARAMS = Collections.unmodifiableSet(Stream.of("KNOX", "KNOX-METADATA", "KNOXSSOUT", "KNOX-SESSION").collect(Collectors.toSet()));
 
     public static Map<String, File> handle(GatewayConfig config, File desc, File destDirectory, Service...gatewayServices) throws IOException {
         return handle(config, SimpleDescriptorFactory.parse(desc.getAbsolutePath()), desc.getParentFile(), destDirectory, gatewayServices);
@@ -106,9 +106,14 @@ public class SimpleDescriptorHandler {
         Map<String, Map<String, String>> serviceParams = new HashMap<>();
         Map<String, List<String>> serviceURLs = new HashMap<>();
 
-        ServiceDiscovery.Cluster cluster = performDiscovery(config, desc, gatewayServices);
-        if (cluster == null) {
-            log.failedToDiscoverClusterServices(desc.getName());
+        ServiceDiscovery.Cluster cluster = null;
+        if (shouldPerformDiscovery(desc)) {
+            cluster = performDiscovery(config, desc, gatewayServices);
+            if (cluster == null) {
+                log.failedToDiscoverClusterServices(desc.getName());
+            }
+        } else {
+            log.discoveryNotConfiguredForDescriptor(desc.getName());
         }
 
         for (SimpleDescriptor.Service descService : desc.getServices()) {
@@ -155,7 +160,7 @@ public class SimpleDescriptorHandler {
                 boolean hasNonDiscoveryParams = false;
                 // Determine if there are any params which are not discovery-only
                 for (String paramName : descriptorServiceParams.keySet()) {
-                    if (!paramName.startsWith(DISCOVERY_PARAM_PREFIX)) {
+                    if (!paramName.startsWith(SimpleDescriptor.DISCOVERY_PARAM_PREFIX)) {
                         hasNonDiscoveryParams = true;
                         break;
                     }
@@ -195,6 +200,22 @@ public class SimpleDescriptorHandler {
                                 gws);
     }
 
+    /**
+     * Determine whether discovery should be performed for the specified descriptor.
+     *
+     * @param desc A SimpleDescriptor
+     * @return true, if discovery should be performed for the descriptor; Otherwise, false.
+     */
+    private static boolean shouldPerformDiscovery(final SimpleDescriptor desc) {
+        // If there is a discovery type specified, then discovery should be performed
+        final String discoveryType = desc.getDiscoveryType();
+        if (discoveryType != null && !discoveryType.isEmpty()) {
+            return true;
+        }
+        log.missingDiscoveryTypeInDescriptor(desc.getName());
+        return false;
+    }
+
     private static GatewayServices getGatewayServices(Service... services) {
       for (Service service : services) {
         if (service instanceof GatewayServices) {
@@ -220,6 +241,9 @@ public class SimpleDescriptorHandler {
         ServiceDiscovery sd = discoveryInstances.get(discoveryType);
         if (sd == null) {
             sd = ServiceDiscoveryFactory.get(discoveryType, gatewayServices);
+            if (sd == null) {
+                throw new IllegalArgumentException("Unsupported service discovery type: " + discoveryType);
+            }
             discoveryInstances.put(discoveryType, sd);
         }
 
@@ -530,7 +554,7 @@ public class SimpleDescriptorHandler {
                 Map<String, String> svcParams = serviceParams.get(serviceName);
                 if (svcParams != null) {
                     for (Entry<String, String> svcParam : svcParams.entrySet()) {
-                        if (!(svcParam.getKey().toLowerCase(Locale.ROOT)).startsWith(DISCOVERY_PARAM_PREFIX)) {
+                        if (!(svcParam.getKey().toLowerCase(Locale.ROOT)).startsWith(SimpleDescriptor.DISCOVERY_PARAM_PREFIX)) {
                             sw.write("        <param>\n");
                             sw.write("            <name>" + svcParam.getKey() + "</name>\n");
                             sw.write("            <value>" + svcParam.getValue() + "</value>\n");
@@ -624,11 +648,14 @@ public class SimpleDescriptorHandler {
             // If it does exist, only overwrite it if it has changed (KNOX-2302)
             // Compare the generated topology with the in-memory topology
             Topology existing = null;
-            TopologyService topologyService = gwServices.getService(ServiceType.TOPOLOGY_SERVICE);
-            for (Topology t : topologyService.getTopologies()) {
-                if (topologyName.equals(t.getName())) {
-                    existing = t;
-                    break;
+            TopologyService topologyService = null;
+            if (gwServices != null) {
+                topologyService = gwServices.getService(ServiceType.TOPOLOGY_SERVICE);
+                for (Topology t : topologyService.getTopologies()) {
+                    if (topologyName.equals(t.getName())) {
+                        existing = t;
+                        break;
+                    }
                 }
             }
 

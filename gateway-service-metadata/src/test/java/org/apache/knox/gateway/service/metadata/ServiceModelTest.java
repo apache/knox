@@ -125,7 +125,7 @@ public class ServiceModelTest {
     serviceModel.setService(service);
     EasyMock.expect(service.getRole()).andReturn("sampleRole").anyTimes();
     EasyMock.replay(service);
-    assertEquals("/samplerole/", serviceModel.getContext());
+    assertEquals("/samplerole", serviceModel.getContext());
   }
 
   @Test
@@ -136,7 +136,7 @@ public class ServiceModelTest {
     final String context = "/testContext";
     EasyMock.expect(metadata.getContext()).andReturn(context).anyTimes();
     EasyMock.replay(metadata);
-    assertEquals(context + "/", serviceModel.getContext());
+    assertEquals(context, serviceModel.getContext());
   }
 
   @Test
@@ -176,7 +176,7 @@ public class ServiceModelTest {
     final String context = "/testContext";
     EasyMock.expect(metadata.getContext()).andReturn(context).anyTimes();
     EasyMock.replay(metadata);
-    assertEquals(String.format(Locale.ROOT, SERVICE_URL_TEMPLATE, SERVER_SCHEME, SERVER_NAME, SERVER_PORT, gatewayPath, topologyName, context + "/"), serviceModel.getServiceUrl());
+    assertEquals(String.format(Locale.ROOT, SERVICE_URL_TEMPLATE, SERVER_SCHEME, SERVER_NAME, SERVER_PORT, gatewayPath, topologyName, context), serviceModel.getServiceUrl());
   }
 
   @Test
@@ -199,12 +199,12 @@ public class ServiceModelTest {
     EasyMock.expect(metadata.getContext()).andReturn(context).anyTimes();
     EasyMock.replay(service, metadata);
     assertEquals(String.format(Locale.ROOT, SERVICE_URL_TEMPLATE, SERVER_SCHEME, SERVER_NAME, SERVER_PORT, gatewayPath, topologyName,
-        context.replace("{{BACKEND_HOST}}", backendHost) + "/"), serviceModel.getServiceUrl());
+        context.replace("{{BACKEND_HOST}}", backendHost)), serviceModel.getServiceUrl());
 
     final String serviceUrl = "https://serviceHost:8888";
     serviceModel.setServiceUrl(serviceUrl); // backend host comes from the given service URL
     assertEquals(
-        String.format(Locale.ROOT, SERVICE_URL_TEMPLATE, SERVER_SCHEME, SERVER_NAME, SERVER_PORT, gatewayPath, topologyName, context.replace("{{BACKEND_HOST}}", serviceUrl) + "/"),
+        String.format(Locale.ROOT, SERVICE_URL_TEMPLATE, SERVER_SCHEME, SERVER_NAME, SERVER_PORT, gatewayPath, topologyName, context.replace("{{BACKEND_HOST}}", serviceUrl)),
         serviceModel.getServiceUrl());
   }
 
@@ -229,6 +229,6 @@ public class ServiceModelTest {
 
     EasyMock.replay(service, metadata);
     assertEquals(String.format(Locale.ROOT, SERVICE_URL_TEMPLATE, SERVER_SCHEME, SERVER_NAME, SERVER_PORT, gatewayPath, topologyName,
-        context.replace("{{SCHEME}}", "https").replace("{{HOST}}", "localhost").replace("{{PORT}}", "5555") + "/"), serviceModel.getServiceUrl());
+        context.replace("{{SCHEME}}", "https").replace("{{HOST}}", "localhost").replace("{{PORT}}", "5555")), serviceModel.getServiceUrl());
   }
 }

@@ -17,6 +17,21 @@
  */
 package org.apache.knox.gateway.dispatch;
 
+import static org.apache.knox.gateway.dispatch.DefaultDispatch.SET_COOKIE;
+import static org.apache.knox.gateway.dispatch.DefaultDispatch.WWW_AUTHENTICATE;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+
+import java.net.URI;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
@@ -28,19 +43,6 @@ import org.apache.knox.test.mock.MockHttpServletResponse;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Test;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.net.URI;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.apache.knox.gateway.dispatch.DefaultDispatch.SET_COOKIE;
-import static org.apache.knox.gateway.dispatch.DefaultDispatch.WWW_AUTHENTICATE;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
 
 public class ConfigurableDispatchTest {
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
@@ -69,6 +71,16 @@ public class ConfigurableDispatchTest {
     EasyMock.replay( request );
     uri = dispatch.getDispatchUrl( request );
     assertThat( uri.toASCIIString(), is( "http://test-host:42/test,path" ) );
+
+    path = "http://test-host:42/test%2Cpath";
+    query = "service_config_version_note.matches(Updated%20Kerberos-related%20configurations";
+    request = EasyMock.createNiceMock( HttpServletRequest.class );
+    EasyMock.expect( request.getRequestURI() ).andReturn( path ).anyTimes();
+    EasyMock.expect( request.getRequestURL() ).andReturn( new StringBuffer( path ) ).anyTimes();
+    EasyMock.expect( request.getQueryString() ).andReturn( query ).anyTimes();
+    EasyMock.replay( request );
+    uri = dispatch.getDispatchUrl( request );
+    assertThat( uri.toASCIIString(), is( "http://test-host:42/test%2Cpath?service_config_version_note.matches(Updated%20Kerberos-related%20configurations" ) );
 
     path = "http://test-host:42/test%2Cpath";
     request = EasyMock.createNiceMock( HttpServletRequest.class );
@@ -127,6 +139,17 @@ public class ConfigurableDispatchTest {
     EasyMock.replay( request );
     uri = dispatch.getDispatchUrl( request );
     assertThat( uri.toASCIIString(), is( "http://test-host:42/test%2Cpath" ) );
+
+    // encoding in query %20 is not removed
+    path = "http://test-host:42/test%2Cpath";
+    query = "service_config_version_note.matches(Updated%20Kerberos-related%20configurations";
+    request = EasyMock.createNiceMock( HttpServletRequest.class );
+    EasyMock.expect( request.getRequestURI() ).andReturn( path ).anyTimes();
+    EasyMock.expect( request.getRequestURL() ).andReturn( new StringBuffer( path ) ).anyTimes();
+    EasyMock.expect( request.getQueryString() ).andReturn( query ).anyTimes();
+    EasyMock.replay( request );
+    uri = dispatch.getDispatchUrl( request );
+    assertThat( uri.toASCIIString(), is( "http://test-host:42/test%2Cpath?service_config_version_note.matches(Updated%20Kerberos-related%20configurations" ) );
 
     // encoding in query string is removed
     path = "http://test-host:42/test%2Cpath";
@@ -259,6 +282,169 @@ public class ConfigurableDispatchTest {
     assertThat(outboundResponse.getHeader(WWW_AUTHENTICATE), is("negotiate"));
   }
 
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void testRequestAppendHeadersConfig() {
+    ConfigurableDispatch dispatch = new ConfigurableDispatch();
+    dispatch.setRequestAppendHeaders("a:b;c:d");
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put(HttpHeaders.AUTHORIZATION, "Basic ...");
+    headers.put(HttpHeaders.ACCEPT, "abc");
+    headers.put("TEST", "test");
+
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getHeaderNames()).andReturn(Collections.enumeration(headers.keySet())).anyTimes();
+    Capture<String> capturedArgument = Capture.newInstance();
+    EasyMock.expect(inboundRequest.getHeader(EasyMock.capture(capturedArgument)))
+            .andAnswer(() -> headers.get(capturedArgument.getValue())).anyTimes();
+    EasyMock.replay(inboundRequest);
+
+    HttpUriRequest outboundRequest = new HttpGet();
+    dispatch.copyRequestHeaderFields(outboundRequest, inboundRequest);
+
+    Header[] outboundRequestHeaders = outboundRequest.getAllHeaders();
+    assertThat(outboundRequestHeaders.length, is(4));
+    assertThat(outboundRequestHeaders[0].getName(), is(HttpHeaders.ACCEPT));
+    assertThat(outboundRequestHeaders[1].getName(), is("TEST"));
+    assertThat(outboundRequestHeaders[2].getName(), is("a"));
+    assertThat(outboundRequestHeaders[3].getName(), is("c"));
+  }
+
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void testRequestExcludeAndAppendHeadersConfig() {
+    ConfigurableDispatch dispatch = new ConfigurableDispatch();
+    dispatch.setRequestAppendHeaders("a : b ; c : d");
+    dispatch.setRequestExcludeHeaders(String.join(",", Arrays.asList(HttpHeaders.ACCEPT, "TEST")));
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put(HttpHeaders.AUTHORIZATION, "Basic ...");
+    headers.put(HttpHeaders.ACCEPT, "abc");
+    headers.put("TEST", "test");
+
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getHeaderNames()).andReturn(Collections.enumeration(headers.keySet())).anyTimes();
+    Capture<String> capturedArgument = Capture.newInstance();
+    EasyMock.expect(inboundRequest.getHeader(EasyMock.capture(capturedArgument)))
+            .andAnswer(() -> headers.get(capturedArgument.getValue())).anyTimes();
+    EasyMock.replay(inboundRequest);
+
+    HttpUriRequest outboundRequest = new HttpGet();
+    dispatch.copyRequestHeaderFields(outboundRequest, inboundRequest);
+
+    Header[] outboundRequestHeaders = outboundRequest.getAllHeaders();
+    assertThat(outboundRequestHeaders.length, is(3));
+    assertThat(outboundRequestHeaders[0].getName(), is(HttpHeaders.AUTHORIZATION));
+    assertThat(outboundRequestHeaders[1].getName(), is("a"));
+    assertThat(outboundRequestHeaders[2].getName(), is("c"));
+  }
+
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void testRequestExcludeAndAppendWithDifferentValueHeadersConfig() {
+    ConfigurableDispatch dispatch = new ConfigurableDispatch();
+    dispatch.setRequestAppendHeaders("a:b; TEST :xyz=abc,def=ghi");
+    dispatch.setRequestExcludeHeaders(String.join(",", Arrays.asList(HttpHeaders.ACCEPT, "TEST")));
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put(HttpHeaders.AUTHORIZATION, "Basic ...");
+    headers.put(HttpHeaders.ACCEPT, "abc");
+    headers.put("TEST", "test");
+
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getHeaderNames()).andReturn(Collections.enumeration(headers.keySet())).anyTimes();
+    Capture<String> capturedArgument = Capture.newInstance();
+    EasyMock.expect(inboundRequest.getHeader(EasyMock.capture(capturedArgument)))
+            .andAnswer(() -> headers.get(capturedArgument.getValue())).anyTimes();
+    EasyMock.replay(inboundRequest);
+
+    HttpUriRequest outboundRequest = new HttpGet();
+    dispatch.copyRequestHeaderFields(outboundRequest, inboundRequest);
+
+    Header[] outboundRequestHeaders = outboundRequest.getAllHeaders();
+    assertThat(outboundRequestHeaders.length, is(3));
+    assertThat(outboundRequestHeaders[0].getName(), is(HttpHeaders.AUTHORIZATION));
+    assertThat(outboundRequestHeaders[1].getName(), is("a"));
+    assertThat(outboundRequestHeaders[2].getName(), is("TEST"));
+    assertThat(outboundRequestHeaders[2].getValue(), is("xyz=abc,def=ghi"));
+  }
+
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void testInvalidRequestAppendHeadersConfig() {
+    ConfigurableDispatch dispatch = new ConfigurableDispatch();
+    dispatch.setRequestAppendHeaders("a:;b;c:d");
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put(HttpHeaders.AUTHORIZATION, "Basic ...");
+    headers.put(HttpHeaders.ACCEPT, "abc");
+    headers.put("TEST", "test");
+
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getHeaderNames()).andReturn(Collections.enumeration(headers.keySet())).anyTimes();
+    Capture<String> capturedArgument = Capture.newInstance();
+    EasyMock.expect(inboundRequest.getHeader(EasyMock.capture(capturedArgument)))
+            .andAnswer(() -> headers.get(capturedArgument.getValue())).anyTimes();
+    EasyMock.replay(inboundRequest);
+
+    HttpUriRequest outboundRequest = new HttpGet();
+    dispatch.copyRequestHeaderFields(outboundRequest, inboundRequest);
+
+    Header[] outboundRequestHeaders = outboundRequest.getAllHeaders();
+    assertThat(outboundRequestHeaders.length, is(2));
+    assertThat(outboundRequestHeaders[0].getName(), is(HttpHeaders.ACCEPT));
+    assertThat(outboundRequestHeaders[1].getName(), is("TEST"));
+  }
+
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void testRequestExcludeAndInvalidAppendHeadersConfig() {
+    ConfigurableDispatch dispatch = new ConfigurableDispatch();
+    dispatch.setRequestAppendHeaders(" a :; b ; c : d ");
+    dispatch.setRequestExcludeHeaders(String.join(",", Arrays.asList(HttpHeaders.ACCEPT, "TEST")));
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put(HttpHeaders.AUTHORIZATION, "Basic ...");
+    headers.put(HttpHeaders.ACCEPT, "abc");
+    headers.put("TEST", "test");
+
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getHeaderNames()).andReturn(Collections.enumeration(headers.keySet())).anyTimes();
+    Capture<String> capturedArgument = Capture.newInstance();
+    EasyMock.expect(inboundRequest.getHeader(EasyMock.capture(capturedArgument)))
+            .andAnswer(() -> headers.get(capturedArgument.getValue())).anyTimes();
+    EasyMock.replay(inboundRequest);
+
+    HttpUriRequest outboundRequest = new HttpGet();
+    dispatch.copyRequestHeaderFields(outboundRequest, inboundRequest);
+
+    Header[] outboundRequestHeaders = outboundRequest.getAllHeaders();
+    assertThat(outboundRequestHeaders.length, is(1));
+    assertThat(outboundRequestHeaders[0].getName(), is(HttpHeaders.AUTHORIZATION));
+  }
+
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void testRequestExcludeAndInvalidAppendWithDifferentValueHeadersConfig() {
+    ConfigurableDispatch dispatch = new ConfigurableDispatch();
+    dispatch.setRequestAppendHeaders("a:b; TEST :xyz=abc;def=ghi");
+    dispatch.setRequestExcludeHeaders(String.join(",", Arrays.asList(HttpHeaders.ACCEPT, "TEST")));
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put(HttpHeaders.AUTHORIZATION, "Basic ...");
+    headers.put(HttpHeaders.ACCEPT, "abc");
+    headers.put("TEST", "test");
+
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getHeaderNames()).andReturn(Collections.enumeration(headers.keySet())).anyTimes();
+    Capture<String> capturedArgument = Capture.newInstance();
+    EasyMock.expect(inboundRequest.getHeader(EasyMock.capture(capturedArgument)))
+            .andAnswer(() -> headers.get(capturedArgument.getValue())).anyTimes();
+    EasyMock.replay(inboundRequest);
+
+    HttpUriRequest outboundRequest = new HttpGet();
+    dispatch.copyRequestHeaderFields(outboundRequest, inboundRequest);
+
+    Header[] outboundRequestHeaders = outboundRequest.getAllHeaders();
+    assertThat(outboundRequestHeaders.length, is(1));
+    assertThat(outboundRequestHeaders[0].getName(), is(HttpHeaders.AUTHORIZATION));
+  }
+
   @Test
   public void shouldExcludeCertainPartsFromSetCookieHeader() throws Exception {
     final Header[] headers = new Header[] { new BasicHeader(SET_COOKIE, "Domain=localhost; Secure; HttpOnly; Max-Age=1") };
@@ -275,6 +461,135 @@ public class ConfigurableDispatchTest {
 
     assertThat(outboundResponse.getHeaderNames().size(), is(1));
     assertThat(outboundResponse.getHeader(SET_COOKIE), is("Secure; Max-Age=1"));
+  }
+
+  /**
+   * Make sure that SET-COOKIE attributes order is maintained
+   */
+  @Test
+  public void testSetCookieHeaderOrder() {
+    final String SET_COOKIE_VALUE = "JSESSIONID=ba760126-414f-406d-baa1-99e14eb47656; zx=yz; SameSite=none; Secure; Path=/; HttpOnly; a=b; c=d";
+    final String EXPECTED_SET_COOKIE_VALUE = "JSESSIONID=ba760126-414f-406d-baa1-99e14eb47656; zx=yz; SameSite=none; Path=/; HttpOnly; a=b; c=d";
+    final Header[] headers = new Header[] { new BasicHeader(SET_COOKIE, SET_COOKIE_VALUE) };
+    final HttpResponse inboundResponse = EasyMock.createNiceMock(HttpResponse.class);
+    EasyMock.expect(inboundResponse.getAllHeaders()).andReturn(headers).anyTimes();
+    EasyMock.replay(inboundResponse);
+
+    final ConfigurableDispatch dispatch = new ConfigurableDispatch();
+    final String setCookieExludeHeaders = SET_COOKIE + ": Secure";
+    dispatch.setResponseExcludeHeaders(setCookieExludeHeaders);
+
+    final HttpServletResponse outboundResponse = new MockHttpServletResponse();
+    dispatch.copyResponseHeaderFields(outboundResponse, inboundResponse);
+
+    assertThat(outboundResponse.getHeader(SET_COOKIE), is(EXPECTED_SET_COOKIE_VALUE));
+  }
+
+  /**
+   * When exclude list is defined and set-cookie is not in the list
+   * make sure auth cookies are blocked.
+   * @throws Exception
+   */
+  @Test
+  public void testPreventSetCookieHeaderDirectivesDefault() throws Exception {
+    final Header[] headers = new Header[] {
+        new BasicHeader(SET_COOKIE, "hadoop.auth=\"u=knox&p=knox/knox.local@knox.local&t=kerberos&e=1604347441986c=\"; Path=/; Domain=knox.local; Expires=Fri, 13-Nov-2020 17:26:18 GMT; Secure; HttpOnly[\\r][\\n]")};
+    final HttpResponse inboundResponse = EasyMock.createNiceMock(HttpResponse.class);
+    EasyMock.expect(inboundResponse.getAllHeaders()).andReturn(headers).anyTimes();
+    EasyMock.replay(inboundResponse);
+
+    final ConfigurableDispatch dispatch = new ConfigurableDispatch();
+
+    final String setCookieExludeHeaders = "WWW-AUTHENTICATE";
+    dispatch.setResponseExcludeHeaders(setCookieExludeHeaders);
+
+    final HttpServletResponse outboundResponse = new MockHttpServletResponse();
+    dispatch.copyResponseHeaderFields(outboundResponse, inboundResponse);
+
+    assertThat(outboundResponse.getHeaderNames().size(), is(0));
+  }
+
+  /**
+   * When exclude list is defined and set-cookie is not in the list
+   * make sure non-auth cookies are not blocked.
+   * @throws Exception
+   */
+  @Test
+  public void testAllowSetCookieHeaderDirectivesDefault() throws Exception {
+    final String SET_COOKIE_VALUE = "RANGERADMINSESSIONID=5C0C1805BD3B43BA8E9FC04A63586505; Path=/; Secure; HttpOnly";
+    final Header[] headers = new Header[] {
+        new BasicHeader(SET_COOKIE, SET_COOKIE_VALUE)};
+    final HttpResponse inboundResponse = EasyMock.createNiceMock(HttpResponse.class);
+    EasyMock.expect(inboundResponse.getAllHeaders()).andReturn(headers).anyTimes();
+    EasyMock.replay(inboundResponse);
+
+    final ConfigurableDispatch dispatch = new ConfigurableDispatch();
+
+    final String setCookieExludeHeaders = "WWW-AUTHENTICATE";
+    dispatch.setResponseExcludeHeaders(setCookieExludeHeaders);
+
+    final HttpServletResponse outboundResponse = new MockHttpServletResponse();
+    dispatch.copyResponseHeaderFields(outboundResponse, inboundResponse);
+
+    assertThat(outboundResponse.getHeaderNames().size(), is(1));
+    assertThat(outboundResponse.getHeader(SET_COOKIE), is(SET_COOKIE_VALUE));
+  }
+
+    /**
+     * Test a case where SET-COOKIE header does not use spaces
+     * @throws Exception
+     */
+    @Test
+    public void testAllowSetCookieHeaderNoSpaces() throws Exception {
+        final Header[] headers = new Header[] {
+                new BasicHeader(SET_COOKIE, "SESSION=e69d3d08-7452-45cb-90bb-9cdde3fa1342;Path=/;HttpOnly")};
+        final HttpResponse inboundResponse = EasyMock.createNiceMock(HttpResponse.class);
+        EasyMock.expect(inboundResponse.getAllHeaders()).andReturn(headers).anyTimes();
+        EasyMock.replay(inboundResponse);
+
+        final ConfigurableDispatch dispatch = new ConfigurableDispatch();
+
+        final String setCookieExludeHeaders = "WWW-AUTHENTICATE";
+        dispatch.setResponseExcludeHeaders(setCookieExludeHeaders);
+
+        final HttpServletResponse outboundResponse = new MockHttpServletResponse();
+        dispatch.copyResponseHeaderFields(outboundResponse, inboundResponse);
+
+        assertThat(outboundResponse.getHeaderNames().size(), is(1));
+        assertThat(outboundResponse.getHeader(SET_COOKIE), is("SESSION=e69d3d08-7452-45cb-90bb-9cdde3fa1342; Path=/; HttpOnly"));
+    }
+
+  /**
+   * Case where auth cookie can be configured to pass through
+   *
+   * @throws Exception
+   */
+  @Test
+  public void testPassthroughSetCookieHeaderDirectivesDefault()
+      throws Exception {
+    final Header[] headers = new Header[] { new BasicHeader(SET_COOKIE,
+        "hadoop.auth=\"u=knox&p=knox/knox.local@nox.local&t=kerberos&e=1604347441986c=\"; Path=/; Domain=knox.local; Expires=Fri, 13-Nov-2020 17:26:18 GMT; Secure; HttpOnly[\\r][\\n]") };
+    final HttpResponse inboundResponse = EasyMock
+        .createNiceMock(HttpResponse.class);
+    EasyMock.expect(inboundResponse.getAllHeaders()).andReturn(headers)
+        .anyTimes();
+    EasyMock.replay(inboundResponse);
+
+    final ConfigurableDispatch dispatch = new ConfigurableDispatch();
+
+    /**
+     * NOTE: here we are defining what set-cookie attributes we
+     * want to block. We are blocking only 'Secure' attribute
+     * other attributes such as 'hadoop.auth' are free to pass
+     **/
+    final String setCookieExludeHeaders = "WWW-AUTHENTICATE, SET-COOKIE: Secure";
+    dispatch.setResponseExcludeHeaders(setCookieExludeHeaders);
+
+    final HttpServletResponse outboundResponse = new MockHttpServletResponse();
+    dispatch.copyResponseHeaderFields(outboundResponse, inboundResponse);
+
+    assertThat(outboundResponse.getHeaderNames().size(), is(1));
+    assertThat(outboundResponse.getHeader(SET_COOKIE), containsString("hadoop.auth="));
   }
 
 }

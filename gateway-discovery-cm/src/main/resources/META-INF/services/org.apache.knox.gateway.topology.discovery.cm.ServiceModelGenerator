@@ -18,6 +18,7 @@
 
 org.apache.knox.gateway.topology.discovery.cm.model.atlas.AtlasServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.atlas.AtlasAPIServiceModelGenerator
+org.apache.knox.gateway.topology.discovery.cm.model.flink.FlinkServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.hbase.HBaseUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.hbase.WebHBaseServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.hdfs.NameNodeServiceModelGenerator
@@ -30,7 +31,6 @@ org.apache.knox.gateway.topology.discovery.cm.model.hue.HueServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.hue.HueLBServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.impala.ImpalaServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.impala.ImpalaUIServiceModelGenerator
-org.apache.knox.gateway.topology.discovery.cm.model.yarn.JobTrackerServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.kudu.KuduUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.livy.LivyServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.oozie.OozieServiceModelGenerator
@@ -42,6 +42,8 @@ org.apache.knox.gateway.topology.discovery.cm.model.solr.SolrServiceModelGenerat
 org.apache.knox.gateway.topology.discovery.cm.model.spark.SparkHistoryUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.spark.Spark3HistoryUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.yarn.JobHistoryUIServiceModelGenerator
+org.apache.knox.gateway.topology.discovery.cm.model.yarn.JobTrackerServiceModelGenerator
+org.apache.knox.gateway.topology.discovery.cm.model.yarn.ResourceManagerApiServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.yarn.ResourceManagerUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.yarn.YarnUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.yarn.YarnUIv2ServiceModelGenerator

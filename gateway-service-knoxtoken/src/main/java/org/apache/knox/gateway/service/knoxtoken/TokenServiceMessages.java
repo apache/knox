@@ -30,11 +30,11 @@ public interface TokenServiceMessages {
   @Message( level = MessageLevel.INFO, text = "Knox Token service ({0}) issued token {1} ({2})")
   void issuedToken(String topologyName, String tokenDisplayText, String tokenId);
 
-  @Message( level = MessageLevel.INFO, text = "Knox Token service ({0}) renewed the expiration for token {1} ({2})")
-  void renewedToken(String topologyName, String tokenDisplayText, String tokenId);
+  @Message( level = MessageLevel.INFO, text = "Knox Token service ({0}) renewed the expiration for token {1} ({2}) (renewer={3})")
+  void renewedToken(String topologyName, String tokenDisplayText, String tokenId, String renewer);
 
-  @Message( level = MessageLevel.INFO, text = "Knox Token service ({0}) revoked token {1} ({2})")
-  void revokedToken(String topologyName, String tokenDisplayText, String tokenId);
+  @Message( level = MessageLevel.INFO, text = "Knox Token service ({0}) revoked token {1} ({2}) (renewer={3})")
+  void revokedToken(String topologyName, String tokenDisplayText, String tokenId, String renewer);
 
   @Message( level = MessageLevel.ERROR, text = "Unable to issue token.")
   void unableToIssueToken(@StackTrace( level = MessageLevel.DEBUG) Exception e);
@@ -71,7 +71,19 @@ public interface TokenServiceMessages {
   @Message( level = MessageLevel.ERROR, text = "Knox Token service ({0}) rejected a bad revocation request for token {1}: {2}")
   void badRevocationRequest(String topologyName, String tokenDisplayText, String error);
 
+  @Message( level = MessageLevel.ERROR, text = "Knox Token service ({0}) rejected a bad set enabled flag request for token {1}: {2}")
+  void badSetEnabledFlagRequest(String topologyName, String tokenId, String error);
+
   @Message( level = MessageLevel.DEBUG, text = "Knox Token service ({0}) stored state for token {1} ({2})")
   void storedToken(String topologyName, String tokenDisplayText, String tokenId);
 
+  @Message( level = MessageLevel.WARN,
+          text = "Renewal is disabled for the Knox Token service ({0}). Responding with the expiration from the token {1} ({2})")
+  void renewalDisabled(String topologyName, String tokenDisplayText, String tokenId);
+
+  @Message( level = MessageLevel.WARN, text = "Invalid duration used for JWT token lifespan ({0}) using the configured TTL for KnoxToken service")
+  void invalidLifetimeValue(String lifetimeStr);
+
+  @Message( level = MessageLevel.ERROR, text = "Unable to get token for user {0}: token limit exceeded")
+  void tokenLimitExceeded(String userName);
 }

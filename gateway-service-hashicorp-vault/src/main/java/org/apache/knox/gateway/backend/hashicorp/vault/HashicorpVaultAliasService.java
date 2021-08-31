@@ -20,6 +20,7 @@ package org.apache.knox.gateway.backend.hashicorp.vault;
 import org.apache.knox.gateway.backend.hashicorp.vault.authentication.HashicorpVaultClientAuthenticationProvider;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.AbstractAliasService;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.util.PasswordUtils;
@@ -38,8 +39,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.Set;
 
-public class HashicorpVaultAliasService implements AliasService {
+public class HashicorpVaultAliasService extends AbstractAliasService {
   public static final String TYPE = "hashicorp.vault";
   public static final String VAULT_CONFIG_PREFIX = "hashicorp.vault.";
   public static final String VAULT_ADDRESS_KEY = VAULT_CONFIG_PREFIX + "address";
@@ -102,6 +104,13 @@ public class HashicorpVaultAliasService implements AliasService {
   }
 
   @Override
+  public void addAliasesForCluster(String clusterName, Map<String, String> credentials) throws AliasServiceException {
+    for (Map.Entry<String, String> credential : credentials.entrySet()) {
+      addAliasForCluster(clusterName, credential.getKey(), credential.getValue());
+    }
+  }
+
+  @Override
   public void removeAliasForCluster(String clusterName, String alias) throws AliasServiceException {
     // Delete is by default a soft delete with versioned KV in Vault
     // https://learn.hashicorp.com/vault/secrets-management/sm-versioned-kv#step-6-permanently-delete-data
@@ -116,6 +125,13 @@ public class HashicorpVaultAliasService implements AliasService {
       vault.delete(getPath(clusterName, alias));
     } catch (VaultException e) {
       throw new AliasServiceException(e);
+    }
+  }
+
+  @Override
+  public void removeAliasesForCluster(String clusterName, Set<String> aliases) throws AliasServiceException {
+    for (String alias : aliases) {
+      removeAliasForCluster(clusterName, alias);
     }
   }
 

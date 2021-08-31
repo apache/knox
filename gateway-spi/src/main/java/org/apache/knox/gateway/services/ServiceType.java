@@ -18,6 +18,8 @@
 
 package org.apache.knox.gateway.services;
 
+import java.util.Locale;
+
 public enum ServiceType {
   ALIAS_SERVICE("AliasService"),
   CLUSTER_CONFIGURATION_MONITOR_SERVICE("ClusterConfigurationMonitorService"),
@@ -36,12 +38,18 @@ public enum ServiceType {
   TOPOLOGY_SERVICE("TopologyService");
 
   private final String serviceTypeName;
+  private final String shortName;
 
   ServiceType(String serviceTypeName) {
     this.serviceTypeName = serviceTypeName;
+    this.shortName = serviceTypeName.toLowerCase(Locale.ROOT).replace("service", "");
   }
 
   public String getServiceTypeName() {
     return serviceTypeName;
+  }
+
+  public String getShortName() {
+    return shortName;
   }
 }

@@ -56,6 +56,9 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.registry.ServiceDefinitionRegistry;
 import org.apache.knox.gateway.services.registry.ServiceDefinitionRegistryException;
 
+import io.swagger.annotations.Api;
+
+@Api(value = "serviceDefinition",  description = "The Knox Admin API to interact with service definition information.")
 @Path("/api/v1")
 @Singleton
 public class ServiceDefinitionsResource {

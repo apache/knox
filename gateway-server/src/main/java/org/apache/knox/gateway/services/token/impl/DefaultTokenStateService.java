@@ -16,30 +16,46 @@
  */
 package org.apache.knox.gateway.services.token.impl;
 
+import java.lang.management.ManagementFactory;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
+
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.token.KnoxToken;
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
-
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import org.apache.knox.gateway.services.token.TokenStateServiceStatistics;
+import org.apache.knox.gateway.util.Tokens;
 
 /**
  * In-Memory authentication token state management implementation.
  */
 public class DefaultTokenStateService implements TokenStateService {
 
-  protected static final long DEFAULT_RENEWAL_INTERVAL = 24 * 60 * 60 * 1000L; // 24 hours
+  protected static final long DEFAULT_RENEWAL_INTERVAL = TimeUnit.HOURS.toMillis(24);
 
   protected static final int MAX_RENEWALS = 7;
 
@@ -47,18 +63,27 @@ public class DefaultTokenStateService implements TokenStateService {
 
   protected static final TokenStateServiceMessages log = MessagesFactory.get(TokenStateServiceMessages.class);
 
-  private final Map<String, Long> tokenExpirations = new HashMap<>();
+  private final Map<String, Long> tokenExpirations = new ConcurrentHashMap<>();
 
-  private final Map<String, Long> maxTokenLifetimes = new HashMap<>();
+  private final Map<String, Long> tokenIssueTimes = new ConcurrentHashMap<>();
 
-  /* token eviction interval in seconds */
+  private final Map<String, Long> maxTokenLifetimes = new ConcurrentHashMap<>();
+
+  private final Map<String, TokenMetadata> metadataMap = new ConcurrentHashMap<>();
+
+  // Token eviction interval (in seconds)
   private long tokenEvictionInterval;
-  /* grace period (in seconds) after which an expired token should be evicted */
-  private long tokenEvictionGracePeriod;
-  /* should knox token fail permissively */
+
+  // Grace period (in seconds) after which an expired token should be evicted
+  protected long tokenEvictionGracePeriod;
+
+  // Knox token validation permissiveness
   protected boolean permissiveValidationEnabled;
 
   private final ScheduledExecutorService evictionScheduler = Executors.newScheduledThreadPool(1);
+
+  //token state MBean to store statistics (only initialized and used if JMX reporting is enabled)
+  protected TokenStateServiceStatistics tokenStateServiceStatistics;
 
 
   @Override
@@ -66,13 +91,22 @@ public class DefaultTokenStateService implements TokenStateService {
     tokenEvictionInterval = config.getKnoxTokenEvictionInterval();
     tokenEvictionGracePeriod = config.getKnoxTokenEvictionGracePeriod();
     permissiveValidationEnabled = config.isKnoxTokenPermissiveValidationEnabled();
+    if (config.isMetricsEnabled() && config.isJmxMetricsReportingEnabled()) {
+      try {
+        tokenStateServiceStatistics = new TokenStateServiceStatistics();
+        final ObjectName objectName = ObjectName.getInstance("metrics:type=Statistics,name=TokenStateService");
+        ManagementFactory.getPlatformMBeanServer().registerMBean(tokenStateServiceStatistics, objectName);
+      } catch (MalformedObjectNameException | InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
+        throw new ServiceLifecycleException("Could not register token state service MBean", e);
+      }
+    }
   }
 
   @Override
   public void start() throws ServiceLifecycleException {
     if (tokenEvictionInterval > 0) {
-      /* run token eviction task at configured intervals */
-      evictionScheduler.scheduleAtFixedRate(() -> evictExpiredTokens(), tokenEvictionInterval, tokenEvictionInterval, TimeUnit.SECONDS);
+      // Run token eviction task at configured interval
+      evictionScheduler.scheduleAtFixedRate(this::evictExpiredTokens, tokenEvictionInterval, tokenEvictionInterval, TimeUnit.SECONDS);
     }
   }
 
@@ -109,14 +143,28 @@ public class DefaultTokenStateService implements TokenStateService {
                              long   issueTime,
                              long   expiration,
                              long   maxLifetimeDuration) {
-    if (!isValidIdentifier(tokenId)) {
-      throw new IllegalArgumentException("Token identifier cannot be null.");
-    }
-    synchronized (tokenExpirations) {
-      tokenExpirations.put(tokenId, expiration);
-    }
+    validateTokenIdentifier(tokenId);
+    setIssueTime(tokenId, issueTime);
+    tokenExpirations.put(tokenId, expiration);
     setMaxLifetime(tokenId, issueTime, maxLifetimeDuration);
-    log.addedToken(tokenId, getTimestampDisplay(expiration));
+    log.addedToken(Tokens.getTokenIDDisplayText(tokenId), getTimestampDisplay(expiration));
+    if (tokenStateServiceStatistics != null) {
+      tokenStateServiceStatistics.addToken();
+    }
+  }
+
+  protected void setIssueTime(String tokenId, long issueTime) {
+    tokenIssueTimes.put(tokenId, issueTime);
+  }
+
+  @Override
+  public long getTokenIssueTime(String tokenId) throws UnknownTokenException {
+    validateToken(tokenId);
+    final Long issueTime = tokenIssueTimes.get(tokenId);
+    if (issueTime == null) {
+      throw new UnknownTokenException(tokenId);
+    }
+    return issueTime.longValue();
   }
 
   @Override
@@ -129,7 +177,7 @@ public class DefaultTokenStateService implements TokenStateService {
       if (permissiveValidationEnabled) {
         String exp = token.getExpires();
         if (exp != null) {
-          log.permissiveTokenHandling(TokenUtils.getTokenId(token), e.getMessage());
+          log.permissiveTokenHandling(Tokens.getTokenIDDisplayText(TokenUtils.getTokenId(token)), e.getMessage());
           expiration = Long.parseLong(exp);
         }
       }
@@ -144,15 +192,20 @@ public class DefaultTokenStateService implements TokenStateService {
 
   @Override
   public long getTokenExpiration(final String tokenId) throws UnknownTokenException {
-    long expiration;
+    return getTokenExpiration(tokenId, true);
+  }
 
-    validateToken(tokenId);
-
-    synchronized (tokenExpirations) {
-      expiration = tokenExpirations.get(tokenId);
+  @Override
+  public long getTokenExpiration(String tokenId, boolean validate) throws UnknownTokenException {
+    if (validate) {
+      validateToken(tokenId);
     }
 
-    return expiration;
+    final Long expiration = tokenExpirations.get(tokenId);
+    if (expiration == null) {
+      throw new UnknownTokenException(tokenId);
+    }
+    return expiration.longValue();
   }
 
   @Override
@@ -183,9 +236,12 @@ public class DefaultTokenStateService implements TokenStateService {
     if (hasRemainingRenewals(tokenId, renewInterval)) {
       expiration = System.currentTimeMillis() + renewInterval;
       updateExpiration(tokenId, expiration);
-      log.renewedToken(tokenId, getTimestampDisplay(expiration));
+      log.renewedToken(Tokens.getTokenIDDisplayText(tokenId), getTimestampDisplay(expiration));
+      if (tokenStateServiceStatistics != null) {
+        tokenStateServiceStatistics.renewToken();
+      }
     } else {
-      log.renewalLimitExceeded(tokenId);
+      log.renewalLimitExceeded(Tokens.getTokenIDDisplayText(tokenId));
       throw new IllegalArgumentException("The renewal limit for the token has been exceeded");
     }
 
@@ -205,7 +261,7 @@ public class DefaultTokenStateService implements TokenStateService {
   public void revokeToken(final String tokenId) throws UnknownTokenException {
     /* no reason to keep revoked tokens around */
     removeToken(tokenId);
-    log.revokedToken(tokenId);
+    log.revokedToken(Tokens.getTokenIDDisplayText(tokenId));
   }
 
   @Override
@@ -213,58 +269,61 @@ public class DefaultTokenStateService implements TokenStateService {
     return getTokenExpiration(token) <= System.currentTimeMillis();
   }
 
+  protected void setMaxLifetime(final String token, long parsedMaxLifeTime) {
+    maxTokenLifetimes.put(token, parsedMaxLifeTime);
+  }
+
   protected void setMaxLifetime(final String token, long issueTime, long maxLifetimeDuration) {
-    synchronized (maxTokenLifetimes) {
-      maxTokenLifetimes.put(token, issueTime + maxLifetimeDuration);
-    }
+    maxTokenLifetimes.put(token, issueTime + maxLifetimeDuration);
   }
 
   /**
-   * @param token token to check
+   * @param token Token to check.
    * @return false, if the service has previously stored the specified token; Otherwise, true.
    */
   protected boolean isUnknown(final String token) {
-    boolean isUnknown;
-
-    synchronized (tokenExpirations) {
-      isUnknown = !(tokenExpirations.containsKey(token));
-    }
-
-    return isUnknown;
+    return !tokenExpirations.containsKey(token);
   }
 
   protected void updateExpiration(final String tokenId, long expiration) {
-    synchronized (tokenExpirations) {
-      tokenExpirations.replace(tokenId, expiration);
-    }
+    tokenExpirations.put(tokenId, expiration);
   }
 
   protected void removeToken(final String tokenId) throws UnknownTokenException {
     validateToken(tokenId);
-    synchronized (tokenExpirations) {
-      tokenExpirations.remove(tokenId);
-    }
-    synchronized (maxTokenLifetimes) {
-      maxTokenLifetimes.remove(tokenId);
-    }
-    log.removedTokenState(tokenId);
+    removeTokens(Collections.singleton(tokenId));
+  }
+
+  /**
+   * Bulk removal of the specified tokens.
+   *
+   * @param tokenIds The unique identifiers of the tokens whose state should be removed.
+   */
+  protected void removeTokens(final Set<String> tokenIds) {
+    removeTokenState(tokenIds);
+  }
+
+  private void removeTokenState(final Set<String> tokenIds) {
+    tokenIssueTimes.keySet().removeAll(tokenIds);
+    tokenExpirations.keySet().removeAll(tokenIds);
+    maxTokenLifetimes.keySet().removeAll(tokenIds);
+    metadataMap.keySet().removeAll(tokenIds);
+    log.removedTokenState(String.join(", ", Tokens.getDisplayableTokenIDsText(tokenIds)));
   }
 
   protected boolean hasRemainingRenewals(final String tokenId, long renewInterval) {
-    // Is the current time + 30-second buffer + the renewal interval is less than the max lifetime for the token?
+    // If the current time + buffer + the renewal interval is less than the max lifetime for the token?
     return ((System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(30) + renewInterval) < getMaxLifetime(tokenId));
   }
 
   protected long getMaxLifetime(final String tokenId) {
-    long result;
-    synchronized (maxTokenLifetimes) {
-      result = maxTokenLifetimes.getOrDefault(tokenId, 0L);
-    }
-    return result;
+    return maxTokenLifetimes.getOrDefault(tokenId, 0L);
   }
 
-  protected boolean isValidIdentifier(final String tokenId) {
-    return tokenId != null && !tokenId.isEmpty();
+  private void validateTokenIdentifier(final String tokenId) {
+    if (tokenId == null || tokenId.isEmpty()) {
+      throw new IllegalArgumentException("Token identifier cannot be null or empty.");
+    }
   }
 
   /**
@@ -276,18 +335,16 @@ public class DefaultTokenStateService implements TokenStateService {
    * @throws UnknownTokenException if the specified token in valid, but not known to the service.
    */
   protected void validateToken(final String tokenId) throws IllegalArgumentException, UnknownTokenException {
-    if (!isValidIdentifier(tokenId)) {
-      throw new IllegalArgumentException("Token identifier cannot be null.");
-    }
+    validateTokenIdentifier(tokenId);
 
     // First, make sure the token is one we know about
     if (isUnknown(tokenId)) {
-      log.unknownToken(tokenId);
+      log.unknownToken(Tokens.getTokenIDDisplayText(tokenId));
       throw new UnknownTokenException(tokenId);
     }
   }
 
-  protected String getTimestampDisplay(long timestamp) {
+  private String getTimestampDisplay(long timestamp) {
     return Instant.ofEpochMilli(timestamp).toString();
   }
 
@@ -295,40 +352,84 @@ public class DefaultTokenStateService implements TokenStateService {
    * Method that deletes expired tokens based on the token timestamp.
    */
   protected void evictExpiredTokens() {
-    for (final String tokenId : getTokens()) {
+    if (readyForEviction()) {
+      final Set<String> tokensToEvict = getExpiredTokens();
+
+      if (!tokensToEvict.isEmpty()) {
+        removeTokens(tokensToEvict);
+      }
+    } else {
+      log.skipEviction();
+    }
+  }
+
+  protected boolean readyForEviction() {
+    return true;
+  }
+
+  protected Set<String> getExpiredTokens() {
+    final Set<String> expiredTokens = new HashSet<>();
+    for (final String tokenId : getTokenIds()) {
       try {
         if (needsEviction(tokenId)) {
-          log.evictToken(tokenId);
-          removeToken(tokenId);
+          log.evictToken(Tokens.getTokenIDDisplayText(tokenId));
+          expiredTokens.add(tokenId); // Add the token to the set of tokens to evict
         }
       } catch (final Exception e) {
-        log.failedExpiredTokenEviction(tokenId, e);
+        log.failedExpiredTokenEviction(Tokens.getTokenIDDisplayText(tokenId), e);
       }
     }
+    return expiredTokens;
   }
 
   /**
    * Method that checks if a token's state is a candidate for eviction.
    *
    * @param tokenId A unique token identifier
-   * @throws UnknownTokenException Exception if token is not found.
+   * @throws UnknownTokenException if token state is not found.
    *
    * @return true, if the associated token state can be evicted; Otherwise, false.
    */
   protected boolean needsEviction(final String tokenId) throws UnknownTokenException {
-    long maxLifetime = getMaxLifetime(tokenId);
-    if (maxLifetime <= 0) {
-      throw new UnknownTokenException(tokenId);
-    }
-    return ((maxLifetime + TimeUnit.SECONDS.toMillis(tokenEvictionGracePeriod)) <= System.currentTimeMillis());
+    // If the expiration time(+ grace period) has already passed, it should be considered expired
+    long expirationWithGrace = getTokenExpiration(tokenId, false) + TimeUnit.SECONDS.toMillis(tokenEvictionGracePeriod);
+    return (expirationWithGrace <= System.currentTimeMillis());
   }
 
   /**
    * Get a list of tokens
    *
-   * @return List of tokens
+   * @return
    */
-  protected List<String> getTokens() {
-    return new ArrayList<>(tokenExpirations.keySet());
+  protected List<String> getTokenIds() {
+    return tokenExpirations.keySet().stream().collect(Collectors.toList());
+  }
+
+  @Override
+  public void addMetadata(String tokenId, TokenMetadata metadata) {
+    metadataMap.put(tokenId, metadata);
+  }
+
+  @Override
+  public TokenMetadata getTokenMetadata(String tokenId) throws UnknownTokenException {
+    if (!metadataMap.containsKey(tokenId)) {
+      throw new UnknownTokenException(tokenId);
+    }
+    return metadataMap.get(tokenId);
+  }
+
+  @Override
+  public Collection<KnoxToken> getTokens(String userName) {
+    final Collection<KnoxToken> tokens = new TreeSet<>();
+    metadataMap.entrySet().stream().filter(entry -> entry.getValue().getUserName().equals(userName)).forEach(metadata -> {
+      String tokenId = metadata.getKey();
+      try {
+        tokens.add(new KnoxToken(tokenId, getTokenIssueTime(tokenId), getTokenExpiration(tokenId), getMaxLifetime(tokenId), metadata.getValue()));
+      } catch (UnknownTokenException e) {
+        // NOP: since this is coming from memory the only reason an UTE is thrown that the token got removed/revoked.
+        // In that case we would not want to return it anyway
+      }
+    });
+    return tokens;
   }
 }

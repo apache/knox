@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm;
 
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.cm.collector.ServiceURLCollectors;
 
@@ -29,6 +30,9 @@ import java.util.Set;
  * ClouderaManager-based service discovery cluster model implementation.
  */
 public class ClouderaManagerCluster implements ServiceDiscovery.Cluster {
+
+  private static final ClouderaManagerServiceDiscoveryMessages log =
+          MessagesFactory.get(ClouderaManagerServiceDiscoveryMessages.class);
 
   private String name;
 
@@ -45,21 +49,44 @@ public class ClouderaManagerCluster implements ServiceDiscovery.Cluster {
 
   @Override
   public List<String> getServiceURLs(String serviceName) {
+    return getServiceURLs(serviceName, null);
+  }
+
+  @Override
+  public List<String> getServiceURLs(String serviceName, Map<String, String> serviceParams) {
     List<String> urls = new ArrayList<>();
+
     if (serviceModels.containsKey(serviceName)) {
       Map<String, List<ServiceModel>> roleModels = new HashMap<>();
       for (ServiceModel model : serviceModels.get(serviceName)) {
-        roleModels.computeIfAbsent(model.getRoleType(), l -> new ArrayList<>()).add(model);
+
+        // Check for discovery qualifier attributes of the service model
+        boolean isMatchingModel = true;
+        if (serviceParams != null) {
+          for (Map.Entry<String, String> serviceParam : serviceParams.entrySet()) {
+            String serviceParamKey = serviceParam.getKey();
+            // If it's a qualifying service param, then perform the qualification check
+            if (serviceParamKey.startsWith(ServiceModel.QUALIFYING_SERVICE_PARAM_PREFIX)) {
+              if (!serviceParam.getValue().equals(model.getQualifyingServiceParam(serviceParamKey))) {
+                isMatchingModel = false;
+                log.qualifyingServiceParamMismatch(serviceName,
+                                                   serviceParamKey,
+                                                   serviceParam.getValue(),
+                                                   model.getQualifyingServiceParam(serviceParamKey));
+                break;
+              }
+            }
+          }
+        }
+
+        if (isMatchingModel) {
+          roleModels.computeIfAbsent(model.getRoleType(), l -> new ArrayList<>()).add(model);
+        }
       }
 
       urls.addAll((ServiceURLCollectors.getCollector(serviceName)).collect(roleModels));
     }
     return urls;
-  }
-
-  @Override
-  public List<String> getServiceURLs(String serviceName, Map<String, String> serviceParams) {
-    return getServiceURLs(serviceName); // TODO: PJZ: Support things like HDFS nameservice params for providing the correct URL(s)?
   }
 
   @Override

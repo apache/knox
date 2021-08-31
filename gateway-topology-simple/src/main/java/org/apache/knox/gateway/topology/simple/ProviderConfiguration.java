@@ -17,13 +17,18 @@
 package org.apache.knox.gateway.topology.simple;
 
 
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface ProviderConfiguration {
 
-  List<Provider> getProviders();
+  Set<Provider> getProviders();
 
+  void saveOrUpdateProviders(Set<Provider> providers);
+
+  boolean isReadOnly();
+
+  void setReadOnly(boolean readOnly);
 
   interface Provider {
 

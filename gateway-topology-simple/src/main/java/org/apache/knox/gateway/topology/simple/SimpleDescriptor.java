@@ -24,6 +24,8 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 public interface SimpleDescriptor {
 
+    String DISCOVERY_PARAM_PREFIX = "discovery-";
+
     String getName();
 
     String getDiscoveryType();

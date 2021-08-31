@@ -20,19 +20,24 @@ package org.apache.knox.gateway.service.metadata;
 import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.knox.gateway.service.definition.Metadata;
+import org.apache.knox.gateway.service.definition.Sample;
 import org.apache.knox.gateway.topology.Service;
 
 @XmlRootElement(name = "service")
@@ -40,6 +45,7 @@ import org.apache.knox.gateway.topology.Service;
 public class ServiceModel implements Comparable<ServiceModel> {
 
   static final String SERVICE_URL_TEMPLATE = "%s://%s:%s/%s/%s%s";
+  static final String CURL_SAMPLE_TEMPLATE = "curl -iv -X %s \"%s%s\"";
   static final String HIVE_SERVICE_NAME = "HIVE";
   static final String HIVE_SERVICE_URL_TEMPLATE = "jdbc:hive2://%s:%d/;ssl=true;transportMode=http;httpPath=%s/%s/hive";
 
@@ -113,7 +119,7 @@ public class ServiceModel implements Comparable<ServiceModel> {
 
   @XmlElement
   public String getContext() {
-    return (serviceMetadata == null ? "/" + getServiceName().toLowerCase(Locale.ROOT) : serviceMetadata.getContext()) + "/";
+    return serviceMetadata == null ? ("/" + getServiceName().toLowerCase(Locale.ROOT)) : serviceMetadata.getContext();
   }
 
   @XmlElement
@@ -122,27 +128,62 @@ public class ServiceModel implements Comparable<ServiceModel> {
     if (HIVE_SERVICE_NAME.equals(getServiceName())) {
       return String.format(Locale.ROOT, HIVE_SERVICE_URL_TEMPLATE, request.getServerName(), request.getServerPort(), gatewayPath, topologyName);
     } else {
+      return getServiceUrl(context);
+    }
+  }
+
+  private String getServiceUrl(String context) {
+    final String resolvedContext = resolvePlaceholdersFromBackendUrl(context);
+    return String.format(Locale.ROOT, SERVICE_URL_TEMPLATE, request.getScheme(), request.getServerName(), request.getServerPort(), gatewayPath, topologyName, resolvedContext);
+  }
+
+  private String resolvePlaceholdersFromBackendUrl(String resolveable) {
+    String toBeResolved = resolveable;
+    if (toBeResolved != null) {
       final String backendUrlString = getBackendServiceUrl();
-      if (context.indexOf("{{BACKEND_HOST}}") > -1) {
-        context = context.replace("{{BACKEND_HOST}}", backendUrlString);
+
+      if (toBeResolved.indexOf("{{BACKEND_HOST}}") > -1) {
+        toBeResolved = toBeResolved.replace("{{BACKEND_HOST}}", backendUrlString);
       }
-      if (context.indexOf("{{SCHEME}}") > -1 || context.indexOf("{{HOST}}") > -1 || context.indexOf("{{PORT}}") > -1) {
+
+      if (toBeResolved.indexOf("{{SCHEME}}") > -1 || toBeResolved.indexOf("{{HOST}}") > -1 || toBeResolved.indexOf("{{PORT}}") > -1) {
         try {
           final URL backendUrl = new URL(backendUrlString);
-          context = context.replace("{{SCHEME}}", backendUrl.getProtocol());
-          context = context.replace("{{HOST}}", backendUrl.getHost());
-          context = context.replace("{{PORT}}", String.valueOf(backendUrl.getPort()));
+          toBeResolved = toBeResolved.replace("{{SCHEME}}", backendUrl.getProtocol());
+          toBeResolved = toBeResolved.replace("{{HOST}}", backendUrl.getHost());
+          toBeResolved = toBeResolved.replace("{{PORT}}", String.valueOf(backendUrl.getPort()));
         } catch (MalformedURLException e) {
           throw new UncheckedIOException("Error while converting " + backendUrlString + " to a URL", e);
         }
       }
-      return String.format(Locale.ROOT, SERVICE_URL_TEMPLATE, request.getScheme(), request.getServerName(), request.getServerPort(), gatewayPath, topologyName, context);
     }
+
+    return toBeResolved;
   }
 
   String getBackendServiceUrl() {
     final String backendServiceUrl = serviceUrl == null ? (service == null ? "" : service.getUrl()) : serviceUrl;
     return backendServiceUrl == null ? "" : backendServiceUrl;
+  }
+
+  @XmlElement(name = "sample")
+  @XmlElementWrapper(name = "samples")
+  public List<Sample> getSamples() {
+    final List<Sample> samples = new ArrayList<>();
+    if (serviceMetadata != null && serviceMetadata.getSamples() != null) {
+      serviceMetadata.getSamples().forEach(sample -> {
+        final Sample resolvedSample = new Sample();
+        resolvedSample.setDescription(sample.getDescription());
+        if (StringUtils.isNotBlank(sample.getValue())) {
+          resolvedSample.setValue(sample.getValue());
+        } else {
+          final String method = StringUtils.isBlank(sample.getMethod()) ? "GET" : sample.getMethod();
+          resolvedSample.setValue(String.format(Locale.ROOT, CURL_SAMPLE_TEMPLATE, method, getServiceUrl(), sample.getPath()));
+        }
+        samples.add(resolvedSample);
+      });
+    }
+    return samples;
   }
 
   @Override

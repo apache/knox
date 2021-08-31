@@ -29,16 +29,19 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.impl.DefaultCryptoService;
 import org.easymock.EasyMock;
 import org.junit.Test;
-import org.pac4j.core.context.Pac4jConstants;
+import org.pac4j.core.util.Pac4jConstants;
 import org.pac4j.http.client.indirect.IndirectBasicAuthClient;
 
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -110,8 +113,10 @@ public class Pac4jProviderTest {
         assertEquals(PAC4J_CALLBACK_URL + "?" + Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER + "=true&" + Pac4jConstants.DEFAULT_CLIENT_NAME_PARAMETER + "=" + CLIENT_CLASS, response.getHeaders().get("Location"));
         // we should have one cookie for the saved requested url
         List<Cookie> cookies = response.getCookies();
-        assertEquals(1, cookies.size());
-        final Cookie requestedUrlCookie = cookies.get(0);
+        assertEquals(3, cookies.size());
+        final Cookie requestedUrlCookie = cookies.stream()
+            .filter(c -> (KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.REQUESTED_URL).equals(c.getName()))
+            .collect(Collectors.toList()).get(0);
         assertEquals(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.REQUESTED_URL, requestedUrlCookie.getName());
 
         // step 2: send credentials to the callback url (callback from the identity provider)
@@ -149,8 +154,10 @@ public class Pac4jProviderTest {
         assertEquals(0, response.getStatus());
         adapter.doFilter(request, response, filterChain);
         cookies = response.getCookies();
-        assertEquals(1, cookies.size());
-        final Cookie userProfileCookie = cookies.get(0);
+        assertEquals(3, cookies.size());
+        final Cookie userProfileCookie = cookies.stream()
+            .filter(c -> (KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.USER_PROFILES).equals(c.getName()))
+            .collect(Collectors.toList()).get(0);
         // the user profile has been cleaned
         assertEquals(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.USER_PROFILES, userProfileCookie.getName());
         assertNull(userProfileCookie.getValue());
@@ -209,8 +216,10 @@ public class Pac4jProviderTest {
         assertEquals(PAC4J_CALLBACK_URL + "?" + Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER + "=true&" + Pac4jConstants.DEFAULT_CLIENT_NAME_PARAMETER + "=" + CLIENT_CLASS, response.getHeaders().get("Location"));
         // we should have one cookie for the saved requested url
         List<Cookie> cookies = response.getCookies();
-        assertEquals(1, cookies.size());
-        final Cookie requestedUrlCookie = cookies.get(0);
+        assertEquals(3, cookies.size());
+        final Cookie requestedUrlCookie = cookies.stream()
+            .filter(c -> (KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.REQUESTED_URL).equals(c.getName()))
+            .collect(Collectors.toList()).get(0);
         assertEquals(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.REQUESTED_URL, requestedUrlCookie.getName());
 
         // step 2: send credentials to the callback url (callback from the identity provider)
@@ -248,8 +257,10 @@ public class Pac4jProviderTest {
         assertEquals(0, response.getStatus());
         adapter.doFilter(request, response, filterChain);
         cookies = response.getCookies();
-        assertEquals(1, cookies.size());
-        final Cookie userProfileCookie = cookies.get(0);
+        assertEquals(3, cookies.size());
+        final Cookie userProfileCookie = cookies.stream()
+            .filter(c -> (KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.USER_PROFILES).equals(c.getName()))
+            .collect(Collectors.toList()).get(0);
         // the user profile has been cleaned
         assertEquals(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.USER_PROFILES, userProfileCookie.getName());
         assertNull(userProfileCookie.getValue());
@@ -307,8 +318,10 @@ public class Pac4jProviderTest {
         assertEquals(PAC4J_CALLBACK_URL + "?" + Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER + "=true&" + Pac4jConstants.DEFAULT_CLIENT_NAME_PARAMETER + "=" + CLIENT_CLASS, response.getHeaders().get("Location"));
         // we should have one cookie for the saved requested url
         List<Cookie> cookies = response.getCookies();
-        assertEquals(1, cookies.size());
-        final Cookie requestedUrlCookie = cookies.get(0);
+        assertEquals(3, cookies.size());
+        final Cookie requestedUrlCookie = cookies.stream()
+            .filter(c -> (KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.REQUESTED_URL).equals(c.getName()))
+            .collect(Collectors.toList()).get(0);
         assertEquals(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.REQUESTED_URL, requestedUrlCookie.getName());
 
         // step 2: send credentials to the callback url (callback from the identity provider)
@@ -346,12 +359,78 @@ public class Pac4jProviderTest {
         assertEquals(0, response.getStatus());
         adapter.doFilter(request, response, filterChain);
         cookies = response.getCookies();
-        assertEquals(1, cookies.size());
-        final Cookie userProfileCookie = cookies.get(0);
+        assertEquals(3, cookies.size());
+        final Cookie userProfileCookie = cookies.stream()
+            .filter(c -> (KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.USER_PROFILES).equals(c.getName()))
+            .collect(Collectors.toList()).get(0);
         // the user profile has been cleaned
         assertEquals(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.USER_PROFILES, userProfileCookie.getName());
         assertNull(userProfileCookie.getValue());
         assertEquals(USERNAME, adapter.getTestIdentifier());
     }
 
+    @Test
+    public void testResolvesAlias() throws Exception {
+        final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+        EasyMock.expect(aliasService.getPasswordFromAliasForCluster(CLUSTER_NAME, KnoxSessionStore.PAC4J_PASSWORD, true))
+                .andReturn(PAC4J_PASSWORD.toCharArray()).anyTimes();
+        EasyMock.expect(aliasService.getPasswordFromAliasForCluster(CLUSTER_NAME, KnoxSessionStore.PAC4J_PASSWORD))
+                .andReturn(PAC4J_PASSWORD.toCharArray()).anyTimes();
+        EasyMock.expect(aliasService.getPasswordFromAliasForCluster(CLUSTER_NAME, "my-secret-alias"))
+                .andReturn("my-oidc-secret".toCharArray()).atLeastOnce();
+        EasyMock.replay(aliasService);
+
+        GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+        EasyMock.expect(services.getService(ServiceType.CRYPTO_SERVICE)).andReturn(new DefaultCryptoService());
+        EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService);
+        EasyMock.replay(services);
+
+        ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+        EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
+        EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).andReturn(CLUSTER_NAME);
+        EasyMock.replay(context);
+
+        new Pac4jDispatcherFilter().init(
+            new FilterConfigStub(context)
+                .addInitParam(Pac4jDispatcherFilter.PAC4J_CALLBACK_URL, PAC4J_CALLBACK_URL)
+                .addInitParam("clientName", "OidcClient")
+                .addInitParam("oidc.secret", "${ALIAS=my-secret-alias}")
+                .addInitParam("oidc.id", "test-id")
+        );
+        EasyMock.verify(aliasService);
+    }
+
+    private class FilterConfigStub implements FilterConfig {
+        private ServletContext context;
+        private Properties properties = new Properties();
+
+        FilterConfigStub(ServletContext context) {
+            this.context = context;
+        }
+
+        public FilterConfigStub addInitParam(String name, String value) {
+            properties.setProperty(name, value);
+            return this;
+        }
+
+        @Override
+        public String getFilterName() {
+            return null;
+        }
+
+        @Override
+        public ServletContext getServletContext() {
+            return context;
+        }
+
+        @Override
+        public String getInitParameter(String s) {
+            return properties.getProperty(s, null);
+        }
+
+        @Override
+        public Enumeration<String> getInitParameterNames() {
+            return (Enumeration<String>) properties.propertyNames();
+        }
+    }
 }

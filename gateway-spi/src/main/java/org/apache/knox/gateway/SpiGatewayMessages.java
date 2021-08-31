@@ -91,4 +91,21 @@ public interface SpiGatewayMessages {
             text = "The dispatch to {0} was disallowed because it fails the dispatch whitelist validation. See documentation for dispatch whitelisting." )
   void dispatchDisallowed(String uri);
 
+  @Message( level = MessageLevel.DEBUG, text = "HTTP client connection timeout is set to {0} for {1}" )
+  void setHttpClientConnectionTimeout(int connectionTimeout, String serviceRole);
+
+  @Message( level = MessageLevel.DEBUG, text = "HTTP client socket timeout is set to {0} for {1}" )
+  void setHttpClientSocketTimeout(int csocketTimeout, String serviceRole);
+
+  @Message( level = MessageLevel.DEBUG, text = "replayBufferSize is set to {0} for {1}" )
+  void setReplayBufferSize(int replayBufferSize, String serviceRole);
+
+  @Message( level = MessageLevel.DEBUG, text = "Using two way SSL in {0}" )
+  void usingTwoWaySsl(String serviceRole);
+
+  @Message( level = MessageLevel.DEBUG, text = "Adding outbound header {0} and value {1}" )
+  void addedOutboundheader(String header, String value);
+
+  @Message( level = MessageLevel.DEBUG, text = "Skipped adding outbound header {0} and value {1}" )
+  void skippedOutboundHeader(String header, String value);
 }

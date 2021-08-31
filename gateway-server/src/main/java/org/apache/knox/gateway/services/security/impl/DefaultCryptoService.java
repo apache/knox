@@ -43,23 +43,23 @@ public class DefaultCryptoService implements CryptoService {
 
   private static final Map<String,ConfigurableEncryptor> ENCRYPTOR_CACHE = new HashMap<>();
 
-  private AliasService as;
-  private KeystoreService ks;
+  private AliasService aliasService;
+  private KeystoreService keystoreService;
   private GatewayConfig config;
 
   public void setKeystoreService(KeystoreService ks) {
-    this.ks = ks;
+    this.keystoreService = ks;
   }
 
   public void setAliasService(AliasService as) {
-    this.as = as;
+    this.aliasService = as;
   }
 
   @Override
   public void init(GatewayConfig config, Map<String, String> options)
       throws ServiceLifecycleException {
     this.config = config;
-  if (as == null) {
+  if (aliasService == null) {
       throw new ServiceLifecycleException("Alias service is not set");
     }
   }
@@ -77,7 +77,7 @@ public class DefaultCryptoService implements CryptoService {
   @Override
   public void createAndStoreEncryptionKeyForCluster(String clusterName, String alias) {
     try {
-      as.generateAliasForCluster(clusterName, alias);
+      aliasService.generateAliasForCluster(clusterName, alias);
     } catch (AliasServiceException e) {
       e.printStackTrace();
     }
@@ -87,7 +87,7 @@ public class DefaultCryptoService implements CryptoService {
   public EncryptionResult encryptForCluster(String clusterName, String alias, byte[] clear) {
     char[] password = null;
     try {
-      password = as.getPasswordFromAliasForCluster(clusterName, alias);
+      password = aliasService.getPasswordFromAliasForCluster(clusterName, alias);
     } catch (AliasServiceException e2) {
       e2.printStackTrace();
     }
@@ -111,7 +111,7 @@ public class DefaultCryptoService implements CryptoService {
     try {
       char[] password;
       ConfigurableEncryptor encryptor;
-        password = as.getPasswordFromAliasForCluster(clusterName, alias);
+        password = aliasService.getPasswordFromAliasForCluster(clusterName, alias);
         if (password != null) {
           encryptor = getEncryptor(clusterName,password );
           try {
@@ -134,7 +134,7 @@ public class DefaultCryptoService implements CryptoService {
     boolean verified = false;
     try {
       Signature sig=Signature.getInstance(algorithm);
-      sig.initVerify(ks.getCertificateForGateway().getPublicKey());
+      sig.initVerify(keystoreService.getCertificateForGateway().getPublicKey());
       sig.update(signed.getBytes(StandardCharsets.UTF_8));
       verified = sig.verify(signature);
     } catch (SignatureException | KeystoreServiceException | InvalidKeyException | NoSuchAlgorithmException | KeyStoreException e) {
@@ -148,8 +148,8 @@ public class DefaultCryptoService implements CryptoService {
   public byte[] sign(String algorithm, String payloadToSign) {
     try {
       char[] passphrase;
-      passphrase = as.getGatewayIdentityPassphrase();
-      PrivateKey privateKey = (PrivateKey) ks.getKeyForGateway(passphrase);
+      passphrase = aliasService.getGatewayIdentityPassphrase();
+      PrivateKey privateKey = (PrivateKey) keystoreService.getKeyForGateway(passphrase);
       Signature signature = Signature.getInstance(algorithm);
       signature.initSign(privateKey);
       signature.update(payloadToSign.getBytes(StandardCharsets.UTF_8));

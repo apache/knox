@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.ha.provider;
 
+import java.util.List;
+
 public interface HaServiceConfig {
   void setServiceName(String name);
 
@@ -41,4 +43,24 @@ public interface HaServiceConfig {
   String getZookeeperNamespace();
 
   void setZookeeperNamespace(String zookeeperNamespace);
+
+  boolean isLoadBalancingEnabled();
+
+  void setLoadBalancingEnabled(boolean isLoadBalancingEnabled);
+
+  boolean isStickySessionEnabled();
+
+  void setStickySessionEnabled(boolean stickySessionEnabled);
+
+  String getStickySessionCookieName();
+
+  void setStickySessionCookieName(String stickySessionCookieName);
+
+  boolean isNoFallbackEnabled();
+
+  void setNoFallbackEnabled(boolean noFallbackEnabled);
+
+  void setDisableStickySessionForUserAgents(List<String> disableStickySessionForUserAgents);
+
+  List<String> getStickySessionDisabledUserAgents();
 }

@@ -101,6 +101,10 @@ public interface ClouderaManagerServiceDiscoveryMessages {
            text = "No password configured for Cloudera Manager service discovery.")
   void aliasServicePasswordNotFound();
 
+  @Message(level = MessageLevel.INFO,
+          text = "The value of the qualifying parameter {1} for service {0} does not match: Expected={2}, Actual={3}")
+  void qualifyingServiceParamMismatch(String serviceName, String paramName, String expectedValue, String actualValue);
+
   @Message(level = MessageLevel.ERROR,
            text = "Unable to access the ClouderaManager Configuration Change Monitor: {0}")
   void errorAccessingConfigurationChangeMonitor(@StackTrace(level = MessageLevel.DEBUG) Exception e);
@@ -125,6 +129,9 @@ public interface ClouderaManagerServiceDiscoveryMessages {
 
   @Message(level = MessageLevel.DEBUG, text = "Checking {0} @ {1} for configuration changes...")
   void checkingClusterConfiguration(String clusterName, String discoveryAddress);
+
+  @Message(level = MessageLevel.ERROR, text = "Error while monitoring ClouderaManager configuration changes: {0}")
+  void clouderaManagerConfigurationChangesMonitoringError(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.ERROR,
       text = "Error getting service configuration details from ClouderaManager: {0}")
@@ -159,10 +166,20 @@ public interface ClouderaManagerServiceDiscoveryMessages {
                                           String clusterName,
                                           String discoveryAddress);
 
-  @Message(level = MessageLevel.DEBUG, text = "Querying restart events from {0} @ {1} since {2}")
-  void queryingRestartEventsFromCluster(String clusterName,
-                                        String discoveryAddress,
-                                        String sinceTimestamp);
+  @Message(level = MessageLevel.DEBUG,
+          text = "Querying configuration activation events from {0} @ {1} since {2}")
+  void queryingConfigActivationEventsFromCluster(String clusterName,
+                                                 String discoveryAddress,
+                                                 String sinceTimestamp);
+
+  @Message(level = MessageLevel.DEBUG, text = "There is no any activation event found within the given time period")
+  void noActivationEventFound();
+
+  @Message(level = MessageLevel.DEBUG, text = "Activation event relevance: {0} = {1}")
+  void activationEventRelevance(String eventId, String relevance);
+
+  @Message(level = MessageLevel.DEBUG, text = "Activation event - {0} - has already been processed, skipping ...")
+  void activationEventAlreadyProcessed(String eventId);
 
   @Message(level = MessageLevel.DEBUG, text = "Analyzing current {0} configuration for changes...")
   void analyzingCurrentServiceConfiguration(String serviceName);

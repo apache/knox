@@ -72,7 +72,7 @@ public class BadBackendTest {
         proxyUri);
     session.getBasicRemote().sendText(message);
 
-    client.awaitClose(CloseReason.CloseCodes.UNEXPECTED_CONDITION.getCode(), 1000,
+    client.awaitClose(CloseReason.CloseCodes.UNEXPECTED_CONDITION.getCode(), 5000,
         TimeUnit.MILLISECONDS);
 
     Assert.assertThat(client.close.getCloseCode().getCode(), CoreMatchers.is(CloseReason.CloseCodes.UNEXPECTED_CONDITION.getCode()));

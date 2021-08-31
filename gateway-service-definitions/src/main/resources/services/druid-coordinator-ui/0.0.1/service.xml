@@ -17,7 +17,7 @@
 <service role="DRUID-COORDINATOR-UI" name="druid-coordinator-ui" version="0.0.1">
     <metadata>
         <type>UI</type>
-        <context>/druid-coordinator-ui</context>
+        <context>/druid-coordinator-ui/</context>
         <shortDesc>Druid Coordinator Console</shortDesc>
         <description>The Druid Coordinator exposes a web GUI for displaying cluster information and rule configuration.</description>
     </metadata>

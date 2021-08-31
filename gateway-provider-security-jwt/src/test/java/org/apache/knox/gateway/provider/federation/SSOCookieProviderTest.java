@@ -113,6 +113,40 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
   }
 
   @Test
+  public void testMissingCookie() throws Exception {
+    try {
+      Properties props = getProperties();
+      handler.init(new TestFilterConfig(props));
+
+      HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+      EasyMock.expect(request.getCookies()).andReturn(null);
+      EasyMock.expect(request.getRequestURL()).andReturn(
+          new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getQueryString()).andReturn(null);
+      HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(
+          SERVICE_URL);
+      response.sendRedirect(EasyMock.anyObject(String.class));
+      EasyMock.expectLastCall()
+      .andAnswer(() -> {
+          String newLocation = (String) EasyMock.getCurrentArguments()[0];
+          Assert.assertEquals("Not the expected principal", newLocation,
+              "https://localhost:8443/authserver?originalUrl=https://localhost:8888/resource");
+          return null;
+      });
+      EasyMock.replay(request);
+      EasyMock.replay(response);
+
+      TestFilterChain chain = new TestFilterChain();
+      handler.doFilter(request, response, chain);
+      Assert.assertFalse("doFilterCalled should be false.", chain.doFilterCalled );
+      Assert.assertNull("Subject should be null.", chain.subject);
+    } catch (ServletException se) {
+      fail("Should NOT have thrown a ServletException.");
+    }
+  }
+
+  @Test
   public void testNoProviderURLJWT() {
     try {
       Properties props = getProperties();
@@ -173,21 +207,26 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
 
     String providerURL = ((TestSSOCookieFederationProvider) handler).deriveDefaultAuthenticationProviderUrl(request);
     Assert.assertNotNull("LoginURL should not be null.", providerURL);
-    Assert.assertEquals(providerURL, "https://localhost:8443/gateway/knoxsso/api/v1/websso");
+    Assert.assertEquals(providerURL, "https://localhost:8888/gateway/knoxsso/api/v1/websso");
 
     String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
     Assert.assertNotNull("LoginURL should not be null.", loginURL);
-    Assert.assertEquals(loginURL, "https://localhost:8443/gateway/knoxsso/api/v1/websso?originalUrl=" + SERVICE_URL);
+    Assert.assertEquals(loginURL, "https://localhost:8888/gateway/knoxsso/api/v1/websso?originalUrl=" + SERVICE_URL);
   }
 
   @Test
   public void testProxiedDefaultAuthenticationProviderURL() throws Exception {
+    // after KNOX-2467 enables jetty's xforwarded support this test has been
+    // changed to expect the X-Forwarded Headers to be resolved by
+    // httpRequest.getRequestURL instead of explicitly checking the headers
+    // ourselves. Leaving the headers set to show this is a proxied request
+    // but they really have no bearing on the results.
     Properties props = new Properties();
     props.setProperty("gateway.path", "gateway");
     handler.init(new TestFilterConfig(props));
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer("https://remotehost:8443/resource")).anyTimes();
     EasyMock.expect(request.getHeader(SSOCookieFederationFilter.X_FORWARDED_PROTO)).andReturn("https").anyTimes();
     EasyMock.expect(request.getHeader(SSOCookieFederationFilter.X_FORWARDED_HOST)).andReturn("remotehost:8443").anyTimes();
     EasyMock.expect(request.getHeader(SSOCookieFederationFilter.X_FORWARDED_PORT)).andReturn("8443").anyTimes();
@@ -199,17 +238,22 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
 
     String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
     Assert.assertNotNull("LoginURL should not be null.", loginURL);
-    Assert.assertEquals(loginURL, "https://remotehost:8443/gateway/knoxsso/api/v1/websso?originalUrl=" + SERVICE_URL);
+    Assert.assertEquals(loginURL, "https://remotehost:8443/gateway/knoxsso/api/v1/websso?originalUrl=" + "https://remotehost:8443/resource");
   }
 
   @Test
-  public void testProxiedDefaultAuthenticationProviderURLWithoutPortInHostHeader() throws Exception {
+  public void testProxiedDefaultAuthenticationProviderURLWithoutNonGatewayAppPath() throws Exception {
+    // after KNOX-2467 enables jetty's xforwarded support this test has been
+    // changed to expect the X-Forwarded Headers to be resolved by
+    // httpRequest.getRequestURL instead of explicitly checking the headers
+    // ourselves. Leaving the headers set to show this is a proxied request
+    // but they really have no bearing on the results.
     Properties props = new Properties();
     props.setProperty("gateway.path", "notgateway");
     handler.init(new TestFilterConfig(props));
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer("https://remotehost:8443/resource")).anyTimes();
     EasyMock.expect(request.getHeader(SSOCookieFederationFilter.X_FORWARDED_PROTO)).andReturn("https").anyTimes();
     EasyMock.expect(request.getHeader(SSOCookieFederationFilter.X_FORWARDED_HOST)).andReturn("remotehost").anyTimes();
     EasyMock.expect(request.getHeader(SSOCookieFederationFilter.X_FORWARDED_PORT)).andReturn("8443").anyTimes();
@@ -221,7 +265,65 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
 
     String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
     Assert.assertNotNull("LoginURL should not be null.", loginURL);
-    Assert.assertEquals(loginURL, "https://remotehost:8443/notgateway/knoxsso/api/v1/websso?originalUrl=" + SERVICE_URL);
+    Assert.assertEquals(loginURL, "https://remotehost:8443/notgateway/knoxsso/api/v1/websso?originalUrl=" + "https://remotehost:8443/resource");
+  }
+
+  @Test
+  public void testProxiedDefaultAuthenticationProviderURLWithoutPortInHostHeader() throws Exception {
+    // after KNOX-2467 enables jetty's xforwarded support this test has been
+    // changed to expect the X-Forwarded Headers to be resolved by
+    // httpRequest.getRequestURL instead of explicitly checking the headers
+    // ourselves. Leaving the headers set to show this is a proxied request
+    // but they really have no bearing on the results.
+    Properties props = new Properties();
+    props.setProperty("gateway.path", "notgateway");
+    handler.init(new TestFilterConfig(props));
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer("https://remotehost/resource")).anyTimes();
+    EasyMock.expect(request.getHeader(SSOCookieFederationFilter.X_FORWARDED_PROTO)).andReturn("https").anyTimes();
+    EasyMock.expect(request.getHeader(SSOCookieFederationFilter.X_FORWARDED_HOST)).andReturn("remotehost").anyTimes();
+    EasyMock.replay(request);
+
+    String providerURL = ((TestSSOCookieFederationProvider) handler).deriveDefaultAuthenticationProviderUrl(request);
+    Assert.assertNotNull("LoginURL should not be null.", providerURL);
+    Assert.assertEquals(providerURL, "https://remotehost/notgateway/knoxsso/api/v1/websso");
+
+    String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
+    Assert.assertNotNull("LoginURL should not be null.", loginURL);
+    Assert.assertEquals(loginURL, "https://remotehost/notgateway/knoxsso/api/v1/websso?originalUrl=" + "https://remotehost/resource");
+  }
+
+  @Test
+  public void testProxiedDefaultAuthenticationProviderURLWithoutMismatchInXForwardedHeader() throws Exception {
+    // after KNOX-2467 enables jetty's xforwarded support this test has been
+    // changed to expect the X-Forwarded Headers to be resolved by
+    // httpRequest.getRequestURL instead of explicitly checking the headers
+    // ourselves. Leaving the headers set to show this is a proxied request
+    // but they really have no bearing on the results.
+
+    // this is an odd test but we want to make sure that the removed code
+    // that explicitly handled incoming xforwarded headers in the redirect
+    // url is actuall removed and all handling of xforwarded is handled by
+    // servlet container.
+    Properties props = new Properties();
+    props.setProperty("gateway.path", "notgateway");
+    handler.init(new TestFilterConfig(props));
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer("https://remotehost/resource")).anyTimes();
+    EasyMock.expect(request.getHeader(SSOCookieFederationFilter.X_FORWARDED_PROTO)).andReturn("http").anyTimes();
+    EasyMock.expect(request.getHeader(SSOCookieFederationFilter.X_FORWARDED_HOST)).andReturn("larryhost").anyTimes();
+    EasyMock.expect(request.getHeader(SSOCookieFederationFilter.X_FORWARDED_PORT)).andReturn("7777").anyTimes();
+    EasyMock.replay(request);
+
+    String providerURL = ((TestSSOCookieFederationProvider) handler).deriveDefaultAuthenticationProviderUrl(request);
+    Assert.assertNotNull("LoginURL should not be null.", providerURL);
+    Assert.assertEquals(providerURL, "https://remotehost/notgateway/knoxsso/api/v1/websso");
+
+    String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
+    Assert.assertNotNull("LoginURL should not be null.", loginURL);
+    Assert.assertEquals(loginURL, "https://remotehost/notgateway/knoxsso/api/v1/websso?originalUrl=" + "https://remotehost/resource");
   }
 
   @Override
@@ -229,7 +331,10 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
     return SSOCookieFederationFilter.SSO_VERIFICATION_PEM;
   }
 
-  private static class TestSSOCookieFederationProvider extends SSOCookieFederationFilter {
+  private static class TestSSOCookieFederationProvider extends SSOCookieFederationFilter
+                                                       implements TokenVerificationCounter {
+    private int verificationCount;
+
     @Override
     public String constructLoginURL(HttpServletRequest req) {
       return super.constructLoginURL(req);
@@ -237,6 +342,17 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
 
     void setTokenService(JWTokenAuthority ts) {
       authority = ts;
+    }
+
+    @Override
+    protected void recordSignatureVerification(String tokenId) {
+      super.recordSignatureVerification(tokenId);
+      verificationCount++;
+    }
+
+    @Override
+    public int getVerificationCount() {
+      return verificationCount;
     }
   }
 }

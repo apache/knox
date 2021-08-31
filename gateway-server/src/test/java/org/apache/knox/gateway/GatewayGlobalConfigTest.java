@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.net.URL;
+import java.security.KeyStore;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -68,7 +69,7 @@ public class GatewayGlobalConfigTest {
     assertThat( config.isClientAuthNeeded(), is( true ) );
     assertThat( config.getTruststorePath(), is("./gateway-trust.jks"));
     assertThat( config.getTruststoreType(), is( "PKCS12" ) );
-    assertThat( config.getKeystoreType(), is( "JKS" ) );
+    assertThat( config.getKeystoreType(), is(KeyStore.getDefaultType()) );
   }
 
   @Test

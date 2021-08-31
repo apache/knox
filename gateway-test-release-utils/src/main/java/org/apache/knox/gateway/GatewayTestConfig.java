@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -412,6 +413,16 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getCredentialStoreAlgorithm() {
+    return DEFAULT_CREDENTIAL_STORE_ALG;
+  }
+
+  @Override
+  public String getCredentialStoreType() {
+    return DEFAULT_CREDENTIAL_STORE_TYPE;
+  }
+
+  @Override
   public int getThreadPoolMax() {
     return 254;
   }
@@ -791,7 +802,27 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public long getKnoxTokenStateAliasPersistenceInterval() {
+    return 0;
+  }
+
+  @Override
+  public String getKnoxTokenHashAlgorithm() {
+    return null;
+  }
+
+  @Override
+  public int getMaximumNumberOfTokensPerUser() {
+    return 0;
+  }
+
+  @Override
   public Set<String> getHiddenTopologiesOnHomepage() {
+    return Collections.emptySet();
+  }
+
+  @Override
+  public Set<String> getPinnedTopologiesOnHomepage() {
     return Collections.emptySet();
   }
 
@@ -802,4 +833,83 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public boolean isKnoxTokenPermissiveValidationEnabled() {
     return false;
   }
+
+  @Override
+  public String getServiceParameter(String service, String parameter) {
+    return "";
+  }
+
+  @Override
+  public boolean homePageLogoutEnabled() {
+    return false;
+  }
+
+  @Override
+  public String getGlobalLogoutPageUrl() {
+    return null;
+  }
+
+  @Override
+  public long getKeystoreCacheSizeLimit() {
+    return 0;
+  }
+
+  @Override
+  public long getKeystoreCacheEntryTimeToLiveInMinutes() {
+    return 0;
+  }
+
+  @Override
+  public boolean isGatewayServerIncomingXForwardedSupportEnabled() {
+    return true;
+  }
+
+  @Override
+  public Map<String, Collection<String>> getHomePageProfiles() {
+    return null;
+  }
+
+  @Override
+  public String getDatabaseType() {
+    return null;
+  }
+
+  @Override
+  public String getDatabaseConnectionUrl() {
+    return null;
+  }
+
+  @Override
+  public String getDatabaseHost() {
+    return null;
+  }
+
+  @Override
+  public int getDatabasePort() {
+    return 0;
+  }
+
+  @Override
+  public String getDatabaseName() {
+    return null;
+  }
+
+
+  @Override
+  public boolean isDatabaseSslEnabled() {
+    return false;
+  }
+
+
+  @Override
+  public boolean verifyDatabaseSslServerCertificate() {
+    return false;
+  }
+
+
+  @Override
+  public String getDatabaseSslTruststoreFileName() {
+    return null;
+  }
+
 }

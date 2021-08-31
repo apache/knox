@@ -280,7 +280,7 @@ public class GatewayFilter implements Filter {
     }
   }
 
-  private class Holder implements Filter, FilterConfig {
+  public class Holder implements Filter, FilterConfig {
     private Template template;
     private String name;
     private Map<String,String> params;
