@@ -71,4 +71,8 @@ export class TokenManagementComponent implements OnInit {
     gotoTokenGenerationPage() {
         window.open(this.tokenGenerationPageURL, '_blank');
     }
+
+    formatDateTime(dateTime: number) {
+        return new Date(dateTime).toLocaleString();
+    }
 }

@@ -22,7 +22,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-public class KnoxToken implements Comparable<KnoxToken>{
+public class KnoxToken implements Comparable<KnoxToken> {
   // SimpleDateFormat is not thread safe must use as a ThreadLocal
   private static final ThreadLocal<DateFormat> KNOX_TOKEN_TS_FORMAT = ThreadLocal
       .withInitial(() -> new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.getDefault()));
@@ -53,12 +53,24 @@ public class KnoxToken implements Comparable<KnoxToken>{
     return KNOX_TOKEN_TS_FORMAT.get().format(new Date(issueTime));
   }
 
+  public long getIssueTimeLong() {
+    return issueTime;
+  }
+
   public String getExpiration() {
     return KNOX_TOKEN_TS_FORMAT.get().format(new Date(expiration));
   }
 
+  public long getExpirationLong() {
+    return expiration;
+  }
+
   public String getMaxLifetime() {
     return KNOX_TOKEN_TS_FORMAT.get().format(new Date(maxLifetime));
+  }
+
+  public long getMaxLifetimeLong() {
+    return maxLifetime;
   }
 
   public TokenMetadata getMetadata() {
