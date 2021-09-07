@@ -119,12 +119,8 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
 
   @Override
   public long getTokenExpiration(String tokenId, boolean validate) throws UnknownTokenException {
-    try {
-      // check the in-memory cache first
-      return super.getTokenExpiration(tokenId, validate);
-    } catch (UnknownTokenException e) {
-      // It's not in memory
-    }
+    // To support HA, there is no in-memory lookup here; we should go directly to the DB
+    // See KNOX-2658 for more details.
 
     if (validate) {
       validateToken(tokenId);
@@ -278,28 +274,23 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
 
   @Override
   public TokenMetadata getTokenMetadata(String tokenId) throws UnknownTokenException {
+    // To support HA, there is no in-memory lookup here; we should go directly to the DB.
+    // See KNOX-2658 for more details.
+
     TokenMetadata tokenMetadata = null;
+
     try {
-      tokenMetadata = super.getTokenMetadata(tokenId);
-    } catch (UnknownTokenException e) {
-      // This is expected if the metadata is not yet part of the in-memory record. In this case, the metadata will
-      // be retrieved from the database.
-    }
+      tokenMetadata = tokenDatabase.getTokenMetadata(tokenId);
 
-    if (tokenMetadata == null) {
-      try {
-        tokenMetadata = tokenDatabase.getTokenMetadata(tokenId);
-
-        if (tokenMetadata != null) {
-          log.fetchedMetadataFromDatabase(Tokens.getTokenIDDisplayText(tokenId));
-          // Update the in-memory cache to avoid subsequent DB look-ups for the same state
-          super.addMetadata(tokenId, tokenMetadata);
-        } else {
-          throw new UnknownTokenException(tokenId);
-        }
-      } catch (SQLException e) {
-        log.errorFetchingMetadataFromDatabase(Tokens.getTokenIDDisplayText(tokenId), e.getMessage(), e);
+      if (tokenMetadata != null) {
+        log.fetchedMetadataFromDatabase(Tokens.getTokenIDDisplayText(tokenId));
+        // Update the in-memory cache to avoid subsequent DB look-ups for the same state
+        super.addMetadata(tokenId, tokenMetadata);
+      } else {
+        throw new UnknownTokenException(tokenId);
       }
+    } catch (SQLException e) {
+      log.errorFetchingMetadataFromDatabase(Tokens.getTokenIDDisplayText(tokenId), e.getMessage(), e);
     }
     return tokenMetadata;
   }
