@@ -20,10 +20,10 @@ language: minimal
 matrix:
   fast_finish: true
   include:
-    - env: IMAGE=maven:3-jdk-8
-    - env: IMAGE=maven:3-jdk-11
+    - env: IMAGE=maven:3-jdk-8-slim
+    - env: IMAGE=maven:3-jdk-11-slim
     - name: Linux ARM64
-      env: IMAGE=maven:3-jdk-11
+      env: IMAGE=maven:3-jdk-11-slim
       arch: arm64-graviton2
       virt: lxd
       group: edge
