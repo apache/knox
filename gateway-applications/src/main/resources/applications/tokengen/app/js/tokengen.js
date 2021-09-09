@@ -185,6 +185,8 @@ var gen = function() {
     var lt_mins = form.lt_mins.value;
     var lifespanInputEnabled = form.lifespanInputEnabled.value;
     var _gen = function() {
+        $('#errorBox').hide();
+        $('#resultBox').hide();
         var apiUrl = tokenURL;
         var params = "";
         if (lifespanInputEnabled === "true") {
@@ -209,8 +211,7 @@ var gen = function() {
                     var decodedToken = b64DecodeUnicode(accessToken.split(".")[1]);
                     var jwtjson = JSON.parse(decodedToken);
                     $('#accessPasscode').text(resp.passcode);
-                    var date = new Date(resp.expires_in);
-                    $('#expiry').text(date.toLocaleString());
+                    $('#expiry').text(new Date(resp.expires_in).toLocaleString());
                     $('#user').text(jwtjson.sub);
                     var homepageURL = resp.homepage_url;
                     $('#homepage_url').html("<a href=\"" + baseURL + homepageURL + "\">Homepage URL</a>");
@@ -223,7 +224,11 @@ var gen = function() {
                 	window.location.reload();
                   }
                   else {
-                    $('#errorBox .errorMsg').text("Response from " + request.responseURL + " - " + request.status + ": " + request.statusText);
+                    var errorMsg = "Response from " + request.responseURL + " - " + request.status + ": " + request.statusText;
+                    if (request.responseText) {
+                        errorMsg += " (" + request.responseText + ")";
+                    }
+                    $('#errorBox .errorMsg').text(errorMsg);
                   }
                 }
             }
