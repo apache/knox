@@ -28,11 +28,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.HmacAlgorithms;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.derby.drda.NetworkServerControl;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -144,6 +147,12 @@ public class JDBCTokenStateServiceTest {
     jdbcTokenStateService.addToken(tokenId, 1, 1, 1);
     jdbcTokenStateService.updateExpiration(tokenId, 2);
 
+    // set token expiration to 3 in-memory
+    // we still expect 2 because in-memory lookup should be skipped while fetching token expiration
+    final Map<String, Long> tokenExpirations = new ConcurrentHashMap<>();
+    tokenExpirations.put(tokenId, 3L);
+    FieldUtils.writeField(jdbcTokenStateService, "tokenExpirations", tokenExpirations, true);
+
     assertEquals(2, jdbcTokenStateService.getTokenExpiration(tokenId));
     assertEquals(2, getLongTokenAttributeFromDatabase(tokenId, TokenStateDatabase.GET_TOKEN_EXPIRATION_SQL));
   }
@@ -173,6 +182,13 @@ public class JDBCTokenStateServiceTest {
     //enable the token (it was disabled)
     tokenMetadata.setEnabled(true);
     jdbcTokenStateService.addMetadata(tokenId, tokenMetadata);
+
+    // set token metadata back to original in the in-memory cache with disabled=false
+    // we still expect an enabled token because in-memory lookup should be skipped while fetching token metadata
+    final Map<String, TokenMetadata> metadataMap = new ConcurrentHashMap<>();
+    metadataMap.put(tokenId, tokenMetadata);
+    FieldUtils.writeField(jdbcTokenStateService, "metadataMap", metadataMap, true);
+
     assertTrue(jdbcTokenStateService.getTokenMetadata(tokenId).isEnabled());
     assertEquals("true", getStringTokenAttributeFromDatabase(tokenId, getSelectMetadataSql(TokenMetadata.ENABLED)));
 
