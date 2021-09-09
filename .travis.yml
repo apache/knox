@@ -30,16 +30,18 @@ matrix:
       os: linux
       dist: focal
 
-addons:
-  apt:
-    packages:
-      - docker-ce
 env:
   global:
   - DOCKERRUN="docker run --rm -v $PWD:/src -v $HOME/.m2:/root/.m2 -v /var/run/docker.sock:/var/run/docker.sock -w /src"
 services:
   - docker
 before_install:
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  - sudo add-apt-repository "deb [arch=arm64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  - sudo apt-get update
+  - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
+  - docker --version
   - lscpu
   - docker pull $IMAGE
 script:
