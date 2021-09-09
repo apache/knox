@@ -23,19 +23,6 @@ import java.util.concurrent.Callable;
  * Manipulates the correlations context associated with the current thread.
  */
 public interface CorrelationService {
-
-  /**
-   * The recommended protocol header name used to transmit the correlation context over the network.
-   */
-  String PROTOCOL_HEADER = "X-Correlation-Context";
-
-  /**
-   * Creates a new correlation context.  The context is attached and empty.
-   *
-   * @return A new correlation context.
-   */
-  CorrelationContext createContext();
-
   /**
    * Returns the current attached correlation context if any.
    *
@@ -55,10 +42,8 @@ public interface CorrelationService {
   /**
    * Detaches the existing attached context if any.
    * This will typically be done so that the context can be persisted or attached to a different thread.
-   *
-   * @return The now detached correlation context.  May be null.
    */
-  CorrelationContext detachContext();
+  void detachContext();
 
   /**
    * Executes the callable within the provided correlation context.

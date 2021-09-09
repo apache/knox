@@ -16,14 +16,8 @@
  */
 package org.apache.knox.gateway.topology.builder;
 
-import java.util.Enumeration;
-
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.builder.property.Property;
-import org.apache.knox.test.log.NoOpAppender;
-import org.apache.log4j.Appender;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -31,19 +25,6 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 
 public class PropertyTopologyBuilderTest {
-
-  private static Enumeration<Appender> realAppenders;
-
-  @BeforeClass
-  public static void setUpBeforeClass() {
-    realAppenders = NoOpAppender.setUpAndReturnOriginalAppenders();
-  }
-
-  @AfterClass
-  public static void tearDownAfterClass() {
-    NoOpAppender.resetOriginalAppenders( realAppenders );
-  }
-
   @Test( expected = IllegalArgumentException.class )
   public void testBuildFailedForWrongProperty() {
     PropertyTopologyBuilder propertyTopologyBuilder = new PropertyTopologyBuilder();

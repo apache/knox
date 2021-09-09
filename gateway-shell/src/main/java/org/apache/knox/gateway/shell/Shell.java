@@ -31,7 +31,6 @@ import org.apache.knox.gateway.shell.manager.Manager;
 import org.apache.knox.gateway.shell.table.KnoxShellTable;
 import org.apache.knox.gateway.shell.workflow.Workflow;
 import org.apache.knox.gateway.shell.yarn.Yarn;
-import org.apache.log4j.PropertyConfigurator;
 import org.codehaus.groovy.tools.shell.AnsiDetector;
 import org.codehaus.groovy.tools.shell.Groovysh;
 import org.fusesource.jansi.Ansi;
@@ -65,7 +64,6 @@ public class Shell {
 
   @SuppressWarnings("PMD.DoNotUseThreads") // we need to define a Thread to be able to register a shutdown hook
   public static void main( String... args ) throws Exception {
-    PropertyConfigurator.configure( System.getProperty( "log4j.configuration" ) );
     if( args.length > 0 ) {
       if (NON_INTERACTIVE_COMMANDS.contains(args[0])) {
           final String[] arguments = new String[args.length == 1 ? 1:3];

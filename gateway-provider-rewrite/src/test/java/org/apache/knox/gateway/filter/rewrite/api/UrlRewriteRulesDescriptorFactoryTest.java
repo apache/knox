@@ -17,8 +17,9 @@
  */
 package org.apache.knox.gateway.filter.rewrite.api;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Logger;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.xmlmatchers.transform.XmlConverters;
@@ -98,10 +99,10 @@ public class UrlRewriteRulesDescriptorFactoryTest {
 
   @Test
   public void testLoadEmptyFile() {
-    Logger logger = org.apache.log4j.LogManager.getLogger( "org.apache.commons.digester3.Digester" );
+    Logger logger = (Logger)LogManager.getLogger( "org.apache.commons.digester3.Digester" );
     Level level = logger.getLevel();
     try {
-      logger.setLevel( org.apache.log4j.Level.OFF );
+      logger.setLevel( Level.OFF );
       UrlRewriteRulesDescriptorFactory.load( "xml", getTestResourceReader( "empty.xml" ) );
       fail( "Should have thrown an IOException." );
     } catch ( IOException e ) {
@@ -118,10 +119,10 @@ public class UrlRewriteRulesDescriptorFactoryTest {
 
   @Test
   public void testLoadInvalidFile() {
-    Logger logger = org.apache.log4j.LogManager.getLogger( "org.apache.commons.digester3.Digester" );
+    Logger logger = (Logger)LogManager.getLogger( "org.apache.commons.digester3.Digester" );
     Level level = logger.getLevel();
     try {
-      logger.setLevel( org.apache.log4j.Level.OFF );
+      logger.setLevel( Level.OFF );
       UrlRewriteRulesDescriptorFactory.load( "xml", getTestResourceReader( "invalid.xml" ) );
       fail( "Should have thrown an IOException." );
     } catch ( IOException e ) {

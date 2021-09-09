@@ -23,6 +23,8 @@ import org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter;
 import org.apache.knox.gateway.services.security.CryptoService;
 import org.apache.knox.gateway.services.security.EncryptionResult;
 import org.apache.knox.gateway.util.Urls;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.pac4j.core.context.ContextHelper;
 import org.pac4j.core.context.Cookie;
 import org.pac4j.core.context.JEEContext;
@@ -32,8 +34,6 @@ import org.pac4j.core.exception.TechnicalException;
 import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.util.JavaSerializationHelper;
 import org.pac4j.core.util.Pac4jConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -52,7 +52,7 @@ import java.util.zip.GZIPOutputStream;
  */
 public class KnoxSessionStore<C extends WebContext> implements SessionStore<C> {
 
-    private static final Logger logger = LoggerFactory.getLogger(KnoxSessionStore.class);
+    private static final Logger logger = LogManager.getLogger(KnoxSessionStore.class);
 
     public static final String PAC4J_PASSWORD = "pac4j.password";
 

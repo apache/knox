@@ -24,12 +24,12 @@ import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.test.TestUtils;
 import org.apache.http.HttpStatus;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hamcrest.MatcherAssert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.OutputStream;
@@ -45,7 +45,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
 public class GatewaySampleFuncTest {
-  private static final Logger LOG = LoggerFactory.getLogger( GatewaySampleFuncTest.class );
+  private static final Logger LOG = LogManager.getLogger( GatewaySampleFuncTest.class );
 
   public static GatewayConfig config;
   public static GatewayServer gateway;

@@ -155,6 +155,8 @@ public class RemoteConfigurationMonitorTest {
      * Configure and start the ZooKeeper test cluster, and create the znodes monitored by the RemoteConfigurationMonitor.
      */
     private void configureAndStartZKCluster() throws Exception {
+        System.setProperty("zookeeper.jmx.log4j.disable", "true");
+
         // Configure security for the ZK cluster instances
         Map<String, Object> customInstanceSpecProps = new HashMap<>();
         customInstanceSpecProps.put("authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");

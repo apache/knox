@@ -56,7 +56,6 @@ import org.apache.knox.gateway.trace.TraceHandler;
 import org.apache.knox.gateway.util.Urls;
 import org.apache.knox.gateway.util.XmlUtils;
 import org.apache.knox.gateway.websockets.GatewayWebsocketHandler;
-import org.apache.log4j.PropertyConfigurator;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
@@ -149,7 +148,6 @@ public class GatewayServer {
 
   public static void main( String[] args ) {
     try {
-      configureLogging();
       logSysProps();
       CommandLine cmd = GatewayCommandLine.parse( args );
       if( cmd.hasOption( GatewayCommandLine.HELP_LONG ) ) {
@@ -232,24 +230,6 @@ public class GatewayServer {
     logSysProp( "java.runtime.name" );
     logSysProp( "java.runtime.version" );
     logSysProp( "java.home" );
-  }
-
-  private static void configureLogging() {
-    PropertyConfigurator.configure( System.getProperty( "log4j.configuration" ) );
-//    String fileName = config.getGatewayConfDir() + File.separator + "log4j.properties";
-//    File file = new File( fileName );
-//    if( file.isFile() && file.canRead() ) {
-//      FileInputStream stream;
-//      try {
-//        stream = new FileInputStream( file );
-//        Properties properties = new Properties();
-//        properties.load( stream );
-//        PropertyConfigurator.configure( properties );
-//        log.loadedLoggingConfig( fileName );
-//      } catch( IOException e ) {
-//        log.failedToLoadLoggingConfig( fileName );
-//      }
-//    }
   }
 
   private static void configureKerberosSecurity( GatewayConfig config ) {

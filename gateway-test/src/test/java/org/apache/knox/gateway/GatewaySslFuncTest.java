@@ -62,13 +62,13 @@ import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.apache.knox.test.TestUtils.LOG_ENTER;
 import static org.apache.knox.test.TestUtils.LOG_EXIT;
@@ -80,7 +80,7 @@ import static org.xmlmatchers.xpath.HasXPath.hasXPath;
 
 @Category( ReleaseTest.class )
 public class GatewaySslFuncTest {
-  private static final Logger LOG = LoggerFactory.getLogger( GatewaySslFuncTest.class );
+  private static final Logger LOG = LogManager.getLogger( GatewaySslFuncTest.class );
   private static final Class<?> DAT = GatewaySslFuncTest.class;
 
   private static GatewayTestConfig config;
