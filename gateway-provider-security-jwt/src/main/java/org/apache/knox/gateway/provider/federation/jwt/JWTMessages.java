@@ -16,10 +16,12 @@
  */
 package org.apache.knox.gateway.provider.federation.jwt;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.knox.gateway.i18n.messages.Message;
 import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
+import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
 
 @Messages(logger="org.apache.knox.gateway.provider.federation.jwt")
 public interface JWTMessages {
@@ -87,4 +89,7 @@ public interface JWTMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Token is disabled: {0}" )
   void disabledToken(String tokenId);
+
+  @Message( level = MessageLevel.INFO, text = "Missing token: {0}")
+  void missingTokenFromHeader(Pair<JWTFederationFilter.TokenType, String> wireToken);
 }

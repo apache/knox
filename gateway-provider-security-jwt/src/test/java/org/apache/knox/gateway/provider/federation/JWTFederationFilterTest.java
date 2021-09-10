@@ -20,8 +20,10 @@ package org.apache.knox.gateway.provider.federation;
 import com.nimbusds.jwt.SignedJWT;
 import org.easymock.EasyMock;
 import org.junit.Before;
+import org.junit.Test;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 @SuppressWarnings("PMD.TestClassWithoutTestCases")
 public class JWTFederationFilterTest extends AbstractJWTFilterTest {
@@ -51,5 +53,23 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
   protected void setGarbledTokenOnRequest(HttpServletRequest request, SignedJWT jwt) {
     String token = TestJWTFederationFilter.BEARER + " ljm" + jwt.serialize();
     EasyMock.expect(request.getHeader("Authorization")).andReturn(token);
+  }
+
+  @Test
+  public void testMissingTokenValue() throws Exception {
+    handler.init(new TestFilterConfig(getProperties()));
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getHeader("Authorization")).andReturn("Basic VG9rZW46");
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+    EasyMock.expectLastCall().once();
+    EasyMock.replay(request, response);
+
+    TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+
+    EasyMock.verify(response);
   }
 }
