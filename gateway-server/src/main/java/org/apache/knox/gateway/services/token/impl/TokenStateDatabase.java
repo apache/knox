@@ -17,12 +17,8 @@
  */
 package org.apache.knox.gateway.services.token.impl;
 
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.IOUtils;
-import org.apache.knox.gateway.services.security.token.KnoxToken;
-import org.apache.knox.gateway.services.security.token.TokenMetadata;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
-import javax.sql.DataSource;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -37,8 +33,12 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import javax.sql.DataSource;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
+import org.apache.knox.gateway.services.security.token.KnoxToken;
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
 
 public class TokenStateDatabase {
   private static final String TOKENS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenDatabaseTable.sql";

@@ -17,17 +17,6 @@
  */
 package org.apache.knox.gateway.services.token.impl;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.token.KnoxToken;
-import org.apache.knox.gateway.services.security.token.TokenMetadata;
-import org.apache.knox.gateway.services.security.token.TokenStateServiceException;
-import org.apache.knox.gateway.services.security.token.UnknownTokenException;
-import org.apache.knox.gateway.util.JDBCUtils;
-import org.apache.knox.gateway.util.Tokens;
-
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,6 +27,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.token.KnoxToken;
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
+import org.apache.knox.gateway.services.security.token.TokenStateServiceException;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
+import org.apache.knox.gateway.util.JDBCUtils;
+import org.apache.knox.gateway.util.Tokens;
 
 public class JDBCTokenStateService extends DefaultTokenStateService {
   private AliasService aliasService; // connection username/pw and passcode HMAC secret are stored here
