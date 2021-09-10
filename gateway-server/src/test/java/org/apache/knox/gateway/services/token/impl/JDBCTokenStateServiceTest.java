@@ -28,6 +28,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,6 +44,7 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.derby.drda.NetworkServerControl;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.token.KnoxToken;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
@@ -128,6 +134,55 @@ public class JDBCTokenStateServiceTest {
 
     assertEquals(expiration, getLongTokenAttributeFromDatabase(tokenId, TokenStateDatabase.GET_TOKEN_EXPIRATION_SQL));
     assertEquals(issueTime + maxLifetimeDuration, getLongTokenAttributeFromDatabase(tokenId, TokenStateDatabase.GET_MAX_LIFETIME_SQL));
+  }
+
+  @Test
+  public void testAddTokensForMultipleUsers() throws Exception {
+    String user1 = "user1";
+    String user2 = "user2";
+    String id1 = "token1";
+    String id2 = "token2";
+    String id3 = "token3";
+
+    long issueTime1 = 1;
+    long expiration1 = 1;
+    String comment1 = "comment1";
+
+    long issueTime2 = 2;
+    long expiration2 = 2;
+    String comment2 = "comment2";
+
+    long issueTime3 = 3;
+    long expiration3 = 3;
+    String comment3 = "comment3";
+
+    truncateDatabase();
+
+    saveToken(user1, id1, issueTime1, expiration1, comment1);
+    saveToken(user1, id2, issueTime2, expiration2, comment2);
+    saveToken(user2, id3, issueTime3, expiration3, comment3);
+
+    List<KnoxToken> user1Tokens = new ArrayList<>(jdbcTokenStateService.getTokens(user1));
+    assertEquals(2, user1Tokens.size());
+    assertToken(user1Tokens.get(0), id1, expiration1, comment1, issueTime1);
+    assertToken(user1Tokens.get(1), id2, expiration2, comment2, issueTime2);
+
+    List<KnoxToken> user2Tokens = new ArrayList<>(jdbcTokenStateService.getTokens(user2));
+    assertEquals(1, user2Tokens.size());
+    assertToken(user2Tokens.get(0), id3, expiration3, comment3, issueTime3);
+  }
+
+  private void assertToken(KnoxToken knoxToken, String tokenId, long expiration, String comment, long issueTime) {
+    SimpleDateFormat df = new SimpleDateFormat(KnoxToken.DATE_FORMAT, Locale.getDefault());
+    assertEquals(tokenId, knoxToken.getTokenId());
+    assertEquals(df.format(new Date(issueTime)), knoxToken.getIssueTime());
+    assertEquals(df.format(new Date(expiration)), knoxToken.getExpiration());
+    assertEquals(comment, knoxToken.getMetadata().getComment());
+  }
+
+  private void saveToken(String user, String tokenId, long issueTime, long expiration, String comment) {
+    jdbcTokenStateService.addToken(tokenId, issueTime, expiration);
+    jdbcTokenStateService.addMetadata(tokenId, new TokenMetadata(user, comment));
   }
 
   @Test(expected = UnknownTokenException.class)

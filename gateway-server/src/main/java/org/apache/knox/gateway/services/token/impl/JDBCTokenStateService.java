@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
@@ -297,16 +296,11 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
 
   @Override
   public Collection<KnoxToken> getTokens(String userName) {
-    final Collection<KnoxToken> tokens = new TreeSet<>();
     try {
-      tokens.addAll(tokenDatabase.getTokens(userName));
-      for (KnoxToken token : tokens) {
-        token.setMetadata(tokenDatabase.getTokenMetadata(token.getTokenId()));
-      }
+      return tokenDatabase.getTokens(userName);
     } catch (SQLException e) {
       log.errorFetchingTokensForUserFromDatabase(userName, e.getMessage(), e);
+      return Collections.emptyList();
     }
-    return tokens;
   }
-
 }
