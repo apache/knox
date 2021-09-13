@@ -47,7 +47,6 @@ public class AtlasZookeeperURLManagerTest {
 
     @Before
     public void setUp() throws Exception {
-        System.setProperty("zookeeper.jmx.log4j.disable", "true");
         cluster = new TestingCluster(1);
         cluster.start();
 

@@ -85,8 +85,8 @@ public class AuditLayout extends AbstractStringLayout {
     appendParameter( eventContextData.getValue( AuditConstants.MDC_RESOURCE_TYPE_KEY ) );
     appendParameter( eventContextData.getValue( AuditConstants.MDC_RESOURCE_NAME_KEY ) );
     appendParameter( eventContextData.getValue( AuditConstants.MDC_OUTCOME_KEY ) );
-    String message = event.getMessage().getFormattedMessage();
-    sb.append( "null".equals(message) ? Strings.EMPTY : message ).append( System.lineSeparator() );
+    String message = event.getMessage() == null ? null : event.getMessage().getFormattedMessage();
+    sb.append(message == null || "null".equals(message) ? Strings.EMPTY : message).append( System.lineSeparator());
     return sb.toString();
   }
 

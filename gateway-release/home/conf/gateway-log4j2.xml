@@ -34,6 +34,18 @@
             <PatternLayout pattern="%d{ISO8601} %-5p %c{2} (%F:%M(%L)) - %m%n" />
             <TimeBasedTriggeringPolicy />
         </RollingFile>
+<!--        <RollingFile name="httpclient" fileName="${app.log.dir}/${launcher.name}-http-client.log" filePattern="${app.log.dir}/${launcher.name}-http-client.log.%d{yyyy-MM-dd}">-->
+<!--            <PatternLayout pattern="%d{ISO8601}|%t|%m%n" />-->
+<!--            <TimeBasedTriggeringPolicy />-->
+<!--        </RollingFile>-->
+<!--        <RollingFile name="httpaccess" fileName="${app.log.dir}/${launcher.name}-http-access.log" filePattern="${app.log.dir}/${launcher.name}-http-access.log.%d{yyyy-MM-dd}">-->
+<!--            <PatternLayout pattern="%d{ISO8601}|%t|%m%n" />-->
+<!--            <TimeBasedTriggeringPolicy />-->
+<!--        </RollingFile>-->
+<!--        <RollingFile name="httpserver" fileName="${app.log.dir}/${launcher.name}-http-server.log" filePattern="${app.log.dir}/${launcher.name}-http-server.log.%d{yyyy-MM-dd}">-->
+<!--            <PatternLayout pattern="%d{ISO8601}|%t|%m%n" />-->
+<!--            <TimeBasedTriggeringPolicy />-->
+<!--        </RollingFile>-->
     </Appenders>
     <Loggers>
         <Logger name="audit" level="INFO">
@@ -43,6 +55,27 @@
         <Root level="ERROR">
             <AppenderRef ref="drfa" />
         </Root>
+<!--        <Logger name="org.springframework" level="DEBUG" />-->
+<!--        <Logger name="org.apache.knox.gateway.http.request.body" level="OFF" />-->
+<!--        <Logger name="org.apache.knox.gateway.http" level="TRACE">-->
+<!--            <AppenderRef ref="httpserver" />-->
+<!--        </Logger>-->
+<!--        <Logger name="org.apache.shiro" level="DEBUG" />-->
+<!--        <Logger name="org.apache.knox.gateway.http.response.body" level="OFF" />-->
+<!--        <Logger name="org.apache.http.client" level="DEBUG" />-->
+<!--        <Logger name="org.apache.knox.gateway.http.request.headers" level="OFF" />-->
+<!--        <Logger name="org.apache.http.wire" level="DEBUG">-->
+<!--            <AppenderRef ref="httpclient" />-->
+<!--        </Logger>-->
+<!--        <Logger name="org.apache.knox.gateway.http.response.headers" level="OFF" />-->
+<!--        <Logger name="net.sf.ehcache" level="DEBUG" />-->
+<!--        <Logger name="org.apache.http" level="DEBUG" />-->
+<!--        <Logger name="org.apache.http.headers" level="DEBUG" />-->
+<!--        <Logger name="org.apache.shiro.util.ThreadContext" level="DEBUG" />-->
+<!--        <Logger name="org.apache.knox.gateway" level="DEBUG" />-->
+<!--        <Logger name="org.eclipse.jetty" level="DEBUG" />-->
+<!--        <Logger name="org.apache.knox.gateway.access" level="TRACE">-->
+<!--            <AppenderRef ref="httpaccess" />-->
+<!--        </Logger>-->
     </Loggers>
-
 </Configuration>

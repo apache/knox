@@ -30,5 +30,19 @@
         <Logger name="audit" level="info">
             <AppenderRef ref="collectappender" />
         </Logger>
+
+<!--        <Logger name="org.apache.directory" level="DEBUG" />-->
+<!--        <Logger name="org.apache.knox.gateway.http.request.body" level="OFF" />-->
+<!--        <Logger name="org.eclipse.jetty" level="DEBUG" />-->
+<!--        <Logger name="org.apache.knox.gateway.http.response.body" level="OFF" />-->
+<!--        <Logger name="org.apache.http.client" level="DEBUG" />-->
+<!--        <Logger name="org.apache.knox.gateway" level="DEBUG" />-->
+<!--        <Logger name="org.apache.knox.gateway.http" level="TRACE" />-->
+<!--        <Logger name="org.apache.http" level="DEBUG" />-->
+<!--        <Logger name="org.apache.knox.test" level="DEBUG" />-->
+<!--        <Logger name="org.apache.http.wire" level="DEBUG" />-->
+<!--        <Logger name="org.apache.shiro" level="DEBUG" />-->
+<!--        <Logger name="org.apache.http.headers" level="DEBUG" />-->
+
     </Loggers>
 </Configuration>
