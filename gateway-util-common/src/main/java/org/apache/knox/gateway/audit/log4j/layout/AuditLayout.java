@@ -60,8 +60,8 @@ public class AuditLayout extends AbstractStringLayout {
   }
 
   private SimpleDateFormat dateFormat() {
-    SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_PATTERN, Locale.getDefault());
-    simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_PATTERN);
+    simpleDateFormat.setTimeZone(TimeZone.getDefault());
     return simpleDateFormat;
   }
 
