@@ -17,6 +17,12 @@
  */
 package org.apache.knox.gateway.audit.log4j.layout;
 
+import java.nio.charset.Charset;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+import java.util.TimeZone;
+
 import org.apache.knox.gateway.audit.api.AuditContext;
 import org.apache.knox.gateway.audit.api.CorrelationContext;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
@@ -31,12 +37,6 @@ import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.layout.AbstractStringLayout;
 import org.apache.logging.log4j.util.ReadOnlyStringMap;
 import org.apache.logging.log4j.util.Strings;
-
-import java.nio.charset.Charset;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Locale;
-import java.util.TimeZone;
 
 /**
  * Formats audit record to following output:
@@ -60,7 +60,7 @@ public class AuditLayout extends AbstractStringLayout {
   }
 
   private SimpleDateFormat dateFormat() {
-    SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_PATTERN);
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_PATTERN, Locale.getDefault(Locale.Category.FORMAT));
     simpleDateFormat.setTimeZone(TimeZone.getDefault());
     return simpleDateFormat;
   }

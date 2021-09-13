@@ -24,7 +24,6 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
-import java.util.TimeZone;
 
 import org.apache.knox.gateway.audit.api.AuditContext;
 import org.apache.knox.gateway.audit.api.AuditService;
@@ -107,7 +106,6 @@ public class AuditLayoutTest {
     assertThat( CollectAppender.queue.size(), is( 1 ) );
     LogEvent event = CollectAppender.queue.iterator().next();
     SimpleDateFormat format = new SimpleDateFormat( "yy/MM/dd HH:mm:ss", Locale.getDefault() );
-    format.setTimeZone(TimeZone.getTimeZone("UTC"));
     String formatedDate = format.format( event.getTimeMillis() );
     //14/01/24 12:40:24 1|2|3|audit.forward|hostaddress|WEBHDFS|username|proxy_username|system_username|action|resource_type|resource_name|outcome|message
     String expectedOutput = String.format(Locale.ROOT,
@@ -125,7 +123,6 @@ public class AuditLayoutTest {
     assertThat( CollectAppender.queue.size(), is( 1 ) );
     LogEvent event = CollectAppender.queue.iterator().next();
     SimpleDateFormat format = new SimpleDateFormat( "yy/MM/dd HH:mm:ss", Locale.getDefault() );
-    format.setTimeZone(TimeZone.getTimeZone("UTC"));
     String formatedDate = format.format( event.getTimeMillis() );
     //14/01/24 12:41:47 |||audit.forward|||||action|resource_type|resource_name|outcome|message
     String expectedOutput = String.format( Locale.ROOT,
@@ -142,8 +139,7 @@ public class AuditLayoutTest {
     assertThat( CollectAppender.queue.size(), is( 1 ) );
     LogEvent event = CollectAppender.queue.iterator().next();
     SimpleDateFormat format = new SimpleDateFormat( "yy/MM/dd HH:mm:ss", Locale.getDefault() );
-    format.setTimeZone(TimeZone.getTimeZone("UTC"));
-    String formatedDate = format.format( event.getTimeMillis() );
+    String formatedDate = format.format(event.getTimeMillis());
     //14/01/24 12:41:47 |||audit.forward|||||action|resource_type|resource_name|outcome|
     String expectedOutput = String.format( Locale.ROOT,
         RECORD_PATTERN, formatedDate,
