@@ -70,7 +70,7 @@ export class TokenManagementService {
     revokeToken(tokenId: string) {
         let xheaders = new HttpHeaders();
         xheaders = this.addJsonHeaders(xheaders);
-        return this.http.post(this.revokeKnoxTokenUrl, tokenId, {headers: xheaders, responseType: 'text'})
+        return this.http.request('DELETE', this.revokeKnoxTokenUrl, {headers: xheaders, body: tokenId, responseType: 'text'})
             .toPromise()
             .then(response => response)
             .catch((err: HttpErrorResponse) => {
