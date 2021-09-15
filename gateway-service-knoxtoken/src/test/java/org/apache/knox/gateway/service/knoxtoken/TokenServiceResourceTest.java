@@ -822,6 +822,12 @@ public class TokenServiceResourceTest {
   }
 
   @Test
+  public void testTokenRevocation_Enabled_RevokeOwnToken() throws Exception {
+    final Response renewalResponse = doTestTokenRevocation(true, null, createTestSubject(USER_NAME));
+    validateSuccessfulRevocationResponse(renewalResponse);
+  }
+
+  @Test
   public void testKidJkuClaims() throws Exception {
     final Map<String, String> contextExpectations = new HashMap<>();
     contextExpectations.put("knox.token.ttl", "60000");
