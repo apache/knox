@@ -39,6 +39,7 @@ import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -405,7 +406,7 @@ public class TokenResource {
     return Response.status(Response.Status.OK).entity(JsonUtils.renderAsJsonString(tokenStateServiceStatusMap)).build();
   }
 
-  @POST
+  @PUT
   @Path(RENEW_PATH)
   @Produces({APPLICATION_JSON})
   public Response renew(String token) {
@@ -474,7 +475,7 @@ public class TokenResource {
     return resp;
   }
 
-  @POST
+  @DELETE
   @Path(REVOKE_PATH)
   @Produces({APPLICATION_JSON})
   public Response revoke(String token) {
