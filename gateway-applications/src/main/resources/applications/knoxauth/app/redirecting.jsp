@@ -65,7 +65,7 @@
     document.addEventListener("load", redirectOnLoad());
 
     function redirectOnLoad() {
-      var originalUrl = <%= originalUrl %>;
+      var originalUrl = "<%= originalUrl %>";
       if (originalUrl != null) {
         redirect(originalUrl);
       }
