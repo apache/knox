@@ -34,11 +34,11 @@
 
     <rule dir="OUT" name="ATLAS/atlas/outbound/login/headers/location" flow="OR">
         <match pattern="*://*:*/login.jsp">
-            <rewrite template="https://{$frontend[addr]}/{gateway.url}/knoxsso/knoxauth/logout.jsp?originalUrl={$postfix[url,/atlas/]}" />
+            <rewrite template="https://{$frontend[addr]}/{$frontend[gateway.name]}/knoxsso/knoxauth/logout.jsp?originalUrl={$postfix[url,/atlas/]}" />
         </match>
 
         <match pattern="*://*:*/logout.html?{**}">
-            <rewrite template="https://{$frontend[addr]}/{gateway.url}/knoxsso/knoxauth/logout.jsp?{**}"/>
+            <rewrite template="https://{$frontend[addr]}/{$frontend[gateway.name]}/knoxsso/knoxauth/logout.jsp?{**}"/>
         </match>
     </rule>
 
