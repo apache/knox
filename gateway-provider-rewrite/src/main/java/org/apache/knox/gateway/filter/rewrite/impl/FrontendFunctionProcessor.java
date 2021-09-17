@@ -67,6 +67,7 @@ public class FrontendFunctionProcessor implements UrlRewriteFunctionProcessor<Fr
       resolvers.put( "path", new FixedResolver( frontend.getPath() ) );
     }
     resolvers.put( "topology", new FixedResolver( (String)environment.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE) ) );
+    resolvers.put( "gateway.name", new FixedResolver( (String)environment.getAttribute(GatewayServices.GATEWAY_NAME) ) );
     resolvers.put( "address", resolvers.get( "addr" ) );
   }
 
