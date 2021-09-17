@@ -810,6 +810,7 @@ public class GatewayServer {
     context.setAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE, topoName );
     context.setAttribute( "org.apache.knox.gateway.frontend.uri", getFrontendUri( context, config ) );
     context.setAttribute( GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE, config );
+    context.setAttribute( GatewayServices.GATEWAY_NAME, config.getGatewayPath());
     // Add support for JSPs.
     context.setAttribute(
         "org.eclipse.jetty.server.webapp.ContainerIncludeJarPattern",

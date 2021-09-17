@@ -26,6 +26,7 @@ public interface GatewayServices extends Service,
 
   String GATEWAY_CLUSTER_ATTRIBUTE = "org.apache.knox.gateway.gateway.cluster";
   String GATEWAY_SERVICES_ATTRIBUTE = "org.apache.knox.gateway.gateway.services";
+  String GATEWAY_NAME = "org.apache.knox.gateway.gateway.name";
 
   Collection<ServiceType> getServiceTypes();
 
