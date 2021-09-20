@@ -51,6 +51,11 @@
         <rewrite template="{$frontend[url]}/ranger/login.jsp"/>
     </rule>
 
+    <rule dir="OUT" name="RANGERUI/rangerui/outbound/timeout/headers/location">
+        <match pattern="*://*:*/*/*/ranger/logout?originalUrl={**}"/>
+        <rewrite template="https://{$frontend[addr]}/{$frontend[gateway.name]}/knoxsso/knoxauth/logout.jsp?originalUrl={**}"/>
+    </rule>
+
     <filter name="RANGERUI/rangerui/outbound/links">
         <content type="application/javascript">
             <apply path="j_spring_security_check" rule="RANGERUI/rangerui/outbound/extrapath"/>
