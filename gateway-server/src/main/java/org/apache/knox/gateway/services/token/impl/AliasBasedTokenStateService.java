@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -410,11 +409,6 @@ public class AliasBasedTokenStateService extends DefaultTokenStateService implem
       }
     }
     return isUnknown;
-  }
-
-  @Override
-  protected void removeToken(final String tokenId) throws UnknownTokenException {
-    removeTokens(Collections.singleton(tokenId));
   }
 
   @Override
