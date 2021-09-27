@@ -20,7 +20,6 @@
         <policy role="webappsec"/>
         <policy role="authentication"/>
         <policy role="rewrite"/>
-        <policy role="identity-assertion"/>
         <policy role="authorization"/>
     </policies>
     <routes>
@@ -28,7 +27,6 @@
             <policies>
                 <policy role="webappsec"/>
                 <policy role="authentication" name="Anonymous"/>
-                <policy role="identity-assertion"/>
                 <policy role="authorization"/>
                 <policy role="rewrite"/>
             </policies>
@@ -37,7 +35,6 @@
             <policies>
                 <policy role="webappsec"/>
                 <policy role="authentication" name="Anonymous"/>
-                <policy role="identity-assertion"/>
                 <policy role="authorization"/>
                 <policy role="rewrite"/>
             </policies>

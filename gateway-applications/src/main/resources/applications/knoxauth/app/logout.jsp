@@ -93,25 +93,41 @@
           }
         }
         else if (("1".equals(request.getParameter("globalLogout")))) {
-          Cookie c = new Cookie(cookieName, null);
-          c.setMaxAge(0);
-          c.setPath("/");
-          try {
-            String domainName = Urls.getDomainName(request.getRequestURL().toString(), null);
-            if(domainName != null) {
-              c.setDomain(domainName);
+            /*
+             * In order to account for google chrome changing default value
+             * of SameSite from None to Lax we need to craft Set-Cookie
+             * header to prevent issues with hadoop-jwt cookie.
+             * NOTE: this would have been easier if javax.servlet.http.Cookie supported
+             * SameSite param. Change this back to Cookie impl. after
+             * SameSite header is supported by javax.servlet.http.Cookie.
+             */
+            final StringBuilder setCookie = new StringBuilder(50);
+            try {
+                setCookie.append(cookieName).append('=');
+                setCookie.append("; Path=/");
+                try {
+                    final String domainName = Urls.getDomainName(
+                            request.getRequestURL().toString(), null);
+                    if (domainName != null) {
+                        setCookie.append("; Domain=").append(domainName);
+                    }
+                } catch (Exception e) {
+                    // do nothing
+                    // we are probably not going to be able to
+                    // remove the cookie due to this error but it
+                    // isn't necessarily not going to work.
+                }
+                setCookie.append("; HttpOnly");
+                setCookie.append("; Secure");
+                setCookie.append("; Max-Age=").append(0);
+                setCookie.append("; SameSite=None");
+                response.setHeader("Set-Cookie", setCookie.toString());
+            } catch (Exception e) {
+                // do nothing
             }
-          } catch (MalformedURLException e) {
-            // we are probably not going to be able to
-            // remove the cookie due to this error but it
-            // isn't necessarily not going to work.
-          }
-          response.addCookie(c);
-
-          response.setStatus(HttpServletResponse.SC_SEE_OTHER);
-          response.setHeader("Location", globalLogoutPageURL);
-          return;
-        }
+            response.setStatus(HttpServletResponse.SC_TEMPORARY_REDIRECT);
+            response.setHeader("Location", globalLogoutPageURL);
+            return;
     %>
   </head>
   
