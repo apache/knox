@@ -103,7 +103,7 @@ public class HadoopAuthFilter extends
 
   private final Set<String> ignoreDoAs = new HashSet<>();
   private JWTFederationFilter jwtFilter;
-  private Set<String> unAuthenticatedPaths = new HashSet(20);
+  private Set<String> unAuthenticatedPaths = new HashSet<>(20);
 
   @Override
   protected Properties getConfiguration(String configPrefix, FilterConfig filterConfig) throws ServletException {
@@ -352,33 +352,43 @@ public class HadoopAuthFilter extends
   }
 
   // Visible for testing
-  Properties getConfiguration(AliasService aliasService, String configPrefix,
-                                        FilterConfig filterConfig) throws ServletException {
-
-    String clusterName = filterConfig.getInitParameter("clusterName");
-
-    Properties props = new Properties();
-    Enumeration<String> names = filterConfig.getInitParameterNames();
+  Properties getConfiguration(AliasService aliasService, String configPrefix, FilterConfig filterConfig) throws ServletException {
+    final Properties props = new Properties();
+    final Enumeration<String> names = filterConfig.getInitParameterNames();
     while (names.hasMoreElements()) {
       String name = names.nextElement();
       if (name.startsWith(configPrefix)) {
-        String value = filterConfig.getInitParameter(name);
-
-        // Handle the case value is an alias
-        if (value.startsWith("${ALIAS=") && value.endsWith("}")) {
-          String alias = value.substring("${ALIAS=".length(), value.length() - 1);
-          try {
-            value = String.valueOf(
-                aliasService.getPasswordFromAliasForCluster(clusterName, alias));
-          } catch (AliasServiceException e) {
-            throw new ServletException("Unable to retrieve alias for config: " + name, e);
-          }
-        }
-
+        String value = handleAlias(aliasService, filterConfig, filterConfig.getInitParameter(name), name);
         props.put(name.substring(configPrefix.length()), value);
       }
     }
     return props;
+  }
+
+  private String handleAlias(AliasService aliasService, FilterConfig filterConfig, String value, String name) throws ServletException {
+    String result = value;
+    // Handle the case value is an alias
+    if (value.startsWith("${ALIAS=") && value.endsWith("}")) {
+      try {
+        final String clusterName = filterConfig.getInitParameter("clusterName");
+        final String alias = value.substring("${ALIAS=".length(), value.length() - 1);
+        final char[] topologyLevelAliasValue = aliasService.getPasswordFromAliasForCluster(clusterName, alias);
+        if (topologyLevelAliasValue == null) {
+          //try on gateway-level
+          final char[] gatewayLevelAliasValue = aliasService.getPasswordFromAliasForGateway(alias);
+          if (gatewayLevelAliasValue != null) {
+            result = String.valueOf(gatewayLevelAliasValue);
+          } else {
+            LOG.noAliasStored(clusterName, alias);
+          }
+        } else {
+          result = String.valueOf(topologyLevelAliasValue);
+        }
+      } catch (AliasServiceException e) {
+        throw new ServletException("Unable to retrieve alias for config: " + name, e);
+      }
+    }
+    return result;
   }
 
   boolean isJwtSupported() {
