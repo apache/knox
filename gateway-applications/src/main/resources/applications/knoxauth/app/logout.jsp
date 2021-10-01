@@ -101,29 +101,56 @@
              * SameSite param. Change this back to Cookie impl. after
              * SameSite header is supported by javax.servlet.http.Cookie.
              */
+            final String clusterName = (String)request.getSession().getServletContext().getAttribute("org.apache.knox.gateway.gateway.name");
+            final String domainName = Urls.getDomainName(
+                    request.getRequestURL().toString(), "*");
+
+            final String p4j_domainName = Urls.getDomainName(
+                    request.getRequestURL().toString(), null);
+
+            final String pac4jPath =  "/"+clusterName+"/knoxsso/api/v1";
+            // Remove hadoop-jwt cookie
+            response.addHeader("Set-Cookie", removeCookie(cookieName, domainName,"/"));
+
+            // remove pac4j cookies
+            response.addHeader("Set-Cookie", removeCookie("pac4j.session.pac4jCsrfToken", p4j_domainName, pac4jPath));
+            response.addHeader("Set-Cookie", removeCookie("pac4j.session.pac4jRequestedUrl", p4j_domainName, pac4jPath));
+            response.addHeader("Set-Cookie", removeCookie("pac4j.session.pac4jUserProfiles", p4j_domainName, pac4jPath));
+            response.addHeader("Set-Cookie", removeCookie("pac4j.session.pac4jUserProfiles", p4j_domainName, pac4jPath+"/websso"));
+            response.addHeader("Set-Cookie", removeCookie("pac4jCsrfToken", domainName, "/"));
+
+          response.setStatus(HttpServletResponse.SC_TEMPORARY_REDIRECT);
+          response.setHeader("Location", globalLogoutPageURL);
+          return;
+        }
+
+
+    %>
+
+    <!-- Helper function to delete cookie -->
+    <%!
+        public String removeCookie(String cName, String domainName, String path) {
             final StringBuilder setCookie = new StringBuilder(50);
             try {
-                setCookie.append(cookieName).append('=');
-                setCookie.append("; Path=/");
+                setCookie.append(cName).append('=');
+                setCookie.append("; Path=").append(path);
                 try {
-                    final String domainName = Urls.getDomainName(
-                            request.getRequestURL().toString(), null);
                     if (domainName != null) {
                         setCookie.append("; Domain=").append(domainName);
                     }
                 } catch (Exception e) {
-                    // do nothing
-                    // we are probably not going to be able to
-                    // remove the cookie due to this error but it
-                    // isn't necessarily not going to work.
+                // do nothing
+                // we are probably not going to be able to
+                // remove the cookie due to this error but it
+                // isn't necessarily not going to work.
                 }
                 setCookie.append("; HttpOnly");
                 setCookie.append("; Secure");
                 setCookie.append("; Max-Age=").append(0);
                 setCookie.append("; SameSite=None");
-                response.setHeader("Set-Cookie", setCookie.toString());
+                return setCookie.toString();
             } catch (Exception e) {
-                // do nothing
+                return "";
             }
             response.setStatus(HttpServletResponse.SC_TEMPORARY_REDIRECT);
             response.setHeader("Location", globalLogoutPageURL);
