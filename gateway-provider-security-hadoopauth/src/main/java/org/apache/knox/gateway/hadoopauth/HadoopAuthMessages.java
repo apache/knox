@@ -47,4 +47,7 @@ public interface HadoopAuthMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Error while checking whether path {0} should be allowed unauthenticated access : {1}" )
   void unauthenticatedPathError(String path, String error);
+
+  @Message(level=MessageLevel.WARN, text="{1} alias is NOT stored on neither topology ({0}) nor gateway levels.")
+  void noAliasStored(String cluster, String alias);
 }

@@ -67,7 +67,11 @@ public class HadoopAuthFilterTest {
   private static final String JWKS_PATH = "/knoxtoken/api/v1/jwks.json";
 
   @Test
-  public void testHadoopAuthFilterAliases() throws Exception {
+  public void testHadoopAuthFilterAliasesOnTopologyLevel() throws Exception {
+    testHadoopAuthFilterAliases(true);
+  }
+
+  private void testHadoopAuthFilterAliases(boolean topologyLevel) throws Exception {
     String aliasKey = "signature.secret";
     String aliasConfigKey = "${ALIAS=" + aliasKey + "}";
     String aliasValue = "password";
@@ -77,8 +81,12 @@ public class HadoopAuthFilterTest {
     topology.setName(clusterName);
 
     AliasService as = createMock(AliasService.class);
-    expect(as.getPasswordFromAliasForCluster(clusterName, aliasKey))
-        .andReturn(aliasValue.toCharArray()).atLeastOnce();
+    if (topologyLevel) {
+      expect(as.getPasswordFromAliasForCluster(clusterName, aliasKey)).andReturn(aliasValue.toCharArray()).anyTimes();
+    } else {
+      expect(as.getPasswordFromAliasForCluster(clusterName, aliasKey)).andReturn(null).anyTimes();
+      expect(as.getPasswordFromAliasForGateway(aliasKey)).andReturn(aliasValue.toCharArray()).anyTimes();
+    }
 
     String configPrefix = "hadoop.auth.config.";
 
@@ -102,6 +110,11 @@ public class HadoopAuthFilterTest {
     assertEquals("abc", configuration.getProperty("test"));
 
     verify(filterConfig, as);
+  }
+
+  @Test
+  public void testHadoopAuthFilterAliasesOnGatewayLevel() throws Exception {
+    testHadoopAuthFilterAliases(false);
   }
 
   @Test
