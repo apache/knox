@@ -130,4 +130,14 @@
         </content>
     </filter>
 
+    <rule dir="OUT" name="OOZIE/oozie/console-url" pattern="*://*:*/proxy/{**}/">
+        <rewrite template="{gateway.url}/yarn/proxy/{**}"/>
+    </rule>
+
+    <filter name="OOZIE/oozie/jobinfo">
+        <content type="*/json">
+            <apply path="$.actions..consoleUrl" rule="OOZIE/oozie/console-url" />
+        </content>
+    </filter>
+
 </rules>
