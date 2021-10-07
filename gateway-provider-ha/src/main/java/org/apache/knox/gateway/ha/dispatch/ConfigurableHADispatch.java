@@ -308,8 +308,14 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
       inboundRequest.setAttribute(AbstractGatewayFilter.TARGET_REQUEST_URL_ATTRIBUTE_NAME, null);
       // Make sure to remove the cookie ha cookie from the request
       inboundRequest = new StickySessionCookieRemovedRequest(stickySessionCookieName, inboundRequest);
-      URI uri = getDispatchUrl(inboundRequest);
-      ((HttpRequestBase) outboundRequest).setURI(uri);
+
+      try {
+        ((HttpRequestBase) outboundRequest).setURI(
+                updateHostURL(getDispatchUrl(inboundRequest), haProvider.getActiveURL(getServiceRole())));
+      } catch (final URISyntaxException e) {
+        LOG.errorSettingActiveUrl();
+      }
+
       if ( failoverSleep > 0 ) {
         try {
           Thread.sleep(failoverSleep);

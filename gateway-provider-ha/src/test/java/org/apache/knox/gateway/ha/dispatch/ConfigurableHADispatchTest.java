@@ -17,7 +17,11 @@
  */
 package org.apache.knox.gateway.ha.dispatch;
 
+import static java.util.Arrays.asList;
+import static org.apache.knox.gateway.ha.dispatch.ConfigurableHADispatch.FAILOVER_COUNTER_ATTRIBUTE;
+import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.capture;
+import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -25,7 +29,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
@@ -198,4 +201,47 @@ public class ConfigurableHADispatchTest {
     Assert.assertEquals(DigestUtils.sha256Hex(activeURL), captureCookieValue.getValue().getValue());
   }
 
+  @Test
+  public void testFailOver() throws Exception {
+    String serviceName = "HIVE";
+    HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "2", "0", null, null, "true", "true", null, null));
+    HaProvider provider = new DefaultHaProvider(descriptor);
+    provider.addHaService(serviceName, asList("http://host1.valid", "http://host2.valid"));
+
+    HttpRequestBase outboundRequest = EasyMock.createNiceMock(HttpRequestBase.class);
+    EasyMock.expect(outboundRequest.getURI()).andReturn(new URI("http://host1.valid?q1=x&q2=y")).anyTimes();
+
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getRequestURL()).andReturn(new StringBuffer("http://host1.valid?q1=x&q2=y")).anyTimes();
+    EasyMock.expect(inboundRequest.getAttribute(FAILOVER_COUNTER_ATTRIBUTE)).andReturn(new AtomicInteger(0)).once();
+    EasyMock.expect(inboundRequest.getAttribute(FAILOVER_COUNTER_ATTRIBUTE)).andReturn(new AtomicInteger(1)).once();
+    EasyMock.expect(inboundRequest.getAttribute(FAILOVER_COUNTER_ATTRIBUTE)).andReturn(new AtomicInteger(2)).once();
+
+    CloseableHttpResponse inboundResponse = EasyMock.createNiceMock(CloseableHttpResponse.class);
+    HttpServletResponse outboundResponse = EasyMock.createNiceMock(HttpServletResponse.class);
+
+    CloseableHttpClient mockHttpClient = EasyMock.createNiceMock(CloseableHttpClient.class);
+    EasyMock.expect(mockHttpClient.execute(anyObject())).andThrow(new IOException()).anyTimes();
+
+    Capture<URI> capturedUri = EasyMock.newCapture();
+    outboundRequest.setURI(capture(capturedUri));
+    EasyMock.expectLastCall().anyTimes();
+
+    EasyMock.replay(outboundRequest, inboundRequest, outboundResponse, mockHttpClient, inboundResponse);
+
+    ConfigurableHADispatch dispatch = new ConfigurableHADispatch();
+    dispatch.setHttpClient(mockHttpClient);
+    dispatch.setHaProvider(provider);
+    dispatch.setServiceRole(serviceName);
+    dispatch.init();
+    try {
+      dispatch.executeRequestWrapper(outboundRequest, inboundRequest, outboundResponse);
+    } catch (IOException e) {
+      //this is expected after the failover limit is reached
+    }
+    assertEquals(
+            asList(URI.create("http://host2.valid?q1=x&q2=y")),
+            capturedUri.getValues());
+  }
 }
