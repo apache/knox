@@ -219,7 +219,7 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
         log.removedTokensFromDatabase(numOfExpiredTokens);
 
         // remove from in-memory collections
-        super.evictExpiredTokens();
+        super.removeTokens(expiredTokenIds);
       }
     } catch (SQLException e) {
       log.errorRemovingTokensFromDatabase(e.getMessage(), e);
