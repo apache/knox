@@ -93,6 +93,18 @@ public class Pac4jDispatcherFilter implements Filter {
 
   private static final String PAC4J_SESSION_STORE = "pac4j.session.store";
 
+  public static final String PAC4J_SESSION_STORE_EXCLUDE_GROUPS = "pac4j.session.store.exclude.groups";
+
+  public static final String PAC4J_SESSION_STORE_EXCLUDE_ROLES = "pac4j.session.store.exclude.roles";
+
+  public static final String PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS = "pac4j.session.store.exclude.permissions";
+
+  public static final String PAC4J_SESSION_STORE_EXCLUDE_GROUPS_DEFAULT = "true";
+
+  public static final String PAC4J_SESSION_STORE_EXCLUDE_ROLES_DEFAULT = "true";
+
+  public static final String PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS_DEFAULT = "true";
+
   private static final String PAC4J_CLIENT_NAME_PARAM = "clientName";
 
   private static final String PAC4J_OIDC_TYPE = "oidc.type";
@@ -103,6 +115,7 @@ public class Pac4jDispatcherFilter implements Filter {
   private MasterService masterService;
   private KeystoreService keystoreService;
   private AliasService aliasService;
+  private Map<String, String> sessionStoreConfigs = new HashMap();
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
@@ -187,6 +200,27 @@ public class Pac4jDispatcherFilter implements Filter {
 
       clientName = CommonHelper.isBlank(clientNameParameter) ? clients.get(0).getName() : clientNameParameter;
 
+      /* do we need to exclude groups? */
+      if (filterConfig.getInitParameter(PAC4J_SESSION_STORE_EXCLUDE_GROUPS) == null) {
+        sessionStoreConfigs.put(PAC4J_SESSION_STORE_EXCLUDE_GROUPS, PAC4J_SESSION_STORE_EXCLUDE_GROUPS_DEFAULT);
+      } else {
+        sessionStoreConfigs.put(PAC4J_SESSION_STORE_EXCLUDE_GROUPS, filterConfig.getInitParameter(PAC4J_SESSION_STORE_EXCLUDE_GROUPS));
+      }
+
+      /* do we need to exclude roles? */
+      if (filterConfig.getInitParameter(PAC4J_SESSION_STORE_EXCLUDE_ROLES) == null) {
+        sessionStoreConfigs.put(PAC4J_SESSION_STORE_EXCLUDE_ROLES, PAC4J_SESSION_STORE_EXCLUDE_ROLES_DEFAULT);
+      } else {
+        sessionStoreConfigs.put(PAC4J_SESSION_STORE_EXCLUDE_ROLES, filterConfig.getInitParameter(PAC4J_SESSION_STORE_EXCLUDE_ROLES));
+      }
+
+      /* do we need to exclude permissions? */
+      if (filterConfig.getInitParameter(PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS) == null) {
+        sessionStoreConfigs.put(PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS, PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS_DEFAULT);
+      } else {
+        sessionStoreConfigs.put(PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS, filterConfig.getInitParameter(PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS));
+      }
+
       //decorating client configuration (if needed)
       PAC4J_CLIENT_CONFIGURATION_DECORATOR.decorateClients(clients, properties);
     }
@@ -207,7 +241,7 @@ public class Pac4jDispatcherFilter implements Filter {
     if(!StringUtils.isBlank(sessionStoreVar) && JEESessionStore.class.getName().contains(sessionStoreVar) ) {
       sessionStore = new JEESessionStore();
     } else {
-      sessionStore = new KnoxSessionStore(cryptoService, clusterName, domainSuffix);
+      sessionStore = new KnoxSessionStore(cryptoService, clusterName, domainSuffix, sessionStoreConfigs);
     }
 
     config.setSessionStore(sessionStore);
