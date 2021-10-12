@@ -241,24 +241,24 @@ public class KnoxSessionStore<C extends WebContext> implements SessionStore<C> {
             final Map<String, CommonProfile> profiles = (Map<String, CommonProfile>) value;
             profiles.forEach((name, profile) -> profile.removeLoginData());
 
-            if(sessionStoreConfigs != null &&
-                sessionStoreConfigs
-                    .getOrDefault(PAC4J_SESSION_STORE_EXCLUDE_GROUPS, PAC4J_SESSION_STORE_EXCLUDE_GROUPS_DEFAULT)
-                    .equalsIgnoreCase("true")) {
-                profiles.forEach((name, profile) -> profile.removeAttribute("groups"));
+            if(sessionStoreConfigs != null) {
+                if(sessionStoreConfigs
+                        .getOrDefault(PAC4J_SESSION_STORE_EXCLUDE_GROUPS, PAC4J_SESSION_STORE_EXCLUDE_GROUPS_DEFAULT)
+                        .equalsIgnoreCase("true")) {
+                    profiles.forEach((name, profile) -> profile.removeAttribute("groups"));
+                }
+                if(sessionStoreConfigs
+                        .getOrDefault(PAC4J_SESSION_STORE_EXCLUDE_ROLES, PAC4J_SESSION_STORE_EXCLUDE_ROLES_DEFAULT)
+                        .equalsIgnoreCase("true")) {
+                    profiles.forEach((name, profile) -> profile.removeAttribute("roles"));
+                }
+                if(sessionStoreConfigs
+                        .getOrDefault(PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS, PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS_DEFAULT)
+                        .equalsIgnoreCase("true")) {
+                    profiles.forEach((name, profile) -> profile.removeAttribute("permissions"));
+                }
             }
-            if(sessionStoreConfigs != null &&
-                sessionStoreConfigs
-                    .getOrDefault(PAC4J_SESSION_STORE_EXCLUDE_ROLES, PAC4J_SESSION_STORE_EXCLUDE_ROLES_DEFAULT)
-                    .equalsIgnoreCase("true")) {
-                profiles.forEach((name, profile) -> profile.removeAttribute("roles"));
-            }
-            if(sessionStoreConfigs != null &&
-                sessionStoreConfigs
-                    .getOrDefault(PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS, PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS_DEFAULT)
-                    .equalsIgnoreCase("true")) {
-                profiles.forEach((name, profile) -> profile.removeAttribute("permissions"));
-            }
+
             return profiles;
         } else {
             final CommonProfile profile = (CommonProfile) value;

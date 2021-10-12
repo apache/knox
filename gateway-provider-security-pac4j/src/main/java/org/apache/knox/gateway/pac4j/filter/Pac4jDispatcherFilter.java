@@ -199,28 +199,12 @@ public class Pac4jDispatcherFilter implements Filter {
       }
 
       clientName = CommonHelper.isBlank(clientNameParameter) ? clients.get(0).getName() : clientNameParameter;
-
       /* do we need to exclude groups? */
-      if (filterConfig.getInitParameter(PAC4J_SESSION_STORE_EXCLUDE_GROUPS) == null) {
-        sessionStoreConfigs.put(PAC4J_SESSION_STORE_EXCLUDE_GROUPS, PAC4J_SESSION_STORE_EXCLUDE_GROUPS_DEFAULT);
-      } else {
-        sessionStoreConfigs.put(PAC4J_SESSION_STORE_EXCLUDE_GROUPS, filterConfig.getInitParameter(PAC4J_SESSION_STORE_EXCLUDE_GROUPS));
-      }
-
+      setSessionStoreConfig(filterConfig, PAC4J_SESSION_STORE_EXCLUDE_GROUPS, PAC4J_SESSION_STORE_EXCLUDE_GROUPS_DEFAULT);
       /* do we need to exclude roles? */
-      if (filterConfig.getInitParameter(PAC4J_SESSION_STORE_EXCLUDE_ROLES) == null) {
-        sessionStoreConfigs.put(PAC4J_SESSION_STORE_EXCLUDE_ROLES, PAC4J_SESSION_STORE_EXCLUDE_ROLES_DEFAULT);
-      } else {
-        sessionStoreConfigs.put(PAC4J_SESSION_STORE_EXCLUDE_ROLES, filterConfig.getInitParameter(PAC4J_SESSION_STORE_EXCLUDE_ROLES));
-      }
-
+      setSessionStoreConfig(filterConfig, PAC4J_SESSION_STORE_EXCLUDE_ROLES, PAC4J_SESSION_STORE_EXCLUDE_ROLES_DEFAULT);
       /* do we need to exclude permissions? */
-      if (filterConfig.getInitParameter(PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS) == null) {
-        sessionStoreConfigs.put(PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS, PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS_DEFAULT);
-      } else {
-        sessionStoreConfigs.put(PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS, filterConfig.getInitParameter(PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS));
-      }
-
+      setSessionStoreConfig(filterConfig, PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS, PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS_DEFAULT);
       //decorating client configuration (if needed)
       PAC4J_CLIENT_CONFIGURATION_DECORATOR.decorateClients(clients, properties);
     }
@@ -247,6 +231,18 @@ public class Pac4jDispatcherFilter implements Filter {
     config.setSessionStore(sessionStore);
 
   }
+
+  /**
+   * A helper method to set filter config value
+   * @param filterConfig
+   * @param configName
+   * @param configDefault
+   */
+  private void setSessionStoreConfig(final FilterConfig filterConfig, final String configName, final String configDefault) {
+    final String configValue = filterConfig.getInitParameter(configName);
+    sessionStoreConfigs.put(configName, configValue == null ? configDefault : configValue);
+  }
+
 
   private String resolveAlias(String clusterName, String key, String value) throws ServletException {
     if (value.startsWith(ALIAS_PREFIX) && value.endsWith("}")) {
