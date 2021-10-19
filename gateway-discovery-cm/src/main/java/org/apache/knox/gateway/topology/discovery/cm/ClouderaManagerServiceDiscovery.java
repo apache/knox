@@ -39,6 +39,8 @@ import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.monitor.ClouderaManagerClusterConfigurationMonitor;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -145,12 +147,22 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
   public ClouderaManagerCluster discover(GatewayConfig          gatewayConfig,
                                          ServiceDiscoveryConfig discoveryConfig,
                                          String                 clusterName) {
-    return discover(discoveryConfig, clusterName, getClient(discoveryConfig));
+    return discover(gatewayConfig, discoveryConfig, clusterName, Collections.emptySet());
   }
 
-  protected ClouderaManagerCluster discover(ServiceDiscoveryConfig discoveryConfig,
-                                            String clusterName,
-                                            DiscoveryApiClient client) {
+  @Override
+  public ClouderaManagerCluster discover(GatewayConfig          gatewayConfig,
+                                         ServiceDiscoveryConfig discoveryConfig,
+                                         String                 clusterName,
+                                         Collection<String>     includedServices) {
+    return discover(gatewayConfig, discoveryConfig, clusterName, includedServices, getClient(discoveryConfig));
+  }
+
+  protected ClouderaManagerCluster discover(GatewayConfig          gatewayConfig,
+                                            ServiceDiscoveryConfig discoveryConfig,
+                                            String                 clusterName,
+                                            Collection<String>     includedServices,
+                                            DiscoveryApiClient     client) {
     ClouderaManagerCluster cluster = null;
 
     if (clusterName == null || clusterName.isEmpty()) {
@@ -159,7 +171,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
     }
 
     try {
-      cluster = discoverCluster(client, clusterName);
+      cluster = discoverCluster(client, clusterName, includedServices);
 
       if (configChangeMonitor != null && cluster != null) {
         // Notify the cluster config monitor about these cluster configuration details
@@ -172,7 +184,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
     return cluster;
   }
 
-  private static ClouderaManagerCluster discoverCluster(DiscoveryApiClient client, String clusterName)
+  private ClouderaManagerCluster discoverCluster(DiscoveryApiClient client, String clusterName, Collection<String> includedServices)
       throws ApiException {
     ServicesResourceApi servicesResourceApi = new ServicesResourceApi(client);
     RolesResourceApi rolesResourceApi = new RolesResourceApi(client);
@@ -195,7 +207,12 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
       serviceList.addItemsItem(cmService);
 
       for (ApiService service : serviceList.getItems()) {
-        String serviceName = service.getName();
+        final String serviceName = service.getName();
+        final List<ServiceModelGenerator> modelGenerators = serviceModelGenerators.get(service.getType());
+        if (shouldSkipServiceDiscovery(modelGenerators, includedServices)) {
+          log.skipServiceDiscovery(serviceName, service.getType());
+          continue;
+        }
         log.discoveredService(serviceName, service.getType());
         ApiServiceConfig serviceConfig = null;
         /* no reason to check service config for CM service */
@@ -215,9 +232,8 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
                   getRoleConfig(rolesResourceApi, clusterName, serviceName, roleName);
             }
 
-            List<ServiceModelGenerator> smgList = serviceModelGenerators.get(service.getType());
-            if (smgList != null) {
-              for (ServiceModelGenerator serviceModelGenerator : smgList) {
+            if (modelGenerators != null) {
+              for (ServiceModelGenerator serviceModelGenerator : modelGenerators) {
                 ServiceModelGeneratorHandleResponse response = serviceModelGenerator.handles(service, serviceConfig, role, roleConfig);
                 if (response.handled()) {
                   serviceModelGenerator.setApiClient(client);
@@ -238,8 +254,24 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
     return null;
   }
 
-  private static ApiServiceList getClusterServices(final ServicesResourceApi servicesResourceApi,
-                                                   final String              clusterName) {
+  private boolean shouldSkipServiceDiscovery(List<ServiceModelGenerator> modelGenerators, Collection<String> includedServices) {
+    if (includedServices == null || includedServices.isEmpty()) {
+      // per the contract of org.apache.knox.gateway.topology.discovery.ServiceDiscovery.discover(GatewayConfig, ServiceDiscoveryConfig, String, Collection<String>):
+      // if included services is null or empty -> discover all services in the given cluster
+      return false;
+    }
+
+    if (modelGenerators != null) {
+      for (ServiceModelGenerator modelGenerator : modelGenerators) {
+        if (includedServices.contains(modelGenerator.getService())) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  private ApiServiceList getClusterServices(final ServicesResourceApi servicesResourceApi, final String clusterName) {
     ApiServiceList services = null;
     try {
       services = servicesResourceApi.readServices(clusterName, VIEW_SUMMARY);
@@ -249,7 +281,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
     return services;
   }
 
-  private static ApiServiceConfig getServiceConfig(final ServicesResourceApi servicesResourceApi,
+  private ApiServiceConfig getServiceConfig(final ServicesResourceApi servicesResourceApi,
                                                    final String clusterName,
                                                    final String serviceName) {
     ApiServiceConfig serviceConfig = null;
@@ -261,7 +293,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
     return serviceConfig;
   }
 
-  private static ApiRoleList getRoles(RolesResourceApi rolesResourceApi,
+  private ApiRoleList getRoles(RolesResourceApi rolesResourceApi,
                                       String clusterName,
                                       String serviceName) {
     ApiRoleList roles = null;
@@ -283,7 +315,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery {
     return roles;
   }
 
-  private static ApiConfigList getRoleConfig(RolesResourceApi rolesResourceApi,
+  private ApiConfigList getRoleConfig(RolesResourceApi rolesResourceApi,
                                              String           clusterName,
                                              String           serviceName,
                                              String           roleName) {

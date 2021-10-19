@@ -43,6 +43,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -247,7 +248,8 @@ public class SimpleDescriptorHandler {
             discoveryInstances.put(discoveryType, sd);
         }
 
-        return sd.discover(config, sdc, desc.getCluster());
+        final Collection<String> includedServices = desc.getServices().stream().map(service -> service.getName()).collect(Collectors.toSet());
+        return sd.discover(config, sdc, desc.getCluster(), includedServices);
     }
 
 

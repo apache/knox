@@ -42,6 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -301,6 +302,11 @@ public class SimpleDescriptorHandlerFuncTest {
           return null;
         }
       };
+    }
+
+    @Override
+    public Cluster discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config, String clusterName, Collection<String> includedServices) {
+      return null;
     }
   }
 }

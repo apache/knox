@@ -34,6 +34,9 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   @Message(level = MessageLevel.INFO, text = "Discovered service: {0} ({1})")
   void discoveredService(String serviceName, String serviceType);
 
+  @Message(level = MessageLevel.INFO, text = "Skipping service discovery: {0} ({1})")
+  void skipServiceDiscovery(String serviceName, String serviceType);
+
   @Message(level = MessageLevel.INFO, text = "Discovered service role: {0} ({1})")
   void discoveredServiceRole(String roleName, String roleType);
 
