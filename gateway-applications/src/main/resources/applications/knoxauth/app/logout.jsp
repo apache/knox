@@ -142,7 +142,7 @@
                 // do nothing
                 // we are probably not going to be able to
                 // remove the cookie due to this error but it
-                // isn't necessarily not going to work.
+                // is not necessarily not going to work.
                 }
                 setCookie.append("; HttpOnly");
                 setCookie.append("; Secure");
@@ -152,9 +152,7 @@
             } catch (Exception e) {
                 return "";
             }
-            response.setStatus(HttpServletResponse.SC_TEMPORARY_REDIRECT);
-            response.setHeader("Location", globalLogoutPageURL);
-            return;
+       }
     %>
   </head>
   
