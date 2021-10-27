@@ -71,7 +71,7 @@ public class SimpleDescriptorHandler {
      */
     public static final String RESULT_REFERENCE = "reference";
 
-    private static final String DEFAULT_DISCOVERY_TYPE = "AMBARI";
+    private static final String DEFAULT_DISCOVERY_TYPE = "ClouderaManager";
 
     private static final String[] PROVIDER_CONFIG_FILE_EXTENSIONS;
     static {
@@ -241,7 +241,7 @@ public class SimpleDescriptorHandler {
         // Use the cached discovery object for the required type, if it has already been loaded
         ServiceDiscovery sd = discoveryInstances.get(discoveryType);
         if (sd == null) {
-            sd = ServiceDiscoveryFactory.get(discoveryType, gatewayServices);
+            sd = ServiceDiscoveryFactory.get(discoveryType, config, gatewayServices);
             if (sd == null) {
                 throw new IllegalArgumentException("Unsupported service discovery type: " + discoveryType);
             }

@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm;
 
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryType;
 
@@ -30,8 +31,8 @@ public class ClouderaManagerServiceDiscoveryType implements ServiceDiscoveryType
   }
 
   @Override
-  public ServiceDiscovery newInstance() {
-    return new ClouderaManagerServiceDiscovery();
+  public ServiceDiscovery newInstance(GatewayConfig gatewayConfig) {
+    return new ClouderaManagerServiceDiscovery(gatewayConfig);
   }
 
 }

@@ -266,7 +266,7 @@ public class SimpleDescriptorHandlerFuncTest {
     }
 
     @Override
-    public ServiceDiscovery newInstance() {
+    public ServiceDiscovery newInstance(GatewayConfig gatewayConfig) {
       return new NoOpServiceDiscovery();
     }
   }
@@ -306,7 +306,7 @@ public class SimpleDescriptorHandlerFuncTest {
 
     @Override
     public Cluster discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config, String clusterName, Collection<String> includedServices) {
-      return null;
+      return discover(gwConfig, config, clusterName);
     }
   }
 }

@@ -1149,15 +1149,17 @@ public class ClouderaManagerServiceDiscoveryTest {
     GatewayConfig gwConf = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.replay(gwConf);
 
-    ServiceDiscoveryConfig sdConfig = createMockDiscoveryConfig();
+    ServiceDiscoveryConfig sdConfig = createMockDiscoveryConfig(clusterName);
 
     // Create the test client for providing test response content
     TestDiscoveryApiClient mockClient = new TestDiscoveryApiClient(sdConfig, null, null);
 
     // Prepare the service list response for the cluster
     ApiServiceList serviceList = EasyMock.createNiceMock(ApiServiceList.class);
+    final List<ApiService> apiServiceList = new ArrayList<>();
+    apiServiceList.add(createMockApiService(serviceName, serviceType, clusterName));
     EasyMock.expect(serviceList.getItems())
-            .andReturn(Collections.singletonList(createMockApiService(serviceName, serviceType, clusterName)))
+            .andReturn(apiServiceList)
             .anyTimes();
     EasyMock.replay(serviceList);
     mockClient.addResponse(ApiServiceList.class, new TestApiServiceListResponse(serviceList));
@@ -1178,7 +1180,8 @@ public class ClouderaManagerServiceDiscoveryTest {
     mockClient.addResponse(ApiConfigList.class, new TestApiConfigListResponse(roleConfigList));
 
     // Invoke the service discovery
-    ClouderaManagerServiceDiscovery cmsd = new ClouderaManagerServiceDiscovery(true);
+    ClouderaManagerServiceDiscovery cmsd = new ClouderaManagerServiceDiscovery(true, gwConf);
+    cmsd.onConfigurationChange(null, null); //to clear the repo
     ServiceDiscovery.Cluster cluster = cmsd.discover(gwConf, sdConfig, clusterName, Collections.emptySet(), mockClient);
     assertNotNull(cluster);
     assertEquals(clusterName, cluster.getName());
@@ -1186,15 +1189,16 @@ public class ClouderaManagerServiceDiscoveryTest {
   }
 
 
-  private static ServiceDiscoveryConfig createMockDiscoveryConfig() {
-    return createMockDiscoveryConfig(DISCOVERY_URL, "itsme");
+  private static ServiceDiscoveryConfig createMockDiscoveryConfig(String clusterName) {
+    return createMockDiscoveryConfig(DISCOVERY_URL, "itsme", clusterName);
   }
 
-  private static ServiceDiscoveryConfig createMockDiscoveryConfig(String address, String username) {
+  private static ServiceDiscoveryConfig createMockDiscoveryConfig(String address, String username, String clusterName) {
     ServiceDiscoveryConfig config = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
     EasyMock.expect(config.getAddress()).andReturn(address).anyTimes();
     EasyMock.expect(config.getUser()).andReturn(username).anyTimes();
     EasyMock.expect(config.getPasswordAlias()).andReturn(null).anyTimes();
+    EasyMock.expect(config.getCluster()).andReturn(clusterName).anyTimes();
     EasyMock.replay(config);
     return config;
   }
