@@ -40,7 +40,8 @@ public class JSchConnectionInfo extends ConnectionInfo {
     private Channel channel;
     private Session jschSession;
     private static final Logger LOG = LoggerFactory.getLogger(JSchConnectionInfo.class);
-    public JSchConnectionInfo(){
+    public JSchConnectionInfo(String username){
+        super(username);
         try {
             jsch = new JSch();
             Properties config = new Properties();
@@ -54,22 +55,23 @@ public class JSchConnectionInfo extends ConnectionInfo {
     }
 
     @Override
-    public void connect(String username){
+    public void connect(){
         try {
             jschSession.connect(30000);
             channel = jschSession.openChannel("shell");
             inputStream = channel.getInputStream();
             outputStream = channel.getOutputStream();
             channel.connect(30000);
-            String sudoCmd = "exec sudo -u "+ username + " -H bash -i\ncd $HOME\nwhoami\n";
+            String sudoCmd = "exec sudo -u "+ username + " bash -i\nwhoami\n";
             outputStream.write(sudoCmd.getBytes(StandardCharsets.UTF_8));
             outputStream.flush();
-            checkConnection(username);
+            //checkConnection(username);
         }  catch (JSchException|IOException e) {
             throw new RuntimeException(e);
         }
     }
 
+    /*
     private void checkConnection(String username) throws IOException{
         InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.US_ASCII);
         BufferedReader bufferedReader = new BufferedReader( reader );
@@ -84,7 +86,7 @@ public class JSchConnectionInfo extends ConnectionInfo {
             LOG.error("Unknown User!");
             throw new RuntimeException();
         }
-    }
+    }*/
 
     @Override
     public void disconnect(){

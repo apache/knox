@@ -47,7 +47,7 @@ import java.security.KeyStore;
  * @since 0.10
  */
 public class ProxyWebSocketAdapter extends WebSocketAdapter {
-  private static final WebsocketLogMessages LOG = MessagesFactory.get(WebsocketLogMessages.class);
+  protected static final WebsocketLogMessages LOG = MessagesFactory.get(WebsocketLogMessages.class);
 
   /* URI for the backend */
   private final URI backend;
@@ -60,14 +60,14 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
 
   private WebSocketContainer container;
 
-  private ExecutorService pool;
+  protected ExecutorService pool;
 
   /* Message buffer for holding data frames temporarily in memory till connection is setup.
    Keeping the max size of the buffer as 100 messages for now. */
   private List<String> messageBuffer = new ArrayList<>();
   private Lock remoteLock = new ReentrantLock();
 
-  private final GatewayConfig config;
+  protected final GatewayConfig config;
 
   /**
    * Used to transmit headers from browser to backend server.

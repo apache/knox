@@ -16,12 +16,12 @@
  * limitations under the License.
  */
 
-function WebShellClient() {
-};
+function WebShellClient() {};
 
 
-WebShellClient.prototype.connect = function (callbackFuncs) {
-    var endpoint = 'wss://127.0.0.1:8443/gateway/homepage/webshell/webshellws';
+WebShellClient.prototype.connect = function (options, callbackFuncs) {
+    // todo: lookup knox homepage implementation, make host and port configurable
+    var endpoint = "wss://localhost:8443/gateway/homepage/webshell/webshellws?" + options.username;
     console.log('connecting websocket endpoint:' + endpoint);
 
     if (window.WebSocket) {
@@ -38,13 +38,13 @@ WebShellClient.prototype.connect = function (callbackFuncs) {
     };
 
     this._connection.onmessage = function (event) {
-        var data = event.data.toString();
-        callbackFuncs.onData(data);
+        //var data = event.data.toString();
+        callbackFuncs.onData(event.data);
     };
 
     this._connection.onerror = function (event) {
-        var error = event.data.toString();
-        callbackFuncs.onError(error);
+        //var error = event.data.toString();
+        callbackFuncs.onError(event.data);
     };
 
 
@@ -53,17 +53,14 @@ WebShellClient.prototype.connect = function (callbackFuncs) {
     };
 };
 
-WebShellClient.prototype.send = function (data) {
-    this._connection.send(JSON.stringify(data));
+WebShellClient.prototype.send = function (data, options) {
+    this._connection.send(JSON.stringify({"command": data, "username": options.username}));
 };
 
+/*
 WebShellClient.prototype.sendInitData = function (options) {
     console.log('send initializing data through websocket'+JSON.stringify(options));
     this._connection.send(JSON.stringify(options));
-}
-
-WebShellClient.prototype.sendClientData = function (data) {
-    this._connection.send(JSON.stringify({"operation": "command", "command": data}))
-}
+}*/
 
 var client = new WebShellClient();

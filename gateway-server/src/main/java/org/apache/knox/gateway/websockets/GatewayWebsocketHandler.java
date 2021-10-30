@@ -34,6 +34,7 @@ import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 
+
 import javax.websocket.ClientEndpointConfig;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -69,6 +70,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
   static final String REGEX_SPLIT_SERVICE_PATH = "^((?:[^/]*/){3}[^/]*)";
 
   private static final int POOL_SIZE = 10;
+
 
   /**
    * Manage the threads that are spawned
@@ -117,9 +119,11 @@ public class GatewayWebsocketHandler extends WebSocketHandler
     try {
       final URI requestURI = req.getRequestURI();
 
-      if (StringUtils.endsWith(requestURI.getRawPath(), "/webshell/webshellws")) {
-        LOG.debugLog("received websocket request for webshhell: "+ requestURI.toString());
-        return new WebshellWebSocketAdapter(req, pool);
+      // Handle webshell websocket request
+      if (StringUtils.endsWith(requestURI.getRawPath(), "/webshell/webshellws")){
+        // rawPath = /gateway/homepage/webshell/webshellws
+        LOG.debugLog("received websocket request for webshhell: "+ requestURI.getRawPath()+" query:"+requestURI.getRawQuery());
+        return new WebshellWebSocketAdapter(req, pool, config, requestURI.getRawQuery());
       }
 
       // URL used to connect to websocket backend
@@ -135,6 +139,8 @@ public class GatewayWebsocketHandler extends WebSocketHandler
       throw new RuntimeException(e);
     }
   }
+
+
 
 
   private KeyStore getTruststore() throws KeystoreServiceException {

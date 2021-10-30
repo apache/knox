@@ -21,17 +21,8 @@ package org.apache.knox.gateway.webshell;
 * data structure to store request coming from client (connect or command)
 */
 public class WebShellData {
-    private String operation;    // connect | command
     private String username;
     private String command = "";
-
-    public String getOperation() {
-        return operation;
-    }
-
-    public void setOperation(String operation) {
-        this.operation = operation;
-    }
 
     public String getUsername() {
         return username;

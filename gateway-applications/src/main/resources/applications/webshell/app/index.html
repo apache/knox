@@ -41,7 +41,6 @@ $(document).ready(function(){
         var username = $(xml).find('sessioninfo').find('user').text();
         console.log(username);
         openTerminal({
-            operation:'connect',
             username: username
         });
     },
@@ -69,19 +68,19 @@ function openTerminal(options){
         screenKeys: true
     });
 
-    term.on('data', function (data) {
-        //callback when input via keyboard
-        client.sendClientData(data);
+    term.on('data', function (data, options) {
+        // callback when input via keyboard
+        client.send(data, options);
     });
     term.open(document.getElementById('terminal'));
     term.write('Connecting ...\r\n');
-    client.connect({
+    client.connect(options, {
         onError: function (error) {
-            term.write('Error: ' + error + '\r\n');
+            term.write(error);
         },
         onOpen: function () {
             console.log('connected to websocket');
-            client.sendInitData(options);
+            //client.sendInitData(options);
         },
         onClose: function () {
             term.write("\r\nconnection closed");

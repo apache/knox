@@ -18,111 +18,145 @@
 package org.apache.knox.gateway.webshell;
 
 import java.io.IOException;
+import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
-import java.util.Locale;
+import java.text.ParseException;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.util.Tokens;
+import org.apache.knox.gateway.websockets.ProxyWebSocketAdapter;
 import org.eclipse.jetty.io.RuntimeIOException;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class WebshellWebSocketAdapter extends WebSocketAdapter {
-    private static final Logger LOG = LoggerFactory.getLogger(WebshellWebSocketAdapter.class);
-
+public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter {
     private Session session;
-
-    private final ExecutorService pool;
-
     private ConnectionInfo connectionInfo;
+    private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
+    private static final String JWT_DEFAULT_ISSUER = "KNOXSSO";
 
-    public static final String OPERATION_CONNECT = "connect";
-    public static final String OPERATION_COMMAND = "command";
+    private String cookieName;
+    private String expectedIssuer;
 
-    public WebshellWebSocketAdapter(ServletUpgradeRequest req, ExecutorService pool) {
-        super();
-        this.pool = pool;
-        //todo: validate hadoop-jwt cookie
+    public WebshellWebSocketAdapter(ServletUpgradeRequest req,  ExecutorService pool, GatewayConfig config, String username) {
+        super(null, pool, null, config);
+        this.connectionInfo = new ProcessConnectionInfo(username);
+        try {
+            checkCookieForValidation(req);
+        } catch (final UnknownTokenException e){
+            LOG.onError("no valid token found");
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    private boolean validateToken(ServletUpgradeRequest req, JWT token) throws UnknownTokenException {
+        // todo: implement this referencing AbstractJWTFilter validateToken function
+        final String tokenId = TokenUtils.getTokenId(token);
+        final String displayableTokenId = Tokens.getTokenIDDisplayText(tokenId);
+        final String displayableToken = Tokens.getTokenDisplayText(token.toString());
+        // todo: expectedIssuer can be configurable
+        expectedIssuer = JWT_DEFAULT_ISSUER;
+        LOG.debugLog(displayableToken);
+        return true;
+    }
+
+    private void checkCookieForValidation(ServletUpgradeRequest req) throws UnknownTokenException {
+        // todo: cookieName can be configurable
+        cookieName = DEFAULT_SSO_COOKIE_NAME;
+        List<HttpCookie> ssoCookies = req.getCookies();
+        for (HttpCookie ssoCookie : ssoCookies) {
+            if (!cookieName.equals(ssoCookie.getName())) {
+                continue;
+            }
+            try {
+                JWT token = new JWTToken(ssoCookie.getValue());
+                if (validateToken(req, token)) {
+                    // we found a valid cookie we don't need to keep checking anymore
+                    return;
+                }
+            } catch (ParseException | UnknownTokenException ignore) {
+                // Ignore the error since cookie was invalid
+                // Fall through to keep checking if there are more cookies
+            }
+            throw new UnknownTokenException("No valid cookie found for webshell connection");
+        }
     }
 
     @Override
     public void onWebSocketConnect(final Session session) {
         this.session = session;
-        //todo: process based works on mac but not on Centos 7, use JSch to connect for now
-        //this.connectionInfo = new ProcessConnectionInfo();
-        this.connectionInfo = new JSchConnectionInfo();
-        LOG.info("websocket connected.");
+        LOG.debugLog("websocket connected.");
+        connectionInfo.connect();
+        pool.execute(new Runnable() {
+            @Override
+            public void run(){
+                blockingReadFromHost();
+            }
+        });
     }
 
 
     @SuppressWarnings("PMD.DoNotUseThreads")
     @Override
     public void onWebSocketText(final String message) {
-        LOG.info("received message "+ message);
+        LOG.debugLog("received message "+ message);
 
         ObjectMapper objectMapper = new ObjectMapper();
         final WebShellData webShellData;
         try {
             webShellData = objectMapper.readValue(message, WebShellData.class);
         } catch (JsonProcessingException e) {
-            LOG.error("error parsing string to WebShellData");
+            LOG.onError("error parsing string to WebShellData");
             throw new RuntimeException(e);
         }
 
-        if (OPERATION_CONNECT.equals(webShellData.getOperation())) {
-            connectionInfo.connect(webShellData.getUsername());
-            pool.execute(new Runnable() {
-                @Override
-                public void run(){
-                    blockingReadFromHost();
-                }
-            });
-        } else if (OPERATION_COMMAND.equals(webShellData.getOperation())) {
-            transToHost(webShellData.getCommand());
-        } else {
-            String err = String.format(Locale.ROOT, "Operation %s not supported",webShellData.getOperation());
-            LOG.error(err);
-            throw new UnsupportedOperationException(err);
-        }
+        // todo: throw exception, or add extra validation using session id
+        assert connectionInfo.getUsername() == webShellData.getUsername();
+        transToHost(webShellData.getCommand());
     }
 
     // this function will block, should be run in an asynchronous thread
     private void blockingReadFromHost(){
-        LOG.info("start listening to bash process");
+        LOG.debugLog("start listening to bash process");
         byte[] buffer = new byte[1024];
-        int i;
+        int bytesRead;
         try {
             // blocks until data comes in
-            while ((i = connectionInfo.getInputStream().read(buffer)) != -1) {
-                transToClient(new String(buffer, 0, i, StandardCharsets.UTF_8));
+            while ((bytesRead = connectionInfo.getInputStream().read(buffer)) != -1) {
+                transToClient(new String(buffer, 0, bytesRead, StandardCharsets.UTF_8));
             }
         } catch (IOException e){
-            LOG.error("Error reading from host:" + e.getMessage());
+            LOG.onError("Error reading from host:" + e.getMessage());
             throw new RuntimeIOException(e);
         }
     }
 
     private void transToHost (String command){
-        LOG.info("sending to host: "+command);
+        LOG.debugLog("sending to host: " + command);
         try {
             connectionInfo.getOutputStream().write(command.getBytes(StandardCharsets.UTF_8));
             connectionInfo.getOutputStream().flush();
         }catch (IOException e){
-            LOG.error("Error sending message to host");
+            LOG.onError("Error sending message to host");
             throw new RuntimeIOException(e);
         }
     }
 
     private void transToClient(String message){
-        LOG.info("sending to client: "+ message);
+        LOG.debugLog("sending to client: "+ message);
         try {
             session.getRemote().sendString(message);
         }catch (IOException e){
-            LOG.error("Error sending message to client");
+            LOG.onError("Error sending message to client");
             throw new RuntimeIOException(e);
         }
     }
@@ -149,7 +183,7 @@ public class WebshellWebSocketAdapter extends WebSocketAdapter {
      * Cleanup sessions
      */
     private void cleanupOnError(final Throwable t) {
-        LOG.error(t.toString());
+        LOG.onError(t.toString());
         cleanup();
     }
 

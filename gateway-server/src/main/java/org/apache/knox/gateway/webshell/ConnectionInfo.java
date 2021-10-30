@@ -23,8 +23,16 @@ import java.io.OutputStream;
 public abstract class ConnectionInfo {
     protected InputStream inputStream;
     protected OutputStream outputStream;
+    protected String username;
 
-    public abstract void connect(String username);
+    protected ConnectionInfo(String username){
+        this.username = username;
+    }
+
+    public abstract void connect();
+    public String getUsername(){
+        return this.username;
+    };
 
     public InputStream getInputStream(){
         return this.inputStream;

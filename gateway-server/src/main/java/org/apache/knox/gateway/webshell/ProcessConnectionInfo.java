@@ -34,11 +34,16 @@ public class ProcessConnectionInfo extends ConnectionInfo {
     private Process process;
     private static final Logger LOG = LoggerFactory.getLogger(ProcessConnectionInfo.class);
 
+    public ProcessConnectionInfo(String username){
+        super(username);
+    }
+
     @SuppressForbidden
     @Override
-    public void connect(String username){
+    public void connect(){
         try {
-            ProcessBuilder builder = new ProcessBuilder("sudo","-u",username,"-H","bash","-i");
+            // todo: windows, redhat, centos
+            ProcessBuilder builder = new ProcessBuilder( "sudo","-u",username,"bash","-i");
             builder.redirectErrorStream(true); // combine stderr with stdout
             process = builder.start();
             inputStream = process.getInputStream();
@@ -47,8 +52,10 @@ public class ProcessConnectionInfo extends ConnectionInfo {
             outputStream.write("cd $HOME\nwhoami\n".getBytes(StandardCharsets.UTF_8));
             outputStream.flush();
             LOG.info("started bash session for " + username);
+            // todo: check bash session is correctly established for user
         } catch(IOException e) {
             LOG.error("Error starting bash for " + username +" : "+ e.getMessage());
+            disconnect();
             throw new RuntimeIOException(e);
         }
     }
