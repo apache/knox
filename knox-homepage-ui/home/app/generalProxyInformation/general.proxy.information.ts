@@ -19,5 +19,5 @@ export class GeneralProxyInformation {
     version: string;
     adminUiUrl: string;
     adminApiBookUrl: string;
-    tokenGenerationUrl: string;
+    enableTokenManagement: string;
 }
