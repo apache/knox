@@ -31,16 +31,19 @@
 <script>
 
 $(document).ready(function(){
-    var sessionUrl = window.location.pathname.replace(new RegExp('webshell/.*'), 'session/api/v1/sessioninfo');
+    const sessionUrl = window.location.pathname.replace(new RegExp('webshell/.*'), 'session/api/v1/sessioninfo');
  
   $.ajax({
     type: "GET",
     url: sessionUrl,
     dataType: "xml",
     success: function(xml){
-        var username = $(xml).find('sessioninfo').find('user').text();
+        const username = $(xml).find('sessioninfo').find('user').text();
         console.log(username);
         openTerminal({
+            // todo: lookup knox homepage implementation, make host and port configurable
+            host: 'localhost',
+            port: 8443,
             username: username
         });
     },
@@ -52,13 +55,12 @@ $(document).ready(function(){
             alert('Error:'+ errorThrown);
         }
     }
-});
+  });
 });
 
 
 function openTerminal(options){
-    var client = new WebShellClient();
-    var term = new Terminal({
+    const terminal = new Terminal({
         cols: 97,
         rows: 37,
         cursorBlink: true,
@@ -68,28 +70,12 @@ function openTerminal(options){
         screenKeys: true
     });
 
-    term.on('data', function (data, options) {
-        // callback when input via keyboard
-        client.send(data, options);
+    terminal.on('data', function (data) {
+        client.send(data);
     });
-    term.open(document.getElementById('terminal'));
-    term.write('Connecting ...\r\n');
-    client.connect(options, {
-        onError: function (error) {
-            term.write(error);
-        },
-        onOpen: function () {
-            console.log('connected to websocket');
-            //client.sendInitData(options);
-        },
-        onClose: function () {
-            term.write("\r\nconnection closed");
-        },
-        onData: function (data) {
-            //call back when received input
-            term.write(data);
-        }
-    });
+    terminal.open(document.getElementById('terminal'));
+    const client = new WebShellClient(options, terminal);
+    client.connect();
 }
 </script>
 </body>

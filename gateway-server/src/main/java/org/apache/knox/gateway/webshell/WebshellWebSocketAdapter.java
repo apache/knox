@@ -40,26 +40,27 @@ import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter {
     private Session session;
     private ConnectionInfo connectionInfo;
+    private final String username;
     private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
     private static final String JWT_DEFAULT_ISSUER = "KNOXSSO";
 
     private String cookieName;
     private String expectedIssuer;
 
-    public WebshellWebSocketAdapter(ServletUpgradeRequest req,  ExecutorService pool, GatewayConfig config, String username) {
+    public WebshellWebSocketAdapter(ServletUpgradeRequest req,  ExecutorService pool, GatewayConfig config) {
         super(null, pool, null, config);
-        this.connectionInfo = new ProcessConnectionInfo(username);
+        username = req.getRequestURI().getRawQuery();
         try {
             checkCookieForValidation(req);
         } catch (final UnknownTokenException e){
             LOG.onError("no valid token found");
             throw new RuntimeException(e);
         }
-
+        this.connectionInfo = new ProcessConnectionInfo(username);
     }
 
     private boolean validateToken(ServletUpgradeRequest req, JWT token) throws UnknownTokenException {
-        // todo: implement this referencing AbstractJWTFilter validateToken function
+        // todo: this is a stub, implement this referencing AbstractJWTFilter validateToken function
         final String tokenId = TokenUtils.getTokenId(token);
         final String displayableTokenId = Tokens.getTokenIDDisplayText(tokenId);
         final String displayableToken = Tokens.getTokenDisplayText(token.toString());
@@ -103,7 +104,21 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter {
             }
         });
     }
-
+    // this function will block, should be run in an asynchronous thread
+    private void blockingReadFromHost(){
+        LOG.debugLog("start listening to bash process");
+        byte[] buffer = new byte[1024];
+        int bytesRead;
+        try {
+            // todo: maybe change to non-blocking read using java.nio
+            while ((bytesRead = connectionInfo.getInputStream().read(buffer)) != -1) {
+                transToClient(new String(buffer, 0, bytesRead, StandardCharsets.UTF_8));
+            }
+        } catch (IOException e){
+            LOG.onError("Error reading from host:" + e.getMessage());
+            throw new RuntimeIOException(e);
+        }
+    }
 
     @SuppressWarnings("PMD.DoNotUseThreads")
     @Override
@@ -120,25 +135,13 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter {
         }
 
         // todo: throw exception, or add extra validation using session id
-        assert connectionInfo.getUsername() == webShellData.getUsername();
+        if (!connectionInfo.getUsername().equals(webShellData.getUsername())){
+            throw new RuntimeException("Unauthorized user");
+        }
         transToHost(webShellData.getCommand());
     }
 
-    // this function will block, should be run in an asynchronous thread
-    private void blockingReadFromHost(){
-        LOG.debugLog("start listening to bash process");
-        byte[] buffer = new byte[1024];
-        int bytesRead;
-        try {
-            // blocks until data comes in
-            while ((bytesRead = connectionInfo.getInputStream().read(buffer)) != -1) {
-                transToClient(new String(buffer, 0, bytesRead, StandardCharsets.UTF_8));
-            }
-        } catch (IOException e){
-            LOG.onError("Error reading from host:" + e.getMessage());
-            throw new RuntimeIOException(e);
-        }
-    }
+
 
     private void transToHost (String command){
         LOG.debugLog("sending to host: " + command);

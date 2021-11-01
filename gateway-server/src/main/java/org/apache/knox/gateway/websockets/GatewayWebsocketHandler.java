@@ -123,7 +123,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
       if (StringUtils.endsWith(requestURI.getRawPath(), "/webshell/webshellws")){
         // rawPath = /gateway/homepage/webshell/webshellws
         LOG.debugLog("received websocket request for webshhell: "+ requestURI.getRawPath()+" query:"+requestURI.getRawQuery());
-        return new WebshellWebSocketAdapter(req, pool, config, requestURI.getRawQuery());
+        return new WebshellWebSocketAdapter(req, pool, config);
       }
 
       // URL used to connect to websocket backend
@@ -139,8 +139,6 @@ public class GatewayWebsocketHandler extends WebSocketHandler
       throw new RuntimeException(e);
     }
   }
-
-
 
 
   private KeyStore getTruststore() throws KeystoreServiceException {

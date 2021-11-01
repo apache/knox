@@ -16,51 +16,42 @@
  * limitations under the License.
  */
 
-function WebShellClient() {};
+function WebShellClient(options, terminal) {
+    this.username = options.username;
+    this.endpoint = 'wss://'+ options.host + ':' + options.port + '/gateway/homepage/webshell/webshellws?' + options.username;
+};
 
-
-WebShellClient.prototype.connect = function (options, callbackFuncs) {
-    // todo: lookup knox homepage implementation, make host and port configurable
-    var endpoint = "wss://localhost:8443/gateway/homepage/webshell/webshellws?" + options.username;
-    console.log('connecting websocket endpoint:' + endpoint);
+// todo: maybe replace this part with xterm's AttachAddon
+WebShellClient.prototype.connect = function () {
+    console.log('connecting websocket endpoint:' + this.endpoint);
 
     if (window.WebSocket) {
         // When new WebSocket(url) is created, it starts connecting immediately
-        this._connection = new WebSocket(endpoint);
+        this.connection = new WebSocket(this.endpoint);
     }else {
-        callbackFuncs.onError('WebSocket Not Supported');
+        this.terminal.write('WebSocket Not Supported');
         return;
     }
+    this.terminal.write('Connecting ...\r\n');
 
-    this._connection.onopen = function () {
+    this.connection.onopen = function () {
         console.log('WebSocket connection established');
-        callbackFuncs.onOpen();
     };
 
-    this._connection.onmessage = function (event) {
-        //var data = event.data.toString();
-        callbackFuncs.onData(event.data);
+    this.connection.onmessage = function (event) {
+        this.terminal.write(event.data);
     };
 
-    this._connection.onerror = function (event) {
-        //var error = event.data.toString();
-        callbackFuncs.onError(event.data);
+    this.connection.onerror = function (event) {
+        this.terminal.write(event.data);
     };
 
 
     this._connection.onclose = function (event) {
-        callbackFuncs.onClose();
+        this.terminal.write("\r\nconnection closed");
     };
 };
 
-WebShellClient.prototype.send = function (data, options) {
-    this._connection.send(JSON.stringify({"command": data, "username": options.username}));
+WebShellClient.prototype.send = function (data) {
+    this.connection.send(JSON.stringify({"command": data, "username": this.username}));
 };
-
-/*
-WebShellClient.prototype.sendInitData = function (options) {
-    console.log('send initializing data through websocket'+JSON.stringify(options));
-    this._connection.send(JSON.stringify(options));
-}*/
-
-var client = new WebShellClient();

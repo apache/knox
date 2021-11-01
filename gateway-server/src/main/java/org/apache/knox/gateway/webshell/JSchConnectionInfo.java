@@ -46,6 +46,7 @@ public class JSchConnectionInfo extends ConnectionInfo {
             jsch = new JSch();
             Properties config = new Properties();
             config.put("StrictHostKeyChecking", "no");
+            //todo: make this configurable
             jschSession = jsch.getSession("knoxui", "localhost", 22);
             jschSession.setConfig(config);
             jschSession.setPassword("knoxui");
@@ -62,10 +63,10 @@ public class JSchConnectionInfo extends ConnectionInfo {
             inputStream = channel.getInputStream();
             outputStream = channel.getOutputStream();
             channel.connect(30000);
-            String sudoCmd = "exec sudo -u "+ username + " bash -i\nwhoami\n";
+            String sudoCmd = "exec sudo -u "+ username + " bash -i\ncd $HOME\nwhoami\n";
             outputStream.write(sudoCmd.getBytes(StandardCharsets.UTF_8));
             outputStream.flush();
-            //checkConnection(username);
+            // checkConnection(username);
         }  catch (JSchException|IOException e) {
             throw new RuntimeException(e);
         }
@@ -75,7 +76,6 @@ public class JSchConnectionInfo extends ConnectionInfo {
     private void checkConnection(String username) throws IOException{
         InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.US_ASCII);
         BufferedReader bufferedReader = new BufferedReader( reader );
-        // todo: implementation highly dependent on the output from host
         int numLinesBeforeUsername = 14;
         for (int i=0; i<numLinesBeforeUsername; i++) {
             LOG.info(bufferedReader.readLine());
