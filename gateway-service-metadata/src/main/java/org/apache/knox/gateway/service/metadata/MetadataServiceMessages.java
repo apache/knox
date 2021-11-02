@@ -25,10 +25,16 @@ import org.apache.knox.gateway.i18n.messages.StackTrace;
 @Messages(logger = "org.apache.knox.gateway.service.metadata")
 public interface MetadataServiceMessages {
 
-  @Message(level = MessageLevel.ERROR, text = "Failed to fetch public certificate: {1}")
+  @Message(level = MessageLevel.ERROR, text = "Failed to fetch public certificate: {0}")
   void failedToFetchPublicCert(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.ERROR, text = "Failed to generate public certificate {0}: {1}")
   void failedToGeneratePublicCert(String certificateType, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.ERROR, text = "Failed to fetch Gateway alias list: {0}")
+  void failedToFetchGatewayAliasList(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.WARN, text = "Knox token management is disabled. Please configure knox.token.hash.key Gateway alias for this feature to work")
+  void tokenManagementDisabled();
 
 }

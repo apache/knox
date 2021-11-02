@@ -28,8 +28,10 @@ import static org.junit.Assert.fail;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.KeyLengthException;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 
@@ -107,7 +109,8 @@ public class TokenServiceResourceTest {
   private ServletContext context;
   private HttpServletRequest request;
   private JWTokenAuthority authority;
-  private TestTokenStateService tss;
+  private TestTokenStateService tss = new TestTokenStateService();
+  private char[] hmacSecret;
 
   private enum TokenLifecycleOperation {
     Renew,
@@ -167,12 +170,11 @@ public class TokenServiceResourceTest {
     EasyMock.expect(config.getKnoxTokenHashAlgorithm()).andReturn(HmacAlgorithms.HMAC_SHA_256.getName()).anyTimes();
     EasyMock.expect(config.getMaximumNumberOfTokensPerUser())
         .andReturn(contextExpectations.containsKey(KNOX_TOKEN_USER_LIMIT) ? Integer.parseInt(contextExpectations.get(KNOX_TOKEN_USER_LIMIT)) : -1).anyTimes();
-    tss = new TestTokenStateService();
     EasyMock.expect(services.getService(ServiceType.TOKEN_STATE_SERVICE)).andReturn(tss).anyTimes();
 
     AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TokenUtils.SIGNING_HMAC_SECRET_ALIAS)).andReturn(null).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TokenUtils.SIGNING_HMAC_SECRET_ALIAS)).andReturn(hmacSecret).anyTimes();
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TokenMAC.KNOX_TOKEN_HASH_KEY_ALIAS_NAME)).andReturn("sPj8FCgQhCEi6G18kBfpswxYSki33plbelGLs0hMSbk".toCharArray()).anyTimes();
 
     authority = new TestJWTokenAuthority(publicKey, privateKey);
@@ -192,6 +194,30 @@ public class TokenServiceResourceTest {
     }
 
     EasyMock.replay(principal, services, context, request, aliasService, config);
+  }
+
+  @Test(expected = KeyLengthException.class)
+  public void testInvalidHmacSecretThrowsException() throws Exception {
+    final Map<String, String> contextExpectations = new HashMap<>();
+    hmacSecret = "1234".toCharArray();
+    contextExpectations.put("knox.token.sigalg", JWSAlgorithm.HS256.getName());
+    configureCommonExpectations(contextExpectations);
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+  }
+
+  @Test
+  public void testValidHmacSecretNoException() throws Exception {
+    final Map<String, String> contextExpectations = new HashMap<>();
+    hmacSecret = "12345678123456781234567812345678".toCharArray();
+    contextExpectations.put("knox.token.sigalg", JWSAlgorithm.HS256.getName());
+    configureCommonExpectations(contextExpectations);
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
   }
 
   @Test
@@ -657,7 +683,7 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRenewal_Enabled_NoRenewersNoSubject() throws Exception {
     Response renewalResponse = doTestTokenRenewal(true, null, null);
-    validateRenewalResponse(renewalResponse, 403, false, "Caller (null) not authorized to renew tokens.");
+    validateRenewalResponse(renewalResponse, 403, false, "Caller (null) not authorized to renew tokens.", TokenResource.ErrorCode.UNAUTHORIZED);
   }
 
   @Test
@@ -667,7 +693,7 @@ public class TokenServiceResourceTest {
     validateRenewalResponse(renewalResponse,
                             403,
                             false,
-                            "Caller (" + caller + ") not authorized to renew tokens.");
+                            "Caller (" + caller + ") not authorized to renew tokens.", TokenResource.ErrorCode.UNAUTHORIZED);
   }
 
   @Test
@@ -676,7 +702,7 @@ public class TokenServiceResourceTest {
     validateRenewalResponse(renewalResponse,
                             403,
                             false,
-                            "Caller (null) not authorized to renew tokens.");
+                            "Caller (null) not authorized to renew tokens.", TokenResource.ErrorCode.UNAUTHORIZED);
   }
 
   @Test
@@ -686,7 +712,7 @@ public class TokenServiceResourceTest {
     validateRenewalResponse(renewalResponse,
                             403,
                             false,
-                            "Caller (" + caller + ") not authorized to renew tokens.");
+                            "Caller (" + caller + ") not authorized to renew tokens.", TokenResource.ErrorCode.UNAUTHORIZED);
   }
 
   @Test
@@ -737,7 +763,7 @@ public class TokenServiceResourceTest {
     validateRevocationResponse(renewalResponse,
                                400,
                                false,
-                               "Token revocation support is not configured");
+                               "Token revocation support is not configured", TokenResource.ErrorCode.CONFIGURATION_ERROR);
   }
 
   @Test
@@ -746,7 +772,7 @@ public class TokenServiceResourceTest {
     validateRevocationResponse(renewalResponse,
                                400,
                                false,
-                               "Token revocation support is not configured");
+                               "Token revocation support is not configured", TokenResource.ErrorCode.CONFIGURATION_ERROR);
   }
 
   @Test
@@ -755,7 +781,7 @@ public class TokenServiceResourceTest {
     validateRevocationResponse(renewalResponse,
                                403,
                                false,
-                               "Caller (null) not authorized to revoke tokens.");
+                               "Caller (null) not authorized to revoke tokens.", TokenResource.ErrorCode.UNAUTHORIZED);
   }
 
   @Test
@@ -765,7 +791,7 @@ public class TokenServiceResourceTest {
     validateRevocationResponse(renewalResponse,
                                403,
                                false,
-                               "Caller (" + caller + ") not authorized to revoke tokens.");
+                               "Caller (" + caller + ") not authorized to revoke tokens.", TokenResource.ErrorCode.UNAUTHORIZED);
   }
 
   @Test
@@ -774,7 +800,7 @@ public class TokenServiceResourceTest {
     validateRevocationResponse(renewalResponse,
                                403,
                                false,
-                               "Caller (null) not authorized to revoke tokens.");
+                               "Caller (null) not authorized to revoke tokens.", TokenResource.ErrorCode.UNAUTHORIZED);
   }
 
   @Test
@@ -784,7 +810,7 @@ public class TokenServiceResourceTest {
     validateRevocationResponse(renewalResponse,
                                403,
                                false,
-                               "Caller (" + caller + ") not authorized to revoke tokens.");
+                               "Caller (" + caller + ") not authorized to revoke tokens.", TokenResource.ErrorCode.UNAUTHORIZED);
   }
 
   @Test
@@ -792,6 +818,12 @@ public class TokenServiceResourceTest {
     final String caller = "shemp";
     Response renewalResponse =
         doTestTokenRevocation(true, ("larry, moe,  curly ," + caller), createTestSubject(caller));
+    validateSuccessfulRevocationResponse(renewalResponse);
+  }
+
+  @Test
+  public void testTokenRevocation_Enabled_RevokeOwnToken() throws Exception {
+    final Response renewalResponse = doTestTokenRevocation(true, null, createTestSubject(USER_NAME));
     validateSuccessfulRevocationResponse(renewalResponse);
   }
 
@@ -960,7 +992,35 @@ public class TokenServiceResourceTest {
   }
 
   @Test
-  public void tesTokenLimitPerUserExceeded() throws Exception {
+  public void testTokenLimitChangeAfterAlreadyHavingTokens() throws Exception {
+    Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put(KNOX_TOKEN_USER_LIMIT, "-1");
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+    // already have N tokens
+    int numberOfPreExistingTokens = 5;
+    for (int i = 0; i < numberOfPreExistingTokens; i++) {
+      tr.doGet();
+    }
+    Response getKnoxTokensResponse = tr.getUserTokens(USER_NAME);
+    Collection<String> tokens = ((Map<String, Collection<String>>) JsonUtils.getObjectFromJsonString(getKnoxTokensResponse.getEntity().toString()))
+            .get("tokens");
+    assertEquals(tokens.size(), numberOfPreExistingTokens);
+    // change the limit and try generate one more
+    contextExpectations.put(KNOX_TOKEN_USER_LIMIT, Integer.toString(numberOfPreExistingTokens -1));
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+    Response response = tr.doGet();
+    assertTrue(response.getEntity().toString().contains("Unable to get token - token limit exceeded."));
+  }
+
+  @Test
+  public void testTokenLimitPerUserExceeded() throws Exception {
     try {
       testLimitingTokensPerUser(String.valueOf("10"), 11);
       fail("Exception should have been thrown");
@@ -1193,13 +1253,14 @@ public class TokenServiceResourceTest {
   }
 
   private static void validateSuccessfulRenewalResponse(final Response response) throws IOException {
-    validateRenewalResponse(response, 200, true, null);
+    validateRenewalResponse(response, 200, true, null, null);
   }
 
   private static void validateRenewalResponse(final Response response,
                                               final int      expectedStatusCode,
                                               final boolean  expectedResult,
-                                              final String   expectedMessage) throws IOException {
+                                              final String   expectedMessage,
+                                              final TokenResource.ErrorCode expectedCode) throws IOException {
     assertEquals(expectedStatusCode, response.getStatus());
     assertTrue(response.hasEntity());
     String responseContent = (String) response.getEntity();
@@ -1209,16 +1270,20 @@ public class TokenServiceResourceTest {
     boolean result = Boolean.valueOf(json.get("renewed"));
     assertEquals(expectedResult, result);
     assertEquals(expectedMessage, json.get("error"));
+    if (expectedCode != null) {
+      assertEquals(expectedCode.toInt(), Integer.parseInt(json.get("code")));
+    }
   }
 
   private static void validateSuccessfulRevocationResponse(final Response response) throws IOException {
-    validateRevocationResponse(response, 200, true, null);
+    validateRevocationResponse(response, 200, true, null, null);
   }
 
   private static void validateRevocationResponse(final Response response,
                                                  final int      expectedStatusCode,
                                                  final boolean  expectedResult,
-                                                 final String   expectedMessage) throws IOException {
+                                                 final String   expectedMessage,
+                                                 final TokenResource.ErrorCode expectedCode) throws IOException {
     assertEquals(expectedStatusCode, response.getStatus());
     assertTrue(response.hasEntity());
     String responseContent = (String) response.getEntity();
@@ -1228,6 +1293,9 @@ public class TokenServiceResourceTest {
     boolean result = Boolean.valueOf(json.get("revoked"));
     assertEquals(expectedResult, result);
     assertEquals(expectedMessage, json.get("error"));
+    if (expectedCode != null) {
+      assertEquals(expectedCode.toInt(), Integer.parseInt(json.get("code")));
+    }
   }
 
 

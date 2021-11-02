@@ -58,7 +58,7 @@
                     <a href="{{ getMetadataAPIUrl('topologies') }}" target="_blank">Topologies</a>
                 </td>
             </tr>
-            <tr *ngIf="this['showTokens']">
+            <tr *ngIf="this.isTokenManagementEnabled() && this['showTokens']">
                 <td>
                     Integration Tokens
                 </td>

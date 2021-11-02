@@ -72,6 +72,16 @@ public class Urls {
   }
 
   /**
+   * Does the provided URL contain UserInfo
+   * @param url
+   * @return true if a URL contains userInfo else false
+   * @throws MalformedURLException
+   */
+  public static boolean containsUserInfo(String url) throws MalformedURLException {
+    return (new URL(url).getUserInfo() != null);
+  }
+
+  /**
    * Compute the domain name from an URL.
    *
    * @param url a given URL

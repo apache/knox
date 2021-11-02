@@ -27,7 +27,7 @@
 
     <groupId>org.apache.knox</groupId>
     <artifactId>gateway</artifactId>
-    <version>1.6.0-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>gateway</name>
@@ -204,8 +204,6 @@
         <hadoop.version>3.2.1</hadoop.version>
         <hamcrest.version>2.2</hamcrest.version>
         <hamcrest-json.version>0.2</hamcrest-json.version>
-        <hibernate.version>5.4.26.Final</hibernate.version>
-        <hibernate-jpa.version>1.0.2.Final</hibernate-jpa.version>
         <httpclient.version>4.5.13</httpclient.version>
         <httpcore.version>4.4.14</httpcore.version>
         <jackson.version>2.11.4</jackson.version>
@@ -233,7 +231,7 @@
         <joda-time.version>2.10.8</joda-time.version>
         <json-path.version>2.5.0</json-path.version>
         <json-smart.version>2.3</json-smart.version>
-        <junit.version>4.13.1</junit.version>
+        <junit.version>4.13.2</junit.version>
         <lang-tag.version>1.5</lang-tag.version>
         <libpam4j.version>1.11</libpam4j.version>
         <log4j.version>1.2.17</log4j.version>
@@ -2193,15 +2191,6 @@
                 <version>${opensaml.version}</version>
             </dependency>
 
-            <!--
-            opensaml v3 doesn't have updated hibernate dependency.
-            We can't upgrade to opensaml v4 since it is JDK 11+ only
-            even though it has the hibernate dependency upgrade.
-            This upgrades the hibernate dependency upgrade based on
-            the opensaml v4 commit.
-            - https://issues.shibboleth.net/jira/browse/OSJ-275
-            - https://git.shibboleth.net/view/?p=java-opensaml.git;a=commit;h=3bb2348f3b3ada3a2f27a15ea555f8bb76884082
-            -->
             <dependency>
                 <groupId>org.opensaml</groupId>
                 <artifactId>opensaml-storage-impl</artifactId>
@@ -2211,17 +2200,11 @@
                         <groupId>org.hibernate</groupId>
                         <artifactId>hibernate-entitymanager</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>org.hibernate.javax.persistence</groupId>
+                        <artifactId>hibernate-jpa-2.1-api</artifactId>
+                    </exclusion>
                 </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.hibernate</groupId>
-                <artifactId>hibernate-core</artifactId>
-                <version>${hibernate.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.hibernate.javax.persistence</groupId>
-                <artifactId>hibernate-jpa-2.1-api</artifactId>
-                <version>${hibernate-jpa.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.javassist</groupId>

@@ -748,6 +748,11 @@ public interface GatewayConfig {
   boolean homePageLogoutEnabled();
 
   /**
+   * @return the Global Logout Page for Federated IDPs
+   */
+  String getGlobalLogoutPageUrl();
+
+  /**
    * @return the maximum number of cache entries where keystore entries are stored
    */
   long getKeystoreCacheSizeLimit();

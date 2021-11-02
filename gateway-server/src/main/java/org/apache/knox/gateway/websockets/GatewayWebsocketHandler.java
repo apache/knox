@@ -118,6 +118,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
     try {
       final URI requestURI = req.getRequestURI();
+      final ClientEndpointConfig clientConfig = getClientEndpointConfig(req);
 
       // Handle webshell websocket request
       if (StringUtils.endsWith(requestURI.getRawPath(), "/webshell/webshellws")){
@@ -131,7 +132,6 @@ public class GatewayWebsocketHandler extends WebSocketHandler
       LOG.debugLog("Generated backend URL for websocket connection: " + backendURL);
 
       // Upgrade happens here
-      final ClientEndpointConfig clientConfig = getClientEndpointConfig(req);
       clientConfig.getUserProperties().put("org.apache.knox.gateway.websockets.truststore", getTruststore());
       return new ProxyWebSocketAdapter(URI.create(backendURL), pool, clientConfig, config);
     } catch (final Exception e) {

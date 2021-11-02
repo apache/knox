@@ -39,6 +39,7 @@ import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -48,6 +49,10 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.KeyLengthException;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.util.ByteUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -151,8 +156,29 @@ public class TokenResource {
   @Context
   ServletContext context;
 
+  public enum ErrorCode {
+    UNKNOWN(0),
+    CONFIGURATION_ERROR(10),
+    UNAUTHORIZED(20),
+    INTERNAL_ERROR(30),
+    INVALID_TOKEN(40),
+    UNKNOWN_TOKEN(50),
+    ALREADY_DISABLED(60),
+    ALREADY_ENABLED(70);
+
+    private final int code;
+
+    ErrorCode(int code) {
+      this.code = code;
+    }
+
+    public int toInt() {
+      return code;
+    }
+  }
+
   @PostConstruct
-  public void init() throws AliasServiceException, ServiceLifecycleException {
+  public void init() throws AliasServiceException, ServiceLifecycleException, KeyLengthException {
 
     String audiences = context.getInitParameter(TOKEN_AUDIENCES_PARAM);
     if (audiences != null) {
@@ -313,11 +339,21 @@ public class TokenResource {
     }
   }
 
-  private void setSignatureAlogrithm() throws AliasServiceException {
+  private void setSignatureAlogrithm() throws AliasServiceException, KeyLengthException {
     final String configuredSigAlg = context.getInitParameter(TOKEN_SIG_ALG);
     final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
     final GatewayServices services = (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    signatureAlgorithm = TokenUtils.getSignatureAlgorithm(configuredSigAlg, (AliasService) services.getService(ServiceType.ALIAS_SERVICE), config.getSigningKeystoreName());
+    AliasService aliasService = services.getService(ServiceType.ALIAS_SERVICE);
+    signatureAlgorithm = TokenUtils.getSignatureAlgorithm(configuredSigAlg, aliasService, config.getSigningKeystoreName());
+    char[] hmacSecret = aliasService.getPasswordFromAliasForGateway(TokenUtils.SIGNING_HMAC_SECRET_ALIAS);
+    if (hmacSecret != null && !isAlgCompatibleWithSecret(signatureAlgorithm, hmacSecret)) {
+      throw new KeyLengthException(JWSAlgorithm.parse(signatureAlgorithm));
+    }
+  }
+
+  private boolean isAlgCompatibleWithSecret(String algName, char[] secret) {
+    return MACSigner.getCompatibleAlgorithms(ByteUtils.bitLength(secret.length))
+            .contains(JWSAlgorithm.parse(algName));
   }
 
   private boolean isServerManagedTokenStateEnabled() {
@@ -370,7 +406,7 @@ public class TokenResource {
     return Response.status(Response.Status.OK).entity(JsonUtils.renderAsJsonString(tokenStateServiceStatusMap)).build();
   }
 
-  @POST
+  @PUT
   @Path(RENEW_PATH)
   @Produces({APPLICATION_JSON})
   public Response renew(String token) {
@@ -379,6 +415,7 @@ public class TokenResource {
     long expiration = 0;
 
     String          error       = "";
+    ErrorCode       errorCode   = ErrorCode.UNKNOWN;
     Response.Status errorStatus = Response.Status.BAD_REQUEST;
 
     if (tokenStateService == null) {
@@ -392,8 +429,10 @@ public class TokenResource {
       } catch (ParseException e) {
         log.invalidToken(getTopologyName(), Tokens.getTokenDisplayText(token), e);
         error = safeGetMessage(e);
+        errorCode = ErrorCode.INVALID_TOKEN;
       } catch (Exception e) {
         error = safeGetMessage(e);
+        errorCode = ErrorCode.INTERNAL_ERROR;
       }
     } else {
       String renewer = SubjectUtils.getCurrentEffectivePrincipalName();
@@ -409,13 +448,16 @@ public class TokenResource {
                            renewer);
         } catch (ParseException e) {
           log.invalidToken(getTopologyName(), Tokens.getTokenDisplayText(token), e);
+          errorCode = ErrorCode.INVALID_TOKEN;
           error = safeGetMessage(e);
         } catch (Exception e) {
           error = safeGetMessage(e);
+          errorCode = ErrorCode.INTERNAL_ERROR;
         }
       } else {
         errorStatus = Response.Status.FORBIDDEN;
         error = "Caller (" + renewer + ") not authorized to renew tokens.";
+        errorCode = ErrorCode.UNAUTHORIZED;
       }
     }
 
@@ -426,43 +468,48 @@ public class TokenResource {
     } else {
       log.badRenewalRequest(getTopologyName(), Tokens.getTokenDisplayText(token), error);
       resp = Response.status(errorStatus)
-                     .entity("{\n  \"renewed\": \"false\",\n  \"error\": \"" + error + "\"\n}\n")
+                     .entity("{\n  \"renewed\": \"false\",\n  \"error\": \"" + error + "\",\n  \"code\": " + errorCode.toInt() + "\n}\n")
                      .build();
     }
 
     return resp;
   }
 
-  @POST
+  @DELETE
   @Path(REVOKE_PATH)
   @Produces({APPLICATION_JSON})
   public Response revoke(String token) {
     Response resp;
 
     String          error       = "";
+    ErrorCode       errorCode   = ErrorCode.UNKNOWN;
     Response.Status errorStatus = Response.Status.BAD_REQUEST;
 
     if (tokenStateService == null) {
       error = "Token revocation support is not configured";
+      errorCode = ErrorCode.CONFIGURATION_ERROR;
     } else {
-      String renewer = SubjectUtils.getCurrentEffectivePrincipalName();
-      if (allowedRenewers.contains(renewer)) {
-        try {
-          final String tokenId = getTokenId(token);
-          tokenStateService.revokeToken(tokenId);
-          log.revokedToken(getTopologyName(),
-                           Tokens.getTokenDisplayText(token),
-                           Tokens.getTokenIDDisplayText(tokenId),
-                           renewer);
-        } catch (ParseException e) {
-          log.invalidToken(getTopologyName(), Tokens.getTokenDisplayText(token), e);
-          error = safeGetMessage(e);
-        } catch (UnknownTokenException e) {
-          error = safeGetMessage(e);
+      try {
+        final String revoker = SubjectUtils.getCurrentEffectivePrincipalName();
+        final String tokenId = getTokenId(token);
+        if (triesToRevokeOwnToken(tokenId, revoker) || allowedRenewers.contains(revoker)) {
+            tokenStateService.revokeToken(tokenId);
+            log.revokedToken(getTopologyName(),
+                Tokens.getTokenDisplayText(token),
+                Tokens.getTokenIDDisplayText(tokenId),
+                revoker);
+        } else {
+          errorStatus = Response.Status.FORBIDDEN;
+          error = "Caller (" + revoker + ") not authorized to revoke tokens.";
+          errorCode = ErrorCode.UNAUTHORIZED;
         }
-      } else {
-        errorStatus = Response.Status.FORBIDDEN;
-        error = "Caller (" + renewer + ") not authorized to revoke tokens.";
+      } catch (ParseException e) {
+        log.invalidToken(getTopologyName(), Tokens.getTokenDisplayText(token), e);
+        error = safeGetMessage(e);
+        errorCode = ErrorCode.INVALID_TOKEN;
+      } catch (UnknownTokenException e) {
+        error = safeGetMessage(e);
+        errorCode = ErrorCode.UNKNOWN_TOKEN;
       }
     }
 
@@ -473,11 +520,17 @@ public class TokenResource {
     } else {
       log.badRevocationRequest(getTopologyName(), Tokens.getTokenDisplayText(token), error);
       resp = Response.status(errorStatus)
-                     .entity("{\n  \"revoked\": \"false\",\n  \"error\": \"" + error + "\"\n}\n")
+                     .entity("{\n  \"revoked\": \"false\",\n  \"error\": \"" + error + "\",\n  \"code\": " + errorCode.toInt() + "\n}\n")
                      .build();
     }
 
     return resp;
+  }
+
+  private boolean triesToRevokeOwnToken(String tokenId, String revoker) throws UnknownTokenException {
+    final TokenMetadata metadata = tokenStateService.getTokenMetadata(tokenId);
+    final String tokenUserName = metadata == null ? "" : metadata.getUserName();
+    return StringUtils.isNotBlank(revoker) && revoker.equals(tokenUserName);
   }
 
   /*
@@ -512,28 +565,33 @@ public class TokenResource {
 
   private Response setTokenEnabledFlag(String tokenId, boolean enabled) {
     String error = "";
+    ErrorCode errorCode = ErrorCode.UNKNOWN;
     if (tokenStateService == null) {
       error = "Unable to " + (enabled ? "enable" : "disable") + " tokens because token management is not configured";
+      errorCode = ErrorCode.CONFIGURATION_ERROR;
     } else {
       try {
         final TokenMetadata tokenMetadata = tokenStateService.getTokenMetadata(tokenId);
         if (enabled && tokenMetadata.isEnabled()) {
           error = "Token is already enabled";
+          errorCode = ErrorCode.ALREADY_ENABLED;
         } else if (!enabled && !tokenMetadata.isEnabled()) {
           error = "Token is already disabled";
+          errorCode = ErrorCode.ALREADY_DISABLED;
         } else {
           tokenMetadata.setEnabled(enabled);
           tokenStateService.addMetadata(tokenId, tokenMetadata);
         }
       } catch (UnknownTokenException e) {
         error = safeGetMessage(e);
+        errorCode = ErrorCode.UNKNOWN_TOKEN;
       }
     }
     if (error.isEmpty()) {
       return Response.status(Response.Status.OK).entity("{\n  \"setEnabledFlag\": \"true\",\n  \"isEnabled\": \"" + enabled + "\"\n}\n").build();
     } else {
       log.badSetEnabledFlagRequest(getTopologyName(), Tokens.getTokenIDDisplayText(tokenId), error);
-      return Response.status(Response.Status.BAD_REQUEST).entity("{\n  \"setEnabledFlag\": \"false\",\n  \"error\": \"" + error + "\"\n}\n").build();
+      return Response.status(Response.Status.BAD_REQUEST).entity("{\n  \"setEnabledFlag\": \"false\",\n  \"error\": \"" + error + "\",\n  \"code\": " + errorCode.toInt() + "\n}\n").build();
     }
   }
 
@@ -591,7 +649,7 @@ public class TokenResource {
 
     if (tokenStateService != null) {
       if (tokenLimitPerUser != -1) { // if -1 => unlimited tokens for all users
-        if (tokenStateService.getTokens(p.getName()).size() == tokenLimitPerUser) {
+        if (tokenStateService.getTokens(p.getName()).size() >= tokenLimitPerUser) {
           log.tokenLimitExceeded(p.getName());
           return Response.status(Response.Status.FORBIDDEN).entity("{ \"Unable to get token - token limit exceeded.\" }").build();
         }
@@ -726,5 +784,4 @@ public class TokenResource {
     String message = t.getMessage();
     return message != null ? message : "null";
   }
-
 }

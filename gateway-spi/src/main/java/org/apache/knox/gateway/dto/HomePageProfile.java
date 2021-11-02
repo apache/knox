@@ -79,6 +79,6 @@ public class HomePageProfile {
   }
 
   public static Collection<String> getTokenProfileElements() {
-    return Arrays.asList(GPI_VERSION, GPI_TOKENS);
+    return Arrays.asList(GPI_VERSION, GPI_CERT, GPI_TOKENS);
   }
 }

@@ -22,6 +22,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 
 import org.junit.Test;
@@ -69,6 +70,13 @@ public class HomePageProfileTest {
   @Test
   public void testGeneralProxyInformationTokens() throws Exception {
     doTestGeneralProxyInformationElement(HomePageProfile.GPI_TOKENS);
+  }
+
+  @Test
+  public void testTokenProfileElements() throws Exception {
+    final Collection<String> tokenProfileElements = HomePageProfile.getTokenProfileElements();
+    assertEquals(3, tokenProfileElements.size());
+    assertTrue(tokenProfileElements.containsAll(Arrays.asList(HomePageProfile.GPI_VERSION, HomePageProfile.GPI_CERT, HomePageProfile.GPI_TOKENS)));
   }
 
   private void doTestGeneralProxyInformationElement(String gpiElement) {

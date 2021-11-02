@@ -43,6 +43,10 @@ public class GeneralProxyInformation {
   @ApiModelProperty(value = "The URL referencing the Admin API book in Knox's user guide")
   private String adminApiBookUrl;
 
+  @XmlElement
+  @ApiModelProperty(value = "A boolean flag indicating if Knox token management should be enabled on the Knox Home page")
+  private String enableTokenManagement = "false";
+
   public String getVersion() {
     return version;
   }
@@ -74,6 +78,14 @@ public class GeneralProxyInformation {
 
   public void setAdminApiBookUrl(String adminApiBookUrl) {
     this.adminApiBookUrl = adminApiBookUrl;
+  }
+
+  public String getEnableTokenManagement() {
+    return enableTokenManagement;
+  }
+
+  public void setEnableTokenManagement(String enableTokenManagement) {
+    this.enableTokenManagement = enableTokenManagement;
   }
 
 }

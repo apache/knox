@@ -54,12 +54,26 @@ public class SessionResource {
       String logoutUrl = getBaseGatewayUrl(config) + "/homepage/knoxssout/api/v1/webssout";
       LOG.homePageLogoutEnabled(logoutUrl);
       sessionInfo.setLogoutUrl(logoutUrl);
+      sessionInfo.setLogoutPageUrl(getLogoutPageUrl(config));
+      sessionInfo.setGlobalLogoutPageUrl(getGlobalLogoutPageUrl(config));
     }
 
     return sessionInfo;
   }
 
   private String getBaseGatewayUrl(GatewayConfig config) {
-    return request.getRequestURL().substring(0, request.getRequestURL().length() - request.getRequestURI().length()) + "/" + config.getGatewayPath();
+    return request.getRequestURL().substring(0,
+        request.getRequestURL().length() - request.getRequestURI().length()) +
+        "/" + config.getGatewayPath();
+  }
+
+  private String getLogoutPageUrl(GatewayConfig config) {
+    return getBaseGatewayUrl(config) +
+        "/knoxsso/knoxauth/logout.jsp?originalUrl=" + getBaseGatewayUrl(config) +
+        "/homepage/home";
+  }
+
+  private String getGlobalLogoutPageUrl(GatewayConfig config) {
+    return config.getGlobalLogoutPageUrl();
   }
 }

@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
@@ -119,12 +118,8 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
 
   @Override
   public long getTokenExpiration(String tokenId, boolean validate) throws UnknownTokenException {
-    try {
-      // check the in-memory cache first
-      return super.getTokenExpiration(tokenId, validate);
-    } catch (UnknownTokenException e) {
-      // It's not in memory
-    }
+    // To support HA, there is no in-memory lookup here; we should go directly to the DB
+    // See KNOX-2658 for more details.
 
     if (validate) {
       validateToken(tokenId);
@@ -224,7 +219,7 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
         log.removedTokensFromDatabase(numOfExpiredTokens);
 
         // remove from in-memory collections
-        super.evictExpiredTokens();
+        super.removeTokens(expiredTokenIds);
       }
     } catch (SQLException e) {
       log.errorRemovingTokensFromDatabase(e.getMessage(), e);
@@ -278,44 +273,34 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
 
   @Override
   public TokenMetadata getTokenMetadata(String tokenId) throws UnknownTokenException {
+    // To support HA, there is no in-memory lookup here; we should go directly to the DB.
+    // See KNOX-2658 for more details.
+
     TokenMetadata tokenMetadata = null;
+
     try {
-      tokenMetadata = super.getTokenMetadata(tokenId);
-    } catch (UnknownTokenException e) {
-      // This is expected if the metadata is not yet part of the in-memory record. In this case, the metadata will
-      // be retrieved from the database.
-    }
+      tokenMetadata = tokenDatabase.getTokenMetadata(tokenId);
 
-    if (tokenMetadata == null) {
-      try {
-        tokenMetadata = tokenDatabase.getTokenMetadata(tokenId);
-
-        if (tokenMetadata != null) {
-          log.fetchedMetadataFromDatabase(Tokens.getTokenIDDisplayText(tokenId));
-          // Update the in-memory cache to avoid subsequent DB look-ups for the same state
-          super.addMetadata(tokenId, tokenMetadata);
-        } else {
-          throw new UnknownTokenException(tokenId);
-        }
-      } catch (SQLException e) {
-        log.errorFetchingMetadataFromDatabase(Tokens.getTokenIDDisplayText(tokenId), e.getMessage(), e);
+      if (tokenMetadata != null) {
+        log.fetchedMetadataFromDatabase(Tokens.getTokenIDDisplayText(tokenId));
+        // Update the in-memory cache to avoid subsequent DB look-ups for the same state
+        super.addMetadata(tokenId, tokenMetadata);
+      } else {
+        throw new UnknownTokenException(tokenId);
       }
+    } catch (SQLException e) {
+      log.errorFetchingMetadataFromDatabase(Tokens.getTokenIDDisplayText(tokenId), e.getMessage(), e);
     }
     return tokenMetadata;
   }
 
   @Override
   public Collection<KnoxToken> getTokens(String userName) {
-    final Collection<KnoxToken> tokens = new TreeSet<>();
     try {
-      tokens.addAll(tokenDatabase.getTokens(userName));
-      for (KnoxToken token : tokens) {
-        token.setMetadata(tokenDatabase.getTokenMetadata(token.getTokenId()));
-      }
+      return tokenDatabase.getTokens(userName);
     } catch (SQLException e) {
       log.errorFetchingTokensForUserFromDatabase(userName, e.getMessage(), e);
+      return Collections.emptyList();
     }
-    return tokens;
   }
-
 }

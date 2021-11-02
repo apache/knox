@@ -14,9 +14,11 @@
 -->
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="java.net.MalformedURLException" %>
 <%@ page import="org.apache.knox.gateway.topology.Topology" %>
 <%@ page import="org.apache.knox.gateway.topology.Service" %>
 <%@ page import="org.apache.knox.gateway.util.RegExUtils" %>
+<%@ page import="org.apache.knox.gateway.util.Urls" %>
 <%@ page import="org.apache.knox.gateway.util.WhitelistUtils" %>
 
 <!DOCTYPE html>
@@ -41,30 +43,43 @@
 
         <script type="text/javascript" src="js/knoxauth.js"></script>
     <%
-        Topology topology = (Topology)request.getSession().getServletContext().getAttribute("org.apache.knox.gateway.topology");
-        String whitelist = null;
-        Collection services = topology.getServices();
-        for (Object service : services) {
-          Service svc = (Service)service;
-          if (svc.getRole().equals("KNOXSSO")) {
-            Map<String, String> params = svc.getParams();
-            whitelist = params.get("knoxsso.redirect.whitelist.regex");
+        boolean validRedirect = true;
+        String originalUrl = request.getParameter("originalUrl");
+        try {
+          if (Urls.containsUserInfo(originalUrl)) {
+            validRedirect = false;
           }
         }
-        if (whitelist == null) {
+        catch (MalformedURLException ex) {
+          // if not a well formed URL then not a valid redirect
+          validRedirect = false;
+        }
+        if (validRedirect) {
+	      Topology topology = (Topology)request.getSession().getServletContext().getAttribute("org.apache.knox.gateway.topology");
+          String whitelist = null;
+          Collection services = topology.getServices();
+          for (Object service : services) {
+            Service svc = (Service)service;
+            if (svc.getRole().equals("KNOXSSO")) {
+              Map<String, String> params = svc.getParams();
+              whitelist = params.get("knoxsso.redirect.whitelist.regex");
+            }
+          }
+          if (whitelist == null) {
             whitelist = WhitelistUtils.getDispatchWhitelist(request);
             if (whitelist == null) {
-                whitelist = "";
+              whitelist = "";
             }
+          }
+          validRedirect = RegExUtils.checkWhitelist(whitelist, originalUrl);
         }
-        boolean validRedirect = RegExUtils.checkWhitelist(whitelist, request.getParameter("originalUrl"));
         if (validRedirect) {
     %>
     <script>
     document.addEventListener("load", redirectOnLoad());
-    
+
     function redirectOnLoad() {
-      var originalUrl = get("originalUrl");
+      var originalUrl = <%= originalUrl %>;
       if (originalUrl != null) {
         redirect(originalUrl);
       }
@@ -74,7 +89,7 @@
     }
     %>
   </head>
-  
+ 
   <body>
         <section id="signin-container" style="margin-top: 80px;">
         <%
@@ -85,7 +100,7 @@
           <div style="background: white;" class="l-logo">
                 <img src="images/loading.gif" alt="Knox logo" style="text-align:center;width: 2%; height: 2%">
             </div>
-              <p style="color: white;display: block">Loading should complete in few a seconds. If not, click <a href="#" onclick='redirect(get("originalUrl"));' >here</a></p>
+              <p style="color: white;display: block">Loading should complete in few a seconds. If not, click <a href="<%= originalUrl %>">here</a></p>
         <%
         } else {
         %>

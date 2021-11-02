@@ -18,4 +18,6 @@
 export class SessionInformation {
     user: string;
     logoutUrl: string;
+    logoutPageUrl: string;
+    globalLgoutPageUrl: string;
 }

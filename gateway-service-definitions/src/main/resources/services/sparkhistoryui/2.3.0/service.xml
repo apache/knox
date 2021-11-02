@@ -44,5 +44,8 @@
             <rewrite apply="SPARKHISTORYUI/sparkhistory/outbound/headers/jobs" to="response.headers"/>
             <rewrite apply="SPARKHISTORYUI/sparkhistory/outbound/rqheaders" to="request.headers"/>
         </route>
+        <route path="/sparkhistory/api/v1/applications/**">
+            <rewrite apply="SPARKHISTORYUI/sparkhistory/inbound/json/body" to="response.body"/>
+        </route>
     </routes>
 </service>

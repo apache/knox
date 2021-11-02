@@ -1588,8 +1588,17 @@ body.login {
   margin: 0 auto;
   width: 280px;
 }
+.login #signout-container {
+  margin: 0 auto;
+  width: 400px;
+}
 .login .l-logo {
   text-align: center;
+  width: 100%;
+  margin-bottom: 20px;
+}
+.login .l2-logo {
+  text-align: left;
   width: 100%;
   margin-bottom: 20px;
 }

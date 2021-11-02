@@ -29,11 +29,10 @@ import java.sql.Statement;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
-
 import javax.sql.DataSource;
 
 import org.apache.commons.codec.binary.Base64;
@@ -57,9 +56,9 @@ public class TokenStateDatabase {
   private static final String ADD_METADATA_SQL = "INSERT INTO " + TOKEN_METADATA_TABLE_NAME + "(token_id, md_name, md_value) VALUES(?, ?, ?)";
   private static final String UPDATE_METADATA_SQL = "UPDATE " + TOKEN_METADATA_TABLE_NAME + " SET md_value = ? WHERE token_id = ? AND md_name = ?";
   private static final String GET_METADATA_SQL = "SELECT md_name, md_value FROM " + TOKEN_METADATA_TABLE_NAME + " WHERE token_id = ?";
-  private static final String GET_TOKENS_BY_USER_NAME_SQL = "SELECT kt.token_id, kt.issue_time, kt.expiration, kt.max_lifetime FROM " + TOKENS_TABLE_NAME
-      + " kt, " + TOKEN_METADATA_TABLE_NAME + " ktm WHERE kt.token_id = ktm.token_id AND ktm.md_name = '" + TokenMetadata.USER_NAME
-      + "' AND ktm.md_value = ? ORDER BY kt.issue_time";
+  private static final String GET_TOKENS_BY_USER_NAME_SQL = "SELECT kt.token_id, kt.issue_time, kt.expiration, kt.max_lifetime, ktm.md_name, ktm.md_value FROM " + TOKENS_TABLE_NAME
+      + " kt, " + TOKEN_METADATA_TABLE_NAME + " ktm WHERE kt.token_id = ktm.token_id AND kt.token_id IN (SELECT token_id FROM " + TOKEN_METADATA_TABLE_NAME + " WHERE md_name = '" + TokenMetadata.USER_NAME + "' AND md_value = ? )"
+      + " ORDER BY kt.issue_time";
 
   private final DataSource dataSource;
 
@@ -192,24 +191,34 @@ public class TokenStateDatabase {
         final Map<String, String> metadataMap = new HashMap<>();
         while (rs.next()) {
           String metadataName = rs.getString(1);
-          metadataMap.put(metadataName, metadataName.equals(TokenMetadata.PASSCODE) ? new String(Base64.decodeBase64(rs.getString(2).getBytes(UTF_8)), UTF_8) : rs.getString(2));
+          metadataMap.put(metadataName, decodeMetadata(metadataName, rs.getString(2)));
         }
         return metadataMap.isEmpty() ? null : new TokenMetadata(metadataMap);
       }
     }
   }
 
+  private static String decodeMetadata(String metadataName, String metadataValue) {
+    return metadataName.equals(TokenMetadata.PASSCODE) ? new String(Base64.decodeBase64(metadataValue.getBytes(UTF_8)), UTF_8) : metadataValue;
+  }
+
   Collection<KnoxToken> getTokens(String userName) throws SQLException {
-    final Collection<KnoxToken> tokens = new TreeSet<>();
+    Map<String, KnoxToken> tokenMap = new LinkedHashMap<>();
     try (Connection connection = dataSource.getConnection(); PreparedStatement getTokenIdsStatement = connection.prepareStatement(GET_TOKENS_BY_USER_NAME_SQL)) {
       getTokenIdsStatement.setString(1, userName);
       try (ResultSet rs = getTokenIdsStatement.executeQuery()) {
         while(rs.next()) {
-          tokens.add(new KnoxToken(rs.getString(1), rs.getLong(2), rs.getLong(3), rs.getLong(4)));
+          String tokenId = rs.getString(1);
+          long issueTime = rs.getLong(2);
+          long expiration = rs.getLong(3);
+          long maxLifeTime = rs.getLong(4);
+          String metaName = rs.getString(5);
+          String metaValue = rs.getString(6);
+          KnoxToken token = tokenMap.computeIfAbsent(tokenId, id -> new KnoxToken(tokenId, issueTime, expiration, maxLifeTime));
+          token.addMetadata(metaName, decodeMetadata(metaName, metaValue));
         }
-        return tokens;
+        return tokenMap.values();
       }
     }
   }
-
 }
