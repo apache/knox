@@ -94,4 +94,9 @@ public class UrlsTest {
     assertEquals( "%3F", Urls.encode( "?" ) );
   }
 
+  @Test
+  public void testContainsUserInfo() throws Exception {
+    assertEquals(true, Urls.containsUserInfo( "https://www.local.com:8443aa@google.com"));
+    assertEquals(false, Urls.containsUserInfo( "https://www.local.com:8443/google.com"));
+  }
 }

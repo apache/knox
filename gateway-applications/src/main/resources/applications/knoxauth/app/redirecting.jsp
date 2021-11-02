@@ -14,9 +14,11 @@
 -->
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="java.net.MalformedURLException" %>
 <%@ page import="org.apache.knox.gateway.topology.Topology" %>
 <%@ page import="org.apache.knox.gateway.topology.Service" %>
 <%@ page import="org.apache.knox.gateway.util.RegExUtils" %>
+<%@ page import="org.apache.knox.gateway.util.Urls" %>
 <%@ page import="org.apache.knox.gateway.util.WhitelistUtils" %>
 
 <!DOCTYPE html>
@@ -41,31 +43,43 @@
 
         <script type="text/javascript" src="js/knoxauth.js"></script>
     <%
+        boolean validRedirect = true;
         String originalUrl = request.getParameter("originalUrl");
-        Topology topology = (Topology)request.getSession().getServletContext().getAttribute("org.apache.knox.gateway.topology");
-        String whitelist = null;
-        Collection services = topology.getServices();
-        for (Object service : services) {
-          Service svc = (Service)service;
-          if (svc.getRole().equals("KNOXSSO")) {
-            Map<String, String> params = svc.getParams();
-            whitelist = params.get("knoxsso.redirect.whitelist.regex");
+        try {
+          if (Urls.containsUserInfo(originalUrl)) {
+            validRedirect = false;
           }
         }
-        if (whitelist == null) {
+        catch (MalformedURLException ex) {
+          // if not a well formed URL then not a valid redirect
+          validRedirect = false;
+        }
+        if (validRedirect) {
+	      Topology topology = (Topology)request.getSession().getServletContext().getAttribute("org.apache.knox.gateway.topology");
+          String whitelist = null;
+          Collection services = topology.getServices();
+          for (Object service : services) {
+            Service svc = (Service)service;
+            if (svc.getRole().equals("KNOXSSO")) {
+              Map<String, String> params = svc.getParams();
+              whitelist = params.get("knoxsso.redirect.whitelist.regex");
+            }
+          }
+          if (whitelist == null) {
             whitelist = WhitelistUtils.getDispatchWhitelist(request);
             if (whitelist == null) {
-                whitelist = "";
+              whitelist = "";
             }
+          }
+          validRedirect = RegExUtils.checkWhitelist(whitelist, originalUrl);
         }
-        boolean validRedirect = RegExUtils.checkWhitelist(whitelist, originalUrl);
         if (validRedirect) {
     %>
     <script>
     document.addEventListener("load", redirectOnLoad());
 
     function redirectOnLoad() {
-      var originalUrl = "<%= originalUrl %>";
+      var originalUrl = <%= originalUrl %>;
       if (originalUrl != null) {
         redirect(originalUrl);
       }
