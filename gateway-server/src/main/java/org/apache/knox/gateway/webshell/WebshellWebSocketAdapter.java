@@ -71,6 +71,9 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
             }
             this.connectionInfo = new ProcessConnectionInfo(username);
         }
+        else {
+            throw new RuntimeException("webshell not enabled");
+        }
     }
 
     private boolean validateToken(ServletUpgradeRequest req, JWT token) throws UnknownTokenException {
@@ -109,21 +112,17 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
 
     @Override
     public void onWebSocketConnect(final Session session) {
-        if (config.isWebShellEnabled()){
-            this.session = session;
-            LOG.debugLog("websocket connected.");
-            connectionInfo.connect();
-            pool.execute(new Runnable() {
-                @Override
-                public void run() {
-                    blockingReadFromHost();
-                }
-            });
-        } else {
-            transToClient("Webshell not enabled");
-            cleanup();
-        }
+        this.session = session;
+        LOG.debugLog("websocket connected.");
+        connectionInfo.connect();
+        pool.execute(new Runnable() {
+            @Override
+            public void run() {
+                blockingReadFromHost();
+            }
+        });
     }
+
     // this function will block, should be run in an asynchronous thread
     private void blockingReadFromHost(){
         LOG.debugLog("start listening to bash process");
@@ -158,7 +157,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
                 throw new RuntimeException("Unrecognized user");
             }
         } catch (JsonProcessingException | RuntimeException e) {
-            cleanupOnError(e.getMessage());
+            cleanupOnError(e.toString());
         }
     }
 

@@ -21,12 +21,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
+
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.registry.ServiceDefEntry;
 import org.apache.knox.gateway.services.registry.ServiceDefinitionRegistry;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
+import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.webshell.WebshellWebSocketAdapter;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
@@ -42,11 +44,14 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.KeyStore;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.apache.knox.gateway.topology.Topology;
+import org.apache.knox.gateway.topology.Service;
 
 /**
  * Websocket handler that will handle websocket connection request. This class
@@ -118,7 +123,17 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
     try {
       final URI requestURI = req.getRequestURI();
-      final ClientEndpointConfig clientConfig = getClientEndpointConfig(req);
+      // get parameters for KNOXSSO service
+      TopologyService ts = this.services.getService(ServiceType.TOPOLOGY_SERVICE);
+      for (Topology topology : ts.getTopologies()){
+        LOG.logMessage("topology:"+topology.getName());
+        for (Object service : topology.getServices()) {
+          Service svc = (Service)service;
+          for (Map.Entry<String,String> entry : svc.getParams().entrySet()){
+            LOG.logMessage(entry.getKey()+':'+entry.getValue());
+          }
+        }
+      }
 
       // Handle webshell websocket request
       if (StringUtils.endsWith(requestURI.getRawPath(), "/webshell/webshellws")){
@@ -132,6 +147,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
       LOG.debugLog("Generated backend URL for websocket connection: " + backendURL);
 
       // Upgrade happens here
+      final ClientEndpointConfig clientConfig = getClientEndpointConfig(req);
       clientConfig.getUserProperties().put("org.apache.knox.gateway.websockets.truststore", getTruststore());
       return new ProxyWebSocketAdapter(URI.create(backendURL), pool, clientConfig, config);
     } catch (final Exception e) {

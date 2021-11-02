@@ -356,7 +356,7 @@ public interface GatewayConfig {
   /**
    * Returns true if webshell feature enabled else false.
    * Default is false.
-   * @since 1.60
+   * @since 2.0.0
    * @return true if webshell feature is enabled
    */
   boolean isWebShellEnabled();
