@@ -18,6 +18,8 @@
 package org.apache.knox.gateway.util;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -96,7 +98,7 @@ public class UrlsTest {
 
   @Test
   public void testContainsUserInfo() throws Exception {
-    assertEquals(true, Urls.containsUserInfo( "https://www.local.com:8443aa@google.com"));
-    assertEquals(false, Urls.containsUserInfo( "https://www.local.com:8443/google.com"));
+    assertTrue(Urls.containsUserInfo( "https://www.local.com:8443aa@google.com"));
+    assertFalse(Urls.containsUserInfo( "https://www.local.com:8443/google.com"));
   }
 }
