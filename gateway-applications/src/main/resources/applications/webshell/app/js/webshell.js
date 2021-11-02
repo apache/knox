@@ -16,39 +16,38 @@
  * limitations under the License.
  */
 
-function WebShellClient(options, terminal) {
+function WebShellClient(options) {
     this.username = options.username;
-    this.endpoint = 'wss://'+ options.host + ':' + options.port + '/gateway/homepage/webshell/webshellws?' + options.username;
+    this.endpoint = 'wss://'+ options.host + ':' + options.port + '/'+ options.gatewayPath + '/homepage/webshell/webshellws?' + options.username;
 };
 
 // todo: maybe replace this part with xterm's AttachAddon
-WebShellClient.prototype.connect = function () {
+WebShellClient.prototype.connect = function (terminal) {
     console.log('connecting websocket endpoint:' + this.endpoint);
-
     if (window.WebSocket) {
         // When new WebSocket(url) is created, it starts connecting immediately
         this.connection = new WebSocket(this.endpoint);
     }else {
-        this.terminal.write('WebSocket Not Supported');
+        terminal.write('WebSocket Not Supported');
         return;
     }
-    this.terminal.write('Connecting ...\r\n');
+    terminal.write('Connecting ...\r\n');
 
     this.connection.onopen = function () {
         console.log('WebSocket connection established');
     };
 
     this.connection.onmessage = function (event) {
-        this.terminal.write(event.data);
+        terminal.write(event.data);
     };
 
     this.connection.onerror = function (event) {
-        this.terminal.write(event.data);
+        terminal.write(event.data);
     };
 
 
-    this._connection.onclose = function (event) {
-        this.terminal.write("\r\nconnection closed");
+    this.connection.onclose = function (event) {
+        terminal.write("\r\nconnection closed");
     };
 };
 

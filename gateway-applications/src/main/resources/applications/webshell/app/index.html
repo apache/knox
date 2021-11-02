@@ -41,9 +41,9 @@ $(document).ready(function(){
         const username = $(xml).find('sessioninfo').find('user').text();
         console.log(username);
         openTerminal({
-            // todo: lookup knox homepage implementation, make host and port configurable
-            host: 'localhost',
-            port: 8443,
+            host: window.location.hostname,
+            port: window.location.port,
+            gatewayPath: window.location.pathname.split('/')[1],
             username: username
         });
     },
@@ -74,8 +74,8 @@ function openTerminal(options){
         client.send(data);
     });
     terminal.open(document.getElementById('terminal'));
-    const client = new WebShellClient(options, terminal);
-    client.connect();
+    const client = new WebShellClient(options);
+    client.connect(terminal);
 }
 </script>
 </body>

@@ -88,6 +88,13 @@ limitations under the License.
         <value>60</value>
         <description>The interval (in seconds) for polling Ambari for cluster configuration changes.</description>
     </property>
+    <!-- @since 1.6.0 WebShell configs -->
+    <!-- must have websocket enabled to use webshell --> 
+    <property>
+        <name>gateway.webshell.feature.enabled</name>
+        <value>false</value>
+        <description>Enable/Disable webshell feature.</description>
+    </property>
 
     <!-- @since 1.5.0 homepage logout -->
     <property>

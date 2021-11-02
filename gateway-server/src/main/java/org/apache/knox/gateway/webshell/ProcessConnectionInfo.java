@@ -55,7 +55,6 @@ public class ProcessConnectionInfo extends ConnectionInfo {
         } catch(IOException e) {
             LOG.error("Error starting bash for " + username +" : "+ e.getMessage());
             disconnect();
-            throw new RuntimeIOException(e);
         }
     }
 

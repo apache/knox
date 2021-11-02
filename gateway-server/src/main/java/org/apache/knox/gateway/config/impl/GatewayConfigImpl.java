@@ -154,6 +154,10 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String WEBSOCKET_IDLE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.idle.timeout";
   public static final String WEBSOCKET_MAX_WAIT_BUFFER_COUNT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.wait.buffer.count";
 
+
+  /* @since 1.60 WebShell config variables */
+  public static final String WEBSHELL_FEATURE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".webshell.feature.enabled";
+
   /**
    * Properties for for gateway port mapping feature
    */
@@ -203,6 +207,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT = 60000;
   public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT = 300000;
   public static final int DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT = 100;
+
+  /* Webshell defaults */
+  public static final boolean DEFAULT_WEBSHELL_FEATURE_ENABLED = false;
 
   public static final boolean DEFAULT_GATEWAY_PORT_MAPPING_ENABLED = true;
   public static final boolean DEFAULT_REMOTE_ALIAS_SERVICE_ENABLED = true;
@@ -870,6 +877,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public boolean isWebsocketEnabled() {
     final String result = get( WEBSOCKET_FEATURE_ENABLED, Boolean.toString(DEFAULT_WEBSOCKET_FEATURE_ENABLED));
+    return Boolean.parseBoolean(result);
+  }
+
+  @Override
+  public boolean isWebShellEnabled() {
+    final String result = get( WEBSHELL_FEATURE_ENABLED, Boolean.toString(DEFAULT_WEBSHELL_FEATURE_ENABLED));
     return Boolean.parseBoolean(result);
   }
 

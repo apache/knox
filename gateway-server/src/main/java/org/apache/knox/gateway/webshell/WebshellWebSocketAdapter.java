@@ -20,6 +20,7 @@ package org.apache.knox.gateway.webshell;
 import java.io.IOException;
 import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
+import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -27,20 +28,31 @@ import java.util.concurrent.ExecutorService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.provider.federation.jwt.filter.SignatureVerificationCache;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
 import org.apache.knox.gateway.util.Tokens;
 import org.apache.knox.gateway.websockets.ProxyWebSocketAdapter;
+import org.apache.shiro.authz.UnauthorizedException;
 import org.eclipse.jetty.io.RuntimeIOException;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 
-public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter {
+
+
+
+
+public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     private Session session;
     private ConnectionInfo connectionInfo;
-    private final String username;
+    private String username;
     private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
     private static final String JWT_DEFAULT_ISSUER = "KNOXSSO";
 
@@ -49,14 +61,17 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter {
 
     public WebshellWebSocketAdapter(ServletUpgradeRequest req,  ExecutorService pool, GatewayConfig config) {
         super(null, pool, null, config);
-        username = req.getRequestURI().getRawQuery();
-        try {
-            checkCookieForValidation(req);
-        } catch (final UnknownTokenException e){
-            LOG.onError("no valid token found");
-            throw new RuntimeException(e);
+        // todo: may not need to get username from request URI, username is contained in JWT token
+        if (config.isWebShellEnabled()) {
+            username = req.getRequestURI().getRawQuery();
+            try {
+                checkCookieForValidation(req);
+            } catch (final UnknownTokenException e) {
+                LOG.onError("no valid token found");
+                throw new RuntimeException(e);
+            }
+            this.connectionInfo = new ProcessConnectionInfo(username);
         }
-        this.connectionInfo = new ProcessConnectionInfo(username);
     }
 
     private boolean validateToken(ServletUpgradeRequest req, JWT token) throws UnknownTokenException {
@@ -71,6 +86,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter {
     }
 
     private void checkCookieForValidation(ServletUpgradeRequest req) throws UnknownTokenException {
+
         // todo: cookieName can be configurable
         cookieName = DEFAULT_SSO_COOKIE_NAME;
         List<HttpCookie> ssoCookies = req.getCookies();
@@ -94,15 +110,20 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter {
 
     @Override
     public void onWebSocketConnect(final Session session) {
-        this.session = session;
-        LOG.debugLog("websocket connected.");
-        connectionInfo.connect();
-        pool.execute(new Runnable() {
-            @Override
-            public void run(){
-                blockingReadFromHost();
-            }
-        });
+        if (config.isWebShellEnabled()){
+            this.session = session;
+            LOG.debugLog("websocket connected.");
+            connectionInfo.connect();
+            pool.execute(new Runnable() {
+                @Override
+                public void run() {
+                    blockingReadFromHost();
+                }
+            });
+        } else {
+            transToClient("Webshell not enabled");
+            cleanup();
+        }
     }
     // this function will block, should be run in an asynchronous thread
     private void blockingReadFromHost(){
@@ -115,8 +136,9 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter {
                 transToClient(new String(buffer, 0, bytesRead, StandardCharsets.UTF_8));
             }
         } catch (IOException e){
-            LOG.onError("Error reading from host:" + e.getMessage());
-            throw new RuntimeIOException(e);
+            transToClient("bash process terminated unexpectedly");
+        } finally {
+            cleanupOnError("bash process terminated unexpectedly");
         }
     }
 
@@ -129,16 +151,16 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter {
         final WebShellData webShellData;
         try {
             webShellData = objectMapper.readValue(message, WebShellData.class);
-        } catch (JsonProcessingException e) {
-            LOG.onError("error parsing string to WebShellData");
-            throw new RuntimeException(e);
+            // todo: also validate against expectedIssuer
+            if (connectionInfo.getUsername().equals(webShellData.getUsername())){
+                transToHost(webShellData.getCommand());
+            } else {
+                transToClient("received command from unrecognized user");
+                throw new RuntimeException("Unrecognized user");
+            }
+        } catch (JsonProcessingException | RuntimeException e) {
+            cleanupOnError(e.getMessage());
         }
-
-        // todo: throw exception, or add extra validation using session id
-        if (!connectionInfo.getUsername().equals(webShellData.getUsername())){
-            throw new RuntimeException("Unauthorized user");
-        }
-        transToHost(webShellData.getCommand());
     }
 
 
@@ -148,9 +170,9 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter {
         try {
             connectionInfo.getOutputStream().write(command.getBytes(StandardCharsets.UTF_8));
             connectionInfo.getOutputStream().flush();
-        }catch (IOException e){
-            LOG.onError("Error sending message to host");
-            throw new RuntimeIOException(e);
+        } catch (IOException e){
+            transToClient("Error sending message to host");
+            cleanupOnError("Error sending message to host");
         }
     }
 
@@ -158,9 +180,8 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter {
         LOG.debugLog("sending to client: "+ message);
         try {
             session.getRemote().sendString(message);
-        }catch (IOException e){
-            LOG.onError("Error sending message to client");
-            throw new RuntimeIOException(e);
+        } catch (IOException e){
+            cleanupOnError("Error sending message to client");
         }
     }
 
@@ -179,14 +200,14 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter {
 
     @Override
     public void onWebSocketError(final Throwable t) {
-        cleanupOnError(t);
+        cleanupOnError(t.toString());
     }
 
     /**
      * Cleanup sessions
      */
-    private void cleanupOnError(final Throwable t) {
-        LOG.onError(t.toString());
+    private void cleanupOnError(String e) {
+        LOG.onError(e);
         cleanup();
     }
 

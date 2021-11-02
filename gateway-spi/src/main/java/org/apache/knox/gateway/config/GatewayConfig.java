@@ -352,6 +352,15 @@ public interface GatewayConfig {
    */
   boolean isWebsocketEnabled();
 
+
+  /**
+   * Returns true if webshell feature enabled else false.
+   * Default is false.
+   * @since 1.60
+   * @return true if webshell feature is enabled
+   */
+  boolean isWebShellEnabled();
+
   /**
    * Websocket connection max text message size.
    * @since 0.10
