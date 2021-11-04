@@ -38,7 +38,7 @@ public class WebShellTokenUtils {
     private static final String JWT_EXPECTED_SIGALG = "jwt.expected.sigalg";
     private static final String SSO_VERIFICATION_PEM = "sso.token.verification.pem";
 
-    private static JWTMessages log = MessagesFactory.get( JWTMessages.class );
+    private static JWTMessages log = MessagesFactory.get(JWTMessages.class);
     private static String cookieName;
     private static String expectedIssuer;
     private static String expectedSigAlg;
@@ -56,7 +56,7 @@ public class WebShellTokenUtils {
             if (cookieName.equals(ssoCookie.getName())) {
                 try {
                     JWT token = new JWTToken(ssoCookie.getValue());
-                    if (validateToken(req, token)) {
+                    if (validateToken(token)) {
                         // we found a valid cookie we don't need to keep checking anymore
                         return;
                     }
@@ -133,7 +133,7 @@ public class WebShellTokenUtils {
         return isServerManaged;
     }
 
-    private static boolean validateToken(ServletUpgradeRequest req, JWT token) throws UnknownTokenException {
+    private static boolean validateToken(JWT token) throws UnknownTokenException {
         final String tokenId = TokenUtils.getTokenId(token);
         final String displayableTokenId = Tokens.getTokenIDDisplayText(tokenId);
         final String displayableToken = Tokens.getTokenDisplayText(token.toString());
