@@ -123,23 +123,12 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
     try {
       final URI requestURI = req.getRequestURI();
-      // get parameters for KNOXSSO service
-      TopologyService ts = this.services.getService(ServiceType.TOPOLOGY_SERVICE);
-      for (Topology topology : ts.getTopologies()){
-        LOG.logMessage("topology:"+topology.getName());
-        for (Object service : topology.getServices()) {
-          Service svc = (Service)service;
-          for (Map.Entry<String,String> entry : svc.getParams().entrySet()){
-            LOG.logMessage(entry.getKey()+':'+entry.getValue());
-          }
-        }
-      }
 
       // Handle webshell websocket request
       if (StringUtils.endsWith(requestURI.getRawPath(), "/webshell/webshellws")){
         // rawPath = /gateway/homepage/webshell/webshellws
         LOG.debugLog("received websocket request for webshhell: "+ requestURI.getRawPath()+" query:"+requestURI.getRawQuery());
-        return new WebshellWebSocketAdapter(req, pool, config);
+        return new WebshellWebSocketAdapter(req, pool, config, services);
       }
 
       // URL used to connect to websocket backend

@@ -18,95 +18,38 @@
 package org.apache.knox.gateway.webshell;
 
 import java.io.IOException;
-import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
-import java.security.interfaces.RSAPublicKey;
-import java.text.ParseException;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
-import org.apache.knox.gateway.services.ServiceType;
-import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
-import org.apache.knox.gateway.services.security.token.TokenStateService;
-import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
-import org.apache.knox.gateway.services.security.token.impl.JWT;
-import org.apache.knox.gateway.services.security.token.impl.JWTToken;
-import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
-import org.apache.knox.gateway.util.Tokens;
 import org.apache.knox.gateway.websockets.ProxyWebSocketAdapter;
-import org.apache.shiro.authz.UnauthorizedException;
-import org.eclipse.jetty.io.RuntimeIOException;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
-
-
-
-
 
 public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     private Session session;
     private ConnectionInfo connectionInfo;
     private String username;
-    private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
-    private static final String JWT_DEFAULT_ISSUER = "KNOXSSO";
 
-    private String cookieName;
-    private String expectedIssuer;
-
-    public WebshellWebSocketAdapter(ServletUpgradeRequest req,  ExecutorService pool, GatewayConfig config) {
+    public WebshellWebSocketAdapter(ServletUpgradeRequest req,  ExecutorService pool, GatewayConfig config, GatewayServices services) {
         super(null, pool, null, config);
         // todo: may not need to get username from request URI, username is contained in JWT token
         if (config.isWebShellEnabled()) {
             username = req.getRequestURI().getRawQuery();
             try {
-                checkCookieForValidation(req);
+                WebShellTokenUtils.validateJWT(req, services, config);
             } catch (final UnknownTokenException e) {
                 LOG.onError("no valid token found");
+                // todo: how to handle validation error?
                 throw new RuntimeException(e);
             }
             this.connectionInfo = new ProcessConnectionInfo(username);
         }
         else {
             throw new RuntimeException("webshell not enabled");
-        }
-    }
-
-    private boolean validateToken(ServletUpgradeRequest req, JWT token) throws UnknownTokenException {
-        // todo: this is a stub, implement this referencing AbstractJWTFilter validateToken function
-        final String tokenId = TokenUtils.getTokenId(token);
-        final String displayableTokenId = Tokens.getTokenIDDisplayText(tokenId);
-        final String displayableToken = Tokens.getTokenDisplayText(token.toString());
-        // todo: expectedIssuer can be configurable
-        expectedIssuer = JWT_DEFAULT_ISSUER;
-        LOG.debugLog(displayableToken);
-        return true;
-    }
-
-    private void checkCookieForValidation(ServletUpgradeRequest req) throws UnknownTokenException {
-
-        // todo: cookieName can be configurable
-        cookieName = DEFAULT_SSO_COOKIE_NAME;
-        List<HttpCookie> ssoCookies = req.getCookies();
-        for (HttpCookie ssoCookie : ssoCookies) {
-            if (!cookieName.equals(ssoCookie.getName())) {
-                continue;
-            }
-            try {
-                JWT token = new JWTToken(ssoCookie.getValue());
-                if (validateToken(req, token)) {
-                    // we found a valid cookie we don't need to keep checking anymore
-                    return;
-                }
-            } catch (ParseException | UnknownTokenException ignore) {
-                // Ignore the error since cookie was invalid
-                // Fall through to keep checking if there are more cookies
-            }
-            throw new UnknownTokenException("No valid cookie found for webshell connection");
         }
     }
 

@@ -409,7 +409,7 @@
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
         </dependency>
-	<dependency>
+	    <dependency>
             <groupId>de.thetaphi</groupId>
             <artifactId>forbiddenapis</artifactId>
         </dependency>
@@ -417,7 +417,11 @@
             <groupId>com.jcraft</groupId>
             <artifactId>jsch</artifactId>
             <version>0.1.54</version>
-	</dependency>
+	    </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-provider-security-jwt</artifactId>
+        </dependency>
         <!-- ********** ********** ********** ********** ********** ********** -->
         <!-- ********** Test Dependencies                           ********** -->
         <!-- ********** ********** ********** ********** ********** ********** -->
