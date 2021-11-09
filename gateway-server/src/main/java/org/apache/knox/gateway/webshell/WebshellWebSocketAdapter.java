@@ -24,7 +24,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
-import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.websockets.ProxyWebSocketAdapter;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
@@ -32,38 +31,29 @@ import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     private Session session;
     private ConnectionInfo connectionInfo;
-    private String username;
+    private WebShellTokenValidator tokenValidator;
 
     public WebshellWebSocketAdapter(ServletUpgradeRequest req,  ExecutorService pool, GatewayConfig config, GatewayServices services) {
         super(null, pool, null, config);
-        // todo: may not need to get username from request URI, username is contained in JWT token
-        if (config.isWebShellEnabled()) {
-            username = req.getRequestURI().getRawQuery();
-            try {
-                WebShellTokenUtils.validateJWT(req, services, config);
-            } catch (final UnknownTokenException e) {
-                LOG.onError("no valid token found");
-                // todo: how to handle validation error?
-                throw new RuntimeException(e);
-            }
-            this.connectionInfo = new ProcessConnectionInfo(username);
-        }
-        else {
-            throw new RuntimeException("webshell not enabled");
-        }
+        this.tokenValidator = new WebShellTokenValidator(req, services, config);
     }
 
     @Override
     public void onWebSocketConnect(final Session session) {
-        this.session = session;
-        LOG.debugLog("websocket connected.");
-        connectionInfo.connect();
-        pool.execute(new Runnable() {
-            @Override
-            public void run() {
-                blockingReadFromHost();
-            }
-        });
+        if (tokenValidator.validateToken()){
+            this.session = session;
+            LOG.debugLog("websocket connected.");
+            connectionInfo = new ProcessConnectionInfo(tokenValidator.getUsername());
+            connectionInfo.connect();
+            pool.execute(new Runnable() {
+                @Override
+                public void run() {
+                    blockingReadFromHost();
+                }
+            });
+        } else{
+            throw new RuntimeException("no valid token found for webshell access");
+        }
     }
 
     // this function will block, should be run in an asynchronous thread
@@ -86,13 +76,13 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     @SuppressWarnings("PMD.DoNotUseThreads")
     @Override
     public void onWebSocketText(final String message) {
+        //todo: check token expiry
         LOG.debugLog("received message "+ message);
 
         ObjectMapper objectMapper = new ObjectMapper();
         final WebShellData webShellData;
         try {
             webShellData = objectMapper.readValue(message, WebShellData.class);
-            // todo: also validate against expectedIssuer
             if (connectionInfo.getUsername().equals(webShellData.getUsername())){
                 transToHost(webShellData.getCommand());
             } else {

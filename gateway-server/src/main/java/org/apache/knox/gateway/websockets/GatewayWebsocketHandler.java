@@ -21,22 +21,18 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
-
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.registry.ServiceDefEntry;
 import org.apache.knox.gateway.services.registry.ServiceDefinitionRegistry;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
-import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.webshell.WebshellWebSocketAdapter;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
-
-
 import javax.websocket.ClientEndpointConfig;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -44,14 +40,11 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.KeyStore;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.apache.knox.gateway.topology.Topology;
-import org.apache.knox.gateway.topology.Service;
 
 /**
  * Websocket handler that will handle websocket connection request. This class
@@ -117,18 +110,23 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
   }
 
+
+
   @Override
   public Object createWebSocket(ServletUpgradeRequest req,
                                 ServletUpgradeResponse resp) {
-
     try {
       final URI requestURI = req.getRequestURI();
-
       // Handle webshell websocket request
       if (StringUtils.endsWith(requestURI.getRawPath(), "/webshell/webshellws")){
         // rawPath = /gateway/homepage/webshell/webshellws
-        LOG.debugLog("received websocket request for webshhell: "+ requestURI.getRawPath()+" query:"+requestURI.getRawQuery());
-        return new WebshellWebSocketAdapter(req, pool, config, services);
+        if (config.isWebShellEnabled()){
+          //todo: instead of passing req, we should add jwt-hadoop token to clientConfig and pass it here.
+          // Adding jwt-hadoop token to clientConfig will be beneficial for non webshell requests too
+          return new WebshellWebSocketAdapter(req, pool, config, services);
+        }
+        //todo: The error should be something meaningful, we also need a LOG.error entry
+        throw new RuntimeException("webshell not enabled");
       }
 
       // URL used to connect to websocket backend
