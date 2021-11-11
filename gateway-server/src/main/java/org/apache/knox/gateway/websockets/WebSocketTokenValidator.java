@@ -1,4 +1,4 @@
-package org.apache.knox.gateway.webshell;
+package org.apache.knox.gateway.websockets;
 
 import com.nimbusds.jose.JWSHeader;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -28,7 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class WebShellTokenValidator {
+public class WebSocketTokenValidator {
     private static final String KNOXSSO_COOKIE_NAME = "knoxsso.cookie.name";
     private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
     private static final String JWT_DEFAULT_ISSUER = "KNOXSSO";
@@ -49,18 +49,15 @@ public class WebShellTokenValidator {
     private final GatewayConfig gatewayConfig;
     private final GatewayServices gatewayServices;
 
-    WebShellTokenValidator(ServletUpgradeRequest req, GatewayServices gatewayServices,
-                           GatewayConfig gatewayConfig){
+    WebSocketTokenValidator(ServletUpgradeRequest req, GatewayServices gatewayServices,
+                            GatewayConfig gatewayConfig){
         this.gatewayConfig = gatewayConfig;
         this.gatewayServices = gatewayServices;
-        this.token = getToken(req);
-        if (this.token == null){
-            throw new RuntimeException("no Valid JWT Token");
-        }
+        this.token = extractToken(req);
         configureParameters();
     }
 
-    // todo: call this function again if topology is reloaded
+    // todo: call this function again if topology is reloaded. needs to verify detail
     private void configureParameters() {
         params = new LinkedHashMap<>();
         TopologyService ts = gatewayServices.getService(ServiceType.TOPOLOGY_SERVICE);
@@ -93,10 +90,10 @@ public class WebShellTokenValidator {
         }
         // Setup the verified tokens cache
         signatureVerificationCache = SignatureVerificationCache.getInstance(
-                "knoxsso", new WebShellFilterConfig(params));
+                "knoxsso", new WebSocketFilterConfig(params));
     }
 
-    private JWT getToken(ServletUpgradeRequest req){
+    private JWT extractToken(ServletUpgradeRequest req){
         List<HttpCookie> ssoCookies = req.getCookies();
         for (HttpCookie ssoCookie : ssoCookies) {
             if (cookieName.equals(ssoCookie.getName())) {
@@ -108,12 +105,15 @@ public class WebShellTokenValidator {
                 }
             }
         }
-        // no cookie contain a valid JWT
-        return null;
+        log.missingBearerToken();
+        throw new RuntimeException("no Valid JWT Token found");
+    }
+
+    public JWT getToken(){
+        return token;
     }
 
     public String getUsername(){
-        //todo: get username from token
         return token.getPrincipal();
     }
 

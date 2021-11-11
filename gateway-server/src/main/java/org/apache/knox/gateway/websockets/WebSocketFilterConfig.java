@@ -1,10 +1,4 @@
-package org.apache.knox.gateway.webshell;
-
-import org.apache.knox.gateway.services.GatewayServices;
-import org.apache.knox.gateway.services.ServiceType;
-import org.apache.knox.gateway.services.topology.TopologyService;
-import org.apache.knox.gateway.topology.Service;
-import org.apache.knox.gateway.topology.Topology;
+package org.apache.knox.gateway.websockets;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
@@ -12,15 +6,15 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Map;
 
-public class WebShellFilterConfig implements FilterConfig {
+public class WebSocketFilterConfig implements FilterConfig {
     private Map<String,String> params;
 
-    WebShellFilterConfig(Map<String, String> params){
+    WebSocketFilterConfig(Map<String, String> params){
         this.params = params;
     }
     @Override
     public String getFilterName() {
-        return "WebShell";
+        return "WebSocket";
     }
 
     @Override

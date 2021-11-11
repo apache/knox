@@ -23,37 +23,32 @@ import java.util.concurrent.ExecutorService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.websockets.ProxyWebSocketAdapter;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 
 public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     private Session session;
     private ConnectionInfo connectionInfo;
-    private WebShellTokenValidator tokenValidator;
+    private String username;
 
-    public WebshellWebSocketAdapter(ServletUpgradeRequest req,  ExecutorService pool, GatewayConfig config, GatewayServices services) {
+    public WebshellWebSocketAdapter(ExecutorService pool, GatewayConfig config, String username) {
         super(null, pool, null, config);
-        this.tokenValidator = new WebShellTokenValidator(req, services, config);
+        this.username = username;
     }
 
     @Override
     public void onWebSocketConnect(final Session session) {
-        if (tokenValidator.validateToken()){
-            this.session = session;
-            LOG.debugLog("websocket connected.");
-            connectionInfo = new ProcessConnectionInfo(tokenValidator.getUsername());
-            connectionInfo.connect();
-            pool.execute(new Runnable() {
-                @Override
-                public void run() {
-                    blockingReadFromHost();
-                }
-            });
-        } else{
-            throw new RuntimeException("no valid token found for webshell access");
-        }
+        this.session = session;
+        LOG.debugLog("websocket connected.");
+        connectionInfo = new ProcessConnectionInfo(username);
+        connectionInfo.connect();
+        pool.execute(new Runnable() {
+            @Override
+            public void run() {
+                blockingReadFromHost();
+            }
+        });
+
     }
 
     // this function will block, should be run in an asynchronous thread

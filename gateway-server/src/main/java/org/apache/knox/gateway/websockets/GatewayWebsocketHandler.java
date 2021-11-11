@@ -110,24 +110,30 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
   }
 
-
-
   @Override
   public Object createWebSocket(ServletUpgradeRequest req,
                                 ServletUpgradeResponse resp) {
     try {
+      // validate JWT
+      WebSocketTokenValidator tokenValidator = new WebSocketTokenValidator(req, services, config);
+      if (!tokenValidator.validateToken()) {
+        LOG.onError("no valid token found for websocket connection");
+        //todo: needs customized exception class?
+        throw new RuntimeException("no valid token found for websocket connection");
+      }
+
       final URI requestURI = req.getRequestURI();
       // Handle webshell websocket request
-      if (StringUtils.endsWith(requestURI.getRawPath(), "/webshell/webshellws")){
-        // rawPath = /gateway/homepage/webshell/webshellws
+      // todo: needs review, better way to check if this is webshell request?
+      if (StringUtils.endsWith(requestURI.getRawPath(), "/webshell")){
         if (config.isWebShellEnabled()){
-          //todo: instead of passing req, we should add jwt-hadoop token to clientConfig and pass it here.
-          // Adding jwt-hadoop token to clientConfig will be beneficial for non webshell requests too
-          return new WebshellWebSocketAdapter(req, pool, config, services);
+          return new WebshellWebSocketAdapter(pool, config, tokenValidator.getUsername());
         }
-        //todo: The error should be something meaningful, we also need a LOG.error entry
+        LOG.onError("webshell not enabled");
+        //todo: needs customized exception class?
         throw new RuntimeException("webshell not enabled");
       }
+
 
       // URL used to connect to websocket backend
       final String backendURL = getMatchedBackendURL(requestURI);
@@ -136,6 +142,8 @@ public class GatewayWebsocketHandler extends WebSocketHandler
       // Upgrade happens here
       final ClientEndpointConfig clientConfig = getClientEndpointConfig(req);
       clientConfig.getUserProperties().put("org.apache.knox.gateway.websockets.truststore", getTruststore());
+      //todo: needs review
+      clientConfig.getUserProperties().put("hadoop-jwt", tokenValidator.getToken());
       return new ProxyWebSocketAdapter(URI.create(backendURL), pool, clientConfig, config);
     } catch (final Exception e) {
       LOG.failedCreatingWebSocket(e);
