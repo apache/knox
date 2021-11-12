@@ -38,7 +38,7 @@ public interface TopologyService extends Service, ServiceDefinitionChangeListene
 
   void deployTopology(Topology t);
 
-  void redeployTopologies(String topologyName);
+  void redeployTopology(String topologyName);
 
   void addTopologyChangeListener(TopologyListener listener);
 

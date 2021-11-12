@@ -160,6 +160,9 @@ public class GatewayDeployFuncTest {
         .gotoRoot()
         .addTag( "service" )
         .addTag( "role" ).addText( "test-service-role" )
+        .gotoRoot()
+        .addTag( "service" )
+        .addTag( "role" ).addText( "dummyService" )
         .gotoRoot();
   }
 
@@ -212,6 +215,7 @@ public class GatewayDeployFuncTest {
 
     // Redeploy and make sure the timestamp is updated.
     topoTimestampBefore = descriptor.lastModified();
+    TestUtils.updateFile(new File(config.getGatewayTopologyDir()), "test-cluster.xml", "dummyService", "dummyService_1");
     GatewayServer.redeployTopologies( "test-cluster" );
     writeTime = System.currentTimeMillis();
     topoTimestampAfter = descriptor.lastModified();

@@ -1088,7 +1088,7 @@ public class KnoxCLI extends Configured implements Tool {
       ts.reloadTopologies();
       if (cluster != null) {
         if (validateClusterName(cluster, ts)) {
-          ts.redeployTopologies(cluster);
+          ts.redeployTopology(cluster);
         }
         else {
           out.println("Invalid cluster name provided. Nothing to redeploy.");

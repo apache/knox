@@ -230,4 +230,14 @@ public class TestUtils {
     LOG.debug( "execute: reponse=" + response );
     return response;
   }
+
+  public static void updateFile(File parent, String name, String from, String to) throws IOException {
+    final File file = new File(parent, name);
+    if (file.exists()) {
+      final String current = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+      final String updated = current.replace(from, to);
+      FileUtils.write(file, updated, StandardCharsets.UTF_8);
+    }
+  }
+
 }
