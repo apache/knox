@@ -66,11 +66,6 @@ public class DummyServiceDiscovery implements ServiceDiscovery {
     }
 
     @Override
-    public Map<String, Cluster> discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config) {
-        return CLUSTERS;
-    }
-
-    @Override
     public Cluster discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config, String clusterName) {
         return DUMMY;
     }

@@ -707,4 +707,9 @@ public interface GatewayMessages {
 
   @Message(level = MessageLevel.ERROR, text = "Error while initiatalizing {0}: {1}")
   void errorInitializingService(String implementation, String error, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.ERROR,
+          text = "Unable to complete service discovery for cluster {0} topology = {1}.")
+  void failedToDiscoverClusterServices(String clusterName, String topologyName,
+                                       @StackTrace(level = MessageLevel.DEBUG) Exception e);
 }
