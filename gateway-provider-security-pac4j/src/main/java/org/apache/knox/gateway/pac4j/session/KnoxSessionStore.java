@@ -19,6 +19,7 @@ package org.apache.knox.gateway.pac4j.session;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter;
 import org.apache.knox.gateway.services.security.CryptoService;
 import org.apache.knox.gateway.services.security.EncryptionResult;
@@ -39,12 +40,16 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES;
+import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES_DEFAULT;
 import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_GROUPS;
 import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_GROUPS_DEFAULT;
 import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS;
@@ -257,6 +262,14 @@ public class KnoxSessionStore<C extends WebContext> implements SessionStore<C> {
                         .equalsIgnoreCase("true")) {
                     profiles.forEach((name, profile) -> profile.removeAttribute("permissions"));
                 }
+              if(!StringUtils.isBlank(sessionStoreConfigs
+                      .getOrDefault(PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES, PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES_DEFAULT))) {
+                final String customAttributes = sessionStoreConfigs
+                        .getOrDefault(PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES, PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES_DEFAULT);
+                /* splits the string based on: zero or more whitespace, a literal comma, zero or more whitespace */
+                final List<String> attr = Arrays.asList(customAttributes.split("\\s*,\\s*"));
+                attr.forEach(a -> profiles.forEach((name, profile) -> profile.removeAttribute(a)));
+              }
             }
 
             return profiles;

@@ -99,6 +99,11 @@ public class Pac4jDispatcherFilter implements Filter {
 
   public static final String PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS = "pac4j.session.store.exclude.permissions";
 
+  /* A comma seperated list of attributes that needed to be excluded */
+  public static final String PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES = "pac4j.session.store.exclude.custom.attributes";
+
+  public static final String PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES_DEFAULT = "";
+
   public static final String PAC4J_SESSION_STORE_EXCLUDE_GROUPS_DEFAULT = "true";
 
   public static final String PAC4J_SESSION_STORE_EXCLUDE_ROLES_DEFAULT = "true";
@@ -205,6 +210,8 @@ public class Pac4jDispatcherFilter implements Filter {
       setSessionStoreConfig(filterConfig, PAC4J_SESSION_STORE_EXCLUDE_ROLES, PAC4J_SESSION_STORE_EXCLUDE_ROLES_DEFAULT);
       /* do we need to exclude permissions? */
       setSessionStoreConfig(filterConfig, PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS, PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS_DEFAULT);
+      /* do we need to exclude custom attributes? */
+      setSessionStoreConfig(filterConfig, PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES, PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES_DEFAULT);
       //decorating client configuration (if needed)
       PAC4J_CLIENT_CONFIGURATION_DECORATOR.decorateClients(clients, properties);
     }
