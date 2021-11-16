@@ -108,6 +108,6 @@
       <name>token-management</name>
    </application>
    <application>      
-      <name>webshell</name>
+      <name>webshell-ui</name>
    </application>
 </topology>
