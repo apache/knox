@@ -16,6 +16,8 @@
  */
 package org.apache.hadoop.gateway.audit.log4j.layout;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  * An adapter class that delegate calls to {@link org.apache.knox.gateway.audit.log4j.layout.AuditLayout}
  * for backwards compatibility with package structure.
@@ -29,6 +31,6 @@ public class AuditLayout extends org.apache.knox.gateway.audit.log4j.layout.Audi
    * Create an instance
    */
   public AuditLayout() {
-    super();
+    super(StandardCharsets.UTF_8);
   }
 }

@@ -19,16 +19,12 @@ package org.apache.knox.gateway.i18n.messages.loggers.log4j;
 
 import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.MessageLogger;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.spi.LocationInfo;
-import org.apache.log4j.spi.LoggingEvent;
-import org.apache.log4j.spi.ThrowableInformation;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.message.SimpleMessage;
 
 public class Log4jMessageLogger implements MessageLogger {
-
   private static String CLASS_NAME = Log4jMessageLogger.class.getName();
-
   private Logger logger;
 
   Log4jMessageLogger( Logger logger ) {
@@ -37,42 +33,15 @@ public class Log4jMessageLogger implements MessageLogger {
 
   @Override
   public final boolean isLoggable( final MessageLevel level ) {
-    return logger.isEnabledFor( toLevel( level ) );
+    return logger.isEnabled( toLevel( level ) );
   }
 
   @Override
   public final void log( final StackTraceElement caller, final MessageLevel messageLevel, final String messageId, final String messageText, final Throwable thrown ) {
-    LoggingEvent event = new LoggingEvent(
-        /* String fqnOfCategoryClass */ CLASS_NAME,
-        /* Category logger */ logger,
-        /* long timeStamp */ System.currentTimeMillis(),
-        /* Level level */ toLevel( messageLevel ),
-        /* Object message */ messageText,
-        /* String threadName */ Thread.currentThread().getName(),
-        /* ThrowableInformation throwable */ toThrownInformation( thrown ),
-        /* String ndc */ null,
-        /* LocationInfo info */ toLocationInfo( caller ),
-        /* java.util.Map properties */ null );
-    logger.callAppenders( event );
+    logger.logMessage(toLevel(messageLevel), null, CLASS_NAME, caller, new SimpleMessage(messageText), thrown);
   }
 
-  private static ThrowableInformation toThrownInformation( final Throwable thrown ) {
-    ThrowableInformation info = null;
-    if( thrown != null ) {
-      info = new ThrowableInformation( thrown );
-    }
-    return info;
-  }
-
-  private static LocationInfo toLocationInfo( final StackTraceElement caller ) {
-    LocationInfo info = null;
-    if( caller != null ) {
-        info = new LocationInfo( caller.getFileName(), caller.getClassName(), caller.getMethodName(), Integer.toString(caller.getLineNumber()) );
-    }
-    return info;
-  }
-
-  private static Level toLevel( final MessageLevel level ) {
+  private static Level toLevel(final MessageLevel level ) {
     switch( level ) {
       case FATAL: return Level.FATAL;
       case ERROR: return Level.ERROR;

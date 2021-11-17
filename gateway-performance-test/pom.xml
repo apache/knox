@@ -112,7 +112,7 @@
                                         </systemProperty>
                                         <systemProperty>
                                             <key>log4j.configuration</key>
-                                            <value>file:${basedir}/src/test/resources/performanceTest-log4j.properties</value>
+                                            <value>file:${basedir}/src/test/resources/performanceTest-log4j2.xml</value>
                                         </systemProperty>
                                     </systemProperties>
                                 </configuration>

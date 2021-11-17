@@ -17,7 +17,8 @@
  */
 package org.apache.knox.gateway.trace;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -27,8 +28,8 @@ import java.util.Enumeration;
 import java.util.Locale;
 
 class TraceRequest extends HttpServletRequestWrapper {
-  private static final Logger log = Logger.getLogger( TraceHandler.HTTP_REQUEST_LOGGER );
-  private static final Logger headLog = Logger.getLogger( TraceHandler.HTTP_REQUEST_HEADER_LOGGER );
+  private static final Logger log = LogManager.getLogger( TraceHandler.HTTP_REQUEST_LOGGER );
+  private static final Logger headLog = LogManager.getLogger( TraceHandler.HTTP_REQUEST_HEADER_LOGGER );
 
   private ServletInputStream input;
 

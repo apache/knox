@@ -17,21 +17,34 @@
  */
 package org.apache.knox.gateway.audit.log4j.correlation;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import static org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationService.KEY_PARENT_REQUEST_ID;
+import static org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationService.KEY_REQUEST_ID;
+import static org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationService.KEY_ROOT_REQUEST_ID;
+
+import java.util.Map;
+import java.util.UUID;
 
 import org.apache.knox.gateway.audit.api.CorrelationContext;
+import org.apache.logging.log4j.core.LogEvent;
 
-public class Log4jCorrelationContext implements Externalizable, CorrelationContext {
+public class Log4jCorrelationContext implements CorrelationContext {
+  private final String requestId;
+  private final String parentRequestId;
+  private final String rootRequestId;
 
-  private byte versionUID = 1;
-  private String requestId;
-  private String parentRequestId;
-  private String rootRequestId;
+  public static Log4jCorrelationContext of(LogEvent event) {
+    if (event == null) {
+      return null;
+    }
+    Map<String, String> data = event.getContextData().toMap();
+    return data.containsKey(KEY_REQUEST_ID)
+        ? new Log4jCorrelationContext(data.get(KEY_REQUEST_ID), data.get(KEY_PARENT_REQUEST_ID), data.get(KEY_ROOT_REQUEST_ID))
+        : null;
+  }
 
-  public Log4jCorrelationContext() {
+  public static Log4jCorrelationContext random() {
+    return new Log4jCorrelationContext(
+            UUID.randomUUID().toString(), UUID.randomUUID().toString(), UUID.randomUUID().toString());
   }
 
   public Log4jCorrelationContext( String requestId, String parentRequestId,
@@ -47,28 +60,13 @@ public class Log4jCorrelationContext implements Externalizable, CorrelationConte
   }
 
   @Override
-  public void setRequestId( String requestId ) {
-    this.requestId = requestId;
-  }
-
-  @Override
   public String getParentRequestId() {
     return parentRequestId;
   }
 
   @Override
-  public void setParentRequestId( String parentRequestId ) {
-    this.parentRequestId = parentRequestId;
-  }
-
-  @Override
   public String getRootRequestId() {
     return rootRequestId;
-  }
-
-  @Override
-  public void setRootRequestId( String rootRequestId ) {
-    this.rootRequestId = rootRequestId;
   }
 
   @Override
@@ -79,25 +77,4 @@ public class Log4jCorrelationContext implements Externalizable, CorrelationConte
                ", root_request_id=" + rootRequestId +
                "]";
   }
-
-  @Override
-  public void writeExternal(ObjectOutput out) throws IOException {
-    out.writeByte( versionUID );
-    out.writeObject( requestId );
-    out.writeObject( parentRequestId );
-    out.writeObject( rootRequestId );
-  }
-
-  @Override
-  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-    versionUID = in.readByte();
-    requestId = (String)in.readObject();
-    parentRequestId = (String)in.readObject();
-    rootRequestId = (String)in.readObject();
-  }
-
-  @Override
-  public void destroy() {
-  }
-
 }

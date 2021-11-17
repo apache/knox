@@ -26,18 +26,19 @@ import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.audit.api.CorrelationContext;
 import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
-import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditService;
-import org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationService;
+import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditContext;
+import org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationContext;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.dispatch.DefaultDispatch;
 import org.apache.knox.test.log.CollectAppender;
-import org.apache.log4j.spi.LoggingEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.util.ReadOnlyStringMap;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -68,7 +69,7 @@ import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.fail;
 
 public class AuditLoggingTest {
-  private static Logger LOG = LoggerFactory.getLogger( AuditLoggingTest.class );
+  private static Logger LOG = LogManager.getLogger( AuditLoggingTest.class );
 
   private static final String METHOD = "GET";
   private static final String PATH = "path";
@@ -151,10 +152,10 @@ public class AuditLoggingTest {
 
     // Use a set to make sure to dedupe any requestIds to get only unique ones
     Set<String> requestIds = new HashSet<>();
-    for (LoggingEvent accessEvent : CollectAppender.queue) {
+    for (LogEvent accessEvent : CollectAppender.queue) {
       verifyAuditEvent( accessEvent, CONTEXT_PATH + PATH, ResourceType.URI, Action.ACCESS, ActionOutcome.UNAVAILABLE, null, "Request method: GET" );
 
-      CorrelationContext cc = (CorrelationContext)accessEvent.getMDC( Log4jCorrelationService.MDC_CORRELATION_CONTEXT_KEY );
+      CorrelationContext cc = Log4jCorrelationContext.of(accessEvent);
       // There are some events that do not have a CorrelationContext associated (ie: deploy)
       if(cc != null) {
         requestIds.add(cc.getRequestId());
@@ -210,8 +211,8 @@ public class AuditLoggingTest {
     gateway.destroy();
 
     assertThat( CollectAppender.queue.size(), is( 1 ) );
-    Iterator<LoggingEvent> iterator = CollectAppender.queue.iterator();
-    LoggingEvent accessEvent = iterator.next();
+    Iterator<LogEvent> iterator = CollectAppender.queue.iterator();
+    LogEvent accessEvent = iterator.next();
     verifyAuditEvent( accessEvent, CONTEXT_PATH + PATH, ResourceType.URI,
         Action.ACCESS, ActionOutcome.UNAVAILABLE, null, "Request method: GET" );
 
@@ -243,43 +244,45 @@ public class AuditLoggingTest {
       dispatch.doGet( new URI( uri ), inboundRequest, outboundResponse );
       fail( "Expected exception while accessing to unreachable host" );
     } catch ( IOException e ) {
-      Iterator<LoggingEvent> iterator = CollectAppender.queue.iterator();
+      Iterator<LogEvent> iterator = CollectAppender.queue.iterator();
 
-      LoggingEvent unavailableEvent = iterator.next();
-      verifyValue( (String) unavailableEvent.getMDC( AuditConstants.MDC_RESOURCE_NAME_KEY ), uri );
-      verifyValue( (String) unavailableEvent.getMDC( AuditConstants.MDC_RESOURCE_TYPE_KEY ), ResourceType.URI );
-      verifyValue( (String) unavailableEvent.getMDC( AuditConstants.MDC_ACTION_KEY ), Action.DISPATCH );
-      verifyValue( (String) unavailableEvent.getMDC( AuditConstants.MDC_OUTCOME_KEY ), ActionOutcome.UNAVAILABLE );
+      LogEvent unavailableEvent = iterator.next();
+      verifyValue(unavailableEvent.getContextData().getValue( AuditConstants.MDC_RESOURCE_NAME_KEY ), uri );
+      verifyValue(unavailableEvent.getContextData().getValue( AuditConstants.MDC_RESOURCE_TYPE_KEY ), ResourceType.URI );
+      verifyValue(unavailableEvent.getContextData().getValue( AuditConstants.MDC_ACTION_KEY ), Action.DISPATCH );
+      verifyValue(unavailableEvent.getContextData().getValue( AuditConstants.MDC_OUTCOME_KEY ), ActionOutcome.UNAVAILABLE );
 
-      LoggingEvent failureEvent = iterator.next();
-      verifyValue( (String) failureEvent.getMDC( AuditConstants.MDC_RESOURCE_NAME_KEY ), uri );
-      verifyValue( (String) failureEvent.getMDC( AuditConstants.MDC_RESOURCE_TYPE_KEY ), ResourceType.URI );
-      verifyValue( (String) failureEvent.getMDC( AuditConstants.MDC_ACTION_KEY ), Action.DISPATCH );
-      verifyValue( (String) failureEvent.getMDC( AuditConstants.MDC_OUTCOME_KEY ), ActionOutcome.FAILURE );
+      LogEvent failureEvent = iterator.next();
+      verifyValue(failureEvent.getContextData().getValue( AuditConstants.MDC_RESOURCE_NAME_KEY ), uri );
+      verifyValue(failureEvent.getContextData().getValue( AuditConstants.MDC_RESOURCE_TYPE_KEY ), ResourceType.URI );
+      verifyValue(failureEvent.getContextData().getValue( AuditConstants.MDC_ACTION_KEY ), Action.DISPATCH );
+      verifyValue(failureEvent.getContextData().getValue( AuditConstants.MDC_OUTCOME_KEY ), ActionOutcome.FAILURE );
 
     }
   }
 
-  private void verifyAuditEvent( LoggingEvent event, String resourceName,
+  private void verifyAuditEvent( LogEvent event, String resourceName,
       String resourceType, String action, String outcome, String targetService,
       String message ) {
-    event.getMDCCopy();
-    CorrelationContext cc = (CorrelationContext) event.getMDC( Log4jCorrelationService.MDC_CORRELATION_CONTEXT_KEY );
-    assertThat( cc, notNullValue() );
-    assertThat( cc.getRequestId(), is( notNullValue() ) );
-    AuditContext ac = (AuditContext) event.getMDC( Log4jAuditService.MDC_AUDIT_CONTEXT_KEY );
-    assertThat( ac, notNullValue() );
-    assertThat( ac.getRemoteIp(), is( ADDRESS ) );
-    assertThat( ac.getRemoteHostname(), is( HOST ) );
-    assertThat(event.getMDC( AuditConstants.MDC_SERVICE_KEY ), is( AuditConstants.KNOX_SERVICE_NAME ) );
-    assertThat(event.getMDC( AuditConstants.MDC_COMPONENT_KEY ), is( AuditConstants.KNOX_COMPONENT_NAME ) );
-    assertThat(event.getLoggerName(), is( AuditConstants.DEFAULT_AUDITOR_NAME ) );
-    verifyValue( (String) event.getMDC( AuditConstants.MDC_RESOURCE_NAME_KEY ), resourceName );
-    verifyValue( (String) event.getMDC( AuditConstants.MDC_RESOURCE_TYPE_KEY ), resourceType );
-    verifyValue( (String) event.getMDC( AuditConstants.MDC_ACTION_KEY ), action );
-    verifyValue( (String) event.getMDC( AuditConstants.MDC_OUTCOME_KEY ), outcome );
-    verifyValue( ac.getTargetServiceName(), targetService );
-    verifyValue( event.getRenderedMessage(), message );
+
+    ReadOnlyStringMap eventContextData = event.getContextData();
+
+    CorrelationContext cc = Log4jCorrelationContext.of(event);
+    assertThat(cc, notNullValue());
+    assertThat(cc.getRequestId(), is(notNullValue()));
+    AuditContext ac = Log4jAuditContext.of(event);
+    assertThat(ac, notNullValue());
+    assertThat(ac.getRemoteIp(), is(ADDRESS));
+    assertThat(ac.getRemoteHostname(), is(HOST));
+    assertThat(eventContextData.getValue(AuditConstants.MDC_SERVICE_KEY), is(AuditConstants.KNOX_SERVICE_NAME));
+    assertThat(eventContextData.getValue(AuditConstants.MDC_COMPONENT_KEY), is(AuditConstants.KNOX_COMPONENT_NAME));
+    assertThat(event.getLoggerName(), is(AuditConstants.DEFAULT_AUDITOR_NAME));
+    verifyValue(eventContextData.getValue(AuditConstants.MDC_RESOURCE_NAME_KEY), resourceName);
+    verifyValue(eventContextData.getValue(AuditConstants.MDC_RESOURCE_TYPE_KEY), resourceType);
+    verifyValue(eventContextData.getValue(AuditConstants.MDC_ACTION_KEY), action);
+    verifyValue(eventContextData.getValue(AuditConstants.MDC_OUTCOME_KEY), outcome);
+    verifyValue(ac.getTargetServiceName(), targetService);
+    verifyValue(event.getMessage().getFormattedMessage(), message);
   }
 
   private void verifyValue( String actual, String expected ) {

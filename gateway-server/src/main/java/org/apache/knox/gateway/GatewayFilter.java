@@ -17,26 +17,16 @@
  */
 package org.apache.knox.gateway;
 
-import org.apache.knox.gateway.audit.api.Action;
-import org.apache.knox.gateway.audit.api.ActionOutcome;
-import org.apache.knox.gateway.audit.api.AuditContext;
-import org.apache.knox.gateway.audit.api.AuditService;
-import org.apache.knox.gateway.audit.api.AuditServiceFactory;
-import org.apache.knox.gateway.audit.api.Auditor;
-import org.apache.knox.gateway.audit.api.CorrelationContext;
-import org.apache.knox.gateway.audit.api.CorrelationServiceFactory;
-import org.apache.knox.gateway.audit.api.ResourceType;
-import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
-import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.filter.AbstractGatewayFilter;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
-import org.apache.knox.gateway.topology.Topology;
-import org.apache.knox.gateway.util.ServletRequestUtils;
-import org.apache.knox.gateway.util.urltemplate.Matcher;
-import org.apache.knox.gateway.util.urltemplate.Parser;
-import org.apache.knox.gateway.util.urltemplate.Template;
-
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -48,16 +38,27 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import org.apache.knox.gateway.audit.api.Action;
+import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.AuditContext;
+import org.apache.knox.gateway.audit.api.AuditService;
+import org.apache.knox.gateway.audit.api.AuditServiceFactory;
+import org.apache.knox.gateway.audit.api.Auditor;
+import org.apache.knox.gateway.audit.api.CorrelationContext;
+import org.apache.knox.gateway.audit.api.CorrelationService;
+import org.apache.knox.gateway.audit.api.CorrelationServiceFactory;
+import org.apache.knox.gateway.audit.api.ResourceType;
+import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
+import org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationContext;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.filter.AbstractGatewayFilter;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
+import org.apache.knox.gateway.topology.Topology;
+import org.apache.knox.gateway.util.ServletRequestUtils;
+import org.apache.knox.gateway.util.urltemplate.Matcher;
+import org.apache.knox.gateway.util.urltemplate.Parser;
+import org.apache.knox.gateway.util.urltemplate.Template;
 
 public class GatewayFilter implements Filter {
 
@@ -152,9 +153,13 @@ public class GatewayFilter implements Filter {
     assignCorrelationRequestId();
     // Populate Audit/correlation parameters
     AuditContext auditContext = auditService.getContext();
+    if(auditContext == null) {
+      auditContext = auditService.createContext();
+    }
     auditContext.setTargetServiceName( match == null ? null : match.getValue().getResourceRole() );
     auditContext.setRemoteIp( getRemoteAddress(servletRequest) );
     auditContext.setRemoteHostname( servletRequest.getRemoteHost() );
+    auditService.attachContext(auditContext);
     auditor.audit(
         Action.ACCESS, contextWithPathAndQuery, ResourceType.URI,
         ActionOutcome.UNAVAILABLE, RES.requestMethod(((HttpServletRequest)servletRequest).getMethod()));
@@ -232,13 +237,10 @@ public class GatewayFilter implements Filter {
 
   // Now creating the correlation context only if required since it may be created upstream in the CorrelationHandler.
   private void assignCorrelationRequestId() {
-    CorrelationContext correlationContext = CorrelationServiceFactory.getCorrelationService().getContext();
+    CorrelationService correlationService = CorrelationServiceFactory.getCorrelationService();
+    CorrelationContext correlationContext = correlationService.getContext();
     if( correlationContext == null ) {
-      correlationContext = CorrelationServiceFactory.getCorrelationService().createContext();
-    }
-    String requestId = correlationContext.getRequestId();
-    if( requestId == null ) {
-      correlationContext.setRequestId( UUID.randomUUID().toString() );
+      correlationService.attachContext(new Log4jCorrelationContext(UUID.randomUUID().toString(), null, null));
     }
   }
 

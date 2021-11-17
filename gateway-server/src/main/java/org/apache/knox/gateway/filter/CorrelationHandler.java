@@ -17,17 +17,17 @@
  */
 package org.apache.knox.gateway.filter;
 
-import org.apache.knox.gateway.audit.api.CorrelationContext;
-import org.apache.knox.gateway.audit.api.CorrelationService;
-import org.apache.knox.gateway.audit.api.CorrelationServiceFactory;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.HandlerWrapper;
-
+import java.io.IOException;
+import java.util.UUID;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.UUID;
+
+import org.apache.knox.gateway.audit.api.CorrelationService;
+import org.apache.knox.gateway.audit.api.CorrelationServiceFactory;
+import org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationContext;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.handler.HandlerWrapper;
 
 public class CorrelationHandler extends HandlerWrapper {
 
@@ -35,13 +35,11 @@ public class CorrelationHandler extends HandlerWrapper {
   public void handle( String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response )
       throws IOException, ServletException {
     CorrelationService correlationService = CorrelationServiceFactory.getCorrelationService();
-    CorrelationContext correlationContext = correlationService.createContext();
-    correlationContext.setRequestId( UUID.randomUUID().toString() );
+    correlationService.attachContext(
+            new Log4jCorrelationContext(UUID.randomUUID().toString(), null, null));
     try {
       super.handle( target, baseRequest, request, response );
     } finally {
-      // Ensure that the correlationContext is destroyed between requests
-      correlationContext.destroy();
       correlationService.detachContext();
     }
   }

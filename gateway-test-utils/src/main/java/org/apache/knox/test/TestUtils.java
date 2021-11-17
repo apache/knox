@@ -19,7 +19,8 @@ package org.apache.knox.test;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -50,7 +51,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 public class TestUtils {
-  private static final Logger LOG = Logger.getLogger(TestUtils.class);
+  private static final Logger LOG = LogManager.getLogger(TestUtils.class);
 
   public static final long SHORT_TIMEOUT = 5000L;
   public static final long MEDIUM_TIMEOUT = 30 * 1000L;

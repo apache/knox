@@ -26,6 +26,8 @@ import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.mock.MockServer;
 import org.apache.http.HttpStatus;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -37,8 +39,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.StringWriter;
@@ -56,7 +56,7 @@ import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
 
 public class AmbariServiceDefinitionTest {
 
-  private static Logger LOG = LoggerFactory.getLogger( AmbariServiceDefinitionTest.class );
+  private static Logger LOG = LogManager.getLogger( AmbariServiceDefinitionTest.class );
   private static Class<?> DAT = AmbariServiceDefinitionTest.class;
 
   private static GatewayTestConfig config;

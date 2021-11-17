@@ -22,7 +22,7 @@ import org.apache.http.Header;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.knox.gateway.security.SubjectUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import javax.security.auth.Subject;
 import javax.servlet.http.HttpServletRequest;
@@ -60,7 +60,7 @@ class NiFiRequestUtil {
         if (index >= 0) {
           knoxRouteContext = inboundRequestPathInfo.substring(0, index);
         } else {
-          Logger.getLogger(NiFiRequestUtil.class.getName()).error(String.format(Locale.ROOT, "Unable to find index of %s in %s", outboundRequestUriPathNoTrailingSlash, inboundRequestPathInfo));
+          LogManager.getLogger(NiFiRequestUtil.class.getName()).error(String.format(Locale.ROOT, "Unable to find index of %s in %s", outboundRequestUriPathNoTrailingSlash, inboundRequestPathInfo));
         }
         outboundRequest.setHeader(NiFiHeaders.X_FORWARDED_CONTEXT, xForwardedContextHeaderValue + knoxRouteContext);
       }

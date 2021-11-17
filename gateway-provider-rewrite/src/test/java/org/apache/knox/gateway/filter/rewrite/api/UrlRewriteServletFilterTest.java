@@ -21,10 +21,8 @@ import com.jayway.jsonassert.JsonAssert;
 import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.util.urltemplate.Parser;
 import org.apache.knox.test.TestUtils;
-import org.apache.knox.test.log.NoOpAppender;
 import org.apache.knox.test.mock.MockInteraction;
 import org.apache.knox.test.mock.MockServlet;
-import org.apache.log4j.Appender;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpTester;
 import org.eclipse.jetty.servlet.FilterHolder;
@@ -47,7 +45,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.EnumSet;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
@@ -60,7 +57,6 @@ import static org.xmlmatchers.XmlMatchers.hasXPath;
 import static org.xmlmatchers.transform.XmlConverters.the;
 
 public class UrlRewriteServletFilterTest {
-
   private ServletTester server;
   private HttpTester.Request request;
   private HttpTester.Response response;
@@ -527,41 +523,35 @@ public class UrlRewriteServletFilterTest {
 
   @Test
   public void testRequestXmlBodyRewriteWithFilterInitParamForInvalidFilterConfig() throws Exception {
-    Enumeration<Appender> realAppenders = NoOpAppender.setUpAndReturnOriginalAppenders();
-    try {
+    Map<String,String> initParams = new HashMap<>();
+    initParams.put( "request.body", "test-filter-3" );
+    testSetUp( initParams );
 
-      Map<String,String> initParams = new HashMap<>();
-      initParams.put( "request.body", "test-filter-3" );
-      testSetUp( initParams );
+    String input = "<root url='http://mock-host:42/test-input-path-1'><url>http://mock-host:42/test-input-path-2</url></root>";
+    String expect = "<root url='http://mock-host:42/test-input-path-2'><url>http://mock-host:42/test-input-path-2</url></root>";
 
-      String input = "<root url='http://mock-host:42/test-input-path-1'><url>http://mock-host:42/test-input-path-2</url></root>";
-      String expect = "<root url='http://mock-host:42/test-input-path-2'><url>http://mock-host:42/test-input-path-2</url></root>";
+    // Setup the server side request/response interaction.
+    interaction.expect()
+        .method( "PUT" )
+        .requestUrl( "http://mock-host:42/test-output-path-1" )
+        .contentType( "text/xml" )
+        .characterEncoding( StandardCharsets.UTF_8.name() )
+        .content( expect, StandardCharsets.UTF_8 );
+    interaction.respond()
+        .status( 200 );
+    interactions.add( interaction );
+    request.setMethod( "PUT" );
+    request.setURI( "/test-input-path" );
+    //request.setVersion( "HTTP/1.1" );
+    request.setHeader( "Host", "mock-host:42" );
+    request.setHeader( "Content-Type", "text/xml; charset=UTF-8" );
+    request.setContent( input );
 
-      // Setup the server side request/response interaction.
-      interaction.expect()
-          .method( "PUT" )
-          .requestUrl( "http://mock-host:42/test-output-path-1" )
-          .contentType( "text/xml" )
-          .characterEncoding( StandardCharsets.UTF_8.name() )
-          .content( expect, StandardCharsets.UTF_8 );
-      interaction.respond()
-          .status( 200 );
-      interactions.add( interaction );
-      request.setMethod( "PUT" );
-      request.setURI( "/test-input-path" );
-      //request.setVersion( "HTTP/1.1" );
-      request.setHeader( "Host", "mock-host:42" );
-      request.setHeader( "Content-Type", "text/xml; charset=UTF-8" );
-      request.setContent( input );
+    // Execute the request.
+    response = TestUtils.execute( server, request );
 
-      // Execute the request.
-      response = TestUtils.execute( server, request );
-
-      // Test the results.
-      assertThat( response.getStatus(), is( 500 ) );
-    } finally {
-      NoOpAppender.resetOriginalAppenders( realAppenders );
-    }
+    // Test the results.
+    assertThat( response.getStatus(), is( 500 ) );
   }
 
   @Test
