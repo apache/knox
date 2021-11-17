@@ -17,12 +17,12 @@
  */
 package org.apache.knox.test.mock;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.servlet.Servlet;
 import java.util.LinkedList;
@@ -44,7 +44,7 @@ import java.util.Queue;
  * The whole idea was modeled after how the REST testing framework REST-assured and aims to be a server side equivalent.
  */
 public class MockServer {
-  private static final Logger log = LoggerFactory.getLogger( MockServer.class );
+  private static final Logger log = LogManager.getLogger( MockServer.class );
 
   private String name;
   private Server jetty;

@@ -17,6 +17,9 @@
  */
 package org.apache.knox.test.mock;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -24,12 +27,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Queue;
 
-import org.apache.log4j.Logger;
 
 import static org.junit.Assert.fail;
 
 public class MockServlet extends HttpServlet {
-  private static final Logger LOG = Logger.getLogger(MockServlet.class);
+  private static final Logger LOG = LogManager.getLogger(MockServlet.class);
 
   private final String name;
   private final Queue<MockInteraction> interactions;

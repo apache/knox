@@ -19,13 +19,13 @@ package org.apache.knox.gateway.i18n.messages.loggers.log4j;
 
 import org.apache.knox.gateway.i18n.messages.MessageLogger;
 import org.apache.knox.gateway.i18n.messages.MessageLoggerFactory;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 public class Log4jMessageLoggerFactory implements MessageLoggerFactory {
 
   @Override
   public MessageLogger getLogger( String name ) {
-    return new Log4jMessageLogger( Logger.getLogger( name ) );
+    return new Log4jMessageLogger( LogManager.getLogger( name ) );
   }
 
 }

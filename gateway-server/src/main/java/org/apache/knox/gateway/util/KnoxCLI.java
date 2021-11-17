@@ -79,7 +79,6 @@ import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.validation.TopologyValidator;
-import org.apache.log4j.PropertyConfigurator;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
@@ -2339,7 +2338,6 @@ public class KnoxCLI extends Configured implements Tool {
   }
 
   public static void main(String[] args) throws Exception {
-    PropertyConfigurator.configure( System.getProperty( "log4j.configuration" ) );
     int res = ToolRunner.run(new GatewayConfigImpl(), new KnoxCLI(), args);
     System.exit(res);
   }

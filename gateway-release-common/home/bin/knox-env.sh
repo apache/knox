@@ -34,7 +34,7 @@
 ## Defaults to {GATEWAY_HOME}/logs
 # export KNOX_GATEWAY_LOG_DIR=""
 
-## KNOX_GATEWAY_LOG_OPTS is a placeholder to set the gateway server's Log4j options (e.g. "-Dlog4j.debug -Dlog4j.configuration=foobar.xml")
+## KNOX_GATEWAY_LOG_OPTS is a placeholder to set the gateway server's Log4j options (e.g. "-Dlog4j.debug -Dlog4j.configurationFile=foobar.xml")
 ## Defaults to an empty string
 # export KNOX_GATEWAY_LOG_OPTS=""
 
@@ -60,7 +60,7 @@
 #### KNOX-CLI RELATED ENVIRONMENT VARIABLES ####
 ################################################
 
-## KNOX_CLI_LOG_OPTS is a placeholder to set KnoxCLI's Log4j options (e.g. "-Dlog4j.debug -Dlog4j.configuration=foobar.xml")
+## KNOX_CLI_LOG_OPTS is a placeholder to set KnoxCLI's Log4j options (e.g. "-Dlog4j.debug -Dlog4j.configurationFile=foobar.xml")
 ## Defaults to an empty string
 # export KNOX_CLI_LOG_OPTS=""
 
@@ -85,7 +85,7 @@
 ## Defaults to {GATEWAY_HOME}/logs
 # export KNOX_LDAP_LOG_DIR=""
 
-## KNOX_LDAP_LOG_OPTS is a placeholder to set the test LDAP server's Log4j options (e.g. "-Dlog4j.debug -Dlog4j.configuration=foobar.xml")
+## KNOX_LDAP_LOG_OPTS is a placeholder to set the test LDAP server's Log4j options (e.g. "-Dlog4j.debug -Dlog4j.configurationFile=foobar.xml")
 ## Defaults to an empty string
 # export KNOX_LDAP_LOG_OPTS=""
 
@@ -102,7 +102,7 @@
 #### KNOX-SHELL RELATED ENVIRONMENT VARIABLES ####
 ##################################################
 
-## KNOX_SHELL_LOG_OPTS is a placeholder to set KnoxShell's Log4j options (e.g. "-Dlog4j.debug -Dlog4j.configuration=foobar.xml")
+## KNOX_SHELL_LOG_OPTS is a placeholder to set KnoxShell's Log4j options (e.g. "-Dlog4j.debug -Dlog4j.configurationFile=foobar.xml")
 ## Defaults to an empty string
 # export KNOX_SHELL_LOG_OPTS=""
 

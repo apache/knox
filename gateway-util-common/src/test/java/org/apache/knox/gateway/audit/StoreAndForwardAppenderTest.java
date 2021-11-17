@@ -18,15 +18,13 @@
 package org.apache.knox.gateway.audit;
 
 import org.apache.knox.test.log.CollectAppender;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -34,13 +32,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class StoreAndForwardAppenderTest {
 
   @Before
-  public void setup() throws IOException {
+  public void setup() throws Exception {
     cleanup();
   }
 
   @After
-  public void cleanup() throws IOException {
-    LogManager.shutdown();
+  public void cleanup() throws Exception {
     String absolutePath = "target/audit";
     File db = new File( absolutePath + ".db" );
     if( db.exists() ) {
@@ -50,7 +47,6 @@ public class StoreAndForwardAppenderTest {
     if( lg.exists() ) {
       assertThat( "Failed to delete audit store lg file.", lg.delete(), is( true ) );
     }
-    PropertyConfigurator.configure( ClassLoader.getSystemResourceAsStream( "audit-log4j.properties" ) );
   }
 
   @Test(timeout = 500000)
@@ -58,7 +54,7 @@ public class StoreAndForwardAppenderTest {
     System.out.println( "Running " + Thread.currentThread().getStackTrace()[1].getClassName() + "#" + Thread.currentThread().getStackTrace()[1].getMethodName() );
 
     int iterations = 1000;
-    Logger logger = Logger.getLogger( "audit.store" );
+    Logger logger = LogManager.getLogger( "audit.store" );
     for( int i = 1; i <= iterations; i++ ) {
       logger.info( Integer.toString( i ) );
     }

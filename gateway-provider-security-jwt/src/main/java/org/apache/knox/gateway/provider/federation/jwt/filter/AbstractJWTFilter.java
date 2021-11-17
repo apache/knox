@@ -234,6 +234,7 @@ public abstract class AbstractJWTFilter implements Filter {
     AuditContext context = auditService.getContext();
     if (context != null) {
       context.setUsername( principal.getName() );
+      auditService.attachContext(context);
       String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
       if (sourceUri != null) {
         auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
