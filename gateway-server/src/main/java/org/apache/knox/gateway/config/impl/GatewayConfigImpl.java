@@ -158,6 +158,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   /* @since 2.0.0 WebShell config variables */
   public static final String WEBSHELL_FEATURE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".webshell.feature.enabled";
 
+  /* @since 2.0.0 WebShell config variables */
+  public static final String WEBSOCKET_JWT_VALIDATION_FEATURE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.JWT.validation.feature.enabled";
+
   /**
    * Properties for for gateway port mapping feature
    */
@@ -207,9 +210,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT = 60000;
   public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT = 300000;
   public static final int DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT = 100;
+  public static final boolean DEFAULT_WEBSOCKET_JWT_VALIDATION_FEATURE_ENABLED = false;
 
   /* Webshell defaults */
   public static final boolean DEFAULT_WEBSHELL_FEATURE_ENABLED = false;
+
 
   public static final boolean DEFAULT_GATEWAY_PORT_MAPPING_ENABLED = true;
   public static final boolean DEFAULT_REMOTE_ALIAS_SERVICE_ENABLED = true;
@@ -884,6 +889,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public boolean isWebShellEnabled() {
     final String result = get( WEBSHELL_FEATURE_ENABLED, Boolean.toString(DEFAULT_WEBSHELL_FEATURE_ENABLED));
+    return Boolean.parseBoolean(result);
+  }
+
+  @Override
+  public boolean isWebsocketJWTValidationEnabled() {
+    final String result = get( WEBSOCKET_JWT_VALIDATION_FEATURE_ENABLED, Boolean.toString(DEFAULT_WEBSOCKET_JWT_VALIDATION_FEATURE_ENABLED));
     return Boolean.parseBoolean(result);
   }
 

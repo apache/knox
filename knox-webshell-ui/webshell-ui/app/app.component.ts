@@ -73,7 +73,7 @@ export class AppComponent implements OnInit, AfterViewInit {
         key = '\x1b';
       }
       // send key to backend server
-      this.webSocketSubject.next({command:key});
+      this.webSocketSubject.next(key);
     })
   }
 }

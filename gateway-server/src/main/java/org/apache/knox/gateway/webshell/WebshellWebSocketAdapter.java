@@ -20,27 +20,30 @@ package org.apache.knox.gateway.webshell;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
+import org.apache.knox.gateway.websockets.JWTValidator;
 import org.apache.knox.gateway.websockets.ProxyWebSocketAdapter;
 import org.eclipse.jetty.websocket.api.Session;
 
 public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     private Session session;
     private ConnectionInfo connectionInfo;
-    private String username;
+    private JWTValidator jwtValidator;
 
-    public WebshellWebSocketAdapter(ExecutorService pool, GatewayConfig config, String username) {
+    public WebshellWebSocketAdapter(ExecutorService pool, GatewayConfig config, JWTValidator jwtValidator) {
         super(null, pool, null, config);
-        this.username = username;
+        this.jwtValidator = jwtValidator;
     }
 
     @Override
     public void onWebSocketConnect(final Session session) {
+        LOG.debugLog("WebShell Websocket connected.");
         this.session = session;
-        LOG.debugLog("websocket connected.");
-        connectionInfo = new ProcessConnectionInfo(username);
+        if (jwtValidator.getUsername() == null){
+            throw new RuntimeException("Needs user name in JWT to use WebShell");
+        }
+        connectionInfo = new ConnectionInfo(jwtValidator.getUsername());
         connectionInfo.connect();
         pool.execute(new Runnable() {
             @Override
@@ -48,7 +51,6 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
                 blockingReadFromHost();
             }
         });
-
     }
 
     // this function will block, should be run in an asynchronous thread
@@ -57,39 +59,29 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
         byte[] buffer = new byte[1024];
         int bytesRead;
         try {
-            // todo: maybe change to non-blocking read using java.nio
             while ((bytesRead = connectionInfo.getInputStream().read(buffer)) != -1) {
                 transToClient(new String(buffer, 0, bytesRead, StandardCharsets.UTF_8));
             }
         } catch (IOException e){
-            transToClient("bash process terminated unexpectedly");
-        } finally {
             cleanupOnError("bash process terminated unexpectedly");
+        } finally {
+            cleanup();
         }
     }
 
     @SuppressWarnings("PMD.DoNotUseThreads")
     @Override
     public void onWebSocketText(final String message) {
-        //todo: check token expiry
-        LOG.debugLog("received message "+ message);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        final WebShellData webShellData;
         try {
-            webShellData = objectMapper.readValue(message, WebShellData.class);
-            if (connectionInfo.getUsername().equals(webShellData.getUsername())){
-                transToHost(webShellData.getCommand());
+            if (jwtValidator.tokenIsStillValid()) {
+                transToHost(message);
             } else {
-                transToClient("received command from unrecognized user");
-                throw new RuntimeException("Unrecognized user");
+                cleanup();
             }
-        } catch (JsonProcessingException | RuntimeException e) {
+        } catch (UnknownTokenException e){
             cleanupOnError(e.toString());
         }
     }
-
-
 
     private void transToHost (String command){
         LOG.debugLog("sending to host: " + command);
@@ -97,7 +89,6 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
             connectionInfo.getOutputStream().write(command.getBytes(StandardCharsets.UTF_8));
             connectionInfo.getOutputStream().flush();
         } catch (IOException e){
-            transToClient("Error sending message to host");
             cleanupOnError("Error sending message to host");
         }
     }
@@ -110,7 +101,6 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
             cleanupOnError("Error sending message to client");
         }
     }
-
 
     @Override
     public void onWebSocketBinary(final byte[] payload, final int offset, final int length) {

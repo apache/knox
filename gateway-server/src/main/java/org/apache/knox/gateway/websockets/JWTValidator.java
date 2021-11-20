@@ -28,7 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class WebSocketTokenValidator {
+public class JWTValidator {
     private static final String KNOXSSO_COOKIE_NAME = "knoxsso.cookie.name";
     private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
     private static final String JWT_DEFAULT_ISSUER = "KNOXSSO";
@@ -36,7 +36,6 @@ public class WebSocketTokenValidator {
     private static final String JWT_DEFAULT_SIGALG = "RS256";
     private static final String JWT_EXPECTED_SIGALG = "jwt.expected.sigalg";
     private static final JWTMessages log = MessagesFactory.get(JWTMessages.class);
-
     private Map<String,String> params;
     private String cookieName;
     private String expectedIssuer;
@@ -45,16 +44,17 @@ public class WebSocketTokenValidator {
     private JWTokenAuthority authorityService;
     private SignatureVerificationCache signatureVerificationCache;
     private JWT token;
-
+    private String displayableTokenId;
+    private String displayableToken;
     private final GatewayConfig gatewayConfig;
     private final GatewayServices gatewayServices;
 
-    WebSocketTokenValidator(ServletUpgradeRequest req, GatewayServices gatewayServices,
-                            GatewayConfig gatewayConfig){
+    JWTValidator(ServletUpgradeRequest req, GatewayServices gatewayServices,
+                 GatewayConfig gatewayConfig){
         this.gatewayConfig = gatewayConfig;
         this.gatewayServices = gatewayServices;
-        this.token = extractToken(req);
         configureParameters();
+        extractToken(req);
     }
 
     // todo: call this function again if topology is reloaded. needs to verify detail
@@ -93,13 +93,15 @@ public class WebSocketTokenValidator {
                 "knoxsso", new WebSocketFilterConfig(params));
     }
 
-    private JWT extractToken(ServletUpgradeRequest req){
+    private void extractToken(ServletUpgradeRequest req){
         List<HttpCookie> ssoCookies = req.getCookies();
         for (HttpCookie ssoCookie : ssoCookies) {
             if (cookieName.equals(ssoCookie.getName())) {
                 try {
                     token = new JWTToken(ssoCookie.getValue());
-                    return token;
+                    displayableTokenId = Tokens.getTokenIDDisplayText(TokenUtils.getTokenId(token));
+                    displayableToken = Tokens.getTokenDisplayText(token.toString());
+                    return;
                 } catch (ParseException e) {
                     // Fall through to keep checking if there are more cookies
                 }
@@ -117,11 +119,8 @@ public class WebSocketTokenValidator {
         return token.getPrincipal();
     }
 
-    public boolean validateToken() {
+    public boolean validate() {
         // todo: call configureParameters() if topology is reloaded
-        final String displayableTokenId = Tokens.getTokenIDDisplayText(TokenUtils.getTokenId(token));
-        final String displayableToken = Tokens.getTokenDisplayText(token.toString());
-
         // confirm that issuer matches the intended target
         if (expectedIssuer.equals(token.getIssuer())) {
             // if there is no expiration data then the lifecycle is tied entirely to
@@ -129,28 +128,16 @@ public class WebSocketTokenValidator {
             // the designated expiration time
             try {
                 if (tokenIsStillValid()) {
-                    // skipped validating audience
                     Date nbf = token.getNotBeforeDate();
                     if (nbf == null || new Date().after(nbf)) {
-                        if (isTokenEnabled()) {
+                        if (isTokenEnabled()){
                             if (verifyTokenSignature()) {
                                 return true;
-                            } else {
-                                log.failedToVerifyTokenSignature(displayableToken, displayableTokenId);
                             }
-                        } else {
-                            log.disabledToken(displayableTokenId);
                         }
                     } else {
                         log.notBeforeCheckFailed();
                     }
-                } else {
-                    log.tokenHasExpired(displayableToken, displayableTokenId);
-                    // Explicitly evict the record of this token's signature verification (if present).
-                    // There is no value in keeping this record for expired tokens, and explicitly
-                    // removing them may prevent records for other valid tokens from being prematurely
-                    // evicted from the cache.
-                    signatureVerificationCache.removeSignatureVerificationRecord(token.toString());
                 }
             } catch (UnknownTokenException e){
                 return false;
@@ -158,7 +145,6 @@ public class WebSocketTokenValidator {
         }
         return false;
     }
-
 
     // adapted from TokenUtils.isServerManagedTokenStateEnabled(FilterConfig)
     private boolean isServerManagedTokenStateEnabled() {
@@ -176,9 +162,7 @@ public class WebSocketTokenValidator {
         return isServerManaged;
     }
 
-
-
-    private boolean tokenIsStillValid() throws UnknownTokenException {
+    public boolean tokenIsStillValid() throws UnknownTokenException {
         Date expires = getServerManagedStateExpiration();
         if (expires == null) {
             // if there is no expiration date then the lifecycle is tied entirely to
@@ -186,7 +170,17 @@ public class WebSocketTokenValidator {
             // the designated expiration time
             expires = token.getExpiresDate();
         }
-        return expires == null || new Date().before(expires);
+        if (expires == null || new Date().before(expires)){
+            return true;
+        } else {
+            log.tokenHasExpired(displayableToken, displayableTokenId);
+            // Explicitly evict the record of this token's signature verification (if present).
+            // There is no value in keeping this record for expired tokens, and explicitly
+            // removing them may prevent records for other valid tokens from being prematurely
+            // evicted from the cache.
+            signatureVerificationCache.removeSignatureVerificationRecord(token.toString());
+            return false;
+        }
     }
 
     private Date getServerManagedStateExpiration() throws UnknownTokenException {
@@ -203,7 +197,12 @@ public class WebSocketTokenValidator {
     private boolean isTokenEnabled() throws UnknownTokenException {
         final TokenMetadata tokenMetadata = tokenStateService == null ? null :
                 tokenStateService.getTokenMetadata(TokenUtils.getTokenId(token));
-        return tokenMetadata == null ? true : tokenMetadata.isEnabled();
+        if (tokenMetadata == null ? true : tokenMetadata.isEnabled()){
+            return true;
+        } else {
+            log.disabledToken(displayableTokenId);
+            return false;
+        }
     }
 
 
@@ -235,7 +234,9 @@ public class WebSocketTokenValidator {
                 signatureVerificationCache.recordSignatureVerification(serializedJWT);
             }
         }
+        if (!verified){
+            log.failedToVerifyTokenSignature(displayableToken, displayableTokenId);
+        }
         return verified;
     }
-
 }

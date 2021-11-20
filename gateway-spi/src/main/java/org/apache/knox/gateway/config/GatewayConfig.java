@@ -362,6 +362,14 @@ public interface GatewayConfig {
   boolean isWebShellEnabled();
 
   /**
+   * Returns true if websocket JWT validation feature enabled else false.
+   * Default is false.
+   * @since 2.0.0
+   * @return true if websocket JWT validation feature is enabled
+   */
+  boolean isWebsocketJWTValidationEnabled();
+
+  /**
    * Websocket connection max text message size.
    * @since 0.10
    * @return max text message size

@@ -1553,10 +1553,6 @@
                         <artifactId>protobuf-java</artifactId>
                     </exclusion>
                     <exclusion>
-                        <groupId>com.jcraft</groupId>
-                        <artifactId>jsch</artifactId>
-                    </exclusion>
-                    <exclusion>
                         <groupId>com.sun.jersey</groupId>
                         <artifactId>jersey-core</artifactId>
                     </exclusion>

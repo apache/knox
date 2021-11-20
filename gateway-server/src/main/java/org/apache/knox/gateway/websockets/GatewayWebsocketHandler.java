@@ -67,6 +67,9 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
   static final String REGEX_SPLIT_SERVICE_PATH = "^((?:[^/]*/){3}[^/]*)";
 
+  static final String REGEX_WEBSHELL_REQUEST_PATH =
+          "^" + SECURE_WEBSOCKET_PROTOCOL_STRING + "[^/]+:[0-9]+/[^/]+/[^/]+/webshell$";
+
   private static final int POOL_SIZE = 10;
 
 
@@ -114,27 +117,29 @@ public class GatewayWebsocketHandler extends WebSocketHandler
   public Object createWebSocket(ServletUpgradeRequest req,
                                 ServletUpgradeResponse resp) {
     try {
-      // validate JWT
-      WebSocketTokenValidator tokenValidator = new WebSocketTokenValidator(req, services, config);
-      if (!tokenValidator.validateToken()) {
-        LOG.onError("no valid token found for websocket connection");
-        //todo: needs customized exception class?
-        throw new RuntimeException("no valid token found for websocket connection");
-      }
-
       final URI requestURI = req.getRequestURI();
-      // Handle webshell websocket request
-      // todo: needs review, better way to check if this is webshell request?
-      if (StringUtils.endsWith(requestURI.getRawPath(), "/webshell")){
+
+      /*  handle websocket request for webshell */
+      if (requestURI.getRawPath().matches(REGEX_WEBSHELL_REQUEST_PATH)){
         if (config.isWebShellEnabled()){
-          return new WebshellWebSocketAdapter(pool, config, tokenValidator.getUsername());
+          JWTValidator jwtValidator = new JWTValidator(req, services, config);
+          if (!jwtValidator.validate()) {
+            LOG.onError("No valid token found for websocket connection");
+            throw new RuntimeException("No valid token found for websocket connection");
+          }
+          return new WebshellWebSocketAdapter(pool, config, jwtValidator);
         }
         LOG.onError("webshell not enabled");
-        //todo: needs customized exception class?
         throw new RuntimeException("webshell not enabled");
       }
-
-
+      /* handle websocket request not for webshell  */
+      if (config.isWebsocketJWTValidationEnabled()){
+        JWTValidator jwtValidator = new JWTValidator(req, services, config);
+        if (!jwtValidator.validate()) {
+          LOG.onError("No valid token found for websocket connection");
+          throw new RuntimeException("No valid token found for websocket connection");
+        }
+      }
       // URL used to connect to websocket backend
       final String backendURL = getMatchedBackendURL(requestURI);
       LOG.debugLog("Generated backend URL for websocket connection: " + backendURL);
@@ -142,15 +147,14 @@ public class GatewayWebsocketHandler extends WebSocketHandler
       // Upgrade happens here
       final ClientEndpointConfig clientConfig = getClientEndpointConfig(req);
       clientConfig.getUserProperties().put("org.apache.knox.gateway.websockets.truststore", getTruststore());
-      //todo: needs review
-      clientConfig.getUserProperties().put("hadoop-jwt", tokenValidator.getToken());
+      // todo: need to do this?
+      // clientConfig.getUserProperties().put("hadoop-jwt", jwtValidator.getToken());
       return new ProxyWebSocketAdapter(URI.create(backendURL), pool, clientConfig, config);
     } catch (final Exception e) {
       LOG.failedCreatingWebSocket(e);
       throw new RuntimeException(e);
     }
   }
-
 
   private KeyStore getTruststore() throws KeystoreServiceException {
     final KeystoreService ks = this.services
