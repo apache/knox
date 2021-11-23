@@ -29,6 +29,7 @@ public class BeanPropertyTopologyBuilder implements TopologyBuilder {
     private String name;
     private String defaultService;
     private boolean isGenerated;
+    private long redeployTime;
     private List<Provider> providers;
     private List<Service> services;
     private List<Application> applications;
@@ -55,6 +56,15 @@ public class BeanPropertyTopologyBuilder implements TopologyBuilder {
 
     public boolean isGenerated() {
         return isGenerated;
+    }
+
+    public BeanPropertyTopologyBuilder redeployTime(String redeployTime) {
+      this.redeployTime = Long.parseLong(redeployTime);
+      return this;
+    }
+
+    public long getRedeployTime() {
+      return redeployTime;
     }
 
     public BeanPropertyTopologyBuilder defaultService(String defaultService) {
@@ -99,6 +109,7 @@ public class BeanPropertyTopologyBuilder implements TopologyBuilder {
         topology.setName(name);
         topology.setDefaultServicePath(defaultService);
         topology.setGenerated(isGenerated);
+        topology.setRedeployTime(redeployTime);
 
         for (Provider provider : providers) {
             topology.addProvider(provider);

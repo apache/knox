@@ -42,6 +42,9 @@ public class Topology {
   @XmlElement(name="generated")
   private boolean isGenerated;
 
+  @XmlElement(name="redeployTime")
+  private long redeployTime;
+
   @XmlElement(name="provider")
   @XmlElementWrapper(name="gateway")
   public List<Provider> providers;
@@ -93,6 +96,14 @@ public class Topology {
 
   public void setGenerated(boolean isGenerated) {
     this.isGenerated = isGenerated;
+  }
+
+  public long getRedeployTime() {
+    return redeployTime;
+  }
+
+  public void setRedeployTime(long redeployTime) {
+    this.redeployTime = redeployTime;
   }
 
   public List<Service> getServices() {

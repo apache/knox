@@ -50,5 +50,9 @@
     <application>
         <name>dynamic-app</name>
         <url>dynamic-app-path</url>
+        <param>
+          <name>dynamix.app.param</name>
+          <value>dummy</value>
+        </param>
     </application>
 </topology>

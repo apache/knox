@@ -79,6 +79,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -88,6 +89,8 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
     TopologyProvider, FileFilter, FileAlterationListener, ServiceDefinitionChangeListener {
 
   private static final JAXBContext jaxbContext = getJAXBContext();
+  private static final String TOPOLOGY_CLOSING_XML_ELEMENT = "</topology>";
+  private static final String REDEPLOY_TIME_TEMPLATE = "   <redeployTime>%d</redeployTime>\n" + TOPOLOGY_CLOSING_XML_ELEMENT;
 
   private static final Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(
     AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
@@ -179,32 +182,21 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
         }
       }
 
-      long start = System.currentTimeMillis();
-      long limit = 1000L; // One second.
-      long elapsed = 1;
-      while (elapsed <= limit) {
-        try {
-          long origTimestamp = topologyFile.lastModified();
-          long setTimestamp = Math.max(System.currentTimeMillis(), topologyFile.lastModified() + elapsed);
-          if(topologyFile.setLastModified(setTimestamp)) {
-            long newTimstamp = topologyFile.lastModified();
-            if(newTimstamp > origTimestamp) {
-              break;
-            } else {
-              Thread.sleep(10);
-              elapsed = System.currentTimeMillis() - start;
-            }
-          } else {
-            auditor.audit(Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY,
-                ActionOutcome.FAILURE);
-            log.failedToRedeployTopology(topology.getName());
-            break;
-          }
-        } catch (InterruptedException e) {
-          auditor.audit(Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
-          log.failedToRedeployTopology(topology.getName(), e);
-          Thread.currentThread().interrupt();
-        }
+      // Since KNOX-2689, updating the topology file's timestamp is not enough.
+      // We need to make an actual change in the topology XML to redeploy it
+      // This change is: updating a new XML element called redeployTime
+      try {
+        final String currentTopologyContent = FileUtils.readFileToString(topologyFile, StandardCharsets.UTF_8);
+        String updated = currentTopologyContent.replaceAll("^*<redeployTime>.*", "");
+
+        //add the current timestamp
+        updated = updated.replace(TOPOLOGY_CLOSING_XML_ELEMENT, String.format(Locale.getDefault(), REDEPLOY_TIME_TEMPLATE, System.currentTimeMillis()));
+
+        //save the updated content in the file
+        FileUtils.write(topologyFile, updated, StandardCharsets.UTF_8);
+      } catch (IOException e) {
+        auditor.audit(Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
+        log.failedToRedeployTopology(topology.getName(), e);
       }
     } catch (SAXException e) {
       auditor.audit(Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
@@ -226,7 +218,7 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
     for (Entry<File, Topology> newTopology : newTopologies.entrySet()) {
       if (oldTopologies.containsKey(newTopology.getKey())) {
         Topology oldTopology = oldTopologies.get(newTopology.getKey());
-        if (newTopology.getValue().getTimestamp() > oldTopology.getTimestamp()) {
+        if (newTopology.getValue().getTimestamp() > oldTopology.getTimestamp() && !oldTopology.equals(newTopology.getValue())) {
           events.add(new TopologyEvent(TopologyEvent.Type.UPDATED, newTopology.getValue()));
         }
       } else {
@@ -326,14 +318,12 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
   }
 
   @Override
-  public void redeployTopologies(String topologyName) {
-
+  public void redeployTopology(String topologyName) {
     for (Topology topology : getTopologies()) {
       if (topologyName == null || topologyName.equals(topology.getName())) {
         redeployTopology(topology);
       }
     }
-
   }
 
   @Override
@@ -344,7 +334,9 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
         Map<File, Topology> newTopologies = loadTopologies(topologiesDirectory);
         List<TopologyEvent> events = createChangeEvents(oldTopologies, newTopologies);
         topologies = newTopologies;
-        notifyChangeListeners(events);
+        if (!events.isEmpty()) {
+          notifyChangeListeners(events);
+        }
       }
     } catch (Exception e) {
       // Maybe it makes sense to throw exception
