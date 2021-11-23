@@ -68,7 +68,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
   static final String REGEX_SPLIT_SERVICE_PATH = "^((?:[^/]*/){3}[^/]*)";
 
   static final String REGEX_WEBSHELL_REQUEST_PATH =
-          "^" + SECURE_WEBSOCKET_PROTOCOL_STRING + "[^/]+:[0-9]+/[^/]+/[^/]+/webshell$";
+          "^" + SECURE_WEBSOCKET_PROTOCOL_STRING + "[^/]+:[0-9]+/[^/]+/webshell$";
 
   private static final int POOL_SIZE = 10;
 
@@ -119,27 +119,24 @@ public class GatewayWebsocketHandler extends WebSocketHandler
     try {
       final URI requestURI = req.getRequestURI();
 
-      /*  handle websocket request for webshell */
-      if (requestURI.getRawPath().matches(REGEX_WEBSHELL_REQUEST_PATH)){
-        if (config.isWebShellEnabled()){
-          JWTValidator jwtValidator = new JWTValidator(req, services, config);
-          if (!jwtValidator.validate()) {
-            LOG.onError("No valid token found for websocket connection");
-            throw new RuntimeException("No valid token found for websocket connection");
-          }
-          return new WebshellWebSocketAdapter(pool, config, jwtValidator);
-        }
-        LOG.onError("webshell not enabled");
-        throw new RuntimeException("webshell not enabled");
-      }
-      /* handle websocket request not for webshell  */
-      if (config.isWebsocketJWTValidationEnabled()){
-        JWTValidator jwtValidator = new JWTValidator(req, services, config);
+      JWTValidator jwtValidator = new JWTValidator(req, services, config);
+      if (config.isWebsocketJWTValidationEnabled() || config.isWebShellEnabled()){
         if (!jwtValidator.validate()) {
           LOG.onError("No valid token found for websocket connection");
           throw new RuntimeException("No valid token found for websocket connection");
         }
       }
+
+      /*  handle websocket request for webshell */
+      if (requestURI.toString().matches(REGEX_WEBSHELL_REQUEST_PATH)){
+        if (config.isWebShellEnabled()){
+          return new WebshellWebSocketAdapter(pool, config, jwtValidator);
+        }
+        LOG.onError("webshell not enabled");
+        throw new RuntimeException("webshell not enabled");
+      }
+
+      /* handle websocket request other than for webshell  */
       // URL used to connect to websocket backend
       final String backendURL = getMatchedBackendURL(requestURI);
       LOG.debugLog("Generated backend URL for websocket connection: " + backendURL);
@@ -147,8 +144,6 @@ public class GatewayWebsocketHandler extends WebSocketHandler
       // Upgrade happens here
       final ClientEndpointConfig clientConfig = getClientEndpointConfig(req);
       clientConfig.getUserProperties().put("org.apache.knox.gateway.websockets.truststore", getTruststore());
-      // todo: need to do this?
-      // clientConfig.getUserProperties().put("hadoop-jwt", jwtValidator.getToken());
       return new ProxyWebSocketAdapter(URI.create(backendURL), pool, clientConfig, config);
     } catch (final Exception e) {
       LOG.failedCreatingWebSocket(e);

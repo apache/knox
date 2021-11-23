@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.apache.knox.gateway.websockets;
 
 import com.nimbusds.jose.JWSHeader;
@@ -48,6 +65,8 @@ public class JWTValidator {
     private String displayableToken;
     private final GatewayConfig gatewayConfig;
     private final GatewayServices gatewayServices;
+    private static final WebsocketLogMessages websocketLog = MessagesFactory
+            .get(WebsocketLogMessages.class);
 
     JWTValidator(ServletUpgradeRequest req, GatewayServices gatewayServices,
                  GatewayConfig gatewayConfig){
@@ -57,7 +76,6 @@ public class JWTValidator {
         extractToken(req);
     }
 
-    // todo: call this function again if topology is reloaded. needs to verify detail
     private void configureParameters() {
         params = new LinkedHashMap<>();
         TopologyService ts = gatewayServices.getService(ServiceType.TOPOLOGY_SERVICE);
@@ -101,6 +119,7 @@ public class JWTValidator {
                     token = new JWTToken(ssoCookie.getValue());
                     displayableTokenId = Tokens.getTokenIDDisplayText(TokenUtils.getTokenId(token));
                     displayableToken = Tokens.getTokenDisplayText(token.toString());
+                    websocketLog.debugLog("found token:"+displayableToken+" id:"+displayableTokenId);
                     return;
                 } catch (ParseException e) {
                     // Fall through to keep checking if there are more cookies
@@ -116,11 +135,10 @@ public class JWTValidator {
     }
 
     public String getUsername(){
-        return token.getPrincipal();
+        return token.getSubject();
     }
 
     public boolean validate() {
-        // todo: call configureParameters() if topology is reloaded
         // confirm that issuer matches the intended target
         if (expectedIssuer.equals(token.getIssuer())) {
             // if there is no expiration data then the lifecycle is tied entirely to
@@ -143,6 +161,7 @@ public class JWTValidator {
                 return false;
             }
         }
+        log.unexpectedTokenIssuer(displayableToken, displayableTokenId);
         return false;
     }
 

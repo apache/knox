@@ -33,8 +33,9 @@ export class AppComponent implements OnInit, AfterViewInit {
   ngOnInit() {}
 
   ngAfterViewInit() {
-    this.child.underlying.options.fontSize = 20;
-    this.child.underlying.options.convertEol = true;
+    const terminal = this.child.underlying;
+    terminal.options.fontSize = 20;
+    terminal.options.convertEol = true;
     let endpoint = 'wss://'+ location.hostname + ':' + location.port + '/'+
         location.pathname.split('/')[1] + '/webshell';
     console.log(endpoint);
@@ -45,8 +46,6 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.webSocketSubject.subscribe(
       // Called whenever there is a message from the server
       msg => {
-        console.log('received message')
-        console.log(msg);
         this.child.write(msg.data);
       },
       // Called if WebSocket API signals some kind of error
@@ -55,25 +54,13 @@ export class AppComponent implements OnInit, AfterViewInit {
       },
       // Called when connection is closed (for whatever reason)
       () => {
-        console.log('connection closed');
         this.child.write('connection closed');
       }
     );
 
-    this.child.keyEventInput.subscribe(e => {
-      console.log('keyboard event:' + e.domEvent.key);
-      let key = e.domEvent.key;
-      if (key === 'Enter'){
-        key = '\n';
-      } else if (key === 'Backspace') {
-        key = '\b';
-      } else if (key === 'Tab') {
-        key = '\t';
-      } else if (key === 'Escape'){
-        key = '\x1b';
-      }
-      // send key to backend server
-      this.webSocketSubject.next(key);
-    })
+    terminal.onData((command) => {
+      // send command to backend server
+      this.webSocketSubject.next({command:command});
+    });
   }
 }

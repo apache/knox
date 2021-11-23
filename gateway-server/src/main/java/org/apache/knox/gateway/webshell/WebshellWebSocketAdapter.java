@@ -20,6 +20,8 @@ package org.apache.knox.gateway.webshell;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.websockets.JWTValidator;
@@ -38,12 +40,11 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
 
     @Override
     public void onWebSocketConnect(final Session session) {
-        LOG.debugLog("WebShell Websocket connected.");
         this.session = session;
         if (jwtValidator.getUsername() == null){
             throw new RuntimeException("Needs user name in JWT to use WebShell");
         }
-        connectionInfo = new ConnectionInfo(jwtValidator.getUsername());
+        connectionInfo = new ConnectionInfo(jwtValidator.getUsername(), LOG);
         connectionInfo.connect();
         pool.execute(new Runnable() {
             @Override
@@ -63,7 +64,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
                 transToClient(new String(buffer, 0, bytesRead, StandardCharsets.UTF_8));
             }
         } catch (IOException e){
-            cleanupOnError("bash process terminated unexpectedly");
+            LOG.onError(e.toString());
         } finally {
             cleanup();
         }
@@ -74,12 +75,15 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     public void onWebSocketText(final String message) {
         try {
             if (jwtValidator.tokenIsStillValid()) {
-                transToHost(message);
+                ObjectMapper objectMapper = new ObjectMapper();
+                WebshellData webshellData = objectMapper.readValue(message, WebshellData.class);
+                transToHost(webshellData.getCommand());
             } else {
                 cleanup();
             }
-        } catch (UnknownTokenException e){
-            cleanupOnError(e.toString());
+        } catch (JsonProcessingException | UnknownTokenException e){
+            LOG.onError(e.toString());
+            cleanup();
         }
     }
 
@@ -89,7 +93,8 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
             connectionInfo.getOutputStream().write(command.getBytes(StandardCharsets.UTF_8));
             connectionInfo.getOutputStream().flush();
         } catch (IOException e){
-            cleanupOnError("Error sending message to host");
+            LOG.onError("Error sending message to host");
+            cleanup();
         }
     }
 
@@ -98,7 +103,8 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
         try {
             session.getRemote().sendString(message);
         } catch (IOException e){
-            cleanupOnError("Error sending message to client");
+            LOG.onError("Error sending message to client");
+            cleanup();
         }
     }
 
@@ -116,14 +122,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
 
     @Override
     public void onWebSocketError(final Throwable t) {
-        cleanupOnError(t.toString());
-    }
-
-    /**
-     * Cleanup sessions
-     */
-    private void cleanupOnError(String e) {
-        LOG.onError(e);
+        LOG.onError(t.toString());
         cleanup();
     }
 

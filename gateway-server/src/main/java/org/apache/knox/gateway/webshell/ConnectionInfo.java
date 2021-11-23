@@ -17,11 +17,9 @@
  */
 package org.apache.knox.gateway.webshell;
 
+import org.apache.knox.gateway.websockets.WebsocketLogMessages;
 import org.eclipse.jetty.io.RuntimeIOException;
 import de.thetaphi.forbiddenapis.SuppressForbidden;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -36,25 +34,28 @@ public class ConnectionInfo {
     private OutputStream outputStream;
     private Process process;
     private String username;
-    private final Logger LOG = LoggerFactory.getLogger(ConnectionInfo.class);
+    private WebsocketLogMessages LOG;
 
-    public ConnectionInfo(String username){
+    public ConnectionInfo(String username, WebsocketLogMessages LOG){
         this.username = username;
+        this.LOG = LOG;
     }
 
     @SuppressForbidden
     public void connect(){
         try {
+            //ProcessBuilder builder = new ProcessBuilder( "bash","-i");
             ProcessBuilder builder = new ProcessBuilder( "sudo","-u",username,"bash","-i");
+            //todo: save pid to local
             builder.redirectErrorStream(true); // combine stderr with stdout
             process = builder.start();
             inputStream = process.getInputStream();
             outputStream = process.getOutputStream();
             outputStream.write("cd $HOME\nwhoami\n".getBytes(StandardCharsets.UTF_8));
             outputStream.flush();
-            LOG.info("started bash session for " + username);
+            LOG.debugLog("started bash session for " + username);
         } catch(IOException e) {
-            LOG.error("Error starting bash for " + username +" : "+ e.getMessage());
+            LOG.onError("Error starting bash for " + username +" : "+ e.getMessage());
             disconnect();
         }
     }
@@ -76,6 +77,8 @@ public class ConnectionInfo {
     }
 
     public void disconnect(){
+        LOG.debugLog("disconnect bash process for user: "+ username);
+        //todo: delete pid
         if (process != null) {
             process.destroy();
             if (process.isAlive()) {

@@ -158,7 +158,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   /* @since 2.0.0 WebShell config variables */
   public static final String WEBSHELL_FEATURE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".webshell.feature.enabled";
 
-  /* @since 2.0.0 WebShell config variables */
+  /* @since 2.0.0 websocket JWT validation config variables */
   public static final String WEBSOCKET_JWT_VALIDATION_FEATURE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.JWT.validation.feature.enabled";
 
   /**
@@ -205,7 +205,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE = Integer.MAX_VALUE;
   public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_SIZE = Integer.MAX_VALUE;
   public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_BUFFER_SIZE = 32768;
-  public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_BUFFER_SIZE  = 32768;
+  public static final int DEFAULT_WEBSOCKET_MAX_BINARY_MESSAGE_BUFFER_SIZE = 32768;
   public static final int DEFAULT_WEBSOCKET_INPUT_BUFFER_SIZE = 4096;
   public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT = 60000;
   public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT = 300000;
