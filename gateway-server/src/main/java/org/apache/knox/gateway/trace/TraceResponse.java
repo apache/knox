@@ -17,7 +17,8 @@
  */
 package org.apache.knox.gateway.trace;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
@@ -28,12 +29,11 @@ import java.util.Locale;
 import java.util.Set;
 
 class TraceResponse extends HttpServletResponseWrapper {
-  private static final Logger log = Logger.getLogger( TraceHandler.HTTP_RESPONSE_LOGGER );
-  private static final Logger headLog = Logger.getLogger( TraceHandler.HTTP_RESPONSE_HEADER_LOGGER );
+  private static final Logger log = LogManager.getLogger( TraceHandler.HTTP_RESPONSE_LOGGER );
+  private static final Logger headLog = LogManager.getLogger( TraceHandler.HTTP_RESPONSE_HEADER_LOGGER );
 
   private ServletOutputStream output;
   private Set<Integer> filter;
-
 
   TraceResponse( HttpServletResponse response, Set<Integer> filter ) {
     super( response );

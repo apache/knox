@@ -52,11 +52,11 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.knox.test.TestUtils;
 import org.apache.http.HttpStatus;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
@@ -79,7 +79,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 public class GatewayAdminTopologyFuncTest {
-  private static final Logger LOG = LoggerFactory.getLogger( GatewayAdminTopologyFuncTest.class );
+  private static final Logger LOG = LogManager.getLogger( GatewayAdminTopologyFuncTest.class );
 
   public static GatewayConfig config;
   public static GatewayServer gateway;

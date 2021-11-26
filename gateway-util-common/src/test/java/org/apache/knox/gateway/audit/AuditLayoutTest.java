@@ -17,6 +17,14 @@
  */
 package org.apache.knox.gateway.audit;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+
 import org.apache.knox.gateway.audit.api.AuditContext;
 import org.apache.knox.gateway.audit.api.AuditService;
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
@@ -25,29 +33,20 @@ import org.apache.knox.gateway.audit.api.CorrelationContext;
 import org.apache.knox.gateway.audit.api.CorrelationService;
 import org.apache.knox.gateway.audit.api.CorrelationServiceFactory;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
+import org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationContext;
 import org.apache.knox.gateway.audit.log4j.layout.AuditLayout;
 import org.apache.knox.test.log.CollectAppender;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.PropertyConfigurator;
-import org.apache.log4j.spi.LoggingEvent;
+import org.apache.logging.log4j.core.LogEvent;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 public class AuditLayoutTest {
   private static AuditService auditService = AuditServiceFactory.getAuditService();
   private static CorrelationService correlationService = CorrelationServiceFactory
       .getCorrelationService();
   private static Auditor auditor = auditService.getAuditor( "audit.forward", AuditConstants.KNOX_COMPONENT_NAME, AuditConstants.KNOX_SERVICE_NAME );
-  private static AuditLayout layout = new AuditLayout();
+  private static AuditLayout layout = new AuditLayout(StandardCharsets.UTF_8);
 
   private static final String USERNAME = "username";
   private static final String PROXYUSERNAME = "proxy_username";
@@ -66,10 +65,6 @@ public class AuditLayoutTest {
   private static final String EMPTY = "";
   private static final String RECORD_PATTERN = "%s %s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s%s";
 
-  static {
-    layout.activateOptions();
-  }
-
   @Before
   public void setUp() {
     tearDown();
@@ -80,7 +75,6 @@ public class AuditLayoutTest {
     CollectAppender.queue.clear();
     auditService.detachContext();
     correlationService.detachContext();
-    LogManager.shutdown();
     String absolutePath = "target/audit";
     File db = new File( absolutePath + ".db" );
     if( db.exists() ) {
@@ -90,7 +84,6 @@ public class AuditLayoutTest {
     if( lg.exists() ) {
       assertThat( "Failed to delete audit store lg file.", lg.delete(), is( true ) );
     }
-    PropertyConfigurator.configure( ClassLoader.getSystemResourceAsStream( "audit-log4j.properties" ) );
   }
 
   @Test
@@ -103,23 +96,24 @@ public class AuditLayoutTest {
     auditContext.setRemoteIp( HOST_ADDRESS );
     auditContext.setTargetServiceName( TARGET_SERVICE );
 
-    CorrelationContext correlationContext = correlationService.createContext();
-    correlationContext.setRequestId( REQUEST_ID );
-    correlationContext.setParentRequestId( PARENT_REQUEST_ID );
-    correlationContext.setRootRequestId( ROOT_REQUEST_ID );
+    auditService.attachContext(auditContext);
+
+    CorrelationContext correlationContext = new Log4jCorrelationContext(
+            REQUEST_ID, PARENT_REQUEST_ID, ROOT_REQUEST_ID);
+    correlationService.attachContext(correlationContext);
     auditor.audit( ACTION, RESOURCE_NAME, RESOURCE_TYPE, OUTCOME, MESSAGE );
 
     assertThat( CollectAppender.queue.size(), is( 1 ) );
-    LoggingEvent event = CollectAppender.queue.iterator().next();
+    LogEvent event = CollectAppender.queue.iterator().next();
     SimpleDateFormat format = new SimpleDateFormat( "yy/MM/dd HH:mm:ss", Locale.getDefault() );
-    String formatedDate = format.format( new Date( event.getTimeStamp() ) );
+    String formatedDate = format.format( event.getTimeMillis() );
     //14/01/24 12:40:24 1|2|3|audit.forward|hostaddress|WEBHDFS|username|proxy_username|system_username|action|resource_type|resource_name|outcome|message
     String expectedOutput = String.format(Locale.ROOT,
         RECORD_PATTERN, formatedDate,
         ROOT_REQUEST_ID, PARENT_REQUEST_ID, REQUEST_ID, "audit.forward",
         HOST_ADDRESS, TARGET_SERVICE, USERNAME, PROXYUSERNAME, SYSTEMUSERNAME, ACTION,
-        RESOURCE_TYPE, RESOURCE_NAME, OUTCOME, MESSAGE, AuditLayout.LINE_SEP );
-    String auditOutput = layout.format( event );
+        RESOURCE_TYPE, RESOURCE_NAME, OUTCOME, MESSAGE, System.lineSeparator() );
+    String auditOutput = layout.toSerializable( event );
     assertThat( auditOutput, is( expectedOutput ) );
   }
 
@@ -127,15 +121,15 @@ public class AuditLayoutTest {
   public void testAuditEventWithoutContexts() {
     auditor.audit( ACTION, RESOURCE_NAME, RESOURCE_TYPE, OUTCOME, MESSAGE );
     assertThat( CollectAppender.queue.size(), is( 1 ) );
-    LoggingEvent event = CollectAppender.queue.iterator().next();
+    LogEvent event = CollectAppender.queue.iterator().next();
     SimpleDateFormat format = new SimpleDateFormat( "yy/MM/dd HH:mm:ss", Locale.getDefault() );
-    String formatedDate = format.format( new Date( event.getTimeStamp() ) );
+    String formatedDate = format.format( event.getTimeMillis() );
     //14/01/24 12:41:47 |||audit.forward|||||action|resource_type|resource_name|outcome|message
     String expectedOutput = String.format( Locale.ROOT,
         RECORD_PATTERN, formatedDate,
         EMPTY, EMPTY, EMPTY, "audit.forward",
-        EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, ACTION, RESOURCE_TYPE, RESOURCE_NAME, OUTCOME, MESSAGE, AuditLayout.LINE_SEP );
-    String auditOutput = layout.format( event );
+        EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, ACTION, RESOURCE_TYPE, RESOURCE_NAME, OUTCOME, MESSAGE, System.lineSeparator() );
+    String auditOutput = layout.toSerializable( event );
     assertThat( auditOutput, is( expectedOutput ) );
   }
 
@@ -143,15 +137,15 @@ public class AuditLayoutTest {
   public void testAuditEventWithoutMessage() {
     auditor.audit( ACTION, RESOURCE_NAME, RESOURCE_TYPE, OUTCOME );
     assertThat( CollectAppender.queue.size(), is( 1 ) );
-    LoggingEvent event = CollectAppender.queue.iterator().next();
+    LogEvent event = CollectAppender.queue.iterator().next();
     SimpleDateFormat format = new SimpleDateFormat( "yy/MM/dd HH:mm:ss", Locale.getDefault() );
-    String formatedDate = format.format( new Date( event.getTimeStamp() ) );
+    String formatedDate = format.format(event.getTimeMillis());
     //14/01/24 12:41:47 |||audit.forward|||||action|resource_type|resource_name|outcome|
     String expectedOutput = String.format( Locale.ROOT,
         RECORD_PATTERN, formatedDate,
         EMPTY, EMPTY, EMPTY, "audit.forward",
-        EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, ACTION, RESOURCE_TYPE, RESOURCE_NAME, OUTCOME, EMPTY, AuditLayout.LINE_SEP );
-    String auditOutput = layout.format( event );
+        EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, ACTION, RESOURCE_TYPE, RESOURCE_NAME, OUTCOME, EMPTY, System.lineSeparator() );
+    String auditOutput = layout.toSerializable( event );
     assertThat( auditOutput, is( expectedOutput ) );
   }
 }

@@ -21,7 +21,6 @@ import static io.restassured.RestAssured.given;
 import static org.apache.knox.test.TestUtils.LOG_ENTER;
 import static org.apache.knox.test.TestUtils.LOG_EXIT;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.net.URL;
@@ -76,8 +75,7 @@ public class GatewayLdapGroupFuncTest {
     driver.stop();
     driver.start();
 
-    File descriptor = new File( driver.config.getGatewayTopologyDir(), cluster + ".xml" );
-    assertTrue(descriptor.setLastModified(System.currentTimeMillis()));
+    TestUtils.updateFile(new File(driver.config.getGatewayTopologyDir()), cluster + ".xml", "dummyService", "dummyService_1");
 
     serviceUrl = driver.getClusterUrl() + "/test-service-path/test-service-resource";
     TestUtils.awaitNon404HttpStatus( new URL( serviceUrl ), 10000, 100 );
@@ -157,7 +155,13 @@ public class GatewayLdapGroupFuncTest {
         .gotoRoot()
         .addTag( "service" )
         .addTag( "role" ).addText( "test-service-role" )
+        .gotoRoot()
+
+        .gotoRoot()
+        .addTag( "service" )
+        .addTag( "role" ).addText( "dummyService" )
         .gotoRoot();
+
   }
 
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )

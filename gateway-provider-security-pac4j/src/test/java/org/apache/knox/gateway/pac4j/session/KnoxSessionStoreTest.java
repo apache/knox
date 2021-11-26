@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES;
 import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_GROUPS;
 import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_GROUPS_DEFAULT;
 import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS;
@@ -82,6 +83,8 @@ public class KnoxSessionStoreTest {
     attributes.put("groups", groups);
     attributes.put("permissions", permissions);
     attributes.put("roles", roles);
+    attributes.put("https://knox.apache.org/SAML/Attributes/groups", groups);
+    attributes.put("https://knox.apache.org/SAML/Attributes/groups2", groups);
     samlProfile.addAttributes(attributes);
 
     /*
@@ -93,11 +96,14 @@ public class KnoxSessionStoreTest {
     Assert.assertNotNull(samlProfile.getAttribute("groups"));
     Assert.assertNotNull(samlProfile.getAttribute("roles"));
     Assert.assertNotNull(samlProfile.getAttribute("permissions"));
+    Assert.assertNotNull(samlProfile.getAttribute("https://knox.apache.org/SAML/Attributes/groups"));
+    Assert.assertNotNull(samlProfile.getAttribute("https://knox.apache.org/SAML/Attributes/groups2"));
 
 
     sessionStoreConfigs.put(PAC4J_SESSION_STORE_EXCLUDE_GROUPS, PAC4J_SESSION_STORE_EXCLUDE_GROUPS_DEFAULT);
     sessionStoreConfigs.put(PAC4J_SESSION_STORE_EXCLUDE_ROLES, PAC4J_SESSION_STORE_EXCLUDE_ROLES_DEFAULT);
     sessionStoreConfigs.put(PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS, PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS_DEFAULT);
+    sessionStoreConfigs.put(PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES, "https://knox.apache.org/SAML/Attributes/groups, https://knox.apache.org/SAML/Attributes/groups2");
 
     final Map<String, CommonProfile> profile = new HashMap<>();
     profile.put("SAML2Client", samlProfile);
@@ -110,6 +116,8 @@ public class KnoxSessionStoreTest {
     Assert.assertNull(samlProfile.getAttribute("groups"));
     Assert.assertNull(samlProfile.getAttribute("roles"));
     Assert.assertNull(samlProfile.getAttribute("permissions"));
+    Assert.assertNull(samlProfile.getAttribute("https://knox.apache.org/SAML/Attributes/groups"));
+    Assert.assertNull(samlProfile.getAttribute("https://knox.apache.org/SAML/Attributes/groups2"));
 
 
     /*
@@ -119,25 +127,32 @@ public class KnoxSessionStoreTest {
     attributes.put("groups", groups);
     attributes.put("permissions", permissions);
     attributes.put("roles", roles);
+    attributes.put("https://knox.apache.org/SAML/Attributes/groups", groups);
+    attributes.put("https://knox.apache.org/SAML/Attributes/groups2", groups);
     samlProfile.addAttributes(attributes);
 
     /* Make sure groups are present */
     Assert.assertNotNull(samlProfile.getAttribute("groups"));
     Assert.assertNotNull(samlProfile.getAttribute("roles"));
     Assert.assertNotNull(samlProfile.getAttribute("permissions"));
+    Assert.assertNotNull(samlProfile.getAttribute("https://knox.apache.org/SAML/Attributes/groups"));
+    Assert.assertNotNull(samlProfile.getAttribute("https://knox.apache.org/SAML/Attributes/groups2"));
 
 
     sessionStoreConfigs.put(PAC4J_SESSION_STORE_EXCLUDE_GROUPS, "false");
     sessionStoreConfigs.put(PAC4J_SESSION_STORE_EXCLUDE_ROLES, "false");
     sessionStoreConfigs.put(PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS, "false");
+    sessionStoreConfigs.put(PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES, "");
 
     profile.put("SAML2Client", samlProfile);
 
     sessionStore.set(mockContext, Pac4jConstants.USER_PROFILES, profile);
 
-    /* Make sure groups are removed */
+    /* Make sure attributes are not removed */
     Assert.assertNotNull(samlProfile.getAttribute("groups"));
     Assert.assertNotNull(samlProfile.getAttribute("roles"));
     Assert.assertNotNull(samlProfile.getAttribute("permissions"));
+    Assert.assertNotNull(samlProfile.getAttribute("https://knox.apache.org/SAML/Attributes/groups"));
+    Assert.assertNotNull(samlProfile.getAttribute("https://knox.apache.org/SAML/Attributes/groups2"));
   }
 }

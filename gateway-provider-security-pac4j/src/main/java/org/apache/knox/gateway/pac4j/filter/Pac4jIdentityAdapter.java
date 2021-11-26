@@ -19,6 +19,7 @@ package org.apache.knox.gateway.pac4j.filter;
 
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.AuditContext;
 import org.apache.knox.gateway.audit.api.AuditService;
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.audit.api.Auditor;
@@ -26,12 +27,12 @@ import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.pac4j.core.config.Config;
 import org.pac4j.core.context.JEEContext;
 import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.profile.ProfileManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.security.auth.Subject;
 import javax.servlet.Filter;
@@ -54,7 +55,7 @@ import java.util.Optional;
  */
 public class Pac4jIdentityAdapter implements Filter {
 
-  private static final Logger logger = LoggerFactory.getLogger(Pac4jIdentityAdapter.class);
+  private static final Logger logger = LogManager.getLogger(Pac4jIdentityAdapter.class);
 
   public static final String PAC4J_ID_ATTRIBUTE = "pac4j.id_attribute";
   private static final String PAC4J_CONFIG = "pac4j.config";
@@ -109,7 +110,10 @@ public class Pac4jIdentityAdapter implements Filter {
       PrimaryPrincipal pp = new PrimaryPrincipal(id);
       Subject subject = new Subject();
       subject.getPrincipals().add(pp);
-      auditService.getContext().setUsername(id);
+
+      AuditContext auditContext = auditService.getContext();
+      auditContext.setUsername(id);
+      auditService.attachContext(auditContext);
       String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
       auditor.audit(Action.AUTHENTICATION, sourceUri, ResourceType.URI, ActionOutcome.SUCCESS);
 

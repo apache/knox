@@ -34,12 +34,12 @@ import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.mock.MockServer;
 import org.apache.http.HttpStatus;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.restassured.RestAssured.given;
 import static org.apache.knox.test.TestUtils.LOG_ENTER;
@@ -56,7 +56,7 @@ import static org.xmlmatchers.xpath.HasXPath.hasXPath;
 import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
 
 public class GatewayAppFuncTest {
-  private static final Logger LOG = LoggerFactory.getLogger( GatewayAppFuncTest.class );
+  private static final Logger LOG = LogManager.getLogger( GatewayAppFuncTest.class );
   private static final Class<?> DAT = GatewayAppFuncTest.class;
 
   private static GatewayTestConfig config;
@@ -483,7 +483,9 @@ public class GatewayAppFuncTest {
       startGatewayServer();
 
       String topoStr = TestUtils.merge( DAT, "test-dynamic-app-topology.xml", params );
-      File topoFile = new File( config.getGatewayTopologyDir(), "test-topology.xml" );
+      final File topologyDir = new File(config.getGatewayTopologyDir());
+      final String topologyFileName = "test-topology.xml";
+      File topoFile = new File(topologyDir, topologyFileName);
       FileUtils.writeStringToFile( topoFile, topoStr, StandardCharsets.UTF_8 );
       topos.reloadTopologies();
 
@@ -501,9 +503,9 @@ public class GatewayAppFuncTest {
           .when().get( clusterUrl + "/dynamic-app-path" );
 
       TestUtils.waitUntilNextSecond();
-      FileUtils.touch( topoFile );
-
+      TestUtils.updateFile(topologyDir, topologyFileName, "dummy", "dummy_1");
       topos.reloadTopologies();
+
       String[] topoDirs2 = deployDir.list();
       assertThat( topoDirs2, is(arrayWithSize(2)) );
       assertThat( topoDirs2, hasItemInArray(topoDirs1[0]) );
@@ -518,7 +520,7 @@ public class GatewayAppFuncTest {
           .when().get( clusterUrl + "/dynamic-app-path" );
 
       TestUtils.waitUntilNextSecond();
-      FileUtils.touch( topoFile );
+      TestUtils.updateFile(topologyDir, topologyFileName, "dummy", "dummy_2");
       topos.reloadTopologies();
 
       String[] topoDirs3 = deployDir.list();

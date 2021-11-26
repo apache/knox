@@ -33,6 +33,7 @@ import javax.servlet.ServletResponse;
 
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.AuditContext;
 import org.apache.knox.gateway.audit.api.AuditService;
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.audit.api.Auditor;
@@ -102,7 +103,9 @@ public class ShiroSubjectIdentityAdapter implements Filter {
       Set<Principal> principals = new HashSet<>();
       Principal p = new PrimaryPrincipal(principal);
       principals.add(p);
-      auditService.getContext().setUsername( principal ); //KM: Audit Fix
+      AuditContext context = auditService.getContext();
+      context.setUsername( principal );
+      auditService.attachContext(context);
       String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
       auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
 

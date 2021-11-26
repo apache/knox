@@ -19,6 +19,7 @@ package org.apache.knox.gateway.filter;
 
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.AuditContext;
 import org.apache.knox.gateway.audit.api.AuditService;
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.audit.api.Auditor;
@@ -60,7 +61,9 @@ public class AnonymousAuthFilter implements Filter {
     }
     Subject subject = new Subject();
     subject.getPrincipals().add(new PrimaryPrincipal(principal));
-    auditService.getContext().setUsername( principal ); //KM: Audit Fix
+    AuditContext context = auditService.getContext();
+    context.setUsername( principal );
+    auditService.attachContext(context);
     String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
     auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
     continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, filterChain);

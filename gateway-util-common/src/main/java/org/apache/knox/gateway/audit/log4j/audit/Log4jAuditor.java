@@ -17,16 +17,15 @@
  */
 package org.apache.knox.gateway.audit.log4j.audit;
 
-
-
 import org.apache.knox.gateway.audit.api.AuditContext;
 import org.apache.knox.gateway.audit.api.AuditService;
 import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.audit.api.CorrelationContext;
 import org.apache.knox.gateway.audit.api.CorrelationService;
 import org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationService;
-import org.apache.log4j.Logger;
-import org.apache.log4j.MDC;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.ThreadContext;
+import org.apache.logging.log4j.core.Logger;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -52,8 +51,8 @@ public class Log4jAuditor implements Auditor {
   }
 
   public Log4jAuditor( String loggerName, String componentName, String serviceName ) {
-    logger = Logger.getLogger( loggerName );
-    logger.setAdditivity( false );
+    logger = (Logger) LogManager.getLogger( loggerName );
+    logger.setAdditive(false);
     this.componentName = componentName;
     this.serviceName = serviceName;
 
@@ -102,21 +101,21 @@ public class Log4jAuditor implements Auditor {
 
   private void auditLog( String action, String resourceName, String resourceType, String outcome, String message ) {
     if ( logger.isInfoEnabled() ) {
-      MDC.put( AuditConstants.MDC_ACTION_KEY, action );
-      MDC.put( AuditConstants.MDC_RESOURCE_NAME_KEY, maskTokenFromURL(resourceName) );
-      MDC.put( AuditConstants.MDC_RESOURCE_TYPE_KEY, resourceType );
-      MDC.put( AuditConstants.MDC_OUTCOME_KEY, outcome );
-      MDC.put( AuditConstants.MDC_SERVICE_KEY, serviceName );
-      MDC.put( AuditConstants.MDC_COMPONENT_KEY, componentName );
+      ThreadContext.put( AuditConstants.MDC_ACTION_KEY, action );
+      ThreadContext.put( AuditConstants.MDC_RESOURCE_NAME_KEY, maskTokenFromURL(resourceName) );
+      ThreadContext.put( AuditConstants.MDC_RESOURCE_TYPE_KEY, resourceType );
+      ThreadContext.put( AuditConstants.MDC_OUTCOME_KEY, outcome );
+      ThreadContext.put( AuditConstants.MDC_SERVICE_KEY, serviceName );
+      ThreadContext.put( AuditConstants.MDC_COMPONENT_KEY, componentName );
 
       logger.info( message );
 
-      MDC.remove( AuditConstants.MDC_ACTION_KEY );
-      MDC.remove( AuditConstants.MDC_RESOURCE_NAME_KEY );
-      MDC.remove( AuditConstants.MDC_RESOURCE_TYPE_KEY );
-      MDC.remove( AuditConstants.MDC_OUTCOME_KEY );
-      MDC.remove( AuditConstants.MDC_SERVICE_KEY );
-      MDC.remove( AuditConstants.MDC_COMPONENT_KEY );
+      ThreadContext.remove( AuditConstants.MDC_ACTION_KEY );
+      ThreadContext.remove( AuditConstants.MDC_RESOURCE_NAME_KEY );
+      ThreadContext.remove( AuditConstants.MDC_RESOURCE_TYPE_KEY );
+      ThreadContext.remove( AuditConstants.MDC_OUTCOME_KEY );
+      ThreadContext.remove( AuditConstants.MDC_SERVICE_KEY );
+      ThreadContext.remove( AuditConstants.MDC_COMPONENT_KEY );
     }
   }
 

@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,6 @@ import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.util.KnoxCLI;
 import org.apache.knox.test.TestUtils;
-import org.apache.knox.test.log.NoOpAppender;
-import org.apache.log4j.Appender;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -35,7 +33,6 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -237,12 +234,7 @@ public class KnoxCliLdapFuncTestPositive {
     username = "bad-name";
     password = "bad-password";
     String[] args2 = {"user-auth-test", "--master", "knox", "--cluster", "test-cluster", "--u", username, "--p", password};
-    Enumeration<Appender> before = NoOpAppender.setUpAndReturnOriginalAppenders();
-    try {
-      cli.run( args2 );
-    } finally {
-      NoOpAppender.resetOriginalAppenders( before );
-    }
+    cli.run(args2);
     assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("LDAP authentication failed"));
 
 //    Test 3: Authenticate a user who belongs to no groups, but specify groups with --g

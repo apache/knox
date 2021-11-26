@@ -105,6 +105,8 @@ limitations under the License.
                     </h:complexType>
                 </h:element>
 
+                <h:element name="redeployTime" type="h:long" minOccurs="0"/>
+
             </h:sequence>
         </h:complexType>
     </h:element>

@@ -17,20 +17,47 @@
  */
 package org.apache.knox.gateway.audit.log4j.audit;
 
-import java.io.Serializable;
+import static org.apache.knox.gateway.audit.log4j.audit.Log4jAuditService.MDC_AUDIT_CONTEXT_KEY;
+
+import java.util.Map;
 
 import org.apache.knox.gateway.audit.api.AuditContext;
+import org.apache.logging.log4j.core.LogEvent;
 
-public class Log4jAuditContext implements Serializable, AuditContext {
-
-  private static final long serialVersionUID = 1L;
-
+public class Log4jAuditContext implements AuditContext {
   private String username;
   private String proxyUsername;
   private String systemUsername;
   private String targetServiceName;
   private String remoteIp;
   private String remoteHostname;
+
+  public static Log4jAuditContext of(LogEvent event) {
+    if (event == null) {
+      return null;
+    }
+    Map<String, String> data = event.getContextData().toMap();
+    return new Log4jAuditContext(
+            data.get(MDC_AUDIT_CONTEXT_KEY + "_username"),
+            data.get(MDC_AUDIT_CONTEXT_KEY + "_proxyUsername"),
+            data.get(MDC_AUDIT_CONTEXT_KEY + "_systemUsername"),
+            data.get(MDC_AUDIT_CONTEXT_KEY + "_targetServiceName"),
+            data.get(MDC_AUDIT_CONTEXT_KEY + "_remoteIp"),
+            data.get(MDC_AUDIT_CONTEXT_KEY + "_remoteHostname"));
+  }
+
+  public Log4jAuditContext() {
+  }
+
+  public Log4jAuditContext(String username, String proxyUsername, String systemUsername,
+                           String targetServiceName, String remoteIp, String remoteHostname) {
+    this.username = username;
+    this.proxyUsername = proxyUsername;
+    this.systemUsername = systemUsername;
+    this.targetServiceName = targetServiceName;
+    this.remoteIp = remoteIp;
+    this.remoteHostname = remoteHostname;
+  }
 
   @Override
   public String getUsername() {

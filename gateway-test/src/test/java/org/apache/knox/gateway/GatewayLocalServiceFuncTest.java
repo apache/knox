@@ -24,19 +24,16 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.test.TestUtils;
-import org.apache.knox.test.log.NoOpAppender;
 import org.apache.http.HttpStatus;
-import org.apache.log4j.Appender;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.OutputStream;
 import java.nio.file.Files;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -49,9 +46,8 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class GatewayLocalServiceFuncTest {
-  private static final Logger LOG = LoggerFactory.getLogger( GatewayTestDriver.class );
+  private static final Logger LOG = LogManager.getLogger( GatewayTestDriver.class );
 
-  public static Enumeration<Appender> appenders;
   public static GatewayConfig config;
   public static GatewayServer gateway;
   public static String gatewayUrl;
@@ -61,7 +57,6 @@ public class GatewayLocalServiceFuncTest {
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
     LOG_ENTER();
-    appenders = NoOpAppender.setUpAndReturnOriginalAppenders();
     driver.setupLdap(0);
     setupGateway();
     LOG_EXIT();
@@ -74,7 +69,6 @@ public class GatewayLocalServiceFuncTest {
     driver.cleanup();
     FileUtils.deleteQuietly( new File( config.getGatewayConfDir() ) );
     FileUtils.deleteQuietly( new File( config.getGatewayDataDir() ) );
-    NoOpAppender.resetOriginalAppenders( appenders );
     LOG_EXIT();
   }
 
