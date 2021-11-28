@@ -16,7 +16,6 @@
  */
 import {Component, OnInit, ViewChild, AfterViewInit, HostListener} from '@angular/core';
 import { NgTerminal } from 'ng-terminal';
-import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
 @Component({
   selector: 'app-root',
@@ -24,8 +23,8 @@ import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit, AfterViewInit {
-  webSocketSubject:WebSocketSubject<any>;
   @ViewChild('term', {static: false}) child: NgTerminal;
+  private _ws: WebSocket;
 
   constructor() { }
 
@@ -38,34 +37,23 @@ export class AppComponent implements OnInit, AfterViewInit {
     let endpoint = 'wss://'+ location.hostname + ':' + location.port + '/'+
         location.pathname.split('/')[1] + '/webshell';
     console.log(endpoint);
-    this.webSocketSubject = webSocket({
-      url: endpoint,
-      deserializer: msg => msg // avoid default behavior to call JSON.parse(msg)
-    });
-    this.webSocketSubject.subscribe(
-      // Called whenever there is a message from the server
-      msg => {
-        this.child.write(msg.data);
-      },
-      // Called if WebSocket API signals some kind of error
-      err => {
-        console.log(err);
-      },
-      // Called when connection is closed (for whatever reason)
-      () => {
-        this.child.write('connection closed');
-      }
-    );
+    this._ws = new WebSocket(endpoint);
+    this._ws.onmessage = function(event){
+      terminal.write(event.data);
+    }
+    this._ws.onclose = function(event){
+      terminal.write("\r\nConnection closed");
+    }
 
     terminal.onData((command) => {
       // send command to backend server
-      this.webSocketSubject.next({command:command});
-    });
+      this._ws.send(JSON.stringify({command:command}));
+    })
   }
 
   @HostListener('window:beforeunload')
-    unloadHandler() {
-    this.webSocketSubject.unsubscribe();
-    this.webSocketSubject.complete();
+    onBeforeUnload() {
+      this._ws.close();
+      return false;
   }
 }

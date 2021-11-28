@@ -30,14 +30,15 @@ import org.eclipse.jetty.websocket.api.Session;
 
 public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     private Session session;
-    private ConnectionInfo connectionInfo;
-    private JWTValidator jwtValidator;
-    private StringBuilder messageBuffer;
+    private final ConnectionInfo connectionInfo;
+    private final JWTValidator jwtValidator;
+    private final StringBuilder messageBuffer;
 
     public WebshellWebSocketAdapter(ExecutorService pool, GatewayConfig config, JWTValidator jwtValidator) {
         super(null, pool, null, config);
         this.jwtValidator = jwtValidator;
         messageBuffer = new StringBuilder();
+        connectionInfo = new ConnectionInfo(jwtValidator.getUsername(), LOG);
     }
 
     @Override
@@ -46,7 +47,6 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
         if (jwtValidator.getUsername() == null){
             throw new RuntimeException("Needs user name in JWT to use WebShell");
         }
-        connectionInfo = new ConnectionInfo(jwtValidator.getUsername(), LOG);
         connectionInfo.connect();
         pool.execute(new Runnable() {
             @Override
@@ -129,6 +129,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     @Override
     public void onWebSocketClose(int statusCode, String reason) {
         super.onWebSocketClose(statusCode, reason);
+        LOG.debugLog("Closing websocket connection");
         cleanup();
     }
 
