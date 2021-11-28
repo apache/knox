@@ -14,9 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
+import {Component, OnInit, ViewChild, AfterViewInit, HostListener} from '@angular/core';
 import { NgTerminal } from 'ng-terminal';
-import { FunctionsUsingCSI } from 'ng-terminal';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
 @Component({
@@ -62,5 +61,11 @@ export class AppComponent implements OnInit, AfterViewInit {
       // send command to backend server
       this.webSocketSubject.next({command:command});
     });
+  }
+
+  @HostListener('window:beforeunload')
+    unloadHandler() {
+    this.webSocketSubject.unsubscribe();
+    this.webSocketSubject.complete();
   }
 }

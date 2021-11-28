@@ -421,6 +421,15 @@
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-provider-security-jwt</artifactId>
         </dependency>
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna-platform</artifactId>
+            <version>5.5.0</version>
+        </dependency>
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+        </dependency>
         <!-- ********** ********** ********** ********** ********** ********** -->
         <!-- ********** Test Dependencies                           ********** -->
         <!-- ********** ********** ********** ********** ********** ********** -->
@@ -483,5 +492,6 @@
             <artifactId>curator-test</artifactId>
             <scope>test</scope>
         </dependency>
+
     </dependencies>
 </project>

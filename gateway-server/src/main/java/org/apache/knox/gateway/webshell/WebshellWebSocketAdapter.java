@@ -32,10 +32,12 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     private Session session;
     private ConnectionInfo connectionInfo;
     private JWTValidator jwtValidator;
+    private StringBuilder messageBuffer;
 
     public WebshellWebSocketAdapter(ExecutorService pool, GatewayConfig config, JWTValidator jwtValidator) {
         super(null, pool, null, config);
         this.jwtValidator = jwtValidator;
+        messageBuffer = new StringBuilder();
     }
 
     @Override
@@ -56,7 +58,6 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
 
     // this function will block, should be run in an asynchronous thread
     private void blockingReadFromHost(){
-        LOG.debugLog("start listening to bash process");
         byte[] buffer = new byte[1024];
         int bytesRead;
         try {
@@ -79,16 +80,28 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
                 WebshellData webshellData = objectMapper.readValue(message, WebshellData.class);
                 transToHost(webshellData.getCommand());
             } else {
-                cleanup();
+                throw new RuntimeException("Token expired");
             }
-        } catch (JsonProcessingException | UnknownTokenException e){
+        } catch (JsonProcessingException | UnknownTokenException | RuntimeException e){
             LOG.onError(e.toString());
             cleanup();
         }
     }
+    private void logCommand(){
+        LOG.debugLog(String.format("[User %s to bash process %d --->] %s",
+                connectionInfo.getUsername(),
+                connectionInfo.getPid(),
+                messageBuffer.toString()));
+        messageBuffer.setLength(0);
+    }
 
     private void transToHost (String command){
-        LOG.debugLog("sending to host: " + command);
+        messageBuffer.append(command);
+        // todo: is this way to detect new line platform independent?
+        String CarriageReturn = Character.toString((char)13);
+        if (command.contains(CarriageReturn)){
+            logCommand();
+        }
         try {
             connectionInfo.getOutputStream().write(command.getBytes(StandardCharsets.UTF_8));
             connectionInfo.getOutputStream().flush();
@@ -99,7 +112,6 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     }
 
     private void transToClient(String message){
-        LOG.debugLog("sending to client: "+ message);
         try {
             session.getRemote().sendString(message);
         } catch (IOException e){
@@ -127,6 +139,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     }
 
     private void cleanup() {
+        logCommand();
         if(session != null && !session.isOpen()) {
             session.close();
         }
