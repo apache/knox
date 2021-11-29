@@ -218,7 +218,7 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
     for (Entry<File, Topology> newTopology : newTopologies.entrySet()) {
       if (oldTopologies.containsKey(newTopology.getKey())) {
         Topology oldTopology = oldTopologies.get(newTopology.getKey());
-        if (newTopology.getValue().getTimestamp() > oldTopology.getTimestamp() && !oldTopology.equals(newTopology.getValue())) {
+        if (shouldMarkTopologyUpdated(newTopology.getValue(), oldTopology)) {
           events.add(new TopologyEvent(TopologyEvent.Type.UPDATED, newTopology.getValue()));
         }
       } else {
@@ -226,6 +226,11 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
       }
     }
     return events;
+  }
+
+  private boolean shouldMarkTopologyUpdated(Topology newTopology, Topology oldTopology) {
+    final boolean timestampUpdated = newTopology.getTimestamp() > oldTopology.getTimestamp();
+    return config.topologyRedeploymentRequiresChanges() ? timestampUpdated && !oldTopology.equals(newTopology) : timestampUpdated;
   }
 
   private File calculateAbsoluteTopologiesDir(GatewayConfig config) {

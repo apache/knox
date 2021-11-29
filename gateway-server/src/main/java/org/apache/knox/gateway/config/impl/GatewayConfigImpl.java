@@ -185,6 +185,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String DESCRIPTORS_DIR_NAME = "descriptors";
   public static final String REMOTE_ALIAS_SERVICE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".remote.alias.service.enabled";
   public static final String STRICT_TOPOLOGY_VALIDATION = GATEWAY_CONFIG_FILE_PREFIX + ".strict.topology.validation";
+  private static final String TOPOLOGY_REDEPLOYMENT_REQUIRES_CHANGES = GATEWAY_CONFIG_FILE_PREFIX + ".topology.redeploy.requires.changes";
 
   /**
    * Comma-separated list of topology names, which should be forcibly treated as read-only.
@@ -1128,6 +1129,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public boolean isTopologyValidationEnabled() {
     final String result = get(STRICT_TOPOLOGY_VALIDATION, Boolean.toString(DEFAULT_STRICT_TOPOLOGY_VALIDATION));
     return Boolean.parseBoolean(result);
+  }
+
+  @Override
+  public boolean topologyRedeploymentRequiresChanges() {
+    return getBoolean(TOPOLOGY_REDEPLOYMENT_REQUIRES_CHANGES, false);
   }
 
   @Override
