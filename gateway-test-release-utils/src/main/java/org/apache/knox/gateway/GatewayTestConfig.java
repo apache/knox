@@ -767,6 +767,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public boolean topologyRedeploymentRequiresChanges() {
+    return false;
+  }
+
+  @Override
   public List<String> getXForwardContextAppendServices() {
     return null;
   }
