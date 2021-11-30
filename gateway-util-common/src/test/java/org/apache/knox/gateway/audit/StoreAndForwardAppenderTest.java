@@ -54,7 +54,7 @@ public class StoreAndForwardAppenderTest {
     System.out.println( "Running " + Thread.currentThread().getStackTrace()[1].getClassName() + "#" + Thread.currentThread().getStackTrace()[1].getMethodName() );
 
     int iterations = 1000;
-    Logger logger = LogManager.getLogger( "audit.store" );
+    Logger logger = LogManager.getLogger( "audit.forward" );
     for( int i = 1; i <= iterations; i++ ) {
       logger.info( Integer.toString( i ) );
     }

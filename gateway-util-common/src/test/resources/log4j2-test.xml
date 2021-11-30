@@ -21,15 +21,11 @@
             <PatternLayout pattern="[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"/>
         </Console>
         <CollectAppender name="audit-forward" />
-        <JdbmStoreAndForwardAppender name="audit-store" file="target/audit" />
     </Appenders>
     <Loggers>
         <Root level="error">
             <AppenderRef ref="console" />
         </Root>
-        <Logger name="audit.store" level="INFO" additivity="false">
-            <AppenderRef ref="audit-store" />
-        </Logger>
         <Logger name="audit.forward" level="INFO">
             <AppenderRef ref="audit-forward" />
         </Logger>
