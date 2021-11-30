@@ -130,6 +130,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
       /*  handle websocket request for webshell */
       if (requestURI.toString().matches(REGEX_WEBSHELL_REQUEST_PATH)){
         if (config.isWebShellEnabled()){
+          // todo: limit the number of webshell sessions.
           return new WebshellWebSocketAdapter(pool, config, jwtValidator);
         }
         LOG.onError("webshell not enabled");

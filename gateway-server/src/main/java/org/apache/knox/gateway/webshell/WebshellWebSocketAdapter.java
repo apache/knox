@@ -33,12 +33,17 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     private final ConnectionInfo connectionInfo;
     private final JWTValidator jwtValidator;
     private final StringBuilder messageBuffer;
+    private final boolean isDebugEnabled;
 
     public WebshellWebSocketAdapter(ExecutorService pool, GatewayConfig config, JWTValidator jwtValidator) {
         super(null, pool, null, config);
         this.jwtValidator = jwtValidator;
-        messageBuffer = new StringBuilder();
         connectionInfo = new ConnectionInfo(jwtValidator.getUsername(), LOG);
+        messageBuffer = new StringBuilder();
+        //todo: how to get isDebugEnabled
+        // LOG.getClass().getAnnotation(Message.class).level() == MessageLevel.DEBUG;
+        isDebugEnabled = true;
+        LOG.debugLog("isDebugEnabled:"+isDebugEnabled);
     }
 
     @Override
@@ -87,21 +92,20 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
             cleanup();
         }
     }
-    private void logCommand(){
-        LOG.debugLog(String.format("[User %s to bash process %d --->] %s",
-                connectionInfo.getUsername(),
-                connectionInfo.getPid(),
-                messageBuffer.toString()));
-        messageBuffer.setLength(0);
-    }
+
 
     private void transToHost (String command){
-        messageBuffer.append(command);
-        // todo: is this way to detect new line platform independent?
-        String CarriageReturn = Character.toString((char)13);
-        if (command.contains(CarriageReturn)){
-            logCommand();
+        if (isDebugEnabled){
+            messageBuffer.append(command);
+            if (command.contains("\r") || command.contains("\n")){
+                LOG.debugLog(String.format("[User %s to bash process %d --->] %s",
+                        connectionInfo.getUsername(),
+                        connectionInfo.getPid(),
+                        messageBuffer));
+                messageBuffer.setLength(0);
+            }
         }
+
         try {
             connectionInfo.getOutputStream().write(command.getBytes(StandardCharsets.UTF_8));
             connectionInfo.getOutputStream().flush();
@@ -140,7 +144,12 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     }
 
     private void cleanup() {
-        logCommand();
+        if (isDebugEnabled){
+            LOG.debugLog(String.format("[User %s to bash process %d --->] %s",
+                    connectionInfo.getUsername(),
+                    connectionInfo.getPid(),
+                    messageBuffer));
+        }
         if(session != null && !session.isOpen()) {
             session.close();
         }
