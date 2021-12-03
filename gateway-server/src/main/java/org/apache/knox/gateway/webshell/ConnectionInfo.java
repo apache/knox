@@ -17,6 +17,10 @@
  */
 package org.apache.knox.gateway.webshell;
 
+import org.apache.knox.gateway.audit.api.Action;
+import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.Auditor;
+import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.websockets.WebsocketLogMessages;
 import org.eclipse.jetty.io.RuntimeIOException;
 import de.thetaphi.forbiddenapis.SuppressForbidden;
@@ -37,12 +41,14 @@ public class ConnectionInfo {
     private InputStream inputStream;
     private OutputStream outputStream;
     private Process process;
-    private String username;
-    private WebsocketLogMessages LOG;
+    private final String username;
+    private final Auditor auditor;
+    private final WebsocketLogMessages LOG;
     private Long pid;
 
-    public ConnectionInfo(String username, WebsocketLogMessages LOG){
+    public ConnectionInfo(String username, Auditor auditor, WebsocketLogMessages LOG){
         this.username = username;
+        this.auditor = auditor;
         this.LOG = LOG;
     }
 
@@ -58,7 +64,8 @@ public class ConnectionInfo {
             if (pid == -1) {
                 throw new RuntimeException("Error getting process id");
             }
-            LOG.debugLog("started bash process for user: "+username + " with pid: "+pid);
+            auditor.audit( Action.WEBSHELL, username+':'+pid,
+                    ResourceType.PROCESS, ActionOutcome.SUCCESS,"Started Bash process");
             inputStream = process.getInputStream();
             outputStream = process.getOutputStream();
             outputStream.write("cd $HOME\nwhoami\n".getBytes(StandardCharsets.UTF_8));
@@ -71,18 +78,13 @@ public class ConnectionInfo {
 
     public String getUsername(){
         return this.username;
-    };
-    public Long getPid(){
-        return this.pid;
-    };
+    }
+    public Long getPid(){ return this.pid; }
     public InputStream getInputStream(){
         return this.inputStream;
-    };
+    }
     public OutputStream getOutputStream(){
         return this.outputStream;
-    };
-    public Process getProcess(){
-        return this.process;
     }
 
     public void disconnect(){
@@ -101,11 +103,24 @@ public class ConnectionInfo {
             throw new RuntimeIOException(e);
         }
     }
+    /*
+    private static int getVersion() {
+        String version = System.getProperty("java.version");
+        if(version.startsWith("1.")) {
+            version = version.substring(2, 3);
+        } else {
+            int dot = version.indexOf(".");
+            if(dot != -1) { version = version.substring(0, dot); }
+        } return Integer.parseInt(version);
+    }*/
 
-
-
-    public static long getProcessID(Process p)
+    private static long getProcessID(Process p)
     {
+        /* todo: wont compile with java 8
+        if (getVersion() >= 9){
+            return p.pid();
+        }*/
+
         long result = -1;
         try
         {

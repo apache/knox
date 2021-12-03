@@ -229,6 +229,7 @@
         <jetty.version>9.4.34.v20201102</jetty.version>
         <jline.version>2.14.6</jline.version>
         <jna.version>5.6.0</jna.version>
+        <jna-platform.version>5.5.0</jna-platform.version>
         <joda-time.version>2.10.8</joda-time.version>
         <json-path.version>2.5.0</json-path.version>
         <json-smart.version>2.4.1</json-smart.version>

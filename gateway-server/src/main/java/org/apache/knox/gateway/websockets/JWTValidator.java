@@ -113,16 +113,18 @@ public class JWTValidator {
 
     private void extractToken(ServletUpgradeRequest req){
         List<HttpCookie> ssoCookies = req.getCookies();
-        for (HttpCookie ssoCookie : ssoCookies) {
-            if (cookieName.equals(ssoCookie.getName())) {
-                try {
-                    token = new JWTToken(ssoCookie.getValue());
-                    displayableTokenId = Tokens.getTokenIDDisplayText(TokenUtils.getTokenId(token));
-                    displayableToken = Tokens.getTokenDisplayText(token.toString());
-                    websocketLog.debugLog("found token:"+displayableToken+" id:"+displayableTokenId);
-                    return;
-                } catch (ParseException e) {
-                    // Fall through to keep checking if there are more cookies
+        if (ssoCookies != null){
+            for (HttpCookie ssoCookie : ssoCookies) {
+                if (cookieName.equals(ssoCookie.getName())) {
+                    try {
+                        token = new JWTToken(ssoCookie.getValue());
+                        displayableTokenId = Tokens.getTokenIDDisplayText(TokenUtils.getTokenId(token));
+                        displayableToken = Tokens.getTokenDisplayText(token.toString());
+                        websocketLog.debugLog("found token:"+displayableToken+" id:"+displayableTokenId);
+                        return;
+                    } catch (ParseException e) {
+                        // Fall through to keep checking if there are more cookies
+                    }
                 }
             }
         }
@@ -176,7 +178,7 @@ public class JWTValidator {
             isServerManaged = (gatewayConfig != null) && gatewayConfig.isServerManagedTokenStateEnabled();
         } else {
             // Otherwise, apply the provider-level configuration
-            isServerManaged = Boolean.valueOf(providerParamValue);
+            isServerManaged = Boolean.parseBoolean(providerParamValue);
         }
         return isServerManaged;
     }
@@ -216,7 +218,7 @@ public class JWTValidator {
     private boolean isTokenEnabled() throws UnknownTokenException {
         final TokenMetadata tokenMetadata = tokenStateService == null ? null :
                 tokenStateService.getTokenMetadata(TokenUtils.getTokenId(token));
-        if (tokenMetadata == null ? true : tokenMetadata.isEnabled()){
+        if (tokenMetadata == null || tokenMetadata.isEnabled()){
             return true;
         } else {
             log.disabledToken(displayableTokenId);

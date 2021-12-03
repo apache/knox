@@ -118,7 +118,6 @@ public class GatewayWebsocketHandler extends WebSocketHandler
                                 ServletUpgradeResponse resp) {
     try {
       final URI requestURI = req.getRequestURI();
-
       JWTValidator jwtValidator = new JWTValidator(req, services, config);
       if (config.isWebsocketJWTValidationEnabled() || config.isWebShellEnabled()){
         if (!jwtValidator.validate()) {
@@ -130,7 +129,8 @@ public class GatewayWebsocketHandler extends WebSocketHandler
       /*  handle websocket request for webshell */
       if (requestURI.toString().matches(REGEX_WEBSHELL_REQUEST_PATH)){
         if (config.isWebShellEnabled()){
-          // todo: limit the number of webshell sessions.
+          //todo: config quota for webshell connections, atomic int, initialize to config,
+          // if exceed throw exception quota existed.
           return new WebshellWebSocketAdapter(pool, config, jwtValidator);
         }
         LOG.onError("webshell not enabled");

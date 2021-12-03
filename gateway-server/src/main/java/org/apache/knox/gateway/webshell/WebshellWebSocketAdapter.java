@@ -22,6 +22,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.knox.gateway.audit.api.Action;
+import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.AuditServiceFactory;
+import org.apache.knox.gateway.audit.api.Auditor;
+import org.apache.knox.gateway.audit.api.ResourceType;
+import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.websockets.JWTValidator;
@@ -33,17 +39,16 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     private final ConnectionInfo connectionInfo;
     private final JWTValidator jwtValidator;
     private final StringBuilder messageBuffer;
-    private final boolean isDebugEnabled;
+    private static Auditor auditor;
 
     public WebshellWebSocketAdapter(ExecutorService pool, GatewayConfig config, JWTValidator jwtValidator) {
         super(null, pool, null, config);
         this.jwtValidator = jwtValidator;
-        connectionInfo = new ConnectionInfo(jwtValidator.getUsername(), LOG);
-        messageBuffer = new StringBuilder();
-        //todo: how to get isDebugEnabled
-        // LOG.getClass().getAnnotation(Message.class).level() == MessageLevel.DEBUG;
-        isDebugEnabled = true;
-        LOG.debugLog("isDebugEnabled:"+isDebugEnabled);
+        messageBuffer = new StringBuilder(); // buffer for audit log
+        auditor = AuditServiceFactory.getAuditService().getAuditor(
+                AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
+                AuditConstants.KNOX_COMPONENT_NAME );
+        connectionInfo = new ConnectionInfo(jwtValidator.getUsername(), auditor, LOG);
     }
 
     @Override
@@ -53,12 +58,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
             throw new RuntimeException("Needs user name in JWT to use WebShell");
         }
         connectionInfo.connect();
-        pool.execute(new Runnable() {
-            @Override
-            public void run() {
-                blockingReadFromHost();
-            }
-        });
+        pool.execute(this::blockingReadFromHost);
     }
 
     // this function will block, should be run in an asynchronous thread
@@ -93,22 +93,16 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
         }
     }
 
-
     private void transToHost (String command){
-        if (isDebugEnabled){
-            messageBuffer.append(command);
-            if (command.contains("\r") || command.contains("\n")){
-                LOG.debugLog(String.format("[User %s to bash process %d --->] %s",
-                        connectionInfo.getUsername(),
-                        connectionInfo.getPid(),
-                        messageBuffer));
-                messageBuffer.setLength(0);
-            }
-        }
-
         try {
             connectionInfo.getOutputStream().write(command.getBytes(StandardCharsets.UTF_8));
             connectionInfo.getOutputStream().flush();
+            // audit command
+            messageBuffer.append(command);
+            if (command.contains("\r") || command.contains("\n")) {
+                webshellAudit(messageBuffer.toString());
+                messageBuffer.setLength(0);
+            }
         } catch (IOException e){
             LOG.onError("Error sending message to host");
             cleanup();
@@ -143,16 +137,18 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
         cleanup();
     }
 
+    private void webshellAudit(String message){
+        auditor.audit(Action.WEBSHELL, connectionInfo.getUsername() + ':' + connectionInfo.getPid(),
+                ResourceType.PROCESS, ActionOutcome.SUCCESS, message);
+    }
+
     private void cleanup() {
-        if (isDebugEnabled){
-            LOG.debugLog(String.format("[User %s to bash process %d --->] %s",
-                    connectionInfo.getUsername(),
-                    connectionInfo.getPid(),
-                    messageBuffer));
-        }
+        // log what's in the buffer
+        webshellAudit(messageBuffer.toString());
         if(session != null && !session.isOpen()) {
             session.close();
         }
-        if (connectionInfo != null) connectionInfo.disconnect();
+        connectionInfo.disconnect();
+        webshellAudit("Webshell closed");
     }
 }
