@@ -100,6 +100,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
             // audit command
             messageBuffer.append(command);
             if (command.contains("\r") || command.contains("\n")) {
+                // todo: parse messageBuffer to extract command for auditing
                 webshellAudit(messageBuffer.toString());
                 messageBuffer.setLength(0);
             }
@@ -143,8 +144,6 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     }
 
     private void cleanup() {
-        // log what's in the buffer
-        webshellAudit(messageBuffer.toString());
         if(session != null && !session.isOpen()) {
             session.close();
         }
