@@ -97,8 +97,8 @@ public class ConnectionInfo {
         }
         LOG.debugLog("destroyed bash process with pid: "+pid);
         try {
-            if (inputStream != null) inputStream.close();
-            if (outputStream != null) outputStream.close();
+            if (inputStream != null) {inputStream.close();}
+            if (outputStream != null) {outputStream.close();}
         } catch (IOException e){
             throw new RuntimeIOException(e);
         }
