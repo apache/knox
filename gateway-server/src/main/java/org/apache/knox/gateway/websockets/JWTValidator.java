@@ -129,9 +129,11 @@ public class JWTValidator {
             }
         }
         log.missingBearerToken();
-        throw new RuntimeException("no Valid JWT Token found");
     }
-
+    /**
+     * This method can return null if request does not contain a JWT token.
+     * @return
+     */
     public JWT getToken(){
         return token;
     }
