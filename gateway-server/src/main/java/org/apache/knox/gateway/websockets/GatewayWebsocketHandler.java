@@ -113,31 +113,45 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
   }
 
+  private Boolean isWebshellRequest(URI requestURI){
+    return requestURI.toString().matches(REGEX_WEBSHELL_REQUEST_PATH);
+  }
+
+  private WebshellWebSocketAdapter handleWebshellRequest(ServletUpgradeRequest req){
+      if (config.isWebShellEnabled()){
+        //todo: config quota for webshell connections, atomic int, initialize to config,
+        // if exceed throw exception quota existed.
+        JWTValidator jwtValidator= new JWTValidator(req, services, config);
+        if (jwtValidator.validate()) {
+          return new WebshellWebSocketAdapter(pool, config, jwtValidator);
+        }
+        LOG.onError("No valid token found for webshell connection");
+        throw new RuntimeException("No valid token found for webshell connection");
+      }
+      LOG.onError("webshell not enabled");
+      throw new RuntimeException("webshell not enabled");
+  }
+
+
   @Override
   public Object createWebSocket(ServletUpgradeRequest req,
                                 ServletUpgradeResponse resp) {
+
     try {
       final URI requestURI = req.getRequestURI();
-      JWTValidator jwtValidator = new JWTValidator(req, services, config);
-      if (config.isWebsocketJWTValidationEnabled() || config.isWebShellEnabled()){
+
+      if (isWebshellRequest(requestURI)) {
+        return handleWebshellRequest(req);
+      }
+
+      if (config.isWebsocketJWTValidationEnabled()){
+        JWTValidator jwtValidator= new JWTValidator(req, services, config);
         if (!jwtValidator.validate()) {
           LOG.onError("No valid token found for websocket connection");
           throw new RuntimeException("No valid token found for websocket connection");
         }
       }
 
-      /*  handle websocket request for webshell */
-      if (requestURI.toString().matches(REGEX_WEBSHELL_REQUEST_PATH)){
-        if (config.isWebShellEnabled()){
-          //todo: config quota for webshell connections, atomic int, initialize to config,
-          // if exceed throw exception quota existed.
-          return new WebshellWebSocketAdapter(pool, config, jwtValidator);
-        }
-        LOG.onError("webshell not enabled");
-        throw new RuntimeException("webshell not enabled");
-      }
-
-      /* handle websocket request other than for webshell  */
       // URL used to connect to websocket backend
       final String backendURL = getMatchedBackendURL(requestURI);
       LOG.debugLog("Generated backend URL for websocket connection: " + backendURL);

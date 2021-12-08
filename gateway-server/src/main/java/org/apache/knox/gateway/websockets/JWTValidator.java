@@ -113,7 +113,7 @@ public class JWTValidator {
 
     private void extractToken(ServletUpgradeRequest req){
         List<HttpCookie> ssoCookies = req.getCookies();
-        if (ssoCookies != null){
+        if (!ssoCookies.isEmpty()){
             for (HttpCookie ssoCookie : ssoCookies) {
                 if (cookieName.equals(ssoCookie.getName())) {
                     try {
@@ -129,11 +129,9 @@ public class JWTValidator {
             }
         }
         log.missingBearerToken();
+        throw new RuntimeException("no Valid JWT found");
     }
-    /**
-     * This method can return null if request does not contain a JWT token.
-     * @return
-     */
+
     public JWT getToken(){
         return token;
     }
