@@ -113,7 +113,7 @@ public class JWTValidator {
 
     private void extractToken(ServletUpgradeRequest req){
         List<HttpCookie> ssoCookies = req.getCookies();
-        if (!ssoCookies.isEmpty()){
+        if (ssoCookies != null){
             for (HttpCookie ssoCookie : ssoCookies) {
                 if (cookieName.equals(ssoCookie.getName())) {
                     try {
