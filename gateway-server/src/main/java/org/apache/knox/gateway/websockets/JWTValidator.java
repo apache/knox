@@ -35,10 +35,13 @@ import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
+import org.apache.knox.gateway.util.CertificateUtils;
 import org.apache.knox.gateway.util.Tokens;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 
+import javax.servlet.ServletException;
 import java.net.HttpCookie;
+import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -52,11 +55,14 @@ public class JWTValidator {
     private static final String JWT_EXPECTED_ISSUER = "jwt.expected.issuer";
     private static final String JWT_DEFAULT_SIGALG = "RS256";
     private static final String JWT_EXPECTED_SIGALG = "jwt.expected.sigalg";
+    public static final String SSO_VERIFICATION_PEM = "sso.token.verification.pem";
     private static final JWTMessages log = MessagesFactory.get(JWTMessages.class);
-    private Map<String,String> params;
     private String cookieName;
     private String expectedIssuer;
     private String expectedSigAlg;
+    private RSAPublicKey publicKey;
+    private String providerParamValue;
+
     private TokenStateService tokenStateService;
     private JWTokenAuthority authorityService;
     private SignatureVerificationCache signatureVerificationCache;
@@ -76,8 +82,8 @@ public class JWTValidator {
         extractToken(req);
     }
 
-    private void configureParameters() {
-        params = new LinkedHashMap<>();
+    private Map<String,String> getParams(){
+        Map<String,String> params = new LinkedHashMap<>();
         TopologyService ts = gatewayServices.getService(ServiceType.TOPOLOGY_SERVICE);
         for (Topology topology : ts.getTopologies()) {
             if (topology.getName().equals("knoxsso")) {
@@ -90,6 +96,24 @@ public class JWTValidator {
                 break;
             }
         }
+        return params;
+    }
+    private void configureParameters() {
+        Map<String,String> params = getParams();
+        // token verification pem
+        String verificationPEM = params.get(SSO_VERIFICATION_PEM);
+        // setup the public key of the token issuer for verification
+        if (verificationPEM != null) {
+            try {
+                publicKey = CertificateUtils.parseRSAPublicKey(verificationPEM);
+            } catch (ServletException e){
+                throw new RuntimeException("Failed to obtain public key: "+e.toString());
+            }
+        }
+
+        //provider-level configuration
+        providerParamValue = params.get(TokenStateService.CONFIG_SERVER_MANAGED);
+
         cookieName = params.get(KNOXSSO_COOKIE_NAME);
         if (cookieName == null) {
             cookieName = DEFAULT_SSO_COOKIE_NAME;
@@ -170,8 +194,6 @@ public class JWTValidator {
     // adapted from TokenUtils.isServerManagedTokenStateEnabled(FilterConfig)
     private boolean isServerManagedTokenStateEnabled() {
         boolean isServerManaged = false;
-        // First, check for explicit provider-level configuration
-        String providerParamValue = params.get(TokenStateService.CONFIG_SERVER_MANAGED);
         // If there is no provider-level configuration
         if (providerParamValue == null || providerParamValue.isEmpty()) {
             // Fall back to the gateway-level default
@@ -226,7 +248,6 @@ public class JWTValidator {
         }
     }
 
-
     private boolean verifyTokenSignature() {
         boolean verified;
         final String serializedJWT = token.toString();
@@ -235,7 +256,11 @@ public class JWTValidator {
         // If it has not yet been verified, then perform the verification now
         if (!verified) {
             try {
-                verified = authorityService.verifyToken(token);
+                if (publicKey != null) {
+                    verified = authorityService.verifyToken(token, publicKey);
+                } else {
+                    verified = authorityService.verifyToken(token);
+                }
             } catch (TokenServiceException e) {
                 log.unableToVerifyToken(e);
             }
