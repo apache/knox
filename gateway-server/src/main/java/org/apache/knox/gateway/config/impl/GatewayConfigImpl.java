@@ -319,6 +319,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return get(GATEWAY_HOME_VAR, System.getProperty(GATEWAY_HOME_VAR, System.getenv(GATEWAY_HOME_VAR)));
   }
 
+  // directory for saving the PIDs spawned by knox
+  @Override
+  public String getGatewayPIDDir(){
+    String pidDir = getGatewayHomeDir() + File.separator + "pids";
+    return FilenameUtils.normalize(pidDir);
+  }
+
   @Override
   public String getGatewayConfDir() {
     // 1st try: using the old style environment/system property name

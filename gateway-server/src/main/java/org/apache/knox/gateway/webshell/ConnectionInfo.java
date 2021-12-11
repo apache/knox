@@ -17,21 +17,25 @@
  */
 package org.apache.knox.gateway.webshell;
 
+import com.sun.jna.Pointer;
+import com.sun.jna.platform.win32.Kernel32;
+import com.sun.jna.platform.win32.WinNT;
+import de.thetaphi.forbiddenapis.SuppressForbidden;
+import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.websockets.WebsocketLogMessages;
 import org.eclipse.jetty.io.RuntimeIOException;
-import de.thetaphi.forbiddenapis.SuppressForbidden;
+
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Kernel32;
-import com.sun.jna.platform.win32.WinNT;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
+
 
 /**
 * data structure to store a connection session
@@ -44,14 +48,26 @@ public class ConnectionInfo {
     private final String username;
     private final Auditor auditor;
     private final WebsocketLogMessages LOG;
+    private final String gatewayPIDDir;
     private Long pid;
 
-    public ConnectionInfo(String username, Auditor auditor, WebsocketLogMessages LOG){
+    public ConnectionInfo(String username, String gatewayPIDDir, Auditor auditor, WebsocketLogMessages LOG) {
         this.username = username;
         this.auditor = auditor;
         this.LOG = LOG;
+        this.gatewayPIDDir = gatewayPIDDir;
     }
 
+    private void saveProcessPID(Long pid){
+        File file = new File(gatewayPIDDir + "/" + "webshell_" + pid.toString() + ".pid");
+        try {
+            FileUtils.writeStringToFile(file, pid.toString(), StandardCharsets.UTF_8);
+        } catch (IOException e){
+            LOG.onError("error saving PID for webshell:" + e);
+        }
+        auditor.audit( Action.WEBSHELL, username+':'+pid,
+                ResourceType.PROCESS, ActionOutcome.SUCCESS,"Started Bash process");
+    }
     @SuppressForbidden
     public void connect(){
         try {
@@ -59,13 +75,11 @@ public class ConnectionInfo {
             //ProcessBuilder builder = new ProcessBuilder( "sudo","-u",username,"bash","-i");
             builder.redirectErrorStream(true); // combine stderr with stdout
             process = builder.start();
-            //todo: save pid to {gateway_home}/pids/
             pid = getProcessID(process);
             if (pid == -1) {
                 throw new RuntimeException("Error getting process id");
             }
-            auditor.audit( Action.WEBSHELL, username+':'+pid,
-                    ResourceType.PROCESS, ActionOutcome.SUCCESS,"Started Bash process");
+            saveProcessPID(pid);
             inputStream = process.getInputStream();
             outputStream = process.getOutputStream();
             outputStream.write("cd $HOME\nwhoami\n".getBytes(StandardCharsets.UTF_8));
@@ -87,15 +101,19 @@ public class ConnectionInfo {
         return this.outputStream;
     }
 
+
     public void disconnect(){
-        //todo: delete pid from {gateway_home}/pids/
         if (process != null) {
             process.destroy();
             if (process.isAlive()) {
                 process.destroyForcibly();
             }
         }
-        LOG.debugLog("destroyed bash process with pid: "+pid);
+        auditor.audit( Action.WEBSHELL, username+':'+pid,
+                ResourceType.PROCESS, ActionOutcome.SUCCESS,"destroyed Bash process");
+        File fileToDelete = FileUtils.getFile(gatewayPIDDir + "/" + "webshell_" + pid.toString() + ".pid");
+        FileUtils.deleteQuietly(fileToDelete);
+
         try {
             if (inputStream != null) {inputStream.close();}
             if (outputStream != null) {outputStream.close();}

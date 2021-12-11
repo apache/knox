@@ -48,7 +48,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
         auditor = AuditServiceFactory.getAuditService().getAuditor(
                 AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
                 AuditConstants.KNOX_COMPONENT_NAME );
-        connectionInfo = new ConnectionInfo(jwtValidator.getUsername(), auditor, LOG);
+        connectionInfo = new ConnectionInfo(jwtValidator.getUsername(),config.getGatewayPIDDir(), auditor, LOG);
     }
 
     @Override

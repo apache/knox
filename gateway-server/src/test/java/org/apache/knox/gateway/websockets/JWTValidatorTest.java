@@ -64,10 +64,8 @@ import java.util.concurrent.TimeUnit;
 public class JWTValidatorTest {
     private static final String dnTemplate = "CN={0},OU=Test,O=Hadoop,L=Test,ST=Test,C=US";
     private static final String PASSCODE_CLAIM = "passcode";
-    private static final String TEST_KEY_ALIAS = "test-identity";
     public static final String SSO_VERIFICATION_PEM = "sso.token.verification.pem";
     private static final String JWT_EXPECTED_SIGALG = "jwt.expected.sigalg";
-
 
     private static SignedJWT jwt;
     private static Map<String, String> params = new HashMap<>();
@@ -79,8 +77,8 @@ public class JWTValidatorTest {
     private static JWTokenAuthority authorityService;
     private static TokenStateService tokenStateService;
 
-
     private JWTValidator jwtValidator;
+
     private static String buildDistinguishedName(String hostname) {
         final String cn = Character.isAlphabetic(hostname.charAt(0)) ? hostname : "localhost";
         String[] paramArray = new String[1];
@@ -196,7 +194,7 @@ public class JWTValidatorTest {
     }
 
     @Test
-    public void testGetToken() throws Exception{
+    public void testGetToken(){
         ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
         setTokenOnRequest(request, jwt);
         EasyMock.replay(request);
@@ -205,7 +203,7 @@ public class JWTValidatorTest {
     }
 
     @Test
-    public void testGetUsername() throws Exception{
+    public void testGetUsername(){
         ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
         setTokenOnRequest(request, jwt);
         EasyMock.replay(request);
@@ -221,31 +219,6 @@ public class JWTValidatorTest {
         jwtValidator = new JWTValidator(request, gatewayServices, gatewayConfig);
         EasyMock.expect(authorityService.verifyToken(jwtValidator.getToken(), publicKey)).andReturn(true).anyTimes();
         EasyMock.replay(authorityService);
-        Assert.assertEquals(true, jwtValidator.validate());
+        Assert.assertTrue(jwtValidator.validate());
     }
-
-
-    /*
-    @Test
-    public void testInvalidTokenUnexpectedIssuer() throws Exception{
-
-    }
-    @Test
-    public void testInvalidTokenExpired() throws Exception{
-
-    }
-    @Test
-    public void testInvalidTokenDisabled() throws Exception{
-
-    }
-    @Test
-    public void testTokenIsStillValid() throws Exception{
-
-    }
-    @Test
-    public void testTokenIsNolongerValid() throws Exception{
-
-    }
-
-    */
 }

@@ -124,9 +124,15 @@ public interface GatewayConfig {
   String getGatewayDataDir();
 
   /**
-   * The location of the gateway services definition's root directory
-   * @return The location of the gateway services top level directory.
+   * The location of the process PIDs spawned by gateway during runtime.
+   * @return The location of the process PIDs spawned by gateway during runtime.
    */
+  String getGatewayPIDDir();
+
+    /**
+     * The location of the gateway services definition's root directory
+     * @return The location of the gateway services top level directory.
+     */
   String getGatewayServicesDir();
 
   /**

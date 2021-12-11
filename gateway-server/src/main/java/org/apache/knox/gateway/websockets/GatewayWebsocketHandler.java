@@ -136,7 +136,6 @@ public class GatewayWebsocketHandler extends WebSocketHandler
   @Override
   public Object createWebSocket(ServletUpgradeRequest req,
                                 ServletUpgradeResponse resp) {
-
     try {
       final URI requestURI = req.getRequestURI();
 

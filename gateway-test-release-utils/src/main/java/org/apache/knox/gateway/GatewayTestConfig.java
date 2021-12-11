@@ -126,6 +126,16 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getGatewayPIDDir() {
+    return getGatewayPIDPath().toString();
+  }
+
+  private Path getGatewayPIDPath() {
+    return gatewayHomePath.resolve("pid");
+  }
+
+
+  @Override
   public String getGatewaySecurityDir() {
     return getGatewaySecurityPath().toString();
   }
