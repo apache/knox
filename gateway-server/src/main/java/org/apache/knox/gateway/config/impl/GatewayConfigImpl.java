@@ -157,7 +157,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   /* @since 2.0.0 WebShell config variables */
   public static final String WEBSHELL_FEATURE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".webshell.feature.enabled";
-
+  public static final String WEBSHELL_MAX_CONCURRENT_SESSIONS = GATEWAY_CONFIG_FILE_PREFIX + ".webshell.max.concurrent.sessions";
   /* @since 2.0.0 websocket JWT validation config variables */
   public static final String WEBSOCKET_JWT_VALIDATION_FEATURE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.JWT.validation.feature.enabled";
 
@@ -213,6 +213,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final boolean DEFAULT_WEBSOCKET_JWT_VALIDATION_FEATURE_ENABLED = false;
 
   public static final boolean DEFAULT_WEBSHELL_FEATURE_ENABLED = false;
+  public static final int DEFAULT_WEBSHELL_MAX_CONCURRENT_SESSIONS = 3;
 
   public static final boolean DEFAULT_GATEWAY_PORT_MAPPING_ENABLED = true;
   public static final boolean DEFAULT_REMOTE_ALIAS_SERVICE_ENABLED = true;
@@ -895,6 +896,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public boolean isWebShellEnabled() {
     final String result = get( WEBSHELL_FEATURE_ENABLED, Boolean.toString(DEFAULT_WEBSHELL_FEATURE_ENABLED));
     return Boolean.parseBoolean(result);
+  }
+
+  @Override
+  public int getMaximumConcurrentWebshells(){
+    return getInt( WEBSHELL_MAX_CONCURRENT_SESSIONS, DEFAULT_WEBSHELL_MAX_CONCURRENT_SESSIONS);
+
   }
 
   @Override

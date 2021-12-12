@@ -20,6 +20,8 @@ package org.apache.knox.gateway.webshell;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.knox.gateway.audit.api.Action;
@@ -38,19 +40,22 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     private Session session;
     private final ConnectionInfo connectionInfo;
     private final JWTValidator jwtValidator;
-    private final StringBuilder messageBuffer;
+    private final StringBuilder auditBuffer;
     private final Auditor auditor;
+    private AtomicInteger concurrentWebshells;
 
-    public WebshellWebSocketAdapter(ExecutorService pool, GatewayConfig config, JWTValidator jwtValidator) {
+    public WebshellWebSocketAdapter(ExecutorService pool, GatewayConfig config, JWTValidator jwtValidator, AtomicInteger concurrentWebshells) {
         super(null, pool, null, config);
         this.jwtValidator = jwtValidator;
-        messageBuffer = new StringBuilder(); // buffer for audit log
+        auditBuffer = new StringBuilder(); // buffer for audit log
         auditor = AuditServiceFactory.getAuditService().getAuditor(
                 AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
                 AuditConstants.KNOX_COMPONENT_NAME );
         connectionInfo = new ConnectionInfo(jwtValidator.getUsername(),config.getGatewayPIDDir(), auditor, LOG);
+        this.concurrentWebshells = concurrentWebshells;
     }
 
+    @SuppressWarnings("PMD.DoNotUseThreads")
     @Override
     public void onWebSocketConnect(final Session session) {
         this.session = session;
@@ -59,9 +64,10 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
         }
         connectionInfo.connect();
         pool.execute(this::blockingReadFromHost);
+        concurrentWebshells.incrementAndGet();
+
     }
 
-    // this function will block, should be run in an asynchronous thread
     private void blockingReadFromHost(){
         byte[] buffer = new byte[1024];
         int bytesRead;
@@ -76,7 +82,6 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
         }
     }
 
-    @SuppressWarnings("PMD.DoNotUseThreads")
     @Override
     public void onWebSocketText(final String message) {
         try {
@@ -99,11 +104,10 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
             connectionInfo.getOutputStream().flush();
             // audit command
             LOG.onError(command);
-            messageBuffer.append(command);
+            auditBuffer.append(command);
             if (command.contains("\r") || command.contains("\n")) {
-                // todo: parse messageBuffer to extract command for auditing
-                webshellAudit(messageBuffer.toString());
-                messageBuffer.setLength(0);
+                webshellAudit(auditBuffer.toString());
+                auditBuffer.setLength(0);
             }
         } catch (IOException e){
             LOG.onError("Error sending message to host");
@@ -149,6 +153,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
             session.close();
         }
         connectionInfo.disconnect();
+        concurrentWebshells.decrementAndGet();
         webshellAudit("Webshell closed");
     }
 }

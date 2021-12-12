@@ -50,6 +50,7 @@ public class ConnectionInfo {
     private final WebsocketLogMessages LOG;
     private final String gatewayPIDDir;
     private Long pid;
+    private Thread shutdownHook;
 
     public ConnectionInfo(String username, String gatewayPIDDir, Auditor auditor, WebsocketLogMessages LOG) {
         this.username = username;
@@ -68,7 +69,9 @@ public class ConnectionInfo {
         auditor.audit( Action.WEBSHELL, username+':'+pid,
                 ResourceType.PROCESS, ActionOutcome.SUCCESS,"Started Bash process");
     }
-    @SuppressForbidden
+
+    @SuppressForbidden // spawn a bash process for authenticated user
+    @SuppressWarnings("PMD.DoNotUseThreads") // we need to define a Thread to register a shutdown hook
     public void connect(){
         try {
             ProcessBuilder builder = new ProcessBuilder( "bash","-i");
@@ -84,7 +87,9 @@ public class ConnectionInfo {
             inputStream = process.getInputStream();
             outputStream = process.getOutputStream();
 
-            Runtime.getRuntime().addShutdownHook(new Thread(this::disconnect));
+            shutdownHook = new Thread(this::disconnect);
+            Runtime.getRuntime().addShutdownHook(shutdownHook);
+
 
             outputStream.write("cd $HOME\nwhoami\n".getBytes(StandardCharsets.UTF_8));
             outputStream.flush();
@@ -105,8 +110,8 @@ public class ConnectionInfo {
         return this.outputStream;
     }
 
-
     public void disconnect(){
+        Runtime.getRuntime().removeShutdownHook(shutdownHook);
         if (process != null) {
             process.destroy();
             if (process.isAlive()) {

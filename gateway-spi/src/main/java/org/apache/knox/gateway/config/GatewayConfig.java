@@ -367,6 +367,13 @@ public interface GatewayConfig {
    */
   boolean isWebShellEnabled();
 
+
+  /**
+   * Returns the maximum number of allowed concurrent webshells
+   * @since 2.0.0
+   */
+  int getMaximumConcurrentWebshells();
+
   /**
    * Returns true if websocket JWT validation feature enabled else false.
    * Default is false.

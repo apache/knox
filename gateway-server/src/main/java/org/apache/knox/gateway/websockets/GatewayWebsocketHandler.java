@@ -45,6 +45,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Websocket handler that will handle websocket connection request. This class
@@ -71,6 +72,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
           "^" + SECURE_WEBSOCKET_PROTOCOL_STRING + "[^/]+:[0-9]+/[^/]+/webshell$";
 
   private static final int POOL_SIZE = 10;
+  private AtomicInteger concurrentWebshells;
 
 
   /**
@@ -89,6 +91,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
     this.config = config;
     this.services = services;
     pool = Executors.newFixedThreadPool(POOL_SIZE);
+    this.concurrentWebshells = new AtomicInteger(0);
   }
 
   @Override
@@ -119,11 +122,14 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
   private WebshellWebSocketAdapter handleWebshellRequest(ServletUpgradeRequest req){
       if (config.isWebShellEnabled()){
-        //todo: config quota for webshell connections, atomic int, initialize to config,
-        // if exceed throw exception quota existed.
-        JWTValidator jwtValidator= new JWTValidator(req, services, config);
+        if (concurrentWebshells.get() >= config.getMaximumConcurrentWebshells()){
+          LOG.onError("number of allowed concurrent webshell sessions exceeded");
+          throw new RuntimeException("number of allowed concurrent webshell sessions exceeded");
+        }
+
+        JWTValidator jwtValidator = new JWTValidator(req, services, config);
         if (jwtValidator.validate()) {
-          return new WebshellWebSocketAdapter(pool, config, jwtValidator);
+          return new WebshellWebSocketAdapter(pool, config, jwtValidator, concurrentWebshells);
         }
         LOG.onError("No valid token found for webshell connection");
         throw new RuntimeException("No valid token found for webshell connection");

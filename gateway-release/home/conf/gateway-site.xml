@@ -95,6 +95,11 @@ limitations under the License.
         <value>false</value>
         <description>Enable/Disable webshell feature.</description>
     </property>
+    <property>
+        <name>webshell.max.concurrent.sessions</name>
+        <value>3</value>
+        <description>maximum number of concurrent webshell sessions</description>
+    </property>
 
     <!-- @since 2.0.0 websocket JWT validation configs -->
     <property>
