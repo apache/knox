@@ -107,7 +107,7 @@ public class JWTValidator {
             try {
                 publicKey = CertificateUtils.parseRSAPublicKey(verificationPEM);
             } catch (ServletException e){
-                throw new RuntimeException("Failed to obtain public key: "+e.toString());
+                throw new RuntimeException("Failed to obtain public key: "+e);
             }
         }
 

@@ -80,8 +80,12 @@ public class ConnectionInfo {
                 throw new RuntimeException("Error getting process id");
             }
             saveProcessPID(pid);
+
             inputStream = process.getInputStream();
             outputStream = process.getOutputStream();
+
+            Runtime.getRuntime().addShutdownHook(new Thread(this::disconnect));
+
             outputStream.write("cd $HOME\nwhoami\n".getBytes(StandardCharsets.UTF_8));
             outputStream.flush();
         } catch(IOException | RuntimeException e) {

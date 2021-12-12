@@ -39,7 +39,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     private final ConnectionInfo connectionInfo;
     private final JWTValidator jwtValidator;
     private final StringBuilder messageBuffer;
-    private static Auditor auditor;
+    private final Auditor auditor;
 
     public WebshellWebSocketAdapter(ExecutorService pool, GatewayConfig config, JWTValidator jwtValidator) {
         super(null, pool, null, config);
@@ -98,6 +98,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
             connectionInfo.getOutputStream().write(command.getBytes(StandardCharsets.UTF_8));
             connectionInfo.getOutputStream().flush();
             // audit command
+            LOG.onError(command);
             messageBuffer.append(command);
             if (command.contains("\r") || command.contains("\n")) {
                 // todo: parse messageBuffer to extract command for auditing
