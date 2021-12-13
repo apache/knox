@@ -54,6 +54,6 @@ export class AppComponent implements OnInit, AfterViewInit {
   @HostListener('window:beforeunload')
     onBeforeUnload() {
       this._ws.close();
-      return false;
+      return "websocket closed on client side";
   }
 }

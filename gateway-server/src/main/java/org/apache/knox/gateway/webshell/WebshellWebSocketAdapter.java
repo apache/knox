@@ -42,7 +42,6 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     private final JWTValidator jwtValidator;
     private final StringBuilder auditBuffer;
     private final Auditor auditor;
-    private AtomicInteger concurrentWebshells;
 
     public WebshellWebSocketAdapter(ExecutorService pool, GatewayConfig config, JWTValidator jwtValidator, AtomicInteger concurrentWebshells) {
         super(null, pool, null, config);
@@ -51,8 +50,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
         auditor = AuditServiceFactory.getAuditService().getAuditor(
                 AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
                 AuditConstants.KNOX_COMPONENT_NAME );
-        connectionInfo = new ConnectionInfo(jwtValidator.getUsername(),config.getGatewayPIDDir(), auditor, LOG);
-        this.concurrentWebshells = concurrentWebshells;
+        connectionInfo = new ConnectionInfo(jwtValidator.getUsername(),config.getGatewayPIDDir(), concurrentWebshells, auditor, LOG);
     }
 
     @SuppressWarnings("PMD.DoNotUseThreads")
@@ -64,7 +62,6 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
         }
         connectionInfo.connect();
         pool.execute(this::blockingReadFromHost);
-        concurrentWebshells.incrementAndGet();
 
     }
 
@@ -153,7 +150,6 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
             session.close();
         }
         connectionInfo.disconnect();
-        concurrentWebshells.decrementAndGet();
         webshellAudit("Webshell closed");
     }
 }

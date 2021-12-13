@@ -35,6 +35,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -51,12 +52,20 @@ public class ConnectionInfo {
     private final String gatewayPIDDir;
     private Long pid;
     private Thread shutdownHook;
+    private AtomicInteger concurrentWebshells;
 
-    public ConnectionInfo(String username, String gatewayPIDDir, Auditor auditor, WebsocketLogMessages LOG) {
+    public ConnectionInfo(String username, String gatewayPIDDir, AtomicInteger concurrentWebshells, Auditor auditor, WebsocketLogMessages LOG) {
         this.username = username;
         this.auditor = auditor;
         this.LOG = LOG;
         this.gatewayPIDDir = gatewayPIDDir;
+        this.concurrentWebshells = concurrentWebshells;
+        shutdownHook = new Thread(() -> {
+            LOG.debugLog("running webshell shutdown hook");
+            disconnect();
+        });
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
+
     }
 
     private void saveProcessPID(Long pid){
@@ -74,7 +83,7 @@ public class ConnectionInfo {
     @SuppressWarnings("PMD.DoNotUseThreads") // we need to define a Thread to register a shutdown hook
     public void connect(){
         try {
-            ProcessBuilder builder = new ProcessBuilder( "bash","-i");
+            ProcessBuilder builder = new ProcessBuilder( "bash", "-i");
             //ProcessBuilder builder = new ProcessBuilder( "sudo","-u",username,"bash","-i");
             builder.redirectErrorStream(true); // combine stderr with stdout
             process = builder.start();
@@ -82,17 +91,14 @@ public class ConnectionInfo {
             if (pid == -1) {
                 throw new RuntimeException("Error getting process id");
             }
+            concurrentWebshells.incrementAndGet();
             saveProcessPID(pid);
-
             inputStream = process.getInputStream();
             outputStream = process.getOutputStream();
 
-            shutdownHook = new Thread(this::disconnect);
-            Runtime.getRuntime().addShutdownHook(shutdownHook);
-
-
             outputStream.write("cd $HOME\nwhoami\n".getBytes(StandardCharsets.UTF_8));
             outputStream.flush();
+
         } catch(IOException | RuntimeException e) {
             LOG.onError("Error starting bash for " + username +" : "+ e.getMessage());
             disconnect();
@@ -111,26 +117,29 @@ public class ConnectionInfo {
     }
 
     public void disconnect(){
-        Runtime.getRuntime().removeShutdownHook(shutdownHook);
         if (process != null) {
             process.destroy();
             if (process.isAlive()) {
                 process.destroyForcibly();
             }
         }
+        concurrentWebshells.decrementAndGet();
         auditor.audit( Action.WEBSHELL, username+':'+pid,
                 ResourceType.PROCESS, ActionOutcome.SUCCESS,"destroyed Bash process");
         File fileToDelete = FileUtils.getFile(gatewayPIDDir + "/" + "webshell_" + pid.toString() + ".pid");
         FileUtils.deleteQuietly(fileToDelete);
-
         try {
             if (inputStream != null) {inputStream.close();}
             if (outputStream != null) {outputStream.close();}
         } catch (IOException e){
             throw new RuntimeIOException(e);
+        } finally {
+            Runtime.getRuntime().removeShutdownHook(shutdownHook);
         }
     }
+
     /*
+    // obtain java version
     private static int getVersion() {
         String version = System.getProperty("java.version");
         if(version.startsWith("1.")) {
@@ -141,13 +150,10 @@ public class ConnectionInfo {
         } return Integer.parseInt(version);
     }*/
 
+    // process.pid() is only available for java 9+,
+    // so we write our own function to be compatible with java 8
     private static long getProcessID(Process p)
     {
-        /* todo: wont compile with java 8
-        if (getVersion() >= 9){
-            return p.pid();
-        }*/
-
         long result = -1;
         try
         {

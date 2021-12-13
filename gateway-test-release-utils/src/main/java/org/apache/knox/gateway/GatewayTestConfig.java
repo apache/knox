@@ -51,6 +51,8 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT = 100;
   private static final boolean DEFAULT_WEBSHELL_FEATURE_ENABLED = false ;
   private static final boolean DEFAULT_WEBSOCKET_JWT_VALIDATION_FEATURE_ENABLED = false ;
+  public static final int DEFAULT_WEBSHELL_MAX_CONCURRENT_SESSIONS = 3;
+
 
 
   private Path gatewayHomePath = Paths.get("gateway-home");
@@ -538,6 +540,13 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public boolean isWebShellEnabled() {
     return DEFAULT_WEBSHELL_FEATURE_ENABLED;
   }
+
+  @Override
+  public int getMaximumConcurrentWebshells() {
+    return DEFAULT_WEBSHELL_MAX_CONCURRENT_SESSIONS;
+  }
+
+
 
   @Override
   public boolean isWebsocketJWTValidationEnabled() {
