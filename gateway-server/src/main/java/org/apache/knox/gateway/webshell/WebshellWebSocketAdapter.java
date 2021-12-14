@@ -150,6 +150,5 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
             session.close();
         }
         connectionInfo.disconnect();
-        webshellAudit("Webshell closed");
     }
 }

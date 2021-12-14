@@ -24,7 +24,7 @@ import { NgTerminal } from 'ng-terminal';
 })
 export class AppComponent implements OnInit, AfterViewInit {
   @ViewChild('term', {static: false}) child: NgTerminal;
-  private _ws: WebSocket;
+  private websocket: WebSocket;
 
   constructor() { }
 
@@ -32,28 +32,30 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     const terminal = this.child.underlying;
-    terminal.options.fontSize = 20;
+    //terminal.options.fontSize = 20;
     terminal.options.convertEol = true;
     let endpoint = 'wss://'+ location.hostname + ':' + location.port + '/'+
         location.pathname.split('/')[1] + '/webshell';
     console.log(endpoint);
-    this._ws = new WebSocket(endpoint);
-    this._ws.onmessage = function(event){
+    this.websocket = new WebSocket(endpoint);
+    this.websocket.onmessage = function(event){
       terminal.write(event.data);
     }
-    this._ws.onclose = function(event){
+    this.websocket.onclose = function(event){
       terminal.write("\r\nConnection closed");
     }
 
     terminal.onData((command) => {
       // send command to backend server
-      this._ws.send(JSON.stringify({command:command}));
+      this.websocket.send(JSON.stringify({command:command}));
     })
   }
 
-  @HostListener('window:beforeunload')
+    @HostListener('window:beforeunload')
     onBeforeUnload() {
-      this._ws.close();
-      return "websocket closed on client side";
-  }
+    //todo: only when send() is called beforehand, close() becomes effective. why?
+      this.websocket.send(JSON.stringify({command:"User closed webshell browser tab\r"}));
+      this.websocket.close();
+    }
+
 }
