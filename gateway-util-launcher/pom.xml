@@ -22,7 +22,7 @@
     <parent>
         <artifactId>gateway</artifactId>
         <groupId>org.apache.knox</groupId>
-        <version>1.6.0</version>
+        <version>1.6.1</version>
     </parent>
     <artifactId>gateway-util-launcher</artifactId>
     <name>gateway-util-launcher</name>
