@@ -18,9 +18,6 @@
 package org.apache.knox.gateway.webshell;
 
 import com.pty4j.PtyProcess;
-import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Kernel32;
-import com.sun.jna.platform.win32.WinNT;
 import de.thetaphi.forbiddenapis.SuppressForbidden;
 import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.audit.api.Action;
@@ -46,7 +43,6 @@ public class ConnectionInfo {
 
     private InputStream inputStream;
     private OutputStream outputStream;
-    //private Process process;
     private PtyProcess ptyProcess;
     private final String username;
     private final Auditor auditor;
@@ -67,7 +63,6 @@ public class ConnectionInfo {
             disconnect();
         });
         Runtime.getRuntime().addShutdownHook(shutdownHook);
-
     }
 
     private void saveProcessPID(int pid){
@@ -85,37 +80,15 @@ public class ConnectionInfo {
     @SuppressWarnings("PMD.DoNotUseThreads") // we need to define a Thread to register a shutdown hook
     public void connect(){
         try {
-            // The command to run in a PTY...
-            String[] cmd = { "bash", "-i" };
-            // The initial environment to pass to the PTY child process...
-            String[] env = { "" };
-
-            ptyProcess = PtyProcess.exec(cmd, env);
-
+            String[] cmd = { "bash" };
+            // todo: specify environment
+            ptyProcess = PtyProcess.exec(cmd);
             outputStream = ptyProcess.getOutputStream();
             inputStream = ptyProcess.getInputStream();
             // todo: combine stderr with stdout?
             pid = ptyProcess.getPid();
-
-            /*
-            ProcessBuilder builder = new ProcessBuilder( "bash", "-i");
-            //ProcessBuilder builder = new ProcessBuilder( "sudo","-u",username,"bash","-i");
-            builder.redirectErrorStream(true); // combine stderr with stdout
-            process = builder.start();
-            pid = (int) getProcessID(process);
-            if (pid == -1) {
-                throw new RuntimeException("Error getting process id");
-            }
-            inputStream = process.getInputStream();
-            outputStream = process.getOutputStream();
-
-            outputStream.write("cd $HOME\nwhoami\n".getBytes(StandardCharsets.UTF_8));
-            outputStream.flush();
-            */
             concurrentWebshells.incrementAndGet();
             saveProcessPID(pid);
-
-
         } catch(IOException | RuntimeException e) {
             LOG.onError("Error starting bash for " + username +" : "+ e.getMessage());
             disconnect();
@@ -140,15 +113,6 @@ public class ConnectionInfo {
                 ptyProcess.destroyForcibly();
             }
         }
-        /*
-        if (process != null) {
-            process.destroy();
-            if (process.isAlive()) {
-                process.destroyForcibly();
-            }
-        }
-
-         */
         concurrentWebshells.decrementAndGet();
         auditor.audit( Action.WEBSHELL, username+':'+pid,
                 ResourceType.PROCESS, ActionOutcome.SUCCESS,"destroyed Bash process");
@@ -162,53 +126,5 @@ public class ConnectionInfo {
         } finally {
             Runtime.getRuntime().removeShutdownHook(shutdownHook);
         }
-    }
-
-    /*
-    // obtain java version
-    private static int getVersion() {
-        String version = System.getProperty("java.version");
-        if(version.startsWith("1.")) {
-            version = version.substring(2, 3);
-        } else {
-            int dot = version.indexOf(".");
-            if(dot != -1) { version = version.substring(0, dot); }
-        } return Integer.parseInt(version);
-    }*/
-
-    // process.pid() is only available for java 9+,
-    // so we write our own function to be compatible with java 8
-    private static long getProcessID(Process p)
-    {
-        long result = -1;
-        try
-        {
-            //for windows
-            if (p.getClass().getName().equals("java.lang.Win32Process") ||
-                    p.getClass().getName().equals("java.lang.ProcessImpl"))
-            {
-                Field f = p.getClass().getDeclaredField("handle");
-                f.setAccessible(true);
-                long handl = f.getLong(p);
-                Kernel32 kernel = Kernel32.INSTANCE;
-                WinNT.HANDLE hand = new WinNT.HANDLE();
-                hand.setPointer(Pointer.createConstant(handl));
-                result = kernel.GetProcessId(hand);
-                f.setAccessible(false);
-            }
-            //for unix based operating systems
-            else if (p.getClass().getName().equals("java.lang.UNIXProcess"))
-            {
-                Field f = p.getClass().getDeclaredField("pid");
-                f.setAccessible(true);
-                result = f.getLong(p);
-                f.setAccessible(false);
-            }
-        }
-        catch(Exception ex)
-        {
-            result = -1;
-        }
-        return result;
     }
 }
