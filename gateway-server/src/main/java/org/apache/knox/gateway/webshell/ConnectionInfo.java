@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.webshell;
 
+import com.pty4j.PtyProcess;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinNT;
@@ -45,12 +46,13 @@ public class ConnectionInfo {
 
     private InputStream inputStream;
     private OutputStream outputStream;
-    private Process process;
+    //private Process process;
+    private PtyProcess ptyProcess;
     private final String username;
     private final Auditor auditor;
     private final WebsocketLogMessages LOG;
     private final String gatewayPIDDir;
-    private Long pid;
+    private int pid;
     private Thread shutdownHook;
     private AtomicInteger concurrentWebshells;
 
@@ -68,10 +70,10 @@ public class ConnectionInfo {
 
     }
 
-    private void saveProcessPID(Long pid){
-        File file = new File(gatewayPIDDir + "/" + "webshell_" + pid.toString() + ".pid");
+    private void saveProcessPID(int pid){
+        File file = new File(gatewayPIDDir + "/" + "webshell_" + pid + ".pid");
         try {
-            FileUtils.writeStringToFile(file, pid.toString(), StandardCharsets.UTF_8);
+            FileUtils.writeStringToFile(file, String.valueOf(pid), StandardCharsets.UTF_8);
         } catch (IOException e){
             LOG.onError("error saving PID for webshell:" + e);
         }
@@ -83,21 +85,36 @@ public class ConnectionInfo {
     @SuppressWarnings("PMD.DoNotUseThreads") // we need to define a Thread to register a shutdown hook
     public void connect(){
         try {
+            // The command to run in a PTY...
+            String[] cmd = { "bash", "-i" };
+            // The initial environment to pass to the PTY child process...
+            String[] env = { "" };
+
+            ptyProcess = PtyProcess.exec(cmd, env);
+
+            outputStream = ptyProcess.getOutputStream();
+            inputStream = ptyProcess.getInputStream();
+            // todo: combine stderr with stdout?
+            pid = ptyProcess.getPid();
+
+            /*
             ProcessBuilder builder = new ProcessBuilder( "bash", "-i");
             //ProcessBuilder builder = new ProcessBuilder( "sudo","-u",username,"bash","-i");
             builder.redirectErrorStream(true); // combine stderr with stdout
             process = builder.start();
-            pid = getProcessID(process);
+            pid = (int) getProcessID(process);
             if (pid == -1) {
                 throw new RuntimeException("Error getting process id");
             }
-            concurrentWebshells.incrementAndGet();
-            saveProcessPID(pid);
             inputStream = process.getInputStream();
             outputStream = process.getOutputStream();
 
             outputStream.write("cd $HOME\nwhoami\n".getBytes(StandardCharsets.UTF_8));
             outputStream.flush();
+            */
+            concurrentWebshells.incrementAndGet();
+            saveProcessPID(pid);
+
 
         } catch(IOException | RuntimeException e) {
             LOG.onError("Error starting bash for " + username +" : "+ e.getMessage());
@@ -108,7 +125,7 @@ public class ConnectionInfo {
     public String getUsername(){
         return this.username;
     }
-    public Long getPid(){ return this.pid; }
+    public int getPid(){ return this.pid; }
     public InputStream getInputStream(){
         return this.inputStream;
     }
@@ -117,16 +134,25 @@ public class ConnectionInfo {
     }
 
     public void disconnect(){
+        if (ptyProcess != null) {
+            ptyProcess.destroy();
+            if (ptyProcess.isAlive()) {
+                ptyProcess.destroyForcibly();
+            }
+        }
+        /*
         if (process != null) {
             process.destroy();
             if (process.isAlive()) {
                 process.destroyForcibly();
             }
         }
+
+         */
         concurrentWebshells.decrementAndGet();
         auditor.audit( Action.WEBSHELL, username+':'+pid,
                 ResourceType.PROCESS, ActionOutcome.SUCCESS,"destroyed Bash process");
-        File fileToDelete = FileUtils.getFile(gatewayPIDDir + "/" + "webshell_" + pid.toString() + ".pid");
+        File fileToDelete = FileUtils.getFile(gatewayPIDDir + "/" + "webshell_" + pid + ".pid");
         FileUtils.deleteQuietly(fileToDelete);
         try {
             if (inputStream != null) {inputStream.close();}

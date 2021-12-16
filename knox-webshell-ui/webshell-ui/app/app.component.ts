@@ -32,7 +32,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     const terminal = this.child.underlying;
-    //terminal.options.fontSize = 20;
+    //terminal.options.fontSize = 12;
     terminal.options.convertEol = true;
     let endpoint = 'wss://'+ location.hostname + ':' + location.port + '/'+
         location.pathname.split('/')[1] + '/webshell';

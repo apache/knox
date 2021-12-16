@@ -42,6 +42,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     private final JWTValidator jwtValidator;
     private final StringBuilder auditBuffer;
     private final Auditor auditor;
+    private final ObjectMapper objectMapper;
 
     public WebshellWebSocketAdapter(ExecutorService pool, GatewayConfig config, JWTValidator jwtValidator, AtomicInteger concurrentWebshells) {
         super(null, pool, null, config);
@@ -51,6 +52,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
                 AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
                 AuditConstants.KNOX_COMPONENT_NAME );
         connectionInfo = new ConnectionInfo(jwtValidator.getUsername(),config.getGatewayPIDDir(), concurrentWebshells, auditor, LOG);
+        objectMapper = new ObjectMapper();
     }
 
     @SuppressWarnings("PMD.DoNotUseThreads")
@@ -83,7 +85,6 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     public void onWebSocketText(final String message) {
         try {
             if (jwtValidator.tokenIsStillValid()) {
-                ObjectMapper objectMapper = new ObjectMapper();
                 WebshellData webshellData = objectMapper.readValue(message, WebshellData.class);
                 transToHost(webshellData.getCommand());
             } else {
@@ -97,9 +98,10 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
 
     private void transToHost (String command){
         try {
+            // forward command to bash process
             connectionInfo.getOutputStream().write(command.getBytes(StandardCharsets.UTF_8));
             connectionInfo.getOutputStream().flush();
-            // audit command
+            // audit command whenever there is a new line
             LOG.onError(command);
             auditBuffer.append(command);
             if (command.contains("\r") || command.contains("\n")) {
