@@ -90,7 +90,7 @@ public class DefaultTopologyServiceTest {
       assertNotNull(content);
       IOUtils.copy(content, output);
     }
-    file.setLastModified(timestamp);
+    assertTrue(file.setLastModified(timestamp));
     assertTrue("Failed to create test file " + file.getAbsolutePath(), file.exists());
     assertTrue("Failed to populate test file " + file.getAbsolutePath(), file.length() > 0);
 
@@ -99,7 +99,7 @@ public class DefaultTopologyServiceTest {
 
   private File touchFile(File parent, String name) throws IOException {
     final File file = new File(parent, name);
-    if (!file.exists()) {
+    if (file.exists()) {
       FileUtils.touch(file);
     }
     return file;
@@ -712,7 +712,16 @@ public class DefaultTopologyServiceTest {
   }
 
   @Test
-  public void testTopologyNotRedeployedIfNotChanged() throws Exception {
+  public void testTopologyRedeployedIfChangeNotRequired() throws Exception {
+    testTopologyRedeployment(false);
+  }
+
+  @Test
+  public void testTopologyNotRedeployedIfNotChangedAndChangeRequired() throws Exception {
+    testTopologyRedeployment(true);
+  }
+
+  private void testTopologyRedeployment(boolean requiresChange) throws Exception {
     final File dir = createDir();
     try {
       final String topologyFileName = "one.xml";
@@ -720,12 +729,12 @@ public class DefaultTopologyServiceTest {
       createFile(topologyDir, topologyFileName, "org/apache/knox/gateway/topology/file/topology-one.xml", topologyDir.lastModified());
       final TestTopologyListener topoListener = new TestTopologyListener();
       final TopologyService topologyService = new DefaultTopologyService();
-      final Map<String, String> c = new HashMap<>();
 
       final GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
       EasyMock.expect(config.getGatewayTopologyDir()).andReturn(topologyDir.getAbsolutePath()).anyTimes();
+      EasyMock.expect(config.topologyRedeploymentRequiresChanges()).andReturn(requiresChange).anyTimes();
       EasyMock.replay(config);
-      topologyService.init(config, c);
+      topologyService.init(config,  new HashMap<>());
       topologyService.addTopologyChangeListener(topoListener);
       topologyService.reloadTopologies();
       assertThat(topoListener.events.size(), is(1));
@@ -734,8 +743,12 @@ public class DefaultTopologyServiceTest {
       assertThat(events.get(0).getType(), is(TopologyEvent.Type.CREATED));
       topoListener.events.clear();
 
-      // actually update the file
-      TestUtils.updateFile(topologyDir, topologyFileName, "host-one", "host-one-b");
+      if (requiresChange) {
+        TestUtils.updateFile(topologyDir, topologyFileName, "host-one", "host-one-b");
+      } else {
+        touchFile(topologyDir, topologyFileName);
+      }
+
       topologyService.reloadTopologies();
       assertThat(topoListener.events.size(), is(1));
       events = topoListener.events.get(0);
@@ -743,10 +756,12 @@ public class DefaultTopologyServiceTest {
       assertThat(events.get(0).getType(), is(TopologyEvent.Type.UPDATED));
       topoListener.events.clear();
 
-      // simply touch the file, but not change it -> this should not trigger any update event
-      touchFile(topologyDir, topologyFileName);
-      topologyService.reloadTopologies();
-      assertThat(topoListener.events.size(), is(0));
+      if (requiresChange) {
+        // simply touch the file, but not change it -> this should not trigger any update event
+        touchFile(topologyDir, topologyFileName);
+        topologyService.reloadTopologies();
+        assertThat(topoListener.events.size(), is(0));
+      }
     } finally {
       FileUtils.deleteQuietly(dir);
     }

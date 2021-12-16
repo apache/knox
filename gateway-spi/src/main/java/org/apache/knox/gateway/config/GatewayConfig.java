@@ -669,6 +669,15 @@ public interface GatewayConfig {
   boolean isTopologyValidationEnabled();
 
   /**
+   * @return true if topology re-deployment requires an actual change in the
+   *         topology. Defaults to <code>false</code> to be backward compatible
+   *         with previous chanages.
+   *
+   * @since 2.0.0
+   */
+  boolean topologyRedeploymentRequiresChanges();
+
+  /**
    * Returns a list of services that need service name appended to
    * X-Forward-Context header as a result of which the new header would look
    * /{gateway}/{sandbox}/{serviceName}
