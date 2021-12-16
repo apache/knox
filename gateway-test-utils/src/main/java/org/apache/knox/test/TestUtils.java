@@ -44,11 +44,14 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class TestUtils {
   private static final Logger LOG = LogManager.getLogger(TestUtils.class);
@@ -162,16 +165,22 @@ public class TestUtils {
 
   public static String merge( String resource, Properties properties ) {
     ClasspathResourceLoader loader = new ClasspathResourceLoader();
-    loader.getResourceStream( resource );
+    loader.getResourceReader(resource, StandardCharsets.UTF_8.name());
 
     VelocityEngine engine = new VelocityEngine();
     Properties config = new Properties();
-    config.setProperty( RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, "org.apache.velocity.runtime.log.NullLogSystem" );
+    config.setProperty( "runtime.log.logsystem.class", "org.apache.velocity.runtime.log.NullLogSystem" );
     config.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
     config.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
     engine.init( config );
 
-    VelocityContext context = new VelocityContext( properties );
+    final Map<String, Object> propertiesMap = properties.entrySet().stream().collect(
+        Collectors.toMap(
+            e -> String.valueOf(e.getKey()),
+            e -> String.valueOf(e.getValue()),
+            (prev, next) -> next, HashMap::new
+        ));
+    VelocityContext context = new VelocityContext( propertiesMap );
     Template template = engine.getTemplate( resource );
     StringWriter writer = new StringWriter();
     template.merge( context, writer );
