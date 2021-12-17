@@ -151,8 +151,9 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     private void audit(String command){
         auditBuffer.append(command);
         if (command.contains("\r") || command.contains("\n")) {
-            auditor.audit(Action.WEBSHELL, connectionInfo.getUsername() + ':' + connectionInfo.getPid(),
-                    ResourceType.PROCESS, ActionOutcome.SUCCESS, cleanText(auditBuffer.toString()));
+            auditor.audit(Action.WEBSHELL, connectionInfo.getUsername() +
+                    ':' + connectionInfo.getPid(), ResourceType.PROCESS,
+                    ActionOutcome.SUCCESS, cleanText(auditBuffer.toString()));
             auditBuffer.setLength(0);
         }
     }

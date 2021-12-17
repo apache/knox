@@ -32,7 +32,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     const terminal = this.child.underlying;
-    //terminal.options.fontSize = 12;
+    // todo: can add other options to customize xterm
+    // or make it adjustable on the browser
     terminal.options.convertEol = true;
     let endpoint = 'wss://'+ location.hostname + ':' + location.port + '/'+
         location.pathname.split('/')[1] + '/webshell';
@@ -53,7 +54,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     @HostListener('window:beforeunload')
     onBeforeUnload() {
-      //todo: websocket.close() doesnot work reliably if websocket.send() not called first.
+      //todo: websocket.close() does not work reliably if websocket.send() not called first.
       this.websocket.send(JSON.stringify({command:"User closed webshell browser tab"}));
       this.websocket.close();
     }
