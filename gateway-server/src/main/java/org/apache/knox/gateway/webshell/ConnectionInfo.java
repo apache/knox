@@ -47,10 +47,12 @@ public class ConnectionInfo {
     private final Auditor auditor;
     private final WebsocketLogMessages LOG;
     private final String gatewayPIDDir;
+    @SuppressWarnings("PMD.DoNotUseThreads") //we need to defined a Thread to clean up resources using shutdown hook
+    private final Thread shutdownHook;
+    private final AtomicInteger concurrentWebshells;
     private long pid;
-    private Thread shutdownHook;
-    private AtomicInteger concurrentWebshells;
 
+    @SuppressWarnings("PMD.DoNotUseThreads") //we need to defined a Thread to clean up resources using shutdown hook
     public ConnectionInfo(String username, String gatewayPIDDir, AtomicInteger concurrentWebshells, Auditor auditor, WebsocketLogMessages LOG) {
         this.username = username;
         this.auditor = auditor;
@@ -75,12 +77,13 @@ public class ConnectionInfo {
                 ResourceType.PROCESS, ActionOutcome.SUCCESS,"Started Bash process");
     }
 
-    @SuppressForbidden // spawn a bash process for authenticated user
+    @SuppressForbidden // we need to spawn a bash process for authenticated user
     @SuppressWarnings("PMD.DoNotUseThreads") // we need to define a Thread to register a shutdown hook
     public void connect(){
         try {
-            //String[] cmd = { "sudo","-u",username, "bash"};
-            String[] cmd = {"bash"};
+            // sudoers file needs to be configured for this to work.
+            // refer to design doc for details
+            String[] cmd = { "sudo","-u",username, "bash"};
             // todo: add configurable environment
             ptyProcess = PtyProcess.exec(cmd);
             outputStream = ptyProcess.getOutputStream();
