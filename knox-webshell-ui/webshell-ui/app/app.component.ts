@@ -53,8 +53,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     @HostListener('window:beforeunload')
     onBeforeUnload() {
-    //todo: only when send() is called beforehand, close() becomes effective. why?
-      this.websocket.send(JSON.stringify({command:"User closed webshell browser tab\r"}));
+      //todo: websocket.close() doesnot work reliably if websocket.send() not called first.
+      this.websocket.send(JSON.stringify({command:"User closed webshell browser tab"}));
       this.websocket.close();
     }
 

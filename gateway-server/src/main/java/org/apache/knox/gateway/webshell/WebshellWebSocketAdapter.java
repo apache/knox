@@ -101,13 +101,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
             // forward command to bash process
             connectionInfo.getOutputStream().write(command.getBytes(StandardCharsets.UTF_8));
             connectionInfo.getOutputStream().flush();
-            // audit command whenever there is a new line
-            LOG.onError(command);
-            auditBuffer.append(command);
-            if (command.contains("\r") || command.contains("\n")) {
-                webshellAudit(auditBuffer.toString());
-                auditBuffer.setLength(0);
-            }
+            audit(command);
         } catch (IOException e){
             LOG.onError("Error sending message to host");
             cleanup();
@@ -142,9 +136,25 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
         cleanup();
     }
 
-    private void webshellAudit(String message){
-        auditor.audit(Action.WEBSHELL, connectionInfo.getUsername() + ':' + connectionInfo.getPid(),
-                ResourceType.PROCESS, ActionOutcome.SUCCESS, message);
+    private String cleanText(String text){
+        // strips off all non-ASCII characters
+        text = text.replaceAll("[^\\x00-\\x7F]", "");
+        // erases all the ASCII control characters
+        text = text.replaceAll("\\p{Cntrl}", "");
+        // removes non-printable characters from Unicode
+        text = text.replaceAll("\\p{C}", "");
+        return text;
+    }
+
+    // todo: this is an approximate solution to audit commands sent to bash process
+    // for more detailed discussion see design doc
+    private void audit(String command){
+        auditBuffer.append(command);
+        if (command.contains("\r") || command.contains("\n")) {
+            auditor.audit(Action.WEBSHELL, connectionInfo.getUsername() + ':' + connectionInfo.getPid(),
+                    ResourceType.PROCESS, ActionOutcome.SUCCESS, cleanText(auditBuffer.toString()));
+            auditBuffer.setLength(0);
+        }
     }
 
     private void cleanup() {

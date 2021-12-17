@@ -31,7 +31,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -48,7 +47,7 @@ public class ConnectionInfo {
     private final Auditor auditor;
     private final WebsocketLogMessages LOG;
     private final String gatewayPIDDir;
-    private int pid;
+    private long pid;
     private Thread shutdownHook;
     private AtomicInteger concurrentWebshells;
 
@@ -65,7 +64,7 @@ public class ConnectionInfo {
         Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
-    private void saveProcessPID(int pid){
+    private void saveProcessPID(long pid){
         File file = new File(gatewayPIDDir + "/" + "webshell_" + pid + ".pid");
         try {
             FileUtils.writeStringToFile(file, String.valueOf(pid), StandardCharsets.UTF_8);
@@ -80,13 +79,14 @@ public class ConnectionInfo {
     @SuppressWarnings("PMD.DoNotUseThreads") // we need to define a Thread to register a shutdown hook
     public void connect(){
         try {
-            String[] cmd = { "bash" };
-            // todo: specify environment
+            //String[] cmd = { "sudo","-u",username, "bash"};
+            String[] cmd = {"bash"};
+            // todo: add configurable environment
             ptyProcess = PtyProcess.exec(cmd);
             outputStream = ptyProcess.getOutputStream();
             inputStream = ptyProcess.getInputStream();
-            // todo: combine stderr with stdout?
-            pid = ptyProcess.getPid();
+            // todo: how to combine stderr with stdout?
+            pid = ptyProcess.pid();
             concurrentWebshells.incrementAndGet();
             saveProcessPID(pid);
         } catch(IOException | RuntimeException e) {
@@ -98,7 +98,7 @@ public class ConnectionInfo {
     public String getUsername(){
         return this.username;
     }
-    public int getPid(){ return this.pid; }
+    public long getPid(){ return this.pid; }
     public InputStream getInputStream(){
         return this.inputStream;
     }
