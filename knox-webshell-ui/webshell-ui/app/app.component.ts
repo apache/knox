@@ -35,6 +35,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     // todo: can add other options to customize xterm
     // or make it adjustable on the browser
     terminal.options.convertEol = true;
+    terminal.setOption("fontFamily","Hack");
     let endpoint = 'wss://'+ location.hostname + ':' + location.port + '/'+
         location.pathname.split('/')[1] + '/webshell';
     console.log(endpoint);

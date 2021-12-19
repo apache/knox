@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.webshell;
 
 import com.pty4j.PtyProcess;
+import com.pty4j.PtyProcessBuilder;
 import de.thetaphi.forbiddenapis.SuppressForbidden;
 import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.audit.api.Action;
@@ -47,12 +48,12 @@ public class ConnectionInfo {
     private final Auditor auditor;
     private final WebsocketLogMessages LOG;
     private final String gatewayPIDDir;
-    @SuppressWarnings("PMD.DoNotUseThreads") //we need to defined a Thread to clean up resources using shutdown hook
+    @SuppressWarnings("PMD.DoNotUseThreads") //we need to define a Thread to clean up resources using shutdown hook
     private final Thread shutdownHook;
     private final AtomicInteger concurrentWebshells;
     private long pid;
 
-    @SuppressWarnings("PMD.DoNotUseThreads") //we need to defined a Thread to clean up resources using shutdown hook
+    @SuppressWarnings("PMD.DoNotUseThreads") //we need to define a Thread to clean up resources using shutdown hook
     public ConnectionInfo(String username, String gatewayPIDDir, AtomicInteger concurrentWebshells, Auditor auditor, WebsocketLogMessages LOG) {
         this.username = username;
         this.auditor = auditor;
@@ -80,22 +81,33 @@ public class ConnectionInfo {
     @SuppressForbidden // we need to spawn a bash process for authenticated user
     @SuppressWarnings("PMD.DoNotUseThreads") // we need to define a Thread to register a shutdown hook
     public void connect(){
-        try {
             // sudoers file needs to be configured for this to work.
             // refer to design doc for details
-            String[] cmd = { "sudo","-u",username, "bash"};
-            // todo: add configurable environment
-            ptyProcess = PtyProcess.exec(cmd);
+            String[] cmd = { "sudo","--user", username, "--preserve-env","bash"};
+            // todo: make environment configurable through gateway-site.xml
+            // if do not set environment variable, env = System.getenv() is used by default
+            // Map<String,String> env = System.getenv();
+            // env.put("TEST_ENV","test_env");
+            //env.forEach((key, value) -> LOG.debugLog(key + ":" + value));
+            try {
+                ptyProcess = new PtyProcessBuilder()
+                        .setCommand(cmd)
+                        //.setEnvironment(env) todo: not reliable
+                        .setRedirectErrorStream(true)
+                        .setWindowsAnsiColorEnabled(true)
+                        .setInitialColumns(150)
+                        .setInitialRows(50)
+                        .start();
+            } catch (IOException e) {
+                LOG.onError("Error starting ptyProcess: " + e.getMessage());
+                disconnect();
+                throw new RuntimeIOException(e);
+            }
             outputStream = ptyProcess.getOutputStream();
             inputStream = ptyProcess.getInputStream();
-            // todo: how to combine stderr with stdout?
             pid = ptyProcess.pid();
             concurrentWebshells.incrementAndGet();
             saveProcessPID(pid);
-        } catch(IOException | RuntimeException e) {
-            LOG.onError("Error starting bash for " + username +" : "+ e.getMessage());
-            disconnect();
-        }
     }
 
     public String getUsername(){
