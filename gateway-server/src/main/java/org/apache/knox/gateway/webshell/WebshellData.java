@@ -21,13 +21,13 @@ package org.apache.knox.gateway.webshell;
  * data structure to store request coming from client (connect or command)
  */
 public class WebshellData {
-    private String command = "";
+    private String userInput = "";
 
-    public String getCommand() {
-        return command;
+    public String getUserInput() {
+        return userInput;
     }
 
-    public void setCommand(String command) {
-        this.command = command;
+    public void setUserInput(String userInput) {
+        this.userInput = userInput;
     }
 }

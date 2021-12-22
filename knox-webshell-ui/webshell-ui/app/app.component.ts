@@ -33,9 +33,10 @@ export class AppComponent implements OnInit, AfterViewInit {
   ngAfterViewInit() {
     const terminal = this.child.underlying;
     // todo: can add other options to customize xterm
-    // or make it adjustable on the browser
     terminal.options.convertEol = true;
-    terminal.setOption("fontFamily","Hack");
+    terminal.options.letterSpacing = 0;
+    terminal.options.fontFamily = 'Monospace Font, monospace';
+
     let endpoint = 'wss://'+ location.hostname + ':' + location.port + '/'+
         location.pathname.split('/')[1] + '/webshell';
     console.log(endpoint);

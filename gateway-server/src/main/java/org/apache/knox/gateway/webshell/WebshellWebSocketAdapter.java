@@ -86,7 +86,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
         try {
             if (jwtValidator.tokenIsStillValid()) {
                 WebshellData webshellData = objectMapper.readValue(message, WebshellData.class);
-                transToHost(webshellData.getCommand());
+                transToHost(webshellData.getUserInput());
             } else {
                 throw new RuntimeException("Token expired");
             }
@@ -96,12 +96,12 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
         }
     }
 
-    private void transToHost (String command){
+    private void transToHost (String userInput){
         try {
             // forward command to bash process
-            connectionInfo.getOutputStream().write(command.getBytes(StandardCharsets.UTF_8));
+            connectionInfo.getOutputStream().write(userInput.getBytes(StandardCharsets.UTF_8));
             connectionInfo.getOutputStream().flush();
-            audit(command);
+            audit(userInput);
         } catch (IOException e){
             LOG.onError("Error sending message to host");
             cleanup();
@@ -148,12 +148,14 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
 
     // todo: this is an approximate solution to audit commands sent to bash process
     // for more detailed discussion see design doc
-    private void audit(String command){
-        auditBuffer.append(command);
-        if (command.contains("\r") || command.contains("\n")) {
+    private void audit(String userInput){
+        auditBuffer.append(userInput);
+        if (userInput.contains("\r") || userInput.contains("\n")) {
+            // we only log the part of the string before the first space
+            String command = auditBuffer.toString().split("\\s+")[0];
             auditor.audit(Action.WEBSHELL, connectionInfo.getUsername() +
                     ':' + connectionInfo.getPid(), ResourceType.PROCESS,
-                    ActionOutcome.SUCCESS, cleanText(auditBuffer.toString()));
+                    ActionOutcome.SUCCESS, cleanText(command));
             auditBuffer.setLength(0);
         }
     }

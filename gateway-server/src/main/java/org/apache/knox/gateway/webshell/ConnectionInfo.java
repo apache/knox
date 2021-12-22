@@ -83,7 +83,7 @@ public class ConnectionInfo {
     public void connect(){
             // sudoers file needs to be configured for this to work.
             // refer to design doc for details
-            String[] cmd = { "sudo","--user", username, "--preserve-env","bash"};
+            String[] cmd = { "sudo","--user", username,"bash"};
             // todo: make environment configurable through gateway-site.xml
             // if do not set environment variable, env = System.getenv() is used by default
             // Map<String,String> env = System.getenv();
@@ -92,7 +92,7 @@ public class ConnectionInfo {
             try {
                 ptyProcess = new PtyProcessBuilder()
                         .setCommand(cmd)
-                        //.setEnvironment(env) todo: not reliable
+                        //.setEnvironment(env)
                         .setRedirectErrorStream(true)
                         .setWindowsAnsiColorEnabled(true)
                         .setInitialColumns(150)
