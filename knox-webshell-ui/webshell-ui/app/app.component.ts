@@ -48,16 +48,16 @@ export class AppComponent implements OnInit, AfterViewInit {
       terminal.write("\r\nConnection closed");
     }
 
-    terminal.onData((command) => {
-      // send command to backend server
-      this.websocket.send(JSON.stringify({command:command}));
+    terminal.onData((userInput) => {
+      // send userInput to backend server
+      this.websocket.send(JSON.stringify({userInput:userInput}));
     })
   }
 
     @HostListener('window:beforeunload')
     onBeforeUnload() {
       //todo: websocket.close() does not work reliably if websocket.send() not called first.
-      this.websocket.send(JSON.stringify({command:"User closed webshell browser tab"}));
+      this.websocket.send(JSON.stringify({userInput:"User closed webshell browser tab"}));
       this.websocket.close();
     }
 

@@ -98,7 +98,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
 
     private void transToHost (String userInput){
         try {
-            // forward command to bash process
+            // forward userInput to bash process
             connectionInfo.getOutputStream().write(userInput.getBytes(StandardCharsets.UTF_8));
             connectionInfo.getOutputStream().flush();
             audit(userInput);
