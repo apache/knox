@@ -101,7 +101,9 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
             // forward userInput to bash process
             connectionInfo.getOutputStream().write(userInput.getBytes(StandardCharsets.UTF_8));
             connectionInfo.getOutputStream().flush();
-            audit(userInput);
+            if (config.isWebShellLoggingEnabled()) {
+                audit(userInput);
+            }
         } catch (IOException e){
             LOG.onError("Error sending message to host");
             cleanup();

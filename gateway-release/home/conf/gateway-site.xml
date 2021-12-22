@@ -100,6 +100,11 @@ limitations under the License.
         <value>3</value>
         <description>maximum number of concurrent webshell sessions</description>
     </property>
+    <property>
+        <name>gateway.webshell.logging.enabled</name>
+        <value>false</value>
+        <description>Enable/Disable webshell logging.</description>
+    </property>
 
     <!-- @since 2.0.0 websocket JWT validation configs -->
     <property>

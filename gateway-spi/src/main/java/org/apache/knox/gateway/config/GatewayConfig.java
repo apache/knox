@@ -367,6 +367,14 @@ public interface GatewayConfig {
    */
   boolean isWebShellEnabled();
 
+  /**
+   * Returns true if webshell logging enabled else false.
+   * Default is false.
+   * @since 2.0.0
+   * @return true if webshell logging is enabled
+   */
+  boolean isWebShellLoggingEnabled();
+
 
   /**
    * Returns the maximum number of allowed concurrent webshells
