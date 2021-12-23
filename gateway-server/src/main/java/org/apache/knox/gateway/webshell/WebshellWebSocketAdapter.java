@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.CharMatcher;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
@@ -139,13 +140,15 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     }
 
     private String cleanText(String text){
-        // strips off all non-ASCII characters
-        text = text.replaceAll("[^\\x00-\\x7F]", "");
-        // erases all the ASCII control characters
-        text = text.replaceAll("\\p{Cntrl}", "");
-        // removes non-printable characters from Unicode
-        text = text.replaceAll("\\p{C}", "");
-        return text;
+        // remove scroll up and down control characters
+        text = text.replaceAll("[\\^\\[OA|\\^\\[OB]", "");
+        // remove control characters
+        String noControl = CharMatcher.javaIsoControl().removeFrom(text);
+        // remove invisible characters
+        String printable = CharMatcher.invisible().removeFrom(noControl);
+        // remove non-ascii characters
+        String clean = CharMatcher.ascii().retainFrom(printable);
+        return clean;
     }
 
     // todo: this is an approximate solution to audit commands sent to bash process
@@ -154,11 +157,13 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
         auditBuffer.append(userInput);
         if (userInput.contains("\r") || userInput.contains("\n")) {
             // we only log the part of the string before the first space
-            String command = auditBuffer.toString().split("\\s+")[0];
-            auditor.audit(Action.WEBSHELL, connectionInfo.getUsername() +
-                    ':' + connectionInfo.getPid(), ResourceType.PROCESS,
-                    ActionOutcome.SUCCESS, cleanText(command));
-            auditBuffer.setLength(0);
+            String[] commands = auditBuffer.toString().split("\\s+");
+            if (commands.length > 0) {
+                auditor.audit(Action.WEBSHELL, connectionInfo.getUsername() +
+                                ':' + connectionInfo.getPid(), ResourceType.PROCESS,
+                        ActionOutcome.SUCCESS, cleanText(commands[0]));
+                auditBuffer.setLength(0);
+            }
         }
     }
 
