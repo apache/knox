@@ -417,6 +417,7 @@
             <groupId>de.thetaphi</groupId>
             <artifactId>forbiddenapis</artifactId>
         </dependency>
+        <!-- webshell support -->
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-provider-security-jwt</artifactId>
@@ -429,8 +430,10 @@
             <groupId>org.jetbrains.pty4j</groupId>
             <artifactId>purejavacomm</artifactId>
         </dependency>
-
-
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
         <!-- ********** ********** ********** ********** ********** ********** -->
         <!-- ********** Test Dependencies                           ********** -->
         <!-- ********** ********** ********** ********** ********** ********** -->

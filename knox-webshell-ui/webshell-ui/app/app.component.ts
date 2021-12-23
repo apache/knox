@@ -16,8 +16,6 @@
  */
 import {Component, OnInit, ViewChild, AfterViewInit, HostListener} from '@angular/core';
 import { NgTerminal } from 'ng-terminal';
-//import FontFaceObserver from 'fontfaceobserver';
-
 
 @Component({
   selector: 'app-root',
@@ -39,16 +37,10 @@ export class AppComponent implements OnInit, AfterViewInit {
     terminal.options.letterSpacing = 0;
     terminal.options.fontFamily = 'Courier New';
 
-    // to make sure font is loaded correctly
+    /* check font
     const fontFamily = terminal.getOption("fontFamily");
     console.log(fontFamily);
-    /*
-    const font = new FontFaceObserver(fontFamily);
-    font.load().then(function () {
-      console.log(fontFamily + ' is available');
-    }, function () {
-      console.log(fontFamily + ' is not available');
-    });*/
+    */
 
     let endpoint = 'wss://'+ location.hostname + ':' + location.port + '/'+
         location.pathname.split('/')[1] + '/webshell';
