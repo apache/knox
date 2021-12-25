@@ -128,7 +128,6 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
 
     @Override
     public void onWebSocketClose(int statusCode, String reason) {
-        super.onWebSocketClose(statusCode, reason);
         LOG.debugLog("Closing websocket connection");
         cleanup();
     }
@@ -157,7 +156,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
         auditBuffer.append(userInput);
         if (userInput.contains("\r") || userInput.contains("\n")) {
             // we only log the part of the string before the first space
-            String[] commands = auditBuffer.toString().split("\\s+");
+            String[] commands = auditBuffer.toString().trim().split("\\s+");
             if (commands.length > 0) {
                 auditor.audit(Action.WEBSHELL, connectionInfo.getUsername() +
                                 ':' + connectionInfo.getPid(), ResourceType.PROCESS,
@@ -170,6 +169,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     private void cleanup() {
         if(session != null && !session.isOpen()) {
             session.close();
+            session = null;
         }
         connectionInfo.disconnect();
     }

@@ -58,12 +58,9 @@ export class AppComponent implements OnInit, AfterViewInit {
       this.websocket.send(JSON.stringify({userInput:userInput}));
     })
   }
-
-    @HostListener('window:beforeunload')
-    onBeforeUnload() {
-      //todo: websocket.close() does not work reliably if websocket.send() not called first.
-      this.websocket.send(JSON.stringify({userInput:"User closed webshell browser tab"}));
-      this.websocket.close();
-    }
+    @HostListener('window:unload')
+        unloadHandler() {
+          this.websocket.close();
+        }
 
 }
