@@ -81,33 +81,34 @@ public class ConnectionInfo {
     @SuppressForbidden // we need to spawn a bash process for authenticated user
     @SuppressWarnings("PMD.DoNotUseThreads") // we need to define a Thread to register a shutdown hook
     public void connect(){
-            // sudoers file needs to be configured for this to work.
-            // refer to design doc for details
-            String[] cmd = { "sudo","--user", username,"bash"};
-            // todo: make environment configurable through gateway-site.xml
-            // if do not set environment variable, env = System.getenv() is used by default
-            // Map<String,String> env = System.getenv();
-            // env.put("TEST_ENV","test_env");
-            //env.forEach((key, value) -> LOG.debugLog(key + ":" + value));
-            try {
-                ptyProcess = new PtyProcessBuilder()
-                        .setCommand(cmd)
-                        //.setEnvironment(env)
-                        .setRedirectErrorStream(true)
-                        .setWindowsAnsiColorEnabled(true)
-                        .setInitialColumns(150)
-                        .setInitialRows(50)
-                        .start();
-            } catch (IOException e) {
-                LOG.onError("Error starting ptyProcess: " + e.getMessage());
-                disconnect();
-                throw new RuntimeIOException(e);
-            }
-            outputStream = ptyProcess.getOutputStream();
-            inputStream = ptyProcess.getInputStream();
-            pid = ptyProcess.pid();
-            concurrentWebshells.incrementAndGet();
-            saveProcessPID(pid);
+        // sudoers file needs to be configured for this to work.
+        // refer to design doc for details
+        String[] cmd = { "sudo","--user", username,"bash"};
+        // todo: make environment configurable through gateway-site.xml
+        // if do not set environment variable, env = System.getenv() is used by default
+        // Map<String,String> env = System.getenv();
+        // env.put("TEST_ENV","test_env");
+        // env.forEach((key, value) -> LOG.debugLog(key + ":" + value));
+        try {
+            ptyProcess = new PtyProcessBuilder()
+                    .setCommand(cmd)
+                    //.setEnvironment(env)
+                    .setRedirectErrorStream(true)
+                    .setWindowsAnsiColorEnabled(true)
+                    .setInitialColumns(150)
+                    .setInitialRows(50)
+                    .start();
+        } catch (IOException e) {
+            LOG.onError("Error starting ptyProcess: " + e.getMessage());
+            disconnect();
+            throw new RuntimeIOException(e);
+        }
+        outputStream = ptyProcess.getOutputStream();
+        inputStream = ptyProcess.getInputStream();
+        pid = ptyProcess.pid();
+        saveProcessPID(pid);
+        concurrentWebshells.incrementAndGet();
+        LOG.debugLog("incremented concurrent webshells:"+concurrentWebshells);
     }
 
     public String getUsername(){
@@ -127,8 +128,11 @@ public class ConnectionInfo {
             if (ptyProcess.isAlive()) {
                 ptyProcess.destroyForcibly();
             }
+            ptyProcess = null;
+            concurrentWebshells.decrementAndGet();
+            LOG.debugLog("decremented concurrent webshells:"+concurrentWebshells);
         }
-        concurrentWebshells.decrementAndGet();
+
         auditor.audit( Action.WEBSHELL, username+':'+pid,
                 ResourceType.PROCESS, ActionOutcome.SUCCESS,"destroyed Bash process");
         File fileToDelete = FileUtils.getFile(gatewayPIDDir + "/" + "webshell_" + pid + ".pid");

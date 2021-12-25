@@ -58,9 +58,4 @@ export class AppComponent implements OnInit, AfterViewInit {
       this.websocket.send(JSON.stringify({userInput:userInput}));
     })
   }
-    @HostListener('window:unload')
-        unloadHandler() {
-          this.websocket.close();
-        }
-
 }
