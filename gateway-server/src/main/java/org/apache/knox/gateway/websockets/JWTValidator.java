@@ -89,11 +89,9 @@ public class JWTValidator {
             if (topology.getName().equals("knoxsso")) {
                 for (Service service : topology.getServices()) {
                     if (service.getRole().equals("KNOXSSO")) {
-                        params = service.getParams();
+                        return service.getParams();
                     }
-                    break;
                 }
-                break;
             }
         }
         return params;
@@ -144,7 +142,7 @@ public class JWTValidator {
                         token = new JWTToken(ssoCookie.getValue());
                         displayableTokenId = Tokens.getTokenIDDisplayText(TokenUtils.getTokenId(token));
                         displayableToken = Tokens.getTokenDisplayText(token.toString());
-                        websocketLog.debugLog("found token:"+displayableToken+" id:"+displayableTokenId);
+                        websocketLog.debugLog("found token id:"+ displayableTokenId);
                         return;
                     } catch (ParseException e) {
                         // Fall through to keep checking if there are more cookies

@@ -373,7 +373,7 @@ public interface GatewayConfig {
    * @since 2.0.0
    * @return true if webshell logging is enabled
    */
-  boolean isWebShellLoggingEnabled();
+  boolean isWebShellAuditLoggingEnabled();
 
 
   /**
@@ -381,6 +381,12 @@ public interface GatewayConfig {
    * @since 2.0.0
    */
   int getMaximumConcurrentWebshells();
+
+  /**
+   * Returns the read buffer size for Web Shell
+   * @since 2.0.0
+   */
+  int getWebShellReadBufferSize();
 
   /**
    * Returns true if websocket JWT validation feature enabled else false.

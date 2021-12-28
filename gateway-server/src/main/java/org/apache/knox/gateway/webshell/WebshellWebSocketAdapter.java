@@ -69,7 +69,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     }
 
     private void blockingReadFromHost(){
-        byte[] buffer = new byte[1024];
+        byte[] buffer = new byte[config.getWebShellReadBufferSize()];
         int bytesRead;
         try {
             while ((bytesRead = connectionInfo.getInputStream().read(buffer)) != -1) {
@@ -102,7 +102,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
             // forward userInput to bash process
             connectionInfo.getOutputStream().write(userInput.getBytes(StandardCharsets.UTF_8));
             connectionInfo.getOutputStream().flush();
-            if (config.isWebShellLoggingEnabled()) {
+            if (config.isWebShellAuditLoggingEnabled()) {
                 audit(userInput);
             }
         } catch (IOException e){

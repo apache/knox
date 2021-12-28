@@ -101,9 +101,14 @@ limitations under the License.
         <description>maximum number of concurrent webshell sessions</description>
     </property>
     <property>
-        <name>gateway.webshell.logging.enabled</name>
+        <name>gateway.webshell.audit.logging.enabled</name>
         <value>false</value>
-        <description>Enable/Disable webshell logging.</description>
+        <description>Enable/Disable webshell audit logging.</description>
+    </property>
+    <property>
+        <name>gateway.webshell.read.buffer.size</name>
+        <value>1024</value>
+        <description>Web Shell buffer size for reading</description>
     </property>
 
     <!-- @since 2.0.0 websocket JWT validation configs -->

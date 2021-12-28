@@ -83,16 +83,10 @@ public class ConnectionInfo {
     public void connect(){
         // sudoers file needs to be configured for this to work.
         // refer to design doc for details
-        String[] cmd = { "sudo","--user", username,"bash"};
-        // todo: make environment configurable through gateway-site.xml
-        // if do not set environment variable, env = System.getenv() is used by default
-        // Map<String,String> env = System.getenv();
-        // env.put("TEST_ENV","test_env");
-        // env.forEach((key, value) -> LOG.debugLog(key + ":" + value));
+        String[] cmd = { "sudo","--user", username,"bash","-i"};
         try {
             ptyProcess = new PtyProcessBuilder()
                     .setCommand(cmd)
-                    //.setEnvironment(env)
                     .setRedirectErrorStream(true)
                     .setWindowsAnsiColorEnabled(true)
                     .setInitialColumns(150)
@@ -114,7 +108,9 @@ public class ConnectionInfo {
     public String getUsername(){
         return this.username;
     }
-    public long getPid(){ return this.pid; }
+    public long getPid(){
+        return this.pid;
+    }
     public InputStream getInputStream(){
         return this.inputStream;
     }
