@@ -309,4 +309,47 @@ public class JWTValidatorTest {
         EasyMock.replay(authorityService);
         Assert.assertFalse(jwtValidator.validate());
     }
+
+    @Test
+    public void testNoPublicKey() throws Exception{
+        SignedJWT validJWT = getJWT(JWT_TEST_ISSUER,
+                "alice",
+                new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)),
+                new Date(),
+                privateKey,
+                JWSAlgorithm.RS512.getName());
+        Map<String, String> params = new HashMap<>();
+        params.put(JWT_EXPECTED_ISSUER, JWT_TEST_ISSUER);
+        params.put(JWT_EXPECTED_SIGALG, validJWT.getHeader().getAlgorithm().getName());
+        setUpParams(params);
+        ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
+        setTokenOnRequest(request, validJWT);
+        EasyMock.replay(request);
+        jwtValidator = new JWTValidator(request, gatewayServices, gatewayConfig);
+        EasyMock.expect(authorityService.verifyToken(jwtValidator.getToken())).andReturn(true).anyTimes();
+        EasyMock.replay(authorityService);
+        Assert.assertTrue(jwtValidator.validate());
+    }
+
+    @Test
+    public void testFailToVerifyToken() throws Exception{
+        SignedJWT parsableJWT = getJWT(JWT_TEST_ISSUER,
+                "alice",
+                new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)),
+                new Date(),
+                privateKey,
+                JWSAlgorithm.RS512.getName());
+        Map<String, String> params = new HashMap<>();
+        params.put(SSO_VERIFICATION_PEM, pem);
+        params.put(JWT_EXPECTED_ISSUER, JWT_TEST_ISSUER);
+        params.put(JWT_EXPECTED_SIGALG, parsableJWT.getHeader().getAlgorithm().getName());
+        setUpParams(params);
+        ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
+        setTokenOnRequest(request, parsableJWT);
+        EasyMock.replay(request);
+        jwtValidator = new JWTValidator(request, gatewayServices, gatewayConfig);
+        EasyMock.expect(authorityService.verifyToken(jwtValidator.getToken(), publicKey)).andReturn(false).anyTimes();
+        EasyMock.replay(authorityService);
+        Assert.assertFalse(jwtValidator.validate());
+    }
 }
