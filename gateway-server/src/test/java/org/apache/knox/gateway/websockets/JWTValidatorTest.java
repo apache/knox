@@ -26,7 +26,6 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.SignatureVerificationCache;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
@@ -41,7 +40,9 @@ import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.lang.reflect.Field;
 import java.net.HttpCookie;
@@ -66,9 +67,9 @@ public class JWTValidatorTest {
     private static final String PASSCODE_CLAIM = "passcode";
     public static final String SSO_VERIFICATION_PEM = "sso.token.verification.pem";
     private static final String JWT_EXPECTED_SIGALG = "jwt.expected.sigalg";
+    private static final String JWT_EXPECTED_ISSUER = "jwt.expected.issuer";
+    private static final String JWT_TEST_ISSUER = "jwt.test.issuer";
 
-    private static SignedJWT jwt;
-    private static Map<String, String> params = new HashMap<>();
     private static RSAPublicKey publicKey;
     private static RSAPrivateKey privateKey;
     private static String pem;
@@ -86,7 +87,8 @@ public class JWTValidatorTest {
         return new MessageFormat(dnTemplate, Locale.ROOT).format(paramArray);
     }
 
-    private static void setupJWT() throws Exception{
+    @BeforeClass
+    public static void setUpBeforeClass() throws Exception {
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
         kpg.initialize(2048);
         KeyPair KPair = kpg.generateKeyPair();
@@ -99,54 +101,6 @@ public class JWTValidatorTest {
         publicKey = (RSAPublicKey) KPair.getPublic();
         privateKey = (RSAPrivateKey) KPair.getPrivate();
 
-        jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER,
-                "alice",
-                new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)),
-                new Date(),
-                privateKey,
-                JWSAlgorithm.RS512.getName());
-
-        params.put(SSO_VERIFICATION_PEM, pem);
-        params.put(JWT_EXPECTED_SIGALG, jwt.getHeader().getAlgorithm().getName());
-
-    }
-
-    private static void setupGatewayConfig() {
-        gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
-        EasyMock.expect(gatewayConfig.isServerManagedTokenStateEnabled())
-                .andReturn(false).anyTimes();
-
-        gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
-        TopologyService ts = EasyMock.createNiceMock(TopologyService.class);
-        Topology topology = EasyMock.createNiceMock(Topology.class);
-        Service service = EasyMock.createNiceMock(Service.class);
-
-        EasyMock.expect(gatewayServices.getService(ServiceType.TOPOLOGY_SERVICE))
-                .andReturn(ts).anyTimes();
-        EasyMock.expect(ts.getTopologies())
-                .andReturn(Arrays.asList(topology)).anyTimes();
-        EasyMock.expect(topology.getName())
-                .andReturn("knoxsso").anyTimes();
-        EasyMock.expect(topology.getServices())
-                .andReturn(Arrays.asList(service)).anyTimes();
-        EasyMock.expect(service.getRole())
-                .andReturn("KNOXSSO").anyTimes();
-        EasyMock.expect(service.getParams())
-                .andReturn(params).anyTimes();
-
-        authorityService = EasyMock.createNiceMock(JWTokenAuthority.class);
-        EasyMock.expect(gatewayServices.getService(ServiceType.TOKEN_SERVICE))
-                .andReturn(authorityService).anyTimes();
-        tokenStateService = EasyMock.createNiceMock(TokenStateService.class);
-        EasyMock.expect(gatewayServices.getService(ServiceType.TOKEN_STATE_SERVICE))
-                .andReturn(tokenStateService).anyTimes();
-        EasyMock.replay(gatewayConfig, gatewayServices, ts, topology, service);
-
-    }
-    @BeforeClass
-    public static void setUpBeforeClass() throws Exception {
-        setupJWT();
-        setupGatewayConfig();
     }
 
     @After
@@ -193,32 +147,166 @@ public class JWTValidatorTest {
         return signedJWT;
     }
 
-    @Test
-    public void testGetToken(){
-        ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
-        setTokenOnRequest(request, jwt);
-        EasyMock.replay(request);
-        jwtValidator = new JWTValidator(request, gatewayServices, gatewayConfig);
-        Assert.assertEquals(jwt.serialize(), jwtValidator.getToken().toString());
-    }
+    private void setUpParams(Map<String,String> params){
+        gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
+        TopologyService ts = EasyMock.createNiceMock(TopologyService.class);
+        // insert params into gatewayServices
+        EasyMock.expect(gatewayServices.getService(ServiceType.TOPOLOGY_SERVICE))
+                .andReturn(ts).anyTimes();
 
-    @Test
-    public void testGetUsername(){
-        ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
-        setTokenOnRequest(request, jwt);
-        EasyMock.replay(request);
-        jwtValidator = new JWTValidator(request, gatewayServices, gatewayConfig);
-        Assert.assertEquals("alice",jwtValidator.getUsername());
+        Topology topology = EasyMock.createNiceMock(Topology.class);
+        EasyMock.expect(ts.getTopologies())
+                .andReturn(Arrays.asList(topology)).anyTimes();
+        EasyMock.expect(topology.getName())
+                .andReturn("knoxsso").anyTimes();
+
+        Service service = EasyMock.createNiceMock(Service.class);
+        EasyMock.expect(topology.getServices())
+                .andReturn(Arrays.asList(service)).anyTimes();
+        EasyMock.expect(service.getRole())
+                .andReturn("KNOXSSO").anyTimes();
+        EasyMock.expect(service.getParams())
+                .andReturn(params).anyTimes();
+
+        authorityService = EasyMock.createNiceMock(JWTokenAuthority.class);
+        EasyMock.expect(gatewayServices.getService(ServiceType.TOKEN_SERVICE))
+                .andReturn(authorityService).anyTimes();
+
+        gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.expect(gatewayConfig.isServerManagedTokenStateEnabled())
+                .andReturn(false).anyTimes();
+
+        EasyMock.replay(gatewayConfig, gatewayServices, ts, topology, service);
     }
 
     @Test
     public void testValidToken() throws Exception{
+        SignedJWT validJWT = getJWT(JWT_TEST_ISSUER,
+                "alice",
+                new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)),
+                new Date(),
+                privateKey,
+                JWSAlgorithm.RS512.getName());
+        Map<String, String> params = new HashMap<>();
+        params.put(SSO_VERIFICATION_PEM, pem);
+        params.put(JWT_EXPECTED_ISSUER, JWT_TEST_ISSUER);
+        params.put(JWT_EXPECTED_SIGALG, validJWT.getHeader().getAlgorithm().getName());
+        setUpParams(params);
         ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
-        setTokenOnRequest(request, jwt);
+        setTokenOnRequest(request, validJWT);
+        EasyMock.replay(request);
+        jwtValidator = new JWTValidator(request, gatewayServices, gatewayConfig);
+        // test get token
+        Assert.assertEquals(validJWT.serialize(), jwtValidator.getToken().toString());
+        // test get username
+        Assert.assertEquals("alice",jwtValidator.getUsername());
+        // test validate token
+        EasyMock.expect(authorityService.verifyToken(jwtValidator.getToken(), publicKey)).andReturn(true).anyTimes();
+        EasyMock.replay(authorityService);
+        Assert.assertTrue(jwtValidator.validate());
+    }
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
+    @Test
+    public void testMissingToken() throws Exception {
+        thrown.expect(RuntimeException.class);
+        thrown.expectMessage("No Valid JWT found");
+        setUpParams(new HashMap<>());
+        ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
+        EasyMock.expect(request.getCookies()).andReturn(null).anyTimes();
         EasyMock.replay(request);
         jwtValidator = new JWTValidator(request, gatewayServices, gatewayConfig);
         EasyMock.expect(authorityService.verifyToken(jwtValidator.getToken(), publicKey)).andReturn(true).anyTimes();
         EasyMock.replay(authorityService);
-        Assert.assertTrue(jwtValidator.validate());
+    }
+
+
+    @Test
+    public void testUnexpectedTokenIssuer() throws Exception{
+        SignedJWT unexpectedIssuerJWT = getJWT("unexpectedIssuer",
+                "alice",
+                new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)),
+                new Date(),
+                privateKey,
+                JWSAlgorithm.RS512.getName());
+        Map<String, String> params = new HashMap<>();
+        params.put(SSO_VERIFICATION_PEM, pem);
+        params.put(JWT_EXPECTED_ISSUER, JWT_TEST_ISSUER);
+        params.put(JWT_EXPECTED_SIGALG, unexpectedIssuerJWT.getHeader().getAlgorithm().getName());
+        setUpParams(params);
+        ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
+        setTokenOnRequest(request, unexpectedIssuerJWT);
+        EasyMock.replay(request);
+        jwtValidator = new JWTValidator(request, gatewayServices, gatewayConfig);
+        EasyMock.expect(authorityService.verifyToken(jwtValidator.getToken(), publicKey)).andReturn(true).anyTimes();
+        EasyMock.replay(authorityService);
+        Assert.assertFalse(jwtValidator.validate());
+    }
+
+    @Test
+    public void testExpiredJWT() throws Exception{
+        SignedJWT expiredJWT = getJWT(JWT_TEST_ISSUER,
+                "alice",
+                new Date(new Date().getTime() - TimeUnit.MINUTES.toMillis(10)),
+                new Date(),
+                privateKey,
+                JWSAlgorithm.RS512.getName());
+        Map<String, String> params = new HashMap<>();
+        params.put(SSO_VERIFICATION_PEM, pem);
+        params.put(JWT_EXPECTED_ISSUER, JWT_TEST_ISSUER);
+        params.put(JWT_EXPECTED_SIGALG, expiredJWT.getHeader().getAlgorithm().getName());
+        setUpParams(params);
+        ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
+        setTokenOnRequest(request, expiredJWT);
+        EasyMock.replay(request);
+        jwtValidator = new JWTValidator(request, gatewayServices, gatewayConfig);
+        EasyMock.expect(authorityService.verifyToken(jwtValidator.getToken(), publicKey)).andReturn(true).anyTimes();
+        EasyMock.replay(authorityService);
+        Assert.assertFalse(jwtValidator.validate());
+    }
+
+    @Test
+    public void testInvalidNBFJWT() throws Exception{
+        SignedJWT expiredJWT = getJWT(JWT_TEST_ISSUER,
+                "alice",
+                new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)),
+                new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(5)),
+                privateKey,
+                JWSAlgorithm.RS512.getName());
+        Map<String, String> params = new HashMap<>();
+        params.put(SSO_VERIFICATION_PEM, pem);
+        params.put(JWT_EXPECTED_ISSUER, JWT_TEST_ISSUER);
+        params.put(JWT_EXPECTED_SIGALG, expiredJWT.getHeader().getAlgorithm().getName());
+        setUpParams(params);
+        ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
+        setTokenOnRequest(request, expiredJWT);
+        EasyMock.replay(request);
+        jwtValidator = new JWTValidator(request, gatewayServices, gatewayConfig);
+        EasyMock.expect(authorityService.verifyToken(jwtValidator.getToken(), publicKey)).andReturn(true).anyTimes();
+        EasyMock.replay(authorityService);
+        Assert.assertFalse(jwtValidator.validate());
+    }
+
+    @Test
+    public void testUnexpectedSigAlg() throws Exception{
+        SignedJWT unexpectedSigAlgJWT = getJWT(JWT_TEST_ISSUER,
+                "alice",
+                new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)),
+                new Date(),
+                privateKey,
+                JWSAlgorithm.RS256.getName());
+        Map<String, String> params = new HashMap<>();
+        params.put(SSO_VERIFICATION_PEM, pem);
+        params.put(JWT_EXPECTED_ISSUER, JWT_TEST_ISSUER);
+        params.put(JWT_EXPECTED_SIGALG, JWSAlgorithm.RS512.getName() );
+        setUpParams(params);
+        ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
+        setTokenOnRequest(request, unexpectedSigAlgJWT);
+        EasyMock.replay(request);
+        jwtValidator = new JWTValidator(request, gatewayServices, gatewayConfig);
+        EasyMock.expect(authorityService.verifyToken(jwtValidator.getToken(), publicKey)).andReturn(true).anyTimes();
+        EasyMock.replay(authorityService);
+        Assert.assertFalse(jwtValidator.validate());
     }
 }
