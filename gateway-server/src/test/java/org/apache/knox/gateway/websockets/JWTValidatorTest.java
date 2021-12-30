@@ -76,7 +76,6 @@ public class JWTValidatorTest {
     private static GatewayConfig gatewayConfig;
     private static GatewayServices gatewayServices;
     private static JWTokenAuthority authorityService;
-    private static TokenStateService tokenStateService;
 
     private JWTValidator jwtValidator;
 

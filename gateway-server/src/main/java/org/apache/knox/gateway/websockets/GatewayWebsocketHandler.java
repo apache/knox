@@ -123,17 +123,14 @@ public class GatewayWebsocketHandler extends WebSocketHandler
   private WebshellWebSocketAdapter handleWebshellRequest(ServletUpgradeRequest req){
       if (config.isWebShellEnabled()){
         if (concurrentWebshells.get() >= config.getMaximumConcurrentWebshells()){
-          LOG.onError("Number of allowed concurrent webshell sessions exceeded");
           throw new RuntimeException("Number of allowed concurrent webshell sessions exceeded");
         }
         JWTValidator jwtValidator = new JWTValidator(req, services, config);
         if (jwtValidator.validate()) {
           return new WebshellWebSocketAdapter(pool, config, jwtValidator, concurrentWebshells);
         }
-        LOG.onError("No valid token found for webshell connection");
         throw new RuntimeException("No valid token found for webshell connection");
       }
-      LOG.onError("webshell not enabled");
       throw new RuntimeException("webshell not enabled");
   }
 
