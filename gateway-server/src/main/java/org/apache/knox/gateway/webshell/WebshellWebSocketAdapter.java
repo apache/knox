@@ -41,14 +41,14 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     private Session session;
     private final ConnectionInfo connectionInfo;
     private final JWTValidator jwtValidator;
-    private final StringBuilder auditBuffer;
+    private final StringBuilder auditBuffer; // buffer for audit log
     private final Auditor auditor;
     private final ObjectMapper objectMapper;
 
     public WebshellWebSocketAdapter(ExecutorService pool, GatewayConfig config, JWTValidator jwtValidator, AtomicInteger concurrentWebshells) {
         super(null, pool, null, config);
         this.jwtValidator = jwtValidator;
-        auditBuffer = new StringBuilder(); // buffer for audit log
+        auditBuffer = new StringBuilder();
         auditor = AuditServiceFactory.getAuditService().getAuditor(
                 AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
                 AuditConstants.KNOX_COMPONENT_NAME );

@@ -69,7 +69,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
   static final String REGEX_SPLIT_SERVICE_PATH = "^((?:[^/]*/){3}[^/]*)";
 
   static final String REGEX_WEBSHELL_REQUEST_PATH =
-          "^" + SECURE_WEBSOCKET_PROTOCOL_STRING + "[^/]+:[0-9]+/[^/]+/webshell$";
+          "^(" + SECURE_WEBSOCKET_PROTOCOL_STRING+"|"+WEBSOCKET_PROTOCOL_STRING + ")[^/]+:[0-9]+/[^/]+/webshell$";
 
   private static final int POOL_SIZE = 10;
   private AtomicInteger concurrentWebshells;
@@ -123,15 +123,16 @@ public class GatewayWebsocketHandler extends WebSocketHandler
   private WebshellWebSocketAdapter handleWebshellRequest(ServletUpgradeRequest req){
       if (config.isWebShellEnabled()){
         if (concurrentWebshells.get() >= config.getMaximumConcurrentWebshells()){
-          throw new RuntimeException("Number of allowed concurrent webshell sessions exceeded");
+          throw new RuntimeException("Number of allowed concurrent Web Shell sessions exceeded");
         }
+
         JWTValidator jwtValidator = new JWTValidator(req, services, config);
         if (jwtValidator.validate()) {
           return new WebshellWebSocketAdapter(pool, config, jwtValidator, concurrentWebshells);
         }
-        throw new RuntimeException("No valid token found for webshell connection");
+        throw new RuntimeException("No valid token found for Web Shell connection");
       }
-      throw new RuntimeException("webshell not enabled");
+      throw new RuntimeException("Web Shell not enabled");
   }
 
 
