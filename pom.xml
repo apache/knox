@@ -250,6 +250,7 @@
         <opensaml.version>3.4.5</opensaml.version>
         <pac4j.version>4.3.0</pac4j.version>
         <postgresql.version>42.2.19</postgresql.version>
+        <powermock.version>2.0.2</powermock.version>
         <purejavacomm.version>0.0.11.1</purejavacomm.version>
         <pty4j.version>0.11.4</pty4j.version> <!--pty4j 0.12.* does not work with java 8  -->
         <log4j.version>1.2.17</log4j.version>
@@ -2434,6 +2435,19 @@
                 <groupId>org.easymock</groupId>
                 <artifactId>easymock</artifactId>
                 <version>${easymock.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-module-junit4</artifactId>
+                <version>${powermock.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-api-easymock</artifactId>
+                <version>${powermock.version}</version>
                 <scope>test</scope>
             </dependency>
 

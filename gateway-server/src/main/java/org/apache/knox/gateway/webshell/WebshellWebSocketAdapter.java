@@ -45,17 +45,15 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     private final Auditor auditor;
     private final ObjectMapper objectMapper;
 
+
     public WebshellWebSocketAdapter(ExecutorService pool, GatewayConfig config, JWTValidator jwtValidator, AtomicInteger concurrentWebshells) {
-        this(pool, config, jwtValidator, concurrentWebshells, new ConnectionInfoFactory());
-    }
-    public WebshellWebSocketAdapter(ExecutorService pool, GatewayConfig config, JWTValidator jwtValidator, AtomicInteger concurrentWebshells, ConnectionInfoFactory connectionInfoFactory) {
         super(null, pool, null, config);
         this.jwtValidator = jwtValidator;
         auditBuffer = new StringBuilder();
         auditor = AuditServiceFactory.getAuditService().getAuditor(
                 AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
                 AuditConstants.KNOX_COMPONENT_NAME );
-        connectionInfo = connectionInfoFactory.create(jwtValidator.getUsername(),config.getGatewayPIDDir(), concurrentWebshells, auditor, LOG);
+        connectionInfo = new ConnectionInfo(jwtValidator.getUsername(),config.getGatewayPIDDir(), concurrentWebshells, auditor, LOG);
         objectMapper = new ObjectMapper();
     }
 

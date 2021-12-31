@@ -42,6 +42,10 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.powermock.api.easymock.PowerMock;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.lang.reflect.Field;
 import java.net.HttpCookie;
@@ -193,7 +197,7 @@ public class JWTValidatorTest {
         ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
         setTokenOnRequest(request, validJWT);
         EasyMock.replay(request);
-        JWTValidator jwtValidator = new JWTValidatorFactory().create(request, gatewayServices, gatewayConfig);
+        JWTValidator jwtValidator = JWTValidatorFactory.create(request, gatewayServices, gatewayConfig);
         // test get token
         Assert.assertEquals(validJWT.serialize(), jwtValidator.getToken().toString());
         // test get username
@@ -214,7 +218,7 @@ public class JWTValidatorTest {
         ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
         EasyMock.expect(request.getCookies()).andReturn(null).anyTimes();
         EasyMock.replay(request);
-        JWTValidator jwtValidator = new JWTValidatorFactory().create(request, gatewayServices, gatewayConfig);
+        JWTValidator jwtValidator = JWTValidatorFactory.create(request, gatewayServices, gatewayConfig);
         EasyMock.expect(authorityService.verifyToken(jwtValidator.getToken(), publicKey)).andReturn(true).anyTimes();
         EasyMock.replay(authorityService);
     }
@@ -236,7 +240,7 @@ public class JWTValidatorTest {
         ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
         setTokenOnRequest(request, unexpectedIssuerJWT);
         EasyMock.replay(request);
-        JWTValidator jwtValidator = new JWTValidatorFactory().create(request, gatewayServices, gatewayConfig);
+        JWTValidator jwtValidator = JWTValidatorFactory.create(request, gatewayServices, gatewayConfig);
         EasyMock.expect(authorityService.verifyToken(jwtValidator.getToken(), publicKey)).andReturn(true).anyTimes();
         EasyMock.replay(authorityService);
         Assert.assertFalse(jwtValidator.validate());
@@ -258,7 +262,7 @@ public class JWTValidatorTest {
         ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
         setTokenOnRequest(request, expiredJWT);
         EasyMock.replay(request);
-        JWTValidator jwtValidator = new JWTValidatorFactory().create(request, gatewayServices, gatewayConfig);
+        JWTValidator jwtValidator = JWTValidatorFactory.create(request, gatewayServices, gatewayConfig);
         EasyMock.expect(authorityService.verifyToken(jwtValidator.getToken(), publicKey)).andReturn(true).anyTimes();
         EasyMock.replay(authorityService);
         Assert.assertFalse(jwtValidator.validate());
@@ -280,7 +284,7 @@ public class JWTValidatorTest {
         ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
         setTokenOnRequest(request, expiredJWT);
         EasyMock.replay(request);
-        JWTValidator jwtValidator = new JWTValidatorFactory().create(request, gatewayServices, gatewayConfig);
+        JWTValidator jwtValidator = JWTValidatorFactory.create(request, gatewayServices, gatewayConfig);
         EasyMock.expect(authorityService.verifyToken(jwtValidator.getToken(), publicKey)).andReturn(true).anyTimes();
         EasyMock.replay(authorityService);
         Assert.assertFalse(jwtValidator.validate());
@@ -302,7 +306,7 @@ public class JWTValidatorTest {
         ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
         setTokenOnRequest(request, unexpectedSigAlgJWT);
         EasyMock.replay(request);
-        JWTValidator jwtValidator = new JWTValidatorFactory().create(request, gatewayServices, gatewayConfig);
+        JWTValidator jwtValidator = JWTValidatorFactory.create(request, gatewayServices, gatewayConfig);
         EasyMock.expect(authorityService.verifyToken(jwtValidator.getToken(), publicKey)).andReturn(true).anyTimes();
         EasyMock.replay(authorityService);
         Assert.assertFalse(jwtValidator.validate());
@@ -323,7 +327,7 @@ public class JWTValidatorTest {
         ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
         setTokenOnRequest(request, validJWT);
         EasyMock.replay(request);
-        JWTValidator jwtValidator = new JWTValidatorFactory().create(request, gatewayServices, gatewayConfig);
+        JWTValidator jwtValidator = JWTValidatorFactory.create(request, gatewayServices, gatewayConfig);
         EasyMock.expect(authorityService.verifyToken(jwtValidator.getToken())).andReturn(true).anyTimes();
         EasyMock.replay(authorityService);
         Assert.assertTrue(jwtValidator.validate());
@@ -345,7 +349,7 @@ public class JWTValidatorTest {
         ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
         setTokenOnRequest(request, parsableJWT);
         EasyMock.replay(request);
-        JWTValidator jwtValidator = new JWTValidatorFactory().create(request, gatewayServices, gatewayConfig);
+        JWTValidator jwtValidator = JWTValidatorFactory.create(request, gatewayServices, gatewayConfig);
         EasyMock.expect(authorityService.verifyToken(jwtValidator.getToken(), publicKey)).andReturn(false).anyTimes();
         EasyMock.replay(authorityService);
         Assert.assertFalse(jwtValidator.validate());

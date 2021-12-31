@@ -31,7 +31,6 @@ import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.util.CertificateUtils;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
-
 import javax.servlet.ServletException;
 import java.net.HttpCookie;
 import java.security.interfaces.RSAPublicKey;
@@ -48,7 +47,7 @@ public class JWTValidatorFactory {
     public static final String SSO_VERIFICATION_PEM = "sso.token.verification.pem";
     private static final JWTMessages jwtMessagesLog = MessagesFactory.get(JWTMessages.class);
 
-    public JWTValidator create(ServletUpgradeRequest req, GatewayServices gatewayServices,
+    public static JWTValidator create(ServletUpgradeRequest req, GatewayServices gatewayServices,
                                       GatewayConfig gatewayConfig){
         Map<String,String> params = getParams(gatewayServices);
         String cookieName = params.containsKey(KNOXSSO_COOKIE_NAME)? params.get(KNOXSSO_COOKIE_NAME):DEFAULT_SSO_COOKIE_NAME;

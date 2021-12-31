@@ -15,19 +15,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.knox.gateway.websockets;
 
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.webshell.WebshellWebSocketAdapter;
-import org.apache.knox.gateway.webshell.WebshellWebSocketAdapterFactory;
 import org.easymock.EasyMock;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.powermock.api.easymock.PowerMock;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.net.URI;
 import java.util.concurrent.ExecutorService;
@@ -35,32 +42,41 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.easymock.EasyMock.isA;
 
-
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({JWTValidatorFactory.class, MessagesFactory.class, GatewayWebsocketHandler.class})
 public class GatewayWebsocketHandlerTest {
+    @BeforeClass
+    public static void setUpBeforeClass() throws Exception {
+        PowerMock.mockStatic(MessagesFactory.class);
+        EasyMock.expect(MessagesFactory.get(JWTMessages.class)).andReturn(EasyMock.createNiceMock(JWTMessages.class)).anyTimes();
+        EasyMock.expect(MessagesFactory.get(WebsocketLogMessages.class)).andReturn(EasyMock.createNiceMock(WebsocketLogMessages.class)).anyTimes();
+        PowerMock.replay(MessagesFactory.class);
+    }
 
     @Test
-    public void testValidWebshellRequest() throws Exception{
+    public void testValidWebShellRequest() throws Exception{
+        // mock GatewayConfig and GatewayServices
         GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
         EasyMock.expect(gatewayConfig.isWebShellEnabled()).andReturn(true).anyTimes();
         EasyMock.expect(gatewayConfig.getMaximumConcurrentWebshells()).andReturn(3).anyTimes();
-
         GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
+        // mock ServletUpgradeRequest and ServletUpgradeResponse
         ServletUpgradeRequest req = EasyMock.createNiceMock(ServletUpgradeRequest.class);
         URI requestURI = new URI("wss://localhost:8443/gateway/webshell");
         EasyMock.expect(req.getRequestURI()).andReturn(requestURI).anyTimes();
         ServletUpgradeResponse resp = EasyMock.createNiceMock(ServletUpgradeResponse.class);
 
-        JWTValidatorFactory jwtValidatorFactory = EasyMock.createNiceMock(JWTValidatorFactory.class);
-        WebshellWebSocketAdapterFactory webshellWebSocketAdapterFactory = EasyMock.createNiceMock(WebshellWebSocketAdapterFactory.class);
         JWTValidator jwtValidator = EasyMock.createNiceMock(JWTValidator.class);
         EasyMock.expect(jwtValidator.validate()).andReturn(true).anyTimes();
-        EasyMock.expect(jwtValidatorFactory.create(req, gatewayServices, gatewayConfig)).andReturn(jwtValidator).anyTimes();
+        PowerMock.mockStatic(JWTValidatorFactory.class);
+        EasyMock.expect(JWTValidatorFactory.create(req, gatewayServices, gatewayConfig)).andReturn(jwtValidator).anyTimes();
 
-        WebshellWebSocketAdapter webshellWebSocketAdapter = EasyMock.createNiceMock(WebshellWebSocketAdapter.class);
-        EasyMock.expect(webshellWebSocketAdapterFactory.create(isA(ExecutorService.class), isA(GatewayConfig.class), isA(JWTValidator.class), isA(AtomicInteger.class))).andReturn(webshellWebSocketAdapter).anyTimes();
-        EasyMock.replay(req,resp,gatewayServices,gatewayConfig,jwtValidator,jwtValidatorFactory,webshellWebSocketAdapter,webshellWebSocketAdapterFactory);
+        WebshellWebSocketAdapter webshellWebSocketAdapter = PowerMock.createMock(WebshellWebSocketAdapter.class);
+        PowerMock.expectNew(WebshellWebSocketAdapter.class,isA(ExecutorService.class) , isA(GatewayConfig.class), isA(JWTValidator.class), isA(AtomicInteger.class)).andReturn(webshellWebSocketAdapter);
+        EasyMock.replay(req,resp,gatewayServices,gatewayConfig,jwtValidator);
+        PowerMock.replayAll();
 
-        GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(gatewayConfig,gatewayServices, webshellWebSocketAdapterFactory,jwtValidatorFactory);
+        GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(gatewayConfig,gatewayServices);
         Assert.assertTrue(gatewayWebsocketHandler.createWebSocket(req,resp) instanceof WebshellWebSocketAdapter);
     }
 
@@ -68,30 +84,29 @@ public class GatewayWebsocketHandlerTest {
     public ExpectedException thrown = ExpectedException.none();
 
     @Test
-    public void testWebshellRequestWithInvalidJWT() throws Exception{
+    public void testWebShellRequestWithInvalidJWT() throws Exception{
         thrown.expect(RuntimeException.class);
         thrown.expectMessage("No valid token found for Web Shell connection");
+        // mock GatewayConfig and GatewayServices
         GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
         EasyMock.expect(gatewayConfig.isWebShellEnabled()).andReturn(true).anyTimes();
         EasyMock.expect(gatewayConfig.getMaximumConcurrentWebshells()).andReturn(3).anyTimes();
-
         GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
+        // mock ServletUpgradeRequest and ServletUpgradeResponse
         ServletUpgradeRequest req = EasyMock.createNiceMock(ServletUpgradeRequest.class);
         URI requestURI = new URI("wss://localhost:8443/gateway/webshell");
         EasyMock.expect(req.getRequestURI()).andReturn(requestURI).anyTimes();
         ServletUpgradeResponse resp = EasyMock.createNiceMock(ServletUpgradeResponse.class);
 
-        JWTValidatorFactory jwtValidatorFactory = EasyMock.createNiceMock(JWTValidatorFactory.class);
-        WebshellWebSocketAdapterFactory webshellWebSocketAdapterFactory = EasyMock.createNiceMock(WebshellWebSocketAdapterFactory.class);
         JWTValidator jwtValidator = EasyMock.createNiceMock(JWTValidator.class);
         EasyMock.expect(jwtValidator.validate()).andReturn(false).anyTimes();
-        EasyMock.expect(jwtValidatorFactory.create(req, gatewayServices, gatewayConfig)).andReturn(jwtValidator).anyTimes();
+        PowerMock.mockStatic(JWTValidatorFactory.class);
+        EasyMock.expect(JWTValidatorFactory.create(req, gatewayServices, gatewayConfig)).andReturn(jwtValidator).anyTimes();
 
-        WebshellWebSocketAdapter webshellWebSocketAdapter = EasyMock.createNiceMock(WebshellWebSocketAdapter.class);
-        EasyMock.expect(webshellWebSocketAdapterFactory.create(isA(ExecutorService.class), isA(GatewayConfig.class), isA(JWTValidator.class), isA(AtomicInteger.class))).andReturn(webshellWebSocketAdapter).anyTimes();
-        EasyMock.replay(req,resp,gatewayServices,gatewayConfig,jwtValidator,jwtValidatorFactory,webshellWebSocketAdapter,webshellWebSocketAdapterFactory);
+        EasyMock.replay(req,resp,gatewayServices,gatewayConfig,jwtValidator);
+        PowerMock.replayAll();
 
-        GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(gatewayConfig,gatewayServices, webshellWebSocketAdapterFactory,jwtValidatorFactory);
+        GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(gatewayConfig,gatewayServices);
         gatewayWebsocketHandler.createWebSocket(req,resp);
     }
 
@@ -100,20 +115,19 @@ public class GatewayWebsocketHandlerTest {
     public void testDisabledWebShell() throws Exception{
         thrown.expect(RuntimeException.class);
         thrown.expectMessage("Web Shell not enabled");
+        // mock GatewayConfig and GatewayServices
         GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
         EasyMock.expect(gatewayConfig.isWebShellEnabled()).andReturn(false).anyTimes();
-
         GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
+        // mock ServletUpgradeRequest and ServletUpgradeResponse
         ServletUpgradeRequest req = EasyMock.createNiceMock(ServletUpgradeRequest.class);
         URI requestURI = new URI("wss://localhost:8443/gateway/webshell");
         EasyMock.expect(req.getRequestURI()).andReturn(requestURI).anyTimes();
         ServletUpgradeResponse resp = EasyMock.createNiceMock(ServletUpgradeResponse.class);
-
-        JWTValidatorFactory jwtValidatorFactory = EasyMock.createNiceMock(JWTValidatorFactory.class);
-        WebshellWebSocketAdapterFactory webshellWebSocketAdapterFactory = EasyMock.createNiceMock(WebshellWebSocketAdapterFactory.class);
-        EasyMock.replay(req,resp,gatewayServices,gatewayConfig,jwtValidatorFactory,webshellWebSocketAdapterFactory);
-
-        GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(gatewayConfig,gatewayServices, webshellWebSocketAdapterFactory,jwtValidatorFactory);
+        EasyMock.replay(req,resp,gatewayServices,gatewayConfig);
+        GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(gatewayConfig,gatewayServices);
         gatewayWebsocketHandler.createWebSocket(req,resp);
     }
+
+
 }
