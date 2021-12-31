@@ -52,7 +52,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
         auditor = AuditServiceFactory.getAuditService().getAuditor(
                 AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
                 AuditConstants.KNOX_COMPONENT_NAME );
-        connectionInfo = new ConnectionInfo(jwtValidator.getUsername(),config.getGatewayPIDDir(), concurrentWebshells, auditor, LOG);
+        connectionInfo = ConnectionInfoFactory.create(jwtValidator.getUsername(),config.getGatewayPIDDir(), concurrentWebshells, auditor, LOG);
         objectMapper = new ObjectMapper();
     }
 
@@ -65,7 +65,6 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
         }
         connectionInfo.connect();
         pool.execute(this::blockingReadFromHost);
-
     }
 
     private void blockingReadFromHost(){

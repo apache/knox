@@ -60,10 +60,7 @@ public class ConnectionInfo {
         this.LOG = LOG;
         this.gatewayPIDDir = gatewayPIDDir;
         this.concurrentWebshells = concurrentWebshells;
-        shutdownHook = new Thread(() -> {
-            LOG.debugLog("running webshell shutdown hook");
-            disconnect();
-        });
+        shutdownHook = new Thread(this::disconnect);
         Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
