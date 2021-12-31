@@ -17,13 +17,14 @@
  */
 package org.apache.knox.gateway.webshell;
 
-import org.apache.knox.gateway.audit.api.Auditor;
-import org.apache.knox.gateway.websockets.WebsocketLogMessages;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.websockets.JWTValidator;
 
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ConnectionInfoFactory {
-    public ConnectionInfo create(String username, String gatewayPIDDir, AtomicInteger concurrentWebshells, Auditor auditor, WebsocketLogMessages LOG){
-        return new ConnectionInfo(username, gatewayPIDDir, concurrentWebshells, auditor, LOG);
+public class WebshellWebSocketAdapterFactory {
+    public WebshellWebSocketAdapter create(ExecutorService pool, GatewayConfig config, JWTValidator jwtValidator, AtomicInteger concurrentWebshells){
+        return new WebshellWebSocketAdapter(pool, config, jwtValidator, concurrentWebshells);
     }
 }

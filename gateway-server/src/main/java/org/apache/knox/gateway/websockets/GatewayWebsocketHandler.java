@@ -28,6 +28,7 @@ import org.apache.knox.gateway.services.registry.ServiceRegistry;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.webshell.WebshellWebSocketAdapter;
+import org.apache.knox.gateway.webshell.WebshellWebSocketAdapterFactory;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
@@ -73,7 +74,8 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
   private static final int POOL_SIZE = 10;
   private AtomicInteger concurrentWebshells;
-
+  private WebshellWebSocketAdapterFactory webshellWebSocketAdapterFactory;
+  private JWTValidatorFactory jwtValidatorFactory;
 
   /**
    * Manage the threads that are spawned
@@ -86,12 +88,19 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
   public GatewayWebsocketHandler(final GatewayConfig config,
       final GatewayServices services) {
+    this(config, services, new WebshellWebSocketAdapterFactory(), new JWTValidatorFactory());
+  }
+  public GatewayWebsocketHandler(final GatewayConfig config,
+                                 final GatewayServices services,
+                                 final WebshellWebSocketAdapterFactory webshellWebSocketAdapterFactory,
+                                 final JWTValidatorFactory jwtValidatorFactory) {
     super();
-
     this.config = config;
     this.services = services;
     pool = Executors.newFixedThreadPool(POOL_SIZE);
     this.concurrentWebshells = new AtomicInteger(0);
+    this.webshellWebSocketAdapterFactory = webshellWebSocketAdapterFactory;
+    this.jwtValidatorFactory = jwtValidatorFactory;
   }
 
   @Override
@@ -125,9 +134,9 @@ public class GatewayWebsocketHandler extends WebSocketHandler
         if (concurrentWebshells.get() >= config.getMaximumConcurrentWebshells()){
           throw new RuntimeException("Number of allowed concurrent Web Shell sessions exceeded");
         }
-        JWTValidator jwtValidator = JWTValidatorFactory.create(req,services,config);
+        JWTValidator jwtValidator = jwtValidatorFactory.create(req,services,config);
         if (jwtValidator.validate()) {
-          return new WebshellWebSocketAdapter(pool, config, jwtValidator, concurrentWebshells);
+          return webshellWebSocketAdapterFactory.create(pool, config, jwtValidator, concurrentWebshells);
         }
         throw new RuntimeException("No valid token found for Web Shell connection");
       }
@@ -146,7 +155,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
       }
 
       if (config.isWebsocketJWTValidationEnabled()){
-        JWTValidator jwtValidator = JWTValidatorFactory.create(req,services,config);
+        JWTValidator jwtValidator = jwtValidatorFactory.create(req,services,config);
         if (!jwtValidator.validate()) {
           LOG.onError("No valid token found for websocket connection");
           throw new RuntimeException("No valid token found for websocket connection");
