@@ -132,7 +132,6 @@ public class ConnectionInfo {
                     ResourceType.PROCESS, ActionOutcome.SUCCESS,"destroyed Bash process");
             File fileToDelete = FileUtils.getFile(gatewayPIDDir + "/" + "webshell_" + pid + ".pid");
             FileUtils.deleteQuietly(fileToDelete);
-            // if directory is empty, remove directory
         }
 
 

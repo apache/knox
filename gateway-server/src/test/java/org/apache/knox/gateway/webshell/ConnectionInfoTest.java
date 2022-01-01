@@ -63,6 +63,8 @@ public class ConnectionInfoTest extends EasyMockSupport {
         EasyMock.replay(auditService, auditor);
     }
 
+
+    @SuppressWarnings("PMD.DoNotUseThreads")
     private static void setupRuntime(){
         PowerMock.mockStatic(Runtime.class);
         Runtime runtime = EasyMock.createMock(Runtime.class);

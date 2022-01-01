@@ -92,9 +92,9 @@ public class WebshellWebsocketAdapterTest extends EasyMockSupport {
         connectionInfo.connect();
 
         String bashOuput = "fake bash output";
-        InputStream inputStream = new ByteArrayInputStream(bashOuput.getBytes());
+        InputStream inputStream = new ByteArrayInputStream(bashOuput.getBytes(StandardCharsets.UTF_8));
         EasyMock.expect(connectionInfo.getInputStream()).andReturn(inputStream).times(1);
-        InputStream inputStreamEmpty = new ByteArrayInputStream("".getBytes());
+        InputStream inputStreamEmpty = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
         EasyMock.expect(connectionInfo.getInputStream()).andReturn(inputStreamEmpty).times(1);
 
         Session session = EasyMock.createNiceMock(Session.class);

@@ -42,11 +42,11 @@ public class JWTValidator {
     private final JWTokenAuthority authorityService;
     private final SignatureVerificationCache signatureVerificationCache;
     private final JWT token;
-    // optional parameters with default values
+    // optional parameters
     private String expectedIssuer = JWT_DEFAULT_ISSUER;
     private String expectedSigAlg = JWT_DEFAULT_SIGALG;
-    private RSAPublicKey publicKey = null;
-    private TokenStateService tokenStateService = null;
+    private RSAPublicKey publicKey;
+    private TokenStateService tokenStateService;
 
     private final String displayableTokenId;
     private final String displayableToken;
