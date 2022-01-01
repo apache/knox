@@ -91,8 +91,9 @@ public class ConnectionInfo {
                     .setCommand(cmd)
                     .setRedirectErrorStream(true)
                     .setWindowsAnsiColorEnabled(true)
-                    .setInitialColumns(150)
-                    .setInitialRows(50)
+                    // see discussion regarding tty size in design doc
+                    .setInitialColumns(100)
+                    .setInitialRows(40)
                     .start();
         } catch (IOException e) {
             LOG.onError("Error starting ptyProcess: " + e.getMessage());
@@ -127,15 +128,21 @@ public class ConnectionInfo {
             }
             ptyProcess = null;
             concurrentWebshells.decrementAndGet();
+            auditor.audit( Action.WEBSHELL, username+':'+pid,
+                    ResourceType.PROCESS, ActionOutcome.SUCCESS,"destroyed Bash process");
+            File fileToDelete = FileUtils.getFile(gatewayPIDDir + "/" + "webshell_" + pid + ".pid");
+            FileUtils.deleteQuietly(fileToDelete);
+            // if directory is empty, remove directory
         }
 
-        auditor.audit( Action.WEBSHELL, username+':'+pid,
-                ResourceType.PROCESS, ActionOutcome.SUCCESS,"destroyed Bash process");
-        File fileToDelete = FileUtils.getFile(gatewayPIDDir + "/" + "webshell_" + pid + ".pid");
-        FileUtils.deleteQuietly(fileToDelete);
+
         try {
-            if (inputStream != null) {inputStream.close();}
-            if (outputStream != null) {outputStream.close();}
+            if (inputStream != null) {
+                inputStream.close();
+            }
+            if (outputStream != null) {
+                outputStream.close();
+            }
         } catch (IOException e){
             throw new RuntimeIOException(e);
         } finally {

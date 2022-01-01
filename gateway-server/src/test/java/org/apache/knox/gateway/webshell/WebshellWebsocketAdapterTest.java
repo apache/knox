@@ -27,6 +27,7 @@ import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.websockets.JWTValidator;
 import org.apache.knox.gateway.websockets.WebsocketLogMessages;
 import org.easymock.EasyMock;
+import org.easymock.EasyMockSupport;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.Session;
 import org.junit.Rule;
@@ -49,7 +50,7 @@ import static org.easymock.EasyMock.isA;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({WebshellWebSocketAdapter.class, MessagesFactory.class, AuditServiceFactory.class})
-public class WebshellWebsocketAdapterTest {
+public class WebshellWebsocketAdapterTest extends EasyMockSupport {
 
     private GatewayConfig setupGatewayConfig(){
         GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
@@ -113,6 +114,7 @@ public class WebshellWebsocketAdapterTest {
         AtomicInteger concurrentWebshells = new AtomicInteger(0);
         WebshellWebSocketAdapter webshellWebSocketAdapter = new WebshellWebSocketAdapter(pool, gatewayConfig, jwtValidator, concurrentWebshells);
         webshellWebSocketAdapter.onWebSocketConnect(session);
+        verifyAll();
     }
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -131,7 +133,8 @@ public class WebshellWebsocketAdapterTest {
 
         ExecutorService pool = Executors.newFixedThreadPool(10);
         AtomicInteger concurrentWebshells = new AtomicInteger(0);
-        WebshellWebSocketAdapter webshellWebSocketAdapter = new WebshellWebSocketAdapter(pool, gatewayConfig, jwtValidator, concurrentWebshells);
+        new WebshellWebSocketAdapter(pool, gatewayConfig, jwtValidator, concurrentWebshells);
+        verifyAll();
     }
 
 
@@ -162,6 +165,7 @@ public class WebshellWebsocketAdapterTest {
         AtomicInteger concurrentWebshells = new AtomicInteger(0);
         WebshellWebSocketAdapter webshellWebSocketAdapter = new WebshellWebSocketAdapter(pool, gatewayConfig, jwtValidator, concurrentWebshells);
         webshellWebSocketAdapter.onWebSocketText("{ \"userInput\" : \"fake user input\"}");
+        verifyAll();
     }
 
     @Test
@@ -184,6 +188,7 @@ public class WebshellWebsocketAdapterTest {
         AtomicInteger concurrentWebshells = new AtomicInteger(0);
         WebshellWebSocketAdapter webshellWebSocketAdapter = new WebshellWebSocketAdapter(pool, gatewayConfig, jwtValidator, concurrentWebshells);
         webshellWebSocketAdapter.onWebSocketText("{ \"userInput\" : \"fake user input\"}");
+        verifyAll();
     }
 
 
@@ -207,6 +212,7 @@ public class WebshellWebsocketAdapterTest {
         AtomicInteger concurrentWebshells = new AtomicInteger(0);
         WebshellWebSocketAdapter webshellWebSocketAdapter = new WebshellWebSocketAdapter(pool, gatewayConfig, jwtValidator, concurrentWebshells);
         webshellWebSocketAdapter.onWebSocketClose(0,"reason");
+        verifyAll();
     }
 
     @Test
@@ -228,5 +234,6 @@ public class WebshellWebsocketAdapterTest {
         AtomicInteger concurrentWebshells = new AtomicInteger(0);
         WebshellWebSocketAdapter webshellWebSocketAdapter = new WebshellWebSocketAdapter(pool, gatewayConfig, jwtValidator, concurrentWebshells);
         webshellWebSocketAdapter.onWebSocketError(new Throwable());
+        verifyAll();
     }
 }
