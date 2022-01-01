@@ -42,18 +42,20 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     private final ConnectionInfo connectionInfo;
     private final JWTValidator jwtValidator;
     private final StringBuilder auditBuffer; // buffer for audit log
-    private final Auditor auditor;
     private final ObjectMapper objectMapper;
+    private static final Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(
+            AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
+            AuditConstants.KNOX_COMPONENT_NAME );
 
 
     public WebshellWebSocketAdapter(ExecutorService pool, GatewayConfig config, JWTValidator jwtValidator, AtomicInteger concurrentWebshells) {
         super(null, pool, null, config);
         this.jwtValidator = jwtValidator;
         auditBuffer = new StringBuilder();
-        auditor = AuditServiceFactory.getAuditService().getAuditor(
-                AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
-                AuditConstants.KNOX_COMPONENT_NAME );
-        connectionInfo = new ConnectionInfo(jwtValidator.getUsername(),config.getGatewayPIDDir(), concurrentWebshells, auditor, LOG);
+        if (jwtValidator.getUsername() == null){
+            throw new RuntimeException("Needs user name in JWT to use WebShell");
+        }
+        connectionInfo = new ConnectionInfo(jwtValidator.getUsername(),config.getGatewayPIDDir(), concurrentWebshells);
         objectMapper = new ObjectMapper();
     }
 
@@ -61,9 +63,6 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     @Override
     public void onWebSocketConnect(final Session session) {
         this.session = session;
-        if (jwtValidator.getUsername() == null){
-            throw new RuntimeException("Needs user name in JWT to use WebShell");
-        }
         connectionInfo.connect();
         pool.execute(this::blockingReadFromHost);
     }
@@ -167,7 +166,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     }
 
     private void cleanup() {
-        if(session != null && !session.isOpen()) {
+        if(session != null && session.isOpen()) {
             session.close();
             session = null;
         }

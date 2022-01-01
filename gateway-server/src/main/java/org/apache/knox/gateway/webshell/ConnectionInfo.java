@@ -23,10 +23,14 @@ import de.thetaphi.forbiddenapis.SuppressForbidden;
 import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.audit.api.ResourceType;
+import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.websockets.WebsocketLogMessages;
 import org.eclipse.jetty.io.RuntimeIOException;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+
 
 import java.io.File;
 import java.io.IOException;
@@ -40,13 +44,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 * data structure to store a connection session
 */
 public class ConnectionInfo {
+    private static final Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(
+            AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
+            AuditConstants.KNOX_COMPONENT_NAME );
+    private static final WebsocketLogMessages LOG = MessagesFactory.get(WebsocketLogMessages.class);
 
     private InputStream inputStream;
     private OutputStream outputStream;
     private PtyProcess ptyProcess;
     private final String username;
-    private final Auditor auditor;
-    private final WebsocketLogMessages LOG;
+
     private final String gatewayPIDDir;
     @SuppressWarnings("PMD.DoNotUseThreads") //we need to define a Thread to clean up resources using shutdown hook
     private final Thread shutdownHook;
@@ -54,10 +61,8 @@ public class ConnectionInfo {
     private long pid;
 
     @SuppressWarnings("PMD.DoNotUseThreads") //we need to define a Thread to clean up resources using shutdown hook
-    public ConnectionInfo(String username, String gatewayPIDDir, AtomicInteger concurrentWebshells, Auditor auditor, WebsocketLogMessages LOG) {
+    public ConnectionInfo(String username, String gatewayPIDDir, AtomicInteger concurrentWebshells) {
         this.username = username;
-        this.auditor = auditor;
-        this.LOG = LOG;
         this.gatewayPIDDir = gatewayPIDDir;
         this.concurrentWebshells = concurrentWebshells;
         shutdownHook = new Thread(this::disconnect);
@@ -99,7 +104,6 @@ public class ConnectionInfo {
         pid = ptyProcess.pid();
         saveProcessPID(pid);
         concurrentWebshells.incrementAndGet();
-        LOG.debugLog("incremented concurrent webshells:"+concurrentWebshells);
     }
 
     public String getUsername(){
@@ -123,7 +127,6 @@ public class ConnectionInfo {
             }
             ptyProcess = null;
             concurrentWebshells.decrementAndGet();
-            LOG.debugLog("decremented concurrent webshells:"+concurrentWebshells);
         }
 
         auditor.audit( Action.WEBSHELL, username+':'+pid,
