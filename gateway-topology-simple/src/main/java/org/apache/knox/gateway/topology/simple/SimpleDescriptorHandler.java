@@ -110,7 +110,7 @@ public class SimpleDescriptorHandler {
         if (shouldPerformDiscovery(desc)) {
             cluster = performDiscovery(config, desc, gatewayServices);
             if (cluster == null) {
-                log.failedToDiscoverClusterServices(desc.getName());
+                throw new DiscoveryException(desc.getCluster(), desc.getName());
             }
         } else {
             log.discoveryNotConfiguredForDescriptor(desc.getName());

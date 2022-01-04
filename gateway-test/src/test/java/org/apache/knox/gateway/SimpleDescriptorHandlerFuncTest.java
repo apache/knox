@@ -279,13 +279,28 @@ public class SimpleDescriptorHandlerFuncTest {
     }
 
     @Override
-    public Map<String, Cluster> discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config) {
-      return Collections.emptyMap();
-    }
-
-    @Override
     public Cluster discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config, String clusterName) {
-      return null;
+      return new Cluster() {
+        @Override
+        public String getName() {
+          return null;
+        }
+
+        @Override
+        public List<String> getServiceURLs(String serviceName) {
+          return null;
+        }
+
+        @Override
+        public List<String> getServiceURLs(String serviceName, Map<String, String> serviceParams) {
+          return null;
+        }
+
+        @Override
+        public ZooKeeperConfig getZooKeeperConfiguration(String serviceName) {
+          return null;
+        }
+      };
     }
   }
 }
