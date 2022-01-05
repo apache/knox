@@ -18,6 +18,9 @@
 
 package org.apache.knox.gateway.websockets;
 
+import org.apache.knox.gateway.audit.api.AuditService;
+import org.apache.knox.gateway.audit.api.AuditServiceFactory;
+import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
@@ -43,15 +46,25 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.easymock.EasyMock.isA;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({JWTValidatorFactory.class, MessagesFactory.class, GatewayWebsocketHandler.class})
+@PrepareForTest({JWTValidatorFactory.class, MessagesFactory.class, GatewayWebsocketHandler.class, AuditServiceFactory.class})
 public class GatewayWebsocketHandlerTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
+        // setup MessageFactory for static variable
         PowerMock.mockStatic(MessagesFactory.class);
         EasyMock.expect(MessagesFactory.get(JWTMessages.class)).andReturn(EasyMock.createNiceMock(JWTMessages.class)).anyTimes();
         EasyMock.expect(MessagesFactory.get(WebsocketLogMessages.class)).andReturn(EasyMock.createNiceMock(WebsocketLogMessages.class)).anyTimes();
         PowerMock.replay(MessagesFactory.class);
+        // setup Auditor for static variable
+        PowerMock.mockStatic(AuditServiceFactory.class);
+        AuditService auditService = EasyMock.createNiceMock(AuditService.class);
+        EasyMock.expect(AuditServiceFactory.getAuditService()).andReturn(auditService).anyTimes();
+        Auditor auditor = EasyMock.createNiceMock(Auditor.class);
+        EasyMock.expect(auditService.getAuditor(isA(String.class),isA(String.class),isA(String.class))).andReturn(auditor).anyTimes();
+        PowerMock.replay(AuditServiceFactory.class);
+        EasyMock.replay(auditService,auditor);
     }
+
 
     @Test
     public void testValidWebShellRequest() throws Exception{
