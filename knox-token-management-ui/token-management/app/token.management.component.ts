@@ -75,4 +75,9 @@ export class TokenManagementComponent implements OnInit {
     formatDateTime(dateTime: number) {
         return new Date(dateTime).toLocaleString();
     }
+
+    isTokenExpired(expiration: number): boolean {
+        return Date.now() > expiration;
+    }
+
 }
