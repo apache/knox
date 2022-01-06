@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.webshell;
 
+import com.pty4j.PtyProcess;
 import com.pty4j.PtyProcessBuilder;
 import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.audit.api.AuditService;
@@ -41,12 +42,15 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.easymock.EasyMock.anyInt;
 import static org.easymock.EasyMock.isA;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({Runtime.class, MessagesFactory.class, AuditServiceFactory.class, ConnectionInfo.class})
 public class ConnectionInfoTest extends EasyMockSupport {
     private static String testPIDdir = "webshell-test";
+    private static String testUserName = "Alice";
+    private static long testPID = 12345;
 
     private static void setupMessagesFactory(){
         PowerMock.mockStatic(MessagesFactory.class);
@@ -91,24 +95,37 @@ public class ConnectionInfoTest extends EasyMockSupport {
 
     @Test
     public void testInstantiation() {
-        new ConnectionInfo("Alice", testPIDdir, new AtomicInteger(0));
+        new ConnectionInfo(testUserName, testPIDdir, new AtomicInteger(0));
         verifyAll();
     }
 
     @Test
-    public void testConnectSuccess() {
-
+    public void testConnectSuccess() throws Exception {
         AtomicInteger concurrentWebshell = EasyMock.createNiceMock(AtomicInteger.class);
         concurrentWebshell.incrementAndGet();
         concurrentWebshell.decrementAndGet();
         EasyMock.replay(concurrentWebshell);
 
-        ConnectionInfo connectionInfo = new ConnectionInfo("Alice", testPIDdir, concurrentWebshell);
+        PtyProcess ptyProcess = EasyMock.createNiceMock(PtyProcess.class);
+        EasyMock.expect(ptyProcess.pid()).andReturn(testPID);
+        EasyMock.replay(ptyProcess);
+
+        PtyProcessBuilder ptyProcessBuilder = PowerMock.createNiceMock(PtyProcessBuilder.class);
+        String[] cmd = { "sudo","--user", testUserName ,"bash","-i"};
+        EasyMock.expect(ptyProcessBuilder.setCommand(cmd)).andReturn(ptyProcessBuilder);
+        EasyMock.expect(ptyProcessBuilder.setRedirectErrorStream(true)).andReturn(ptyProcessBuilder);
+        EasyMock.expect(ptyProcessBuilder.setWindowsAnsiColorEnabled(true)).andReturn(ptyProcessBuilder);
+        EasyMock.expect(ptyProcessBuilder.setInitialColumns(anyInt())).andReturn(ptyProcessBuilder);
+        EasyMock.expect(ptyProcessBuilder.setInitialRows(anyInt())).andReturn(ptyProcessBuilder);
+        EasyMock.expect(ptyProcessBuilder.start()).andReturn(ptyProcess);
+        PowerMock.expectNew(PtyProcessBuilder.class).andReturn(ptyProcessBuilder);
+        PowerMock.replay(ptyProcessBuilder,PtyProcessBuilder.class);
+
+        ConnectionInfo connectionInfo = new ConnectionInfo(testUserName, testPIDdir, concurrentWebshell);
         connectionInfo.connect();
         connectionInfo.disconnect();
         verifyAll();
     }
-
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
