@@ -35,11 +35,12 @@
             <tr *ngFor="let knoxToken of mf.data">
                 <td>{{knoxToken.tokenId}}</td>
                 <td>{{formatDateTime(knoxToken.issueTimeLong)}}</td>
-                <td>{{formatDateTime(knoxToken.expirationLong)}}</td>
+                <td *ngIf="!isTokenExpired(knoxToken.expirationLong)" style="color: green">{{formatDateTime(knoxToken.expirationLong)}}</td>
+                <td *ngIf="isTokenExpired(knoxToken.expirationLong)" style="color: red">{{formatDateTime(knoxToken.expirationLong)}}</td>
                 <td>{{knoxToken.metadata.comment}}</td>
                 <td>
-                    <button *ngIf="knoxToken.metadata.enabled" (click)="disableToken(knoxToken.tokenId);">Disable</button>
-                    <button *ngIf="!knoxToken.metadata.enabled" (click)="enableToken(knoxToken.tokenId);">Enable</button>
+                    <button *ngIf="knoxToken.metadata.enabled && !isTokenExpired(knoxToken.expirationLong)" (click)="disableToken(knoxToken.tokenId);">Disable</button>
+                    <button *ngIf="!knoxToken.metadata.enabled && !isTokenExpired(knoxToken.expirationLong)" (click)="enableToken(knoxToken.tokenId);">Enable</button>
                     <button (click)="revokeToken(knoxToken.tokenId);">Revoke</button>
                 </td>
             </tr>
