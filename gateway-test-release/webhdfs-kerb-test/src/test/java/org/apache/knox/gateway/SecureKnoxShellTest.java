@@ -300,9 +300,6 @@ public class SecureKnoxShellTest {
     binding.setProperty("file", file.getAbsolutePath());
 
     final GroovyShell shell = new GroovyShell(binding);
-
-    /* give gateway time to wake up */
-    //Thread.sleep(50000);
     shell.evaluate(driver.getResourceUrl(SCRIPT).toURI());
 
     String status = (String) binding.getProperty("status");
