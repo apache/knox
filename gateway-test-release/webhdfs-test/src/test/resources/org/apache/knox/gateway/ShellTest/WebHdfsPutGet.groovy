@@ -33,6 +33,7 @@ session = Hadoop.login( gateway, username, pass )
 status = Hdfs.status(session).file( "/" ).now().string
 
 Hdfs.put( session ).file( file ).to( dataDir + "/" + dataFile ).now()
+Thread.sleep(2000)
 Hdfs.put( session ).file( file ).to( dataDir + "/" + dataFile ).overwrite(true).permission(777).now()
 
 fetchedFile = Hdfs.get( session ).from( dataDir + "/" + dataFile).now().string

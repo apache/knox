@@ -301,7 +301,9 @@ public class SecureKnoxShellTest {
 
     final GroovyShell shell = new GroovyShell(binding);
 
-    shell.evaluate(TestUtils.getResourceUrl(SCRIPT).toURI());
+    /* give gateway time to wake up */
+    //Thread.sleep(50000);
+    shell.evaluate(driver.getResourceUrl(SCRIPT).toURI());
 
     String status = (String) binding.getProperty("status");
     assertNotNull(status);
