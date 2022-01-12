@@ -683,6 +683,7 @@ public class ClouderaManagerServiceDiscoveryTest {
     // Configure the role
     Map<String, String> roleProperties = new HashMap<>();
     roleProperties.put("hs2_http_port", port);
+    roleProperties.put(ImpalaServiceModelGenerator.SPECIALIZATION, ImpalaServiceModelGenerator.NO_SPEC);
 
     ServiceDiscovery.Cluster cluster = doTestDiscovery(hostName,
                                                        "IMPALA-1",
