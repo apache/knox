@@ -30,12 +30,6 @@ session = KnoxSession.kerberosLogin(gateway, jaasConf, krb5conf, true)
 status = Hdfs.status(session).file( "/" ).now().string
 
 Hdfs.put( session ).file( file ).to( dataDir + "/" + dataFile ).now()
-try {
-    status = Hdfs.status(session).file( file ).now().string
-} catch (Exception e) {
-    // case where we get 404 or 500 exception due to MiniDFSCluster
-    Thread.sleep(1000)
-}
 Hdfs.put( session ).file( file ).to( dataDir + "/" + dataFile ).overwrite(true).permission(777).now()
 
 fetchedFile = Hdfs.get( session ).from( dataDir + "/" + dataFile).now().string
