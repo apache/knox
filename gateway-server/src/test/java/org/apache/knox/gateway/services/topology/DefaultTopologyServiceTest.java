@@ -712,16 +712,26 @@ public class DefaultTopologyServiceTest {
   }
 
   @Test
-  public void testTopologyRedeployedIfChangeNotRequired() throws Exception {
-    testTopologyRedeployment(false);
+  public void testTopologyRedeployedIfChangeNotRequiredAndNoChangesMade() throws Exception {
+    testTopologyRedeployment(false, false);
   }
 
   @Test
-  public void testTopologyNotRedeployedIfNotChangedAndChangeRequired() throws Exception {
-    testTopologyRedeployment(true);
+  public void testTopologyRedeployedIfChangeNotRequiredAndChangesWereMade() throws Exception {
+    testTopologyRedeployment(false, true);
   }
 
-  private void testTopologyRedeployment(boolean requiresChange) throws Exception {
+  @Test
+  public void testTopologyNotRedeployedIfNotChangedAndChangeRequiredAndNoChangesMade() throws Exception {
+    testTopologyRedeployment(true, false);
+  }
+
+  @Test
+  public void testTopologyNotRedeployedIfNotChangedAndChangeRequiredAndChangesWereMade() throws Exception {
+    testTopologyRedeployment(true, true);
+  }
+
+  private void testTopologyRedeployment(boolean requiresChange, boolean doChange) throws Exception {
     final File dir = createDir();
     try {
       final String topologyFileName = "one.xml";
@@ -761,6 +771,17 @@ public class DefaultTopologyServiceTest {
         touchFile(topologyDir, topologyFileName);
         topologyService.reloadTopologies();
         assertThat(topoListener.events.size(), is(0));
+      }
+
+      if (doChange) {
+        // if topology is updated, even if change is not required or timestamp is older
+        // (due to previous topology processing) -> an update event must be triggered
+        TestUtils.updateFile(topologyDir, topologyFileName, requiresChange ? "host-one-b" : "host-one", "host-one-c");
+        topologyService.reloadTopologies();
+        assertThat(topoListener.events.size(), is(1));
+        events = topoListener.events.get(0);
+        assertThat(events.size(), is(1));
+        assertThat(events.get(0).getType(), is(TopologyEvent.Type.UPDATED));
       }
     } finally {
       FileUtils.deleteQuietly(dir);

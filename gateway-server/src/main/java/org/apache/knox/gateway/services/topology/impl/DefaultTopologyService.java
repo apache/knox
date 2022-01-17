@@ -230,7 +230,14 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
 
   private boolean shouldMarkTopologyUpdated(Topology newTopology, Topology oldTopology) {
     final boolean timestampUpdated = newTopology.getTimestamp() > oldTopology.getTimestamp();
-    return config.topologyRedeploymentRequiresChanges() ? timestampUpdated && !oldTopology.equals(newTopology) : timestampUpdated;
+    final boolean topologyChanged = !oldTopology.equals(newTopology);
+    if (topologyChanged) {
+      // if topology is changed, an UPDATE event has to be triggered no matter what
+      return true;
+    } else {
+      // topology is not changed
+      return config.topologyRedeploymentRequiresChanges() ? false : timestampUpdated;
+    }
   }
 
   private File calculateAbsoluteTopologiesDir(GatewayConfig config) {
