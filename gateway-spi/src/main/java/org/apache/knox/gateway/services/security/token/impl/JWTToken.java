@@ -27,6 +27,7 @@ import java.util.UUID;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
@@ -68,19 +69,29 @@ public class JWTToken implements JWT {
   }
 
   public JWTToken(String alg, String[] claimsArray, List<String> audiences, boolean managed) {
+    this(alg, claimsArray, audiences, managed, null);
+  }
+
+  public JWTToken(String alg, String[] claimsArray, List<String> audiences, boolean managed, String type) {
+    if(claimsArray == null) {
+      log.missingClaims(-1);
+    } else if (claimsArray.length < 6){
+      log.missingClaims(claimsArray.length);
+    }
+
     JWSHeader header = null;
     try {
       header = new JWSHeader(new JWSAlgorithm(alg),
+      type == null ? null : new JOSEObjectType(type),
+      null,
+      null,
+      getClaimValue(claimsArray, 5) != null ? new URI(getClaimValue(claimsArray, 5)) : null, // JKU
       null,
       null,
       null,
-      claimsArray[5] != null ? new URI(claimsArray[5]) : null, // JKU
       null,
       null,
-      null,
-      null,
-      null,
-      claimsArray[4] != null ? claimsArray[4] : null, // KID
+      getClaimValue(claimsArray, 4) != null ? getClaimValue(claimsArray, 4) : null, // KID
       null,
       null);
     } catch (URISyntaxException e) {
@@ -88,29 +99,25 @@ public class JWTToken implements JWT {
       header = new JWSHeader(new JWSAlgorithm(alg));
     }
 
-    if(claimsArray == null || claimsArray.length < 6) {
-      log.missingClaims(claimsArray.length);
-    }
-
-    if (claimsArray[2] != null) {
+    if (getClaimValue(claimsArray, 2) != null) {
       if (audiences == null) {
         audiences = new ArrayList<>();
       }
-      audiences.add(claimsArray[2]);
+      audiences.add(getClaimValue(claimsArray, 2));
     }
     JWTClaimsSet claims;
     JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder()
-    .issuer(claimsArray[0])
-    .subject(claimsArray[1])
+    .issuer(getClaimValue(claimsArray, 0))
+    .subject(getClaimValue(claimsArray, 1))
     .audience(audiences);
-    if(claimsArray[3] != null) {
+    if(getClaimValue(claimsArray, 3) != null) {
       builder = builder.expirationTime(new Date(Long.parseLong(claimsArray[3])));
     }
-    if(claimsArray[4] != null) {
-      builder.claim(KNOX_KID_CLAIM, claimsArray[4]);
+    if(getClaimValue(claimsArray, 4) != null) {
+      builder.claim(KNOX_KID_CLAIM, getClaimValue(claimsArray, 4));
     }
-    if(claimsArray[5] != null) {
-      builder.claim(KNOX_JKU_CLAIM, claimsArray[5]);
+    if(getClaimValue(claimsArray, 5) != null) {
+      builder.claim(KNOX_JKU_CLAIM, getClaimValue(claimsArray, 5));
     }
 
     // Add a private UUID claim for uniqueness
@@ -122,6 +129,10 @@ public class JWTToken implements JWT {
     jwt = new SignedJWT(header, claims);
   }
 
+  private String getClaimValue(String[] claims, int index) {
+    return claims == null || claims.length <= index ? null : claims[index];
+  }
+
   @Override
   public String getHeader() {
     JWSHeader header = jwt.getHeader();
@@ -131,6 +142,11 @@ public class JWTToken implements JWT {
   @Override
   public JWSAlgorithm getSignatureAlgorithm() {
     return jwt.getHeader().getAlgorithm();
+  }
+
+  @Override
+  public JOSEObjectType getType() {
+    return jwt.getHeader().getType();
   }
 
   @Override

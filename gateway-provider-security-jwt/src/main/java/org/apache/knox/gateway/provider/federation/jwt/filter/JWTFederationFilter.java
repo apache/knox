@@ -26,6 +26,7 @@ import java.util.Base64;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
@@ -46,6 +47,8 @@ import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.CertificateUtils;
 
+import com.nimbusds.jose.JOSEObjectType;
+
 public class JWTFederationFilter extends AbstractJWTFilter {
 
   private static final JWTMessages LOGGER = MessagesFactory.get( JWTMessages.class );
@@ -61,6 +64,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   public static final String KNOX_TOKEN_QUERY_PARAM_NAME = "knox.token.query.param.name";
   public static final String TOKEN_PRINCIPAL_CLAIM = "knox.token.principal.claim";
   public static final String JWKS_URL = "knox.token.jwks.url";
+  public static final String ALLOWED_JWS_TYPES = "knox.token.allowed.jws.types";
   public static final String BEARER   = "Bearer ";
   public static final String BASIC    = "Basic";
   public static final String TOKEN    = "Token";
@@ -88,6 +92,14 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     String oidcjwksurl = filterConfig.getInitParameter(JWKS_URL);
     if (oidcjwksurl != null) {
       expectedJWKSUrl = oidcjwksurl;
+    }
+
+    allowedJwsTypes = new HashSet<>();
+    final String allowedTypes = filterConfig.getInitParameter(ALLOWED_JWS_TYPES);
+    if (allowedTypes != null) {
+      Stream.of(allowedTypes.trim().split(",")).forEach(allowedType -> allowedJwsTypes.add(new JOSEObjectType(allowedType.trim())));
+    } else {
+      allowedJwsTypes.add(JOSEObjectType.JWT);
     }
 
     // expected claim
