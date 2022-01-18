@@ -98,6 +98,7 @@ public class TokenResource {
   private static final String ENDPOINT_PUBLIC_CERT = "endpoint_public_cert";
   private static final String BEARER = "Bearer";
   private static final String TOKEN_TTL_PARAM = "knox.token.ttl";
+  private static final String TOKEN_TYPE_PARAM = "knox.token.type";
   private static final String TOKEN_AUDIENCES_PARAM = "knox.token.audiences";
   private static final String TOKEN_TARGET_URL = "knox.token.target.url";
   static final String TOKEN_CLIENT_DATA = "knox.token.client.data";
@@ -128,6 +129,7 @@ public class TokenResource {
   private static final String TARGET_ENDPOINT_PULIC_CERT_PEM = "knox.token.target.endpoint.cert.pem";
   private static TokenServiceMessages log = MessagesFactory.get(TokenServiceMessages.class);
   private long tokenTTL = TOKEN_TTL_DEFAULT;
+  private String tokenType;
   private String tokenTTLAsText;
   private List<String> targetAudiences = new ArrayList<>();
   private String tokenTargetUrl;
@@ -211,6 +213,9 @@ public class TokenResource {
         log.invalidTokenTTLEncountered(ttl);
       }
     }
+
+    this.tokenType = context.getInitParameter(TOKEN_TYPE_PARAM);
+
     tokenTTLAsText = getTokenTTLAsText();
 
     tokenTargetUrl = context.getInitParameter(TOKEN_TARGET_URL);
@@ -666,7 +671,8 @@ public class TokenResource {
           .setAlgorithm(signatureAlgorithm)
           .setExpires(expires)
           .setManaged(managedToken)
-          .setJku(jku);
+          .setJku(jku)
+          .setType(tokenType);
       if (!targetAudiences.isEmpty()) {
         jwtAttributesBuilder.setAudiences(targetAudiences);
       }

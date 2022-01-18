@@ -28,6 +28,7 @@ import static org.junit.Assert.fail;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
@@ -1513,7 +1514,7 @@ public class TokenServiceResourceTest {
     }
 
     @Override
-    public boolean verifyToken(JWT token, String jwksurl, String algorithm) {
+    public boolean verifyToken(JWT token, String jwksurl, String algorithm, Set<JOSEObjectType> allowedJwsTypes) {
      return false;
     }
   }
