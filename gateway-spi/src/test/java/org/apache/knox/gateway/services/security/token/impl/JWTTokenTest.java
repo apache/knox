@@ -17,6 +17,13 @@
  */
 package org.apache.knox.gateway.services.security.token.impl;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
@@ -30,18 +37,12 @@ import java.util.UUID;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
-
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class JWTTokenTest {
   private static final String JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE0MTY5MjkxMDksImp0aSI6ImFhN2Y4ZDBhOTVjIiwic2NvcGVzIjpbInJlcG8iLCJwdWJsaWNfcmVwbyJdfQ.XCEwpBGvOLma4TCoh36FU7XhUbcskygS81HE1uHLf0E";
@@ -289,5 +290,15 @@ public class JWTTokenTest {
       assertEquals("Invalid JWS header: The algorithm \"alg\" header parameter must be for signatures",
           ex.getMessage());
     }
+  }
+
+  @Test
+  public void testTokenType() throws Exception {
+    JWT token = new JWTToken("RS256", null, null, false, null);
+    assertNull(token.getType());
+
+    final String tokenType = "at+jwt";
+    token = new JWTToken("RS256", null, null, false, tokenType);
+    assertEquals(token.getType(), new JOSEObjectType(tokenType));
   }
 }

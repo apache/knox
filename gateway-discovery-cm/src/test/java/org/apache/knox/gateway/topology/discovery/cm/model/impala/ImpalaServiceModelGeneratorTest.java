@@ -20,8 +20,12 @@ import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.AbstractServiceModelGeneratorTest;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class ImpalaServiceModelGeneratorTest extends AbstractServiceModelGeneratorTest {
 
@@ -33,6 +37,31 @@ public class ImpalaServiceModelGeneratorTest extends AbstractServiceModelGenerat
     roleConfig.put(ImpalaServiceModelGenerator.HTTP_PORT, "1357");
 
     validateServiceModel(createServiceModel(serviceConfig, roleConfig), serviceConfig, roleConfig);
+  }
+
+  @Override
+  @Test
+  public void testHandles() {
+    Map<String, String> roleConfig = new HashMap<>();
+    roleConfig.put(ImpalaServiceModelGenerator.SPECIALIZATION,
+                   ImpalaServiceModelGenerator.NO_SPEC);
+    assertTrue(doTestHandles(newGenerator(), getServiceType(), Collections.emptyMap(), getRoleType(), roleConfig));
+  }
+
+  @Test
+  public void testHandlesExecutorOnly() {
+    Map<String, String> roleConfig = new HashMap<>();
+    roleConfig.put(ImpalaServiceModelGenerator.SPECIALIZATION,
+                   ImpalaServiceModelGenerator.EXECUTOR_ONLY_SPEC);
+    assertFalse(doTestHandles(newGenerator(), getServiceType(), Collections.emptyMap(), getRoleType(), roleConfig));
+  }
+
+  @Test
+  public void testHandlesCoordinatorOnly() {
+    Map<String, String> roleConfig = new HashMap<>();
+    roleConfig.put(ImpalaServiceModelGenerator.SPECIALIZATION,
+                   ImpalaServiceModelGenerator.COORDINATOR_ONLY_SPEC);
+    assertTrue(doTestHandles(newGenerator(), getServiceType(), Collections.emptyMap(), getRoleType(), roleConfig));
   }
 
   @Override

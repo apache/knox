@@ -31,9 +31,10 @@ public class JWTokenAttributes {
   private final char[] signingKeystorePassphrase;
   private final boolean managed;
   private final String jku;
+  private final String type;
 
   JWTokenAttributes(Principal principal, List<String> audiences, String algorithm, long expires, String signingKeystoreName, String signingKeystoreAlias,
-      char[] signingKeystorePassphrase, boolean managed, String jku) {
+      char[] signingKeystorePassphrase, boolean managed, String jku, String type) {
     super();
     this.principal = principal;
     this.audiences = audiences;
@@ -44,6 +45,7 @@ public class JWTokenAttributes {
     this.signingKeystorePassphrase = signingKeystorePassphrase;
     this.managed = managed;
     this.jku = jku;
+    this.type = type;
   }
 
   public Principal getPrincipal() {
@@ -81,4 +83,9 @@ public class JWTokenAttributes {
   public String getJku() {
     return jku;
   }
+
+  public String getType() {
+    return type;
+  }
+
 }

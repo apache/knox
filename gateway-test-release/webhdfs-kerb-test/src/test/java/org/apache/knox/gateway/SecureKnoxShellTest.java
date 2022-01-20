@@ -300,7 +300,6 @@ public class SecureKnoxShellTest {
     binding.setProperty("file", file.getAbsolutePath());
 
     final GroovyShell shell = new GroovyShell(binding);
-
     shell.evaluate(driver.getResourceUrl(SCRIPT).toURI());
 
     String status = (String) binding.getProperty("status");

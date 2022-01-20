@@ -19,6 +19,7 @@ package org.apache.knox.gateway.services.security.token.impl;
 
 import java.util.Date;
 
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
@@ -61,6 +62,8 @@ public interface JWT {
   String getClaims();
 
   JWSAlgorithm getSignatureAlgorithm();
+
+  JOSEObjectType getType();
 
   void sign(JWSSigner signer);
 

@@ -15,22 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.services.security.token;
+package org.apache.knox.gateway.topology.simple;
 
-import java.security.interfaces.RSAPublicKey;
-import java.util.Set;
+public class DiscoveryException extends RuntimeException {
+    private final String clusterName;
+    private final String topologyName;
 
-import org.apache.knox.gateway.services.security.token.impl.JWT;
+    public DiscoveryException(String clusterName, String topologyName) {
+        this.clusterName = clusterName;
+        this.topologyName = topologyName;
+    }
 
-import com.nimbusds.jose.JOSEObjectType;
+    public String getClusterName() {
+        return clusterName;
+    }
 
-public interface JWTokenAuthority {
-
-  JWT issueToken(JWTokenAttributes jwtAttributes) throws TokenServiceException;
-
-  boolean verifyToken(JWT token) throws TokenServiceException;
-
-  boolean verifyToken(JWT token, RSAPublicKey publicKey) throws TokenServiceException;
-
-  boolean verifyToken(JWT token, String jwksurl, String algorithm, Set<JOSEObjectType> allowedJwsTypes) throws TokenServiceException;
+    public String getTopologyName() {
+        return topologyName;
+    }
 }

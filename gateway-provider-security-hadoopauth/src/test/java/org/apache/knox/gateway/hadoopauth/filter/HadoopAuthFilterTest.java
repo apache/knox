@@ -564,6 +564,7 @@ public class HadoopAuthFilterTest {
       expect(filterConfig.getInitParameter(JWTFederationFilter.JWT_UNAUTHENTICATED_PATHS_PARAM)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(AbstractJWTFilter.JWT_EXPECTED_ISSUER)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(AbstractJWTFilter.JWT_EXPECTED_SIGALG)).andReturn(null).anyTimes();
+      expect(filterConfig.getInitParameter(JWTFederationFilter.ALLOWED_JWS_TYPES)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(SignatureVerificationCache.TOKENS_VERIFIED_CACHE_MAX)).andReturn(null).anyTimes();
     }
 

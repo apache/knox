@@ -72,6 +72,7 @@ import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
 
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSHeader;
 import org.apache.knox.gateway.util.Tokens;
 
@@ -105,6 +106,7 @@ public abstract class AbstractJWTFilter implements Filter {
   private String expectedSigAlg;
   protected String expectedPrincipalClaim;
   protected String expectedJWKSUrl;
+  protected Set<JOSEObjectType> allowedJwsTypes;
 
   private TokenStateService tokenStateService;
   private TokenMAC tokenMAC;
@@ -451,7 +453,7 @@ public abstract class AbstractJWTFilter implements Filter {
         if (publicKey != null) {
           verified = authority.verifyToken(token, publicKey);
         } else if (expectedJWKSUrl != null) {
-          verified = authority.verifyToken(token, expectedJWKSUrl, expectedSigAlg);
+          verified = authority.verifyToken(token, expectedJWKSUrl, expectedSigAlg, allowedJwsTypes);
         } else {
           verified = authority.verifyToken(token);
         }

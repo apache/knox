@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.service.knoxsso;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.KeyLengthException;
@@ -66,6 +67,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.apache.knox.gateway.services.GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE;
 import static org.junit.Assert.assertEquals;
@@ -816,7 +818,7 @@ public class WebSSOResourceTest {
     }
 
     @Override
-    public boolean verifyToken(JWT token, String jwksurl, String algorithm) {
+    public boolean verifyToken(JWT token, String jwksurl, String algorithm, Set<JOSEObjectType> allowedJwsTypes) {
      return false;
     }
   }

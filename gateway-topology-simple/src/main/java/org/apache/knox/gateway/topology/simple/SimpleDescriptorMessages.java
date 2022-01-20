@@ -32,10 +32,6 @@ public interface SimpleDescriptorMessages {
             text = "The \"{0}\" descriptor does not include discovery-type.")
     void missingDiscoveryTypeInDescriptor(String descriptorName);
 
-    @Message(level = MessageLevel.ERROR,
-            text = "Unable to complete service discovery for cluster {0}.")
-    void failedToDiscoverClusterServices(String descriptorName);
-
     @Message(level = MessageLevel.WARN,
             text = "No valid URLs were discovered for {0} in the {1} cluster.")
     void failedToDiscoverClusterServiceURLs(String serviceName, String clusterName);

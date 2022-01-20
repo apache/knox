@@ -97,6 +97,10 @@
           <name>knox.token.renewer.whitelist</name>
           <value>admin</value>
       </param>
+      <param>
+          <name>knox.token.type</name>
+          <value>JWT</value>
+      </param>
    </service>
    <application>
       <name>tokengen</name>
