@@ -154,11 +154,11 @@ public class GatewayFilter implements Filter {
     }
 
     /* If request contains X-Request-Id header use it else use random uuid as correlation id */
-    final String req_id = ((HttpServletRequest) servletRequest).getHeader(REQUEST_ID_HEADER_NAME);
-    if (StringUtils.isBlank(req_id)) {
+    final String reqID = ((HttpServletRequest) servletRequest).getHeader(REQUEST_ID_HEADER_NAME);
+    if (StringUtils.isBlank(reqID)) {
       assignCorrelationRequestId(UUID.randomUUID().toString());
     } else {
-      assignCorrelationRequestId(req_id);
+      assignCorrelationRequestId(reqID);
     }
     // Populate Audit/correlation parameters
     AuditContext auditContext = auditService.getContext();
