@@ -23,6 +23,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.audit.api.CorrelationService;
 import org.apache.knox.gateway.audit.api.CorrelationServiceFactory;
 import org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationContext;
@@ -30,13 +31,17 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.HandlerWrapper;
 
 public class CorrelationHandler extends HandlerWrapper {
+  public static final String REQUEST_ID_HEADER_NAME = "X-Request-Id";
 
   @Override
   public void handle( String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response )
       throws IOException, ServletException {
     CorrelationService correlationService = CorrelationServiceFactory.getCorrelationService();
+    /* If request id is specified use it */
+    final String req_id = request.getHeader(REQUEST_ID_HEADER_NAME);
     correlationService.attachContext(
-            new Log4jCorrelationContext(UUID.randomUUID().toString(), null, null));
+            new Log4jCorrelationContext(StringUtils.isBlank(req_id) ? UUID.randomUUID().toString() : req_id,
+                null, null));
     try {
       super.handle( target, baseRequest, request, response );
     } finally {
