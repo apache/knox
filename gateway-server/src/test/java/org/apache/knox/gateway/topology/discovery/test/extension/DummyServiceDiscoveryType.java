@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.topology.discovery.test.extension;
 
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryType;
 
@@ -26,7 +27,7 @@ public class DummyServiceDiscoveryType implements ServiceDiscoveryType {
     }
 
     @Override
-    public ServiceDiscovery newInstance() {
+    public ServiceDiscovery newInstance(GatewayConfig gatewayConfig) {
         return new DummyServiceDiscovery();
     }
 }

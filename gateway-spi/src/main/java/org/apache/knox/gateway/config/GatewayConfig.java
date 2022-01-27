@@ -109,6 +109,8 @@ public interface GatewayConfig {
 
   String PROXYUSER_SERVICES_IGNORE_DOAS = "gateway.proxyuser.services.ignore.doas";
 
+  long DEFAULT_CM_SERVICE_DISCOVERY_CACHE_ENTRY_TTL = 600; // 10 minutes
+
   /**
    * The location of the gateway configuration.
    * Subdirectories will be: topologies
@@ -681,6 +683,11 @@ public interface GatewayConfig {
    * @return the monitoring interval (in milliseconds) of Cloudera Manager advanced service discovery configuration
    */
   long getClouderaManagerAdvancedServiceDiscoveryConfigurationMonitoringInterval();
+
+  /**
+   * @return the entry TTL in seconds in CM service discovery repository cache where we store service/role configurations
+   */
+  long getClouderaManagerServiceDiscoveryRepositoryEntryTTL();
 
   /**
    * @return true, if state for tokens issued by the Knox Token service should be managed by Knox.
