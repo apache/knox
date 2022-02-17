@@ -175,7 +175,7 @@ public class HadoopGroupProviderFilterTest {
             "(&amp;(|(objectclass=person)(objectclass=applicationProcess))(cn={0}))")
         .anyTimes();
     EasyMock.expect(config.getInitParameterNames())
-        .andReturn(Collections.enumeration((keysList))).anyTimes();
+            .andStubAnswer(() -> Collections.enumeration((keysList)));
 
     EasyMock.replay( config );
     EasyMock.replay( context );

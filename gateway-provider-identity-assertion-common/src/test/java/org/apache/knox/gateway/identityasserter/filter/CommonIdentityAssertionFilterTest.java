@@ -29,14 +29,16 @@ import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -44,6 +46,7 @@ import static org.junit.Assert.assertTrue;
 public class CommonIdentityAssertionFilterTest {
   private String username;
   private Filter filter;
+  private Set<String> calculatedGroups = new HashSet<>();
 
   @Before
   public void setUp() {
@@ -67,13 +70,8 @@ public class CommonIdentityAssertionFilterTest {
 
       @Override
       protected String[] combineGroupMappings(String[] mappedGroups, String[] groups) {
-        String[] combined = super.combineGroupMappings(mappedGroups, groups);
-        assertEquals("LARRY", username);
-        assertTrue("Should be greater than 2", combined.length > 2);
-        assertTrue(combined[0], combined[0].equalsIgnoreCase("EVERYONE"));
-        assertTrue(combined[1].equalsIgnoreCase("USERS") || combined[1].equalsIgnoreCase("ADMIN"));
-        assertTrue(combined[2], combined[2].equalsIgnoreCase("USERS") || combined[2].equalsIgnoreCase("ADMIN"));
-        return combined;
+        calculatedGroups.addAll(Arrays.asList(super.combineGroupMappings(mappedGroups, groups)));
+        return super.combineGroupMappings(mappedGroups, groups);
       }
     };
   }
@@ -85,6 +83,14 @@ public class CommonIdentityAssertionFilterTest {
         andReturn("*=everyone;").once();
     EasyMock.expect(config.getInitParameter(CommonIdentityAssertionFilter.PRINCIPAL_MAPPING)).
         andReturn("ljm=lmccay;").once();
+    EasyMock.expect(config.getInitParameterNames()).
+            andReturn(Collections.enumeration(Arrays.asList(
+                    CommonIdentityAssertionFilter.GROUP_PRINCIPAL_MAPPING,
+                    CommonIdentityAssertionFilter.PRINCIPAL_MAPPING,
+                    CommonIdentityAssertionFilter.VIRTUAL_GROUP_MAPPING_PREFIX + "test-virtual-group")))
+            .anyTimes();
+    EasyMock.expect(config.getInitParameter(CommonIdentityAssertionFilter.VIRTUAL_GROUP_MAPPING_PREFIX + "test-virtual-group")).
+            andReturn("(and (member 'users') (member 'admin'))").anyTimes();
     EasyMock.replay( config );
 
     final HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
@@ -93,12 +99,7 @@ public class CommonIdentityAssertionFilterTest {
     final HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
     EasyMock.replay( response );
 
-    final FilterChain chain = new FilterChain() {
-      @Override
-      public void doFilter(ServletRequest request, ServletResponse response)
-          throws IOException, ServletException {
-      }
-    };
+    final FilterChain chain = (req, resp) -> {};
 
     Subject subject = new Subject();
     subject.getPrincipals().add(new PrimaryPrincipal("larry"));
@@ -107,14 +108,11 @@ public class CommonIdentityAssertionFilterTest {
     try {
       Subject.doAs(
         subject,
-        new PrivilegedExceptionAction<Object>() {
-          @Override
-          public Object run() throws Exception {
-            filter.init(config);
-            filter.doFilter(request, response, chain);
-            return null;
-          }
-        });
+              (PrivilegedExceptionAction<Object>) () -> {
+                filter.init(config);
+                filter.doFilter(request, response, chain);
+                return null;
+              });
     }
     catch (PrivilegedActionException e) {
       Throwable t = e.getCause();
@@ -128,5 +126,9 @@ public class CommonIdentityAssertionFilterTest {
         throw new ServletException(t);
       }
     }
+
+    assertEquals("LARRY", username);
+    assertTrue("Should be greater than 2", calculatedGroups.size() > 2);
+    assertTrue(calculatedGroups.containsAll(Arrays.asList("everyone", "USERS", "ADMIN", "test-virtual-group")));
   }
 }
