@@ -512,6 +512,7 @@
                     <systemPropertyVariables>
                         <project.version>${project.version}</project.version>
                     </systemPropertyVariables>
+                	<forkCount>1.5C</forkCount>
                 </configuration>
             </plugin>
             <plugin>
