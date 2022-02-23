@@ -111,7 +111,7 @@ public class VirtualGroupMapperTest {
     }
 
     private Set<String> virtualGroups(String user1, List<String> ldapGroups) {
-        return mapper.virtualGroupsOfUser(user1, new HashSet<>(ldapGroups), null);
+        return mapper.mapGroups(user1, new HashSet<>(ldapGroups), null);
     }
 
     private static Set<String> setOf(String... strings) {

@@ -20,6 +20,15 @@ package org.apache.knox.gateway.plang;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Abstract Syntax Tree of the code.
+ *
+ * For example from the following code:
+ *      (or true (and false true))
+ *
+ * The parser generates the following AST:
+ *      [or, true, [and, false, true]]
+ */
 public class Ast {
     private final List<Ast> children = new ArrayList<>();
     private final String token;

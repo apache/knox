@@ -42,7 +42,7 @@ public class VirtualGroupMapper {
     /**
      *  @return all virtual groups where the corresponding predicate matches
      */
-    public Set<String> virtualGroupsOfUser(String username, Set<String> groups, ServletRequest request) {
+    public Set<String> mapGroups(String username, Set<String> groups, ServletRequest request) {
         Set<String> virtualGroups = new HashSet<>();
         for (Map.Entry<String, Ast> each : virtualGroupToPredicateMap.entrySet()) {
             String virtualGroupName = each.getKey();
@@ -50,8 +50,6 @@ public class VirtualGroupMapper {
             if (evalPredicate(virtualGroupName, username, groups, predicate, request)) {
                 virtualGroups.add(virtualGroupName);
                 LOG.addingUserToVirtualGroup(username, virtualGroupName, predicate);
-            } else {
-                LOG.notAddingUserToVirtualGroup(username, virtualGroupName, predicate);
             }
         }
         LOG.virtualGroups(username, groups, virtualGroups);

@@ -150,7 +150,7 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     mappedPrincipalName = mapUserPrincipal(mappedPrincipalName);
     String[] mappedGroups = mapGroupPrincipalsBase(mappedPrincipalName, subject);
     String[] groups = mapGroupPrincipals(mappedPrincipalName, subject);
-    String[] virtualGroups = virtualGroupMapper.virtualGroupsOfUser(mappedPrincipalName, groups(subject), request).toArray(new String[0]);
+    String[] virtualGroups = virtualGroupMapper.mapGroups(mappedPrincipalName, groups(subject), request).toArray(new String[0]);
     groups = combineGroupMappings(mappedGroups, groups);
     groups = combineGroupMappings(virtualGroups, groups);
 
