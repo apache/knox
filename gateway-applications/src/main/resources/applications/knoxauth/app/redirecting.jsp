@@ -45,6 +45,9 @@
     <%
         boolean validRedirect = true;
         String originalUrl = request.getParameter("originalUrl");
+        if (originalUrl == null) {
+            originalUrl = "";
+        }
         try {
           if (Urls.containsUserInfo(originalUrl)) {
             validRedirect = false;
