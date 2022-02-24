@@ -18,9 +18,11 @@
 package org.apache.knox.gateway.dispatch;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.filter.GatewayResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.logging.log4j.ThreadContext;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -37,6 +39,8 @@ import java.util.Set;
 public abstract class AbstractGatewayDispatch implements Dispatch {
   private static final Set<String> REQUEST_EXCLUDE_HEADERS = new HashSet<>(Arrays.asList(
       "Host", "Authorization", "Content-Length", "Transfer-Encoding"));
+  protected static final String REQUEST_ID_HEADER_NAME = "X-Request-Id";
+  protected static final String TRACE_ID = "trace_id";
 
   protected  HttpClient client;
 
@@ -124,6 +128,19 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
   public void copyRequestHeaderFields(HttpUriRequest outboundRequest,
       HttpServletRequest inboundRequest) {
     Enumeration<String> headerNames = inboundRequest.getHeaderNames();
+    /**
+     Add X-Request-Id headers to outgoing requests.
+     Only do this when
+      1. incoming request does not have X-Request-Id header (if it has no need to add)
+      2. This header is not in exclude header list
+      3. This header is present in the MDC context
+     **/
+    if(StringUtils.isBlank(inboundRequest.getHeader(REQUEST_ID_HEADER_NAME)) &&
+        !getOutboundRequestExcludeHeaders().contains( REQUEST_ID_HEADER_NAME ) &&
+        ThreadContext.containsKey(TRACE_ID)) {
+      outboundRequest.addHeader( REQUEST_ID_HEADER_NAME,  ThreadContext.get(TRACE_ID));
+    }
+
     while( headerNames.hasMoreElements() ) {
       String name = headerNames.nextElement();
       if ( !outboundRequest.containsHeader( name )

@@ -18,6 +18,9 @@
 package org.apache.knox.gateway;
 
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
+import org.apache.knox.gateway.audit.api.CorrelationContext;
+import org.apache.knox.gateway.audit.api.CorrelationService;
+import org.apache.knox.gateway.audit.api.CorrelationServiceFactory;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.topology.Topology;
@@ -39,7 +42,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
+import static org.apache.knox.gateway.filter.CorrelationHandler.REQUEST_ID_HEADER_NAME;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @Category( { UnitTests.class, FastTests.class } )
@@ -140,6 +147,18 @@ public class GatewayFilterTest {
 
   }
 
+  public static class TestCorrelationFilter extends AbstractGatewayFilter {
+    public String correlation_id;
+    public String request_id;
+    @Override
+    protected void doFilter( HttpServletRequest request, HttpServletResponse response, FilterChain chain ) throws IOException, ServletException {
+      this.request_id = request.getHeader( REQUEST_ID_HEADER_NAME );
+      CorrelationService correlationService = CorrelationServiceFactory.getCorrelationService();
+      CorrelationContext correlationContext = correlationService.getContext();
+      correlation_id = correlationContext.getRequestId();
+    }
+  }
+
   @Test
   public void testTargetServiceRoleRequestAttribute() throws Exception {
 
@@ -175,6 +194,58 @@ public class GatewayFilterTest {
 
     assertThat(filter.role, is( "test-role" ) );
 
+  }
+
+  /**
+   * make sure request id passed by request to knox is picked up as a correlation id
+   * @throws Exception
+   */
+  @Test
+  public void testLoadBalancerCorrelationID() throws Exception {
+
+    final String TEST_REQ_ID = "7365dfbc1028ad7e4501dad3454a34c3";
+    FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
+    EasyMock.replay( config );
+
+    HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+    HttpServletRequest requestNoID = EasyMock.createNiceMock( HttpServletRequest.class );
+
+    ServletContext context = EasyMock.createNiceMock( ServletContext.class );
+    GatewayConfig gatewayConfig = EasyMock.createNiceMock( GatewayConfig.class );
+    EasyMock.expect( context.getAttribute(
+    GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).anyTimes();
+    EasyMock.expect(gatewayConfig.getHeaderNameForRemoteAddress()).andReturn(
+        "Custom-Forwarded-For").anyTimes();
+    request.setAttribute( AbstractGatewayFilter.TARGET_SERVICE_ROLE, "test-role" );
+    EasyMock.expectLastCall().anyTimes();
+
+    EasyMock.expect( request.getPathInfo() ).andReturn( "test-path/test-resource" ).anyTimes();
+    EasyMock.expect( request.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect( request.getHeader( REQUEST_ID_HEADER_NAME ) ).andReturn( TEST_REQ_ID ).anyTimes();
+    HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
+
+    EasyMock.expect( requestNoID.getPathInfo() ).andReturn( "test-path/test-resource" ).anyTimes();
+    EasyMock.expect( requestNoID.getServletContext() ).andReturn( context ).anyTimes();
+
+    EasyMock.replay(response,request,requestNoID,context,gatewayConfig);
+
+
+    TestCorrelationFilter filter = new TestCorrelationFilter();
+
+    /* test a case where request coming into knox has request id header */
+    GatewayFilter gateway = new GatewayFilter();
+    gateway.addFilter( "test-path/**", "test-filter", filter, null, "test-role" );
+    gateway.init( config );
+    gateway.doFilter( request, response );
+    assertThat(filter.request_id, is( TEST_REQ_ID ) );
+    assertThat(filter.correlation_id, is( TEST_REQ_ID ) );
+
+    /* test the case where request id for request coming to knox is absent */
+    gateway.doFilter( requestNoID, response );
+    assertThat(filter.request_id, nullValue() );
+    assertThat(filter.correlation_id, notNullValue() );
+    assertThat(filter.correlation_id, not( TEST_REQ_ID ) );
+    gateway.destroy();
   }
 
   @Test

@@ -38,6 +38,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.AuditContext;
@@ -59,6 +60,8 @@ import org.apache.knox.gateway.util.ServletRequestUtils;
 import org.apache.knox.gateway.util.urltemplate.Matcher;
 import org.apache.knox.gateway.util.urltemplate.Parser;
 import org.apache.knox.gateway.util.urltemplate.Template;
+
+import static org.apache.knox.gateway.filter.CorrelationHandler.REQUEST_ID_HEADER_NAME;
 
 public class GatewayFilter implements Filter {
 
@@ -150,7 +153,14 @@ public class GatewayFilter implements Filter {
       }
     }
 
-    assignCorrelationRequestId();
+    /* If request contains X-Request-Id header use it else use random uuid as correlation id */
+    final String reqID =
+        StringUtils.isBlank(((HttpServletRequest) servletRequest).getHeader(REQUEST_ID_HEADER_NAME)) ?
+            UUID.randomUUID().toString() :
+            ((HttpServletRequest) servletRequest).getHeader(REQUEST_ID_HEADER_NAME);
+
+    assignCorrelationRequestId(reqID);
+
     // Populate Audit/correlation parameters
     AuditContext auditContext = auditService.getContext();
     if(auditContext == null) {
@@ -236,11 +246,11 @@ public class GatewayFilter implements Filter {
   }
 
   // Now creating the correlation context only if required since it may be created upstream in the CorrelationHandler.
-  private void assignCorrelationRequestId() {
+  private void assignCorrelationRequestId(final String requestID) {
     CorrelationService correlationService = CorrelationServiceFactory.getCorrelationService();
     CorrelationContext correlationContext = correlationService.getContext();
     if( correlationContext == null ) {
-      correlationService.attachContext(new Log4jCorrelationContext(UUID.randomUUID().toString(), null, null));
+      correlationService.attachContext(new Log4jCorrelationContext(requestID, null, null));
     }
   }
 

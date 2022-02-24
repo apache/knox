@@ -207,7 +207,7 @@
 </filter>
 <filter name="YARNUI/yarn/outbound/filter/cluster">
     <content type="*/html">
-        <apply path="(https?://[^/':,]+:[\d]+)?/ws/v1/cluster/apps/application" rule="YARNUI/yarn/outbound/apps/cluster1"/>
+        <apply path="https?://[^/':,]+:[\d]+/ws/v1/cluster/apps/application" rule="YARNUI/yarn/outbound/apps/cluster1"/>
         <apply path="/ws/v1/.*" rule="YARNUI/yarn/outbound/ws1"/>
         <apply path="https?://[^/':,]+:[\d]+/cluster/scheduler.*" rule="YARNUI/yarn/outbound/scheduler1"/>
         <apply path="/cluster/scheduler.*" rule="YARNUI/yarn/outbound/scheduler2"/>
