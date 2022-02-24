@@ -23,6 +23,7 @@ import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -36,6 +37,12 @@ import org.junit.Test;
 public class VirtualGroupMapperTest {
     private Parser parser = new Parser();
     private VirtualGroupMapper mapper;
+
+    @Test
+    public void testWithEmptyConfig() {
+        mapper = new VirtualGroupMapper(Collections.emptyMap());
+        assertEquals(Collections.emptySet(), virtualGroups("user1", emptyList()));
+    }
 
     @Test
     public void testEverybodyGroup() {

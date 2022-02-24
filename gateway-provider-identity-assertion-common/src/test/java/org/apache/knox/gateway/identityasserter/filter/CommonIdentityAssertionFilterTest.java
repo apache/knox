@@ -17,20 +17,10 @@
  */
 package org.apache.knox.gateway.identityasserter.filter;
 
-import org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
-import org.apache.knox.gateway.security.GroupPrincipal;
-import org.apache.knox.gateway.security.PrimaryPrincipal;
-import org.easymock.EasyMock;
-import org.junit.Before;
-import org.junit.Test;
+import static org.apache.knox.gateway.audit.log4j.audit.Log4jAuditService.MDC_AUDIT_CONTEXT_KEY;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
-import javax.security.auth.Subject;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -39,9 +29,21 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
+import javax.security.auth.Subject;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
+import org.apache.knox.gateway.security.GroupPrincipal;
+import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.logging.log4j.ThreadContext;
+import org.easymock.EasyMock;
+import org.junit.Before;
+import org.junit.Test;
 
 public class CommonIdentityAssertionFilterTest {
   private String username;
@@ -74,6 +76,7 @@ public class CommonIdentityAssertionFilterTest {
         return super.combineGroupMappings(mappedGroups, groups);
       }
     };
+    ThreadContext.put(MDC_AUDIT_CONTEXT_KEY, "dummy");
   }
 
   @Test
@@ -90,7 +93,7 @@ public class CommonIdentityAssertionFilterTest {
                     CommonIdentityAssertionFilter.VIRTUAL_GROUP_MAPPING_PREFIX + "test-virtual-group")))
             .anyTimes();
     EasyMock.expect(config.getInitParameter(CommonIdentityAssertionFilter.VIRTUAL_GROUP_MAPPING_PREFIX + "test-virtual-group")).
-            andReturn("(and (member 'users') (member 'admin'))").anyTimes();
+            andReturn("(and (username 'lmccay') (and (member 'users') (member 'admin')))").anyTimes();
     EasyMock.replay( config );
 
     final HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
@@ -102,7 +105,7 @@ public class CommonIdentityAssertionFilterTest {
     final FilterChain chain = (req, resp) -> {};
 
     Subject subject = new Subject();
-    subject.getPrincipals().add(new PrimaryPrincipal("larry"));
+    subject.getPrincipals().add(new PrimaryPrincipal("ljm"));
     subject.getPrincipals().add(new GroupPrincipal("users"));
     subject.getPrincipals().add(new GroupPrincipal("admin"));
     try {
@@ -127,7 +130,7 @@ public class CommonIdentityAssertionFilterTest {
       }
     }
 
-    assertEquals("LARRY", username);
+    assertEquals("LMCCAY", username);
     assertTrue("Should be greater than 2", calculatedGroups.size() > 2);
     assertTrue(calculatedGroups.containsAll(Arrays.asList("everyone", "USERS", "ADMIN", "test-virtual-group")));
   }

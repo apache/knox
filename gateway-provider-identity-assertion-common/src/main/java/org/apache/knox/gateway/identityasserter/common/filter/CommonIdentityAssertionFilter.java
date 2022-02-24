@@ -48,7 +48,7 @@ import org.apache.knox.gateway.security.principal.PrincipalMappingException;
 import org.apache.knox.gateway.security.principal.SimplePrincipalMapper;
 
 public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilter {
-  public static final String VIRTUAL_GROUP_MAPPING_PREFIX = "virtual.group.mapping.";
+  public static final String VIRTUAL_GROUP_MAPPING_PREFIX = "group.mapping.";
   private IdentityAsserterMessages LOG = MessagesFactory.get(IdentityAsserterMessages.class);
 
   public static final String GROUP_PRINCIPAL_MAPPING = "group.principal.mapping";
