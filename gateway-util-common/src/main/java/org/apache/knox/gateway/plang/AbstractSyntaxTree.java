@@ -29,15 +29,15 @@ import java.util.List;
  * The parser generates the following AST:
  *      [or, true, [and, false, true]]
  */
-public class Ast {
-    private final List<Ast> children = new ArrayList<>();
+public class AbstractSyntaxTree {
+    private final List<AbstractSyntaxTree> children = new ArrayList<>();
     private final String token;
 
-    public Ast(String token) {
+    public AbstractSyntaxTree(String token) {
         this.token = token;
     }
 
-    public void addChild(Ast child) {
+    public void addChild(AbstractSyntaxTree child) {
         children.add(child);
     }
 
@@ -55,15 +55,16 @@ public class Ast {
     }
 
     public boolean isNumber() {
-        if (token == null) {
-            return false;
+        boolean result = false;
+        if (token != null) {
+            try {
+                numValue();
+                result = true;
+            } catch (NumberFormatException e) {
+                // NaN
+            }
         }
-        try {
-            numValue();
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
-        }
+        return result;
     }
 
     public Number numValue() {
@@ -75,6 +76,9 @@ public class Ast {
     }
 
     public String strValue() {
+        if (!isStr()) {
+            throw new InterpreterException("Token: " + token + " is not a String");
+        }
         return token.substring(1, token.length() -1);
     }
 
@@ -90,7 +94,7 @@ public class Ast {
         return children.get(0).token();
     }
 
-    public List<Ast> functionParameters() {
+    public List<AbstractSyntaxTree> functionParameters() {
         return children.subList(1, children.size());
     }
 }

@@ -29,7 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.knox.gateway.plang.Ast;
+import org.apache.knox.gateway.plang.AbstractSyntaxTree;
 import org.apache.knox.gateway.plang.Parser;
 import org.junit.Test;
 
@@ -46,7 +46,7 @@ public class VirtualGroupMapperTest {
 
     @Test
     public void testEverybodyGroup() {
-        mapper = new VirtualGroupMapper(new HashMap<String, Ast>(){{
+        mapper = new VirtualGroupMapper(new HashMap<String, AbstractSyntaxTree>(){{
                 put("everybody", parser.parse("true"));
         }});
         assertEquals(setOf("everybody"), virtualGroups("user1", emptyList()));
@@ -55,7 +55,7 @@ public class VirtualGroupMapperTest {
 
     @Test
     public void testNobodyGroup() {
-        mapper = new VirtualGroupMapper(new HashMap<String, Ast>(){{
+        mapper = new VirtualGroupMapper(new HashMap<String, AbstractSyntaxTree>(){{
             put("nobody", parser.parse("false"));
         }});
         assertEquals(0, virtualGroups("user1", emptyList()).size());
@@ -64,7 +64,7 @@ public class VirtualGroupMapperTest {
 
     @Test
     public void testMember() {
-        mapper = new VirtualGroupMapper(new HashMap<String, Ast>(){{
+        mapper = new VirtualGroupMapper(new HashMap<String, AbstractSyntaxTree>(){{
             put("vg1", parser.parse("(member 'g1')"));
             put("vg2", parser.parse("(member 'g2')"));
             put("both", parser.parse("(and (member 'g1') (member 'g2'))"));
@@ -78,7 +78,7 @@ public class VirtualGroupMapperTest {
 
     @Test
     public void testAtLeastOne() {
-        mapper = new VirtualGroupMapper(new HashMap<String, Ast>(){{
+        mapper = new VirtualGroupMapper(new HashMap<String, AbstractSyntaxTree>(){{
             put("at-least-one", parser.parse("(!= 0 (size groups))"));
         }});
         assertEquals(0, virtualGroups("user1", emptyList()).size());
@@ -89,7 +89,7 @@ public class VirtualGroupMapperTest {
 
     @Test
     public void testEmptyGroup() {
-        mapper = new VirtualGroupMapper(new HashMap<String, Ast>(){{
+        mapper = new VirtualGroupMapper(new HashMap<String, AbstractSyntaxTree>(){{
             put("empty", parser.parse("(= 0 (size groups))"));
         }});
         assertEquals(setOf("empty"), virtualGroups("user1", emptyList()));
@@ -98,7 +98,7 @@ public class VirtualGroupMapperTest {
 
     @Test
     public void testMatchUser() {
-        mapper = new VirtualGroupMapper(new HashMap<String, Ast>(){{
+        mapper = new VirtualGroupMapper(new HashMap<String, AbstractSyntaxTree>(){{
             put("users", parser.parse("(match username 'user_\\d+')"));
         }});
         assertEquals(setOf("users"), virtualGroups("user_1", emptyList()));
@@ -108,7 +108,7 @@ public class VirtualGroupMapperTest {
 
     @Test
     public void testMatchGroup() {
-        mapper = new VirtualGroupMapper(new HashMap<String, Ast>(){{
+        mapper = new VirtualGroupMapper(new HashMap<String, AbstractSyntaxTree>(){{
             put("grp", parser.parse("(match groups 'grp_\\d+')"));
         }});
         assertEquals(setOf("grp"), virtualGroups("user1", singletonList("grp_1")));

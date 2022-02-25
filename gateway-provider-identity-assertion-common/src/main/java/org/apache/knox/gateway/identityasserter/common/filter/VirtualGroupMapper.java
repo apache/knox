@@ -28,14 +28,14 @@ import javax.servlet.http.HttpSession;
 import org.apache.knox.gateway.IdentityAsserterMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.plang.Arity;
-import org.apache.knox.gateway.plang.Ast;
+import org.apache.knox.gateway.plang.AbstractSyntaxTree;
 import org.apache.knox.gateway.plang.Interpreter;
 
 public class VirtualGroupMapper {
     private final IdentityAsserterMessages LOG = MessagesFactory.get(IdentityAsserterMessages.class);
-    private final Map<String, Ast> virtualGroupToPredicateMap;
+    private final Map<String, AbstractSyntaxTree> virtualGroupToPredicateMap;
 
-    public VirtualGroupMapper(Map<String, Ast> virtualGroupToPredicateMap) {
+    public VirtualGroupMapper(Map<String, AbstractSyntaxTree> virtualGroupToPredicateMap) {
         this.virtualGroupToPredicateMap = virtualGroupToPredicateMap;
     }
 
@@ -44,9 +44,9 @@ public class VirtualGroupMapper {
      */
     public Set<String> mapGroups(String username, Set<String> groups, ServletRequest request) {
         Set<String> virtualGroups = new HashSet<>();
-        for (Map.Entry<String, Ast> each : virtualGroupToPredicateMap.entrySet()) {
+        for (Map.Entry<String, AbstractSyntaxTree> each : virtualGroupToPredicateMap.entrySet()) {
             String virtualGroupName = each.getKey();
-            Ast predicate = each.getValue();
+            AbstractSyntaxTree predicate = each.getValue();
             if (evalPredicate(virtualGroupName, username, groups, predicate, request)) {
                 virtualGroups.add(virtualGroupName);
                 LOG.addingUserToVirtualGroup(username, virtualGroupName, predicate);
@@ -59,7 +59,7 @@ public class VirtualGroupMapper {
     /**
      * @return true if the user should be added to the virtual group based on the given predicate
      */
-    private boolean evalPredicate(String virtualGroupName, String userName, Set<String> ldapGroups, Ast predicate, ServletRequest request) {
+    private boolean evalPredicate(String virtualGroupName, String userName, Set<String> ldapGroups, AbstractSyntaxTree predicate, ServletRequest request) {
         Interpreter interpreter = new Interpreter();
         interpreter.addConstant("username", userName);
         interpreter.addConstant("groups", new ArrayList<>(ldapGroups));

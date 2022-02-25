@@ -23,12 +23,12 @@ import java.io.StringReader;
 
 public class Parser {
 
-    public Ast parse(String str) {
+    public AbstractSyntaxTree parse(String str) {
         if (str == null || str.trim().equals("")) {
             return null;
         }
         try (PushbackReader reader = new PushbackReader(new StringReader(str))) {
-            Ast ast = parse(reader);
+            AbstractSyntaxTree ast = parse(reader);
             String rest = peek(reader);
             if (rest != null) {
                 throw new SyntaxException("Unexpected closing " + rest);
@@ -39,10 +39,10 @@ public class Parser {
         }
     }
 
-    private Ast parse(PushbackReader reader) throws IOException {
+    private AbstractSyntaxTree parse(PushbackReader reader) throws IOException {
         String token = nextToken(reader);
         if ("(".equals(token)) {
-            Ast children = new Ast(token);
+            AbstractSyntaxTree children = new AbstractSyntaxTree(token);
             while (!")".equals(peek(reader))) {
                 children.addChild(parse(reader));
             }
@@ -53,7 +53,7 @@ public class Parser {
         } else if ("".equals(token)) {
             throw new SyntaxException("Missing closing )");
         } else {
-            return new Ast(token);
+            return new AbstractSyntaxTree(token);
         }
     }
 

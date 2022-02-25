@@ -138,7 +138,7 @@ public class ParserTest {
         assertEquals("1.2342424", parse("1.2342424").toString());
     }
 
-    private static Ast parse(String script) {
+    private static AbstractSyntaxTree parse(String script) {
         Parser parser = new Parser();
         return parser.parse(script);
     }

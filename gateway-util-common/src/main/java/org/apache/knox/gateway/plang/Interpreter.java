@@ -40,7 +40,7 @@ public class Interpreter {
     }
 
     private interface SpecialForm {
-        Object call(List<Ast> parameters);
+        Object call(List<AbstractSyntaxTree> parameters);
     }
 
     public Interpreter() {
@@ -93,7 +93,7 @@ public class Interpreter {
         });
     }
 
-    public Object eval(Ast ast) {
+    public Object eval(AbstractSyntaxTree ast) {
         try {
             if (ast == null) {
                 return null;
@@ -118,7 +118,7 @@ public class Interpreter {
         }
     }
 
-    private Object lookupConstant(Ast ast) {
+    private Object lookupConstant(AbstractSyntaxTree ast) {
         Object var = constants.get(ast.token());
         if (var == null) {
             throw new UndefinedSymbolException(ast.token(), "variable");

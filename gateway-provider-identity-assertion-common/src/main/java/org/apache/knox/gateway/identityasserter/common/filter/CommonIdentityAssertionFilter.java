@@ -40,7 +40,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.IdentityAsserterMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.plang.Ast;
+import org.apache.knox.gateway.plang.AbstractSyntaxTree;
 import org.apache.knox.gateway.plang.Parser;
 import org.apache.knox.gateway.plang.SyntaxException;
 import org.apache.knox.gateway.security.GroupPrincipal;
@@ -77,8 +77,8 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     virtualGroupMapper = new VirtualGroupMapper(loadVirtualGroups(filterConfig));
   }
 
-  private Map<String, Ast> loadVirtualGroups(FilterConfig filterConfig) {
-    Map<String, Ast> predicateToGroupMapping = new HashMap<>();
+  private Map<String, AbstractSyntaxTree> loadVirtualGroups(FilterConfig filterConfig) {
+    Map<String, AbstractSyntaxTree> predicateToGroupMapping = new HashMap<>();
     loadVirtualGroupConfig(filterConfig, predicateToGroupMapping);
     if (predicateToGroupMapping.isEmpty() && filterConfig.getServletContext() != null) {
       loadVirtualGroupConfig(filterConfig.getServletContext(), predicateToGroupMapping);
@@ -89,10 +89,10 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     return predicateToGroupMapping;
   }
 
-  private void loadVirtualGroupConfig(FilterConfig config, Map<String, Ast> result) {
+  private void loadVirtualGroupConfig(FilterConfig config, Map<String, AbstractSyntaxTree> result) {
     for (String paramName : virtualGroupParameterNames(config.getInitParameterNames())) {
       try {
-        Ast ast = parser.parse(config.getInitParameter(paramName));
+        AbstractSyntaxTree ast = parser.parse(config.getInitParameter(paramName));
         result.put(paramName.substring(VIRTUAL_GROUP_MAPPING_PREFIX.length()).trim(), ast);
       } catch (SyntaxException e) {
         LOG.parseError(paramName, config.getInitParameter(paramName), e);
@@ -100,10 +100,10 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     }
   }
 
-  private void loadVirtualGroupConfig(ServletContext context, Map<String, Ast> result) {
+  private void loadVirtualGroupConfig(ServletContext context, Map<String, AbstractSyntaxTree> result) {
     for (String paramName : virtualGroupParameterNames(context.getInitParameterNames())) {
       try {
-        Ast ast = parser.parse(context.getInitParameter(paramName));
+        AbstractSyntaxTree ast = parser.parse(context.getInitParameter(paramName));
         result.put(paramName.substring(VIRTUAL_GROUP_MAPPING_PREFIX.length()).trim(), ast);
       } catch (SyntaxException e) {
         LOG.parseError(paramName, context.getInitParameter(paramName), e);
