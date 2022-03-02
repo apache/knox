@@ -1,0 +1,83 @@
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+    <rule dir="IN" name="TRINOUI/trinoui/inbound" pattern="*://*:*/**/trino/">
+        <rewrite template="{$serviceUrl[TRINOUI]}/ui/login.html"/>
+    </rule>
+
+    <rule dir="IN" name="TRINOUI/trinoui/inbound/trino/vendor" pattern="*://*:*/**/trino/ui/vendor/{**}?{**}">
+        <rewrite template="{$serviceUrl[TRINOUI]}/ui/vendor/{**}?{**}"/>
+    </rule>
+    <rule dir="IN" name="TRINOUI/trinoui/inbound/trino/assets" pattern="*://*:*/**/trino/ui/assets/{**}?{**}">
+        <rewrite template="{$serviceUrl[TRINOUI]}/ui/assets/{**}?{**}"/>
+    </rule>
+
+    <rule dir="IN" name="TRINOUI/trinoui/inbound/trino/dist" pattern="*://*:*/**/trino/ui/dist/{**}?{**}">
+        <rewrite template="{$serviceUrl[TRINOUI]}/ui/dist/{**}?{**}"/>
+    </rule>
+
+    <rule dir="IN" name="TRINOUI/trinoui/inbound/ui/login" pattern="*://*:*/**/trino/ui/login">
+        <rewrite template="{$serviceUrl[TRINOUI]}/ui/login"/>
+    </rule>
+
+    <rule dir="IN" name="TRINOUI/trinoui/inbound/ui/login" pattern="*://*:*/**/trino/ui/logout">
+        <rewrite template="{$serviceUrl[TRINOUI]}/ui/logout"/>
+    </rule>
+
+    <rule dir="IN" name="TRINOUI/trinoui/inbound/trino/api" pattern="*://*:*/**/trino/ui/api/{**}">
+        <rewrite template="{$serviceUrl[TRINOUI]}/ui/api/{**}"/>
+    </rule>
+
+    <rule dir="IN" name="TRINOUI/trinoui/inbound/trino/api" pattern="*://*:*/**/trino/ui/{**}?{**}">
+        <rewrite template="{$serviceUrl[TRINOUI]}/ui/{**}?{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="TRINOUI/trinoui/outbound/vendor" pattern="/vendor/{**}?{**}">
+        <rewrite template="{$frontend[url]}/trino/ui/vendor/{**}?{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="TRINOUI/trinoui/outbound/assets" pattern="/assets/{**}">
+        <rewrite template="{$frontend[url]}/trino/ui/assets/{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="TRINOUI/trinoui/outbound/api" pattern="/ui/api/{**}">
+        <rewrite template="{$frontend[url]}/trino/ui/api/{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="TRINOUI/trinoui/outbound/assets" pattern="/ui/login">
+        <rewrite template="{$frontend[url]}/trino/ui/login"/>
+    </rule>
+
+    <rule flow="OR" dir="OUT" name="TRINOUI/trino/outbound/headers/location">
+        <match pattern="*://*:*/ui/login.html">
+            <rewrite template="{$frontend[url]}/trino/"/>
+        </match>
+    </rule>
+
+    <filter name="TRINOUI/trino/outbound/headers">
+        <content type="application/x-http-headers">
+            <apply path="Location" rule="TRINOUI/trino/outbound/headers/location"/>
+        </content>
+    </filter>
+
+    <filter name="TRINOUI/trino/outbound/body">
+        <content type="application/javascript">
+            <apply path="/ui/api/[\w]+" rule="TRINOUI/trinoui/outbound/api"/>
+        </content>
+    </filter>
+
+</rules>
