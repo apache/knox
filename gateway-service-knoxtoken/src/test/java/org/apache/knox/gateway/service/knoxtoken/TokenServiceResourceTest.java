@@ -65,7 +65,10 @@ import org.junit.Test;
 import javax.security.auth.Subject;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import java.io.IOException;
 import java.security.KeyPair;
@@ -153,6 +156,7 @@ public class TokenServiceResourceTest {
     if (contextExpectations.containsKey(TokenResource.LIFESPAN)) {
       EasyMock.expect(request.getParameter(TokenResource.LIFESPAN)).andReturn(contextExpectations.get(TokenResource.LIFESPAN)).anyTimes();
     }
+    EasyMock.expect(request.getParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
 
     GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services).anyTimes();
@@ -1007,7 +1011,7 @@ public class TokenServiceResourceTest {
     for (int i = 0; i < numberOfPreExistingTokens; i++) {
       tr.doGet();
     }
-    Response getKnoxTokensResponse = tr.getUserTokens(USER_NAME);
+    Response getKnoxTokensResponse = getUserTokensResponse(tr);
     Collection<String> tokens = ((Map<String, Collection<String>>) JsonUtils.getObjectFromJsonString(getKnoxTokensResponse.getEntity().toString()))
             .get("tokens");
     assertEquals(tokens.size(), numberOfPreExistingTokens);
@@ -1019,6 +1023,15 @@ public class TokenServiceResourceTest {
     tr.init();
     Response response = tr.doGet();
     assertTrue(response.getEntity().toString().contains("Unable to get token - token limit exceeded."));
+  }
+
+  private Response getUserTokensResponse(TokenResource tokenResource) {
+    final MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
+    queryParameters.put("userName", Arrays.asList(USER_NAME));
+    final UriInfo uriInfo = EasyMock.createNiceMock(UriInfo.class);
+    EasyMock.expect(uriInfo.getQueryParameters()).andReturn(queryParameters).anyTimes();
+    EasyMock.replay(uriInfo);
+    return tokenResource.getUserTokens(uriInfo);
   }
 
   @Test
@@ -1063,7 +1076,7 @@ public class TokenServiceResourceTest {
         throw new Exception(getTokenResponse.getEntity().toString());
       }
     }
-    final Response getKnoxTokensResponse = tr.getUserTokens(USER_NAME);
+    final Response getKnoxTokensResponse = getUserTokensResponse(tr);
     final Collection<String> tokens = ((Map<String, Collection<String>>) JsonUtils.getObjectFromJsonString(getKnoxTokensResponse.getEntity().toString()))
         .get("tokens");
     assertEquals(tokens.size(), revokeOldestToken ? configuredLimit : numberOfTokens);

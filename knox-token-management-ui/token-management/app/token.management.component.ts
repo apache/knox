@@ -80,4 +80,12 @@ export class TokenManagementComponent implements OnInit {
         return Date.now() > expiration;
     }
 
+    getCustomMetadataArray(knoxToken: KnoxToken): [string, string][] {
+      let mdMap = new Map();
+      if (knoxToken.metadata.customMetadataMap) {
+        mdMap = knoxToken.metadata.customMetadataMap;
+      }
+      return Array.from(Object.entries(mdMap));
+    }
+
 }

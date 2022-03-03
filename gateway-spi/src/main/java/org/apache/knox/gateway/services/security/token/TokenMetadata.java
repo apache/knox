@@ -16,7 +16,9 @@
  */
 package org.apache.knox.gateway.services.security.token;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -33,6 +35,7 @@ public class TokenMetadata {
   public static final String COMMENT = "comment";
   public static final String ENABLED = "enabled";
   public static final String PASSCODE = "passcode";
+  private static final List<String> KNOWN_MD_NAMES = Arrays.asList(USER_NAME, COMMENT, ENABLED, PASSCODE);
 
   private final Map<String, String> metadataMap = new HashMap<>();
 
@@ -64,6 +67,21 @@ public class TokenMetadata {
   @JsonIgnore
   public Map<String, String> getMetadataMap() {
     return new HashMap<String, String>(this.metadataMap);
+  }
+
+  @JsonIgnore
+  public String getMetadata(String key) {
+    return this.metadataMap.get(key);
+  }
+
+  public Map<String, String> getCustomMetadataMap() {
+    final Map<String, String> customMetadataMap = new HashMap<>();
+    this.metadataMap.forEach((key, value) -> {
+      if (!KNOWN_MD_NAMES.contains(key)) {
+        customMetadataMap.put(key, value);
+      }
+    });
+    return customMetadataMap;
   }
 
   public String getUserName() {

@@ -19,4 +19,5 @@ export class Metadata {
     enabled: boolean;
     userName: string;
     comment: string;
+    customMetadataMap: Map<string, string>;
 }

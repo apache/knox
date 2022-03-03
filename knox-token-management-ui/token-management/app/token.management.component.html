@@ -28,6 +28,7 @@
                 <th>Issued</th>
                 <th>Expires</th>
                 <th>Comment</th>
+                <th>Additional Metadata</th>
                 <th>Actions</th>
             </tr>
             </thead>
@@ -39,6 +40,13 @@
                 <td *ngIf="isTokenExpired(knoxToken.expirationLong)" style="color: red">{{formatDateTime(knoxToken.expirationLong)}}</td>
                 <td>{{knoxToken.metadata.comment}}</td>
                 <td>
+                  <ul>
+                    <li *ngFor="let metadata of getCustomMetadataArray(knoxToken)">
+                      {{metadata[0]}} = {{metadata[1]}}
+                    </li>
+                  </ul>
+                </td>
+                <td>
                     <button *ngIf="knoxToken.metadata.enabled && !isTokenExpired(knoxToken.expirationLong)" (click)="disableToken(knoxToken.tokenId);">Disable</button>
                     <button *ngIf="!knoxToken.metadata.enabled && !isTokenExpired(knoxToken.expirationLong)" (click)="enableToken(knoxToken.tokenId);">Enable</button>
                     <button (click)="revokeToken(knoxToken.tokenId);">Revoke</button>
@@ -47,7 +55,7 @@
             </tbody>
 		    <tfoot>
 		    <tr>
-		        <td colspan="5">
+		        <td colspan="6">
 		            <mfBootstrapPaginator [rowsOnPageSet]="[5,10,15]"></mfBootstrapPaginator>
 		        </td>
 		    </tr>
