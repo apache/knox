@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -117,6 +118,7 @@ public class TokenResource {
   private static final String TSS_MAXIMUM_LIFETIME_TEXT = "maximumLifetimeText";
   private static final String LIFESPAN_INPUT_ENABLED_PARAM = "knox.token.lifespan.input.enabled";
   private static final String LIFESPAN_INPUT_ENABLED_TEXT = "lifespanInputEnabled";
+  static final String KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION = "knox.token.user.limit.exceeded.action";
   private static final long TOKEN_TTL_DEFAULT = 30000L;
   static final String TOKEN_API_PATH = "knoxtoken/api/v1";
   static final String RESOURCE_PATH = TOKEN_API_PATH + "/token";
@@ -149,6 +151,9 @@ public class TokenResource {
   private Optional<Long> maxTokenLifetime = Optional.empty();
 
   private int tokenLimitPerUser;
+
+  enum UserLimitExceededAction {REMOVE_OLDEST, RETURN_ERROR};
+  private UserLimitExceededAction userLimitExceededAction = UserLimitExceededAction.RETURN_ERROR;
 
   private List<String> allowedRenewers;
 
@@ -246,6 +251,11 @@ public class TokenResource {
       tokenMAC = new TokenMAC(gatewayConfig.getKnoxTokenHashAlgorithm(), aliasService.getPasswordFromAliasForGateway(TokenMAC.KNOX_TOKEN_HASH_KEY_ALIAS_NAME));
 
       tokenLimitPerUser = gatewayConfig.getMaximumNumberOfTokensPerUser();
+      final String userLimitExceededActionParam = context.getInitParameter(KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION);
+      if (userLimitExceededActionParam != null) {
+        userLimitExceededAction = UserLimitExceededAction.valueOf(userLimitExceededActionParam);
+        log.generalInfoMessage("Configured Knox Token user limit exceeded action = " + userLimitExceededAction.name());
+      }
 
       String renewIntervalValue = context.getInitParameter(TOKEN_EXP_RENEWAL_INTERVAL);
       if (renewIntervalValue != null && !renewIntervalValue.isEmpty()) {
@@ -654,9 +664,17 @@ public class TokenResource {
 
     if (tokenStateService != null) {
       if (tokenLimitPerUser != -1) { // if -1 => unlimited tokens for all users
-        if (tokenStateService.getTokens(p.getName()).size() >= tokenLimitPerUser) {
+        final Collection<KnoxToken> userTokens = tokenStateService.getTokens(p.getName());
+        if (userTokens.size() >= tokenLimitPerUser) {
           log.tokenLimitExceeded(p.getName());
-          return Response.status(Response.Status.FORBIDDEN).entity("{ \"Unable to get token - token limit exceeded.\" }").build();
+          if (UserLimitExceededAction.RETURN_ERROR == userLimitExceededAction) {
+            return Response.status(Response.Status.FORBIDDEN).entity("{ \"Unable to get token - token limit exceeded.\" }").build();
+          } else {
+            // userTokens is an ordered collection (by issue time) -> the first element is the oldest one
+            final String oldestTokenId = userTokens.iterator().next().getTokenId();
+            log.generalInfoMessage(String.format(Locale.getDefault(), "Revoking %s's oldest token %s ...", p.getName(), Tokens.getTokenIDDisplayText(oldestTokenId)));
+            revoke(oldestTokenId);
+           }
         }
       }
     }

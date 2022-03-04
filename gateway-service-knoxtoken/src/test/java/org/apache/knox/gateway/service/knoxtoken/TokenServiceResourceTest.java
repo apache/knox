@@ -19,6 +19,7 @@ package org.apache.knox.gateway.service.knoxtoken;
 
 import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.KNOX_TOKEN_USER_LIMIT;
 import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.KNOX_TOKEN_USER_LIMIT_DEFAULT;
+import static org.apache.knox.gateway.service.knoxtoken.TokenResource.KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -984,12 +985,12 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testConfiguredTokenLimitPerUser() throws Exception {
-    testLimitingTokensPerUser(String.valueOf(KNOX_TOKEN_USER_LIMIT_DEFAULT), KNOX_TOKEN_USER_LIMIT_DEFAULT);
+    testLimitingTokensPerUser(KNOX_TOKEN_USER_LIMIT_DEFAULT, KNOX_TOKEN_USER_LIMIT_DEFAULT);
   }
 
   @Test
   public void testUnlimitedTokensPerUser() throws Exception {
-    testLimitingTokensPerUser(String.valueOf("-1"), 100);
+    testLimitingTokensPerUser(-1, 100);
   }
 
   @Test
@@ -1023,16 +1024,32 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenLimitPerUserExceeded() throws Exception {
     try {
-      testLimitingTokensPerUser(String.valueOf("10"), 11);
+      testLimitingTokensPerUser(10, 11);
       fail("Exception should have been thrown");
     } catch (Exception e) {
       assertTrue(e.getMessage().contains("Unable to get token - token limit exceeded."));
     }
   }
 
-  private void testLimitingTokensPerUser(String configuredLimit, int numberOfTokens) throws Exception {
+  @Test
+  public void testTokenLimitPerUserExceededShouldRevokeOldestToken() throws Exception {
+    try {
+      testLimitingTokensPerUser(10, 11, true);
+    } catch (Exception e) {
+      fail("Exception should NOT have been thrown");
+    }
+  }
+
+  private void testLimitingTokensPerUser(int configuredLimit, int numberOfTokens) throws Exception {
+    testLimitingTokensPerUser(configuredLimit, numberOfTokens, false);
+  }
+
+  private void testLimitingTokensPerUser(int configuredLimit, int numberOfTokens, boolean revokeOldestToken) throws Exception {
     final Map<String, String> contextExpectations = new HashMap<>();
-    contextExpectations.put(KNOX_TOKEN_USER_LIMIT, configuredLimit);
+    contextExpectations.put(KNOX_TOKEN_USER_LIMIT, String.valueOf(configuredLimit));
+    if (revokeOldestToken) {
+      contextExpectations.put(KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION, TokenResource.UserLimitExceededAction.REMOVE_OLDEST.name());
+    }
     configureCommonExpectations(contextExpectations, Boolean.TRUE);
 
     final TokenResource tr = new TokenResource();
@@ -1041,7 +1058,7 @@ public class TokenServiceResourceTest {
     tr.init();
 
     for (int i = 0; i < numberOfTokens; i++) {
-      final Response getTokenResponse = tr.doGet();
+      final Response getTokenResponse = Subject.doAs(createTestSubject(USER_NAME), (PrivilegedAction<Response>) () -> tr.doGet());
       if (getTokenResponse.getStatus() != Response.Status.OK.getStatusCode()) {
         throw new Exception(getTokenResponse.getEntity().toString());
       }
@@ -1049,7 +1066,7 @@ public class TokenServiceResourceTest {
     final Response getKnoxTokensResponse = tr.getUserTokens(USER_NAME);
     final Collection<String> tokens = ((Map<String, Collection<String>>) JsonUtils.getObjectFromJsonString(getKnoxTokensResponse.getEntity().toString()))
         .get("tokens");
-    assertEquals(tokens.size(), numberOfTokens);
+    assertEquals(tokens.size(), revokeOldestToken ? configuredLimit : numberOfTokens);
   }
 
   /**
@@ -1395,6 +1412,10 @@ public class TokenServiceResourceTest {
 
     @Override
     public void revokeToken(String tokenId) {
+      issueTimes.remove(tokenId);
+      expirationData.remove(tokenId);
+      maxLifetimes.remove(tokenId);
+      tokenMetadata.remove(tokenId);
     }
 
     @Override
