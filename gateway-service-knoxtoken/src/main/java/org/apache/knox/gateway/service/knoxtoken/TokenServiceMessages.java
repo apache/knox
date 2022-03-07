@@ -86,4 +86,7 @@ public interface TokenServiceMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Unable to get token for user {0}: token limit exceeded")
   void tokenLimitExceeded(String userName);
+
+  @Message( level = MessageLevel.INFO, text = "{0}")
+  void generalInfoMessage(String message);
 }
