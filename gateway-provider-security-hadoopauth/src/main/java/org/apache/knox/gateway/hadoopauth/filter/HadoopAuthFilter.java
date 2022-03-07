@@ -18,7 +18,6 @@
 package org.apache.knox.gateway.hadoopauth.filter;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authorize.AuthorizationException;
 import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.hadoop.util.HttpExceptionUtils;
@@ -115,7 +114,10 @@ public class HadoopAuthFilter extends
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
-    Configuration conf = getProxyuserConfiguration(filterConfig);
+    // Return a {@link Configuration} instance with the proxy user
+    // (<code>hadoop.proxyuser.*</code>) properties set using parameter information
+    // from the filterConfig.
+    final Configuration conf = AuthFilterUtils.getProxyUserConfiguration(filterConfig, PROXYUSER_PREFIX);
     ProxyUsers.refreshSuperUserGroupsConfiguration(conf, PROXYUSER_PREFIX);
 
     Collection<String> ignoredServices = null;
@@ -198,38 +200,18 @@ public class HadoopAuthFilter extends
      * (proxy user) is allowed to set specified proxied user. It is expected that the relevant
      * topology file has the required hadoop.proxyuser configurations set.
      */
-    if (!ignoreDoAs(request.getRemoteUser())) {
-      String doAsUser = request.getParameter(QUERY_PARAMETER_DOAS);
-      if (doAsUser != null && !doAsUser.equals(request.getRemoteUser())) {
-        LOG.hadoopAuthDoAsUser(doAsUser, request.getRemoteUser(), request.getRemoteAddr());
-
-        UserGroupInformation requestUgi = (request.getUserPrincipal() != null)
-            ? UserGroupInformation.createRemoteUser(request.getRemoteUser())
-            : null;
-
-        if (requestUgi != null) {
-          requestUgi = UserGroupInformation.createProxyUser(doAsUser, requestUgi);
-
+    HttpServletRequest proxyRequest = null;
+    final String remoteUser = request.getRemoteUser();
+    if (!ignoreDoAs(remoteUser)) {
+      final String doAsUser = request.getParameter(QUERY_PARAMETER_DOAS);
+      if (doAsUser != null && !doAsUser.equals(remoteUser)) {
+        LOG.hadoopAuthDoAsUser(doAsUser, remoteUser, request.getRemoteAddr());
+        if (request.getUserPrincipal() != null) {
           try {
-            ProxyUsers.authorize(requestUgi, request.getRemoteAddr());
-
-            final UserGroupInformation ugiF = requestUgi;
-            request = new HttpServletRequestWrapper(request) {
-              @Override
-              public String getRemoteUser() {
-                return ugiF.getShortUserName();
-              }
-
-              @Override
-              public Principal getUserPrincipal() {
-                return ugiF::getUserName;
-              }
-            };
-
+            proxyRequest = AuthFilterUtils.getProxyRequest(request, doAsUser);
             LOG.hadoopAuthProxyUserSuccess();
           } catch (AuthorizationException ex) {
-            HttpExceptionUtils.createServletExceptionResponse(response,
-                HttpServletResponse.SC_FORBIDDEN, ex);
+            HttpExceptionUtils.createServletExceptionResponse(response, HttpServletResponse.SC_FORBIDDEN, ex);
             LOG.hadoopAuthProxyUserFailed(ex);
             return;
           }
@@ -237,7 +219,7 @@ public class HadoopAuthFilter extends
       }
     }
 
-    super.doFilter(filterChain, request, response);
+    super.doFilter(filterChain, proxyRequest == null ? request : proxyRequest, response);
   }
 
   /**
@@ -325,30 +307,6 @@ public class HadoopAuthFilter extends
     // * the userPrincipal is null
     // * the user principal exists on the ignoreDoAs set.
     return (userName == null) || userName.isEmpty() || ignoreDoAs.contains(userName.toLowerCase(Locale.ROOT));
-  }
-
-  /**
-   * Return a {@link Configuration} instance with the proxy user (<code>hadoop.proxyuser.*</code>)
-   * properties set using parameter information from the filterConfig.
-   *
-   * @param filterConfig the {@link FilterConfig} to query
-   * @return a {@link Configuration}
-   */
-  private Configuration getProxyuserConfiguration(FilterConfig filterConfig) {
-    Configuration conf = new Configuration(false);
-
-    // Iterate through the init parameters of the filter configuration to add Hadoop proxyuser
-    // parameters to the configuration instance
-    Enumeration<?> names = filterConfig.getInitParameterNames();
-    while (names.hasMoreElements()) {
-      String name = (String) names.nextElement();
-      if (name.startsWith(PROXYUSER_PREFIX + ".")) {
-        String value = filterConfig.getInitParameter(name);
-        conf.set(name, value);
-      }
-    }
-
-    return conf;
   }
 
   // Visible for testing

@@ -106,7 +106,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   public JWT issueToken(JWTokenAttributes jwtAttributes) throws TokenServiceException {
     String[] claimArray = new String[6];
     claimArray[0] = "KNOXSSO";
-    claimArray[1] = jwtAttributes.getPrincipal().getName();
+    claimArray[1] = jwtAttributes.getUserName();
     claimArray[2] = null;
     if (jwtAttributes.getExpires() == -1) {
       claimArray[3] = null;

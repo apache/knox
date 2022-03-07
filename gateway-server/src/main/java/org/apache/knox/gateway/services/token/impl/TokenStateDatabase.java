@@ -59,6 +59,9 @@ public class TokenStateDatabase {
   private static final String GET_TOKENS_BY_USER_NAME_SQL = "SELECT kt.token_id, kt.issue_time, kt.expiration, kt.max_lifetime, ktm.md_name, ktm.md_value FROM " + TOKENS_TABLE_NAME
       + " kt, " + TOKEN_METADATA_TABLE_NAME + " ktm WHERE kt.token_id = ktm.token_id AND kt.token_id IN (SELECT token_id FROM " + TOKEN_METADATA_TABLE_NAME + " WHERE md_name = '" + TokenMetadata.USER_NAME + "' AND md_value = ? )"
       + " ORDER BY kt.issue_time";
+  private static final String GET_TOKENS_CREATED_BY_USER_NAME_SQL = "SELECT kt.token_id, kt.issue_time, kt.expiration, kt.max_lifetime, ktm.md_name, ktm.md_value FROM " + TOKENS_TABLE_NAME
+      + " kt, " + TOKEN_METADATA_TABLE_NAME + " ktm WHERE kt.token_id = ktm.token_id AND kt.token_id IN (SELECT token_id FROM " + TOKEN_METADATA_TABLE_NAME + " WHERE md_name = '" + TokenMetadata.CREATED_BY + "' AND md_value = ? )"
+      + " ORDER BY kt.issue_time";
 
   private final DataSource dataSource;
 
@@ -203,11 +206,19 @@ public class TokenStateDatabase {
   }
 
   Collection<KnoxToken> getTokens(String userName) throws SQLException {
+    return fetchTokens(userName, GET_TOKENS_BY_USER_NAME_SQL);
+  }
+
+  Collection<KnoxToken> getDoAsTokens(String userName) throws SQLException {
+    return fetchTokens(userName, GET_TOKENS_CREATED_BY_USER_NAME_SQL);
+  }
+
+  private Collection<KnoxToken> fetchTokens(String userName, String sql) throws SQLException {
     Map<String, KnoxToken> tokenMap = new LinkedHashMap<>();
-    try (Connection connection = dataSource.getConnection(); PreparedStatement getTokenIdsStatement = connection.prepareStatement(GET_TOKENS_BY_USER_NAME_SQL)) {
+    try (Connection connection = dataSource.getConnection(); PreparedStatement getTokenIdsStatement = connection.prepareStatement(sql)) {
       getTokenIdsStatement.setString(1, userName);
       try (ResultSet rs = getTokenIdsStatement.executeQuery()) {
-        while(rs.next()) {
+        while (rs.next()) {
           String tokenId = rs.getString(1);
           long issueTime = rs.getLong(2);
           long expiration = rs.getLong(3);

@@ -17,15 +17,12 @@
  */
 package org.apache.knox.gateway.services.security.token;
 
-import java.security.Principal;
 import java.util.Collections;
 import java.util.List;
 
-import javax.security.auth.Subject;
-
 public class JWTokenAttributesBuilder {
 
-  private Principal principal;
+  private String userName;
   private List<String> audiences;
   private String algorithm;
   private long expires;
@@ -36,12 +33,8 @@ public class JWTokenAttributesBuilder {
   private String jku;
   private String type;
 
-  public JWTokenAttributesBuilder setPrincipal(Subject subject) {
-    return setPrincipal((Principal) subject.getPrincipals().toArray()[0]);
-  }
-
-  public JWTokenAttributesBuilder setPrincipal(Principal principal) {
-    this.principal = principal;
+  public JWTokenAttributesBuilder setUserName(String userName) {
+    this.userName = userName;
     return this;
   }
 
@@ -95,7 +88,7 @@ public class JWTokenAttributesBuilder {
   }
 
   public JWTokenAttributes build() {
-    return new JWTokenAttributes(principal, (audiences == null ? Collections.emptyList() : audiences), algorithm, expires, signingKeystoreName, signingKeystoreAlias,
+    return new JWTokenAttributes(userName, (audiences == null ? Collections.emptyList() : audiences), algorithm, expires, signingKeystoreName, signingKeystoreAlias,
         signingKeystorePassphrase, managed, jku, type);
   }
 

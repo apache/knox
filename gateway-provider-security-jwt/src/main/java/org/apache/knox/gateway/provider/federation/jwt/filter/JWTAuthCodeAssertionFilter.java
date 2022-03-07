@@ -65,7 +65,7 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
     principalName = mapper.mapUserPrincipal(principalName);
     JWT authCode;
     try {
-      authCode = authority.issueToken(new JWTokenAttributesBuilder().setPrincipal(subject).setAlgorithm(signatureAlgorithm).build());
+      authCode = authority.issueToken(new JWTokenAttributesBuilder().setUserName(principalName).setAlgorithm(signatureAlgorithm).build());
       // get the url for the token service
       String url = null;
       if (sr != null) {

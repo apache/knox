@@ -772,7 +772,7 @@ public class WebSSOResourceTest {
         throws TokenServiceException {
       String[] claimArray = new String[6];
       claimArray[0] = "KNOXSSO";
-      claimArray[1] = jwtAttributes.getPrincipal().getName();
+      claimArray[1] = jwtAttributes.getUserName();
       claimArray[2] = null;
       if (jwtAttributes.getExpires() == -1) {
         claimArray[3] = null;

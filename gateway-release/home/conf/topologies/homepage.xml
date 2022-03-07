@@ -101,6 +101,18 @@
           <name>knox.token.type</name>
           <value>JWT</value>
       </param>
+      <param>
+          <name>knox.token.proxyuser.admin.users</name>
+          <value>*</value>
+      </param>
+      <param>
+          <name>knox.token.proxyuser.admin.groups</name>
+          <value>*</value>
+      </param>
+      <param>
+          <name>knox.token.proxyuser.admin.hosts</name>
+          <value>*</value>
+      </param>
    </service>
    <application>
       <name>tokengen</name>

@@ -303,4 +303,14 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
       return Collections.emptyList();
     }
   }
+
+  @Override
+  public Collection<KnoxToken> getDoAsTokens(String createdBy) {
+    try {
+      return tokenDatabase.getDoAsTokens(createdBy);
+    } catch (SQLException e) {
+      log.errorFetchingDoAsTokensForUserFromDatabase(createdBy, e.getMessage(), e);
+      return Collections.emptyList();
+    }
+  }
 }

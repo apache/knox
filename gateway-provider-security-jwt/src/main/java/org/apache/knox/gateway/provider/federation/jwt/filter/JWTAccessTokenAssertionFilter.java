@@ -19,7 +19,6 @@ package org.apache.knox.gateway.provider.federation.jwt.filter;
 
 import java.io.IOException;
 import java.security.AccessController;
-import java.security.Principal;
 import java.text.ParseException;
 import java.util.HashMap;
 
@@ -35,8 +34,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.knox.gateway.filter.security.AbstractIdentityAssertionFilter;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
-import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
@@ -140,15 +139,9 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
   private String getAccessToken(final String principalName, String serviceName, long expires) {
     String accessToken = null;
 
-    Principal p = new Principal() {
-      @Override
-      public String getName() {
-        return principalName;
-      }
-    };
     JWT token;
     try {
-      final JWTokenAttributes jwtAttributes = new JWTokenAttributesBuilder().setPrincipal(p).setAudiences(serviceName).setAlgorithm(signatureAlgorithm).setExpires(expires).build();
+      final JWTokenAttributes jwtAttributes = new JWTokenAttributesBuilder().setUserName(principalName).setAudiences(serviceName).setAlgorithm(signatureAlgorithm).setExpires(expires).build();
       token = authority.issueToken(jwtAttributes);
       // Coverity CID 1327961
       if( token != null ) {
