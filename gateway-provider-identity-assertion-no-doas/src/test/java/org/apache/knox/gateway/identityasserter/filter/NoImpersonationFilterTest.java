@@ -33,7 +33,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-public class NoDoAsIdentityAssertionFilterTest {
+public class NoImpersonationFilterTest {
 
   @Test
   public void testInitParameters() throws Exception {
@@ -45,7 +45,7 @@ public class NoDoAsIdentityAssertionFilterTest {
     EasyMock.replay( config );
     EasyMock.replay( context );
 
-    NoDoAsAsserterFilter filter = new NoDoAsAsserterFilter();
+    NoImpersonationFilter filter = new NoImpersonationFilter();
     Subject subject = new Subject();
 
     subject.getPrincipals().add(new PrimaryPrincipal("lmccay"));
@@ -116,7 +116,7 @@ public class NoDoAsIdentityAssertionFilterTest {
     EasyMock.replay( config );
     EasyMock.replay( context );
 
-    NoDoAsAsserterFilter filter = new NoDoAsAsserterFilter();
+    NoImpersonationFilter filter = new NoImpersonationFilter();
     Subject subject = new Subject();
 
     subject.getPrincipals().add(new PrimaryPrincipal("lmccay"));

@@ -27,7 +27,7 @@ import javax.servlet.http.HttpServletRequestWrapper;
 
 import org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
 
-public class NoDoAsAsserterFilter extends CommonIdentityAssertionFilter {
+public class NoImpersonationFilter extends CommonIdentityAssertionFilter {
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
@@ -47,7 +47,7 @@ public class NoDoAsAsserterFilter extends CommonIdentityAssertionFilter {
   @Override
   public HttpServletRequestWrapper wrapHttpServletRequest(
       ServletRequest request, String mappedPrincipalName) {
-    return new IdentityAsserterNoDoAsHttpServletRequestWrapper(
+    return new IdentityAsserterNoImpersonationHttpServletRequestWrapper(
         (HttpServletRequest) request,
         mappedPrincipalName);
   }

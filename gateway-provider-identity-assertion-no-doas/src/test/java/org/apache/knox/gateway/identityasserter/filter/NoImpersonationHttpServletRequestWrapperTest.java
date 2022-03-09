@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.identityasserter.filter;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.test.mock.MockHttpServletRequest;
 import org.apache.knox.test.mock.MockServletInputStream;
@@ -31,8 +32,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertTrue;
 
-public class IdentityAssertionNoDoAsHttpServletRequestWrapperTest {
+public class NoImpersonationHttpServletRequestWrapperTest {
   @After
   public void resetSystemProps() {
     System.setProperty(GatewayConfig.HADOOP_KERBEROS_SECURED, "false");
@@ -48,8 +50,8 @@ public class IdentityAssertionNoDoAsHttpServletRequestWrapperTest {
     request.setContentType( "application/x-www-form-urlencoded" );
     request.setMethod("POST");
 
-    IdentityAsserterNoDoAsHttpServletRequestWrapper wrapper
-        = new IdentityAsserterNoDoAsHttpServletRequestWrapper( request, "output-user" );
+    IdentityAsserterNoImpersonationHttpServletRequestWrapper wrapper
+        = new IdentityAsserterNoImpersonationHttpServletRequestWrapper( request, "output-user" );
 
     String output = wrapper.getQueryString();
     assertThat( output, containsString( "" ) );
@@ -64,12 +66,12 @@ public class IdentityAssertionNoDoAsHttpServletRequestWrapperTest {
     request.setContentType( "application/x-www-form-urlencoded" );
     request.setMethod("POST");
 
-    IdentityAsserterNoDoAsHttpServletRequestWrapper wrapper
-        = new IdentityAsserterNoDoAsHttpServletRequestWrapper( request, "output-user" );
+    IdentityAsserterNoImpersonationHttpServletRequestWrapper wrapper
+        = new IdentityAsserterNoImpersonationHttpServletRequestWrapper( request, "output-user" );
 
     String output = wrapper.getQueryString();
     // make sure principal is not added
-    assertThat( output, containsString( "" ) );
+    assertTrue(StringUtils.isBlank(output));
   }
 
   @Test
@@ -82,8 +84,8 @@ public class IdentityAssertionNoDoAsHttpServletRequestWrapperTest {
     request.setContentType( "application/x-www-form-urlencoded" );
     request.setMethod("POST");
 
-    IdentityAsserterNoDoAsHttpServletRequestWrapper wrapper
-        = new IdentityAsserterNoDoAsHttpServletRequestWrapper( request, "output-user" );
+    IdentityAsserterNoImpersonationHttpServletRequestWrapper wrapper
+        = new IdentityAsserterNoImpersonationHttpServletRequestWrapper( request, "output-user" );
 
     String output = wrapper.getQueryString();
     assertThat( output, containsString( "" ) );
@@ -98,8 +100,8 @@ public class IdentityAssertionNoDoAsHttpServletRequestWrapperTest {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setQueryString( input );
 
-    IdentityAsserterNoDoAsHttpServletRequestWrapper wrapper
-        = new IdentityAsserterNoDoAsHttpServletRequestWrapper( request, "output-user" );
+    IdentityAsserterNoImpersonationHttpServletRequestWrapper wrapper
+        = new IdentityAsserterNoImpersonationHttpServletRequestWrapper( request, "output-user" );
 
     String output = wrapper.getQueryString();
 
@@ -112,8 +114,8 @@ public class IdentityAssertionNoDoAsHttpServletRequestWrapperTest {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setQueryString("op=LISTSTATUS&user.name=jack&User.Name=jill&DOas=admin&doas=root");
 
-    IdentityAsserterNoDoAsHttpServletRequestWrapper wrapper
-        = new IdentityAsserterNoDoAsHttpServletRequestWrapper( request, "output-user" );
+    IdentityAsserterNoImpersonationHttpServletRequestWrapper wrapper
+        = new IdentityAsserterNoImpersonationHttpServletRequestWrapper( request, "output-user" );
 
     String output = wrapper.getQueryString();
     assertThat(output, is("op=LISTSTATUS"));
@@ -126,8 +128,8 @@ public class IdentityAssertionNoDoAsHttpServletRequestWrapperTest {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setQueryString( input );
 
-    IdentityAsserterNoDoAsHttpServletRequestWrapper wrapper
-        = new IdentityAsserterNoDoAsHttpServletRequestWrapper( request, "output-user" );
+    IdentityAsserterNoImpersonationHttpServletRequestWrapper wrapper
+        = new IdentityAsserterNoImpersonationHttpServletRequestWrapper( request, "output-user" );
 
     String output = wrapper.getQueryString();
 
@@ -141,8 +143,8 @@ public class IdentityAssertionNoDoAsHttpServletRequestWrapperTest {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setQueryString( input );
 
-    IdentityAsserterNoDoAsHttpServletRequestWrapper wrapper
-        = new IdentityAsserterNoDoAsHttpServletRequestWrapper( request, "output-user" );
+    IdentityAsserterNoImpersonationHttpServletRequestWrapper wrapper
+        = new IdentityAsserterNoImpersonationHttpServletRequestWrapper( request, "output-user" );
 
     String output = wrapper.getQueryString();
 
@@ -157,8 +159,8 @@ public class IdentityAssertionNoDoAsHttpServletRequestWrapperTest {
     request.setQueryString( input );
     request.setMethod("POST");
 
-    IdentityAsserterNoDoAsHttpServletRequestWrapper wrapper
-        = new IdentityAsserterNoDoAsHttpServletRequestWrapper( request, "output-user" );
+    IdentityAsserterNoImpersonationHttpServletRequestWrapper wrapper
+        = new IdentityAsserterNoImpersonationHttpServletRequestWrapper( request, "output-user" );
 
     String output = wrapper.getQueryString();
 

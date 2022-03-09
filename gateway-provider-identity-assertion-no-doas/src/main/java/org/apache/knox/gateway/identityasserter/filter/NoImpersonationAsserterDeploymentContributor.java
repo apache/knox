@@ -21,13 +21,13 @@ import org.apache.knox.gateway.deploy.DeploymentContext;
 import org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor;
 import org.apache.knox.gateway.topology.Provider;
 
-public class NoDoAsAsserterDeploymentContributor extends AbstractIdentityAsserterDeploymentContributor {
+public class NoImpersonationAsserterDeploymentContributor extends AbstractIdentityAsserterDeploymentContributor {
 
   /**
    * Name of our <b>identity-assertion</b> provider.
    */
-  public static final String NO_DOAS_PROVIDER = "NoDoAsProvider";
-  private static final String FILTER_CLASSNAME = NoDoAsAsserterFilter.class.getName();
+  public static final String NO_DOAS_PROVIDER = "NoImpersonationProvider";
+  private static final String FILTER_CLASSNAME = NoImpersonationFilter.class.getName();
   private static final String PRINCIPAL_MAPPING_PARAM_NAME = "principal.mapping";
   private static final String GROUP_PRINCIPAL_MAPPING_PARAM_NAME = "group.principal.mapping";
 

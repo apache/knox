@@ -16,4 +16,4 @@
 # limitations under the License.
 ##########################################################################
 
-org.apache.knox.gateway.identityasserter.filter.NoDoAsAsserterDeploymentContributor
+org.apache.knox.gateway.identityasserter.filter.NoImpersonationAsserterDeploymentContributor
