@@ -25,10 +25,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class IdentityAsserterNoImpersonationHttpServletRequestWrapper extends
+public class NoImpersonationAsserterRequestWrapper extends
     IdentityAsserterHttpServletRequestWrapper {
 
-  public IdentityAsserterNoImpersonationHttpServletRequestWrapper(
+  public NoImpersonationAsserterRequestWrapper(
       HttpServletRequest request, String principal) {
     super(request, principal);
   }

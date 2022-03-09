@@ -50,8 +50,8 @@ public class NoImpersonationHttpServletRequestWrapperTest {
     request.setContentType( "application/x-www-form-urlencoded" );
     request.setMethod("POST");
 
-    IdentityAsserterNoImpersonationHttpServletRequestWrapper wrapper
-        = new IdentityAsserterNoImpersonationHttpServletRequestWrapper( request, "output-user" );
+    NoImpersonationAsserterRequestWrapper wrapper
+        = new NoImpersonationAsserterRequestWrapper( request, "output-user" );
 
     String output = wrapper.getQueryString();
     assertThat( output, containsString( "" ) );
@@ -66,8 +66,8 @@ public class NoImpersonationHttpServletRequestWrapperTest {
     request.setContentType( "application/x-www-form-urlencoded" );
     request.setMethod("POST");
 
-    IdentityAsserterNoImpersonationHttpServletRequestWrapper wrapper
-        = new IdentityAsserterNoImpersonationHttpServletRequestWrapper( request, "output-user" );
+    NoImpersonationAsserterRequestWrapper wrapper
+        = new NoImpersonationAsserterRequestWrapper( request, "output-user" );
 
     String output = wrapper.getQueryString();
     // make sure principal is not added
@@ -84,8 +84,8 @@ public class NoImpersonationHttpServletRequestWrapperTest {
     request.setContentType( "application/x-www-form-urlencoded" );
     request.setMethod("POST");
 
-    IdentityAsserterNoImpersonationHttpServletRequestWrapper wrapper
-        = new IdentityAsserterNoImpersonationHttpServletRequestWrapper( request, "output-user" );
+    NoImpersonationAsserterRequestWrapper wrapper
+        = new NoImpersonationAsserterRequestWrapper( request, "output-user" );
 
     String output = wrapper.getQueryString();
     assertThat( output, containsString( "" ) );
@@ -100,8 +100,8 @@ public class NoImpersonationHttpServletRequestWrapperTest {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setQueryString( input );
 
-    IdentityAsserterNoImpersonationHttpServletRequestWrapper wrapper
-        = new IdentityAsserterNoImpersonationHttpServletRequestWrapper( request, "output-user" );
+    NoImpersonationAsserterRequestWrapper wrapper
+        = new NoImpersonationAsserterRequestWrapper( request, "output-user" );
 
     String output = wrapper.getQueryString();
 
@@ -114,8 +114,8 @@ public class NoImpersonationHttpServletRequestWrapperTest {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setQueryString("op=LISTSTATUS&user.name=jack&User.Name=jill&DOas=admin&doas=root");
 
-    IdentityAsserterNoImpersonationHttpServletRequestWrapper wrapper
-        = new IdentityAsserterNoImpersonationHttpServletRequestWrapper( request, "output-user" );
+    NoImpersonationAsserterRequestWrapper wrapper
+        = new NoImpersonationAsserterRequestWrapper( request, "output-user" );
 
     String output = wrapper.getQueryString();
     assertThat(output, is("op=LISTSTATUS"));
@@ -128,8 +128,8 @@ public class NoImpersonationHttpServletRequestWrapperTest {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setQueryString( input );
 
-    IdentityAsserterNoImpersonationHttpServletRequestWrapper wrapper
-        = new IdentityAsserterNoImpersonationHttpServletRequestWrapper( request, "output-user" );
+    NoImpersonationAsserterRequestWrapper wrapper
+        = new NoImpersonationAsserterRequestWrapper( request, "output-user" );
 
     String output = wrapper.getQueryString();
 
@@ -143,8 +143,8 @@ public class NoImpersonationHttpServletRequestWrapperTest {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setQueryString( input );
 
-    IdentityAsserterNoImpersonationHttpServletRequestWrapper wrapper
-        = new IdentityAsserterNoImpersonationHttpServletRequestWrapper( request, "output-user" );
+    NoImpersonationAsserterRequestWrapper wrapper
+        = new NoImpersonationAsserterRequestWrapper( request, "output-user" );
 
     String output = wrapper.getQueryString();
 
@@ -159,8 +159,8 @@ public class NoImpersonationHttpServletRequestWrapperTest {
     request.setQueryString( input );
     request.setMethod("POST");
 
-    IdentityAsserterNoImpersonationHttpServletRequestWrapper wrapper
-        = new IdentityAsserterNoImpersonationHttpServletRequestWrapper( request, "output-user" );
+    NoImpersonationAsserterRequestWrapper wrapper
+        = new NoImpersonationAsserterRequestWrapper( request, "output-user" );
 
     String output = wrapper.getQueryString();
 

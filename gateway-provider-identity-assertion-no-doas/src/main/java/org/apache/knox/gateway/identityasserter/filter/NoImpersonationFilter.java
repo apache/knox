@@ -47,7 +47,7 @@ public class NoImpersonationFilter extends CommonIdentityAssertionFilter {
   @Override
   public HttpServletRequestWrapper wrapHttpServletRequest(
       ServletRequest request, String mappedPrincipalName) {
-    return new IdentityAsserterNoImpersonationHttpServletRequestWrapper(
+    return new NoImpersonationAsserterRequestWrapper(
         (HttpServletRequest) request,
         mappedPrincipalName);
   }
