@@ -29,11 +29,13 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.TreeSet;
 import java.util.UUID;
 
 import javax.annotation.PostConstruct;
@@ -46,9 +48,9 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.KeyLengthException;
@@ -119,6 +121,7 @@ public class TokenResource {
   private static final String LIFESPAN_INPUT_ENABLED_PARAM = "knox.token.lifespan.input.enabled";
   private static final String LIFESPAN_INPUT_ENABLED_TEXT = "lifespanInputEnabled";
   static final String KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION = "knox.token.user.limit.exceeded.action";
+  private static final String METADATA_QUERY_PARAM_PREFIX = "md_";
   private static final long TOKEN_TTL_DEFAULT = 30000L;
   static final String TOKEN_API_PATH = "knoxtoken/api/v1";
   static final String RESOURCE_PATH = TOKEN_API_PATH + "/token";
@@ -405,11 +408,43 @@ public class TokenResource {
   @GET
   @Path(GET_USER_TOKENS)
   @Produces({APPLICATION_JSON, APPLICATION_XML})
-  public Response getUserTokens(@QueryParam("userName") String userName) {
+  public Response getUserTokens(@Context UriInfo uriInfo) {
     if (tokenStateService == null) {
       return Response.status(Response.Status.SERVICE_UNAVAILABLE).entity("{\n  \"error\": \"Token management is not configured\"\n}\n").build();
     } else {
-      final Collection<KnoxToken> tokens = tokenStateService.getTokens(userName);
+      if (uriInfo == null) {
+        throw new IllegalArgumentException("URI info cannot be NULL.");
+      }
+      final Map<String, String> metadataMap = new HashMap<>();
+      uriInfo.getQueryParameters().entrySet().forEach(entry -> {
+        if (entry.getKey().startsWith(METADATA_QUERY_PARAM_PREFIX)) {
+          String metadataName = entry.getKey().substring(METADATA_QUERY_PARAM_PREFIX.length());
+          metadataMap.put(metadataName, entry.getValue().get(0));
+        }
+      });
+
+      final String userName = uriInfo.getQueryParameters().getFirst("userName");
+      final Collection<KnoxToken> userTokens = tokenStateService.getTokens(userName);
+      final Collection<KnoxToken> tokens = new TreeSet<>();
+      if (metadataMap.isEmpty()) {
+        tokens.addAll(userTokens);
+      } else {
+        userTokens.forEach(knoxToken -> {
+          for (Map.Entry<String, String> entry : metadataMap.entrySet()) {
+            if (StringUtils.isBlank(entry.getValue()) || "*".equals(entry.getValue())) {
+              // we should only filter tokens by metadata name
+              if (knoxToken.hasMetadata(entry.getKey())) {
+                tokens.add(knoxToken);
+              }
+            } else {
+              // metadata value should also match
+              if (entry.getValue().equals(knoxToken.getMetadataValue(entry.getKey()))) {
+                tokens.add(knoxToken);
+              }
+            }
+          }
+        });
+      }
       return Response.status(Response.Status.OK).entity(JsonUtils.renderAsJsonString(Collections.singletonMap("tokens", tokens))).build();
     }
   }
@@ -733,6 +768,7 @@ public class TokenResource {
           final String comment = request.getParameter(COMMENT);
           final TokenMetadata tokenMetadata = new TokenMetadata(p.getName(), StringUtils.isBlank(comment) ? null : comment);
           tokenMetadata.setPasscode(tokenMAC.hash(tokenId, issueTime, p.getName(), passcode));
+          addArbitraryTokenMetadata(tokenMetadata);
           tokenStateService.addMetadata(tokenId, tokenMetadata);
           log.storedToken(getTopologyName(), Tokens.getTokenDisplayText(accessToken), Tokens.getTokenIDDisplayText(tokenId));
         }
@@ -745,6 +781,18 @@ public class TokenResource {
       log.unableToIssueToken(e);
     }
     return Response.ok().entity("{ \"Unable to acquire token.\" }").build();
+  }
+
+  private void addArbitraryTokenMetadata(TokenMetadata tokenMetadata) {
+    final Enumeration<String> paramNames = request.getParameterNames();
+    while (paramNames.hasMoreElements()) {
+      final String paramName = paramNames.nextElement();
+      if (paramName.startsWith(METADATA_QUERY_PARAM_PREFIX)) {
+        final String metadataName = paramName.substring(METADATA_QUERY_PARAM_PREFIX.length());
+        final String metadataValue = request.getParameter(paramName);
+        tokenMetadata.add(metadataName, metadataValue);
+      }
+    }
   }
 
   private String generatePasscodeField(String tokenId, String passcode) {
