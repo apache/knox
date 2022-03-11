@@ -99,6 +99,7 @@
         <module>gateway-provider-identity-assertion-regex</module>
         <module>gateway-provider-identity-assertion-switchcase</module>
         <module>gateway-provider-identity-assertion-pseudo</module>
+        <module>gateway-provider-identity-assertion-no-doas</module>
         <module>gateway-provider-jersey</module>
         <module>gateway-provider-ha</module>
         <module>gateway-service-admin</module>
@@ -975,6 +976,11 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-identity-assertion-switchcase</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-provider-identity-assertion-no-doas</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
