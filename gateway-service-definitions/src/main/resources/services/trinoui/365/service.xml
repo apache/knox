@@ -16,6 +16,12 @@
    limitations under the License.
 -->
 <service role="TRINOUI" name="trino" version="365">
+    <metadata>
+        <type>UI</type>
+        <context>/trino/</context>
+        <shortDesc>Trino Web UI</shortDesc>
+        <description>Trino is a distributed SQL query engine designed to query large data sets distributed over one or more heterogeneous data sources. It provides a web UI for monitoring a Trino cluster and managing queries.</description>
+    </metadata>
     <routes>
         <route path="/trino/">
         </route>
