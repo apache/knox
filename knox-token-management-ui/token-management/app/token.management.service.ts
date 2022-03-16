@@ -27,16 +27,18 @@ export class TokenManagementService {
     sessionUrl = window.location.pathname.replace(new RegExp('token-management/.*'), 'session/api/v1/sessioninfo');
     apiUrl = window.location.pathname.replace(new RegExp('token-management/.*'), 'knoxtoken/api/v1/token/');
     getKnoxTokensUrl = this.apiUrl + 'getUserTokens?userName=';
+    getDoAsKnoxTokensUrl = this.apiUrl + 'getUserTokens?createdBy=';
     enableKnoxTokenUrl = this.apiUrl + 'enable';
     disableKnoxTokenUrl = this.apiUrl + 'disable';
     revokeKnoxTokenUrl = this.apiUrl + 'revoke';
 
     constructor(private http: HttpClient) {}
 
-    getKnoxTokens(userName: string): Promise<KnoxToken[]> {
+    getKnoxTokens(userName: string, impersonated: boolean): Promise<KnoxToken[]> {
         let headers = new HttpHeaders();
         headers = this.addJsonHeaders(headers);
-        return this.http.get(this.getKnoxTokensUrl + userName, { headers: headers})
+        let urlToUse = impersonated ? this.getDoAsKnoxTokensUrl : this.getKnoxTokensUrl;
+        return this.http.get(urlToUse + userName, { headers: headers})
             .toPromise()
             .then(response => response['tokens'] as KnoxToken[])
             .catch((err: HttpErrorResponse) => {

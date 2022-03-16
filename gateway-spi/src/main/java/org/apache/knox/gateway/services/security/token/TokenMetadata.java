@@ -35,7 +35,8 @@ public class TokenMetadata {
   public static final String COMMENT = "comment";
   public static final String ENABLED = "enabled";
   public static final String PASSCODE = "passcode";
-  private static final List<String> KNOWN_MD_NAMES = Arrays.asList(USER_NAME, COMMENT, ENABLED, PASSCODE);
+  public static final String CREATED_BY = "createdBy";
+  private static final List<String> KNOWN_MD_NAMES = Arrays.asList(USER_NAME, COMMENT, ENABLED, PASSCODE, CREATED_BY);
 
   private final Map<String, String> metadataMap = new HashMap<>();
 
@@ -85,11 +86,11 @@ public class TokenMetadata {
   }
 
   public String getUserName() {
-    return metadataMap.get(USER_NAME);
+    return getMetadata(USER_NAME);
   }
 
   public String getComment() {
-    return metadataMap.get(COMMENT);
+    return getMetadata(COMMENT);
   }
 
   public void setEnabled(boolean enabled) {
@@ -97,7 +98,7 @@ public class TokenMetadata {
   }
 
   public boolean isEnabled() {
-    return Boolean.parseBoolean(metadataMap.get(ENABLED));
+    return Boolean.parseBoolean(getMetadata(ENABLED));
   }
 
   public void setPasscode(String passcode) {
@@ -106,7 +107,15 @@ public class TokenMetadata {
 
   @JsonIgnore
   public String getPasscode() {
-    return metadataMap.get(PASSCODE);
+    return getMetadata(PASSCODE);
+  }
+
+  public void setCreatedBy(String createdBy) {
+    saveMetadata(CREATED_BY, createdBy);
+  }
+
+  public String getCreatedBy() {
+    return getMetadata(CREATED_BY);
   }
 
   public String toJSON() {

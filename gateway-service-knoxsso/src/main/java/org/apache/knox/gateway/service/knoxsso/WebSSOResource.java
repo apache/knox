@@ -262,7 +262,7 @@ public class WebSSOResource {
         signingKeystorePassphrase = as.getPasswordFromAliasForCluster(clusterName, signingKeystorePassphraseAlias);
       }
 
-      final JWTokenAttributes jwtAttributes = new JWTokenAttributesBuilder().setPrincipal(p).setAudiences(targetAudiences).setAlgorithm(signatureAlgorithm).setExpires(getExpiry())
+      final JWTokenAttributes jwtAttributes = new JWTokenAttributesBuilder().setUserName(p.getName()).setAudiences(targetAudiences).setAlgorithm(signatureAlgorithm).setExpires(getExpiry())
           .setSigningKeystoreName(signingKeystoreName).setSigningKeystoreAlias(signingKeystoreAlias).setSigningKeystorePassphrase(signingKeystorePassphrase).build();
       JWT token = tokenAuthority.issueToken(jwtAttributes);
 

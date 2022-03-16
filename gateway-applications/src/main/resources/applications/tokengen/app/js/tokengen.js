@@ -158,6 +158,19 @@ function validateComment(comment) {
     return valid;
 }
 
+function validateDoAs(doAs) {
+    var valid = true;
+    if (doAs.value != '') {
+        doAs.reportValidity();
+        valid = doAs.checkValidity();
+        if (!valid) {
+            $('#invalidDoasText').show();
+        }
+    }
+
+    return valid;
+}
+
 function maximumLifetimeExceeded(maximumLifetime, days, hours, mins) {
 	if (maximumLifetime == -1) {
 		return false;
@@ -196,6 +209,11 @@ var gen = function() {
         if (form.comment.value != '') {
             params = params + (lifespanInputEnabled === "true" ? "&" : "?") + 'comment=' + encodeURIComponent(form.comment.value);
         }
+
+        if (form.doas.value != '') {
+            params = params + (lifespanInputEnabled === "true" || form.comment.value != '' ? "&" : "?") + 'doAs=' + encodeURIComponent(form.doas.value);
+        }
+
         var request = ((window.XMLHttpRequest) ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP"));
         request.open("GET", apiUrl + params, true);
         request.send(null);
@@ -235,7 +253,7 @@ var gen = function() {
         }
     }
 
-    if (validateLifespan(lifespanInputEnabled, form.lt_days, form.lt_hours, form.lt_mins) && validateComment(form.comment)) {
+    if (validateLifespan(lifespanInputEnabled, form.lt_days, form.lt_hours, form.lt_mins) && validateComment(form.comment) && validateDoAs(form.doas)) {
         if (maximumLifetimeExceeded(form.maximumLifetimeSeconds.textContent, lt_days, lt_hours, lt_mins)) {
             swal({
                 title: "Warning",

@@ -86,6 +86,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -97,6 +98,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Predicate;
 
 /**
  * Some tests for the token service
@@ -147,6 +149,7 @@ public class TokenServiceResourceTest {
   private void configureCommonExpectations(Map<String, String> contextExpectations, String expectedSubjectDN, Boolean serverManagedTssEnabled) throws Exception {
     context = EasyMock.createNiceMock(ServletContext.class);
     contextExpectations.forEach((key, value) -> EasyMock.expect(context.getInitParameter(key)).andReturn(value).anyTimes());
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.enumeration(contextExpectations.keySet())).anyTimes();
     request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
     Principal principal = EasyMock.createNiceMock(Principal.class);
@@ -155,6 +158,9 @@ public class TokenServiceResourceTest {
     EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(TOKEN_API_PATH+TOKEN_PATH)).anyTimes();
     if (contextExpectations.containsKey(TokenResource.LIFESPAN)) {
       EasyMock.expect(request.getParameter(TokenResource.LIFESPAN)).andReturn(contextExpectations.get(TokenResource.LIFESPAN)).anyTimes();
+    }
+    if (contextExpectations.containsKey(TokenResource.QUERY_PARAMETER_DOAS)) {
+      EasyMock.expect(request.getParameter(TokenResource.QUERY_PARAMETER_DOAS)).andReturn(contextExpectations.get(TokenResource.QUERY_PARAMETER_DOAS)).anyTimes();
     }
     EasyMock.expect(request.getParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
 
@@ -1026,8 +1032,12 @@ public class TokenServiceResourceTest {
   }
 
   private Response getUserTokensResponse(TokenResource tokenResource) {
+    return getUserTokensResponse(tokenResource, false);
+  }
+
+  private Response getUserTokensResponse(TokenResource tokenResource, boolean createdBy) {
     final MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
-    queryParameters.put("userName", Arrays.asList(USER_NAME));
+    queryParameters.put(createdBy ? "createdBy" : "userName", Arrays.asList(USER_NAME));
     final UriInfo uriInfo = EasyMock.createNiceMock(UriInfo.class);
     EasyMock.expect(uriInfo.getQueryParameters()).andReturn(queryParameters).anyTimes();
     EasyMock.replay(uriInfo);
@@ -1080,6 +1090,31 @@ public class TokenServiceResourceTest {
     final Collection<String> tokens = ((Map<String, Collection<String>>) JsonUtils.getObjectFromJsonString(getKnoxTokensResponse.getEntity().toString()))
         .get("tokens");
     assertEquals(tokens.size(), revokeOldestToken ? configuredLimit : numberOfTokens);
+  }
+
+  @Test
+  public void testCreateImpersonatedToken() throws Exception {
+    final String impersonatedUser = "testUser";
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put(TokenResource.QUERY_PARAMETER_DOAS, impersonatedUser);
+    contextExpectations.put(TokenResource.PROXYUSER_PREFIX + "." + USER_NAME + ".users", impersonatedUser);
+    contextExpectations.put(TokenResource.PROXYUSER_PREFIX + "." + USER_NAME + ".hosts", "*");
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+
+    final TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    tr.doGet();
+
+    final Response getKnoxTokensResponse = getUserTokensResponse(tr, true);
+    final Collection<LinkedHashMap<String, Object>> tokens = ((Map<String, Collection<LinkedHashMap<String, Object>>>) JsonUtils
+        .getObjectFromJsonString(getKnoxTokensResponse.getEntity().toString())).get("tokens");
+    final LinkedHashMap<String, Object> knoxToken = tokens.iterator().next();
+    final Map<String, String> metadata = (Map<String, String>) knoxToken.get("metadata");
+    assertEquals(metadata.get("createdBy"), USER_NAME);
+    assertEquals(metadata.get("userName"), impersonatedUser);
   }
 
   /**
@@ -1478,11 +1513,26 @@ public class TokenServiceResourceTest {
 
     @Override
     public Collection<KnoxToken> getTokens(String userName) {
+      return fetchTokens(userName, false);
+    }
+
+    @Override
+    public Collection<KnoxToken> getDoAsTokens(String createdBy) {
+      return fetchTokens(createdBy, true);
+    }
+
+    private Collection<KnoxToken> fetchTokens(String userName, boolean createdBy) {
       final Collection<KnoxToken> tokens = new TreeSet<>();
-      tokenMetadata.entrySet().stream().filter(entry -> entry.getValue().getUserName().equals(userName)).forEach(metadata -> {
+      final Predicate<Map.Entry<String, TokenMetadata>> filterPredicate;
+      if (createdBy) {
+        filterPredicate = entry -> userName.equals(entry.getValue().getCreatedBy());
+      } else {
+        filterPredicate = entry -> userName.equals(entry.getValue().getUserName());
+      }
+      tokenMetadata.entrySet().stream().filter(filterPredicate).forEach(metadata -> {
         String tokenId = metadata.getKey();
         try {
-          tokens.add(new KnoxToken(tokenId, getTokenIssueTime(tokenId), getTokenExpiration(tokenId), 0L, metadata.getValue()));
+          tokens.add(new KnoxToken(tokenId, getTokenIssueTime(tokenId), getTokenExpiration(tokenId), getMaxLifetime(tokenId), metadata.getValue()));
         } catch (UnknownTokenException e) {
           // NOP
         }
@@ -1523,7 +1573,7 @@ public class TokenServiceResourceTest {
     public JWT issueToken(JWTokenAttributes jwtAttributes) {
       String[] claimArray = new String[6];
       claimArray[0] = "KNOXSSO";
-      claimArray[1] = jwtAttributes.getPrincipal().getName();
+      claimArray[1] = jwtAttributes.getUserName();
       claimArray[2] = null;
       if (jwtAttributes.getExpires() == -1) {
         claimArray[3] = null;

@@ -48,8 +48,7 @@ import static org.junit.Assert.assertTrue;
 public class DefaultTokenAuthorityServiceTest {
   @Test
   public void testTokenCreation() throws Exception {
-    Principal principal = EasyMock.createNiceMock(Principal.class);
-    EasyMock.expect(principal.getName()).andReturn("john.doe@example.com");
+    final String userName = "john.doe@example.com";
 
     GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
     String basedir = System.getProperty("basedir");
@@ -74,7 +73,7 @@ public class DefaultTokenAuthorityServiceTest {
     AliasService as = EasyMock.createNiceMock(AliasService.class);
     EasyMock.expect(as.getSigningKeyPassphrase()).andReturn("horton".toCharArray()).anyTimes();
 
-    EasyMock.replay(principal, config, ms, as);
+    EasyMock.replay(config, ms, as);
 
     DefaultKeystoreService ks = new DefaultKeystoreService();
     ks.setMasterService(ms);
@@ -88,7 +87,7 @@ public class DefaultTokenAuthorityServiceTest {
     ta.init(config, new HashMap<>());
     ta.start();
 
-    JWT token = ta.issueToken(new JWTokenAttributesBuilder().setPrincipal(principal).setAlgorithm("RS256").setManaged(true).build());
+    JWT token = ta.issueToken(new JWTokenAttributesBuilder().setUserName(userName).setAlgorithm("RS256").setManaged(true).build());
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
     assertTrue(Boolean.parseBoolean(token.getClaim(JWTToken.MANAGED_TOKEN_CLAIM)));
@@ -98,8 +97,7 @@ public class DefaultTokenAuthorityServiceTest {
 
   @Test
   public void testTokenCreationAudience() throws Exception {
-    Principal principal = EasyMock.createNiceMock(Principal.class);
-    EasyMock.expect(principal.getName()).andReturn("john.doe@example.com");
+    final String userName = "john.doe@example.com";
 
     GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
     String basedir = System.getProperty("basedir");
@@ -124,7 +122,7 @@ public class DefaultTokenAuthorityServiceTest {
     AliasService as = EasyMock.createNiceMock(AliasService.class);
     EasyMock.expect(as.getSigningKeyPassphrase()).andReturn("horton".toCharArray()).anyTimes();
 
-    EasyMock.replay(principal, config, ms, as);
+    EasyMock.replay(config, ms, as);
 
     DefaultKeystoreService ks = new DefaultKeystoreService();
     ks.setMasterService(ms);
@@ -139,7 +137,7 @@ public class DefaultTokenAuthorityServiceTest {
     ta.start();
 
     JWT token = ta
-        .issueToken(new JWTokenAttributesBuilder().setPrincipal(principal).setAudiences("https://login.example.com").setAlgorithm("RS256").build());
+        .issueToken(new JWTokenAttributesBuilder().setUserName(userName).setAudiences("https://login.example.com").setAlgorithm("RS256").build());
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
     assertEquals("https://login.example.com", token.getAudience());
@@ -149,8 +147,7 @@ public class DefaultTokenAuthorityServiceTest {
 
   @Test
   public void testTokenCreationNullAudience() throws Exception {
-    Principal principal = EasyMock.createNiceMock(Principal.class);
-    EasyMock.expect(principal.getName()).andReturn("john.doe@example.com");
+    final String userName = "john.doe@example.com";
 
     GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
     String basedir = System.getProperty("basedir");
@@ -175,7 +172,7 @@ public class DefaultTokenAuthorityServiceTest {
     AliasService as = EasyMock.createNiceMock(AliasService.class);
     EasyMock.expect(as.getSigningKeyPassphrase()).andReturn("horton".toCharArray()).anyTimes();
 
-    EasyMock.replay(principal, config, ms, as);
+    EasyMock.replay(config, ms, as);
 
     DefaultKeystoreService ks = new DefaultKeystoreService();
     ks.setMasterService(ms);
@@ -189,7 +186,7 @@ public class DefaultTokenAuthorityServiceTest {
     ta.init(config, new HashMap<>());
     ta.start();
 
-    JWT token = ta.issueToken(new JWTokenAttributesBuilder().setPrincipal(principal).setAlgorithm("RS256").build());
+    JWT token = ta.issueToken(new JWTokenAttributesBuilder().setUserName(userName).setAlgorithm("RS256").build());
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
 
@@ -198,8 +195,7 @@ public class DefaultTokenAuthorityServiceTest {
 
   @Test
   public void testTokenCreationSignatureAlgorithm() throws Exception {
-    Principal principal = EasyMock.createNiceMock(Principal.class);
-    EasyMock.expect(principal.getName()).andReturn("john.doe@example.com");
+    final String userName = "john.doe@example.com";
 
     GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
     String basedir = System.getProperty("basedir");
@@ -224,7 +220,7 @@ public class DefaultTokenAuthorityServiceTest {
     AliasService as = EasyMock.createNiceMock(AliasService.class);
     EasyMock.expect(as.getSigningKeyPassphrase()).andReturn("horton".toCharArray()).anyTimes();
 
-    EasyMock.replay(principal, config, ms, as);
+    EasyMock.replay(config, ms, as);
 
     DefaultKeystoreService ks = new DefaultKeystoreService();
     ks.setMasterService(ms);
@@ -238,7 +234,7 @@ public class DefaultTokenAuthorityServiceTest {
     ta.init(config, new HashMap<>());
     ta.start();
 
-    JWT token = ta.issueToken(new JWTokenAttributesBuilder().setPrincipal(principal).setAlgorithm("RS512").build());
+    JWT token = ta.issueToken(new JWTokenAttributesBuilder().setUserName(userName).setAlgorithm("RS512").build());
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
     assertTrue(token.getHeader().contains("RS512"));
@@ -248,8 +244,7 @@ public class DefaultTokenAuthorityServiceTest {
 
   @Test (expected = TokenServiceException.class)
   public void testTokenCreationBadSignatureAlgorithm() throws Exception {
-    Principal principal = EasyMock.createNiceMock(Principal.class);
-    EasyMock.expect(principal.getName()).andReturn("john.doe@example.com");
+    final String userName = "john.doe@example.com";
 
     GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
     String basedir = System.getProperty("basedir");
@@ -274,7 +269,7 @@ public class DefaultTokenAuthorityServiceTest {
     AliasService as = EasyMock.createNiceMock(AliasService.class);
     EasyMock.expect(as.getSigningKeyPassphrase()).andReturn("horton".toCharArray()).anyTimes();
 
-    EasyMock.replay(principal, config, ms, as);
+    EasyMock.replay(config, ms, as);
 
     DefaultKeystoreService ks = new DefaultKeystoreService();
     ks.setMasterService(ms);
@@ -286,7 +281,7 @@ public class DefaultTokenAuthorityServiceTest {
     ta.setKeystoreService(ks);
 
     ta.init(config, new HashMap<>());
-    ta.issueToken(new JWTokenAttributesBuilder().setPrincipal(principal).setAlgorithm("none").build());
+    ta.issueToken(new JWTokenAttributesBuilder().setUserName(userName).setAlgorithm("none").build());
   }
 
   @Test
@@ -303,8 +298,7 @@ public class DefaultTokenAuthorityServiceTest {
     String customSigningKeyAlias = "testSigningKeyAlias";
     String customSigningKeyPassphrase = "testSigningKeyPassphrase";
 
-    Principal principal = EasyMock.createNiceMock(Principal.class);
-    EasyMock.expect(principal.getName()).andReturn("john.doe@example.com");
+    final String userName = "john.doe@example.com";
 
     GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
     String basedir = System.getProperty("basedir");
@@ -328,7 +322,7 @@ public class DefaultTokenAuthorityServiceTest {
     AliasService as = EasyMock.createNiceMock(AliasService.class);
     EasyMock.expect(as.getSigningKeyPassphrase()).andReturn("horton".toCharArray()).anyTimes();
 
-    EasyMock.replay(principal, config, ms, as);
+    EasyMock.replay(config, ms, as);
 
     DefaultKeystoreService ks = new DefaultKeystoreService();
     ks.setMasterService(ms);
@@ -340,7 +334,7 @@ public class DefaultTokenAuthorityServiceTest {
     ta.init(config, new HashMap<>());
     ta.start();
 
-    final JWTokenAttributes jwtAttributes = new JWTokenAttributesBuilder().setPrincipal(principal).setAudiences(Collections.emptyList()).setAlgorithm("RS256").setExpires(-1)
+    final JWTokenAttributes jwtAttributes = new JWTokenAttributesBuilder().setUserName(userName).setAudiences(Collections.emptyList()).setAlgorithm("RS256").setExpires(-1)
         .setSigningKeystoreName(customSigningKeyName).setSigningKeystoreAlias(customSigningKeyAlias).setSigningKeystorePassphrase(customSigningKeyPassphrase.toCharArray()).build();
     JWT token = ta.issueToken(jwtAttributes);
     assertEquals("KNOXSSO", token.getIssuer());
