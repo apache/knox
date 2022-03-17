@@ -34,7 +34,9 @@ import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
@@ -75,6 +77,14 @@ public class CommonIdentityAssertionFilterTest {
         calculatedGroups.addAll(Arrays.asList(super.combineGroupMappings(mappedGroups, groups)));
         return super.combineGroupMappings(mappedGroups, groups);
       }
+
+      @Override
+      protected void continueChainAsPrincipal(HttpServletRequestWrapper request, ServletResponse response, FilterChain chain, String mappedPrincipalName, String[] groups) throws IOException, ServletException {
+        assertEquals("Groups should not have duplicates: " + Arrays.toString(groups),
+                new HashSet<>(Arrays.asList(groups)).size(),
+                groups.length);
+        super.continueChainAsPrincipal(request, response, chain, mappedPrincipalName, groups);
+      }
     };
     ThreadContext.put(MDC_AUDIT_CONTEXT_KEY, "dummy");
   }
@@ -83,7 +93,7 @@ public class CommonIdentityAssertionFilterTest {
   public void testSimpleFilter() throws ServletException, IOException {
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect(config.getInitParameter(CommonIdentityAssertionFilter.GROUP_PRINCIPAL_MAPPING)).
-        andReturn("*=everyone;").once();
+        andReturn("*=everyone;lmccay=test-virtual-group").once();
     EasyMock.expect(config.getInitParameter(CommonIdentityAssertionFilter.PRINCIPAL_MAPPING)).
         andReturn("ljm=lmccay;").once();
     EasyMock.expect(config.getInitParameterNames()).

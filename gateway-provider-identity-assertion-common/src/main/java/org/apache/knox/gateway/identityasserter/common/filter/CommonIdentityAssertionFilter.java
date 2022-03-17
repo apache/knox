@@ -20,8 +20,10 @@ package org.apache.knox.gateway.identityasserter.common.filter;
 import java.io.IOException;
 import java.security.AccessController;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -157,7 +159,11 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     HttpServletRequestWrapper wrapper = wrapHttpServletRequest(
         request, mappedPrincipalName);
 
-    continueChainAsPrincipal(wrapper, response, chain, mappedPrincipalName, groups);
+    continueChainAsPrincipal(wrapper, response, chain, mappedPrincipalName, unique(groups));
+  }
+
+  private static String[] unique(String[] groups) {
+    return new HashSet<>(Arrays.asList(groups)).toArray(new String[0]);
   }
 
   protected String[] combineGroupMappings(String[] mappedGroups, String[] groups) {
