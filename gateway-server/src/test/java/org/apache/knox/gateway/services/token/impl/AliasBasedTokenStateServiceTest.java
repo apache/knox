@@ -369,7 +369,7 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     // Neither addAliasForCluster nor removeAliasForCluster should be called because updating expiration should happen in memory and let the
     // background persistence job done its job
     aliasService.addAliasesForCluster(anyString(), anyObject());
-    EasyMock.expectLastCall().andVoid().once(); // Expecting this during shutdown
+    EasyMock.expectLastCall().andVoid().atLeastOnce(); // Expecting this during shutdown
 
     //expecting this call when loading credentials from the keystore on startup
     EasyMock.expect(aliasService.getPasswordsForGateway()).andReturn(Collections.emptyMap()).anyTimes();

@@ -31,7 +31,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ContentType;
-import org.apache.knox.gateway.SpiGatewayMessages;
 import org.apache.knox.gateway.SpiGatewayResources;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
@@ -43,7 +42,6 @@ import org.apache.knox.gateway.config.Configure;
 import org.apache.knox.gateway.config.Default;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.Optional;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
 import org.apache.knox.gateway.util.MimeTypes;
 
@@ -69,7 +67,6 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
   protected static final Set<String> EXCLUDE_SET_COOKIES_DEFAULT = new HashSet<>(Arrays.asList("hadoop.auth", "hive.server2.auth", "impala.auth"));
 
 
-  protected static final SpiGatewayMessages LOG = MessagesFactory.get(SpiGatewayMessages.class);
   protected static final SpiGatewayResources RES = ResourcesFactory.get(SpiGatewayResources.class);
   protected static final Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
       AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
@@ -84,6 +81,9 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
 
   //Buffer size in bytes
   private int replayBufferSize = -1;
+
+  //whether to add Expect:100-continue to PUT/POST requests like 'curl' does
+  private boolean addExpect100Continue;
 
   @Override
   public void destroy() {
@@ -119,6 +119,12 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
     }
     replayBufferSize = size;
     LOG.setReplayBufferSize(replayBufferSize, getServiceRole());
+  }
+
+  @Configure
+  protected void setAddExpect100Continue(@Default("false")boolean addExpect100Continue) {
+    this.addExpect100Continue = addExpect100Continue;
+    LOG.setAddExpect100Continue(addExpect100Continue, serviceRole);
   }
 
   /**
@@ -258,9 +264,13 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
    }
 
    protected HttpEntity createRequestEntity(HttpServletRequest request) throws IOException {
-      String contentType = request.getContentType();
-      int contentLength = request.getContentLength();
-      InputStream contentStream = request.getInputStream();
+     return createRequestEntity(request, false);
+   }
+
+   protected HttpEntity createRequestEntity(HttpServletRequest request, boolean useBufferedEntity) throws IOException {
+      final String contentType = request.getContentType();
+      final int contentLength = request.getContentLength();
+      final InputStream contentStream = request.getInputStream();
 
       HttpEntity entity;
       if (contentType == null) {
@@ -268,24 +278,28 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       } else {
          entity = new InputStreamEntity(contentStream, contentLength, ContentType.parse(contentType));
       }
-      GatewayConfig config =
-         (GatewayConfig)request.getServletContext().getAttribute( GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE );
-      if( config != null && config.isHadoopKerberosSecured() ) {
-        //Check if delegation token is supplied in the request
-        boolean delegationTokenPresent = false;
-        String queryString = request.getQueryString();
-        if (queryString != null) {
-          delegationTokenPresent = queryString.startsWith("delegation=") || queryString.contains("&delegation=");
-        }
-        if (replayBufferSize < 0) {
-          replayBufferSize = config.getHttpServerRequestBuffer();
-        }
-        if (!delegationTokenPresent && replayBufferSize > 0 ) {
-          entity = new PartiallyRepeatableHttpEntity(entity, replayBufferSize);
+
+      final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+      if (config != null && config.isHadoopKerberosSecured()) {
+        if (useBufferedEntity) {
+          entity = new KnoxBufferedHttpEntity(entity);
+        } else {
+          // To honor backward-compatibility we should keep replayBufferSize-based entity creation
+          if (replayBufferSize < 0) {
+            replayBufferSize = config.getHttpServerRequestBuffer();
+          }
+          if (!requestHasDelegationToken(request) && replayBufferSize > 0) {
+            entity = new PartiallyRepeatableHttpEntity(entity, replayBufferSize);
+          }
         }
       }
 
       return entity;
+   }
+
+   private boolean requestHasDelegationToken(HttpServletRequest request) {
+     final String queryString = request.getQueryString();
+     return queryString == null ? false : queryString.startsWith("delegation=") || queryString.contains("&delegation=");
    }
 
    @Override
@@ -310,11 +324,11 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
    @Override
    public void doPut(URI url, HttpServletRequest request, HttpServletResponse response)
          throws IOException {
-      HttpPut method = new HttpPut(url);
-      HttpEntity entity = createRequestEntity(request);
+      final HttpPut method = new HttpPut(url);
+      copyRequestHeaderFields(method, request, addExpect100Continue);
+      final HttpEntity entity = createRequestEntity(request, addExpect100Continue);
       method.setEntity(entity);
-      copyRequestHeaderFields(method, request);
-     executeRequestWrapper(method, request, response);
+      executeRequestWrapper(method, request, response);
    }
 
    @Override
@@ -324,17 +338,20 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       HttpEntity entity = createRequestEntity(request);
       method.setEntity(entity);
       copyRequestHeaderFields(method, request);
-     executeRequestWrapper(method, request, response);
+      executeRequestWrapper(method, request, response);
    }
 
    @Override
    public void doPost(URI url, HttpServletRequest request, HttpServletResponse response)
          throws IOException, URISyntaxException {
+      final int contentLength = request.getContentLength();
+      LOG.receivedRequestWithLength(contentLength);
+      final boolean shouldAddExpect100Continue = addExpect100Continue && (contentLength > 1024 || contentLength == -1);
       HttpPost method = new HttpPost(url);
-      HttpEntity entity = createRequestEntity(request);
+      copyRequestHeaderFields(method, request, shouldAddExpect100Continue);
+      HttpEntity entity = createRequestEntity(request, shouldAddExpect100Continue);
       method.setEntity(entity);
-      copyRequestHeaderFields(method, request);
-     executeRequestWrapper(method, request, response);
+      executeRequestWrapper(method, request, response);
    }
 
    @Override

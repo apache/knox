@@ -33,5 +33,9 @@
         <name>httpclient.socketTimeout</name>
         <value>5m</value>
       </param>
+      <param>
+        <name>addExpect100Continue</name>
+        <value>true</value>
+      </param>
     </dispatch>
 </service>

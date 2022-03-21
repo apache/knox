@@ -52,8 +52,8 @@
             <value>WWW-AUTHENTICATE</value>
         </param>
         <param>
-            <name>replayBufferSize</name>
-            <value>65</value>
+          <name>addExpect100Continue</name>
+          <value>true</value>
         </param>
     </dispatch>
 </service>

@@ -100,6 +100,9 @@ public interface SpiGatewayMessages {
   @Message( level = MessageLevel.INFO, text = "replayBufferSize is set to {0} for {1}" )
   void setReplayBufferSize(int replayBufferSize, String serviceRole);
 
+  @Message( level = MessageLevel.DEBUG, text = "addExpect100Continue is set to {0} for {1}" )
+  void setAddExpect100Continue(boolean addExpect100Continue, String serviceRole);
+
   @Message( level = MessageLevel.DEBUG, text = "Using two way SSL in {0}" )
   void usingTwoWaySsl(String serviceRole);
 
@@ -114,4 +117,10 @@ public interface SpiGatewayMessages {
 
   @Message( level = MessageLevel.INFO, text = "HTTP client retry non safe request is set to {0} for {1}" )
   void setRetryNonIndependent(boolean retryNonIndependent, String serviceRole);
+
+  @Message (level = MessageLevel.DEBUG, text = "Added Expect:100-continue header into the outbound request")
+  void addedExpect100Continue();
+
+  @Message (level = MessageLevel.DEBUG, text = "Received HTTP servlet request with length = {0}")
+  void receivedRequestWithLength(int length);
 }

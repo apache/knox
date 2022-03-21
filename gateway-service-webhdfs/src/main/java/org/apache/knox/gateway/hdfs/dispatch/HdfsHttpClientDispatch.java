@@ -41,6 +41,11 @@ public class HdfsHttpClientDispatch extends ConfigurableDispatch {
   @Override
   protected HttpEntity createRequestEntity(HttpServletRequest request)
       throws IOException {
+    return createRequestEntity(request, false);
+  }
+
+  @Override
+  protected HttpEntity createRequestEntity(HttpServletRequest request, boolean useBufferedEntity) throws IOException {
     return null;
   }
 }

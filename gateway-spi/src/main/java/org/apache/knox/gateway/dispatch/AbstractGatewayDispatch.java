@@ -19,7 +19,10 @@ package org.apache.knox.gateway.dispatch;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.SpiGatewayMessages;
 import org.apache.knox.gateway.filter.GatewayResponse;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.http.Header;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.logging.log4j.ThreadContext;
@@ -37,9 +40,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 public abstract class AbstractGatewayDispatch implements Dispatch {
-  private static final Set<String> REQUEST_EXCLUDE_HEADERS = new HashSet<>(Arrays.asList(
-      "Host", "Authorization", "Content-Length", "Transfer-Encoding"));
+  protected static final SpiGatewayMessages LOG = MessagesFactory.get(SpiGatewayMessages.class);
+
+  private static final Set<String> REQUEST_EXCLUDE_HEADERS = new HashSet<>(Arrays.asList("Host", "Authorization", "Content-Length", "Transfer-Encoding"));
   protected static final String REQUEST_ID_HEADER_NAME = "X-Request-Id";
+  protected static final String EXPECT_HEADER_NAME = "Expect";
+  protected static final String EXPECT_100_CONTINUE = "100-continue";
   protected static final String TRACE_ID = "trace_id";
 
   protected  HttpClient client;
@@ -125,8 +131,11 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
     response.sendError( HttpServletResponse.SC_METHOD_NOT_ALLOWED );
   }
 
-  public void copyRequestHeaderFields(HttpUriRequest outboundRequest,
-      HttpServletRequest inboundRequest) {
+  public void copyRequestHeaderFields(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest) {
+    copyRequestHeaderFields(outboundRequest, inboundRequest, false);
+  }
+
+  public void copyRequestHeaderFields(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, boolean shouldAddExpect100Header) {
     Enumeration<String> headerNames = inboundRequest.getHeaderNames();
     /**
      Add X-Request-Id headers to outgoing requests.
@@ -149,6 +158,23 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
         outboundRequest.addHeader( name, value );
       }
     }
+
+    if (shouldAddExpect100Header && !getOutboundRequestExcludeHeaders().contains(EXPECT_HEADER_NAME) && !requestHasExpect100(outboundRequest)) {
+      outboundRequest.addHeader(EXPECT_HEADER_NAME, EXPECT_100_CONTINUE);
+      LOG.addedExpect100Continue();
+    }
+  }
+
+  private boolean requestHasExpect100(HttpUriRequest request) {
+    final Header[] expectHeaders = request.getHeaders(EXPECT_HEADER_NAME);
+    if (expectHeaders != null) {
+      for (Header expectHeader: expectHeaders) {
+        if (EXPECT_100_CONTINUE.equalsIgnoreCase(expectHeader.getValue())) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public Set<String> getOutboundRequestExcludeHeaders() {

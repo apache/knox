@@ -46,5 +46,10 @@
         <route path="/atlas/api/**"/>
     </routes>
 
-    <dispatch classname="org.apache.knox.gateway.dispatch.DefaultDispatch" ha-classname="org.apache.knox.gateway.ha.dispatch.AtlasApiTrustedProxyHaDispatch"/>
+    <dispatch classname="org.apache.knox.gateway.dispatch.DefaultDispatch" ha-classname="org.apache.knox.gateway.ha.dispatch.AtlasApiTrustedProxyHaDispatch">
+        <param>
+            <name>addExpect100Continue</name>
+            <value>true</value>
+        </param>
+    </dispatch>
 </service>

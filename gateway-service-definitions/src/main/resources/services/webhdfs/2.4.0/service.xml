@@ -61,10 +61,22 @@
         </route>
         <route path="/webhdfs/data/v1/**?**">
             <rewrite apply="WEBHDFS/webhdfs/inbound/datanode" to="request.url"/>
-            <dispatch contributor-name="http-client" ha-classname="org.apache.knox.gateway.dispatch.DefaultDispatch" />
+            <dispatch contributor-name="http-client" ha-classname="org.apache.knox.gateway.dispatch.DefaultDispatch">
+                <param>
+                    <name>addExpect100Continue</name>
+                    <!-- This should never be set to true -->
+                    <value>false</value>
+                </param>
+            </dispatch>
         </route>
     </routes>
-    <dispatch classname="org.apache.knox.gateway.hdfs.dispatch.HdfsHttpClientDispatch" ha-classname="org.apache.knox.gateway.hdfs.dispatch.WebHdfsHaDispatch"/>
+    <dispatch classname="org.apache.knox.gateway.hdfs.dispatch.HdfsHttpClientDispatch" ha-classname="org.apache.knox.gateway.hdfs.dispatch.WebHdfsHaDispatch">
+        <param>
+            <name>addExpect100Continue</name>
+            <!-- This should never be set to true -->
+            <value>false</value>
+        </param>
+    </dispatch>
     <testURLs>
         <testURL>/webhdfs/v1/?op=LISTSTATUS</testURL>
     </testURLs>
