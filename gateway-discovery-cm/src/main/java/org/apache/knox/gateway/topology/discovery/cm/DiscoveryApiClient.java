@@ -16,28 +16,32 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm;
 
-import com.cloudera.api.swagger.client.ApiClient;
-import com.cloudera.api.swagger.client.Pair;
-import com.cloudera.api.swagger.client.auth.Authentication;
-import com.cloudera.api.swagger.client.auth.HttpBasicAuth;
+import static org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscovery.API_PATH;
+import static org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscovery.DEFAULT_PWD_ALIAS;
+import static org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscovery.DEFAULT_USER_ALIAS;
+
+import java.security.KeyStore;
+import java.util.Arrays;
+import java.util.List;
+
+import javax.net.ssl.SSLContext;
+import javax.security.auth.Subject;
+
 import org.apache.knox.gateway.config.ConfigurationException;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
-import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.auth.AuthUtils;
 import org.apache.knox.gateway.topology.discovery.cm.auth.SpnegoAuthInterceptor;
 import org.apache.knox.gateway.util.TruststoreSSLContextUtils;
 
-import javax.net.ssl.SSLContext;
-import javax.security.auth.Subject;
-import java.util.List;
-
-import static org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscovery.API_PATH;
-import static org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscovery.DEFAULT_USER_ALIAS;
-import static org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscovery.DEFAULT_PWD_ALIAS;
+import com.cloudera.api.swagger.client.ApiClient;
+import com.cloudera.api.swagger.client.Pair;
+import com.cloudera.api.swagger.client.auth.Authentication;
+import com.cloudera.api.swagger.client.auth.HttpBasicAuth;
+import com.squareup.okhttp.ConnectionSpec;
 
 /**
  * Cloudera Manager ApiClient extension for service discovery.
@@ -52,9 +56,9 @@ public class DiscoveryApiClient extends ApiClient {
   private ServiceDiscoveryConfig config;
 
   public DiscoveryApiClient(ServiceDiscoveryConfig discoveryConfig, AliasService aliasService,
-                            KeystoreService keystoreService) {
+      KeyStore trustStore) {
     this.config = discoveryConfig;
-    configure(aliasService, keystoreService);
+    configure(aliasService, trustStore);
   }
 
   ServiceDiscoveryConfig getConfig() {
@@ -65,7 +69,7 @@ public class DiscoveryApiClient extends ApiClient {
     return isKerberos;
   }
 
-  private void configure(AliasService aliasService, KeystoreService keystoreService) {
+  private void configure(AliasService aliasService, KeyStore trustStore) {
     String apiAddress = config.getAddress();
     apiAddress += (apiAddress.endsWith("/") ? API_PATH : "/" + API_PATH);
 
@@ -130,7 +134,7 @@ public class DiscoveryApiClient extends ApiClient {
       }
     }
 
-    configureTruststore(keystoreService);
+    configureSsl(trustStore);
   }
 
   @Override
@@ -157,12 +161,18 @@ public class DiscoveryApiClient extends ApiClient {
     return username;
   }
 
-  private void configureTruststore(KeystoreService keystoreService) {
-    SSLContext truststoreSSLContext = TruststoreSSLContextUtils.getTruststoreSSLContext(keystoreService);
+  private void configureSsl(KeyStore trustStore) {
+    final SSLContext truststoreSSLContext = TruststoreSSLContextUtils.getTruststoreSSLContext(trustStore);
+
     if (truststoreSSLContext != null) {
+      final ConnectionSpec.Builder connectionSpecBuilder = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS);
+      connectionSpecBuilder.cipherSuites(truststoreSSLContext.getSupportedSSLParameters().getCipherSuites());
+      connectionSpecBuilder.tlsVersions(truststoreSSLContext.getSupportedSSLParameters().getProtocols());
+      getHttpClient().setConnectionSpecs(Arrays.asList(connectionSpecBuilder.build()));
       getHttpClient().setSslSocketFactory(truststoreSSLContext.getSocketFactory());
     } else {
       log.failedToConfigureTruststore();
     }
   }
+
 }

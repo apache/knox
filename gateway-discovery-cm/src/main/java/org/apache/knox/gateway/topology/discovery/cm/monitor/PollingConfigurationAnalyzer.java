@@ -33,11 +33,13 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 import org.apache.knox.gateway.GatewayServer;
+import org.apache.knox.gateway.i18n.GatewaySpiMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
@@ -49,6 +51,7 @@ import org.apache.knox.gateway.topology.simple.SimpleDescriptorFactory;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.security.KeyStore;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -105,6 +108,8 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
   private static final ClouderaManagerServiceDiscoveryMessages log = MessagesFactory.get(ClouderaManagerServiceDiscoveryMessages.class);
 
+  private static final GatewaySpiMessages LOGGER = MessagesFactory.get(GatewaySpiMessages.class);
+
   // Fully-qualified cluster name delimiter
   private static final String FQCN_DELIM = "::";
 
@@ -115,7 +120,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
   private AliasService aliasService;
 
-  private KeystoreService keystoreService;
+  private KeyStore truststore;
 
   private TopologyService topologyService;
 
@@ -151,7 +156,15 @@ public class PollingConfigurationAnalyzer implements Runnable {
                                int                               interval) {
     this.configCache     = configCache;
     this.aliasService    = aliasService;
-    this.keystoreService = keystoreService;
+
+    if (keystoreService != null) {
+      try {
+        truststore = keystoreService.getTruststoreForHttpClient();
+      } catch (KeystoreServiceException e) {
+        LOGGER.failedToLoadTruststore(e.getMessage(), e);
+      }
+    }
+
     this.changeListener  = changeListener;
     this.interval        = interval;
     this.processedEvents = Caffeine.newBuilder().expireAfterAccess(interval * 3, TimeUnit.SECONDS).maximumSize(1000).build();
@@ -383,7 +396,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
    */
   private DiscoveryApiClient getApiClient(final ServiceDiscoveryConfig discoveryConfig) {
     return clients.computeIfAbsent(discoveryConfig.getAddress(),
-                                   c -> new DiscoveryApiClient(discoveryConfig, aliasService, keystoreService));
+                                   c -> new DiscoveryApiClient(discoveryConfig, aliasService, truststore));
   }
 
   /**
