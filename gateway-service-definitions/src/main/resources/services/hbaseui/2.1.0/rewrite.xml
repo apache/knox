@@ -141,6 +141,9 @@
   <rule dir="OUT" name="HBASEUI/hbase/outbound/master/children" pattern="/hbck.jsp?{**}">
     <rewrite template="{$frontend[url]}/hbase/webui/master/hbck.jsp?host={$inboundurl[host]}?port={$inboundurl[port]}?{**}"/>
   </rule>
+  <rule dir="OUT" name="HBASEUI/hbase/outbound/master/children" pattern="/namedQueueLog.jsp?{**}">
+    <rewrite template="{$frontend[url]}/hbase/webui/master/namedQueueLog.jsp?host={$inboundurl[host]}?port={$inboundurl[port]}?{**}"/>
+  </rule>
 
   <!-- RegionServer UI proxying -->
   <rule dir="IN" name="HBASEUI/hbase/inbound/regionserver/root/qualified" pattern="*://*:*/**/hbase/webui/regionserver?{host}?port}">
