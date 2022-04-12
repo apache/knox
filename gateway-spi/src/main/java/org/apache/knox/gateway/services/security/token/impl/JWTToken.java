@@ -16,15 +16,10 @@
  */
 package org.apache.knox.gateway.services.security.token.impl;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.Date;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
-
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
@@ -36,6 +31,8 @@ import com.nimbusds.jose.Payload;
 import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
 
 public class JWTToken implements JWT {
   private static JWTProviderMessages log = MessagesFactory.get( JWTProviderMessages.class );
@@ -44,6 +41,7 @@ public class JWTToken implements JWT {
   public static final String MANAGED_TOKEN_CLAIM = "managed.token";
   public static final String KNOX_KID_CLAIM = "kid";
   public static final String KNOX_JKU_CLAIM = "jku";
+  public static final String KNOX_GROUPS_CLAIM = "knox.groups";
 
   SignedJWT jwt;
 
@@ -60,77 +58,51 @@ public class JWTToken implements JWT {
     }
   }
 
-  public JWTToken(String alg, String[] claimsArray) {
-    this(alg, claimsArray, null);
-  }
-
-  public JWTToken(String alg, String[] claimsArray, List<String> audiences) {
-    this(alg, claimsArray, audiences, false);
-  }
-
-  public JWTToken(String alg, String[] claimsArray, List<String> audiences, boolean managed) {
-    this(alg, claimsArray, audiences, managed, null);
-  }
-
-  public JWTToken(String alg, String[] claimsArray, List<String> audiences, boolean managed, String type) {
-    if(claimsArray == null) {
-      log.missingClaims(-1);
-    } else if (claimsArray.length < 6){
-      log.missingClaims(claimsArray.length);
-    }
-
+  public JWTToken(JWTokenAttributes jwtAttributes) {
     JWSHeader header = null;
     try {
-      header = new JWSHeader(new JWSAlgorithm(alg),
-      type == null ? null : new JOSEObjectType(type),
+      header = new JWSHeader(new JWSAlgorithm(jwtAttributes.getAlgorithm()),
+              jwtAttributes.getType() == null ? null : new JOSEObjectType(jwtAttributes.getType()),
       null,
       null,
-      getClaimValue(claimsArray, 5) != null ? new URI(getClaimValue(claimsArray, 5)) : null, // JKU
+      jwtAttributes.getJkuUri(),
       null,
       null,
       null,
       null,
       null,
-      getClaimValue(claimsArray, 4) != null ? getClaimValue(claimsArray, 4) : null, // KID
+      jwtAttributes.getKid(),
       null,
       null);
     } catch (URISyntaxException e) {
       /* in event of bad URI exception fall back to using just algo in header */
-      header = new JWSHeader(new JWSAlgorithm(alg));
-    }
-
-    if (getClaimValue(claimsArray, 2) != null) {
-      if (audiences == null) {
-        audiences = new ArrayList<>();
-      }
-      audiences.add(getClaimValue(claimsArray, 2));
+      header = new JWSHeader(new JWSAlgorithm(jwtAttributes.getAlgorithm()));
     }
     JWTClaimsSet claims;
     JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder()
-    .issuer(getClaimValue(claimsArray, 0))
-    .subject(getClaimValue(claimsArray, 1))
-    .audience(audiences);
-    if(getClaimValue(claimsArray, 3) != null) {
-      builder = builder.expirationTime(new Date(Long.parseLong(claimsArray[3])));
+      .issuer(jwtAttributes.getIssuer())
+      .subject(jwtAttributes.getUserName())
+      .audience(jwtAttributes.getAudiences());
+    if(jwtAttributes.getExpiresDate() != null) {
+      builder = builder.expirationTime(jwtAttributes.getExpiresDate());
     }
-    if(getClaimValue(claimsArray, 4) != null) {
-      builder.claim(KNOX_KID_CLAIM, getClaimValue(claimsArray, 4));
+    if(jwtAttributes.getKid() != null) {
+      builder.claim(KNOX_KID_CLAIM, jwtAttributes.getKid());
     }
-    if(getClaimValue(claimsArray, 5) != null) {
-      builder.claim(KNOX_JKU_CLAIM, getClaimValue(claimsArray, 5));
+    if(jwtAttributes.getJku() != null) {
+      builder.claim(KNOX_JKU_CLAIM, jwtAttributes.getJku());
+    }
+    if (jwtAttributes.getGroups() != null) {
+      builder.claim(KNOX_GROUPS_CLAIM, jwtAttributes.getGroups());
     }
 
     // Add a private UUID claim for uniqueness
     builder.claim(KNOX_ID_CLAIM, String.valueOf(UUID.randomUUID()));
 
-    builder.claim(MANAGED_TOKEN_CLAIM, String.valueOf(managed));
+    builder.claim(MANAGED_TOKEN_CLAIM, String.valueOf(jwtAttributes.isManaged()));
     claims = builder.build();
 
     jwt = new SignedJWT(header, claims);
-  }
-
-  private String getClaimValue(String[] claims, int index) {
-    return claims == null || claims.length <= index ? null : claims[index];
   }
 
   @Override
@@ -245,7 +217,7 @@ public class JWTToken implements JWT {
 
   @Override
   public String getExpires() {
-    Date expires = getExpiresDate();
+      Date expires = getExpiresDate();
     if (expires != null) {
       return String.valueOf(expires.getTime());
     }

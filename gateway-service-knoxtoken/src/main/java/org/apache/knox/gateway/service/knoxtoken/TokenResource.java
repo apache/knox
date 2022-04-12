@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.service.knoxtoken;
 
 import java.nio.charset.StandardCharsets;
+import java.security.AccessController;
 import java.security.KeyStoreException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
@@ -34,11 +35,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
+import javax.security.auth.Subject;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.DELETE;
@@ -62,6 +66,7 @@ import org.apache.hadoop.security.authorize.AuthorizationException;
 import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
@@ -106,6 +111,7 @@ public class TokenResource {
   private static final String TOKEN_TTL_PARAM = "knox.token.ttl";
   private static final String TOKEN_TYPE_PARAM = "knox.token.type";
   private static final String TOKEN_AUDIENCES_PARAM = "knox.token.audiences";
+  private static final String TOKEN_INCLUDE_GROUPS_IN_JWT = "knox.token.include.groups";
   private static final String TOKEN_TARGET_URL = "knox.token.target.url";
   static final String TOKEN_CLIENT_DATA = "knox.token.client.data";
   private static final String TOKEN_CLIENT_CERT_REQUIRED = "knox.token.client.cert.required";
@@ -160,6 +166,7 @@ public class TokenResource {
   private Optional<Long> maxTokenLifetime = Optional.empty();
 
   private int tokenLimitPerUser;
+  private boolean shouldIncludeGroups;
 
   enum UserLimitExceededAction {REMOVE_OLDEST, RETURN_ERROR};
   private UserLimitExceededAction userLimitExceededAction = UserLimitExceededAction.RETURN_ERROR;
@@ -227,6 +234,9 @@ public class TokenResource {
         log.invalidTokenTTLEncountered(ttl);
       }
     }
+
+    String shouldIncludeGroupsParam = context.getInitParameter(TOKEN_INCLUDE_GROUPS_IN_JWT);
+    shouldIncludeGroups = shouldIncludeGroupsParam == null ? false : Boolean.parseBoolean(shouldIncludeGroupsParam);
 
     this.tokenType = context.getInitParameter(TOKEN_TYPE_PARAM);
 
@@ -756,6 +766,9 @@ public class TokenResource {
       if (!targetAudiences.isEmpty()) {
         jwtAttributesBuilder.setAudiences(targetAudiences);
       }
+      if (shouldIncludeGroups) {
+        jwtAttributesBuilder.setGroups(groups());
+      }
 
       jwtAttributes = jwtAttributesBuilder.build();
       token = ts.issueToken(jwtAttributes);
@@ -811,6 +824,14 @@ public class TokenResource {
       log.unableToIssueToken(e);
     }
     return Response.ok().entity("{ \"Unable to acquire token.\" }").build();
+  }
+
+  protected Set<String> groups() {
+    Subject subject = Subject.getSubject(AccessController.getContext());
+    Set<String> groups = subject.getPrincipals(GroupPrincipal.class).stream()
+            .map(GroupPrincipal::getName)
+            .collect(Collectors.toSet());
+    return groups;
   }
 
   private void addArbitraryTokenMetadata(TokenMetadata tokenMetadata) {

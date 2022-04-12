@@ -17,8 +17,10 @@
  */
 package org.apache.knox.gateway.services.security.token;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class JWTokenAttributesBuilder {
 
@@ -32,6 +34,9 @@ public class JWTokenAttributesBuilder {
   private boolean managed;
   private String jku;
   private String type;
+  private Set<String> groups;
+  private String kid;
+  private String issuer = "KNOXSSO";
 
   public JWTokenAttributesBuilder setUserName(String userName) {
     this.userName = userName;
@@ -87,9 +92,23 @@ public class JWTokenAttributesBuilder {
     return this;
   }
 
-  public JWTokenAttributes build() {
-    return new JWTokenAttributes(userName, (audiences == null ? Collections.emptyList() : audiences), algorithm, expires, signingKeystoreName, signingKeystoreAlias,
-        signingKeystorePassphrase, managed, jku, type);
+  public JWTokenAttributesBuilder setGroups(Set<String> groups) {
+    this.groups = groups;
+    return this;
   }
 
+  public JWTokenAttributesBuilder setKid(String kid) {
+    this.kid = kid;
+    return this;
+  }
+
+  public JWTokenAttributesBuilder setIssuer(String issuer) {
+    this.issuer = issuer;
+    return this;
+  }
+
+  public JWTokenAttributes build() {
+    return new JWTokenAttributes(userName, (audiences == null ? new ArrayList<>() : audiences), algorithm, expires, signingKeystoreName, signingKeystoreAlias,
+        signingKeystorePassphrase, managed, jku, type, groups, kid, issuer);
+  }
 }

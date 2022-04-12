@@ -17,10 +17,13 @@
  */
 package org.apache.knox.gateway.services.security.token;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 public class JWTokenAttributes {
-
   private final String userName;
   private final List<String> audiences;
   private final String algorithm;
@@ -29,11 +32,14 @@ public class JWTokenAttributes {
   private final String signingKeystoreAlias;
   private final char[] signingKeystorePassphrase;
   private final boolean managed;
-  private final String jku;
+  private String jku;
   private final String type;
+  private final Set<String> groups;
+  private final String issuer;
+  private String kid;
 
   JWTokenAttributes(String userName, List<String> audiences, String algorithm, long expires, String signingKeystoreName, String signingKeystoreAlias,
-      char[] signingKeystorePassphrase, boolean managed, String jku, String type) {
+      char[] signingKeystorePassphrase, boolean managed, String jku, String type, Set<String> groups, String kid, String issuer) {
     this.userName = userName;
     this.audiences = audiences;
     this.algorithm = algorithm;
@@ -44,6 +50,9 @@ public class JWTokenAttributes {
     this.managed = managed;
     this.jku = jku;
     this.type = type;
+    this.groups = groups;
+    this.kid = kid;
+    this.issuer = issuer;
   }
 
   public String getUserName() {
@@ -62,6 +71,10 @@ public class JWTokenAttributes {
     return expires;
   }
 
+  public Date getExpiresDate() {
+    return expires == -1 ? null : new Date(expires);
+  }
+
   public String getSigningKeystoreName() {
     return signingKeystoreName;
   }
@@ -78,12 +91,35 @@ public class JWTokenAttributes {
     return managed;
   }
 
-  public String getJku() {
+  public URI getJkuUri() throws URISyntaxException {
+    return jku != null ? new URI(jku) : null;
+  }
+
+  public String getJku(){
     return jku;
+  }
+
+  public void setJku(String jku) {
+    this.jku = jku;
   }
 
   public String getType() {
     return type;
   }
 
+  public Set<String> getGroups() {
+    return groups;
+  }
+
+  public void setKid(String kid) {
+    this.kid = kid;
+  }
+
+  public String getKid() {
+    return kid;
+  }
+
+  public String getIssuer() {
+    return issuer;
+  }
 }

@@ -20,55 +20,13 @@ package org.apache.knox.gateway.service.knoxtoken;
 import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.KNOX_TOKEN_USER_LIMIT;
 import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.KNOX_TOKEN_USER_LIMIT_DEFAULT;
 import static org.apache.knox.gateway.service.knoxtoken.TokenResource.KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION;
+import static org.apache.knox.gateway.services.security.token.impl.JWTToken.KNOX_GROUPS_CLAIM;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.KeyLengthException;
-import com.nimbusds.jose.crypto.RSASSASigner;
-import com.nimbusds.jose.crypto.RSASSAVerifier;
-
-import org.apache.commons.codec.digest.HmacAlgorithms;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.security.PrimaryPrincipal;
-import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.apache.knox.gateway.services.ServiceType;
-import org.apache.knox.gateway.services.GatewayServices;
-import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
-import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
-import org.apache.knox.gateway.services.security.token.KnoxToken;
-import org.apache.knox.gateway.services.security.token.TokenMetadata;
-import org.apache.knox.gateway.services.security.token.TokenStateService;
-import org.apache.knox.gateway.services.security.token.TokenUtils;
-import org.apache.knox.gateway.services.security.token.UnknownTokenException;
-import org.apache.knox.gateway.services.security.token.impl.JWT;
-import org.apache.knox.gateway.services.security.token.impl.JWTToken;
-import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
-import org.apache.knox.gateway.services.token.impl.JDBCTokenStateService;
-import org.apache.knox.gateway.util.JsonUtils;
-import org.easymock.EasyMock;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import javax.security.auth.Subject;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 
 import java.io.IOException;
 import java.security.KeyPair;
@@ -86,6 +44,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -99,6 +58,47 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
+import javax.security.auth.Subject;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.KeyLengthException;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
+import org.apache.commons.codec.digest.HmacAlgorithms;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
+import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.KnoxToken;
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
+import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
+import org.apache.knox.gateway.services.token.impl.JDBCTokenStateService;
+import org.apache.knox.gateway.util.JsonUtils;
+import org.easymock.EasyMock;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * Some tests for the token service
@@ -653,8 +653,8 @@ public class TokenServiceResourceTest {
     validateSuccessfulRenewalResponse(renewalResponse);
     String responseContent = (String) renewalResponse.getEntity();
     assertNotNull(responseContent);
-    Map<String, String> json = parseJSONResponse(responseContent);
-    assertTrue(Boolean.parseBoolean(json.get("renewed")));
+    Map<String, Object> json = parseJSONResponse(responseContent);
+    assertTrue(Boolean.parseBoolean((String)json.get("renewed")));
     assertNotNull(json.get("expires")); // Should get back the original expiration from the token itself
   }
 
@@ -670,8 +670,8 @@ public class TokenServiceResourceTest {
     validateSuccessfulRenewalResponse(renewalResponse);
     String responseContent = (String) renewalResponse.getEntity();
     assertNotNull(responseContent);
-    Map<String, String> json = parseJSONResponse(responseContent);
-    assertTrue(Boolean.parseBoolean(json.get("renewed")));
+    Map<String, Object> json = parseJSONResponse(responseContent);
+    assertTrue(Boolean.parseBoolean((String)json.get("renewed")));
     assertNotNull(json.get("expires")); // Should get back the original expiration from the token itself
   }
 
@@ -687,8 +687,8 @@ public class TokenServiceResourceTest {
     validateSuccessfulRenewalResponse(renewalResponse);
     String responseContent = (String) renewalResponse.getEntity();
     assertNotNull(responseContent);
-    Map<String, String> json = parseJSONResponse(responseContent);
-    assertTrue(Boolean.parseBoolean(json.get("renewed")));
+    Map<String, Object> json = parseJSONResponse(responseContent);
+    assertTrue(Boolean.parseBoolean((String)json.get("renewed")));
     assertNotNull(json.get("expires")); // Should get back the original expiration from the token itself
   }
 
@@ -1117,6 +1117,54 @@ public class TokenServiceResourceTest {
     assertEquals(metadata.get("userName"), impersonatedUser);
   }
 
+  @Test
+  public void testGroupsAddedToToken() throws Exception {
+    Set<String> groups = new HashSet<>(Arrays.asList("group1", "group2"));
+    Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.include.groups", "true");
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+
+    TokenResource tr = new TokenResource() {
+      @Override
+      protected Set<String> groups() {
+        return groups;
+      }
+    };
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response response = tr.doGet();
+    assertEquals(200, response.getStatus());
+
+    String accessToken = getTagValue(response.getEntity().toString(), "access_token");
+    Map<String, Object> payload = parseJSONResponse(JWTToken.parseToken(accessToken).getPayload());
+    assertEquals(new ArrayList<>(groups), payload.get(KNOX_GROUPS_CLAIM));
+  }
+
+  @Test
+  public void testNoGroupsAddedToTokenByDefault() throws Exception {
+    Map<String, String> contextExpectations = new HashMap<>();
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+
+    TokenResource tr = new TokenResource() {
+      @Override
+      protected Set<String> groups() {
+        return new HashSet<>(Arrays.asList("group1", "group2"));
+      }
+    };
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response response = tr.doGet();
+    assertEquals(200, response.getStatus());
+
+    String accessToken = getTagValue(response.getEntity().toString(), "access_token");
+    Map<String, Object> payload = parseJSONResponse(JWTToken.parseToken(accessToken).getPayload());
+    assertFalse(payload.containsKey(KNOX_GROUPS_CLAIM));
+  }
+
   /**
    *
    * @param isTokenStateServerManaged true, if server-side token state management should be enabled; Otherwise, false or null.
@@ -1332,12 +1380,12 @@ public class TokenServiceResourceTest {
     String responseContent = (String) response.getEntity();
     assertNotNull(responseContent);
     assertFalse(responseContent.isEmpty());
-    Map<String, String> json = parseJSONResponse(responseContent);
-    boolean result = Boolean.valueOf(json.get("renewed"));
+    Map<String, Object> json = parseJSONResponse(responseContent);
+    boolean result = Boolean.valueOf((String)json.get("renewed"));
     assertEquals(expectedResult, result);
     assertEquals(expectedMessage, json.get("error"));
     if (expectedCode != null) {
-      assertEquals(expectedCode.toInt(), Integer.parseInt(json.get("code")));
+      assertEquals(expectedCode.toInt(), json.get("code"));
     }
   }
 
@@ -1355,12 +1403,12 @@ public class TokenServiceResourceTest {
     String responseContent = (String) response.getEntity();
     assertNotNull(responseContent);
     assertFalse(responseContent.isEmpty());
-    Map<String, String> json = parseJSONResponse(responseContent);
-    boolean result = Boolean.valueOf(json.get("revoked"));
+    Map<String, Object> json = parseJSONResponse(responseContent);
+    boolean result = Boolean.valueOf((String)json.get("revoked"));
     assertEquals(expectedResult, result);
     assertEquals(expectedMessage, json.get("error"));
     if (expectedCode != null) {
-      assertEquals(expectedCode.toInt(), Integer.parseInt(json.get("code")));
+      assertEquals(expectedCode.toInt(), json.get("code"));
     }
   }
 
@@ -1396,8 +1444,8 @@ public class TokenServiceResourceTest {
     return s;
   }
 
-  private static Map<String, String> parseJSONResponse(final String response) throws IOException {
-    return (new ObjectMapper()).readValue(response, new TypeReference<Map<String, String>>(){});
+  private static Map<String, Object> parseJSONResponse(final String response) throws IOException {
+    return (new ObjectMapper()).readValue(response, new TypeReference<Map<String, Object>>(){});
   }
 
 
@@ -1583,7 +1631,8 @@ public class TokenServiceResourceTest {
       claimArray[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
       claimArray[5] = jwtAttributes.getJku();
 
-      JWT token = new JWTToken(jwtAttributes.getAlgorithm(), claimArray, jwtAttributes.getAudiences());
+      jwtAttributes.setKid("E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA");
+      JWT token = new JWTToken(jwtAttributes);
       JWSSigner signer = new RSASSASigner(privateKey);
       token.sign(signer);
 

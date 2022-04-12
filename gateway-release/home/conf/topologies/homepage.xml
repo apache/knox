@@ -113,6 +113,10 @@
           <name>knox.token.proxyuser.admin.hosts</name>
           <value>*</value>
       </param>
+      <param>
+         <name>knox.token.include.groups</name>
+         <value>false</value>
+      </param>
    </service>
    <application>
       <name>tokengen</name>

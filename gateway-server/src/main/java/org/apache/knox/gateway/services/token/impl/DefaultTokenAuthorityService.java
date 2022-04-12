@@ -36,23 +36,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.knox.gateway.GatewayResources;
-import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
-import org.apache.knox.gateway.services.Service;
-import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.AliasServiceException;
-import org.apache.knox.gateway.services.security.KeystoreService;
-import org.apache.knox.gateway.services.security.KeystoreServiceException;
-import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
-import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
-import org.apache.knox.gateway.services.security.token.TokenServiceException;
-import org.apache.knox.gateway.services.security.token.TokenUtils;
-import org.apache.knox.gateway.services.security.token.impl.JWT;
-import org.apache.knox.gateway.services.security.token.impl.JWTToken;
-
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -75,6 +58,22 @@ import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import com.nimbusds.jwt.proc.JWTClaimsSetVerifier;
+import org.apache.knox.gateway.GatewayResources;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
+import org.apache.knox.gateway.services.Service;
+import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AliasServiceException;
+import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.services.security.KeystoreServiceException;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
+import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.TokenServiceException;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
 public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   private static final GatewayResources RESOURCES = ResourcesFactory.get(GatewayResources.class);
@@ -104,26 +103,15 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
 
   @Override
   public JWT issueToken(JWTokenAttributes jwtAttributes) throws TokenServiceException {
-    String[] claimArray = new String[6];
-    claimArray[0] = "KNOXSSO";
-    claimArray[1] = jwtAttributes.getUserName();
-    claimArray[2] = null;
-    if (jwtAttributes.getExpires() == -1) {
-      claimArray[3] = null;
-    }
-    else {
-      claimArray[3] = String.valueOf(jwtAttributes.getExpires());
-    }
     final String algorithm = jwtAttributes.getAlgorithm();
     if(SUPPORTED_HMAC_SIG_ALGS.contains(algorithm)) {
-      claimArray[4] = null;
-      claimArray[5] = null;
+      jwtAttributes.setKid(null);
+      jwtAttributes.setJku(null);
     } else {
-      claimArray[4] = cachedSigningKeyID.isPresent() ? cachedSigningKeyID.get() : null;
-      claimArray[5] = jwtAttributes.getJku();
+      jwtAttributes.setKid(cachedSigningKeyID.isPresent() ? cachedSigningKeyID.get() : null);
     }
     final JWT token = SUPPORTED_PKI_SIG_ALGS.contains(algorithm) || SUPPORTED_HMAC_SIG_ALGS.contains(algorithm)
-        ? new JWTToken(algorithm, claimArray, jwtAttributes.getAudiences(), jwtAttributes.isManaged(), jwtAttributes.getType())
+        ? new JWTToken(jwtAttributes)
         : null;
     if (token != null) {
       if (SUPPORTED_HMAC_SIG_ALGS.contains(algorithm)) {
