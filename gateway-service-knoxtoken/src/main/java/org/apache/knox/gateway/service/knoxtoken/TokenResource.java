@@ -112,7 +112,7 @@ public class TokenResource {
   private static final String TOKEN_TTL_PARAM = TOKEN_PARAM_PREFIX + "ttl";
   private static final String TOKEN_TYPE_PARAM = TOKEN_PARAM_PREFIX + "type";
   private static final String TOKEN_AUDIENCES_PARAM = TOKEN_PARAM_PREFIX + "audiences";
-  private static final String TOKEN_INCLUDE_GROUPS_IN_JWT = TOKEN_PARAM_PREFIX + "include.groups";
+  public static final String TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED = TOKEN_PARAM_PREFIX + "include.groups.allowed";
   private static final String TOKEN_TARGET_URL = TOKEN_PARAM_PREFIX + "target.url";
   static final String TOKEN_CLIENT_DATA = TOKEN_PARAM_PREFIX + "client.data";
   private static final String TOKEN_CLIENT_CERT_REQUIRED = TOKEN_PARAM_PREFIX + "client.cert.required";
@@ -144,6 +144,7 @@ public class TokenResource {
   private static final String TARGET_ENDPOINT_PULIC_CERT_PEM = TOKEN_PARAM_PREFIX + "target.endpoint.cert.pem";
   static final String QUERY_PARAMETER_DOAS = "doAs";
   static final String PROXYUSER_PREFIX = TOKEN_PARAM_PREFIX + "proxyuser";
+  public static final String KNOX_TOKEN_INCLUDE_GROUPS = "knox.token.include.groups";
 
   private static TokenServiceMessages log = MessagesFactory.get(TokenServiceMessages.class);
   private long tokenTTL = TOKEN_TTL_DEFAULT;
@@ -167,7 +168,7 @@ public class TokenResource {
   private Optional<Long> maxTokenLifetime = Optional.empty();
 
   private int tokenLimitPerUser;
-  private boolean shouldIncludeGroups;
+  private boolean includeGroupsInTokenAllowed;
 
   enum UserLimitExceededAction {REMOVE_OLDEST, RETURN_ERROR};
   private UserLimitExceededAction userLimitExceededAction = UserLimitExceededAction.RETURN_ERROR;
@@ -236,8 +237,10 @@ public class TokenResource {
       }
     }
 
-    String shouldIncludeGroupsParam = context.getInitParameter(TOKEN_INCLUDE_GROUPS_IN_JWT);
-    shouldIncludeGroups = shouldIncludeGroupsParam == null ? false : Boolean.parseBoolean(shouldIncludeGroupsParam);
+    String includeGroupsInTokenAllowedParam = context.getInitParameter(TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED);
+    includeGroupsInTokenAllowed = includeGroupsInTokenAllowedParam == null
+            ? true
+            : Boolean.parseBoolean(includeGroupsInTokenAllowedParam);
 
     this.tokenType = context.getInitParameter(TOKEN_TYPE_PARAM);
 
@@ -767,8 +770,15 @@ public class TokenResource {
       if (!targetAudiences.isEmpty()) {
         jwtAttributesBuilder.setAudiences(targetAudiences);
       }
-      if (shouldIncludeGroups) {
-        jwtAttributesBuilder.setGroups(groups());
+      if (shouldIncludeGroups()) {
+        if (includeGroupsInTokenAllowed) {
+          jwtAttributesBuilder.setGroups(groups());
+        } else {
+          return Response
+                  .status(Response.Status.BAD_REQUEST)
+                  .entity("{\n  \"error\": \"Including group information in tokens is disabled\"\n}\n")
+                  .build();
+        }
       }
 
       jwtAttributes = jwtAttributesBuilder.build();
@@ -825,6 +835,10 @@ public class TokenResource {
       log.unableToIssueToken(e);
     }
     return Response.ok().entity("{ \"Unable to acquire token.\" }").build();
+  }
+
+  private boolean shouldIncludeGroups() {
+    return Boolean.parseBoolean(request.getParameter(KNOX_TOKEN_INCLUDE_GROUPS));
   }
 
   protected Set<String> groups() {

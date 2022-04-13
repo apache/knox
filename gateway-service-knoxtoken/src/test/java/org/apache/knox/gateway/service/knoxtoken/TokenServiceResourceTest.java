@@ -20,6 +20,7 @@ package org.apache.knox.gateway.service.knoxtoken;
 import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.KNOX_TOKEN_USER_LIMIT;
 import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.KNOX_TOKEN_USER_LIMIT_DEFAULT;
 import static org.apache.knox.gateway.service.knoxtoken.TokenResource.KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION;
+import static org.apache.knox.gateway.service.knoxtoken.TokenResource.TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED;
 import static org.apache.knox.gateway.services.security.token.impl.JWTToken.KNOX_GROUPS_CLAIM;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -158,6 +159,9 @@ public class TokenServiceResourceTest {
     EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(TOKEN_API_PATH+TOKEN_PATH)).anyTimes();
     if (contextExpectations.containsKey(TokenResource.LIFESPAN)) {
       EasyMock.expect(request.getParameter(TokenResource.LIFESPAN)).andReturn(contextExpectations.get(TokenResource.LIFESPAN)).anyTimes();
+    }
+    if (contextExpectations.containsKey(TokenResource.KNOX_TOKEN_INCLUDE_GROUPS)) {
+      EasyMock.expect(request.getParameter(TokenResource.KNOX_TOKEN_INCLUDE_GROUPS)).andReturn(contextExpectations.get(TokenResource.KNOX_TOKEN_INCLUDE_GROUPS)).anyTimes();
     }
     if (contextExpectations.containsKey(TokenResource.QUERY_PARAMETER_DOAS)) {
       EasyMock.expect(request.getParameter(TokenResource.QUERY_PARAMETER_DOAS)).andReturn(contextExpectations.get(TokenResource.QUERY_PARAMETER_DOAS)).anyTimes();
@@ -1121,7 +1125,8 @@ public class TokenServiceResourceTest {
   public void testGroupsAddedToToken() throws Exception {
     Set<String> groups = new HashSet<>(Arrays.asList("group1", "group2"));
     Map<String, String> contextExpectations = new HashMap<>();
-    contextExpectations.put("knox.token.include.groups", "true");
+    contextExpectations.put(TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED, "true");
+    contextExpectations.put(TokenResource.KNOX_TOKEN_INCLUDE_GROUPS, "true");
     configureCommonExpectations(contextExpectations, Boolean.TRUE);
 
     TokenResource tr = new TokenResource() {
@@ -1145,6 +1150,7 @@ public class TokenServiceResourceTest {
   @Test
   public void testNoGroupsAddedToTokenByDefault() throws Exception {
     Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put(TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED, "true");
     configureCommonExpectations(contextExpectations, Boolean.TRUE);
 
     TokenResource tr = new TokenResource() {
@@ -1163,6 +1169,28 @@ public class TokenServiceResourceTest {
     String accessToken = getTagValue(response.getEntity().toString(), "access_token");
     Map<String, Object> payload = parseJSONResponse(JWTToken.parseToken(accessToken).getPayload());
     assertFalse(payload.containsKey(KNOX_GROUPS_CLAIM));
+  }
+
+  @Test
+  public void testBadRequestWhenGroupsAreRequestedToBeIncludedInTokenButItIsDisabledByServer() throws Exception {
+    Set<String> groups = new HashSet<>(Arrays.asList("group1", "group2"));
+    Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put(TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED, "false");
+    contextExpectations.put(TokenResource.KNOX_TOKEN_INCLUDE_GROUPS, "true");
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+
+    TokenResource tr = new TokenResource() {
+      @Override
+      protected Set<String> groups() {
+        return groups;
+      }
+    };
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response response = tr.doGet();
+    assertEquals(400, response.getStatus());
   }
 
   /**
