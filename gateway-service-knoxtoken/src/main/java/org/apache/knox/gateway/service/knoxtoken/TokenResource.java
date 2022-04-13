@@ -144,7 +144,7 @@ public class TokenResource {
   private static final String TARGET_ENDPOINT_PULIC_CERT_PEM = TOKEN_PARAM_PREFIX + "target.endpoint.cert.pem";
   static final String QUERY_PARAMETER_DOAS = "doAs";
   static final String PROXYUSER_PREFIX = TOKEN_PARAM_PREFIX + "proxyuser";
-  public static final String KNOX_TOKEN_INCLUDE_GROUPS = "knox.token.include.groups";
+  public static final String KNOX_TOKEN_INCLUDE_GROUPS = TOKEN_PARAM_PREFIX + "include.groups";
 
   private static TokenServiceMessages log = MessagesFactory.get(TokenServiceMessages.class);
   private long tokenTTL = TOKEN_TTL_DEFAULT;
