@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.service.knoxtoken;
 
 import java.nio.charset.StandardCharsets;
+import java.security.AccessController;
 import java.security.KeyStoreException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
@@ -34,11 +35,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
+import javax.security.auth.Subject;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.DELETE;
@@ -62,6 +66,7 @@ import org.apache.hadoop.security.authorize.AuthorizationException;
 import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
@@ -103,27 +108,29 @@ public class TokenResource {
   private static final String TARGET_URL = "target_url";
   private static final String ENDPOINT_PUBLIC_CERT = "endpoint_public_cert";
   private static final String BEARER = "Bearer";
-  private static final String TOKEN_TTL_PARAM = "knox.token.ttl";
-  private static final String TOKEN_TYPE_PARAM = "knox.token.type";
-  private static final String TOKEN_AUDIENCES_PARAM = "knox.token.audiences";
-  private static final String TOKEN_TARGET_URL = "knox.token.target.url";
-  static final String TOKEN_CLIENT_DATA = "knox.token.client.data";
-  private static final String TOKEN_CLIENT_CERT_REQUIRED = "knox.token.client.cert.required";
-  private static final String TOKEN_ALLOWED_PRINCIPALS = "knox.token.allowed.principals";
-  private static final String TOKEN_SIG_ALG = "knox.token.sigalg";
-  private static final String TOKEN_EXP_RENEWAL_INTERVAL = "knox.token.exp.renew-interval";
-  private static final String TOKEN_EXP_RENEWAL_MAX_LIFETIME = "knox.token.exp.max-lifetime";
-  private static final String TOKEN_EXP_TOKENGEN_ALLOWED_TSS_BACKENDS = "knox.token.exp.tokengen.allowed.tss.backends";
-  private static final String TOKEN_RENEWER_WHITELIST = "knox.token.renewer.whitelist";
+  private static final String TOKEN_PARAM_PREFIX = "knox.token.";
+  private static final String TOKEN_TTL_PARAM = TOKEN_PARAM_PREFIX + "ttl";
+  private static final String TOKEN_TYPE_PARAM = TOKEN_PARAM_PREFIX + "type";
+  private static final String TOKEN_AUDIENCES_PARAM = TOKEN_PARAM_PREFIX + "audiences";
+  public static final String TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED = TOKEN_PARAM_PREFIX + "include.groups.allowed";
+  private static final String TOKEN_TARGET_URL = TOKEN_PARAM_PREFIX + "target.url";
+  static final String TOKEN_CLIENT_DATA = TOKEN_PARAM_PREFIX + "client.data";
+  private static final String TOKEN_CLIENT_CERT_REQUIRED = TOKEN_PARAM_PREFIX + "client.cert.required";
+  private static final String TOKEN_ALLOWED_PRINCIPALS = TOKEN_PARAM_PREFIX + "allowed.principals";
+  private static final String TOKEN_SIG_ALG = TOKEN_PARAM_PREFIX + "sigalg";
+  private static final String TOKEN_EXP_RENEWAL_INTERVAL = TOKEN_PARAM_PREFIX + "exp.renew-interval";
+  private static final String TOKEN_EXP_RENEWAL_MAX_LIFETIME = TOKEN_PARAM_PREFIX + "exp.max-lifetime";
+  private static final String TOKEN_EXP_TOKENGEN_ALLOWED_TSS_BACKENDS = TOKEN_PARAM_PREFIX + "exp.tokengen.allowed.tss.backends";
+  private static final String TOKEN_RENEWER_WHITELIST = TOKEN_PARAM_PREFIX + "renewer.whitelist";
   private static final String TSS_STATUS_IS_MANAGEMENT_ENABLED = "tokenManagementEnabled";
   private static final String TSS_STATUS_CONFIFURED_BACKEND = "configuredTssBackend";
   private static final String TSS_STATUS_ACTUAL_BACKEND = "actualTssBackend";
   private static final String TSS_ALLOWED_BACKEND_FOR_TOKENGEN = "allowedTssForTokengen";
   private static final String TSS_MAXIMUM_LIFETIME_SECONDS = "maximumLifetimeSeconds";
   private static final String TSS_MAXIMUM_LIFETIME_TEXT = "maximumLifetimeText";
-  private static final String LIFESPAN_INPUT_ENABLED_PARAM = "knox.token.lifespan.input.enabled";
+  private static final String LIFESPAN_INPUT_ENABLED_PARAM = TOKEN_PARAM_PREFIX + "lifespan.input.enabled";
   private static final String LIFESPAN_INPUT_ENABLED_TEXT = "lifespanInputEnabled";
-  static final String KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION = "knox.token.user.limit.exceeded.action";
+  static final String KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION = TOKEN_PARAM_PREFIX + "user.limit.exceeded.action";
   private static final String METADATA_QUERY_PARAM_PREFIX = "md_";
   private static final long TOKEN_TTL_DEFAULT = 30000L;
   static final String TOKEN_API_PATH = "knoxtoken/api/v1";
@@ -134,9 +141,10 @@ public class TokenResource {
   static final String REVOKE_PATH = "/revoke";
   static final String ENABLE_PATH = "/enable";
   static final String DISABLE_PATH = "/disable";
-  private static final String TARGET_ENDPOINT_PULIC_CERT_PEM = "knox.token.target.endpoint.cert.pem";
+  private static final String TARGET_ENDPOINT_PULIC_CERT_PEM = TOKEN_PARAM_PREFIX + "target.endpoint.cert.pem";
   static final String QUERY_PARAMETER_DOAS = "doAs";
-  static final String PROXYUSER_PREFIX = "knox.token.proxyuser";
+  static final String PROXYUSER_PREFIX = TOKEN_PARAM_PREFIX + "proxyuser";
+  public static final String KNOX_TOKEN_INCLUDE_GROUPS = TOKEN_PARAM_PREFIX + "include.groups";
 
   private static TokenServiceMessages log = MessagesFactory.get(TokenServiceMessages.class);
   private long tokenTTL = TOKEN_TTL_DEFAULT;
@@ -160,6 +168,7 @@ public class TokenResource {
   private Optional<Long> maxTokenLifetime = Optional.empty();
 
   private int tokenLimitPerUser;
+  private boolean includeGroupsInTokenAllowed;
 
   enum UserLimitExceededAction {REMOVE_OLDEST, RETURN_ERROR};
   private UserLimitExceededAction userLimitExceededAction = UserLimitExceededAction.RETURN_ERROR;
@@ -227,6 +236,11 @@ public class TokenResource {
         log.invalidTokenTTLEncountered(ttl);
       }
     }
+
+    String includeGroupsInTokenAllowedParam = context.getInitParameter(TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED);
+    includeGroupsInTokenAllowed = includeGroupsInTokenAllowedParam == null
+            ? true
+            : Boolean.parseBoolean(includeGroupsInTokenAllowedParam);
 
     this.tokenType = context.getInitParameter(TOKEN_TYPE_PARAM);
 
@@ -756,6 +770,16 @@ public class TokenResource {
       if (!targetAudiences.isEmpty()) {
         jwtAttributesBuilder.setAudiences(targetAudiences);
       }
+      if (shouldIncludeGroups()) {
+        if (includeGroupsInTokenAllowed) {
+          jwtAttributesBuilder.setGroups(groups());
+        } else {
+          return Response
+                  .status(Response.Status.BAD_REQUEST)
+                  .entity("{\n  \"error\": \"Including group information in tokens is disabled\"\n}\n")
+                  .build();
+        }
+      }
 
       jwtAttributes = jwtAttributesBuilder.build();
       token = ts.issueToken(jwtAttributes);
@@ -811,6 +835,18 @@ public class TokenResource {
       log.unableToIssueToken(e);
     }
     return Response.ok().entity("{ \"Unable to acquire token.\" }").build();
+  }
+
+  private boolean shouldIncludeGroups() {
+    return Boolean.parseBoolean(request.getParameter(KNOX_TOKEN_INCLUDE_GROUPS));
+  }
+
+  protected Set<String> groups() {
+    Subject subject = Subject.getSubject(AccessController.getContext());
+    Set<String> groups = subject.getPrincipals(GroupPrincipal.class).stream()
+            .map(GroupPrincipal::getName)
+            .collect(Collectors.toSet());
+    return groups;
   }
 
   private void addArbitraryTokenMetadata(TokenMetadata tokenMetadata) {
