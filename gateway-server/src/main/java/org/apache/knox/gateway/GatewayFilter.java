@@ -95,8 +95,14 @@ public class GatewayFilter implements Filter {
   @Override
   public void doFilter( ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain ) throws IOException, ServletException {
     doFilter( servletRequest, servletResponse );
-    if( filterChain != null ) {
-      filterChain.doFilter( servletRequest, servletResponse );
+    try {
+      if (filterChain != null) {
+        filterChain.doFilter(servletRequest, servletResponse);
+      }
+    } finally {
+      auditLog(servletRequest, servletResponse);
+      // Make sure to destroy the correlationContext to prevent threading issues
+      CorrelationServiceFactory.getCorrelationService().detachContext();
     }
   }
 
@@ -187,16 +193,10 @@ public class GatewayFilter implements Filter {
         LOG.failedToExecuteFilter( e );
         auditor.audit( Action.ACCESS, contextWithPathAndQuery, ResourceType.URI, ActionOutcome.FAILURE );
         throw new ServletException( e );
-      } finally {
-        // Make sure to destroy the correlationContext to prevent threading issues
-        CorrelationServiceFactory.getCorrelationService().detachContext();
       }
     } else {
       LOG.failedToMatchPath( requestPath );
       httpResponse.setStatus( HttpServletResponse.SC_NOT_FOUND );
-
-      // Make sure to destroy the correlationContext to prevent threading issues
-      CorrelationServiceFactory.getCorrelationService().detachContext();
     }
 
     //KAM[ Don't do this or the Jetty default servlet will overwrite any response setup by the filter.
@@ -252,6 +252,19 @@ public class GatewayFilter implements Filter {
     if( correlationContext == null ) {
       correlationService.attachContext(new Log4jCorrelationContext(requestID, null, null));
     }
+  }
+
+  private void auditLog(ServletRequest servletRequest, ServletResponse servletResponse) {
+    final int status = ((HttpServletResponse) servletResponse).getStatus();
+    final String requestUri, actionOutcome;
+    if (HttpServletResponse.SC_SERVICE_UNAVAILABLE == status) {
+      requestUri = ServletRequestUtils.getContextPathWithQuery(servletRequest);
+      actionOutcome = ActionOutcome.UNAVAILABLE;
+    } else {
+      requestUri = (String) servletRequest.getAttribute(AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME);
+      actionOutcome = ActionOutcome.SUCCESS;
+    }
+    auditor.audit(Action.ACCESS, requestUri, ResourceType.URI, actionOutcome, RES.responseStatus(status));
   }
 
   private class Chain implements FilterChain {

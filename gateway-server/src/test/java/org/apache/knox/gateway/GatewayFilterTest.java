@@ -229,6 +229,8 @@ public class GatewayFilterTest {
 
     EasyMock.replay(response,request,requestNoID,context,gatewayConfig);
 
+    FilterChain chain = EasyMock.createNiceMock( FilterChain.class );
+    EasyMock.replay( chain );
 
     TestCorrelationFilter filter = new TestCorrelationFilter();
 
@@ -236,12 +238,12 @@ public class GatewayFilterTest {
     GatewayFilter gateway = new GatewayFilter();
     gateway.addFilter( "test-path/**", "test-filter", filter, null, "test-role" );
     gateway.init( config );
-    gateway.doFilter( request, response );
+    gateway.doFilter( request, response, chain );
     assertThat(filter.request_id, is( TEST_REQ_ID ) );
     assertThat(filter.correlation_id, is( TEST_REQ_ID ) );
 
     /* test the case where request id for request coming to knox is absent */
-    gateway.doFilter( requestNoID, response );
+    gateway.doFilter( requestNoID, response, chain );
     assertThat(filter.request_id, nullValue() );
     assertThat(filter.correlation_id, notNullValue() );
     assertThat(filter.correlation_id, not( TEST_REQ_ID ) );
