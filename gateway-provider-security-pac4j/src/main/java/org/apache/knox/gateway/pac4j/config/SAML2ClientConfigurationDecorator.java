@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.pac4j.Pac4jMessages;
+import org.pac4j.config.client.PropertiesConstants;
 import org.pac4j.core.client.Client;
 import org.pac4j.saml.client.SAML2Client;
 
@@ -31,6 +34,8 @@ public class SAML2ClientConfigurationDecorator implements ClientConfigurationDec
   private static final String CONFIG_NAME_USE_FORCE_AUTH = "forceAuth";
   private static final String CONFIG_NAME_USE_PASSIVE = "passive";
   private static final String CONFIG_NAME_NAMEID_POLICY_FORMAT = "nameIdPolicyFormat";
+  private static Pac4jMessages log = MessagesFactory.get(Pac4jMessages.class);
+  public static final String KEYSTORE_TYPE = "saml.keyStoreType";
 
   @Override
   public void decorateClients(List<Client> clients, Map<String, String> properties) {
@@ -41,6 +46,8 @@ public class SAML2ClientConfigurationDecorator implements ClientConfigurationDec
         setForceAuthFlag(properties, saml2Client);
         setPassiveFlag(properties, saml2Client);
         setNameIdPolicyFormat(properties, saml2Client);
+        setKeyStoreType(properties, saml2Client);
+        setKeyStorePath(properties, saml2Client);
       }
     }
   }
@@ -70,6 +77,22 @@ public class SAML2ClientConfigurationDecorator implements ClientConfigurationDec
     final String nameIdPolicyFormat = properties.get(CONFIG_NAME_NAMEID_POLICY_FORMAT);
     if (StringUtils.isNotBlank(nameIdPolicyFormat)) {
       saml2Client.getConfiguration().setNameIdPolicyFormat(nameIdPolicyFormat);
+    }
+  }
+
+  private void setKeyStoreType(Map<String, String> properties, final SAML2Client saml2Client) {
+    final String keyStoreType = properties.get(KEYSTORE_TYPE);
+    if (StringUtils.isNotBlank(keyStoreType)) {
+      saml2Client.getConfiguration().setKeystoreType(keyStoreType);
+      log.pac4jSamlKeystoreType(keyStoreType);
+    }
+  }
+
+  private void setKeyStorePath(Map<String, String> properties, final SAML2Client saml2Client) {
+    final String keyStorePath = properties.get(PropertiesConstants.SAML_KEYSTORE_PATH);
+    if (StringUtils.isNotBlank(keyStorePath)) {
+      saml2Client.getConfiguration().setKeystorePath(keyStorePath);
+      log.pac4jSamlKeystorePath(keyStorePath);
     }
   }
 }
