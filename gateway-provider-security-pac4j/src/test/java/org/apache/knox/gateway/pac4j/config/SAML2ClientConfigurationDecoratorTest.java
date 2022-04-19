@@ -39,6 +39,7 @@ public class SAML2ClientConfigurationDecoratorTest {
     properties.put("forceAuth", "true");
     properties.put("passive", "true");
     properties.put("nameIdPolicyFormat", "testPolicyFormat");
+    properties.put("saml.keyStoreType", "JKS");
 
     final SAML2ClientConfigurationDecorator saml2ConfigurationDecorator = new SAML2ClientConfigurationDecorator();
     saml2ConfigurationDecorator.decorateClients(Collections.singletonList(client), properties);
@@ -46,6 +47,7 @@ public class SAML2ClientConfigurationDecoratorTest {
     assertTrue(saml2Configuration.isForceAuth());
     assertTrue(saml2Configuration.isPassive());
     assertEquals("testPolicyFormat", saml2Configuration.getNameIdPolicyFormat());
+    assertEquals("JKS", saml2Configuration.getKeyStoreType());
   }
 
 }
