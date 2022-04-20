@@ -31,6 +31,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.filter.security.AbstractIdentityAssertionFilter;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
@@ -71,9 +72,9 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
     authority = services.getService(ServiceType.TOKEN_SERVICE);
     sr = services.getService(ServiceType.SERVICE_REGISTRY_SERVICE);
 
-    this.tokenIssuer = filterConfig.getInitParameter(JWTAccessTokenAssertionFilter.ISSUER) != null
-            ? filterConfig.getInitParameter(JWTAccessTokenAssertionFilter.ISSUER)
-            : JWTokenAttributes.DEFAULT_ISSUER;
+    this.tokenIssuer = StringUtils.isEmpty(filterConfig.getInitParameter(JWTAccessTokenAssertionFilter.ISSUER))
+            ? JWTokenAttributes.DEFAULT_ISSUER
+            : filterConfig.getInitParameter(JWTAccessTokenAssertionFilter.ISSUER);
   }
 
   @Override
