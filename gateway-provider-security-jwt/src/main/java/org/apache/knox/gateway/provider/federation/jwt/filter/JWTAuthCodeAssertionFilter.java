@@ -32,6 +32,7 @@ import org.apache.knox.gateway.filter.security.AbstractIdentityAssertionFilter;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
@@ -42,6 +43,7 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
   private JWTokenAuthority authority;
 
   private ServiceRegistry sr;
+  private String tokenIssuer;
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
@@ -55,6 +57,10 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
     GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     authority = services.getService(ServiceType.TOKEN_SERVICE);
     sr = services.getService(ServiceType.SERVICE_REGISTRY_SERVICE);
+
+    this.tokenIssuer = filterConfig.getInitParameter(JWTAccessTokenAssertionFilter.ISSUER) != null
+            ? filterConfig.getInitParameter(JWTAccessTokenAssertionFilter.ISSUER)
+            : JWTokenAttributes.DEFAULT_ISSUER;
   }
 
   @Override
@@ -65,7 +71,11 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
     principalName = mapper.mapUserPrincipal(principalName);
     JWT authCode;
     try {
-      authCode = authority.issueToken(new JWTokenAttributesBuilder().setUserName(principalName).setAlgorithm(signatureAlgorithm).build());
+      authCode = authority.issueToken(new JWTokenAttributesBuilder()
+              .setIssuer(tokenIssuer)
+              .setUserName(principalName)
+              .setAlgorithm(signatureAlgorithm)
+              .build());
       // get the url for the token service
       String url = null;
       if (sr != null) {

@@ -145,7 +145,7 @@ public class TokenResource {
   static final String QUERY_PARAMETER_DOAS = "doAs";
   static final String PROXYUSER_PREFIX = TOKEN_PARAM_PREFIX + "proxyuser";
   public static final String KNOX_TOKEN_INCLUDE_GROUPS = TOKEN_PARAM_PREFIX + "include.groups";
-
+  public static final String KNOX_TOKEN_ISSUER = TOKEN_PARAM_PREFIX + "issuer";
   private static TokenServiceMessages log = MessagesFactory.get(TokenServiceMessages.class);
   private long tokenTTL = TOKEN_TTL_DEFAULT;
   private String tokenType;
@@ -169,6 +169,7 @@ public class TokenResource {
 
   private int tokenLimitPerUser;
   private boolean includeGroupsInTokenAllowed;
+  private String tokenIssuer;
 
   enum UserLimitExceededAction {REMOVE_OLDEST, RETURN_ERROR};
   private UserLimitExceededAction userLimitExceededAction = UserLimitExceededAction.RETURN_ERROR;
@@ -242,6 +243,9 @@ public class TokenResource {
             ? true
             : Boolean.parseBoolean(includeGroupsInTokenAllowedParam);
 
+    this.tokenIssuer = context.getInitParameter(KNOX_TOKEN_ISSUER) != null
+            ? context.getInitParameter(KNOX_TOKEN_ISSUER)
+            : JWTokenAttributes.DEFAULT_ISSUER;
     this.tokenType = context.getInitParameter(TOKEN_TYPE_PARAM);
 
     tokenTTLAsText = getTokenTTLAsText();
@@ -761,6 +765,7 @@ public class TokenResource {
       JWTokenAttributes jwtAttributes;
       final JWTokenAttributesBuilder jwtAttributesBuilder = new JWTokenAttributesBuilder();
       jwtAttributesBuilder
+          .setIssuer(tokenIssuer)
           .setUserName(userName)
           .setAlgorithm(signatureAlgorithm)
           .setExpires(expires)
