@@ -243,7 +243,7 @@ public class TokenResource {
             ? true
             : Boolean.parseBoolean(includeGroupsInTokenAllowedParam);
 
-    this.tokenIssuer = StringUtils.isEmpty(context.getInitParameter(KNOX_TOKEN_ISSUER))
+    this.tokenIssuer = StringUtils.isBlank(context.getInitParameter(KNOX_TOKEN_ISSUER))
             ? JWTokenAttributes.DEFAULT_ISSUER
             : context.getInitParameter(KNOX_TOKEN_ISSUER);
     this.tokenType = context.getInitParameter(TOKEN_TYPE_PARAM);

@@ -59,7 +59,7 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
     authority = services.getService(ServiceType.TOKEN_SERVICE);
     sr = services.getService(ServiceType.SERVICE_REGISTRY_SERVICE);
 
-    this.tokenIssuer = StringUtils.isEmpty(filterConfig.getInitParameter(JWTAccessTokenAssertionFilter.ISSUER))
+    this.tokenIssuer = StringUtils.isBlank(filterConfig.getInitParameter(JWTAccessTokenAssertionFilter.ISSUER))
             ? JWTokenAttributes.DEFAULT_ISSUER
             : filterConfig.getInitParameter(JWTAccessTokenAssertionFilter.ISSUER);
   }

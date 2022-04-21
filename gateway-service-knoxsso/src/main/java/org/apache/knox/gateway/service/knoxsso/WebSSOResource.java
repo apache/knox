@@ -125,7 +125,7 @@ public class WebSSOResource {
     String enableSessionStr = context.getInitParameter(SSO_ENABLE_SESSION_PARAM);
     this.enableSession = Boolean.parseBoolean(enableSessionStr);
 
-    this.tokenIssuer = StringUtils.isEmpty(context.getInitParameter(SSO_TOKEN_ISSUER))
+    this.tokenIssuer = StringUtils.isBlank(context.getInitParameter(SSO_TOKEN_ISSUER))
             ? JWTokenAttributes.DEFAULT_ISSUER
             : context.getInitParameter(SSO_TOKEN_ISSUER);
 
