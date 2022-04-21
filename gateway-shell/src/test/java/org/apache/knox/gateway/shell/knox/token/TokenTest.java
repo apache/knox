@@ -111,7 +111,14 @@ public class TokenTest {
     expect(knoxSession.base()).andReturn("http://localhost/base").atLeastOnce();
     replay(knoxSession);
 
-    Get.Request request = Token.get(knoxSession, setDoAsUser ? doAsUser : null, includeGroupsInToken);
+    Get.Request request;
+    if (!includeGroupsInToken) {
+      request = (setDoAsUser)
+              ? Token.get(knoxSession, doAsUser)
+              : Token.get(knoxSession);
+    } else {
+      request = Token.get(knoxSession, setDoAsUser ? doAsUser : null, true);
+    }
 
     if (setDoAsUser) {
       assertEquals(doAsUser, request.getDoAsUser());
