@@ -228,7 +228,12 @@ var gen = function() {
                     $('#accessToken').text(accessToken);
                     var decodedToken = b64DecodeUnicode(accessToken.split(".")[1]);
                     var jwtjson = JSON.parse(decodedToken);
-                    $('#accessPasscode').text(resp.passcode);
+                    if (resp.passcode && resp.passcode != "") {
+                        document.getElementById('jwtPasscodeTokenLabel').style.display = 'block';
+                        $('#accessPasscode').text(resp.passcode);
+                    } else {
+                        document.getElementById('jwtPasscodeTokenLabel').style.display = 'none';
+                    }
                     $('#expiry').text(new Date(resp.expires_in).toLocaleString());
                     $('#user').text(jwtjson.sub);
                     var homepageURL = resp.homepage_url;
