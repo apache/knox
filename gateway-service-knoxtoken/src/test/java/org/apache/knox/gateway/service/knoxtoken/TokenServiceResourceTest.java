@@ -26,6 +26,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -87,6 +88,7 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.KnoxToken;
+import org.apache.knox.gateway.services.security.token.PersistentTokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
@@ -1193,6 +1195,48 @@ public class TokenServiceResourceTest {
     assertEquals(400, response.getStatus());
   }
 
+  @Test
+  public void passcodeShouldNotBeInResponseIfTokenStateServiceIsDisabled() throws Exception {
+    testPasscodeToken(false, false, false);
+  }
+
+  @Test
+  public void passcodeShouldNotBeInResponseIfTokenStateServiceIsNotPersistent() throws Exception {
+    testPasscodeToken(true, false, false);
+  }
+
+  @Test
+  public void passcodeShouldBeInResponseIfTokenStateServiceIsEnabledAndPersistent() throws Exception {
+    testPasscodeToken(true, true, true);
+  }
+
+  private void testPasscodeToken(boolean serverManagedTssEnabled, boolean usePersistentTokenStore, boolean expectPasscodeInResponse) throws Exception {
+    try {
+      if (usePersistentTokenStore) {
+        tss = new PersistentTestTokenStateService();
+      }
+      configureCommonExpectations(new HashMap<>(), serverManagedTssEnabled);
+
+      final TokenResource tr = new TokenResource();
+      tr.context = context;
+      tr.request = request;
+      tr.init();
+
+      // Issue a token
+      final Response response = tr.doGet();
+      assertEquals(200, response.getStatus());
+      final String retString = response.getEntity().toString();
+      final String passcode = getTagValue(retString, TokenResource.PASSCODE);
+      if (expectPasscodeInResponse) {
+        assertNotNull(passcode);
+      } else {
+        assertNull(passcode);
+      }
+    } finally {
+      tss = new TestTokenStateService();
+    }
+  }
+
   /**
    *
    * @param isTokenStateServerManaged true, if server-side token state management should be enabled; Otherwise, false or null.
@@ -1442,6 +1486,9 @@ public class TokenServiceResourceTest {
 
 
   private String getTagValue(String token, String tagName) {
+    if (!token.contains(tagName)) {
+      return null;
+    }
     String searchString = tagName + "\":";
     String value = token.substring(token.indexOf(searchString) + searchString.length());
     if (value.startsWith("\"")) {
@@ -1627,6 +1674,9 @@ public class TokenServiceResourceTest {
     @Override
     public void stop() throws ServiceLifecycleException {
     }
+  }
+
+  private static class PersistentTestTokenStateService extends TestTokenStateService implements PersistentTokenStateService {
   }
 
   private static class TestJWTokenAuthority implements JWTokenAuthority {

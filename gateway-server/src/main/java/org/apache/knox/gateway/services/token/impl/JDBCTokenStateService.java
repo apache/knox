@@ -39,7 +39,7 @@ import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.util.JDBCUtils;
 import org.apache.knox.gateway.util.Tokens;
 
-public class JDBCTokenStateService extends DefaultTokenStateService {
+public class JDBCTokenStateService extends AbstractPersistentTokenStateService {
   private AliasService aliasService; // connection username/pw and passcode HMAC secret are stored here
   private TokenStateDatabase tokenDatabase;
   private AtomicBoolean initialized = new AtomicBoolean(false);

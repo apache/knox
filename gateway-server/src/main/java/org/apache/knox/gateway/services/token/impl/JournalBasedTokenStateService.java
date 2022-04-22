@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class JournalBasedTokenStateService extends DefaultTokenStateService {
+public class JournalBasedTokenStateService extends AbstractPersistentTokenStateService {
 
     private TokenStateJournal journal;
 
