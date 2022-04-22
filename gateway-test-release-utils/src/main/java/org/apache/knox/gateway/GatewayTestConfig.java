@@ -922,4 +922,13 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return null;
   }
 
+  @Override
+  public int getJettyMaxFormContentSize() {
+    return 0;
+  }
+
+  @Override
+  public int getJettyMaxFormKeys() {
+    return 0;
+  }
 }

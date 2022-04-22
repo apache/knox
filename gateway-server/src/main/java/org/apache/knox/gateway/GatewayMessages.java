@@ -712,4 +712,10 @@ public interface GatewayMessages {
           text = "Unable to complete service discovery for cluster {0} topology = {1}.")
   void failedToDiscoverClusterServices(String clusterName, String topologyName,
                                        @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.DEBUG, text = "Jetty's maxFormContentSize is set to {0}")
+  void setMaxFormContentSize(int maxFormContentSize);
+
+  @Message(level = MessageLevel.DEBUG, text = "Jetty's maxFormKeys is set to {0}")
+  void setMaxFormKeys(int maxFormKeys);
 }
