@@ -23,6 +23,7 @@ import org.apache.derby.jdbc.ClientDataSource;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
+import org.hsqldb.jdbc.JDBCDataSource;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.postgresql.jdbc.SslMode;
 import org.postgresql.ssl.NonValidatingFactory;
@@ -34,6 +35,7 @@ public class JDBCUtils {
   public static final String POSTGRESQL_DB_TYPE = "postgresql";
   public static final String MYSQL_DB_TYPE = "mysql";
   public static final String DERBY_DB_TYPE = "derbydb";
+  public static final String HSQL = "hsql";
   public static final String DATABASE_USER_ALIAS_NAME = "gateway_database_user";
   public static final String DATABASE_PASSWORD_ALIAS_NAME = "gateway_database_password";
   public static final String DATABASE_TRUSTSTORE_PASSWORD_ALIAS_NAME = "gateway_database_ssl_truststore_password";
@@ -43,6 +45,8 @@ public class JDBCUtils {
       return createPostgresDataSource(gatewayConfig, aliasService);
     } else if (DERBY_DB_TYPE.equalsIgnoreCase(gatewayConfig.getDatabaseType())) {
       return createDerbyDatasource(gatewayConfig, aliasService);
+    } else if (HSQL.equalsIgnoreCase(gatewayConfig.getDatabaseType())) {
+      return createHsqlDatasource(gatewayConfig, aliasService);
     } else if (MYSQL_DB_TYPE.equalsIgnoreCase(gatewayConfig.getDatabaseType())) {
       return createMySqlDataSource(gatewayConfig, aliasService);
     }
@@ -85,6 +89,15 @@ public class JDBCUtils {
     derbyDatasource.setUser(getDatabaseUser(aliasService));
     derbyDatasource.setPassword(getDatabasePassword(aliasService));
     return derbyDatasource;
+  }
+
+
+  private static DataSource createHsqlDatasource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException {
+    JDBCDataSource hsqlDatasource = new JDBCDataSource();
+    hsqlDatasource.setUrl(gatewayConfig.getDatabaseConnectionUrl());
+    hsqlDatasource.setUser(getDatabaseUser(aliasService));
+    hsqlDatasource.setPassword(getDatabasePassword(aliasService));
+    return hsqlDatasource;
   }
 
   private static DataSource createMySqlDataSource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException, SQLException {

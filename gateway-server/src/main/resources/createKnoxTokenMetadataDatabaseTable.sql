@@ -13,7 +13,7 @@
 --  License for the specific language governing permissions and limitations under
 --  the License.
 
-CREATE TABLE KNOX_TOKEN_METADATA (
+CREATE TABLE IF NOT EXISTS KNOX_TOKEN_METADATA ( -- IF NOT EXISTS syntax is not supported by Derby
    token_id varchar(128) NOT NULL,
    md_name varchar(32) NOT NULL,
    md_value varchar(256) NOT NULL,
