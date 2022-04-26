@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.services.token.impl;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.knox.gateway.util.JDBCUtils.HSQL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -63,6 +64,7 @@ public class JDBCTokenStateServiceTest {
   @ClassRule
   public static final TemporaryFolder testFolder = new TemporaryFolder();
   public static final String CONNECTION_URL = "jdbc:hsqldb:mem:knox;ifexists=false";
+  public static final String DB_NAME = "knox";
   private static JDBCTokenStateService jdbcTokenStateService;
   private static TokenMAC tokenMAC;
 
@@ -70,9 +72,9 @@ public class JDBCTokenStateServiceTest {
   @BeforeClass
   public static void setUp() throws Exception {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
-    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn("hsql").anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(HSQL).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseConnectionUrl()).andReturn(CONNECTION_URL).anyTimes();
-    EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("knox").anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn(DB_NAME).anyTimes();
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(JDBCUtils.DATABASE_USER_ALIAS_NAME)).andReturn(USERNAME.toCharArray()).anyTimes();
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(JDBCUtils.DATABASE_PASSWORD_ALIAS_NAME)).andReturn(PASSWORD.toCharArray()).anyTimes();

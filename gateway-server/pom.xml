@@ -452,7 +452,6 @@
             <groupId>org.hsqldb</groupId>
             <artifactId>hsqldb</artifactId>
             <scope>provided</scope>
-            <version>2.4.0</version>
         </dependency>
 
         <dependency>
