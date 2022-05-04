@@ -31,6 +31,7 @@ export class TokenManagementComponent implements OnInit {
     userName: string;
     knoxTokens: KnoxToken[];
     doAsKnoxTokens: KnoxToken[];
+    impersonationEnabled: boolean;
 
     toggleBoolean(propertyName: string) {
         this[propertyName] = !this[propertyName];
@@ -46,6 +47,8 @@ export class TokenManagementComponent implements OnInit {
     ngOnInit(): void {
         console.debug('TokenManagementComponent --> ngOnInit()');
         this.tokenManagementService.getUserName().then(userName => this.setUserName(userName));
+        this.tokenManagementService.getImpersonationEnabled()
+            .then(impersonationEnabled => this.impersonationEnabled = impersonationEnabled === 'true');
     }
 
     setUserName(userName: string) {
@@ -85,6 +88,10 @@ export class TokenManagementComponent implements OnInit {
 
     isTokenExpired(expiration: number): boolean {
         return Date.now() > expiration;
+    }
+
+    isImpersonationEnabled(): boolean {
+        return this.impersonationEnabled;
     }
 
     getCustomMetadataArray(knoxToken: KnoxToken): [string, string][] {

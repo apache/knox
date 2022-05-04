@@ -66,7 +66,7 @@
 
     <!-- 'doAs' Knox Tokens (tokens created by the current user on behalf on another user -->
 
-    <div class="table-responsive" style="width:100%; overflow: auto; overflow-y: scroll; padding: 10px 0px 0px 0px;">
+    <div class="table-responsive" style="width:100%; overflow: auto; overflow-y: scroll; padding: 10px 0px 0px 0px;" *ngIf="isImpersonationEnabled()">
         <label>Impersonation Knox Tokens</label>
         <table class="table table-hover" [mfData]="doAsKnoxTokens" #doAsTokens="mfDataTable" [mfRowsOnPage]="10">
             <thead>
