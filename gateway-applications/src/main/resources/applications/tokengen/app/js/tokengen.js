@@ -112,6 +112,10 @@ function setTokenStateServiceStatus() {
                     $('#lifespanFields').show();
                     document.getElementById("lifespanInputEnabled").value = "true";
                 }
+
+                if (resp.impersonationEnabled === "true") {
+                    $('#impersonationFields').show();
+                }
             }
         }
     }

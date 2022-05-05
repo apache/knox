@@ -145,6 +145,8 @@ public class TokenResource {
   private static final String TARGET_ENDPOINT_PULIC_CERT_PEM = TOKEN_PARAM_PREFIX + "target.endpoint.cert.pem";
   static final String QUERY_PARAMETER_DOAS = "doAs";
   static final String PROXYUSER_PREFIX = TOKEN_PARAM_PREFIX + "proxyuser";
+  private static final String IMPERSONATION_ENABLED_PARAM = TOKEN_PARAM_PREFIX + "impersonation.enabled";
+  private static final String IMPERSONATION_ENABLED_TEXT = "impersonationEnabled";
   public static final String KNOX_TOKEN_INCLUDE_GROUPS = TOKEN_PARAM_PREFIX + "include.groups";
 
   private static TokenServiceMessages log = MessagesFactory.get(TokenServiceMessages.class);
@@ -361,6 +363,10 @@ public class TokenResource {
     final String lifespanInputEnabledValue = context.getInitParameter(LIFESPAN_INPUT_ENABLED_PARAM);
     final Boolean lifespanInputEnabled = lifespanInputEnabledValue == null ? Boolean.TRUE : Boolean.parseBoolean(lifespanInputEnabledValue);
     tokenStateServiceStatusMap.put(LIFESPAN_INPUT_ENABLED_TEXT, lifespanInputEnabled.toString());
+
+    final String impersonationEnabledValue = context.getInitParameter(IMPERSONATION_ENABLED_PARAM);
+    final Boolean impersonationEnabled = impersonationEnabledValue == null ? Boolean.TRUE : Boolean.parseBoolean(impersonationEnabledValue);
+    tokenStateServiceStatusMap.put(IMPERSONATION_ENABLED_TEXT, impersonationEnabled.toString());
   }
 
   private void populateAllowedTokenStateBackendForTokenGenApp(final String actualTokenServiceName) {
