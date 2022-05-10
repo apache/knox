@@ -252,7 +252,7 @@
         <pac4j.version>4.3.0</pac4j.version>
         <postgresql.version>42.2.19</postgresql.version>
         <mysql.version>8.0.25</mysql.version>
-        <protobuf.version>3.14.0</protobuf.version>
+        <protobuf.version>3.16.1</protobuf.version>
         <rest-assured.version>4.3.3</rest-assured.version>
         <shiro.version>1.8.0</shiro.version>
         <shrinkwrap.version>1.2.6</shrinkwrap.version>
