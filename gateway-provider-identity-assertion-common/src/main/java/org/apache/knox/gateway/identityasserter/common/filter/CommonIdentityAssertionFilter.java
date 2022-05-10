@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
@@ -49,15 +50,22 @@ import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.principal.PrincipalMappingException;
 import org.apache.knox.gateway.security.principal.SimplePrincipalMapper;
 
+import static org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor.IMPERSONATION_PARAMS;
+
 public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilter {
   public static final String VIRTUAL_GROUP_MAPPING_PREFIX = "group.mapping.";
   private IdentityAsserterMessages LOG = MessagesFactory.get(IdentityAsserterMessages.class);
 
   public static final String GROUP_PRINCIPAL_MAPPING = "group.principal.mapping";
   public static final String PRINCIPAL_MAPPING = "principal.mapping";
+
+  private static final String PRINCIPAL_PARAM = "user.name";
+  private static final String DOAS_PRINCIPAL_PARAM = "doAs";
   private SimplePrincipalMapper mapper = new SimplePrincipalMapper();
   private final Parser parser = new Parser();
   private VirtualGroupMapper virtualGroupMapper;
+  /* List of all default and configured impersonation params */
+  protected final List<String> impersonationParamsList = new ArrayList<>();
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
@@ -77,6 +85,37 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
       }
     }
     virtualGroupMapper = new VirtualGroupMapper(loadVirtualGroups(filterConfig));
+    String impersonationListFromConfig = filterConfig.getInitParameter(IMPERSONATION_PARAMS);
+    if (impersonationListFromConfig == null || impersonationListFromConfig.isEmpty()) {
+      impersonationListFromConfig = filterConfig.getServletContext().getInitParameter(IMPERSONATION_PARAMS);
+    }
+    initImpersonationParamsList(impersonationListFromConfig);
+  }
+
+  /**
+   * Initialize the impersonation params list.
+   * This list contains query params that needs to be scrubbed
+   * from the outgoing request.
+   * @param impersonationListFromConfig
+   * @return
+   */
+  private void initImpersonationParamsList(final String impersonationListFromConfig) {
+    /* Add default impersonation params */
+    impersonationParamsList.add(DOAS_PRINCIPAL_PARAM);
+    impersonationParamsList.add(PRINCIPAL_PARAM);
+    if(null == impersonationListFromConfig || impersonationListFromConfig.isEmpty()) {
+      return;
+    } else {
+      /* Add configured impersonation params */
+      LOG.impersonationConfig(impersonationListFromConfig);
+      final StringTokenizer t = new StringTokenizer(impersonationListFromConfig, ",");
+      while(t.hasMoreElements()) {
+        final String token = t.nextToken().trim();
+        if(!impersonationParamsList.contains(token)) {
+          impersonationParamsList.add(token);
+        }
+      }
+    }
   }
 
   private Map<String, AbstractSyntaxTree> loadVirtualGroups(FilterConfig filterConfig) {
@@ -189,7 +228,8 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     // from request methods
     return new IdentityAsserterHttpServletRequestWrapper(
         (HttpServletRequest) request,
-        mappedPrincipalName);
+        mappedPrincipalName,
+        impersonationParamsList);
   }
 
   protected String[] mapGroupPrincipalsBase(String mappedPrincipalName, Subject subject) {

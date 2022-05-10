@@ -179,13 +179,37 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
       if ( "rewrite".equals(role) ) {
         addRewriteFilter(context, service, filterParams, params, resource);
       } else if ( topologyContainsProviderType(context, role) ) {
-        context.contributeFilter(service, resource, role, policyBinding.getName(), null);
+        context.contributeFilter(service, resource, role, policyBinding.getName(), buildParams(policyBinding.getParams(), resource));
       }
       /* handle the case where topology has federation provider but service defines Anonymous authentication see KNOX-1197 */
       else if ("authentication".equalsIgnoreCase(role) && topologyContainsProviderType(context, "federation")) {
-        context.contributeFilter(service, resource, role, policyBinding.getName(), null);
+        context.contributeFilter(service, resource, role, policyBinding.getName(), buildParams(policyBinding.getParams(), resource));
       }
     }
+  }
+
+  /**
+   * A helper method to convert Map<String, String> params to
+   * List<FilterParamDescriptor>
+   */
+  private List<FilterParamDescriptor> buildParams(Map<String, String> params,
+      ResourceDescriptor resource) {
+    List<FilterParamDescriptor> filterParams = new ArrayList<>();
+    // blindly add all the service params as filter init params
+    if (params == null || params.isEmpty()) {
+      return filterParams;
+    }
+
+    for(Map.Entry<String, String> entry : params.entrySet()) {
+      FilterParamDescriptor f = resource
+          .createFilterParam()
+          .name(entry.getKey().toLowerCase(Locale.ROOT))
+          .value(entry.getValue());
+      if(!filterParams.contains(f)) {
+        filterParams.add(f);
+      }
+    }
+    return filterParams;
   }
 
   private void addDefaultPolicies(DeploymentContext context, Service service, Map<String, String> filterParams, List<FilterParamDescriptor> params, ResourceDescriptor resource) throws URISyntaxException {

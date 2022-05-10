@@ -102,6 +102,8 @@ public class CommonIdentityAssertionFilterTest {
                     CommonIdentityAssertionFilter.PRINCIPAL_MAPPING,
                     CommonIdentityAssertionFilter.VIRTUAL_GROUP_MAPPING_PREFIX + "test-virtual-group")))
             .anyTimes();
+    EasyMock.expect(config.getInitParameter(CommonIdentityAssertionFilter.IMPERSONATION_PARAMS)).
+        andReturn("doAs").anyTimes();
     EasyMock.expect(config.getInitParameter(CommonIdentityAssertionFilter.VIRTUAL_GROUP_MAPPING_PREFIX + "test-virtual-group")).
             andReturn("(and (username 'lmccay') (and (member 'users') (member 'admin')))").anyTimes();
     EasyMock.replay( config );
