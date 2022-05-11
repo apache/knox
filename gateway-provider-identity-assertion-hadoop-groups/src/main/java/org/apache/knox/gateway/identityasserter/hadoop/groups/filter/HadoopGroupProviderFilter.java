@@ -96,8 +96,7 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
     /* return the groups as seen by Hadoop */
     String[] groups;
     try {
-      final List<String> groupList = hadoopGroups
-          .getGroups(mappedPrincipalName);
+      final List<String> groupList = hadoopGroups(mappedPrincipalName);
       LOG.groupsFound(mappedPrincipalName, groupList.toString());
       groups = groupList.toArray(new String[0]);
 
@@ -112,6 +111,10 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
       groups = new String[0];
     }
     return groups;
+  }
+
+  protected List<String> hadoopGroups(String mappedPrincipalName) throws IOException {
+    return hadoopGroups.getGroups(mappedPrincipalName);
   }
 
   @Override
