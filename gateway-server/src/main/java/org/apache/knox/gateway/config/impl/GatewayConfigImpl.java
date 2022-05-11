@@ -261,6 +261,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String CLOUDERA_MANAGER_DESCRIPTORS_MONITOR_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.descriptors.monitor.interval";
   private static final String CLOUDERA_MANAGER_ADVANCED_SERVICE_DISCOVERY_CONF_MONITOR_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.advanced.service.discovery.config.monitor.interval";
   private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_REPOSITORY_CACHE_ENTRY_TTL = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.repository.cache.entry.ttl";
+  private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_MAX_RETRY_ATTEMPS = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.maximum.retry.attemps";
 
   private static final String KNOX_TOKEN_EVICTION_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.eviction.interval";
   private static final String KNOX_TOKEN_EVICTION_GRACE_PERIOD = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.eviction.grace.period";
@@ -1175,6 +1176,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public long getClouderaManagerServiceDiscoveryRepositoryEntryTTL() {
     return getLong(CLOUDERA_MANAGER_SERVICE_DISCOVERY_REPOSITORY_CACHE_ENTRY_TTL, DEFAULT_CM_SERVICE_DISCOVERY_CACHE_ENTRY_TTL);
+  }
+
+  @Override
+  public int getClouderaManagerServiceDiscoveryMaximumRetryAttempts() {
+    return getInt(CLOUDERA_MANAGER_SERVICE_DISCOVERY_MAX_RETRY_ATTEMPS, DEFAULT_CM_SERVICE_DISCOVERY_MAX_RETRY_ATTEMPTS);
   }
 
   @Override

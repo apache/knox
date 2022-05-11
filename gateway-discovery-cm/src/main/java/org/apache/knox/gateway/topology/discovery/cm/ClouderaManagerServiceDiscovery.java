@@ -38,6 +38,7 @@ import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.monitor.ClouderaManagerClusterConfigurationMonitor;
 
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -48,6 +49,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -90,6 +92,10 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
 
   private final ClouderaManagerServiceDiscoveryRepository repository = ClouderaManagerServiceDiscoveryRepository.getInstance();
 
+  private final AtomicInteger retryAttempts = new AtomicInteger(0);
+  private final int retrySleepSeconds = 3;  // It's been agreed that we not expose this config
+  private int maxRetryAttempts = -1;
+
   ClouderaManagerServiceDiscovery(GatewayConfig gatewayConfig) {
     this(false, gatewayConfig);
   }
@@ -105,6 +111,23 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
 
     if (gatewayConfig != null) {
       repository.setCacheEntryTTL(gatewayConfig.getClouderaManagerServiceDiscoveryRepositoryEntryTTL());
+    }
+
+    configureRetryParams(gatewayConfig);
+  }
+
+  private void configureRetryParams(GatewayConfig gatewayConfig) {
+    final int configuredMaxRetryAttempts = gatewayConfig.getClouderaManagerServiceDiscoveryMaximumRetryAttempts();
+    if (configuredMaxRetryAttempts > 0) {
+      final int configuredRetryDurationSeconds = configuredMaxRetryAttempts * retrySleepSeconds;
+      final int pollingInterval = gatewayConfig.getClusterMonitorPollingInterval(ClouderaManagerClusterConfigurationMonitor.getType());
+      final int retryDurationLimit = pollingInterval / 2;
+      if (retryDurationLimit > configuredRetryDurationSeconds) {
+        this.maxRetryAttempts = configuredMaxRetryAttempts;
+      } else {
+        this.maxRetryAttempts = retryDurationLimit / retrySleepSeconds;
+        log.updateMaxRetryAttempts(configuredMaxRetryAttempts, maxRetryAttempts);
+      }
     }
   }
 
@@ -183,11 +206,39 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
         // Notify the cluster config monitor about these cluster configuration details
         configChangeMonitor.addServiceConfiguration(cluster, discoveryConfig);
       }
+      resetRetryAttempts();
     } catch (ApiException e) {
       log.clusterDiscoveryError(clusterName, e);
+      if (shouldRetryServiceDiscovery(e)) {
+        log.retryDiscovery(retrySleepSeconds, retryAttempts.get());
+        try {
+          Thread.sleep(retrySleepSeconds * 1000L);
+        } catch (InterruptedException ex) {
+          Thread.currentThread().interrupt();
+        }
+        cluster = discover(gatewayConfig, discoveryConfig, clusterName, includedServices, client);
+      } else {
+        resetRetryAttempts();
+      }
     }
 
     return cluster;
+  }
+
+  private void resetRetryAttempts() {
+    retryAttempts.set(0);
+  }
+
+  private boolean shouldRetryServiceDiscovery(ApiException e) {
+    if (maxRetryAttempts > 0 && maxRetryAttempts > retryAttempts.getAndIncrement()) {
+      final Throwable cause = e.getCause();
+      if (cause != null) {
+        if (ConnectException.class.isAssignableFrom(cause.getClass())) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private ClouderaManagerCluster discoverCluster(DiscoveryApiClient client, String clusterName, Collection<String> includedServices)
@@ -281,7 +332,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
     return true;
   }
 
-  private List<ApiService> getClusterServices(ServiceDiscoveryConfig serviceDiscoveryConfig, ServicesResourceApi servicesResourceApi) {
+  private List<ApiService> getClusterServices(ServiceDiscoveryConfig serviceDiscoveryConfig, ServicesResourceApi servicesResourceApi) throws ApiException {
     log.lookupClusterServicesFromRepository();
     List<ApiService> services = repository.getServices(serviceDiscoveryConfig);
     if (services == null || services.isEmpty()) {
@@ -294,12 +345,13 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
         services.forEach(service -> repository.addService(serviceDiscoveryConfig, service));
       } catch (ApiException e) {
         log.failedToAccessServiceConfigs(serviceDiscoveryConfig.getCluster(), e);
+        throw e;
       }
     }
     return services;
   }
 
-  private ApiServiceConfig getServiceConfig(ServiceDiscoveryConfig serviceDiscoveryConfig, ServicesResourceApi servicesResourceApi, ApiService service) {
+  private ApiServiceConfig getServiceConfig(ServiceDiscoveryConfig serviceDiscoveryConfig, ServicesResourceApi servicesResourceApi, ApiService service) throws ApiException {
     log.lookupServiceConfigsFromRepository();
     // first, try in the service discovery repository
     ApiServiceConfig serviceConfig = repository.getServiceConfig(serviceDiscoveryConfig, service);
@@ -312,14 +364,15 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
 
         // make sure that service config is populated in the service discovery repository to avoid subsequent CM calls
         repository.addServiceConfig(serviceDiscoveryConfig, service, serviceConfig);
-      } catch (Exception e) {
+      } catch (ApiException e) {
         log.failedToAccessServiceConfigs(serviceDiscoveryConfig.getCluster(), e);
+        throw e;
       }
     }
     return serviceConfig;
   }
 
-  private ApiRoleList getRoles(ServiceDiscoveryConfig serviceDiscoveryConfig, RolesResourceApi rolesResourceApi, String clusterName, ApiService service) {
+  private ApiRoleList getRoles(ServiceDiscoveryConfig serviceDiscoveryConfig, RolesResourceApi rolesResourceApi, String clusterName, ApiService service) throws ApiException {
     log.lookupRolesFromRepository();
     //first, try in the service discovery repository
     ApiRoleList roles  = repository.getRoles(serviceDiscoveryConfig, service);
@@ -341,15 +394,16 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
 
         // make sure that role is populated in the service discovery repository to avoid subsequent CM calls
         repository.addRoles(serviceDiscoveryConfig, service, roles);
-      } catch (Exception e) {
+      } catch (ApiException e) {
         log.failedToAccessServiceRoleConfigs(serviceName, "N/A", clusterName, e);
+        throw e;
       }
     }
 
     return roles;
   }
 
-  private ApiConfigList getRoleConfig(ServiceDiscoveryConfig serviceDiscoveryConfig, RolesResourceApi rolesResourceApi, ApiService service, ApiRole role) {
+  private ApiConfigList getRoleConfig(ServiceDiscoveryConfig serviceDiscoveryConfig, RolesResourceApi rolesResourceApi, ApiService service, ApiRole role) throws ApiException {
     log.lookupRoleConfigsFromRepository();
     // first, try in the service discovery repository
     ApiConfigList configList = repository.getRoleConfigs(serviceDiscoveryConfig, service, role);
@@ -361,8 +415,9 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
 
         // make sure that role config is populated in the service discovery repository to avoid subsequent CM calls
         repository.addRoleConfigs(serviceDiscoveryConfig, service, role, configList);
-      } catch (Exception e) {
+      } catch (ApiException e) {
         log.failedToAccessServiceRoleConfigs(service.getName(), role.getName(), serviceDiscoveryConfig.getCluster(), e);
+        throw e;
       }
     }
     return configList;
