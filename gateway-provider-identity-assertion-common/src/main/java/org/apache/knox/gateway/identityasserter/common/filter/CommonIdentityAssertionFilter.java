@@ -152,7 +152,7 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     mappedPrincipalName = mapUserPrincipal(mappedPrincipalName);
     String[] mappedGroups = mapGroupPrincipalsBase(mappedPrincipalName, subject);
     String[] groups = mapGroupPrincipals(mappedPrincipalName, subject);
-    String[] virtualGroups = virtualGroupMapper.mapGroups(mappedPrincipalName, groups(subject), request).toArray(new String[0]);
+    String[] virtualGroups = virtualGroupMapper.mapGroups(mappedPrincipalName, combine(subject, groups), request).toArray(new String[0]);
     groups = combineGroupMappings(mappedGroups, groups);
     groups = combineGroupMappings(virtualGroups, groups);
 
@@ -160,6 +160,14 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
         request, mappedPrincipalName);
 
     continueChainAsPrincipal(wrapper, response, chain, mappedPrincipalName, unique(groups));
+  }
+
+  private Set<String> combine(Subject subject, String[] groups) {
+    Set<String> result = groups(subject);
+    if (groups != null) {
+      result.addAll(Arrays.asList(groups));
+    }
+    return result;
   }
 
   private static String[] unique(String[] groups) {
