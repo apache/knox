@@ -51,7 +51,7 @@ public class HaDescriptorFactoryTest {
 
   @Test
   public void testCreateServiceConfigActive() {
-    HaServiceConfig serviceConfig = HaDescriptorFactory.createServiceConfig("foo", "enableStickySession=true;enabled=true;maxFailoverAttempts=42;failoverSleep=50;maxRetryAttempts=1;retrySleep=1000");
+    HaServiceConfig serviceConfig = HaDescriptorFactory.createServiceConfig("foo", "enableStickySession=true;enabled=true;maxFailoverAttempts=42;failoverSleep=50");
     assertNotNull(serviceConfig);
     assertTrue(serviceConfig.isEnabled());
     assertEquals("foo", serviceConfig.getServiceName());
@@ -60,7 +60,7 @@ public class HaDescriptorFactoryTest {
     assertTrue(serviceConfig.isStickySessionEnabled());
     assertEquals(HaServiceConfigConstants.DEFAULT_STICKY_SESSION_COOKIE_NAME, serviceConfig.getStickySessionCookieName());
 
-    serviceConfig = HaDescriptorFactory.createServiceConfig("foo", "enableStickySession=true;enabled=true;maxFailoverAttempts=42;failoverSleep=50;maxRetryAttempts=1;retrySleep=1000;stickySessionCookieName=abc");
+    serviceConfig = HaDescriptorFactory.createServiceConfig("foo", "enableStickySession=true;enabled=true;maxFailoverAttempts=42;failoverSleep=50;stickySessionCookieName=abc");
     assertNotNull(serviceConfig);
     assertTrue(serviceConfig.isEnabled());
     assertEquals("foo", serviceConfig.getServiceName());
