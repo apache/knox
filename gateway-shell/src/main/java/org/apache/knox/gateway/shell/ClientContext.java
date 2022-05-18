@@ -211,7 +211,7 @@ public class ClientContext {
     /**
      * true if it's OK to retry requests that have been sent
      */
-    public ConnectionContext withRequestSentRetryEnabled(boolean retryNonIdempotent) {
+    public ConnectionContext requestSentRetryEnabled(boolean retryNonIdempotent) {
       configuration.addProperty("requestSentRetryEnabled", retryNonIdempotent);
       return this;
     }
@@ -220,7 +220,7 @@ public class ClientContext {
       return configuration.getBoolean("requestSentRetryEnabled", false);
     }
 
-    public ConnectionContext withRetryIntervalMillis(int msec) {
+    public ConnectionContext retryIntervalMillis(int msec) {
       configuration.addProperty("retryIntervalMillis", msec);
       return this;
     }
