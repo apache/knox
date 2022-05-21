@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor.IMPERSONATION_PARAMS;
 import static org.junit.Assert.assertEquals;
 
 public class AbstractIdentityAsserterDeploymentContributorTest {
@@ -50,7 +51,7 @@ public class AbstractIdentityAsserterDeploymentContributorTest {
 
     Service service = new Service();
     Map<String, String> params = new HashMap<>();
-    params.put(CommonIdentityAssertionFilter.IMPERSONATION_PARAMS, CUSTOM_IMPERSONATION_PARAM);
+    params.put(IMPERSONATION_PARAMS, CUSTOM_IMPERSONATION_PARAM);
     service.setParams(params);
 
     Topology topology = new Topology();
@@ -76,7 +77,7 @@ public class AbstractIdentityAsserterDeploymentContributorTest {
     assertEquals(1, filterParams.size());
 
     FilterParamDescriptor paramDescriptor = filterParams.get(0);
-    assertEquals(CommonIdentityAssertionFilter.IMPERSONATION_PARAMS, paramDescriptor.name());
+    assertEquals(IMPERSONATION_PARAMS, paramDescriptor.name());
     assertEquals(CUSTOM_IMPERSONATION_PARAM, paramDescriptor.value());
   }
 }

@@ -28,7 +28,7 @@ import javax.servlet.ServletContext;
 import java.security.Principal;
 import java.util.Arrays;
 
-import static org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter.IMPERSONATION_PARAMS;
+import static org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor.IMPERSONATION_PARAMS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
