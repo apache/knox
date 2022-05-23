@@ -19,8 +19,10 @@ package org.apache.knox.gateway.service.knoxtoken;
 
 import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.KNOX_TOKEN_USER_LIMIT;
 import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.KNOX_TOKEN_USER_LIMIT_DEFAULT;
+import static org.apache.knox.gateway.service.knoxtoken.TokenResource.KNOX_TOKEN_ISSUER;
 import static org.apache.knox.gateway.service.knoxtoken.TokenResource.KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION;
 import static org.apache.knox.gateway.service.knoxtoken.TokenResource.TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED;
+import static org.apache.knox.gateway.services.security.token.JWTokenAttributes.DEFAULT_ISSUER;
 import static org.apache.knox.gateway.services.security.token.impl.JWTToken.KNOX_GROUPS_CLAIM;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -1121,6 +1123,43 @@ public class TokenServiceResourceTest {
     final Map<String, String> metadata = (Map<String, String>) knoxToken.get("metadata");
     assertEquals(metadata.get("createdBy"), USER_NAME);
     assertEquals(metadata.get("userName"), impersonatedUser);
+  }
+
+  @Test
+  public void testDefaultIssuer() throws Exception {
+    Map<String, String> contextExpectations = new HashMap<>();
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response response = tr.doGet();
+    assertEquals(200, response.getStatus());
+
+    String accessToken = getTagValue(response.getEntity().toString(), "access_token");
+    Map<String, Object> payload = parseJSONResponse(JWTToken.parseToken(accessToken).getPayload());
+    assertEquals(DEFAULT_ISSUER, payload.get("iss"));
+  }
+
+  @Test
+  public void testConfiguredIssuer() throws Exception {
+    Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put(KNOX_TOKEN_ISSUER, "test issuer");
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response response = tr.doGet();
+    assertEquals(200, response.getStatus());
+
+    String accessToken = getTagValue(response.getEntity().toString(), "access_token");
+    Map<String, Object> payload = parseJSONResponse(JWTToken.parseToken(accessToken).getPayload());
+    assertEquals("test issuer", payload.get("iss"));
   }
 
   @Test

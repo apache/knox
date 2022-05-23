@@ -36,7 +36,7 @@ public class JWTokenAttributesBuilder {
   private String type;
   private Set<String> groups;
   private String kid;
-  private String issuer = "KNOXSSO";
+  private String issuer = JWTokenAttributes.DEFAULT_ISSUER;
 
   public JWTokenAttributesBuilder setUserName(String userName) {
     this.userName = userName;

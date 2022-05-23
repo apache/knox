@@ -83,6 +83,7 @@ public class WebSSOResource {
   private static final String SSO_SIGNINGKEY_KEYSTORE_NAME = "knoxsso.signingkey.keystore.name";
   private static final String SSO_SIGNINGKEY_KEYSTORE_ALIAS = "knoxsso.signingkey.keystore.alias";
   private static final String SSO_SIGNINGKEY_KEYSTORE_PASSPHRASE_ALIAS = "knoxsso.signingkey.keystore.passphrase.alias";
+  private static final String SSO_TOKEN_ISSUER = "knoxsso.token.issuer";
 
   /* parameters expected by knoxsso */
   private static final String SSO_EXPECTED_PARAM = "knoxsso.expected.params";
@@ -104,6 +105,7 @@ public class WebSSOResource {
   private String signatureAlgorithm;
   private List<String> ssoExpectedparams = new ArrayList<>();
   private String clusterName;
+  private String tokenIssuer;
 
   @Context
   HttpServletRequest request;
@@ -122,6 +124,10 @@ public class WebSSOResource {
 
     String enableSessionStr = context.getInitParameter(SSO_ENABLE_SESSION_PARAM);
     this.enableSession = Boolean.parseBoolean(enableSessionStr);
+
+    this.tokenIssuer = StringUtils.isBlank(context.getInitParameter(SSO_TOKEN_ISSUER))
+            ? JWTokenAttributes.DEFAULT_ISSUER
+            : context.getInitParameter(SSO_TOKEN_ISSUER);
 
     setSignatureAlogrithm();
 
@@ -262,8 +268,16 @@ public class WebSSOResource {
         signingKeystorePassphrase = as.getPasswordFromAliasForCluster(clusterName, signingKeystorePassphraseAlias);
       }
 
-      final JWTokenAttributes jwtAttributes = new JWTokenAttributesBuilder().setUserName(p.getName()).setAudiences(targetAudiences).setAlgorithm(signatureAlgorithm).setExpires(getExpiry())
-          .setSigningKeystoreName(signingKeystoreName).setSigningKeystoreAlias(signingKeystoreAlias).setSigningKeystorePassphrase(signingKeystorePassphrase).build();
+      final JWTokenAttributes jwtAttributes = new JWTokenAttributesBuilder()
+              .setIssuer(tokenIssuer)
+              .setUserName(p.getName())
+              .setAudiences(targetAudiences)
+              .setAlgorithm(signatureAlgorithm)
+              .setExpires(getExpiry())
+              .setSigningKeystoreName(signingKeystoreName)
+              .setSigningKeystoreAlias(signingKeystoreAlias)
+              .setSigningKeystorePassphrase(signingKeystorePassphrase)
+              .build();
       JWT token = tokenAuthority.issueToken(jwtAttributes);
 
       // Coverity CID 1327959
