@@ -50,12 +50,18 @@ public class IdentityAsserterHttpServletRequestWrapper extends HttpServletReques
 
   private static final String PRINCIPAL_PARAM = "user.name";
   private static final String DOAS_PRINCIPAL_PARAM = "doAs";
+  private List<String> impersonationParamsList;
 
   private String username;
 
   public IdentityAsserterHttpServletRequestWrapper( HttpServletRequest request, String principal ) {
+    this(request, principal, Collections.EMPTY_LIST);
+  }
+
+  public IdentityAsserterHttpServletRequestWrapper( HttpServletRequest request, String principal, List impersonationParamsList ) {
     super(request);
     username = principal;
+    this.impersonationParamsList = impersonationParamsList;
   }
 
   @Override
@@ -182,14 +188,18 @@ public class IdentityAsserterHttpServletRequestWrapper extends HttpServletReques
   }
 
   protected List<String> getImpersonationParamNames() {
-    // TODO: let's have service definitions register their impersonation
-    // params in a future release and get this list from a central registry.
-    // This will provide better coverage of protection by removing any
-    // prepopulated impersonation params.
-    ArrayList<String> principalParamNames = new ArrayList<>();
-    principalParamNames.add(DOAS_PRINCIPAL_PARAM);
-    principalParamNames.add(PRINCIPAL_PARAM);
-    return principalParamNames;
+    /**
+     *  If for some reason impersonationParamsList is empty e.g. some component using
+     *  old api then return the default list. This is for backwards compatibility.
+     **/
+    if(impersonationParamsList == null || impersonationParamsList.isEmpty()) {
+      ArrayList<String> principalParamNames = new ArrayList<>();
+      principalParamNames.add(DOAS_PRINCIPAL_PARAM);
+      principalParamNames.add(PRINCIPAL_PARAM);
+      return principalParamNames;
+    } else {
+      return impersonationParamsList;
+    }
   }
 
   protected Map<String, List<String>> scrubOfExistingPrincipalParams(

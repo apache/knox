@@ -21,6 +21,7 @@ import org.apache.knox.gateway.identityasserter.common.filter.IdentityAsserterHt
 import javax.servlet.http.HttpServletRequest;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,8 +31,14 @@ public class NoImpersonationAsserterRequestWrapper extends
 
   public NoImpersonationAsserterRequestWrapper(
       HttpServletRequest request, String principal) {
-    super(request, principal);
+    this(request, principal, Collections.EMPTY_LIST);
   }
+
+  public NoImpersonationAsserterRequestWrapper(
+      HttpServletRequest request, String principal, List<String> impersonationParamsList) {
+    super(request, principal, impersonationParamsList);
+  }
+
 
   /**
    * Skip adding doAs as query param

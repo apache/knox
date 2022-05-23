@@ -18,12 +18,20 @@
 package org.apache.knox.gateway.service.definition;
 
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Policy {
 
   private String name;
 
   private String role;
+
+  @XmlElement(name = "param")
+  private List<CustomDispatch.XMLParam> params = new ArrayList<>();
 
   @XmlAttribute
   public String getName() {
@@ -41,5 +49,19 @@ public class Policy {
 
   public void setRole(String role) {
     this.role = role;
+  }
+
+  public void addParam( DispatchParam param ) {
+    params.add(new CustomDispatch.XMLParam(param.getName(), param.getValue()));
+  }
+
+  public Map<String, String> getParams() {
+    Map<String, String> result = new LinkedHashMap<>();
+    if( params != null ) {
+      for (CustomDispatch.XMLParam p : params) {
+        result.put(p.name, p.value);
+      }
+    }
+    return result;
   }
 }

@@ -119,12 +119,12 @@ public class CustomDispatch {
   }
 
   @XmlAccessorType(XmlAccessType.NONE)
-  private static class XMLParam {
+  static class XMLParam {
     @XmlElement
-    private String name;
+    protected String name;
 
     @XmlElement
-    private String value;
+    protected String value;
 
     @SuppressWarnings("unused")
     XMLParam() {

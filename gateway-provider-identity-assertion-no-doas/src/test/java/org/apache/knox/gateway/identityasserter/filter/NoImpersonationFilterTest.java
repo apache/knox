@@ -28,6 +28,7 @@ import javax.servlet.ServletContext;
 import java.security.Principal;
 import java.util.Arrays;
 
+import static org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor.IMPERSONATION_PARAMS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -61,6 +62,7 @@ public class NoImpersonationFilterTest {
     config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "lmccay,kminder=hdfs;newuser=mapred" ).anyTimes();
     EasyMock.expect(config.getInitParameter("group.principal.mapping") ).andReturn( "kminder=group1;lmccay=mrgroup,mrducks" ).anyTimes();
+    EasyMock.expect(config.getInitParameter(IMPERSONATION_PARAMS) ).andReturn("doAs").anyTimes();
     context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
     EasyMock.replay( config );
@@ -81,6 +83,7 @@ public class NoImpersonationFilterTest {
     config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "lmccay,kminder=hdfs;newuser=mapred" ).anyTimes();
     EasyMock.expect(config.getInitParameter("group.principal.mapping") ).andReturn( "kminder=group1;lmccay=mrgroup,mrducks" ).anyTimes();
+    EasyMock.expect(config.getInitParameter(IMPERSONATION_PARAMS) ).andReturn("doAs").anyTimes();
     context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
     EasyMock.replay( config );
