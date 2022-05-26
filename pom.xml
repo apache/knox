@@ -86,6 +86,7 @@
         <module>gateway-provider-security-jwt</module>
         <module>gateway-provider-security-webappsec</module>
         <module>gateway-provider-security-preauth</module>
+        <module>gateway-provider-security-cookie-bearer</module>
         <module>gateway-provider-security-hadoopauth</module>
         <module>gateway-provider-security-clientcert</module>
         <module>gateway-provider-security-shiro</module>
@@ -146,6 +147,8 @@
         <module>knox-homepage-ui</module>
         <module>gateway-openapi-ui</module>
         <module>knox-token-management-ui</module>
+        <module>gateway-service-preauth</module>
+        <module>gateway-service-auth-bearer</module>
     </modules>
 
     <properties>
@@ -276,6 +279,7 @@
         <xml-jaxb.version>2.3.0</xml-jaxb.version>
         <xml-matchers.version>0.10</xml-matchers.version>
         <zookeeper.version>3.5.7</zookeeper.version>
+        <jwks-rsa.version>0.21.1</jwks-rsa.version>
     </properties>
 
     <profiles>
@@ -2342,6 +2346,11 @@
                         <artifactId>error_prone_annotations</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.auth0</groupId>
+                <artifactId>jwks-rsa</artifactId>
+                <version>${jwks-rsa.version}</version>
             </dependency>
 
             <!-- ********** ********** ********** ********** ********** ********** -->
