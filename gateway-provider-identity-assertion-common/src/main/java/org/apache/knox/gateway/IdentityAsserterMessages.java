@@ -47,4 +47,7 @@ public interface IdentityAsserterMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "User {0} (with group(s) {1}) added to group(s) {2}")
   void virtualGroups(String userName, Set<String> userGroups, Set<String> virtualGroups);
+
+  @Message( level = MessageLevel.INFO, text = "Using configured impersonation parameters: {0}")
+  void impersonationConfig(String config);
 }

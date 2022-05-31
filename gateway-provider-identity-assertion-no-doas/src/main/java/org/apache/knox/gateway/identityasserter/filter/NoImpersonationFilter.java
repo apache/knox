@@ -49,6 +49,7 @@ public class NoImpersonationFilter extends CommonIdentityAssertionFilter {
       ServletRequest request, String mappedPrincipalName) {
     return new NoImpersonationAsserterRequestWrapper(
         (HttpServletRequest) request,
-        mappedPrincipalName);
+        mappedPrincipalName,
+        impersonationParamsList);
   }
 }

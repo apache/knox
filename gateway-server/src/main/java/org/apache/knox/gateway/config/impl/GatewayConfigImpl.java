@@ -49,6 +49,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.dto.HomePageProfile;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasService;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
@@ -142,6 +143,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String GRAPHITE_METRICS_REPORTING_FREQUENCY = GATEWAY_CONFIG_FILE_PREFIX + ".graphite.metrics.reporting.frequency";
   public static final String GATEWAY_IDLE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".idle.timeout";
   public static final String REMOTE_IP_HEADER_NAME = GATEWAY_CONFIG_FILE_PREFIX + ".remote.ip.header.name";
+  private static final String JETTY_MAX_FORM_CONTENT_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".jetty.max.form.content.size";
+  private static final String JETTY_MAX_FORM_KEYS = GATEWAY_CONFIG_FILE_PREFIX + ".jetty.max.form.keys";
 
   /* @since 0.10 Websocket config variables */
   public static final String WEBSOCKET_FEATURE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.feature.enabled";
@@ -258,6 +261,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String CLOUDERA_MANAGER_DESCRIPTORS_MONITOR_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.descriptors.monitor.interval";
   private static final String CLOUDERA_MANAGER_ADVANCED_SERVICE_DISCOVERY_CONF_MONITOR_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.advanced.service.discovery.config.monitor.interval";
   private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_REPOSITORY_CACHE_ENTRY_TTL = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.repository.cache.entry.ttl";
+  private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_MAX_RETRY_ATTEMPS = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.maximum.retry.attemps";
 
   private static final String KNOX_TOKEN_EVICTION_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.eviction.interval";
   private static final String KNOX_TOKEN_EVICTION_GRACE_PERIOD = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.eviction.grace.period";
@@ -1175,6 +1179,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public int getClouderaManagerServiceDiscoveryMaximumRetryAttempts() {
+    return getInt(CLOUDERA_MANAGER_SERVICE_DISCOVERY_MAX_RETRY_ATTEMPS, DEFAULT_CM_SERVICE_DISCOVERY_MAX_RETRY_ATTEMPTS);
+  }
+
+  @Override
   public boolean isServerManagedTokenStateEnabled() {
     return getBoolean(TOKEN_STATE_SERVER_MANAGED, false);
   }
@@ -1314,6 +1323,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getDatabaseSslTruststoreFileName() {
     return get(GATEWAY_DATABASE_TRUSTSTORE_FILE);
+  }
+
+  @Override
+  public int getJettyMaxFormContentSize() {
+    return getInt(JETTY_MAX_FORM_CONTENT_SIZE, ContextHandler.DEFAULT_MAX_FORM_CONTENT_SIZE);
+  }
+
+  @Override
+  public int getJettyMaxFormKeys() {
+    return getInt(JETTY_MAX_FORM_KEYS, ContextHandler.DEFAULT_MAX_FORM_KEYS);
   }
 
 }

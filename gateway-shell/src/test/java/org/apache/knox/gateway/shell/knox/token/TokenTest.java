@@ -26,6 +26,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
@@ -42,24 +43,28 @@ public class TokenTest {
 
   @Test
   public void testTokenWithNoDoAs() {
-    testToken(false, null);
+    testToken(false, null, false);
   }
 
   @Test
   public void testTokenWithNullDoAs() {
-    testToken(true, null);
+    testToken(true, null, false);
   }
 
   @Test
   public void testTokenWithEmptyDoAs() {
-    testToken(true, "");
+    testToken(true, "", false);
   }
 
   @Test
   public void testTokenWithDoAs() {
-    testToken(true, "userA");
+    testToken(true, "userA", false);
   }
 
+  @Test
+  public void testTokenWithDoAsAndIncludeGroups() {
+    testToken(true, "userA", true);
+  }
 
   @Test
   public void testTokenRenewalWithNoDoAs() throws Exception {
@@ -101,15 +106,19 @@ public class TokenTest {
     testRevokeToken(true, "userA");
   }
 
-
-  private void testToken(boolean setDoAsUser, String doAsUser) {
+  private void testToken(boolean setDoAsUser, String doAsUser, boolean includeGroupsInToken) {
     KnoxSession knoxSession = createMock(KnoxSession.class);
     expect(knoxSession.base()).andReturn("http://localhost/base").atLeastOnce();
     replay(knoxSession);
 
-    Get.Request request = (setDoAsUser)
-        ? Token.get(knoxSession, doAsUser)
-        : Token.get(knoxSession);
+    Get.Request request;
+    if (!includeGroupsInToken) {
+      request = (setDoAsUser)
+              ? Token.get(knoxSession, doAsUser)
+              : Token.get(knoxSession);
+    } else {
+      request = Token.get(knoxSession, setDoAsUser ? doAsUser : null, true);
+    }
 
     if (setDoAsUser) {
       assertEquals(doAsUser, request.getDoAsUser());
@@ -117,11 +126,9 @@ public class TokenTest {
       assertNull(request.getDoAsUser());
     }
 
-    if (setDoAsUser && StringUtils.isNotEmpty(doAsUser)) {
-      assertEquals("http://localhost/base/knoxtoken/api/v1/token?doAs=" + doAsUser, request.getRequestURI().toString());
-    } else {
-      assertEquals("http://localhost/base/knoxtoken/api/v1/token", request.getRequestURI().toString());
-    }
+    assertTrue(request.getRequestURI().toString().startsWith("http://localhost/base/knoxtoken/api/v1/token"));
+    assertEquals(setDoAsUser && StringUtils.isNotEmpty(doAsUser), request.getRequestURI().toString().contains("doAs=" + doAsUser));
+    assertEquals(includeGroupsInToken, request.getRequestURI().toString().contains("knox.token.include.groups=true"));
 
     assertSame(knoxSession, request.getSession());
 

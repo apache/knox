@@ -17,6 +17,37 @@
  */
 package org.apache.knox.gateway.service.knoxsso;
 
+import static org.apache.knox.gateway.services.GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.lang.reflect.Field;
+import java.net.HttpCookie;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.Principal;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
+
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSSigner;
@@ -43,37 +74,6 @@ import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import javax.servlet.ServletContext;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-import java.lang.reflect.Field;
-import java.net.HttpCookie;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.Principal;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static org.apache.knox.gateway.services.GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Some tests for the Knox SSO service.
@@ -770,19 +770,7 @@ public class WebSSOResourceTest {
     @Override
     public JWT issueToken(JWTokenAttributes jwtAttributes)
         throws TokenServiceException {
-      String[] claimArray = new String[6];
-      claimArray[0] = "KNOXSSO";
-      claimArray[1] = jwtAttributes.getUserName();
-      claimArray[2] = null;
-      if (jwtAttributes.getExpires() == -1) {
-        claimArray[3] = null;
-      } else {
-        claimArray[3] = String.valueOf(jwtAttributes.getExpires());
-      }
-      claimArray[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
-      claimArray[5] = null;
-
-      JWT token = new JWTToken(jwtAttributes.getAlgorithm(), claimArray, jwtAttributes.getAudiences());
+      JWT token = new JWTToken(jwtAttributes);
       try {
         JWSSigner signer = useHMAC ? new MACSigner(HMAC_SECRET)
             : new RSASSASigner(getPrivateKey(jwtAttributes.getSigningKeystoreName(), jwtAttributes.getSigningKeystoreAlias(), jwtAttributes.getSigningKeystorePassphrase()));

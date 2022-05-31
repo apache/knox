@@ -31,6 +31,7 @@ export class TokenManagementService {
     enableKnoxTokenUrl = this.apiUrl + 'enable';
     disableKnoxTokenUrl = this.apiUrl + 'disable';
     revokeKnoxTokenUrl = this.apiUrl + 'revoke';
+    getTssStatusUrl = this.apiUrl + 'getTssStatus';
 
     constructor(private http: HttpClient) {}
 
@@ -94,6 +95,23 @@ export class TokenManagementService {
             .then(response => response['sessioninfo'].user as string)
             .catch((err: HttpErrorResponse) => {
                 console.debug('TokenManagementService --> getUserName() --> ' + this.sessionUrl + '\n  error: ' + err.message);
+                if (err.status === 401) {
+                    window.location.assign(document.location.pathname);
+                } else {
+                    return this.handleError(err);
+                }
+            });
+    }
+
+    getImpersonationEnabled(): Promise<string> {
+        let headers = new HttpHeaders();
+        headers = this.addJsonHeaders(headers);
+        return this.http.get(this.getTssStatusUrl, { headers: headers})
+            .toPromise()
+            .then(response => response['impersonationEnabled'] as string)
+            .catch((err: HttpErrorResponse) => {
+                console.debug('TokenManagementService --> getImpersonationEnabled() --> ' + this.getTssStatusUrl
+                              + '\n  error: ' + err.message);
                 if (err.status === 401) {
                     window.location.assign(document.location.pathname);
                 } else {

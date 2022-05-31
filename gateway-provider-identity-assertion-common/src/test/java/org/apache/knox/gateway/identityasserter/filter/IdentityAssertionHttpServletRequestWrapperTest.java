@@ -118,6 +118,26 @@ public class IdentityAssertionHttpServletRequestWrapperTest {
   }
 
   @Test
+  public void testRemoveImpersonationParam() throws IOException {
+    String inputBody = "DelegationUID=drwho&user.name=input-user";
+
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.setInputStream( new MockServletInputStream( new ByteArrayInputStream( inputBody.getBytes( StandardCharsets.UTF_8 ) ) ) );
+    request.setCharacterEncoding( StandardCharsets.UTF_8.name() );
+    request.setContentType( "application/x-www-form-urlencoded" );
+    request.setMethod("POST");
+
+    // Add DelegationUID to impersonation list
+    IdentityAsserterHttpServletRequestWrapper wrapper
+        = new IdentityAsserterHttpServletRequestWrapper( request, "output-user", Arrays.asList("DelegationUID"));
+
+    String output = wrapper.getQueryString();
+    assertThat( output, containsString( "user.name=output-user" ) );
+    assertThat( output, not( containsString( "input-user" ) ) );
+    assertThat( output, not( containsString( "drwho" ) ) );
+  }
+
+  @Test
   public void testIngoreNonFormBody() throws IOException {
     String inputBody = "user.name=input-user&jar=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaWebHCat%2Fhadoop-examples.jar&class=org.apache.org.apache.hadoop.examples.WordCount&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Finput&arg=%2Ftmp%2FGatewayWebHdfsFuncTest%2FtestJavaMapReduceViaTempleton%2Foutput";
 

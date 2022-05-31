@@ -18,13 +18,13 @@
 package org.apache.knox.gateway.services.token.impl;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.knox.gateway.util.JDBCUtils.HSQL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -36,23 +36,18 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.lang3.reflect.FieldUtils;
-import org.apache.derby.drda.NetworkServerControl;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.token.KnoxToken;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
-import org.apache.knox.gateway.shell.jdbc.Database;
-import org.apache.knox.gateway.shell.jdbc.derby.DerbyDatabase;
 import org.apache.knox.gateway.util.JDBCUtils;
 import org.easymock.EasyMock;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -60,65 +55,34 @@ import org.junit.rules.TemporaryFolder;
 
 public class JDBCTokenStateServiceTest {
 
+  public static final String USERNAME = "SA";
+  public static final String PASSWORD = "";
   private static final String GET_TOKENS_COUNT_SQL = "SELECT count(*) FROM " + TokenStateDatabase.TOKENS_TABLE_NAME;
   private static final String TRUNCATE_KNOX_TOKENS_SQL = "DELETE FROM " + TokenStateDatabase.TOKENS_TABLE_NAME;
   private static final String TRUNCATE_KNOX_TOKEN_METADATA_SQL = "DELETE FROM " + TokenStateDatabase.TOKEN_METADATA_TABLE_NAME;
 
   @ClassRule
   public static final TemporaryFolder testFolder = new TemporaryFolder();
-
-  private static final String SYSTEM_PROPERTY_DERBY_STREAM_ERROR_FILE = "derby.stream.error.file";
-  private static final String SAMPLE_DERBY_DATABASE_NAME = "sampleDerbyDatabase";
-  private static NetworkServerControl derbyNetworkServerControl;
-  private static Database derbyDatabase;
+  public static final String CONNECTION_URL = "jdbc:hsqldb:mem:knox;ifexists=false";
+  public static final String DB_NAME = "knox";
   private static JDBCTokenStateService jdbcTokenStateService;
   private static TokenMAC tokenMAC;
 
   @SuppressWarnings("PMD.JUnit4TestShouldUseBeforeAnnotation")
   @BeforeClass
   public static void setUp() throws Exception {
-    final String username = "app";
-    final String password = "P4ssW0rd!";
-    System.setProperty(SYSTEM_PROPERTY_DERBY_STREAM_ERROR_FILE, "/dev/null");
-    derbyNetworkServerControl = new NetworkServerControl(username, password);
-    derbyNetworkServerControl.start(null);
-    TimeUnit.SECONDS.sleep(1); // give a bit of time for the server to start
-    final Path derbyDatabaseFolder = Paths.get(testFolder.newFolder().toPath().toString(), SAMPLE_DERBY_DATABASE_NAME);
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
-    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(JDBCUtils.DERBY_DB_TYPE).anyTimes();
-    EasyMock.expect(gatewayConfig.getDatabaseHost()).andReturn("localhost").anyTimes();
-    EasyMock.expect(gatewayConfig.getDatabasePort()).andReturn(NetworkServerControl.DEFAULT_PORTNUMBER).anyTimes();
-    EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn(derbyDatabaseFolder.toString()).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(HSQL).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseConnectionUrl()).andReturn(CONNECTION_URL).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn(DB_NAME).anyTimes();
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(JDBCUtils.DATABASE_USER_ALIAS_NAME)).andReturn(username.toCharArray()).anyTimes();
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(JDBCUtils.DATABASE_PASSWORD_ALIAS_NAME)).andReturn(password.toCharArray()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(JDBCUtils.DATABASE_USER_ALIAS_NAME)).andReturn(USERNAME.toCharArray()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(JDBCUtils.DATABASE_PASSWORD_ALIAS_NAME)).andReturn(PASSWORD.toCharArray()).anyTimes();
     EasyMock.replay(gatewayConfig, aliasService);
-
-    derbyDatabase = prepareDerbyDatabase(derbyDatabaseFolder);
-
     jdbcTokenStateService = new JDBCTokenStateService();
     jdbcTokenStateService.setAliasService(aliasService);
     jdbcTokenStateService.init(gatewayConfig, null);
-
-    assertTrue(derbyDatabase.hasTable(TokenStateDatabase.TOKENS_TABLE_NAME));
-
     tokenMAC = new TokenMAC(HmacAlgorithms.HMAC_SHA_256.getName(), "sPj8FCgQhCEi6G18kBfpswxYSki33plbelGLs0hMSbk".toCharArray());
-  }
-
-  private static Database prepareDerbyDatabase(Path derbyDatabaseFolder) throws SQLException {
-    final Database derbyDatabase = new DerbyDatabase(derbyDatabaseFolder.toString(), true);
-    derbyDatabase.create();
-    return derbyDatabase;
-  }
-
-  @SuppressWarnings("PMD.JUnit4TestShouldUseAfterAnnotation")
-  @AfterClass
-  public static void tearDown() throws Exception {
-    if (derbyDatabase != null) {
-      derbyDatabase.shutdown();
-    }
-    derbyNetworkServerControl.shutdown();
-    System.clearProperty(SYSTEM_PROPERTY_DERBY_STREAM_ERROR_FILE);
   }
 
   @Test
@@ -266,7 +230,7 @@ public class JDBCTokenStateServiceTest {
   }
 
   private long getLongTokenAttributeFromDatabase(String tokenId, String sql) throws SQLException {
-    try (Connection conn = derbyDatabase.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+    try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
       if (tokenId != null) {
         stmt.setString(1, tokenId);
       }
@@ -277,7 +241,7 @@ public class JDBCTokenStateServiceTest {
   }
 
   private String getStringTokenAttributeFromDatabase(String tokenId, String sql) throws SQLException {
-    try (Connection conn = derbyDatabase.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+    try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
       stmt.setString(1, tokenId);
       try (ResultSet rs = stmt.executeQuery()) {
         return rs.next() ? rs.getString(1) : null;
@@ -286,13 +250,17 @@ public class JDBCTokenStateServiceTest {
   }
 
   private void truncateDatabase() throws SQLException {
-    try (Connection conn = derbyDatabase.getConnection(); PreparedStatement stmt = conn.prepareStatement(TRUNCATE_KNOX_TOKEN_METADATA_SQL)) {
+    try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(TRUNCATE_KNOX_TOKEN_METADATA_SQL)) {
       stmt.executeUpdate();
     }
 
-    try (Connection conn = derbyDatabase.getConnection(); PreparedStatement stmt = conn.prepareStatement(TRUNCATE_KNOX_TOKENS_SQL)) {
+    try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(TRUNCATE_KNOX_TOKENS_SQL)) {
       stmt.executeUpdate();
     }
+  }
+
+  private Connection getConnection() throws SQLException {
+    return DriverManager.getConnection(CONNECTION_URL, USERNAME, PASSWORD);
   }
 
   private String getSelectMetadataSql(String metadataName) {

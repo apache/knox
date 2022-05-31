@@ -195,6 +195,39 @@ public class ClientContext {
     public String endpointPublicCertPem() {
       return configuration.getString("endpointPublicCertPem");
     }
+
+    /**
+     * Number of retries, after a failure, before giving up.
+     */
+    public ConnectionContext retryCount(int retryCount) {
+      configuration.addProperty("retryCount", retryCount);
+      return this;
+    }
+
+    public int retryCount() {
+      return configuration.getInt("retryCount", 3);
+    }
+
+    /**
+     * true if it's OK to retry requests that have been sent
+     */
+    public ConnectionContext requestSentRetryEnabled(boolean retryNonIdempotent) {
+      configuration.addProperty("requestSentRetryEnabled", retryNonIdempotent);
+      return this;
+    }
+
+    public boolean requestSentRetryEnabled() {
+      return configuration.getBoolean("requestSentRetryEnabled", false);
+    }
+
+    public ConnectionContext retryIntervalMillis(int msec) {
+      configuration.addProperty("retryIntervalMillis", msec);
+      return this;
+    }
+
+    public int retryIntervalMillis() {
+      return configuration.getInt("retryIntervalMillis", 1000);
+    }
   }
 
   /**

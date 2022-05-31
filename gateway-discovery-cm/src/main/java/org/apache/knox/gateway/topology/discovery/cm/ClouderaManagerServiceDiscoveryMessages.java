@@ -81,6 +81,9 @@ public interface ClouderaManagerServiceDiscoveryMessages {
            text = "Encountered an error during cluster ({0}) discovery: {1}")
   void clusterDiscoveryError(String clusterName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.INFO, text = "Sleeping {0} second(s) before retrying Cloudera Manager service discovery for the {1}. time")
+  void retryDiscovery(long retrySleep, int retryAttempt);
+
   @Message(level = MessageLevel.ERROR,
            text = "Failed to access the service configurations for cluster ({0}) discovery: {1}")
   void failedToAccessServiceConfigs(String clusterName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
@@ -250,4 +253,6 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   @Message(level = MessageLevel.DEBUG, text = "Clearing service discovery repository...")
   void clearServiceDiscoveryRepository();
 
+  @Message(level = MessageLevel.WARN, text = "The configured maximum retry attempts of {0} may overlap with the configured polling interval settings; using {1} retry attempts")
+  void updateMaxRetryAttempts(int configured, int actual);
 }

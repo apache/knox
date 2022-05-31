@@ -111,6 +111,8 @@ public interface GatewayConfig {
 
   long DEFAULT_CM_SERVICE_DISCOVERY_CACHE_ENTRY_TTL = 600; // 10 minutes
 
+  int DEFAULT_CM_SERVICE_DISCOVERY_MAX_RETRY_ATTEMPTS = 3;
+
   /**
    * The location of the gateway configuration.
    * Subdirectories will be: topologies
@@ -690,6 +692,16 @@ public interface GatewayConfig {
   long getClouderaManagerServiceDiscoveryRepositoryEntryTTL();
 
   /**
+   * The maximum number of attempts to try connecting to a configured Cloudera
+   * Manager endpoint in case a communication related exception is caught when
+   * trying to discover the configured cluster.
+   * <p>
+   * Setting this configuration to <code>-1</code> indicates the user does not
+   * want to retry the failed service discovery.
+   */
+  int getClouderaManagerServiceDiscoveryMaximumRetryAttempts();
+
+  /**
    * @return true, if state for tokens issued by the Knox Token service should be managed by Knox.
    */
   boolean isServerManagedTokenStateEnabled();
@@ -798,4 +810,7 @@ public interface GatewayConfig {
 
   String getDatabaseSslTruststoreFileName();
 
+  int getJettyMaxFormContentSize();
+
+  int getJettyMaxFormKeys();
 }

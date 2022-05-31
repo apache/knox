@@ -51,4 +51,14 @@ public interface Pac4jMessages {
   @Message( level = MessageLevel.ERROR, text =
       "No keystore password alias found. Defaulting to master secret. Exception encountered: {0}")
   void noKeystorePasswordProvisioned(Exception e);
+
+  @Message( level = MessageLevel.ERROR, text =
+      "There was an error fetching keystore type. Exception encountered: {0}")
+  void errorFetchingKeystoreType(Exception e);
+
+  @Message( level = MessageLevel.DEBUG, text = "Pac4j keystore path used : {0}")
+  void pac4jSamlKeystorePath(String path);
+
+  @Message( level = MessageLevel.DEBUG, text = "Pac4j keystore type : {0}")
+  void pac4jSamlKeystoreType(String type);
 }

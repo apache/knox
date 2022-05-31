@@ -20,11 +20,14 @@ package org.apache.knox.gateway.identityasserter.common.filter;
 import java.io.IOException;
 import java.security.AccessController;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
@@ -47,15 +50,22 @@ import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.principal.PrincipalMappingException;
 import org.apache.knox.gateway.security.principal.SimplePrincipalMapper;
 
+import static org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor.IMPERSONATION_PARAMS;
+
 public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilter {
   public static final String VIRTUAL_GROUP_MAPPING_PREFIX = "group.mapping.";
   private IdentityAsserterMessages LOG = MessagesFactory.get(IdentityAsserterMessages.class);
 
   public static final String GROUP_PRINCIPAL_MAPPING = "group.principal.mapping";
   public static final String PRINCIPAL_MAPPING = "principal.mapping";
+
+  private static final String PRINCIPAL_PARAM = "user.name";
+  private static final String DOAS_PRINCIPAL_PARAM = "doAs";
   private SimplePrincipalMapper mapper = new SimplePrincipalMapper();
   private final Parser parser = new Parser();
   private VirtualGroupMapper virtualGroupMapper;
+  /* List of all default and configured impersonation params */
+  protected final List<String> impersonationParamsList = new ArrayList<>();
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
@@ -75,6 +85,37 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
       }
     }
     virtualGroupMapper = new VirtualGroupMapper(loadVirtualGroups(filterConfig));
+    String impersonationListFromConfig = filterConfig.getInitParameter(IMPERSONATION_PARAMS);
+    if (impersonationListFromConfig == null || impersonationListFromConfig.isEmpty()) {
+      impersonationListFromConfig = filterConfig.getServletContext().getInitParameter(IMPERSONATION_PARAMS);
+    }
+    initImpersonationParamsList(impersonationListFromConfig);
+  }
+
+  /**
+   * Initialize the impersonation params list.
+   * This list contains query params that needs to be scrubbed
+   * from the outgoing request.
+   * @param impersonationListFromConfig
+   * @return
+   */
+  private void initImpersonationParamsList(final String impersonationListFromConfig) {
+    /* Add default impersonation params */
+    impersonationParamsList.add(DOAS_PRINCIPAL_PARAM);
+    impersonationParamsList.add(PRINCIPAL_PARAM);
+    if(null == impersonationListFromConfig || impersonationListFromConfig.isEmpty()) {
+      return;
+    } else {
+      /* Add configured impersonation params */
+      LOG.impersonationConfig(impersonationListFromConfig);
+      final StringTokenizer t = new StringTokenizer(impersonationListFromConfig, ",");
+      while(t.hasMoreElements()) {
+        final String token = t.nextToken().trim();
+        if(!impersonationParamsList.contains(token)) {
+          impersonationParamsList.add(token);
+        }
+      }
+    }
   }
 
   private Map<String, AbstractSyntaxTree> loadVirtualGroups(FilterConfig filterConfig) {
@@ -150,14 +191,26 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     mappedPrincipalName = mapUserPrincipal(mappedPrincipalName);
     String[] mappedGroups = mapGroupPrincipalsBase(mappedPrincipalName, subject);
     String[] groups = mapGroupPrincipals(mappedPrincipalName, subject);
-    String[] virtualGroups = virtualGroupMapper.mapGroups(mappedPrincipalName, groups(subject), request).toArray(new String[0]);
+    String[] virtualGroups = virtualGroupMapper.mapGroups(mappedPrincipalName, combine(subject, groups), request).toArray(new String[0]);
     groups = combineGroupMappings(mappedGroups, groups);
     groups = combineGroupMappings(virtualGroups, groups);
 
     HttpServletRequestWrapper wrapper = wrapHttpServletRequest(
         request, mappedPrincipalName);
 
-    continueChainAsPrincipal(wrapper, response, chain, mappedPrincipalName, groups);
+    continueChainAsPrincipal(wrapper, response, chain, mappedPrincipalName, unique(groups));
+  }
+
+  private Set<String> combine(Subject subject, String[] groups) {
+    Set<String> result = groups(subject);
+    if (groups != null) {
+      result.addAll(Arrays.asList(groups));
+    }
+    return result;
+  }
+
+  private static String[] unique(String[] groups) {
+    return new HashSet<>(Arrays.asList(groups)).toArray(new String[0]);
   }
 
   protected String[] combineGroupMappings(String[] mappedGroups, String[] groups) {
@@ -175,7 +228,8 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     // from request methods
     return new IdentityAsserterHttpServletRequestWrapper(
         (HttpServletRequest) request,
-        mappedPrincipalName);
+        mappedPrincipalName,
+        impersonationParamsList);
   }
 
   protected String[] mapGroupPrincipalsBase(String mappedPrincipalName, Subject subject) {
