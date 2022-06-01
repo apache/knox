@@ -243,7 +243,7 @@
         <maven-enforcer-plugin.version>3.0.0-M3</maven-enforcer-plugin.version>
         <maven-pmd-plugin.version>3.12.0</maven-pmd-plugin.version>
         <metrics.version>4.1.16</metrics.version>
-        <mina.version>2.0.21</mina.version>
+        <mina.version>2.0.23</mina.version>
         <netty.version>4.1.77.Final</netty.version>
         <nimbus-jose-jwt.version>8.14.1</nimbus-jose-jwt.version>
         <nodejs.version>v12.18.2</nodejs.version>
