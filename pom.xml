@@ -70,6 +70,7 @@
         <module>gateway-i18n-logging-log4j</module>
         <module>gateway-i18n-logging-sl4j</module>
         <module>gateway-spi</module>
+        <module>gateway-spi-common</module>
         <module>gateway-discovery-ambari</module>
         <module>gateway-discovery-cm</module>
         <module>gateway-performance-test</module>
@@ -897,6 +898,11 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-spi</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-spi-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

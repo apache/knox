@@ -38,4 +38,7 @@ public interface HadoopGroupProviderMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "Found groups for principal {0} : {1}" )
   void groupsFound(String principal, String groups );
+
+  @Message( level = MessageLevel.DEBUG, text = "Found group mapping configuration in gateway-site" )
+  void groupMappingFound();
 }

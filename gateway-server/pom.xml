@@ -99,6 +99,10 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-spi-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-topology-simple</artifactId>
         </dependency>
         <dependency>
