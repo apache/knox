@@ -111,9 +111,8 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
 
     if (gatewayConfig != null) {
       repository.setCacheEntryTTL(gatewayConfig.getClouderaManagerServiceDiscoveryRepositoryEntryTTL());
+      configureRetryParams(gatewayConfig);
     }
-
-    configureRetryParams(gatewayConfig);
   }
 
   private void configureRetryParams(GatewayConfig gatewayConfig) {
