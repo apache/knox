@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -1044,17 +1045,17 @@ public class KnoxCLI extends Configured implements Tool {
       }
       as.addAliasesForCluster(cluster, aliases);
       if (!generated.isEmpty()) {
-        out.println(generated.size() + " alias(es) have been successfully generated.");
+        out.println(generated.size() + " alias(es) have been successfully generated: " + generated);
       }
       List<String> created = new ArrayList<>(aliases.keySet());
       created.removeAll(generated);
       if (!created.isEmpty()) {
-        out.println(created.size() + " alias(es) have been successfully created.");
+        out.println(created.size() + " alias(es) have been successfully created: " + created);
       }
     }
 
     private Map<String, String> toMap() {
-      Map<String,String> aliases = new HashMap<>();
+      Map<String,String> aliases = new LinkedHashMap<>();
       for (int i = 0; i < names.size(); i++) {
         aliases.put(names.get(i), values.get(i));
       }
