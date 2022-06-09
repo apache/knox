@@ -881,6 +881,66 @@ public class KnoxCLITest {
     assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("admin"));
   }
 
+  @Test
+  public void testCreateMultipleAliasesInOneBatch() throws Exception {
+    outContent.reset();
+    String[] args1 = { "create-aliases",
+            "--alias", "alias1", "--value", "testvalue1",
+            "--alias", "alias2", "--value", "testvalue2",
+            "--alias", "alias3", "--value", "testvalue3",
+            "--cluster", "cluster1",
+            "--master", "master" };
+    int rc;
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf(new GatewayConfigImpl());
+    rc = cli.run(args1);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains(
+            "3 alias(es) have been successfully created: [alias1, alias2, alias3]"));
+  }
+
+  @Test
+  public void testCreateAndGenerateMultipleAliasesInOneBatch1() throws Exception {
+    outContent.reset();
+    String[] args1 = { "create-aliases",
+            "--alias", "alias1", "--value", "testvalue1",
+            "--alias", "alias2", "--value", "testvalue2",
+            "--alias", "alias3",
+            "--generate",
+            "--cluster", "cluster1",
+            "--master", "master" };
+    int rc;
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf(new GatewayConfigImpl());
+    rc = cli.run(args1);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains(
+            "2 alias(es) have been successfully created: [alias1, alias2]"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains(
+            "1 alias(es) have been successfully generated: [alias3]"));
+  }
+
+  @Test
+  public void testCreateAndGenerateMultipleAliasesInOneBatch2() throws Exception {
+    outContent.reset();
+    String[] args1 = { "create-aliases",
+            "--alias", "alias1", "--value", "testvalue1",
+            "--alias", "alias2",
+            "--alias", "alias3",
+            "--generate",
+            "--cluster", "cluster1",
+            "--master", "master" };
+    int rc;
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf(new GatewayConfigImpl());
+    rc = cli.run(args1);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains(
+            "2 alias(es) have been successfully generated: [alias2, alias3]"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains(
+            "1 alias(es) have been successfully created: [alias1]"));
+  }
+
   private class GatewayConfigMock extends GatewayConfigImpl{
     private String confDir;
     public void setConfDir(String location) {
