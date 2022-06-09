@@ -20,7 +20,6 @@ package org.apache.knox.gateway;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -33,6 +32,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -73,6 +73,10 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   private ConcurrentMap<String, Integer> topologyPortMapping = new ConcurrentHashMap<>();
   private int backupVersionLimit = -1;
   private long backupAgeLimit = -1;
+
+  public GatewayTestConfig(Properties props) {
+   super.getProps().putAll(props);
+  }
 
   public GatewayTestConfig() {
 
@@ -276,14 +280,14 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public List getExcludedSSLProtocols() {
+  public List<String> getExcludedSSLProtocols() {
     List<String> protocols = new ArrayList<>();
     protocols.add("SSLv3");
     return protocols;
   }
 
   @Override
-  public List getIncludedSSLCiphers() {
+  public List<String> getIncludedSSLCiphers() {
     return includedSSLCiphers;
   }
 
@@ -292,7 +296,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public List getExcludedSSLCiphers() {
+  public List<String> getExcludedSSLCiphers() {
     return excludedSSLCiphers;
   }
 
@@ -720,7 +724,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public List<String> getReadOnlyOverrideTopologyNames() {
     List<String> readOnly = new ArrayList<>();
 
-    String value = get(GatewayConfigImpl.READ_ONLY_OVERRIDE_TOPOLOGIES);
+    String value = get("gateway.read.only.override.topologies");
     if (value != null && !value.isEmpty()) {
       readOnly.addAll(Arrays.asList(value.trim().split("\\s*,\\s*")));
     }

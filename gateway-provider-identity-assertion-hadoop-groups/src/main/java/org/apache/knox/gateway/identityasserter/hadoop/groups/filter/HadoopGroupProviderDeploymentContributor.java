@@ -18,9 +18,11 @@
 package org.apache.knox.gateway.identityasserter.hadoop.groups.filter;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.deploy.DeploymentContext;
 import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
 import org.apache.knox.gateway.descriptor.ResourceDescriptor;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor;
 import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Service;
@@ -46,6 +48,10 @@ public class HadoopGroupProviderDeploymentContributor
    */
   public static final String HADOOP_GROUP_PROVIDER = "HadoopGroupProvider";
 
+  private static final HadoopGroupProviderMessages LOG = MessagesFactory.get(HadoopGroupProviderMessages.class);
+
+  static final String CENTRAL_GROUP_CONFIG_PREFIX_PARAM_NAME = "CENTRAL_GROUP_CONFIG_PREFIX";
+
   /* create an instance */
   public HadoopGroupProviderDeploymentContributor() {
     super();
@@ -62,46 +68,57 @@ public class HadoopGroupProviderDeploymentContributor
   }
 
   @Override
-  public void contributeFilter( DeploymentContext context, Provider provider, Service service,
-      ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
-    Map<String, String> p = provider.getParams();
-    String prefix = p.get("CENTRAL_GROUP_CONFIG_PREFIX");
+  public void contributeFilter(DeploymentContext context, Provider provider, Service service, ResourceDescriptor resource, List<FilterParamDescriptor> params) {
+    final List<FilterParamDescriptor> filterParams = params == null ? new ArrayList<>() : new ArrayList<>(params);
+
+    // add group mapping parameters from gateway-site.xml, if any
+    final List<FilterParamDescriptor> groupMappingParamsList = getParamsFromGatewaySiteWithCentralGroupConfigPrefix(provider, context, resource);
+    filterParams.addAll(groupMappingParamsList);
+
+    // add provider parameters except for the CENTRAL_GROUP_CONFIG_PREFIX_PARAM_NAME one (that is used only to provide a bridge between the gateway and provider levels)
+    provider.getParams().entrySet().stream().filter(entry -> !entry.getKey().startsWith(CENTRAL_GROUP_CONFIG_PREFIX_PARAM_NAME)).forEach(entry -> {
+      // if a property already exists with the same name as this provider parameter, it
+      // should be removed because the provider-level property should be able to
+      // override the gateway-site parameter
+      filterParams.removeIf(filterParam -> filterParam.name().equals(entry.getKey()));
+      filterParams.add(createFilterParam(resource, entry.getKey(), entry.getValue()));
+    });
+
+    resource.addFilter().name(getName()).role(getRole()).impl(getFilterClassname()).params(filterParams);
+  }
+
+  private FilterParamDescriptor createFilterParam(ResourceDescriptor resource, String name, String value) {
+    return resource.createFilterParam().name(name.toLowerCase(Locale.ROOT)).value(value);
+  }
+
+  private List<FilterParamDescriptor> getParamsFromGatewaySiteWithCentralGroupConfigPrefix(Provider provider, DeploymentContext context, ResourceDescriptor resource) {
+    final List<FilterParamDescriptor> groupMappingParamsList = new ArrayList<>();
+    final Map<String, String> providerParams = provider.getParams();
+    String prefix = providerParams.get(CENTRAL_GROUP_CONFIG_PREFIX_PARAM_NAME);
     if (prefix != null && !prefix.isEmpty()) {
       if (!prefix.endsWith(".")) {
-          prefix += ".";
+        prefix += ".";
       }
-      Map<String, String> groupMappingParams =
-              ((Configuration)context.getGatewayConfig()).getPropsWithPrefix(prefix);
-      if (groupMappingParams != null) {
-        params = createParamList(resource, params, groupMappingParams);
-      }
-    }
 
-    if (params == null || params.isEmpty()) {
-        params = buildFilterInitParms(provider, resource, params);
+      final GatewayConfig gatewayConfig = context.getGatewayConfig();
+      final Map<String, String> groupMappingParams = gatewayConfig == null ? null : ((Configuration) gatewayConfig).getPropsWithPrefix(prefix);
+      if (groupMappingParams != null && !groupMappingParams.isEmpty()) {
+        LOG.groupMappingFound();
+        for (Entry<String, String> entry : groupMappingParams.entrySet()) {
+          groupMappingParamsList.add(createFilterParam(resource, entry.getKey(), entry.getValue()));
+        }
+      }
     }
-    resource.addFilter().name(getName()).role(getRole()).impl(getFilterClassname()).params(params);
+    return groupMappingParamsList;
   }
 
   @Override
-  public List<FilterParamDescriptor> buildFilterInitParms(Provider provider,
-      ResourceDescriptor resource, List<FilterParamDescriptor> params) {
-  // blindly add all the provider params as filter init params
-    if (params == null) {
-      params = new ArrayList<>();
-    }
-    Map<String, String> providerParams = provider.getParams();
-    return createParamList(resource, params, providerParams);
-  }
-
-  private List<FilterParamDescriptor> createParamList(ResourceDescriptor resource, List<FilterParamDescriptor> params,
-        Map<String, String> providerParams) {
-    if (params == null) {
-      params = new ArrayList<>();
-    }
-    for(Entry<String, String> entry : providerParams.entrySet()) {
-      params.add( resource.createFilterParam().name(entry.getKey().toLowerCase(Locale.ROOT)).value(entry.getValue()));
-    }
-    return params;
+  public List<FilterParamDescriptor> buildFilterInitParms(Provider provider, ResourceDescriptor resource, List<FilterParamDescriptor> params) {
+    final List<FilterParamDescriptor> filterInitParams = params == null ? new ArrayList<>() : new ArrayList<>(params);
+    // blindly add all the provider params as filter init params
+    provider.getParams().forEach((paramName, paramValue) -> {
+      filterInitParams.add(createFilterParam(resource, paramName, paramValue));
+    });
+    return filterInitParams;
   }
 }
