@@ -923,32 +923,6 @@ public class KnoxCLI extends Configured implements Tool {
    public String getUsage() {
      return USAGE + ":\n\n" + DESC;
    }
-
-    protected char[] promptUserForPassword() {
-      char[] password = null;
-      Console c = System.console();
-      if (c == null) {
-        System.err
-            .println("No console to fetch password from user.Consider setting via --generate or --value.");
-        System.exit(1);
-      }
-
-      boolean noMatch;
-      do {
-        char[] newPassword1 = c.readPassword("Enter password: ");
-        char[] newPassword2 = c.readPassword("Enter password again: ");
-        noMatch = !Arrays.equals(newPassword1, newPassword2);
-        if (noMatch) {
-          c.format("Passwords don't match. Try again.%n");
-        } else {
-          password = Arrays.copyOf(newPassword1, newPassword1.length);
-        }
-        Arrays.fill(newPassword1, ' ');
-        Arrays.fill(newPassword2, ' ');
-      } while (noMatch);
-      return password;
-    }
-
  }
 
  public class AliasDeleteCommand extends Command {
