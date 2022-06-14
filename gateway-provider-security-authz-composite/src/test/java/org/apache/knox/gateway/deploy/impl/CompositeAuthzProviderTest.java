@@ -64,4 +64,16 @@ public class CompositeAuthzProviderTest {
     assertEquals(providerNames[1], "SomeOther");
     assertEquals(providerNames[2], "TheOtherOne");
   }
+
+  @Test
+  public void testingParsingProviderNames() throws Exception {
+    String testnames = "   AclsAuthz  ,   SomeOther   ,   TheOtherOne   ,";
+    CompositeAuthzDeploymentContributor c = new CompositeAuthzDeploymentContributor();
+    String[] providerNames = c.parseProviderNames(testnames);
+    assertEquals(providerNames.length, 3);
+    assertEquals(providerNames[0], "AclsAuthz");
+    assertEquals(providerNames[1], "SomeOther");
+    assertEquals(providerNames[2], "TheOtherOne");
+  }
 }
+
