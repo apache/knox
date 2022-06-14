@@ -69,7 +69,6 @@ public class CompositeAuthzDeploymentContributor extends ProviderDeploymentContr
 
   String[] parseProviderNames(String providerNames) {
     String[] b = providerNames.split("\\s*,\\s*");
-
     for (int i = 0; i < b.length; i++) {
       b[i] = b[i].trim();
     }
