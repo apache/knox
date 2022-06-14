@@ -31,6 +31,7 @@ import static org.junit.Assert.assertTrue;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpRequest;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.util.EntityUtils;
 import org.apache.knox.gateway.shell.KnoxSession;
 import org.junit.Test;
@@ -209,8 +210,8 @@ public class TokenTest {
       // expected
     }
 
-    HttpEntity entity = request.getRequest().getEntity();
-    assertNotNull("Missing expected POST data.", entity);
+    HttpEntity entity = ((HttpEntityEnclosingRequestBase)request.getRequest()).getEntity();
+    assertNotNull("Missing expected PUT/DELETE data.", entity);
     String postData = null;
     try {
       postData = EntityUtils.toString(entity);

@@ -16,6 +16,11 @@
  */
 package org.apache.knox.gateway.shell.knox.token;
 
+import java.nio.charset.StandardCharsets;
+
+import org.apache.http.HttpRequest;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
 import org.apache.knox.gateway.shell.KnoxSession;
 
 public class Renew {
@@ -23,18 +28,30 @@ public class Renew {
   public static class Request extends AbstractTokenLifecycleRequest {
 
     public static final String OPERATION = "renew";
+    private HttpPut putRequest;
 
     Request(final KnoxSession session, final String token) {
-      super(session, token);
+      this(session, token, null);
     }
 
     Request(final KnoxSession session, final String token, final String doAsUser) {
       super(session, token, doAsUser);
+      initPutRequest(token);
+    }
+
+    private void initPutRequest(String token) {
+      this.putRequest = new HttpPut(getRequestURI());
+      this.putRequest.setEntity(new StringEntity(token, StandardCharsets.UTF_8));
     }
 
     @Override
     protected String getOperation() {
       return OPERATION;
+    }
+
+    @Override
+    public HttpRequest getRequest() {
+      return this.putRequest;
     }
   }
 
