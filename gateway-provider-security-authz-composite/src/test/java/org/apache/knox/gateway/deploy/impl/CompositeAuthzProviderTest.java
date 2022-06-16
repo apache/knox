@@ -58,22 +58,24 @@ public class CompositeAuthzProviderTest {
   public void testParsingProviderNames() throws Exception {
     String names = "AclsAuthz,   SomeOther,TheOtherOne";
     CompositeAuthzDeploymentContributor c = new CompositeAuthzDeploymentContributor();
-    String[] providerNames = c.parseProviderNames(names);
-    assertEquals(providerNames.length, 3);
-    assertEquals(providerNames[0], "AclsAuthz");
-    assertEquals(providerNames[1], "SomeOther");
-    assertEquals(providerNames[2], "TheOtherOne");
+    List providerNames = c.parseProviderNames(names);
+    assertEquals(providerNames.size(), 3);
+    assertEquals(providerNames.get(0), "AclsAuthz");
+    assertEquals(providerNames.get(1), "SomeOther");
+    assertEquals(providerNames.get(2), "TheOtherOne");
   }
 
   @Test
   public void testingParsingProviderNames() throws Exception {
-    String testnames = "   AclsAuthz  ,   SomeOther   ,   TheOtherOne   ,";
+    String testnames = "   AclsAuthz  ,SomeOther   , ,  TheOtherOne,AnotherOne";
     CompositeAuthzDeploymentContributor c = new CompositeAuthzDeploymentContributor();
-    String[] providerNames = c.parseProviderNames(testnames);
-    assertEquals(providerNames.length, 3);
-    assertEquals(providerNames[0], "AclsAuthz");
-    assertEquals(providerNames[1], "SomeOther");
-    assertEquals(providerNames[2], "TheOtherOne");
+    List providerNames = c.parseProviderNames(testnames);
+    assertEquals(providerNames.size(), 5);
+    assertEquals(providerNames.get(0), "AclsAuthz");
+    assertEquals(providerNames.get(1), "SomeOther");
+    assertEquals(providerNames.get(2), "");
+    assertEquals(providerNames.get(3), "TheOtherOne");
+    assertEquals(providerNames.get(4), "AnotherOne");
   }
 }
 
