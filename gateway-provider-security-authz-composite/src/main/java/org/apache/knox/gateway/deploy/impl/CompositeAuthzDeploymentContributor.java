@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Arrays;
 
 public class CompositeAuthzDeploymentContributor extends ProviderDeploymentContributorBase {
   @Override
@@ -57,22 +58,23 @@ public class CompositeAuthzDeploymentContributor extends ProviderDeploymentContr
     Map<String, String> providerParams = provider.getParams();
     String providerNames = providerParams.get("composite.provider.names");
     if (!providerNames.isEmpty()) {
-    String[] names = parseProviderNames(providerNames);
-    for (String name : names) {
-      getProviderSpecificParams(resource, params, providerParams, name);
-      DeploymentFactory.getProviderContributor("authorization", name)
-              .contributeFilter(context, provider, service, resource, params);
-      params.clear();
-    }
+      List<String> names = parseProviderNames(providerNames);
+      for (String name : names) {
+        getProviderSpecificParams(resource, params, providerParams, name);
+        DeploymentFactory.getProviderContributor("authorization", name)
+                .contributeFilter(context, provider, service, resource, params);
+        params.clear();
+      }
     }
   }
 
-  String[] parseProviderNames(String providerNames) {
-    String[] b = providerNames.split("\\s*,\\s*");
-    for (int i = 0; i < b.length; i++) {
-      b[i] = b[i].trim();
+  List parseProviderNames(String providerNames) {
+    String[] providerNamesList = providerNames.split("\\s*,\\s*");
+    for (int i = 0; i < providerNamesList.length; i++) {
+      providerNamesList[i] = providerNamesList[i].trim();
     }
-    return b;
+    List<String> providerNamesCollection = Arrays.asList(providerNamesList);
+    return providerNamesCollection;
   }
 
   void getProviderSpecificParams(ResourceDescriptor resource, List<FilterParamDescriptor> params,
