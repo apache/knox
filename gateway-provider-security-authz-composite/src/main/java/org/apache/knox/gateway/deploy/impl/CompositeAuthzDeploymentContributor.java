@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Collections;
 import java.util.Arrays;
 
 public class CompositeAuthzDeploymentContributor extends ProviderDeploymentContributorBase {
@@ -69,12 +70,12 @@ public class CompositeAuthzDeploymentContributor extends ProviderDeploymentContr
   }
 
   List parseProviderNames(String providerNames) {
-    String[] providerNamesList = providerNames.split("\\s*,\\s*");
-    for (int i = 0; i < providerNamesList.length; i++) {
-      providerNamesList[i] = providerNamesList[i].trim();
+    if (providerNames==null){
+      return Collections.singletonList("");
     }
-    List<String> providerNamesCollection = Arrays.asList(providerNamesList);
-    return providerNamesCollection;
+    List<String> providerNamesList = Arrays.asList(providerNames.split("\\s*,\\s*"));
+    providerNamesList.replaceAll(String::trim);
+    return providerNamesList;
   }
 
   void getProviderSpecificParams(ResourceDescriptor resource, List<FilterParamDescriptor> params,

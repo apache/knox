@@ -77,5 +77,20 @@ public class CompositeAuthzProviderTest {
     assertEquals(providerNames.get(3), "NoSpaces");
     assertEquals(providerNames.get(4), "MoreSpaces");
   }
+  @Test
+
+  public void testingNullandEmptyProviderNames() throws Exception {
+    String testnames = "";
+    CompositeAuthzDeploymentContributor c = new CompositeAuthzDeploymentContributor();
+    List providerNames = c.parseProviderNames(testnames);
+    assertEquals(providerNames.size(), 1);
+    assertEquals(providerNames.get(0), "");
+
+    testnames = null;
+    providerNames = c.parseProviderNames(testnames);
+    assertEquals(providerNames.size(), 1);
+    assertEquals(providerNames.get(0), "");
+
+  }
 }
 
