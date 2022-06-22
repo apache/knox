@@ -21,16 +21,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
+
 
 import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
 import org.apache.knox.gateway.descriptor.ResourceDescriptor;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertEquals;
 
 public class CompositeAuthzProviderTest {
   @Test
@@ -83,13 +85,19 @@ public class CompositeAuthzProviderTest {
     String testnames = "";
     CompositeAuthzDeploymentContributor c = new CompositeAuthzDeploymentContributor();
     List providerNames = c.parseProviderNames(testnames);
-    assertEquals(providerNames.size(), 1);
-    assertEquals(providerNames.get(0), "");
+    assertSame(providerNames.size(),0);
+    assertSame(providerNames,Collections.emptyList());
+
+    testnames = "  ";
+    providerNames = c.parseProviderNames(testnames);
+    assertSame(providerNames.size(),0);
+    assertSame(providerNames,Collections.emptyList());
 
     testnames = null;
     providerNames = c.parseProviderNames(testnames);
-    assertEquals(providerNames.size(), 1);
-    assertEquals(providerNames.get(0), "");
+    assertSame(providerNames.size(),0);
+    assertSame(providerNames,Collections.emptyList());
+
 
   }
 }

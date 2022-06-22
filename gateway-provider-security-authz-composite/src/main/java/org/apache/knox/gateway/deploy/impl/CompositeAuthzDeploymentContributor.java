@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.deploy.impl;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.deploy.DeploymentContext;
 import org.apache.knox.gateway.deploy.DeploymentFactory;
 import org.apache.knox.gateway.deploy.ProviderDeploymentContributorBase;
@@ -58,7 +59,7 @@ public class CompositeAuthzDeploymentContributor extends ProviderDeploymentContr
 
     Map<String, String> providerParams = provider.getParams();
     String providerNames = providerParams.get("composite.provider.names");
-    if (!providerNames.isEmpty()) {
+    if (!StringUtils.isEmpty(providerNames)) {
       List<String> names = parseProviderNames(providerNames);
       for (String name : names) {
         getProviderSpecificParams(resource, params, providerParams, name);
@@ -70,8 +71,8 @@ public class CompositeAuthzDeploymentContributor extends ProviderDeploymentContr
   }
 
   List parseProviderNames(String providerNames) {
-    if (providerNames==null){
-      return Collections.singletonList("");
+    if (providerNames==null || StringUtils.isEmpty(providerNames) || StringUtils.isBlank(providerNames)){
+      return Collections.emptyList();
     }
     List<String> providerNamesList = Arrays.asList(providerNames.split("\\s*,\\s*"));
     providerNamesList.replaceAll(String::trim);
