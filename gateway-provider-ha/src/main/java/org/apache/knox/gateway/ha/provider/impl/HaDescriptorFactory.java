@@ -20,10 +20,7 @@ package org.apache.knox.gateway.ha.provider.impl;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.ha.provider.HaDescriptor;
 import org.apache.knox.gateway.ha.provider.HaServiceConfig;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
@@ -47,15 +44,8 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
     final String stickySessionCookieName = configMap.getOrDefault(STICKY_SESSION_COOKIE_NAME, DEFAULT_STICKY_SESSION_COOKIE_NAME);
 
     final String disableLoadBalancingForUserAgentsConfig = configMap.getOrDefault(DISABLE_LB_USER_AGENTS, DEFAULT_DISABLE_LB_USER_AGENTS);
-    /* configured user agents are comma separate list which *can* contain whitespaces */
-    List<String> disableLoadBalancingForUserAgents = Collections.EMPTY_LIST;
-    if(StringUtils.isNotBlank(disableLoadBalancingForUserAgentsConfig)) {
-      disableLoadBalancingForUserAgents = Arrays.asList(disableLoadBalancingForUserAgentsConfig
-              .trim()
-              .split("\\s*,\\s*"));
-    }
     return createServiceConfig(serviceName, enabled, maxFailoverAttempts, failoverSleep, zookeeperEnsemble, zookeeperNamespace, stickySessionsEnabled, loadBalancingEnabled,
-            stickySessionCookieName, noFallbackEnabled, disableLoadBalancingForUserAgents);
+            stickySessionCookieName, noFallbackEnabled, disableLoadBalancingForUserAgentsConfig);
   }
 
   /**
@@ -78,8 +68,8 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
                                                      String maxFailoverAttemptsValue, String failoverSleepValue,
                                                      String zookeeperEnsemble, String zookeeperNamespace,
                                                      String loadBalancingEnabledValue, String stickySessionsEnabledValue,
-                                                     String stickySessionCookieNameValue,
-                                                     String noFallbackEnabledValue) {
+                                                     String stickySessionCookieNameValue, String noFallbackEnabledValue,
+                                                     String disableLoadBalancingForUserAgentsValue) {
       boolean enabled = DEFAULT_ENABLED;
       int maxFailoverAttempts = DEFAULT_MAX_FAILOVER_ATTEMPTS;
       int failoverSleep = DEFAULT_FAILOVER_SLEEP;
@@ -87,6 +77,7 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
       boolean loadBalancingEnabled = DEFAULT_LOAD_BALANCING_ENABLED;
       boolean noFallbackEnabled = DEFAULT_NO_FALLBACK_ENABLED;
       String stickySessionCookieName = DEFAULT_STICKY_SESSION_COOKIE_NAME;
+      String disableLoadBalancingForUserAgentsConfig = DEFAULT_DISABLE_LB_USER_AGENTS;
       if (enabledValue != null && !enabledValue.trim().isEmpty()) {
          enabled = Boolean.parseBoolean(enabledValue);
       }
@@ -108,9 +99,12 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
       if (noFallbackEnabledValue != null && !noFallbackEnabledValue.trim().isEmpty()) {
          noFallbackEnabled = Boolean.parseBoolean(noFallbackEnabledValue);
       }
+      if(StringUtils.isNotBlank(disableLoadBalancingForUserAgentsValue)) {
+        disableLoadBalancingForUserAgentsConfig = disableLoadBalancingForUserAgentsValue;
+      }
 
      return createServiceConfig(serviceName, enabled, maxFailoverAttempts, failoverSleep, zookeeperEnsemble, zookeeperNamespace, stickySessionsEnabled, loadBalancingEnabled,
-             stickySessionCookieName, noFallbackEnabled, Arrays.asList(DEFAULT_DISABLE_LB_USER_AGENTS));
+             stickySessionCookieName, noFallbackEnabled, disableLoadBalancingForUserAgentsConfig);
    }
 
   private static DefaultHaServiceConfig createServiceConfig(final String serviceName, final boolean enabled,
@@ -118,7 +112,7 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
           final String zookeeperEnsemble, final String zookeeperNamespace,
           final boolean stickySessionsEnabled, final boolean loadBalancingEnabled,
           final String stickySessionCookieName,
-          final boolean noFallbackEnabled, final List<String> disableStickySessionForUserAgents) {
+          final boolean noFallbackEnabled, final String disableStickySessionForUserAgents) {
     DefaultHaServiceConfig serviceConfig = new DefaultHaServiceConfig(serviceName);
     serviceConfig.setEnabled(enabled);
     serviceConfig.setMaxFailoverAttempts(maxFailoverAttempts);

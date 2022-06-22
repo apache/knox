@@ -69,7 +69,7 @@ public class ConfigurableHADispatchTest {
   public void testHADispatchURL() throws Exception {
     String serviceName = "HIVE";
     HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", "true", null, null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", "true", null, null, null));
     HaProvider provider = new DefaultHaProvider(descriptor);
     URI uri1 = new URI("http://host1.valid");
     URI uri2 = new URI("http://host2.valid");
@@ -105,7 +105,7 @@ public class ConfigurableHADispatchTest {
   public void testSetCookieHeader() throws Exception {
     String serviceName = "HIVE";
     HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", "true", null, null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", "true", null, null,null));
     HaProvider provider = new DefaultHaProvider(descriptor);
     URI uri1 = new URI( "http://host1.valid" );
     URI uri2 = new URI( "http://host2.valid" );
