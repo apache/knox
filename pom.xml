@@ -252,7 +252,7 @@
         <opensaml.version>3.4.5</opensaml.version>
         <pac4j.version>4.5.2</pac4j.version>
         <postgresql.version>42.3.3</postgresql.version>
-        <mysql.version>8.0.25</mysql.version>
+        <mysql.version>8.0.28</mysql.version>
         <protobuf.version>3.16.1</protobuf.version>
         <rest-assured.version>4.3.3</rest-assured.version>
         <shiro.version>1.8.0</shiro.version>
