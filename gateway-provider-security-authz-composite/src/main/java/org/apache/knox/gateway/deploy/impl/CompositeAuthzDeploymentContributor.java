@@ -71,7 +71,7 @@ public class CompositeAuthzDeploymentContributor extends ProviderDeploymentContr
   }
 
   List parseProviderNames(String providerNames) {
-    if (providerNames==null || StringUtils.isEmpty(providerNames) || StringUtils.isBlank(providerNames)){
+    if (providerNames==null || StringUtils.isBlank(providerNames)){
       return Collections.emptyList();
     }
     List<String> providerNamesList = Arrays.asList(providerNames.split("\\s*,\\s*"));
