@@ -58,7 +58,7 @@ public class RMHaDispatchTest {
     public void testConnectivityFailure() throws Exception {
         String serviceName = "RESOURCEMANAGER";
         HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-        descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, null, null, null, null));
+        descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, null, null, null, null,null));
         HaProvider provider = new DefaultHaProvider(descriptor);
         URI uri1 = new URI("http://unreachable-host.invalid");
         URI uri2 = new URI("http://reachable-host.invalid");
@@ -129,7 +129,7 @@ public class RMHaDispatchTest {
     public void testConnectivityFailover() throws Exception {
         String serviceName = "RESOURCEMANAGER";
         HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-        descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, null, null, null, null));
+        descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, null, null, null, null,null));
         HaProvider provider = new DefaultHaProvider(descriptor);
         URI uri1 = new URI("http://passive-host.invalid");
         URI uri2 = new URI("http://other-host.invalid");

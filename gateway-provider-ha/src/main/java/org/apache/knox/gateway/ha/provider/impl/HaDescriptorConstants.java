@@ -51,4 +51,6 @@ public interface HaDescriptorConstants {
    String ENABLE_NO_FALLBACK = "noFallback";
 
    String STICKY_SESSION_COOKIE_NAME = "stickySessionCookieName";
+
+   String DISABLE_LB_USER_AGENTS = "disableLoadBalancingForUserAgents";
 }
