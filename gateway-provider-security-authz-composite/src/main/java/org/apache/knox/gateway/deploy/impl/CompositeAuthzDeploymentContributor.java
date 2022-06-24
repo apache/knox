@@ -59,16 +59,14 @@ public class CompositeAuthzDeploymentContributor extends ProviderDeploymentContr
 
     Map<String, String> providerParams = provider.getParams();
     String providerNames = providerParams.get("composite.provider.names");
-    if (!StringUtils.isEmpty(providerNames)) {
-      List<String> names = parseProviderNames(providerNames);
-      for (String name : names) {
-        getProviderSpecificParams(resource, params, providerParams, name);
-        DeploymentFactory.getProviderContributor("authorization", name)
-                .contributeFilter(context, provider, service, resource, params);
-        params.clear();
+    List<String> names = parseProviderNames(providerNames);
+    for (String name : names) {
+      getProviderSpecificParams(resource, params, providerParams, name);
+      DeploymentFactory.getProviderContributor("authorization", name)
+              .contributeFilter(context, provider, service, resource, params);
+      params.clear();
       }
     }
-  }
 
    List<String> parseProviderNames(String providerNames) {
     if (StringUtils.isBlank(providerNames)){

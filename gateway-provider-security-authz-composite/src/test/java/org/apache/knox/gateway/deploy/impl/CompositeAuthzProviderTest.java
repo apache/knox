@@ -96,8 +96,6 @@ public class CompositeAuthzProviderTest {
     providerNames = c.parseProviderNames(testnames);
     assertEquals(0,providerNames.size());
     assertEquals(Collections.emptyList(), providerNames);
-
-
   }
 }
 
