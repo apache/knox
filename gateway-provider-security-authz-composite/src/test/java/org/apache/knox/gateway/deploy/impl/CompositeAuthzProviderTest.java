@@ -31,7 +31,6 @@ import org.junit.Test;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertEquals;
 
 public class CompositeAuthzProviderTest {
@@ -61,10 +60,10 @@ public class CompositeAuthzProviderTest {
     String names = "AclsAuthz,   SomeOther,TheOtherOne";
     CompositeAuthzDeploymentContributor c = new CompositeAuthzDeploymentContributor();
     List providerNames = c.parseProviderNames(names);
-    assertEquals(providerNames.size(), 3);
-    assertEquals(providerNames.get(0), "AclsAuthz");
-    assertEquals(providerNames.get(1), "SomeOther");
-    assertEquals(providerNames.get(2), "TheOtherOne");
+    assertEquals(3, providerNames.size());
+    assertEquals("AclsAuthz", providerNames.get(0));
+    assertEquals("SomeOther", providerNames.get(1));
+    assertEquals("TheOtherOne", providerNames.get(2));
   }
 
   @Test
@@ -72,12 +71,12 @@ public class CompositeAuthzProviderTest {
     String testnames = " SpaceBefore,SpaceAfter , SpaceBeforeandAfter ,NoSpaces,   MoreSpaces   ";
     CompositeAuthzDeploymentContributor c = new CompositeAuthzDeploymentContributor();
     List providerNames = c.parseProviderNames(testnames);
-    assertEquals(providerNames.size(), 5);
-    assertEquals(providerNames.get(0), "SpaceBefore");
-    assertEquals(providerNames.get(1), "SpaceAfter");
-    assertEquals(providerNames.get(2), "SpaceBeforeandAfter");
-    assertEquals(providerNames.get(3), "NoSpaces");
-    assertEquals(providerNames.get(4), "MoreSpaces");
+    assertEquals(5, providerNames.size());
+    assertEquals("SpaceBefore", providerNames.get(0));
+    assertEquals("SpaceAfter", providerNames.get(1));
+    assertEquals("SpaceBeforeandAfter", providerNames.get(2));
+    assertEquals("NoSpaces", providerNames.get(3));
+    assertEquals("MoreSpaces", providerNames.get(4));
   }
   @Test
 
@@ -85,18 +84,18 @@ public class CompositeAuthzProviderTest {
     String testnames = "";
     CompositeAuthzDeploymentContributor c = new CompositeAuthzDeploymentContributor();
     List providerNames = c.parseProviderNames(testnames);
-    assertSame(providerNames.size(),0);
-    assertSame(providerNames,Collections.emptyList());
+    assertEquals(0,providerNames.size());
+    assertEquals(Collections.emptyList(), providerNames);
 
     testnames = "  ";
     providerNames = c.parseProviderNames(testnames);
-    assertSame(providerNames.size(),0);
-    assertSame(providerNames,Collections.emptyList());
+    assertEquals(0, providerNames.size());
+    assertEquals(Collections.emptyList(), providerNames);
 
     testnames = null;
     providerNames = c.parseProviderNames(testnames);
-    assertSame(providerNames.size(),0);
-    assertSame(providerNames,Collections.emptyList());
+    assertEquals(0,providerNames.size());
+    assertEquals(Collections.emptyList(), providerNames);
 
 
   }

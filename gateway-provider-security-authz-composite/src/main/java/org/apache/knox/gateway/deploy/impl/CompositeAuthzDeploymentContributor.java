@@ -70,7 +70,7 @@ public class CompositeAuthzDeploymentContributor extends ProviderDeploymentContr
     }
   }
 
-  List parseProviderNames(String providerNames) {
+   List<String> parseProviderNames(String providerNames) {
     if (StringUtils.isBlank(providerNames)){
       return Collections.emptyList();
     }
