@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.deploy.impl;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.deploy.DeploymentContext;
 import org.apache.knox.gateway.deploy.DeploymentFactory;
 import org.apache.knox.gateway.deploy.ProviderDeploymentContributorBase;
@@ -30,6 +31,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Collections;
+import java.util.Arrays;
 
 public class CompositeAuthzDeploymentContributor extends ProviderDeploymentContributorBase {
   @Override
@@ -56,23 +59,22 @@ public class CompositeAuthzDeploymentContributor extends ProviderDeploymentContr
 
     Map<String, String> providerParams = provider.getParams();
     String providerNames = providerParams.get("composite.provider.names");
-    if (!providerNames.isEmpty()) {
-    String[] names = parseProviderNames(providerNames);
+    List<String> names = parseProviderNames(providerNames);
     for (String name : names) {
       getProviderSpecificParams(resource, params, providerParams, name);
       DeploymentFactory.getProviderContributor("authorization", name)
               .contributeFilter(context, provider, service, resource, params);
       params.clear();
+      }
     }
-    }
-  }
 
-  String[] parseProviderNames(String providerNames) {
-    String[] b = providerNames.split("\\s*,\\s*");
-    for (int i = 0; i < b.length; i++) {
-      b[i] = b[i].trim();
+   List<String> parseProviderNames(String providerNames) {
+    if (StringUtils.isBlank(providerNames)){
+      return Collections.emptyList();
     }
-    return b;
+    List<String> providerNamesList = Arrays.asList(providerNames.split("\\s*,\\s*"));
+    providerNamesList.replaceAll(String::trim);
+    return providerNamesList;
   }
 
   void getProviderSpecificParams(ResourceDescriptor resource, List<FilterParamDescriptor> params,
