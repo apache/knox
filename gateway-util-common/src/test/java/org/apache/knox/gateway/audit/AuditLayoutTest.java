@@ -115,6 +115,7 @@ public class AuditLayoutTest {
         RESOURCE_TYPE, RESOURCE_NAME, OUTCOME, MESSAGE, System.lineSeparator() );
     String auditOutput = layout.toSerializable( event );
     assertThat( auditOutput, is( expectedOutput ) );
+    //hello world
   }
 
   @Test
