@@ -128,12 +128,14 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
 
     if (doesRetryParamExist(filterConfig)) {
       int retryCount = Integer.parseInt(filterConfig.getInitParameter(PARAMETER_RETRY_COUNT));
+      LOG.setRetryCount(retryCount, serviceRole);
       /* do we want to retry non-idempotent requests? default no */
       boolean retryNonIdempotent = DEFAULT_PARAMETER_RETRY_NON_SAFE_REQUEST;
       if (filterConfig.getInitParameter(PARAMETER_RETRY_NON_SAFE_REQUEST)
           != null) {
         retryNonIdempotent = Boolean.parseBoolean(
             filterConfig.getInitParameter(PARAMETER_RETRY_NON_SAFE_REQUEST));
+        LOG.setRetryNonIndependent(retryNonIdempotent, serviceRole);
       }
       builder.setRetryHandler(new DefaultHttpRequestRetryHandler(retryCount,
           retryNonIdempotent));
