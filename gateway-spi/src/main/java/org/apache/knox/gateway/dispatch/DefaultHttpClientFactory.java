@@ -135,8 +135,8 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
           != null) {
         retryNonIdempotent = Boolean.parseBoolean(
             filterConfig.getInitParameter(PARAMETER_RETRY_NON_SAFE_REQUEST));
-        LOG.setRetryNonIndependent(retryNonIdempotent, serviceRole);
       }
+      LOG.setRetryNonIndependent(retryNonIdempotent, serviceRole);
       builder.setRetryHandler(new DefaultHttpRequestRetryHandler(retryCount,
           retryNonIdempotent));
     }

@@ -91,11 +91,11 @@ public interface SpiGatewayMessages {
             text = "The dispatch to {0} was disallowed because it fails the dispatch whitelist validation. See documentation for dispatch whitelisting." )
   void dispatchDisallowed(String uri);
 
-  @Message( level = MessageLevel.INFO, text = "HTTP client connection timeout is set to {0} msec for {1}" )
+  @Message( level = MessageLevel.INFO, text = "HTTP client connection timeout is set to {0} ms for {1}" )
   void setHttpClientConnectionTimeout(int connectionTimeout, String serviceRole);
 
-  @Message( level = MessageLevel.INFO, text = "HTTP client socket timeout is set to {0} msec for {1}" )
-  void setHttpClientSocketTimeout(int csocketTimeout, String serviceRole);
+  @Message( level = MessageLevel.INFO, text = "HTTP client socket timeout is set to {0} ms for {1}" )
+  void setHttpClientSocketTimeout(int socketTimeout, String serviceRole);
 
   @Message( level = MessageLevel.DEBUG, text = "replayBufferSize is set to {0} for {1}" )
   void setReplayBufferSize(int replayBufferSize, String serviceRole);
