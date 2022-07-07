@@ -300,6 +300,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return excludedSSLCiphers;
   }
 
+  @Override
+  public boolean isSSLRenegotiationAllowed() {
+    return true;
+  }
+
   public void setExcludedSSLCiphers( List<String> list ) {
     excludedSSLCiphers = list;
   }

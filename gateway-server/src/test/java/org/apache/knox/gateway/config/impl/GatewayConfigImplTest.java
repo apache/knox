@@ -165,6 +165,18 @@ public class GatewayConfigImplTest {
     assertThat( config.getExcludedSSLCiphers(), is(hasItems("ONE","TWO","THREE")) );
   }
 
+  // KNOX-2772
+  @Test
+  public void testisSSLRenegotiationAllowed() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+    boolean isSSLRenegotiationAllowed = config.isSSLRenegotiationAllowed();
+    assertThat( isSSLRenegotiationAllowed, is(true));
+
+    config.set("ssl.renegotiation", "false");
+    isSSLRenegotiationAllowed = config.isSSLRenegotiationAllowed();
+    assertThat( isSSLRenegotiationAllowed, is(false));
+  }
+
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
   public void testGlobalRulesServices() {
     GatewayConfigImpl config = new GatewayConfigImpl();
