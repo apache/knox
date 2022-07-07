@@ -97,7 +97,7 @@ public interface SpiGatewayMessages {
   @Message( level = MessageLevel.INFO, text = "HTTP client socket timeout is set to {0} ms for {1}" )
   void setHttpClientSocketTimeout(int socketTimeout, String serviceRole);
 
-  @Message( level = MessageLevel.DEBUG, text = "replayBufferSize is set to {0} for {1}" )
+  @Message( level = MessageLevel.INFO, text = "replayBufferSize is set to {0} for {1}" )
   void setReplayBufferSize(int replayBufferSize, String serviceRole);
 
   @Message( level = MessageLevel.DEBUG, text = "Using two way SSL in {0}" )
