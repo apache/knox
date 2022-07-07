@@ -228,7 +228,7 @@
         <jee-pac4j.version>5.0.0</jee-pac4j.version>
         <jericho-html.version>3.4</jericho-html.version>
         <jersey.version>2.6</jersey.version>
-        <jetty.version>9.4.45.v20220203</jetty.version>
+        <jetty.version>9.4.48.v20220622</jetty.version>
         <jline.version>2.14.6</jline.version>
         <jna.version>5.6.0</jna.version>
         <joda-time.version>2.10.8</joda-time.version>
