@@ -44,7 +44,7 @@ declare -a APP_JAVA_OPTS
 
 #status-based test related variables
 DEFAULT_APP_STATUS_TEST_RETRY_ATTEMPTS=5
-DEFAULT_APP_STATUS_TEST_RETRY_SLEEP=2s
+DEFAULT_APP_STATUS_TEST_RETRY_SLEEP=2
 
 ############################
 ##### common functions #####
