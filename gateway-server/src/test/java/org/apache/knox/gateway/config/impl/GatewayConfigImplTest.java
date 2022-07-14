@@ -24,6 +24,8 @@ import org.junit.Test;
 
 import java.nio.file.Paths;
 import java.security.KeyStore;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -424,4 +426,48 @@ public class GatewayConfigImplTest {
     assertEquals("myTokenStateService", gatewayConfig.getServiceParameter("tokenstate", "impl"));
   }
 
+  @Test
+  public void testDefaultConcurrentSessionLimitParameters(){
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    assertThat( config.getPrivilegedUserConcurrentSessionLimit(), is(3) );
+    assertThat( config.getNonPrivilegedUserConcurrentSessionLimit(), is(2) );
+    assertThat( config.getPrivilegedUsers(), is(new HashSet<>()) );
+    assertThat( config.getNonPrivilegedUsers(), is(new HashSet<>()) );
+  }
+  @Test
+  public void testNormalConcurrentSessionLimitParameters(){
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    config.set( "gateway.privileged.user.concurrent.session.limit", "5" );
+    assertThat( config.getPrivilegedUserConcurrentSessionLimit(), is(5));
+    config.set( "gateway.non.privileged.user.concurrent.session.limit", "6" );
+    assertThat( config.getNonPrivilegedUserConcurrentSessionLimit(), is(6));
+    config.set( "gateway.privileged.users", "admin,jeff" );
+    assertThat( config.getPrivilegedUsers(), is(new HashSet<>(Arrays.asList("admin", "jeff"))));
+    config.set( "gateway.non.privileged.users", "tom,sam" );
+    assertThat( config.getNonPrivilegedUsers(), is(new HashSet<>(Arrays.asList("tom", "sam"))));
+  }
+
+  @Test
+  public void testAbnormalConcurrentSessionLimitParameters(){
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    config.set( "gateway.privileged.users", "" );
+    assertThat( config.getPrivilegedUsers(), is(new HashSet<>()));
+    config.set( "gateway.non.privileged.users", "");
+    config.set( "gateway.privileged.users", "   " );
+    assertThat( config.getPrivilegedUsers(), is(new HashSet<>()));
+    config.set( "gateway.non.privileged.users", "   ");
+    assertThat( config.getNonPrivilegedUsers(), is(new HashSet<>()));
+
+    config.set( "gateway.privileged.users", " admin , jeff " );
+    assertThat( config.getPrivilegedUsers(), is(new HashSet<>(Arrays.asList("admin", "jeff"))));
+    config.set( "gateway.non.privileged.users", " tom , sam " );
+    assertThat( config.getNonPrivilegedUsers(), is(new HashSet<>(Arrays.asList("tom", "sam"))));
+    config.set( "gateway.privileged.users", "  guest  " );
+    assertThat( config.getPrivilegedUsers(), is(new HashSet<>(Arrays.asList("guest"))));
+    config.set( "gateway.non.privileged.users", "  guest  " );
+    assertThat( config.getNonPrivilegedUsers(), is(new HashSet<>(Arrays.asList("guest"))));
+  }
 }

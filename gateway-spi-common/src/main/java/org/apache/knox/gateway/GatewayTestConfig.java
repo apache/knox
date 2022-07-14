@@ -940,4 +940,24 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public int getJettyMaxFormKeys() {
     return 0;
   }
+
+  @Override
+  public int getPrivilegedUserConcurrentSessionLimit() {
+    return 0;
+  }
+
+  @Override
+  public int getNonPrivilegedUserConcurrentSessionLimit() {
+    return 0;
+  }
+
+  @Override
+  public Set<String> getPrivilegedUsers() {
+    return null;
+  }
+
+  @Override
+  public Set<String> getNonPrivilegedUsers() {
+    return null;
+  }
 }
