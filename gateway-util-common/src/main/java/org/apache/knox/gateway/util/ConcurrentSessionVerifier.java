@@ -41,8 +41,9 @@ public class ConcurrentSessionVerifier {
     }
 
     public  static boolean verifySessionForUser(String username){
-        if(!privilegedUsers.contains(username) && !nonPrivilegedUsers.contains(username))
+        if(!privilegedUsers.contains(username) && !nonPrivilegedUsers.contains(username)) {
             return true;
+        }
         if(!concurrentSessionCounter.containsKey(username)){
             concurrentSessionCounter.put(username, 0);
         }
@@ -65,10 +66,11 @@ public class ConcurrentSessionVerifier {
         if(concurrentSessionCounter.containsKey(username)){
             int count = concurrentSessionCounter.get(username);
             count--;
-            if(count < 0)
+            if(count < 0) {
                 concurrentSessionCounter.put(username, 0);
-            else
+            }else {
                 concurrentSessionCounter.put(username, count);
+            }
         }
     }
 }
