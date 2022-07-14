@@ -1346,19 +1346,21 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public int getPrivilegedUserConcurrentSessionLimit(){
     int limit = getInt(GATEWAY_PRIVILEGED_USER_CONCURRENT_SESSION_LIMIT, GATEWAY_PRIVILEGED_USER_CONCURRENT_SESSION_LIMIT_DEFAULT);
-    if(limit < 0)
+    if(limit < 0) {
       return GATEWAY_PRIVILEGED_USER_CONCURRENT_SESSION_LIMIT_DEFAULT;
-    else
+    }else {
       return limit;
+    }
   }
 
   @Override
   public int getNonPrivilegedUserConcurrentSessionLimit(){
     int limit = getInt(GATEWAY_NON_PRIVILEGED_USER_CONCURRENT_SESSION_LIMIT, GATEWAY_NON_PRIVILEGED_USER_CONCURRENT_SESSION_LIMIT_DEFAULT);
-    if(limit < 0)
+    if(limit < 0) {
       return GATEWAY_NON_PRIVILEGED_USER_CONCURRENT_SESSION_LIMIT_DEFAULT;
-    else
+    }else {
       return limit;
+    }
   }
 
   @Override
