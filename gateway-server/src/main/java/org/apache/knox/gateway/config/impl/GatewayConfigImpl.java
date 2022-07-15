@@ -294,12 +294,14 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String GATEWAY_DATABASE_TRUSTSTORE_FILE =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.truststore.file";
 
   // Concurrent session properties
-  private static final String GATEWAY_PRIVILEGED_USER_CONCURRENT_SESSION_LIMIT =  GATEWAY_CONFIG_FILE_PREFIX + ".privileged.user.concurrent.session.limit";
-  private static final String GATEWAY_NON_PRIVILEGED_USER_CONCURRENT_SESSION_LIMIT =  GATEWAY_CONFIG_FILE_PREFIX + ".non.privileged.user.concurrent.session.limit";
-  private static final int GATEWAY_PRIVILEGED_USER_CONCURRENT_SESSION_LIMIT_DEFAULT = 3;
-  private static final int GATEWAY_NON_PRIVILEGED_USER_CONCURRENT_SESSION_LIMIT_DEFAULT = 2;
-  private static final String GATEWAY_PRIVILEGED_USERS = GATEWAY_CONFIG_FILE_PREFIX + ".privileged.users";
-  private static final String GATEWAY_NON_PRIVILEGED_USERS = GATEWAY_CONFIG_FILE_PREFIX + ".non.privileged.users";
+  private static final String PRIVILEGED_USERS = "privileged.users";
+  private static final String NON_PRIVILEGED_USERS = "non." + PRIVILEGED_USERS;
+  private static final String GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT =  GATEWAY_CONFIG_FILE_PREFIX + "." + PRIVILEGED_USERS + ".concurrent.session.limit";
+  private static final String GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT =  GATEWAY_CONFIG_FILE_PREFIX + "." + NON_PRIVILEGED_USERS + ".concurrent.session.limit";
+  private static final int GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT = 3;
+  private static final int GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT = 2;
+  private static final String GATEWAY_PRIVILEGED_USERS = GATEWAY_CONFIG_FILE_PREFIX + "." + PRIVILEGED_USERS;
+  private static final String GATEWAY_NON_PRIVILEGED_USERS = GATEWAY_CONFIG_FILE_PREFIX + "." + NON_PRIVILEGED_USERS;
 
   public GatewayConfigImpl() {
     init();
@@ -1344,20 +1346,20 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public int getPrivilegedUserConcurrentSessionLimit(){
-    int limit = getInt(GATEWAY_PRIVILEGED_USER_CONCURRENT_SESSION_LIMIT, GATEWAY_PRIVILEGED_USER_CONCURRENT_SESSION_LIMIT_DEFAULT);
+  public int getPrivilegedUsersConcurrentSessionLimit(){
+    int limit = getInt(GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT, GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT);
     if(limit < 0) {
-      return GATEWAY_PRIVILEGED_USER_CONCURRENT_SESSION_LIMIT_DEFAULT;
+      return GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT;
     }else {
       return limit;
     }
   }
 
   @Override
-  public int getNonPrivilegedUserConcurrentSessionLimit(){
-    int limit = getInt(GATEWAY_NON_PRIVILEGED_USER_CONCURRENT_SESSION_LIMIT, GATEWAY_NON_PRIVILEGED_USER_CONCURRENT_SESSION_LIMIT_DEFAULT);
+  public int getNonPrivilegedUsersConcurrentSessionLimit(){
+    int limit = getInt(GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT, GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT);
     if(limit < 0) {
-      return GATEWAY_NON_PRIVILEGED_USER_CONCURRENT_SESSION_LIMIT_DEFAULT;
+      return GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT;
     }else {
       return limit;
     }
@@ -1365,29 +1367,27 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public Set<String> getPrivilegedUsers(){
-    Set<String> set = new HashSet<>();
+    Set<String> privUsers = new HashSet<>();
 
     String value = get( GATEWAY_PRIVILEGED_USERS );
-    if ((value != null) && (!value.trim().equals("")) ) {
+    if(!StringUtils.isBlank(value)) {
       List<String> temp = new ArrayList<>(Arrays.asList(value.split(",")));
-      temp.forEach(e -> { temp.set(temp.indexOf(e), e.trim()); });
-      set.addAll(temp);
+      temp.forEach(e -> { privUsers.add(e.trim()); });
     }
 
-    return set;
+    return privUsers;
   }
 
   @Override
   public Set<String> getNonPrivilegedUsers(){
-    Set<String> set = new HashSet<>();
+    Set<String> nonPrivUsers = new HashSet<>();
 
     String value = get( GATEWAY_NON_PRIVILEGED_USERS );
-    if ((value != null) && (!value.trim().equals("")) ) {
+    if(!StringUtils.isBlank(value)) {
       List<String> temp = new ArrayList<>(Arrays.asList(value.split(",")));
-      temp.forEach(e -> { temp.set(temp.indexOf(e), e.trim()); });
-      set.addAll(temp);
+      temp.forEach(e -> { nonPrivUsers.add(e.trim()); });
     }
 
-    return set;
+    return nonPrivUsers;
   }
 }

@@ -942,12 +942,12 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public int getPrivilegedUserConcurrentSessionLimit() {
+  public int getPrivilegedUsersConcurrentSessionLimit() {
     return 0;
   }
 
   @Override
-  public int getNonPrivilegedUserConcurrentSessionLimit() {
+  public int getNonPrivilegedUsersConcurrentSessionLimit() {
     return 0;
   }
 

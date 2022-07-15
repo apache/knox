@@ -32,11 +32,11 @@ public class ConcurrentSessionVerifier {
 
     private ConcurrentSessionVerifier(){}
 
-    public static void init(Set<String> _privilegedUsers, Set<String> _nonPrivilegedUsers, int _privilegedUserConcurrentSessionLimit, int _nonPrivilegedUserConcurrentSessionLimit){
-        privilegedUsers = _privilegedUsers;
-        nonPrivilegedUsers = _nonPrivilegedUsers;
-        privilegedUserConcurrentSessionLimit = _privilegedUserConcurrentSessionLimit;
-        nonPrivilegedUserConcurrentSessionLimit = _nonPrivilegedUserConcurrentSessionLimit;
+    public static void init(Set<String> privilegedUsers, Set<String> nonPrivilegedUsers, int privilegedUserConcurrentSessionLimit, int nonPrivilegedUserConcurrentSessionLimit){
+        ConcurrentSessionVerifier.privilegedUsers = privilegedUsers;
+        ConcurrentSessionVerifier.nonPrivilegedUsers = nonPrivilegedUsers;
+        ConcurrentSessionVerifier.privilegedUserConcurrentSessionLimit = privilegedUserConcurrentSessionLimit;
+        ConcurrentSessionVerifier.nonPrivilegedUserConcurrentSessionLimit = nonPrivilegedUserConcurrentSessionLimit;
         concurrentSessionCounter = new HashMap<>();
     }
 

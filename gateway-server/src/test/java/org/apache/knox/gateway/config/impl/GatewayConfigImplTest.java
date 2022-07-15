@@ -430,8 +430,8 @@ public class GatewayConfigImplTest {
   public void testDefaultConcurrentSessionLimitParameters(){
     GatewayConfigImpl config = new GatewayConfigImpl();
 
-    assertThat( config.getPrivilegedUserConcurrentSessionLimit(), is(3) );
-    assertThat( config.getNonPrivilegedUserConcurrentSessionLimit(), is(2) );
+    assertThat( config.getPrivilegedUsersConcurrentSessionLimit(), is(3) );
+    assertThat( config.getNonPrivilegedUsersConcurrentSessionLimit(), is(2) );
     assertThat( config.getPrivilegedUsers(), is(new HashSet<>()) );
     assertThat( config.getNonPrivilegedUsers(), is(new HashSet<>()) );
   }
@@ -439,10 +439,10 @@ public class GatewayConfigImplTest {
   public void testNormalConcurrentSessionLimitParameters(){
     GatewayConfigImpl config = new GatewayConfigImpl();
 
-    config.set( "gateway.privileged.user.concurrent.session.limit", "5" );
-    assertThat( config.getPrivilegedUserConcurrentSessionLimit(), is(5));
-    config.set( "gateway.non.privileged.user.concurrent.session.limit", "6" );
-    assertThat( config.getNonPrivilegedUserConcurrentSessionLimit(), is(6));
+    config.set( "gateway.privileged.users.concurrent.session.limit", "5" );
+    assertThat( config.getPrivilegedUsersConcurrentSessionLimit(), is(5));
+    config.set( "gateway.non.privileged.users.concurrent.session.limit", "6" );
+    assertThat( config.getNonPrivilegedUsersConcurrentSessionLimit(), is(6));
     config.set( "gateway.privileged.users", "admin,jeff" );
     assertThat( config.getPrivilegedUsers(), is(new HashSet<>(Arrays.asList("admin", "jeff"))));
     config.set( "gateway.non.privileged.users", "tom,sam" );
