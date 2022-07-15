@@ -18,45 +18,46 @@
 package org.apache.knox.gateway.util;
 
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ConcurrentSessionVerifier {
     private static Set<String> privilegedUsers = new HashSet<>();
     private static Set<String> nonPrivilegedUsers = new HashSet<>();;
     private static int privilegedUserConcurrentSessionLimit = 3;
     private static int nonPrivilegedUserConcurrentSessionLimit = 2;
-    private static Map<String, Integer> concurrentSessionCounter = new HashMap<>();
+    private static Map<String, Integer> concurrentSessionCounter = new ConcurrentHashMap<>();
+    private static final Object lock = new Object();
 
     private ConcurrentSessionVerifier(){}
 
-    public static void init(Set<String> privilegedUsers, Set<String> nonPrivilegedUsers, int privilegedUserConcurrentSessionLimit, int nonPrivilegedUserConcurrentSessionLimit){
+    public static synchronized void init(Set<String> privilegedUsers, Set<String> nonPrivilegedUsers, int privilegedUserConcurrentSessionLimit, int nonPrivilegedUserConcurrentSessionLimit){
         ConcurrentSessionVerifier.privilegedUsers = privilegedUsers;
         ConcurrentSessionVerifier.nonPrivilegedUsers = nonPrivilegedUsers;
         ConcurrentSessionVerifier.privilegedUserConcurrentSessionLimit = privilegedUserConcurrentSessionLimit;
         ConcurrentSessionVerifier.nonPrivilegedUserConcurrentSessionLimit = nonPrivilegedUserConcurrentSessionLimit;
-        concurrentSessionCounter = new HashMap<>();
+        concurrentSessionCounter = new ConcurrentHashMap<>();
     }
 
-    public  static boolean verifySessionForUser(String username){
+    public static boolean verifySessionForUser(String username){
         if(!privilegedUsers.contains(username) && !nonPrivilegedUsers.contains(username)) {
             return true;
         }
-        if(!concurrentSessionCounter.containsKey(username)){
-            concurrentSessionCounter.put(username, 0);
+        synchronized(lock) {
+            if (!concurrentSessionCounter.containsKey(username)) {
+                concurrentSessionCounter.put(username, 0);
+            }
+            if ((privilegedUsers.contains(username) && !(concurrentSessionCounter.get(username) < privilegedUserConcurrentSessionLimit)) || (nonPrivilegedUsers.contains(username) && !(concurrentSessionCounter.get(username) < nonPrivilegedUserConcurrentSessionLimit))) {
+                return false;
+            }
+            incrementConcurrentSessionCount(username);
         }
-
-        if((privilegedUsers.contains(username) && !(concurrentSessionCounter.get(username) < privilegedUserConcurrentSessionLimit)) || (nonPrivilegedUsers.contains(username) && !(concurrentSessionCounter.get(username) < nonPrivilegedUserConcurrentSessionLimit))){
-            return false;
-        }
-
-        incrementConcurrentSessionCount(username);
         return true;
     }
 
-    private static void incrementConcurrentSessionCount(String username){
+    private static synchronized void incrementConcurrentSessionCount(String username){
         int count = concurrentSessionCounter.get(username);
         count++;
         concurrentSessionCounter.put(username, count);
@@ -64,12 +65,14 @@ public class ConcurrentSessionVerifier {
 
     public static void sessionEndedForUser(String username){
         if(concurrentSessionCounter.containsKey(username)){
-            int count = concurrentSessionCounter.get(username);
-            count--;
-            if(count < 0) {
-                concurrentSessionCounter.put(username, 0);
-            }else {
-                concurrentSessionCounter.put(username, count);
+            synchronized(lock) {
+                int count = concurrentSessionCounter.get(username);
+                count--;
+                if (count < 0) {
+                    concurrentSessionCounter.put(username, 0);
+                } else {
+                    concurrentSessionCounter.put(username, count);
+                }
             }
         }
     }
