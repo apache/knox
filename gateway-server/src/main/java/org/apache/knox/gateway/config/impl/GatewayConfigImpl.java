@@ -1367,27 +1367,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public Set<String> getPrivilegedUsers(){
-    Set<String> privUsers = new HashSet<>();
-
-    String value = get( GATEWAY_PRIVILEGED_USERS );
-    if(!StringUtils.isBlank(value)) {
-      List<String> temp = new ArrayList<>(Arrays.asList(value.split(",")));
-      temp.forEach(e -> { privUsers.add(e.trim()); });
-    }
-
-    return privUsers;
+    final Collection<String> privilegedUsers = getTrimmedStringCollection(GATEWAY_PRIVILEGED_USERS);
+    return privilegedUsers == null ? Collections.emptySet() : new HashSet<>(privilegedUsers);
   }
 
   @Override
   public Set<String> getNonPrivilegedUsers(){
-    Set<String> nonPrivUsers = new HashSet<>();
-
-    String value = get( GATEWAY_NON_PRIVILEGED_USERS );
-    if(!StringUtils.isBlank(value)) {
-      List<String> temp = new ArrayList<>(Arrays.asList(value.split(",")));
-      temp.forEach(e -> { nonPrivUsers.add(e.trim()); });
-    }
-
-    return nonPrivUsers;
+    final Collection<String> nonPrivilegedUsers = getTrimmedStringCollection(GATEWAY_NON_PRIVILEGED_USERS);
+    return nonPrivilegedUsers == null ? Collections.emptySet() : new HashSet<>(nonPrivilegedUsers);
   }
 }
