@@ -55,15 +55,13 @@ public class ConcurrentSessionVerifier {
         if (!privilegedUsers.contains(username) && !nonPrivilegedUsers.contains(username)) {
             return true;
         }
+        concurrentSessionCounter.putIfAbsent(username, 0);
         verifyLock.lock();
         try {
-            if (!concurrentSessionCounter.containsKey(username)) {
-                concurrentSessionCounter.put(username, 0);
-            }
             if (privilegedUserLimitCheck(username) || nonPrivilegedUserLimitCheck(username)) {
                 return false;
             }
-            incrementConcurrentSessionCount(username);
+            concurrentSessionCounter.compute(username, (key, value) -> value + 1);
         } finally {
             verifyLock.unlock();
         }
@@ -76,14 +74,6 @@ public class ConcurrentSessionVerifier {
 
     private boolean nonPrivilegedUserLimitCheck(String username) {
         return nonPrivilegedUsers.contains(username) && !(concurrentSessionCounter.get(username) < nonPrivilegedUserConcurrentSessionLimit);
-    }
-
-    /*
-     * This function gets called inside a lock, it is not thread-safe in itself.
-     */
-    private void incrementConcurrentSessionCount(String username) {
-        int count = concurrentSessionCounter.get(username);
-        concurrentSessionCounter.put(username, ++count);
     }
 
     public void sessionEndedForUser(String username) {
@@ -101,10 +91,6 @@ public class ConcurrentSessionVerifier {
     }
 
     int getUserConcurrentSessionCount(String username) {
-        if(concurrentSessionCounter.containsKey(username)){
-            return concurrentSessionCounter.get(username);
-        } else {
-            return 0;
-        }
+        return concurrentSessionCounter.getOrDefault(username, 0);
     }
 }
