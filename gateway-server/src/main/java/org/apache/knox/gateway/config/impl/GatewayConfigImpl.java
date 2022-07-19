@@ -1346,33 +1346,33 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public int getPrivilegedUsersConcurrentSessionLimit(){
+  public int getPrivilegedUsersConcurrentSessionLimit() {
     int limit = getInt(GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT, GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT);
-    if(limit < 0) {
+    if (limit < 0) {
       return GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT;
-    }else {
+    } else {
       return limit;
     }
   }
 
   @Override
-  public int getNonPrivilegedUsersConcurrentSessionLimit(){
+  public int getNonPrivilegedUsersConcurrentSessionLimit() {
     int limit = getInt(GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT, GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT);
-    if(limit < 0) {
+    if (limit < 0) {
       return GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT;
-    }else {
+    } else {
       return limit;
     }
   }
 
   @Override
-  public Set<String> getPrivilegedUsers(){
+  public Set<String> getPrivilegedUsers() {
     final Collection<String> privilegedUsers = getTrimmedStringCollection(GATEWAY_PRIVILEGED_USERS);
     return privilegedUsers == null ? Collections.emptySet() : new HashSet<>(privilegedUsers);
   }
 
   @Override
-  public Set<String> getNonPrivilegedUsers(){
+  public Set<String> getNonPrivilegedUsers() {
     final Collection<String> nonPrivilegedUsers = getTrimmedStringCollection(GATEWAY_NON_PRIVILEGED_USERS);
     return nonPrivilegedUsers == null ? Collections.emptySet() : new HashSet<>(nonPrivilegedUsers);
   }

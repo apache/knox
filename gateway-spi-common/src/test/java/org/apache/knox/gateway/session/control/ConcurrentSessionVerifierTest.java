@@ -29,117 +29,117 @@ import java.util.Set;
 
 public class ConcurrentSessionVerifierTest {
 
-    private ConcurrentSessionVerifier verifier;
+  private ConcurrentSessionVerifier verifier;
 
-    @Before
-    public void setUp() {
-        verifier = ConcurrentSessionVerifier.getInstance();
+  @Before
+  public void setUp() {
+    verifier = ConcurrentSessionVerifier.getInstance();
+  }
+
+  private GatewayConfig mockConfig(Set<String> privilegedUsers, Set<String> nonPrivilegedUsers, int privilegedUsersLimit, int nonPrivilegedUsersLimit) {
+    GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(config.getPrivilegedUsers()).andReturn(privilegedUsers);
+    EasyMock.expect(config.getNonPrivilegedUsers()).andReturn(nonPrivilegedUsers);
+    EasyMock.expect(config.getPrivilegedUsersConcurrentSessionLimit()).andReturn(privilegedUsersLimit);
+    EasyMock.expect(config.getNonPrivilegedUsersConcurrentSessionLimit()).andReturn(nonPrivilegedUsersLimit);
+    EasyMock.replay(config);
+    return config;
+  }
+
+
+  @Test
+  public void userIsInNeitherOfTheGroups() {
+    GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 2);
+    verifier.init(config);
+    for (int i = 0; i < 4; i++) {
+      Assert.assertTrue(verifier.verifySessionForUser("sam"));
     }
+  }
 
-    private GatewayConfig mockConfig(Set<String> privilegedUsers, Set<String> nonPrivilegedUsers, int privilegedUsersLimit, int nonPrivilegedUsersLimit) {
-        GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
-        EasyMock.expect(config.getPrivilegedUsers()).andReturn(privilegedUsers);
-        EasyMock.expect(config.getNonPrivilegedUsers()).andReturn(nonPrivilegedUsers);
-        EasyMock.expect(config.getPrivilegedUsersConcurrentSessionLimit()).andReturn(privilegedUsersLimit);
-        EasyMock.expect(config.getNonPrivilegedUsersConcurrentSessionLimit()).andReturn(nonPrivilegedUsersLimit);
-        EasyMock.replay(config);
-        return config;
-    }
+  @Test
+  public void userIsInBothOfTheGroups() {
+    GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin", "tom")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 2);
+    verifier.init(config);
 
+    Assert.assertTrue(verifier.verifySessionForUser("tom"));
+    Assert.assertTrue(verifier.verifySessionForUser("tom"));
+    Assert.assertFalse(verifier.verifySessionForUser("tom"));
 
-    @Test
-    public void userIsInNeitherOfTheGroups() {
-        GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 2);
-        verifier.init(config);
-        for (int i = 0; i < 4; i++) {
-            Assert.assertTrue(verifier.verifySessionForUser("sam"));
-        }
-    }
+    config = mockConfig(new HashSet<>(Arrays.asList("admin", "tom")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 4);
+    verifier.init(config);
 
-    @Test
-    public void userIsInBothOfTheGroups() {
-        GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin", "tom")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 2);
-        verifier.init(config);
+    Assert.assertTrue(verifier.verifySessionForUser("tom"));
+    Assert.assertTrue(verifier.verifySessionForUser("tom"));
+    Assert.assertTrue(verifier.verifySessionForUser("tom"));
+    Assert.assertFalse(verifier.verifySessionForUser("tom"));
+  }
 
-        Assert.assertTrue(verifier.verifySessionForUser("tom"));
-        Assert.assertTrue(verifier.verifySessionForUser("tom"));
-        Assert.assertFalse(verifier.verifySessionForUser("tom"));
+  @Test
+  public void userIsPrivileged() {
+    GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 2);
+    verifier.init(config);
 
-        config = mockConfig(new HashSet<>(Arrays.asList("admin", "tom")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 4);
-        verifier.init(config);
+    Assert.assertTrue(verifier.verifySessionForUser("admin"));
+    Assert.assertTrue(verifier.verifySessionForUser("admin"));
+    Assert.assertTrue(verifier.verifySessionForUser("admin"));
+    Assert.assertFalse(verifier.verifySessionForUser("admin"));
+    Assert.assertFalse(verifier.verifySessionForUser("admin"));
+    verifier.sessionEndedForUser("admin");
+    Assert.assertTrue(verifier.verifySessionForUser("admin"));
+    Assert.assertFalse(verifier.verifySessionForUser("admin"));
+    Assert.assertFalse(verifier.verifySessionForUser("admin"));
+  }
 
-        Assert.assertTrue(verifier.verifySessionForUser("tom"));
-        Assert.assertTrue(verifier.verifySessionForUser("tom"));
-        Assert.assertTrue(verifier.verifySessionForUser("tom"));
-        Assert.assertFalse(verifier.verifySessionForUser("tom"));
-    }
+  @Test
+  public void userIsNotPrivileged() {
+    GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 2);
+    verifier.init(config);
 
-    @Test
-    public void userIsPrivileged() {
-        GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 2);
-        verifier.init(config);
+    Assert.assertTrue(verifier.verifySessionForUser("tom"));
+    Assert.assertTrue(verifier.verifySessionForUser("tom"));
+    Assert.assertFalse(verifier.verifySessionForUser("tom"));
+    Assert.assertFalse(verifier.verifySessionForUser("tom"));
+    verifier.sessionEndedForUser("tom");
+    Assert.assertTrue(verifier.verifySessionForUser("tom"));
+    Assert.assertFalse(verifier.verifySessionForUser("tom"));
+    Assert.assertFalse(verifier.verifySessionForUser("tom"));
+  }
 
-        Assert.assertTrue(verifier.verifySessionForUser("admin"));
-        Assert.assertTrue(verifier.verifySessionForUser("admin"));
-        Assert.assertTrue(verifier.verifySessionForUser("admin"));
-        Assert.assertFalse(verifier.verifySessionForUser("admin"));
-        Assert.assertFalse(verifier.verifySessionForUser("admin"));
-        verifier.sessionEndedForUser("admin");
-        Assert.assertTrue(verifier.verifySessionForUser("admin"));
-        Assert.assertFalse(verifier.verifySessionForUser("admin"));
-        Assert.assertFalse(verifier.verifySessionForUser("admin"));
-    }
+  @Test
+  public void privilegedLimitIsZero() {
+    GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 0, 2);
+    verifier.init(config);
 
-    @Test
-    public void userIsNotPrivileged() {
-        GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 2);
-        verifier.init(config);
+    Assert.assertFalse(verifier.verifySessionForUser("admin"));
+  }
 
-        Assert.assertTrue(verifier.verifySessionForUser("tom"));
-        Assert.assertTrue(verifier.verifySessionForUser("tom"));
-        Assert.assertFalse(verifier.verifySessionForUser("tom"));
-        Assert.assertFalse(verifier.verifySessionForUser("tom"));
-        verifier.sessionEndedForUser("tom");
-        Assert.assertTrue(verifier.verifySessionForUser("tom"));
-        Assert.assertFalse(verifier.verifySessionForUser("tom"));
-        Assert.assertFalse(verifier.verifySessionForUser("tom"));
-    }
+  @Test
+  public void nonPrivilegedLimitIsZero() {
+    GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 0);
+    verifier.init(config);
 
-    @Test
-    public void privilegedLimitIsZero() {
-        GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 0, 2);
-        verifier.init(config);
+    Assert.assertFalse(verifier.verifySessionForUser("tom"));
+  }
 
-        Assert.assertFalse(verifier.verifySessionForUser("admin"));
-    }
+  @Test
+  public void sessionsDoNotGoToNegative() {
+    GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 2, 2);
+    verifier.init(config);
+    Assert.assertTrue(verifier.getUserConcurrentSessionCount("admin") == 0);
+    verifier.sessionEndedForUser("admin");
+    verifier.sessionEndedForUser("admin");
+    Assert.assertTrue(verifier.getUserConcurrentSessionCount("admin") == 0);
+    Assert.assertTrue(verifier.getUserConcurrentSessionCount("tom") == 0);
+    verifier.sessionEndedForUser("tom");
+    verifier.sessionEndedForUser("tom");
+    Assert.assertTrue(verifier.getUserConcurrentSessionCount("tom") == 0);
 
-    @Test
-    public void nonPrivilegedLimitIsZero() {
-        GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 0);
-        verifier.init(config);
-
-        Assert.assertFalse(verifier.verifySessionForUser("tom"));
-    }
-
-    @Test
-    public void sessionsDoNotGoToNegative() {
-        GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 2, 2);
-        verifier.init(config);
-        Assert.assertTrue(verifier.getUserConcurrentSessionCount("admin") == 0);
-        verifier.sessionEndedForUser("admin");
-        verifier.sessionEndedForUser("admin");
-        Assert.assertTrue(verifier.getUserConcurrentSessionCount("admin") == 0);
-        Assert.assertTrue(verifier.getUserConcurrentSessionCount("tom") == 0);
-        verifier.sessionEndedForUser("tom");
-        verifier.sessionEndedForUser("tom");
-        Assert.assertTrue(verifier.getUserConcurrentSessionCount("tom") == 0);
-
-        Assert.assertTrue(verifier.verifySessionForUser("tom"));
-        Assert.assertTrue(verifier.verifySessionForUser("tom"));
-        Assert.assertFalse(verifier.verifySessionForUser("tom"));
-        Assert.assertTrue(verifier.verifySessionForUser("admin"));
-        Assert.assertTrue(verifier.verifySessionForUser("admin"));
-        Assert.assertFalse(verifier.verifySessionForUser("admin"));
-    }
+    Assert.assertTrue(verifier.verifySessionForUser("tom"));
+    Assert.assertTrue(verifier.verifySessionForUser("tom"));
+    Assert.assertFalse(verifier.verifySessionForUser("tom"));
+    Assert.assertTrue(verifier.verifySessionForUser("admin"));
+    Assert.assertTrue(verifier.verifySessionForUser("admin"));
+    Assert.assertFalse(verifier.verifySessionForUser("admin"));
+  }
 }
 
