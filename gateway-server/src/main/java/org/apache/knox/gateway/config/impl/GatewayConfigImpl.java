@@ -296,8 +296,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   // Concurrent session properties
   private static final String PRIVILEGED_USERS = "privileged.users";
   private static final String NON_PRIVILEGED_USERS = "non." + PRIVILEGED_USERS;
-  private static final String GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT =  GATEWAY_CONFIG_FILE_PREFIX + "." + PRIVILEGED_USERS + ".concurrent.session.limit";
-  private static final String GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT =  GATEWAY_CONFIG_FILE_PREFIX + "." + NON_PRIVILEGED_USERS + ".concurrent.session.limit";
+  private static final String GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT = GATEWAY_CONFIG_FILE_PREFIX + "." + PRIVILEGED_USERS + ".concurrent.session.limit";
+  private static final String GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT = GATEWAY_CONFIG_FILE_PREFIX + "." + NON_PRIVILEGED_USERS + ".concurrent.session.limit";
   private static final int GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT = 3;
   private static final int GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT = 2;
   private static final String GATEWAY_PRIVILEGED_USERS = GATEWAY_CONFIG_FILE_PREFIX + "." + PRIVILEGED_USERS;
@@ -1347,22 +1347,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public int getPrivilegedUsersConcurrentSessionLimit() {
-    int limit = getInt(GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT, GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT);
-    if (limit < 0) {
-      return GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT;
-    } else {
-      return limit;
-    }
+    return getInt(GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT, GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT);
   }
 
   @Override
   public int getNonPrivilegedUsersConcurrentSessionLimit() {
-    int limit = getInt(GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT, GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT);
-    if (limit < 0) {
-      return GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT;
-    } else {
-      return limit;
-    }
+    return getInt(GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT, GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT);
   }
 
   @Override

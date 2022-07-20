@@ -33,8 +33,7 @@ public class ConcurrentSessionVerifier {
   private int privilegedUserConcurrentSessionLimit;
   private int nonPrivilegedUserConcurrentSessionLimit;
   private Map<String, Integer> concurrentSessionCounter;
-  private Lock verifyLock = new ReentrantLock();
-  private Lock decreaseLock = new ReentrantLock();
+  private Lock sessionCountModifyLock = new ReentrantLock();
 
   private ConcurrentSessionVerifier() {
   }
@@ -55,42 +54,49 @@ public class ConcurrentSessionVerifier {
     if (!privilegedUsers.contains(username) && !nonPrivilegedUsers.contains(username)) {
       return true;
     }
-    concurrentSessionCounter.putIfAbsent(username, 0);
-    verifyLock.lock();
+
+    sessionCountModifyLock.lock();
     try {
-      if (privilegedUserLimitCheck(username) || nonPrivilegedUserLimitCheck(username)) {
+      concurrentSessionCounter.putIfAbsent(username, 0);
+      if (privilegedUserCheckLimitReached(username) || nonPrivilegedUserCheckLimitReached(username)) {
         return false;
       }
       concurrentSessionCounter.compute(username, (key, value) -> value + 1);
     } finally {
-      verifyLock.unlock();
+      sessionCountModifyLock.unlock();
     }
     return true;
   }
 
-  private boolean privilegedUserLimitCheck(String username) {
-    return privilegedUsers.contains(username) && !(concurrentSessionCounter.get(username) < privilegedUserConcurrentSessionLimit);
+  private boolean privilegedUserCheckLimitReached(String username) {
+    if (privilegedUserConcurrentSessionLimit < 0) {
+      return false;
+    }
+    return privilegedUsers.contains(username) && (concurrentSessionCounter.get(username) >= privilegedUserConcurrentSessionLimit);
   }
 
-  private boolean nonPrivilegedUserLimitCheck(String username) {
-    return nonPrivilegedUsers.contains(username) && !(concurrentSessionCounter.get(username) < nonPrivilegedUserConcurrentSessionLimit);
+  private boolean nonPrivilegedUserCheckLimitReached(String username) {
+    if (nonPrivilegedUserConcurrentSessionLimit < 0) {
+      return false;
+    }
+    return nonPrivilegedUsers.contains(username) && (concurrentSessionCounter.get(username) >= nonPrivilegedUserConcurrentSessionLimit);
   }
 
   public void sessionEndedForUser(String username) {
     if (concurrentSessionCounter.containsKey(username)) {
-      decreaseLock.lock();
+      sessionCountModifyLock.lock();
       try {
         int count = concurrentSessionCounter.get(username);
-        if (count > 1) {
+        if (count > 0) {
           concurrentSessionCounter.put(username, --count);
         }
       } finally {
-        decreaseLock.unlock();
+        sessionCountModifyLock.unlock();
       }
     }
   }
 
-  int getUserConcurrentSessionCount(String username) {
-    return concurrentSessionCounter.getOrDefault(username, 0);
+  Integer getUserConcurrentSessionCount(String username) {
+    return concurrentSessionCounter.get(username);
   }
 }

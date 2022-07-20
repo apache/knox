@@ -125,21 +125,37 @@ public class ConcurrentSessionVerifierTest {
   public void sessionsDoNotGoToNegative() {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 2, 2);
     verifier.init(config);
-    Assert.assertTrue(verifier.getUserConcurrentSessionCount("admin") == 0);
-    verifier.sessionEndedForUser("admin");
-    verifier.sessionEndedForUser("admin");
-    Assert.assertTrue(verifier.getUserConcurrentSessionCount("admin") == 0);
-    Assert.assertTrue(verifier.getUserConcurrentSessionCount("tom") == 0);
-    verifier.sessionEndedForUser("tom");
-    verifier.sessionEndedForUser("tom");
-    Assert.assertTrue(verifier.getUserConcurrentSessionCount("tom") == 0);
 
-    Assert.assertTrue(verifier.verifySessionForUser("tom"));
-    Assert.assertTrue(verifier.verifySessionForUser("tom"));
-    Assert.assertFalse(verifier.verifySessionForUser("tom"));
-    Assert.assertTrue(verifier.verifySessionForUser("admin"));
-    Assert.assertTrue(verifier.verifySessionForUser("admin"));
-    Assert.assertFalse(verifier.verifySessionForUser("admin"));
+    Assert.assertNull(verifier.getUserConcurrentSessionCount("admin"));
+    verifier.verifySessionForUser("admin");
+    Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("admin").intValue());
+    verifier.sessionEndedForUser("admin");
+    Assert.assertEquals(0, verifier.getUserConcurrentSessionCount("admin").intValue());
+    verifier.sessionEndedForUser("admin");
+    Assert.assertEquals(0, verifier.getUserConcurrentSessionCount("admin").intValue());
+    verifier.verifySessionForUser("admin");
+    Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("admin").intValue());
+
+    Assert.assertNull(verifier.getUserConcurrentSessionCount("tom"));
+    verifier.verifySessionForUser("tom");
+    Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("tom").intValue());
+    verifier.sessionEndedForUser("tom");
+    Assert.assertEquals(0, verifier.getUserConcurrentSessionCount("tom").intValue());
+    verifier.sessionEndedForUser("tom");
+    Assert.assertEquals(0, verifier.getUserConcurrentSessionCount("tom").intValue());
+    verifier.verifySessionForUser("tom");
+    Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("tom").intValue());
+  }
+
+  @Test
+  public void negativeLimitMeansUnlimited() {
+    GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), -2, -2);
+    verifier.init(config);
+
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(verifier.verifySessionForUser("admin"));
+      Assert.assertTrue(verifier.verifySessionForUser("tom"));
+    }
   }
 }
 
