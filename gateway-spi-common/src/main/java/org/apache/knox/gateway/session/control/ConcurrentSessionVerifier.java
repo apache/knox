@@ -33,7 +33,7 @@ public class ConcurrentSessionVerifier {
   private int privilegedUserConcurrentSessionLimit;
   private int nonPrivilegedUserConcurrentSessionLimit;
   private Map<String, Integer> concurrentSessionCounter;
-  private Lock sessionCountModifyLock = new ReentrantLock();
+  private final Lock sessionCountModifyLock = new ReentrantLock();
 
   private ConcurrentSessionVerifier() {
   }
