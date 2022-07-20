@@ -145,7 +145,7 @@ public class TokenResource {
   private static final String TARGET_ENDPOINT_PULIC_CERT_PEM = TOKEN_PARAM_PREFIX + "target.endpoint.cert.pem";
   static final String QUERY_PARAMETER_DOAS = "doAs";
   static final String PROXYUSER_PREFIX = TOKEN_PARAM_PREFIX + "proxyuser";
-  private static final String IMPERSONATION_ENABLED_PARAM = TOKEN_PARAM_PREFIX + "impersonation.enabled";
+  static final String IMPERSONATION_ENABLED_PARAM = TOKEN_PARAM_PREFIX + "impersonation.enabled";
   private static final String IMPERSONATION_ENABLED_TEXT = "impersonationEnabled";
   public static final String KNOX_TOKEN_INCLUDE_GROUPS = TOKEN_PARAM_PREFIX + "include.groups";
   public static final String KNOX_TOKEN_ISSUER = TOKEN_PARAM_PREFIX + "issuer";
@@ -173,6 +173,7 @@ public class TokenResource {
   private int tokenLimitPerUser;
   private boolean includeGroupsInTokenAllowed;
   private String tokenIssuer;
+  private boolean impersonationEnabled;
 
   enum UserLimitExceededAction {REMOVE_OLDEST, RETURN_ERROR};
   private UserLimitExceededAction userLimitExceededAction = UserLimitExceededAction.RETURN_ERROR;
@@ -269,6 +270,12 @@ public class TokenResource {
       endpointPublicCert = targetEndpointPublicCert;
     }
 
+    // KnoxToken impersonation should be configurable regardless of the token state
+    // management status (i.e. even if token state management is enabled users
+    // should be able to opt-out token impersonation
+    final String impersonationEnabledValue = context.getInitParameter(IMPERSONATION_ENABLED_PARAM);
+    impersonationEnabled = impersonationEnabledValue == null ? Boolean.TRUE : Boolean.parseBoolean(impersonationEnabledValue);
+
     // If server-managed token expiration is configured, set the token state service
     if (isServerManagedTokenStateEnabled()) {
       String topologyName = getTopologyName();
@@ -314,11 +321,15 @@ public class TokenResource {
       } else {
         log.noRenewersConfigured(topologyName);
       }
+
+      // refreshing Hadoop ProxyUser groups config only makes sense if token state management is turned on
+      // and impersonation is enabled
+      if (impersonationEnabled) {
+        final Configuration conf = AuthFilterUtils.getProxyUserConfiguration(context, PROXYUSER_PREFIX);
+        ProxyUsers.refreshSuperUserGroupsConfiguration(conf, PROXYUSER_PREFIX);
+      }
     }
     setTokenStateServiceStatusMap();
-
-    final Configuration conf = AuthFilterUtils.getProxyUserConfiguration(context, PROXYUSER_PREFIX);
-    ProxyUsers.refreshSuperUserGroupsConfiguration(conf, PROXYUSER_PREFIX);
   }
 
   private String getTokenTTLAsText() {
@@ -368,9 +379,7 @@ public class TokenResource {
     final Boolean lifespanInputEnabled = lifespanInputEnabledValue == null ? Boolean.TRUE : Boolean.parseBoolean(lifespanInputEnabledValue);
     tokenStateServiceStatusMap.put(LIFESPAN_INPUT_ENABLED_TEXT, lifespanInputEnabled.toString());
 
-    final String impersonationEnabledValue = context.getInitParameter(IMPERSONATION_ENABLED_PARAM);
-    final Boolean impersonationEnabled = impersonationEnabledValue == null ? Boolean.TRUE : Boolean.parseBoolean(impersonationEnabledValue);
-    tokenStateServiceStatusMap.put(IMPERSONATION_ENABLED_TEXT, impersonationEnabled.toString());
+    tokenStateServiceStatusMap.put(IMPERSONATION_ENABLED_TEXT, Boolean.toString(impersonationEnabled));
   }
 
   private void populateAllowedTokenStateBackendForTokenGenApp(final String actualTokenServiceName) {
@@ -711,7 +720,8 @@ public class TokenResource {
     String userName = request.getUserPrincipal().getName();
     String createdBy = null;
     // checking the doAs user only makes sense if tokens are managed (this is where we store the userName information)
-    if (tokenStateService != null) {
+    // and if impersonation is enabled
+    if (impersonationEnabled && tokenStateService != null) {
       final String doAsUser = request.getParameter(QUERY_PARAMETER_DOAS);
       if (doAsUser != null && !doAsUser.equals(userName)) {
         try {

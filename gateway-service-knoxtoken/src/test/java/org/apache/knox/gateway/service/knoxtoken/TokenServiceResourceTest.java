@@ -170,6 +170,9 @@ public class TokenServiceResourceTest {
     if (contextExpectations.containsKey(TokenResource.QUERY_PARAMETER_DOAS)) {
       EasyMock.expect(request.getParameter(TokenResource.QUERY_PARAMETER_DOAS)).andReturn(contextExpectations.get(TokenResource.QUERY_PARAMETER_DOAS)).anyTimes();
     }
+    if (contextExpectations.containsKey(TokenResource.IMPERSONATION_ENABLED_PARAM)) {
+      EasyMock.expect(request.getParameter(TokenResource.IMPERSONATION_ENABLED_PARAM)).andReturn(contextExpectations.get(TokenResource.IMPERSONATION_ENABLED_PARAM)).anyTimes();
+    }
     EasyMock.expect(request.getParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
 
     GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
@@ -1102,11 +1105,21 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testCreateImpersonatedToken() throws Exception {
+    testCreateImpersonatedToken(true);
+  }
+
+  @Test
+  public void testImpersonationDisabled() throws Exception {
+    testCreateImpersonatedToken(false);
+  }
+
+  private void testCreateImpersonatedToken(boolean enableImpersonation) throws Exception {
     final String impersonatedUser = "testUser";
     final Map<String, String> contextExpectations = new HashMap<>();
     contextExpectations.put(TokenResource.QUERY_PARAMETER_DOAS, impersonatedUser);
     contextExpectations.put(TokenResource.PROXYUSER_PREFIX + "." + USER_NAME + ".users", impersonatedUser);
     contextExpectations.put(TokenResource.PROXYUSER_PREFIX + "." + USER_NAME + ".hosts", "*");
+    contextExpectations.put(TokenResource.IMPERSONATION_ENABLED_PARAM, Boolean.toString(enableImpersonation));
     configureCommonExpectations(contextExpectations, Boolean.TRUE);
 
     final TokenResource tr = new TokenResource();
@@ -1116,13 +1129,18 @@ public class TokenServiceResourceTest {
 
     tr.doGet();
 
-    final Response getKnoxTokensResponse = getUserTokensResponse(tr, true);
+    final Response getKnoxTokensResponse = getUserTokensResponse(tr, enableImpersonation);
     final Collection<LinkedHashMap<String, Object>> tokens = ((Map<String, Collection<LinkedHashMap<String, Object>>>) JsonUtils
         .getObjectFromJsonString(getKnoxTokensResponse.getEntity().toString())).get("tokens");
     final LinkedHashMap<String, Object> knoxToken = tokens.iterator().next();
     final Map<String, String> metadata = (Map<String, String>) knoxToken.get("metadata");
-    assertEquals(metadata.get("createdBy"), USER_NAME);
-    assertEquals(metadata.get("userName"), impersonatedUser);
+    if (enableImpersonation) {
+      assertEquals(metadata.get("createdBy"), USER_NAME);
+      assertEquals(metadata.get("userName"), impersonatedUser);
+    } else {
+      assertNull(metadata.get("createdBy"));
+      assertEquals(USER_NAME, metadata.get("userName"));
+    }
   }
 
   @Test
