@@ -130,9 +130,9 @@ public class ConcurrentSessionVerifierTest {
     verifier.verifySessionForUser("admin");
     Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("admin").intValue());
     verifier.sessionEndedForUser("admin");
-    Assert.assertEquals(0, verifier.getUserConcurrentSessionCount("admin").intValue());
+    Assert.assertNull(verifier.getUserConcurrentSessionCount("admin"));
     verifier.sessionEndedForUser("admin");
-    Assert.assertEquals(0, verifier.getUserConcurrentSessionCount("admin").intValue());
+    Assert.assertNull(verifier.getUserConcurrentSessionCount("admin"));
     verifier.verifySessionForUser("admin");
     Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("admin").intValue());
 
@@ -140,9 +140,9 @@ public class ConcurrentSessionVerifierTest {
     verifier.verifySessionForUser("tom");
     Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("tom").intValue());
     verifier.sessionEndedForUser("tom");
-    Assert.assertEquals(0, verifier.getUserConcurrentSessionCount("tom").intValue());
+    Assert.assertNull(verifier.getUserConcurrentSessionCount("tom"));
     verifier.sessionEndedForUser("tom");
-    Assert.assertEquals(0, verifier.getUserConcurrentSessionCount("tom").intValue());
+    Assert.assertNull(verifier.getUserConcurrentSessionCount("tom"));
     verifier.verifySessionForUser("tom");
     Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("tom").intValue());
   }
