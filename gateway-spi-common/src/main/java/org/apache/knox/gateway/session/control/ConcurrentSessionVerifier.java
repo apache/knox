@@ -83,10 +83,15 @@ public class ConcurrentSessionVerifier {
   }
 
   public void sessionEndedForUser(String username) {
-    concurrentSessionCounter.computeIfPresent(username, this::decreaseCounter);
+    sessionCountModifyLock.lock();
+    try {
+      concurrentSessionCounter.computeIfPresent(username, (key, counter) -> decreaseCounter(counter));
+    } finally {
+      sessionCountModifyLock.unlock();
+    }
   }
 
-  private Integer decreaseCounter(String username, Integer counter) {
+  private Integer decreaseCounter(Integer counter) {
     counter--;
     if (counter < 1) {
       return null;
