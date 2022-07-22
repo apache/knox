@@ -293,6 +293,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String GATEWAY_DATABASE_VERIFY_SERVER_CERT =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.verify.server.cert";
   private static final String GATEWAY_DATABASE_TRUSTSTORE_FILE =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.truststore.file";
 
+  // Concurrent session properties
+  private static final String PRIVILEGED_USERS = "privileged.users";
+  private static final String NON_PRIVILEGED_USERS = "non." + PRIVILEGED_USERS;
+  private static final String GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT = GATEWAY_CONFIG_FILE_PREFIX + "." + PRIVILEGED_USERS + ".concurrent.session.limit";
+  private static final String GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT = GATEWAY_CONFIG_FILE_PREFIX + "." + NON_PRIVILEGED_USERS + ".concurrent.session.limit";
+  private static final int GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT = 3;
+  private static final int GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT = 2;
+  private static final String GATEWAY_PRIVILEGED_USERS = GATEWAY_CONFIG_FILE_PREFIX + "." + PRIVILEGED_USERS;
+  private static final String GATEWAY_NON_PRIVILEGED_USERS = GATEWAY_CONFIG_FILE_PREFIX + "." + NON_PRIVILEGED_USERS;
+
   public GatewayConfigImpl() {
     init();
   }
@@ -1335,4 +1345,25 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return getInt(JETTY_MAX_FORM_KEYS, ContextHandler.DEFAULT_MAX_FORM_KEYS);
   }
 
+  @Override
+  public int getPrivilegedUsersConcurrentSessionLimit() {
+    return getInt(GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT, GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT);
+  }
+
+  @Override
+  public int getNonPrivilegedUsersConcurrentSessionLimit() {
+    return getInt(GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT, GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT);
+  }
+
+  @Override
+  public Set<String> getPrivilegedUsers() {
+    final Collection<String> privilegedUsers = getTrimmedStringCollection(GATEWAY_PRIVILEGED_USERS);
+    return privilegedUsers == null ? Collections.emptySet() : new HashSet<>(privilegedUsers);
+  }
+
+  @Override
+  public Set<String> getNonPrivilegedUsers() {
+    final Collection<String> nonPrivilegedUsers = getTrimmedStringCollection(GATEWAY_NON_PRIVILEGED_USERS);
+    return nonPrivilegedUsers == null ? Collections.emptySet() : new HashSet<>(nonPrivilegedUsers);
+  }
 }
