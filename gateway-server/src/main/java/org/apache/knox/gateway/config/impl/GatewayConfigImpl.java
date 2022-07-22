@@ -475,8 +475,14 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public String getGatewayHost() {
-    return get( HTTP_HOST, "0.0.0.0" );
+  public List<String> getGatewayHost() {
+    String hosts = get( HTTP_HOST, "0.0.0.0" );
+    String[] hostArray = hosts.split(",");
+    List<String> hostIps = new ArrayList<>();
+    for (String host : hostArray) {
+      hostIps.add(host.trim());
+    }
+    return hostIps;
   }
 
   @Override
@@ -520,10 +526,14 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public InetSocketAddress getGatewayAddress() throws UnknownHostException {
-    String host = getGatewayHost();
+  public List<InetSocketAddress> getGatewayAddress() throws UnknownHostException {
+    List<String> hostIps = getGatewayHost();
     int port = getGatewayPort();
-    return new InetSocketAddress( host, port );
+    List<InetSocketAddress> socketAddressList = new ArrayList<>();
+    for (String host : hostIps) {
+      socketAddressList.add(new InetSocketAddress( host, port ));
+    }
+    return socketAddressList;
   }
 
   @Override

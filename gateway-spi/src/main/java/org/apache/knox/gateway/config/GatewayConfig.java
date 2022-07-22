@@ -141,7 +141,7 @@ public interface GatewayConfig {
 
   String getHadoopConfDir();
 
-  String getGatewayHost();
+  List<String> getGatewayHost();
 
   int getGatewayPort();
 
@@ -167,7 +167,7 @@ public interface GatewayConfig {
 
   String getGatewayDeploymentDir();
 
-  InetSocketAddress getGatewayAddress() throws UnknownHostException;
+  List<InetSocketAddress> getGatewayAddress() throws UnknownHostException;
 
   boolean isSSLEnabled();
 
