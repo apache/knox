@@ -233,7 +233,7 @@
         <jna.version>5.6.0</jna.version>
         <joda-time.version>2.10.8</joda-time.version>
         <json-path.version>2.5.0</json-path.version>
-        <json-smart.version>2.4.7</json-smart.version>
+        <json-smart.version>2.4.8</json-smart.version>
         <junit.version>4.13.2</junit.version>
         <lang-tag.version>1.5</lang-tag.version>
         <libpam4j.version>1.11</libpam4j.version>
@@ -261,7 +261,7 @@
         <slf4j.version>1.7.30</slf4j.version>
         <spotbugs.version>4.2.0</spotbugs.version>
         <spotbugs-maven-plugin.version>4.1.4</spotbugs-maven-plugin.version>
-        <spring.version>5.3.18</spring.version>
+        <spring.version>5.3.21</spring.version>
         <spring-vault.version>2.3.2</spring-vault.version>
         <stax-ex.version>1.8.3</stax-ex.version>
         <stax2-api.version>4.2.1</stax2-api.version>
