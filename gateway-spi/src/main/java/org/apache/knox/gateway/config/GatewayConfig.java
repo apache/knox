@@ -177,6 +177,8 @@ public interface GatewayConfig {
 
   List<String> getExcludedSSLCiphers();
 
+  boolean isSSLRenegotiationAllowed();
+
   boolean isHadoopKerberosSecured();
 
   String getKerberosConfig();
