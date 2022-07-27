@@ -17,7 +17,11 @@
  */
 package org.apache.knox.gateway.service.knoxsso;
 
+import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.session.control.ConcurrentSessionVerifier;
 import org.apache.knox.gateway.util.Urls;
 
 import javax.annotation.PostConstruct;
@@ -105,7 +109,13 @@ public class WebSSOutResource {
       rc = false;
     }
     response.addCookie(c);
+    GatewayServices gwServices = GatewayServer.getGatewayServices();
+    if (gwServices != null) {
+      ConcurrentSessionVerifier verifier = gwServices.getService(ServiceType.CONCURRENT_SESSION_VERIFIER);
+      verifier.sessionEndedForUser(request.getUserPrincipal().getName());
+      Cookie[] cookies = request.getCookies();
 
+    }
     return rc;
   }
 }

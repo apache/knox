@@ -19,6 +19,8 @@ package org.apache.knox.gateway.session.control;
 
 
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.Service;
+import org.apache.knox.gateway.services.ServiceLifecycleException;
 
 import java.util.Map;
 import java.util.Set;
@@ -26,29 +28,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class ConcurrentSessionVerifier {
-  public static final ConcurrentSessionVerifier INSTANCE = new ConcurrentSessionVerifier();
+public class ConcurrentSessionVerifier implements Service {
   private Set<String> privilegedUsers;
   private Set<String> nonPrivilegedUsers;
   private int privilegedUserConcurrentSessionLimit;
   private int nonPrivilegedUserConcurrentSessionLimit;
   private Map<String, Integer> concurrentSessionCounter;
   private final Lock sessionCountModifyLock = new ReentrantLock();
-
-  private ConcurrentSessionVerifier() {
-  }
-
-  public static ConcurrentSessionVerifier getInstance() {
-    return INSTANCE;
-  }
-
-  public void init(GatewayConfig config) {
-    this.privilegedUsers = config.getPrivilegedUsers();
-    this.nonPrivilegedUsers = config.getNonPrivilegedUsers();
-    this.privilegedUserConcurrentSessionLimit = config.getPrivilegedUsersConcurrentSessionLimit();
-    this.nonPrivilegedUserConcurrentSessionLimit = config.getNonPrivilegedUsersConcurrentSessionLimit();
-    this.concurrentSessionCounter = new ConcurrentHashMap<>();
-  }
 
   public boolean verifySessionForUser(String username) {
     if (!privilegedUsers.contains(username) && !nonPrivilegedUsers.contains(username)) {
@@ -98,6 +84,25 @@ public class ConcurrentSessionVerifier {
     } else {
       return counter;
     }
+  }
+
+  @Override
+  public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
+    this.privilegedUsers = config.getPrivilegedUsers();
+    this.nonPrivilegedUsers = config.getNonPrivilegedUsers();
+    this.privilegedUserConcurrentSessionLimit = config.getPrivilegedUsersConcurrentSessionLimit();
+    this.nonPrivilegedUserConcurrentSessionLimit = config.getNonPrivilegedUsersConcurrentSessionLimit();
+    this.concurrentSessionCounter = new ConcurrentHashMap<>();
+  }
+
+  @Override
+  public void start() throws ServiceLifecycleException {
+
+  }
+
+  @Override
+  public void stop() throws ServiceLifecycleException {
+
   }
 
   Integer getUserConcurrentSessionCount(String username) {

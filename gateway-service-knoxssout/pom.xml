@@ -68,5 +68,9 @@
             <artifactId>gateway-test-utils</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-server</artifactId>
+        </dependency>
     </dependencies>
 </project>

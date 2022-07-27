@@ -18,22 +18,26 @@
 package org.apache.knox.gateway.session.control;
 
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class ConcurrentSessionVerifierTest {
-
   private ConcurrentSessionVerifier verifier;
+  private Map<String, String> options;
 
   @Before
   public void setUp() {
-    verifier = ConcurrentSessionVerifier.getInstance();
+    verifier = new ConcurrentSessionVerifier();
+    options = new HashMap<>();
   }
 
   private GatewayConfig mockConfig(Set<String> privilegedUsers, Set<String> nonPrivilegedUsers, int privilegedUsersLimit, int nonPrivilegedUsersLimit) {
@@ -48,25 +52,25 @@ public class ConcurrentSessionVerifierTest {
 
 
   @Test
-  public void userIsInNeitherOfTheGroups() {
+  public void userIsInNeitherOfTheGroups() throws ServiceLifecycleException {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 2);
-    verifier.init(config);
+    verifier.init(config, options);
     for (int i = 0; i < 4; i++) {
       Assert.assertTrue(verifier.verifySessionForUser("sam"));
     }
   }
 
   @Test
-  public void userIsInBothOfTheGroups() {
+  public void userIsInBothOfTheGroups() throws ServiceLifecycleException {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin", "tom")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 2);
-    verifier.init(config);
+    verifier.init(config, options);
 
     Assert.assertTrue(verifier.verifySessionForUser("tom"));
     Assert.assertTrue(verifier.verifySessionForUser("tom"));
     Assert.assertFalse(verifier.verifySessionForUser("tom"));
 
     config = mockConfig(new HashSet<>(Arrays.asList("admin", "tom")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 4);
-    verifier.init(config);
+    verifier.init(config, options);
 
     Assert.assertTrue(verifier.verifySessionForUser("tom"));
     Assert.assertTrue(verifier.verifySessionForUser("tom"));
@@ -75,9 +79,9 @@ public class ConcurrentSessionVerifierTest {
   }
 
   @Test
-  public void userIsPrivileged() {
+  public void userIsPrivileged() throws ServiceLifecycleException {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 2);
-    verifier.init(config);
+    verifier.init(config, options);
 
     Assert.assertTrue(verifier.verifySessionForUser("admin"));
     Assert.assertTrue(verifier.verifySessionForUser("admin"));
@@ -91,9 +95,9 @@ public class ConcurrentSessionVerifierTest {
   }
 
   @Test
-  public void userIsNotPrivileged() {
+  public void userIsNotPrivileged() throws ServiceLifecycleException {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 2);
-    verifier.init(config);
+    verifier.init(config, options);
 
     Assert.assertTrue(verifier.verifySessionForUser("tom"));
     Assert.assertTrue(verifier.verifySessionForUser("tom"));
@@ -106,25 +110,25 @@ public class ConcurrentSessionVerifierTest {
   }
 
   @Test
-  public void privilegedLimitIsZero() {
+  public void privilegedLimitIsZero() throws ServiceLifecycleException {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 0, 2);
-    verifier.init(config);
+    verifier.init(config, options);
 
     Assert.assertFalse(verifier.verifySessionForUser("admin"));
   }
 
   @Test
-  public void nonPrivilegedLimitIsZero() {
+  public void nonPrivilegedLimitIsZero() throws ServiceLifecycleException {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 0);
-    verifier.init(config);
+    verifier.init(config, options);
 
     Assert.assertFalse(verifier.verifySessionForUser("tom"));
   }
 
   @Test
-  public void sessionsDoNotGoToNegative() {
+  public void sessionsDoNotGoToNegative() throws ServiceLifecycleException {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 2, 2);
-    verifier.init(config);
+    verifier.init(config, options);
 
     Assert.assertNull(verifier.getUserConcurrentSessionCount("admin"));
     verifier.verifySessionForUser("admin");
@@ -148,14 +152,15 @@ public class ConcurrentSessionVerifierTest {
   }
 
   @Test
-  public void negativeLimitMeansUnlimited() {
+  public void negativeLimitMeansUnlimited() throws ServiceLifecycleException {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), -2, -2);
-    verifier.init(config);
+    verifier.init(config, options);
 
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(verifier.verifySessionForUser("admin"));
       Assert.assertTrue(verifier.verifySessionForUser("tom"));
     }
   }
+
 }
 

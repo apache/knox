@@ -31,3 +31,4 @@ org.apache.knox.gateway.services.factory.SslServiceFactory
 org.apache.knox.gateway.services.factory.TokenServiceFactory
 org.apache.knox.gateway.services.factory.TokenStateServiceFactory
 org.apache.knox.gateway.services.factory.TopologyServiceFactory
+org.apache.knox.gateway.services.factory.ConcurrentSessionVerifierFactory
