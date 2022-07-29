@@ -219,12 +219,10 @@ public class Pac4jDispatcherFilter implements Filter {
     }
 
 
-    callbackFilter = new CallbackFilter();
+    callbackFilter = new CallbackFilter(config);
     callbackFilter.init(filterConfig);
-    callbackFilter.setConfigOnly(config);
-    securityFilter = new SecurityFilter();
+    securityFilter = new SecurityFilter(config);
     securityFilter.setClients(clientName);
-    securityFilter.setConfigOnly(config);
 
     final String domainSuffix = filterConfig.getInitParameter(PAC4J_COOKIE_DOMAIN_SUFFIX_PARAM);
     final String sessionStoreVar = filterConfig.getInitParameter(PAC4J_SESSION_STORE);
@@ -232,7 +230,8 @@ public class Pac4jDispatcherFilter implements Filter {
     SessionStore sessionStore;
 
     if(!StringUtils.isBlank(sessionStoreVar) && JEESessionStore.class.getName().contains(sessionStoreVar) ) {
-      sessionStore = new JEESessionStore();
+      /* NOTE: this is a final variable, and will be used by all requests in Knox */
+      sessionStore = JEESessionStore.INSTANCE;
     } else {
       sessionStore = new KnoxSessionStore(cryptoService, clusterName, domainSuffix, sessionStoreConfigs);
     }

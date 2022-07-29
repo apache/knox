@@ -31,8 +31,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.pac4j.core.config.Config;
 import org.pac4j.core.context.JEEContext;
-import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.profile.ProfileManager;
+import org.pac4j.core.profile.UserProfile;
 
 import javax.security.auth.Subject;
 import javax.servlet.Filter;
@@ -84,14 +84,14 @@ public class Pac4jIdentityAdapter implements Filter {
 
     final HttpServletRequest request = (HttpServletRequest) servletRequest;
     final HttpServletResponse response = (HttpServletResponse) servletResponse;
-    final JEEContext context = new JEEContext(request, response,
-        ((Config)request.getAttribute(PAC4J_CONFIG)).getSessionStore());
-    final ProfileManager<CommonProfile> manager = new ProfileManager<>(context);
-    final Optional<CommonProfile> optional = manager.get(true);
+    final JEEContext context = new JEEContext(request, response);
+    /* see https://www.pac4j.org/blog/what_s_new_in_pac4j_v5.html#4-session-management */
+    final ProfileManager manager = new ProfileManager(context, ((Config)request.getAttribute(PAC4J_CONFIG)).getSessionStore());
+    final Optional<UserProfile> optional = manager.getProfile();
     if (optional.isPresent()) {
-      CommonProfile profile = optional.get();
+      UserProfile profile = optional.get();
       logger.debug("User authenticated as: {}", profile);
-      manager.remove(true);
+      manager.removeProfiles();
       String id = null;
       if (idAttribute != null) {
         Object attribute = profile.getAttribute(idAttribute);

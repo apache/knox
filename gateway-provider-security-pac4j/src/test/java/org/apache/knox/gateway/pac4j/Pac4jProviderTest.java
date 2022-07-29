@@ -27,6 +27,8 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.impl.DefaultCryptoService;
+import org.easymock.Capture;
+import org.easymock.CaptureType;
 import org.easymock.EasyMock;
 import org.junit.Test;
 import org.pac4j.core.util.Pac4jConstants;
@@ -43,6 +45,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
+import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.isA;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -105,12 +109,19 @@ public class Pac4jProviderTest {
         request.setRequestURL(KNOXSSO_SERVICE_URL + "?" + ORIGINAL_URL + "=" + HADOOP_SERVICE_URL);
         request.setCookies(new Cookie[0]);
         request.setServerName(LOCALHOST);
+
+        Capture<String> captureSetCookieHeaders = EasyMock.newCapture(
+            CaptureType.ALL);
         MockHttpServletResponse response = new MockHttpServletResponse();
+        response.addHeader(isA(String.class), capture(captureSetCookieHeaders));
+
         FilterChain filterChain = EasyMock.createNiceMock(FilterChain.class);
         dispatcher.doFilter(request, response, filterChain);
         // it should be a redirection to the idp topology
         assertEquals(302, response.getStatus());
         assertEquals(PAC4J_CALLBACK_URL + "?" + Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER + "=true&" + Pac4jConstants.DEFAULT_CLIENT_NAME_PARAMETER + "=" + CLIENT_CLASS, response.getHeaders().get("Location"));
+        System.out.println("Set-headers: "+captureSetCookieHeaders.getValues().size());
+
         // we should have one cookie for the saved requested url
         List<Cookie> cookies = response.getCookies();
         assertEquals(3, cookies.size());
