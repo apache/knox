@@ -21,7 +21,12 @@ package org.apache.knox.gateway.session.control;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
+import java.text.ParseException;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,57 +38,82 @@ public class ConcurrentSessionVerifier implements Service {
   private Set<String> nonPrivilegedUsers;
   private int privilegedUserConcurrentSessionLimit;
   private int nonPrivilegedUserConcurrentSessionLimit;
-  private Map<String, Integer> concurrentSessionCounter;
+  private Map<String, Set<String>> concurrentSessionCounter;
   private final Lock sessionCountModifyLock = new ReentrantLock();
 
-  public boolean verifySessionForUser(String username) {
+  public boolean verifySessionForUser(String username, String token) {
     if (!privilegedUsers.contains(username) && !nonPrivilegedUsers.contains(username)) {
       return true;
     }
 
     sessionCountModifyLock.lock();
     try {
-      concurrentSessionCounter.putIfAbsent(username, 0);
-      if (privilegedUserCheckLimitReached(username) || nonPrivilegedUserCheckLimitReached(username)) {
+      int validTokenNumber = countValidTokensForUser(username);
+      if (privilegedUserCheckLimitReached(username, validTokenNumber) || nonPrivilegedUserCheckLimitReached(username, validTokenNumber)) {
         return false;
       }
-      concurrentSessionCounter.compute(username, (key, value) -> value + 1);
+      concurrentSessionCounter.putIfAbsent(username, new HashSet<>());
+      concurrentSessionCounter.compute(username, (key, tokenSet) -> addTokenForUser(tokenSet, token));
     } finally {
       sessionCountModifyLock.unlock();
     }
     return true;
   }
 
-  private boolean privilegedUserCheckLimitReached(String username) {
+  private int countValidTokensForUser(String username) {
+    int result = 0;
+    Set<String> tokens = concurrentSessionCounter.getOrDefault(username, null);
+    if (tokens != null && !tokens.isEmpty()) {
+      for (String token : tokens) {
+        try {
+          JWT jwtToken = new JWTToken(token);
+          Date expire = jwtToken.getExpiresDate();
+          if (expire == null || expire.after(new Date())) {
+            result++;
+          }
+        } catch (ParseException ignore) {
+        }
+      }
+    }
+    return result;
+  }
+
+  private boolean privilegedUserCheckLimitReached(String username, int validTokenNumber) {
     if (privilegedUserConcurrentSessionLimit < 0) {
       return false;
     }
-    return privilegedUsers.contains(username) && (concurrentSessionCounter.get(username) >= privilegedUserConcurrentSessionLimit);
+    return privilegedUsers.contains(username) && (validTokenNumber >= privilegedUserConcurrentSessionLimit);
   }
 
-  private boolean nonPrivilegedUserCheckLimitReached(String username) {
+  private boolean nonPrivilegedUserCheckLimitReached(String username, int validTokenNumber) {
     if (nonPrivilegedUserConcurrentSessionLimit < 0) {
       return false;
     }
-    return nonPrivilegedUsers.contains(username) && (concurrentSessionCounter.get(username) >= nonPrivilegedUserConcurrentSessionLimit);
+    return nonPrivilegedUsers.contains(username) && (validTokenNumber >= nonPrivilegedUserConcurrentSessionLimit);
   }
 
-  public void sessionEndedForUser(String username) {
-    sessionCountModifyLock.lock();
-    try {
-      concurrentSessionCounter.computeIfPresent(username, (key, counter) -> decreaseCounter(counter));
-    } finally {
-      sessionCountModifyLock.unlock();
+  public void sessionEndedForUser(String username, String token) {
+    if (!token.isEmpty()) {
+      sessionCountModifyLock.lock();
+      try {
+        concurrentSessionCounter.computeIfPresent(username, (key, tokenSet) -> removeTokenFromUser(tokenSet, token));
+      } finally {
+        sessionCountModifyLock.unlock();
+      }
     }
   }
 
-  private Integer decreaseCounter(Integer counter) {
-    counter--;
-    if (counter < 1) {
+  private Set<String> removeTokenFromUser(Set<String> tokenSet, String newToken) {
+    tokenSet.remove(newToken);
+    if (tokenSet.size() == 0) {
       return null;
-    } else {
-      return counter;
     }
+    return tokenSet;
+  }
+
+  private Set<String> addTokenForUser(Set<String> tokens, String newToken) {
+    tokens.add(newToken);
+    return tokens;
   }
 
   @Override
@@ -106,6 +136,7 @@ public class ConcurrentSessionVerifier implements Service {
   }
 
   Integer getUserConcurrentSessionCount(String username) {
-    return concurrentSessionCounter.get(username);
+    int result = countValidTokensForUser(username);
+    return (result == 0) ? null : result;
   }
 }

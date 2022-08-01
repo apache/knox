@@ -295,9 +295,8 @@ public class WebSSOResource {
         GatewayServices gwServices = GatewayServer.getGatewayServices();
         if (gwServices != null) {
           ConcurrentSessionVerifier verifier = gwServices.getService(ServiceType.CONCURRENT_SESSION_VERIFIER);
-          if (!verifier.verifySessionForUser(p.getName())) {
-            throw new WebApplicationException("Too many sessions for user: " + request.getUserPrincipal().getName(),
-                    Response.Status.FORBIDDEN);
+          if (!verifier.verifySessionForUser(p.getName(), token.toString())) {
+            throw new WebApplicationException("Too many sessions for user: " + request.getUserPrincipal().getName(), Response.Status.FORBIDDEN);
           }
           addJWTHadoopCookie(original, token);
         }

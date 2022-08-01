@@ -36,6 +36,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.MalformedURLException;
+import java.util.Arrays;
+import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
@@ -109,13 +111,19 @@ public class WebSSOutResource {
       rc = false;
     }
     response.addCookie(c);
-    GatewayServices gwServices = GatewayServer.getGatewayServices();
-    if (gwServices != null) {
-      ConcurrentSessionVerifier verifier = gwServices.getService(ServiceType.CONCURRENT_SESSION_VERIFIER);
-      verifier.sessionEndedForUser(request.getUserPrincipal().getName());
-      Cookie[] cookies = request.getCookies();
 
+    Cookie[] cookies = request.getCookies();
+    Optional<Cookie> SSOCookie = Arrays.stream(cookies).filter(cookie -> cookie.getName().equals(cookieName)).findFirst();
+    if (SSOCookie.isPresent()) {
+      GatewayServices gwServices = GatewayServer.getGatewayServices();
+      if (gwServices != null) {
+        ConcurrentSessionVerifier verifier = gwServices.getService(ServiceType.CONCURRENT_SESSION_VERIFIER);
+        verifier.sessionEndedForUser(request.getUserPrincipal().getName(), SSOCookie.get().getValue());
+      }
+    } else {
+      log.couldNotFindCookieWithTokenToRemove(cookieName, request.getUserPrincipal().getName());
     }
+
     return rc;
   }
 }
