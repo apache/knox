@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.service.knoxsso;
 
-import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
@@ -113,15 +112,18 @@ public class WebSSOutResource {
     response.addCookie(c);
 
     Cookie[] cookies = request.getCookies();
-    Optional<Cookie> SSOCookie = Arrays.stream(cookies).filter(cookie -> cookie.getName().equals(cookieName)).findFirst();
-    if (SSOCookie.isPresent()) {
-      GatewayServices gwServices = GatewayServer.getGatewayServices();
-      if (gwServices != null) {
-        ConcurrentSessionVerifier verifier = gwServices.getService(ServiceType.CONCURRENT_SESSION_VERIFIER);
-        verifier.sessionEndedForUser(request.getUserPrincipal().getName(), SSOCookie.get().getValue());
+    if (cookies != null) {
+      Optional<Cookie> SSOCookie = Arrays.stream(cookies).filter(cookie -> cookie.getName().equals(cookieName)).findFirst();
+      if (SSOCookie.isPresent()) {
+        GatewayServices gwServices =
+                (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+        if (gwServices != null) {
+          ConcurrentSessionVerifier verifier = gwServices.getService(ServiceType.CONCURRENT_SESSION_VERIFIER);
+          verifier.sessionEndedForUser(request.getUserPrincipal().getName(), SSOCookie.get().getValue());
+        }
+      } else {
+        log.couldNotFindCookieWithTokenToRemove(cookieName, request.getUserPrincipal().getName());
       }
-    } else {
-      log.couldNotFindCookieWithTokenToRemove(cookieName, request.getUserPrincipal().getName());
     }
 
     return rc;

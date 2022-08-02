@@ -45,7 +45,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.WebApplicationException;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditor;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -292,14 +291,11 @@ public class WebSSOResource {
 
       // Coverity CID 1327959
       if (token != null) {
-        GatewayServices gwServices = GatewayServer.getGatewayServices();
-        if (gwServices != null) {
-          ConcurrentSessionVerifier verifier = gwServices.getService(ServiceType.CONCURRENT_SESSION_VERIFIER);
-          if (!verifier.verifySessionForUser(p.getName(), token.toString())) {
-            throw new WebApplicationException("Too many sessions for user: " + request.getUserPrincipal().getName(), Response.Status.FORBIDDEN);
-          }
-          addJWTHadoopCookie(original, token);
+        ConcurrentSessionVerifier verifier = services.getService(ServiceType.CONCURRENT_SESSION_VERIFIER);
+        if (verifier != null && !verifier.verifySessionForUser(p.getName(), token.toString())) {
+          throw new WebApplicationException("Too many sessions for user: " + request.getUserPrincipal().getName(), Response.Status.FORBIDDEN);
         }
+        addJWTHadoopCookie(original, token);
       }
 
       if (removeOriginalUrlCookie) {
