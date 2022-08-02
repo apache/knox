@@ -105,7 +105,7 @@ public class ConcurrentSessionVerifier implements Service {
 
   private Set<String> removeTokenFromUser(Set<String> tokenSet, String newToken) {
     tokenSet.remove(newToken);
-    if (tokenSet.size() == 0) {
+    if (tokenSet.isEmpty()) {
       return null;
     }
     return tokenSet;
