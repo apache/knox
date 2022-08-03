@@ -19,7 +19,6 @@ package org.apache.knox.gateway.session.control;
 
 
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 
@@ -32,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class ConcurrentSessionVerifier implements Service {
+public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerifier {
   private Set<String> privilegedUsers;
   private Set<String> nonPrivilegedUsers;
   private int privilegedUserConcurrentSessionLimit;

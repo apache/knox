@@ -42,8 +42,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class ConcurrentSessionVerifierTest {
-  private ConcurrentSessionVerifier verifier;
+public class InMemoryConcurrentSessionVerifierTest {
+  private InMemoryConcurrentSessionVerifier verifier;
   private Map<String, String> options;
   private DefaultTokenAuthorityService tokenAuthority;
   private JWTokenAttributes jwtAttributesForAdmin;
@@ -63,7 +63,7 @@ public class ConcurrentSessionVerifierTest {
 
   @Before
   public void setUp() throws AliasServiceException, IOException, ServiceLifecycleException {
-    verifier = new ConcurrentSessionVerifier();
+    verifier = new InMemoryConcurrentSessionVerifier();
     options = new HashMap<>();
 
     GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);

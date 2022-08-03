@@ -18,6 +18,8 @@
 package org.apache.knox.gateway.service.knoxsso;
 
 import static org.apache.knox.gateway.services.GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.anyString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -36,7 +38,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,10 +63,8 @@ import org.apache.http.HttpStatus;
 import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditor;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
-import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
@@ -147,14 +146,14 @@ public class WebSSOResourceTest {
   }
 
   private void configureCommonExpectations(Map<String, String> contextExpectations) throws Exception {
-    configureCommonExpectations(contextExpectations, false, false);
+    configureCommonExpectations(contextExpectations, false, false, true);
   }
 
   private void configureCommonExpectations(Map<String, String> contextExpectations, boolean sslEnabled) throws Exception {
-    configureCommonExpectations(contextExpectations, false, sslEnabled);
+    configureCommonExpectations(contextExpectations, false, sslEnabled, true);
   }
 
-  private void configureCommonExpectations(Map<String, String> contextExpectations, boolean useHmac, boolean sslEnabled) throws Exception {
+  private void configureCommonExpectations(Map<String, String> contextExpectations, boolean useHmac, boolean sslEnabled, boolean concurrentSessionVerifyResult) throws Exception {
     context = EasyMock.createNiceMock(ServletContext.class);
     contextExpectations.forEach((key, value) -> EasyMock.expect(context.getInitParameter(key)).andReturn(value).anyTimes());
 
@@ -183,7 +182,11 @@ public class WebSSOResourceTest {
     ServletOutputStream outputStream = EasyMock.createNiceMock(ServletOutputStream.class);
     responseWrapper = new CookieResponseWrapper(response, outputStream);
 
-    EasyMock.replay(principal, services, context, request);
+    verifier = EasyMock.createNiceMock(ConcurrentSessionVerifier.class);
+    EasyMock.expect(verifier.verifySessionForUser(anyString(), anyObject())).andReturn(concurrentSessionVerifyResult).anyTimes();
+    EasyMock.expect(services.getService(ServiceType.CONCURRENT_SESSION_VERIFIER)).andReturn(verifier).anyTimes();
+
+    EasyMock.replay(principal, services, context, request, verifier);
   }
 
   @Test
@@ -276,7 +279,7 @@ public class WebSSOResourceTest {
 
   private void testSignatureAlgorithm(boolean useHMAC) throws Exception {
     final String algorithm = useHMAC ? "HS256" : "RS512";
-    configureCommonExpectations(Collections.singletonMap("knoxsso.token.sigalg", algorithm), useHMAC, false);
+    configureCommonExpectations(Collections.singletonMap("knoxsso.token.sigalg", algorithm), useHMAC, false, true);
 
     WebSSOResource webSSOResponse = new WebSSOResource();
     webSSOResponse.request = request;
@@ -689,8 +692,8 @@ public class WebSSOResourceTest {
   }
 
   @Test
-  public void privilegedHitLimit() throws AliasServiceException, ServiceLifecycleException {
-    mockWebSSO("admin");
+  public void concurrentSessionLimitHit() throws Exception {
+    configureCommonExpectations(Collections.emptyMap(), false, false, false);
 
     WebSSOResource webSSOResponse = new WebSSOResource();
     webSSOResponse.request = request;
@@ -698,71 +701,7 @@ public class WebSSOResourceTest {
     webSSOResponse.context = context;
     webSSOResponse.init();
 
-    webSSOResponse.doPost();
-    webSSOResponse.doPost();
-    webSSOResponse.doPost();
     Assert.assertThrows(WebApplicationException.class, webSSOResponse::doPost);
-  }
-
-  @Test
-  public void nonPrivilegedHitLimit() throws AliasServiceException, ServiceLifecycleException {
-    mockWebSSO("tom");
-
-    WebSSOResource webSSOResponse = new WebSSOResource();
-    webSSOResponse.request = request;
-    webSSOResponse.response = responseWrapper;
-    webSSOResponse.context = context;
-    webSSOResponse.init();
-
-    webSSOResponse.doPost();
-    webSSOResponse.doPost();
-    Assert.assertThrows(WebApplicationException.class, webSSOResponse::doPost);
-  }
-
-  private void mockWebSSO(String username) throws AliasServiceException, ServiceLifecycleException {
-    context = EasyMock.createNiceMock(ServletContext.class);
-
-    request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getParameter("originalUrl")).andReturn("http://localhost:9080/service").anyTimes();
-    EasyMock.expect(request.getParameterMap()).andReturn(Collections.emptyMap()).anyTimes();
-    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
-
-    Principal principal = EasyMock.createNiceMock(Principal.class);
-    EasyMock.expect(principal.getName()).andReturn(username).anyTimes();
-    EasyMock.expect(request.getUserPrincipal()).andReturn(principal).anyTimes();
-
-    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
-    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services).anyTimes();
-
-    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(expectGatewayConfig(false)).anyTimes();
-
-    AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
-    EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TokenUtils.SIGNING_HMAC_SECRET_ALIAS)).andReturn(null).anyTimes();
-
-    authority = new TestJWTokenAuthority(gatewayPublicKey, gatewayPrivateKey, false);
-    EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority).anyTimes();
-
-    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-    ServletOutputStream outputStream = EasyMock.createNiceMock(ServletOutputStream.class);
-    responseWrapper = new CookieResponseWrapper(response, outputStream);
-
-    verifier = new ConcurrentSessionVerifier();
-    GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom")), 3, 2);
-    verifier.init(config, new HashMap<>());
-    EasyMock.expect(services.getService(ServiceType.CONCURRENT_SESSION_VERIFIER)).andReturn(verifier).anyTimes();
-
-    EasyMock.replay(principal, services, context, request);
-  }
-
-  private GatewayConfig mockConfig(Set<String> privilegedUsers, Set<String> nonPrivilegedUsers, int privilegedUsersLimit, int nonPrivilegedUsersLimit) {
-    GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
-    EasyMock.expect(config.getPrivilegedUsers()).andReturn(privilegedUsers);
-    EasyMock.expect(config.getNonPrivilegedUsers()).andReturn(nonPrivilegedUsers);
-    EasyMock.expect(config.getPrivilegedUsersConcurrentSessionLimit()).andReturn(privilegedUsersLimit);
-    EasyMock.expect(config.getNonPrivilegedUsersConcurrentSessionLimit()).andReturn(nonPrivilegedUsersLimit);
-    EasyMock.replay(config);
-    return config;
   }
 
   /**

@@ -22,7 +22,7 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
-import org.apache.knox.gateway.session.control.ConcurrentSessionVerifier;
+import org.apache.knox.gateway.session.control.InMemoryConcurrentSessionVerifier;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -31,7 +31,7 @@ import java.util.Map;
 public class ConcurrentSessionVerifierFactory extends AbstractServiceFactory {
   @Override
   protected Service createService(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation) throws ServiceLifecycleException {
-    return shouldCreateService(implementation) ? new ConcurrentSessionVerifier() : null;
+    return shouldCreateService(implementation) ? new InMemoryConcurrentSessionVerifier() : null;
   }
 
   @Override
@@ -41,6 +41,6 @@ public class ConcurrentSessionVerifierFactory extends AbstractServiceFactory {
 
   @Override
   protected Collection<String> getKnownImplementations() {
-    return Collections.singleton(ConcurrentSessionVerifier.class.getName());
+    return Collections.singleton(InMemoryConcurrentSessionVerifier.class.getName());
   }
 }
