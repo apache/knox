@@ -39,6 +39,7 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
   private Map<String, Set<SessionJWT>> concurrentSessionCounter;
   private final Lock sessionCountModifyLock = new ReentrantLock();
 
+  @Override
   public boolean verifySessionForUser(String username, JWT JWToken) {
     if (!privilegedUsers.contains(username) && !nonPrivilegedUsers.contains(username)) {
       return true;
@@ -83,6 +84,7 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
     return nonPrivilegedUsers.contains(username) && (validTokenNumber >= nonPrivilegedUserConcurrentSessionLimit);
   }
 
+  @Override
   public void sessionEndedForUser(String username, String token) {
     if (!token.isEmpty()) {
       sessionCountModifyLock.lock();
