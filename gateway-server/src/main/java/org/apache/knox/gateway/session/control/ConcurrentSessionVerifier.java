@@ -22,9 +22,8 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
-import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
-import java.text.ParseException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
@@ -38,10 +37,10 @@ public class ConcurrentSessionVerifier implements Service {
   private Set<String> nonPrivilegedUsers;
   private int privilegedUserConcurrentSessionLimit;
   private int nonPrivilegedUserConcurrentSessionLimit;
-  private Map<String, Set<String>> concurrentSessionCounter;
+  private Map<String, Set<SessionJWT>> concurrentSessionCounter;
   private final Lock sessionCountModifyLock = new ReentrantLock();
 
-  public boolean verifySessionForUser(String username, String token) {
+  public boolean verifySessionForUser(String username, JWT JWToken) {
     if (!privilegedUsers.contains(username) && !nonPrivilegedUsers.contains(username)) {
       return true;
     }
@@ -53,7 +52,7 @@ public class ConcurrentSessionVerifier implements Service {
         return false;
       }
       concurrentSessionCounter.putIfAbsent(username, new HashSet<>());
-      concurrentSessionCounter.compute(username, (key, tokenSet) -> addTokenForUser(tokenSet, token));
+      concurrentSessionCounter.compute(username, (key, sessionTokenSet) -> addTokenForUser(sessionTokenSet, JWToken));
     } finally {
       sessionCountModifyLock.unlock();
     }
@@ -62,17 +61,10 @@ public class ConcurrentSessionVerifier implements Service {
 
   private int countValidTokensForUser(String username) {
     int result = 0;
-    Set<String> tokens = concurrentSessionCounter.getOrDefault(username, null);
-    if (tokens != null && !tokens.isEmpty()) {
-      for (String token : tokens) {
-        try {
-          JWT jwtToken = new JWTToken(token);
-          Date expire = jwtToken.getExpiresDate();
-          if (expire == null || expire.after(new Date())) {
-            result++;
-          }
-        } catch (ParseException ignore) {
-        }
+    Set<SessionJWT> tokens = concurrentSessionCounter.getOrDefault(username, Collections.emptySet());
+    for (SessionJWT token : tokens) {
+      if (!token.hasExpired()) {
+        result++;
       }
     }
     return result;
@@ -96,24 +88,24 @@ public class ConcurrentSessionVerifier implements Service {
     if (!token.isEmpty()) {
       sessionCountModifyLock.lock();
       try {
-        concurrentSessionCounter.computeIfPresent(username, (key, tokenSet) -> removeTokenFromUser(tokenSet, token));
+        concurrentSessionCounter.computeIfPresent(username, (key, sessionTokenSet) -> removeTokenFromUser(sessionTokenSet, token));
       } finally {
         sessionCountModifyLock.unlock();
       }
     }
   }
 
-  private Set<String> removeTokenFromUser(Set<String> tokenSet, String newToken) {
-    tokenSet.remove(newToken);
-    if (tokenSet.isEmpty()) {
+  private Set<SessionJWT> removeTokenFromUser(Set<SessionJWT> sessionTokenSet, String token) {
+    sessionTokenSet.removeIf(sessionToken -> sessionToken.getToken().equals(token));
+    if (sessionTokenSet.isEmpty()) {
       return null;
     }
-    return tokenSet;
+    return sessionTokenSet;
   }
 
-  private Set<String> addTokenForUser(Set<String> tokens, String newToken) {
-    tokens.add(newToken);
-    return tokens;
+  private Set<SessionJWT> addTokenForUser(Set<SessionJWT> sessionTokenSet, JWT JWToken) {
+    sessionTokenSet.add(new SessionJWT(JWToken));
+    return sessionTokenSet;
   }
 
   @Override
@@ -138,5 +130,27 @@ public class ConcurrentSessionVerifier implements Service {
   Integer getUserConcurrentSessionCount(String username) {
     int result = countValidTokensForUser(username);
     return (result == 0) ? null : result;
+  }
+
+  public static class SessionJWT {
+    private final Date expiry;
+    private final String token;
+
+    public SessionJWT(JWT token) {
+      this.expiry = token.getExpiresDate();
+      this.token = token.toString();
+    }
+
+    public Date getExpiry() {
+      return expiry;
+    }
+
+    public String getToken() {
+      return token;
+    }
+
+    public boolean hasExpired() {
+      return expiry != null && expiry.before(new Date());
+    }
   }
 }

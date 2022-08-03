@@ -153,10 +153,10 @@ public class ConcurrentSessionVerifierTest {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("guest")), 3, 2);
     verifier.init(config, options);
 
-    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken1.toString()));
-    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken2.toString()));
-    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken3.toString()));
-    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken4.toString()));
+    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken1));
+    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken2));
+    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken3));
+    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken4));
   }
 
   @Test
@@ -164,17 +164,17 @@ public class ConcurrentSessionVerifierTest {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin", "tom")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 2);
     verifier.init(config, options);
 
-    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken1.toString()));
-    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken2.toString()));
-    Assert.assertFalse(verifier.verifySessionForUser("tom", tomToken3.toString()));
+    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken1));
+    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken2));
+    Assert.assertFalse(verifier.verifySessionForUser("tom", tomToken3));
 
     config = mockConfig(new HashSet<>(Arrays.asList("admin", "tom")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 4);
     verifier.init(config, options);
 
-    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken1.toString()));
-    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken2.toString()));
-    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken3.toString()));
-    Assert.assertFalse(verifier.verifySessionForUser("tom", tomToken4.toString()));
+    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken1));
+    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken2));
+    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken3));
+    Assert.assertFalse(verifier.verifySessionForUser("tom", tomToken4));
   }
 
   @Test
@@ -182,13 +182,13 @@ public class ConcurrentSessionVerifierTest {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 2);
     verifier.init(config, options);
 
-    Assert.assertTrue(verifier.verifySessionForUser("admin", adminToken1.toString()));
-    Assert.assertTrue(verifier.verifySessionForUser("admin", adminToken2.toString()));
-    Assert.assertTrue(verifier.verifySessionForUser("admin", adminToken3.toString()));
-    Assert.assertFalse(verifier.verifySessionForUser("admin", adminToken4.toString()));
+    Assert.assertTrue(verifier.verifySessionForUser("admin", adminToken1));
+    Assert.assertTrue(verifier.verifySessionForUser("admin", adminToken2));
+    Assert.assertTrue(verifier.verifySessionForUser("admin", adminToken3));
+    Assert.assertFalse(verifier.verifySessionForUser("admin", adminToken4));
     verifier.sessionEndedForUser("admin", adminToken1.toString());
-    Assert.assertTrue(verifier.verifySessionForUser("admin", adminToken5.toString()));
-    Assert.assertFalse(verifier.verifySessionForUser("admin", adminToken6.toString()));
+    Assert.assertTrue(verifier.verifySessionForUser("admin", adminToken5));
+    Assert.assertFalse(verifier.verifySessionForUser("admin", adminToken6));
   }
 
   @Test
@@ -196,13 +196,13 @@ public class ConcurrentSessionVerifierTest {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 2);
     verifier.init(config, options);
 
-    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken1.toString()));
-    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken2.toString()));
-    Assert.assertFalse(verifier.verifySessionForUser("tom", tomToken3.toString()));
-    Assert.assertFalse(verifier.verifySessionForUser("tom", tomToken4.toString()));
+    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken1));
+    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken2));
+    Assert.assertFalse(verifier.verifySessionForUser("tom", tomToken3));
+    Assert.assertFalse(verifier.verifySessionForUser("tom", tomToken4));
     verifier.sessionEndedForUser("tom", tomToken1.toString());
-    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken5.toString()));
-    Assert.assertFalse(verifier.verifySessionForUser("tom", tomToken6.toString()));
+    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken5));
+    Assert.assertFalse(verifier.verifySessionForUser("tom", tomToken6));
   }
 
   @Test
@@ -210,7 +210,7 @@ public class ConcurrentSessionVerifierTest {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 0, 2);
     verifier.init(config, options);
 
-    Assert.assertFalse(verifier.verifySessionForUser("admin", adminToken1.toString()));
+    Assert.assertFalse(verifier.verifySessionForUser("admin", adminToken1));
   }
 
   @Test
@@ -218,7 +218,7 @@ public class ConcurrentSessionVerifierTest {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 0);
     verifier.init(config, options);
 
-    Assert.assertFalse(verifier.verifySessionForUser("tom", tomToken1.toString()));
+    Assert.assertFalse(verifier.verifySessionForUser("tom", tomToken1));
   }
 
   @Test
@@ -227,23 +227,23 @@ public class ConcurrentSessionVerifierTest {
     verifier.init(config, options);
 
     Assert.assertNull(verifier.getUserConcurrentSessionCount("admin"));
-    verifier.verifySessionForUser("admin", adminToken1.toString());
+    verifier.verifySessionForUser("admin", adminToken1);
     Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("admin").intValue());
     verifier.sessionEndedForUser("admin", adminToken1.toString());
     Assert.assertNull(verifier.getUserConcurrentSessionCount("admin"));
     verifier.sessionEndedForUser("admin", adminToken1.toString());
     Assert.assertNull(verifier.getUserConcurrentSessionCount("admin"));
-    verifier.verifySessionForUser("admin", adminToken2.toString());
+    verifier.verifySessionForUser("admin", adminToken2);
     Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("admin").intValue());
 
     Assert.assertNull(verifier.getUserConcurrentSessionCount("tom"));
-    verifier.verifySessionForUser("tom", tomToken1.toString());
+    verifier.verifySessionForUser("tom", tomToken1);
     Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("tom").intValue());
     verifier.sessionEndedForUser("tom", tomToken1.toString());
     Assert.assertNull(verifier.getUserConcurrentSessionCount("tom"));
     verifier.sessionEndedForUser("tom", tomToken1.toString());
     Assert.assertNull(verifier.getUserConcurrentSessionCount("tom"));
-    verifier.verifySessionForUser("tom", tomToken2.toString());
+    verifier.verifySessionForUser("tom", tomToken2);
     Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("tom").intValue());
   }
 
@@ -255,9 +255,9 @@ public class ConcurrentSessionVerifierTest {
     for (int i = 0; i < 10; i++) {
       try {
         JWT token = tokenAuthority.issueToken(jwtAttributesForAdmin);
-        Assert.assertTrue(verifier.verifySessionForUser("admin", token.toString()));
+        Assert.assertTrue(verifier.verifySessionForUser("admin", token));
         token = tokenAuthority.issueToken(jwtAttributesForTom);
-        Assert.assertTrue(verifier.verifySessionForUser("tom", token.toString()));
+        Assert.assertTrue(verifier.verifySessionForUser("tom", token));
       } catch (TokenServiceException ignored) {
       }
     }
@@ -280,13 +280,13 @@ public class ConcurrentSessionVerifierTest {
             .build();
 
     JWT tomToken = tokenAuthority.issueToken(jwtAttributesForTom);
-    verifier.verifySessionForUser("tom", tomToken.toString());
+    verifier.verifySessionForUser("tom", tomToken);
     Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("tom").intValue());
     tomToken = tokenAuthority.issueToken(jwtAttributesForTomFor10Sec);
-    verifier.verifySessionForUser("tom", tomToken.toString());
+    verifier.verifySessionForUser("tom", tomToken);
     Assert.assertEquals(2, verifier.getUserConcurrentSessionCount("tom").intValue());
     tomToken = tokenAuthority.issueToken(jwtAttributesForTomFor10Sec);
-    verifier.verifySessionForUser("tom", tomToken.toString());
+    verifier.verifySessionForUser("tom", tomToken);
     Assert.assertEquals(3, verifier.getUserConcurrentSessionCount("tom").intValue());
     Thread.sleep(1000L);
     Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("tom").intValue());
@@ -303,13 +303,13 @@ public class ConcurrentSessionVerifierTest {
             .build();
 
     JWT adminToken = tokenAuthority.issueToken(jwtAttributesForAdmin);
-    verifier.verifySessionForUser("admin", adminToken.toString());
+    verifier.verifySessionForUser("admin", adminToken);
     Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("admin").intValue());
     adminToken = tokenAuthority.issueToken(jwtAttributesForAdminFor10Sec);
-    verifier.verifySessionForUser("admin", adminToken.toString());
+    verifier.verifySessionForUser("admin", adminToken);
     Assert.assertEquals(2, verifier.getUserConcurrentSessionCount("admin").intValue());
     adminToken = tokenAuthority.issueToken(jwtAttributesForAdminFor10Sec);
-    verifier.verifySessionForUser("admin", adminToken.toString());
+    verifier.verifySessionForUser("admin", adminToken);
     Assert.assertEquals(3, verifier.getUserConcurrentSessionCount("admin").intValue());
     Thread.sleep(1000L);
     Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("admin").intValue());

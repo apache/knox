@@ -292,7 +292,7 @@ public class WebSSOResource {
       // Coverity CID 1327959
       if (token != null) {
         ConcurrentSessionVerifier verifier = services.getService(ServiceType.CONCURRENT_SESSION_VERIFIER);
-        if (verifier != null && !verifier.verifySessionForUser(p.getName(), token.toString())) {
+        if (verifier != null && !verifier.verifySessionForUser(p.getName(), token)) {
           throw new WebApplicationException("Too many sessions for user: " + request.getUserPrincipal().getName(), Response.Status.FORBIDDEN);
         }
         addJWTHadoopCookie(original, token);
