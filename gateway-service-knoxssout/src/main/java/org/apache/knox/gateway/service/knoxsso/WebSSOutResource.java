@@ -113,13 +113,15 @@ public class WebSSOutResource {
 
     Cookie[] cookies = request.getCookies();
     if (cookies != null) {
-      Optional<Cookie> SSOCookie = Arrays.stream(cookies).filter(cookie -> cookie.getName().equals(cookieName)).findFirst();
-      if (SSOCookie.isPresent()) {
+      Optional<Cookie> ssoCookie = Arrays.stream(cookies).filter(cookie -> cookie.getName().equals(cookieName)).findFirst();
+      if (ssoCookie.isPresent()) {
         GatewayServices gwServices =
                 (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
         if (gwServices != null) {
           ConcurrentSessionVerifier verifier = gwServices.getService(ServiceType.CONCURRENT_SESSION_VERIFIER);
-          verifier.sessionEndedForUser(request.getUserPrincipal().getName(), SSOCookie.get().getValue());
+          if (verifier != null) {
+            verifier.sessionEndedForUser(request.getUserPrincipal().getName(), ssoCookie.get().getValue());
+          }
         }
       } else {
         log.couldNotFindCookieWithTokenToRemove(cookieName, request.getUserPrincipal().getName());

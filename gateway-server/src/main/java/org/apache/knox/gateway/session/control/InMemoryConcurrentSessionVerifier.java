@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
@@ -60,14 +61,11 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
   }
 
   private int countValidTokensForUser(String username) {
-    int result = 0;
-    Set<SessionJWT> tokens = concurrentSessionCounter.getOrDefault(username, Collections.emptySet());
-    for (SessionJWT token : tokens) {
-      if (!token.hasExpired()) {
-        result++;
-      }
-    }
-    return result;
+    return (int) concurrentSessionCounter
+            .getOrDefault(username, Collections.emptySet())
+            .stream()
+            .filter(each -> !each.hasExpired())
+            .count();
   }
 
   private boolean privilegedUserCheckLimitReached(String username, int validTokenNumber) {
@@ -137,13 +135,22 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
     private final Date expiry;
     private final String token;
 
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      SessionJWT that = (SessionJWT) o;
+      return Objects.equals(token, that.token);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(token);
+    }
+
     public SessionJWT(JWT token) {
       this.expiry = token.getExpiresDate();
       this.token = token.toString();
-    }
-
-    public Date getExpiry() {
-      return expiry;
     }
 
     public String getToken() {
