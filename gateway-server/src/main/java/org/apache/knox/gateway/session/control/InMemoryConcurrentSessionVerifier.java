@@ -137,8 +137,12 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
       SessionJWT that = (SessionJWT) o;
       return Objects.equals(token, that.token);
     }
