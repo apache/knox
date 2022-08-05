@@ -111,23 +111,28 @@ public class WebSSOutResource {
     }
     response.addCookie(c);
 
+    Optional<Cookie> ssoCookie = findCookie(cookieName);
+    if (ssoCookie.isPresent()) {
+      GatewayServices gwServices =
+              (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+      if (gwServices != null) {
+        ConcurrentSessionVerifier verifier = gwServices.getService(ServiceType.CONCURRENT_SESSION_VERIFIER);
+        if (verifier != null) {
+          verifier.sessionEndedForUser(request.getUserPrincipal().getName(), ssoCookie.get().getValue());
+        }
+      }
+    } else {
+      log.couldNotFindCookieWithTokenToRemove(cookieName, request.getUserPrincipal().getName());
+    }
+    return rc;
+  }
+
+  private Optional<Cookie> findCookie(String cookieName) {
     Cookie[] cookies = request.getCookies();
     if (cookies != null) {
-      Optional<Cookie> ssoCookie = Arrays.stream(cookies).filter(cookie -> cookie.getName().equals(cookieName)).findFirst();
-      if (ssoCookie.isPresent()) {
-        GatewayServices gwServices =
-                (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-        if (gwServices != null) {
-          ConcurrentSessionVerifier verifier = gwServices.getService(ServiceType.CONCURRENT_SESSION_VERIFIER);
-          if (verifier != null) {
-            verifier.sessionEndedForUser(request.getUserPrincipal().getName(), ssoCookie.get().getValue());
-          }
-        }
-      } else {
-        log.couldNotFindCookieWithTokenToRemove(cookieName, request.getUserPrincipal().getName());
-      }
+      return Arrays.stream(cookies).filter(cookie -> cookie.getName().equals(cookieName)).findFirst();
+    } else {
+      return Optional.empty();
     }
-
-    return rc;
   }
 }

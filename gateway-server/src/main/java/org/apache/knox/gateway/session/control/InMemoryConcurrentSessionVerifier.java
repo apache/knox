@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.session.control;
 
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
@@ -41,7 +42,7 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
   private final Lock sessionCountModifyLock = new ReentrantLock();
 
   @Override
-  public boolean verifySessionForUser(String username, JWT JWToken) {
+  public boolean verifySessionForUser(String username, JWT jwtToken) {
     if (!privilegedUsers.contains(username) && !nonPrivilegedUsers.contains(username)) {
       return true;
     }
@@ -53,7 +54,7 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
         return false;
       }
       concurrentSessionCounter.putIfAbsent(username, new HashSet<>());
-      concurrentSessionCounter.compute(username, (key, sessionTokenSet) -> addTokenForUser(sessionTokenSet, JWToken));
+      concurrentSessionCounter.compute(username, (key, sessionTokenSet) -> addTokenForUser(sessionTokenSet, jwtToken));
     } finally {
       sessionCountModifyLock.unlock();
     }
@@ -84,7 +85,7 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
 
   @Override
   public void sessionEndedForUser(String username, String token) {
-    if (!token.isEmpty()) {
+    if (StringUtils.isNotBlank(token)) {
       sessionCountModifyLock.lock();
       try {
         concurrentSessionCounter.computeIfPresent(username, (key, sessionTokenSet) -> removeTokenFromUser(sessionTokenSet, token));
@@ -102,8 +103,8 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
     return sessionTokenSet;
   }
 
-  private Set<SessionJWT> addTokenForUser(Set<SessionJWT> sessionTokenSet, JWT JWToken) {
-    sessionTokenSet.add(new SessionJWT(JWToken));
+  private Set<SessionJWT> addTokenForUser(Set<SessionJWT> sessionTokenSet, JWT jwtToken) {
+    sessionTokenSet.add(new SessionJWT(jwtToken));
     return sessionTokenSet;
   }
 
