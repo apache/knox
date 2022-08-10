@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -64,7 +65,7 @@ public class InMemoryConcurrentSessionVerifierTest {
   @Before
   public void setUp() throws AliasServiceException, IOException, ServiceLifecycleException {
     verifier = new InMemoryConcurrentSessionVerifier();
-    options = new HashMap<>();
+    options = Collections.emptyMap();
 
     GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
     String basedir = System.getProperty("basedir");
@@ -147,9 +148,12 @@ public class InMemoryConcurrentSessionVerifierTest {
     return config;
   }
 
-
+  /**
+   * The goal for this test is to prove that if the user is not configured for either of the groups then
+   * neither of the limits apply to him, he can have unlimited sessions.
+   */
   @Test
-  public void userIsInNeitherOfTheGroups() throws ServiceLifecycleException {
+  public void testUserIsInNeitherOfTheGroupsCanBeLoggedInUnlimitedTimes() throws ServiceLifecycleException {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("guest")), 3, 2);
     verifier.init(config, options);
 
@@ -160,7 +164,7 @@ public class InMemoryConcurrentSessionVerifierTest {
   }
 
   @Test
-  public void userIsInBothOfTheGroups() throws ServiceLifecycleException {
+  public void testUserIsInBothOfTheGroupsLowerLimitApplies() throws ServiceLifecycleException {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin", "tom")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 2);
     verifier.init(config, options);
 
@@ -178,7 +182,7 @@ public class InMemoryConcurrentSessionVerifierTest {
   }
 
   @Test
-  public void userIsPrivileged() throws ServiceLifecycleException, TokenServiceException {
+  public void testUserIsPrivileged() throws ServiceLifecycleException, TokenServiceException {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 2);
     verifier.init(config, options);
 
@@ -192,7 +196,7 @@ public class InMemoryConcurrentSessionVerifierTest {
   }
 
   @Test
-  public void userIsNotPrivileged() throws ServiceLifecycleException {
+  public void testUserIsNotPrivileged() throws ServiceLifecycleException {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 2);
     verifier.init(config, options);
 
@@ -206,7 +210,7 @@ public class InMemoryConcurrentSessionVerifierTest {
   }
 
   @Test
-  public void privilegedLimitIsZero() throws ServiceLifecycleException {
+  public void testPrivilegedLimitIsZero() throws ServiceLifecycleException {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 0, 2);
     verifier.init(config, options);
 
@@ -214,7 +218,7 @@ public class InMemoryConcurrentSessionVerifierTest {
   }
 
   @Test
-  public void nonPrivilegedLimitIsZero() throws ServiceLifecycleException {
+  public void testNonPrivilegedLimitIsZero() throws ServiceLifecycleException {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 0);
     verifier.init(config, options);
 
@@ -222,33 +226,33 @@ public class InMemoryConcurrentSessionVerifierTest {
   }
 
   @Test
-  public void sessionsDoNotGoToNegative() throws ServiceLifecycleException {
+  public void testSessionsDoNotGoToNegative() throws ServiceLifecycleException {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 2, 2);
     verifier.init(config, options);
 
-    Assert.assertNull(verifier.getUserConcurrentSessionCount("admin"));
+    Assert.assertEquals(0, verifier.countValidTokensForUser("admin"));
     verifier.verifySessionForUser("admin", adminToken1);
-    Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("admin").intValue());
+    Assert.assertEquals(1, verifier.countValidTokensForUser("admin"));
     verifier.sessionEndedForUser("admin", adminToken1.toString());
-    Assert.assertNull(verifier.getUserConcurrentSessionCount("admin"));
+    Assert.assertEquals(0, verifier.countValidTokensForUser("admin"));
     verifier.sessionEndedForUser("admin", adminToken1.toString());
-    Assert.assertNull(verifier.getUserConcurrentSessionCount("admin"));
+    Assert.assertEquals(0, verifier.countValidTokensForUser("admin"));
     verifier.verifySessionForUser("admin", adminToken2);
-    Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("admin").intValue());
+    Assert.assertEquals(1, verifier.countValidTokensForUser("admin"));
 
-    Assert.assertNull(verifier.getUserConcurrentSessionCount("tom"));
+    Assert.assertEquals(0, verifier.countValidTokensForUser("tom"));
     verifier.verifySessionForUser("tom", tomToken1);
-    Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("tom").intValue());
+    Assert.assertEquals(1, verifier.countValidTokensForUser("tom"));
     verifier.sessionEndedForUser("tom", tomToken1.toString());
-    Assert.assertNull(verifier.getUserConcurrentSessionCount("tom"));
+    Assert.assertEquals(0, verifier.countValidTokensForUser("tom"));
     verifier.sessionEndedForUser("tom", tomToken1.toString());
-    Assert.assertNull(verifier.getUserConcurrentSessionCount("tom"));
+    Assert.assertEquals(0, verifier.countValidTokensForUser("tom"));
     verifier.verifySessionForUser("tom", tomToken2);
-    Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("tom").intValue());
+    Assert.assertEquals(1, verifier.countValidTokensForUser("tom"));
   }
 
   @Test
-  public void negativeLimitMeansUnlimited() throws ServiceLifecycleException {
+  public void testNegativeLimitMeansUnlimited() throws ServiceLifecycleException {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), -2, -2);
     verifier.init(config, options);
 
@@ -264,7 +268,7 @@ public class InMemoryConcurrentSessionVerifierTest {
   }
 
   @Test
-  public void expiredTokensAreNotCounted() throws ServiceLifecycleException, TokenServiceException, InterruptedException {
+  public void testExpiredTokensAreNotCounted() throws ServiceLifecycleException, TokenServiceException, InterruptedException {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 3);
     verifier.init(config, options);
 
@@ -281,15 +285,15 @@ public class InMemoryConcurrentSessionVerifierTest {
 
     JWT tomToken = tokenAuthority.issueToken(jwtAttributesForTom);
     verifier.verifySessionForUser("tom", tomToken);
-    Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("tom").intValue());
+    Assert.assertEquals(1, verifier.countValidTokensForUser("tom"));
     tomToken = tokenAuthority.issueToken(jwtAttributesForTomFor10Sec);
     verifier.verifySessionForUser("tom", tomToken);
-    Assert.assertEquals(2, verifier.getUserConcurrentSessionCount("tom").intValue());
+    Assert.assertEquals(2, verifier.countValidTokensForUser("tom"));
     tomToken = tokenAuthority.issueToken(jwtAttributesForTomFor10Sec);
     verifier.verifySessionForUser("tom", tomToken);
-    Assert.assertEquals(3, verifier.getUserConcurrentSessionCount("tom").intValue());
+    Assert.assertEquals(3, verifier.countValidTokensForUser("tom"));
     Thread.sleep(1000L);
-    Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("tom").intValue());
+    Assert.assertEquals(1, verifier.countValidTokensForUser("tom"));
 
     JWTokenAttributes jwtAttributesForAdminFor10Sec = new JWTokenAttributesBuilder()
             .setIssuer("KNOXSSO")
@@ -304,15 +308,15 @@ public class InMemoryConcurrentSessionVerifierTest {
 
     JWT adminToken = tokenAuthority.issueToken(jwtAttributesForAdmin);
     verifier.verifySessionForUser("admin", adminToken);
-    Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("admin").intValue());
+    Assert.assertEquals(1, verifier.countValidTokensForUser("admin"));
     adminToken = tokenAuthority.issueToken(jwtAttributesForAdminFor10Sec);
     verifier.verifySessionForUser("admin", adminToken);
-    Assert.assertEquals(2, verifier.getUserConcurrentSessionCount("admin").intValue());
+    Assert.assertEquals(2, verifier.countValidTokensForUser("admin"));
     adminToken = tokenAuthority.issueToken(jwtAttributesForAdminFor10Sec);
     verifier.verifySessionForUser("admin", adminToken);
-    Assert.assertEquals(3, verifier.getUserConcurrentSessionCount("admin").intValue());
+    Assert.assertEquals(3, verifier.countValidTokensForUser("admin"));
     Thread.sleep(1000L);
-    Assert.assertEquals(1, verifier.getUserConcurrentSessionCount("admin").intValue());
+    Assert.assertEquals(1, verifier.countValidTokensForUser("admin"));
   }
 }
 

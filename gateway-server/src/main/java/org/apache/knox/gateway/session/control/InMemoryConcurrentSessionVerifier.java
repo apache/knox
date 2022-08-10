@@ -19,7 +19,9 @@ package org.apache.knox.gateway.session.control;
 
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 
@@ -34,6 +36,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerifier {
+  private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
+
   private Set<String> privilegedUsers;
   private Set<String> nonPrivilegedUsers;
   private int privilegedUserConcurrentSessionLimit;
@@ -43,6 +47,10 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
 
   @Override
   public boolean verifySessionForUser(String username, JWT jwtToken) {
+    if (StringUtils.isBlank(username)) {
+      LOG.errorVerifyingUserBlankUsername();
+      return false;
+    }
     if (!privilegedUsers.contains(username) && !nonPrivilegedUsers.contains(username)) {
       return true;
     }
@@ -61,7 +69,7 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
     return true;
   }
 
-  private int countValidTokensForUser(String username) {
+  int countValidTokensForUser(String username) {
     return (int) concurrentSessionCounter
             .getOrDefault(username, Collections.emptySet())
             .stream()
@@ -85,7 +93,7 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
 
   @Override
   public void sessionEndedForUser(String username, String token) {
-    if (StringUtils.isNotBlank(token)) {
+    if (StringUtils.isNotBlank(token) && StringUtils.isNotBlank(username)) {
       sessionCountModifyLock.lock();
       try {
         concurrentSessionCounter.computeIfPresent(username, (key, sessionTokenSet) -> removeTokenFromUser(sessionTokenSet, token));
@@ -125,11 +133,6 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
   @Override
   public void stop() throws ServiceLifecycleException {
 
-  }
-
-  Integer getUserConcurrentSessionCount(String username) {
-    int result = countValidTokensForUser(username);
-    return (result == 0) ? null : result;
   }
 
   public static class SessionJWT {

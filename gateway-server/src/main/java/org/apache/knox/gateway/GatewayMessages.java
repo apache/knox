@@ -718,4 +718,7 @@ public interface GatewayMessages {
 
   @Message(level = MessageLevel.DEBUG, text = "Jetty's maxFormKeys is set to {0}")
   void setMaxFormKeys(int maxFormKeys);
+
+  @Message(level = MessageLevel.ERROR, text = "ConcurrentSessionVerifier got blank username for verification.")
+  void errorVerifyingUserBlankUsername();
 }

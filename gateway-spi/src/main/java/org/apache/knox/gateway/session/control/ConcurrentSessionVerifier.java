@@ -21,6 +21,13 @@ import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 
 public interface ConcurrentSessionVerifier extends Service {
+  /**
+   * Verifies whether the given user is permitted to have a[nother] session or not.
+   *
+   * @param username the user who needs verification
+   * @param JWToken  the token which the user will use in the session
+   * @return true if the user is allowed to have a[nother] session, false if the user is not allowed to have a[nother] session
+   */
   boolean verifySessionForUser(String username, JWT JWToken);
 
   void sessionEndedForUser(String username, String token);

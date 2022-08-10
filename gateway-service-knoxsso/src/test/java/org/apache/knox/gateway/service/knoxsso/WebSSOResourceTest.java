@@ -692,7 +692,7 @@ public class WebSSOResourceTest {
   }
 
   @Test
-  public void concurrentSessionLimitHit() throws Exception {
+  public void testConcurrentSessionLimitHit() throws Exception {
     configureCommonExpectations(Collections.emptyMap(), false, false, false);
 
     WebSSOResource webSSOResponse = new WebSSOResource();
