@@ -25,6 +25,7 @@ import org.junit.Test;
 import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -482,5 +483,19 @@ public class GatewayConfigImplTest {
     assertThat(config.getPrivilegedUsers(), is(new HashSet<>(Arrays.asList("guest"))));
     config.set("gateway.non.privileged.users", "  guest  ");
     assertThat(config.getNonPrivilegedUsers(), is(new HashSet<>(Arrays.asList("guest"))));
+  }
+
+  // KNOX-2779
+  @Test
+  public void testGatewayHost() throws Exception {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    List<String> hosts = new ArrayList<>();
+    hosts.add("0.0.0.0");
+    assertThat(config.getGatewayHost(), is(hosts));
+
+    config.set("gateway.host", "0.0.0.0,127.0.0.1");
+    hosts.add("127.0.0.1");
+    assertThat(config.getGatewayHost(), is(hosts));
   }
 }

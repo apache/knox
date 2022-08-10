@@ -160,8 +160,10 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public String getGatewayHost() {
-    return gatewayHost;
+  public List<String> getGatewayHost() {
+    List<String> hosts = new ArrayList<>();
+    hosts.add(gatewayHost);
+    return hosts;
   }
 
   @Override
@@ -179,8 +181,14 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public InetSocketAddress getGatewayAddress() throws UnknownHostException {
-    return new InetSocketAddress( getGatewayHost(), getGatewayPort() );
+  public List<InetSocketAddress> getGatewayAddress() throws UnknownHostException {
+    List<String> hostIps = getGatewayHost();
+    int port = getGatewayPort();
+    List<InetSocketAddress> socketAddressList = new ArrayList<>();
+    for (String host : hostIps) {
+      socketAddressList.add(new InetSocketAddress( host, port ));
+    }
+    return socketAddressList;
   }
 
   @Override
