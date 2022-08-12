@@ -272,7 +272,7 @@ public class InMemoryConcurrentSessionVerifierTest {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 3);
     verifier.init(config, options);
 
-    JWTokenAttributes jwtAttributesForTomFor10Sec = new JWTokenAttributesBuilder()
+    JWTokenAttributes expiringJwtAttributesForTom = new JWTokenAttributesBuilder()
             .setIssuer("KNOXSSO")
             .setUserName("tom")
             .setAudiences(new ArrayList<>())
@@ -286,16 +286,16 @@ public class InMemoryConcurrentSessionVerifierTest {
     JWT tomToken = tokenAuthority.issueToken(jwtAttributesForTom);
     verifier.verifySessionForUser("tom", tomToken);
     Assert.assertEquals(1, verifier.countValidTokensForUser("tom"));
-    tomToken = tokenAuthority.issueToken(jwtAttributesForTomFor10Sec);
+    tomToken = tokenAuthority.issueToken(expiringJwtAttributesForTom);
     verifier.verifySessionForUser("tom", tomToken);
     Assert.assertEquals(2, verifier.countValidTokensForUser("tom"));
-    tomToken = tokenAuthority.issueToken(jwtAttributesForTomFor10Sec);
+    tomToken = tokenAuthority.issueToken(expiringJwtAttributesForTom);
     verifier.verifySessionForUser("tom", tomToken);
     Assert.assertEquals(3, verifier.countValidTokensForUser("tom"));
     Thread.sleep(1000L);
     Assert.assertEquals(1, verifier.countValidTokensForUser("tom"));
 
-    JWTokenAttributes jwtAttributesForAdminFor10Sec = new JWTokenAttributesBuilder()
+    JWTokenAttributes expiringJwtAttributesForAdmin = new JWTokenAttributesBuilder()
             .setIssuer("KNOXSSO")
             .setUserName("admin")
             .setAudiences(new ArrayList<>())
@@ -309,10 +309,10 @@ public class InMemoryConcurrentSessionVerifierTest {
     JWT adminToken = tokenAuthority.issueToken(jwtAttributesForAdmin);
     verifier.verifySessionForUser("admin", adminToken);
     Assert.assertEquals(1, verifier.countValidTokensForUser("admin"));
-    adminToken = tokenAuthority.issueToken(jwtAttributesForAdminFor10Sec);
+    adminToken = tokenAuthority.issueToken(expiringJwtAttributesForAdmin);
     verifier.verifySessionForUser("admin", adminToken);
     Assert.assertEquals(2, verifier.countValidTokensForUser("admin"));
-    adminToken = tokenAuthority.issueToken(jwtAttributesForAdminFor10Sec);
+    adminToken = tokenAuthority.issueToken(expiringJwtAttributesForAdmin);
     verifier.verifySessionForUser("admin", adminToken);
     Assert.assertEquals(3, verifier.countValidTokensForUser("admin"));
     Thread.sleep(1000L);
