@@ -36,6 +36,7 @@ env:
 services:
   - docker
 before_install:
+  - df -h
   - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
   - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
   - sudo add-apt-repository "deb [arch=arm64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
@@ -46,6 +47,10 @@ before_install:
   - docker pull $IMAGE
 script:
   - $DOCKERRUN $IMAGE mvn -T.75C clean verify -U -Dshellcheck=true -Dsurefire.useFile=false -Djavax.net.ssl.trustStorePassword=changeit -Dmaven.wagon.http.retryHandler.count=5 -Dmaven.wagon.http.retryHandler.class=default -Dmaven.wagon.http.retryHandler.nonRetryableClasses=java.io.InterruptedIOException -Dhttp.keepAlive=false -B -V
+after_success:
+  - df -h
+after_failure:
+  - df -h
 git:
   depth: 1000
 cache:
