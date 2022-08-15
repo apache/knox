@@ -124,31 +124,32 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     if (predicateToGroupMapping.isEmpty() && filterConfig.getServletContext() != null) {
       loadVirtualGroupConfig(filterConfig.getServletContext(), predicateToGroupMapping);
     }
-    if (predicateToGroupMapping.keySet().stream().anyMatch(StringUtils::isBlank)) {
-      LOG.missingVirtualGroupName();
-    }
     return predicateToGroupMapping;
   }
 
   private void loadVirtualGroupConfig(FilterConfig config, Map<String, AbstractSyntaxTree> result) {
     for (String paramName : virtualGroupParameterNames(config.getInitParameterNames())) {
-      try {
-        AbstractSyntaxTree ast = parser.parse(config.getInitParameter(paramName));
-        result.put(paramName.substring(VIRTUAL_GROUP_MAPPING_PREFIX.length()).trim(), ast);
-      } catch (SyntaxException e) {
-        LOG.parseError(paramName, config.getInitParameter(paramName), e);
-      }
+      addGroup(result, paramName, config.getInitParameter(paramName));
     }
   }
 
   private void loadVirtualGroupConfig(ServletContext context, Map<String, AbstractSyntaxTree> result) {
     for (String paramName : virtualGroupParameterNames(context.getInitParameterNames())) {
-      try {
-        AbstractSyntaxTree ast = parser.parse(context.getInitParameter(paramName));
-        result.put(paramName.substring(VIRTUAL_GROUP_MAPPING_PREFIX.length()).trim(), ast);
-      } catch (SyntaxException e) {
-        LOG.parseError(paramName, context.getInitParameter(paramName), e);
+      addGroup(result, paramName, context.getInitParameter(paramName));
+    }
+  }
+
+  private void addGroup(Map<String, AbstractSyntaxTree> result, String paramName, String predicate) {
+    try {
+      AbstractSyntaxTree ast = parser.parse(predicate);
+      String groupName = paramName.substring(VIRTUAL_GROUP_MAPPING_PREFIX.length()).trim();
+      if (StringUtils.isBlank(groupName)) {
+        LOG.missingVirtualGroupName();
+      } else {
+        result.put(groupName, ast);
       }
+    } catch (SyntaxException e) {
+      LOG.parseError(paramName, predicate, e);
     }
   }
 
