@@ -36,7 +36,7 @@ public enum ServiceType {
   TOKEN_SERVICE("TokenService"),
   TOKEN_STATE_SERVICE("TokenStateService"),
   TOPOLOGY_SERVICE("TopologyService"),
-  CONCURRENT_SESSION_VERIFIER("ConcurrentSessionCounter");
+  CONCURRENT_SESSION_VERIFIER("ConcurrentSessionVerifier");
 
   private final String serviceTypeName;
   private final String shortName;
