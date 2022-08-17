@@ -42,7 +42,7 @@ public class ConcurrentSessionVerifierFactory extends AbstractServiceFactory {
         if (isThereGroupConfigured(gatewayConfig)) {
           service = new InMemoryConcurrentSessionVerifier();
         } else {
-          throw new ServiceLifecycleException("Error, neither privileged nor non-privileged groups are configured!");
+          throw new ServiceLifecycleException("Error creating InMemoryConcurrentSessionVerifier, at least one user should be added in either the privileged group or the non-privileged group!");
         }
       }
       logServiceUsage(implementation, serviceType);
