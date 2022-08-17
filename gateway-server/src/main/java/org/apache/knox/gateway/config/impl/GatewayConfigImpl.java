@@ -303,6 +303,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final int GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT = 2;
   private static final String GATEWAY_PRIVILEGED_USERS = GATEWAY_CONFIG_FILE_PREFIX + "." + PRIVILEGED_USERS;
   private static final String GATEWAY_NON_PRIVILEGED_USERS = GATEWAY_CONFIG_FILE_PREFIX + "." + NON_PRIVILEGED_USERS;
+  private static final String GATEWAY_SESSION_VERIFICATION_EXPIRED_TOKENS_CLEANING_PERIOD = GATEWAY_CONFIG_FILE_PREFIX + ".session.verification.expired.tokens.cleaning.period";
+  private static final long GATEWAY_SESSION_VERIFICATION_EXPIRED_TOKENS_CLEANING_PERIOD_DEFAULT = TimeUnit.MINUTES.toSeconds(30);
 
   public GatewayConfigImpl() {
     init();
@@ -1381,5 +1383,10 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public Set<String> getNonPrivilegedUsers() {
     final Collection<String> nonPrivilegedUsers = getTrimmedStringCollection(GATEWAY_NON_PRIVILEGED_USERS);
     return nonPrivilegedUsers == null ? Collections.emptySet() : new HashSet<>(nonPrivilegedUsers);
+  }
+
+  @Override
+  public long getConcurrentSessionVerifierExpiredTokensCleaningPeriod() {
+    return getLong(GATEWAY_SESSION_VERIFICATION_EXPIRED_TOKENS_CLEANING_PERIOD, GATEWAY_SESSION_VERIFICATION_EXPIRED_TOKENS_CLEANING_PERIOD_DEFAULT);
   }
 }

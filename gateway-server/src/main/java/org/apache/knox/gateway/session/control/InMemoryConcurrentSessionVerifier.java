@@ -28,12 +28,17 @@ import org.apache.knox.gateway.services.security.token.impl.JWT;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerifier {
   private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
@@ -44,6 +49,8 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
   private int nonPrivilegedUserConcurrentSessionLimit;
   private Map<String, Set<SessionJWT>> concurrentSessionCounter;
   private final Lock sessionCountModifyLock = new ReentrantLock();
+  private long cleaningPeriod;
+  private final ScheduledExecutorService expiredTokenRemover = Executors.newSingleThreadScheduledExecutor();
 
   @Override
   public boolean verifySessionForUser(String username, JWT jwtToken) {
@@ -122,17 +129,34 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
     this.nonPrivilegedUsers = config.getNonPrivilegedUsers();
     this.privilegedUserConcurrentSessionLimit = config.getPrivilegedUsersConcurrentSessionLimit();
     this.nonPrivilegedUserConcurrentSessionLimit = config.getNonPrivilegedUsersConcurrentSessionLimit();
+    this.cleaningPeriod = config.getConcurrentSessionVerifierExpiredTokensCleaningPeriod();
     this.concurrentSessionCounter = new ConcurrentHashMap<>();
   }
 
   @Override
   public void start() throws ServiceLifecycleException {
-
+    expiredTokenRemover.scheduleAtFixedRate(this::removeExpiredTokens, cleaningPeriod, cleaningPeriod, TimeUnit.SECONDS);
   }
 
   @Override
   public void stop() throws ServiceLifecycleException {
+    expiredTokenRemover.shutdown();
+  }
 
+  private void removeExpiredTokens() {
+    sessionCountModifyLock.lock();
+    try {
+      Iterator<Map.Entry<String, Set<SessionJWT>>> concurrentSessionCounterIterator = concurrentSessionCounter.entrySet().iterator();
+      while (concurrentSessionCounterIterator.hasNext()) {
+        Map.Entry<String, Set<SessionJWT>> concurrentSessionCounterMapEntry = concurrentSessionCounterIterator.next();
+        concurrentSessionCounterMapEntry.setValue(concurrentSessionCounterMapEntry.getValue().stream().filter(sessionJWT -> !sessionJWT.hasExpired()).collect(Collectors.toSet()));
+        if (concurrentSessionCounterMapEntry.getValue().isEmpty()) {
+          concurrentSessionCounterIterator.remove();
+        }
+      }
+    } finally {
+      sessionCountModifyLock.unlock();
+    }
   }
 
   public static class SessionJWT {
