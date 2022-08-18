@@ -15,17 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.service.knoxsso;
+package org.apache.knox.gateway.session.control;
 
-import org.apache.knox.gateway.i18n.messages.Message;
-import org.apache.knox.gateway.i18n.messages.MessageLevel;
-import org.apache.knox.gateway.i18n.messages.Messages;
+import org.apache.knox.gateway.services.Service;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
 
-@Messages(logger="org.apache.knox.gateway.service.knoxsso")
-public interface KnoxSSOutMessages {
-  @Message( level = MessageLevel.INFO, text = "There was a problem determining the SSO cookie domain - using default domain.")
-  void problemWithCookieDomainUsingDefault();
+public interface ConcurrentSessionVerifier extends Service {
+  /**
+   * Verifies whether the given user is permitted to have a[nother] session or not.
+   *
+   * @param username the user who needs verification
+   * @param JWToken  the token which the user will use in the session
+   * @return true if the user is allowed to have a[nother] session, false if the user is not allowed to have a[nother] session
+   */
+  boolean verifySessionForUser(String username, JWT JWToken);
 
-  @Message(level = MessageLevel.WARN, text = "Could not find cookie with the name: {0} in the request to be removed from the concurrent session counter for user: {1}. ")
-  void couldNotFindCookieWithTokenToRemove(String cookieName, String username);
+  void sessionEndedForUser(String username, String token);
+
 }

@@ -26,6 +26,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -47,12 +48,15 @@ public class WebSSOutResourceTest {
 
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(""));
+    Principal mockPrincipal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(mockPrincipal.getName()).andReturn("admin").anyTimes();
+    EasyMock.expect(request.getUserPrincipal()).andReturn(mockPrincipal).anyTimes();
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     ServletOutputStream outputStream = EasyMock.createNiceMock(ServletOutputStream.class);
     CookieResponseWrapper responseWrapper = new CookieResponseWrapper(response, outputStream);
 
-    EasyMock.replay(context, request);
+    EasyMock.replay(context, request, mockPrincipal);
 
     WebSSOutResource webSSOutResponse = new WebSSOutResource();
     webSSOutResponse.request = request;

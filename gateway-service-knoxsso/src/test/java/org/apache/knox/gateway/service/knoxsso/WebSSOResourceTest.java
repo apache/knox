@@ -18,6 +18,8 @@
 package org.apache.knox.gateway.service.knoxsso;
 
 import static org.apache.knox.gateway.services.GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.anyString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -69,6 +71,7 @@ import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.session.control.ConcurrentSessionVerifier;
 import org.apache.knox.gateway.util.RegExUtils;
 import org.easymock.EasyMock;
 import org.junit.Assert;
@@ -86,6 +89,7 @@ public class WebSSOResourceTest {
   private ServletContext context;
   private HttpServletRequest request;
   private JWTokenAuthority authority;
+  private ConcurrentSessionVerifier verifier;
   CookieResponseWrapper responseWrapper;
 
   @BeforeClass
@@ -142,14 +146,14 @@ public class WebSSOResourceTest {
   }
 
   private void configureCommonExpectations(Map<String, String> contextExpectations) throws Exception {
-    configureCommonExpectations(contextExpectations, false, false);
+    configureCommonExpectations(contextExpectations, false, false, true);
   }
 
   private void configureCommonExpectations(Map<String, String> contextExpectations, boolean sslEnabled) throws Exception {
-    configureCommonExpectations(contextExpectations, false, sslEnabled);
+    configureCommonExpectations(contextExpectations, false, sslEnabled, true);
   }
 
-  private void configureCommonExpectations(Map<String, String> contextExpectations, boolean useHmac, boolean sslEnabled) throws Exception {
+  private void configureCommonExpectations(Map<String, String> contextExpectations, boolean useHmac, boolean sslEnabled, boolean concurrentSessionVerifyResult) throws Exception {
     context = EasyMock.createNiceMock(ServletContext.class);
     contextExpectations.forEach((key, value) -> EasyMock.expect(context.getInitParameter(key)).andReturn(value).anyTimes());
 
@@ -178,7 +182,11 @@ public class WebSSOResourceTest {
     ServletOutputStream outputStream = EasyMock.createNiceMock(ServletOutputStream.class);
     responseWrapper = new CookieResponseWrapper(response, outputStream);
 
-    EasyMock.replay(principal, services, context, request);
+    verifier = EasyMock.createNiceMock(ConcurrentSessionVerifier.class);
+    EasyMock.expect(verifier.verifySessionForUser(anyString(), anyObject())).andReturn(concurrentSessionVerifyResult).anyTimes();
+    EasyMock.expect(services.getService(ServiceType.CONCURRENT_SESSION_VERIFIER)).andReturn(verifier).anyTimes();
+
+    EasyMock.replay(principal, services, context, request, verifier);
   }
 
   @Test
@@ -271,7 +279,7 @@ public class WebSSOResourceTest {
 
   private void testSignatureAlgorithm(boolean useHMAC) throws Exception {
     final String algorithm = useHMAC ? "HS256" : "RS512";
-    configureCommonExpectations(Collections.singletonMap("knoxsso.token.sigalg", algorithm), useHMAC, false);
+    configureCommonExpectations(Collections.singletonMap("knoxsso.token.sigalg", algorithm), useHMAC, false, true);
 
     WebSSOResource webSSOResponse = new WebSSOResource();
     webSSOResponse.request = request;
@@ -681,6 +689,19 @@ public class WebSSOResourceTest {
     assertEquals("alice", parsedToken.getSubject());
     assertFalse(authority.verifyToken(parsedToken, gatewayPublicKey));
     assertTrue(authority.verifyToken(parsedToken, customPublicKey));
+  }
+
+  @Test
+  public void testConcurrentSessionLimitHit() throws Exception {
+    configureCommonExpectations(Collections.emptyMap(), false, false, false);
+
+    WebSSOResource webSSOResponse = new WebSSOResource();
+    webSSOResponse.request = request;
+    webSSOResponse.response = responseWrapper;
+    webSSOResponse.context = context;
+    webSSOResponse.init();
+
+    Assert.assertThrows(WebApplicationException.class, webSSOResponse::doPost);
   }
 
   /**

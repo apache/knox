@@ -58,6 +58,7 @@ import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.session.control.ConcurrentSessionVerifier;
 import org.apache.knox.gateway.util.CookieUtils;
 import org.apache.knox.gateway.util.RegExUtils;
 import org.apache.knox.gateway.util.Urls;
@@ -215,6 +216,14 @@ public class WebSSOResource {
   }
 
   private Response getAuthenticationToken(int statusCode) {
+    if (!enableSession) {
+      // invalidate the session to avoid autologin
+      // Coverity CID 1352857
+      HttpSession session = request.getSession(false);
+      if (session != null) {
+        session.invalidate();
+      }
+    }
     GatewayServices services =
                 (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     boolean removeOriginalUrlCookie = true;
@@ -281,8 +290,12 @@ public class WebSSOResource {
       JWT token = tokenAuthority.issueToken(jwtAttributes);
 
       // Coverity CID 1327959
-      if( token != null ) {
-        addJWTHadoopCookie( original, token );
+      if (token != null) {
+        ConcurrentSessionVerifier verifier = services.getService(ServiceType.CONCURRENT_SESSION_VERIFIER);
+        if (verifier != null && !verifier.verifySessionForUser(p.getName(), token)) {
+          throw new WebApplicationException("Too many sessions for user: " + request.getUserPrincipal().getName(), Response.Status.FORBIDDEN);
+        }
+        addJWTHadoopCookie(original, token);
       }
 
       if (removeOriginalUrlCookie) {
@@ -308,14 +321,7 @@ public class WebSSOResource {
       // todo log return error response
     }
 
-    if (!enableSession) {
-      // invalidate the session to avoid autologin
-      // Coverity CID 1352857
-      HttpSession session = request.getSession(false);
-      if( session != null ) {
-        session.invalidate();
-      }
-    }
+
 
     return Response.seeOther(location).entity("{ \"redirectTo\" : " + original + " }").build();
   }
