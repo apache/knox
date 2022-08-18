@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.servlet.ServletContext;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
@@ -50,15 +51,6 @@ import javax.servlet.http.HttpServletResponseWrapper;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.KeyLengthException;
-import com.nimbusds.jose.crypto.MACSigner;
-import com.nimbusds.jose.crypto.MACVerifier;
-import com.nimbusds.jose.crypto.RSASSASigner;
-import com.nimbusds.jose.crypto.RSASSAVerifier;
 import org.apache.http.HttpStatus;
 import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditor;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -77,6 +69,16 @@ import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.KeyLengthException;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.crypto.MACVerifier;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
 
 /**
  * Some tests for the Knox SSO service.
@@ -552,6 +554,10 @@ public class WebSSOResourceTest {
     EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TokenUtils.SIGNING_HMAC_SECRET_ALIAS)).andReturn(null).anyTimes();
 
+    ConcurrentSessionVerifier concurrentSessionVerifier = EasyMock.createNiceMock(ConcurrentSessionVerifier.class);
+    EasyMock.expect(concurrentSessionVerifier.verifySessionForUser(anyString(), anyObject())).andReturn(true).anyTimes();
+    EasyMock.expect(services.getService(ServiceType.CONCURRENT_SESSION_VERIFIER)).andReturn(concurrentSessionVerifier).anyTimes();
+
     JWTokenAuthority authority = new TestJWTokenAuthority(gatewayPublicKey, gatewayPrivateKey);
     EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority).anyTimes();
 
@@ -559,7 +565,7 @@ public class WebSSOResourceTest {
     ServletOutputStream outputStream = EasyMock.createNiceMock(ServletOutputStream.class);
     CookieResponseWrapper responseWrapper = new CookieResponseWrapper(response, outputStream);
 
-    EasyMock.replay(principal, services, context, contextNoParam, request, aliasService);
+    EasyMock.replay(principal, services, context, contextNoParam, request, aliasService, concurrentSessionVerifier);
 
     /* declare knoxtoken as part of knoxsso param so it is stripped from the final url */
     WebSSOResource webSSOResponse = new WebSSOResource();
@@ -666,11 +672,15 @@ public class WebSSOResourceTest {
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TokenUtils.SIGNING_HMAC_SECRET_ALIAS)).andReturn(null).anyTimes();
     EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
 
+    ConcurrentSessionVerifier concurrentSessionVerifier = EasyMock.createNiceMock(ConcurrentSessionVerifier.class);
+    EasyMock.expect(concurrentSessionVerifier.verifySessionForUser(anyString(), anyObject())).andReturn(true).anyTimes();
+    EasyMock.expect(services.getService(ServiceType.CONCURRENT_SESSION_VERIFIER)).andReturn(concurrentSessionVerifier).anyTimes();
+
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     ServletOutputStream outputStream = EasyMock.createNiceMock(ServletOutputStream.class);
     CookieResponseWrapper responseWrapper = new CookieResponseWrapper(response, outputStream);
 
-    EasyMock.replay(principal, services, context, request, aliasService);
+    EasyMock.replay(principal, services, context, request, aliasService, concurrentSessionVerifier);
 
     WebSSOResource webSSOResponse = new WebSSOResource();
     webSSOResponse.request = request;
