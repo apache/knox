@@ -17,22 +17,6 @@
  */
 package org.apache.knox.gateway.session.control;
 
-import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.AliasServiceException;
-import org.apache.knox.gateway.services.security.MasterService;
-import org.apache.knox.gateway.services.security.impl.DefaultKeystoreService;
-import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
-import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
-import org.apache.knox.gateway.services.security.token.TokenServiceException;
-import org.apache.knox.gateway.services.security.token.impl.JWT;
-import org.apache.knox.gateway.services.token.impl.DefaultTokenAuthorityService;
-import org.easymock.EasyMock;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,6 +32,22 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AliasServiceException;
+import org.apache.knox.gateway.services.security.MasterService;
+import org.apache.knox.gateway.services.security.impl.DefaultKeystoreService;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
+import org.apache.knox.gateway.services.security.token.TokenServiceException;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.token.impl.DefaultTokenAuthorityService;
+import org.easymock.EasyMock;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 public class InMemoryConcurrentSessionVerifierTest {
   private final long DEFAULT_TEST_EXPIRY_PERIOD = 1000;

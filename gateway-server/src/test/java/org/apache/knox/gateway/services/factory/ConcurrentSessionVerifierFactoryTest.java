@@ -17,6 +17,14 @@
  */
 package org.apache.knox.gateway.services.factory;
 
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
@@ -26,14 +34,6 @@ import org.apache.knox.gateway.session.control.InMemoryConcurrentSessionVerifier
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 
 public class ConcurrentSessionVerifierFactoryTest extends ServiceFactoryTest {
   private final ConcurrentSessionVerifierFactory serviceFactory = new ConcurrentSessionVerifierFactory();

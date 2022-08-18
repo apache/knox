@@ -18,13 +18,6 @@
 package org.apache.knox.gateway.session.control;
 
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.knox.gateway.GatewayMessages;
-import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.apache.knox.gateway.services.security.token.impl.JWT;
-
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -39,6 +32,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.GatewayMessages;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
 
 public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerifier {
   private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);

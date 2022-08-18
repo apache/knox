@@ -17,6 +17,12 @@
  */
 package org.apache.knox.gateway.services.factory;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
+
+import java.util.Collection;
+import java.util.Map;
+
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
@@ -24,12 +30,6 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.session.control.EmptyConcurrentSessionVerifier;
 import org.apache.knox.gateway.session.control.InMemoryConcurrentSessionVerifier;
-
-import java.util.Collection;
-import java.util.Map;
-
-import static java.util.Arrays.asList;
-import static java.util.Collections.unmodifiableList;
 
 public class ConcurrentSessionVerifierFactory extends AbstractServiceFactory {
   @Override

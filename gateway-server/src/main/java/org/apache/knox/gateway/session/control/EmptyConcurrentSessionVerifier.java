@@ -17,11 +17,11 @@
  */
 package org.apache.knox.gateway.session.control;
 
+import java.util.Map;
+
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
-
-import java.util.Map;
 
 public class EmptyConcurrentSessionVerifier implements ConcurrentSessionVerifier {
   @Override
