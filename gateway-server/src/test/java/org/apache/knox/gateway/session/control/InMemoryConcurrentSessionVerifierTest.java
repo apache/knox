@@ -331,6 +331,7 @@ public class InMemoryConcurrentSessionVerifierTest {
     Assert.assertEquals(2, verifier.countValidTokensForUser("tom"));
   }
 
+  @SuppressWarnings("PMD.DoNotUseThreads")
   @Test
   public void testPrivilegedLoginLogoutStress() throws ServiceLifecycleException, InterruptedException {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 256, 256);
@@ -395,6 +396,7 @@ public class InMemoryConcurrentSessionVerifierTest {
     Assert.assertEquals(10, verifier.countValidTokensForUser("admin"));
   }
 
+  @SuppressWarnings("PMD.DoNotUseThreads")
   @Test
   public void testNonPrivilegedLoginLogoutStress() throws ServiceLifecycleException, InterruptedException {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 256, 256);
