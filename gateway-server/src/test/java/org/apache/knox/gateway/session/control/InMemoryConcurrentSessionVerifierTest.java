@@ -356,7 +356,7 @@ public class InMemoryConcurrentSessionVerifierTest {
     for (int i = 0; i < 128; i++) {
       executor.submit(privilegedLogin);
     }
-    Thread.sleep(100L);
+    Thread.sleep(1000L);
     Assert.assertEquals(128, verifier.countValidTokensForUser("admin"));
 
     Runnable privilegedLogout = () -> {
@@ -376,13 +376,13 @@ public class InMemoryConcurrentSessionVerifierTest {
     for (int i = 0; i < 64; i++) {
       executor.submit(privilegedLogout);
     }
-    Thread.sleep(100L);
+    Thread.sleep(1000L);
     Assert.assertEquals(128, verifier.countValidTokensForUser("admin"));
 
     for (int i = 0; i < 128; i++) {
       executor.submit(privilegedLogout);
     }
-    Thread.sleep(100L);
+    Thread.sleep(1000L);
     Assert.assertEquals(0, verifier.countValidTokensForUser("admin"));
 
     config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 10, 10);
@@ -392,7 +392,7 @@ public class InMemoryConcurrentSessionVerifierTest {
     for (int i = 0; i < 128; i++) {
       executor.submit(privilegedLogin);
     }
-    Thread.sleep(100L);
+    Thread.sleep(1000L);
     Assert.assertEquals(10, verifier.countValidTokensForUser("admin"));
   }
 
@@ -421,7 +421,7 @@ public class InMemoryConcurrentSessionVerifierTest {
     for (int i = 0; i < 128; i++) {
       executor.submit(nonPrivilegedLogin);
     }
-    Thread.sleep(100L);
+    Thread.sleep(1000L);
     Assert.assertEquals(128, verifier.countValidTokensForUser("tom"));
 
     Runnable nonPrivilegedLogout = () -> {
@@ -441,13 +441,13 @@ public class InMemoryConcurrentSessionVerifierTest {
     for (int i = 0; i < 64; i++) {
       executor.submit(nonPrivilegedLogout);
     }
-    Thread.sleep(100L);
+    Thread.sleep(1000L);
     Assert.assertEquals(128, verifier.countValidTokensForUser("tom"));
 
     for (int i = 0; i < 128; i++) {
       executor.submit(nonPrivilegedLogout);
     }
-    Thread.sleep(100L);
+    Thread.sleep(1000L);
     Assert.assertEquals(0, verifier.countValidTokensForUser("tom"));
 
     config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 10, 10);
@@ -457,7 +457,7 @@ public class InMemoryConcurrentSessionVerifierTest {
     for (int i = 0; i < 128; i++) {
       executor.submit(nonPrivilegedLogin);
     }
-    Thread.sleep(100L);
+    Thread.sleep(1000L);
     Assert.assertEquals(10, verifier.countValidTokensForUser("tom"));
   }
 }
