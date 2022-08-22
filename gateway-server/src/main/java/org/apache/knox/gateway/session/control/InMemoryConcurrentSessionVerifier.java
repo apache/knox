@@ -31,7 +31,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.GatewayMessages;
@@ -148,9 +147,9 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
     try {
       Iterator<Map.Entry<String, Set<SessionJWT>>> concurrentSessionCounterIterator = concurrentSessionCounter.entrySet().iterator();
       while (concurrentSessionCounterIterator.hasNext()) {
-        Map.Entry<String, Set<SessionJWT>> concurrentSessionCounterMapEntry = concurrentSessionCounterIterator.next();
-        concurrentSessionCounterMapEntry.setValue(concurrentSessionCounterMapEntry.getValue().stream().filter(sessionJWT -> !sessionJWT.hasExpired()).collect(Collectors.toSet()));
-        if (concurrentSessionCounterMapEntry.getValue().isEmpty()) {
+        Set<SessionJWT> sessionJWTSet = concurrentSessionCounterIterator.next().getValue();
+        sessionJWTSet.removeIf(session -> session.hasExpired());
+        if (sessionJWTSet.isEmpty()) {
           concurrentSessionCounterIterator.remove();
         }
       }
