@@ -17,6 +17,22 @@
  */
 package org.apache.knox.gateway.session.control;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -33,17 +49,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 public class InMemoryConcurrentSessionVerifierTest {
+  private final long DEFAULT_TEST_EXPIRY_PERIOD = 1000;
   private InMemoryConcurrentSessionVerifier verifier;
   private Map<String, String> options;
   private DefaultTokenAuthorityService tokenAuthority;
@@ -101,26 +108,9 @@ public class InMemoryConcurrentSessionVerifierTest {
     tokenAuthority.init(config, new HashMap<>());
     tokenAuthority.start();
 
-    jwtAttributesForAdmin = new JWTokenAttributesBuilder()
-            .setIssuer("KNOXSSO")
-            .setUserName("admin")
-            .setAudiences(new ArrayList<>())
-            .setAlgorithm("RS256")
-            .setExpires(-1)
-            .setSigningKeystoreName(null)
-            .setSigningKeystoreAlias(null)
-            .setSigningKeystorePassphrase(null)
-            .build();
-    jwtAttributesForTom = new JWTokenAttributesBuilder()
-            .setIssuer("KNOXSSO")
-            .setUserName("tom")
-            .setAudiences(new ArrayList<>())
-            .setAlgorithm("RS256")
-            .setExpires(-1)
-            .setSigningKeystoreName(null)
-            .setSigningKeystoreAlias(null)
-            .setSigningKeystorePassphrase(null)
-            .build();
+    jwtAttributesForAdmin = makeJwtAttribute("admin", false);
+    jwtAttributesForTom = makeJwtAttribute("tom", false);
+
     try {
       adminToken1 = tokenAuthority.issueToken(jwtAttributesForAdmin);
       adminToken2 = tokenAuthority.issueToken(jwtAttributesForAdmin);
@@ -146,6 +136,20 @@ public class InMemoryConcurrentSessionVerifierTest {
     EasyMock.expect(config.getNonPrivilegedUsersConcurrentSessionLimit()).andReturn(nonPrivilegedUsersLimit);
     EasyMock.replay(config);
     return config;
+  }
+
+  private JWTokenAttributes makeJwtAttribute(String username, boolean expiring) {
+    long expiryTime = expiring ? System.currentTimeMillis() + DEFAULT_TEST_EXPIRY_PERIOD : -1;
+    return new JWTokenAttributesBuilder()
+            .setIssuer("KNOXSSO")
+            .setUserName(username)
+            .setAudiences(new ArrayList<>())
+            .setAlgorithm("RS256")
+            .setExpires(expiryTime)
+            .setSigningKeystoreName(null)
+            .setSigningKeystoreAlias(null)
+            .setSigningKeystorePassphrase(null)
+            .build();
   }
 
   /**
@@ -272,16 +276,7 @@ public class InMemoryConcurrentSessionVerifierTest {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 3);
     verifier.init(config, options);
 
-    JWTokenAttributes expiringJwtAttributesForTom = new JWTokenAttributesBuilder()
-            .setIssuer("KNOXSSO")
-            .setUserName("tom")
-            .setAudiences(new ArrayList<>())
-            .setAlgorithm("RS256")
-            .setExpires(System.currentTimeMillis() + 1000)
-            .setSigningKeystoreName(null)
-            .setSigningKeystoreAlias(null)
-            .setSigningKeystorePassphrase(null)
-            .build();
+    JWTokenAttributes expiringJwtAttributesForTom = makeJwtAttribute("tom", true);
 
     JWT tomToken = tokenAuthority.issueToken(jwtAttributesForTom);
     verifier.verifySessionForUser("tom", tomToken);
@@ -295,16 +290,7 @@ public class InMemoryConcurrentSessionVerifierTest {
     Thread.sleep(1000L);
     Assert.assertEquals(1, verifier.countValidTokensForUser("tom"));
 
-    JWTokenAttributes expiringJwtAttributesForAdmin = new JWTokenAttributesBuilder()
-            .setIssuer("KNOXSSO")
-            .setUserName("admin")
-            .setAudiences(new ArrayList<>())
-            .setAlgorithm("RS256")
-            .setExpires(System.currentTimeMillis() + 1000)
-            .setSigningKeystoreName(null)
-            .setSigningKeystoreAlias(null)
-            .setSigningKeystorePassphrase(null)
-            .build();
+    JWTokenAttributes expiringJwtAttributesForAdmin = makeJwtAttribute("admin", true);
 
     JWT adminToken = tokenAuthority.issueToken(jwtAttributesForAdmin);
     verifier.verifySessionForUser("admin", adminToken);
@@ -317,6 +303,162 @@ public class InMemoryConcurrentSessionVerifierTest {
     Assert.assertEquals(3, verifier.countValidTokensForUser("admin"));
     Thread.sleep(1000L);
     Assert.assertEquals(1, verifier.countValidTokensForUser("admin"));
+  }
+
+  @Test
+  public void testBackgroundThreadRemoveExpiredTokens() throws ServiceLifecycleException, TokenServiceException, InterruptedException {
+    GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 3, 3);
+    verifier.init(config, options);
+
+    JWTokenAttributes expiringJwtAttributesForAdmin = makeJwtAttribute("admin", true);
+
+    verifier.verifySessionForUser("admin", adminToken1);
+    verifier.verifySessionForUser("admin", adminToken2);
+    JWT expiringAdminToken = tokenAuthority.issueToken(expiringJwtAttributesForAdmin);
+    verifier.verifySessionForUser("admin", expiringAdminToken);
+    Assert.assertEquals(3, verifier.countValidTokensForUser("admin"));
+    Thread.sleep(1100);
+    Assert.assertEquals(2, verifier.countValidTokensForUser("admin"));
+
+    JWTokenAttributes expiringJwtAttributesForTom = makeJwtAttribute("tom", true);
+
+    verifier.verifySessionForUser("tom", tomToken1);
+    verifier.verifySessionForUser("tom", tomToken2);
+    JWT expiringTomToken = tokenAuthority.issueToken(expiringJwtAttributesForTom);
+    verifier.verifySessionForUser("tom", expiringTomToken);
+    Assert.assertEquals(3, verifier.countValidTokensForUser("tom"));
+    Thread.sleep(1100);
+    Assert.assertEquals(2, verifier.countValidTokensForUser("tom"));
+  }
+
+  @SuppressWarnings("PMD.DoNotUseThreads")
+  @Test
+  public void testPrivilegedLoginLogoutStress() throws ServiceLifecycleException, InterruptedException {
+    GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 256, 256);
+    verifier.init(config, options);
+
+    ExecutorService executor = Executors.newFixedThreadPool(128);
+    BlockingQueue<JWT> tokenStorage = new ArrayBlockingQueue<>(256);
+    CyclicBarrier barrier = new CyclicBarrier(128);
+
+    Runnable privilegedLogin = () -> {
+      JWT token;
+      try {
+        token = tokenAuthority.issueToken(jwtAttributesForAdmin);
+        tokenStorage.add(token);
+        barrier.await();
+      } catch (InterruptedException | BrokenBarrierException | TokenServiceException e) {
+        throw new RuntimeException(e);
+      }
+      verifier.verifySessionForUser("admin", token);
+    };
+
+    for (int i = 0; i < 128; i++) {
+      executor.submit(privilegedLogin);
+    }
+    Thread.sleep(1000L);
+    Assert.assertEquals(128, verifier.countValidTokensForUser("admin"));
+
+    Runnable privilegedLogout = () -> {
+      JWT token;
+      try {
+        token = tokenStorage.take();
+        barrier.await();
+      } catch (InterruptedException | BrokenBarrierException e) {
+        throw new RuntimeException(e);
+      }
+      verifier.sessionEndedForUser("admin", String.valueOf(token));
+    };
+
+    for (int i = 0; i < 64; i++) {
+      executor.submit(privilegedLogin);
+    }
+    for (int i = 0; i < 64; i++) {
+      executor.submit(privilegedLogout);
+    }
+    Thread.sleep(1000L);
+    Assert.assertEquals(128, verifier.countValidTokensForUser("admin"));
+
+    for (int i = 0; i < 128; i++) {
+      executor.submit(privilegedLogout);
+    }
+    Thread.sleep(1000L);
+    Assert.assertEquals(0, verifier.countValidTokensForUser("admin"));
+
+    config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 10, 10);
+    verifier.init(config, options);
+    tokenStorage.clear();
+
+    for (int i = 0; i < 128; i++) {
+      executor.submit(privilegedLogin);
+    }
+    Thread.sleep(1000L);
+    Assert.assertEquals(10, verifier.countValidTokensForUser("admin"));
+  }
+
+  @SuppressWarnings("PMD.DoNotUseThreads")
+  @Test
+  public void testNonPrivilegedLoginLogoutStress() throws ServiceLifecycleException, InterruptedException {
+    GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 256, 256);
+    verifier.init(config, options);
+
+    ExecutorService executor = Executors.newFixedThreadPool(128);
+    BlockingQueue<JWT> tokenStorage = new ArrayBlockingQueue<>(256);
+    CyclicBarrier barrier = new CyclicBarrier(128);
+
+    Runnable nonPrivilegedLogin = () -> {
+      JWT token;
+      try {
+        token = tokenAuthority.issueToken(jwtAttributesForTom);
+        tokenStorage.add(token);
+        barrier.await();
+      } catch (InterruptedException | BrokenBarrierException | TokenServiceException e) {
+        throw new RuntimeException(e);
+      }
+      verifier.verifySessionForUser("tom", token);
+    };
+
+    for (int i = 0; i < 128; i++) {
+      executor.submit(nonPrivilegedLogin);
+    }
+    Thread.sleep(1000L);
+    Assert.assertEquals(128, verifier.countValidTokensForUser("tom"));
+
+    Runnable nonPrivilegedLogout = () -> {
+      JWT token;
+      try {
+        token = tokenStorage.take();
+        barrier.await();
+      } catch (InterruptedException | BrokenBarrierException e) {
+        throw new RuntimeException(e);
+      }
+      verifier.sessionEndedForUser("tom", String.valueOf(token));
+    };
+
+    for (int i = 0; i < 64; i++) {
+      executor.submit(nonPrivilegedLogin);
+    }
+    for (int i = 0; i < 64; i++) {
+      executor.submit(nonPrivilegedLogout);
+    }
+    Thread.sleep(1000L);
+    Assert.assertEquals(128, verifier.countValidTokensForUser("tom"));
+
+    for (int i = 0; i < 128; i++) {
+      executor.submit(nonPrivilegedLogout);
+    }
+    Thread.sleep(1000L);
+    Assert.assertEquals(0, verifier.countValidTokensForUser("tom"));
+
+    config = mockConfig(new HashSet<>(Arrays.asList("admin")), new HashSet<>(Arrays.asList("tom", "guest")), 10, 10);
+    verifier.init(config, options);
+    tokenStorage.clear();
+
+    for (int i = 0; i < 128; i++) {
+      executor.submit(nonPrivilegedLogin);
+    }
+    Thread.sleep(1000L);
+    Assert.assertEquals(10, verifier.countValidTokensForUser("tom"));
   }
 }
 

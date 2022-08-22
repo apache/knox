@@ -973,4 +973,9 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public Set<String> getNonPrivilegedUsers() {
     return null;
   }
+
+  @Override
+  public long getConcurrentSessionVerifierExpiredTokensCleaningPeriod() {
+    return 0;
+  }
 }

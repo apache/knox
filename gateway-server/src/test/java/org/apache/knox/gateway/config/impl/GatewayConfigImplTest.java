@@ -498,4 +498,20 @@ public class GatewayConfigImplTest {
     hosts.add("127.0.0.1");
     assertThat(config.getGatewayHost(), is(hosts));
   }
+
+  @Test
+  public void testDefaultConcurrentSessionVerifierExpiredTokensCleaningPeriodParameter() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    assertThat(config.getConcurrentSessionVerifierExpiredTokensCleaningPeriod(), is(TimeUnit.MINUTES.toSeconds(30)));
+  }
+
+  @Test
+  public void testConcurrentSessionVerifierExpiredTokensCleaningPeriodParameter() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    config.set("gateway.session.verification.expired.tokens.cleaning.period", "1000");
+    assertThat(config.getConcurrentSessionVerifierExpiredTokensCleaningPeriod(), is(1000L));
+  }
+
 }

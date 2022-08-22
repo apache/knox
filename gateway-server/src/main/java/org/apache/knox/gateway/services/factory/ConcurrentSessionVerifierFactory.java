@@ -17,21 +17,37 @@
  */
 package org.apache.knox.gateway.services.factory;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
+
+import java.util.Collection;
+import java.util.Map;
+
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.session.control.EmptyConcurrentSessionVerifier;
 import org.apache.knox.gateway.session.control.InMemoryConcurrentSessionVerifier;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
 
 public class ConcurrentSessionVerifierFactory extends AbstractServiceFactory {
   @Override
   protected Service createService(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation) throws ServiceLifecycleException {
-    return shouldCreateService(implementation) ? new InMemoryConcurrentSessionVerifier() : null;
+    Service service = null;
+    if (shouldCreateService(implementation)) {
+      if (matchesImplementation(implementation, EmptyConcurrentSessionVerifier.class, true)) {
+        service = new EmptyConcurrentSessionVerifier();
+      } else if (matchesImplementation(implementation, InMemoryConcurrentSessionVerifier.class)) {
+        if (isThereGroupConfigured(gatewayConfig)) {
+          service = new InMemoryConcurrentSessionVerifier();
+        } else {
+          throw new ServiceLifecycleException("Error creating InMemoryConcurrentSessionVerifier, at least one user should be added in either the privileged group or the non-privileged group!");
+        }
+      }
+      logServiceUsage(implementation, serviceType);
+    }
+    return service;
   }
 
   @Override
@@ -41,6 +57,10 @@ public class ConcurrentSessionVerifierFactory extends AbstractServiceFactory {
 
   @Override
   protected Collection<String> getKnownImplementations() {
-    return Collections.singleton(InMemoryConcurrentSessionVerifier.class.getName());
+    return unmodifiableList(asList(InMemoryConcurrentSessionVerifier.class.getName(), EmptyConcurrentSessionVerifier.class.getName()));
+  }
+
+  private boolean isThereGroupConfigured(GatewayConfig gatewayConfig) {
+    return !gatewayConfig.getNonPrivilegedUsers().isEmpty() || !gatewayConfig.getPrivilegedUsers().isEmpty();
   }
 }

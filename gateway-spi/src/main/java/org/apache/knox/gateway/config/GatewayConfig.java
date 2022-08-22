@@ -823,4 +823,6 @@ public interface GatewayConfig {
   Set<String> getPrivilegedUsers();
 
   Set<String> getNonPrivilegedUsers();
+
+  long getConcurrentSessionVerifierExpiredTokensCleaningPeriod();
 }
