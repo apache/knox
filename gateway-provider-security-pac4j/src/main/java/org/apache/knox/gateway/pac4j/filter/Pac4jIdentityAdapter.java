@@ -84,8 +84,7 @@ public class Pac4jIdentityAdapter implements Filter {
 
     final HttpServletRequest request = (HttpServletRequest) servletRequest;
     final HttpServletResponse response = (HttpServletResponse) servletResponse;
-    final JEEContext context = new JEEContext(request, response,
-        ((Config)request.getAttribute(PAC4J_CONFIG)).getSessionStore());
+    final JEEContext context = new JEEContext(request, response, ((Config)request.getAttribute(PAC4J_CONFIG)).getSessionStore());
     final ProfileManager<CommonProfile> manager = new ProfileManager<>(context);
     final Optional<CommonProfile> optional = manager.get(true);
     if (optional.isPresent()) {
