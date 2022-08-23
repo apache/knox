@@ -142,7 +142,7 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
     expiredTokenRemover.shutdown();
   }
 
-  private void removeExpiredTokens() {
+  void removeExpiredTokens() {
     sessionCountModifyLock.lock();
     try {
       Iterator<Map.Entry<String, Set<SessionJWT>>> concurrentSessionCounterIterator = concurrentSessionCounter.entrySet().iterator();

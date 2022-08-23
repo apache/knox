@@ -51,7 +51,6 @@ import org.junit.Test;
 
 public class InMemoryConcurrentSessionVerifierTest {
   private final long DEFAULT_TEST_EXPIRY_PERIOD = 1000;
-  private final long DEFAULT_TEST_CLEANING_PERIOD = 1;
   private InMemoryConcurrentSessionVerifier verifier;
   private Map<String, String> options;
   private DefaultTokenAuthorityService tokenAuthority;
@@ -130,16 +129,11 @@ public class InMemoryConcurrentSessionVerifierTest {
   }
 
   private GatewayConfig mockConfig(Set<String> unlimitedUsers, Set<String> privilegedUsers, int privilegedUsersLimit, int nonPrivilegedUsersLimit) {
-    return mockConfig(unlimitedUsers, privilegedUsers, privilegedUsersLimit, nonPrivilegedUsersLimit, DEFAULT_TEST_CLEANING_PERIOD);
-  }
-
-  private GatewayConfig mockConfig(Set<String> unlimitedUsers, Set<String> privilegedUsers, int privilegedUsersLimit, int nonPrivilegedUsersLimit, long cleaningPeriod) {
     GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(config.getPrivilegedUsers()).andReturn(privilegedUsers);
     EasyMock.expect(config.getUnlimitedUsers()).andReturn(unlimitedUsers);
     EasyMock.expect(config.getPrivilegedUsersConcurrentSessionLimit()).andReturn(privilegedUsersLimit);
     EasyMock.expect(config.getNonPrivilegedUsersConcurrentSessionLimit()).andReturn(nonPrivilegedUsersLimit);
-    EasyMock.expect(config.getConcurrentSessionVerifierExpiredTokensCleaningPeriod()).andReturn(cleaningPeriod);
     EasyMock.replay(config);
     return config;
   }
@@ -295,7 +289,6 @@ public class InMemoryConcurrentSessionVerifierTest {
   public void testBackgroundThreadRemoveExpiredTokens() throws ServiceLifecycleException, TokenServiceException, InterruptedException {
     GatewayConfig config = mockConfig(Collections.emptySet(), new HashSet<>(Arrays.asList("admin")), 3, 3);
     verifier.init(config, options);
-    verifier.start();
 
     JWTokenAttributes expiringJwtAttributesForAdmin = makeJwtAttribute("admin", true);
 
@@ -304,7 +297,8 @@ public class InMemoryConcurrentSessionVerifierTest {
     JWT expiringAdminToken = tokenAuthority.issueToken(expiringJwtAttributesForAdmin);
     verifier.verifySessionForUser("admin", expiringAdminToken);
     Assert.assertEquals(3, verifier.getTokenCountForUser("admin").intValue());
-    Thread.sleep(2050);
+    Thread.sleep(1050);
+    verifier.removeExpiredTokens();
     Assert.assertEquals(2, verifier.getTokenCountForUser("admin").intValue());
 
     JWTokenAttributes expiringJwtAttributesForTom = makeJwtAttribute("tom", true);
@@ -314,7 +308,8 @@ public class InMemoryConcurrentSessionVerifierTest {
     JWT expiringTomToken = tokenAuthority.issueToken(expiringJwtAttributesForTom);
     verifier.verifySessionForUser("tom", expiringTomToken);
     Assert.assertEquals(3, verifier.getTokenCountForUser("tom").intValue());
-    Thread.sleep(1550);
+    Thread.sleep(1050);
+    verifier.removeExpiredTokens();
     Assert.assertEquals(2, verifier.getTokenCountForUser("tom").intValue());
   }
 

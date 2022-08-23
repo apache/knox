@@ -19,10 +19,14 @@ package org.apache.knox.gateway.services.factory;
 
 import static org.junit.Assert.assertTrue;
 
+import java.util.Collections;
+
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.session.control.ConcurrentSessionVerifier;
 import org.apache.knox.gateway.session.control.EmptyConcurrentSessionVerifier;
 import org.apache.knox.gateway.session.control.InMemoryConcurrentSessionVerifier;
+import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -49,7 +53,11 @@ public class ConcurrentSessionVerifierFactoryTest extends ServiceFactoryTest {
 
   @Test
   public void testShouldReturnInMemoryConcurrentSessionVerifier() throws Exception {
-    ConcurrentSessionVerifier concurrentSessionVerifier = (ConcurrentSessionVerifier) serviceFactory.create(gatewayServices, ServiceType.CONCURRENT_SESSION_VERIFIER, gatewayConfig, null, InMemoryConcurrentSessionVerifier.class.getName());
+    GatewayConfig configForInMemoryVerifier = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(configForInMemoryVerifier.getPrivilegedUsers()).andReturn(Collections.emptySet()).anyTimes();
+    EasyMock.replay(configForInMemoryVerifier);
+
+    ConcurrentSessionVerifier concurrentSessionVerifier = (ConcurrentSessionVerifier) serviceFactory.create(gatewayServices, ServiceType.CONCURRENT_SESSION_VERIFIER, configForInMemoryVerifier, null, InMemoryConcurrentSessionVerifier.class.getName());
     assertTrue(concurrentSessionVerifier instanceof InMemoryConcurrentSessionVerifier);
   }
 
