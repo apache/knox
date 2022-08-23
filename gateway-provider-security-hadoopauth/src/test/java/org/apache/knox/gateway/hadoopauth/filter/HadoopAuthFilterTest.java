@@ -566,6 +566,8 @@ public class HadoopAuthFilterTest {
       expect(filterConfig.getInitParameter(AbstractJWTFilter.JWT_EXPECTED_SIGALG)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(JWTFederationFilter.ALLOWED_JWS_TYPES)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(SignatureVerificationCache.TOKENS_VERIFIED_CACHE_MAX)).andReturn(null).anyTimes();
+      expect(filterConfig.getInitParameter(JWTFederationFilter.KNOX_TOKEN_USE_COOKIE)).andReturn(null).anyTimes();
+      expect(filterConfig.getInitParameter(JWTFederationFilter.KNOX_TOKEN_COOKIE_NAME)).andReturn(null).anyTimes();
     }
 
     final ServletContext servletContext = createMock(ServletContext.class);
