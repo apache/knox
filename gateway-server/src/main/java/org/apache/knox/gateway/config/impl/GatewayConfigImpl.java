@@ -295,16 +295,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String GATEWAY_DATABASE_TRUSTSTORE_FILE =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.truststore.file";
 
   // Concurrent session properties
-  private static final String PRIVILEGED_USERS = "privileged.users";
-  private static final String NON_PRIVILEGED_USERS = "non." + PRIVILEGED_USERS;
-  private static final String GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT = GATEWAY_CONFIG_FILE_PREFIX + "." + PRIVILEGED_USERS + ".concurrent.session.limit";
-  private static final String GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT = GATEWAY_CONFIG_FILE_PREFIX + "." + NON_PRIVILEGED_USERS + ".concurrent.session.limit";
-  private static final int GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT = 3;
-  private static final int GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT = 2;
-  private static final String GATEWAY_PRIVILEGED_USERS = GATEWAY_CONFIG_FILE_PREFIX + "." + PRIVILEGED_USERS;
-  private static final String GATEWAY_NON_PRIVILEGED_USERS = GATEWAY_CONFIG_FILE_PREFIX + "." + NON_PRIVILEGED_USERS;
-  private static final String GATEWAY_SESSION_VERIFICATION_EXPIRED_TOKENS_CLEANING_PERIOD = GATEWAY_CONFIG_FILE_PREFIX + ".session.verification.expired.tokens.cleaning.period";
+  private static final String GATEWAY_SESSION_VERIFICATION_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".session.verification";
+  private static final String GATEWAY_SESSION_VERIFICATION_PRIVILEGED_USER_LIMIT = GATEWAY_SESSION_VERIFICATION_PREFIX + ".privileged.user.limit";
+  private static final String GATEWAY_SESSION_VERIFICATION_NON_PRIVILEGED_USER_LIMIT = GATEWAY_SESSION_VERIFICATION_PREFIX + ".non.privileged.user.limit";
+  private static final int GATEWAY_SESSION_VERIFICATION_PRIVILEGED_USER_LIMIT_DEFAULT = 3;
+  private static final int GATEWAY_SESSION_VERIFICATION_NON_PRIVILEGED_USER_LIMIT_DEFAULT = 2;
+  private static final String GATEWAY_SESSION_VERIFICATION_PRIVILEGED_USERS = GATEWAY_SESSION_VERIFICATION_PREFIX + ".privileged.users";
+  private static final String GATEWAY_SESSION_VERIFICATION_UNLIMITED_USERS = GATEWAY_SESSION_VERIFICATION_PREFIX + ".unlimited.users";
+  private static final String GATEWAY_SESSION_VERIFICATION_EXPIRED_TOKENS_CLEANING_PERIOD = GATEWAY_SESSION_VERIFICATION_PREFIX + ".expired.tokens.cleaning.period";
   private static final long GATEWAY_SESSION_VERIFICATION_EXPIRED_TOKENS_CLEANING_PERIOD_DEFAULT = TimeUnit.MINUTES.toSeconds(30);
+
 
   public GatewayConfigImpl() {
     init();
@@ -1365,25 +1365,26 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public int getPrivilegedUsersConcurrentSessionLimit() {
-    return getInt(GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT, GATEWAY_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT);
+    return getInt(GATEWAY_SESSION_VERIFICATION_PRIVILEGED_USER_LIMIT, GATEWAY_SESSION_VERIFICATION_PRIVILEGED_USER_LIMIT_DEFAULT);
   }
 
   @Override
   public int getNonPrivilegedUsersConcurrentSessionLimit() {
-    return getInt(GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT, GATEWAY_NON_PRIVILEGED_USERS_CONCURRENT_SESSION_LIMIT_DEFAULT);
+    return getInt(GATEWAY_SESSION_VERIFICATION_NON_PRIVILEGED_USER_LIMIT, GATEWAY_SESSION_VERIFICATION_NON_PRIVILEGED_USER_LIMIT_DEFAULT);
   }
 
   @Override
   public Set<String> getPrivilegedUsers() {
-    final Collection<String> privilegedUsers = getTrimmedStringCollection(GATEWAY_PRIVILEGED_USERS);
+    final Collection<String> privilegedUsers = getTrimmedStringCollection(GATEWAY_SESSION_VERIFICATION_PRIVILEGED_USERS);
     return privilegedUsers == null ? Collections.emptySet() : new HashSet<>(privilegedUsers);
   }
 
   @Override
-  public Set<String> getNonPrivilegedUsers() {
-    final Collection<String> nonPrivilegedUsers = getTrimmedStringCollection(GATEWAY_NON_PRIVILEGED_USERS);
+  public Set<String> getUnlimitedUsers() {
+    final Collection<String> nonPrivilegedUsers = getTrimmedStringCollection(GATEWAY_SESSION_VERIFICATION_UNLIMITED_USERS);
     return nonPrivilegedUsers == null ? Collections.emptySet() : new HashSet<>(nonPrivilegedUsers);
   }
+
 
   @Override
   public long getConcurrentSessionVerifierExpiredTokensCleaningPeriod() {

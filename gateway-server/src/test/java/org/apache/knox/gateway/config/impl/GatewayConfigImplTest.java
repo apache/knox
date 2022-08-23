@@ -16,21 +16,6 @@
  */
 package org.apache.knox.gateway.config.impl;
 
-import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasService;
-import org.apache.knox.test.TestUtils;
-import org.hamcrest.CoreMatchers;
-import org.junit.Test;
-
-import java.nio.file.Paths;
-import java.security.KeyStore;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 import static org.apache.knox.gateway.services.security.impl.RemoteAliasService.REMOTE_ALIAS_SERVICE_TYPE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -42,7 +27,22 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-  import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertTrue;
+
+import java.nio.file.Paths;
+import java.security.KeyStore;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasService;
+import org.apache.knox.test.TestUtils;
+import org.hamcrest.CoreMatchers;
+import org.junit.Test;
 
 public class GatewayConfigImplTest {
 
@@ -446,43 +446,43 @@ public class GatewayConfigImplTest {
     assertThat(config.getPrivilegedUsersConcurrentSessionLimit(), is(3));
     assertThat(config.getNonPrivilegedUsersConcurrentSessionLimit(), is(2));
     assertThat(config.getPrivilegedUsers(), is(new HashSet<>()));
-    assertThat(config.getNonPrivilegedUsers(), is(new HashSet<>()));
+    assertThat(config.getUnlimitedUsers(), is(new HashSet<>()));
   }
 
   @Test
   public void testNormalConcurrentSessionLimitParameters() {
     GatewayConfigImpl config = new GatewayConfigImpl();
 
-    config.set("gateway.privileged.users.concurrent.session.limit", "5");
+    config.set("gateway.session.verification.privileged.user.limit", "5");
     assertThat(config.getPrivilegedUsersConcurrentSessionLimit(), is(5));
-    config.set("gateway.non.privileged.users.concurrent.session.limit", "6");
+    config.set("gateway.session.verification.non.privileged.user.limit", "6");
     assertThat(config.getNonPrivilegedUsersConcurrentSessionLimit(), is(6));
-    config.set("gateway.privileged.users", "admin,jeff");
+    config.set("gateway.session.verification.privileged.users", "admin,jeff");
     assertThat(config.getPrivilegedUsers(), is(new HashSet<>(Arrays.asList("admin", "jeff"))));
-    config.set("gateway.non.privileged.users", "tom,sam");
-    assertThat(config.getNonPrivilegedUsers(), is(new HashSet<>(Arrays.asList("tom", "sam"))));
+    config.set("gateway.session.verification.unlimited.users", "tom,sam");
+    assertThat(config.getUnlimitedUsers(), is(new HashSet<>(Arrays.asList("tom", "sam"))));
   }
 
   @Test
   public void testAbnormalConcurrentSessionLimitParameters() {
     GatewayConfigImpl config = new GatewayConfigImpl();
 
-    config.set("gateway.privileged.users", "");
+    config.set("gateway.session.verification.privileged.users", "");
     assertThat(config.getPrivilegedUsers(), is(new HashSet<>()));
-    config.set("gateway.non.privileged.users", "");
-    config.set("gateway.privileged.users", "   ");
+    config.set("gateway.session.verification.unlimited.users", "");
+    assertThat(config.getUnlimitedUsers(), is(new HashSet<>()));
+    config.set("gateway.session.verification.privileged.users", "   ");
     assertThat(config.getPrivilegedUsers(), is(new HashSet<>()));
-    config.set("gateway.non.privileged.users", "   ");
-    assertThat(config.getNonPrivilegedUsers(), is(new HashSet<>()));
-
-    config.set("gateway.privileged.users", " admin , jeff ");
+    config.set("gateway.session.verification.unlimited.users", "   ");
+    assertThat(config.getUnlimitedUsers(), is(new HashSet<>()));
+    config.set("gateway.session.verification.privileged.users", " admin , jeff ");
     assertThat(config.getPrivilegedUsers(), is(new HashSet<>(Arrays.asList("admin", "jeff"))));
-    config.set("gateway.non.privileged.users", " tom , sam ");
-    assertThat(config.getNonPrivilegedUsers(), is(new HashSet<>(Arrays.asList("tom", "sam"))));
-    config.set("gateway.privileged.users", "  guest  ");
+    config.set("gateway.session.verification.unlimited.users", " tom , sam ");
+    assertThat(config.getUnlimitedUsers(), is(new HashSet<>(Arrays.asList("tom", "sam"))));
+    config.set("gateway.session.verification.privileged.users", "  guest  ");
     assertThat(config.getPrivilegedUsers(), is(new HashSet<>(Arrays.asList("guest"))));
-    config.set("gateway.non.privileged.users", "  guest  ");
-    assertThat(config.getNonPrivilegedUsers(), is(new HashSet<>(Arrays.asList("guest"))));
+    config.set("gateway.session.verification.unlimited.users", "  guest  ");
+    assertThat(config.getUnlimitedUsers(), is(new HashSet<>(Arrays.asList("guest"))));
   }
 
   // KNOX-2779

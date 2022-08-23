@@ -17,10 +17,6 @@
  */
 package org.apache.knox.gateway;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.knox.gateway.config.GatewayConfig;
-
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.file.FileSystems;
@@ -36,6 +32,10 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.knox.gateway.config.GatewayConfig;
 
 public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
@@ -970,7 +970,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public Set<String> getNonPrivilegedUsers() {
+  public Set<String> getUnlimitedUsers() {
     return null;
   }
 
