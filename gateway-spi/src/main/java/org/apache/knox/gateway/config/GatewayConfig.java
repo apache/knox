@@ -820,9 +820,9 @@ public interface GatewayConfig {
 
   int getNonPrivilegedUsersConcurrentSessionLimit();
 
-  Set<String> getPrivilegedUsers();
+  Set<String> getSessionVerificationPrivilegedUsers();
 
-  Set<String> getUnlimitedUsers();
+  Set<String> getSessionVerificationUnlimitedUsers();
 
   long getConcurrentSessionVerifierExpiredTokensCleaningPeriod();
 }

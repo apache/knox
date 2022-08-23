@@ -54,7 +54,7 @@ public class ConcurrentSessionVerifierFactoryTest extends ServiceFactoryTest {
   @Test
   public void testShouldReturnInMemoryConcurrentSessionVerifier() throws Exception {
     GatewayConfig configForInMemoryVerifier = EasyMock.createNiceMock(GatewayConfig.class);
-    EasyMock.expect(configForInMemoryVerifier.getPrivilegedUsers()).andReturn(Collections.emptySet()).anyTimes();
+    EasyMock.expect(configForInMemoryVerifier.getSessionVerificationPrivilegedUsers()).andReturn(Collections.emptySet()).anyTimes();
     EasyMock.replay(configForInMemoryVerifier);
 
     ConcurrentSessionVerifier concurrentSessionVerifier = (ConcurrentSessionVerifier) serviceFactory.create(gatewayServices, ServiceType.CONCURRENT_SESSION_VERIFIER, configForInMemoryVerifier, null, InMemoryConcurrentSessionVerifier.class.getName());

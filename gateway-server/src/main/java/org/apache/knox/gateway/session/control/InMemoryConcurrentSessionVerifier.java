@@ -124,8 +124,8 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
 
   @Override
   public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
-    this.privilegedUsers = config.getPrivilegedUsers();
-    this.unlimitedUsers = config.getUnlimitedUsers();
+    this.privilegedUsers = config.getSessionVerificationPrivilegedUsers();
+    this.unlimitedUsers = config.getSessionVerificationUnlimitedUsers();
     this.privilegedUserConcurrentSessionLimit = config.getPrivilegedUsersConcurrentSessionLimit();
     this.nonPrivilegedUserConcurrentSessionLimit = config.getNonPrivilegedUsersConcurrentSessionLimit();
     this.cleaningPeriod = config.getConcurrentSessionVerifierExpiredTokensCleaningPeriod();

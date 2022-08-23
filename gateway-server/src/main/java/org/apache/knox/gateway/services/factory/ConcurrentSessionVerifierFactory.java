@@ -44,7 +44,7 @@ public class ConcurrentSessionVerifierFactory extends AbstractServiceFactory {
         service = new EmptyConcurrentSessionVerifier();
       } else if (matchesImplementation(implementation, InMemoryConcurrentSessionVerifier.class)) {
         service = new InMemoryConcurrentSessionVerifier();
-        if (gatewayConfig.getPrivilegedUsers().isEmpty()) {
+        if (gatewayConfig.getSessionVerificationPrivilegedUsers().isEmpty()) {
           LOG.privilegedUserGroupIsNotConfigured();
         }
       }

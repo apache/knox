@@ -1374,13 +1374,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public Set<String> getPrivilegedUsers() {
+  public Set<String> getSessionVerificationPrivilegedUsers() {
     final Collection<String> privilegedUsers = getTrimmedStringCollection(GATEWAY_SESSION_VERIFICATION_PRIVILEGED_USERS);
     return privilegedUsers == null ? Collections.emptySet() : new HashSet<>(privilegedUsers);
   }
 
   @Override
-  public Set<String> getUnlimitedUsers() {
+  public Set<String> getSessionVerificationUnlimitedUsers() {
     final Collection<String> nonPrivilegedUsers = getTrimmedStringCollection(GATEWAY_SESSION_VERIFICATION_UNLIMITED_USERS);
     return nonPrivilegedUsers == null ? Collections.emptySet() : new HashSet<>(nonPrivilegedUsers);
   }

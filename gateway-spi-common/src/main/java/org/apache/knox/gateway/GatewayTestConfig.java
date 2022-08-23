@@ -965,12 +965,12 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public Set<String> getPrivilegedUsers() {
+  public Set<String> getSessionVerificationPrivilegedUsers() {
     return null;
   }
 
   @Override
-  public Set<String> getUnlimitedUsers() {
+  public Set<String> getSessionVerificationUnlimitedUsers() {
     return null;
   }
 

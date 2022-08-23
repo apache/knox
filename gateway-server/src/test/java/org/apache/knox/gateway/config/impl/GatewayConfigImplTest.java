@@ -445,8 +445,8 @@ public class GatewayConfigImplTest {
 
     assertThat(config.getPrivilegedUsersConcurrentSessionLimit(), is(3));
     assertThat(config.getNonPrivilegedUsersConcurrentSessionLimit(), is(2));
-    assertThat(config.getPrivilegedUsers(), is(new HashSet<>()));
-    assertThat(config.getUnlimitedUsers(), is(new HashSet<>()));
+    assertThat(config.getSessionVerificationPrivilegedUsers(), is(new HashSet<>()));
+    assertThat(config.getSessionVerificationUnlimitedUsers(), is(new HashSet<>()));
   }
 
   @Test
@@ -458,9 +458,9 @@ public class GatewayConfigImplTest {
     config.set("gateway.session.verification.non.privileged.user.limit", "6");
     assertThat(config.getNonPrivilegedUsersConcurrentSessionLimit(), is(6));
     config.set("gateway.session.verification.privileged.users", "admin,jeff");
-    assertThat(config.getPrivilegedUsers(), is(new HashSet<>(Arrays.asList("admin", "jeff"))));
+    assertThat(config.getSessionVerificationPrivilegedUsers(), is(new HashSet<>(Arrays.asList("admin", "jeff"))));
     config.set("gateway.session.verification.unlimited.users", "tom,sam");
-    assertThat(config.getUnlimitedUsers(), is(new HashSet<>(Arrays.asList("tom", "sam"))));
+    assertThat(config.getSessionVerificationUnlimitedUsers(), is(new HashSet<>(Arrays.asList("tom", "sam"))));
   }
 
   @Test
@@ -468,21 +468,21 @@ public class GatewayConfigImplTest {
     GatewayConfigImpl config = new GatewayConfigImpl();
 
     config.set("gateway.session.verification.privileged.users", "");
-    assertThat(config.getPrivilegedUsers(), is(new HashSet<>()));
+    assertThat(config.getSessionVerificationPrivilegedUsers(), is(new HashSet<>()));
     config.set("gateway.session.verification.unlimited.users", "");
-    assertThat(config.getUnlimitedUsers(), is(new HashSet<>()));
+    assertThat(config.getSessionVerificationUnlimitedUsers(), is(new HashSet<>()));
     config.set("gateway.session.verification.privileged.users", "   ");
-    assertThat(config.getPrivilegedUsers(), is(new HashSet<>()));
+    assertThat(config.getSessionVerificationPrivilegedUsers(), is(new HashSet<>()));
     config.set("gateway.session.verification.unlimited.users", "   ");
-    assertThat(config.getUnlimitedUsers(), is(new HashSet<>()));
+    assertThat(config.getSessionVerificationUnlimitedUsers(), is(new HashSet<>()));
     config.set("gateway.session.verification.privileged.users", " admin , jeff ");
-    assertThat(config.getPrivilegedUsers(), is(new HashSet<>(Arrays.asList("admin", "jeff"))));
+    assertThat(config.getSessionVerificationPrivilegedUsers(), is(new HashSet<>(Arrays.asList("admin", "jeff"))));
     config.set("gateway.session.verification.unlimited.users", " tom , sam ");
-    assertThat(config.getUnlimitedUsers(), is(new HashSet<>(Arrays.asList("tom", "sam"))));
+    assertThat(config.getSessionVerificationUnlimitedUsers(), is(new HashSet<>(Arrays.asList("tom", "sam"))));
     config.set("gateway.session.verification.privileged.users", "  guest  ");
-    assertThat(config.getPrivilegedUsers(), is(new HashSet<>(Arrays.asList("guest"))));
+    assertThat(config.getSessionVerificationPrivilegedUsers(), is(new HashSet<>(Arrays.asList("guest"))));
     config.set("gateway.session.verification.unlimited.users", "  guest  ");
-    assertThat(config.getUnlimitedUsers(), is(new HashSet<>(Arrays.asList("guest"))));
+    assertThat(config.getSessionVerificationUnlimitedUsers(), is(new HashSet<>(Arrays.asList("guest"))));
   }
 
   // KNOX-2779
