@@ -118,13 +118,11 @@ public class InMemoryConcurrentSessionVerifierTest {
       adminToken3 = tokenAuthority.issueToken(jwtAttributesForAdmin);
       adminToken4 = tokenAuthority.issueToken(jwtAttributesForAdmin);
       adminToken5 = tokenAuthority.issueToken(jwtAttributesForAdmin);
-      adminToken6 = tokenAuthority.issueToken(jwtAttributesForAdmin);
       tomToken1 = tokenAuthority.issueToken(jwtAttributesForTom);
       tomToken2 = tokenAuthority.issueToken(jwtAttributesForTom);
       tomToken3 = tokenAuthority.issueToken(jwtAttributesForTom);
       tomToken4 = tokenAuthority.issueToken(jwtAttributesForTom);
       tomToken5 = tokenAuthority.issueToken(jwtAttributesForTom);
-      tomToken6 = tokenAuthority.issueToken(jwtAttributesForTom);
     } catch (TokenServiceException ignored) {
     }
   }
