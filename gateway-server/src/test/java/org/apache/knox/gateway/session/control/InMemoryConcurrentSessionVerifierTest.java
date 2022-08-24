@@ -62,13 +62,11 @@ public class InMemoryConcurrentSessionVerifierTest {
   private JWT adminToken3;
   private JWT adminToken4;
   private JWT adminToken5;
-  private JWT adminToken6;
   private JWT tomToken1;
   private JWT tomToken2;
   private JWT tomToken3;
   private JWT tomToken4;
   private JWT tomToken5;
-  private JWT tomToken6;
 
   @Before
   public void setUp() throws AliasServiceException, IOException, ServiceLifecycleException {
