@@ -722,6 +722,9 @@ public interface GatewayMessages {
   @Message(level = MessageLevel.ERROR, text = "ConcurrentSessionVerifier got blank username for verification.")
   void errorVerifyingUserBlankUsername();
 
+  @Message(level = MessageLevel.ERROR, text = "ConcurrentSessionVerifier got blank username for token registration.")
+  void errorRegisteringTokenForBlankUsername();
+
   @Message(level = MessageLevel.WARN, text = "InMemoryConcurrentSessionVerifier is used and privileged user group is not configured! Non-privileged limit applies to all users (except the unlimited group).")
   void privilegedUserGroupIsNotConfigured();
 }

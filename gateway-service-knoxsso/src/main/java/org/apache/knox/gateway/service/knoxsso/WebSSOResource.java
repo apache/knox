@@ -17,6 +17,10 @@
  */
 package org.apache.knox.gateway.service.knoxsso;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static org.apache.knox.gateway.services.GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -40,16 +44,16 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.WebApplicationException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditor;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
@@ -63,10 +67,6 @@ import org.apache.knox.gateway.util.CookieUtils;
 import org.apache.knox.gateway.util.RegExUtils;
 import org.apache.knox.gateway.util.Urls;
 import org.apache.knox.gateway.util.WhitelistUtils;
-
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-import static org.apache.knox.gateway.services.GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE;
 
 @Path( WebSSOResource.RESOURCE_PATH )
 public class WebSSOResource {
@@ -264,9 +264,14 @@ public class WebSSOResource {
       original = originalUrlCookies.get(0).getValue();
     }
 
+    Principal p = request.getUserPrincipal();
+    ConcurrentSessionVerifier verifier = services.getService(ServiceType.CONCURRENT_SESSION_VERIFIER);
+    if (!verifier.verifySessionForUser(p.getName())) {
+      throw new WebApplicationException("Too many sessions for user: " + request.getUserPrincipal().getName(), Response.Status.FORBIDDEN);
+    }
+
     AliasService as = services.getService(ServiceType.ALIAS_SERVICE);
     JWTokenAuthority tokenAuthority = services.getService(ServiceType.TOKEN_SERVICE);
-    Principal p = request.getUserPrincipal();
 
     try {
       String signingKeystoreName = context.getInitParameter(SSO_SIGNINGKEY_KEYSTORE_NAME);
@@ -291,8 +296,7 @@ public class WebSSOResource {
 
       // Coverity CID 1327959
       if (token != null) {
-        ConcurrentSessionVerifier verifier = services.getService(ServiceType.CONCURRENT_SESSION_VERIFIER);
-        if (!verifier.verifySessionForUser(p.getName(), token)) {
+        if (!verifier.registerToken(p.getName(), token)) {
           throw new WebApplicationException("Too many sessions for user: " + request.getUserPrincipal().getName(), Response.Status.FORBIDDEN);
         }
         addJWTHadoopCookie(original, token);

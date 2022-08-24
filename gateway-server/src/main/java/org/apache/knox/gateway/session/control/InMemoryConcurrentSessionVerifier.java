@@ -51,8 +51,37 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
   private long cleaningPeriod;
   private final ScheduledExecutorService expiredTokenRemover = Executors.newSingleThreadScheduledExecutor();
 
+  /**
+   * This function is used after the verifySessionForUser function.
+   * It checks the session limits even though verifySessionForUser already checked them,
+   * because in high stress situations there might be some threads which get verified even though they are over the limit in
+   * verifySessionForUser function, so we catch them here.
+   */
   @Override
-  public boolean verifySessionForUser(String username, JWT jwtToken) {
+  public boolean registerToken(String username, JWT jwtToken) {
+    if (StringUtils.isBlank(username)) {
+      LOG.errorRegisteringTokenForBlankUsername();
+      return false;
+    }
+    if (unlimitedUsers.contains(username)) {
+      return true;
+    }
+
+    sessionCountModifyLock.lock();
+    try {
+      if (checkLimitReached(username)) {
+        return false;
+      }
+      concurrentSessionCounter.putIfAbsent(username, new HashSet<>());
+      concurrentSessionCounter.compute(username, (key, sessionTokenSet) -> addTokenForUser(sessionTokenSet, jwtToken));
+    } finally {
+      sessionCountModifyLock.unlock();
+    }
+    return true;
+  }
+
+  @Override
+  public boolean verifySessionForUser(String username) {
     if (StringUtils.isBlank(username)) {
       LOG.errorVerifyingUserBlankUsername();
       return false;
@@ -63,16 +92,18 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
 
     sessionCountModifyLock.lock();
     try {
-      int validTokenNumber = countValidTokensForUser(username);
-      if (privilegedUserCheckLimitReached(username, validTokenNumber) || nonPrivilegedUserCheckLimitReached(username, validTokenNumber)) {
+      if (checkLimitReached(username)) {
         return false;
       }
-      concurrentSessionCounter.putIfAbsent(username, new HashSet<>());
-      concurrentSessionCounter.compute(username, (key, sessionTokenSet) -> addTokenForUser(sessionTokenSet, jwtToken));
     } finally {
       sessionCountModifyLock.unlock();
     }
     return true;
+  }
+
+  private boolean checkLimitReached(String username) {
+    int validTokenNumber = countValidTokensForUser(username);
+    return privilegedUserCheckLimitReached(username, validTokenNumber) || nonPrivilegedUserCheckLimitReached(username, validTokenNumber);
   }
 
   int countValidTokensForUser(String username) {

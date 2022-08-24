@@ -23,12 +23,23 @@ import org.apache.knox.gateway.services.security.token.impl.JWT;
 public interface ConcurrentSessionVerifier extends Service {
   /**
    * Verifies whether the given user is permitted to have a[nother] session or not.
+   * Similar to the registerToken function, but we need this in WebSSOResource to verify the before the token generation,
+   * so in case of an attack we are not wasting resources on token generation and storing.
    *
    * @param username the user who needs verification
-   * @param JWToken  the token which the user will use in the session
    * @return true if the user is allowed to have a[nother] session, false if the user is not allowed to have a[nother] session
    */
-  boolean verifySessionForUser(String username, JWT JWToken);
+  boolean verifySessionForUser(String username);
+
+  /**
+   * Verifies whether the given user is permitted to have a[nother] session or not.
+   * Also stores the token which the user is using for the session.
+   *
+   * @param jwtToken token which needs to be stored
+   * @param username the user who needs verification
+   * @return true if the user is allowed to have a[nother] session, false if the user is not allowed to have a[nother] session
+   */
+  boolean registerToken(String username, JWT jwtToken);
 
   void sessionEndedForUser(String username, String token);
 
