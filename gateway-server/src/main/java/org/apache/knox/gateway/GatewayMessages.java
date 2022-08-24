@@ -17,18 +17,18 @@
  */
 package org.apache.knox.gateway;
 
+import java.io.File;
+import java.net.URI;
+import java.util.Date;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.cli.ParseException;
 import org.apache.knox.gateway.i18n.messages.Message;
 import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
-
-import java.io.File;
-import java.net.URI;
-import java.util.Date;
-import java.util.Map;
-import java.util.Set;
 
 @Messages(logger="org.apache.knox.gateway")
 public interface GatewayMessages {
@@ -721,4 +721,7 @@ public interface GatewayMessages {
 
   @Message(level = MessageLevel.ERROR, text = "ConcurrentSessionVerifier got blank username for verification.")
   void errorVerifyingUserBlankUsername();
+
+  @Message(level = MessageLevel.WARN, text = "InMemoryConcurrentSessionVerifier is used and privileged user group is not configured! Non-privileged limit applies to all users (except the unlimited group).")
+  void privilegedUserGroupIsNotConfigured();
 }

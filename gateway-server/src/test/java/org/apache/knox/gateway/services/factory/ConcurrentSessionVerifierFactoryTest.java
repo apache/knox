@@ -17,16 +17,11 @@
  */
 package org.apache.knox.gateway.services.factory;
 
-import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.session.control.ConcurrentSessionVerifier;
 import org.apache.knox.gateway.session.control.EmptyConcurrentSessionVerifier;
@@ -50,42 +45,20 @@ public class ConcurrentSessionVerifierFactoryTest extends ServiceFactoryTest {
 
   @Test
   public void testShouldReturnEmptyConcurrentSessionVerifier() throws Exception {
-    GatewayConfig configForVerifier = mockConfig(Collections.emptySet(), Collections.emptySet());
-
-    ConcurrentSessionVerifier concurrentSessionVerifier = (ConcurrentSessionVerifier) serviceFactory.create(gatewayServices, ServiceType.CONCURRENT_SESSION_VERIFIER, configForVerifier, null, "");
+    ConcurrentSessionVerifier concurrentSessionVerifier = (ConcurrentSessionVerifier) serviceFactory.create(gatewayServices, ServiceType.CONCURRENT_SESSION_VERIFIER, gatewayConfig, null, "");
     assertTrue(concurrentSessionVerifier instanceof EmptyConcurrentSessionVerifier);
-    concurrentSessionVerifier = (ConcurrentSessionVerifier) serviceFactory.create(gatewayServices, ServiceType.CONCURRENT_SESSION_VERIFIER, configForVerifier, null, EmptyConcurrentSessionVerifier.class.getName());
+    concurrentSessionVerifier = (ConcurrentSessionVerifier) serviceFactory.create(gatewayServices, ServiceType.CONCURRENT_SESSION_VERIFIER, gatewayConfig, null, EmptyConcurrentSessionVerifier.class.getName());
     assertTrue(concurrentSessionVerifier instanceof EmptyConcurrentSessionVerifier);
   }
 
   @Test
   public void testShouldReturnInMemoryConcurrentSessionVerifier() throws Exception {
-    GatewayConfig configForVerifier = mockConfig(new HashSet<>(Arrays.asList("admin")), Collections.emptySet());
+    GatewayConfig configForInMemoryVerifier = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(configForInMemoryVerifier.getSessionVerificationPrivilegedUsers()).andReturn(Collections.emptySet()).anyTimes();
+    EasyMock.replay(configForInMemoryVerifier);
 
-    ConcurrentSessionVerifier concurrentSessionVerifier = (ConcurrentSessionVerifier) serviceFactory.create(gatewayServices, ServiceType.CONCURRENT_SESSION_VERIFIER, configForVerifier, null, InMemoryConcurrentSessionVerifier.class.getName());
+    ConcurrentSessionVerifier concurrentSessionVerifier = (ConcurrentSessionVerifier) serviceFactory.create(gatewayServices, ServiceType.CONCURRENT_SESSION_VERIFIER, configForInMemoryVerifier, null, InMemoryConcurrentSessionVerifier.class.getName());
     assertTrue(concurrentSessionVerifier instanceof InMemoryConcurrentSessionVerifier);
-
-    configForVerifier = mockConfig(Collections.emptySet(), new HashSet<>(Arrays.asList("tom")));
-
-    concurrentSessionVerifier = (ConcurrentSessionVerifier) serviceFactory.create(gatewayServices, ServiceType.CONCURRENT_SESSION_VERIFIER, configForVerifier, null, InMemoryConcurrentSessionVerifier.class.getName());
-    assertTrue(concurrentSessionVerifier instanceof InMemoryConcurrentSessionVerifier);
-  }
-
-  @Test
-  public void testShouldThrowException() {
-    GatewayConfig configForVerifier = mockConfig(Collections.emptySet(), Collections.emptySet());
-
-    assertThrows(ServiceLifecycleException.class, () -> {
-      serviceFactory.create(gatewayServices, ServiceType.CONCURRENT_SESSION_VERIFIER, configForVerifier, null, InMemoryConcurrentSessionVerifier.class.getName());
-    });
-  }
-
-  private GatewayConfig mockConfig(Set<String> privilegedUsers, Set<String> nonPrivilegedUsers) {
-    GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
-    EasyMock.expect(config.getPrivilegedUsers()).andReturn(privilegedUsers).anyTimes();
-    EasyMock.expect(config.getNonPrivilegedUsers()).andReturn(nonPrivilegedUsers).anyTimes();
-    EasyMock.replay(config);
-    return config;
   }
 
 }

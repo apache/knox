@@ -43,7 +43,7 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
   private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
 
   private Set<String> privilegedUsers;
-  private Set<String> nonPrivilegedUsers;
+  private Set<String> unlimitedUsers;
   private int privilegedUserConcurrentSessionLimit;
   private int nonPrivilegedUserConcurrentSessionLimit;
   private Map<String, Set<SessionJWT>> concurrentSessionCounter;
@@ -57,7 +57,7 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
       LOG.errorVerifyingUserBlankUsername();
       return false;
     }
-    if (!privilegedUsers.contains(username) && !nonPrivilegedUsers.contains(username)) {
+    if (unlimitedUsers.contains(username)) {
       return true;
     }
 
@@ -94,7 +94,7 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
     if (nonPrivilegedUserConcurrentSessionLimit < 0) {
       return false;
     }
-    return nonPrivilegedUsers.contains(username) && (validTokenNumber >= nonPrivilegedUserConcurrentSessionLimit);
+    return !privilegedUsers.contains(username) && (validTokenNumber >= nonPrivilegedUserConcurrentSessionLimit);
   }
 
   @Override
@@ -124,8 +124,8 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
 
   @Override
   public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
-    this.privilegedUsers = config.getPrivilegedUsers();
-    this.nonPrivilegedUsers = config.getNonPrivilegedUsers();
+    this.privilegedUsers = config.getSessionVerificationPrivilegedUsers();
+    this.unlimitedUsers = config.getSessionVerificationUnlimitedUsers();
     this.privilegedUserConcurrentSessionLimit = config.getPrivilegedUsersConcurrentSessionLimit();
     this.nonPrivilegedUserConcurrentSessionLimit = config.getNonPrivilegedUsersConcurrentSessionLimit();
     this.cleaningPeriod = config.getConcurrentSessionVerifierExpiredTokensCleaningPeriod();
@@ -142,7 +142,7 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
     expiredTokenRemover.shutdown();
   }
 
-  private void removeExpiredTokens() {
+  void removeExpiredTokens() {
     sessionCountModifyLock.lock();
     try {
       Iterator<Map.Entry<String, Set<SessionJWT>>> concurrentSessionCounterIterator = concurrentSessionCounter.entrySet().iterator();
@@ -156,6 +156,17 @@ public class InMemoryConcurrentSessionVerifier implements ConcurrentSessionVerif
     } finally {
       sessionCountModifyLock.unlock();
     }
+  }
+
+  /**
+   * This function is for testing whether the background thread is removing the expired tokens properly.
+   */
+  Integer getTokenCountForUser(String username) {
+    Integer result = null;
+    if (concurrentSessionCounter.containsKey(username)) {
+      result = concurrentSessionCounter.get(username).size();
+    }
+    return result;
   }
 
   public static class SessionJWT {
