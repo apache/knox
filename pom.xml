@@ -105,6 +105,7 @@
         <module>gateway-provider-ha</module>
         <module>gateway-service-admin</module>
         <module>gateway-service-as</module>
+        <module>gateway-service-auth</module>
         <module>gateway-service-hbase</module>
         <module>gateway-service-hive</module>
         <module>gateway-service-impala</module>
@@ -1084,6 +1085,11 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-as</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-service-auth</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
