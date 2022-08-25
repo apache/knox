@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.Base64;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -34,9 +35,11 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
@@ -46,6 +49,7 @@ import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.CertificateUtils;
+import org.apache.knox.gateway.util.CookieUtils;
 
 import com.nimbusds.jose.JOSEObjectType;
 
@@ -69,6 +73,13 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   public static final String BASIC    = "Basic";
   public static final String TOKEN    = "Token";
   public static final String PASSCODE = "Passcode";
+
+  //cookie verification support
+  public static final String KNOX_TOKEN_USE_COOKIE = "knox.token.use.cookie";
+  public static final String KNOX_TOKEN_COOKIE_NAME = "knox.token.cookie.name";
+  private boolean useCookie; //defaults to false
+  private String cookieName;
+
   private String paramName;
   private Set<String> unAuthenticatedPaths = new HashSet<>(20);
 
@@ -101,6 +112,13 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     } else {
       allowedJwsTypes.add(JOSEObjectType.JWT);
     }
+
+    //cookie auth support
+    final String useCookieParam = filterConfig.getInitParameter(KNOX_TOKEN_USE_COOKIE);
+    useCookie = StringUtils.isBlank(useCookieParam) ? false : Boolean.parseBoolean(useCookieParam);
+
+    final String cookieNameParam = filterConfig.getInitParameter(KNOX_TOKEN_COOKIE_NAME);
+    cookieName = StringUtils.isBlank(cookieNameParam) ? SSOCookieFederationFilter.DEFAULT_SSO_COOKIE_NAME : cookieNameParam;
 
     // expected claim
     String oidcPrincipalclaim = filterConfig.getInitParameter(TOKEN_PRINCIPAL_CLAIM);
@@ -136,6 +154,22 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       continueWithAnonymousSubject(request, response, chain);
       return;
     }
+
+    if (useCookie) {
+      try {
+        if (authenticateWithCookies((HttpServletRequest) request, (HttpServletResponse) response, chain)) {
+          // if there was a valid cookie authentication was handled, there is no point in
+          // going forward to check the JWT path in the header
+          return;
+        }
+      } catch (NoValidCookiesException e) {
+        log.missingValidCookie();
+        handleValidationError((HttpServletRequest) request, (HttpServletResponse) response, HttpServletResponse.SC_UNAUTHORIZED,
+            "There is no valid cookie found");
+        return;
+      }
+    }
+
     final Pair<TokenType, String> wireToken = getWireToken(request);
 
     if (wireToken != null && wireToken.getLeft() != null && wireToken.getRight() != null) {
@@ -229,6 +263,36 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       return parsed;
   }
 
+  /*
+   * Attempts to authenticate using session cookies.
+   */
+  private boolean authenticateWithCookies(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+      throws NoValidCookiesException, ServletException, IOException {
+    final List<Cookie> relevantCookies = CookieUtils.getCookiesForName(request, cookieName);
+    for (Cookie ssoCookie : relevantCookies) {
+      try {
+        final JWT token = new JWTToken(ssoCookie.getValue());
+        if (validateToken(request, response, chain, token)) {
+          final Subject subject = createSubjectFromToken(token);
+          continueWithEstablishedSecurityContext(subject, request, response, chain);
+          // we found a valid cookie we don't need to keep checking anymore
+          return true;
+        }
+      } catch (ParseException | UnknownTokenException ignore) {
+        // Ignore the error since cookie was invalid
+        // Fall through to keep checking if there are more cookies
+      }
+    }
+
+    if (!relevantCookies.isEmpty()) {
+      // No valid cookies found but cookie was present so reject this request and do
+      // no further processing
+      throw new NoValidCookiesException();
+    }
+
+    return false;
+  }
+
   @Override
   protected void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status,
                                        String error) throws IOException {
@@ -265,6 +329,17 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       LOGGER.unauthenticatedPathError(
           ((HttpServletRequest) request).getRequestURI(), e.toString());
       throw e;
+    }
+  }
+
+  /**
+   * An exception indicating that cookies are present, but none of them contain a
+   * valid JWT.
+   */
+  @SuppressWarnings("serial")
+  private class NoValidCookiesException extends Exception {
+    NoValidCookiesException() {
+      super("None of the presented cookies are valid.");
     }
   }
 

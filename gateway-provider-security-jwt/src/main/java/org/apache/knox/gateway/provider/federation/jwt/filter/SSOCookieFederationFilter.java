@@ -63,7 +63,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
   public static final String X_FORWARDED_PROTO = "X-Forwarded-Proto";
 
   private static final String ORIGINAL_URL_QUERY_PARAM = "originalUrl=";
-  private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
+  public static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
 
   /* A semicolon separated list of paths that need to bypass authentication */
   private static final String SSO_UNAUTHENTICATED_PATHS_PARAM = "sso.unauthenticated.path.list";
