@@ -40,7 +40,12 @@ public class EmptyConcurrentSessionVerifier implements ConcurrentSessionVerifier
   }
 
   @Override
-  public boolean verifySessionForUser(String username, JWT JWToken) {
+  public boolean verifySessionForUser(String username) {
+    return true;
+  }
+
+  @Override
+  public boolean registerToken(String username, JWT jwtToken) {
     return true;
   }
 

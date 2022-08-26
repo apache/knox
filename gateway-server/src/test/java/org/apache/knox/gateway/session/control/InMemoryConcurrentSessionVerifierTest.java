@@ -62,13 +62,11 @@ public class InMemoryConcurrentSessionVerifierTest {
   private JWT adminToken3;
   private JWT adminToken4;
   private JWT adminToken5;
-  private JWT adminToken6;
   private JWT tomToken1;
   private JWT tomToken2;
   private JWT tomToken3;
   private JWT tomToken4;
   private JWT tomToken5;
-  private JWT tomToken6;
 
   @Before
   public void setUp() throws AliasServiceException, IOException, ServiceLifecycleException {
@@ -120,13 +118,11 @@ public class InMemoryConcurrentSessionVerifierTest {
       adminToken3 = tokenAuthority.issueToken(jwtAttributesForAdmin);
       adminToken4 = tokenAuthority.issueToken(jwtAttributesForAdmin);
       adminToken5 = tokenAuthority.issueToken(jwtAttributesForAdmin);
-      adminToken6 = tokenAuthority.issueToken(jwtAttributesForAdmin);
       tomToken1 = tokenAuthority.issueToken(jwtAttributesForTom);
       tomToken2 = tokenAuthority.issueToken(jwtAttributesForTom);
       tomToken3 = tokenAuthority.issueToken(jwtAttributesForTom);
       tomToken4 = tokenAuthority.issueToken(jwtAttributesForTom);
       tomToken5 = tokenAuthority.issueToken(jwtAttributesForTom);
-      tomToken6 = tokenAuthority.issueToken(jwtAttributesForTom);
     } catch (TokenServiceException ignored) {
     }
   }
@@ -164,10 +160,14 @@ public class InMemoryConcurrentSessionVerifierTest {
     GatewayConfig config = mockConfig(new HashSet<>(Arrays.asList("admin")), Collections.emptySet(), 3, 2);
     verifier.init(config, options);
 
-    Assert.assertTrue(verifier.verifySessionForUser("admin", adminToken1));
-    Assert.assertTrue(verifier.verifySessionForUser("admin", adminToken2));
-    Assert.assertTrue(verifier.verifySessionForUser("admin", adminToken3));
-    Assert.assertTrue(verifier.verifySessionForUser("admin", adminToken4));
+    Assert.assertTrue(verifier.verifySessionForUser("admin"));
+    Assert.assertTrue(verifier.registerToken("admin", adminToken1));
+    Assert.assertTrue(verifier.verifySessionForUser("admin"));
+    Assert.assertTrue(verifier.registerToken("admin", adminToken2));
+    Assert.assertTrue(verifier.verifySessionForUser("admin"));
+    Assert.assertTrue(verifier.registerToken("admin", adminToken3));
+    Assert.assertTrue(verifier.verifySessionForUser("admin"));
+    Assert.assertTrue(verifier.registerToken("admin", adminToken4));
   }
 
   @Test
@@ -175,13 +175,19 @@ public class InMemoryConcurrentSessionVerifierTest {
     GatewayConfig config = mockConfig(Collections.emptySet(), new HashSet<>(Arrays.asList("admin")), 3, 2);
     verifier.init(config, options);
 
-    Assert.assertTrue(verifier.verifySessionForUser("admin", adminToken1));
-    Assert.assertTrue(verifier.verifySessionForUser("admin", adminToken2));
-    Assert.assertTrue(verifier.verifySessionForUser("admin", adminToken3));
-    Assert.assertFalse(verifier.verifySessionForUser("admin", adminToken4));
+    Assert.assertTrue(verifier.verifySessionForUser("admin"));
+    Assert.assertTrue(verifier.registerToken("admin", adminToken1));
+    Assert.assertTrue(verifier.verifySessionForUser("admin"));
+    Assert.assertTrue(verifier.registerToken("admin", adminToken2));
+    Assert.assertTrue(verifier.verifySessionForUser("admin"));
+    Assert.assertTrue(verifier.registerToken("admin", adminToken3));
+    Assert.assertFalse(verifier.verifySessionForUser("admin"));
+    Assert.assertFalse(verifier.registerToken("admin", adminToken4));
     verifier.sessionEndedForUser("admin", adminToken1.toString());
-    Assert.assertTrue(verifier.verifySessionForUser("admin", adminToken5));
-    Assert.assertFalse(verifier.verifySessionForUser("admin", adminToken6));
+    Assert.assertTrue(verifier.verifySessionForUser("admin"));
+    Assert.assertTrue(verifier.registerToken("admin", adminToken5));
+    Assert.assertFalse(verifier.verifySessionForUser("admin"));
+    Assert.assertFalse(verifier.registerToken("admin", adminToken5));
   }
 
   @Test
@@ -189,21 +195,26 @@ public class InMemoryConcurrentSessionVerifierTest {
     GatewayConfig config = mockConfig(Collections.emptySet(), Collections.emptySet(), 3, 2);
     verifier.init(config, options);
 
-    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken1));
-    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken2));
-    Assert.assertFalse(verifier.verifySessionForUser("tom", tomToken3));
-    Assert.assertFalse(verifier.verifySessionForUser("tom", tomToken4));
+    Assert.assertTrue(verifier.verifySessionForUser("tom"));
+    Assert.assertTrue(verifier.registerToken("tom", tomToken1));
+    Assert.assertTrue(verifier.verifySessionForUser("tom"));
+    Assert.assertTrue(verifier.registerToken("tom", tomToken2));
+    Assert.assertFalse(verifier.verifySessionForUser("tom"));
+    Assert.assertFalse(verifier.registerToken("tom", tomToken3));
     verifier.sessionEndedForUser("tom", tomToken1.toString());
-    Assert.assertTrue(verifier.verifySessionForUser("tom", tomToken5));
-    Assert.assertFalse(verifier.verifySessionForUser("tom", tomToken6));
+    Assert.assertTrue(verifier.verifySessionForUser("tom"));
+    Assert.assertTrue(verifier.registerToken("tom", tomToken4));
+    Assert.assertFalse(verifier.verifySessionForUser("tom"));
+    Assert.assertFalse(verifier.registerToken("tom", tomToken5));
   }
 
   @Test
   public void testPrivilegedLimitIsZero() throws ServiceLifecycleException {
-    GatewayConfig config = mockConfig(Collections.emptySet(), new HashSet<>(Arrays.asList("tom")), 0, 2);
+    GatewayConfig config = mockConfig(Collections.emptySet(), new HashSet<>(Arrays.asList("admin")), 0, 2);
     verifier.init(config, options);
 
-    Assert.assertFalse(verifier.verifySessionForUser("tom", tomToken1));
+    Assert.assertFalse(verifier.verifySessionForUser("admin"));
+    Assert.assertFalse(verifier.registerToken("admin", adminToken1));
   }
 
   @Test
@@ -211,7 +222,8 @@ public class InMemoryConcurrentSessionVerifierTest {
     GatewayConfig config = mockConfig(Collections.emptySet(), Collections.emptySet(), 3, 0);
     verifier.init(config, options);
 
-    Assert.assertFalse(verifier.verifySessionForUser("tom", tomToken1));
+    Assert.assertFalse(verifier.verifySessionForUser("tom"));
+    Assert.assertFalse(verifier.registerToken("tom", tomToken1));
   }
 
   @Test
@@ -220,23 +232,23 @@ public class InMemoryConcurrentSessionVerifierTest {
     verifier.init(config, options);
 
     Assert.assertEquals(0, verifier.countValidTokensForUser("admin"));
-    verifier.verifySessionForUser("admin", adminToken1);
+    verifier.registerToken("admin", adminToken1);
     Assert.assertEquals(1, verifier.countValidTokensForUser("admin"));
     verifier.sessionEndedForUser("admin", adminToken1.toString());
     Assert.assertEquals(0, verifier.countValidTokensForUser("admin"));
     verifier.sessionEndedForUser("admin", adminToken1.toString());
     Assert.assertEquals(0, verifier.countValidTokensForUser("admin"));
-    verifier.verifySessionForUser("admin", adminToken2);
+    verifier.registerToken("admin", adminToken2);
     Assert.assertEquals(1, verifier.countValidTokensForUser("admin"));
 
     Assert.assertEquals(0, verifier.countValidTokensForUser("tom"));
-    verifier.verifySessionForUser("tom", tomToken1);
+    verifier.registerToken("tom", tomToken1);
     Assert.assertEquals(1, verifier.countValidTokensForUser("tom"));
     verifier.sessionEndedForUser("tom", tomToken1.toString());
     Assert.assertEquals(0, verifier.countValidTokensForUser("tom"));
     verifier.sessionEndedForUser("tom", tomToken1.toString());
     Assert.assertEquals(0, verifier.countValidTokensForUser("tom"));
-    verifier.verifySessionForUser("tom", tomToken2);
+    verifier.registerToken("tom", tomToken2);
     Assert.assertEquals(1, verifier.countValidTokensForUser("tom"));
   }
 
@@ -248,9 +260,11 @@ public class InMemoryConcurrentSessionVerifierTest {
     for (int i = 0; i < 10; i++) {
       try {
         JWT token = tokenAuthority.issueToken(jwtAttributesForAdmin);
-        Assert.assertTrue(verifier.verifySessionForUser("admin", token));
+        Assert.assertTrue(verifier.verifySessionForUser("admin"));
+        Assert.assertTrue(verifier.registerToken("admin", token));
         token = tokenAuthority.issueToken(jwtAttributesForTom);
-        Assert.assertTrue(verifier.verifySessionForUser("tom", token));
+        Assert.assertTrue(verifier.verifySessionForUser("tom"));
+        Assert.assertTrue(verifier.registerToken("tom", token));
       } catch (TokenServiceException ignored) {
       }
     }
@@ -261,22 +275,22 @@ public class InMemoryConcurrentSessionVerifierTest {
     GatewayConfig config = mockConfig(Collections.emptySet(), new HashSet<>(Arrays.asList("admin")), 3, 3);
     verifier.init(config, options);
 
-    verifier.verifySessionForUser("tom", tomToken1);
+    verifier.registerToken("tom", tomToken1);
     Assert.assertEquals(1, verifier.countValidTokensForUser("tom"));
     JWT expiredTomToken = tokenAuthority.issueToken(expiredJwtAttributesForTom);
-    verifier.verifySessionForUser("tom", expiredTomToken);
+    verifier.registerToken("tom", expiredTomToken);
     Assert.assertEquals(1, verifier.countValidTokensForUser("tom"));
     expiredTomToken = tokenAuthority.issueToken(expiredJwtAttributesForTom);
-    verifier.verifySessionForUser("tom", expiredTomToken);
+    verifier.registerToken("tom", expiredTomToken);
     Assert.assertEquals(1, verifier.countValidTokensForUser("tom"));
 
-    verifier.verifySessionForUser("admin", adminToken1);
+    verifier.registerToken("admin", adminToken1);
     Assert.assertEquals(1, verifier.countValidTokensForUser("admin"));
     JWT expiredAdminToken = tokenAuthority.issueToken(expiredJwtAttributesForAdmin);
-    verifier.verifySessionForUser("admin", expiredAdminToken);
+    verifier.registerToken("admin", expiredAdminToken);
     Assert.assertEquals(1, verifier.countValidTokensForUser("admin"));
     expiredAdminToken = tokenAuthority.issueToken(expiredJwtAttributesForAdmin);
-    verifier.verifySessionForUser("admin", expiredAdminToken);
+    verifier.registerToken("admin", expiredAdminToken);
     Assert.assertEquals(1, verifier.countValidTokensForUser("admin"));
   }
 
@@ -285,18 +299,18 @@ public class InMemoryConcurrentSessionVerifierTest {
     GatewayConfig config = mockConfig(Collections.emptySet(), new HashSet<>(Arrays.asList("admin")), 3, 3);
     verifier.init(config, options);
 
-    verifier.verifySessionForUser("admin", adminToken1);
-    verifier.verifySessionForUser("admin", adminToken2);
+    verifier.registerToken("admin", adminToken1);
+    verifier.registerToken("admin", adminToken2);
     JWT expiredAdminToken = tokenAuthority.issueToken(expiredJwtAttributesForAdmin);
-    verifier.verifySessionForUser("admin", expiredAdminToken);
+    verifier.registerToken("admin", expiredAdminToken);
     Assert.assertEquals(3, verifier.getTokenCountForUser("admin").intValue());
     verifier.removeExpiredTokens();
     Assert.assertEquals(2, verifier.getTokenCountForUser("admin").intValue());
 
-    verifier.verifySessionForUser("tom", tomToken1);
-    verifier.verifySessionForUser("tom", tomToken2);
+    verifier.registerToken("tom", tomToken1);
+    verifier.registerToken("tom", tomToken2);
     JWT expiredTomToken = tokenAuthority.issueToken(expiredJwtAttributesForTom);
-    verifier.verifySessionForUser("tom", expiredTomToken);
+    verifier.registerToken("tom", expiredTomToken);
     Assert.assertEquals(3, verifier.getTokenCountForUser("tom").intValue());
     verifier.removeExpiredTokens();
     Assert.assertEquals(2, verifier.getTokenCountForUser("tom").intValue());
@@ -321,7 +335,9 @@ public class InMemoryConcurrentSessionVerifierTest {
       } catch (InterruptedException | BrokenBarrierException | TokenServiceException e) {
         throw new RuntimeException(e);
       }
-      verifier.verifySessionForUser("admin", token);
+      if (verifier.verifySessionForUser("admin")) {
+        verifier.registerToken("admin", token);
+      }
     };
 
     for (int i = 0; i < 128; i++) {
@@ -386,7 +402,9 @@ public class InMemoryConcurrentSessionVerifierTest {
       } catch (InterruptedException | BrokenBarrierException | TokenServiceException e) {
         throw new RuntimeException(e);
       }
-      verifier.verifySessionForUser("tom", token);
+      if (verifier.verifySessionForUser("tom")) {
+        verifier.registerToken("tom", token);
+      }
     };
 
     for (int i = 0; i < 128; i++) {

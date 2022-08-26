@@ -185,7 +185,8 @@ public class WebSSOResourceTest {
     responseWrapper = new CookieResponseWrapper(response, outputStream);
 
     verifier = EasyMock.createNiceMock(ConcurrentSessionVerifier.class);
-    EasyMock.expect(verifier.verifySessionForUser(anyString(), anyObject())).andReturn(concurrentSessionVerifyResult).anyTimes();
+    EasyMock.expect(verifier.verifySessionForUser(anyString())).andReturn(concurrentSessionVerifyResult).anyTimes();
+    EasyMock.expect(verifier.registerToken(anyString(), anyObject())).andReturn(concurrentSessionVerifyResult).anyTimes();
     EasyMock.expect(services.getService(ServiceType.CONCURRENT_SESSION_VERIFIER)).andReturn(verifier).anyTimes();
 
     EasyMock.replay(principal, services, context, request, verifier);
@@ -555,7 +556,8 @@ public class WebSSOResourceTest {
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TokenUtils.SIGNING_HMAC_SECRET_ALIAS)).andReturn(null).anyTimes();
 
     ConcurrentSessionVerifier concurrentSessionVerifier = EasyMock.createNiceMock(ConcurrentSessionVerifier.class);
-    EasyMock.expect(concurrentSessionVerifier.verifySessionForUser(anyString(), anyObject())).andReturn(true).anyTimes();
+    EasyMock.expect(concurrentSessionVerifier.verifySessionForUser(anyString())).andReturn(true).anyTimes();
+    EasyMock.expect(concurrentSessionVerifier.registerToken(anyString(), anyObject())).andReturn(true).anyTimes();
     EasyMock.expect(services.getService(ServiceType.CONCURRENT_SESSION_VERIFIER)).andReturn(concurrentSessionVerifier).anyTimes();
 
     JWTokenAuthority authority = new TestJWTokenAuthority(gatewayPublicKey, gatewayPrivateKey);
@@ -673,7 +675,8 @@ public class WebSSOResourceTest {
     EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
 
     ConcurrentSessionVerifier concurrentSessionVerifier = EasyMock.createNiceMock(ConcurrentSessionVerifier.class);
-    EasyMock.expect(concurrentSessionVerifier.verifySessionForUser(anyString(), anyObject())).andReturn(true).anyTimes();
+    EasyMock.expect(concurrentSessionVerifier.verifySessionForUser(anyString())).andReturn(true).anyTimes();
+    EasyMock.expect(concurrentSessionVerifier.registerToken(anyString(), anyObject())).andReturn(true).anyTimes();
     EasyMock.expect(services.getService(ServiceType.CONCURRENT_SESSION_VERIFIER)).andReturn(concurrentSessionVerifier).anyTimes();
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
