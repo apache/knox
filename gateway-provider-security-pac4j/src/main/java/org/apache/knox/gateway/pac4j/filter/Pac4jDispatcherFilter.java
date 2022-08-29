@@ -161,10 +161,6 @@ public class Pac4jDispatcherFilter implements Filter {
 
     // client name from servlet parameter (mandatory)
     final String clientNameParameter = filterConfig.getInitParameter(PAC4J_CLIENT_NAME_PARAM);
-    if (clientNameParameter == null) {
-      log.clientNameParameterRequired();
-      throw new ServletException("Required pac4j clientName parameter is missing.");
-    }
 
     final String oidcType = filterConfig.getInitParameter(PAC4J_OIDC_TYPE);
     /*
@@ -266,7 +262,7 @@ public class Pac4jDispatcherFilter implements Filter {
 
   private void addDefaultConfig(String clientNameParameter, Map<String, String> properties) {
     // add default saml params
-    if (clientNameParameter.contains(SAML2Client.class.getSimpleName())) {
+    if (clientNameParameter != null && clientNameParameter.contains(SAML2Client.class.getSimpleName())) {
       properties.put(PropertiesConstants.SAML_KEYSTORE_PATH,
           keystoreService.getKeystorePath());
 
