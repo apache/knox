@@ -19,6 +19,8 @@ package org.apache.knox.gateway.topology;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.knox.gateway.i18n.GatewaySpiMessages;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class Provider {
+  private static final GatewaySpiMessages LOG = MessagesFactory.get(GatewaySpiMessages.class);
 
   private String role;
   private String name;
@@ -60,6 +63,9 @@ public class Provider {
   }
 
   public void addParam(Param param) {
+    if (params.containsKey(param.getName())) {
+      LOG.duplicatedFilterParamKey(param.getName());
+    }
     params.put(param.getName(), param.getValue());
   }
 

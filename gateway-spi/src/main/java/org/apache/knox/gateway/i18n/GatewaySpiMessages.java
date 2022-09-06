@@ -79,4 +79,6 @@ public interface GatewaySpiMessages {
   @Message(level = MessageLevel.ERROR, text = "Failed to load truststore due to {0}")
   void failedToLoadTruststore(String message, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.WARN, text = "Duplicated filter param key: {0}")
+  void duplicatedFilterParamKey(String name);
 }
