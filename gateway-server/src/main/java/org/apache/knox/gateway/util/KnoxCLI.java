@@ -723,8 +723,8 @@ public class KnoxCLI extends Configured implements Tool {
           }
 
           if ("PEM".equalsIgnoreCase(type) || type == null) {
-            X509CertificateUtil.writeCertificateToFile(cert, new File(keyStoreDir + "gateway-identity.pem"));
-            out.println("Certificate gateway-identity has been successfully exported to: " + keyStoreDir + "gateway-identity.pem");
+            X509CertificateUtil.writeCertificateToFile(cert, new File(keyStoreDir + "gateway-client-trust.pem"));
+            out.println("Certificate gateway-identity has been successfully exported to: " + keyStoreDir + "gateway-client-trust.pem");
           } else if ("JKS".equalsIgnoreCase(type)) {
             X509CertificateUtil.writeCertificateToJks(cert, new File(keyStoreDir + "gateway-client-trust.jks"));
             out.println("Certificate gateway-identity has been successfully exported to: " + keyStoreDir + "gateway-client-trust.jks");
