@@ -624,7 +624,8 @@ public class TokenResource {
   private boolean triesToRevokeOwnToken(String tokenId, String revoker) throws UnknownTokenException {
     final TokenMetadata metadata = tokenStateService.getTokenMetadata(tokenId);
     final String tokenUserName = metadata == null ? "" : metadata.getUserName();
-    return StringUtils.isNotBlank(revoker) && revoker.equals(tokenUserName);
+    final String tokenCreatedBy =  metadata == null ? "" : metadata.getCreatedBy();
+    return StringUtils.isNotBlank(revoker) && (revoker.equals(tokenUserName) || revoker.equals(tokenCreatedBy));
   }
 
   /*
@@ -770,7 +771,11 @@ public class TokenResource {
             // userTokens is an ordered collection (by issue time) -> the first element is the oldest one
             final String oldestTokenId = userTokens.iterator().next().getTokenId();
             log.generalInfoMessage(String.format(Locale.getDefault(), "Revoking %s's oldest token %s ...", userName, Tokens.getTokenIDDisplayText(oldestTokenId)));
-            revoke(oldestTokenId);
+            final Response revocationResponse = revoke(oldestTokenId);
+            if (Response.Status.OK.getStatusCode() != revocationResponse.getStatus()) {
+              return Response.status(Response.Status.fromStatusCode(revocationResponse.getStatus()))
+                  .entity("{\n  \"error\": \"An error occurred during the oldest token revocation of " + userName + " \"\n}\n").build();
+            }
            }
         }
       }

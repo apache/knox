@@ -851,6 +851,12 @@ public class TokenServiceResourceTest {
   }
 
   @Test
+  public void testTokenRevocation_Enabled_RevokeImpersonatedToken() throws Exception {
+    final Response renewalResponse = doTestTokenRevocation(true, null, createTestSubject(USER_NAME), "impersonatedUserName");
+    validateSuccessfulRevocationResponse(renewalResponse);
+  }
+
+  @Test
   public void testKidJkuClaims() throws Exception {
     final Map<String, String> contextExpectations = new HashMap<>();
     contextExpectations.put("knox.token.ttl", "60000");
@@ -1374,6 +1380,11 @@ public class TokenServiceResourceTest {
     return doTestTokenLifecyle(TokenLifecycleOperation.Revoke, isTokenStateServerManaged, renewers, caller);
   }
 
+  private Response doTestTokenRevocation(final Boolean isTokenStateServerManaged, final String renewers, final Subject caller, String impersonatedUser)
+      throws Exception {
+    return doTestTokenLifecyle(TokenLifecycleOperation.Revoke, isTokenStateServerManaged, null, renewers, null, caller, impersonatedUser).getValue();
+  }
+
   /**
    * @param operation     A TokenLifecycleOperation
    * @param serverManaged true, if server-side token state management should be enabled; Otherwise, false or null.
@@ -1411,6 +1422,11 @@ public class TokenServiceResourceTest {
     return doTestTokenLifecyle(operation, serviceLevelConfig, null, renewers, maxTokenLifetime, caller);
   }
 
+  private Map.Entry<TestTokenStateService, Response> doTestTokenLifecyle(final TokenLifecycleOperation operation, final Boolean serviceLevelConfig,
+      final Boolean gatewayLevelConfig, final String renewers, final Long maxTokenLifetime, final Subject caller) throws Exception {
+    return doTestTokenLifecyle(operation, serviceLevelConfig, gatewayLevelConfig, renewers, maxTokenLifetime, caller, null);
+  }
+
   /**
    * @param operation          A TokenLifecycleOperation
    * @param serviceLevelConfig true, if server-side token state management should be enabled at the service level;
@@ -1430,7 +1446,8 @@ public class TokenServiceResourceTest {
                                                                          final Boolean                 gatewayLevelConfig,
                                                                          final String                  renewers,
                                                                          final Long                    maxTokenLifetime,
-                                                                         final Subject                 caller) throws Exception {
+                                                                         final Subject                 caller,
+                                                                         final String impersonatedUser) throws Exception {
 
     final Map<String, String> contextExpectations = new HashMap<>();
     contextExpectations.put("knox.token.audiences", "recipient1,recipient2");
@@ -1443,6 +1460,13 @@ public class TokenServiceResourceTest {
       }
     }
     contextExpectations.put("knox.token.renewer.whitelist", renewers);
+
+    if (StringUtils.isNotBlank(impersonatedUser)) {
+      contextExpectations.put(TokenResource.IMPERSONATION_ENABLED_PARAM, "true");
+      contextExpectations.put(TokenResource.QUERY_PARAMETER_DOAS, impersonatedUser);
+      contextExpectations.put(TokenResource.PROXYUSER_PREFIX + "." + USER_NAME + ".users", impersonatedUser);
+      contextExpectations.put(TokenResource.PROXYUSER_PREFIX + "." + USER_NAME + ".hosts", "*");
+    }
 
     configureCommonExpectations(contextExpectations, gatewayLevelConfig);
 
