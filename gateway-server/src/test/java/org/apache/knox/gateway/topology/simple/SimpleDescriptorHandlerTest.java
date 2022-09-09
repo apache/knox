@@ -19,6 +19,7 @@ package org.apache.knox.gateway.topology.simple;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.topology.validation.TopologyValidator;
 import org.apache.knox.gateway.util.XmlUtils;
 import org.easymock.EasyMock;
@@ -851,6 +852,25 @@ public class SimpleDescriptorHandlerTest {
         assertThat(topologyXml, hasXPath("/topology/service/role", is(equalTo("KNOX"))));
       } finally {
         providerConfig.delete();
+        if (topologyFile != null) {
+          topologyFile.delete();
+        }
+      }
+    }
+
+    @Test
+    public void testJsonHandler() throws Exception {
+      File topologyFile = null;
+      try {
+        final File destDir = new File(System.getProperty("java.io.tmpdir")).getCanonicalFile();
+        final File descriptorFile = new File(SimpleDescriptorHandlerTest.class.getResource("/conf-full/conf/descriptors/test-topology.json").getFile());
+        final GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
+        final Map<String, File> handleResult = SimpleDescriptorHandler.handle(null, descriptorFile, destDir, gatewayServices);
+        topologyFile = handleResult.get(SimpleDescriptorHandler.RESULT_TOPOLOGY);
+        final Document topologyXml = XmlUtils.readXml(topologyFile);
+        assertThat(topologyXml, hasXPath("/topology/service/role", is(equalTo("KNOX"))));
+        assertThat(topologyXml, hasXPath("/topology/gateway/provider/name", is(equalTo("ShiroProvider"))));
+      } finally {
         if (topologyFile != null) {
           topologyFile.delete();
         }
