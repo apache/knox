@@ -458,11 +458,11 @@ public class TokenResource {
       if (uriInfo == null) {
         throw new IllegalArgumentException("URI info cannot be NULL.");
       }
-      final Map<String, String> metadataMap = new HashMap<>();
+      final Map<String, List<String>> metadataMap = new HashMap<>();
       uriInfo.getQueryParameters().entrySet().forEach(entry -> {
         if (entry.getKey().startsWith(METADATA_QUERY_PARAM_PREFIX)) {
           String metadataName = entry.getKey().substring(METADATA_QUERY_PARAM_PREFIX.length());
-          metadataMap.put(metadataName, entry.getValue().get(0));
+          metadataMap.put(metadataName, entry.getValue());
         }
       });
 
@@ -474,15 +474,15 @@ public class TokenResource {
         tokens.addAll(userTokens);
       } else {
         userTokens.forEach(knoxToken -> {
-          for (Map.Entry<String, String> entry : metadataMap.entrySet()) {
-            if (StringUtils.isBlank(entry.getValue()) || "*".equals(entry.getValue())) {
+          for (Map.Entry<String,  List<String>> entry : metadataMap.entrySet()) {
+            if (entry.getValue().contains("*")) {
               // we should only filter tokens by metadata name
               if (knoxToken.hasMetadata(entry.getKey())) {
                 tokens.add(knoxToken);
               }
             } else {
               // metadata value should also match
-              if (entry.getValue().equals(knoxToken.getMetadataValue(entry.getKey()))) {
+              if (entry.getValue().contains(knoxToken.getMetadataValue(entry.getKey()))) {
                 tokens.add(knoxToken);
               }
             }
