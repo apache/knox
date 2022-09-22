@@ -1300,6 +1300,11 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-servlets</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
             <!-- Need these additional due to classifier tests -->
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>

@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.deploy.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.knox.gateway.deploy.DeploymentContext;
@@ -27,18 +28,24 @@ import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Service;
 
 public class DosFilterDeploymentContributor extends ProviderDeploymentContributorBase {
+  private static final String JETTY_DOS_FILTER_CLASSNAME = "org.eclipse.jetty.servlets.DoSFilter";
+
   @Override
   public String getRole() {
-    return null;
+    return "dos";
   }
 
   @Override
   public String getName() {
-    return null;
+    return "JettyDoS";
   }
 
   @Override
   public void contributeFilter(DeploymentContext context, Provider provider, Service service, ResourceDescriptor resource, List<FilterParamDescriptor> params) {
-
+    if (params == null) {
+      params = new ArrayList<>();
+    }
+    copyAllProviderParams(provider, resource, params, false);
+    resource.addFilter().name(getName()).role(getRole()).impl(JETTY_DOS_FILTER_CLASSNAME).params(params);
   }
 }
