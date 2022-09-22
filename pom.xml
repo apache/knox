@@ -148,6 +148,7 @@
         <module>knox-homepage-ui</module>
         <module>gateway-openapi-ui</module>
         <module>knox-token-management-ui</module>
+        <module>gateway-provider-security-dos</module>
     </modules>
 
     <properties>
@@ -2527,6 +2528,11 @@
                 <artifactId>system-stubs-junit4</artifactId>
                 <version>${system-stubs-junit4.version}</version>
                 <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-provider-security-dos</artifactId>
+                <version>${project.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
