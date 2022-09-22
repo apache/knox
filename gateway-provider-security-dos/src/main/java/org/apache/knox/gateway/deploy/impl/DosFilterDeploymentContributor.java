@@ -41,6 +41,16 @@ public class DosFilterDeploymentContributor extends ProviderDeploymentContributo
   }
 
   @Override
+  public void initializeContribution(DeploymentContext context) {
+    super.initializeContribution(context);
+  }
+
+  @Override
+  public void contributeProvider(DeploymentContext context, Provider provider) {
+    super.contributeProvider(context, provider);
+  }
+
+  @Override
   public void contributeFilter(DeploymentContext context, Provider provider, Service service, ResourceDescriptor resource, List<FilterParamDescriptor> params) {
     if (params == null) {
       params = new ArrayList<>();
