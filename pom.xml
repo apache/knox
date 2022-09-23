@@ -94,6 +94,7 @@
         <module>gateway-provider-security-authz-acls</module>
         <module>gateway-provider-security-authz-composite</module>
         <module>gateway-provider-security-authc-anon</module>
+        <module>gateway-provider-security-dos</module>
         <module>gateway-provider-identity-assertion-common</module>
         <module>gateway-provider-identity-assertion-concat</module>
         <module>gateway-provider-identity-assertion-hadoop-groups</module>
@@ -148,7 +149,6 @@
         <module>knox-homepage-ui</module>
         <module>gateway-openapi-ui</module>
         <module>knox-token-management-ui</module>
-        <module>gateway-provider-security-dos</module>
     </modules>
 
     <properties>

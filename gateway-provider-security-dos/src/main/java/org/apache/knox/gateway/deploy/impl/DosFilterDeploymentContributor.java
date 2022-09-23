@@ -30,14 +30,17 @@ import org.apache.knox.gateway.topology.Service;
 public class DosFilterDeploymentContributor extends ProviderDeploymentContributorBase {
   private static final String JETTY_DOS_FILTER_CLASSNAME = "org.eclipse.jetty.servlets.DoSFilter";
 
+  private static final String ROLE = "dos";
+  private static final String NAME = "JettyDoS";
+
   @Override
   public String getRole() {
-    return "dos";
+    return ROLE;
   }
 
   @Override
   public String getName() {
-    return "JettyDoS";
+    return NAME;
   }
 
   @Override
