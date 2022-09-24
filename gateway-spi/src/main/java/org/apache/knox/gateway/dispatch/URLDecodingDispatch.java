@@ -17,10 +17,9 @@
  */
 package org.apache.knox.gateway.dispatch;
 
+import org.apache.knox.gateway.util.URLUtils;
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 
 /**
  * Dispatch which decodes the outgoing URLs (to services).
@@ -37,21 +36,6 @@ public class URLDecodingDispatch extends ConfigurableDispatch {
 
   @Override
   public URI getDispatchUrl(final HttpServletRequest request) {
-    String decoded;
-
-    try {
-      decoded = URLDecoder.decode(request.getRequestURL().toString(), StandardCharsets.UTF_8.name() );
-    } catch (final Exception e) {
-      /* fall back in case of exception */
-      decoded = request.getRequestURL().toString();
-    }
-
-    final StringBuilder str = new StringBuilder(decoded);
-    final String query = request.getQueryString();
-    if ( query != null ) {
-      str.append('?');
-      str.append(query);
-    }
-    return URI.create(str.toString());
+    return URLUtils.getDecodeUri(request.getRequestURL().toString(), request.getQueryString());
   }
 }

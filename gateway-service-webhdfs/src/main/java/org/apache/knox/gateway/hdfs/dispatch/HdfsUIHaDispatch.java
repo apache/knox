@@ -17,13 +17,21 @@
  */
 package org.apache.knox.gateway.hdfs.dispatch;
 
+import org.apache.knox.gateway.util.URLUtils;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import java.net.URI;
 
 public class HdfsUIHaDispatch extends AbstractHdfsHaDispatch {
   public static final String RESOURCE_ROLE = "HDFSUI";
 
   public HdfsUIHaDispatch() throws ServletException {
     super();
+  }
+
+  @Override
+  public URI getDispatchUrl(final HttpServletRequest request) {
+    return URLUtils.getDecodeUri(request.getRequestURL().toString(), request.getQueryString());
   }
 
   @Override
