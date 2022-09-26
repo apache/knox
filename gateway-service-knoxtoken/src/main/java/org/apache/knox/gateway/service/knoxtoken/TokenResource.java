@@ -730,7 +730,9 @@ public class TokenResource {
           AuthFilterUtils.authorizeImpersonationRequest(request, doAsUser);
           createdBy = userName;
           userName = doAsUser;
+          log.tokenImpersonationSuccess(userName, doAsUser);
         } catch (AuthorizationException e) {
+          log.tokenImpersonationFailed(e);
           return Response.status(Response.Status.FORBIDDEN).entity("{ \"" + e.getMessage() + "\" }").build();
         }
       }
