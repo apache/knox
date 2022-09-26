@@ -995,7 +995,7 @@ public class ClouderaManagerServiceDiscoveryTest {
     Map<String, String> roleProperties = new HashMap<>();
     roleProperties.put("hive_hs2_config_safety_valve", hs2SafetyValveValue);
 
-    final Map<String, String> serviceProperties = Collections.singletonMap("hive.server2.use.SSL", String.valueOf(enableSSL));
+    final Map<String, String> serviceProperties = Collections.singletonMap(HiveServiceModelGenerator.SSL_ENABLED, String.valueOf(enableSSL));
 
     return doTestDiscovery(hostName,
                            "HIVE-1",
@@ -1023,7 +1023,7 @@ public class ClouderaManagerServiceDiscoveryTest {
     roleProperties.put("hive_server2_transport_mode", "http");
     roleProperties.put("hive_hs2_config_safety_valve", hs2SafetyValveValue);
 
-    final Map<String, String> serviceProperties = Collections.singletonMap("hive.server2.use.SSL", String.valueOf(enableSSL));
+    final Map<String, String> serviceProperties = Collections.singletonMap(HiveServiceModelGenerator.SSL_ENABLED, String.valueOf(enableSSL));
 
     return doTestDiscovery(hostName,
                            "HIVE_ON_TEZ-1",

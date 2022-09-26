@@ -37,7 +37,7 @@ public class HiveServiceModelGenerator extends AbstractServiceModelGenerator {
   static final String TRANSPORT_MODE_ALL  = "all";
 
   static final String SAFETY_VALVE   = "hive_hs2_config_safety_valve";
-  static final String SSL_ENABLED    = "hive.server2.use.SSL";
+  public static final String SSL_ENABLED = "hiveserver2_enable_ssl";
   static final String TRANSPORT_MODE = "hive.server2.transport.mode";
   static final String HTTP_PORT      = "hive.server2.thrift.http.port";
   static final String HTTP_PATH      = "hive.server2.thrift.http.path";
@@ -90,7 +90,7 @@ public class HiveServiceModelGenerator extends AbstractServiceModelGenerator {
 
     ServiceModel model =
         createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/%s", scheme, hostname, port, httpPath));
-    model.addRoleProperty(getRoleType(), SSL_ENABLED, Boolean.toString(sslEnabled));
+    model.addServiceProperty(SSL_ENABLED, Boolean.toString(sslEnabled));
     model.addRoleProperty(getRoleType(), SAFETY_VALVE, getRoleConfigValue(roleConfig, SAFETY_VALVE));
 
     return model;
