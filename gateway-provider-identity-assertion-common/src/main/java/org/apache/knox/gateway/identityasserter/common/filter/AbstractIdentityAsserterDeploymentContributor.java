@@ -33,6 +33,9 @@ import java.util.Map.Entry;
 public abstract class AbstractIdentityAsserterDeploymentContributor extends
     ProviderDeploymentContributorBase {
 
+  /* Service specific impersonation params that needs to be scrubbed */
+  public static final String IMPERSONATION_PARAMS = "impersonation.params";
+
   @Override
   public String getRole() {
     return "identity-assertion";
@@ -42,7 +45,28 @@ public abstract class AbstractIdentityAsserterDeploymentContributor extends
   public void contributeFilter( DeploymentContext context, Provider provider, Service service,
       ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
     params = buildFilterInitParms(provider, resource, params);
+    /* extract params from service definition */
+    params = buildServiceParams(service, resource, params);
     resource.addFilter().name(getName()).role(getRole()).impl(getFilterClassname()).params(params);
+  }
+
+  protected List<FilterParamDescriptor> buildServiceParams(Service service,
+      ResourceDescriptor resource, List<FilterParamDescriptor> params) {
+    // blindly add all the service params as filter init params
+    if (params == null) {
+      params = new ArrayList<>();
+    }
+    Map<String, String> serviceParams = service.getParams();
+    for(Entry<String, String> entry : serviceParams.entrySet()) {
+      FilterParamDescriptor f = resource
+          .createFilterParam()
+          .name(entry.getKey().toLowerCase(Locale.ROOT))
+          .value(entry.getValue());
+      if(!params.contains(f)) {
+        params.add(f);
+      }
+    }
+    return params;
   }
 
   public List<FilterParamDescriptor> buildFilterInitParms(Provider provider,
@@ -56,6 +80,13 @@ public abstract class AbstractIdentityAsserterDeploymentContributor extends
       params.add( resource.createFilterParam().name(entry.getKey().toLowerCase(Locale.ROOT)).value(entry.getValue()));
     }
     return params;
+  }
+
+  @Override
+  public void contributeProvider(final DeploymentContext context, final Provider provider ) {
+    super.contributeProvider(context, provider);
+    final String impersonationParams = provider.getParams().get(IMPERSONATION_PARAMS);
+    context.getWebAppDescriptor().createContextParam().paramName(IMPERSONATION_PARAMS).paramValue(impersonationParams);
   }
 
   protected abstract String getFilterClassname();

@@ -53,7 +53,7 @@ import org.apache.knox.gateway.util.Tokens;
 /**
  * A TokenStateService implementation based on the AliasService.
  */
-public class AliasBasedTokenStateService extends DefaultTokenStateService implements TokenStatePeristerMonitorListener {
+public class AliasBasedTokenStateService extends AbstractPersistentTokenStateService implements TokenStatePeristerMonitorListener {
 
   static final String TOKEN_ALIAS_SUFFIX_DELIM   = "--";
   static final String TOKEN_ISSUE_TIME_POSTFIX   = TOKEN_ALIAS_SUFFIX_DELIM + "iss";

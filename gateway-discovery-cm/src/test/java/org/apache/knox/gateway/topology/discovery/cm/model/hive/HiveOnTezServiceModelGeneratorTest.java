@@ -55,10 +55,10 @@ public class HiveOnTezServiceModelGeneratorTest extends AbstractServiceModelGene
 
   @Test
   public void testServiceModelMetadata() {
-    final Map<String, String> serviceConfig = Collections.emptyMap();
+    final Map<String, String> serviceConfig = new HashMap<>();
+    serviceConfig.put(HiveServiceModelGenerator.SSL_ENABLED, "false");
 
     final Map<String, String> roleConfig = new HashMap<>();
-    roleConfig.put(HiveOnTezServiceModelGenerator.SSL_ENABLED, "false");
     roleConfig.put(HiveOnTezServiceModelGenerator.HIVEONTEZ_TRANSPORT_MODE,
                    HiveOnTezServiceModelGenerator.TRANSPORT_MODE_HTTP);
     roleConfig.put(HiveOnTezServiceModelGenerator.HIVEONTEZ_HTTP_PORT, "12345");
@@ -69,10 +69,10 @@ public class HiveOnTezServiceModelGeneratorTest extends AbstractServiceModelGene
 
   @Test
   public void testServiceModelMetadataTransportModeAll() {
-    final Map<String, String> serviceConfig = Collections.emptyMap();
+    final Map<String, String> serviceConfig = new HashMap<>();
+    serviceConfig.put(HiveServiceModelGenerator.SSL_ENABLED, "false");
 
     final Map<String, String> roleConfig = new HashMap<>();
-    roleConfig.put(HiveOnTezServiceModelGenerator.SSL_ENABLED, "false");
     roleConfig.put(HiveOnTezServiceModelGenerator.HIVEONTEZ_TRANSPORT_MODE,
                    HiveOnTezServiceModelGenerator.TRANSPORT_MODE_ALL);
     roleConfig.put(HiveOnTezServiceModelGenerator.HIVEONTEZ_HTTP_PORT, "12345");

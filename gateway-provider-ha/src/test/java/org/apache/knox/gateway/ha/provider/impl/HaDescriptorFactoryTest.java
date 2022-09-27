@@ -41,7 +41,7 @@ public class HaDescriptorFactoryTest {
       assertEquals(42, serviceConfig.getMaxFailoverAttempts());
       assertEquals(50, serviceConfig.getFailoverSleep());
 
-      serviceConfig = HaDescriptorFactory.createServiceConfig("bar", "false", "3", "1000", null, null, null, null, null, null);
+      serviceConfig = HaDescriptorFactory.createServiceConfig("bar", "false", "3", "1000", null, null, null, null, null, null,null);
       assertNotNull(serviceConfig);
       assertFalse(serviceConfig.isEnabled());
       assertEquals("bar", serviceConfig.getServiceName());
@@ -51,7 +51,7 @@ public class HaDescriptorFactoryTest {
 
   @Test
   public void testCreateServiceConfigActive() {
-    HaServiceConfig serviceConfig = HaDescriptorFactory.createServiceConfig("foo", "enableStickySession=true;enabled=true;maxFailoverAttempts=42;failoverSleep=50;maxRetryAttempts=1;retrySleep=1000");
+    HaServiceConfig serviceConfig = HaDescriptorFactory.createServiceConfig("foo", "enableStickySession=true;enabled=true;maxFailoverAttempts=42;failoverSleep=50");
     assertNotNull(serviceConfig);
     assertTrue(serviceConfig.isEnabled());
     assertEquals("foo", serviceConfig.getServiceName());
@@ -60,7 +60,7 @@ public class HaDescriptorFactoryTest {
     assertTrue(serviceConfig.isStickySessionEnabled());
     assertEquals(HaServiceConfigConstants.DEFAULT_STICKY_SESSION_COOKIE_NAME, serviceConfig.getStickySessionCookieName());
 
-    serviceConfig = HaDescriptorFactory.createServiceConfig("foo", "enableStickySession=true;enabled=true;maxFailoverAttempts=42;failoverSleep=50;maxRetryAttempts=1;retrySleep=1000;stickySessionCookieName=abc");
+    serviceConfig = HaDescriptorFactory.createServiceConfig("foo", "enableStickySession=true;enabled=true;maxFailoverAttempts=42;failoverSleep=50;stickySessionCookieName=abc");
     assertNotNull(serviceConfig);
     assertTrue(serviceConfig.isEnabled());
     assertEquals("foo", serviceConfig.getServiceName());
@@ -69,7 +69,7 @@ public class HaDescriptorFactoryTest {
     assertTrue(serviceConfig.isStickySessionEnabled());
     assertEquals("abc", serviceConfig.getStickySessionCookieName());
 
-    serviceConfig = HaDescriptorFactory.createServiceConfig( "bar", "false", "3", "1000", null, null, null, "true", null, null);
+    serviceConfig = HaDescriptorFactory.createServiceConfig( "bar", "false", "3", "1000", null, null, null, "true", null, null,null);
     assertNotNull(serviceConfig);
     assertFalse(serviceConfig.isEnabled());
     assertEquals("bar", serviceConfig.getServiceName());
@@ -78,7 +78,7 @@ public class HaDescriptorFactoryTest {
     assertTrue(serviceConfig.isStickySessionEnabled());
     assertEquals(HaServiceConfigConstants.DEFAULT_STICKY_SESSION_COOKIE_NAME, serviceConfig.getStickySessionCookieName());
 
-    serviceConfig = HaDescriptorFactory.createServiceConfig( "knox", "false", "4", "3000", null, null, null, null, null, null);
+    serviceConfig = HaDescriptorFactory.createServiceConfig( "knox", "false", "4", "3000", null, null, null, null, null, null,null);
     assertNotNull(serviceConfig);
     assertFalse(serviceConfig.isEnabled());
     assertEquals("knox", serviceConfig.getServiceName());
@@ -87,7 +87,7 @@ public class HaDescriptorFactoryTest {
     assertFalse(serviceConfig.isStickySessionEnabled());
     assertEquals(HaServiceConfigConstants.DEFAULT_STICKY_SESSION_COOKIE_NAME, serviceConfig.getStickySessionCookieName());
 
-    serviceConfig = HaDescriptorFactory.createServiceConfig( "bar", "false", "3", "1000", null, null, null, "true", "abc", null);
+    serviceConfig = HaDescriptorFactory.createServiceConfig( "bar", "false", "3", "1000", null, null, null, "true", "abc", null,null);
     assertNotNull(serviceConfig);
     assertFalse(serviceConfig.isEnabled());
     assertEquals("bar", serviceConfig.getServiceName());
@@ -96,7 +96,7 @@ public class HaDescriptorFactoryTest {
     assertTrue(serviceConfig.isStickySessionEnabled());
     assertEquals("abc", serviceConfig.getStickySessionCookieName());
 
-    serviceConfig = HaDescriptorFactory.createServiceConfig( "bar", "false", "3", "1000", null, null, "true", null, "abc", "true");
+    serviceConfig = HaDescriptorFactory.createServiceConfig( "bar", "false", "3", "1000", null, null, "true", null, "abc", "true",null);
     assertNotNull(serviceConfig);
     assertFalse(serviceConfig.isEnabled());
     assertEquals("bar", serviceConfig.getServiceName());

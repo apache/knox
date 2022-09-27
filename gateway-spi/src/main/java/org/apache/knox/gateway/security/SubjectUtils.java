@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.security;
 
 import javax.security.auth.Subject;
+
 import java.security.AccessController;
 import java.security.Principal;
 import java.util.Optional;
@@ -84,6 +85,10 @@ public class SubjectUtils {
       }
     }
     return name;
+  }
+
+  public static Set<GroupPrincipal> getGroupPrincipals(Subject subject) {
+    return subject.getPrincipals(GroupPrincipal.class);
   }
 
 }

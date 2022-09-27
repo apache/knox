@@ -31,6 +31,7 @@ import java.util.Properties;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -487,8 +488,23 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
 
         @Override
         public Collection<KnoxToken> getTokens(String userName) {
+          return fetchTokens(userName, false);
+        }
+
+        @Override
+        public Collection<KnoxToken> getDoAsTokens(String createdBy) {
+          return fetchTokens(createdBy, true);
+        }
+
+        private Collection<KnoxToken> fetchTokens(String userName, boolean createdBy) {
           final Collection<KnoxToken> tokens = new TreeSet<>();
-          tokenMetadata.entrySet().stream().filter(entry -> entry.getValue().getUserName().equals(userName)).forEach(metadata -> {
+          final Predicate<Map.Entry<String, TokenMetadata>> filterPredicate;
+          if (createdBy) {
+            filterPredicate = entry -> userName.equals(entry.getValue().getCreatedBy());
+          } else {
+            filterPredicate = entry -> userName.equals(entry.getValue().getUserName());
+          }
+          tokenMetadata.entrySet().stream().filter(filterPredicate).forEach(metadata -> {
             String tokenId = metadata.getKey();
             try {
               tokens.add(new KnoxToken(tokenId, getTokenIssueTime(tokenId), getTokenExpiration(tokenId), 0L, metadata.getValue()));

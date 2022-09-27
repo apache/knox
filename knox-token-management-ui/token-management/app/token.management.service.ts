@@ -27,16 +27,19 @@ export class TokenManagementService {
     sessionUrl = window.location.pathname.replace(new RegExp('token-management/.*'), 'session/api/v1/sessioninfo');
     apiUrl = window.location.pathname.replace(new RegExp('token-management/.*'), 'knoxtoken/api/v1/token/');
     getKnoxTokensUrl = this.apiUrl + 'getUserTokens?userName=';
+    getDoAsKnoxTokensUrl = this.apiUrl + 'getUserTokens?createdBy=';
     enableKnoxTokenUrl = this.apiUrl + 'enable';
     disableKnoxTokenUrl = this.apiUrl + 'disable';
     revokeKnoxTokenUrl = this.apiUrl + 'revoke';
+    getTssStatusUrl = this.apiUrl + 'getTssStatus';
 
     constructor(private http: HttpClient) {}
 
-    getKnoxTokens(userName: string): Promise<KnoxToken[]> {
+    getKnoxTokens(userName: string, impersonated: boolean): Promise<KnoxToken[]> {
         let headers = new HttpHeaders();
         headers = this.addJsonHeaders(headers);
-        return this.http.get(this.getKnoxTokensUrl + userName, { headers: headers})
+        let urlToUse = impersonated ? this.getDoAsKnoxTokensUrl : this.getKnoxTokensUrl;
+        return this.http.get(urlToUse + userName, { headers: headers})
             .toPromise()
             .then(response => response['tokens'] as KnoxToken[])
             .catch((err: HttpErrorResponse) => {
@@ -92,6 +95,23 @@ export class TokenManagementService {
             .then(response => response['sessioninfo'].user as string)
             .catch((err: HttpErrorResponse) => {
                 console.debug('TokenManagementService --> getUserName() --> ' + this.sessionUrl + '\n  error: ' + err.message);
+                if (err.status === 401) {
+                    window.location.assign(document.location.pathname);
+                } else {
+                    return this.handleError(err);
+                }
+            });
+    }
+
+    getImpersonationEnabled(): Promise<string> {
+        let headers = new HttpHeaders();
+        headers = this.addJsonHeaders(headers);
+        return this.http.get(this.getTssStatusUrl, { headers: headers})
+            .toPromise()
+            .then(response => response['impersonationEnabled'] as string)
+            .catch((err: HttpErrorResponse) => {
+                console.debug('TokenManagementService --> getImpersonationEnabled() --> ' + this.getTssStatusUrl
+                              + '\n  error: ' + err.message);
                 if (err.status === 401) {
                     window.location.assign(document.location.pathname);
                 } else {

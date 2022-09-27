@@ -296,6 +296,24 @@ public class KnoxShellTableTest {
   }
 
   @Test
+  public void testTrim() throws IOException {
+    KnoxShellTable table = new KnoxShellTable();
+
+    table.header("Column A").header("Column B").header("Column C");
+
+    table.row().value(" 789").value("012").value("844444444");
+    table.row().value(" 123").value("456").value("344444444");
+
+    KnoxShellTable table2 = table.trim("Column A");
+    assertEquals(table2.getRows().get(0).get(0), "789");
+    assertEquals(table2.getRows().get(1).get(0), "123");
+
+    KnoxShellTable table3 = table.trim(0);
+    assertEquals(table3.getRows().get(0).get(0), "789");
+    assertEquals(table3.getRows().get(1).get(0), "123");
+  }
+
+  @Test
   public void testSortStringValuesNumerically() throws IOException {
     KnoxShellTable table = new KnoxShellTable();
 

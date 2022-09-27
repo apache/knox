@@ -13,7 +13,7 @@
 --  License for the specific language governing permissions and limitations under
 --  the License.
 
-CREATE TABLE KNOX_TOKENS (
+CREATE TABLE IF NOT EXISTS KNOX_TOKENS ( -- IF NOT EXISTS syntax is not supported by Derby
    token_id varchar(128) NOT NULL,
    issue_time bigint NOT NULL,
    expiration bigint NOT NULL,

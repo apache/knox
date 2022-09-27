@@ -155,7 +155,7 @@ public class AmbariServiceDefinitionTest {
     params.put( "AMBARI_URL", "http://localhost:" + mockAmbari.getPort() );
 
     velocity = new VelocityEngine();
-    velocity.setProperty( RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, "org.apache.velocity.runtime.log.NullLogSystem" );
+    velocity.setProperty( "runtime.log.logsystem.class", "org.apache.velocity.runtime.log.NullLogSystem" );
     velocity.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
     velocity.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
     velocity.init();

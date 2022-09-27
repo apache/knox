@@ -16,7 +16,9 @@
  */
 package org.apache.knox.gateway.services.security.token;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -33,6 +35,8 @@ public class TokenMetadata {
   public static final String COMMENT = "comment";
   public static final String ENABLED = "enabled";
   public static final String PASSCODE = "passcode";
+  public static final String CREATED_BY = "createdBy";
+  private static final List<String> KNOWN_MD_NAMES = Arrays.asList(USER_NAME, COMMENT, ENABLED, PASSCODE, CREATED_BY);
 
   private final Map<String, String> metadataMap = new HashMap<>();
 
@@ -66,12 +70,27 @@ public class TokenMetadata {
     return new HashMap<String, String>(this.metadataMap);
   }
 
+  @JsonIgnore
+  public String getMetadata(String key) {
+    return this.metadataMap.get(key);
+  }
+
+  public Map<String, String> getCustomMetadataMap() {
+    final Map<String, String> customMetadataMap = new HashMap<>();
+    this.metadataMap.forEach((key, value) -> {
+      if (!KNOWN_MD_NAMES.contains(key)) {
+        customMetadataMap.put(key, value);
+      }
+    });
+    return customMetadataMap;
+  }
+
   public String getUserName() {
-    return metadataMap.get(USER_NAME);
+    return getMetadata(USER_NAME);
   }
 
   public String getComment() {
-    return metadataMap.get(COMMENT);
+    return getMetadata(COMMENT);
   }
 
   public void setEnabled(boolean enabled) {
@@ -79,7 +98,7 @@ public class TokenMetadata {
   }
 
   public boolean isEnabled() {
-    return Boolean.parseBoolean(metadataMap.get(ENABLED));
+    return Boolean.parseBoolean(getMetadata(ENABLED));
   }
 
   public void setPasscode(String passcode) {
@@ -88,7 +107,15 @@ public class TokenMetadata {
 
   @JsonIgnore
   public String getPasscode() {
-    return metadataMap.get(PASSCODE);
+    return getMetadata(PASSCODE);
+  }
+
+  public void setCreatedBy(String createdBy) {
+    saveMetadata(CREATED_BY, createdBy);
+  }
+
+  public String getCreatedBy() {
+    return getMetadata(CREATED_BY);
   }
 
   public String toJSON() {

@@ -30,6 +30,8 @@ export class TokenManagementComponent implements OnInit {
 
     userName: string;
     knoxTokens: KnoxToken[];
+    doAsKnoxTokens: KnoxToken[];
+    impersonationEnabled: boolean;
 
     toggleBoolean(propertyName: string) {
         this[propertyName] = !this[propertyName];
@@ -45,27 +47,35 @@ export class TokenManagementComponent implements OnInit {
     ngOnInit(): void {
         console.debug('TokenManagementComponent --> ngOnInit()');
         this.tokenManagementService.getUserName().then(userName => this.setUserName(userName));
+        this.tokenManagementService.getImpersonationEnabled()
+            .then(impersonationEnabled => this.impersonationEnabled = impersonationEnabled === 'true');
     }
 
     setUserName(userName: string) {
         this.userName = userName;
-        this.fetchKnoxTokens();
+        this.fetchAllKnoxTokens();
     }
 
-    fetchKnoxTokens(): void {
-        this.tokenManagementService.getKnoxTokens(this.userName).then(tokens => this.knoxTokens = tokens);
+    fetchAllKnoxTokens(): void {
+        this.fetchKnoxTokens(true);
+        this.fetchKnoxTokens(false);
+    }
+
+    fetchKnoxTokens(impersonated: boolean): void {
+        this.tokenManagementService.getKnoxTokens(this.userName, impersonated)
+            .then(tokens => impersonated ? this.doAsKnoxTokens = tokens : this.knoxTokens = tokens);
     }
 
     disableToken(tokenId: string) {
-        this.tokenManagementService.setEnabledDisabledFlag(false, tokenId).then((response: string) => this.fetchKnoxTokens());
+        this.tokenManagementService.setEnabledDisabledFlag(false, tokenId).then((response: string) => this.fetchAllKnoxTokens());
     }
 
     enableToken(tokenId: string) {
-        this.tokenManagementService.setEnabledDisabledFlag(true, tokenId).then((response: string) => this.fetchKnoxTokens());
+        this.tokenManagementService.setEnabledDisabledFlag(true, tokenId).then((response: string) => this.fetchAllKnoxTokens());
     }
 
     revokeToken(tokenId: string) {
-        this.tokenManagementService.revokeToken(tokenId).then((response: string) => this.fetchKnoxTokens());
+        this.tokenManagementService.revokeToken(tokenId).then((response: string) => this.fetchAllKnoxTokens());
     }
 
     gotoTokenGenerationPage() {
@@ -78,6 +88,18 @@ export class TokenManagementComponent implements OnInit {
 
     isTokenExpired(expiration: number): boolean {
         return Date.now() > expiration;
+    }
+
+    isImpersonationEnabled(): boolean {
+        return this.impersonationEnabled;
+    }
+
+    getCustomMetadataArray(knoxToken: KnoxToken): [string, string][] {
+      let mdMap = new Map();
+      if (knoxToken.metadata.customMetadataMap) {
+        mdMap = knoxToken.metadata.customMetadataMap;
+      }
+      return Array.from(Object.entries(mdMap));
     }
 
 }

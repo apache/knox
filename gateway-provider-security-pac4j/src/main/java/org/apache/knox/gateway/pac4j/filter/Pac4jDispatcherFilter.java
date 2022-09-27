@@ -22,6 +22,7 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.pac4j.Pac4jMessages;
 import org.apache.knox.gateway.pac4j.config.ClientConfigurationDecorator;
 import org.apache.knox.gateway.pac4j.config.Pac4jClientConfigurationDecorator;
+import org.apache.knox.gateway.pac4j.config.SAML2ClientConfigurationDecorator;
 import org.apache.knox.gateway.pac4j.session.KnoxSessionStore;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
@@ -29,6 +30,7 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.CryptoService;
 import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.MasterService;
 import org.pac4j.config.client.PropertiesConfigFactory;
 import org.pac4j.config.client.PropertiesConstants;
@@ -159,10 +161,6 @@ public class Pac4jDispatcherFilter implements Filter {
 
     // client name from servlet parameter (mandatory)
     final String clientNameParameter = filterConfig.getInitParameter(PAC4J_CLIENT_NAME_PARAM);
-    if (clientNameParameter == null) {
-      log.clientNameParameterRequired();
-      throw new ServletException("Required pac4j clientName parameter is missing.");
-    }
 
     final String oidcType = filterConfig.getInitParameter(PAC4J_OIDC_TYPE);
     /*
@@ -217,12 +215,10 @@ public class Pac4jDispatcherFilter implements Filter {
     }
 
 
-    callbackFilter = new CallbackFilter();
+    callbackFilter = new CallbackFilter(config);
     callbackFilter.init(filterConfig);
-    callbackFilter.setConfigOnly(config);
-    securityFilter = new SecurityFilter();
+    securityFilter = new SecurityFilter(config);
     securityFilter.setClients(clientName);
-    securityFilter.setConfigOnly(config);
 
     final String domainSuffix = filterConfig.getInitParameter(PAC4J_COOKIE_DOMAIN_SUFFIX_PARAM);
     final String sessionStoreVar = filterConfig.getInitParameter(PAC4J_SESSION_STORE);
@@ -230,7 +226,8 @@ public class Pac4jDispatcherFilter implements Filter {
     SessionStore sessionStore;
 
     if(!StringUtils.isBlank(sessionStoreVar) && JEESessionStore.class.getName().contains(sessionStoreVar) ) {
-      sessionStore = new JEESessionStore();
+      /* NOTE: this is a final variable, and will be used by all requests in Knox */
+      sessionStore = JEESessionStore.INSTANCE;
     } else {
       sessionStore = new KnoxSessionStore(cryptoService, clusterName, domainSuffix, sessionStoreConfigs);
     }
@@ -265,9 +262,16 @@ public class Pac4jDispatcherFilter implements Filter {
 
   private void addDefaultConfig(String clientNameParameter, Map<String, String> properties) {
     // add default saml params
-    if (clientNameParameter.contains(SAML2Client.class.getSimpleName())) {
+    if (clientNameParameter != null && clientNameParameter.contains(SAML2Client.class.getSimpleName())) {
       properties.put(PropertiesConstants.SAML_KEYSTORE_PATH,
           keystoreService.getKeystorePath());
+
+      try {
+        properties.put(SAML2ClientConfigurationDecorator.KEYSTORE_TYPE,
+            keystoreService.getKeystoreForGateway().getType());
+      } catch (final KeystoreServiceException e) {
+        log.errorFetchingKeystoreType(e);
+      }
 
       // check for provisioned alias for keystore password
       char[] giksp = null;

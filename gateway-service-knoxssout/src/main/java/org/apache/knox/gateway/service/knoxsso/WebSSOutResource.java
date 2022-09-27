@@ -18,6 +18,9 @@
 package org.apache.knox.gateway.service.knoxsso;
 
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.session.control.ConcurrentSessionVerifier;
 import org.apache.knox.gateway.util.Urls;
 
 import javax.annotation.PostConstruct;
@@ -32,6 +35,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.MalformedURLException;
+import java.util.Arrays;
+import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
@@ -106,6 +111,26 @@ public class WebSSOutResource {
     }
     response.addCookie(c);
 
+    Optional<Cookie> ssoCookie = findCookie(cookieName);
+    if (ssoCookie.isPresent()) {
+      GatewayServices gwServices =
+              (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+      if (gwServices != null) {
+        ConcurrentSessionVerifier verifier = gwServices.getService(ServiceType.CONCURRENT_SESSION_VERIFIER);
+        verifier.sessionEndedForUser(request.getUserPrincipal().getName(), ssoCookie.get().getValue());
+      }
+    } else {
+      log.couldNotFindCookieWithTokenToRemove(cookieName, request.getUserPrincipal().getName());
+    }
     return rc;
+  }
+
+  private Optional<Cookie> findCookie(String cookieName) {
+    Cookie[] cookies = request.getCookies();
+    if (cookies != null) {
+      return Arrays.stream(cookies).filter(cookie -> cookie.getName().equals(cookieName)).findFirst();
+    } else {
+      return Optional.empty();
+    }
   }
 }

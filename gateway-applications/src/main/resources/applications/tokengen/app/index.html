@@ -79,6 +79,11 @@
                             </table>
                             <label style="display: none; color: red;" id="invalidLifetimeText"><i class="icon-warning"></i>Invalid lifetime!</label>
                         </div>
+                        <div id="impersonationFields" style="display: none;">
+                            <label><i class="icon-user"></i> Generating token for (impersonation):</label>
+                            <input type="text" name="doas" id="doas" size="50" maxlength="255">
+                            <label style="display: none; color: red;" id="invalidDoasText"><i class="icon-warning"></i>Invalid doAs!</label>
+                        </div>
                     </div>
                     <span id="errorBox" class="help-inline" style="color:red;display:none;"><span class="errorMsg"></span>
                         <i class="icon-warning-sign" style="color:#ae2817;"></i>

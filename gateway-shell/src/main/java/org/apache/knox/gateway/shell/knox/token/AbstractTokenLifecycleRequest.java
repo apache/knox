@@ -16,9 +16,8 @@
  */
 package org.apache.knox.gateway.shell.knox.token;
 
-import org.apache.http.client.methods.HttpPost;
+import org.apache.http.HttpRequest;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.StringEntity;
 import org.apache.knox.gateway.shell.AbstractRequest;
 import org.apache.knox.gateway.shell.ErrorResponse;
 import org.apache.knox.gateway.shell.KnoxSession;
@@ -29,6 +28,9 @@ import java.net.URISyntaxException;
 import java.util.concurrent.Callable;
 
 public abstract class AbstractTokenLifecycleRequest extends AbstractRequest<TokenLifecycleResponse> {
+
+  private final URI requestURI;
+  private final String token;
 
   AbstractTokenLifecycleRequest(final KnoxSession session, final String token) {
     this(session, token, null);
@@ -47,18 +49,10 @@ public abstract class AbstractTokenLifecycleRequest extends AbstractRequest<Toke
 
   protected abstract String getOperation();
 
-  private URI requestURI;
-
-  private HttpPost httpPostRequest;
-
-  private String token;
+  protected abstract HttpRequest getRequest();
 
   public URI getRequestURI() {
     return requestURI;
-  }
-
-  public HttpPost getRequest() {
-    return httpPostRequest;
   }
 
   public String getToken() {
@@ -68,10 +62,8 @@ public abstract class AbstractTokenLifecycleRequest extends AbstractRequest<Toke
   @Override
   protected Callable<TokenLifecycleResponse> callable() {
     return () -> {
-      httpPostRequest = new HttpPost(requestURI);
-      httpPostRequest.setEntity(new StringEntity(token));
       try {
-        return new TokenLifecycleResponse(execute(httpPostRequest));
+        return new TokenLifecycleResponse(execute(getRequest()));
       } catch (ErrorResponse e) {
         return new TokenLifecycleResponse(e.getResponse());
       }

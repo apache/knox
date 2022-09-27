@@ -17,8 +17,6 @@
  */
 package org.apache.knox.gateway.ha.provider.impl;
 
-import java.util.List;
-
 import org.apache.knox.gateway.ha.provider.HaServiceConfig;
 
 public class DefaultHaServiceConfig implements HaServiceConfig, HaServiceConfigConstants {
@@ -43,7 +41,7 @@ public class DefaultHaServiceConfig implements HaServiceConfig, HaServiceConfigC
 
   private String zookeeperNamespace;
 
-  private List<String> disableStickySessionForUserAgents;
+  private String disableStickySessionForUserAgents;
 
   public DefaultHaServiceConfig(String name) {
     this.name = name;
@@ -150,12 +148,12 @@ public class DefaultHaServiceConfig implements HaServiceConfig, HaServiceConfigC
   }
 
   @Override
-  public void setDisableStickySessionForUserAgents(List<String> disableStickySessionForUserAgents) {
+  public void setDisableStickySessionForUserAgents(String disableStickySessionForUserAgents) {
     this.disableStickySessionForUserAgents = disableStickySessionForUserAgents;
   }
 
   @Override
-  public List<String> getStickySessionDisabledUserAgents() {
+  public String getStickySessionDisabledUserAgents() {
     return disableStickySessionForUserAgents;
   }
 }

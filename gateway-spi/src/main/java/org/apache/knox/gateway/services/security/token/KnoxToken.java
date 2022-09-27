@@ -83,6 +83,14 @@ public class KnoxToken implements Comparable<KnoxToken>{
     this.metadata = metadata;
   }
 
+  public String getMetadataValue(String key) {
+    return this.metadata == null ? null : metadata.getMetadata(key);
+  }
+
+  public boolean hasMetadata(String key) {
+    return getMetadataValue(key) != null;
+  }
+
   @Override
   public int compareTo(KnoxToken other) {
     return Long.compare(this.issueTime, other.issueTime);

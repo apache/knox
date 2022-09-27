@@ -66,7 +66,7 @@ public class DefaultHaDispatchTest {
   public void testConnectivityFailover() throws Exception {
     String serviceName = "OOZIE";
     HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, null, null, null, null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, null, null, null, null, null));
     HaProvider provider = new DefaultHaProvider(descriptor);
     URI uri1 = new URI( "http://unreachable-host.invalid" );
     URI uri2 = new URI( "http://reachable-host.invalid" );
@@ -134,7 +134,7 @@ public class DefaultHaDispatchTest {
   public void testNoLoadbalancingStickyFailoverNoFallback() throws Exception {
     String serviceName = "OOZIE";
     HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, null, "true", null, "true"));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, null, "true", null, "true", null));
     HaProvider provider = new DefaultHaProvider(descriptor);
     URI uri1 = new URI( "http://unreachable-host.invalid" );
     URI uri2 = new URI( "http://reachable-host.invalid" );
@@ -200,7 +200,7 @@ public class DefaultHaDispatchTest {
   public void testNoFallbackWhenStickyDisabled() throws Exception {
     String serviceName = "OOZIE";
     HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, null, null, null, "true"));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, null, null, null, "true", null));
     HaProvider provider = new DefaultHaProvider(descriptor);
     URI uri1 = new URI( "http://unreachable-host.invalid" );
     URI uri2 = new URI( "http://reachable-host.invalid" );
@@ -269,7 +269,7 @@ public class DefaultHaDispatchTest {
   public void testLoadbalancingOffStickyOn() throws Exception {
     String serviceName = "OOZIE";
     HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, null, "true", null, null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, null, "true", null, null,null));
     HaProvider provider = new DefaultHaProvider(descriptor);
     URI uri1 = new URI( "http://host1.valid" );
     URI uri2 = new URI( "http://host2.valid" );
@@ -364,7 +364,7 @@ public class DefaultHaDispatchTest {
   public void testLoadbalancingOn() throws Exception {
     String serviceName = "OOZIE";
     HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", null, null, null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", null, null, null,null));
     HaProvider provider = new DefaultHaProvider(descriptor);
     URI uri1 = new URI( "http://host1.valid" );
     URI uri2 = new URI( "http://host2.valid" );
@@ -460,7 +460,7 @@ public class DefaultHaDispatchTest {
   public void testLoadbalancingOnStickyOn() throws Exception {
     String serviceName = "OOZIE";
     HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", "true", null, null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", "true", null, null,null));
     HaProvider provider = new DefaultHaProvider(descriptor);
     URI uri1 = new URI( "http://host1.valid" );
     URI uri2 = new URI( "http://host2.valid" );
@@ -592,7 +592,8 @@ public class DefaultHaDispatchTest {
                                                                         enableLoadBalancing,
                                                                         enableStickySession,
                                                                         null,
-                                                                        noFallback));
+                                                                        noFallback,
+                                                                        null));
     final HaProvider provider = new DefaultHaProvider(descriptor);
     final URI uri1 = new URI( "http://host1.valid" );
     final URI uri2 = new URI( "http://host2.valid" );
@@ -717,7 +718,7 @@ public class DefaultHaDispatchTest {
   public void testStickyOn() throws Exception {
     String serviceName = "OOZIE";
     HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", "true", null, null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", "true", null, null,null));
     HaProvider provider = new DefaultHaProvider(descriptor);
     URI uri1 = new URI( "http://host1.valid" );
     URI uri2 = new URI( "http://host2.valid" );
@@ -816,7 +817,7 @@ public class DefaultHaDispatchTest {
     String userAgent = "ClouderaODBCDriverforApacheHive/2.6.11.1011 Thrift/0.9.0 (C++/THttpClient)[\\r][\\n]";
     String serviceName = "HIVE";
     HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", "true", null, null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", "true", null, null,null));
     HaProvider provider = new DefaultHaProvider(descriptor);
     URI uri1 = new URI( "http://host1.valid" );
     URI uri2 = new URI( "http://host2.valid" );
@@ -970,7 +971,7 @@ public class DefaultHaDispatchTest {
     String userAgent = "JDBCDriverforApacheHive/2.6.11.1011 [\\r][\\n]";
     String serviceName = "HIVE";
     HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", "true", null, null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", "true", null, null,null));
     HaProvider provider = new DefaultHaProvider(descriptor);
     URI uri1 = new URI( "http://host1.valid" );
     URI uri2 = new URI( "http://host2.valid" );
@@ -1162,7 +1163,7 @@ public class DefaultHaDispatchTest {
   public void testConnectivityActive() throws Exception {
     String serviceName = "OOZIE";
     HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, null, "true", null, null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, null, "true", null, null,null));
     HaProvider provider = new DefaultHaProvider(descriptor);
     URI uri1 = new URI( "http://unreachable-host" );
     URI uri2 = new URI( "http://reachable-host" );
@@ -1219,7 +1220,7 @@ public class DefaultHaDispatchTest {
   public void testMarkedFailedWithoutRetry() throws Exception {
     String serviceName = "OOZIE";
     HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "0", "1000", null, null, null, null, null, null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "0", "1000", null, null, null, null, null, null,null));
     HaProvider provider = new DefaultHaProvider(descriptor);
     URI uri1 = new URI( "http://unreachable-host.invalid" );
     URI uri2 = new URI( "http://reachable-host.invalid" );

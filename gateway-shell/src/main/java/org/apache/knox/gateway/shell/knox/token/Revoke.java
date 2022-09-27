@@ -16,6 +16,11 @@
  */
 package org.apache.knox.gateway.shell.knox.token;
 
+import java.nio.charset.StandardCharsets;
+
+import org.apache.http.HttpRequest;
+import org.apache.http.entity.StringEntity;
+import org.apache.knox.gateway.shell.HttpDelete;
 import org.apache.knox.gateway.shell.KnoxSession;
 
 public class Revoke {
@@ -23,18 +28,30 @@ public class Revoke {
   public static class Request extends AbstractTokenLifecycleRequest {
 
     public static final String OPERATION = "revoke";
+    private HttpDelete deleteRequest;
 
     Request(final KnoxSession session, final String token) {
-      super(session, token);
+      this(session, token, null);
     }
 
     Request(final KnoxSession session, final String token, final String doAsUser) {
       super(session, token, doAsUser);
+      initDeleteRequest(token);
+    }
+
+    private void initDeleteRequest(String token) {
+      this.deleteRequest = new HttpDelete(getRequestURI());
+      this.deleteRequest.setEntity(new StringEntity(token, StandardCharsets.UTF_8));
     }
 
     @Override
     protected String getOperation() {
       return OPERATION;
+    }
+
+    @Override
+    protected HttpRequest getRequest() {
+      return this.deleteRequest;
     }
   }
 

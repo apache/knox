@@ -24,10 +24,14 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.bootstrap.HttpServer;
+import org.apache.http.impl.bootstrap.ServerBootstrap;
 import org.junit.Test;
 
 import javax.security.auth.Subject;
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.List;
@@ -172,6 +176,32 @@ public class KnoxSessionTest {
     } finally {
       logger.removeHandler(logCapture);
       logger.setLevel(originalLevel);
+    }
+  }
+
+  @Test
+  public void testRetry() throws Exception {
+    int[] counter = new int[]{ 0 };
+    HttpServer server = ServerBootstrap.bootstrap()
+            .setListenerPort(findFreePort())
+            .registerHandler("/retry", (req, resp, ctx) -> resp.setStatusCode(counter[0]++ < 2 ? 503 : 200))
+            .create();
+    server.start();
+    try {
+      ClientContext context = ClientContext.with("http://localhost:" + server.getLocalPort());
+      context.connection().retryCount(2);
+      KnoxSession session = KnoxSession.login(context);
+      assertEquals(200, session.executeNow(new HttpGet("/retry")).getStatusLine().getStatusCode());
+      session.close();
+      assertEquals(3, counter[0]);
+    } finally {
+      server.stop();
+    }
+  }
+
+  public static int findFreePort() throws IOException {
+    try(ServerSocket socket = new ServerSocket(0)) {
+      return socket.getLocalPort();
     }
   }
 

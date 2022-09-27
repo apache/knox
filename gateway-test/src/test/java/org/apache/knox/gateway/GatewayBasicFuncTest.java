@@ -1000,7 +1000,7 @@ public class GatewayBasicFuncTest {
     createFile( user, pass, group, root+"/input/changes.txt", "666", "text/plain", "changes.txt", 307, 201, 200 );
 
     VelocityEngine velocity = new VelocityEngine();
-    velocity.setProperty( RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, "org.apache.velocity.runtime.log.NullLogSystem" );
+    velocity.setProperty( "runtime.log.logsystem.class", "org.apache.velocity.runtime.log.NullLogSystem" );
     velocity.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
     velocity.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
     velocity.init();
@@ -2410,7 +2410,7 @@ public class GatewayBasicFuncTest {
     String gatewayAddrName = InetAddress.getByName( gatewayHostName ).getHostAddress();
 
     VelocityEngine velocity = new VelocityEngine();
-    velocity.setProperty( RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, "org.apache.velocity.runtime.log.NullLogSystem" );
+    velocity.setProperty( "runtime.log.logsystem.class", "org.apache.velocity.runtime.log.NullLogSystem" );
     velocity.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
     velocity.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
     velocity.init();
@@ -2663,7 +2663,7 @@ public class GatewayBasicFuncTest {
     Map<String, Matcher<?>> matchers = new HashMap<>();
 
     VelocityEngine velocity = new VelocityEngine();
-    velocity.setProperty( RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, "org.apache.velocity.runtime.log.NullLogSystem" );
+    velocity.setProperty( "runtime.log.logsystem.class", "org.apache.velocity.runtime.log.NullLogSystem" );
     velocity.setProperty( RuntimeConstants.RESOURCE_LOADER, "classpath" );
     velocity.setProperty( "classpath.resource.loader.class", ClasspathResourceLoader.class.getName() );
     velocity.init();

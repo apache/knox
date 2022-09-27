@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
@@ -369,16 +370,7 @@ public class DefaultTokenStateServiceTest {
 
   /* create a test JWT token */
   protected JWT getJWTToken(final long expiry) {
-    String[] claims = new String[6];
-    claims[0] = "KNOXSSO";
-    claims[1] = "john.doe@example.com";
-    claims[2] = "https://login.example.com";
-    if(expiry > 0) {
-      claims[3] = Long.toString(expiry);
-    }
-    claims[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
-    claims[5] = null;
-    JWT token = new JWTToken("RS256", claims);
+    JWT token = new JWTToken(new JWTokenAttributesBuilder().setExpires(expiry).setAlgorithm("RS256").build());
     // Sign the token
     JWSSigner signer = new RSASSASigner(privateKey);
     token.sign(signer);

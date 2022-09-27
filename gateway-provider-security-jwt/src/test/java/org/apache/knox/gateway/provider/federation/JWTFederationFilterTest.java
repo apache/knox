@@ -17,13 +17,23 @@
  */
 package org.apache.knox.gateway.provider.federation;
 
-import com.nimbusds.jwt.SignedJWT;
+import static org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter.JWT_DEFAULT_ISSUER;
+import static org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter.DEFAULT_SSO_COOKIE_NAME;
+import static org.junit.Assert.assertEquals;
+
+import java.util.Date;
+import java.util.Properties;
+
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import com.nimbusds.jwt.SignedJWT;
 
 @SuppressWarnings("PMD.TestClassWithoutTestCases")
 public class JWTFederationFilterTest extends AbstractJWTFilterTest {
@@ -72,4 +82,61 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
 
     EasyMock.verify(response);
   }
+
+  @Test
+  public void testCookieAuthSupportValidCookie() throws Exception {
+    testCookieAuthSupport(true);
+  }
+
+  @Test
+  public void testCookieAuthSupportInvalidCookie() throws Exception {
+    testCookieAuthSupport(false);
+  }
+
+  @Test
+  public void testCookieAuthSupportCustomCookieName() throws Exception {
+    testCookieAuthSupport(true, "customCookie");
+  }
+
+  private void testCookieAuthSupport(boolean validCookie) throws Exception {
+    testCookieAuthSupport(validCookie, null);
+  }
+
+  private void testCookieAuthSupport(boolean validCookie, String customCookieName) throws Exception {
+    final Properties properties = getProperties();
+    properties.put(JWTFederationFilter.KNOX_TOKEN_USE_COOKIE, "true");
+    if (customCookieName != null) {
+      properties.put(JWTFederationFilter.KNOX_TOKEN_COOKIE_NAME, customCookieName);
+    }
+    handler.init(new TestFilterConfig(properties));
+
+    final String subject = "bob";
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    final SignedJWT jwt = getJWT(JWT_DEFAULT_ISSUER, subject, new Date(System.currentTimeMillis() + 60000));
+    final Cookie[] cookies = new Cookie[1];
+    final Cookie cookie = EasyMock.createNiceMock(Cookie.class);
+    EasyMock.expect(cookie.getValue()).andReturn(jwt.serialize());
+    final String cookieName = validCookie ? (customCookieName == null ? DEFAULT_SSO_COOKIE_NAME : customCookieName) : "dummyCookie";
+    EasyMock.expect(cookie.getName()).andReturn(cookieName).anyTimes();
+    cookies[0] = cookie;
+    EasyMock.expect(request.getCookies()).andReturn(cookies).anyTimes();
+
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    if (!validCookie) {
+      response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+      EasyMock.expectLastCall().once();
+    }
+    EasyMock.replay(request, response, cookie);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+
+    if (validCookie) {
+      assertEquals(1, chain.getSubject().getPrincipals().size());
+      assertEquals(subject, chain.getSubject().getPrincipals().iterator().next().getName());
+    } else {
+      EasyMock.verify(response);
+    }
+  }
+
 }

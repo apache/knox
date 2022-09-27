@@ -17,10 +17,16 @@
  */
 package org.apache.knox.gateway.shell.knox.token;
 
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.knox.gateway.shell.KnoxSession;
 
-public class Token {
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
+public class Token {
+  private static final String KNOX_TOKEN_INCLUDE_GROUPS = "knox.token.include.groups";
   static String SERVICE_PATH = "/knoxtoken/api/v1/token";
 
   public static Get.Request get(final KnoxSession session) {
@@ -28,7 +34,15 @@ public class Token {
   }
 
   public static Get.Request get(final KnoxSession session, final String doAsUser) {
-    return new Get.Request(session, doAsUser);
+    return new Get.Request(session, doAsUser, Collections.emptyList());
+  }
+
+  public static Get.Request get(final KnoxSession session, final String doAsUser, boolean includeGroupsInToken) {
+    List<NameValuePair> queryParamss = new ArrayList<>();
+    if (includeGroupsInToken) {
+      queryParamss.add(new BasicNameValuePair(KNOX_TOKEN_INCLUDE_GROUPS, "true"));
+    }
+    return new Get.Request(session, doAsUser, queryParamss);
   }
 
   public static Renew.Request renew(final KnoxSession session, final String token) {

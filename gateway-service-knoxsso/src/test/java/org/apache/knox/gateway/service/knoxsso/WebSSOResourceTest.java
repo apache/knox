@@ -17,41 +17,14 @@
  */
 package org.apache.knox.gateway.service.knoxsso;
 
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.KeyLengthException;
-import com.nimbusds.jose.crypto.MACSigner;
-import com.nimbusds.jose.crypto.MACVerifier;
-import com.nimbusds.jose.crypto.RSASSASigner;
-import com.nimbusds.jose.crypto.RSASSAVerifier;
-import org.apache.http.HttpStatus;
-import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditor;
-import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.services.GatewayServices;
-import org.apache.knox.gateway.services.ServiceType;
-import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
-import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
-import org.apache.knox.gateway.services.security.token.TokenServiceException;
-import org.apache.knox.gateway.services.security.token.TokenUtils;
-import org.apache.knox.gateway.services.security.token.impl.JWT;
-import org.apache.knox.gateway.services.security.token.impl.JWTToken;
-import org.apache.knox.gateway.util.RegExUtils;
-import org.easymock.EasyMock;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import static org.apache.knox.gateway.services.GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.anyString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
 import java.lang.reflect.Field;
 import java.net.HttpCookie;
 import java.net.URLEncoder;
@@ -69,11 +42,43 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.apache.knox.gateway.services.GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
+
+import org.apache.http.HttpStatus;
+import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditor;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
+import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.TokenServiceException;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.session.control.ConcurrentSessionVerifier;
+import org.apache.knox.gateway.util.RegExUtils;
+import org.easymock.EasyMock;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.KeyLengthException;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.crypto.MACVerifier;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
 
 /**
  * Some tests for the Knox SSO service.
@@ -86,6 +91,7 @@ public class WebSSOResourceTest {
   private ServletContext context;
   private HttpServletRequest request;
   private JWTokenAuthority authority;
+  private ConcurrentSessionVerifier verifier;
   CookieResponseWrapper responseWrapper;
 
   @BeforeClass
@@ -142,14 +148,14 @@ public class WebSSOResourceTest {
   }
 
   private void configureCommonExpectations(Map<String, String> contextExpectations) throws Exception {
-    configureCommonExpectations(contextExpectations, false, false);
+    configureCommonExpectations(contextExpectations, false, false, true);
   }
 
   private void configureCommonExpectations(Map<String, String> contextExpectations, boolean sslEnabled) throws Exception {
-    configureCommonExpectations(contextExpectations, false, sslEnabled);
+    configureCommonExpectations(contextExpectations, false, sslEnabled, true);
   }
 
-  private void configureCommonExpectations(Map<String, String> contextExpectations, boolean useHmac, boolean sslEnabled) throws Exception {
+  private void configureCommonExpectations(Map<String, String> contextExpectations, boolean useHmac, boolean sslEnabled, boolean concurrentSessionVerifyResult) throws Exception {
     context = EasyMock.createNiceMock(ServletContext.class);
     contextExpectations.forEach((key, value) -> EasyMock.expect(context.getInitParameter(key)).andReturn(value).anyTimes());
 
@@ -178,7 +184,12 @@ public class WebSSOResourceTest {
     ServletOutputStream outputStream = EasyMock.createNiceMock(ServletOutputStream.class);
     responseWrapper = new CookieResponseWrapper(response, outputStream);
 
-    EasyMock.replay(principal, services, context, request);
+    verifier = EasyMock.createNiceMock(ConcurrentSessionVerifier.class);
+    EasyMock.expect(verifier.verifySessionForUser(anyString())).andReturn(concurrentSessionVerifyResult).anyTimes();
+    EasyMock.expect(verifier.registerToken(anyString(), anyObject())).andReturn(concurrentSessionVerifyResult).anyTimes();
+    EasyMock.expect(services.getService(ServiceType.CONCURRENT_SESSION_VERIFIER)).andReturn(verifier).anyTimes();
+
+    EasyMock.replay(principal, services, context, request, verifier);
   }
 
   @Test
@@ -271,7 +282,7 @@ public class WebSSOResourceTest {
 
   private void testSignatureAlgorithm(boolean useHMAC) throws Exception {
     final String algorithm = useHMAC ? "HS256" : "RS512";
-    configureCommonExpectations(Collections.singletonMap("knoxsso.token.sigalg", algorithm), useHMAC, false);
+    configureCommonExpectations(Collections.singletonMap("knoxsso.token.sigalg", algorithm), useHMAC, false, true);
 
     WebSSOResource webSSOResponse = new WebSSOResource();
     webSSOResponse.request = request;
@@ -544,6 +555,11 @@ public class WebSSOResourceTest {
     EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TokenUtils.SIGNING_HMAC_SECRET_ALIAS)).andReturn(null).anyTimes();
 
+    ConcurrentSessionVerifier concurrentSessionVerifier = EasyMock.createNiceMock(ConcurrentSessionVerifier.class);
+    EasyMock.expect(concurrentSessionVerifier.verifySessionForUser(anyString())).andReturn(true).anyTimes();
+    EasyMock.expect(concurrentSessionVerifier.registerToken(anyString(), anyObject())).andReturn(true).anyTimes();
+    EasyMock.expect(services.getService(ServiceType.CONCURRENT_SESSION_VERIFIER)).andReturn(concurrentSessionVerifier).anyTimes();
+
     JWTokenAuthority authority = new TestJWTokenAuthority(gatewayPublicKey, gatewayPrivateKey);
     EasyMock.expect(services.getService(ServiceType.TOKEN_SERVICE)).andReturn(authority).anyTimes();
 
@@ -551,7 +567,7 @@ public class WebSSOResourceTest {
     ServletOutputStream outputStream = EasyMock.createNiceMock(ServletOutputStream.class);
     CookieResponseWrapper responseWrapper = new CookieResponseWrapper(response, outputStream);
 
-    EasyMock.replay(principal, services, context, contextNoParam, request, aliasService);
+    EasyMock.replay(principal, services, context, contextNoParam, request, aliasService, concurrentSessionVerifier);
 
     /* declare knoxtoken as part of knoxsso param so it is stripped from the final url */
     WebSSOResource webSSOResponse = new WebSSOResource();
@@ -658,11 +674,16 @@ public class WebSSOResourceTest {
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TokenUtils.SIGNING_HMAC_SECRET_ALIAS)).andReturn(null).anyTimes();
     EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
 
+    ConcurrentSessionVerifier concurrentSessionVerifier = EasyMock.createNiceMock(ConcurrentSessionVerifier.class);
+    EasyMock.expect(concurrentSessionVerifier.verifySessionForUser(anyString())).andReturn(true).anyTimes();
+    EasyMock.expect(concurrentSessionVerifier.registerToken(anyString(), anyObject())).andReturn(true).anyTimes();
+    EasyMock.expect(services.getService(ServiceType.CONCURRENT_SESSION_VERIFIER)).andReturn(concurrentSessionVerifier).anyTimes();
+
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     ServletOutputStream outputStream = EasyMock.createNiceMock(ServletOutputStream.class);
     CookieResponseWrapper responseWrapper = new CookieResponseWrapper(response, outputStream);
 
-    EasyMock.replay(principal, services, context, request, aliasService);
+    EasyMock.replay(principal, services, context, request, aliasService, concurrentSessionVerifier);
 
     WebSSOResource webSSOResponse = new WebSSOResource();
     webSSOResponse.request = request;
@@ -681,6 +702,19 @@ public class WebSSOResourceTest {
     assertEquals("alice", parsedToken.getSubject());
     assertFalse(authority.verifyToken(parsedToken, gatewayPublicKey));
     assertTrue(authority.verifyToken(parsedToken, customPublicKey));
+  }
+
+  @Test
+  public void testConcurrentSessionLimitHit() throws Exception {
+    configureCommonExpectations(Collections.emptyMap(), false, false, false);
+
+    WebSSOResource webSSOResponse = new WebSSOResource();
+    webSSOResponse.request = request;
+    webSSOResponse.response = responseWrapper;
+    webSSOResponse.context = context;
+    webSSOResponse.init();
+
+    Assert.assertThrows(WebApplicationException.class, webSSOResponse::doPost);
   }
 
   /**
@@ -770,19 +804,7 @@ public class WebSSOResourceTest {
     @Override
     public JWT issueToken(JWTokenAttributes jwtAttributes)
         throws TokenServiceException {
-      String[] claimArray = new String[6];
-      claimArray[0] = "KNOXSSO";
-      claimArray[1] = jwtAttributes.getPrincipal().getName();
-      claimArray[2] = null;
-      if (jwtAttributes.getExpires() == -1) {
-        claimArray[3] = null;
-      } else {
-        claimArray[3] = String.valueOf(jwtAttributes.getExpires());
-      }
-      claimArray[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
-      claimArray[5] = null;
-
-      JWT token = new JWTToken(jwtAttributes.getAlgorithm(), claimArray, jwtAttributes.getAudiences());
+      JWT token = new JWTToken(jwtAttributes);
       try {
         JWSSigner signer = useHMAC ? new MACSigner(HMAC_SECRET)
             : new RSASSASigner(getPrivateKey(jwtAttributes.getSigningKeystoreName(), jwtAttributes.getSigningKeystoreAlias(), jwtAttributes.getSigningKeystorePassphrase()));

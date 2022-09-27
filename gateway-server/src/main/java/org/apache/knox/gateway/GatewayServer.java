@@ -65,6 +65,7 @@ import org.eclipse.jetty.server.NetworkConnector;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.RequestLogHandler;
@@ -398,50 +399,53 @@ public class GatewayServer {
    *                     use the port provided in GatewayConfig.
    * @param topologyName Connector name, only used when not null
    */
-  private Connector createConnector(final Server server,
+  private List<Connector> createConnector(final Server server,
       final GatewayConfig config, final int port, final String topologyName)
       throws IOException, CertificateException, NoSuchAlgorithmException,
       KeyStoreException, AliasServiceException {
 
-    ServerConnector connector;
+    List<Connector> connectors = new ArrayList<>();
 
     // Determine the socket address and check availability.
-    InetSocketAddress address = config.getGatewayAddress();
-    checkAddressAvailability( address );
+    List<InetSocketAddress> addressList = config.getGatewayAddress();
+    for (InetSocketAddress address : addressList) {
+      ServerConnector connector;
+      checkAddressAvailability( address );
 
-    final int connectorPort = port > 0 ? port : address.getPort();
+      final int connectorPort = port > 0 ? port : address.getPort();
 
-    checkPortConflict(connectorPort, topologyName, config);
+      checkPortConflict(connectorPort, topologyName, config);
 
-    HttpConfiguration httpConfig = new HttpConfiguration();
-    httpConfig.setRequestHeaderSize( config.getHttpServerRequestHeaderBuffer() );
-    httpConfig.setResponseHeaderSize( config.getHttpServerResponseHeaderBuffer() );
-    httpConfig.setOutputBufferSize( config.getHttpServerResponseBuffer() );
+      HttpConfiguration httpConfig = new HttpConfiguration();
+      httpConfig.setRequestHeaderSize( config.getHttpServerRequestHeaderBuffer() );
+      httpConfig.setResponseHeaderSize( config.getHttpServerResponseHeaderBuffer() );
+      httpConfig.setOutputBufferSize( config.getHttpServerResponseBuffer() );
 
-    if (config.isSSLEnabled()) {
-      HttpConfiguration httpsConfig = new HttpConfiguration( httpConfig );
-      httpsConfig.setSecureScheme( "https" );
-      httpsConfig.setSecurePort( connectorPort );
-      httpsConfig.addCustomizer( new SecureRequestCustomizer() );
-      SSLService ssl = services.getService(ServiceType.SSL_SERVICE);
-      SslContextFactory sslContextFactory = (SslContextFactory)ssl.buildSslContextFactory( config );
-      connector = new ServerConnector( server, sslContextFactory, new HttpConnectionFactory( httpsConfig ) );
-    } else {
-      connector = new ServerConnector( server );
+      if (config.isSSLEnabled()) {
+        HttpConfiguration httpsConfig = new HttpConfiguration( httpConfig );
+        httpsConfig.setSecureScheme( "https" );
+        httpsConfig.setSecurePort( connectorPort );
+        httpsConfig.addCustomizer( new SecureRequestCustomizer() );
+        SSLService ssl = services.getService(ServiceType.SSL_SERVICE);
+        SslContextFactory sslContextFactory = (SslContextFactory)ssl.buildSslContextFactory( config );
+        connector = new ServerConnector( server, sslContextFactory, new HttpConnectionFactory( httpsConfig ) );
+      } else {
+        connector = new ServerConnector( server );
+      }
+      connector.setHost( address.getHostName() );
+      connector.setPort( connectorPort );
+
+      if(!StringUtils.isBlank(topologyName)) {
+        connector.setName(topologyName);
+      }
+
+      long idleTimeout = config.getGatewayIdleTimeout();
+      if (idleTimeout > 0L) {
+        connector.setIdleTimeout(idleTimeout);
+      }
+      connectors.add(connector);
     }
-    connector.setHost( address.getHostName() );
-    connector.setPort( connectorPort );
-
-    if(!StringUtils.isBlank(topologyName)) {
-      connector.setName(topologyName);
-    }
-
-    long idleTimeout = config.getGatewayIdleTimeout();
-    if (idleTimeout > 0L) {
-      connector.setIdleTimeout(idleTimeout);
-    }
-
-    return connector;
+    return connectors;
   }
 
   private static HandlerCollection createHandlers(
@@ -598,8 +602,16 @@ public class GatewayServer {
     // Start Jetty.
     jetty = new Server( new QueuedThreadPool( config.getThreadPoolMax() ) );
 
+    jetty.setAttribute(ContextHandler.MAX_FORM_CONTENT_SIZE_KEY, config.getJettyMaxFormContentSize());
+    log.setMaxFormContentSize(config.getJettyMaxFormContentSize());
+    jetty.setAttribute(ContextHandler.MAX_FORM_KEYS_KEY, config.getJettyMaxFormKeys());
+    log.setMaxFormKeys(config.getJettyMaxFormKeys());
+
     /* topologyName is null because all topology listen on this port */
-    jetty.addConnector( createConnector( jetty, config, config.getGatewayPort(), null) );
+    List<Connector> connectors = createConnector( jetty, config, config.getGatewayPort(), null);
+    for (Connector connector : connectors) {
+      jetty.addConnector(connector);
+    }
 
 
     // Add Annotations processing into the Jetty server to support JSPs
@@ -653,8 +665,10 @@ public class GatewayServer {
         if(deployedTopologyList.contains(entry.getKey()) && (entry.getValue() != config.getGatewayPort()) ) {
           log.createJettyConnector(entry.getKey().toLowerCase(Locale.ROOT), entry.getValue());
           try {
-            jetty.addConnector(createConnector(jetty, config, entry.getValue(),
-                entry.getKey().toLowerCase(Locale.ROOT)));
+            connectors = createConnector(jetty, config, entry.getValue(), entry.getKey().toLowerCase(Locale.ROOT));
+            for (Connector connector : connectors) {
+              jetty.addConnector(connector);
+            }
           } catch(final IOException e) {
             /* in case of port conflict we log error and move on */
             if( e.toString().contains("ports for topologies (if defined) have to be unique.") ) {
@@ -800,6 +814,10 @@ public class GatewayServer {
     context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false");
     ClassLoader jspClassLoader = new URLClassLoader(new URL[0], this.getClass().getClassLoader());
     context.setClassLoader(jspClassLoader);
+    context.setMaxFormContentSize(config.getJettyMaxFormContentSize());
+    log.setMaxFormContentSize(config.getJettyMaxFormContentSize());
+    context.setMaxFormKeys(config.getJettyMaxFormKeys());
+    log.setMaxFormKeys(config.getJettyMaxFormKeys());
     return context;
   }
 

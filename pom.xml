@@ -70,6 +70,7 @@
         <module>gateway-i18n-logging-log4j</module>
         <module>gateway-i18n-logging-sl4j</module>
         <module>gateway-spi</module>
+        <module>gateway-spi-common</module>
         <module>gateway-discovery-ambari</module>
         <module>gateway-discovery-cm</module>
         <module>gateway-performance-test</module>
@@ -99,10 +100,12 @@
         <module>gateway-provider-identity-assertion-regex</module>
         <module>gateway-provider-identity-assertion-switchcase</module>
         <module>gateway-provider-identity-assertion-pseudo</module>
+        <module>gateway-provider-identity-assertion-no-doas</module>
         <module>gateway-provider-jersey</module>
         <module>gateway-provider-ha</module>
         <module>gateway-service-admin</module>
         <module>gateway-service-as</module>
+        <module>gateway-service-auth</module>
         <module>gateway-service-hbase</module>
         <module>gateway-service-hive</module>
         <module>gateway-service-impala</module>
@@ -173,7 +176,7 @@
         <commons-cli.version>1.4</commons-cli.version>
         <commons-codec.version>1.15</commons-codec.version>
         <commons-collections.version>3.2.2</commons-collections.version>
-        <commons-compress.version>1.20</commons-compress.version>
+        <commons-compress.version>1.21</commons-compress.version>
         <commons-configuration.version>1.10</commons-configuration.version>
         <commons-digester3.version>3.2</commons-digester3.version>
         <commons-io.version>2.8.0</commons-io.version>
@@ -188,6 +191,7 @@
         <curator.version>4.3.0</curator.version>
         <dependency-check-maven.version>6.0.3</dependency-check-maven.version>
         <derby.db.version>10.14.2.0</derby.db.version> <!-- 10.15.1.3 requires Java 9 -->
+        <hsql.db.version>2.4.0</hsql.db.version>
         <dockerfile-maven-plugin.version>1.4.13</dockerfile-maven-plugin.version>
         <dom4j.version>2.1.3</dom4j.version>
         <easymock.version>4.2</easymock.version>
@@ -199,10 +203,10 @@
         <forbiddenapis.version>3.1</forbiddenapis.version>
         <frontend-maven-plugin.version>1.11.0</frontend-maven-plugin.version>
         <glassfish-jaxb.version>2.3.3</glassfish-jaxb.version>
-        <gson.version>2.8.6</gson.version>
+        <gson.version>2.8.9</gson.version>
         <groovy.version>3.0.7</groovy.version>
         <guava.version>28.2-jre</guava.version>
-        <hadoop.version>3.2.2</hadoop.version>
+        <hadoop.version>3.2.3</hadoop.version>
         <hamcrest.version>2.2</hamcrest.version>
         <hamcrest-json.version>0.2</hamcrest-json.version>
         <httpclient.version>4.5.13</httpclient.version>
@@ -220,18 +224,18 @@
         <jaxws-ri.version>2.3.3</jaxws-ri.version>
         <jakarta.xml.bind.version>2.3.2</jakarta.xml.bind.version>
         <jakarta.activation.version>1.2.2</jakarta.activation.version>
-        <java-support.version>7.5.2</java-support.version>
+        <java-support.version>7.5.1</java-support.version>
         <javassist.version>3.27.0-GA</javassist.version>
         <jboss-logging.version>3.4.1.Final</jboss-logging.version>
         <jee-pac4j.version>5.0.0</jee-pac4j.version>
         <jericho-html.version>3.4</jericho-html.version>
         <jersey.version>2.6</jersey.version>
-        <jetty.version>9.4.34.v20201102</jetty.version>
+        <jetty.version>9.4.45.v20220203</jetty.version>
         <jline.version>2.14.6</jline.version>
         <jna.version>5.6.0</jna.version>
         <joda-time.version>2.10.8</joda-time.version>
         <json-path.version>2.5.0</json-path.version>
-        <json-smart.version>2.4.7</json-smart.version>
+        <json-smart.version>2.4.8</json-smart.version>
         <junit.version>4.13.2</junit.version>
         <lang-tag.version>1.5</lang-tag.version>
         <libpam4j.version>1.11</libpam4j.version>
@@ -242,39 +246,39 @@
         <maven-enforcer-plugin.version>3.0.0-M3</maven-enforcer-plugin.version>
         <maven-pmd-plugin.version>3.12.0</maven-pmd-plugin.version>
         <metrics.version>4.1.16</metrics.version>
-        <mina.version>2.0.21</mina.version>
-        <netty.version>4.1.70.Final</netty.version>
+        <mina.version>2.0.22</mina.version>
+        <netty.version>4.1.77.Final</netty.version>
         <nimbus-jose-jwt.version>8.14.1</nimbus-jose-jwt.version>
         <nodejs.version>v12.20.2</nodejs.version>
         <okhttp.version>2.7.5</okhttp.version>
         <opensaml.version>3.4.5</opensaml.version>
-        <pac4j.version>4.3.0</pac4j.version>
-        <postgresql.version>42.2.19</postgresql.version>
+        <pac4j.version>4.5.6</pac4j.version>
+        <postgresql.version>42.3.3</postgresql.version>
+        <mysql.version>8.0.28</mysql.version>
+        <protobuf.version>3.16.1</protobuf.version>
         <powermock.version>2.0.9</powermock.version>
         <purejavacomm.version>0.0.11.1</purejavacomm.version>
-        <pty4j.version>0.11.4</pty4j.version> <!--pty4j 0.12.* does not work with java 8  -->
-        <log4j.version>1.2.17</log4j.version>
-        <mysql.version>8.0.25</mysql.version>
-        <protobuf.version>3.14.0</protobuf.version>
+        <pty4j.version>0.11.4</pty4j.version>
         <rest-assured.version>4.3.3</rest-assured.version>
-        <shiro.version>1.7.0</shiro.version>
+        <shiro.version>1.8.0</shiro.version>
         <shrinkwrap.version>1.2.6</shrinkwrap.version>
         <shrinkwrap.descriptors.version>2.0.0</shrinkwrap.descriptors.version>
         <slf4j.version>1.7.30</slf4j.version>
         <spotbugs.version>4.2.0</spotbugs.version>
         <spotbugs-maven-plugin.version>4.1.4</spotbugs-maven-plugin.version>
-        <spring.version>5.3.2</spring.version>
-        <spring-vault.version>2.3.0</spring-vault.version>
+        <spring.version>5.3.21</spring.version>
+        <spring-vault.version>2.3.2</spring-vault.version>
         <stax-ex.version>1.8.3</stax-ex.version>
         <stax2-api.version>4.2.1</stax2-api.version>
+        <system-stubs-junit4.version>1.1.0</system-stubs-junit4.version>
         <swagger-annotations.version>1.6.2</swagger-annotations.version>
         <swagger-maven-plugin.version>3.1.7</swagger-maven-plugin.version>
         <taglibs-standard.version>1.2.5</taglibs-standard.version>
         <testcontainers.version>1.15.1</testcontainers.version>
         <txw2.version>2.4.0-b180830.0438</txw2.version>
-        <velocity.version>1.7</velocity.version>
+        <velocity.version>2.3</velocity.version>
         <woodstox-core.version>6.1.1</woodstox-core.version>
-        <xmlsec.version>2.1.5</xmlsec.version>
+        <xmlsec.version>2.1.8</xmlsec.version>
         <xmltool.version>3.3</xmltool.version>
         <xml-jaxb.version>2.3.0</xml-jaxb.version>
         <xml-matchers.version>0.10</xml-matchers.version>
@@ -449,6 +453,7 @@
                         <exclude>**/.project/**</exclude>
                         <exclude>**/.settings/**</exclude>
                         <exclude>**/.classpath/**</exclude>
+                        <exclude>**/.checkstyle/**</exclude>
                         <exclude>src/stage.txt</exclude>
                         <exclude>src/vote.txt</exclude>
                         <exclude>**/*.iml</exclude>
@@ -910,6 +915,11 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-spi-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-security-jwt</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -986,6 +996,11 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-identity-assertion-switchcase</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-provider-identity-assertion-no-doas</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1081,6 +1096,11 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-as</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-service-auth</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -2271,6 +2291,26 @@
                 <artifactId>opensaml-security-api</artifactId>
                 <version>${opensaml.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.opensaml</groupId>
+                <artifactId>opensaml-security-impl</artifactId>
+                <version>${opensaml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.opensaml</groupId>
+                <artifactId>opensaml-messaging-api</artifactId>
+                <version>${opensaml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.opensaml</groupId>
+                <artifactId>opensaml-storage-api</artifactId>
+                <version>${opensaml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.opensaml</groupId>
+                <artifactId>opensaml-profile-api</artifactId>
+                <version>${opensaml.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.opensaml</groupId>
@@ -2537,6 +2577,17 @@
                 <groupId>org.testcontainers</groupId>
                 <artifactId>vault</artifactId>
                 <version>${testcontainers.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.hsqldb</groupId>
+                <artifactId>hsqldb</artifactId>
+                <version>${hsql.db.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>uk.org.webcompere</groupId>
+                <artifactId>system-stubs-junit4</artifactId>
+                <version>${system-stubs-junit4.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>

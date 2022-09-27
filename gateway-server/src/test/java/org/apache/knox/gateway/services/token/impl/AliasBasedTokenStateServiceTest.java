@@ -162,10 +162,10 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     tss.setAliasService(aliasService);
     initTokenStateService(tss);
 
-    Map<String, Long> tokenExpirations = getTokenExpirationsField(tss, false);
-    Map<String, Long> maxTokenLifetimes = getMaxTokenLifetimesField(tss, false);
-    Map<String, Map<String, TokenMetadata>> metadata = getMetadataMapField(tss, false);
-    Map<String, Long> tokenIssueTimes = getTokenIssueTimesField(tss, false);
+    Map<String, Long> tokenExpirations = getTokenExpirationsField(tss, 2);
+    Map<String, Long> maxTokenLifetimes = getMaxTokenLifetimesField(tss, 2);
+    Map<String, Map<String, TokenMetadata>> metadata = getMetadataMapField(tss, 2);
+    Map<String, Long> tokenIssueTimes = getTokenIssueTimesField(tss, 2);
 
     final long evictionInterval = TimeUnit.SECONDS.toMillis(3);
     final long maxTokenLifetime = evictionInterval * 3;
@@ -537,7 +537,7 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
 
     Map<String, Long> tokenExpirations = getTokenExpirationsField(tss);
     Map<String, Long> maxTokenLifetimes = getMaxTokenLifetimesField(tss);
-    Map<String, Long> tokenIssueTimes = getTokenIssueTimesField(tss, true);
+    Map<String, Long> tokenIssueTimes = getTokenIssueTimesField(tss, 3);
 
     Set<AliasBasedTokenStateService.TokenState> unpersistedState = getUnpersistedStateField(tss);
 
@@ -623,7 +623,7 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
 
     Map<String, Long> tokenExpirations = getTokenExpirationsField(tss);
     Map<String, Long> maxTokenLifetimes = getMaxTokenLifetimesField(tss);
-    Map<String, Long> tokenIssueTimes = getTokenIssueTimesField(tss, true);
+    Map<String, Long> tokenIssueTimes = getTokenIssueTimesField(tss, 3);
 
     Set<AliasBasedTokenStateService.TokenState> unpersistedState = getUnpersistedStateField(tss);
 
@@ -663,7 +663,7 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
       tss.renewToken(token);
     }
 
-    final List<AliasBasedTokenStateService.TokenState> unpersistedTokenStates = new ArrayList<>(getUnpersistedStateField(tss, false));
+    final List<AliasBasedTokenStateService.TokenState> unpersistedTokenStates = new ArrayList<>(getUnpersistedStateField(tss, 0));
     final int expectedAliasCount = 3 * tokenCount; //expiration + max + issue time for each token
     assertEquals(expectedAliasCount, unpersistedTokenStates.size());
     for (JWTToken token : testTokens) {
@@ -838,48 +838,49 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
   }
 
   private static Map<String, Long> getTokenExpirationsField(TokenStateService tss) throws Exception {
-    return getTokenExpirationsField(tss, true);
+    return getTokenExpirationsField(tss, 3);
   }
-  private static Map<String, Long> getTokenExpirationsField(TokenStateService tss, boolean fromGrandParent) throws Exception {
-    final Class<TokenStateService> clazz = (Class<TokenStateService>) (fromGrandParent ? tss.getClass().getSuperclass().getSuperclass() : tss.getClass().getSuperclass());
-    final Field tokenExpirationsField = clazz.getDeclaredField("tokenExpirations");
-    tokenExpirationsField.setAccessible(true);
-    return (Map<String, Long>) tokenExpirationsField.get(tss);
+
+  private static Map<String, Long> getTokenExpirationsField(TokenStateService tss, int level) throws Exception {
+    return (Map<String, Long>) getField(tss, level, "tokenExpirations");
+  }
+
+  private static Object getField(TokenStateService tss, int level, String fieldName) throws Exception {
+    final Field field = getParentClass(tss, level).getDeclaredField(fieldName);
+    field.setAccessible(true);
+    return field.get(tss);
+  }
+
+  private static Class<TokenStateService> getParentClass(TokenStateService tss, int level) {
+    Class<TokenStateService> clazz = (Class<TokenStateService>) tss.getClass();
+    for (int i = 1; i <= level; i++) {
+      clazz = (Class<TokenStateService>) clazz.getSuperclass();
+    }
+    return clazz;
   }
 
   private static Map<String, Long> getMaxTokenLifetimesField(TokenStateService tss) throws Exception {
-    return getMaxTokenLifetimesField(tss, true);
+    return getMaxTokenLifetimesField(tss, 3);
   }
 
-  private static Map<String, Long> getMaxTokenLifetimesField(TokenStateService tss, boolean fromGrandParent) throws Exception {
-    final Class<TokenStateService> clazz = (Class<TokenStateService>) (fromGrandParent ? tss.getClass().getSuperclass().getSuperclass() : tss.getClass().getSuperclass());
-    Field maxTokenLifetimesField = clazz.getDeclaredField("maxTokenLifetimes");
-    maxTokenLifetimesField.setAccessible(true);
-    return (Map<String, Long>) maxTokenLifetimesField.get(tss);
+  private static Map<String, Long> getMaxTokenLifetimesField(TokenStateService tss, int level) throws Exception {
+    return (Map<String, Long>) getField(tss, level, "maxTokenLifetimes");
   }
 
-  private static Map<String, Long> getTokenIssueTimesField(TokenStateService tss, boolean fromGrandParent) throws Exception {
-    final Class<TokenStateService> clazz = (Class<TokenStateService>) (fromGrandParent ? tss.getClass().getSuperclass().getSuperclass() : tss.getClass().getSuperclass());
-    Field tokenIssueTimesField = clazz.getDeclaredField("tokenIssueTimes");
-    tokenIssueTimesField.setAccessible(true);
-    return (Map<String, Long>) tokenIssueTimesField.get(tss);
+  private static Map<String, Long> getTokenIssueTimesField(TokenStateService tss, int level) throws Exception {
+    return (Map<String, Long>) getField(tss, level, "tokenIssueTimes");
   }
 
-  private static Map<String, Map<String, TokenMetadata>> getMetadataMapField(TokenStateService tss, boolean fromGrandParent) throws Exception {
-    final Class<TokenStateService> clazz = (Class<TokenStateService>) (fromGrandParent ? tss.getClass().getSuperclass().getSuperclass() : tss.getClass().getSuperclass());
-    Field metadataMapField = clazz.getDeclaredField("metadataMap");
-    metadataMapField.setAccessible(true);
-    return (Map<String, Map<String, TokenMetadata>>) metadataMapField.get(tss);
+  private static Map<String, Map<String, TokenMetadata>> getMetadataMapField(TokenStateService tss, int level) throws Exception {
+    return (Map<String, Map<String, TokenMetadata>>) getField(tss, level, "metadataMap");
   }
 
   private static Set<AliasBasedTokenStateService.TokenState> getUnpersistedStateField(TokenStateService tss) throws Exception {
-    return getUnpersistedStateField(tss, true);
+    return getUnpersistedStateField(tss, 1);
   }
 
-  private static Set<AliasBasedTokenStateService.TokenState> getUnpersistedStateField(TokenStateService tss, boolean fromParent) throws Exception {
-    Field unpersistedStateField = fromParent ? tss.getClass().getSuperclass().getDeclaredField("unpersistedState") : tss.getClass().getDeclaredField("unpersistedState");
-    unpersistedStateField.setAccessible(true);
-    return (Set<AliasBasedTokenStateService.TokenState>) unpersistedStateField.get(tss);
+  private static Set<AliasBasedTokenStateService.TokenState> getUnpersistedStateField(TokenStateService tss, int level) throws Exception {
+    return (Set<AliasBasedTokenStateService.TokenState>) getField(tss, level, "unpersistedState");
   }
 
   private static class TestJournalEntry implements JournalEntry {
