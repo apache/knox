@@ -43,6 +43,8 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.easymock.EasyMock.anyInt;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.anyString;
 import static org.easymock.EasyMock.isA;
 
 @RunWith(PowerMockRunner.class)
@@ -117,6 +119,8 @@ public class ConnectionInfoTest extends EasyMockSupport {
         EasyMock.expect(ptyProcessBuilder.setWindowsAnsiColorEnabled(true)).andReturn(ptyProcessBuilder);
         EasyMock.expect(ptyProcessBuilder.setInitialColumns(anyInt())).andReturn(ptyProcessBuilder);
         EasyMock.expect(ptyProcessBuilder.setInitialRows(anyInt())).andReturn(ptyProcessBuilder);
+        EasyMock.expect(ptyProcessBuilder.setDirectory(anyString())).andReturn(ptyProcessBuilder);
+        EasyMock.expect(ptyProcessBuilder.setEnvironment(anyObject())).andReturn(ptyProcessBuilder);
         EasyMock.expect(ptyProcessBuilder.start()).andReturn(ptyProcess);
         PowerMock.expectNew(PtyProcessBuilder.class).andReturn(ptyProcessBuilder);
         PowerMock.replay(ptyProcessBuilder,PtyProcessBuilder.class);

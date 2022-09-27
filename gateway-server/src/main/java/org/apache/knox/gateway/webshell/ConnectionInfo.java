@@ -37,6 +37,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
@@ -59,6 +61,8 @@ public class ConnectionInfo {
     private final Thread shutdownHook;
     private final AtomicInteger concurrentWebshells;
     private long pid;
+    /* set up webshell environment variables */
+    private final Map<String, String> env = new HashMap();
 
     @SuppressWarnings("PMD.DoNotUseThreads") //we need to define a Thread to clean up resources using shutdown hook
     public ConnectionInfo(String username, String gatewayPIDDir, AtomicInteger concurrentWebshells) {
@@ -67,6 +71,7 @@ public class ConnectionInfo {
         this.concurrentWebshells = concurrentWebshells;
         shutdownHook = new Thread(this::disconnect);
         Runtime.getRuntime().addShutdownHook(shutdownHook);
+        env.put("TERM", "xterm");
     }
 
     private void saveProcessPID(long pid){
@@ -94,6 +99,7 @@ public class ConnectionInfo {
                     // see discussion regarding tty size in design doc
                     .setInitialColumns(100)
                     .setInitialRows(40)
+                    //.setEnvironment(env)
                     .start();
         } catch (IOException e) {
             LOG.onError("Error starting ptyProcess: " + e.getMessage());

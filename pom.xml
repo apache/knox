@@ -2182,11 +2182,6 @@
                 <version>${pty4j.version}</version>
             </dependency>
             <dependency>
-                <groupId>log4j</groupId>
-                <artifactId>log4j</artifactId>
-                <version>${log4j.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.jetbrains.pty4j</groupId>
                 <artifactId>purejavacomm</artifactId>
                 <version>${purejavacomm.version}</version>
@@ -2227,12 +2222,6 @@
                 <groupId>org.pac4j</groupId>
                 <artifactId>pac4j-oidc</artifactId>
                 <version>${pac4j.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.mockito</groupId>
-                        <artifactId>mockito-core</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.pac4j</groupId>
@@ -2532,6 +2521,12 @@
                 <artifactId>velocity</artifactId>
                 <version>${velocity.version}</version>
                 <!--scope>test</scope-->
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.velocity</groupId>
+                <artifactId>velocity-engine-core</artifactId>
+                <version>${velocity.version}</version>
             </dependency>
 
             <dependency>

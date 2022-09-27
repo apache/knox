@@ -22,6 +22,7 @@ import org.apache.knox.gateway.audit.api.AuditService;
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.i18n.GatewaySpiMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.services.GatewayServices;
@@ -52,6 +53,7 @@ public class GatewayWebsocketHandlerTest {
     public static void setUpBeforeClass() throws Exception {
         // setup MessageFactory for static variable
         PowerMock.mockStatic(MessagesFactory.class);
+        EasyMock.expect(MessagesFactory.get(GatewaySpiMessages.class)).andReturn(EasyMock.createNiceMock(GatewaySpiMessages.class)).anyTimes();
         EasyMock.expect(MessagesFactory.get(JWTMessages.class)).andReturn(EasyMock.createNiceMock(JWTMessages.class)).anyTimes();
         EasyMock.expect(MessagesFactory.get(WebsocketLogMessages.class)).andReturn(EasyMock.createNiceMock(WebsocketLogMessages.class)).anyTimes();
         PowerMock.replay(MessagesFactory.class);
