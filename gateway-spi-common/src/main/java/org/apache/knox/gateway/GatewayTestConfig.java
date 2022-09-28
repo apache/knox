@@ -978,4 +978,9 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public long getConcurrentSessionVerifierExpiredTokensCleaningPeriod() {
     return 0;
   }
+
+  @Override
+  public boolean isAsyncSupported() {
+    return false;
+  }
 }
