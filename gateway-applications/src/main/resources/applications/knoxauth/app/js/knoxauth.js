@@ -46,7 +46,7 @@ function redirect(redirectUrl) {
 // btoa skips some of the special characters such as ë
 // https://developer.mozilla.org/en-US/docs/Web/API/btoa
 function unicodeBase64Encode(str) {
-    return window.btoa(unescape(encodeURIComponent(str)));
+    return btoa(unescape(encodeURIComponent(str)));
 }
 
 var keypressed = function(event) {
