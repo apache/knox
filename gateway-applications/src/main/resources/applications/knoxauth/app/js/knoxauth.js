@@ -43,6 +43,12 @@ function redirect(redirectUrl) {
 	}
 }
 
+// btoa skips some of the special characters such as ë
+// https://developer.mozilla.org/en-US/docs/Web/API/btoa
+function unicodeBase64Encode(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+}
+
 var keypressed = function(event) {
 	if (event.keyCode == 13) {
 		login();
@@ -63,7 +69,7 @@ var login = function() {
 		//Instantiate HTTP Request
 		var request = ((window.XMLHttpRequest) ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP"));
 		request.open("POST", idpUrl, true);
-		request.setRequestHeader("Authorization", "Basic " + btoa(username + ":" + password));
+		request.setRequestHeader("Authorization", "Basic " + unicodeBase64Encode(username + ":" + password));
 		request.send(null);
 
 		//Process Response
