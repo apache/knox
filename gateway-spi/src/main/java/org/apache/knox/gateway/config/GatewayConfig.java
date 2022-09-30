@@ -825,4 +825,9 @@ public interface GatewayConfig {
   Set<String> getSessionVerificationUnlimitedUsers();
 
   long getConcurrentSessionVerifierExpiredTokensCleaningPeriod();
+
+  /**
+   * @return true if the async supported flag is enabled in jetty gateway servlet; false otherwise (defaults to false)
+   */
+  boolean isAsyncSupported();
 }

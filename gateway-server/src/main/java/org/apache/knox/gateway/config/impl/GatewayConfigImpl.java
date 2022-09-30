@@ -305,6 +305,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String GATEWAY_SESSION_VERIFICATION_EXPIRED_TOKENS_CLEANING_PERIOD = GATEWAY_SESSION_VERIFICATION_PREFIX + ".expired.tokens.cleaning.period";
   private static final long GATEWAY_SESSION_VERIFICATION_EXPIRED_TOKENS_CLEANING_PERIOD_DEFAULT = TimeUnit.MINUTES.toSeconds(30);
 
+  private static final String GATEWAY_SERVLET_ASYNC_SUPPORTED = GATEWAY_CONFIG_FILE_PREFIX + ".servlet.async.supported";
+  private static final boolean GATEWAY_SERVLET_ASYNC_SUPPORTED_DEFAULT = false;
 
   public GatewayConfigImpl() {
     init();
@@ -1385,9 +1387,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return nonPrivilegedUsers == null ? Collections.emptySet() : new HashSet<>(nonPrivilegedUsers);
   }
 
-
   @Override
   public long getConcurrentSessionVerifierExpiredTokensCleaningPeriod() {
     return getLong(GATEWAY_SESSION_VERIFICATION_EXPIRED_TOKENS_CLEANING_PERIOD, GATEWAY_SESSION_VERIFICATION_EXPIRED_TOKENS_CLEANING_PERIOD_DEFAULT);
+  }
+
+  @Override
+  public boolean isAsyncSupported() {
+    return getBoolean(GATEWAY_SERVLET_ASYNC_SUPPORTED, GATEWAY_SERVLET_ASYNC_SUPPORTED_DEFAULT);
   }
 }

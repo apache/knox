@@ -128,4 +128,10 @@ public abstract class ServiceDeploymentContributorBase extends DeploymentContrib
     context.contributeFilter( service, resource, role, name, params );
   }
 
+  protected void addDoSFilter(DeploymentContext context, Service service, ResourceDescriptor resource) {
+    if (topologyContainsProviderType(context, "dos")) {
+      context.contributeFilter(service, resource, "dos", null, null);
+    }
+  }
+
 }

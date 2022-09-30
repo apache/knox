@@ -470,5 +470,9 @@
             <groupId>org.apache.knox</groupId>
             <artifactId>knox-token-management-ui</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-provider-security-dos</artifactId>
+        </dependency>
     </dependencies>
 </project>
