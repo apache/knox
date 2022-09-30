@@ -50,6 +50,9 @@
     <rule dir="OUT" name="HIVESERVER2UI/hiveserver2/outbound/llap.html" pattern="/llap.html">
         <rewrite template="{$frontend[url]}/hiveserver2/llap.html"/>
     </rule>
+    <rule dir="OUT" name="HIVESERVER2UI/hiveserver2/outbound/hiveserver2.jsp" pattern="/hiveserver2.jsp">
+        <rewrite template="{$frontend[url]}/hiveserver2/hiveserver2.jsp"/>
+    </rule>
     <rule dir="OUT" name="HIVESERVER2UI/hiveserver2/outbound/home" pattern="/">
         <rewrite template="{$frontend[url]}/hiveserver2/"/>
     </rule>
