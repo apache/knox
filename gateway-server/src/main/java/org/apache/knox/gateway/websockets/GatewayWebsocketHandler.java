@@ -124,7 +124,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
         if (concurrentWebshells.get() >= config.getMaximumConcurrentWebshells()){
           throw new RuntimeException("Number of allowed concurrent Web Shell sessions exceeded");
         }
-        JWTValidator jwtValidator = JWTValidatorFactory.create(req,services,config);
+        JWTValidator jwtValidator = JWTValidatorFactory.create(req, services, config);
         if (jwtValidator.validate()) {
           return new WebshellWebSocketAdapter(pool, config, jwtValidator, concurrentWebshells);
         }
