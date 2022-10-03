@@ -94,6 +94,7 @@
         <module>gateway-provider-security-authz-acls</module>
         <module>gateway-provider-security-authz-composite</module>
         <module>gateway-provider-security-authc-anon</module>
+        <module>gateway-provider-security-dos</module>
         <module>gateway-provider-identity-assertion-common</module>
         <module>gateway-provider-identity-assertion-concat</module>
         <module>gateway-provider-identity-assertion-hadoop-groups</module>
@@ -1306,6 +1307,11 @@
                 <version>${jetty.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-servlets</artifactId>
+                <version>${jetty.version}</version>
             </dependency>
             <!-- Need these additional due to classifier tests -->
             <dependency>
@@ -2577,6 +2583,11 @@
                 <artifactId>system-stubs-junit4</artifactId>
                 <version>${system-stubs-junit4.version}</version>
                 <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-provider-security-dos</artifactId>
+                <version>${project.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

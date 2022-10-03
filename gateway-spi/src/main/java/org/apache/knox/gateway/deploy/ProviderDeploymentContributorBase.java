@@ -17,6 +17,12 @@
  */
 package org.apache.knox.gateway.deploy;
 
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
+import org.apache.knox.gateway.descriptor.ResourceDescriptor;
 import org.apache.knox.gateway.topology.Provider;
 
 public abstract class ProviderDeploymentContributorBase extends DeploymentContributorBase implements ProviderDeploymentContributor {
@@ -34,6 +40,17 @@ public abstract class ProviderDeploymentContributorBase extends DeploymentContri
   @Override
   public void finalizeContribution(DeploymentContext context ) {
     // Noop.
+  }
+
+  protected void copyAllProviderParams(Provider provider, ResourceDescriptor resource, List<FilterParamDescriptor> params) {
+    copyAllProviderParams(provider, resource, params, true);
+  }
+
+  protected void copyAllProviderParams(Provider provider, ResourceDescriptor resource, List<FilterParamDescriptor> params, boolean useLowerCaseKeys) {
+    for (Map.Entry<String, String> entry : provider.getParams().entrySet()) {
+      String key = useLowerCaseKeys ? entry.getKey().toLowerCase(Locale.ROOT) : entry.getKey();
+      params.add(resource.createFilterParam().name(key).value(entry.getValue()));
+    }
   }
 
 }
