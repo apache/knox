@@ -144,14 +144,6 @@ public class GatewayWebsocketHandler extends WebSocketHandler
         return handleWebshellRequest(req);
       }
 
-      if (config.isWebsocketJWTValidationEnabled()){
-        JWTValidator jwtValidator = JWTValidatorFactory.create(req,services,config);
-        if (!jwtValidator.validate()) {
-          LOG.onError("No valid token found for websocket connection");
-          throw new RuntimeException("No valid token found for websocket connection");
-        }
-      }
-
       // URL used to connect to websocket backend
       final String backendURL = getMatchedBackendURL(requestURI);
       LOG.debugLog("Generated backend URL for websocket connection: " + backendURL);

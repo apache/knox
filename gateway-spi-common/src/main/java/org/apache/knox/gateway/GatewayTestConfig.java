@@ -51,7 +51,6 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT = 100;
   private static final boolean DEFAULT_WEBSHELL_FEATURE_ENABLED = false ;
   private static final boolean DEFAULT_WEBSHELL_AUDIT_LOGGING_ENABLED = false;
-  private static final boolean DEFAULT_WEBSOCKET_JWT_VALIDATION_FEATURE_ENABLED = false ;
   public static final int DEFAULT_WEBSHELL_MAX_CONCURRENT_SESSIONS = 3;
   public static final int  DEFAULT_WEBSHELL_READ_BUFFER_SIZE = 1024;
 
@@ -573,12 +572,6 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public int getWebShellReadBufferSize() {
     return DEFAULT_WEBSHELL_READ_BUFFER_SIZE;
-  }
-
-
-  @Override
-  public boolean isWebsocketJWTValidationEnabled() {
-    return DEFAULT_WEBSOCKET_JWT_VALIDATION_FEATURE_ENABLED;
   }
 
   @Override

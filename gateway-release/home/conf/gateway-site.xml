@@ -96,7 +96,7 @@ limitations under the License.
         <description>Enable/Disable webshell feature.</description>
     </property>
     <property>
-        <name>webshell.max.concurrent.sessions</name>
+        <name>gateway.webshell.max.concurrent.sessions</name>
         <value>20</value>
         <description>Maximum number of total concurrent webshell sessions</description>
     </property>
