@@ -18,13 +18,13 @@
 package org.apache.knox.gateway.hbase;
 
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.knox.gateway.dispatch.DefaultDispatch;
+import org.apache.knox.gateway.dispatch.ConfigurableDispatch;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-public class HBaseUIDispatch extends DefaultDispatch {
+public class HBaseUIDispatch extends ConfigurableDispatch {
   @Override
   protected void executeRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest,
       HttpServletResponse outboundResponse) throws IOException {
