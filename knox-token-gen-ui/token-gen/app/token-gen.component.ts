@@ -29,6 +29,8 @@ import { TssStatusData } from "./tssStatus.model";
 export class TokenGen implements OnInit{
   tssStatusMessageLevel: 'info' | 'warning' | 'error';
   tssStatusMessage: string;
+  requestErrorMessage: string;
+  hasResult: boolean;
 
   loginPageSuffix = "token-gen/index.html";
   knoxtokenURL = "knoxtoken/api/v1/token";
@@ -42,8 +44,6 @@ export class TokenGen implements OnInit{
 
   // Data coming from input fields
   comment = new FormControl('', Validators.maxLength(255));
-  maxLifeTimeSec = new FormControl('');
-  isLifespanInputEnabled = new FormControl(false);
   lifespanDays = new FormControl(0, [
     Validators.min(0),
     Validators.max(3650)
@@ -75,10 +75,8 @@ export class TokenGen implements OnInit{
   constructor(private http: HttpClient) {
     this.tssStatusMessageLevel = 'info';
     this.tssStatusMessage = '';
-    // TODO maybe init the whole thing
     this.tssStatus = new TssStatusData();
-    this.tssStatus.lifespanInputEnabled = false;
-    this.tssStatus.impersonationEnabled = false;
+    this.hasResult = false;
   }
 
   ngOnInit(): void {
@@ -88,10 +86,10 @@ export class TokenGen implements OnInit{
 
   generateToken() {
     if(this.isFromValid()){
-      // errorBox hide
-      // resultBox hide
+      this.requestErrorMessage = '';
+      this.hasResult = false;
       var params = new HttpParams();
-      if(this.isLifespanInputEnabled.value){
+      if(this.tssStatus.lifespanInputEnabled){
         params = params.append('lifespan', 'P' + this.lifespanDays + "DT" + this.lifespanHours + "H" + this.lifespanMins + "M");
       }
       if(this.comment.value){
@@ -104,7 +102,7 @@ export class TokenGen implements OnInit{
       this.http.get<TokenData>(this.tokenURL, { params: params })
       .subscribe(responseData => {
         // status is 0 when your html file containing the script is opened in the browser via the file scheme.
-        // result show
+        this.hasResult = true;
         this.accessToken = responseData.access_token;
         let decodedToken = this.b64DecodeUnicode(this.accessToken.split(".")[1]);
         let jwtJson = JSON.parse(decodedToken);
@@ -119,10 +117,13 @@ export class TokenGen implements OnInit{
         this.targetURL = window.location.protocol + "//" + window.location.host + "/" + this.baseURL + responseData.target_url;
         console.log(responseData);
       }, (e: HttpErrorResponse) => {
-        // show error box
-        // if status code is 401 reload????
-        // else error message in error box
-        console.log(e.status);
+        this.requestErrorMessage = "Response from " + e.url + " - " + e.status + ": " + e.statusText;
+        /** TODO
+         * if (request.responseText) {
+         *   errorMsg += " (" + request.responseText + ")";
+         * }
+         */ 
+        // if status code == 401 reload???? else error message in error box
       });    
     }
   }
@@ -162,7 +163,7 @@ export class TokenGen implements OnInit{
   }
 
   private isFromValid(): boolean {
-    if(this.comment.errors || this.lifespanDays.errors || this.lifespanHours.errors || this.lifespanMins.errors || this.impersonation.errors){
+    if(this.comment.invalid || this.lifespanDays.invalid || this.lifespanHours.invalid || this.lifespanMins.invalid || this.impersonation.invalid){
       return false;
     }
     return true;

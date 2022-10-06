@@ -26,17 +26,11 @@
 
                 <label><i class="icon-comment"></i> Comment:</label>
                 <input [formControl]="comment" type="text" tabindex="1" autofocus size="255" maxlength="255">
-                <label style="display: none; color: red;" id="invalidCommentText"><i class="icon-warning"></i>Invalid comment!</label>
+                <label *ngIf="comment.invalid" style="color: red;"><i class="icon-warning"></i>Invalid comment!</label>
 
                 <label><i class="icon-info"></i> Configured maximum lifetime: </label>
-                <!--maximumLifetimeText comes from init request-->
                 <label>{{tssStatus.maximumLifetimeText}}</label>
-                <!--maximumLifetimeSeconds comes from init request, so no need for input i believe-->
-                <input [formControl]="maxLifeTimeSec" [value]="tssStatus.maximumLifetimeSeconds" type="number"/>
-                <!--lifespanFields-->
                 <div *ngIf="tssStatus.lifespanInputEnabled">
-                    <!--unnecessary i could just set in code the value-->
-                    <input [formControl]="isLifespanInputEnabled" [value]="tssStatus.lifespanInputEnabled" type="text"/>
                     <label><i class="icon-time"></i> Lifetime (days, hours, mins):</label>
                     <table>
                         <tr>
@@ -45,18 +39,17 @@
                             <td><input [formControl]="lifespanMins" type="number" step="1" min="0" max="59" value="0" size="3"></td>
                         </tr>
                     </table>
-                    <label style="display: none; color: red;" id="invalidLifetimeText"><i class="icon-warning"></i>Invalid lifetime!</label>
+                    <label *ngIf="lifespanDays.invalid || lifespanHours.invalid || lifespanMins.invalid" style="color: red;"><i class="icon-warning"></i>Invalid lifetime!</label>
                 </div>
 
-                <!--impersonationFields-->
                 <div *ngIf="tssStatus.impersonationEnabled">
                     <label><i class="icon-user"></i> Generating token for (impersonation):</label>
                     <input [formControl]="impersonation" type="text" size="50" maxlength="255">
-                    <label style="display: none; color: red;" id="invalidDoasText"><i class="icon-warning"></i>Invalid doAs!</label>
+                    <label *ngIf="impersonation.invalid" style="color: red;"><i class="icon-warning"></i>Invalid doAs!</label>
                 </div>
             </div>
 
-            <span id="errorBox" class="help-inline" style="color: red; display: none;"><span class="errorMsg"></span>
+            <span *ngIf="requestErrorMessage" class="help-inline" style="color: red;"><span class="errorMsg">{{requestErrorMessage}}</span>
                 <i class="icon-warning-sign" style="color: #ae2817;"></i>
             </span>
 
@@ -69,37 +62,36 @@
     </div>
 
     <div style="margin-left: 1.75%; margin-right: 1.75%; margin-top: 10px">
-        <span id="resultBox" style="color:black; margin-left: 1.75%; margin-right: 1.75%;">
+        <span *ngIf="hasResult" style="color:black; margin-left: 1.75%; margin-right: 1.75%;">
+            <label id="jwtAccessTokenLabel" onclick="copyTextToClipboard('accessToken');"><i class="icon-copy"></i> JWT Token:</label>
+            <div class="tokenResultDisplay">
+                <span style="word-wrap: break-word">{{accessToken}}</span>
+            </div>
 
-        <label id="jwtAccessTokenLabel" onclick="copyTextToClipboard('accessToken');"><i class="icon-copy"></i> JWT Token:</label>
-        <div class="tokenResultDisplay">
-            <span id="accessToken" name="accessToken" style="word-wrap: break-word">{{accessToken}}</span>
-        </div>
+            <label id="jwtPasscodeTokenLabel" onclick="copyTextToClipboard('accessPasscode');"><i class="icon-copy"></i> Passcode Token:</label>
+            <div class="tokenResultDisplay">
+                <span>{{accessPasscode}}</span>
+            </div>
 
-        <label id="jwtPasscodeTokenLabel" onclick="copyTextToClipboard('accessPasscode');"><i class="icon-copy"></i> Passcode Token:</label>
-        <div class="tokenResultDisplay">
-            <span id="accessPasscode" name="accessPasscode">{{accessPasscode}}</span>
-        </div>
+            <label><i class="icon-info"></i> Expiration:</label>
+            <div class="tokenResultDisplay">
+                <span>{{expiry}}</span>
+            </div>
 
-        <label><i class="icon-info"></i> Expiration:</label>
-        <div class="tokenResultDisplay">
-            <span id="expiry" name="expiry">{{expiry}}</span>
-        </div>
+            <label><i class="icon-info"></i> User:</label>
+            <div class="tokenResultDisplay">
+                <span>{{user}}</span>
+            </div>
 
-        <label><i class="icon-info"></i> User:</label>
-        <div class="tokenResultDisplay">
-            <span id="user" name="user">{{user}}</span>
-        </div>
+            <label id="targetBaseUrlLabel" onclick="copyTextToClipboard('target_url');"><i class="icon-copy"></i> Target Base URL:</label>
+            <div class="tokenResultDisplay">
+                <span>{{targetURL}}</span>
+            </div>
 
-        <label id="targetBaseUrlLabel" onclick="copyTextToClipboard('target_url');"><i class="icon-copy"></i> Target Base URL:</label>
-        <div class="tokenResultDisplay">
-            <span id="target_url" name="target_url">{{targetURL}}</span>
-        </div>
-
-        <label><i class="icon-link"></i> Homepage:</label>
-        <div class="tokenResultDisplay">
-            <a [href]="homepageURL">Homepage URL</a>
-        </div>
+            <label><i class="icon-link"></i> Homepage:</label>
+            <div class="tokenResultDisplay">
+                <a [href]="homepageURL">Homepage URL</a>
+            </div>
         </span>
     </div>
 </div>
