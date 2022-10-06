@@ -114,6 +114,9 @@
       <name>tokengen</name>
    </application>
    <application>
+      <name>token-gen</name>
+   </application>
+   <application>
       <name>home</name>
    </application>
    <application>

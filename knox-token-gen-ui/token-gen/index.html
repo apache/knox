@@ -16,7 +16,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Apache Knox Token Management</title>
+    <title>Apache Knox Token Generation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -27,29 +27,7 @@
 	  console.log(window['base-href']);
 	</script>
 </head>
-<body>
-<div class="navbar-wrapper">
-    <div class="container-fluid">
-        <nav class="navbar navbar-inverse navbar-static-top">
-            <div class="container-fluid">
-                <div class="navbar-header">
-                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
-                            data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                    <a class="navbar-brand" href="#"> <img style="max-width:200px; margin-top: -9px;" src="assets/knox-logo-transparent.gif" alt="Apache Knox Home"></a>
-                </div>
-                <app-session-information></app-session-information>
-            </div>
-        </nav>
-    </div>
-
-    <div class="container-fluid">
-        <app-token-gen></app-token-gen>
-    </div>
-</div>
+<body class="login">
+    <app-token-gen></app-token-gen>
 </body>
 </html>
