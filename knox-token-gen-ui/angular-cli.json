@@ -18,7 +18,9 @@
       "prefix": "app",
       "mobile": false,
       "styles": [
-        "../node_modules/bootstrap/dist/css/bootstrap.min.css",
+        "./assets/styles/bootstrap.min.css",
+        "./assets/styles/app-font.css",
+        "./assets/styles/knox.css",
         "styles.css"
       ],
       "scripts": [

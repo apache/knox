@@ -24,11 +24,6 @@ import { TssStatusData } from "./tssStatus.model";
 @Component({
   selector: 'app-token-gen',
   templateUrl: './token-gen.component.html',
-  styleUrls: [
-    './styles/knox.css',
-    './styles/bootstrap.min.css',
-    './styles/app-font.css'
-  ],
   providers: []
 })
 export class TokenGen implements OnInit{
