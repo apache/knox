@@ -16,7 +16,7 @@
  */
 import { HttpClient, HttpErrorResponse, HttpParams } from "@angular/common/http";
 import { Component, OnInit } from "@angular/core";
-import { FormControl, FormGroup, Validators } from "@angular/forms";
+import { FormControl, FormGroup, ValidatorFn, Validators } from "@angular/forms";
 import { TokenData } from "./token.data.model";
 import { TssStatusData } from "./tssStatus.model";
 
@@ -47,25 +47,25 @@ export class TokenGen implements OnInit{
   tokenGenFrom = new FormGroup({
     comment : new FormControl('', Validators.maxLength(255)),
     lifespanDays : new FormControl(0, [
-    Validators.min(0),
-    Validators.max(3650),
-    Validators.required,
-    Validators.pattern('^[0-9]*$')
+      Validators.min(0),
+      Validators.max(3650),
+      Validators.required,
+      Validators.pattern('^[0-9]*$')
     ]),
     lifespanHours : new FormControl(1, [
-    Validators.min(0),
-    Validators.max(23),
-    Validators.required,
-    Validators.pattern('^[0-9]*$')
+      Validators.min(0),
+      Validators.max(23),
+      Validators.required,
+      Validators.pattern('^[0-9]*$')
     ]),
     lifespanMins : new FormControl(0, [
-    Validators.min(0),
-    Validators.max(59),
-    Validators.required,
-    Validators.pattern('^[0-9]*$')
+      Validators.min(0),
+      Validators.max(59),
+      Validators.required,
+      Validators.pattern('^[0-9]*$')
     ]),
     impersonation : new FormControl('', Validators.maxLength(255))
-  }, )
+  }, this.allZeroValidator());
 
   // Data from token generating request
   // TODO might put them in class
@@ -162,8 +162,17 @@ export class TokenGen implements OnInit{
     });  
   }
 
-  private notZeroValidator(controls: FormControl[]) {
-    // TODO
+  private allZeroValidator(): ValidatorFn {
+     return (formGroup: FormGroup) => {
+      if(
+        formGroup.get('lifespanDays').value == 0 &&
+        formGroup.get('lifespanHours').value == 0 &&
+        formGroup.get('lifespanMins').value == 0
+        ){
+          return {allZero: true};
+      }
+        return null;
+     }
   }
 
   private setTssMessage(level: 'info' | 'warning' | 'error', message: string){

@@ -40,7 +40,7 @@
                             <td><input formControlName="lifespanMins" type="number" step="1" min="0" max="59" value="0" size="3"></td>
                         </tr>
                     </table>
-                    <label *ngIf="tokenGenFrom.get('lifespanDays').invalid || tokenGenFrom.get('lifespanHours').invalid || tokenGenFrom.get('lifespanMins').invalid" style="color: red;"><i class="icon-warning"></i>Invalid lifetime!</label>
+                    <label *ngIf="tokenGenFrom.get('lifespanDays').invalid || tokenGenFrom.get('lifespanHours').invalid || tokenGenFrom.get('lifespanMins').invalid || tokenGenFrom.errors?.allZero" style="color: red;"><i class="icon-warning"></i>Invalid lifetime!</label>
                 </div>
 
                 <div *ngIf="tssStatus.impersonationEnabled">
