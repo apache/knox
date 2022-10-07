@@ -14,6 +14,7 @@
 -->
 <div class="login">
     <div style="margin-left: 1.75%; margin-right: 1.75%; margin-top: 4.5px">
+        <form [formGroup]="tokenGenFrom">
         <fieldset>
             <div class="fields">
                 <h3>Token Generation</h3>
@@ -25,8 +26,8 @@
                  securely from others as this token represents your identity and is active until expired.</label>
 
                 <label><i class="icon-comment"></i> Comment:</label>
-                <input [formControl]="comment" type="text" tabindex="1" autofocus size="255" maxlength="255">
-                <label *ngIf="comment.invalid" style="color: red;"><i class="icon-warning"></i>Invalid comment!</label>
+                <input formControlName="comment" type="text" tabindex="1" autofocus size="255" maxlength="255">
+                <label *ngIf="tokenGenFrom.get('comment').invalid" style="color: red;"><i class="icon-warning"></i>Invalid comment!</label>
 
                 <label><i class="icon-info"></i> Configured maximum lifetime: </label>
                 <label>{{tssStatus.maximumLifetimeText}}</label>
@@ -34,17 +35,17 @@
                     <label><i class="icon-time"></i> Lifetime (days, hours, mins):</label>
                     <table>
                         <tr>
-                            <td><input [formControl]="lifespanDays" type="number" step="1" min="0" max="3650" value="0" size="3"></td> <!-- 10 years limit -->
-                            <td><input [formControl]="lifespanHours" type="number" step="1" min="0" max="23" value="1" size="3"></td>
-                            <td><input [formControl]="lifespanMins" type="number" step="1" min="0" max="59" value="0" size="3"></td>
+                            <td><input formControlName="lifespanDays" type="number" step="1" min="0" max="3650" value="0" size="3"></td> <!-- 10 years limit -->
+                            <td><input formControlName="lifespanHours" type="number" step="1" min="0" max="23" value="1" size="3"></td>
+                            <td><input formControlName="lifespanMins" type="number" step="1" min="0" max="59" value="0" size="3"></td>
                         </tr>
                     </table>
-                    <label *ngIf="lifespanDays.invalid || lifespanHours.invalid || lifespanMins.invalid" style="color: red;"><i class="icon-warning"></i>Invalid lifetime!</label>
+                    <label *ngIf="tokenGenFrom.get('lifespanDays').invalid || tokenGenFrom.get('lifespanHours').invalid || tokenGenFrom.get('lifespanMins').invalid" style="color: red;"><i class="icon-warning"></i>Invalid lifetime!</label>
                 </div>
 
                 <div *ngIf="tssStatus.impersonationEnabled">
                     <label><i class="icon-user"></i> Generating token for (impersonation):</label>
-                    <input [formControl]="impersonation" type="text" size="50" maxlength="255">
+                    <input formControlName="impersonation" type="text" size="50" maxlength="255">
                     <label *ngIf="impersonation.invalid" style="color: red;"><i class="icon-warning"></i>Invalid doAs!</label>
                 </div>
             </div>
@@ -59,6 +60,7 @@
                 </button>
             </div>
         </fieldset>
+    </form>
     </div>
 
     <div style="margin-left: 1.75%; margin-right: 1.75%; margin-top: 10px">

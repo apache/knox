@@ -16,7 +16,7 @@
  */
 import { HttpClient, HttpErrorResponse, HttpParams } from "@angular/common/http";
 import { Component, OnInit } from "@angular/core";
-import { FormControl, Validators } from "@angular/forms";
+import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { TokenData } from "./token.data.model";
 import { TssStatusData } from "./tssStatus.model";
 
@@ -36,32 +36,39 @@ export class TokenGen implements OnInit{
   knoxtokenURL = "knoxtoken/api/v1/token";
   tssStatusURL = 'knoxtoken/api/v1/token/getTssStatus'
   
-  //These are not global for some reason
+  //These are not global for some reason? -> changed and then sent request might be problem
   pathname = window.location.pathname;
   topologyContext = this.pathname.replace(this.loginPageSuffix, "");;
   baseURL = this.topologyContext.substring(0, this.topologyContext.lastIndexOf('/'));
   tokenURL = this.topologyContext + this.knoxtokenURL;
 
   // Data coming from input fields
-  comment = new FormControl('', Validators.maxLength(255));
-  lifespanDays = new FormControl(0, [
+  // TODO cross field validation
+  tokenGenFrom = new FormGroup({
+    comment : new FormControl('', Validators.maxLength(255)),
+    lifespanDays : new FormControl(0, [
     Validators.min(0),
-    Validators.max(3650)
-    // TODO egesz legyen
-  ]);
-  lifespanHours = new FormControl(1, [
+    Validators.max(3650),
+    Validators.required,
+    Validators.pattern('^[0-9]*$')
+    ]),
+    lifespanHours : new FormControl(1, [
     Validators.min(0),
-    Validators.max(23)
-    // TODO egesz legyen
-  ]);
-  lifespanMins = new FormControl(0, [
+    Validators.max(23),
+    Validators.required,
+    Validators.pattern('^[0-9]*$')
+    ]),
+    lifespanMins : new FormControl(0, [
     Validators.min(0),
-    Validators.max(59)
-    // TODO egesz legyen
-  ]);
-  impersonation = new FormControl('', Validators.maxLength(255));
+    Validators.max(59),
+    Validators.required,
+    Validators.pattern('^[0-9]*$')
+    ]),
+    impersonation : new FormControl('', Validators.maxLength(255))
+  }, )
 
   // Data from token generating request
+  // TODO might put them in class
   accessToken: string;
   accessPasscode: string;
   expiry: string;
@@ -76,11 +83,11 @@ export class TokenGen implements OnInit{
     this.tssStatusMessageLevel = 'info';
     this.tssStatusMessage = '';
     this.tssStatus = new TssStatusData();
+    this.tssStatus.lifespanInputEnabled = true;
     this.hasResult = false;
   }
 
   ngOnInit(): void {
-    console.log("token URL: " + this.tokenURL);
     this.setTokenStateServiceStatus();
   }
 
@@ -90,32 +97,32 @@ export class TokenGen implements OnInit{
       this.hasResult = false;
       var params = new HttpParams();
       if(this.tssStatus.lifespanInputEnabled){
-        params = params.append('lifespan', 'P' + this.lifespanDays + "DT" + this.lifespanHours + "H" + this.lifespanMins + "M");
+        params = params.append('lifespan', 'P' + this.tokenGenFrom.get('lifespanDays').value + "DT" + this.tokenGenFrom.get('lifespanHours').value + "H" + this.tokenGenFrom.get('lifespanMins').value + "M");
       }
-      if(this.comment.value){
-        params = params.append('comment', this.comment.value);
+      if(this.tokenGenFrom.get('comment').value){
+        params = params.append('comment', this.tokenGenFrom.get('comment').value);
       }
-      if(this.impersonation.value){
-        params = params.append('doAs', this.impersonation.value);
+      if(this.tokenGenFrom.get('impersonation').value){
+        params = params.append('doAs', this.tokenGenFrom.get('impersonation.value').value);
       }
-      // XMLHttpRequest or ActiveXObject 3rd parameter true in open means async
+      // TODO look up these: XMLHttpRequest or ActiveXObject 3rd parameter true in open means async
       this.http.get<TokenData>(this.tokenURL, { params: params })
       .subscribe(responseData => {
-        // status is 0 when your html file containing the script is opened in the browser via the file scheme.
+        // TODO status is 0 when your html file containing the script is opened in the browser via the file scheme.
         this.hasResult = true;
         this.accessToken = responseData.access_token;
         let decodedToken = this.b64DecodeUnicode(this.accessToken.split(".")[1]);
         let jwtJson = JSON.parse(decodedToken);
         this.user = jwtJson.sub;
         if(responseData.passcode){
-          // Passcode show
+          // TODO show jwtPasscodeTokenLabel?? why only the label -> beacuse then the passcode '' anyway but i can make the wholething dissapear maybe
           this.accessPasscode = responseData.passcode;
+        } else {
+          // TODO hide jwtPasscodeTokenLabel?? why only the label
         }
         this.expiry = new Date(responseData.expires_in).toLocaleString();
-        // change dom to link
         this.homepageURL = this.baseURL + responseData.homepage_url;
         this.targetURL = window.location.protocol + "//" + window.location.host + "/" + this.baseURL + responseData.target_url;
-        console.log(responseData);
       }, (e: HttpErrorResponse) => {
         this.requestErrorMessage = "Response from " + e.url + " - " + e.status + ": " + e.statusText;
         /** TODO
@@ -123,7 +130,7 @@ export class TokenGen implements OnInit{
          *   errorMsg += " (" + request.responseText + ")";
          * }
          */ 
-        // if status code == 401 reload???? else error message in error box
+        // TODO if status code == 401 reload???? else error message in error box
       });    
     }
   }
@@ -136,14 +143,12 @@ export class TokenGen implements OnInit{
       if (this.tssStatus.tokenManagementEnabled) {
         if(this.tssStatus.allowedTssForTokengen){
           if(this.tssStatus.actualTssBackend == 'AliasBasedTokenStateService'){
-            // display warning (msg3)
             this.setTssMessage('warning','Token management backend is configured to store tokens in keystores. This is only valid non-HA environments!');
           }else{
-            // display info (msg4)
             this.setTssMessage('info','Token management backend is properly configured for HA and production deployments.');
           }
         }else{
-            // diasble token management(msg2)
+            // disable token management(msg2)
             this.setTssMessage('error','Token management backend initialization failed, token generation disabled.');
             // TODO disable
         }
@@ -157,16 +162,21 @@ export class TokenGen implements OnInit{
     });  
   }
 
+  private notZeroValidator(controls: FormControl[]) {
+    // TODO
+  }
+
   private setTssMessage(level: 'info' | 'warning' | 'error', message: string){
     this.tssStatusMessageLevel = level;
     this.tssStatusMessage = message;
   }
 
+  // TODO if validators work mightn not need a separate function
   private isFromValid(): boolean {
-    if(this.comment.invalid || this.lifespanDays.invalid || this.lifespanHours.invalid || this.lifespanMins.invalid || this.impersonation.invalid){
-      return false;
+    if(this.tokenGenFrom.valid){
+      return true;
     }
-    return true;
+    return false;
   }
 
   private b64DecodeUnicode(str) {
