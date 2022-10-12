@@ -19,7 +19,6 @@ import {BrowserModule} from '@angular/platform-browser';
 import {HttpClientModule, HttpClientXsrfModule} from '@angular/common/http';
 import {MatGridListModule} from '@angular/material/grid-list';
 import {BsModalModule} from 'ng2-bs3-modal/ng2-bs3-modal';
-import {DataTableModule} from 'angular2-datatable';
 import { TokenGen } from './token-gen.component';
 import { ReactiveFormsModule } from '@angular/forms';
 
@@ -29,7 +28,6 @@ import { ReactiveFormsModule } from '@angular/forms';
         HttpClientXsrfModule,
         MatGridListModule,
         BsModalModule,
-        DataTableModule,
         ReactiveFormsModule
     ],
     declarations: [TokenGen],

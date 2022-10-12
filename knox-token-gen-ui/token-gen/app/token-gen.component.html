@@ -26,7 +26,7 @@
                  securely from others as this token represents your identity and is active until expired.</label>
 
                 <label><i class="icon-comment"></i> Comment:</label>
-                <input formControlName="comment" type="text" tabindex="1" autofocus size="255" maxlength="255">
+                <input formControlName="comment" (keydown.enter)="generateToken()" type="text" tabindex="1" autofocus size="255" maxlength="255">
                 <label *ngIf="tokenGenFrom.get('comment').invalid" style="color: red;"><i class="icon-warning"></i>Invalid comment!</label>
 
                 <label><i class="icon-info"></i> Configured maximum lifetime: </label>
@@ -55,7 +55,7 @@
             </span>
 
             <div style="align-content: center; width: 25%;">
-                <button (click)="generateToken()" type="button" class="btn btn-primary btn-block" tabindex="2"  >
+                <button (click)="generateToken()" [disabled]="!tssStatus.tokenManagementEnabled || !tssStatus.allowedTssForTokengen" type="button" class="btn btn-primary btn-block" tabindex="2"  >
                     Generate Token
                 </button>
             </div>
@@ -65,33 +65,33 @@
 
     <div style="margin-left: 1.75%; margin-right: 1.75%; margin-top: 10px">
         <span *ngIf="hasResult" style="color:black; margin-left: 1.75%; margin-right: 1.75%;">
-            <label id="jwtAccessTokenLabel" onclick="copyTextToClipboard('accessToken');"><i class="icon-copy"></i> JWT Token:</label>
             <div class="tokenResultDisplay">
-                <span style="word-wrap: break-word">{{accessToken}}</span>
+                <label (click)="copyTextToClipboard('accessToken')"><i class="icon-copy"></i> JWT Token:</label>
+                <span id="accessToken" style="word-wrap: break-word">{{accessToken}}</span>
             </div>
 
-            <label id="jwtPasscodeTokenLabel" onclick="copyTextToClipboard('accessPasscode');"><i class="icon-copy"></i> Passcode Token:</label>
-            <div class="tokenResultDisplay">
-                <span>{{accessPasscode}}</span>
+            <div *ngIf="accessPasscode" class="tokenResultDisplay">
+                <label (click)="copyTextToClipboard('accessPasscode')"><i class="icon-copy"></i> Passcode Token:</label>            
+                <span id="accessPasscode">{{accessPasscode}}</span>
             </div>
 
-            <label><i class="icon-info"></i> Expiration:</label>
             <div class="tokenResultDisplay">
+                <label><i class="icon-info"></i> Expiration:</label>            
                 <span>{{expiry}}</span>
             </div>
 
-            <label><i class="icon-info"></i> User:</label>
             <div class="tokenResultDisplay">
+                <label><i class="icon-info"></i> User:</label>            
                 <span>{{user}}</span>
             </div>
 
-            <label id="targetBaseUrlLabel" onclick="copyTextToClipboard('target_url');"><i class="icon-copy"></i> Target Base URL:</label>
             <div class="tokenResultDisplay">
-                <span>{{targetURL}}</span>
+                <label (click)="copyTextToClipboard('target_url')"><i class="icon-copy"></i> Target Base URL:</label>        
+                <span id="target_url">{{targetURL}}</span>
             </div>
 
-            <label><i class="icon-link"></i> Homepage:</label>
             <div class="tokenResultDisplay">
+                <label><i class="icon-link"></i> Homepage:</label>            
                 <a [href]="homepageURL">Homepage URL</a>
             </div>
         </span>
