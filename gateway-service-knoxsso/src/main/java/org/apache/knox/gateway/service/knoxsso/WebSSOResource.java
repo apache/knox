@@ -76,6 +76,7 @@ public class WebSSOResource {
   private static final String SSO_COOKIE_SECURE_ONLY_INIT_PARAM = "knoxsso.cookie.secure.only";
   private static final String SSO_COOKIE_MAX_AGE_INIT_PARAM = "knoxsso.cookie.max.age";
   private static final String SSO_COOKIE_DOMAIN_SUFFIX_PARAM = "knoxsso.cookie.domain.suffix";
+  private static final String SSO_COOKIE_SAMESITE_PARAM = "knoxsso.cookie.samesite";
   private static final String SSO_COOKIE_TOKEN_TTL_PARAM = "knoxsso.token.ttl";
   private static final String SSO_COOKIE_TOKEN_AUDIENCES_PARAM = "knoxsso.token.audiences";
   private static final String SSO_COOKIE_TOKEN_SIG_ALG = "knoxsso.token.sigalg";
@@ -93,6 +94,7 @@ public class WebSSOResource {
   private static final String ORIGINAL_URL_REQUEST_PARAM = "originalUrl";
   private static final String ORIGINAL_URL_COOKIE_NAME = "original-url";
   private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
+  private static final String SSO_COOKIE_SAMESITE_DEFAULT = "Strict";
   private static final long TOKEN_TTL_DEFAULT = 30000L;
   static final String RESOURCE_PATH = "/api/v1/websso";
   private String cookieName;
@@ -107,6 +109,8 @@ public class WebSSOResource {
   private List<String> ssoExpectedparams = new ArrayList<>();
   private String clusterName;
   private String tokenIssuer;
+
+  private String sameSiteValue;
 
   @Context
   HttpServletRequest request;
@@ -136,6 +140,10 @@ public class WebSSOResource {
     if (expectedParams != null) {
       ssoExpectedparams = Arrays.asList(expectedParams.split(","));
     }
+
+    this.sameSiteValue = StringUtils.isBlank(context.getInitParameter(SSO_COOKIE_SAMESITE_PARAM))
+            ? SSO_COOKIE_SAMESITE_DEFAULT
+            : context.getInitParameter(SSO_COOKIE_SAMESITE_PARAM);
   }
 
   private void setSignatureAlogrithm() throws AliasServiceException {
@@ -405,7 +413,7 @@ public class WebSSOResource {
       if (maxAge != -1) {
         setCookie.append("; Max-Age=").append(maxAge);
       }
-      setCookie.append("; SameSite=None");
+      setCookie.append("; SameSite=").append(this.sameSiteValue);
       response.setHeader("Set-Cookie", setCookie.toString());
       LOGGER.addedJWTCookie();
     } catch (Exception e) {
