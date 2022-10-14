@@ -46,7 +46,7 @@
                 <div *ngIf="tssStatus.impersonationEnabled">
                     <label><i class="icon-user"></i> Generating token for (impersonation):</label>
                     <input formControlName="impersonation" type="text" size="50" maxlength="255">
-                    <label *ngIf="impersonation.invalid" style="color: red;"><i class="icon-warning"></i>Invalid doAs!</label>
+                    <label *ngIf="tokenGenFrom.get('impersonation').invalid" style="color: red;"><i class="icon-warning"></i>Invalid doAs!</label>
                 </div>
             </div>
 

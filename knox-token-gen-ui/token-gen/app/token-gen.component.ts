@@ -37,12 +37,13 @@ export class TokenGen implements OnInit{
 
   loginPageSuffix = "token-gen/index.html";
   knoxtokenURL = "knoxtoken/api/v1/token";
-  tssStatusURL = 'knoxtoken/api/v1/token/getTssStatus'
+  tssStatusURL = 'knoxtoken/api/v1/token/getTssStatus';
   
   //These are not global for some reason? -> changed and then sent request might be problem
   pathname = window.location.pathname;
-  topologyContext = this.pathname.replace(this.loginPageSuffix, "");;
-  baseURL = this.topologyContext.substring(0, this.topologyContext.lastIndexOf('/'));
+  //topologyContext = this.pathname.replace(this.loginPageSuffix, "");
+  topologyContext = "/gateway/homepage/"
+  baseURL: string;
   tokenURL = this.topologyContext + this.knoxtokenURL;
 
   // Data coming from input fields
@@ -82,6 +83,9 @@ export class TokenGen implements OnInit{
   tssStatus: TssStatusData;
 
   constructor(private http: HttpClient) {
+    var temporaryURL = this.topologyContext.substring(0, this.topologyContext.lastIndexOf('/'));
+    this.baseURL = temporaryURL.substring(0, temporaryURL.lastIndexOf('/') + 1);
+
     this.tssStatusMessageLevel = 'info';
     this.tssStatusMessage = '';
     this.requestErrorMessage = '';
@@ -162,7 +166,7 @@ export class TokenGen implements OnInit{
       params = params.append('comment', this.tokenGenFrom.get('comment').value);
     }
     if (this.tokenGenFrom.get('impersonation').value) {
-      params = params.append('doAs', this.tokenGenFrom.get('impersonation.value').value);
+      params = params.append('doAs', this.tokenGenFrom.get('impersonation').value);
     }
     // TODO look up these: XMLHttpRequest or ActiveXObject 3rd parameter true in open means async
     this.http.get<TokenData>(this.tokenURL, { params: params })
