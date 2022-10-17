@@ -260,13 +260,7 @@ public abstract class DeploymentFactory {
     // for some tests the number of providers are limited to the classpath of the module
     // and exceptions will be thrown as topologies are deployed even though they will
     // work fine at actual server runtime.
-
-    // SRM: Only add "Default" provider iff it is found in the provider contributor map
-    // There could be cases where service loader might find other
-    // identity-assertion providers e.g. JWTAuthCodeAsserter
-    if (PROVIDER_CONTRIBUTOR_MAP.get("identity-assertion") != null &&
-            PROVIDER_CONTRIBUTOR_MAP.get("identity-assertion").keySet() != null &&
-            PROVIDER_CONTRIBUTOR_MAP.get("identity-assertion").keySet().contains("Default")) {
+    if (PROVIDER_CONTRIBUTOR_MAP.get("identity-assertion") != null) {
       // check for required providers and add the defaults if missing
       if (!providerMap.containsKey("identity-assertion")) {
         Provider idassertion = new Provider();
