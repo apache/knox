@@ -19,7 +19,8 @@ package org.apache.knox.gateway.jkg;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.knox.gateway.dispatch.DefaultDispatch;
+
+import org.apache.knox.gateway.dispatch.ConfigurableDispatch;
 import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteRequestStream;
 import org.apache.knox.gateway.security.SubjectUtils;
 
@@ -44,7 +45,7 @@ import java.util.Map;
  * This specialized dispatch provides Jupyter Kernel Gateway specific features to the
  * default dispatch.
  */
-public class JkgDispatch extends DefaultDispatch {
+public class JkgDispatch extends ConfigurableDispatch {
 
   @Override
   public void doPost(URI url, HttpServletRequest request, HttpServletResponse response)

@@ -415,6 +415,31 @@ public class WebSSOResourceTest {
   }
 
   @Test
+  public void testSameConfigurableSite() throws Exception {
+    testSameSite("None", "None"); // explicitly set to None
+    testSameSite(null, "Strict"); // default value
+    testSameSite("Lax", "Lax"); // explicitly set to Lax
+  }
+
+  private void testSameSite(String knoxSsoCookiesameSite, String expectedknoxSsoSecureOnly) throws Exception {
+    configureCommonExpectations(Collections.singletonMap("knoxsso.cookie.samesite", knoxSsoCookiesameSite == null ? null : knoxSsoCookiesameSite));
+
+    final WebSSOResource webSSOResponse = new WebSSOResource();
+    webSSOResponse.request = request;
+    webSSOResponse.response = responseWrapper;
+    webSSOResponse.context = context;
+    webSSOResponse.init();
+
+    // Issue a token
+    webSSOResponse.doGet();
+
+    // Check the cookie
+    final Cookie cookie = responseWrapper.getCookie("hadoop-jwt");
+    assertNotNull(cookie);
+    assertTrue(((CookieResponseWrapper)responseWrapper).headers.get("Set-Cookie").contains("SameSite=" + expectedknoxSsoSecureOnly));
+  }
+
+  @Test
   public void testOverflowTTL() throws Exception {
     configureCommonExpectations(Collections.singletonMap("knoxsso.token.ttl", String.valueOf(Long.MAX_VALUE)));
 
