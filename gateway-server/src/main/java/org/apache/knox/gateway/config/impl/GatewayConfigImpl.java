@@ -926,20 +926,17 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isWebsocketEnabled() {
-    final String result = get( WEBSOCKET_FEATURE_ENABLED, Boolean.toString(DEFAULT_WEBSOCKET_FEATURE_ENABLED));
-    return Boolean.parseBoolean(result);
+    return getBoolean(WEBSOCKET_FEATURE_ENABLED, DEFAULT_WEBSOCKET_FEATURE_ENABLED);
   }
 
   @Override
   public boolean isWebShellEnabled() {
-    final String result = get( WEBSHELL_FEATURE_ENABLED, Boolean.toString(DEFAULT_WEBSHELL_FEATURE_ENABLED));
-    return Boolean.parseBoolean(result);
+    return getBoolean(WEBSHELL_FEATURE_ENABLED, DEFAULT_WEBSHELL_FEATURE_ENABLED);
   }
 
   @Override
   public boolean isWebShellAuditLoggingEnabled(){
-    final String result = get( WEBSHELL_AUDIT_LOGGING_ENABLED, Boolean.toString(DEFAULT_WEBSHELL_AUDIT_LOGGING_ENABLED));
-    return Boolean.parseBoolean(result);
+    return getBoolean(WEBSHELL_AUDIT_LOGGING_ENABLED, DEFAULT_WEBSHELL_AUDIT_LOGGING_ENABLED);
   }
 
   @Override

@@ -53,6 +53,8 @@ public class ConnectionInfoTest extends EasyMockSupport {
     private static String testPIDdir = "webshell-test";
     private static String testUserName = "Alice";
     private static long testPID = 12345;
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     private static void setupMessagesFactory(){
         PowerMock.mockStatic(MessagesFactory.class);
@@ -130,9 +132,6 @@ public class ConnectionInfoTest extends EasyMockSupport {
         connectionInfo.disconnect();
         verifyAll();
     }
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void testConnectFailure() throws Exception{

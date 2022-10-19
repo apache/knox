@@ -18,6 +18,7 @@
 
 package org.apache.knox.gateway.websockets;
 
+import static org.easymock.EasyMock.isA;
 import org.apache.knox.gateway.audit.api.AuditService;
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.audit.api.Auditor;
@@ -43,8 +44,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.net.URI;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.easymock.EasyMock.isA;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({JWTValidatorFactory.class, MessagesFactory.class, GatewayWebsocketHandler.class, AuditServiceFactory.class})

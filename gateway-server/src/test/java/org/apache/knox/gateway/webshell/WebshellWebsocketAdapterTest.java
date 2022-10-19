@@ -18,6 +18,7 @@
 
 package org.apache.knox.gateway.webshell;
 
+import static org.easymock.EasyMock.isA;
 import org.apache.knox.gateway.audit.api.AuditService;
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.audit.api.Auditor;
@@ -46,11 +47,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.easymock.EasyMock.isA;
-
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({WebshellWebSocketAdapter.class, MessagesFactory.class, AuditServiceFactory.class})
 public class WebshellWebsocketAdapterTest extends EasyMockSupport {
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     private GatewayConfig setupGatewayConfig(){
         GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
@@ -116,8 +117,6 @@ public class WebshellWebsocketAdapterTest extends EasyMockSupport {
         webshellWebSocketAdapter.onWebSocketConnect(session);
         verifyAll();
     }
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void testOnWebSocketConnectWithoutUsername() throws Exception {
@@ -190,8 +189,6 @@ public class WebshellWebsocketAdapterTest extends EasyMockSupport {
         webshellWebSocketAdapter.onWebSocketText("{ \"userInput\" : \"fake user input\"}");
         verifyAll();
     }
-
-
 
     @Test
     public void testOnWebSocketClose() throws Exception {
