@@ -66,32 +66,32 @@
     <span *ngIf="hasResult" style="color:black; margin-left: 1.75%; margin-right: 1.75%;">
         <div class="tokenResultDisplay">
             <label (click)="copyTextToClipboard('accessToken')"><i class="icon-copy"></i> JWT Token:</label>
-            <span id="accessToken" style="word-wrap: break-word">{{accessToken}}</span>
+            <span id="accessToken" style="word-wrap: break-word">{{tokenResultData.accessToken}}</span>
         </div>
 
-        <div *ngIf="accessPasscode" class="tokenResultDisplay">
+        <div *ngIf="tokenResultData.accessPasscode" class="tokenResultDisplay">
             <label (click)="copyTextToClipboard('accessPasscode')"><i class="icon-copy"></i> Passcode Token:</label>            
-            <span id="accessPasscode">{{accessPasscode}}</span>
+            <span id="accessPasscode">{{tokenResultData.accessPasscode}}</span>
         </div>
 
         <div class="tokenResultDisplay">
             <label><i class="icon-info"></i> Expiration:</label>            
-            <span>{{expiry}}</span>
+            <span>{{tokenResultData.expiry}}</span>
         </div>
 
         <div class="tokenResultDisplay">
             <label><i class="icon-info"></i> User:</label>            
-            <span>{{user}}</span>
+            <span>{{tokenResultData.user}}</span>
         </div>
 
         <div class="tokenResultDisplay">
             <label (click)="copyTextToClipboard('target_url')"><i class="icon-copy"></i> Target Base URL:</label>        
-            <span id="target_url">{{targetURL}}</span>
+            <span id="target_url">{{tokenResultData.targetURL}}</span>
         </div>
 
         <div class="tokenResultDisplay">
             <label><i class="icon-link"></i> Homepage:</label>            
-            <a [href]="homepageURL">Homepage URL</a>
+            <a [href]="tokenResultData.homepageURL">Homepage URL</a>
         </div>
     </span>
 </div>

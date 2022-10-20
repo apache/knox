@@ -14,6 +14,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+export class TssStatusData{
+    tokenManagementEnabled: boolean;
+    maximumLifetimeText: string;
+    maximumLifetimeSeconds: number;
+    lifespanInputEnabled: boolean;
+    impersonationEnabled: boolean;
+    configuredTssBackend: string;
+    allowedTssForTokengen: boolean;
+    actualTssBackend: string;
+}
+
+export class TokenResultData{
+    accessToken: string;
+    accessPasscode: string;
+    expiry: string;
+    user: string;
+    homepageURL: string;
+    targetURL: string;
+}
+
 export interface TokenData{
     access_token: string;
     token_id: string;
@@ -24,4 +44,13 @@ export interface TokenData{
     token_type: string;
     expires_in: number;
     passcode: string;
+ }
+
+ export interface TokenRequestParams{
+    lifespanInputEnabled: boolean;
+    comment: string;
+    impersonation: string;
+    lifespanDays: number;
+    lifespanHours: number;
+    lifespanMins:number;
  }

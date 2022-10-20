@@ -21,6 +21,7 @@ import {MatGridListModule} from '@angular/material/grid-list';
 import {BsModalModule} from 'ng2-bs3-modal/ng2-bs3-modal';
 import { TokenGen } from './token-gen.component';
 import { ReactiveFormsModule } from '@angular/forms';
+import { TokenGenService } from './token-gen.service';
 
 @NgModule({
     imports: [BrowserModule,
@@ -31,7 +32,7 @@ import { ReactiveFormsModule } from '@angular/forms';
         ReactiveFormsModule
     ],
     declarations: [TokenGen],
-    providers: [],
+    providers: [TokenGenService],
     bootstrap: [TokenGen]
 })
 export class AppModule {

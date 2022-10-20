@@ -14,14 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { HttpClient, HttpErrorResponse, HttpParams } from "@angular/common/http";
+import { HttpClient} from "@angular/common/http";
 import { Component, OnInit } from "@angular/core";
 import { FormControl, FormGroup, ValidatorFn, Validators } from "@angular/forms";
 import * as _swal from 'sweetalert';
 import { SweetAlert } from 'sweetalert/typings/core';
 const swal: SweetAlert = _swal as any;
-import { TokenData } from "./token.data.model";
-import { TssStatusData } from "./tssStatus.model";
+import { TokenResultData, TssStatusData } from "./token-gen.models";
+import { TokenGenService } from "./token-gen.service";
+
 
 
 @Component({
@@ -30,10 +31,6 @@ import { TssStatusData } from "./tssStatus.model";
   providers: []
 })
 export class TokenGen implements OnInit{
-  readonly baseURL: string;
-  readonly tokenURL: string;
-  readonly tssStatusRequestURL: string;
-  
   tssStatusMessageLevel: 'info' | 'warning' | 'error';
   tssStatusMessage: string;
   requestErrorMessage: string;
@@ -69,34 +66,20 @@ export class TokenGen implements OnInit{
   get lifespanMins() { return this.tokenGenFrom.get('lifespanMins'); }
   get impersonation() { return this.tokenGenFrom.get('impersonation'); }
 
-  // Data coming from token generating request
-  accessToken: string;
-  accessPasscode: string;
-  expiry: string;
-  user: string;
-  homepageURL: string;
-  targetURL: string;
+  // Data coming from Token generating request
+  tokenResultData: TokenResultData;
 
   // Data coming from TokenStateService status request
   tssStatus: TssStatusData;
 
-  constructor(private http: HttpClient) {
-    const loginPageSuffix = "token-gen/index.html";
-    const knoxtokenURL = "knoxtoken/api/v1/token";
-    const tssStatusURL = 'knoxtoken/api/v1/token/getTssStatus';
-
-    let topologyContext = window.location.pathname.replace(loginPageSuffix, "");
-    let temporaryURL = topologyContext.substring(0, topologyContext.lastIndexOf('/'));
-    this.baseURL = temporaryURL.substring(0, temporaryURL.lastIndexOf('/') + 1);    
-    this.tokenURL = topologyContext + knoxtokenURL;
-    this.tssStatusRequestURL = topologyContext + tssStatusURL;
-
+  constructor(private http: HttpClient, private tokenGenService: TokenGenService) {
     this.tssStatusMessageLevel = 'info';
     this.tssStatusMessage = '';
     this.requestErrorMessage = '';
     this.hasResult = false;
 
-    this.tssStatus = new TssStatusData()
+    this.tssStatus = new TssStatusData();
+    this.tokenResultData = new TokenResultData();
   }
 
   ngOnInit(): void {
@@ -125,16 +108,16 @@ export class TokenGen implements OnInit{
   }
 
   setTokenStateServiceStatus() {
-    this.http.get<TssStatusData>(this.tssStatusRequestURL)
-    .subscribe(responseData => {
-      this.tssStatus = responseData;
+    this.tokenGenService.getTokenStateServiceStatus()
+    .then(tssStatus => {
+      this.tssStatus = tssStatus;
       this.decideTssMessage();
-    }, (e: HttpErrorResponse) => {    
-      console.log(e.status);
-    });  
+    })
+    .catch((errorMessage) => {
+      this.requestErrorMessage = errorMessage;
+    });
   }
 
-  // From angular 9 there's cdk clipboard
   copyTextToClipboard(elementId) {
     let toBeCopied = document.getElementById(elementId).innerText.trim();
     const tempTextArea = document.createElement('textarea');
@@ -150,39 +133,23 @@ export class TokenGen implements OnInit{
     this.requestErrorMessage = '';
     this.hasResult = false;
 
-    let params = new HttpParams();
-    if (this.tssStatus.lifespanInputEnabled) {
-      params = params.append('lifespan', 'P' + this.lifespanDays.value + "DT" + this.lifespanHours.value + "H" + this.lifespanMins.value + "M");
-    }
-    if (this.comment.value) {
-      params = params.append('comment', this.comment.value);
-    }
-    if (this.impersonation.value) {
-      params = params.append('doAs', this.impersonation.value);
+    let params = {
+      lifespanInputEnabled: this.tssStatus.lifespanInputEnabled,
+      comment: this.comment.value,
+      impersonation: this.impersonation.value,
+      lifespanDays: this.lifespanDays.value,
+      lifespanHours: this.lifespanHours.value,
+      lifespanMins: this.lifespanMins.value
     }
 
-    this.http.get<TokenData>(this.tokenURL, { params: params })
-      .subscribe(responseData => {
-        this.hasResult = true;
-        this.accessToken = responseData.access_token;
-        let decodedToken = this.b64DecodeUnicode(this.accessToken.split(".")[1]);
-        let jwtJson = JSON.parse(decodedToken);
-        this.user = jwtJson.sub;
-        this.accessPasscode = responseData.passcode;
-        this.expiry = new Date(responseData.expires_in).toLocaleString();
-        this.homepageURL = this.baseURL + responseData.homepage_url;
-        this.targetURL = window.location.protocol + "//" + window.location.host + "/" + this.baseURL + responseData.target_url;
-      }, (e: HttpErrorResponse) => {
-        this.requestErrorMessage = "Response from " + e.url + " - " + e.status + ": " + e.statusText;
-        if(e.status === 401){
-          // TODO reload
-        } else {
-          if(e.error){
-            this.requestErrorMessage += " (" + e.error + ")"
-          }
-        }
-      }
-    );
+    this.tokenGenService.getGeneratedTokenData(params)  
+    .then(tokenResultData => {
+      this.hasResult = true;
+      this.tokenResultData = tokenResultData;
+    })
+    .catch((errorMessage) => {
+      this.requestErrorMessage = errorMessage;
+    });
   }
 
   private allZeroValidator(): ValidatorFn {
@@ -229,12 +196,4 @@ export class TokenGen implements OnInit{
     this.tssStatusMessageLevel = level;
     this.tssStatusMessage = message;
   }
-
-  private b64DecodeUnicode(string) {
-    // Going backwards: from bytestream, to percent-encoding, to original string.
-    return decodeURIComponent(atob(string).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-  }
-
 }
