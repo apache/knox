@@ -21,4 +21,5 @@ export class GeneralProxyInformation {
     webShellUrl: string;
     adminApiBookUrl: string;
     enableTokenManagement: string;
+    enableWebshell: string;
 }

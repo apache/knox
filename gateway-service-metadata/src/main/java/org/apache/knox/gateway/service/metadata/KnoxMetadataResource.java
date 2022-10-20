@@ -107,6 +107,7 @@ public class KnoxMetadataResource {
       proxyInfo.setAdminUiUrl(getBaseGatewayUrl(config) + "/manager/admin-ui/");
       proxyInfo.setWebShellUrl(getBaseGatewayUrl(config) + "/homepage/webshell-ui/index.html");
       setTokenManagementEnabledFlag(proxyInfo, gatewayServices);
+      proxyInfo.setEnableWebshell(String.valueOf(config.isWebShellEnabled()));
     }
 
     return proxyInfo;

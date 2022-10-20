@@ -93,6 +93,13 @@ export class GeneralProxyInformationComponent implements OnInit {
         return false;
     }
 
+    isWebshellEnabled() {
+        if (this.generalProxyInformation) {
+            return this.generalProxyInformation.enableWebshell === 'true';
+        }
+        return false;
+    }
+
     ngOnInit(): void {
         console.debug('GeneralProxyInformationComponent --> ngOnInit() --> ');
         this.homepageService.getGeneralProxyInformation()

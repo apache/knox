@@ -47,6 +47,10 @@ public class GeneralProxyInformation {
   @ApiModelProperty(value = "A boolean flag indicating if Knox token management should be enabled on the Knox Home page")
   private String enableTokenManagement = "false";
 
+  @XmlElement
+  @ApiModelProperty(value = "A boolean flag indicating whether Webshell UI should be enabled on the Knox Home page")
+  private String enableWebshell = "false";
+
   public String getVersion() {
     return version;
   }
@@ -86,6 +90,14 @@ public class GeneralProxyInformation {
 
   public void setEnableTokenManagement(String enableTokenManagement) {
     this.enableTokenManagement = enableTokenManagement;
+  }
+
+  public String getEnableWebshell() {
+    return enableWebshell;
+  }
+
+  public void setEnableWebshell(String enableWebshell) {
+    this.enableWebshell = enableWebshell;
   }
 
 }
