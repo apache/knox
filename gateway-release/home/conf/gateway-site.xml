@@ -88,6 +88,37 @@ limitations under the License.
         <value>60</value>
         <description>The interval (in seconds) for polling Ambari for cluster configuration changes.</description>
     </property>
+    <!-- @since 2.0.0 WebShell configs -->
+    <!-- must have websocket enabled to use webshell --> 
+    <property>
+        <name>gateway.webshell.feature.enabled</name>
+        <value>false</value>
+        <description>Enable/Disable webshell feature.</description>
+    </property>
+    <property>
+        <name>gateway.webshell.max.concurrent.sessions</name>
+        <value>20</value>
+        <description>Maximum number of total concurrent webshell sessions</description>
+    </property>
+    <property>
+        <name>gateway.webshell.audit.logging.enabled</name>
+        <value>false</value>
+        <description>[Experimental Feature] Enable/Disable webshell command audit logging.
+            NOTE: Turning this on might log secrets that might be part of
+            command line arguments, please consider this before turning this on.</description>
+    </property>
+    <property>
+        <name>gateway.webshell.read.buffer.size</name>
+        <value>1024</value>
+        <description>Web Shell buffer size for reading</description>
+    </property>
+
+    <!-- @since 2.0.0 websocket JWT validation configs -->
+    <property>
+        <name>gateway.websocket.JWT.validation.feature.enabled</name>
+        <value>true</value>
+        <description>Enable/Disable websocket JWT validation at websocket layer.</description>
+    </property>
 
     <!-- @since 1.5.0 homepage logout -->
     <property>

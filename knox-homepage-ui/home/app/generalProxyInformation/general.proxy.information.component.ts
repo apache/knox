@@ -38,6 +38,7 @@ export class GeneralProxyInformationComponent implements OnInit {
         this['showAdminAPI'] = true;
         this['showMetadataAPI'] = true;
         this['showTokens'] = true;
+        this['showWebShell'] = true;
     }
 
     getVersion() {
@@ -53,6 +54,13 @@ export class GeneralProxyInformationComponent implements OnInit {
           }
         return '';
     }
+
+    getWebShellUrl() {
+            if (this.generalProxyInformation) {
+                return this.generalProxyInformation.webShellUrl;
+              }
+            return '';
+        }
 
     getMetadataAPIUrl(endpoint: string) {
         return this.getAdminUiUrl().replace('manager/admin-ui/', 'metadata/api/v1/metadata/' + endpoint);
@@ -85,6 +93,13 @@ export class GeneralProxyInformationComponent implements OnInit {
         return false;
     }
 
+    isWebshellEnabled() {
+        if (this.generalProxyInformation) {
+            return this.generalProxyInformation.enableWebshell === 'true';
+        }
+        return false;
+    }
+
     ngOnInit(): void {
         console.debug('GeneralProxyInformationComponent --> ngOnInit() --> ');
         this.homepageService.getGeneralProxyInformation()
@@ -108,6 +123,7 @@ export class GeneralProxyInformationComponent implements OnInit {
         this['showAdminAPI'] = (profile['gpi_admin_api'] === 'true');
         this['showMetadataAPI'] = (profile['gpi_md_api'] === 'true');
         this['showTokens'] = (profile['gpi_tokens'] === 'true');
+        this['showWebShell'] = (profile['gpi_webshell'] === 'true');
     }
 
     toggleBoolean(propertyName: string) {

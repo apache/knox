@@ -27,12 +27,12 @@ import org.apache.knox.gateway.services.registry.ServiceDefinitionRegistry;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
+import org.apache.knox.gateway.webshell.WebshellWebSocketAdapter;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
-
 import javax.websocket.ClientEndpointConfig;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -45,6 +45,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Websocket handler that will handle websocket connection request. This class
@@ -67,7 +68,11 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
   static final String REGEX_SPLIT_SERVICE_PATH = "^((?:[^/]*/){3}[^/]*)";
 
+  static final String REGEX_WEBSHELL_REQUEST_PATH =
+          "^(" + SECURE_WEBSOCKET_PROTOCOL_STRING+"|"+WEBSOCKET_PROTOCOL_STRING + ")[^/]+:[0-9]+/[^/]+/webshell$";
+
   private static final int POOL_SIZE = 10;
+  private final AtomicInteger concurrentWebshells;
 
   /**
    * Manage the threads that are spawned
@@ -78,13 +83,14 @@ public class GatewayWebsocketHandler extends WebSocketHandler
   final GatewayConfig config;
   final GatewayServices services;
 
-  public GatewayWebsocketHandler(final GatewayConfig config,
-      final GatewayServices services) {
-    super();
 
+  public GatewayWebsocketHandler(final GatewayConfig config,
+                                 final GatewayServices services) {
+    super();
     this.config = config;
     this.services = services;
     pool = Executors.newFixedThreadPool(POOL_SIZE);
+    this.concurrentWebshells = new AtomicInteger(0);
   }
 
   @Override
@@ -109,18 +115,40 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
   }
 
+  private Boolean isWebshellRequest(URI requestURI){
+    return requestURI.toString().matches(REGEX_WEBSHELL_REQUEST_PATH);
+  }
+
+  private WebshellWebSocketAdapter handleWebshellRequest(ServletUpgradeRequest req){
+      if (config.isWebShellEnabled()){
+        if (concurrentWebshells.get() >= config.getMaximumConcurrentWebshells()){
+          throw new RuntimeException("Number of allowed concurrent Web Shell sessions exceeded");
+        }
+        JWTValidator jwtValidator = JWTValidatorFactory.create(req, services, config);
+        if (jwtValidator.validate()) {
+          return new WebshellWebSocketAdapter(pool, config, jwtValidator, concurrentWebshells);
+        }
+        throw new RuntimeException("No valid token found for Web Shell connection");
+      }
+      throw new RuntimeException("Web Shell not enabled");
+  }
+
+
   @Override
   public Object createWebSocket(ServletUpgradeRequest req,
-      ServletUpgradeResponse resp) {
-
+                                ServletUpgradeResponse resp) {
     try {
       final URI requestURI = req.getRequestURI();
 
-      /* URL used to connect to websocket backend */
+      if (isWebshellRequest(requestURI)) {
+        return handleWebshellRequest(req);
+      }
+
+      // URL used to connect to websocket backend
       final String backendURL = getMatchedBackendURL(requestURI);
       LOG.debugLog("Generated backend URL for websocket connection: " + backendURL);
 
-      /* Upgrade happens here */
+      // Upgrade happens here
       final ClientEndpointConfig clientConfig = getClientEndpointConfig(req);
       clientConfig.getUserProperties().put("org.apache.knox.gateway.websockets.truststore", getTruststore());
       return new ProxyWebSocketAdapter(URI.create(backendURL), pool, clientConfig, config);
@@ -129,7 +157,6 @@ public class GatewayWebsocketHandler extends WebSocketHandler
       throw new RuntimeException(e);
     }
   }
-
 
   private KeyStore getTruststore() throws KeystoreServiceException {
     final KeystoreService ks = this.services

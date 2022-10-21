@@ -14,12 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-export class GeneralProxyInformation {
-    version: string;
-    adminUiUrl: string;
-    webShellUrl: string;
-    adminApiBookUrl: string;
-    enableTokenManagement: string;
-    enableWebshell: string;
-}
+import { BrowserModule } from '@angular/platform-browser';
+import { NgModule } from '@angular/core';
+import { NgTerminalModule } from 'ng-terminal';
+import { AppComponent } from './app.component';
+@NgModule({
+  declarations: [
+    AppComponent
+  ],
+  imports: [
+    BrowserModule,
+    NgTerminalModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }

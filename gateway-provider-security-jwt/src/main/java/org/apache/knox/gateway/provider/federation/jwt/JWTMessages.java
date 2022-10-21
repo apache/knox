@@ -95,4 +95,7 @@ public interface JWTMessages {
 
   @Message( level = MessageLevel.INFO, text = "Missing token: {0}")
   void missingTokenFromHeader(Pair<JWTFederationFilter.TokenType, String> wireToken);
+
+  @Message( level = MessageLevel.INFO, text = "Unexpected Issuer for token {0} ({1})." )
+  void unexpectedTokenIssuer(String tokenDisplayText, String tokenId);
 }

@@ -15,21 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.audit.api;
+package org.apache.knox.gateway.webshell;
 
-public abstract class Action {
-  private Action() {
-  }
+/**
+ * data structure to store request coming from client (connect or command)
+ */
+public class WebshellData {
+    private String userInput = "";
 
-  public static final String AUTHENTICATION = "authentication";
-  public static final String AUTHORIZATION = "authorization";
-  public static final String REDEPLOY = "redeploy";
-  public static final String DEPLOY = "deploy";
-  public static final String LOAD = "load";
-  public static final String UNDEPLOY = "undeploy";
-  public static final String IDENTITY_MAPPING = "identity-mapping";
-  public static final String DISPATCH = "dispatch";
-  public static final String ACCESS = "access";
-  public static final String WEBSHELL = "webshell";
+    public String getUserInput() {
+        return userInput;
+    }
 
+    public void setUserInput(String userInput) {
+        this.userInput = userInput;
+    }
 }

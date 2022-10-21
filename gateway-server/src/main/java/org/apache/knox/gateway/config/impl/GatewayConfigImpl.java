@@ -157,6 +157,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String WEBSOCKET_IDLE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.idle.timeout";
   public static final String WEBSOCKET_MAX_WAIT_BUFFER_COUNT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.wait.buffer.count";
 
+
+  /* @since 2.0.0 WebShell config variables */
+  public static final String WEBSHELL_FEATURE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".webshell.feature.enabled";
+  public static final String WEBSHELL_AUDIT_LOGGING_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".webshell.audit.logging.enabled";
+  public static final String WEBSHELL_MAX_CONCURRENT_SESSIONS = GATEWAY_CONFIG_FILE_PREFIX + ".webshell.max.concurrent.sessions";
+  public static final String WEBSHELL_READ_BUFFER_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".webshell.read.buffer.size";
+
   /**
    * Properties for for gateway port mapping feature
    */
@@ -208,6 +215,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT = 60000;
   public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT = 300000;
   public static final int DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT = 100;
+
+  public static final boolean DEFAULT_WEBSHELL_FEATURE_ENABLED = false;
+  public static final boolean DEFAULT_WEBSHELL_AUDIT_LOGGING_ENABLED = false;
+  public static final int DEFAULT_WEBSHELL_MAX_CONCURRENT_SESSIONS = 3;
+  public static final int DEFAULT_WEBSHELL_READ_BUFFER_SIZE = 1024;
+
 
   public static final boolean DEFAULT_GATEWAY_PORT_MAPPING_ENABLED = true;
   public static final boolean DEFAULT_REMOTE_ALIAS_SERVICE_ENABLED = true;
@@ -328,6 +341,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private String getGatewayHomeDir() {
     return get(GATEWAY_HOME_VAR, System.getProperty(GATEWAY_HOME_VAR, System.getenv(GATEWAY_HOME_VAR)));
+  }
+
+  // directory for saving the PIDs spawned by knox
+  @Override
+  public String getGatewayPIDDir(){
+    String pidDir = getGatewayHomeDir() + File.separator + "pids";
+    return FilenameUtils.normalize(pidDir);
   }
 
   @Override
@@ -906,8 +926,27 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isWebsocketEnabled() {
-    final String result = get( WEBSOCKET_FEATURE_ENABLED, Boolean.toString(DEFAULT_WEBSOCKET_FEATURE_ENABLED));
-    return Boolean.parseBoolean(result);
+    return getBoolean(WEBSOCKET_FEATURE_ENABLED, DEFAULT_WEBSOCKET_FEATURE_ENABLED);
+  }
+
+  @Override
+  public boolean isWebShellEnabled() {
+    return getBoolean(WEBSHELL_FEATURE_ENABLED, DEFAULT_WEBSHELL_FEATURE_ENABLED);
+  }
+
+  @Override
+  public boolean isWebShellAuditLoggingEnabled(){
+    return getBoolean(WEBSHELL_AUDIT_LOGGING_ENABLED, DEFAULT_WEBSHELL_AUDIT_LOGGING_ENABLED);
+  }
+
+  @Override
+  public int getMaximumConcurrentWebshells(){
+    return getInt( WEBSHELL_MAX_CONCURRENT_SESSIONS, DEFAULT_WEBSHELL_MAX_CONCURRENT_SESSIONS);
+  }
+
+  @Override
+  public int getWebShellReadBufferSize(){
+    return getInt( WEBSHELL_READ_BUFFER_SIZE, DEFAULT_WEBSHELL_READ_BUFFER_SIZE);
   }
 
   @Override

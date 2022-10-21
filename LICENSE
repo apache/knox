@@ -209,7 +209,7 @@ notices and license terms.  Your use of these sub-components is subject
 to the terms and conditions of the following licenses.
 
 ------------------------------------------------------------------------------
-From Jetty and Jerico
+From Jetty, Jerico and Pty4J
 ------------------------------------------------------------------------------
 Eclipse Public License - v 1.0
 
@@ -833,7 +833,7 @@ SOFTWARE.
 
 
 ------------------------------------------------------------------------------
-Eclipse Public License - v1.0 (from Jetty/Jerico)
+Eclipse Public License - v1.0 (from Jetty/Jerico/Pty4J)
 ------------------------------------------------------------------------------
 THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC
 LICENSE ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THE PROGRAM

@@ -24,5 +24,6 @@ public abstract class ResourceType {
   public static final String URI = "uri";
   public static final String TOPOLOGY = "topology";
   public static final String PRINCIPAL = "principal";
+  public static final String PROCESS = "process";
 
 }

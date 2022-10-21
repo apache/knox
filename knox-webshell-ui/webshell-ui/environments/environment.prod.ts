@@ -14,12 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-export class GeneralProxyInformation {
-    version: string;
-    adminUiUrl: string;
-    webShellUrl: string;
-    adminApiBookUrl: string;
-    enableTokenManagement: string;
-    enableWebshell: string;
-}
+export const environment = {
+  production: true
+};

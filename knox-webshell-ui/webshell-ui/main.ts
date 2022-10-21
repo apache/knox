@@ -14,12 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { enableProdMode } from '@angular/core';
+import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 
-export class GeneralProxyInformation {
-    version: string;
-    adminUiUrl: string;
-    webShellUrl: string;
-    adminApiBookUrl: string;
-    enableTokenManagement: string;
-    enableWebshell: string;
+import { AppModule } from './app/app.module';
+import { environment } from './environments/environment';
+
+if (environment.production) {
+  enableProdMode();
 }
+
+platformBrowserDynamic().bootstrapModule(AppModule)
+  .catch(err => console.error(err));

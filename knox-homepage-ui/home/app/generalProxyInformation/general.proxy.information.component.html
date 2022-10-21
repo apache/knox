@@ -68,6 +68,10 @@
                     <a href="{{ getTokenGenerationUrl() }}" target="_blank">Token Generation</a>
                 </td>
             </tr>
+            <tr *ngIf="this.isWebshellEnabled() && this['showWebShell']">
+                <td>Web Shell</td>
+                <td><a href="{{ getWebShellUrl() }}" target="_blank">{{ getWebShellUrl() }}</a></td>
+            </tr>
          </tbody>
     </table>
 </div>

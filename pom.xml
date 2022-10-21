@@ -149,6 +149,7 @@
         <module>knox-homepage-ui</module>
         <module>gateway-openapi-ui</module>
         <module>knox-token-management-ui</module>
+        <module>knox-webshell-ui</module>
     </modules>
 
     <properties>
@@ -249,13 +250,16 @@
         <mina.version>2.0.22</mina.version>
         <netty.version>4.1.77.Final</netty.version>
         <nimbus-jose-jwt.version>8.14.1</nimbus-jose-jwt.version>
-        <nodejs.version>v12.18.2</nodejs.version>
+        <nodejs.version>v12.20.2</nodejs.version>
         <okhttp.version>2.7.5</okhttp.version>
         <opensaml.version>3.4.5</opensaml.version>
         <pac4j.version>4.5.6</pac4j.version>
         <postgresql.version>42.3.3</postgresql.version>
         <mysql.version>8.0.28</mysql.version>
         <protobuf.version>3.16.1</protobuf.version>
+        <powermock.version>2.0.9</powermock.version>
+        <purejavacomm.version>0.0.11.1</purejavacomm.version>
+        <pty4j.version>0.11.4</pty4j.version>
         <rest-assured.version>4.3.3</rest-assured.version>
         <shiro.version>1.8.0</shiro.version>
         <shrinkwrap.version>1.2.6</shrinkwrap.version>
@@ -281,7 +285,13 @@
         <xml-matchers.version>0.10</xml-matchers.version>
         <zookeeper.version>3.5.7</zookeeper.version>
     </properties>
-
+    <repositories>
+        <repository>
+            <id>jcenter</id>
+            <name>jcenter</name>
+            <url>https://jcenter.bintray.com</url>
+        </repository>
+    </repositories>
     <profiles>
         <profile>
             <id>package</id>
@@ -1261,6 +1271,11 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.knox</groupId>
+                <artifactId>knox-webshell-ui</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-openapi-ui</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -2166,6 +2181,17 @@
                 <artifactId>mysql-connector-java</artifactId>
                 <version>${mysql.version}</version>
             </dependency>
+            <!-- Webshell support -->
+            <dependency>
+                <groupId>org.jetbrains.pty4j</groupId>
+                <artifactId>pty4j</artifactId>
+                <version>${pty4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jetbrains.pty4j</groupId>
+                <artifactId>purejavacomm</artifactId>
+                <version>${purejavacomm.version}</version>
+            </dependency>
             <!-- pac4j Dependencies -->
             <dependency>
                 <groupId>org.pac4j</groupId>
@@ -2202,12 +2228,6 @@
                 <groupId>org.pac4j</groupId>
                 <artifactId>pac4j-oidc</artifactId>
                 <version>${pac4j.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.mockito</groupId>
-                        <artifactId>mockito-core</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.pac4j</groupId>
@@ -2454,6 +2474,37 @@
             </dependency>
 
             <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-module-junit4</artifactId>
+                <version>${powermock.version}</version>
+                <scope>test</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.objenesis</groupId>
+                        <artifactId>objenesis</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-api-easymock</artifactId>
+                <version>${powermock.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-core</artifactId>
+                <version>${powermock.version}</version>
+                <scope>test</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.objenesis</groupId>
+                        <artifactId>objenesis</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
                 <groupId>org.apache.derby</groupId>
                 <artifactId>derby</artifactId>
                 <version>${derby.db.version}</version>
@@ -2475,7 +2526,6 @@
                 <groupId>org.apache.velocity</groupId>
                 <artifactId>velocity-engine-core</artifactId>
                 <version>${velocity.version}</version>
-                <!--scope>test</scope-->
             </dependency>
 
             <dependency>
