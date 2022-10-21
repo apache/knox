@@ -95,4 +95,7 @@ public interface TokenServiceMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "Token impersonation failed: {0}" )
   void tokenImpersonationFailed(@StackTrace Throwable t);
+
+  @Message(level=MessageLevel.DEBUG, text="Refreshing proxyuser config in {0} topology with prefix {1} and config {2}")
+  void refreshProxyuserConfig(String topology, String prefix, String properties);
 }

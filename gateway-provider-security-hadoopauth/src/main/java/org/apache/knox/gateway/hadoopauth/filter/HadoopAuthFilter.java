@@ -114,11 +114,13 @@ public class HadoopAuthFilter extends
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
+    final String topologyName = (String) filterConfig.getInitParameter("clusterName");
     // Return a {@link Configuration} instance with the proxy user
     // (<code>hadoop.proxyuser.*</code>) properties set using parameter information
     // from the filterConfig.
     final Configuration conf = AuthFilterUtils.getProxyUserConfiguration(filterConfig, PROXYUSER_PREFIX);
     ProxyUsers.refreshSuperUserGroupsConfiguration(conf, PROXYUSER_PREFIX);
+    LOG.refreshProxyuserConfig(topologyName, PROXYUSER_PREFIX, conf.getPropsWithPrefix(PROXYUSER_PREFIX).toString());
 
     Collection<String> ignoredServices = null;
 
