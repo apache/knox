@@ -16,9 +16,7 @@
  */
 import {NgModule} from '@angular/core';
 import {BrowserModule} from '@angular/platform-browser';
-import {HttpClientModule, HttpClientXsrfModule} from '@angular/common/http';
-import {MatGridListModule} from '@angular/material/grid-list';
-import {BsModalModule} from 'ng2-bs3-modal/ng2-bs3-modal';
+import {HttpClientModule} from '@angular/common/http';
 import { TokenGen } from './token-gen.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { TokenGenService } from './token-gen.service';
@@ -26,9 +24,6 @@ import { TokenGenService } from './token-gen.service';
 @NgModule({
     imports: [BrowserModule,
         HttpClientModule,
-        HttpClientXsrfModule,
-        MatGridListModule,
-        BsModalModule,
         ReactiveFormsModule
     ],
     declarations: [TokenGen],
