@@ -43,9 +43,24 @@ export class TokenGenService {
         let headers = new HttpHeaders();
         headers = this.addHeaders(headers);
 
-        return this.http.get<TssStatusData>(this.tssStatusRequestURL, { headers: headers })
+        return this.http.get<any>(this.tssStatusRequestURL, { headers: headers })
         .toPromise()
-        .then(responseData => responseData)
+        .then(responseData => {
+                /** 
+                 * The data needs to be returned this way, because if the return type would be set to <TssStatusData> and the responseData
+                 * would be just returned without modification the boolean values would act like string.
+                 */
+                return {
+                    tokenManagementEnabled: responseData.tokenManagementEnabled == "true",
+                    maximumLifetimeText: responseData.maximumLifetimeText,
+                    maximumLifetimeSeconds: responseData.maximumLifetimeSeconds,
+                    lifespanInputEnabled: responseData.lifespanInputEnabled == "true",
+                    impersonationEnabled: responseData.impersonationEnabled == "true",
+                    configuredTssBackend: responseData.configuredTssBackend,
+                    allowedTssForTokengen: responseData.allowedTssForTokengen == "true",
+                    actualTssBackend: responseData.actualTssBackend
+                }
+        })
         .catch((error: HttpErrorResponse) => {
             console.debug('TokenGenService --> getTokenStateServiceStatus() --> ' + this.tssStatusRequestURL + '\n  error: ' + error.message);
             if (error.status === 401) {

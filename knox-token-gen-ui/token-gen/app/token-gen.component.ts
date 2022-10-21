@@ -169,9 +169,13 @@ export class TokenGen implements OnInit{
     if (this.tssStatus.maximumLifetimeSeconds == -1) {
       return false;
     }
+    if (!this.tssStatus.lifespanInputEnabled){
+      return false;
+    }
     let daysInSeconds = this.lifespanDays.value * 86400;
     let hoursInSeconds = this.lifespanHours.value * 3600;
     let minsInSeconds = this.lifespanMins.value * 60;
+    
     let suppliedLifetime = daysInSeconds + hoursInSeconds + minsInSeconds;
     return suppliedLifetime > this.tssStatus.maximumLifetimeSeconds;
   }

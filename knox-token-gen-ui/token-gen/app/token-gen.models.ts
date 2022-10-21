@@ -36,12 +36,8 @@ export class TokenResultData{
 
 export interface TokenData{
     access_token: string;
-    token_id: string;
-    managed: boolean;
     target_url: string;
     homepage_url: string;
-    endpoint_public_cert: string;
-    token_type: string;
     expires_in: number;
     passcode: string;
  }
@@ -52,5 +48,5 @@ export interface TokenData{
     impersonation: string;
     lifespanDays: number;
     lifespanHours: number;
-    lifespanMins:number;
+    lifespanMins: number;
  }
