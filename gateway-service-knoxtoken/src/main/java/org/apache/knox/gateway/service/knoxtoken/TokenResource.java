@@ -274,7 +274,7 @@ public class TokenResource {
     // management status (i.e. even if token state management is enabled users
     // should be able to opt-out token impersonation
     final String impersonationEnabledValue = context.getInitParameter(IMPERSONATION_ENABLED_PARAM);
-    impersonationEnabled = impersonationEnabledValue == null ? Boolean.TRUE : Boolean.parseBoolean(impersonationEnabledValue);
+    impersonationEnabled = impersonationEnabledValue == null ? Boolean.FALSE : Boolean.parseBoolean(impersonationEnabledValue);
 
     // If server-managed token expiration is configured, set the token state service
     if (isServerManagedTokenStateEnabled()) {
@@ -327,6 +327,7 @@ public class TokenResource {
       if (impersonationEnabled) {
         final Configuration conf = AuthFilterUtils.getProxyUserConfiguration(context, PROXYUSER_PREFIX);
         ProxyUsers.refreshSuperUserGroupsConfiguration(conf, PROXYUSER_PREFIX);
+        log.refreshProxyuserConfig(topologyName, PROXYUSER_PREFIX, conf.getPropsWithPrefix(PROXYUSER_PREFIX).toString());
       }
     }
     setTokenStateServiceStatusMap();
@@ -730,7 +731,7 @@ public class TokenResource {
           AuthFilterUtils.authorizeImpersonationRequest(request, doAsUser);
           createdBy = userName;
           userName = doAsUser;
-          log.tokenImpersonationSuccess(userName, doAsUser);
+          log.tokenImpersonationSuccess(createdBy, doAsUser);
         } catch (AuthorizationException e) {
           log.tokenImpersonationFailed(e);
           return Response.status(Response.Status.FORBIDDEN).entity("{ \"" + e.getMessage() + "\" }").build();
