@@ -69,6 +69,15 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>knox-token-gen-npm-run-lint</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>run lint</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>knox-token-management-npm-run-build-prod</id>
                         <goals>
                             <goal>npm</goal>

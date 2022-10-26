@@ -14,14 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { HttpClient} from "@angular/common/http";
-import { Component, OnInit } from "@angular/core";
-import { FormControl, FormGroup, ValidatorFn, Validators } from "@angular/forms";
+import { HttpClient} from '@angular/common/http';
+import { Component, OnInit } from '@angular/core';
+import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import * as _swal from 'sweetalert';
 import { SweetAlert } from 'sweetalert/typings/core';
 const swal: SweetAlert = _swal as any;
-import { TokenResultData, TssStatusData } from "./token-gen.models";
-import { TokenGenService } from "./token-gen.service";
+import { TokenResultData, TssStatusData } from './token-gen.models';
+import { TokenGenService } from './token-gen.service';
 
 
 
@@ -30,7 +30,7 @@ import { TokenGenService } from "./token-gen.service";
   templateUrl: './token-gen.component.html',
   providers: []
 })
-export class TokenGen implements OnInit{
+export class TokenGenComponent implements OnInit {
   tssStatusMessageLevel: 'info' | 'warning' | 'error';
   tssStatusMessage: string;
   requestErrorMessage: string;
@@ -87,13 +87,14 @@ export class TokenGen implements OnInit{
   }
 
   generateToken() {
-    if(this.tokenGenFrom.valid && this.tssStatus.tokenManagementEnabled && this.tssStatus.allowedTssForTokengen){
-      if(this.isMaximumLifetimeExceeded()){
+    if (this.tokenGenFrom.valid && this.tssStatus.tokenManagementEnabled && this.tssStatus.allowedTssForTokengen) {
+      if (this.isMaximumLifetimeExceeded()) {
         swal({
-          title: "Warning",
-          text: "You are trying to generate a token with a lifetime that exceeds the configured maximum. In this case the generated token's lifetime will be limited to the configured maximum.",
-          icon: "warning",
-          buttons: ["Adjust request lifetime", "Generate token anyway"],
+          title: 'Warning',
+          text: `You are trying to generate a token with a lifetime that exceeds the configured maximum.
+                 In this case the generated token's lifetime will be limited to the configured maximum.`,
+          icon: 'warning',
+          buttons: ['Adjust request lifetime', 'Generate token anyway'],
           dangerMode: true
         })
         .then((willGenerateToken) => {
@@ -101,7 +102,7 @@ export class TokenGen implements OnInit{
             this.requestToken();
           }
         });
-      }else{
+      } else {
         this.requestToken();
       }
     }
@@ -126,7 +127,7 @@ export class TokenGen implements OnInit{
     tempTextArea.select();
     document.execCommand('copy');
     document.body.removeChild(tempTextArea);
-    swal("Copied to clipboard!", {buttons: [false],timer: 1000});
+    swal('Copied to clipboard!', { buttons: [false], timer: 1000 });
   }
 
   private requestToken() {
@@ -140,9 +141,9 @@ export class TokenGen implements OnInit{
       lifespanDays: this.lifespanDays.value,
       lifespanHours: this.lifespanHours.value,
       lifespanMins: this.lifespanMins.value
-    }
+    };
 
-    this.tokenGenService.getGeneratedTokenData(params)  
+    this.tokenGenService.getGeneratedTokenData(params)
     .then(tokenResultData => {
       this.hasResult = true;
       this.tokenResultData = tokenResultData;
@@ -154,49 +155,50 @@ export class TokenGen implements OnInit{
 
   private allZeroValidator(): ValidatorFn {
     return (formGroup: FormGroup) => {
-      if(
-        formGroup.get('lifespanDays').value == 0 &&
-        formGroup.get('lifespanHours').value == 0 &&
-        formGroup.get('lifespanMins').value == 0
-        ){
+      if (
+        formGroup.get('lifespanDays').value === 0 &&
+        formGroup.get('lifespanHours').value === 0 &&
+        formGroup.get('lifespanMins').value === 0
+        ) {
           return {allZero: true};
       }
-        return null;
-     }
+      return null;
+    };
   }
 
   private isMaximumLifetimeExceeded() {
-    if (this.tssStatus.maximumLifetimeSeconds == -1) {
+    if (this.tssStatus.maximumLifetimeSeconds === -1) {
       return false;
     }
-    if (!this.tssStatus.lifespanInputEnabled){
+    if (!this.tssStatus.lifespanInputEnabled) {
       return false;
     }
     let daysInSeconds = this.lifespanDays.value * 86400;
     let hoursInSeconds = this.lifespanHours.value * 3600;
     let minsInSeconds = this.lifespanMins.value * 60;
-    
+
     let suppliedLifetime = daysInSeconds + hoursInSeconds + minsInSeconds;
     return suppliedLifetime > this.tssStatus.maximumLifetimeSeconds;
   }
 
   private decideTssMessage() {
     if (this.tssStatus.tokenManagementEnabled) {
-      if(this.tssStatus.allowedTssForTokengen){
-        if(this.tssStatus.actualTssBackend == 'AliasBasedTokenStateService'){
-          this.setTssMessage('warning','Token management backend is configured to store tokens in keystores. This is only valid non-HA environments!');
-        }else{
-          this.setTssMessage('info','Token management backend is properly configured for HA and production deployments.');
+      if (this.tssStatus.allowedTssForTokengen) {
+        if (this.tssStatus.actualTssBackend === 'AliasBasedTokenStateService') {
+          this.setTssMessage('warning', `Token management backend is configured to store tokens in keystores.
+            This is only valid non-HA environments!`);
+        } else {
+          this.setTssMessage('info', 'Token management backend is properly configured for HA and production deployments.');
         }
-      }else{
-        this.setTssMessage('error','Token management backend initialization failed, token generation disabled.');
+      } else {
+        this.setTssMessage('error', 'Token management backend initialization failed, token generation disabled.');
       }
     } else {
-      this.setTssMessage('error','Token management is disabled');
+      this.setTssMessage('error', 'Token management is disabled');
     }
   }
 
-  private setTssMessage(level: 'info' | 'warning' | 'error', message: string){
+  private setTssMessage(level: 'info' | 'warning' | 'error', message: string) {
     this.tssStatusMessageLevel = level;
     this.tssStatusMessage = message;
   }
