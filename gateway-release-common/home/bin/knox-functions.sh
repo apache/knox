@@ -232,12 +232,20 @@ function getPID {
       printf "Can't find PID dir.\n"
       exit 1
    fi
-   if [ ! -f "$APP_PID_FILE" ]; then
+
+   getPidByCommand
+
+   if [ ! -f "$APP_PID_FILE" ] && [ -z $APP_GATEWAY_PID ]; then
      APP_PID=0
      return 1
    fi
 
    APP_PID="$(<"$APP_PID_FILE")"
+
+   PID_EXIST=$(ps aux | awk '{print $2}'| grep -w $APP_PID)
+   if [ ! $PID_EXIST ];then
+	    APP_PID=$APP_GATEWAY_PID
+   fi
 
    ps -p "$APP_PID" > /dev/null
    # if the exit code was 1 then it isn't running
@@ -247,6 +255,14 @@ function getPID {
    fi
 
    return 0
+}
+
+function getPidByCommand {
+   APP_GATEWAY_PID=` ps ax | grep 'java.*'$APP_NAME'.jar' | grep -v grep | awk '{print $1}'`
+   if [ -z $APP_GATEWAY_PID ];then
+     return 0
+   fi
+   return 1
 }
 
 function appStart {
