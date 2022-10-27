@@ -21,9 +21,11 @@ import org.apache.knox.gateway.jersey.JerseyServiceDeploymentContributorBase;
 
 public class TokenServiceDeploymentContributor extends JerseyServiceDeploymentContributorBase {
 
+  public static final String ROLE = "KNOXTOKEN";
+
   @Override
   public String getRole() {
-    return "KNOXTOKEN";
+    return ROLE;
   }
 
   @Override
