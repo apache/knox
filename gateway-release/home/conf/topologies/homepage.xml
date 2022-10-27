@@ -111,9 +111,6 @@
       </param>
    </service>
    <application>
-      <name>tokengen</name>
-   </application>
-   <application>
       <name>token-gen</name>
    </application>
    <application>

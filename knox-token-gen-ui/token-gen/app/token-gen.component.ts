@@ -23,8 +23,6 @@ const swal: SweetAlert = _swal as any;
 import { TokenResultData, TssStatusData } from './token-gen.models';
 import { TokenGenService } from './token-gen.service';
 
-
-
 @Component({
   selector: 'app-token-gen',
   templateUrl: './token-gen.component.html',

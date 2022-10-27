@@ -14,12 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
-import { HttpClientModule } from '@angular/common/http';
-import { TokenGenComponent } from './token-gen.component';
-import { ReactiveFormsModule } from '@angular/forms';
-import { TokenGenService } from './token-gen.service';
+import {NgModule} from '@angular/core';
+import {BrowserModule} from '@angular/platform-browser';
+import {HttpClientModule} from '@angular/common/http';
+import {TokenGenComponent} from './token-gen.component';
+import {ReactiveFormsModule} from '@angular/forms';
+import {TokenGenService} from './token-gen.service';
 
 @NgModule({
     imports: [BrowserModule,
