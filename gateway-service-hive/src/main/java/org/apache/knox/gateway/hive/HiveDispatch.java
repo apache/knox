@@ -19,14 +19,14 @@ package org.apache.knox.gateway.hive;
 
 import org.apache.knox.gateway.config.Configure;
 import org.apache.knox.gateway.config.Default;
-import org.apache.knox.gateway.dispatch.DefaultDispatch;
+import org.apache.knox.gateway.dispatch.ConfigurableDispatch;
 import org.apache.http.client.methods.HttpUriRequest;
 
 /**
  * This specialized dispatch provides Hive specific features to the
  * default HttpClientDispatch.
  */
-public class HiveDispatch extends DefaultDispatch {
+public class HiveDispatch extends ConfigurableDispatch {
   private boolean basicAuthPreemptive;
 
   @Override

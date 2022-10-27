@@ -229,6 +229,15 @@ public class GatewayDispatchFilterTest {
                                     true);
   }
 
+  @Test
+  public void testIgnorePathSegmentsAndQueryParams() throws Exception {
+    final String serviceRole = "TESTROLE";
+    doTestServiceDispatchWhitelist(Collections.singletonList(serviceRole),
+            "^https://localhost:[0-9]+/?$",
+            serviceRole,
+            "https://localhost:1234/any/path?any=query",
+            true);
+  }
 
   private void doTestServiceDispatchWhitelist(List<String> whitelistedServices,
                                               String       whitelist,

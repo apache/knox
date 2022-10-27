@@ -40,10 +40,4 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
       - name: 'Build and Test'
-        run: mvn -T.75C clean verify -U -Dsurefire.useFile=false -Djavax.net.ssl.trustStorePassword=changeit -Dmaven.wagon.http.retryHandler.count=5 -Dmaven.wagon.http.retryHandler.class=default -Dmaven.wagon.http.retryHandler.nonRetryableClasses=java.io.InterruptedIOException -Dhttp.keepAlive=false -B -V
-# This is failing due to not finding files? - See KNOX-2347
-#      - name: shellcheck
-#        uses: reviewdog/action-shellcheck@v1
-#        with:
-#          pattern: "*release*/home/bin/*.sh"
-
+        run: mvn -T.75C clean verify -U -Dsurefire.useFile=false -Dshellcheck=true -Djavax.net.ssl.trustStorePassword=changeit -Dmaven.wagon.http.retryHandler.count=5 -Dmaven.wagon.http.retryHandler.class=default -Dmaven.wagon.http.retryHandler.nonRetryableClasses=java.io.InterruptedIOException -Dhttp.keepAlive=false -B -V

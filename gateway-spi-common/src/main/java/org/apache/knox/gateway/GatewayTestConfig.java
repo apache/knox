@@ -49,6 +49,12 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT = 60000;
   public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT = 300000;
   public static final int DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT = 100;
+  private static final boolean DEFAULT_WEBSHELL_FEATURE_ENABLED = false ;
+  private static final boolean DEFAULT_WEBSHELL_AUDIT_LOGGING_ENABLED = false;
+  public static final int DEFAULT_WEBSHELL_MAX_CONCURRENT_SESSIONS = 3;
+  public static final int  DEFAULT_WEBSHELL_READ_BUFFER_SIZE = 1024;
+
+
 
   private Path gatewayHomePath = Paths.get("gateway-home");
   private String hadoopConfDir = "hadoop";
@@ -125,6 +131,16 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   private Path getGatewayDataPath() {
     return gatewayHomePath.resolve("data");
   }
+
+  @Override
+  public String getGatewayPIDDir() {
+    return getGatewayPIDPath().toString();
+  }
+
+  private Path getGatewayPIDPath() {
+    return gatewayHomePath.resolve("pid");
+  }
+
 
   @Override
   public String getGatewaySecurityDir() {
@@ -536,6 +552,26 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public boolean isWebsocketEnabled() {
     return DEFAULT_WEBSOCKET_FEATURE_ENABLED;
+  }
+
+  @Override
+  public boolean isWebShellEnabled() {
+    return DEFAULT_WEBSHELL_FEATURE_ENABLED;
+  }
+
+  @Override
+  public boolean isWebShellAuditLoggingEnabled() {
+    return DEFAULT_WEBSHELL_AUDIT_LOGGING_ENABLED;
+  }
+
+  @Override
+  public int getMaximumConcurrentWebshells() {
+    return DEFAULT_WEBSHELL_MAX_CONCURRENT_SESSIONS;
+  }
+
+  @Override
+  public int getWebShellReadBufferSize() {
+    return DEFAULT_WEBSHELL_READ_BUFFER_SIZE;
   }
 
   @Override
@@ -977,5 +1013,10 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public long getConcurrentSessionVerifierExpiredTokensCleaningPeriod() {
     return 0;
+  }
+
+  @Override
+  public boolean isAsyncSupported() {
+    return false;
   }
 }

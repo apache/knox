@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway.storm;
 
-import org.apache.knox.gateway.dispatch.DefaultDispatch;
+import org.apache.knox.gateway.dispatch.ConfigurableDispatch;
 
 import java.util.Collections;
 import java.util.Set;
@@ -26,7 +26,7 @@ import java.util.Set;
  * This specialized dispatch provides Storm specific features to the
  * default dispatch.
  */
-public class StormDispatch extends DefaultDispatch {
+public class StormDispatch extends ConfigurableDispatch {
 
   @Override
   public Set<String> getOutboundResponseExcludeHeaders() {

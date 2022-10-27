@@ -138,6 +138,7 @@ public class HadoopAuthFilterTest {
     expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
     expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(null).anyTimes();
+    expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
 
     Properties configProperties = createMock(Properties.class);
     expect(configProperties.getProperty("signature.secret.file")).andReturn("signature.secret.file").atLeastOnce();
@@ -201,6 +202,7 @@ public class HadoopAuthFilterTest {
     expect(filterConfig.getInitParameter("config.prefix")).andReturn("some.prefix").atLeastOnce();
     expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(null).anyTimes();
+    expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
 
 
     EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -248,6 +250,7 @@ public class HadoopAuthFilterTest {
     expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
     /* update the default list to use favicon.ico */
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(request_semicolon_path).anyTimes();
+    expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     /* capture errors */
@@ -306,6 +309,7 @@ public class HadoopAuthFilterTest {
     expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
     /* update the default list to use favicon.ico */
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(request_semicolon_path).anyTimes();
+    expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     /* capture errors */
@@ -364,6 +368,7 @@ public class HadoopAuthFilterTest {
     expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
     /* update the default list to use favicon.ico */
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(request_semicolon_path).anyTimes();
+    expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     /* capture errors */
@@ -422,6 +427,7 @@ public class HadoopAuthFilterTest {
     expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
     /* update the default list to use favicon.ico */
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(request_semicolon_path).anyTimes();
+    expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     /* capture errors */
@@ -481,6 +487,7 @@ public class HadoopAuthFilterTest {
     expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
     /* update the default list to use favicon.ico */
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(request_semicolon_path).anyTimes();
+    expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     /* capture errors */
@@ -554,6 +561,7 @@ public class HadoopAuthFilterTest {
     expect(filterConfig.getInitParameter("config.prefix")).andReturn("some.prefix").atLeastOnce();
     expect(filterConfig.getInitParameter("support.jwt")).andReturn(supportJwt).anyTimes();
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(null).anyTimes();
+    expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
     final boolean isJwtSupported = Boolean.parseBoolean(supportJwt);
     if (isJwtSupported) {
       expect(filterConfig.getInitParameter(JWTFederationFilter.KNOX_TOKEN_AUDIENCES)).andReturn(null).anyTimes();

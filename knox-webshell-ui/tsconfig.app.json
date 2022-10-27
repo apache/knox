@@ -1,0 +1,11 @@
+/* To learn more about this file see: https://angular.io/config/tsconfig. */
+{
+  "extends": "./tsconfig.json",
+  "files": [
+    "webshell-ui/main.ts",
+    "webshell-ui/polyfills.ts"
+  ],
+  "include": [
+    "webshell-ui/**/*.d.ts"
+  ]
+}

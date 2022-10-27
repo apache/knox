@@ -169,7 +169,6 @@
             </build>
         </profile>
         <profile>
-           <!-- Running this profile require you to have the 'shellcheck' tool installed on your DEV environment. Check out https://github.com/koalaman/shellcheck#installing for more information -->
            <activation>
                <property>
                    <name>shellcheck</name>
@@ -469,6 +468,14 @@
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>knox-token-management-ui</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-provider-security-dos</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>knox-webshell-ui</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>

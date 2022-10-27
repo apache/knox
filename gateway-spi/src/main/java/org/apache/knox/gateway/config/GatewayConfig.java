@@ -128,9 +128,15 @@ public interface GatewayConfig {
   String getGatewayDataDir();
 
   /**
-   * The location of the gateway services definition's root directory
-   * @return The location of the gateway services top level directory.
+   * The location of the process PIDs spawned by gateway during runtime.
+   * @return The location of the process PIDs spawned by gateway during runtime.
    */
+  String getGatewayPIDDir();
+
+    /**
+     * The location of the gateway services definition's root directory
+     * @return The location of the gateway services top level directory.
+     */
   String getGatewayServicesDir();
 
   /**
@@ -357,6 +363,36 @@ public interface GatewayConfig {
    * @return true if websocket feature is enabled
    */
   boolean isWebsocketEnabled();
+
+
+  /**
+   * Returns true if webshell feature enabled else false.
+   * Default is false.
+   * @since 2.0.0
+   * @return true if webshell feature is enabled
+   */
+  boolean isWebShellEnabled();
+
+  /**
+   * Returns true if webshell logging enabled else false.
+   * Default is false.
+   * @since 2.0.0
+   * @return true if webshell logging is enabled
+   */
+  boolean isWebShellAuditLoggingEnabled();
+
+
+  /**
+   * Returns the maximum number of allowed concurrent webshells
+   * @since 2.0.0
+   */
+  int getMaximumConcurrentWebshells();
+
+  /**
+   * Returns the read buffer size for Web Shell
+   * @since 2.0.0
+   */
+  int getWebShellReadBufferSize();
 
   /**
    * Websocket connection max text message size.
@@ -825,4 +861,9 @@ public interface GatewayConfig {
   Set<String> getSessionVerificationUnlimitedUsers();
 
   long getConcurrentSessionVerifierExpiredTokensCleaningPeriod();
+
+  /**
+   * @return true if the async supported flag is enabled in jetty gateway servlet; false otherwise (defaults to false)
+   */
+  boolean isAsyncSupported();
 }

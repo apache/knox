@@ -30,5 +30,6 @@ public abstract class Action {
   public static final String IDENTITY_MAPPING = "identity-mapping";
   public static final String DISPATCH = "dispatch";
   public static final String ACCESS = "access";
+  public static final String WEBSHELL = "webshell";
 
 }
