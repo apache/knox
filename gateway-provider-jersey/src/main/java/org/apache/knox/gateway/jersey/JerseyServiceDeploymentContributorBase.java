@@ -44,7 +44,6 @@ public abstract class JerseyServiceDeploymentContributorBase extends ServiceDepl
       ResourceDescriptor resource = context.getGatewayDescriptor().addResource();
       resource.role( service.getRole() );
       resource.pattern( pattern );
-      addDoSFilter(context, service, resource);
       addWebAppSecFilters( context, service, resource );
       addXForwardedFilter( context, service, resource );
       addAuthenticationFilter( context, service, resource );
