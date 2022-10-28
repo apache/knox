@@ -91,8 +91,8 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
       String rateLimitingEnabled = map.get(RATE_LIMITING_ENABLED);
       if (Boolean.parseBoolean(rateLimitingEnabled)) {
         provisionConfig(resource, providerParams, params, RATE_LIMITING_PREFIX + ".", true, false);
-        resource.addFilter().name(getName() + STRICT_TRANSPORT_SUFFIX)
-                .role(getRole() + RATE_LIMITING_SUFFIX)
+        resource.addFilter().name(getName() + RATE_LIMITING_SUFFIX)
+                .role(getRole())
                 .impl(RATE_LIMITING_FILTER_CLASSNAME)
                 .params(params);
       }
