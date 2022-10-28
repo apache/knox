@@ -17,9 +17,7 @@
  */
 package org.apache.knox.gateway.hadoopauth.filter;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.authorize.AuthorizationException;
-import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.hadoop.util.HttpExceptionUtils;
 import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.audit.api.Action;
@@ -33,6 +31,7 @@ import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.hadoopauth.HadoopAuthMessages;
+import org.apache.knox.gateway.hadoopauth.deploy.HadoopAuthDeploymentContributor;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
@@ -103,6 +102,7 @@ public class HadoopAuthFilter extends
   private final Set<String> ignoreDoAs = new HashSet<>();
   private JWTFederationFilter jwtFilter;
   private Set<String> unAuthenticatedPaths = new HashSet<>(20);
+  private String topologyName;
 
   @Override
   protected Properties getConfiguration(String configPrefix, FilterConfig filterConfig) throws ServletException {
@@ -114,13 +114,8 @@ public class HadoopAuthFilter extends
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
-    final String topologyName = (String) filterConfig.getInitParameter("clusterName");
-    // Return a {@link Configuration} instance with the proxy user
-    // (<code>hadoop.proxyuser.*</code>) properties set using parameter information
-    // from the filterConfig.
-    final Configuration conf = AuthFilterUtils.getProxyUserConfiguration(filterConfig, PROXYUSER_PREFIX);
-    ProxyUsers.refreshSuperUserGroupsConfiguration(conf, PROXYUSER_PREFIX);
-    LOG.refreshProxyuserConfig(topologyName, PROXYUSER_PREFIX, conf.getPropsWithPrefix(PROXYUSER_PREFIX).toString());
+    this.topologyName = (String) filterConfig.getInitParameter("clusterName");
+    AuthFilterUtils.refreshSuperUserGroupsConfiguration(filterConfig, PROXYUSER_PREFIX, topologyName, HadoopAuthDeploymentContributor.NAME);
 
     Collection<String> ignoredServices = null;
 
@@ -210,7 +205,7 @@ public class HadoopAuthFilter extends
         LOG.hadoopAuthDoAsUser(doAsUser, remoteUser, request.getRemoteAddr());
         if (request.getUserPrincipal() != null) {
           try {
-            proxyRequest = AuthFilterUtils.getProxyRequest(request, doAsUser);
+            proxyRequest = AuthFilterUtils.getProxyRequest(request, doAsUser, topologyName, HadoopAuthDeploymentContributor.NAME);
             LOG.hadoopAuthProxyUserSuccess();
           } catch (AuthorizationException ex) {
             HttpExceptionUtils.createServletExceptionResponse(response, HttpServletResponse.SC_FORBIDDEN, ex);

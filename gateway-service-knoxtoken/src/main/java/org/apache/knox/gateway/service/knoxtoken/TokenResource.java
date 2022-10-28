@@ -61,13 +61,12 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.util.ByteUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.authorize.AuthorizationException;
-import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
+import org.apache.knox.gateway.service.knoxtoken.deploy.TokenServiceDeploymentContributor;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -325,9 +324,7 @@ public class TokenResource {
       // refreshing Hadoop ProxyUser groups config only makes sense if token state management is turned on
       // and impersonation is enabled
       if (impersonationEnabled) {
-        final Configuration conf = AuthFilterUtils.getProxyUserConfiguration(context, PROXYUSER_PREFIX);
-        ProxyUsers.refreshSuperUserGroupsConfiguration(conf, PROXYUSER_PREFIX);
-        log.refreshProxyuserConfig(topologyName, PROXYUSER_PREFIX, conf.getPropsWithPrefix(PROXYUSER_PREFIX).toString());
+        AuthFilterUtils.refreshSuperUserGroupsConfiguration(context, PROXYUSER_PREFIX, getTopologyName(), TokenServiceDeploymentContributor.ROLE);
       }
     }
     setTokenStateServiceStatusMap();
@@ -728,7 +725,7 @@ public class TokenResource {
       if (doAsUser != null && !doAsUser.equals(userName)) {
         try {
           //this call will authorize the doAs request
-          AuthFilterUtils.authorizeImpersonationRequest(request, doAsUser);
+          AuthFilterUtils.authorizeImpersonationRequest(request, doAsUser, getTopologyName(), TokenServiceDeploymentContributor.ROLE);
           createdBy = userName;
           userName = doAsUser;
           log.tokenImpersonationSuccess(createdBy, doAsUser);

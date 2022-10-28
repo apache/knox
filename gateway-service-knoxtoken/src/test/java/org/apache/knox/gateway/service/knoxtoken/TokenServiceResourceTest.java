@@ -155,6 +155,7 @@ public class TokenServiceResourceTest {
     context = EasyMock.createNiceMock(ServletContext.class);
     contextExpectations.forEach((key, value) -> EasyMock.expect(context.getInitParameter(key)).andReturn(value).anyTimes());
     EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.enumeration(contextExpectations.keySet())).anyTimes();
+    EasyMock.expect(context.getAttribute("org.apache.knox.gateway.gateway.cluster")).andReturn("topology1").anyTimes();
     request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
     Principal principal = EasyMock.createNiceMock(Principal.class);

@@ -51,7 +51,4 @@ public interface HadoopAuthMessages {
   @Message(level=MessageLevel.WARN, text="{1} alias is NOT stored on neither topology ({0}) nor gateway levels.")
   void noAliasStored(String cluster, String alias);
 
-  @Message(level=MessageLevel.DEBUG, text="Refreshing proxyuser config in {0} topology with prefix {1} and config {2}")
-  void refreshProxyuserConfig(String topology, String prefix, String properties);
-
 }
