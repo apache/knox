@@ -14,11 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
-import {Injectable} from '@angular/core';
-import {HttpClient, HttpErrorResponse, HttpHeaders, HttpParams} from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import * as _swal from 'sweetalert';
 import { SweetAlert } from 'sweetalert/typings/core';
-import { TokenData, TokenRequestParams, TokenResultData, TssStatusData } from './token-gen.models';
+import { TokenData, TokenRequestParams, TokenResultData, TssStatusData } from './token-generation.models';
 const swal: SweetAlert = _swal as any;
 
 @Injectable()

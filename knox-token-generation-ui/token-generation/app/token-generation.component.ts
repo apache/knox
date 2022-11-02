@@ -20,15 +20,15 @@ import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms'
 import * as _swal from 'sweetalert';
 import { SweetAlert } from 'sweetalert/typings/core';
 const swal: SweetAlert = _swal as any;
-import { TokenResultData, TssStatusData } from './token-gen.models';
-import { TokenGenService } from './token-gen.service';
+import { TokenResultData, TssStatusData } from './token-generation.models';
+import { TokenGenService } from './token-generation.service';
 
 @Component({
-  selector: 'app-token-gen',
-  templateUrl: './token-gen.component.html',
+  selector: 'app-token-generation',
+  templateUrl: './token-generation.component.html',
   providers: []
 })
-export class TokenGenComponent implements OnInit {
+export class TokenGenerationComponent implements OnInit {
   tssStatusMessageLevel: 'info' | 'warning' | 'error';
   tssStatusMessage: string;
   requestErrorMessage: string;
