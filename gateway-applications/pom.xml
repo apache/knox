@@ -52,7 +52,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
-            <artifactId>knox-token-gen-ui</artifactId>
+            <artifactId>knox-token-generation-ui</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
@@ -108,11 +108,11 @@
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.apache.knox</groupId>
-                                    <artifactId>knox-token-gen-ui</artifactId>
+                                    <artifactId>knox-token-generation-ui</artifactId>
                                     <type>jar</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${project.build.outputDirectory}/applications</outputDirectory>
-                                    <includes>token-gen/**</includes>
+                                    <includes>token-generation/**</includes>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.apache.knox</groupId>

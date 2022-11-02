@@ -479,7 +479,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
-            <artifactId>knox-token-gen-ui</artifactId>
+            <artifactId>knox-token-generation-ui</artifactId>
         </dependency>
     </dependencies>
 </project>

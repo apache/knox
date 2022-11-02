@@ -149,8 +149,8 @@
         <module>knox-homepage-ui</module>
         <module>gateway-openapi-ui</module>
         <module>knox-token-management-ui</module>
-        <module>knox-token-gen-ui</module>
         <module>knox-webshell-ui</module>
+        <module>knox-token-generation-ui</module>
     </modules>
 
     <properties>
@@ -1287,7 +1287,7 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.knox</groupId>
-                <artifactId>knox-token-gen-ui</artifactId>
+                <artifactId>knox-token-generation-ui</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

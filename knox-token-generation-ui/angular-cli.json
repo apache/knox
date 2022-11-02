@@ -1,12 +1,12 @@
 {
   "project": {
     "version": "1.0.0",
-    "name": "ng-knox-token-gen"
+    "name": "ng-knox-token-generation"
   },
   "apps": [
     {
-      "root": "token-gen",
-      "outDir": "target/classes/token-gen/app",
+      "root": "token-generation",
+      "outDir": "target/classes/token-generation/app",
       "assets": [
         "assets",
         "favicon.ico"

@@ -1,9 +1,9 @@
 {
-  "name": "ng-knox-token-gen",
+  "name": "ng-knox-token-generation",
   "version": "1.0.0",
   "license": "Apache-2.0",
   "scripts": {
-    "start": "ng serve --base-href /gateway/homepage/token-gen/ --deploy-url /gateway/homepage/token-gen/ --verbose=true",
+    "start": "ng serve --base-href /gateway/homepage/token-generation/ --deploy-url /gateway/homepage/token-generation/ --verbose=true",
     "build": "ng build",
     "build-prod": "ng build --prod",
     "lint": "tslint \"token-gen/**/*.ts\""

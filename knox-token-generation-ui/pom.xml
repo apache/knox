@@ -25,8 +25,8 @@
         <version>2.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>knox-token-gen-ui</artifactId>
-    <name>knox-token-gen-ui</name>
+    <artifactId>knox-token-generation-ui</artifactId>
+    <name>knox-token-generation-ui</name>
     <description>The Knox Token Generation UI</description>
 
     <build>
@@ -51,7 +51,7 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <id>knox-token-gen-install-node-and-npm</id>
+                        <id>knox-token-generation-install-node-and-npm</id>
                         <goals>
                             <goal>install-node-and-npm</goal>
                         </goals>
@@ -60,7 +60,7 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>knox-token-gen-npm-install</id>
+                        <id>knox-token-generation-npm-install</id>
                         <goals>
                             <goal>npm</goal>
                         </goals>
@@ -69,7 +69,7 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>knox-token-gen-npm-run-lint</id>
+                        <id>knox-token-generation-npm-run-lint</id>
                         <goals>
                             <goal>npm</goal>
                         </goals>
@@ -78,7 +78,7 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>knox-token-gen-npm-run-build-prod</id>
+                        <id>knox-token-generation-npm-run-build-prod</id>
                         <goals>
                             <goal>npm</goal>
                         </goals>

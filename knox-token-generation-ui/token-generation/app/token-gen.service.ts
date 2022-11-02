@@ -28,7 +28,7 @@ export class TokenGenService {
     readonly tssStatusRequestURL: string;
 
     constructor(private http: HttpClient) {
-        const loginPageSuffix = 'token-gen/index.html';
+        const loginPageSuffix = 'token-generation/index.html';
         const knoxtokenURL = 'knoxtoken/api/v1/token';
         const tssStatusURL = 'knoxtoken/api/v1/token/getTssStatus';
 

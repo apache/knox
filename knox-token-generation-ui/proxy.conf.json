@@ -1,5 +1,5 @@
 {
-  "/token-gen/api": {
+  "/token-generation/api": {
     "target": "http://localhost:8443",
     "secure": false,
     "logLevel": "debug",

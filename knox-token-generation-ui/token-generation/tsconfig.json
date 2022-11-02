@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "baseUrl": "token-gen",
+    "baseUrl": "token-generation",
     "declaration": false,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
