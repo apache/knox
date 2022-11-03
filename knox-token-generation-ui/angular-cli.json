@@ -1,0 +1,55 @@
+{
+  "project": {
+    "version": "1.0.0",
+    "name": "ng-knox-token-generation"
+  },
+  "apps": [
+    {
+      "root": "token-generation",
+      "outDir": "target/classes/token-generation/app",
+      "assets": [
+        "assets",
+        "favicon.ico"
+      ],
+      "index": "index.html",
+      "main": "main.ts",
+      "test": "test.ts",
+      "tsconfig": "tsconfig.json",
+      "prefix": "app",
+      "mobile": false,
+      "styles": [
+        "./assets/styles/bootstrap.min.css",
+        "./assets/styles/app-font.css",
+        "./assets/styles/knox.css",
+        "styles.css"
+      ],
+      "scripts": [
+        "../node_modules/jquery/dist/jquery.min.js"
+      ],
+      "environmentSource": "environments/environment.ts",
+      "environments": {
+        "dev": "environments/environment.ts",
+        "prod": "environments/environment.prod.ts"
+      }
+    }
+  ],
+  "addons": [],
+  "packages": [],
+  "e2e": {
+    "protractor": {
+      "config": "./protractor.conf.js"
+    }
+  },
+  "test": {
+    "karma": {
+      "config": "./karma.conf.js"
+    }
+  },
+  "defaults": {
+    "styleExt": "css",
+    "component": {
+      "inlineTemplate": false,
+      "spec": true
+    }
+  }
+}

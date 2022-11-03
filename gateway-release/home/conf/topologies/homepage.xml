@@ -111,7 +111,7 @@
       </param>
    </service>
    <application>
-      <name>tokengen</name>
+      <name>token-generation</name>
    </application>
    <application>
       <name>home</name>

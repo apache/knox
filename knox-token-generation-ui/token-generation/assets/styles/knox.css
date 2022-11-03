@@ -542,7 +542,7 @@ table.backgrid tr:hover {
   /* background-color: rgba(0,0,0,0.3); */
   text-align: center;
   /* z-index: 999; */
-  background: url('../images/loading.gif') no-repeat center center rgba(0,0,0,0.3);
+  background: url('../../assets/images/loading.gif') no-repeat center center rgba(0,0,0,0.3);
 }
 .white {
   color: #fff !important;
@@ -899,7 +899,7 @@ table.table-policy tbody tr:hover .nav.nav-option {
 }
 
 .working.ui-autocomplete-loading {
-  background: url('../images/loading.gif') no-repeat right center !important;
+  background: url('../../assets/images/loading.gif') no-repeat right center !important;
 }
 
 .form-actions.form-asset {
@@ -1309,7 +1309,8 @@ ul.tabs > li > a {
   border-radius: 8px;
   /* ie fix */
   -pie-lazy-init: true;
-  behavior: url(PIE.htc);
+  /* TODO causes error */
+  /* behavior: url(PIE.htc); */
 }
 
 .white-on-black .jquery-msg-content {
@@ -1327,7 +1328,8 @@ ul.tabs > li > a {
   border-radius: 8px;
   /* ie fix */
   -pie-lazy-init: true;
-  behavior: url(PIE.htc);
+  /* TODO causes error */
+  /* behavior: url(PIE.htc); */
 }
 
 /* End :jQuery MSG Plugin : CSS */

@@ -1,0 +1,31 @@
+{
+  "name": "ng-knox-token-generation",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "ng serve --base-href /gateway/homepage/token-generation/ --deploy-url /gateway/homepage/token-generation/ --verbose=true",
+    "build": "ng build",
+    "build-prod": "ng build --prod",
+    "lint": "tslint \"token-generation/**/*.ts\""
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/common": "^5.2.0",
+    "@angular/compiler": "^5.2.0",
+    "@angular/core": "^5.2.0",
+    "@angular/forms": "^5.2.0",
+    "@angular/platform-browser": "^5.2.0",
+    "@angular/platform-browser-dynamic": "^5.2.0",
+    "jquery": "^3.5.1",
+    "sweetalert": "^2.1.2",
+    "zone.js": "^0.8.29"
+  },
+  "devDependencies": {
+    "@angular/cli": "^1.7.4",
+    "@angular/compiler-cli": "^5.2.0",
+    "@angular/language-service": "^5.2.0",
+    "codelyzer": "^4.1.0",
+    "tslint": "~5.7.0",
+    "typescript": "~2.4.2"
+  }
+}

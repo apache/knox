@@ -150,6 +150,7 @@
         <module>gateway-openapi-ui</module>
         <module>knox-token-management-ui</module>
         <module>knox-webshell-ui</module>
+        <module>knox-token-generation-ui</module>
     </modules>
 
     <properties>
@@ -1282,6 +1283,11 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>knox-token-management-ui</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>knox-token-generation-ui</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

@@ -26,7 +26,7 @@ import {KnoxToken} from './knox.token';
 
 export class TokenManagementComponent implements OnInit {
 
-    tokenGenerationPageURL = window.location.pathname.replace(new RegExp('token-management/.*'), 'tokengen/index.html');
+    tokenGenerationPageURL = window.location.pathname.replace(new RegExp('token-management/.*'), 'token-generation/index.html');
 
     userName: string;
     knoxTokens: KnoxToken[];

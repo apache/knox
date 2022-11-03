@@ -52,6 +52,10 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
+            <artifactId>knox-token-generation-ui</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
             <artifactId>knox-webshell-ui</artifactId>
         </dependency>
     </dependencies>
@@ -101,6 +105,14 @@
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${project.build.outputDirectory}/applications</outputDirectory>
                                     <includes>token-management/**</includes>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.apache.knox</groupId>
+                                    <artifactId>knox-token-generation-ui</artifactId>
+                                    <type>jar</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.outputDirectory}/applications</outputDirectory>
+                                    <includes>token-generation/**</includes>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.apache.knox</groupId>

@@ -79,7 +79,7 @@ export class GeneralProxyInformationComponent implements OnInit {
     }
 
     getTokenGenerationUrl() {
-        return this.getAdminUiUrl().replace(new RegExp('manager/admin-ui/*'), 'homepage/tokengen/index.html');
+        return this.getAdminUiUrl().replace(new RegExp('manager/admin-ui/*'), 'homepage/token-generation/index.html');
     }
 
     getTokenManagementUrl() {

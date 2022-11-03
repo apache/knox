@@ -15,7 +15,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<service role="tokengen" name="tokengen" version="1.0.0">
+<service role="token-generation" name="token-generation" version="1.0.0">
     <policies>
         <policy role="webappsec"/>
         <policy role="authentication"/>
