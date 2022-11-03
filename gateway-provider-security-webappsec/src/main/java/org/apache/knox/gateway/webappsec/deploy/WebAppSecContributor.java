@@ -165,15 +165,15 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
     }
   }
 
-  private void provisionConfig(ResourceDescriptor resource, Map<String,String> providerParams,
+  private void provisionConfig(ResourceDescriptor resource, Map<String, String> providerParams,
                                List<FilterParamDescriptor> params, String prefix, boolean cutPrefix, boolean toLowerCase) {
-    for(Entry<String, String> entry : providerParams.entrySet()) {
+    for (Entry<String, String> entry : providerParams.entrySet()) {
       if (entry.getKey().startsWith(prefix)) {
         String key = entry.getKey();
-        if(cutPrefix) {
+        if (cutPrefix) {
           key = key.substring(prefix.length());
         }
-        if(toLowerCase) {
+        if (toLowerCase) {
           key = key.toLowerCase(Locale.ROOT);
         }
         params.add(resource.createFilterParam().name(key).value(entry.getValue()));
@@ -181,7 +181,7 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
     }
   }
 
-  private void provisionConfig(ResourceDescriptor resource, Map<String,String> providerParams,
+  private void provisionConfig(ResourceDescriptor resource, Map<String, String> providerParams,
                                List<FilterParamDescriptor> params, String prefix) {
     provisionConfig(resource, providerParams, params, prefix, false, true);
   }
