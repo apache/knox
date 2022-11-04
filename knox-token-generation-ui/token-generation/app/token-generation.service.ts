@@ -16,10 +16,8 @@
 */
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
-import * as _swal from 'sweetalert';
-import { SweetAlert } from 'sweetalert/typings/core';
+import swal from 'sweetalert';
 import { TokenData, TokenRequestParams, TokenResultData, TssStatusData } from './token-generation.models';
-const swal: SweetAlert = _swal as any;
 
 @Injectable()
 export class TokenGenService {
