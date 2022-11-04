@@ -229,7 +229,6 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
   }
 
   private void addDefaultPolicies( DeploymentContext context, Service service, Map<String, String> filterParams, List<FilterParamDescriptor> params, ResourceDescriptor resource) throws URISyntaxException {
-    addDoSFilter(context, service, resource);
     addWebAppSecFilters(context, service, resource);
     addAuthenticationFilter(context, service, resource);
     addRewriteFilter(context, service, filterParams, params, resource);

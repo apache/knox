@@ -51,7 +51,10 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
   private static final String STRICT_TRANSPORT_SUFFIX = "_STRICTTRANSPORT";
   private static final String STRICT_TRANSPORT_FILTER_CLASSNAME = "org.apache.knox.gateway.webappsec.filter.StrictTransportFilter";
   private static final String STRICT_TRANSPORT_ENABLED = "strict.transport.enabled";
-
+  private static final String RATE_LIMITING_FILTER_CLASSNAME = "org.eclipse.jetty.servlets.DoSFilter";
+  private static final String RATE_LIMITING_PREFIX = "rate.limiting";
+  private static final String RATE_LIMITING_SUFFIX = "_RATE.LIMITING";
+  private static final String RATE_LIMITING_ENABLED = RATE_LIMITING_PREFIX + ".enabled";
 
   @Override
   public String getRole() {
@@ -83,7 +86,19 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
       }
 
       Map<String, String> providerParams = provider.getParams();
+
+      // Rate limiting
+      String rateLimitingEnabled = map.get(RATE_LIMITING_ENABLED);
+      if (Boolean.parseBoolean(rateLimitingEnabled)) {
+        provisionConfig(resource, providerParams, params, RATE_LIMITING_PREFIX + ".", true, false);
+        resource.addFilter().name(getName() + RATE_LIMITING_SUFFIX)
+                .role(getRole())
+                .impl(RATE_LIMITING_FILTER_CLASSNAME)
+                .params(params);
+      }
+
       // CORS support
+      params = new ArrayList<>();
       String corsEnabled = map.get(CORS_ENABLED);
       if (Boolean.parseBoolean(corsEnabled)) {
         provisionConfig(resource, providerParams, params, "cors.");
@@ -150,12 +165,24 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
     }
   }
 
-  private void provisionConfig(ResourceDescriptor resource, Map<String,String> providerParams,
-      List<FilterParamDescriptor> params, String prefix) {
-    for(Entry<String, String> entry : providerParams.entrySet()) {
+  private void provisionConfig(ResourceDescriptor resource, Map<String, String> providerParams,
+                               List<FilterParamDescriptor> params, String prefix, boolean cutPrefix, boolean toLowerCase) {
+    for (Entry<String, String> entry : providerParams.entrySet()) {
       if (entry.getKey().startsWith(prefix)) {
-        params.add(resource.createFilterParam().name(entry.getKey().toLowerCase(Locale.ROOT)).value(entry.getValue()));
+        String key = entry.getKey();
+        if (cutPrefix) {
+          key = key.substring(prefix.length());
+        }
+        if (toLowerCase) {
+          key = key.toLowerCase(Locale.ROOT);
+        }
+        params.add(resource.createFilterParam().name(key).value(entry.getValue()));
       }
     }
+  }
+
+  private void provisionConfig(ResourceDescriptor resource, Map<String, String> providerParams,
+                               List<FilterParamDescriptor> params, String prefix) {
+    provisionConfig(resource, providerParams, params, prefix, false, true);
   }
 }
