@@ -43,8 +43,8 @@ public class DefaultConfigurationMonitorProvider extends AbstractServiceFactory 
                                     Map<String, String> options,
                                     String implementation) throws ServiceLifecycleException {
         RemoteConfigurationMonitor service = null;
-        if (matchesImplementation(implementation, DefaultRemoteConfigurationMonitor.class)) {
-            service = new DefaultRemoteConfigurationMonitor(gatewayConfig, gatewayServices.getService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE));
+        if (matchesImplementation(implementation, ZkRemoteConfigurationMonitor.class)) {
+            service = new ZkRemoteConfigurationMonitor(gatewayConfig, gatewayServices.getService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE));
         } else if (matchesImplementation(implementation, DbRemoteConfigurationMonitor.class)) {
             service = createDbBasedMonitor(gatewayConfig, gatewayServices.getService(ServiceType.ALIAS_SERVICE));
         }
@@ -70,6 +70,6 @@ public class DefaultConfigurationMonitorProvider extends AbstractServiceFactory 
 
     @Override
     protected Collection<String> getKnownImplementations() {
-        return Arrays.asList(DefaultRemoteConfigurationMonitor.class.getName(), DbRemoteConfigurationMonitor.class.getName());
+        return Arrays.asList(ZkRemoteConfigurationMonitor.class.getName(), DbRemoteConfigurationMonitor.class.getName());
     }
 }
