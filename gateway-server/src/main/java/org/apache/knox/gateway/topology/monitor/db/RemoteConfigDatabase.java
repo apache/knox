@@ -51,7 +51,7 @@ public class RemoteConfigDatabase {
 
   private void createTableIfNotExists(String tableName, String createSqlFileName) throws Exception {
     if (!JDBCUtils.isTableExists(tableName, dataSource)) {
-      JDBCUtils.createTable(createSqlFileName, dataSource);
+      JDBCUtils.createTable(createSqlFileName, dataSource, this.getClass().getClassLoader());
     }
   }
 

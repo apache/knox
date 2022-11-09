@@ -43,7 +43,7 @@ public class RemoteConfigDatabaseTest {
     dataSource.setDatabaseName(DB_NAME);
     dataSource.setUser(USER);
     dataSource.setPassword(PASSWORD);
-    dataSource.setUrl("jdbc:hsqldb:mem:knox;sql.syntax_pgs=true");
+    dataSource.setUrl("jdbc:hsqldb:mem:knox;sql.syntax_pgs=true"); // sql.syntax_pgs => use postgres syntax
     db = new RemoteConfigDatabase(dataSource);
   }
 

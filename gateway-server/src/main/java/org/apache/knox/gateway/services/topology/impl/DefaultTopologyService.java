@@ -460,7 +460,7 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
       // registry, even if it does not exist locally.
       if (remoteMonitor != null) {
         // If the remote config monitor is configured, delete the descriptor from the remote registry
-        remoteMonitor.deleteProvider(name);
+        remoteMonitor.deleteProvider(providerConfig.getName()); // use file name with extension
       }
 
       // Whether the remote configuration registry is being employed or not, delete the local file if it exists

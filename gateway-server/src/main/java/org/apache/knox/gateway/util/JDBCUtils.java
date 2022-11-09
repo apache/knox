@@ -26,7 +26,6 @@ import org.apache.derby.jdbc.ClientDataSource;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
-import org.apache.knox.gateway.services.token.impl.TokenStateDatabase;
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.postgresql.jdbc.SslMode;
@@ -165,8 +164,8 @@ public class JDBCUtils {
     return exists;
   }
 
-  public static void createTable(String createSqlFileName, DataSource dataSource) throws Exception {
-    final InputStream is = TokenStateDatabase.class.getClassLoader().getResourceAsStream(createSqlFileName);
+  public static void createTable(String createSqlFileName, DataSource dataSource, ClassLoader classLoader) throws Exception {
+    final InputStream is = classLoader.getResourceAsStream(createSqlFileName);
     String createTableSql = IOUtils.toString(is, UTF_8);
     try (Connection connection = dataSource.getConnection(); Statement createTableStatment = connection.createStatement();) {
       createTableStatment.execute(createTableSql);
