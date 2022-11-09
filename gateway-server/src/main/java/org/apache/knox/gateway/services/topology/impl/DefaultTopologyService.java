@@ -39,7 +39,6 @@ import org.apache.knox.gateway.service.definition.ServiceDefinitionChangeListene
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
-import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.services.topology.monitor.DescriptorsMonitor;
@@ -54,8 +53,8 @@ import org.apache.knox.gateway.topology.TopologyProvider;
 import org.apache.knox.gateway.topology.Version;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
+import org.apache.knox.gateway.topology.monitor.DefaultConfigurationMonitorProvider;
 import org.apache.knox.gateway.topology.monitor.RemoteConfigurationMonitor;
-import org.apache.knox.gateway.topology.monitor.RemoteConfigurationMonitorFactory;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorFactory;
 import org.apache.knox.gateway.topology.validation.TopologyValidator;
@@ -419,14 +418,8 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
 
     // If the remote configuration registry is being employed, persist it there also
     if (remoteMonitor != null) {
-      RemoteConfigurationRegistryClient client = remoteMonitor.getClient();
-      if (client != null) {
-        String entryPath = "/knox/config/shared-providers/" + name;
-        client.createEntry(entryPath, content);
-        result = (client.getEntryData(entryPath) != null);
-      }
+      remoteMonitor.createProvider(name, content);
     }
-
     return result;
   }
 
@@ -465,7 +458,10 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
 
       // If the remote config monitor is configured, attempt to delete the provider configuration from the remote
       // registry, even if it does not exist locally.
-      deleteRemoteEntry("/knox/config/shared-providers", name);
+      if (remoteMonitor != null) {
+        // If the remote config monitor is configured, delete the descriptor from the remote registry
+        remoteMonitor.deleteProvider(name);
+      }
 
       // Whether the remote configuration registry is being employed or not, delete the local file if it exists
       result = providerConfig == null || !providerConfig.exists() || providerConfig.delete();
@@ -486,12 +482,7 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
 
     // If the remote configuration registry is being employed, persist it there also
     if (remoteMonitor != null) {
-      RemoteConfigurationRegistryClient client = remoteMonitor.getClient();
-      if (client != null) {
-        String entryPath = "/knox/config/descriptors/" + name;
-        client.createEntry(entryPath, content);
-        result = (client.getEntryData(entryPath) != null);
-      }
+      return remoteMonitor.createDescriptor(name, content);
     }
 
     return result;
@@ -512,8 +503,10 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
   public boolean deleteDescriptor(String name) {
     boolean result;
 
-    // If the remote config monitor is configured, delete the descriptor from the remote registry
-    deleteRemoteEntry("/knox/config/descriptors", name);
+    if (remoteMonitor != null) {
+      // If the remote config monitor is configured, delete the descriptor from the remote registry
+      remoteMonitor.deleteDescriptor(name);
+    }
 
     // Whether the remote configuration registry is being employed or not, delete the local file
     File descriptor = getExistingFile(descriptorsDirectory, name);
@@ -661,42 +654,12 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
       log.configuredMonitoringProviderConfigChangesInDirectory(sharedProvidersDirectory.getAbsolutePath());
 
       // Initialize the remote configuration monitor, if it has been configured
-      remoteMonitor = RemoteConfigurationMonitorFactory.get(config);
+      DefaultConfigurationMonitorProvider provider = new DefaultConfigurationMonitorProvider();
+      remoteMonitor = (RemoteConfigurationMonitor) provider.create(gwServices, ServiceType.REMOTE_CONFIGURATION_MONITOR, config, Collections.emptyMap());
+
     } catch (Exception e) {
       throw new ServiceLifecycleException(e.getMessage(), e);
     }
-  }
-
-  /**
-   * Delete the entry in the remote configuration registry, which matches the specified resource name.
-   *
-   * @param entryParent The remote registry path in which the entry exists.
-   * @param name        The name of the entry (typically without any file extension).
-   *
-   * @return true, if the entry is deleted, or did not exist; otherwise, false.
-   */
-  private boolean deleteRemoteEntry(String entryParent, String name) {
-    boolean result = true;
-
-    if (remoteMonitor != null) {
-      RemoteConfigurationRegistryClient client = remoteMonitor.getClient();
-      if (client != null) {
-        List<String> existingProviderConfigs = client.listChildEntries(entryParent);
-        for (String entryName : existingProviderConfigs) {
-          if (FilenameUtils.getBaseName(entryName).equals(name)) {
-            String entryPath = entryParent + "/" + entryName;
-            client.deleteEntry(entryPath);
-            result = !client.entryExists(entryPath);
-            if (!result) {
-              log.failedToDeletedRemoteConfigFile("descriptor", name);
-            }
-            break;
-          }
-        }
-      }
-    }
-
-    return result;
   }
 
   /**

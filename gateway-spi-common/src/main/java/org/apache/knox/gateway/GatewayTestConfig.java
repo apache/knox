@@ -975,6 +975,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public long getDbRemoteConfigMonitorPollingInterval() {
+    return 30;
+  }
+
+  @Override
   public long getConcurrentSessionVerifierExpiredTokensCleaningPeriod() {
     return 0;
   }

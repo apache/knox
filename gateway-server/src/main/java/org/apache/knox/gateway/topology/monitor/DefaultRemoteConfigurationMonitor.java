@@ -17,9 +17,11 @@
 package org.apache.knox.gateway.topology.monitor;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient.ChildEntryListener;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient.EntryListener;
@@ -32,6 +34,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 class DefaultRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
 
@@ -138,12 +141,10 @@ class DefaultRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
     }
 
     @Override
-    public RemoteConfigurationRegistryClient getClient() {
-        return client;
-    }
+    public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {}
 
     @Override
-    public void start() throws Exception {
+    public void start() throws ServiceLifecycleException {
         if (client == null) {
             throw new IllegalStateException("Failed to acquire a remote configuration registry client.");
         }
@@ -166,10 +167,14 @@ class DefaultRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
             for (String providerConfig : providerConfigs) {
                 File localFile = new File(providersDir, providerConfig);
 
-                byte[] remoteContent = client.getEntryData(NODE_KNOX_PROVIDERS + "/" + providerConfig).getBytes(StandardCharsets.UTF_8);
-                if (!localFile.exists() || !Arrays.equals(remoteContent, FileUtils.readFileToByteArray(localFile))) {
-                    FileUtils.writeByteArrayToFile(localFile, remoteContent);
-                    log.downloadedRemoteConfigFile(providersDir.getName(), providerConfig);
+                try {
+                    byte[] remoteContent = client.getEntryData(NODE_KNOX_PROVIDERS + "/" + providerConfig).getBytes(StandardCharsets.UTF_8);
+                    if (!localFile.exists() || !Arrays.equals(remoteContent, FileUtils.readFileToByteArray(localFile))) {
+                        FileUtils.writeByteArrayToFile(localFile, remoteContent);
+                        log.downloadedRemoteConfigFile(providersDir.getName(), providerConfig);
+                    }
+                } catch (IOException e) {
+                    throw new ServiceLifecycleException("Exception while downloading remote configs from zookeeper", e);
                 }
             }
         }
@@ -181,20 +186,69 @@ class DefaultRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
             throw new IllegalStateException("Unable to access remote path: " + NODE_KNOX_DESCRIPTORS);
         }
 
-        // Register a listener for provider config znode additions/removals
-        client.addChildEntryListener(NODE_KNOX_PROVIDERS, new ConfigDirChildEntryListener(providersDir));
+        try {
+            // Register a listener for provider config znode additions/removals
+            client.addChildEntryListener(NODE_KNOX_PROVIDERS, new ConfigDirChildEntryListener(providersDir));
 
-        // Register a listener for descriptor znode additions/removals
-        client.addChildEntryListener(NODE_KNOX_DESCRIPTORS, new ConfigDirChildEntryListener(descriptorsDir));
+            // Register a listener for descriptor znode additions/removals
+            client.addChildEntryListener(NODE_KNOX_DESCRIPTORS, new ConfigDirChildEntryListener(descriptorsDir));
+        } catch (Exception e) {
+            throw new ServiceLifecycleException("Exception while registering provider/descriptor znode listeners", e);
+        }
 
         log.monitoringRemoteConfigurationSource(monitorSource);
     }
 
 
     @Override
-    public void stop() throws Exception {
-        client.removeEntryListener(NODE_KNOX_PROVIDERS);
-        client.removeEntryListener(NODE_KNOX_DESCRIPTORS);
+    public void stop() throws ServiceLifecycleException {
+        try {
+            client.removeEntryListener(NODE_KNOX_PROVIDERS);
+            client.removeEntryListener(NODE_KNOX_DESCRIPTORS);
+        } catch (Exception e) {
+            throw new ServiceLifecycleException("Exception while stopping: " + getClass().getName(), e);
+        }
+    }
+
+    @Override
+    public boolean createProvider(String name, String content) {
+        String entryPath = "/knox/config/shared-providers/" + name;
+        client.createEntry(entryPath, content);
+        return (client.getEntryData(entryPath) != null);
+    }
+
+    @Override
+    public boolean createDescriptor(String name, String content) {
+        String entryPath = "/knox/config/descriptors/" + name;
+        client.createEntry(entryPath, content);
+        return (client.getEntryData(entryPath) != null);
+    }
+
+    @Override
+    public boolean deleteProvider(String name) {
+        return deleteEntry("/knox/config/descriptors", name);
+    }
+
+    @Override
+    public boolean deleteDescriptor(String name) {
+        return deleteEntry("/knox/config/shared-providers", name);
+    }
+
+    private boolean deleteEntry(String entryParent, String name) {
+        boolean result = false;
+        List<String> existingProviderConfigs = client.listChildEntries(entryParent);
+        for (String entryName : existingProviderConfigs) {
+            if (FilenameUtils.getBaseName(entryName).equals(name)) {
+                String entryPath = entryParent + "/" + entryName;
+                client.deleteEntry(entryPath);
+                result = !client.entryExists(entryPath);
+                if (!result) {
+                    log.failedToDeletedRemoteConfigFile("descriptor", name);
+                }
+                break;
+            }
+        }
+        return result;
     }
 
     private void ensureEntries() {

@@ -29,6 +29,15 @@ import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
+import org.apache.knox.gateway.topology.monitor.db.LocalDirectory;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.net.URI;
+import java.util.Date;
+import java.util.Map;
+import java.util.Set;
 
 @Messages(logger="org.apache.knox.gateway")
 public interface GatewayMessages {
@@ -727,4 +736,28 @@ public interface GatewayMessages {
 
   @Message(level = MessageLevel.WARN, text = "InMemoryConcurrentSessionVerifier is used and privileged user group is not configured! Non-privileged limit applies to all users (except the unlimited group).")
   void privilegedUserGroupIsNotConfigured();
+
+  @Message(level = MessageLevel.WARN,
+          text = "Could not create local provider/descriptor config at {0}, cause: {1}")
+  void errorSynchronizingLocalProviderDescriptor(LocalDirectory dir, Exception cause);
+
+  @Message(level = MessageLevel.INFO,
+          text = "Downloading provider/descriptor {0} to {1} from database")
+  void downloadingProviderDescriptor(String name, LocalDirectory localDir);
+
+  @Message(level = MessageLevel.INFO,
+          text = "Deleting provider/descriptor {0} from directory: {1}")
+  void deletingProviderDescriptor(String name, LocalDirectory localDir);
+
+  @Message(level = MessageLevel.WARN,
+          text = "Cannot create local directory: {0} cause: {1}")
+  void cannotCreateLocalDirectory(File base, IOException e);
+
+  @Message(level = MessageLevel.INFO,
+          text = "DB remote configuration monitor. Interval = {0} seconds")
+  void startingDbRemoteConfigurationMonitor(long intervalSeconds);
+
+  @Message(level = MessageLevel.WARN,
+          text = "Can not sync local file system from DB, cause = {0}")
+  void errorWhileSyncingLocalFileSystem(Exception e);
 }

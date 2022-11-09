@@ -229,6 +229,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   static final String REMOTE_CONFIG_MONITOR_CLIENT_ALLOW_READ_ACCESS =
                                                   REMOTE_CONFIG_MONITOR_CLIENT_NAME + ".allowUnauthenticatedReadAccess";
 
+  private static final String REMOTE_CONFIG_MONITOR_DB_POLLING_INTERVAL_SECONDS = GATEWAY_CONFIG_FILE_PREFIX + ".remote.config.monitor.db.poll.interval.seconds";
+  private static final long REMOTE_CONFIG_MONITOR_DB_POLLING_INTERVAL_SECONDS_DEFAULT = 15;
+
   /* @since 1.1.0 Default discovery configuration */
   static final String DEFAULT_DISCOVERY_ADDRESS = GATEWAY_CONFIG_FILE_PREFIX + ".discovery.default.address";
   static final String DEFAULT_DISCOVERY_CLUSTER = GATEWAY_CONFIG_FILE_PREFIX + ".discovery.default.cluster";
@@ -1385,6 +1388,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public Set<String> getSessionVerificationUnlimitedUsers() {
     final Collection<String> nonPrivilegedUsers = getTrimmedStringCollection(GATEWAY_SESSION_VERIFICATION_UNLIMITED_USERS);
     return nonPrivilegedUsers == null ? Collections.emptySet() : new HashSet<>(nonPrivilegedUsers);
+  }
+
+  @Override
+  public long getDbRemoteConfigMonitorPollingInterval() {
+    return getLong(REMOTE_CONFIG_MONITOR_DB_POLLING_INTERVAL_SECONDS, REMOTE_CONFIG_MONITOR_DB_POLLING_INTERVAL_SECONDS_DEFAULT);
   }
 
   @Override
