@@ -98,7 +98,7 @@ export class TokenGenerationComponent implements OnInit {
             cancelButtonText: '<span style="color: #555;">Adjust request lifetime</span>',
             cancelButtonColor: '#efefef'
           }).then((willGenerateToken) => {
-              if (willGenerateToken) {
+              if (willGenerateToken.isConfirmed) {
                 this.requestToken();
               }
           });

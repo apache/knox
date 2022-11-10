@@ -17,9 +17,9 @@
     <fieldset>
         <div class="fields">
             <h3>Token Generation</h3>
-            <label *ngIf="tssStatusMessageLevel == 'info'" style="color: green;">{{tssStatusMessage}}</label>
-            <label *ngIf="tssStatusMessageLevel == 'warning'" style="color: yellow;">{{tssStatusMessage}}</label>
-            <label *ngIf="tssStatusMessageLevel == 'error'" style="color: red;">{{tssStatusMessage}}</label>
+            <label *ngIf="tssStatusMessageLevel === 'info'" style="color: green;">{{tssStatusMessage}}</label>
+            <label *ngIf="tssStatusMessageLevel === 'warning'" style="color: yellow;">{{tssStatusMessage}}</label>
+            <label *ngIf="tssStatusMessageLevel === 'error'" style="color: red;">{{tssStatusMessage}}</label>
             <label><i class="icon-info"></i> Token Generation enables integration and API invocations by using the
              token as an authorization bearer token. Copy the JWT token from the resulting text area and protect it
              securely from others as this token represents your identity and is active until expired.</label>

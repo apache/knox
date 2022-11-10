@@ -53,22 +53,12 @@
               "token-generation/assets/styles/knox.css",
               "token-generation/styles.css"
             ],
-            "scripts": ["node_modules/jquery/dist/jquery.min.js"]
+            "scripts": [
+              "node_modules/jquery/dist/jquery.min.js"
+            ]
           },
           "configurations": {
             "production": {
-              "budgets": [
-                {
-                  "type": "initial",
-                  "maximumWarning": "500kb",
-                  "maximumError": "1mb"
-                },
-                {
-                  "type": "anyComponentStyle",
-                  "maximumWarning": "2kb",
-                  "maximumError": "4kb"
-                }
-              ],
               "fileReplacements": [
                 {
                   "replace": "token-generation/environments/environment.ts",
@@ -105,9 +95,23 @@
           "options": {
             "browserTarget": "token-generation:build"
           }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "token-generation/**/*.ts",
+              "token-generation/**/*.html"
+            ]
+          }
         }
       }
     }
   },
-  "defaultProject": "token-generation"
+  "defaultProject": "token-generation",
+  "cli": {
+    "schematicCollections": [
+      "@angular-eslint/schematics"
+    ]
+  }
 }
