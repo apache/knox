@@ -123,8 +123,9 @@ public class RemoteConfigDatabase {
          PreparedStatement statement = connection.prepareStatement(
                  "SELECT name FROM " + tableName + " WHERE name = ?")) {
       statement.setString(1, name);
-      ResultSet resultSet = statement.executeQuery();
-      return resultSet.next();
+      try (ResultSet resultSet = statement.executeQuery()) {
+        return resultSet.next();
+      }
     }
   }
 

@@ -17,6 +17,7 @@
 package org.apache.knox.gateway.topology.monitor.db;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -51,13 +52,13 @@ public class LocalDirectoryTest {
 
   @Test
   public void testDeleteNonExisting() {
-    assertEquals(false, localDirectory.deleteFile("non_existing.txt"));
+    assertFalse(localDirectory.deleteFile("non_existing.txt"));
   }
 
   @Test
   public void testDeleteExisting() throws Exception {
     localDirectory.writeFile("new.txt", "content");
-    assertEquals(true, localDirectory.deleteFile("new.txt"));
+    assertTrue(localDirectory.deleteFile("new.txt"));
   }
 
   @Test
