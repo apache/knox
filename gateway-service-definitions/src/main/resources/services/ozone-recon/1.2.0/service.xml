@@ -14,7 +14,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 -->
-<service role="RECON" name="ozone-recon" version="1.2.0">
+<service role="OZONE-RECON" name="ozone-recon" version="1.2.0">
 <metadata>
         <type>UI</type>
         <context>/ozone-recon/index.html</context>
@@ -24,7 +24,7 @@
     <route path="/ozone-recon"/>
     <route path="/ozone-recon/**"/>
     <route path="/ozone-recon/static/js/**">
-	<rewrite apply="RECON/filter/staticLinks" to="response.body"/>
+	<rewrite apply="OZONE-RECON/filter/staticLinks" to="response.body"/>
     </route>
 </routes>
 </service>

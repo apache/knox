@@ -28,7 +28,7 @@ import java.util.Locale;
 
 public class ReconServiceModelGenerator extends AbstractServiceModelGenerator {
 
-  public static final String SERVICE      = "RECON";
+  public static final String SERVICE      = "OZONE-RECON";
   public static final String SERVICE_TYPE = "OZONE";
   public static final String ROLE_TYPE    = "OZONE_RECON";
 

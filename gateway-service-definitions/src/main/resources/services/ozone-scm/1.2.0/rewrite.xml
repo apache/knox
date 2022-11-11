@@ -17,16 +17,16 @@ Licensed to the Apache Software Foundation (ASF) under one or more
 
 
 <rules>
-    <rule dir="IN" name="SCM/rule/inbound" pattern="*://*:*/**/ozone-scm/{path=**}?{**}">
-        <rewrite template="{$serviceUrl[SCM]}/{path=**}?{**}"/>
+    <rule dir="IN" name="OZONE-SCM/rule/inbound" pattern="*://*:*/**/ozone-scm/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[OZONE-SCM]}/{path=**}?{**}"/>
     </rule>
-    <rule dir="OUT" name="SCM/rule/docs">
+    <rule dir="OUT" name="OZONE-SCM/rule/docs">
         <rewrite template="{gateway.url}/ozone-scm/docs/index.html"/>
     </rule>
 
-    <filter name="SCM/filter/doc">
+    <filter name="OZONE-SCM/filter/doc">
         <content type="text/html">
-            <apply path="/docs" rule="SCM/rule/docs"/>
+            <apply path="/docs" rule="OZONE-SCM/rule/docs"/>
         </content>
     </filter>
 </rules>

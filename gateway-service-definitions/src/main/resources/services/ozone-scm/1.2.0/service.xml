@@ -14,7 +14,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
  -->
-<service role="SCM" name="ozone-scm" version="1.2.0">
+<service role="OZONE-SCM" name="ozone-scm" version="1.2.0">
 	<metadata>
 		<type>UI</type>
 		<context>/ozone-scm/index.html?host={{BACKEND_HOST}}</context>
@@ -22,7 +22,7 @@
 	</metadata>
 	<routes>
       <route path="/ozone-scm/**">
-         <rewrite apply="SCM/filter/doc" to="response.body"/>
+         <rewrite apply="OZONE-SCM/filter/doc" to="response.body"/>
       </route>
 	</routes>
 </service>

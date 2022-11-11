@@ -15,33 +15,33 @@
    limitations under the License.
 -->
 <rules>
-    <rule dir="IN" name="RECON/rule/inbound" pattern="*://*:*/**/ozone-recon/{recon_path=**}?{**}">
-        <rewrite template="{$serviceUrl[RECON]}/{recon_path=**}?{**}"/>
+    <rule dir="IN" name="OZONE-RECON/rule/inbound" pattern="*://*:*/**/ozone-recon/{recon_path=**}?{**}">
+        <rewrite template="{$serviceUrl[OZONE-RECON]}/{recon_path=**}?{**}"/>
     </rule>
 
 
-    <rule dir="OUT" name="RECON/rule/static" pattern="/static/{**}">
+    <rule dir="OUT" name="OZONE-RECON/rule/static" pattern="/static/{**}">
         <rewrite template="{gateway.url}/ozone-recon/static/{**}"/>
     </rule>
-    <rule dir="OUT" name="RECON/rule/manifest" pattern="/manifest.json">
+    <rule dir="OUT" name="OZONE-RECON/rule/manifest" pattern="/manifest.json">
         <rewrite template="{gateway.url}/ozone-recon/manifest.json"/>
     </rule>
-    <rule dir="OUT" name="RECON/rule/favicon" pattern="/favicon.ico">
+    <rule dir="OUT" name="OZONE-RECON/rule/favicon" pattern="/favicon.ico">
         <rewrite template="{gateway.url}/ozone-recon/favicon.ico"/>
     </rule>
 
-    <rule dir="OUT" name="RECON/rule/media" pattern="/static/media/{**}">
+    <rule dir="OUT" name="OZONE-RECON/rule/media" pattern="/static/media/{**}">
         <rewrite template="{$frontend[gateway.name]}/{$frontend[topology]}/ozone-recon/static/media/{**}"/>
     </rule>
-    <rule dir="OUT" name="RECON/rule/api" pattern="/api/v1/{**}">
+    <rule dir="OUT" name="OZONE-RECON/rule/api" pattern="/api/v1/{**}">
         <rewrite template="{gateway.url}/ozone-recon/api/v1/{**}"/>
     </rule>
 
 
-    <filter name="RECON/filter/staticLinks">
+    <filter name="OZONE-RECON/filter/staticLinks">
         <content type="application/javascript">
-            <apply path="static/media/.*\.png" rule="RECON/rule/media"/>
-            <apply path="/api/v1/[\w]+" rule="RECON/rule/api"/>
+            <apply path="static/media/.*\.png" rule="OZONE-RECON/rule/media"/>
+            <apply path="/api/v1/[\w]+" rule="OZONE-RECON/rule/api"/>
         </content>
     </filter>
 </rules>

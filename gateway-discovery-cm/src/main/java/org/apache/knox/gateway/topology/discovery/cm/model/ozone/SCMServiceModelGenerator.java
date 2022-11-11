@@ -28,7 +28,7 @@ import java.util.Locale;
 
 public class SCMServiceModelGenerator extends AbstractServiceModelGenerator {
 
-  public static final String SERVICE      = "SCM";
+  public static final String SERVICE      = "OZONE-SCM";
   public static final String SERVICE_TYPE = "OZONE";
   public static final String ROLE_TYPE    = "STORAGE_CONTAINER_MANAGER";
 
