@@ -27,23 +27,29 @@ import java.util.List;
 
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class RemoteConfigDatabaseTest {
   public static final String DB_NAME = "remote_config_test";
   public static final String USER = "sa";
   public static final String PASSWORD = "";
+  private static JDBCDataSource dataSource;
   private RemoteConfigDatabase db;
-  private JDBCDataSource dataSource;
 
-  @Before
-  public void setUp() throws Exception {
+  @BeforeClass
+  public static void setUpClass() throws Exception {
     dataSource = new JDBCDataSource();
     dataSource.setDatabaseName(DB_NAME);
     dataSource.setUser(USER);
     dataSource.setPassword(PASSWORD);
     dataSource.setUrl("jdbc:hsqldb:mem:knox;sql.syntax_pgs=true"); // sql.syntax_pgs => use postgres syntax
+  }
+
+  @Before
+  public void setUp() throws Exception {
     db = new RemoteConfigDatabase(dataSource);
   }
 
@@ -53,6 +59,14 @@ public class RemoteConfigDatabaseTest {
          Statement statement = connection.createStatement()) {
          statement.execute("DROP TABLE KNOX_PROVIDERS");
          statement.execute("DROP TABLE KNOX_DESCRIPTORS");
+    }
+  }
+
+  @AfterClass
+  public static void tearDownClass() throws Exception {
+    try (Connection connection = dataSource.getConnection(USER, PASSWORD);
+         Statement statement = connection.createStatement()) {
+      statement.execute("SHUTDOWN");
     }
   }
 

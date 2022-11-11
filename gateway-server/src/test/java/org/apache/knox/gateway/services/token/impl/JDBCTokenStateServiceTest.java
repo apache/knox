@@ -28,6 +28,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -48,6 +49,7 @@ import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
 import org.apache.knox.gateway.util.JDBCUtils;
 import org.easymock.EasyMock;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -83,6 +85,15 @@ public class JDBCTokenStateServiceTest {
     jdbcTokenStateService.setAliasService(aliasService);
     jdbcTokenStateService.init(gatewayConfig, null);
     tokenMAC = new TokenMAC(HmacAlgorithms.HMAC_SHA_256.getName(), "sPj8FCgQhCEi6G18kBfpswxYSki33plbelGLs0hMSbk".toCharArray());
+  }
+
+  @SuppressWarnings("PMD.JUnit4TestShouldUseAfterAnnotation")
+  @AfterClass
+  public static void tearDown() throws Exception {
+    try (Connection connection = getConnection();
+         Statement statement = connection.createStatement()) {
+      statement.execute("SHUTDOWN");
+    }
   }
 
   @Test
@@ -259,7 +270,7 @@ public class JDBCTokenStateServiceTest {
     }
   }
 
-  private Connection getConnection() throws SQLException {
+  private static Connection getConnection() throws SQLException {
     return DriverManager.getConnection(CONNECTION_URL, USERNAME, PASSWORD);
   }
 
