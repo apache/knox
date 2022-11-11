@@ -6,7 +6,7 @@
     "start": "ng serve --verbose=true",
     "build": "ng build",
     "build-prod": "ng build --configuration production",
-    "lint": "eslint 'token-generation/app/*'"
+    "lint": "eslint token-generation"
   },
   "private": true,
   "dependencies": {
