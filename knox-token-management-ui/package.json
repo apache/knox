@@ -6,7 +6,7 @@
     "start": "ng serve  --verbose=true",
     "build": "ng build",
     "build-prod": "ng build --configuration production",
-    "lint": "tslint \"token-management/**/*.ts\""
+    "lint": "eslint \"token-management/app/*\""
   },
   "private": true,
   "dependencies": {
@@ -37,15 +37,21 @@
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^13.0.2",
+    "@angular-eslint/builder": "14.1.2",
+    "@angular-eslint/eslint-plugin": "14.1.2",
+    "@angular-eslint/eslint-plugin-template": "14.1.2",
+    "@angular-eslint/schematics": "14.1.2",
+    "@angular-eslint/template-parser": "14.1.2",
     "@angular/cli": "^14.2.8",
     "@angular/compiler-cli": "^13.0.1",
     "@angular/language-service": "^5.2.0",
     "@types/jasmine": "~2.5.53",
     "@types/jasminewd2": "^2.0.8",
     "@types/node": "^18.11.9",
-    "codelyzer": "^4.1.0",
+    "@typescript-eslint/eslint-plugin": "5.37.0",
+    "@typescript-eslint/parser": "5.37.0",
+    "eslint": "^8.23.1",
     "ts-node": "~3.2.0",
-    "tslint": "~5.7.0",
     "typescript": "~4.4.4",
     "webdriver-manager": "10.2.5"
   }

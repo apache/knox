@@ -64,8 +64,7 @@ export class SessionInformationComponent implements OnInit {
         if (this.sessionInformation) {
             if (!this.logoutSupported) {
                 window.alert('Logout for the configured is IDP not supported.\nPlease close all browser windows to logout.');
-            }
-            else {
+            } else {
                 this.homepageService.logout(this.getLogoutUrl())
                                         .then(() => window.location.assign(this.sessionInformation.logoutPageUrl));
             }
