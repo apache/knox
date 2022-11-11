@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar timeout_1 = require('../../operator/timeout');\n\nObservable_1.Observable.prototype.timeout = timeout_1.timeout; //# sourceMappingURL=timeout.js.map","map":null,"metadata":{},"sourceType":"script"}

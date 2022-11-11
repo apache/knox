@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar combineLatest_1 = require('../operators/combineLatest');\n\nfunction combineAll(project) {\n  return function (source) {\n    return source.lift(new combineLatest_1.CombineLatestOperator(project));\n  };\n}\n\nexports.combineAll = combineAll; //# sourceMappingURL=combineAll.js.map","map":null,"metadata":{},"sourceType":"script"}

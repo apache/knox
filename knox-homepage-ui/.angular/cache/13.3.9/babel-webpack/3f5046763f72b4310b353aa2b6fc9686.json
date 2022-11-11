@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar count_1 = require('../../operator/count');\n\nObservable_1.Observable.prototype.count = count_1.count; //# sourceMappingURL=count.js.map","map":null,"metadata":{},"sourceType":"script"}

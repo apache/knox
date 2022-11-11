@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nfunction isDate(value) {\n  return value instanceof Date && !isNaN(+value);\n}\n\nexports.isDate = isDate; //# sourceMappingURL=isDate.js.map","map":null,"metadata":{},"sourceType":"script"}

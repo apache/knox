@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar zipAll_1 = require('../../operator/zipAll');\n\nObservable_1.Observable.prototype.zipAll = zipAll_1.zipAll; //# sourceMappingURL=zipAll.js.map","map":null,"metadata":{},"sourceType":"script"}

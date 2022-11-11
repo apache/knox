@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar windowCount_1 = require('../../operator/windowCount');\n\nObservable_1.Observable.prototype.windowCount = windowCount_1.windowCount; //# sourceMappingURL=windowCount.js.map","map":null,"metadata":{},"sourceType":"script"}

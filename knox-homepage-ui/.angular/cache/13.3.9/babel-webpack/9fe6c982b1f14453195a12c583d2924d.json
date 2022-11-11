@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar do_1 = require('../../operator/do');\n\nObservable_1.Observable.prototype.do = do_1._do;\nObservable_1.Observable.prototype._do = do_1._do; //# sourceMappingURL=do.js.map","map":null,"metadata":{},"sourceType":"script"}

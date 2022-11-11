@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar ArrayObservable_1 = require('./ArrayObservable');\n\nexports.of = ArrayObservable_1.ArrayObservable.of; //# sourceMappingURL=of.js.map","map":null,"metadata":{},"sourceType":"script"}

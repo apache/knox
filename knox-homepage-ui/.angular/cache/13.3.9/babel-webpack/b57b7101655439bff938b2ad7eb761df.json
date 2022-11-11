@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar switchMap_1 = require('./switchMap');\n\nvar identity_1 = require('../util/identity');\n\nfunction switchAll() {\n  return switchMap_1.switchMap(identity_1.identity);\n}\n\nexports.switchAll = switchAll; //# sourceMappingURL=switchAll.js.map","map":null,"metadata":{},"sourceType":"script"}

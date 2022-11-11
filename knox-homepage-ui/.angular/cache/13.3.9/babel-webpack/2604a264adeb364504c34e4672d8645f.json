@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar BoundNodeCallbackObservable_1 = require('./BoundNodeCallbackObservable');\n\nexports.bindNodeCallback = BoundNodeCallbackObservable_1.BoundNodeCallbackObservable.create; //# sourceMappingURL=bindNodeCallback.js.map","map":null,"metadata":{},"sourceType":"script"}

@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar window_1 = require('../../operator/window');\n\nObservable_1.Observable.prototype.window = window_1.window; //# sourceMappingURL=window.js.map","map":null,"metadata":{},"sourceType":"script"}

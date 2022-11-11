@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar AjaxObservable_1 = require('./AjaxObservable');\n\nexports.ajax = AjaxObservable_1.AjaxObservable.create; //# sourceMappingURL=ajax.js.map","map":null,"metadata":{},"sourceType":"script"}

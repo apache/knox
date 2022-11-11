@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar TimerObservable_1 = require('./TimerObservable');\n\nexports.timer = TimerObservable_1.TimerObservable.create; //# sourceMappingURL=timer.js.map","map":null,"metadata":{},"sourceType":"script"}

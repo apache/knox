@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar scan_1 = require('../../operator/scan');\n\nObservable_1.Observable.prototype.scan = scan_1.scan; //# sourceMappingURL=scan.js.map","map":null,"metadata":{},"sourceType":"script"}

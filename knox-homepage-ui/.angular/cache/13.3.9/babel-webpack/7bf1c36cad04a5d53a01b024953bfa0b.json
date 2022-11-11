@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar IntervalObservable_1 = require('./IntervalObservable');\n\nexports.interval = IntervalObservable_1.IntervalObservable.create; //# sourceMappingURL=interval.js.map","map":null,"metadata":{},"sourceType":"script"}

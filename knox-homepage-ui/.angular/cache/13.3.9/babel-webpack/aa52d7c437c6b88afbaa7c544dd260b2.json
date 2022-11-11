@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../../Observable');\n\nvar webSocket_1 = require('../../../observable/dom/webSocket');\n\nObservable_1.Observable.webSocket = webSocket_1.webSocket; //# sourceMappingURL=webSocket.js.map","map":null,"metadata":{},"sourceType":"script"}

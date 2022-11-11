@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar bufferCount_1 = require('../../operator/bufferCount');\n\nObservable_1.Observable.prototype.bufferCount = bufferCount_1.bufferCount; //# sourceMappingURL=bufferCount.js.map","map":null,"metadata":{},"sourceType":"script"}

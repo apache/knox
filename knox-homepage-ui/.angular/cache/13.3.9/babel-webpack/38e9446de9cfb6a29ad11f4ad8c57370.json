@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar skipLast_1 = require('../../operator/skipLast');\n\nObservable_1.Observable.prototype.skipLast = skipLast_1.skipLast; //# sourceMappingURL=skipLast.js.map","map":null,"metadata":{},"sourceType":"script"}

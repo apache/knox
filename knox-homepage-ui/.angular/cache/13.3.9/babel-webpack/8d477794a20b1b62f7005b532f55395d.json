@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nfunction isScheduler(value) {\n  return value && typeof value.schedule === 'function';\n}\n\nexports.isScheduler = isScheduler; //# sourceMappingURL=isScheduler.js.map","map":null,"metadata":{},"sourceType":"script"}

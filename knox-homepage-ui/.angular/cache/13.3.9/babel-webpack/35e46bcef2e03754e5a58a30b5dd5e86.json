@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar WebSocketSubject_1 = require('./WebSocketSubject');\n\nexports.webSocket = WebSocketSubject_1.WebSocketSubject.create; //# sourceMappingURL=webSocket.js.map","map":null,"metadata":{},"sourceType":"script"}

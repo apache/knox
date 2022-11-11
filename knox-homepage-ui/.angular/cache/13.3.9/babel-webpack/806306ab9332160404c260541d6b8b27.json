@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar FromEventObservable_1 = require('./FromEventObservable');\n\nexports.fromEvent = FromEventObservable_1.FromEventObservable.create; //# sourceMappingURL=fromEvent.js.map","map":null,"metadata":{},"sourceType":"script"}

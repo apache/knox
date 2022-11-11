@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar mergeMapTo_1 = require('../../operator/mergeMapTo');\n\nObservable_1.Observable.prototype.flatMapTo = mergeMapTo_1.mergeMapTo;\nObservable_1.Observable.prototype.mergeMapTo = mergeMapTo_1.mergeMapTo; //# sourceMappingURL=mergeMapTo.js.map","map":null,"metadata":{},"sourceType":"script"}

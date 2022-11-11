@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar interval_1 = require('../../observable/interval');\n\nObservable_1.Observable.interval = interval_1.interval; //# sourceMappingURL=interval.js.map","map":null,"metadata":{},"sourceType":"script"}

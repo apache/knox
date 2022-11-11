@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nexports.isArrayLike = function (x) {\n  return x && typeof x.length === 'number';\n}; //# sourceMappingURL=isArrayLike.js.map","map":null,"metadata":{},"sourceType":"script"}

@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar sequenceEqual_1 = require('../../operator/sequenceEqual');\n\nObservable_1.Observable.prototype.sequenceEqual = sequenceEqual_1.sequenceEqual; //# sourceMappingURL=sequenceEqual.js.map","map":null,"metadata":{},"sourceType":"script"}

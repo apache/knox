@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar toArray_1 = require('../../operator/toArray');\n\nObservable_1.Observable.prototype.toArray = toArray_1.toArray; //# sourceMappingURL=toArray.js.map","map":null,"metadata":{},"sourceType":"script"}

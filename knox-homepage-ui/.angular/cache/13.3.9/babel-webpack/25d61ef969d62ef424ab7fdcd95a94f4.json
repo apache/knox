@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar root_1 = require('./root');\n\nvar MapPolyfill_1 = require('./MapPolyfill');\n\nexports.Map = root_1.root.Map || function () {\n  return MapPolyfill_1.MapPolyfill;\n}(); //# sourceMappingURL=Map.js.map","map":null,"metadata":{},"sourceType":"script"}

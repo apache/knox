@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar reduce_1 = require('../../operator/reduce');\n\nObservable_1.Observable.prototype.reduce = reduce_1.reduce; //# sourceMappingURL=reduce.js.map","map":null,"metadata":{},"sourceType":"script"}

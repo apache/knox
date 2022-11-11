@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar windowToggle_1 = require('../../operator/windowToggle');\n\nObservable_1.Observable.prototype.windowToggle = windowToggle_1.windowToggle; //# sourceMappingURL=windowToggle.js.map","map":null,"metadata":{},"sourceType":"script"}

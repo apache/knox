@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar defer_1 = require('../../observable/defer');\n\nObservable_1.Observable.defer = defer_1.defer; //# sourceMappingURL=defer.js.map","map":null,"metadata":{},"sourceType":"script"}

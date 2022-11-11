@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar if_1 = require('../../observable/if');\n\nObservable_1.Observable.if = if_1._if; //# sourceMappingURL=if.js.map","map":null,"metadata":{},"sourceType":"script"}

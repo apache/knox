@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar zip_1 = require('./zip');\n\nfunction zipAll(project) {\n  return function (source) {\n    return source.lift(new zip_1.ZipOperator(project));\n  };\n}\n\nexports.zipAll = zipAll; //# sourceMappingURL=zipAll.js.map","map":null,"metadata":{},"sourceType":"script"}

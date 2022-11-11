@@ -17,10 +17,10 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {MatGridListModule} from '@angular/material/grid-list';
-import {BsModalComponent} from 'ng2-bs3-modal/ng2-bs3-modal';
 import {HomepageService} from '../homepage.service';
 import {TopologyInformation} from './topology.information';
 import {Service} from './service';
+import {BsModalComponent} from 'ng2-bs3-modal';
 
 @Component({
     selector: 'app-topologies-information',

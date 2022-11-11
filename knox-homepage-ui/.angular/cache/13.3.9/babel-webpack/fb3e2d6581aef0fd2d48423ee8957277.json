@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n/* tslint:disable:no-empty */\n\nfunction noop() {}\n\nexports.noop = noop; //# sourceMappingURL=noop.js.map","map":null,"metadata":{},"sourceType":"script"}

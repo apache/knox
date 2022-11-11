@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar onErrorResumeNext_1 = require('../../observable/onErrorResumeNext');\n\nObservable_1.Observable.onErrorResumeNext = onErrorResumeNext_1.onErrorResumeNext; //# sourceMappingURL=onErrorResumeNext.js.map","map":null,"metadata":{},"sourceType":"script"}

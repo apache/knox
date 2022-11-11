@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar concat_1 = require('../../operator/concat');\n\nObservable_1.Observable.prototype.concat = concat_1.concat; //# sourceMappingURL=concat.js.map","map":null,"metadata":{},"sourceType":"script"}

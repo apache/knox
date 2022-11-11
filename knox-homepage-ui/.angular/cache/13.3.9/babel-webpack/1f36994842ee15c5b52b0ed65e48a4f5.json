@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar publish_1 = require('../../operator/publish');\n\nObservable_1.Observable.prototype.publish = publish_1.publish; //# sourceMappingURL=publish.js.map","map":null,"metadata":{},"sourceType":"script"}

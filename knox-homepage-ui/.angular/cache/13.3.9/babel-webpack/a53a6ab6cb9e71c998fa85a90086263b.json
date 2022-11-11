@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nfunction isFunction(x) {\n  return typeof x === 'function';\n}\n\nexports.isFunction = isFunction; //# sourceMappingURL=isFunction.js.map","map":null,"metadata":{},"sourceType":"script"}

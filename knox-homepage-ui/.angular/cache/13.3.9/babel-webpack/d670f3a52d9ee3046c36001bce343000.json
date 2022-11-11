@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nexports.isArray = Array.isArray || function (x) {\n  return x && typeof x.length === 'number';\n}; //# sourceMappingURL=isArray.js.map","map":null,"metadata":{},"sourceType":"script"}

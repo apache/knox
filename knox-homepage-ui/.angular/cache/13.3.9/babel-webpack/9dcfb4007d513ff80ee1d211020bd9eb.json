@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar takeUntil_1 = require('../../operator/takeUntil');\n\nObservable_1.Observable.prototype.takeUntil = takeUntil_1.takeUntil; //# sourceMappingURL=takeUntil.js.map","map":null,"metadata":{},"sourceType":"script"}

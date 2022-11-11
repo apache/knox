@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar PromiseObservable_1 = require('./PromiseObservable');\n\nexports.fromPromise = PromiseObservable_1.PromiseObservable.create; //# sourceMappingURL=fromPromise.js.map","map":null,"metadata":{},"sourceType":"script"}

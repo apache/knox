@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar PairsObservable_1 = require('./PairsObservable');\n\nexports.pairs = PairsObservable_1.PairsObservable.create; //# sourceMappingURL=pairs.js.map","map":null,"metadata":{},"sourceType":"script"}

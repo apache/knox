@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar ForkJoinObservable_1 = require('./ForkJoinObservable');\n\nexports.forkJoin = ForkJoinObservable_1.ForkJoinObservable.create; //# sourceMappingURL=forkJoin.js.map","map":null,"metadata":{},"sourceType":"script"}

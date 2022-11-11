@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar debounceTime_1 = require('../../operator/debounceTime');\n\nObservable_1.Observable.prototype.debounceTime = debounceTime_1.debounceTime; //# sourceMappingURL=debounceTime.js.map","map":null,"metadata":{},"sourceType":"script"}

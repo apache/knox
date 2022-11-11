@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar let_1 = require('../../operator/let');\n\nObservable_1.Observable.prototype.let = let_1.letProto;\nObservable_1.Observable.prototype.letBind = let_1.letProto; //# sourceMappingURL=let.js.map","map":null,"metadata":{},"sourceType":"script"}

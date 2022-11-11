@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar combineLatest_1 = require('../../observable/combineLatest');\n\nObservable_1.Observable.combineLatest = combineLatest_1.combineLatest; //# sourceMappingURL=combineLatest.js.map","map":null,"metadata":{},"sourceType":"script"}

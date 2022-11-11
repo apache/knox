@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar switch_1 = require('../../operator/switch');\n\nObservable_1.Observable.prototype.switch = switch_1._switch;\nObservable_1.Observable.prototype._switch = switch_1._switch; //# sourceMappingURL=switch.js.map","map":null,"metadata":{},"sourceType":"script"}

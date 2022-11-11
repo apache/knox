@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar debounce_1 = require('../../operator/debounce');\n\nObservable_1.Observable.prototype.debounce = debounce_1.debounce; //# sourceMappingURL=debounce.js.map","map":null,"metadata":{},"sourceType":"script"}

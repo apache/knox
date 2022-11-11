@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar distinct_1 = require('../../operator/distinct');\n\nObservable_1.Observable.prototype.distinct = distinct_1.distinct; //# sourceMappingURL=distinct.js.map","map":null,"metadata":{},"sourceType":"script"}

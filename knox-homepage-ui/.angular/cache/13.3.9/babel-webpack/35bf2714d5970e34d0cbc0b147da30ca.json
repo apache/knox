@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../Observable');\n\nvar pairs_1 = require('../../observable/pairs');\n\nObservable_1.Observable.pairs = pairs_1.pairs; //# sourceMappingURL=pairs.js.map","map":null,"metadata":{},"sourceType":"script"}

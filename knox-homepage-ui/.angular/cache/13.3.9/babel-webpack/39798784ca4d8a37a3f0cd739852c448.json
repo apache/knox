@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar Observable_1 = require('../../../Observable');\n\nvar ajax_1 = require('../../../observable/dom/ajax');\n\nObservable_1.Observable.ajax = ajax_1.ajax; //# sourceMappingURL=ajax.js.map","map":null,"metadata":{},"sourceType":"script"}

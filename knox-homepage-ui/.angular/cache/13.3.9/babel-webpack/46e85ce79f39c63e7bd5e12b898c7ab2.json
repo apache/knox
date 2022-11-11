@@ -1,0 +1,1 @@
+{"ast":null,"code":"\"use strict\";\n\nvar GenerateObservable_1 = require('./GenerateObservable');\n\nexports.generate = GenerateObservable_1.GenerateObservable.create; //# sourceMappingURL=generate.js.map","map":null,"metadata":{},"sourceType":"script"}
