@@ -16,7 +16,7 @@
  */
 import {Injectable} from '@angular/core';
 import {HttpClient, HttpErrorResponse, HttpHeaders} from '@angular/common/http';
-import swal from 'sweetalert';
+import Swal from 'sweetalert2';
 
 import 'rxjs/add/operator/toPromise';
 
@@ -133,7 +133,12 @@ export class TokenManagementService {
     }
 
     private handleError(error: HttpErrorResponse): Promise<any> {
-        swal('Oops!', 'Something went wrong!\n' + (error.error ? error.error : error.statusText), 'error');
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops!',
+            text: 'Something went wrong!\n' + (error.error ? error.error : error.statusText),
+            confirmButtonColor: '#7cd1f9'
+          });
         return Promise.reject(error.message || error);
     }
 
