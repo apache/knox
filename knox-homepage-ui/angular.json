@@ -94,6 +94,15 @@
           "options": {
             "browserTarget": "home:build"
           }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "home/**/*.ts",
+              "home/**/*.html"
+            ]
+          }
         }
       }
     }
@@ -101,6 +110,7 @@
   "defaultProject": "home",
   "cli": {
     "schematicCollections": [
+      "@angular-eslint/schematics",
       "@angular-eslint/schematics"
     ]
   }
