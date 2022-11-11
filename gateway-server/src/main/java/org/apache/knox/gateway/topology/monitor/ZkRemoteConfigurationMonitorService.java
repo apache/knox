@@ -36,7 +36,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-class ZkRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
+class ZkRemoteConfigurationMonitorService implements RemoteConfigurationMonitor {
 
     private static final String NODE_KNOX = "/knox";
     private static final String NODE_KNOX_CONFIG = NODE_KNOX + "/config";
@@ -117,8 +117,8 @@ class ZkRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
      * @param config                The gateway configuration
      * @param registryClientService The service from which the remote registry client should be acquired.
      */
-    ZkRemoteConfigurationMonitor(GatewayConfig                            config,
-                                 RemoteConfigurationRegistryClientService registryClientService) {
+    ZkRemoteConfigurationMonitorService(GatewayConfig                            config,
+                                        RemoteConfigurationRegistryClientService registryClientService) {
         this.providersDir   = new File(config.getGatewayProvidersConfigDir());
         this.descriptorsDir = new File(config.getGatewayDescriptorsDir());
 

@@ -170,7 +170,7 @@ public class ZooKeeperConfigurationMonitorTest {
         clientService.init(gc, Collections.emptyMap());
         clientService.start();
 
-        ZkRemoteConfigurationMonitor cm = new ZkRemoteConfigurationMonitor(gc, clientService);
+        ZkRemoteConfigurationMonitorService cm = new ZkRemoteConfigurationMonitorService(gc, clientService);
 
         // Create a provider configuration in the test ZK, prior to starting the monitor, to make sure that the monitor
         // will download existing entries upon starting.

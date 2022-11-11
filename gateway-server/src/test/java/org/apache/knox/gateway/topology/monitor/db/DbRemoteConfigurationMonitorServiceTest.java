@@ -28,8 +28,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class DbRemoteConfigurationMonitorTest {
-  private DbRemoteConfigurationMonitor monitor;
+public class DbRemoteConfigurationMonitorServiceTest {
+  private DbRemoteConfigurationMonitorService monitor;
   private RemoteConfigDatabase db;
   private LocalDirectory providersDir;
   private LocalDirectory descriptorsDir;
@@ -40,7 +40,7 @@ public class DbRemoteConfigurationMonitorTest {
     db = EasyMock.createMock(RemoteConfigDatabase.class);
     providersDir = EasyMock.createMock(LocalDirectory.class);
     descriptorsDir = EasyMock.createMock(LocalDirectory.class);
-    monitor = new DbRemoteConfigurationMonitor(db, providersDir, descriptorsDir, 60);
+    monitor = new DbRemoteConfigurationMonitorService(db, providersDir, descriptorsDir, 60);
     monitor.start();
   }
 

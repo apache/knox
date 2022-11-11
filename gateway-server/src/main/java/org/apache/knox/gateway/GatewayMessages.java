@@ -19,6 +19,7 @@ package org.apache.knox.gateway;
 
 import java.io.File;
 import java.net.URI;
+import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
@@ -31,13 +32,7 @@ import org.apache.knox.gateway.i18n.messages.StackTrace;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.topology.monitor.db.LocalDirectory;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
-import java.net.URI;
-import java.util.Date;
-import java.util.Map;
-import java.util.Set;
 
 @Messages(logger="org.apache.knox.gateway")
 public interface GatewayMessages {
@@ -760,4 +755,16 @@ public interface GatewayMessages {
   @Message(level = MessageLevel.WARN,
           text = "Can not sync local file system from DB, cause = {0}")
   void errorWhileSyncingLocalFileSystem(Exception e);
+
+  @Message(level = MessageLevel.DEBUG,
+          text = "Remote configuration sync completed at: {0}")
+  void remoteConfigurationSyncCompleted(Instant lastSyncTime);
+
+  @Message(level = MessageLevel.DEBUG,
+          text = "Deleting local {0} with name {1}")
+  void deletingLocalDescriptorProvider(String type, String name);
+
+  @Message(level = MessageLevel.DEBUG,
+          text = "Creating local {0} with name {1}")
+  void creatingLocalDescriptorProvider(String type, String name);
 }

@@ -53,7 +53,7 @@ import org.apache.knox.gateway.topology.TopologyProvider;
 import org.apache.knox.gateway.topology.Version;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
-import org.apache.knox.gateway.topology.monitor.DefaultConfigurationMonitorProvider;
+import org.apache.knox.gateway.topology.monitor.RemoteConfigurationMonitorServiceFactory;
 import org.apache.knox.gateway.topology.monitor.RemoteConfigurationMonitor;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorFactory;
@@ -654,7 +654,7 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
       log.configuredMonitoringProviderConfigChangesInDirectory(sharedProvidersDirectory.getAbsolutePath());
 
       // Initialize the remote configuration monitor, if it has been configured
-      DefaultConfigurationMonitorProvider provider = new DefaultConfigurationMonitorProvider();
+      RemoteConfigurationMonitorServiceFactory provider = new RemoteConfigurationMonitorServiceFactory();
       remoteMonitor = (RemoteConfigurationMonitor) provider.create(gwServices, ServiceType.REMOTE_CONFIGURATION_MONITOR, config, Collections.emptyMap());
 
     } catch (Exception e) {

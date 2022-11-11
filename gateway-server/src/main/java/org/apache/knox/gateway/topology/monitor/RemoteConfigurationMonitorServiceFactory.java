@@ -29,13 +29,13 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.factory.AbstractServiceFactory;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
-import org.apache.knox.gateway.topology.monitor.db.DbRemoteConfigurationMonitor;
+import org.apache.knox.gateway.topology.monitor.db.DbRemoteConfigurationMonitorService;
 import org.apache.knox.gateway.topology.monitor.db.LocalDirectory;
 import org.apache.knox.gateway.topology.monitor.db.RemoteConfigDatabase;
 import org.apache.knox.gateway.util.JDBCUtils;
 
 
-public class DefaultConfigurationMonitorProvider extends AbstractServiceFactory {
+public class RemoteConfigurationMonitorServiceFactory extends AbstractServiceFactory {
     @Override
     protected RemoteConfigurationMonitor createService(GatewayServices gatewayServices,
                                     ServiceType serviceType,
@@ -43,20 +43,20 @@ public class DefaultConfigurationMonitorProvider extends AbstractServiceFactory 
                                     Map<String, String> options,
                                     String implementation) throws ServiceLifecycleException {
         RemoteConfigurationMonitor service = null;
-        if (matchesImplementation(implementation, ZkRemoteConfigurationMonitor.class)) {
-            service = new ZkRemoteConfigurationMonitor(gatewayConfig, gatewayServices.getService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE));
-        } else if (matchesImplementation(implementation, DbRemoteConfigurationMonitor.class)) {
-            service = createDbBasedMonitor(gatewayConfig, gatewayServices.getService(ServiceType.ALIAS_SERVICE));
+        if (matchesImplementation(implementation, ZkRemoteConfigurationMonitorService.class)) {
+            service = new ZkRemoteConfigurationMonitorService(gatewayConfig, gatewayServices.getService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE));
+        } else if (matchesImplementation(implementation, DbRemoteConfigurationMonitorService.class)) {
+            service = createDbBasedMonitor(gatewayConfig, getAliasService(gatewayServices));
         }
         return service;
     }
 
-    private DbRemoteConfigurationMonitor createDbBasedMonitor(GatewayConfig config, AliasService aliasService) throws ServiceLifecycleException {
+    private DbRemoteConfigurationMonitorService createDbBasedMonitor(GatewayConfig config, AliasService aliasService) throws ServiceLifecycleException {
         try {
             RemoteConfigDatabase db = new RemoteConfigDatabase(JDBCUtils.getDataSource(config, aliasService));
             LocalDirectory descriptorDir = new LocalDirectory(new File(config.getGatewayDescriptorsDir()));
             LocalDirectory providerDir = new LocalDirectory(new File(config.getGatewayProvidersConfigDir()));
-            return new DbRemoteConfigurationMonitor(
+            return new DbRemoteConfigurationMonitorService(
                     db, providerDir, descriptorDir, config.getDbRemoteConfigMonitorPollingInterval());
         } catch (SQLException | AliasServiceException e) {
             throw new ServiceLifecycleException("Cannot create DbRemoteConfigurationMonitor", e);
@@ -70,6 +70,6 @@ public class DefaultConfigurationMonitorProvider extends AbstractServiceFactory 
 
     @Override
     protected Collection<String> getKnownImplementations() {
-        return Arrays.asList(ZkRemoteConfigurationMonitor.class.getName(), DbRemoteConfigurationMonitor.class.getName());
+        return Arrays.asList(ZkRemoteConfigurationMonitorService.class.getName(), DbRemoteConfigurationMonitorService.class.getName());
     }
 }

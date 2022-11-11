@@ -33,7 +33,7 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.topology.monitor.RemoteConfigurationMonitor;
 
-public class DbRemoteConfigurationMonitor implements RemoteConfigurationMonitor {
+public class DbRemoteConfigurationMonitorService implements RemoteConfigurationMonitor {
   private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
   public static final int OFFSET_SECONDS = 5;
   private final RemoteConfigDatabase db;
@@ -43,7 +43,7 @@ public class DbRemoteConfigurationMonitor implements RemoteConfigurationMonitor 
   private final ScheduledExecutorService executor;
   private Instant lastSyncTime;
 
-  public DbRemoteConfigurationMonitor(RemoteConfigDatabase db, LocalDirectory providersDir, LocalDirectory descriptorsDir, long intervalSeconds) {
+  public DbRemoteConfigurationMonitorService(RemoteConfigDatabase db, LocalDirectory providersDir, LocalDirectory descriptorsDir, long intervalSeconds) {
     this.db = db;
     this.providersDir = providersDir;
     this.descriptorsDir = descriptorsDir;
@@ -67,21 +67,25 @@ public class DbRemoteConfigurationMonitor implements RemoteConfigurationMonitor 
 
   @Override
   public boolean createProvider(String name, String content) {
+    LOG.creatingLocalDescriptorProvider("provider", name);
     return db.putProvider(name, content);
   }
 
   @Override
   public boolean createDescriptor(String name, String content) {
+    LOG.creatingLocalDescriptorProvider("descriptor", name);
     return db.putDescriptor(name, content);
   }
 
   @Override
   public boolean deleteProvider(String name) {
+    LOG.deletingLocalDescriptorProvider("provider", name);
     return db.deleteProvider(name);
   }
 
   @Override
   public boolean deleteDescriptor(String name) {
+    LOG.deletingLocalDescriptorProvider("descriptor", name);
     return db.deleteDescriptor(name);
   }
 
@@ -90,17 +94,18 @@ public class DbRemoteConfigurationMonitor implements RemoteConfigurationMonitor 
       syncLocalWithRemote(db.selectProviders(), providersDir);
       syncLocalWithRemote(db.selectDescriptors(), descriptorsDir);
       lastSyncTime = Instant.now();
+      LOG.remoteConfigurationSyncCompleted(lastSyncTime);
     } catch (Exception e) {
       LOG.errorWhileSyncingLocalFileSystem(e);
     }
   }
 
   private void syncLocalWithRemote(List<RemoteConfig> remoteConfigs, LocalDirectory localDir) {
-    createLocalFiles(remoteConfigs, localDir);
+    createOrUpdateLocalFiles(remoteConfigs, localDir);
     deleteLocalFiles(remoteConfigs, localDir);
   }
 
-  private void createLocalFiles(List<RemoteConfig> remoteConfigs, LocalDirectory localDir) {
+  private void createOrUpdateLocalFiles(List<RemoteConfig> remoteConfigs, LocalDirectory localDir) {
     Set<String> localFiles = localDir.list();
     for (RemoteConfig remoteConfig : remoteConfigs) {
       try {
