@@ -107,7 +107,8 @@ export class HomepageService {
             .toPromise()
             .then(response => response)
             .catch((err: HttpErrorResponse) => {
-                console.debug('HomepageService --> getProfile() --> ' + this.apiUrl + '/profiles/' + profileName + '\n  error: ' + err.message);
+                console.debug('HomepageService --> getProfile() --> ' + this.apiUrl + '/profiles/'
+                + profileName + '\n  error: ' + err.message);
                 if (err.status === 401) {
                     window.location.assign(document.location.pathname);
                 } else {
@@ -129,17 +130,17 @@ export class HomepageService {
     }
 
     private handleError(error: HttpErrorResponse): Promise<any> {
-        //location.reload();
+        // location.reload();
         let refresh;
         this.route.queryParams.subscribe(params => {
           refresh = params['refresh'];
-          console.debug('refresh = ' + refresh)
+          console.debug('refresh = ' + refresh);
           if (refresh) {
             console.debug('Refreshing page...', window.location.href);
-            var url = window.location.pathname.replace(new RegExp('refresh=1/.*'), '?');
-            //var url = window.location.pathname;
-            
-            //window.location.assign(url);
+            let url = window.location.pathname.replace(new RegExp('refresh=1/.*'), '?');
+            // var url = window.location.pathname;
+
+            // window.location.assign(url);
             window.location.reload();
           }
         });
