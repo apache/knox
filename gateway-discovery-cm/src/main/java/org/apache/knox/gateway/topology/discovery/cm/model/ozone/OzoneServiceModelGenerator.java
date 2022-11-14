@@ -22,7 +22,6 @@ import com.cloudera.api.swagger.model.ApiRole;
 import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
-import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGeneratorHandleResponse;
 import org.apache.knox.gateway.topology.discovery.cm.model.AbstractServiceModelGenerator;
 
 import java.util.Locale;
@@ -71,7 +70,7 @@ public class OzoneServiceModelGenerator extends AbstractServiceModelGenerator {
     // Role config properties
     String httpPort = getRoleConfigValue(roleConfig, HTTP_PORT);
     String httpsPort = getRoleConfigValue(roleConfig, HTTPS_PORT);
-    ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/",
+    ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s",
             scheme, hostname, sslEnabled ? httpsPort : httpPort));
     model.addServiceProperty(SSL_ENABLED, getRoleConfigValue(roleConfig, SSL_ENABLED));
     model.addRoleProperty(role.getName(), HTTP_PORT, httpPort);

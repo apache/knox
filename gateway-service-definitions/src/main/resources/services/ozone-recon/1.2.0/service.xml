@@ -15,16 +15,16 @@
    limitations under the License.
 -->
 <service role="OZONE-RECON" name="ozone-recon" version="1.2.0">
-<metadata>
+    <metadata>
         <type>UI</type>
         <context>/ozone-recon/index.html</context>
         <shortDesc>OZONE Recon UI</shortDesc>
-</metadata>
-<routes>
-    <route path="/ozone-recon"/>
-    <route path="/ozone-recon/**"/>
-    <route path="/ozone-recon/static/js/**">
-	<rewrite apply="OZONE-RECON/filter/staticLinks" to="response.body"/>
-    </route>
-</routes>
+    </metadata>
+    <routes>
+        <route path="/ozone-recon"/>
+        <route path="/ozone-recon/**"/>
+        <route path="/ozone-recon/static/js/**">
+	        <rewrite apply="OZONE-RECON/filter/staticLinks" to="response.body"/>
+        </route>
+    </routes>
 </service>

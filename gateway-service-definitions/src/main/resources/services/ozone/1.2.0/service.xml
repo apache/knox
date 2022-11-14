@@ -15,9 +15,6 @@
    limitations under the License.
  -->
 <service role="OZONE" name="ozone" version="1.2.0">
-	<policies>
-        <policy role="rewrite"/>
-    </policies>
 	<metadata>
 		<type>UI</type>
 		<context>/ozone/index.html?host={{BACKEND_HOST}}</context>
