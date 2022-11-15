@@ -14,18 +14,30 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.knox.gateway.topology.monitor;
+package org.apache.knox.gateway.topology.monitor.db;
 
-import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
+import java.time.Instant;
 
+public class RemoteConfig {
+  private final String name;
+  private final String content;
+  private final Instant lastModified;
 
-public class DefaultConfigurationMonitorProvider implements RemoteConfigurationMonitorProvider {
+  public RemoteConfig(String name, String content, Instant lastModified) {
+    this.name = name;
+    this.content = content;
+    this.lastModified = lastModified;
+  }
 
-    @Override
-    public RemoteConfigurationMonitor newInstance(final GatewayConfig                            config,
-                                                  final RemoteConfigurationRegistryClientService clientService) {
-        return new DefaultRemoteConfigurationMonitor(config, clientService);
-    }
+  public String getName() {
+    return name;
+  }
 
+  public String getContent() {
+    return content;
+  }
+
+  public Instant getLastModified() {
+    return lastModified;
+  }
 }

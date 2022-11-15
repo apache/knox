@@ -248,10 +248,7 @@ public class RemoteConfigurationMonitorTest {
         clientService.init(gc, Collections.emptyMap());
         clientService.start();
 
-        RemoteConfigurationMonitorFactory.setClientService(clientService);
-
-        RemoteConfigurationMonitor cm = RemoteConfigurationMonitorFactory.get(gc);
-        assertNotNull("Failed to load RemoteConfigurationMonitor", cm);
+        RemoteConfigurationMonitor cm = new ZkRemoteConfigurationMonitorService(gc, clientService);
 
         final ACL ANY_AUTHENTICATED_USER_ALL = new ACL(ZooDefs.Perms.ALL, new Id("auth", ""));
         List<ACL> acls = Arrays.asList(ANY_AUTHENTICATED_USER_ALL, new ACL(ZooDefs.Perms.WRITE, ZooDefs.Ids.ANYONE_ID_UNSAFE));
@@ -284,7 +281,6 @@ public class RemoteConfigurationMonitorTest {
             cm.stop();
         }
     }
-
 
     /*
      * KNOX-1135
@@ -324,10 +320,7 @@ public class RemoteConfigurationMonitorTest {
         clientService.init(gc, Collections.emptyMap());
         clientService.start();
 
-        RemoteConfigurationMonitorFactory.setClientService(clientService);
-
-        RemoteConfigurationMonitor cm = RemoteConfigurationMonitorFactory.get(gc);
-        assertNotNull("Failed to load RemoteConfigurationMonitor", cm);
+        RemoteConfigurationMonitor cm = new ZkRemoteConfigurationMonitorService(gc, clientService);
 
         final ACL ANY_AUTHENTICATED_USER_ALL = new ACL(ZooDefs.Perms.ALL, new Id("auth", ""));
         List<ACL> acls = Arrays.asList(ANY_AUTHENTICATED_USER_ALL, new ACL(ZooDefs.Perms.WRITE, ZooDefs.Ids.ANYONE_ID_UNSAFE));
@@ -398,10 +391,7 @@ public class RemoteConfigurationMonitorTest {
         clientService.init(gc, Collections.emptyMap());
         clientService.start();
 
-        RemoteConfigurationMonitorFactory.setClientService(clientService);
-
-        RemoteConfigurationMonitor cm = RemoteConfigurationMonitorFactory.get(gc);
-        assertNotNull("Failed to load RemoteConfigurationMonitor", cm);
+        RemoteConfigurationMonitor cm = new ZkRemoteConfigurationMonitorService(gc, clientService);
 
         List<ACL> acls = Collections.singletonList(ANY_AUTHENTICATED_USER_ALL);
         client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(acls).forPath(PATH_KNOX);
@@ -472,10 +462,7 @@ public class RemoteConfigurationMonitorTest {
         clientService.init(gc, Collections.emptyMap());
         clientService.start();
 
-        RemoteConfigurationMonitorFactory.setClientService(clientService);
-
-        RemoteConfigurationMonitor cm = RemoteConfigurationMonitorFactory.get(gc);
-        assertNotNull("Failed to load RemoteConfigurationMonitor", cm);
+        RemoteConfigurationMonitor cm = new ZkRemoteConfigurationMonitorService(gc, clientService);
 
         // Check that the config nodes really don't yet exist (the monitor will create them if they're not present)
         assertNull(client.checkExists().forPath(PATH_KNOX));

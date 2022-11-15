@@ -21,7 +21,7 @@ import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistr
 import org.easymock.EasyMock;
 import org.junit.Test;
 
-public class DefaultRemoteConfigurationMonitorTest {
+public class ZkRemoteConfigurationMonitorServiceTest {
   @Test(expected=IllegalStateException.class)
   public void testInitWithoutRequiredConfig() {
     GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
@@ -32,6 +32,6 @@ public class DefaultRemoteConfigurationMonitorTest {
     RemoteConfigurationRegistryClientService remoteConfigurationRegistryClientService =
         EasyMock.createNiceMock(RemoteConfigurationRegistryClientService.class);
 
-    new DefaultRemoteConfigurationMonitor(gatewayConfig, remoteConfigurationRegistryClientService);
+    new ZkRemoteConfigurationMonitorService(gatewayConfig, remoteConfigurationRegistryClientService);
   }
 }

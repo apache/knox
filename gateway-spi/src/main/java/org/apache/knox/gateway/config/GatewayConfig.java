@@ -860,6 +860,8 @@ public interface GatewayConfig {
 
   Set<String> getSessionVerificationUnlimitedUsers();
 
+  long getDbRemoteConfigMonitorPollingInterval();
+
   long getConcurrentSessionVerifierExpiredTokensCleaningPeriod();
 
   /**

@@ -63,7 +63,8 @@ public class AbstractGatewayServicesTest {
         ServiceType.HOST_MAPPING_SERVICE,
         ServiceType.SERVICE_DEFINITION_REGISTRY,
         ServiceType.SERVICE_REGISTRY_SERVICE,
-        ServiceType.CONCURRENT_SESSION_VERIFIER
+        ServiceType.CONCURRENT_SESSION_VERIFIER,
+        ServiceType.REMOTE_CONFIGURATION_MONITOR,
     };
 
     assertNotEquals(ServiceType.values(), orderedServiceTypes);

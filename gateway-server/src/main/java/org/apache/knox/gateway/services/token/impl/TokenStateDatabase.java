@@ -19,26 +19,22 @@ package org.apache.knox.gateway.services.token.impl;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.sql.DataSource;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.IOUtils;
 import org.apache.knox.gateway.services.security.token.KnoxToken;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
+import org.apache.knox.gateway.util.JDBCUtils;
 
 public class TokenStateDatabase {
   private static final String TOKENS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenDatabaseTable.sql";
@@ -72,28 +68,8 @@ public class TokenStateDatabase {
   }
 
   private void createTableIfNotExists(String tableName, String createSqlFileName) throws Exception {
-    if (!isTableExists(tableName)) {
-      createTable(createSqlFileName);
-    }
-  }
-
-  private boolean isTableExists(String tableName) throws SQLException {
-    boolean exists = false;
-    try (Connection connection = dataSource.getConnection()) {
-      final DatabaseMetaData dbMetadata = connection.getMetaData();
-      final String tableNameToCheck = dbMetadata.storesUpperCaseIdentifiers() ? tableName : tableName.toLowerCase(Locale.ROOT);
-      try (ResultSet tables = dbMetadata.getTables(connection.getCatalog(), null, tableNameToCheck, null)) {
-        exists = tables.next();
-      }
-    }
-    return exists;
-  }
-
-  private void createTable(String createSqlFileName) throws Exception {
-    final InputStream is = TokenStateDatabase.class.getClassLoader().getResourceAsStream(createSqlFileName);
-    final String createTableSql = IOUtils.toString(is, UTF_8);
-    try (Connection connection = dataSource.getConnection(); Statement createTableStatment = connection.createStatement();) {
-      createTableStatment.execute(createTableSql);
+    if (!JDBCUtils.isTableExists(tableName, dataSource)) {
+      JDBCUtils.createTable(createSqlFileName, dataSource, TokenStateDatabase.class.getClassLoader());
     }
   }
 
