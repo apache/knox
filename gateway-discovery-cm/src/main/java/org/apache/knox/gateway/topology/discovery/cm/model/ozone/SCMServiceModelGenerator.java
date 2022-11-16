@@ -70,11 +70,11 @@ public class SCMServiceModelGenerator extends AbstractServiceModelGenerator {
     // Role config properties
     String httpPort = getRoleConfigValue(roleConfig, HTTP_PORT);
     String httpsPort = getRoleConfigValue(roleConfig, HTTPS_PORT);
-    ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/",
+    ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s",
             scheme, hostname, sslEnabled ? httpsPort : httpPort));
-    model.addServiceProperty(SSL_ENABLED, getRoleConfigValue(roleConfig, SSL_ENABLED));
-    model.addRoleProperty(role.getName(), HTTP_PORT, httpPort);
-    model.addRoleProperty(role.getName(),HTTPS_PORT,httpsPort);
+    model.addRoleProperty(getRoleType(),SSL_ENABLED, getRoleConfigValue(roleConfig, SSL_ENABLED));
+    model.addRoleProperty(getRoleType(),HTTP_PORT,httpPort);
+    model.addRoleProperty(getRoleType(),HTTPS_PORT,httpsPort);
     return model;
   }
 }
