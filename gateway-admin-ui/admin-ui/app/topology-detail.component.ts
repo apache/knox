@@ -18,7 +18,7 @@ import {Component, OnInit, ViewChild} from '@angular/core';
 import {Topology} from './topology';
 import {TopologyService} from './topology.service';
 import {ResourceTypesService} from './resourcetypes/resourcetypes.service';
-import {BsModalComponent} from 'ng2-bs3-modal/ng2-bs3-modal';
+import {BsModalComponent} from 'ng2-bs3-modal';
 
 import 'brace/theme/monokai';
 import 'brace/mode/xml';

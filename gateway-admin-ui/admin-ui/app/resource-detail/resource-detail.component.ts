@@ -20,7 +20,9 @@ import {Resource} from '../resource/resource';
 import {ProviderConfig} from './provider-config';
 import {Descriptor} from './descriptor';
 import {Service} from '../resource/service';
-import {parseString} from 'xml2js';
+//import {parseString} from 'xml2js';
+import {XMLParser} from 'fast-xml-parser';
+
 
 import 'brace/theme/monokai';
 import 'brace/mode/xml';
@@ -40,6 +42,8 @@ export class ResourceDetailComponent implements OnInit {
     private static emptyResource: Resource = new Resource();
 
     private static emptyDescriptor: Descriptor = new Descriptor();
+
+    private parser = new XMLParser();
 
     title: string;
 
@@ -124,6 +128,9 @@ export class ResourceDetailComponent implements OnInit {
                     this.readOnlyProviderConfig = contentObj['readOnly'];
                 } else if (res.name.endsWith('xml')) {
                     // Parse the XML representation
+                    
+                    this.parser.parse(this.resourceContent);
+                    /*
                     parseString(this.resourceContent,
                         (error, result) => {
                             if (error) {
@@ -152,6 +159,7 @@ export class ResourceDetailComponent implements OnInit {
                                 this.readOnlyProviderConfig = result['gateway'].readOnly;
                             }
                         });
+                        */
                 }
             } catch (e) {
                 console.error('ResourceDetailComponent --> setProviderConfigContent() --> Error parsing ' + res.name + ' content: ' + e);

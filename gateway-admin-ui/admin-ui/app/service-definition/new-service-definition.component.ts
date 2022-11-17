@@ -17,7 +17,7 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {BsModalComponent} from 'ng2-bs3-modal';
-import swal from 'sweetalert';
+import Swal from 'sweetalert2';
 
 import {ServiceDefinitionService} from './servicedefinition.service';
 import {ResourceTypesService} from '../resourcetypes/resourcetypes.service';
@@ -63,7 +63,7 @@ export class NewServiceDefinitionComponent implements OnInit {
     onClose() {
         this.serviceDefinitionService.saveNewServiceDefinition(this.serviceDefinitionContent)
                                      .then(response => {
-                                           swal('Saved successfully!');
+                                           Swal.fire('Saved successfully!');
                                            this.resourceTypesService.selectResourceType('Service Definitions');
                                            this.serviceDefinitionService.selectedServiceDefinition(null);
                                      });
