@@ -57,7 +57,12 @@ public class RemoteConfigurationMonitorServiceFactory extends AbstractServiceFac
             LocalDirectory descriptorDir = new LocalDirectory(new File(config.getGatewayDescriptorsDir()));
             LocalDirectory providerDir = new LocalDirectory(new File(config.getGatewayProvidersConfigDir()));
             return new DbRemoteConfigurationMonitorService(
-                    db, providerDir, descriptorDir, config.getDbRemoteConfigMonitorPollingInterval());
+                    db,
+                    providerDir,
+                    descriptorDir,
+                    config.getDbRemoteConfigMonitorPollingInterval(),
+                    config.getDbRemoteConfigMonitorCleanUpPeriod()
+            );
         } catch (SQLException | AliasServiceException e) {
             throw new ServiceLifecycleException("Cannot create DbRemoteConfigurationMonitor", e);
         }

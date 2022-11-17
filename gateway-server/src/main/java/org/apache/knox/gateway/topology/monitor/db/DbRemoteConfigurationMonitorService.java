@@ -16,7 +16,7 @@
  */
 package org.apache.knox.gateway.topology.monitor.db;
 
-import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -39,16 +40,18 @@ public class DbRemoteConfigurationMonitorService implements RemoteConfigurationM
   private final RemoteConfigDatabase db;
   private final LocalDirectory providersDir;
   private final LocalDirectory descriptorsDir;
-  private long intervalSeconds;
+  private final long syncIntervalSeconds;
   private final ScheduledExecutorService executor;
+  private final int cleanUpPeriodHours;
   private Instant lastSyncTime;
 
-  public DbRemoteConfigurationMonitorService(RemoteConfigDatabase db, LocalDirectory providersDir, LocalDirectory descriptorsDir, long intervalSeconds) {
+  public DbRemoteConfigurationMonitorService(RemoteConfigDatabase db, LocalDirectory providersDir, LocalDirectory descriptorsDir, long syncIntervalSeconds, int cleanUpPeriodHours) {
     this.db = db;
     this.providersDir = providersDir;
     this.descriptorsDir = descriptorsDir;
     this.executor = Executors.newSingleThreadScheduledExecutor();
-    this.intervalSeconds = intervalSeconds;
+    this.syncIntervalSeconds = syncIntervalSeconds;
+    this.cleanUpPeriodHours = cleanUpPeriodHours;
   }
 
   @Override
@@ -56,8 +59,9 @@ public class DbRemoteConfigurationMonitorService implements RemoteConfigurationM
 
   @Override
   public void start() throws ServiceLifecycleException {
-    LOG.startingDbRemoteConfigurationMonitor(intervalSeconds);
-    executor.scheduleWithFixedDelay(this::sync, intervalSeconds, intervalSeconds, TimeUnit.SECONDS);
+    LOG.startingDbRemoteConfigurationMonitor(syncIntervalSeconds);
+    executor.scheduleWithFixedDelay(this::sync, syncIntervalSeconds, syncIntervalSeconds, TimeUnit.SECONDS);
+    executor.scheduleWithFixedDelay(this::cleanUp, cleanUpPeriodHours, cleanUpPeriodHours, TimeUnit.HOURS);
   }
 
   @Override
@@ -101,8 +105,15 @@ public class DbRemoteConfigurationMonitorService implements RemoteConfigurationM
   }
 
   private void syncLocalWithRemote(List<RemoteConfig> remoteConfigs, LocalDirectory localDir) {
-    createOrUpdateLocalFiles(remoteConfigs, localDir);
-    deleteLocalFiles(remoteConfigs, localDir);
+    List<RemoteConfig> existingConfigs = remoteConfigs.stream()
+            .filter(each -> !each.isDeleted())
+            .collect(toList());
+    createOrUpdateLocalFiles(existingConfigs, localDir);
+    Set<String> deletedConfigs = remoteConfigs.stream()
+            .filter(RemoteConfig::isDeleted)
+            .map(RemoteConfig::getName)
+            .collect(Collectors.toSet());
+    deleteLocalFiles(deletedConfigs, localDir);
   }
 
   private void createOrUpdateLocalFiles(List<RemoteConfig> remoteConfigs, LocalDirectory localDir) {
@@ -137,13 +148,20 @@ public class DbRemoteConfigurationMonitorService implements RemoteConfigurationM
     }
   }
 
-  private void deleteLocalFiles(List<RemoteConfig> remoteConfigs, LocalDirectory localDir) {
-    Set<String> remoteConfigNames = remoteConfigs.stream().map(RemoteConfig::getName).collect(toSet());
+  private void deleteLocalFiles(Set<String> deletedRemoteConfigNames, LocalDirectory localDir) {
     for (String localFileName : localDir.list()) {
-      if (!remoteConfigNames.contains(localFileName)) {
-        LOG.deletingProviderDescriptor(localFileName, localDir);
-        localDir.deleteFile(localFileName);
+      if (deletedRemoteConfigNames.contains(localFileName)) {
+        if (localDir.deleteFile(localFileName)) {
+          LOG.deletingProviderDescriptor(localFileName, localDir);
+        }
       }
     }
+  }
+
+  /**
+   * Remove entries which were logically deleted, and they're older than the given cleanUpPeriodHours
+   */
+  private void cleanUp() {
+    db.cleanTables(cleanUpPeriodHours);
   }
 }

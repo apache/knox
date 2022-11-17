@@ -503,14 +503,14 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
   public boolean deleteDescriptor(String name) {
     boolean result;
 
-    if (remoteMonitor != null) {
-      // If the remote config monitor is configured, delete the descriptor from the remote registry
-      remoteMonitor.deleteDescriptor(name);
-    }
-
     // Whether the remote configuration registry is being employed or not, delete the local file
     File descriptor = getExistingFile(descriptorsDirectory, name);
     result = (descriptor == null) || descriptor.delete();
+
+    if (remoteMonitor != null && descriptor != null) {
+      // If the remote config monitor is configured, delete the descriptor from the remote registry
+      remoteMonitor.deleteDescriptor(descriptor.getName());
+    }
 
     return result;
   }
