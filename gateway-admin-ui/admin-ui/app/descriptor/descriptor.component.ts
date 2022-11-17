@@ -21,12 +21,9 @@ import {Component, OnInit} from '@angular/core';
     templateUrl: './descriptor.component.html',
     styleUrls: ['./descriptor.component.css']
 })
-export class DescriptorComponent implements OnInit {
+export class DescriptorComponent {
 
     constructor() {
-    }
-
-    ngOnInit() {
     }
 
 }

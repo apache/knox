@@ -29,7 +29,7 @@ import {ValidationUtils} from './utils/validation-utils';
     template: `
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h4 class="panel-title">{{title}} <span *ngIf="showEditOptions == false" style="padding-left: 15%;"
+                <h4 class="panel-title">{{title}} <span *ngIf="showEditOptions === false" style="padding-left: 15%;"
                                                         class="text-danger text-center"> Read Only (generated file) </span> <span
                         class="pull-right">{{titleSuffix}}</span></h4>
             </div>

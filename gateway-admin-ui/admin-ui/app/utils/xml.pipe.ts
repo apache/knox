@@ -16,7 +16,7 @@
  */
 import {Pipe, PipeTransform} from '@angular/core';
 
-declare var vkbeautify: any;
+declare let vkbeautify: any;
 
 @Pipe({name: 'xml'})
 export class XmlPipe implements PipeTransform {

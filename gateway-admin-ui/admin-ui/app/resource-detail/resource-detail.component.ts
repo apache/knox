@@ -20,7 +20,7 @@ import {Resource} from '../resource/resource';
 import {ProviderConfig} from './provider-config';
 import {Descriptor} from './descriptor';
 import {Service} from '../resource/service';
-//import {parseString} from 'xml2js';
+// import {parseString} from 'xml2js';
 import {XMLParser} from 'fast-xml-parser';
 
 
@@ -128,7 +128,6 @@ export class ResourceDetailComponent implements OnInit {
                     this.readOnlyProviderConfig = contentObj['readOnly'];
                 } else if (res.name.endsWith('xml')) {
                     // Parse the XML representation
-                    
                     this.parser.parse(this.resourceContent);
                     /*
                     parseString(this.resourceContent,
