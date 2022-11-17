@@ -18,7 +18,6 @@ package org.apache.knox.gateway.topology.discovery.cm.model.ozone;
 
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.AbstractServiceModelGeneratorTest;
-import org.apache.knox.gateway.topology.discovery.cm.model.hue.HueServiceModelGenerator;
 import org.junit.Test;
 
 import java.util.Collections;
