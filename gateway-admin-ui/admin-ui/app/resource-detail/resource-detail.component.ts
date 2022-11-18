@@ -20,9 +20,8 @@ import {Resource} from '../resource/resource';
 import {ProviderConfig} from './provider-config';
 import {Descriptor} from './descriptor';
 import {Service} from '../resource/service';
+// Commented out in scope of KNOX-2834 (see below)
 // import {parseString} from 'xml2js';
-import {XMLParser} from 'fast-xml-parser';
-
 
 import 'brace/theme/monokai';
 import 'brace/mode/xml';
@@ -36,14 +35,13 @@ import {HttpErrorResponse} from '@angular/common/http';
     templateUrl: './resource-detail.component.html',
     styleUrls: ['./resource-detail.component.css']
 })
+
 export class ResourceDetailComponent implements OnInit {
 
     // Static "empty" Resource used for clearing the display between resource selections
     private static emptyResource: Resource = new Resource();
 
     private static emptyDescriptor: Descriptor = new Descriptor();
-
-    private parser = new XMLParser();
 
     title: string;
 
@@ -126,10 +124,13 @@ export class ResourceDetailComponent implements OnInit {
                     contentObj = yaml.safeLoad(this.resourceContent);
                     this.providers = contentObj['providers'];
                     this.readOnlyProviderConfig = contentObj['readOnly'];
-                } else if (res.name.endsWith('xml')) {
+                }
+                /*  Commented out in scope of KNOX-2834, because documentation does not mention supporting
+                    XML shared provider files and xml2js library is not compatible with angular 14.
+
+                    else if (res.name.endsWith('xml')) {
                     // Parse the XML representation
-                    this.parser.parse(this.resourceContent);
-                    /*
+
                     parseString(this.resourceContent,
                         (error, result) => {
                             if (error) {
@@ -157,9 +158,9 @@ export class ResourceDetailComponent implements OnInit {
                                 this.providers = tempProviders;
                                 this.readOnlyProviderConfig = result['gateway'].readOnly;
                             }
-                        });
-                        */
-                }
+                        }
+                    );
+                } */
             } catch (e) {
                 console.error('ResourceDetailComponent --> setProviderConfigContent() --> Error parsing ' + res.name + ' content: ' + e);
                 this.providers = null; // Clear detail display

@@ -33,7 +33,7 @@
           { "code": 140 }
         ],
         "@typescript-eslint/explicit-member-accessibility": [
-          "error",
+          "off",
           {"accessibility": "no-public"}
         ],
         "@typescript-eslint/member-ordering": [

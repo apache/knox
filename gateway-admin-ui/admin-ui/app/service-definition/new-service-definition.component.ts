@@ -63,9 +63,12 @@ export class NewServiceDefinitionComponent implements OnInit {
     onClose() {
         this.serviceDefinitionService.saveNewServiceDefinition(this.serviceDefinitionContent)
                                      .then(response => {
-                                           Swal.fire('Saved successfully!');
-                                           this.resourceTypesService.selectResourceType('Service Definitions');
-                                           this.serviceDefinitionService.selectedServiceDefinition(null);
+                                        Swal.fire({
+                                            text: 'Saved successfully!',
+                                            confirmButtonColor: '#7cd1f9'
+                                        });
+                                        this.resourceTypesService.selectResourceType('Service Definitions');
+                                        this.serviceDefinitionService.selectedServiceDefinition(null);
                                      });
     }
 

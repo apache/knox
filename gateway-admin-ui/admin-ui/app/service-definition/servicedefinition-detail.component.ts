@@ -126,7 +126,10 @@ export class ServiceDefinitionDetailComponent implements OnInit {
         this.serviceDefinitionService.updateServiceDefinition(this.changedServiceDefinitionContent ? this.changedServiceDefinitionContent
                                                                 : this.serviceDefinitionContent)
             .then(response => {
-                Swal.fire('Updated successfully!');
+                Swal.fire({
+                    text: 'Updated successfully!',
+                    confirmButtonColor: '#7cd1f9'
+                });
                 this.resourceTypesService.selectResourceType('Service Definitions');
                 this.serviceDefinitionService.selectedServiceDefinition(null);
             });
@@ -135,7 +138,10 @@ export class ServiceDefinitionDetailComponent implements OnInit {
     deleteServiceDefinition() {
         this.serviceDefinitionService.deleteServiceDefinition(this.serviceDefinition)
             .then(response => {
-                Swal.fire('Deleted successfully!');
+                Swal.fire({
+                    text: 'Deleted successfully!',
+                    confirmButtonColor: '#7cd1f9'
+                });
                 this.resourceTypesService.selectResourceType('Service Definitions');
                 this.serviceDefinitionService.selectedServiceDefinition(null);
             });

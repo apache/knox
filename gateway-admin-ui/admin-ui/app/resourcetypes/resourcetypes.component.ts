@@ -22,8 +22,6 @@ import {ResourceTypesService} from './resourcetypes.service';
     templateUrl: './resourcetypes.component.html',
     styleUrls: ['./resourcetypes.component.css']
 })
-
-@Injectable()
 export class ResourcetypesComponent implements OnInit {
 
     resourceTypes = [];
