@@ -54,4 +54,8 @@ org.apache.knox.gateway.topology.discovery.cm.model.nifi.NifiServiceModelGenerat
 org.apache.knox.gateway.topology.discovery.cm.model.nifi.NifiRegistryServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.cm.ClouderaManagerAPIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.cm.ClouderaManagerUIServiceModelGenerator
+org.apache.knox.gateway.topology.discovery.cm.model.ozone.OzoneServiceModelGenerator
+org.apache.knox.gateway.topology.discovery.cm.model.ozone.ReconServiceModelGenerator
+org.apache.knox.gateway.topology.discovery.cm.model.ozone.SCMServiceModelGenerator
+
 
