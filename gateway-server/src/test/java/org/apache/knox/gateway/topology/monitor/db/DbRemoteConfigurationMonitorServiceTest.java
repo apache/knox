@@ -41,7 +41,7 @@ public class DbRemoteConfigurationMonitorServiceTest {
     db = EasyMock.createMock(RemoteConfigDatabase.class);
     providersDir = EasyMock.createMock(LocalDirectory.class);
     descriptorsDir = EasyMock.createMock(LocalDirectory.class);
-    monitor = new DbRemoteConfigurationMonitorService(db, providersDir, descriptorsDir, 60, 1);
+    monitor = new DbRemoteConfigurationMonitorService(db, providersDir, descriptorsDir, 60, 3600);
     monitor.start();
   }
 

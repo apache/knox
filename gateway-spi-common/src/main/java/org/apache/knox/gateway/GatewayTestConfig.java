@@ -1016,7 +1016,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public int getDbRemoteConfigMonitorCleanUpPeriod() {
+  public int getDbRemoteConfigMonitorCleanUpInterval() {
     return 1;
   }
 

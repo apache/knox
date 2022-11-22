@@ -42,26 +42,28 @@ public class DbRemoteConfigurationMonitorService implements RemoteConfigurationM
   private final LocalDirectory descriptorsDir;
   private final long syncIntervalSeconds;
   private final ScheduledExecutorService executor;
-  private final int cleanUpPeriodHours;
+  private final int cleanUpPeriodSeconds;
   private Instant lastSyncTime;
 
-  public DbRemoteConfigurationMonitorService(RemoteConfigDatabase db, LocalDirectory providersDir, LocalDirectory descriptorsDir, long syncIntervalSeconds, int cleanUpPeriodHours) {
+  public DbRemoteConfigurationMonitorService(RemoteConfigDatabase db, LocalDirectory providersDir, LocalDirectory descriptorsDir, long syncIntervalSeconds, int cleanUpPeriodSeconds) {
     this.db = db;
     this.providersDir = providersDir;
     this.descriptorsDir = descriptorsDir;
     this.executor = Executors.newSingleThreadScheduledExecutor();
     this.syncIntervalSeconds = syncIntervalSeconds;
-    this.cleanUpPeriodHours = cleanUpPeriodHours;
+    this.cleanUpPeriodSeconds = cleanUpPeriodSeconds;
   }
 
   @Override
-  public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {}
+  public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
+    LOG.initDbRemoteConfigMonitor(syncIntervalSeconds, cleanUpPeriodSeconds);
+  }
 
   @Override
   public void start() throws ServiceLifecycleException {
     LOG.startingDbRemoteConfigurationMonitor(syncIntervalSeconds);
     executor.scheduleWithFixedDelay(this::sync, syncIntervalSeconds, syncIntervalSeconds, TimeUnit.SECONDS);
-    executor.scheduleWithFixedDelay(this::cleanUp, cleanUpPeriodHours, cleanUpPeriodHours, TimeUnit.HOURS);
+    executor.scheduleWithFixedDelay(this::cleanUp, cleanUpPeriodSeconds, cleanUpPeriodSeconds, TimeUnit.SECONDS);
   }
 
   @Override
@@ -162,6 +164,7 @@ public class DbRemoteConfigurationMonitorService implements RemoteConfigurationM
    * Remove entries which were logically deleted, and they're older than the given cleanUpPeriodHours
    */
   private void cleanUp() {
-    db.cleanTables(cleanUpPeriodHours);
+    LOG.cleaningRemoteConfigTables(cleanUpPeriodSeconds);
+    db.cleanTables(cleanUpPeriodSeconds);
   }
 }

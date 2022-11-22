@@ -767,4 +767,12 @@ public interface GatewayMessages {
   @Message(level = MessageLevel.DEBUG,
           text = "Creating local {0} with name {1}")
   void creatingLocalDescriptorProvider(String type, String name);
+
+  @Message(level = MessageLevel.DEBUG,
+          text = "Cleaning remote configuration db. Deleting logically deleted rows which are older than {0} seconds.")
+  void cleaningRemoteConfigTables(int cleanUpPeriodSeconds);
+
+  @Message(level = MessageLevel.INFO,
+          text = "Initializing remote configuration db. Sync interval={0} seconds. Clean up interval={1} seconds.")
+  void initDbRemoteConfigMonitor(long syncIntervalSeconds, int cleanUpPeriodSeconds);
 }

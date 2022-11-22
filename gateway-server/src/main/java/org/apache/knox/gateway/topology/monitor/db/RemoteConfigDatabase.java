@@ -159,17 +159,18 @@ public class RemoteConfigDatabase {
   private boolean deleteLogical(String name, String tableName) {
     try (Connection connection = dataSource.getConnection();
          PreparedStatement statement = connection.prepareStatement(
-                 "UPDATE " + tableName + " SET deleted = ? WHERE name = ?")) {
+                 "UPDATE " + tableName + " SET deleted = ?, last_modified_time = ? WHERE name = ?")) {
       statement.setBoolean(1, true);
-      statement.setString(2, name);
+      statement.setTimestamp(2, Timestamp.from(Instant.now()));
+      statement.setString(3, name);
       return statement.executeUpdate() == 1;
     } catch (SQLException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public int cleanTables(int olderThanHours) {
-    Instant instant = Instant.now().minusSeconds(olderThanHours * 60 * 60);
+  public int cleanTables(int olderThanSeconds) {
+    Instant instant = Instant.now().minusSeconds(olderThanSeconds);
     return cleanTable(KNOX_PROVIDERS_TABLE_NAME, instant)
             + cleanTable(KNOX_DESCRIPTORS_TABLE_NAME, instant);
   }

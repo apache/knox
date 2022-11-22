@@ -61,7 +61,7 @@ public class RemoteConfigurationMonitorServiceFactory extends AbstractServiceFac
                     providerDir,
                     descriptorDir,
                     config.getDbRemoteConfigMonitorPollingInterval(),
-                    config.getDbRemoteConfigMonitorCleanUpPeriod()
+                    config.getDbRemoteConfigMonitorCleanUpInterval()
             );
         } catch (SQLException | AliasServiceException e) {
             throw new ServiceLifecycleException("Cannot create DbRemoteConfigurationMonitor", e);
