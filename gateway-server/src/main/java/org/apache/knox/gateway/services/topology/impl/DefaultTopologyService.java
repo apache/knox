@@ -654,8 +654,10 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
       log.configuredMonitoringProviderConfigChangesInDirectory(sharedProvidersDirectory.getAbsolutePath());
 
       // Initialize the remote configuration monitor, if it has been configured
-      RemoteConfigurationMonitorServiceFactory provider = new RemoteConfigurationMonitorServiceFactory();
-      remoteMonitor = (RemoteConfigurationMonitor) provider.create(gwServices, ServiceType.REMOTE_CONFIGURATION_MONITOR, config, Collections.emptyMap());
+      if (gwServices != null) { // if it was called from knoxcli, we don't have gwServices
+        RemoteConfigurationMonitorServiceFactory provider = new RemoteConfigurationMonitorServiceFactory();
+        remoteMonitor = (RemoteConfigurationMonitor) provider.create(gwServices, ServiceType.REMOTE_CONFIGURATION_MONITOR, config, Collections.emptyMap());
+      }
 
     } catch (Exception e) {
       throw new ServiceLifecycleException(e.getMessage(), e);
