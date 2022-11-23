@@ -245,7 +245,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String REMOTE_CONFIG_MONITOR_DB_POLLING_INTERVAL_SECONDS = GATEWAY_CONFIG_FILE_PREFIX + ".remote.config.monitor.db.poll.interval.seconds";
   private static final long REMOTE_CONFIG_MONITOR_DB_POLLING_INTERVAL_SECONDS_DEFAULT = 30;
 
-  private static final String REMOTE_CONFIG_MONITOR_DB_POLLING_CLEANUP_INTERVAL_SECONDS = GATEWAY_CONFIG_FILE_PREFIX + ".remote.config.monitor.db.cleanup.period.hours";
+  private static final String REMOTE_CONFIG_MONITOR_DB_POLLING_CLEANUP_INTERVAL_SECONDS = GATEWAY_CONFIG_FILE_PREFIX + ".remote.config.monitor.db.cleanup.interval.seconds";
   private static final int REMOTE_CONFIG_MONITOR_DB_POLLING_CLEANUP_INTERVAL_DEFAULT = 3 * 60 * 60;
 
   /* @since 1.1.0 Default discovery configuration */
