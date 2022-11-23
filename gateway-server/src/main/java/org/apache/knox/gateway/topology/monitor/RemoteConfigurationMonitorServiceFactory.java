@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -36,6 +37,8 @@ import org.apache.knox.gateway.util.JDBCUtils;
 
 
 public class RemoteConfigurationMonitorServiceFactory extends AbstractServiceFactory {
+    private static final String DEFAULT_IMPLEMENTATION = ZkRemoteConfigurationMonitorService.class.getName();
+
     @Override
     protected RemoteConfigurationMonitor createService(GatewayServices gatewayServices,
                                     ServiceType serviceType,
@@ -43,6 +46,9 @@ public class RemoteConfigurationMonitorServiceFactory extends AbstractServiceFac
                                     Map<String, String> options,
                                     String implementation) throws ServiceLifecycleException {
         RemoteConfigurationMonitor service = null;
+        if (StringUtils.isBlank(implementation) && gatewayConfig.getRemoteConfigurationMonitorClientName() != null) {
+            implementation = DEFAULT_IMPLEMENTATION; // for backward compatibility
+        }
         if (matchesImplementation(implementation, ZkRemoteConfigurationMonitorService.class)) {
             service = new ZkRemoteConfigurationMonitorService(gatewayConfig, gatewayServices.getService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE));
         } else if (matchesImplementation(implementation, DbRemoteConfigurationMonitorService.class)) {
@@ -75,6 +81,6 @@ public class RemoteConfigurationMonitorServiceFactory extends AbstractServiceFac
 
     @Override
     protected Collection<String> getKnownImplementations() {
-        return Arrays.asList(ZkRemoteConfigurationMonitorService.class.getName(), DbRemoteConfigurationMonitorService.class.getName());
+        return Arrays.asList(DEFAULT_IMPLEMENTATION, DbRemoteConfigurationMonitorService.class.getName());
     }
 }
