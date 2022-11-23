@@ -37,7 +37,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.knox.gateway.audit.api.AuditContext;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.knox.gateway.security.ImpersonatedPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.audit.api.AuditService;
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
@@ -51,6 +53,7 @@ import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
+import org.apache.knox.gateway.util.AuthFilterUtils;
 
 public class HadoopAuthPostFilter implements Filter {
 
@@ -96,7 +99,19 @@ public class HadoopAuthPostFilter implements Filter {
       final String principal = ((HttpServletRequest) request).getRemoteUser();
       if (principal != null) {
         subject = new Subject();
-        subject.getPrincipals().add(new PrimaryPrincipal(principal));
+        // see org.apache.knox.gateway.util.AuthFilterUtils.getProxyRequest(...).new HttpServletRequestWrapper() {...}.getAttribute(String)
+        final String realUserName = (String) request.getAttribute(AuthFilterUtils.REAL_USER_NAME_ATTRIBUTE);
+        if (StringUtils.isNotBlank(realUserName)) {
+          // this means the 'doAs' query parameter was set and proxyuser authorization went well
+          // in this case, we need to set two principals:
+          // - the primary principal should be the original user who initiated the request
+          // - the impersonated principal should be the 'doAs' user (which)
+          subject.getPrincipals().add(new PrimaryPrincipal(realUserName));
+          subject.getPrincipals().add(new ImpersonatedPrincipal(principal));
+        } else {
+          // simple case: no 'doAs' -> only the primary principal should be carried over (= the original user who initiated the request)
+          subject.getPrincipals().add(new PrimaryPrincipal(principal));
+        }
         AuditContext context = auditService.getContext();
         context.setUsername(principal);
         auditService.attachContext(context);

@@ -28,6 +28,7 @@ import java.util.Set;
  * General utility methods for interrogating the standard java Subject
  */
 public class SubjectUtils {
+
   public static Subject getCurrentSubject() {
     return Subject.getSubject( AccessController.getContext() );
   }
@@ -76,15 +77,8 @@ public class SubjectUtils {
   }
 
   public static String getCurrentEffectivePrincipalName() {
-    String name = null;
-    Subject subject = getCurrentSubject();
-    if( subject != null ) {
-      name = getImpersonatedPrincipalName( subject );
-      if (name == null) {
-        name = getPrimaryPrincipalName(subject);
-      }
-    }
-    return name;
+    final Subject subject = getCurrentSubject();
+    return subject == null ? null : getEffectivePrincipalName(subject);
   }
 
   public static Set<GroupPrincipal> getGroupPrincipals(Subject subject) {

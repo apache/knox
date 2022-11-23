@@ -15,22 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.filter.security;
+package org.apache.knox.gateway.context;
 
-import org.apache.knox.gateway.security.SubjectUtils;
+public interface ContextAttributes {
 
-import javax.security.auth.Subject;
-
-public class AbstractIdentityAssertionBase {
-
-  /**
-   * Retrieve the principal to represent the asserted identity from
-   * the provided Subject.
-   * @param subject subject to get the principal from
-   * @return principalName
-   */
-  protected String getPrincipalName(Subject subject) {
-    return SubjectUtils.getEffectivePrincipalName(subject);
-  }
+  String IMPERSONATION_ENABLED_ATTRIBUTE = "org.apache.knox.gateway.gateway.proxyuser.impersonation.enabled";
 
 }

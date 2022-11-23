@@ -50,6 +50,7 @@ import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.ImpersonatedPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.security.SubjectUtils;
 
 public abstract class AbstractIdentityAssertionFilter extends
   AbstractIdentityAssertionBase implements Filter {
@@ -91,7 +92,6 @@ public abstract class AbstractIdentityAssertionFilter extends
       ServletException {
         Subject subject;
         Principal impersonationPrincipal;
-        Principal primaryPrincipal;
 
         // get the current subject and determine whether we need another doAs with
         // an impersonatedPrincipal and/or mapped group principals
@@ -105,38 +105,35 @@ public abstract class AbstractIdentityAssertionFilter extends
           throw new IllegalStateException("Required Subject Missing");
         }
 
-        Set<?> currentGroups = currentSubject.getPrincipals(GroupPrincipal.class);
-
-        primaryPrincipal = (PrimaryPrincipal) currentSubject.getPrincipals(PrimaryPrincipal.class).toArray()[0];
-        if (primaryPrincipal != null) {
-          if (!primaryPrincipal.getName().equals(mappedPrincipalName)) {
+        String primaryPrincipalName = SubjectUtils.getPrimaryPrincipalName(currentSubject);
+        if (primaryPrincipalName != null) {
+          if (!primaryPrincipalName.equals(mappedPrincipalName)) {
             impersonationNeeded = true;
             AuditContext context = auditService.getContext();
             context.setProxyUsername( mappedPrincipalName );
             auditService.attachContext(context);
-            auditor.audit( Action.IDENTITY_MAPPING, primaryPrincipal.getName(),
+            auditor.audit( Action.IDENTITY_MAPPING, primaryPrincipalName,
                 ResourceType.PRINCIPAL, ActionOutcome.SUCCESS, RES.effectiveUser(mappedPrincipalName) );
           }
-        }
-        else {
+        } else {
           // something is amiss - authentication/federation providers should have run
           // before identity assertion and should have ensured that the appropriate
           // principals were added to the current subject
           // TODO: log as appropriate
-          primaryPrincipal = new PrimaryPrincipal(((HttpServletRequest) request).getUserPrincipal().getName());
+          primaryPrincipalName = ((HttpServletRequest) request).getUserPrincipal().getName();
         }
 
+        final Set<?> currentGroups = SubjectUtils.getGroupPrincipals(currentSubject);
         groupsMapped = groups != null || !currentGroups.isEmpty();
 
         if (impersonationNeeded || groupsMapped) {
           // gonna need a new subject and doAs
           subject = new Subject();
-          Set<Principal> principals = subject.getPrincipals();
-          principals.add(primaryPrincipal);
+          subject.getPrincipals().add(new PrimaryPrincipal(primaryPrincipalName));
 
           // map group principals from current Subject into newly created Subject
           for (Object obj : currentGroups) {
-            principals.add((Principal)obj);
+            subject.getPrincipals().add((Principal)obj);
           }
 
           if (impersonationNeeded) {

@@ -60,6 +60,22 @@
          <role>identity-assertion</role>
          <name>Default</name>
          <enabled>true</enabled>
+         <param>
+            <name>haddop.proxyuser.impersonation.enabled</name>
+            <value>false</value>
+         </param>
+         <param>
+            <name>haddop.proxyuser.admin.users</name>
+            <value>*</value>
+         </param>
+         <param>
+            <name>hadoop.proxyuser.admin.groups</name>
+            <value>*</value>
+         </param>
+         <param>
+            <name>hadoop.proxyuser.admin.hosts</name>
+            <value>*</value>
+         </param>
       </provider>
    </gateway>
    <service>
@@ -96,18 +112,6 @@
       <param>
           <name>knox.token.type</name>
           <value>JWT</value>
-      </param>
-      <param>
-          <name>knox.token.proxyuser.admin.users</name>
-          <value>*</value>
-      </param>
-      <param>
-          <name>knox.token.proxyuser.admin.groups</name>
-          <value>*</value>
-      </param>
-      <param>
-          <name>knox.token.proxyuser.admin.hosts</name>
-          <value>*</value>
       </param>
    </service>
    <application>

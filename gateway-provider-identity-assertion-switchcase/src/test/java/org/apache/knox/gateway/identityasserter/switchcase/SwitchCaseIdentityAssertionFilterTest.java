@@ -18,6 +18,8 @@
 package org.apache.knox.gateway.identityasserter.switchcase;
 
 import java.security.Principal;
+import java.util.Collections;
+
 import javax.security.auth.Subject;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
@@ -40,6 +42,8 @@ public class SwitchCaseIdentityAssertionFilterTest {
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.replay( config );
     EasyMock.replay( context );
@@ -67,6 +71,8 @@ public class SwitchCaseIdentityAssertionFilterTest {
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.replay( config );
     EasyMock.replay( context );
@@ -93,6 +99,8 @@ public class SwitchCaseIdentityAssertionFilterTest {
     EasyMock.expect( config.getInitParameter( "group.principal.case" ) ).andReturn( "LOWER" ).anyTimes();
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.replay( config );
     EasyMock.replay( context );
@@ -119,6 +127,8 @@ public class SwitchCaseIdentityAssertionFilterTest {
     EasyMock.expect( config.getInitParameter( "group.principal.case" ) ).andReturn( "NONE" ).anyTimes();
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.replay( config );
     EasyMock.replay( context );
@@ -143,6 +153,8 @@ public class SwitchCaseIdentityAssertionFilterTest {
     EasyMock.expect( config.getInitParameter( "group.principal.case" ) ).andReturn( null ).anyTimes();
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.replay( config );
     EasyMock.replay( context );
@@ -169,6 +181,8 @@ public class SwitchCaseIdentityAssertionFilterTest {
     EasyMock.expect( config.getInitParameter( "group.principal.case" ) ).andReturn( "none" ).anyTimes();
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.replay( config );
     EasyMock.replay( context );
@@ -195,6 +209,8 @@ public class SwitchCaseIdentityAssertionFilterTest {
     EasyMock.expect( config.getInitParameter( "group.principal.case" ) ).andReturn( "none" ).anyTimes();
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.replay( config );
     EasyMock.replay( context );
@@ -222,6 +238,8 @@ public class SwitchCaseIdentityAssertionFilterTest {
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.replay( config );
     EasyMock.replay( context );

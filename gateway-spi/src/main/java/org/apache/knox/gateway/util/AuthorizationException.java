@@ -15,22 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.filter.security;
+package org.apache.knox.gateway.util;
 
-import org.apache.knox.gateway.security.SubjectUtils;
+import java.io.IOException;
 
-import javax.security.auth.Subject;
+@SuppressWarnings("serial")
+public class AuthorizationException extends IOException {
 
-public class AbstractIdentityAssertionBase {
+  public AuthorizationException(String message) {
+    super(message);
+  }
 
-  /**
-   * Retrieve the principal to represent the asserted identity from
-   * the provided Subject.
-   * @param subject subject to get the principal from
-   * @return principalName
-   */
-  protected String getPrincipalName(Subject subject) {
-    return SubjectUtils.getEffectivePrincipalName(subject);
+  public AuthorizationException(Throwable e) {
+    super(e);
   }
 
 }

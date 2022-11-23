@@ -57,6 +57,7 @@ import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
@@ -231,11 +232,13 @@ public abstract class AbstractJWTFilter implements Filter {
     return valid;
   }
 
-  protected void continueWithEstablishedSecurityContext(final Subject subject, final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
-    Principal principal = (Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0];
+  protected void continueWithEstablishedSecurityContext(final Subject subject,
+                                                        final HttpServletRequest request,
+                                                        final HttpServletResponse response,
+                                                        final FilterChain chain) throws IOException, ServletException {
     AuditContext context = auditService.getContext();
     if (context != null) {
-      context.setUsername( principal.getName() );
+      context.setUsername( SubjectUtils.getPrimaryPrincipalName(subject) );
       auditService.attachContext(context);
       String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
       if (sourceUri != null) {
