@@ -92,6 +92,10 @@
               "browserTarget": "admin-ui:build:development"
             }
           },
+          "options": {
+            "browserTarget": "admin-ui:build",
+            "proxyConfig": "proxy.conf.json"
+          },
           "defaultConfiguration": "development"
         },
         "extract-i18n": {
