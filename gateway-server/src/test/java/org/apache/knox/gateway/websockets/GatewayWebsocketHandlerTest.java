@@ -33,7 +33,6 @@ import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -69,8 +68,6 @@ public class GatewayWebsocketHandlerTest {
         EasyMock.replay(auditService,auditor);
     }
 
-
-    @Ignore("KNOX-2846 - Temporary ignoring until it's fixed in a way such as it passes GH runs too 100%")
     @Test
     public void testValidWebShellRequest() throws Exception{
         // mock GatewayConfig and GatewayServices
