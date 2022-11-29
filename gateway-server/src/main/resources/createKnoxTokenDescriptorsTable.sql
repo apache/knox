@@ -17,5 +17,6 @@ CREATE TABLE IF NOT EXISTS KNOX_DESCRIPTORS ( -- IF NOT EXISTS syntax is not sup
    name varchar(256) NOT NULL,
    content TEXT NOT NULL,
    last_modified_time TIMESTAMP NOT NULL,
+   deleted boolean DEFAULT false NOT NULL,
    PRIMARY KEY (name)
 )

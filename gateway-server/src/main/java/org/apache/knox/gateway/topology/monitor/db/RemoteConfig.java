@@ -22,11 +22,17 @@ public class RemoteConfig {
   private final String name;
   private final String content;
   private final Instant lastModified;
+  private final boolean deleted;
 
   public RemoteConfig(String name, String content, Instant lastModified) {
+    this(name, content, lastModified, false);
+  }
+
+  public RemoteConfig(String name, String content, Instant lastModified, boolean deleted) {
     this.name = name;
     this.content = content;
     this.lastModified = lastModified;
+    this.deleted = deleted;
   }
 
   public String getName() {
@@ -39,5 +45,9 @@ public class RemoteConfig {
 
   public Instant getLastModified() {
     return lastModified;
+  }
+
+  public boolean isDeleted() {
+    return deleted;
   }
 }

@@ -243,7 +243,10 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
                                                   REMOTE_CONFIG_MONITOR_CLIENT_NAME + ".allowUnauthenticatedReadAccess";
 
   private static final String REMOTE_CONFIG_MONITOR_DB_POLLING_INTERVAL_SECONDS = GATEWAY_CONFIG_FILE_PREFIX + ".remote.config.monitor.db.poll.interval.seconds";
-  private static final long REMOTE_CONFIG_MONITOR_DB_POLLING_INTERVAL_SECONDS_DEFAULT = 15;
+  private static final long REMOTE_CONFIG_MONITOR_DB_POLLING_INTERVAL_SECONDS_DEFAULT = 30;
+
+  private static final String REMOTE_CONFIG_MONITOR_DB_POLLING_CLEANUP_INTERVAL_SECONDS = GATEWAY_CONFIG_FILE_PREFIX + ".remote.config.monitor.db.cleanup.interval.seconds";
+  private static final int REMOTE_CONFIG_MONITOR_DB_POLLING_CLEANUP_INTERVAL_DEFAULT = 3 * 60 * 60;
 
   /* @since 1.1.0 Default discovery configuration */
   static final String DEFAULT_DISCOVERY_ADDRESS = GATEWAY_CONFIG_FILE_PREFIX + ".discovery.default.address";
@@ -1432,6 +1435,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public long getDbRemoteConfigMonitorPollingInterval() {
     return getLong(REMOTE_CONFIG_MONITOR_DB_POLLING_INTERVAL_SECONDS, REMOTE_CONFIG_MONITOR_DB_POLLING_INTERVAL_SECONDS_DEFAULT);
+  }
+
+  @Override
+  public int getDbRemoteConfigMonitorCleanUpInterval() {
+    return getInt(REMOTE_CONFIG_MONITOR_DB_POLLING_CLEANUP_INTERVAL_SECONDS, REMOTE_CONFIG_MONITOR_DB_POLLING_CLEANUP_INTERVAL_DEFAULT);
   }
 
   @Override

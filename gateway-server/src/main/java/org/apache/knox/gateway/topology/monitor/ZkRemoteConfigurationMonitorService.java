@@ -238,7 +238,7 @@ class ZkRemoteConfigurationMonitorService implements RemoteConfigurationMonitor 
         boolean result = false;
         List<String> existingProviderConfigs = client.listChildEntries(entryParent);
         for (String entryName : existingProviderConfigs) {
-            if (FilenameUtils.getBaseName(entryName).equals(name)) {
+            if (FilenameUtils.getName(entryName).equals(name)) {
                 String entryPath = entryParent + "/" + entryName;
                 client.deleteEntry(entryPath);
                 result = !client.entryExists(entryPath);

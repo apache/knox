@@ -862,6 +862,8 @@ public interface GatewayConfig {
 
   long getDbRemoteConfigMonitorPollingInterval();
 
+  int getDbRemoteConfigMonitorCleanUpInterval();
+
   long getConcurrentSessionVerifierExpiredTokensCleaningPeriod();
 
   /**

@@ -21,6 +21,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashSet;
 
 import org.easymock.EasyMock;
@@ -40,7 +41,7 @@ public class DbRemoteConfigurationMonitorServiceTest {
     db = EasyMock.createMock(RemoteConfigDatabase.class);
     providersDir = EasyMock.createMock(LocalDirectory.class);
     descriptorsDir = EasyMock.createMock(LocalDirectory.class);
-    monitor = new DbRemoteConfigurationMonitorService(db, providersDir, descriptorsDir, 60);
+    monitor = new DbRemoteConfigurationMonitorService(db, providersDir, descriptorsDir, 60, 3600);
     monitor.start();
   }
 
@@ -75,13 +76,15 @@ public class DbRemoteConfigurationMonitorServiceTest {
 
   @Test
   public void testDeletesProviderFromFileSystem() throws Exception {
-    EasyMock.expect(providersDir.list()).andReturn(new HashSet<>(asList("local"))).anyTimes();
+    EasyMock.expect(providersDir.list()).andReturn(new HashSet<>(asList("to-be-deleted"))).anyTimes();
     EasyMock.expect(descriptorsDir.list()).andReturn(emptySet()).anyTimes();
 
+    EasyMock.expect(db.selectProviders()).andReturn(Arrays.asList(
+            new RemoteConfig("to-be-deleted", "any", NOW, true)
+    )).anyTimes();
     EasyMock.expect(db.selectDescriptors()).andReturn(emptyList()).anyTimes();
-    EasyMock.expect(db.selectProviders()).andReturn(emptyList()).anyTimes();
 
-    EasyMock.expect(providersDir.deleteFile("local")).andReturn(true).once();
+    EasyMock.expect(providersDir.deleteFile("to-be-deleted")).andReturn(true).once();
 
     EasyMock.replay(providersDir, descriptorsDir, db);
     monitor.sync();
@@ -109,7 +112,8 @@ public class DbRemoteConfigurationMonitorServiceTest {
     EasyMock.expect(providersDir.list()).andReturn(emptySet()).anyTimes();
     EasyMock.expect(descriptorsDir.list()).andReturn(new HashSet<>(asList("local"))).anyTimes();
 
-    EasyMock.expect(db.selectDescriptors()).andReturn(emptyList()).anyTimes();
+    EasyMock.expect(db.selectDescriptors()).andReturn(Arrays.asList(
+            new RemoteConfig("local", "any", NOW, true))).anyTimes();
     EasyMock.expect(db.selectProviders()).andReturn(emptyList()).anyTimes();
 
     EasyMock.expect(descriptorsDir.deleteFile("local")).andReturn(true).once();
@@ -136,7 +140,8 @@ public class DbRemoteConfigurationMonitorServiceTest {
 
     EasyMock.expect(db.selectDescriptors()).andReturn(asList(
             new RemoteConfig("desc1", "desc1-same-content", NOW),
-            new RemoteConfig("desc2", "desc2-remote-content", NOW)
+            new RemoteConfig("desc2", "desc2-remote-content", NOW),
+            new RemoteConfig("desc3-to-be-deleted", "any", NOW, true)
     )).anyTimes();
 
     // Expectations

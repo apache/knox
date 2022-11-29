@@ -17,7 +17,9 @@
 package org.apache.knox.gateway.topology.monitor.db;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.sql.Connection;
 import java.sql.Statement;
@@ -128,14 +130,69 @@ public class RemoteConfigDatabaseTest {
 
     db.deleteProvider("provider_2");
 
+    assertEquals(2, db.selectProviders().size());
+    for (RemoteConfig provider : db.selectProviders()) {
+      if (provider.getName().equals("provider_1")) {
+        assertFalse(provider.isDeleted());
+      } else if (provider.getName().equals("provider_2")) {
+        assertTrue(provider.isDeleted());
+      } else {
+        fail("unexpected name: " + provider.getName());
+      }
+    }
+
+    db.deleteDescriptor("descriptor_1");
+
+    assertEquals(2, db.selectProviders().size());
+    assertEquals(1, db.selectDescriptors().size());
+
+    assertTrue(db.selectDescriptors().get(0).isDeleted());
+  }
+
+  @Test
+  public void testPutBackDeletedOne() {
+    db.putProvider("provider_1", "test provider1 content");
+    db.putDescriptor("descriptor_1", "test descriptor content");
+
+    db.deleteProvider("provider_1");
+    db.deleteDescriptor("descriptor_1");
+
+    assertEquals(1, db.selectProviders().size());
+    assertTrue(db.selectProviders().get(0).isDeleted());
+    assertEquals(1, db.selectDescriptors().size());
+    assertTrue(db.selectDescriptors().get(0).isDeleted());
+
+    db.putProvider("provider_1", "test provider1 new content");
+    db.putDescriptor("descriptor_1", "test descriptor new content");
+
+    assertEquals(1, db.selectProviders().size());
+    assertEquals(1, db.selectDescriptors().size());
+
+    assertEquals(1, db.selectProviders().size());
+    assertFalse(db.selectProviders().get(0).isDeleted());
+    assertEquals(1, db.selectDescriptors().size());
+    assertFalse(db.selectDescriptors().get(0).isDeleted());
+
+    assertEquals("test provider1 new content", db.selectProviders().get(0).getContent());
+    assertEquals("test descriptor new content", db.selectDescriptors().get(0).getContent());
+  }
+
+  @Test
+  public void testPhysicalDelete() {
+    db.putProvider("provider_1", "any");
+    db.putDescriptor("descriptor_1", "any");
+
+    assertEquals(0, db.cleanTables(0));
+
     assertEquals(1, db.selectProviders().size());
     assertEquals(1, db.selectDescriptors().size());
 
     db.deleteDescriptor("descriptor_1");
+    db.deleteProvider("provider_1");
 
-    assertEquals(1, db.selectProviders().size());
+    assertEquals(2, db.cleanTables(0));
+
+    assertEquals(0, db.selectProviders().size());
     assertEquals(0, db.selectDescriptors().size());
-
-    assertEquals("provider_1", db.selectProviders().get(0).getName());
   }
 }

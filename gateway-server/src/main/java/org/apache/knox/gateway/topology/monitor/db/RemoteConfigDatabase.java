@@ -55,10 +55,16 @@ public class RemoteConfigDatabase {
     }
   }
 
+  /**
+   * @return all remote providers, including the deleted ones
+   */
   public List<RemoteConfig> selectProviders() {
     return selectFrom(KNOX_PROVIDERS_TABLE_NAME);
   }
 
+  /**
+   * @return all remote descriptors, including the deleted one
+   */
   public List<RemoteConfig> selectDescriptors() {
     return selectFrom(KNOX_DESCRIPTORS_TABLE_NAME);
   }
@@ -66,10 +72,16 @@ public class RemoteConfigDatabase {
   private List<RemoteConfig> selectFrom(String tableName) {
     List<RemoteConfig> result = new ArrayList<>();
     try (Connection connection = dataSource.getConnection();
-         PreparedStatement statement = connection.prepareStatement("SELECT name, content, last_modified_time FROM " + tableName)) {
+         PreparedStatement statement = connection.prepareStatement(
+                 "SELECT name, content, last_modified_time, deleted FROM " + tableName)) {
       try (ResultSet rs = statement.executeQuery()) {
         while(rs.next()) {
-          result.add(new RemoteConfig(rs.getString(1), rs.getString(2), rs.getTimestamp(3).toInstant()));
+          result.add(new RemoteConfig(
+                  rs.getString(1),
+                  rs.getString(2),
+                  rs.getTimestamp(3).toInstant(),
+                  rs.getBoolean(4)
+          ));
         }
       }
     } catch (SQLException e) {
@@ -97,10 +109,11 @@ public class RemoteConfigDatabase {
       if (exists(name, tableName)) {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(
-                     "UPDATE " + tableName + " SET content = ?, last_modified_time = ? WHERE name = ?")) {
+                     "UPDATE " + tableName + " SET content = ?, last_modified_time = ?, deleted = ? WHERE name = ?")) {
           statement.setString(1, content);
           statement.setTimestamp(2, Timestamp.from(Instant.now()));
-          statement.setString(3, name);
+          statement.setBoolean(3, false);
+          statement.setString(4, name);
           return statement.executeUpdate() == 1;
         }
       } else {
@@ -129,20 +142,46 @@ public class RemoteConfigDatabase {
     }
   }
 
+  /**
+   * Logically delete a provider
+   */
   public boolean deleteProvider(String name) {
-    return delete(name, KNOX_PROVIDERS_TABLE_NAME);
+    return deleteLogical(name, KNOX_PROVIDERS_TABLE_NAME);
   }
 
+  /**
+   * Logically delete a descriptor
+   */
   public boolean deleteDescriptor(String name) {
-    return delete(name, KNOX_DESCRIPTORS_TABLE_NAME);
+    return deleteLogical(name, KNOX_DESCRIPTORS_TABLE_NAME);
   }
 
-  private boolean delete(String name, String tableName) {
+  private boolean deleteLogical(String name, String tableName) {
     try (Connection connection = dataSource.getConnection();
          PreparedStatement statement = connection.prepareStatement(
-                 "DELETE FROM " + tableName + " WHERE name = ?")) {
-      statement.setString(1, name);
+                 "UPDATE " + tableName + " SET deleted = ?, last_modified_time = ? WHERE name = ?")) {
+      statement.setBoolean(1, true);
+      statement.setTimestamp(2, Timestamp.from(Instant.now()));
+      statement.setString(3, name);
       return statement.executeUpdate() == 1;
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public int cleanTables(int olderThanSeconds) {
+    Instant instant = Instant.now().minusSeconds(olderThanSeconds);
+    return cleanTable(KNOX_PROVIDERS_TABLE_NAME, instant)
+            + cleanTable(KNOX_DESCRIPTORS_TABLE_NAME, instant);
+  }
+
+  private int cleanTable(String tableName, Instant instant) {
+    try (Connection connection = dataSource.getConnection();
+         PreparedStatement statement = connection.prepareStatement(
+                 "DELETE FROM " + tableName + " WHERE deleted = ? AND last_modified_time <= ?")) {
+      statement.setBoolean(1, true);
+      statement.setTimestamp(2, Timestamp.from(instant));
+      return statement.executeUpdate();
     } catch (SQLException e) {
       throw new RuntimeException(e);
     }
