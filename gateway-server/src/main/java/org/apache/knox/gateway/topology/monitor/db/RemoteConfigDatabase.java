@@ -30,7 +30,7 @@ import org.apache.knox.gateway.util.JDBCUtils;
 
 public class RemoteConfigDatabase {
   private static final String KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxProvidersTable.sql";
-  private static final String KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenDescriptorsTable.sql";
+  private static final String KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxDescriptorsTable.sql";
   private static final String KNOX_PROVIDERS_TABLE_NAME = "KNOX_PROVIDERS";
   private static final String KNOX_DESCRIPTORS_TABLE_NAME = "KNOX_DESCRIPTORS";
   private final DataSource dataSource;
