@@ -23,6 +23,7 @@ import {ResourceService} from '../resource/resource.service';
 import {Resource} from '../resource/resource';
 import {ResourceTypesService} from '../resourcetypes/resourcetypes.service';
 import {ValidationUtils} from '../utils/validation-utils';
+import {HttpErrorResponse} from '@angular/common/http';
 
 @Component({
     selector: 'app-new-desc-wizard',
@@ -92,6 +93,8 @@ export class NewDescWizardComponent implements OnInit {
 
     editModePC: boolean;
 
+    existingReadOnlyTopology = false;
+
     constructor(private resourceTypesService: ResourceTypesService, private resourceService: ResourceService) {
     }
 
@@ -110,6 +113,7 @@ export class NewDescWizardComponent implements OnInit {
         this.resource = new Resource();
         this.descriptor = new Descriptor();
         this.descriptorName = '';
+        this.existingReadOnlyTopology = false;
 
         // Reset any previously-selected services
         for (let serviceName of NewDescWizardComponent.supportedServices) {
@@ -120,7 +124,7 @@ export class NewDescWizardComponent implements OnInit {
         }
     }
 
-    onClose() {
+    save() {
         // Set the service declarations on the descriptor
         for (let serviceName of NewDescWizardComponent.supportedServices) {
             if (this.isSelected(serviceName)) {
@@ -153,7 +157,15 @@ export class NewDescWizardComponent implements OnInit {
                         }
                     }
                 });
+                this.childModal.close(); // close the dialog if there was no error
+            }).catch((err: HttpErrorResponse) => {
+                this.existingReadOnlyTopology = (err.status === 409);
+                console.error('Error creating ' + this.descriptorName + ' : ' + err.message);
             });
+    }
+
+    isExistingReadOnlyTopology(): boolean {
+        return this.existingReadOnlyTopology;
     }
 
     getServiceDisplayColumns() {

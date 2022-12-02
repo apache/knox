@@ -128,8 +128,8 @@ public class TopologiesResource {
           }
 
           // For any read-only override topology, mark it as generated to discourage modification.
-          final List<String> ambariManagedTopos = config.getReadOnlyOverrideTopologyNames();
-          if (ambariManagedTopos.contains(convertedTopology.getName())) {
+          final List<String> managedTopologies = config.getReadOnlyOverrideTopologyNames();
+          if (managedTopologies.contains(convertedTopology.getName())) {
             convertedTopology.setGenerated(true);
           }
 
@@ -398,8 +398,13 @@ public class TopologiesResource {
 
     GatewayServices gs =
             (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-
     TopologyService ts = gs.getService(ServiceType.TOPOLOGY_SERVICE);
+    GatewayConfig config =
+            (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    if (existingGeneratedTopology(name, ts, config)) {
+      log.disallowedOverwritingGeneratedTopology(name);
+      return status(Response.Status.CONFLICT).entity("{ \"error\" : \"Cannot overwrite existing generated topology: " + name + "\" }").build();
+    }
 
     File existing = getExistingConfigFile(ts.getDescriptors(), name);
     boolean isUpdate = (existing != null);
@@ -424,6 +429,14 @@ public class TopologiesResource {
     return response;
   }
 
+  private boolean existingGeneratedTopology(String fileName, TopologyService topologyService, GatewayConfig config) {
+    for (org.apache.knox.gateway.topology.Topology topology : topologyService.getTopologies()) {
+      if(topology.getName().equals(FilenameUtils.getBaseName(fileName))) {
+        return config.getReadOnlyOverrideTopologyNames().contains(topology.getName());
+      }
+    }
+    return false;
+  }
 
   @GET
   @Produces({APPLICATION_JSON})
