@@ -1926,7 +1926,7 @@ public class GatewayAdminTopologyFuncTest {
               .header("Content-type", MediaType.APPLICATION_JSON)
               .body("new content")
               .then()
-              .statusCode(HttpStatus.SC_BAD_REQUEST)
+              .statusCode(HttpStatus.SC_CONFLICT)
               .when().put((clusterUrl + "/api/v1/descriptors/" + topologyName));
     } finally {
       // Restart the gateway with old settings.
