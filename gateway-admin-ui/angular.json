@@ -1,0 +1,126 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "admin-ui": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:class": {
+          "skipTests": true
+        },
+        "@schematics/angular:component": {
+          "skipTests": true
+        },
+        "@schematics/angular:directive": {
+          "skipTests": true
+        },
+        "@schematics/angular:guard": {
+          "skipTests": true
+        },
+        "@schematics/angular:interceptor": {
+          "skipTests": true
+        },
+        "@schematics/angular:pipe": {
+          "skipTests": true
+        },
+        "@schematics/angular:service": {
+          "skipTests": true
+        },
+        "@schematics/angular:application": {
+          "strict": true
+        }
+      },
+      "root": "",
+      "sourceRoot": "admin-ui",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "outputPath": "target/classes/admin-ui/app",
+            "index": "admin-ui/index.html",
+            "main": "admin-ui/main.ts",
+            "polyfills": "admin-ui/polyfills.ts",
+            "tsConfig": "admin-ui/tsconfig.json",
+            "assets": [
+              "admin-ui/favicon.ico",
+              "admin-ui/assets"
+            ],
+            "styles": [
+              "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "admin-ui/styles.css"
+            ],
+            "scripts": [
+              "node_modules/jquery/dist/jquery.min.js",
+              "node_modules/bootstrap/dist/js/bootstrap.js",
+              "node_modules/ace-builds/src-min/ace.js",
+              "node_modules/ace-builds/src-min/theme-monokai.js"              
+            ]
+          },
+          "configurations": {
+            "production": {
+              "buildOptimizer": false,
+              "aot": false,
+              "fileReplacements": [
+                {
+                  "replace": "admin-ui/environments/environment.ts",
+                  "with": "admin-ui/environments/environment.prod.ts"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "buildOptimizer": false,
+              "aot": false,
+              "optimization": false,
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "configurations": {
+            "production": {
+              "browserTarget": "admin-ui:build:production"
+            },
+            "development": {
+              "browserTarget": "admin-ui:build:development"
+            }
+          },
+          "options": {
+            "browserTarget": "admin-ui:build",
+            "proxyConfig": "proxy.conf.json"
+          },
+          "defaultConfiguration": "development"
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "browserTarget": "admin-ui:build"
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "admin-ui/**/*.ts",
+              "admin-ui/**/*.html"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "defaultProject": "admin-ui",
+  "cli": {
+    "schematicCollections": [
+      "@angular-eslint/schematics",
+      "@angular-eslint/schematics"
+    ]
+  }
+}

@@ -27,7 +27,7 @@ import {HttpErrorResponse} from '@angular/common/http';
     templateUrl: './provider-config-selector.component.html',
     styleUrls: ['./provider-config-selector.component.css']
 })
-export class ProviderConfigSelectorComponent implements OnInit {
+export class ProviderConfigSelectorComponent {
 
     @ViewChild('chooseProviderConfigModal')
     private childModal: BsModalComponent;
@@ -40,9 +40,6 @@ export class ProviderConfigSelectorComponent implements OnInit {
     selectedName: string;
 
     constructor(private resourceService: ResourceService) {
-    }
-
-    ngOnInit() {
     }
 
     open(desc: Descriptor, size?: string) {

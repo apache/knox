@@ -18,7 +18,7 @@ import {NgModule} from '@angular/core';
 import {BrowserModule} from '@angular/platform-browser';
 import {HttpClientModule, HttpClientXsrfModule} from '@angular/common/http';
 import {MatGridListModule} from '@angular/material/grid-list';
-import {BsModalModule} from 'ng2-bs3-modal/ng2-bs3-modal';
+import {BsModalModule} from 'ng2-bs3-modal';
 import {Routes, RouterModule}  from '@angular/router';
 import {APP_BASE_HREF} from '@angular/common';
 

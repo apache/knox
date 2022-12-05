@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 import {Component, OnInit, ViewChild} from '@angular/core';
-import {BsModalComponent} from 'ng2-bs3-modal/ng2-bs3-modal';
-import swal from 'sweetalert';
+import {BsModalComponent} from 'ng2-bs3-modal';
+import Swal from 'sweetalert2';
 
 import {ServiceDefinition} from './servicedefinition';
 import {ServiceDefinitionService} from './servicedefinition.service';
@@ -126,7 +126,10 @@ export class ServiceDefinitionDetailComponent implements OnInit {
         this.serviceDefinitionService.updateServiceDefinition(this.changedServiceDefinitionContent ? this.changedServiceDefinitionContent
                                                                 : this.serviceDefinitionContent)
             .then(response => {
-                swal('Updated successfully!');
+                Swal.fire({
+                    text: 'Updated successfully!',
+                    confirmButtonColor: '#7cd1f9'
+                });
                 this.resourceTypesService.selectResourceType('Service Definitions');
                 this.serviceDefinitionService.selectedServiceDefinition(null);
             });
@@ -135,7 +138,10 @@ export class ServiceDefinitionDetailComponent implements OnInit {
     deleteServiceDefinition() {
         this.serviceDefinitionService.deleteServiceDefinition(this.serviceDefinition)
             .then(response => {
-                swal('Deleted successfully!');
+                Swal.fire({
+                    text: 'Deleted successfully!',
+                    confirmButtonColor: '#7cd1f9'
+                });
                 this.resourceTypesService.selectResourceType('Service Definitions');
                 this.serviceDefinitionService.selectedServiceDefinition(null);
             });

@@ -37,7 +37,7 @@ import {TabComponent} from './utils/tab.component';
 import {TabsComponent} from './utils/tabs.component';
 
 import {AceEditorModule} from 'ng2-ace-editor';
-import {BsModalModule} from 'ng2-bs3-modal/ng2-bs3-modal';
+import {BsModalModule} from 'ng2-bs3-modal';
 import {ResourcetypesComponent} from './resourcetypes/resourcetypes.component';
 import {ResourceTypesService} from './resourcetypes/resourcetypes.service';
 import {ResourceComponent} from './resource/resource.component';

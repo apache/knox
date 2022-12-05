@@ -17,10 +17,10 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {MatGridListModule} from '@angular/material/grid-list';
-import {BsModalComponent} from 'ng2-bs3-modal/ng2-bs3-modal';
 import {HomepageService} from '../homepage.service';
 import {TopologyInformation} from './topology.information';
 import {Service} from './service';
+import {BsModalComponent} from 'ng2-bs3-modal';
 
 @Component({
     selector: 'app-topologies-information',
@@ -36,7 +36,7 @@ export class TopologyInformationsComponent implements OnInit {
 
     topologies: TopologyInformation[];
     desiredTopologies: string[];
-    selectedApiService : Service;
+    selectedApiService: Service;
 
     setTopologies(topologies: TopologyInformation[]) {
         this.topologies = topologies;
@@ -63,13 +63,13 @@ export class TopologyInformationsComponent implements OnInit {
         this.homepageService.getTopologies().then(topologies => this.setTopologies(topologies));
         this.route.queryParams.subscribe(params => {
             let topologiesParam = params['topologies'];
-            console.debug('Topologies query param name = ' + topologiesParam)
+            console.debug('Topologies query param name = ' + topologiesParam);
             if (topologiesParam) {
                 this.desiredTopologies = topologiesParam.split(',');
                 this.filterTopologies();
             } else {
 	        	    let profileName = params['profile'];
-	            console.debug('Profile name = ' + profileName)
+	            console.debug('Profile name = ' + profileName);
 	            if (profileName) {
 	            	    console.debug('Fetching profile information...');
 	            	    this.homepageService.getProfile(profileName).then(profile => this.setDesiredTopologiesFromProfile(profile));
@@ -80,7 +80,7 @@ export class TopologyInformationsComponent implements OnInit {
 
     setDesiredTopologiesFromProfile(profile: JSON) {
       let topologiesInProfile = profile['topologies'];
-      if (topologiesInProfile !== "") {
+      if (topologiesInProfile !== '') {
          this.desiredTopologies = topologiesInProfile.split(',');
          this.filterTopologies();
       }

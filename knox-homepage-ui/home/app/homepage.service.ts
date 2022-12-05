@@ -17,7 +17,7 @@
 import {Injectable} from '@angular/core';
 import {HttpClient, HttpErrorResponse, HttpHeaders} from '@angular/common/http';
 import {ActivatedRoute} from '@angular/router';
-import swal from 'sweetalert';
+import Swal from 'sweetalert2';
 
 import 'rxjs/add/operator/toPromise';
 
@@ -107,7 +107,8 @@ export class HomepageService {
             .toPromise()
             .then(response => response)
             .catch((err: HttpErrorResponse) => {
-                console.debug('HomepageService --> getProfile() --> ' + this.apiUrl + '/profiles/' + profileName + '\n  error: ' + err.message);
+                console.debug('HomepageService --> getProfile() --> ' + this.apiUrl + '/profiles/'
+                + profileName + '\n  error: ' + err.message);
                 if (err.status === 401) {
                     window.location.assign(document.location.pathname);
                 } else {
@@ -129,21 +130,26 @@ export class HomepageService {
     }
 
     private handleError(error: HttpErrorResponse): Promise<any> {
-        //location.reload();
+        // location.reload();
         let refresh;
         this.route.queryParams.subscribe(params => {
           refresh = params['refresh'];
-          console.debug('refresh = ' + refresh)
+          console.debug('refresh = ' + refresh);
           if (refresh) {
             console.debug('Refreshing page...', window.location.href);
-            var url = window.location.pathname.replace(new RegExp('refresh=1/.*'), '?');
-            //var url = window.location.pathname;
-            
-            //window.location.assign(url);
+            let url = window.location.pathname.replace(new RegExp('refresh=1/.*'), '?');
+            // var url = window.location.pathname;
+
+            // window.location.assign(url);
             window.location.reload();
           }
         });
-        swal('Oops!', 'Something went wrong!\n' + (error.error ? error.error : error.statusText), 'error');
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops!',
+            text: 'Something went wrong!\n' + (error.error ? error.error : error.statusText),
+            confirmButtonColor: '#7cd1f9'
+        });
         return Promise.reject(error.message || error);
     }
 

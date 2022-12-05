@@ -1,8 +1,0 @@
-{
-  "/token-management/api": {
-    "target": "http://localhost:8443",
-    "secure": false,
-    "logLevel": "debug",
-    "changeOrigin": true
-  }
-}

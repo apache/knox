@@ -60,7 +60,7 @@ export class IdentityAssertionWizard extends CategoryWizard {
         let configType = IdentityAssertionWizard.typeConfigMap.get(this.selectedType);
         if (configType) {
             this.providerConfig = Object.create(configType.prototype) as IdentityAssertionProviderConfig;
-            this.providerConfig.constructor.apply(this.providerConfig);
+            this.providerConfig = this.providerConfig.constructor.apply(this.providerConfig);
             (this.providerConfig as IdentityAssertionProviderConfig).setType(this.selectedType);
         } else {
             console.debug('IdentityAssertionWizard --> No provider configuration type mapped for ' + this.selectedType);

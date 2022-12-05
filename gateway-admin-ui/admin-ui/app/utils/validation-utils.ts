@@ -16,7 +16,7 @@
  */
 
 export class ParsedURL {
-    static REGEXP: RegExp = new RegExp('^([^:/\\?#]+)?:\\/\\/([^:/\\?#]+)(:([^:/\\?#]+))?(\\/([^\\?#]*))*(\\?([^#]*))?(#(.*))?');
+    static REGEXP = new RegExp('^([^:/\\?#]+)?:\\/\\/([^:/\\?#]+)(:([^:/\\?#]+))?(\\/([^\\?#]*))*(\\?([^#]*))?(#(.*))?');
 
     scheme: string;
     host: string;
@@ -44,8 +44,8 @@ export class ParsedURL {
 }
 
 export class ValidationUtils {
-    private static VALID_NAME_REGEXP: RegExp = new RegExp('^[\\w\\d-_]*$');
-    private static DN_TEMPLATE_REGEXP: RegExp =
+    private static VALID_NAME_REGEXP = new RegExp('^[\\w\\d-_]*$');
+    private static DN_TEMPLATE_REGEXP =
         new RegExp('(?:[A-Za-z][\\w-]*|\\d+(?:\\.\\d+)*)' +
             '=(?:#(?:[\\dA-Fa-f]{2})+|(?:[^,=\\+<>#;\\"]|\\[,=\\+<>#;\\"]|\\[\\dA-Fa-f]{2})*|"(?:[^\\"]|\\[,=\\+<>#;\\"]|' +
             '\\[\\dA-Fa-f]{2})*")' +

@@ -107,7 +107,7 @@ export class GeneralProxyInformationComponent implements OnInit {
         let profileName;
         this.route.queryParams.subscribe(params => {
         	    profileName = params['profile'];
-            console.debug('Profile name = ' + profileName)
+            console.debug('Profile name = ' + profileName);
             if (profileName) {
             	    console.debug('Fetching profile information...');
             	    this.homepageService.getProfile(profileName).then(profile => this.setProfileFlags(profile));

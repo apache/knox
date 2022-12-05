@@ -16,10 +16,8 @@
 */
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
-import * as _swal from 'sweetalert';
-import { SweetAlert } from 'sweetalert/typings/core';
+import Swal from 'sweetalert2';
 import { TokenData, TokenRequestParams, TokenResultData, TssStatusData } from './token-generation.models';
-const swal: SweetAlert = _swal as any;
 
 @Injectable()
 export class TokenGenService {
@@ -120,7 +118,12 @@ export class TokenGenService {
     }
 
     private handleError(error: HttpErrorResponse): Promise<any> {
-        swal('Oops!', 'Something went wrong!\n' + (error.error ? error.error : error.statusText), 'error');
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops!',
+            text: 'Something went wrong!\n' + (error.error ? error.error : error.statusText),
+            confirmButtonColor: '#7cd1f9'
+          });
         let requestErrorMessage = 'Response from ' + error.url + ' - ' + error.status + ': ' + error.statusText;
         if (error.error) {
             requestErrorMessage += ' (' + error.error + ')';

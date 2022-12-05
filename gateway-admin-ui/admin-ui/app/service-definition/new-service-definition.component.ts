@@ -14,16 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {BsModalComponent} from 'ng2-bs3-modal';
-import swal from 'sweetalert';
+import Swal from 'sweetalert2';
 
 import {ServiceDefinitionService} from './servicedefinition.service';
 import {ResourceTypesService} from '../resourcetypes/resourcetypes.service';
+import * as ace from 'ace-builds';
 
-import 'brace/theme/monokai';
-import 'brace/mode/xml';
 
 @Component({
     selector: 'app-service-definition-wizard',
@@ -41,6 +40,9 @@ export class NewServiceDefinitionComponent implements OnInit {
     @ViewChild('newServiceDefinitionModal')
     childModal: BsModalComponent;
 
+    @ViewChild('editor')
+    editor: ElementRef<HTMLElement>;
+
     constructor(private http: HttpClient,
                 private serviceDefinitionService: ServiceDefinitionService,
                 private resourceTypesService: ResourceTypesService) {
@@ -49,6 +51,15 @@ export class NewServiceDefinitionComponent implements OnInit {
     ngOnInit() {
         this.http.get(this.serviceDefinitionXmlTemplate, {responseType: 'text'})
                      .subscribe(data => this.defaultServiceDefinitionContent = data);
+    }
+
+    ngAfterViewInit(): void {
+        ace.config.set(
+            'basePath',
+            'https://unpkg.com/ace-builds@1.4.12/src-noconflict'
+        );
+        const aceEditor = ace.edit(this.editor.nativeElement);
+        aceEditor.session.setMode('xml');
     }
 
     open(size?: string) {
@@ -63,9 +74,12 @@ export class NewServiceDefinitionComponent implements OnInit {
     onClose() {
         this.serviceDefinitionService.saveNewServiceDefinition(this.serviceDefinitionContent)
                                      .then(response => {
-                                           swal('Saved successfully!');
-                                           this.resourceTypesService.selectResourceType('Service Definitions');
-                                           this.serviceDefinitionService.selectedServiceDefinition(null);
+                                        Swal.fire({
+                                            text: 'Saved successfully!',
+                                            confirmButtonColor: '#7cd1f9'
+                                        });
+                                        this.resourceTypesService.selectResourceType('Service Definitions');
+                                        this.serviceDefinitionService.selectedServiceDefinition(null);
                                      });
     }
 

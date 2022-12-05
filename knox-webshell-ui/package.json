@@ -2,9 +2,9 @@
   "name": "ng-knox-webshell-ui",
   "version": "1.0.0",
   "scripts": {
-    "start": "ng serve --base-href /gateway/manager/admin-ui/ --deploy-url /gateway/manager/admin-ui/ --verbose=true",
+    "start": "ng serve --verbose=true",
     "build": "ng build",
-    "build-prod": "ng build --prod"
+    "build-prod": "ng build --configuration production"
   },
   "private": true,
   "dependencies": {
@@ -22,7 +22,7 @@
   "devDependencies": {
     "@angular-devkit/build-angular": "^13.0.2",
     "@angular-eslint/builder": "^12.6.1 ",
-    "@angular/cli": "~13.0.1",
+    "@angular/cli": "~14.2.9",
     "@angular/compiler-cli": "~13.0.1",
     "@types/jasmine": "~3.6.0",
     "@types/node": "^12.11.1",

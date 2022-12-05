@@ -17,9 +17,7 @@
 import { HttpClient} from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
-import * as _swal from 'sweetalert';
-import { SweetAlert } from 'sweetalert/typings/core';
-const swal: SweetAlert = _swal as any;
+import Swal from 'sweetalert2';
 import { TokenResultData, TssStatusData } from './token-generation.models';
 import { TokenGenService } from './token-generation.service';
 
@@ -87,19 +85,23 @@ export class TokenGenerationComponent implements OnInit {
   generateToken() {
     if (this.tokenGenFrom.valid && this.tssStatus.tokenManagementEnabled && this.tssStatus.allowedTssForTokengen) {
       if (this.isMaximumLifetimeExceeded()) {
-        swal({
-          title: 'Warning',
-          text: `You are trying to generate a token with a lifetime that exceeds the configured maximum.
-                 In this case the generated token's lifetime will be limited to the configured maximum.`,
-          icon: 'warning',
-          buttons: ['Adjust request lifetime', 'Generate token anyway'],
-          dangerMode: true
-        })
-        .then((willGenerateToken) => {
-          if (willGenerateToken) {
-            this.requestToken();
-          }
-        });
+        Swal.fire(
+          {
+            title: 'Warning',
+            text: `You are trying to generate a token with a lifetime that exceeds the configured maximum.
+            In this case the generated token's lifetime will be limited to the configured maximum.`,
+            icon: 'warning',
+            reverseButtons: true,
+            confirmButtonText: 'Generate token anyway',
+            confirmButtonColor: '#e64942',
+            showCancelButton: true,
+            cancelButtonText: '<span style="color: #555;">Adjust request lifetime</span>',
+            cancelButtonColor: '#efefef'
+          }).then((willGenerateToken) => {
+              if (willGenerateToken.isConfirmed) {
+                this.requestToken();
+              }
+          });
       } else {
         this.requestToken();
       }
@@ -125,7 +127,11 @@ export class TokenGenerationComponent implements OnInit {
     tempTextArea.select();
     document.execCommand('copy');
     document.body.removeChild(tempTextArea);
-    swal('Copied to clipboard!', { buttons: [false], timer: 1000 });
+    Swal.fire({
+      text: 'Copied to clipboard!',
+      timer: 1000,
+      showConfirmButton: false,
+    });
   }
 
   private requestToken() {

@@ -14,29 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {Topology} from './topology';
 import {TopologyService} from './topology.service';
 import {ResourceTypesService} from './resourcetypes/resourcetypes.service';
-import {BsModalComponent} from 'ng2-bs3-modal/ng2-bs3-modal';
-
-import 'brace/theme/monokai';
-import 'brace/mode/xml';
+import {BsModalComponent} from 'ng2-bs3-modal';
 import {ValidationUtils} from './utils/validation-utils';
+import * as ace from 'ace-builds';
 
 @Component({
     selector: 'app-topology-detail',
     template: `
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h4 class="panel-title">{{title}} <span *ngIf="showEditOptions == false" style="padding-left: 15%;"
+                <h4 class="panel-title">{{title}} <span *ngIf="showEditOptions === false" style="padding-left: 15%;"
                                                         class="text-danger text-center"> Read Only (generated file) </span> <span
                         class="pull-right">{{titleSuffix}}</span></h4>
             </div>
-            <div *ngIf="topologyContent" class="panel-body">
+            <div [style.display]="getEditorVisibility()" class="panel-body">
                 <ace-editor
+                        #editor
                         [(text)]="topologyContent"
-                        [mode]="'xml'"
                         [options]="options"
                         [theme]="theme"
                         [readOnly]="!showEditOptions"
@@ -93,7 +91,7 @@ import {ValidationUtils} from './utils/validation-utils';
         </div>
     `
 })
-export class TopologyDetailComponent implements OnInit {
+export class TopologyDetailComponent implements OnInit, AfterViewInit {
     title = 'Topology Detail';
     titleSuffix: string;
     topology: Topology;
@@ -110,13 +108,27 @@ export class TopologyDetailComponent implements OnInit {
     @ViewChild('deleteConfirmModal')
     deleteConfirmModal: BsModalComponent;
 
-    @ViewChild('editor') editor;
+    @ViewChild('editor')
+    editor: ElementRef<HTMLElement>;
 
     constructor(private topologyService: TopologyService, private resourceTypesService: ResourceTypesService) {
     }
 
     ngOnInit(): void {
         this.topologyService.selectedTopology$.subscribe(value => this.populateContent(value));
+    }
+
+    ngAfterViewInit(): void {
+        ace.config.set(
+            'basePath',
+            'https://unpkg.com/ace-builds@1.4.12/src-noconflict'
+        );
+        const aceEditor = ace.edit(this.editor.nativeElement);
+        aceEditor.session.setMode('xml');
+    }
+
+    getEditorVisibility(): string {
+        return this.topologyContent ? 'block' : 'none';
     }
 
     setTitle(value: string) {

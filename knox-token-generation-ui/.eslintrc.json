@@ -1,0 +1,98 @@
+{
+  "root": true,
+  "overrides": [
+    {
+      "files": [
+        "*.ts"
+      ],
+      "parserOptions": {
+        "project": [
+          "token-generation/tsconfig.json"
+        ],
+        "createDefaultProgram": true
+      },
+      "extends": [
+        "plugin:@angular-eslint/recommended",
+        "plugin:@angular-eslint/template/process-inline-templates"
+      ],
+      "rules": {
+        "@typescript-eslint/naming-convention": [
+          "error",
+          {
+            "selector": ["class"],
+            "format": ["PascalCase"]
+          }
+        ],
+        "spaced-comment": "error",
+        "curly": "error",
+        "eol-last": "error",
+        "guard-for-in": "error",
+        "no-unused-labels": "error",
+        "max-len": [
+          "error",
+          { "code": 140 }
+        ],
+        "@typescript-eslint/explicit-member-accessibility": [
+          "off",
+          {"accessibility": "no-public"}
+        ],
+        "@typescript-eslint/member-ordering": [
+          "error",
+          { "default": ["static-field", "instance-field", "field", "method"] }
+        ],
+        "no-caller": "error",
+        "no-bitwise": "error",
+        "no-console": "off",
+        "no-new-wrappers": "error",
+        "no-debugger": "error",
+        "no-redeclare": "off",
+        "no-empty": "error",
+        "no-eval": "error",
+        "@typescript-eslint/no-inferrable-types": "error",
+        "no-shadow": "error",
+        "dot-notation": "off",
+        "no-fallthrough": "error",
+        "no-trailing-spaces": "error",
+        "no-unused-expressions": "error",
+        "no-var": "error",
+        "sort-keys": "off",
+        "brace-style": ["error","1tbs", { "allowSingleLine": true }],
+        "quotes": ["error", "single"],
+        "radix": "error",
+        "@typescript-eslint/semi": "error",
+        "eqeqeq": ["error", "always", {"null": "ignore"}],
+        "@typescript-eslint/type-annotation-spacing": "error",
+        "@angular-eslint/directive-selector": [
+          "error",
+          {
+            "type": "attribute",
+            "prefix": "app",
+            "style": "camelCase"
+          }
+        ],
+        "@angular-eslint/component-selector": [
+          "error",
+          {
+            "type": "element",
+            "prefix": "app",
+            "style": "kebab-case"
+          }
+        ],
+        "@angular-eslint/no-input-rename": "off",
+        "@angular-eslint/no-output-rename": "error",
+        "@angular-eslint/use-pipe-transform-interface": "error",
+        "@angular-eslint/component-class-suffix": "error",
+        "@angular-eslint/directive-class-suffix": "error"
+      }
+    },
+    {
+      "files": [
+        "*.html"
+      ],
+      "extends": [
+        "plugin:@angular-eslint/template/recommended"
+      ],
+      "rules": {}
+    }
+  ]
+}

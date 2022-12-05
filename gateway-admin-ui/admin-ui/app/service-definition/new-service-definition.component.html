@@ -10,8 +10,8 @@
             <br />
             <div>
                 <ace-editor
+                        #editor
                         [(text)]="serviceDefinitionContent"
-                        [mode]="'xml'"
                         [options]="options"
                         [theme]="theme"
                         style="min-height: 430px; width:100%; overflow: auto;">
