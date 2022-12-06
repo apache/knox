@@ -205,6 +205,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String READ_ONLY_OVERRIDE_TOPOLOGIES =
                                                     GATEWAY_CONFIG_FILE_PREFIX + ".read.only.override.topologies";
 
+  public static final String READ_ONLY_OVERRIDE_PROVIDERS =
+                                                    GATEWAY_CONFIG_FILE_PREFIX + ".read.only.override.providers";
+
   /* Websocket defaults */
   public static final boolean DEFAULT_WEBSOCKET_FEATURE_ENABLED = false;
   public static final int DEFAULT_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE = Integer.MAX_VALUE;
@@ -1153,6 +1156,18 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     List<String> topologyNames = new ArrayList<>();
 
     String value = get(READ_ONLY_OVERRIDE_TOPOLOGIES);
+    if (value != null && !value.isEmpty()) {
+      topologyNames.addAll(Arrays.asList(value.trim().split("\\s*,\\s*")));
+    }
+
+    return topologyNames;
+  }
+
+  @Override
+  public List<String> getReadOnlyOverrideProviderNames() {
+    List<String> topologyNames = new ArrayList<>();
+
+    String value = get(READ_ONLY_OVERRIDE_PROVIDERS);
     if (value != null && !value.isEmpty()) {
       topologyNames.addAll(Arrays.asList(value.trim().split("\\s*,\\s*")));
     }

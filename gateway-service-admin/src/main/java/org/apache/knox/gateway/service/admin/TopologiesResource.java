@@ -361,6 +361,14 @@ public class TopologiesResource {
     // extension.
     String filename = isUpdate ? existing.getName() : getFileNameForResource(name, headers);
 
+    GatewayConfig config =
+            (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    if (providerExists(name, ts) &&
+            config.getReadOnlyOverrideProviderNames().contains(FilenameUtils.getBaseName(name))) {
+      log.disallowedOverwritingGeneratedProvider(name);
+      return status(Response.Status.CONFLICT).entity("{ \"error\" : \"Cannot overwrite existing generated provider: " + name + "\" }").build();
+    }
+
     if (ts.deployProviderConfiguration(filename, content)) {
       try {
         if (isUpdate) {
@@ -401,8 +409,9 @@ public class TopologiesResource {
     TopologyService ts = gs.getService(ServiceType.TOPOLOGY_SERVICE);
     GatewayConfig config =
             (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
-    if (existingGeneratedTopology(name, ts, config)) {
-      log.disallowedOverwritingGeneratedTopology(name);
+    if ((descriptorExists(name, ts) || topologyExists(name, ts))
+            && config.getReadOnlyOverrideTopologyNames().contains(FilenameUtils.getBaseName(name))) {
+      log.disallowedOverwritingGeneratedDescriptor(name);
       return status(Response.Status.CONFLICT).entity("{ \"error\" : \"Cannot overwrite existing generated topology: " + name + "\" }").build();
     }
 
@@ -429,13 +438,19 @@ public class TopologiesResource {
     return response;
   }
 
-  private boolean existingGeneratedTopology(String fileName, TopologyService topologyService, GatewayConfig config) {
-    for (org.apache.knox.gateway.topology.Topology topology : topologyService.getTopologies()) {
-      if(topology.getName().equals(FilenameUtils.getBaseName(fileName))) {
-        return config.getReadOnlyOverrideTopologyNames().contains(topology.getName());
-      }
-    }
-    return false;
+  public boolean topologyExists(String fileName, TopologyService topologyService) {
+    return topologyService.getTopologies().stream()
+            .anyMatch(topology -> topology.getName().equals(FilenameUtils.getBaseName(fileName)));
+  }
+
+  public boolean descriptorExists(String fileName, TopologyService topologyService) {
+    return topologyService.getDescriptors().stream()
+            .anyMatch(file -> FilenameUtils.getBaseName(file.getName()).equals(FilenameUtils.getBaseName(fileName)));
+  }
+
+  public boolean providerExists(String fileName, TopologyService topologyService) {
+    return topologyService.getProviderConfigurations().stream()
+            .anyMatch(file -> FilenameUtils.getBaseName(file.getName()).equals(FilenameUtils.getBaseName(fileName)));
   }
 
   @GET

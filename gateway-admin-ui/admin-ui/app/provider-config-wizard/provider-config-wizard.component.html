@@ -1,4 +1,4 @@
-<bs-modal (onClose)="onClose()" #newProviderConfigModal xmlns="http://www.w3.org/1999/html">
+<bs-modal #newProviderConfigModal xmlns="http://www.w3.org/1999/html">
     <bs-modal-header [showDismiss]="true">
         <label class="modal-title">Create a New Provider Configuration</label>
     </bs-modal-header>
@@ -19,6 +19,8 @@
                             <span *ngIf="field.errors?.required" style="color: red">
                 &nbsp;required
               </span>
+                            <span *ngIf="isExistingReadOnlyProvider()"
+                                  style="color: red">Cannot overwrite existing read-only topology</span>
                             <span *ngIf="!field.errors?.required && !isValidProviderConfigName()"
                                   style="color: red">
                 &nbsp;invalid
@@ -120,7 +122,7 @@
                 *ngIf="isRootStep() || !hasMoreSteps()"
                 class="btn btn-primary btn-sm"
                 [disabled]="(isRootStep() && !name)"
-                (click)="isRootStep() ? newProviderConfigModal.close() : onFinishAdd()">Ok
+                (click)="isRootStep() ? save() : onFinishAdd()">Ok
         </button>
         <button type="button"
                 *ngIf="!isRootStep() && hasMoreSteps()"

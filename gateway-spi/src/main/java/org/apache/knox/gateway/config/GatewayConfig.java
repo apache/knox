@@ -627,6 +627,11 @@ public interface GatewayConfig {
   List<String> getReadOnlyOverrideTopologyNames();
 
   /**
+   * Get the list of those topology names which should be treated as read-only.
+   */
+  List<String> getReadOnlyOverrideProviderNames();
+
+  /**
    * Get the comma separated list of group names that represent Knox Admin users
    * @return comma separate list of admin group names
    */

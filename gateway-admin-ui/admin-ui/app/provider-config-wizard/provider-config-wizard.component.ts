@@ -32,6 +32,7 @@ import {HostMapProviderWizard} from './hostmap-provider-wizard';
 import {ProviderContributorWizard} from './provider-contributor-wizard';
 import {WebAppSecurityWizard} from './webappsec-wizard';
 import {ValidationUtils} from '../utils/validation-utils';
+import {HttpErrorResponse} from '@angular/common/http';
 
 @Component({
     selector: 'app-provider-config-wizard',
@@ -79,6 +80,8 @@ export class ProviderConfigWizardComponent implements OnInit {
 
     selectedCategory: string;
 
+    existingReadOnlyProvider = false;
+
     static isProviderConfigValid(pc: ProviderConfig): boolean {
         let isValid = true;
         if (pc instanceof DisplayBindingProviderConfig) {
@@ -113,6 +116,7 @@ export class ProviderConfigWizardComponent implements OnInit {
         this.name = '';
         this.providers = [];
         this.selectedCategory = ProviderConfigWizardComponent.CATEGORY_AUTHENTICATION;
+        this.existingReadOnlyProvider = false;
     }
 
     onFinishAdd() {
@@ -189,7 +193,7 @@ export class ProviderConfigWizardComponent implements OnInit {
         }
     }
 
-    onClose() {
+    save() {
         // Identify the new resource
         let newResource = new Resource();
         newResource.name = this.name + '.json';
@@ -222,7 +226,11 @@ export class ProviderConfigWizardComponent implements OnInit {
                         }
                     }
                 });
-            });
+                this.childModal.close(); // close the dialog if there was no error
+            }).catch((err: HttpErrorResponse) => {
+                this.existingReadOnlyProvider = (err.status === 409);
+                console.error('Error creating ' + newResource + ' : ' + err.message);
+          });
     }
 
     onNextStep() {
@@ -392,4 +400,7 @@ export class ProviderConfigWizardComponent implements OnInit {
         return this['show' + propertName];
     }
 
+    isExistingReadOnlyProvider(): boolean {
+        return this.existingReadOnlyProvider;
+    }
 }
