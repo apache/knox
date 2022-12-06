@@ -110,10 +110,13 @@ public class JDBCUtilsTest {
   public void testGetPostgreSqlDatasourceFromJdbcConnectionUrl() throws Exception {
     final String connectionUrl = "jdbc:postgresql://postgresql_host:1234/testDb?user=smolnar&password=secret&ssl=true&sslmode=verify-ca&sslrootcert=/var/lib/knox/gateway/conf/postgresql/root.crt";
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(JDBCUtils.DATABASE_USER_ALIAS_NAME)).andReturn(null).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(JDBCUtils.DATABASE_PASSWORD_ALIAS_NAME)).andReturn(null).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(JDBCUtils.POSTGRESQL_DB_TYPE).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseConnectionUrl()).andReturn(connectionUrl).anyTimes();
-    EasyMock.replay(gatewayConfig);
-    final PGSimpleDataSource dataSource = (PGSimpleDataSource) JDBCUtils.getDataSource(gatewayConfig, null);
+    EasyMock.replay(gatewayConfig, aliasService);
+    final PGSimpleDataSource dataSource = (PGSimpleDataSource) JDBCUtils.getDataSource(gatewayConfig, aliasService);
     assertEquals("postgresql_host", dataSource.getServerNames()[0]);
     assertEquals(1234, dataSource.getPortNumbers()[0]);
     assertEquals("testDb", dataSource.getDatabaseName());

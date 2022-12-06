@@ -19,9 +19,18 @@ package org.apache.knox.gateway.util;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import com.mysql.cj.conf.PropertyDefinitions;
-import com.mysql.cj.jdbc.MysqlDataSource;
+import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Locale;
+
+import javax.sql.DataSource;
+
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.derby.jdbc.ClientDataSource;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -31,14 +40,8 @@ import org.postgresql.ds.PGSimpleDataSource;
 import org.postgresql.jdbc.SslMode;
 import org.postgresql.ssl.NonValidatingFactory;
 
-import javax.sql.DataSource;
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Locale;
+import com.mysql.cj.conf.PropertyDefinitions;
+import com.mysql.cj.jdbc.MysqlDataSource;
 
 public class JDBCUtils {
   public static final String POSTGRESQL_DB_TYPE = "postgresql";
@@ -64,16 +67,29 @@ public class JDBCUtils {
 
   private static DataSource createPostgresDataSource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException {
     final PGSimpleDataSource postgresDataSource = new PGSimpleDataSource();
+    final String dbUser = getDatabaseUser(aliasService);
+    final String dbPassword = getDatabasePassword(aliasService);
     if (gatewayConfig.getDatabaseConnectionUrl() != null) {
       postgresDataSource.setUrl(gatewayConfig.getDatabaseConnectionUrl());
+
+      // avoid nullifying already configured user/password properties in case they
+      // were already set in the given JDBC URL but not saved as aliases
+      if (StringUtils.isNotBlank(dbUser)) {
+        postgresDataSource.setUser(dbUser);
+      }
+      if (StringUtils.isNotBlank(dbPassword)) {
+        postgresDataSource.setPassword(dbPassword);
+      }
     } else {
       postgresDataSource.setDatabaseName(gatewayConfig.getDatabaseName());
       postgresDataSource.setServerNames(new String[] { gatewayConfig.getDatabaseHost() });
       postgresDataSource.setPortNumbers(new int[] { gatewayConfig.getDatabasePort() });
-      postgresDataSource.setUser(getDatabaseUser(aliasService));
-      postgresDataSource.setPassword(getDatabasePassword(aliasService));
-      configurePostgreSQLSsl(gatewayConfig, aliasService, postgresDataSource);
+      postgresDataSource.setUser(dbUser);
+      postgresDataSource.setPassword(dbPassword);
     }
+
+    configurePostgreSQLSsl(gatewayConfig, aliasService, postgresDataSource);
+
     return postgresDataSource;
   }
 
