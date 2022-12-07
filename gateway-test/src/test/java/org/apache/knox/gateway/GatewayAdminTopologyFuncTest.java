@@ -1913,6 +1913,72 @@ public class GatewayAdminTopologyFuncTest {
   }
 
   @Test( timeout = TestUtils.LONG_TIMEOUT )
+  public void testPutExistingGeneratedDescriptorFails() throws Exception {
+    LOG_ENTER();
+    try {
+      gateway.stop();
+      GatewayTestConfig conf = new GatewayTestConfig();
+      String topologyName = "test-desc";
+      conf.set(GatewayConfigImpl.READ_ONLY_OVERRIDE_TOPOLOGIES, topologyName);
+      setupGateway(conf);
+      given()
+              .auth().preemptive().basic("admin", "admin-password")
+              .header("Content-type", MediaType.APPLICATION_JSON)
+              .body("{}")
+              .then()
+              .statusCode(HttpStatus.SC_CREATED)
+              .when().put((clusterUrl + "/api/v1/descriptors/" + topologyName));
+      given()
+              .auth().preemptive().basic("admin", "admin-password")
+              .header("Content-type", MediaType.APPLICATION_JSON)
+              .body("new content")
+              .then()
+              .statusCode(HttpStatus.SC_CONFLICT)
+              .when().put((clusterUrl + "/api/v1/descriptors/" + topologyName));
+    } finally {
+      // Restart the gateway with old settings.
+      gateway.stop();
+      setupGateway(new GatewayTestConfig());
+    }
+
+    LOG_EXIT();
+  }
+
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
+  public void testPutExistingGeneratedProviderFails() throws Exception {
+    LOG_ENTER();
+    try {
+      gateway.stop();
+      GatewayTestConfig conf = new GatewayTestConfig();
+      String providerName = "sso";
+      conf.set(GatewayConfigImpl.READ_ONLY_OVERRIDE_PROVIDERS, providerName);
+      setupGateway(conf);
+      given()
+              .auth().preemptive().basic("admin", "admin-password")
+              .header("Content-type", MediaType.APPLICATION_JSON)
+              .body("{}")
+              .then()
+              .statusCode(HttpStatus.SC_CREATED)
+              .when()
+              .put((clusterUrl + "/api/v1/providerconfig/" + providerName));
+      given()
+        .auth().preemptive().basic("admin", "admin-password")
+        .header("Content-type", MediaType.APPLICATION_JSON)
+        .body("new content")
+      .then()
+        .statusCode(HttpStatus.SC_CONFLICT)
+        .when()
+      .put((clusterUrl + "/api/v1/providerconfig/" + providerName));
+    } finally {
+      // Restart the gateway with old settings.
+      gateway.stop();
+      setupGateway(new GatewayTestConfig());
+    }
+
+    LOG_EXIT();
+  }
+
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testPutDescriptorWithInvalidNameEncodedElement() throws Exception {
     LOG_ENTER();
 

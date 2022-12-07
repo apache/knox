@@ -1,4 +1,4 @@
-<bs-modal (onClose)="onClose()" #newDescriptorModal xmlns="http://www.w3.org/1999/html">
+<bs-modal #newDescriptorModal xmlns="http://www.w3.org/1999/html">
     <bs-modal-header [showDismiss]="true">
         <label class="modal-title">Create a New Descriptor</label>
     </bs-modal-header>
@@ -12,6 +12,8 @@
                 <span *ngIf="isMissingDescriptorName()" style="color: red">required</span>
                 <span *ngIf="!isMissingDescriptorName() && !isValidDescriptorName()"
                       style="color: red">invalid</span>
+                <span *ngIf="isExistingReadOnlyTopology()"
+                      style="color: red">Cannot overwrite existing read-only topology</span>
             </div> <!-- Descriptor Name -->
 
             <br>
@@ -141,7 +143,7 @@
         <button type="button"
                 class="btn btn-primary btn-sm"
                 [disabled]="!validate()"
-                (click)="newDescriptorModal.close()">Ok
+                (click)="save()">Ok
         </button>
     </bs-modal-footer>
 </bs-modal>

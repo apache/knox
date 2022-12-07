@@ -782,6 +782,18 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public List<String> getReadOnlyOverrideProviderNames() {
+    List<String> readOnly = new ArrayList<>();
+
+    String value = get("gateway.read.only.override.providers");
+    if (value != null && !value.isEmpty()) {
+      readOnly.addAll(Arrays.asList(value.trim().split("\\s*,\\s*")));
+    }
+
+    return readOnly;
+  }
+
+  @Override
   public String getKnoxAdminGroups() {
     return null;
   }
