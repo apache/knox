@@ -214,6 +214,14 @@
     <rewrite template="{$frontend[url]}/hbase/webui/jmx?host={$inboundurl[host]}?port={$inboundurl[port]}?{**}"/>
   </rule>
 
+  <!-- Prometheus metrics -->
+  <rule dir="IN" name="HBASEUI/hbase/inbound/prometheus" pattern="*://*:*/**/hbase/webui/prometheus?{host}?{port}?{**}">
+    <rewrite template="{$serviceScheme[HBASEUI]}://{host}:{port}/prometheus?{**}"/>
+  </rule>
+  <rule dir="OUT" name="HBASEUI/hbase/outbound/prometheus" pattern="/prometheus?{**}">
+    <rewrite template="{$frontend[url]}/hbase/webui/prometheus?host={$inboundurl[host]}?port={$inboundurl[port]}?{**}"/>
+  </rule>
+
   <!-- Static file serving -->
   <rule dir="IN" name="HBASEUI/hbase/inbound/static" pattern="*://*:*/**/hbase/webui/static/{**}">
     <rewrite template="{$serviceUrl[HBASEUI]}/static/{**}"/>

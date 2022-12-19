@@ -63,6 +63,10 @@
           <rewrite apply="HBASEUI/hbase/inbound/jmx" to="request.url"/>
           <rewrite apply="HBASEUI/hbase/outbound/jmx" to="response.body"/>
         </route>
+        <route path="/hbase/webui/prometheus?{**}">
+            <rewrite apply="HBASEUI/hbase/inbound/prometheus" to="request.url"/>
+            <rewrite apply="HBASEUI/hbase/outbound/prometheus" to="response.body"/>
+        </route>
         <route path="/hbase/webui/prof?{**}">
           <rewrite apply="HBASEUI/hbase/inbound/profiler" to="request.url"/>
           <rewrite apply="HBASEUI/hbase/outbound/profiler" to="response.body"/>
