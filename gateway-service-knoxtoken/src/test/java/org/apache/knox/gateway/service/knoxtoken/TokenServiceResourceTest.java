@@ -82,6 +82,8 @@ import com.nimbusds.jose.crypto.RSASSAVerifier;
 import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.context.ContextAttributes;
+import org.apache.knox.gateway.security.ImpersonatedPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -99,6 +101,7 @@ import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
 import org.apache.knox.gateway.services.token.impl.JDBCTokenStateService;
+import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.JsonUtils;
 import org.easymock.EasyMock;
 import org.junit.Assert;
@@ -156,6 +159,10 @@ public class TokenServiceResourceTest {
     contextExpectations.forEach((key, value) -> EasyMock.expect(context.getInitParameter(key)).andReturn(value).anyTimes());
     EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.enumeration(contextExpectations.keySet())).anyTimes();
     EasyMock.expect(context.getAttribute("org.apache.knox.gateway.gateway.cluster")).andReturn("topology1").anyTimes();
+    if (contextExpectations.containsKey(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE)) {
+       EasyMock.expect(context.getAttribute(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE)).andReturn(Boolean.parseBoolean(contextExpectations.get(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE))).anyTimes();
+     }
+
     request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
     Principal principal = EasyMock.createNiceMock(Principal.class);
@@ -170,9 +177,6 @@ public class TokenServiceResourceTest {
     }
     if (contextExpectations.containsKey(TokenResource.QUERY_PARAMETER_DOAS)) {
       EasyMock.expect(request.getParameter(TokenResource.QUERY_PARAMETER_DOAS)).andReturn(contextExpectations.get(TokenResource.QUERY_PARAMETER_DOAS)).anyTimes();
-    }
-    if (contextExpectations.containsKey(TokenResource.IMPERSONATION_ENABLED_PARAM)) {
-      EasyMock.expect(request.getParameter(TokenResource.IMPERSONATION_ENABLED_PARAM)).andReturn(contextExpectations.get(TokenResource.IMPERSONATION_ENABLED_PARAM)).anyTimes();
     }
     EasyMock.expect(request.getParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
 
@@ -1124,9 +1128,9 @@ public class TokenServiceResourceTest {
     final String impersonatedUser = "testUser";
     final Map<String, String> contextExpectations = new HashMap<>();
     contextExpectations.put(TokenResource.QUERY_PARAMETER_DOAS, impersonatedUser);
-    contextExpectations.put(TokenResource.PROXYUSER_PREFIX + "." + USER_NAME + ".users", impersonatedUser);
-    contextExpectations.put(TokenResource.PROXYUSER_PREFIX + "." + USER_NAME + ".hosts", "*");
-    contextExpectations.put(TokenResource.IMPERSONATION_ENABLED_PARAM, Boolean.toString(enableImpersonation));
+    contextExpectations.put(AuthFilterUtils.PROXYUSER_PREFIX + "." + USER_NAME + ".users", impersonatedUser);
+    contextExpectations.put(AuthFilterUtils.PROXYUSER_PREFIX + "." + USER_NAME + ".hosts", "*");
+    contextExpectations.put(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE, Boolean.toString(enableImpersonation));
     configureCommonExpectations(contextExpectations, Boolean.TRUE);
 
     final TokenResource tr = new TokenResource();
@@ -1134,7 +1138,11 @@ public class TokenServiceResourceTest {
     tr.context = context;
     tr.init();
 
-    tr.doGet();
+    final Subject subject = createTestSubject(USER_NAME);
+    if (enableImpersonation) {
+      subject.getPrincipals().add(new ImpersonatedPrincipal(impersonatedUser));
+    }
+    Subject.doAs(subject,  (PrivilegedAction<Response>) () -> tr.doGet());
 
     final Response getKnoxTokensResponse = getUserTokensResponse(tr, enableImpersonation);
     final Collection<LinkedHashMap<String, Object>> tokens = ((Map<String, Collection<LinkedHashMap<String, Object>>>) JsonUtils
@@ -1463,10 +1471,10 @@ public class TokenServiceResourceTest {
     contextExpectations.put("knox.token.renewer.whitelist", renewers);
 
     if (StringUtils.isNotBlank(impersonatedUser)) {
-      contextExpectations.put(TokenResource.IMPERSONATION_ENABLED_PARAM, "true");
+      contextExpectations.put(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE, "true");
       contextExpectations.put(TokenResource.QUERY_PARAMETER_DOAS, impersonatedUser);
-      contextExpectations.put(TokenResource.PROXYUSER_PREFIX + "." + USER_NAME + ".users", impersonatedUser);
-      contextExpectations.put(TokenResource.PROXYUSER_PREFIX + "." + USER_NAME + ".hosts", "*");
+      contextExpectations.put(AuthFilterUtils.PROXYUSER_PREFIX + "." + USER_NAME + ".users", impersonatedUser);
+      contextExpectations.put(AuthFilterUtils.PROXYUSER_PREFIX + "." + USER_NAME + ".hosts", "*");
     }
 
     configureCommonExpectations(contextExpectations, gatewayLevelConfig);

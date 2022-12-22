@@ -35,10 +35,11 @@ public abstract class AbstractIdentityAsserterDeploymentContributor extends
 
   /* Service specific impersonation params that needs to be scrubbed */
   public static final String IMPERSONATION_PARAMS = "impersonation.params";
+  static final String ROLE = "identity-assertion";
 
   @Override
   public String getRole() {
-    return "identity-assertion";
+    return ROLE;
   }
 
   @Override

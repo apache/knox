@@ -118,15 +118,19 @@ export class TokenGenService {
     }
 
     private handleError(error: HttpErrorResponse): Promise<any> {
+	    let errorMsg = '';
+        if (error.error) {
+            errorMsg = error.error.RemoteException ? error.error.RemoteException.message : error.error;
+        }
         Swal.fire({
             icon: 'error',
             title: 'Oops!',
-            text: 'Something went wrong!\n' + (error.error ? error.error : error.statusText),
+            text: 'Something went wrong!\n' + (errorMsg ? errorMsg : error.statusText),
             confirmButtonColor: '#7cd1f9'
           });
         let requestErrorMessage = 'Response from ' + error.url + ' - ' + error.status + ': ' + error.statusText;
-        if (error.error) {
-            requestErrorMessage += ' (' + error.error + ')';
+        if (errorMsg) {
+            requestErrorMessage += ' (' + errorMsg + ')';
         }
         return Promise.reject(requestErrorMessage);
     }

@@ -20,6 +20,7 @@ package org.apache.knox.gateway.filter;
 import java.io.IOException;
 import java.security.Principal;
 import java.security.PrivilegedExceptionAction;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -83,6 +84,7 @@ public class ShiroSubjectIdentityAdapter implements Filter {
       this.chain = chain;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Void call() throws Exception {
       PrivilegedExceptionAction<Void> action = new PrivilegedExceptionAction<Void>() {
@@ -99,7 +101,6 @@ public class ShiroSubjectIdentityAdapter implements Filter {
       }
 
       final String principal = shiroSubject.getPrincipal().toString();
-      HashSet emptySet = new HashSet();
       Set<Principal> principals = new HashSet<>();
       Principal p = new PrimaryPrincipal(principal);
       principals.add(p);
@@ -141,7 +142,7 @@ public class ShiroSubjectIdentityAdapter implements Filter {
       // To modify the Principals Set, the caller must have AuthPermission("modifyPrincipals").
       // To modify the public credential Set, the caller must have AuthPermission("modifyPublicCredentials").
       // To modify the private credential Set, the caller must have AuthPermission("modifyPrivateCredentials").
-      javax.security.auth.Subject subject = new javax.security.auth.Subject(true, principals, emptySet, emptySet);
+      javax.security.auth.Subject subject = new javax.security.auth.Subject(true, principals, Collections.emptySet(), Collections.emptySet());
       javax.security.auth.Subject.doAs( subject, action );
 
       return null;

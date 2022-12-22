@@ -19,7 +19,7 @@ package org.apache.knox.gateway.util;
 
 import java.security.Principal;
 import java.util.Collections;
-import java.util.Enumeration;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -36,7 +36,6 @@ import javax.servlet.http.HttpServletRequestWrapper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.security.authorize.AuthorizationException;
 import org.apache.hadoop.security.authorize.DefaultImpersonationProvider;
 import org.apache.hadoop.security.authorize.ImpersonationProvider;
 import org.apache.knox.gateway.i18n.GatewaySpiMessages;
@@ -44,6 +43,9 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 public class AuthFilterUtils {
   public static final String DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM = "/knoxtoken/api/v1/jwks.json";
+  public static final String PROXYUSER_PREFIX = "hadoop.proxyuser";
+  public static final String QUERY_PARAMETER_DOAS = "doAs";
+  public static final String REAL_USER_NAME_ATTRIBUTE = "real.user.name";
 
   private static final GatewaySpiMessages LOG = MessagesFactory.get(GatewaySpiMessages.class);
   private static final Map<String, Map<String, ImpersonationProvider>> TOPOLOGY_IMPERSONATION_PROVIDERS = new ConcurrentHashMap<>();
@@ -90,43 +92,39 @@ public class AuthFilterUtils {
     }
   }
 
-  public static void refreshSuperUserGroupsConfiguration(ServletContext context, String prefix, String topologyName, String role) {
+  public static void refreshSuperUserGroupsConfiguration(ServletContext context, List<String> initParameterNames, String topologyName, String role) {
     if (context == null) {
       throw new IllegalArgumentException("Cannot get proxyuser configuration from NULL context");
     }
-    refreshSuperUserGroupsConfiguration(context, null, prefix, topologyName, role);
+    refreshSuperUserGroupsConfiguration(context, null, initParameterNames, topologyName, role);
   }
 
-  public static void refreshSuperUserGroupsConfiguration(FilterConfig filterConfig, String prefix, String topologyName, String role) {
+  public static void refreshSuperUserGroupsConfiguration(FilterConfig filterConfig, List<String> initParameterNames, String topologyName, String role) {
     if (filterConfig == null) {
       throw new IllegalArgumentException("Cannot get proxyuser configuration from NULL filter config");
     }
-    refreshSuperUserGroupsConfiguration(null, filterConfig, prefix, topologyName, role);
+    refreshSuperUserGroupsConfiguration(null, filterConfig, initParameterNames, topologyName, role);
   }
 
-  private static void refreshSuperUserGroupsConfiguration(ServletContext context, FilterConfig filterConfig, String prefix, String topologyName, String role) {
+  private static void refreshSuperUserGroupsConfiguration(ServletContext context, FilterConfig filterConfig, List<String> initParameterNames, String topologyName, String role) {
     final Configuration conf = new Configuration(false);
-    final Enumeration<?> names = context == null ? filterConfig.getInitParameterNames() : context.getInitParameterNames();
-    if (names != null) {
-      while (names.hasMoreElements()) {
-        String name = (String) names.nextElement();
-        if (name.startsWith(prefix + ".")) {
-          String value = context == null ? filterConfig.getInitParameter(name) : context.getInitParameter(name);
-          conf.set(name, value);
-        }
-      }
+    if (initParameterNames != null) {
+      initParameterNames.stream().filter(name -> name.startsWith(PROXYUSER_PREFIX + ".")).forEach(name -> {
+        String value = context == null ? filterConfig.getInitParameter(name) : context.getInitParameter(name);
+        conf.set(name, value);
+      });
     }
 
-    saveImpersonationProvider(prefix, topologyName, role, conf);
+    saveImpersonationProvider(topologyName, role, conf);
   }
 
-  private static void saveImpersonationProvider(String prefix, String topologyName, String role, final Configuration conf) {
+  private static void saveImpersonationProvider(String topologyName, String role, final Configuration conf) {
     refreshSuperUserGroupsLock.lock();
     try {
       final ImpersonationProvider impersonationProvider = new DefaultImpersonationProvider();
       impersonationProvider.setConf(conf);
-      impersonationProvider.init(prefix);
-      LOG.createImpersonationProvider(topologyName, role, prefix, conf.getPropsWithPrefix(prefix + ".").toString());
+      impersonationProvider.init(PROXYUSER_PREFIX);
+      LOG.createImpersonationProvider(topologyName, role, PROXYUSER_PREFIX, conf.getPropsWithPrefix(PROXYUSER_PREFIX + ".").toString());
       TOPOLOGY_IMPERSONATION_PROVIDERS.putIfAbsent(topologyName, new ConcurrentHashMap<String, ImpersonationProvider>());
       TOPOLOGY_IMPERSONATION_PROVIDERS.get(topologyName).put(role, impersonationProvider);
     } finally {
@@ -135,7 +133,11 @@ public class AuthFilterUtils {
   }
 
   public static HttpServletRequest getProxyRequest(HttpServletRequest request, String doAsUser, String topologyName, String role) throws AuthorizationException {
-    final UserGroupInformation remoteRequestUgi = getRemoteRequestUgi(request, doAsUser);
+    return getProxyRequest(request, request.getUserPrincipal().getName(), doAsUser, topologyName, role);
+  }
+
+  public static HttpServletRequest getProxyRequest(HttpServletRequest request, String remoteUser, String doAsUser, String topologyName, String role) throws AuthorizationException {
+    final UserGroupInformation remoteRequestUgi = getRemoteRequestUgi(remoteUser, doAsUser);
     if (remoteRequestUgi != null) {
       authorizeImpersonationRequest(request, remoteRequestUgi, topologyName, role);
 
@@ -149,14 +151,23 @@ public class AuthFilterUtils {
         public Principal getUserPrincipal() {
           return remoteRequestUgi::getUserName;
         }
+
+        @Override
+        public Object getAttribute(String name) {
+          if (name != null && name.equals(REAL_USER_NAME_ATTRIBUTE)) {
+            return remoteRequestUgi.getRealUser().getShortUserName();
+          } else {
+            return super.getAttribute(name);
+          }
+        }
       };
 
     }
     return null;
   }
 
-  public static void authorizeImpersonationRequest(HttpServletRequest request, String doAsUser, String topologyName, String role) throws AuthorizationException {
-    final UserGroupInformation remoteRequestUgi = getRemoteRequestUgi(request, doAsUser);
+  public static void authorizeImpersonationRequest(HttpServletRequest request, String remoteUser, String doAsUser, String topologyName, String role) throws AuthorizationException {
+    final UserGroupInformation remoteRequestUgi = getRemoteRequestUgi(remoteUser, doAsUser);
     if (remoteRequestUgi != null) {
       authorizeImpersonationRequest(request, remoteRequestUgi, topologyName, role);
     }
@@ -168,7 +179,11 @@ public class AuthFilterUtils {
     final ImpersonationProvider impersonationProvider = getImpersonationProvider(topologyName, role);
 
     if (impersonationProvider != null) {
-      impersonationProvider.authorize(remoteRequestUgi, request.getRemoteAddr());
+      try {
+        impersonationProvider.authorize(remoteRequestUgi, request.getRemoteAddr());
+      } catch (org.apache.hadoop.security.authorize.AuthorizationException e) {
+        throw new AuthorizationException(e);
+      }
     } else {
       throw new AuthorizationException("ImpersonationProvider for " + topologyName + " / " + role + " not found!");
     }
@@ -185,13 +200,45 @@ public class AuthFilterUtils {
     return impersonationProvider;
   }
 
-  private static UserGroupInformation getRemoteRequestUgi(HttpServletRequest request, String doAsUser) {
-    if (request.getUserPrincipal() != null) {
-      final String remoteUser = request.getUserPrincipal().getName();
+  private static UserGroupInformation getRemoteRequestUgi(String remoteUser, String doAsUser) {
+    if (remoteUser != null) {
       final UserGroupInformation remoteUserUgi = UserGroupInformation.createRemoteUser(remoteUser);
       return UserGroupInformation.createProxyUser(doAsUser, remoteUserUgi);
     }
     return null;
+  }
+
+  public static boolean hasProxyConfig(String topologyName, String role) {
+    return getImpersonationProvider(topologyName, role) != null;
+  }
+
+  public static void removeProxyUserConfig(String topologyName, String role) {
+    if (hasProxyConfig(topologyName, role)) {
+      refreshSuperUserGroupsLock.lock();
+      try {
+        TOPOLOGY_IMPERSONATION_PROVIDERS.get(topologyName).remove(role);
+      } finally {
+        refreshSuperUserGroupsLock.unlock();
+      }
+    }
+  }
+
+  /**
+   * FilterConfig.getInitParameters() returns an enumeration and the first time we
+   * iterate thru on its elements we can process the parameter names as desired
+   * (because hasMoreElements returns true). The subsequent calls, however, will not
+   * succeed because getInitParameters() returns the same object where the
+   * hasMoreElements returns false.
+   * <p>
+   * In classes where there are multiple iterations should be conducted, a
+   * collection should be used instead.
+   *
+   * @return the names of the filter's initialization parameters as a List of
+   *         String objects, or an empty List if the filter has no initialization
+   *         parameters.
+   */
+  public static List<String> getInitParameterNamesAsList(FilterConfig filterConfig) {
+    return filterConfig.getInitParameterNames() == null ? Collections.emptyList() : Collections.list(filterConfig.getInitParameterNames());
   }
 
 }

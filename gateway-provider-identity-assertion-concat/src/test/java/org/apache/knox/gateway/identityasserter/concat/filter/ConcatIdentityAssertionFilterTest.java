@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import java.security.Principal;
+import java.util.Collections;
 
 import javax.security.auth.Subject;
 import javax.servlet.FilterConfig;
@@ -38,7 +39,9 @@ public class ConcatIdentityAssertionFilterTest {
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.replay( config );
     EasyMock.replay( context );
@@ -59,7 +62,9 @@ public class ConcatIdentityAssertionFilterTest {
     config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.expect(config.getInitParameter("concat.prefix") ).andReturn( "sir-" ).anyTimes();
     EasyMock.replay( config );
@@ -70,7 +75,9 @@ public class ConcatIdentityAssertionFilterTest {
 
     config = EasyMock.createNiceMock( FilterConfig.class );
     context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.expect(config.getInitParameter("concat.suffix") ).andReturn( "-tenant-1" ).anyTimes();
     EasyMock.replay( config );
@@ -81,7 +88,9 @@ public class ConcatIdentityAssertionFilterTest {
 
     config = EasyMock.createNiceMock( FilterConfig.class );
     context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.expect(config.getInitParameter("concat.prefix") ).andReturn( "sir-" ).anyTimes();
     EasyMock.expect(config.getInitParameter("concat.suffix") ).andReturn( "-tenant-1" ).anyTimes();

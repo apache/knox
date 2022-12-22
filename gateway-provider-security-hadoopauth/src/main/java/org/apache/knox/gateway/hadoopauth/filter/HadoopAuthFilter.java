@@ -17,8 +17,6 @@
  */
 package org.apache.knox.gateway.hadoopauth.filter;
 
-import org.apache.hadoop.security.authorize.AuthorizationException;
-import org.apache.hadoop.util.HttpExceptionUtils;
 import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
@@ -29,6 +27,7 @@ import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.context.ContextAttributes;
 import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.hadoopauth.HadoopAuthMessages;
 import org.apache.knox.gateway.hadoopauth.deploy.HadoopAuthDeploymentContributor;
@@ -40,6 +39,8 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.util.AuthFilterUtils;
+import org.apache.knox.gateway.util.AuthorizationException;
+import org.apache.knox.gateway.util.HttpExceptionUtils;
 
 import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
@@ -58,6 +59,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.Set;
@@ -86,8 +88,6 @@ import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHEN
 public class HadoopAuthFilter extends
     org.apache.hadoop.security.authentication.server.AuthenticationFilter {
 
-  private static final String QUERY_PARAMETER_DOAS = "doAs";
-  private static final String PROXYUSER_PREFIX = "hadoop.proxyuser";
   static final String SUPPORT_JWT = "support.jwt";
 
   private static final HadoopAuthMessages LOG = MessagesFactory.get(HadoopAuthMessages.class);
@@ -115,7 +115,9 @@ public class HadoopAuthFilter extends
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
     this.topologyName = (String) filterConfig.getInitParameter("clusterName");
-    AuthFilterUtils.refreshSuperUserGroupsConfiguration(filterConfig, PROXYUSER_PREFIX, topologyName, HadoopAuthDeploymentContributor.NAME);
+    final List<String> initParameterNames = AuthFilterUtils.getInitParameterNamesAsList(filterConfig);
+    AuthFilterUtils.refreshSuperUserGroupsConfiguration(filterConfig, initParameterNames, topologyName, HadoopAuthDeploymentContributor.NAME);
+    filterConfig.getServletContext().setAttribute(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE, Boolean.TRUE);
 
     Collection<String> ignoredServices = null;
 
@@ -200,7 +202,7 @@ public class HadoopAuthFilter extends
     HttpServletRequest proxyRequest = null;
     final String remoteUser = request.getRemoteUser();
     if (!ignoreDoAs(remoteUser)) {
-      final String doAsUser = request.getParameter(QUERY_PARAMETER_DOAS);
+      final String doAsUser = request.getParameter(AuthFilterUtils.QUERY_PARAMETER_DOAS);
       if (doAsUser != null && !doAsUser.equals(remoteUser)) {
         LOG.hadoopAuthDoAsUser(doAsUser, remoteUser, request.getRemoteAddr());
         if (request.getUserPrincipal() != null) {
@@ -237,8 +239,7 @@ public class HadoopAuthFilter extends
       final Subject sub = new Subject();
       sub.getPrincipals().add(new PrimaryPrincipal("anonymous"));
       LOG.unauthenticatedPathBypass(((HttpServletRequest) request).getRequestURI(), unAuthenticatedPaths.toString());
-      continueWithEstablishedSecurityContext(sub, (HttpServletRequest) request,
-          (HttpServletResponse) response, chain);
+      continueWithEstablishedSecurityContext(sub, (HttpServletRequest) request, (HttpServletResponse) response, chain);
 
     } catch (final Exception e) {
       LOG.unauthenticatedPathError(

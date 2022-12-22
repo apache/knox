@@ -22,6 +22,7 @@ import java.util.Set;
 import org.apache.knox.gateway.i18n.messages.Message;
 import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
+import org.apache.knox.gateway.i18n.messages.StackTrace;
 import org.apache.knox.gateway.plang.AbstractSyntaxTree;
 import org.apache.knox.gateway.plang.SyntaxException;
 
@@ -50,4 +51,16 @@ public interface IdentityAsserterMessages {
 
   @Message( level = MessageLevel.INFO, text = "Using configured impersonation parameters: {0}")
   void impersonationConfig(String config);
+
+  @Message( level = MessageLevel.WARN, text = "Ignoring the proxyuser configuration in favor of the HadoopAuth provider's configuration.")
+  void ignoreProxyuserConfig();
+
+  @Message( level = MessageLevel.DEBUG, text = "doAsUser = {0}, RemoteUser = {1} , RemoteAddress = {2}" )
+  void hadoopAuthDoAsUser(String doAsUser, String remoteUser, String remoteAddr);
+
+  @Message( level = MessageLevel.DEBUG, text = "Proxy user Authentication successful" )
+  void hadoopAuthProxyUserSuccess();
+
+  @Message( level = MessageLevel.DEBUG, text = "Proxy user Authentication failed: {0}" )
+  void hadoopAuthProxyUserFailed(@StackTrace Throwable t);
 }
