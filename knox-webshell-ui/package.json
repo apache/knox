@@ -1,10 +1,12 @@
 {
   "name": "ng-knox-webshell-ui",
   "version": "1.0.0",
+  "license": "Apache-2.0",
   "scripts": {
     "start": "ng serve --verbose=true",
     "build": "ng build",
-    "build-prod": "ng build --configuration production"
+    "build-prod": "ng build --configuration production",
+    "lint": "eslint webshell-ui"
   },
   "private": true,
   "dependencies": {

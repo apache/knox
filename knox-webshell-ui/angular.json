@@ -54,18 +54,8 @@
           },
           "configurations": {
             "production": {
-              "budgets": [
-                {
-                  "type": "initial",
-                  "maximumWarning": "500kb",
-                  "maximumError": "1mb"
-                },
-                {
-                  "type": "anyComponentStyle",
-                  "maximumWarning": "2kb",
-                  "maximumError": "4kb"
-                }
-              ],
+              "buildOptimizer": false,
+              "aot": false,
               "fileReplacements": [
                 {
                   "replace": "webshell-ui/environments/environment.ts",
@@ -102,9 +92,24 @@
           "options": {
             "browserTarget": "webshell-ui:build"
           }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "webshell-ui/**/*.ts",
+              "webshell-ui/**/*.html"
+            ]
+          }
         }
       }
     }
   },
-  "defaultProject": "webshell-ui"
+  "defaultProject": "webshell-ui",
+  "cli": {
+    "schematicCollections": [
+      "@angular-eslint/schematics",
+      "@angular-eslint/schematics"
+    ]
+  }
 }
