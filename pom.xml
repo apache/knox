@@ -171,7 +171,7 @@
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
         <cglib.version>3.3.0</cglib.version>
         <checkstyle.version>8.38</checkstyle.version>
-        <cloudera-manager.version>7.0.3</cloudera-manager.version>
+        <cloudera-manager.version>7.8.1</cloudera-manager.version>
         <cloudera-manager-api-swagger.version>${cloudera-manager.version}</cloudera-manager-api-swagger.version>
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
         <commons-cli.version>1.4</commons-cli.version>
