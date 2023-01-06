@@ -20,7 +20,9 @@ import {Metadata} from './metadata';
 export class KnoxToken {
     tokenId: string;
     issueTime: string;
+    issueTimeLong: number;
     expiration: string;
+    expirationLong: number;
     maxLifetime: string;
     metadata: Metadata;
 }
