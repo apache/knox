@@ -95,7 +95,7 @@ public class WebSSOResource {
   private static final String ORIGINAL_URL_COOKIE_NAME = "original-url";
   private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
   private static final String SSO_COOKIE_SAMESITE_DEFAULT = "Strict";
-  private static final long TOKEN_TTL_DEFAULT = 15000 * 60;
+  public static final long TOKEN_TTL_DEFAULT = 15000 * 60;
   static final String RESOURCE_PATH = "/api/v1/websso";
   private String cookieName;
   private boolean secureOnly = true;

@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.service.knoxsso;
 
+import static org.apache.knox.gateway.service.knoxsso.WebSSOResource.TOKEN_TTL_DEFAULT;
 import static org.apache.knox.gateway.services.GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.anyString;
@@ -326,7 +327,7 @@ public class WebSSOResourceTest {
     Date expiresDate = parsedToken.getExpiresDate();
     Date now = new Date();
     assertTrue(expiresDate.after(now));
-    assertTrue((expiresDate.getTime() - now.getTime()) < 30000L);
+    assertTrue((expiresDate.getTime() - now.getTime()) < TOKEN_TTL_DEFAULT);
   }
 
   @Test
@@ -381,7 +382,7 @@ public class WebSSOResourceTest {
     Date expiresDate = parsedToken.getExpiresDate();
     Date now = new Date();
     assertTrue(expiresDate.after(now));
-    assertTrue((expiresDate.getTime() - now.getTime()) < 30000L);
+    assertTrue((expiresDate.getTime() - now.getTime()) < TOKEN_TTL_DEFAULT);
   }
 
   @Test
@@ -463,7 +464,7 @@ public class WebSSOResourceTest {
     Date expiresDate = parsedToken.getExpiresDate();
     Date now = new Date();
     assertTrue(expiresDate.after(now));
-    assertTrue((expiresDate.getTime() - now.getTime()) < 30000L);
+    assertTrue((expiresDate.getTime() - now.getTime()) < TOKEN_TTL_DEFAULT);
   }
 
   @Test
