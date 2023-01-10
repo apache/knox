@@ -15,15 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/* You can add global styles to this file, and also import other style files */
-
-@import '~@angular/material/prebuilt-themes/deeppurple-amber.css';
-
-.navbar-static-top {
-    min-height: 110px;
+ 
+.example-container {
+  display: flex;
+  flex-direction: column;
+  min-width: 300px;
 }
 
-.clickable {
-    cursor: pointer;
+.example-header {
+  min-height: 64px;
+  padding: 8px 24px 0;
+}
+
+.mat-form-field {
+  font-size: 14px;
+  width: 100%;
+}
+
+.mat-table {
+  overflow: auto;
+  max-height: 500px;
 }
