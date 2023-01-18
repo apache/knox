@@ -289,8 +289,8 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
     if (inboundRequest.getCookies() != null) {
         sessionCookie =
                 Arrays.stream(inboundRequest.getCookies())
-                      .findFirst()
-                      .filter(cookie -> stickySessionCookieName.equals(cookie.getName()));
+                      .filter(cookie -> stickySessionCookieName.equals(cookie.getName()))
+                      .findFirst();
     }
 
     // Check for a case where no fallback is configured
