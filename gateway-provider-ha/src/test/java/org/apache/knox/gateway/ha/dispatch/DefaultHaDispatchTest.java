@@ -574,7 +574,42 @@ public class DefaultHaDispatchTest {
     doTestFailoverStickyOnFallbackOff(true);
   }
 
+  /**
+   * Test whether order of sticky session cookie matters.
+   * Test the case where loadbalancing is on, sticky sessions is on, fallback is disabled, and the initial request
+   * fails AND session cookie is not first.
+   *
+   * Expected behavior: Failover should occur until the initial session has been established, regardless of the
+   * noFallback setting.
+   *
+   * KNOX-2619
+   */
+  @Test
+  public void testFailoverStickyOnFallbackOff_SessionCookieOrder() throws Exception {
+    Cookie [] sessionCookieFirst = new Cookie[3];
+    sessionCookieFirst[0] = new Cookie(HaServiceConfigConstants.DEFAULT_STICKY_SESSION_COOKIE_NAME + "-" + "OOZIE",
+        "59973e253ae20de796c6ef413608ec1c80fca24310a4cbdecc0ff97aeea55745");
+    sessionCookieFirst[1] = new Cookie("Test1", "Test1");
+    sessionCookieFirst[2] = new Cookie("Test2", "Test2");
+
+    Cookie [] sessionCookieLast = new Cookie[3];
+    sessionCookieLast[2] = new Cookie(HaServiceConfigConstants.DEFAULT_STICKY_SESSION_COOKIE_NAME + "-" + "OOZIE",
+        "59973e253ae20de796c6ef413608ec1c80fca24310a4cbdecc0ff97aeea55745");
+    sessionCookieLast[1] = new Cookie("Test1", "Test1");
+    sessionCookieLast[0] = new Cookie("Test2", "Test2");
+
+    /* Test when session cookie is first */
+    doTestFailoverStickyOnFallbackOff(true, sessionCookieFirst);
+    /* Test when session cookie is last */
+    doTestFailoverStickyOnFallbackOff(true, sessionCookieLast);
+  }
+
   private void doTestFailoverStickyOnFallbackOff(final Boolean withCookie)
+      throws Exception {
+    doTestFailoverStickyOnFallbackOff(withCookie, null);
+  }
+
+  private void doTestFailoverStickyOnFallbackOff(final Boolean withCookie, final Cookie[] cookies)
           throws Exception {
     final String enableLoadBalancing = "true"; // load-balancing is required for sticky sessions to be enabled
     final String enableStickySession = "true";
@@ -624,10 +659,19 @@ public class DefaultHaDispatchTest {
     EasyMock.expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(0)).once();
     EasyMock.expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(1)).once();
     if (withCookie) {
+      Cookie[] responseCookies;
+      Cookie sessionCookie = new Cookie(HaServiceConfigConstants.DEFAULT_STICKY_SESSION_COOKIE_NAME + "-" + serviceName,
+          "59973e253ae20de796c6ef413608ec1c80fca24310a4cbdecc0ff97aeea55745");
+      if(cookies != null && cookies.length > 0) {
+        /* Add provided cookies */
+        responseCookies = cookies;
+      } else {
+        responseCookies = new Cookie[] {sessionCookie};
+      }
+
       inboundRequest.getCookies();
       EasyMock.expectLastCall()
-              .andReturn(new Cookie[] { new Cookie(HaServiceConfigConstants.DEFAULT_STICKY_SESSION_COOKIE_NAME + "-" + serviceName,
-                                                   "59973e253ae20de796c6ef413608ec1c80fca24310a4cbdecc0ff97aeea55745") })
+              .andReturn(responseCookies)
               .anyTimes();
     } else {
       EasyMock.expect(inboundRequest.getCookies()).andReturn(null).anyTimes();
