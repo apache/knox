@@ -184,6 +184,9 @@ public class TestHashicorpVaultAliasService {
     assertNull(aliasService.getPasswordFromAliasForCluster(clusterName, alias));
     assertEquals(0, aliasService.getAliasesForCluster(clusterName).size());
 
+    char[] generatedPassword = aliasService.getPasswordFromAliasForCluster(clusterName, alias, true);
+    assertTrue(generatedPassword != null);
+
     aliasService.stop();
   }
 
