@@ -47,6 +47,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static org.apache.knox.gateway.backend.hashicorp.vault.HashicorpVaultAliasService.VAULT_SEPARATOR;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -185,7 +186,7 @@ public class TestHashicorpVaultAliasService {
     assertEquals(0, aliasService.getAliasesForCluster(clusterName).size());
 
     char[] generatedPassword = aliasService.getPasswordFromAliasForCluster(clusterName, alias, true);
-    assertTrue(generatedPassword != null);
+    assertNotNull(generatedPassword != null);
 
     aliasService.stop();
   }
