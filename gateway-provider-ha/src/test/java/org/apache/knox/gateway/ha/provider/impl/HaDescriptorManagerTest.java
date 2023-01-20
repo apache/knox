@@ -76,8 +76,8 @@ public class HaDescriptorManagerTest {
    @Test
    public void testDescriptorStoring() throws IOException {
       HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-      descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("foo", "false", "42", "1000", "foo:2181,bar:2181", "hiveserver2", null, null, null, null));
-      descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("bar", "true", "3", "5000", null, null, null, null, null, null));
+      descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("foo", "false", "42", "1000", "foo:2181,bar:2181", "hiveserver2", null, null, null, null,null));
+      descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("bar", "true", "3", "5000", null, null, null, null, null, null,null));
       StringWriter writer = new StringWriter();
       HaDescriptorManager.store(descriptor, writer);
       String xml = writer.toString();
@@ -88,10 +88,10 @@ public class HaDescriptorManagerTest {
   @Test
   public void testDescriptorStoringStickySessionCookie() throws IOException {
     HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("foo", "false", "42", "1000", "foo:2181,bar:2181", "hiveserver2", null, "true", null, null));
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("bar", "true", "3", "5000", null, null, null, "true", null, null));
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("abc", "true", "3", "5000", null, null, null, "true", "abc", null));
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("xyz", "true", "3", "5000", null, null, null, "true", "xyz", "true"));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("foo", "false", "42", "1000", "foo:2181,bar:2181", "hiveserver2", null, "true", null, null,null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("bar", "true", "3", "5000", null, null, null, "true", null, null,null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("abc", "true", "3", "5000", null, null, null, "true", "abc", null,null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("xyz", "true", "3", "5000", null, null, null, "true", "xyz", "true",null));
 
     StringWriter writer = new StringWriter();
     HaDescriptorManager.store(descriptor, writer);
@@ -105,9 +105,9 @@ public class HaDescriptorManagerTest {
   @Test
   public void testDescriptorStoringLoadBalancerConfig() throws IOException {
     HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("foo", "false", "42", "1000", "foo:2181,bar:2181", "hiveserver2", "true", "false", null, null));
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("bar", "true", "3", "5000", null, null, "true", null, null, null));
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("abc", "true", "3", "5000", null, null, null, "true", "abc", null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("foo", "false", "42", "1000", "foo:2181,bar:2181", "hiveserver2", "true", "false", null, null,null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("bar", "true", "3", "5000", null, null, "true", null, null, null,null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("abc", "true", "3", "5000", null, null, null, "true", "abc", null,null));
     StringWriter writer = new StringWriter();
     HaDescriptorManager.store(descriptor, writer);
     String xml = writer.toString();

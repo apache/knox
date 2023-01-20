@@ -39,7 +39,7 @@ import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.util.JDBCUtils;
 import org.apache.knox.gateway.util.Tokens;
 
-public class JDBCTokenStateService extends DefaultTokenStateService {
+public class JDBCTokenStateService extends AbstractPersistentTokenStateService {
   private AliasService aliasService; // connection username/pw and passcode HMAC secret are stored here
   private TokenStateDatabase tokenDatabase;
   private AtomicBoolean initialized = new AtomicBoolean(false);
@@ -219,7 +219,7 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
         log.removedTokensFromDatabase(numOfExpiredTokens);
 
         // remove from in-memory collections
-        super.evictExpiredTokens();
+        super.removeTokens(expiredTokenIds);
       }
     } catch (SQLException e) {
       log.errorRemovingTokensFromDatabase(e.getMessage(), e);
@@ -300,6 +300,16 @@ public class JDBCTokenStateService extends DefaultTokenStateService {
       return tokenDatabase.getTokens(userName);
     } catch (SQLException e) {
       log.errorFetchingTokensForUserFromDatabase(userName, e.getMessage(), e);
+      return Collections.emptyList();
+    }
+  }
+
+  @Override
+  public Collection<KnoxToken> getDoAsTokens(String createdBy) {
+    try {
+      return tokenDatabase.getDoAsTokens(createdBy);
+    } catch (SQLException e) {
+      log.errorFetchingDoAsTokensForUserFromDatabase(createdBy, e.getMessage(), e);
       return Collections.emptyList();
     }
   }

@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.apache.knox</groupId>
         <artifactId>gateway</artifactId>
-        <version>1.6.0-SNAPSHOT</version>
+        <version>2.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>gateway-release</artifactId>
@@ -169,7 +169,6 @@
             </build>
         </profile>
         <profile>
-           <!-- Running this profile require you to have the 'shellcheck' tool installed on your DEV environment. Check out https://github.com/koalaman/shellcheck#installing for more information -->
            <activation>
                <property>
                    <name>shellcheck</name>
@@ -233,6 +232,10 @@
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-service-as</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-service-auth</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
@@ -385,6 +388,10 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-provider-identity-assertion-no-doas</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-provider-ha</artifactId>
         </dependency>
 
@@ -461,6 +468,14 @@
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>knox-token-management-ui</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>knox-webshell-ui</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>knox-token-generation-ui</artifactId>
         </dependency>
     </dependencies>
 </project>

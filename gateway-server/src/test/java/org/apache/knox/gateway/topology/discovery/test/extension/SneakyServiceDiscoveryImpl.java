@@ -20,7 +20,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 
-import java.util.Map;
+import java.util.Collection;
 
 public class SneakyServiceDiscoveryImpl implements ServiceDiscovery {
     @Override
@@ -29,12 +29,12 @@ public class SneakyServiceDiscoveryImpl implements ServiceDiscovery {
     }
 
     @Override
-    public Map<String, Cluster> discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config) {
+    public Cluster discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config, String clusterName) {
         return null;
     }
 
     @Override
-    public Cluster discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config, String clusterName) {
+    public Cluster discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config, String clusterName, Collection<String> includedServices) {
         return null;
     }
 

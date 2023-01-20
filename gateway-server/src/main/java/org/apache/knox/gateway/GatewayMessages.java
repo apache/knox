@@ -17,18 +17,22 @@
  */
 package org.apache.knox.gateway;
 
+import java.io.File;
+import java.net.URI;
+import java.time.Instant;
+import java.util.Date;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.cli.ParseException;
 import org.apache.knox.gateway.i18n.messages.Message;
 import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
+import org.apache.knox.gateway.topology.monitor.db.LocalDirectory;
 
-import java.io.File;
-import java.net.URI;
-import java.util.Date;
-import java.util.Map;
-import java.util.Set;
+import java.io.IOException;
 
 @Messages(logger="org.apache.knox.gateway")
 public interface GatewayMessages {
@@ -707,4 +711,68 @@ public interface GatewayMessages {
 
   @Message(level = MessageLevel.ERROR, text = "Error while initiatalizing {0}: {1}")
   void errorInitializingService(String implementation, String error, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.ERROR,
+          text = "Unable to complete service discovery for cluster {0} topology = {1}.")
+  void failedToDiscoverClusterServices(String clusterName, String topologyName,
+                                       @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.DEBUG, text = "Jetty's maxFormContentSize is set to {0}")
+  void setMaxFormContentSize(int maxFormContentSize);
+
+  @Message(level = MessageLevel.DEBUG, text = "Jetty's maxFormKeys is set to {0}")
+  void setMaxFormKeys(int maxFormKeys);
+
+  @Message(level = MessageLevel.ERROR, text = "ConcurrentSessionVerifier got blank username for verification.")
+  void errorVerifyingUserBlankUsername();
+
+  @Message(level = MessageLevel.ERROR, text = "ConcurrentSessionVerifier got blank username for token registration.")
+  void errorRegisteringTokenForBlankUsername();
+
+  @Message(level = MessageLevel.WARN, text = "InMemoryConcurrentSessionVerifier is used and privileged user group is not configured! Non-privileged limit applies to all users (except the unlimited group).")
+  void privilegedUserGroupIsNotConfigured();
+
+  @Message(level = MessageLevel.WARN,
+          text = "Could not create local provider/descriptor config at {0}, cause: {1}")
+  void errorSynchronizingLocalProviderDescriptor(LocalDirectory dir, Exception cause);
+
+  @Message(level = MessageLevel.INFO,
+          text = "Downloading provider/descriptor {0} to {1} from database")
+  void downloadingProviderDescriptor(String name, LocalDirectory localDir);
+
+  @Message(level = MessageLevel.INFO,
+          text = "Deleting provider/descriptor {0} from directory: {1}")
+  void deletingProviderDescriptor(String name, LocalDirectory localDir);
+
+  @Message(level = MessageLevel.WARN,
+          text = "Cannot create local directory: {0} cause: {1}")
+  void cannotCreateLocalDirectory(File base, IOException e);
+
+  @Message(level = MessageLevel.INFO,
+          text = "DB remote configuration monitor. Interval = {0} seconds")
+  void startingDbRemoteConfigurationMonitor(long intervalSeconds);
+
+  @Message(level = MessageLevel.WARN,
+          text = "Can not sync local file system from DB, cause = {0}")
+  void errorWhileSyncingLocalFileSystem(Exception e);
+
+  @Message(level = MessageLevel.DEBUG,
+          text = "Remote configuration sync completed at: {0}")
+  void remoteConfigurationSyncCompleted(Instant lastSyncTime);
+
+  @Message(level = MessageLevel.DEBUG,
+          text = "Deleting local {0} with name {1}")
+  void deletingLocalDescriptorProvider(String type, String name);
+
+  @Message(level = MessageLevel.DEBUG,
+          text = "Creating local {0} with name {1}")
+  void creatingLocalDescriptorProvider(String type, String name);
+
+  @Message(level = MessageLevel.DEBUG,
+          text = "Cleaning remote configuration db. Deleting logically deleted rows which are older than {0} seconds.")
+  void cleaningRemoteConfigTables(int cleanUpPeriodSeconds);
+
+  @Message(level = MessageLevel.INFO,
+          text = "Initializing remote configuration db. Sync interval={0} seconds. Clean up interval={1} seconds.")
+  void initDbRemoteConfigMonitor(long syncIntervalSeconds, int cleanUpPeriodSeconds);
 }

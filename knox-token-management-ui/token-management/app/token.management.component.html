@@ -16,42 +16,120 @@
 
     <div>
         <button (click)="gotoTokenGenerationPage();">Generate New Token</button>
-        <button type="button" title="Refresh Knox Tokens" (click)="fetchKnoxTokens();">
+        <button type="button" title="Refresh Knox Tokens" (click)="fetchAllKnoxTokens();">
             <span class="glyphicon glyphicon-refresh"></span>
         </button>
     </div>
-    <div class="table-responsive" style="width:100%; overflow: auto; overflow-y: scroll">
-        <table class="table table-hover" [mfData]="knoxTokens" #mf="mfDataTable" [mfRowsOnPage]="10">
-            <thead>
-            <tr>
-                <th>Token ID</th>
-                <th>Issued</th>
-                <th>Expires</th>
-                <th>Comment</th>
-                <th>Actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr *ngFor="let knoxToken of mf.data">
-                <td>{{knoxToken.tokenId}}</td>
-                <td>{{formatDateTime(knoxToken.issueTimeLong)}}</td>
-                <td>{{formatDateTime(knoxToken.expirationLong)}}</td>
-                <td>{{knoxToken.metadata.comment}}</td>
-                <td>
-                    <button *ngIf="knoxToken.metadata.enabled" (click)="disableToken(knoxToken.tokenId);">Disable</button>
-                    <button *ngIf="!knoxToken.metadata.enabled" (click)="enableToken(knoxToken.tokenId);">Enable</button>
+
+    <div class="table-responsive" style="width:100%; overflow: auto; overflow-y: scroll; padding: 10px 0px 0px 0px;">
+        <label>My Knox Tokens</label>
+
+        <mat-form-field [floatLabel]="always" appearance="fill" #search>
+            <mat-label>Search by Token ID, Comment or Metadata...</mat-label>
+            <input matInput (keyup)="applyFilter(false, $event.target.value)">
+        </mat-form-field>
+
+        <mat-table [dataSource]="knoxTokens" matSort #ownSort="matSort">
+            <ng-container matColumnDef="tokenId">
+                <mat-header-cell *matHeaderCellDef mat-sort-header="tokenId">Token ID</mat-header-cell>
+                <mat-cell *matCellDef="let knoxToken">{{knoxToken.tokenId}}</mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="issued">
+                <mat-header-cell *matHeaderCellDef mat-sort-header="issueTime">Issued</mat-header-cell>
+                <mat-cell *matCellDef="let knoxToken">{{formatDateTime(knoxToken.issueTimeLong)}}</mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="expires">
+                <mat-header-cell *matHeaderCellDef mat-sort-header="expiration">Expires</mat-header-cell>
+                <mat-cell *matCellDef="let knoxToken" [style.color]="getExpirationColor(knoxToken.expirationLong)">{{formatDateTime(knoxToken.expirationLong)}}</mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="comment">
+                <mat-header-cell *matHeaderCellDef mat-sort-header="metadata.comment">Comment</mat-header-cell>
+                <mat-cell *matCellDef="let knoxToken">{{knoxToken.metadata.comment}}</mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="metadata">
+                <mat-header-cell *matHeaderCellDef>Additional Metadata</mat-header-cell>
+                <mat-cell *matCellDef="let knoxToken">
+                   <ul>
+                     <li *ngFor="let metadata of getCustomMetadataArray(knoxToken)">
+                       {{metadata[0]}} = {{metadata[1]}}
+                     </li>
+                   </ul>
+                </mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+                <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+                <mat-cell *matCellDef="let knoxToken">
+                    <button *ngIf="knoxToken.metadata.enabled && !isTokenExpired(knoxToken.expirationLong)" (click)="disableToken(knoxToken.tokenId);">Disable</button>
+                    <button *ngIf="!knoxToken.metadata.enabled && !isTokenExpired(knoxToken.expirationLong)" (click)="enableToken(knoxToken.tokenId);">Enable</button>
                     <button (click)="revokeToken(knoxToken.tokenId);">Revoke</button>
-                </td>
-            </tr>
-            </tbody>
-		    <tfoot>
-		    <tr>
-		        <td colspan="5">
-		            <mfBootstrapPaginator [rowsOnPageSet]="[5,10,15]"></mfBootstrapPaginator>
-		        </td>
-		    </tr>
-		    </tfoot>
-        </table>
+                </mat-cell>
+            </ng-container>
+
+            <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+            <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+
+        </mat-table>
+        <mat-paginator #ownPaginator [pageSizeOptions]="[5, 10, 25, 100]" [showFirstLastButtons]="true"></mat-paginator>
+    </div>
+
+
+    <!-- 'doAs' Knox Tokens (tokens created by the current user on behalf on another user -->
+
+    <div class="table-responsive" style="width:100%; overflow: auto; overflow-y: scroll; padding: 10px 0px 0px 0px;">
+        <label>Impersonated Knox Tokens</label>
+
+        <mat-form-field [floatLabel]="always" appearance="fill" #impersonationSearch>
+            <mat-label>Search by Token ID, Comment, Metadata or Impersonated User Name...</mat-label>
+            <input matInput (keyup)="applyFilter(true, $event.target.value)">
+        </mat-form-field>
+
+        <mat-table [dataSource]="doAsKnoxTokens" matSort #impersonationSort="matSort">
+            <ng-container matColumnDef="impersonation.tokenId">
+                <mat-header-cell *matHeaderCellDef mat-sort-header="impersonation.tokenId">Token ID</mat-header-cell>
+                <mat-cell *matCellDef="let knoxToken">{{knoxToken.tokenId}}</mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="impersonation.issued">
+                <mat-header-cell *matHeaderCellDef mat-sort-header="impersonation.issueTime">Issued</mat-header-cell>
+                <mat-cell *matCellDef="let knoxToken">{{formatDateTime(knoxToken.issueTimeLong)}}</mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="impersonation.expires">
+                <mat-header-cell *matHeaderCellDef mat-sort-header="impersonation.expiration">Expires</mat-header-cell>
+                <mat-cell *matCellDef="let knoxToken" [style.color]="getExpirationColor(knoxToken.expirationLong)">{{formatDateTime(knoxToken.expirationLong)}}</mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="impersonation.comment">
+                <mat-header-cell *matHeaderCellDef mat-sort-header="impersonation.metadata.comment">Comment</mat-header-cell>
+                <mat-cell *matCellDef="let knoxToken">{{knoxToken.metadata.comment}}</mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="impersonation.metadata">
+                <mat-header-cell *matHeaderCellDef>Additional Metadata</mat-header-cell>
+                <mat-cell *matCellDef="let knoxToken">
+                   <ul>
+                     <li *ngFor="let metadata of getCustomMetadataArray(knoxToken)">
+                       {{metadata[0]}} = {{metadata[1]}}
+                     </li>
+                   </ul>
+                </mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="impersonation.user.name">
+                <mat-header-cell *matHeaderCellDef mat-sort-header="impersonation.metadata.username">Impersonated User</mat-header-cell>
+                <mat-cell *matCellDef="let knoxToken">{{knoxToken.metadata.userName}}</mat-cell>
+            </ng-container>
+
+            <mat-header-row *matHeaderRowDef="impersonationDisplayedColumns"></mat-header-row>
+            <mat-row *matRowDef="let row; columns: impersonationDisplayedColumns"></mat-row>
+
+        </mat-table>
+        <mat-paginator #impersonationPaginator [pageSizeOptions]="[5, 10, 25, 100]" [showFirstLastButtons]="true"></mat-paginator>
     </div>
 </div>
 

@@ -153,11 +153,6 @@ public class RemoteAliasService extends AbstractAliasService {
     /* convert all alias names to lower case since JDK expects the same behaviour */
     final String alias = givenAlias.toLowerCase(Locale.ROOT);
 
-    /* Generate a new password  */
-    if (generate) {
-      generateAliasForCluster(clusterName, alias);
-    }
-
     char[] password = null;
 
     /* try to get it from remote registry */
@@ -174,6 +169,11 @@ public class RemoteAliasService extends AbstractAliasService {
     if(password == null) {
       /* try to get it from the local keystore, ignore generate flag. */
       password = localAliasService.getPasswordFromAliasForCluster(clusterName, alias);
+    }
+
+    if (password == null && generate) {
+      generateAliasForCluster(clusterName, alias); // generate password and save it in both local and remote keystore (if configured)
+      password = localAliasService.getPasswordFromAliasForCluster(clusterName, alias); // get the generated password from the local store
     }
 
     /* found nothing */

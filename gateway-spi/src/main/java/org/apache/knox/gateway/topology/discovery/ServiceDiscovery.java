@@ -18,6 +18,7 @@ package org.apache.knox.gateway.topology.discovery;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -37,18 +38,6 @@ public interface ServiceDiscovery {
      */
     String getType();
 
-
-    /**
-     * Discover details of all the clusters known to the target registry.
-     *
-     * @param gwConfig The gateway configuration
-     * @param config The configuration for the discovery invocation
-     *
-     * @return A Map of the discovered service data, keyed by the cluster name.
-     */
-    Map<String, Cluster> discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config);
-
-
     /**
      * Discover details for a single cluster.
      *
@@ -59,6 +48,18 @@ public interface ServiceDiscovery {
      * @return The discovered service data for the specified cluster
      */
     Cluster discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config, String clusterName);
+
+    /**
+     * Discover details for a single cluster filtered by the given <code>services</code> list.
+     *
+     * @param gwConfig The gateway configuration
+     * @param config The configuration for the discovery invocation
+     * @param clusterName The name of a particular cluster
+     * @param includedServices The list of service names to be discovered. If that's set to <code>null</code> or <code>an empty collection</code>, all services within the given cluster will be discovered.
+     *
+     * @return The discovered service data for the specified cluster
+     */
+    Cluster discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config, String clusterName, Collection<String> includedServices);
 
 
     /**

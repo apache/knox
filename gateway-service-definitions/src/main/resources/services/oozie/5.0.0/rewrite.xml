@@ -16,7 +16,7 @@
 -->
 <rules>
 
-    <rule dir="IN" name="OOZIE/oozie/root" pattern="*://*:*/**/oozie/{**}?{**}">
+    <rule dir="IN" name="OOZIE/oozie/root" pattern="http*://*:*/**/oozie/{**}?{**}">
         <rewrite template="{$serviceUrl[OOZIE]}/{**}?{**}"/>
     </rule>
 

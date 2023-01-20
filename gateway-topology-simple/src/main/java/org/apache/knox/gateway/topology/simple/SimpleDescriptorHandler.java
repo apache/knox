@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.topology.simple;
 
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceType;
@@ -43,6 +44,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -70,7 +72,7 @@ public class SimpleDescriptorHandler {
      */
     public static final String RESULT_REFERENCE = "reference";
 
-    private static final String DEFAULT_DISCOVERY_TYPE = "AMBARI";
+    private static final String DEFAULT_DISCOVERY_TYPE = "ClouderaManager";
 
     private static final String[] PROVIDER_CONFIG_FILE_EXTENSIONS;
     static {
@@ -110,7 +112,7 @@ public class SimpleDescriptorHandler {
         if (shouldPerformDiscovery(desc)) {
             cluster = performDiscovery(config, desc, gatewayServices);
             if (cluster == null) {
-                log.failedToDiscoverClusterServices(desc.getName());
+                throw new DiscoveryException(desc.getCluster(), desc.getName());
             }
         } else {
             log.discoveryNotConfiguredForDescriptor(desc.getName());
@@ -240,14 +242,15 @@ public class SimpleDescriptorHandler {
         // Use the cached discovery object for the required type, if it has already been loaded
         ServiceDiscovery sd = discoveryInstances.get(discoveryType);
         if (sd == null) {
-            sd = ServiceDiscoveryFactory.get(discoveryType, gatewayServices);
+            sd = ServiceDiscoveryFactory.get(discoveryType, config, gatewayServices);
             if (sd == null) {
                 throw new IllegalArgumentException("Unsupported service discovery type: " + discoveryType);
             }
             discoveryInstances.put(discoveryType, sd);
         }
 
-        return sd.discover(config, sdc, desc.getCluster());
+        final Collection<String> includedServices = desc.getServices().stream().map(service -> service.getName()).collect(Collectors.toSet());
+        return sd.discover(config, sdc, desc.getCluster(), includedServices);
     }
 
 
@@ -463,7 +466,7 @@ public class SimpleDescriptorHandler {
                 for (Map.Entry<String, String> param : provider.getParams().entrySet()) {
                     sw.write("            <param>\n");
                     sw.write("                <name>" + param.getKey() + "</name>\n");
-                    sw.write("                <value>" + param.getValue() + "</value>\n");
+                    sw.write("                <value>" + StringEscapeUtils.escapeXml11(param.getValue()) + "</value>\n");
                     sw.write("            </param>\n");
                 }
 
@@ -557,7 +560,7 @@ public class SimpleDescriptorHandler {
                         if (!(svcParam.getKey().toLowerCase(Locale.ROOT)).startsWith(SimpleDescriptor.DISCOVERY_PARAM_PREFIX)) {
                             sw.write("        <param>\n");
                             sw.write("            <name>" + svcParam.getKey() + "</name>\n");
-                            sw.write("            <value>" + svcParam.getValue() + "</value>\n");
+                            sw.write("            <value>" + StringEscapeUtils.escapeXml11(svcParam.getValue()) + "</value>\n");
                             sw.write("        </param>\n");
                         }
                     }
@@ -587,7 +590,7 @@ public class SimpleDescriptorHandler {
                         for (Entry<String, String> entry : appParams.entrySet()) {
                             sw.write("        <param>\n");
                             sw.write("            <name>" + entry.getKey() + "</name>\n");
-                            sw.write("            <value>" + entry.getValue() + "</value>\n");
+                            sw.write("            <value>" + StringEscapeUtils.escapeXml11(entry.getValue()) + "</value>\n");
                             sw.write("        </param>\n");
                         }
                     }

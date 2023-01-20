@@ -52,11 +52,11 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.knox.test.TestUtils;
 import org.apache.http.HttpStatus;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
@@ -79,7 +79,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 public class GatewayAdminTopologyFuncTest {
-  private static final Logger LOG = LoggerFactory.getLogger( GatewayAdminTopologyFuncTest.class );
+  private static final Logger LOG = LogManager.getLogger( GatewayAdminTopologyFuncTest.class );
 
   public static GatewayConfig config;
   public static GatewayServer gateway;
@@ -1910,6 +1910,72 @@ public class GatewayAdminTopologyFuncTest {
     // Verify that the descriptor was NOT written to the expected location
     File newDescriptorFile = new File(new File(config.getGatewayConfDir(), "descriptors"), newDescriptorFileName);
     assertFalse(newDescriptorFile.exists());
+  }
+
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
+  public void testPutExistingGeneratedDescriptorFails() throws Exception {
+    LOG_ENTER();
+    try {
+      gateway.stop();
+      GatewayTestConfig conf = new GatewayTestConfig();
+      String topologyName = "test-desc";
+      conf.set(GatewayConfigImpl.READ_ONLY_OVERRIDE_TOPOLOGIES, topologyName);
+      setupGateway(conf);
+      given()
+              .auth().preemptive().basic("admin", "admin-password")
+              .header("Content-type", MediaType.APPLICATION_JSON)
+              .body("{}")
+              .then()
+              .statusCode(HttpStatus.SC_CREATED)
+              .when().put((clusterUrl + "/api/v1/descriptors/" + topologyName));
+      given()
+              .auth().preemptive().basic("admin", "admin-password")
+              .header("Content-type", MediaType.APPLICATION_JSON)
+              .body("new content")
+              .then()
+              .statusCode(HttpStatus.SC_CONFLICT)
+              .when().put((clusterUrl + "/api/v1/descriptors/" + topologyName));
+    } finally {
+      // Restart the gateway with old settings.
+      gateway.stop();
+      setupGateway(new GatewayTestConfig());
+    }
+
+    LOG_EXIT();
+  }
+
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
+  public void testPutExistingGeneratedProviderFails() throws Exception {
+    LOG_ENTER();
+    try {
+      gateway.stop();
+      GatewayTestConfig conf = new GatewayTestConfig();
+      String providerName = "sso";
+      conf.set(GatewayConfigImpl.READ_ONLY_OVERRIDE_PROVIDERS, providerName);
+      setupGateway(conf);
+      given()
+              .auth().preemptive().basic("admin", "admin-password")
+              .header("Content-type", MediaType.APPLICATION_JSON)
+              .body("{}")
+              .then()
+              .statusCode(HttpStatus.SC_CREATED)
+              .when()
+              .put((clusterUrl + "/api/v1/providerconfig/" + providerName));
+      given()
+        .auth().preemptive().basic("admin", "admin-password")
+        .header("Content-type", MediaType.APPLICATION_JSON)
+        .body("new content")
+      .then()
+        .statusCode(HttpStatus.SC_CONFLICT)
+        .when()
+      .put((clusterUrl + "/api/v1/providerconfig/" + providerName));
+    } finally {
+      // Restart the gateway with old settings.
+      gateway.stop();
+      setupGateway(new GatewayTestConfig());
+    }
+
+    LOG_EXIT();
   }
 
   @Test( timeout = TestUtils.LONG_TIMEOUT )

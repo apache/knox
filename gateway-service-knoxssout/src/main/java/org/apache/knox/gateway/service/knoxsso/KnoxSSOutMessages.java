@@ -25,4 +25,7 @@ import org.apache.knox.gateway.i18n.messages.Messages;
 public interface KnoxSSOutMessages {
   @Message( level = MessageLevel.INFO, text = "There was a problem determining the SSO cookie domain - using default domain.")
   void problemWithCookieDomainUsingDefault();
+
+  @Message(level = MessageLevel.WARN, text = "Could not find cookie with the name: {0} in the request to be removed from the concurrent session counter for user: {1}. ")
+  void couldNotFindCookieWithTokenToRemove(String cookieName, String username);
 }

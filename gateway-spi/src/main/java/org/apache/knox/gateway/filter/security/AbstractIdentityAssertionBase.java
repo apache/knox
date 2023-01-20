@@ -30,7 +30,7 @@ public class AbstractIdentityAssertionBase {
    * @return principalName
    */
   protected String getPrincipalName(Subject subject) {
-    return SubjectUtils.getPrimaryPrincipalName(subject);
+    return SubjectUtils.getEffectivePrincipalName(subject);
   }
 
 }

@@ -17,6 +17,15 @@
  */
 package org.apache.knox.gateway.services.security.token.impl;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
@@ -27,21 +36,16 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
-
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class JWTTokenTest {
   private static final String JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE0MTY5MjkxMDksImp0aSI6ImFhN2Y4ZDBhOTVjIiwic2NvcGVzIjpbInJlcG8iLCJwdWJsaWNfcmVwbyJdfQ.XCEwpBGvOLma4TCoh36FU7XhUbcskygS81HE1uHLf0E";
@@ -72,14 +76,7 @@ public class JWTTokenTest {
     final String KID = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
     final String JKU = "https://localhost:8443/gateway/token/knoxtoken/api/v1/jwks.json";
     final String ALGO = "RS256";
-    String[] claims = new String[6];
-    claims[0] = "KNOXSSO";
-    claims[1] = "john.doe@example.com";
-    claims[2] = "https://login.example.com";
-    claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
-    claims[4] = KID;
-    claims[5] = JKU;
-    JWT token = new JWTToken(ALGO, claims);
+    JWT token = new JWTToken(new JWTokenAttributesBuilder().setAudiences(singletonList("https://login.example.com")).setKid(KID).setUserName("john.doe@example.com").setJku(JKU).setAlgorithm(ALGO).build());
 
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
@@ -92,14 +89,7 @@ public class JWTTokenTest {
 
   @Test
   public void testPrivateUUIDClaim() throws Exception {
-    String[] claims = new String[6];
-    claims[0] = "KNOXSSO";
-    claims[1] = "john.doe@example.com";
-    claims[2] = "https://login.example.com";
-    claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
-    claims[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
-    claims[5] = null;
-    JWT token = new JWTToken("RS256", claims);
+    JWT token = new JWTToken(new JWTokenAttributesBuilder().setAudiences(singletonList("https://login.example.com")).setUserName("john.doe@example.com").setAlgorithm("RS256").build());
 
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
@@ -113,17 +103,10 @@ public class JWTTokenTest {
 
   @Test
   public void testTokenCreationWithAudienceListSingle() throws Exception {
-    String[] claims = new String[6];
-    claims[0] = "KNOXSSO";
-    claims[1] = "john.doe@example.com";
-    claims[2] = null;
-    claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
-    claims[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
-    claims[5] = null;
     List<String> audiences = new ArrayList<>();
     audiences.add("https://login.example.com");
 
-    JWT token = new JWTToken("RS256", claims, audiences);
+    JWT token = new JWTToken(new JWTokenAttributesBuilder().setUserName("john.doe@example.com").setAudiences(audiences).setAlgorithm("RS256").setManaged(false).build());
 
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
@@ -133,18 +116,11 @@ public class JWTTokenTest {
 
   @Test
   public void testTokenCreationWithAudienceListMultiple() throws Exception {
-    String[] claims = new String[6];
-    claims[0] = "KNOXSSO";
-    claims[1] = "john.doe@example.com";
-    claims[2] = null;
-    claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
-    claims[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
-    claims[5] = null;
     List<String> audiences = new ArrayList<>();
     audiences.add("https://login.example.com");
     audiences.add("KNOXSSO");
 
-    JWT token = new JWTToken("RS256", claims, audiences);
+    JWT token = new JWTToken(new JWTokenAttributesBuilder().setUserName("john.doe@example.com").setAudiences(audiences).setManaged(false).setAlgorithm("RS256").build());
 
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
@@ -154,19 +130,7 @@ public class JWTTokenTest {
 
   @Test
   public void testTokenCreationWithAudienceListCombined() throws Exception {
-    String[] claims = new String[6];
-    claims[0] = "KNOXSSO";
-    claims[1] = "john.doe@example.com";
-    claims[2] = "LJM";
-    claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
-    claims[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
-    claims[5] = null;
-    ArrayList<String> audiences = new ArrayList<>();
-    audiences.add("https://login.example.com");
-    audiences.add("KNOXSSO");
-
-    JWTToken token = new JWTToken("RS256", claims, audiences);
-
+    JWTToken token = new JWTToken(new JWTokenAttributesBuilder().setAudiences(asList("https://login.example.com", "KNOXSSO", "LJM")).setUserName("john.doe@example.com").setManaged(false).setAlgorithm("RS256").build());
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
     assertEquals("https://login.example.com", token.getAudience());
@@ -175,17 +139,7 @@ public class JWTTokenTest {
 
   @Test
   public void testTokenCreationWithNullAudienceList() throws Exception {
-    String[] claims = new String[6];
-    claims[0] = "KNOXSSO";
-    claims[1] = "john.doe@example.com";
-    claims[2] = null;
-    claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
-    claims[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
-    claims[5] = null;
-    List<String> audiences = null;
-
-    JWT token = new JWTToken("RS256", claims, audiences);
-
+    JWT token = new JWTToken(new JWTokenAttributesBuilder().setUserName("john.doe@example.com").setAudiences((List<String>)null).setAlgorithm("RS256").setManaged(false).build());
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
     assertNull(token.getAudience());
@@ -194,14 +148,7 @@ public class JWTTokenTest {
 
   @Test
   public void testTokenCreationRS512() throws Exception {
-    String[] claims = new String[6];
-    claims[0] = "KNOXSSO";
-    claims[1] = "john.doe@example.com";
-    claims[2] = "https://login.example.com";
-    claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
-    claims[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
-    claims[5] = null;
-    JWTToken token = new JWTToken(JWSAlgorithm.RS512.getName(), claims);
+    JWTToken token = new JWTToken(new JWTokenAttributesBuilder().setAudiences(singletonList("https://login.example.com")).setUserName("john.doe@example.com").setAlgorithm(JWSAlgorithm.RS512.getName()).build());
 
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
@@ -211,14 +158,7 @@ public class JWTTokenTest {
 
   @Test
   public void testTokenSignature() throws Exception {
-    String[] claims = new String[6];
-    claims[0] = "KNOXSSO";
-    claims[1] = "john.doe@example.com";
-    claims[2] = "https://login.example.com";
-    claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
-    claims[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
-    claims[5] = null;
-    JWT token = new JWTToken("RS256", claims);
+    JWT token = new JWTToken(new JWTokenAttributesBuilder().setAudiences(singletonList("https://login.example.com")).setUserName("john.doe@example.com").setAlgorithm("RS256").build());
 
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
@@ -236,14 +176,7 @@ public class JWTTokenTest {
 
   @Test
   public void testTokenSignatureRS512() throws Exception {
-    String[] claims = new String[6];
-    claims[0] = "KNOXSSO";
-    claims[1] = "john.doe@example.com";
-    claims[2] = "https://login.example.com";
-    claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
-    claims[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
-    claims[5] = null;
-    JWT token = new JWTToken(JWSAlgorithm.RS512.getName(), claims);
+    JWT token = new JWTToken(new JWTokenAttributesBuilder().setAudiences(singletonList("https://login.example.com")).setUserName("john.doe@example.com").setAlgorithm(JWSAlgorithm.RS512.getName()).build());
 
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
@@ -262,14 +195,7 @@ public class JWTTokenTest {
 
   @Test
   public void testTokenExpiry() throws Exception {
-    String[] claims = new String[6];
-    claims[0] = "KNOXSSO";
-    claims[1] = "john.doe@example.com";
-    claims[2] = "https://login.example.com";
-    claims[3] = Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
-    claims[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
-    claims[5] = null;
-    JWT token = new JWTToken("RS256", claims);
+    JWT token = new JWTToken(new JWTokenAttributesBuilder().setAlgorithm("RS256").build());
 
     assertNotNull(token.getExpires());
     assertNotNull(token.getExpiresDate());
@@ -289,5 +215,15 @@ public class JWTTokenTest {
       assertEquals("Invalid JWS header: The algorithm \"alg\" header parameter must be for signatures",
           ex.getMessage());
     }
+  }
+
+  @Test
+  public void testTokenType() throws Exception {
+    JWT token = new JWTToken(new JWTokenAttributesBuilder().setAlgorithm("RS256").build());
+    assertNull(token.getType());
+
+    final String tokenType = "at+jwt";
+    token = new JWTToken(new JWTokenAttributesBuilder().setAlgorithm("RS256").setType(tokenType).build());
+    assertEquals(token.getType(), new JOSEObjectType(tokenType));
   }
 }

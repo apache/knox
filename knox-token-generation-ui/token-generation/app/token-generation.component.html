@@ -1,0 +1,97 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+      http://www.apache.org/licenses/LICENSE-2.0
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<div style="margin-left: 1.75%; margin-right: 1.75%; margin-top: 4.5px">
+    <form [formGroup]="tokenGenFrom">
+    <fieldset>
+        <div class="fields">
+            <h3>Token Generation</h3>
+            <label *ngIf="tssStatusMessageLevel === 'info'" style="color: green;">{{tssStatusMessage}}</label>
+            <label *ngIf="tssStatusMessageLevel === 'warning'" style="color: yellow;">{{tssStatusMessage}}</label>
+            <label *ngIf="tssStatusMessageLevel === 'error'" style="color: red;">{{tssStatusMessage}}</label>
+            <label><i class="icon-info"></i> Token Generation enables integration and API invocations by using the
+             token as an authorization bearer token. Copy the JWT token from the resulting text area and protect it
+             securely from others as this token represents your identity and is active until expired.</label>
+
+            <label><i class="icon-comment"></i> Comment:</label>
+            <input formControlName="comment" (keydown.enter)="generateToken()" type="text" tabindex="1" autofocus size="255" maxlength="255">
+            <label *ngIf="comment.invalid" style="color: red;"><i class="icon-warning"></i>Invalid comment!</label>
+
+            <label><i class="icon-info"></i> Configured maximum lifetime: </label>
+            <label>{{tssStatus.maximumLifetimeText}}</label>
+            <div *ngIf="tssStatus.lifespanInputEnabled">
+                <label><i class="icon-time"></i> Lifetime (days, hours, mins):</label>
+                <table>
+                    <tr>
+                        <td><input formControlName="lifespanDays" type="number" step="1" min="0" max="3650" value="0" size="3"></td> <!-- 10 years limit -->
+                        <td><input formControlName="lifespanHours" type="number" step="1" min="0" max="23" value="1" size="3"></td>
+                        <td><input formControlName="lifespanMins" type="number" step="1" min="0" max="59" value="0" size="3"></td>
+                    </tr>
+                </table>
+                <label *ngIf="lifespanDays.invalid || lifespanHours.invalid || lifespanMins.invalid || tokenGenFrom.errors?.allZero" style="color: red;"><i class="icon-warning"></i>Invalid lifetime!</label>
+            </div>
+
+            <div *ngIf="tssStatus.impersonationEnabled">
+                <label><i class="icon-user"></i> Generating token for (impersonation):</label>
+                <input formControlName="impersonation" type="text" size="50" maxlength="255">
+                <label *ngIf="impersonation.invalid" style="color: red;"><i class="icon-warning"></i>Invalid doAs!</label>
+            </div>
+        </div>
+
+        <span *ngIf="requestErrorMessage" class="help-inline" style="color: red;"><span class="errorMsg">{{requestErrorMessage}}</span>
+            <i class="icon-warning-sign" style="color: #ae2817;"></i>
+        </span>
+
+        <div style="align-content: center; width: 25%;">
+            <button (click)="generateToken()" [disabled]="!tssStatus.tokenManagementEnabled || !tssStatus.allowedTssForTokengen || !tokenGenFrom.valid" type="button" class="btn btn-primary btn-block" tabindex="2"  >
+                Generate Token
+            </button>
+        </div>
+    </fieldset>
+</form>
+</div>
+
+<div style="margin-left: 1.75%; margin-right: 1.75%; margin-top: 10px">
+    <span *ngIf="hasResult" style="color:black; margin-left: 1.75%; margin-right: 1.75%;">
+        <div class="tokenResultDisplay">
+            <label (click)="copyTextToClipboard('accessToken')"><i class="icon-copy"></i> JWT Token:</label>
+            <span id="accessToken" style="word-wrap: break-word">{{tokenResultData.accessToken}}</span>
+        </div>
+
+        <div *ngIf="tokenResultData.accessPasscode" class="tokenResultDisplay">
+            <label (click)="copyTextToClipboard('accessPasscode')"><i class="icon-copy"></i> Passcode Token:</label>            
+            <span id="accessPasscode">{{tokenResultData.accessPasscode}}</span>
+        </div>
+
+        <div class="tokenResultDisplay">
+            <label><i class="icon-info"></i> Expiration:</label>            
+            <span>{{tokenResultData.expiry}}</span>
+        </div>
+
+        <div class="tokenResultDisplay">
+            <label><i class="icon-info"></i> User:</label>            
+            <span>{{tokenResultData.user}}</span>
+        </div>
+
+        <div class="tokenResultDisplay">
+            <label (click)="copyTextToClipboard('target_url')"><i class="icon-copy"></i> Target Base URL:</label>        
+            <span id="target_url">{{tokenResultData.targetURL}}</span>
+        </div>
+
+        <div class="tokenResultDisplay">
+            <label><i class="icon-link"></i> Homepage:</label>            
+            <a [href]="tokenResultData.homepageURL">Homepage URL</a>
+        </div>
+    </span>
+</div>

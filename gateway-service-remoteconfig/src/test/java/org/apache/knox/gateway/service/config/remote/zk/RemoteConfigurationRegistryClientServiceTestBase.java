@@ -53,7 +53,6 @@ public class RemoteConfigurationRegistryClientServiceTestBase {
      */
     protected TestingCluster setupAndStartSecureTestZooKeeper(String principal, String digestPassword) throws Exception {
         final boolean applyAuthentication = (principal != null);
-
         // Configure security for the ZK cluster instances
         Map<String, Object> customInstanceSpecProps = new HashMap<>();
         customInstanceSpecProps.put("admin.enableServer", false);

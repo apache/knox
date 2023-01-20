@@ -32,7 +32,7 @@ public class HomePageProfileTest {
   @Test
   public void testEmptyConfiguration() throws Exception {
     final HomePageProfile profile = new HomePageProfile(Collections.emptySet());
-    assertEquals(7, profile.getProfileElements().size());
+    assertEquals(8, profile.getProfileElements().size());
     profile.getProfileElements().forEach((key, value) -> {
       if (key.startsWith(HomePageProfile.GPI_PREFIX)) {
         assertFalse(Boolean.parseBoolean(value));

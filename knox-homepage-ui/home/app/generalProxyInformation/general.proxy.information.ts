@@ -18,6 +18,8 @@
 export class GeneralProxyInformation {
     version: string;
     adminUiUrl: string;
+    webShellUrl: string;
     adminApiBookUrl: string;
-    tokenGenerationUrl: string;
+    enableTokenManagement: string;
+    enableWebshell: string;
 }

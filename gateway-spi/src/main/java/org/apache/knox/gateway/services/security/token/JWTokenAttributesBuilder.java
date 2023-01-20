@@ -17,15 +17,14 @@
  */
 package org.apache.knox.gateway.services.security.token;
 
-import java.security.Principal;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import javax.security.auth.Subject;
+import java.util.Set;
 
 public class JWTokenAttributesBuilder {
 
-  private Principal principal;
+  private String userName;
   private List<String> audiences;
   private String algorithm;
   private long expires;
@@ -34,13 +33,13 @@ public class JWTokenAttributesBuilder {
   private char[] signingKeystorePassphrase;
   private boolean managed;
   private String jku;
+  private String type;
+  private Set<String> groups;
+  private String kid;
+  private String issuer = JWTokenAttributes.DEFAULT_ISSUER;
 
-  public JWTokenAttributesBuilder setPrincipal(Subject subject) {
-    return setPrincipal((Principal) subject.getPrincipals().toArray()[0]);
-  }
-
-  public JWTokenAttributesBuilder setPrincipal(Principal principal) {
-    this.principal = principal;
+  public JWTokenAttributesBuilder setUserName(String userName) {
+    this.userName = userName;
     return this;
   }
 
@@ -88,9 +87,28 @@ public class JWTokenAttributesBuilder {
     return this;
   }
 
-  public JWTokenAttributes build() {
-    return new JWTokenAttributes(principal, (audiences == null ? Collections.emptyList() : audiences), algorithm, expires, signingKeystoreName, signingKeystoreAlias,
-        signingKeystorePassphrase, managed, jku);
+  public JWTokenAttributesBuilder setType(String type) {
+    this.type = type;
+    return this;
   }
 
+  public JWTokenAttributesBuilder setGroups(Set<String> groups) {
+    this.groups = groups;
+    return this;
+  }
+
+  public JWTokenAttributesBuilder setKid(String kid) {
+    this.kid = kid;
+    return this;
+  }
+
+  public JWTokenAttributesBuilder setIssuer(String issuer) {
+    this.issuer = issuer;
+    return this;
+  }
+
+  public JWTokenAttributes build() {
+    return new JWTokenAttributes(userName, (audiences == null ? new ArrayList<>() : audiences), algorithm, expires, signingKeystoreName, signingKeystoreAlias,
+        signingKeystorePassphrase, managed, jku, type, groups, kid, issuer);
+  }
 }

@@ -57,6 +57,7 @@ import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
@@ -72,6 +73,7 @@ import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
 
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSHeader;
 import org.apache.knox.gateway.util.Tokens;
 
@@ -105,6 +107,7 @@ public abstract class AbstractJWTFilter implements Filter {
   private String expectedSigAlg;
   protected String expectedPrincipalClaim;
   protected String expectedJWKSUrl;
+  protected Set<JOSEObjectType> allowedJwsTypes;
 
   private TokenStateService tokenStateService;
   private TokenMAC tokenMAC;
@@ -229,11 +232,14 @@ public abstract class AbstractJWTFilter implements Filter {
     return valid;
   }
 
-  protected void continueWithEstablishedSecurityContext(final Subject subject, final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
-    Principal principal = (Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0];
+  protected void continueWithEstablishedSecurityContext(final Subject subject,
+                                                        final HttpServletRequest request,
+                                                        final HttpServletResponse response,
+                                                        final FilterChain chain) throws IOException, ServletException {
     AuditContext context = auditService.getContext();
     if (context != null) {
-      context.setUsername( principal.getName() );
+      context.setUsername( SubjectUtils.getPrimaryPrincipalName(subject) );
+      auditService.attachContext(context);
       String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
       if (sourceUri != null) {
         auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
@@ -450,7 +456,7 @@ public abstract class AbstractJWTFilter implements Filter {
         if (publicKey != null) {
           verified = authority.verifyToken(token, publicKey);
         } else if (expectedJWKSUrl != null) {
-          verified = authority.verifyToken(token, expectedJWKSUrl, expectedSigAlg);
+          verified = authority.verifyToken(token, expectedJWKSUrl, expectedSigAlg, allowedJwsTypes);
         } else {
           verified = authority.verifyToken(token);
         }

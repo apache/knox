@@ -18,8 +18,8 @@
 package org.apache.knox.gateway.service.knoxtoken;
 
 import java.nio.charset.StandardCharsets;
+import java.security.AccessController;
 import java.security.KeyStoreException;
-import java.security.Principal;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
@@ -29,14 +29,20 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
+import javax.security.auth.Subject;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.DELETE;
@@ -45,9 +51,9 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.KeyLengthException;
@@ -56,7 +62,9 @@ import com.nimbusds.jose.util.ByteUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.context.ContextAttributes;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
@@ -69,6 +77,7 @@ import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.KnoxToken;
+import org.apache.knox.gateway.services.security.token.PersistentTokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
@@ -92,30 +101,35 @@ public class TokenResource {
   private static final String TOKEN_TYPE = "token_type";
   private static final String ACCESS_TOKEN = "access_token";
   private static final String TOKEN_ID = "token_id";
-  private static final String PASSCODE = "passcode";
+  static final String PASSCODE = "passcode";
   private static final String MANAGED_TOKEN = "managed";
   private static final String TARGET_URL = "target_url";
   private static final String ENDPOINT_PUBLIC_CERT = "endpoint_public_cert";
   private static final String BEARER = "Bearer";
-  private static final String TOKEN_TTL_PARAM = "knox.token.ttl";
-  private static final String TOKEN_AUDIENCES_PARAM = "knox.token.audiences";
-  private static final String TOKEN_TARGET_URL = "knox.token.target.url";
-  static final String TOKEN_CLIENT_DATA = "knox.token.client.data";
-  private static final String TOKEN_CLIENT_CERT_REQUIRED = "knox.token.client.cert.required";
-  private static final String TOKEN_ALLOWED_PRINCIPALS = "knox.token.allowed.principals";
-  private static final String TOKEN_SIG_ALG = "knox.token.sigalg";
-  private static final String TOKEN_EXP_RENEWAL_INTERVAL = "knox.token.exp.renew-interval";
-  private static final String TOKEN_EXP_RENEWAL_MAX_LIFETIME = "knox.token.exp.max-lifetime";
-  private static final String TOKEN_EXP_TOKENGEN_ALLOWED_TSS_BACKENDS = "knox.token.exp.tokengen.allowed.tss.backends";
-  private static final String TOKEN_RENEWER_WHITELIST = "knox.token.renewer.whitelist";
+  private static final String TOKEN_PARAM_PREFIX = "knox.token.";
+  private static final String TOKEN_TTL_PARAM = TOKEN_PARAM_PREFIX + "ttl";
+  private static final String TOKEN_TYPE_PARAM = TOKEN_PARAM_PREFIX + "type";
+  private static final String TOKEN_AUDIENCES_PARAM = TOKEN_PARAM_PREFIX + "audiences";
+  public static final String TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED = TOKEN_PARAM_PREFIX + "include.groups.allowed";
+  private static final String TOKEN_TARGET_URL = TOKEN_PARAM_PREFIX + "target.url";
+  static final String TOKEN_CLIENT_DATA = TOKEN_PARAM_PREFIX + "client.data";
+  private static final String TOKEN_CLIENT_CERT_REQUIRED = TOKEN_PARAM_PREFIX + "client.cert.required";
+  private static final String TOKEN_ALLOWED_PRINCIPALS = TOKEN_PARAM_PREFIX + "allowed.principals";
+  private static final String TOKEN_SIG_ALG = TOKEN_PARAM_PREFIX + "sigalg";
+  private static final String TOKEN_EXP_RENEWAL_INTERVAL = TOKEN_PARAM_PREFIX + "exp.renew-interval";
+  private static final String TOKEN_EXP_RENEWAL_MAX_LIFETIME = TOKEN_PARAM_PREFIX + "exp.max-lifetime";
+  private static final String TOKEN_EXP_TOKENGEN_ALLOWED_TSS_BACKENDS = TOKEN_PARAM_PREFIX + "exp.tokengen.allowed.tss.backends";
+  private static final String TOKEN_RENEWER_WHITELIST = TOKEN_PARAM_PREFIX + "renewer.whitelist";
   private static final String TSS_STATUS_IS_MANAGEMENT_ENABLED = "tokenManagementEnabled";
   private static final String TSS_STATUS_CONFIFURED_BACKEND = "configuredTssBackend";
   private static final String TSS_STATUS_ACTUAL_BACKEND = "actualTssBackend";
   private static final String TSS_ALLOWED_BACKEND_FOR_TOKENGEN = "allowedTssForTokengen";
   private static final String TSS_MAXIMUM_LIFETIME_SECONDS = "maximumLifetimeSeconds";
   private static final String TSS_MAXIMUM_LIFETIME_TEXT = "maximumLifetimeText";
-  private static final String LIFESPAN_INPUT_ENABLED_PARAM = "knox.token.lifespan.input.enabled";
+  private static final String LIFESPAN_INPUT_ENABLED_PARAM = TOKEN_PARAM_PREFIX + "lifespan.input.enabled";
   private static final String LIFESPAN_INPUT_ENABLED_TEXT = "lifespanInputEnabled";
+  static final String KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION = TOKEN_PARAM_PREFIX + "user.limit.exceeded.action";
+  private static final String METADATA_QUERY_PARAM_PREFIX = "md_";
   private static final long TOKEN_TTL_DEFAULT = 30000L;
   static final String TOKEN_API_PATH = "knoxtoken/api/v1";
   static final String RESOURCE_PATH = TOKEN_API_PATH + "/token";
@@ -125,9 +139,14 @@ public class TokenResource {
   static final String REVOKE_PATH = "/revoke";
   static final String ENABLE_PATH = "/enable";
   static final String DISABLE_PATH = "/disable";
-  private static final String TARGET_ENDPOINT_PULIC_CERT_PEM = "knox.token.target.endpoint.cert.pem";
+  private static final String TARGET_ENDPOINT_PULIC_CERT_PEM = TOKEN_PARAM_PREFIX + "target.endpoint.cert.pem";
+  static final String QUERY_PARAMETER_DOAS = "doAs";
+  private static final String IMPERSONATION_ENABLED_TEXT = "impersonationEnabled";
+  public static final String KNOX_TOKEN_INCLUDE_GROUPS = TOKEN_PARAM_PREFIX + "include.groups";
+  public static final String KNOX_TOKEN_ISSUER = TOKEN_PARAM_PREFIX + "issuer";
   private static TokenServiceMessages log = MessagesFactory.get(TokenServiceMessages.class);
   private long tokenTTL = TOKEN_TTL_DEFAULT;
+  private String tokenType;
   private String tokenTTLAsText;
   private List<String> targetAudiences = new ArrayList<>();
   private String tokenTargetUrl;
@@ -147,6 +166,11 @@ public class TokenResource {
   private Optional<Long> maxTokenLifetime = Optional.empty();
 
   private int tokenLimitPerUser;
+  private boolean includeGroupsInTokenAllowed;
+  private String tokenIssuer;
+
+  enum UserLimitExceededAction {REMOVE_OLDEST, RETURN_ERROR};
+  private UserLimitExceededAction userLimitExceededAction = UserLimitExceededAction.RETURN_ERROR;
 
   private List<String> allowedRenewers;
 
@@ -211,6 +235,17 @@ public class TokenResource {
         log.invalidTokenTTLEncountered(ttl);
       }
     }
+
+    String includeGroupsInTokenAllowedParam = context.getInitParameter(TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED);
+    includeGroupsInTokenAllowed = includeGroupsInTokenAllowedParam == null
+            ? true
+            : Boolean.parseBoolean(includeGroupsInTokenAllowedParam);
+
+    this.tokenIssuer = StringUtils.isBlank(context.getInitParameter(KNOX_TOKEN_ISSUER))
+            ? JWTokenAttributes.DEFAULT_ISSUER
+            : context.getInitParameter(KNOX_TOKEN_ISSUER);
+    this.tokenType = context.getInitParameter(TOKEN_TYPE_PARAM);
+
     tokenTTLAsText = getTokenTTLAsText();
 
     tokenTargetUrl = context.getInitParameter(TOKEN_TARGET_URL);
@@ -241,6 +276,11 @@ public class TokenResource {
       tokenMAC = new TokenMAC(gatewayConfig.getKnoxTokenHashAlgorithm(), aliasService.getPasswordFromAliasForGateway(TokenMAC.KNOX_TOKEN_HASH_KEY_ALIAS_NAME));
 
       tokenLimitPerUser = gatewayConfig.getMaximumNumberOfTokensPerUser();
+      final String userLimitExceededActionParam = context.getInitParameter(KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION);
+      if (userLimitExceededActionParam != null) {
+        userLimitExceededAction = UserLimitExceededAction.valueOf(userLimitExceededActionParam);
+        log.generalInfoMessage("Configured Knox Token user limit exceeded action = " + userLimitExceededAction.name());
+      }
 
       String renewIntervalValue = context.getInitParameter(TOKEN_EXP_RENEWAL_INTERVAL);
       if (renewIntervalValue != null && !renewIntervalValue.isEmpty()) {
@@ -319,6 +359,9 @@ public class TokenResource {
     final String lifespanInputEnabledValue = context.getInitParameter(LIFESPAN_INPUT_ENABLED_PARAM);
     final Boolean lifespanInputEnabled = lifespanInputEnabledValue == null ? Boolean.TRUE : Boolean.parseBoolean(lifespanInputEnabledValue);
     tokenStateServiceStatusMap.put(LIFESPAN_INPUT_ENABLED_TEXT, lifespanInputEnabled.toString());
+
+    final Boolean impersonationEnabled = (Boolean) context.getAttribute(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE);
+    tokenStateServiceStatusMap.put(IMPERSONATION_ENABLED_TEXT, impersonationEnabled == null ? Boolean.FALSE.toString() : impersonationEnabled.toString());
   }
 
   private void populateAllowedTokenStateBackendForTokenGenApp(final String actualTokenServiceName) {
@@ -390,11 +433,44 @@ public class TokenResource {
   @GET
   @Path(GET_USER_TOKENS)
   @Produces({APPLICATION_JSON, APPLICATION_XML})
-  public Response getUserTokens(@QueryParam("userName") String userName) {
+  public Response getUserTokens(@Context UriInfo uriInfo) {
     if (tokenStateService == null) {
       return Response.status(Response.Status.SERVICE_UNAVAILABLE).entity("{\n  \"error\": \"Token management is not configured\"\n}\n").build();
     } else {
-      final Collection<KnoxToken> tokens = tokenStateService.getTokens(userName);
+      if (uriInfo == null) {
+        throw new IllegalArgumentException("URI info cannot be NULL.");
+      }
+      final Map<String, List<String>> metadataMap = new HashMap<>();
+      uriInfo.getQueryParameters().entrySet().forEach(entry -> {
+        if (entry.getKey().startsWith(METADATA_QUERY_PARAM_PREFIX)) {
+          String metadataName = entry.getKey().substring(METADATA_QUERY_PARAM_PREFIX.length());
+          metadataMap.put(metadataName, entry.getValue());
+        }
+      });
+
+      final String userName = uriInfo.getQueryParameters().getFirst("userName");
+      final String createdBy = uriInfo.getQueryParameters().getFirst("createdBy");
+      final Collection<KnoxToken> userTokens = createdBy == null ? tokenStateService.getTokens(userName) : tokenStateService.getDoAsTokens(createdBy);
+      final Collection<KnoxToken> tokens = new TreeSet<>();
+      if (metadataMap.isEmpty()) {
+        tokens.addAll(userTokens);
+      } else {
+        userTokens.forEach(knoxToken -> {
+          for (Map.Entry<String,  List<String>> entry : metadataMap.entrySet()) {
+            if (entry.getValue().contains("*")) {
+              // we should only filter tokens by metadata name
+              if (knoxToken.hasMetadata(entry.getKey())) {
+                tokens.add(knoxToken);
+              }
+            } else {
+              // metadata value should also match
+              if (entry.getValue().contains(knoxToken.getMetadataValue(entry.getKey()))) {
+                tokens.add(knoxToken);
+              }
+            }
+          }
+        });
+      }
       return Response.status(Response.Status.OK).entity(JsonUtils.renderAsJsonString(Collections.singletonMap("tokens", tokens))).build();
     }
   }
@@ -530,7 +606,8 @@ public class TokenResource {
   private boolean triesToRevokeOwnToken(String tokenId, String revoker) throws UnknownTokenException {
     final TokenMetadata metadata = tokenStateService.getTokenMetadata(tokenId);
     final String tokenUserName = metadata == null ? "" : metadata.getUserName();
-    return StringUtils.isNotBlank(revoker) && revoker.equals(tokenUserName);
+    final String tokenCreatedBy =  metadata == null ? "" : metadata.getCreatedBy();
+    return StringUtils.isNotBlank(revoker) && (revoker.equals(tokenUserName) || revoker.equals(tokenCreatedBy));
   }
 
   /*
@@ -622,7 +699,24 @@ public class TokenResource {
         .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
 
     JWTokenAuthority ts = services.getService(ServiceType.TOKEN_SERVICE);
-    Principal p = request.getUserPrincipal();
+
+    String userName = request.getUserPrincipal().getName();
+    String createdBy = null;
+    // checking the doAs user only makes sense if tokens are managed (this is where we store the userName/createdBy information)
+    // and if impersonation was enabled before (on HadoopAuth or identity-assertion level) so the the current subject has at least one ImpersonatedPrincipal principal
+    if (tokenStateService != null) {
+      final Subject subject = SubjectUtils.getCurrentSubject();
+      if (subject != null && SubjectUtils.isImpersonating(subject)) {
+        String primaryPrincipalName = SubjectUtils.getPrimaryPrincipalName(subject);
+        String impersonatedPrincipalName = SubjectUtils.getImpersonatedPrincipalName(subject);
+        if (!primaryPrincipalName.equals(impersonatedPrincipalName)) {
+          createdBy = primaryPrincipalName;
+          userName = impersonatedPrincipalName;
+          log.tokenImpersonationSuccess(createdBy, userName);
+        }
+      }
+    }
+
     long expires = getExpiry();
 
     if (endpointPublicCert == null) {
@@ -649,9 +743,21 @@ public class TokenResource {
 
     if (tokenStateService != null) {
       if (tokenLimitPerUser != -1) { // if -1 => unlimited tokens for all users
-        if (tokenStateService.getTokens(p.getName()).size() >= tokenLimitPerUser) {
-          log.tokenLimitExceeded(p.getName());
-          return Response.status(Response.Status.FORBIDDEN).entity("{ \"Unable to get token - token limit exceeded.\" }").build();
+        final Collection<KnoxToken> userTokens = tokenStateService.getTokens(userName);
+        if (userTokens.size() >= tokenLimitPerUser) {
+          log.tokenLimitExceeded(userName);
+          if (UserLimitExceededAction.RETURN_ERROR == userLimitExceededAction) {
+            return Response.status(Response.Status.FORBIDDEN).entity("{ \"Unable to get token - token limit exceeded.\" }").build();
+          } else {
+            // userTokens is an ordered collection (by issue time) -> the first element is the oldest one
+            final String oldestTokenId = userTokens.iterator().next().getTokenId();
+            log.generalInfoMessage(String.format(Locale.getDefault(), "Revoking %s's oldest token %s ...", userName, Tokens.getTokenIDDisplayText(oldestTokenId)));
+            final Response revocationResponse = revoke(oldestTokenId);
+            if (Response.Status.OK.getStatusCode() != revocationResponse.getStatus()) {
+              return Response.status(Response.Status.fromStatusCode(revocationResponse.getStatus()))
+                  .entity("{\n  \"error\": \"An error occurred during the oldest token revocation of " + userName + " \"\n}\n").build();
+            }
+           }
         }
       }
     }
@@ -662,13 +768,25 @@ public class TokenResource {
       JWTokenAttributes jwtAttributes;
       final JWTokenAttributesBuilder jwtAttributesBuilder = new JWTokenAttributesBuilder();
       jwtAttributesBuilder
-          .setPrincipal(p)
+          .setIssuer(tokenIssuer)
+          .setUserName(userName)
           .setAlgorithm(signatureAlgorithm)
           .setExpires(expires)
           .setManaged(managedToken)
-          .setJku(jku);
+          .setJku(jku)
+          .setType(tokenType);
       if (!targetAudiences.isEmpty()) {
         jwtAttributesBuilder.setAudiences(targetAudiences);
+      }
+      if (shouldIncludeGroups()) {
+        if (includeGroupsInTokenAllowed) {
+          jwtAttributesBuilder.setGroups(groups());
+        } else {
+          return Response
+                  .status(Response.Status.BAD_REQUEST)
+                  .entity("{\n  \"error\": \"Including group information in tokens is disabled\"\n}\n")
+                  .build();
+        }
       }
 
       jwtAttributes = jwtAttributesBuilder.build();
@@ -694,8 +812,11 @@ public class TokenResource {
         if (endpointPublicCert != null) {
           map.put(ENDPOINT_PUBLIC_CERT, endpointPublicCert);
         }
+
         final String passcode = UUID.randomUUID().toString();
-        map.put(PASSCODE, generatePasscodeField(tokenId, passcode));
+        if (tokenStateService != null && tokenStateService instanceof PersistentTokenStateService) {
+          map.put(PASSCODE, generatePasscodeField(tokenId, passcode));
+        }
 
         String jsonResponse = JsonUtils.renderAsJsonString(map);
 
@@ -707,8 +828,12 @@ public class TokenResource {
                                      expires,
                                      maxTokenLifetime.orElse(tokenStateService.getDefaultMaxLifetimeDuration()));
           final String comment = request.getParameter(COMMENT);
-          final TokenMetadata tokenMetadata = new TokenMetadata(p.getName(), StringUtils.isBlank(comment) ? null : comment);
-          tokenMetadata.setPasscode(tokenMAC.hash(tokenId, issueTime, p.getName(), passcode));
+          final TokenMetadata tokenMetadata = new TokenMetadata(userName, StringUtils.isBlank(comment) ? null : comment);
+          tokenMetadata.setPasscode(tokenMAC.hash(tokenId, issueTime, userName, passcode));
+          addArbitraryTokenMetadata(tokenMetadata);
+          if (createdBy != null) {
+            tokenMetadata.setCreatedBy(createdBy);
+          }
           tokenStateService.addMetadata(tokenId, tokenMetadata);
           log.storedToken(getTopologyName(), Tokens.getTokenDisplayText(accessToken), Tokens.getTokenIDDisplayText(tokenId));
         }
@@ -721,6 +846,30 @@ public class TokenResource {
       log.unableToIssueToken(e);
     }
     return Response.ok().entity("{ \"Unable to acquire token.\" }").build();
+  }
+
+  private boolean shouldIncludeGroups() {
+    return Boolean.parseBoolean(request.getParameter(KNOX_TOKEN_INCLUDE_GROUPS));
+  }
+
+  protected Set<String> groups() {
+    Subject subject = Subject.getSubject(AccessController.getContext());
+    Set<String> groups = subject.getPrincipals(GroupPrincipal.class).stream()
+            .map(GroupPrincipal::getName)
+            .collect(Collectors.toSet());
+    return groups;
+  }
+
+  private void addArbitraryTokenMetadata(TokenMetadata tokenMetadata) {
+    final Enumeration<String> paramNames = request.getParameterNames();
+    while (paramNames.hasMoreElements()) {
+      final String paramName = paramNames.nextElement();
+      if (paramName.startsWith(METADATA_QUERY_PARAM_PREFIX)) {
+        final String metadataName = paramName.substring(METADATA_QUERY_PARAM_PREFIX.length());
+        final String metadataValue = request.getParameter(paramName);
+        tokenMetadata.add(metadataName, metadataValue);
+      }
+    }
   }
 
   private String generatePasscodeField(String tokenId, String passcode) {

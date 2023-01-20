@@ -19,17 +19,27 @@ package org.apache.knox.gateway.identityasserter.hadoop.groups.filter;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
 
 import java.security.Principal;
+import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.security.auth.Subject;
+import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
+import javax.servlet.http.HttpServletResponse;
 
+import org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.easymock.EasyMock;
 import org.junit.Test;
@@ -40,7 +50,7 @@ import org.junit.Test;
  * @since 0.11.0
  */
 public class HadoopGroupProviderFilterTest {
-
+  private static final String USER_NAME = "knox";
   /**
    * System username
    */
@@ -67,7 +77,9 @@ public class HadoopGroupProviderFilterTest {
     final FilterConfig config = EasyMock.createNiceMock(FilterConfig.class);
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.replay( config );
     EasyMock.replay( context );
@@ -99,7 +111,9 @@ public class HadoopGroupProviderFilterTest {
     final FilterConfig config = EasyMock.createNiceMock(FilterConfig.class);
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.replay( config );
     EasyMock.replay( context );
@@ -143,6 +157,7 @@ public class HadoopGroupProviderFilterTest {
     final FilterConfig config = EasyMock.createNiceMock(FilterConfig.class);
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
 
@@ -175,7 +190,7 @@ public class HadoopGroupProviderFilterTest {
             "(&amp;(|(objectclass=person)(objectclass=applicationProcess))(cn={0}))")
         .anyTimes();
     EasyMock.expect(config.getInitParameterNames())
-        .andReturn(Collections.enumeration((keysList))).anyTimes();
+            .andStubAnswer(() -> Collections.enumeration((keysList)));
 
     EasyMock.replay( config );
     EasyMock.replay( context );
@@ -201,4 +216,54 @@ public class HadoopGroupProviderFilterTest {
 
   }
 
+  @Test
+  public void testGroupsWithVirtualGroup() throws Exception {
+    Set<String> calculatedGroups = new HashSet<>();
+    FilterConfig config = EasyMock.createNiceMock(FilterConfig.class);
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.expect(config.getServletContext()).andReturn(context).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).
+            andReturn(Collections.enumeration(Arrays.asList(
+                    CommonIdentityAssertionFilter.VIRTUAL_GROUP_MAPPING_PREFIX + "test-virtual-group")))
+            .anyTimes();
+    EasyMock.expect(config.getInitParameter(CommonIdentityAssertionFilter.VIRTUAL_GROUP_MAPPING_PREFIX + "test-virtual-group")).
+            andReturn("(and (username 'knox') (member 'hadoop-group'))").anyTimes();
+
+    EasyMock.replay(config);
+    EasyMock.replay(context);
+
+    HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+    EasyMock.replay(request);
+
+    HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
+    EasyMock.replay(response);
+
+    FilterChain chain = (req, resp) -> {};
+
+    HadoopGroupProviderFilter filter = new HadoopGroupProviderFilter() {
+      @Override
+      protected void continueChainAsPrincipal(HttpServletRequestWrapper request, ServletResponse response, FilterChain chain, String mappedPrincipalName, String[] groups) {
+        calculatedGroups.addAll(Arrays.asList(groups));
+      }
+
+      @Override
+      protected List<String> hadoopGroups(String mappedPrincipalName) {
+        return Collections.singletonList("hadoop-group");
+      }
+    };
+
+    Subject subject = new Subject();
+    subject.getPrincipals().add(new PrimaryPrincipal(USER_NAME));
+    Subject.doAs(
+            subject,
+            (PrivilegedExceptionAction<Object>) () -> {
+              filter.init(config);
+              filter.doFilter(request, response, chain);
+              return null;
+            });
+
+    assertEquals(
+            new HashSet<>(Arrays.asList("hadoop-group", "test-virtual-group")), calculatedGroups);
+  }
 }

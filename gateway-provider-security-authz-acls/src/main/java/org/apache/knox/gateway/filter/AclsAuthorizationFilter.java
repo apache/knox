@@ -25,8 +25,7 @@ import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.GroupPrincipal;
-import org.apache.knox.gateway.security.ImpersonatedPrincipal;
-import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.security.SubjectUtils;
 
 import javax.security.auth.Subject;
 import javax.servlet.Filter;
@@ -38,7 +37,6 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.security.AccessController;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -114,9 +112,7 @@ public class AclsAuthorizationFilter implements Filter {
     }
   }
 
-  protected boolean enforceAclAuthorizationPolicy(ServletRequest request,
-      ServletResponse response, FilterChain chain) {
-    HttpServletRequest req = (HttpServletRequest) request;
+  protected boolean enforceAclAuthorizationPolicy(ServletRequest request, ServletResponse response, FilterChain chain) {
 
     // before enforcing acls check whether there are no acls defined
     // which would mean that there are no restrictions
@@ -124,23 +120,15 @@ public class AclsAuthorizationFilter implements Filter {
       return true;
     }
 
-    boolean userAccess;
     boolean groupAccess = false;
     boolean ipAddrAccess;
 
-    Subject subject = Subject.getSubject(AccessController.getContext());
-    Principal primaryPrincipal = (Principal)subject.getPrincipals(PrimaryPrincipal.class).toArray()[0];
-    log.primaryPrincipal(primaryPrincipal.getName());
-    Object[] impersonations = subject.getPrincipals(ImpersonatedPrincipal.class).toArray();
-    if (impersonations.length > 0) {
-      log.impersonatedPrincipal(((Principal)impersonations[0]).getName());
-      userAccess = checkUserAcls((Principal)impersonations[0]);
-      log.impersonatedPrincipalHasAccess(userAccess);
-    }
-    else {
-      userAccess = checkUserAcls(primaryPrincipal);
-      log.primaryPrincipalHasAccess(userAccess);
-    }
+    final Subject subject = SubjectUtils.getCurrentSubject();
+    final String effectivePrincipalName = SubjectUtils.getEffectivePrincipalName(subject);
+    log.effectivePrincipal(effectivePrincipalName);
+    boolean userAccess = checkUserAcls(effectivePrincipalName);
+    log.effectivePrincipalHasAccess(userAccess);
+
     Object[] groups = subject.getPrincipals(GroupPrincipal.class).toArray();
     if (groups.length > 0) {
       groupAccess = checkGroupAcls(groups);
@@ -155,8 +143,8 @@ public class AclsAuthorizationFilter implements Filter {
         groupAccess = true;
       }
     }
-    log.remoteIPAddress(req.getRemoteAddr());
-    ipAddrAccess = checkRemoteIpAcls(req.getRemoteAddr());
+    log.remoteIPAddress(((HttpServletRequest) request).getRemoteAddr());
+    ipAddrAccess = checkRemoteIpAcls(((HttpServletRequest) request).getRemoteAddr());
     log.remoteIPAddressHasAccess(ipAddrAccess);
 
     if ("OR".equals(aclProcessingMode)) {
@@ -191,20 +179,20 @@ public class AclsAuthorizationFilter implements Filter {
     return allowed;
   }
 
-  boolean checkUserAcls(Principal user) {
+  boolean checkUserAcls(String userName) {
     boolean allowed = false;
-    if (user == null) {
+    if (userName == null) {
       return false;
     }
     if (parser.anyUser) {
       allowed = true;
     }
     else {
-      if (parser.users.contains(user.getName())) {
+      if (parser.users.contains(userName)) {
         allowed = true;
       }
       else if (parser.users.contains("KNOX_ADMIN_USERS") &&
-          adminUsers.contains(user.getName())) {
+          adminUsers.contains(userName)) {
         allowed = true;
       }
     }

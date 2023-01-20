@@ -42,17 +42,11 @@ public interface AclsAuthorizationMessages {
   @Message( level = MessageLevel.DEBUG, text = "Access Granted: {0}" )
   void accessGranted(boolean accessGranted);
 
-  @Message( level = MessageLevel.DEBUG, text = "PrimaryPrincipal: {0}" )
-  void primaryPrincipal(String name);
+  @Message( level = MessageLevel.DEBUG, text = "Effective principal: {0}" )
+  void effectivePrincipal(String name);
 
-  @Message( level = MessageLevel.DEBUG, text = "ImpersonatedPrincipal: {0}" )
-  void impersonatedPrincipal(String name);
-
-  @Message( level = MessageLevel.DEBUG, text = "ImpersonatedPrincipal has access: {0}" )
-  void impersonatedPrincipalHasAccess(boolean userAccess);
-
-  @Message( level = MessageLevel.DEBUG, text = "PrimaryPrincipal has access: {0}" )
-  void primaryPrincipalHasAccess(boolean userAccess);
+  @Message( level = MessageLevel.DEBUG, text = "Effective principal has access: {0}" )
+  void effectivePrincipalHasAccess(boolean userAccess);
 
   @Message( level = MessageLevel.DEBUG, text = "GroupPrincipal has access: {0}" )
   void groupPrincipalHasAccess(boolean groupAccess);

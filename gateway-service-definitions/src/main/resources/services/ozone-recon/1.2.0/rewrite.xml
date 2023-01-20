@@ -1,0 +1,49 @@
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this  work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+    <rule dir="IN" name="OZONE-RECON/rule/inbound" pattern="*://*:*/**/ozone-recon/{recon_path=**}?{**}">
+        <rewrite template="{$serviceUrl[OZONE-RECON]}/{recon_path=**}?{**}"/>
+    </rule>
+
+
+    <rule dir="OUT" name="OZONE-RECON/rule/static" pattern="/static/{**}">
+        <rewrite template="{gateway.url}/ozone-recon/static/{**}"/>
+    </rule>
+    <rule dir="OUT" name="OZONE-RECON/rule/manifest" pattern="/manifest.json">
+        <rewrite template="{gateway.url}/ozone-recon/manifest.json"/>
+    </rule>
+    <rule dir="OUT" name="OZONE-RECON/rule/favicon" pattern="/favicon.ico">
+        <rewrite template="{gateway.url}/ozone-recon/favicon.ico"/>
+    </rule>
+
+    <rule dir="OUT" name="OZONE-RECON/rule/media" pattern="/static/media/{**}">
+        <rewrite template="{$frontend[gateway.name]}/{$frontend[topology]}/ozone-recon/static/media/{**}"/>
+    </rule>
+    <rule dir="OUT" name="OZONE-RECON/rule/api" pattern="/api/v1/{**}">
+        <rewrite template="{gateway.url}/ozone-recon/api/v1/{**}"/>
+    </rule>
+
+
+    <filter name="OZONE-RECON/filter/staticLinks">
+        <content type="application/javascript">
+            <apply path="static/media/.*\.png" rule="OZONE-RECON/rule/media"/>
+            <apply path="/api/v1/[\w]+" rule="OZONE-RECON/rule/api"/>
+        </content>
+    </filter>
+</rules>
+
+

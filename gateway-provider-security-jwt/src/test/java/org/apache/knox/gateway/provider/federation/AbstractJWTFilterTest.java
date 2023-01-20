@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.provider.federation;
 
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
@@ -979,6 +980,10 @@ public abstract class AbstractJWTFilterTest  {
     return props;
   }
 
+  protected SignedJWT getJWT(String issuer, String sub, Date expires) throws Exception {
+    return getJWT(issuer, sub, expires, privateKey);
+  }
+
   protected SignedJWT getJWT(String issuer, String sub, Date expires, RSAPrivateKey privateKey)
       throws Exception {
     return getJWT(issuer, sub, expires, new Date(), privateKey, JWSAlgorithm.RS256.getName());
@@ -1053,7 +1058,7 @@ public abstract class AbstractJWTFilterTest  {
     }
 
     @Override
-    public boolean verifyToken(JWT token, String jwksurl, String algorithm) {
+    public boolean verifyToken(JWT token, String jwksurl, String algorithm, Set<JOSEObjectType> allowedJwsTypes) {
      return false;
     }
   }
@@ -1067,6 +1072,10 @@ public abstract class AbstractJWTFilterTest  {
       doFilterCalled = true;
 
       subject = Subject.getSubject( AccessController.getContext() );
+    }
+
+    public Subject getSubject() {
+      return subject;
     }
   }
 

@@ -37,6 +37,7 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.easymock.EasyMock;
@@ -141,8 +142,7 @@ public class JWKSResourceTest {
     claimArray[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
     claimArray[5] = null;
 
-    final JWT token = new JWTToken(algorithm, claimArray,
-        Collections.singletonList("aud"), false);
+    final JWT token = new JWTToken(new JWTokenAttributesBuilder().setAlgorithm(algorithm).setAudiences(Collections.singletonList("aud")).setManaged(false).build());
     final JWSSigner signer = new RSASSASigner(privateKey, true);
     token.sign(signer);
     return token;

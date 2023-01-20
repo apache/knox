@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.identityasserter.filter;
 
+import static org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter.VIRTUAL_GROUP_MAPPING_PREFIX;
+
 import org.apache.knox.gateway.deploy.DeploymentContext;
 import org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor;
 import org.apache.knox.gateway.topology.Provider;
@@ -37,9 +39,11 @@ public class IdentityAsserterDeploymentContributor extends AbstractIdentityAsser
     super.contributeProvider(context, provider);
     String mappings = provider.getParams().get(PRINCIPAL_MAPPING_PARAM_NAME);
     String groupMappings = provider.getParams().get(GROUP_PRINCIPAL_MAPPING_PARAM_NAME);
-
     context.getWebAppDescriptor().createContextParam().paramName(PRINCIPAL_MAPPING_PARAM_NAME).paramValue(mappings);
     context.getWebAppDescriptor().createContextParam().paramName(GROUP_PRINCIPAL_MAPPING_PARAM_NAME).paramValue(groupMappings);
+    provider.getParamsList().stream()
+            .filter(each -> each.getName().startsWith(VIRTUAL_GROUP_MAPPING_PREFIX))
+            .forEach(each -> context.getWebAppDescriptor().createContextParam().paramName(each.getName()).paramValue(each.getValue()));
   }
 
   @Override

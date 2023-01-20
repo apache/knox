@@ -42,6 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -165,7 +166,8 @@ public class SimpleDescriptorHandlerFuncTest {
 
       // Try setting up enough of the GatewayServer to support the test...
       GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
-      InetSocketAddress gatewayAddress = new InetSocketAddress(0);
+      List<InetSocketAddress> gatewayAddress = new ArrayList<>();
+      gatewayAddress.add(new InetSocketAddress(0));
       EasyMock.expect(config.getGatewayConfDir()).andReturn(testConfDir.getAbsolutePath()).anyTimes();
       EasyMock.expect(config.getGatewayDataDir()).andReturn(testDataDir.getAbsolutePath()).anyTimes();
       EasyMock.expect(config.getGatewayTopologyDir()).andReturn(testTopoDir.getAbsolutePath()).anyTimes();
@@ -265,7 +267,7 @@ public class SimpleDescriptorHandlerFuncTest {
     }
 
     @Override
-    public ServiceDiscovery newInstance() {
+    public ServiceDiscovery newInstance(GatewayConfig gatewayConfig) {
       return new NoOpServiceDiscovery();
     }
   }
@@ -279,13 +281,33 @@ public class SimpleDescriptorHandlerFuncTest {
     }
 
     @Override
-    public Map<String, Cluster> discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config) {
-      return Collections.emptyMap();
+    public Cluster discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config, String clusterName) {
+      return new Cluster() {
+        @Override
+        public String getName() {
+          return null;
+        }
+
+        @Override
+        public List<String> getServiceURLs(String serviceName) {
+          return null;
+        }
+
+        @Override
+        public List<String> getServiceURLs(String serviceName, Map<String, String> serviceParams) {
+          return null;
+        }
+
+        @Override
+        public ZooKeeperConfig getZooKeeperConfiguration(String serviceName) {
+          return null;
+        }
+      };
     }
 
     @Override
-    public Cluster discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config, String clusterName) {
-      return null;
+    public Cluster discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config, String clusterName, Collection<String> includedServices) {
+      return discover(gwConfig, config, clusterName);
     }
   }
 }

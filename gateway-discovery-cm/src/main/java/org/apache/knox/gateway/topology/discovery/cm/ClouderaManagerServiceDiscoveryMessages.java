@@ -25,14 +25,26 @@ import org.apache.knox.gateway.i18n.messages.StackTrace;
 @Messages(logger="org.apache.knox.gateway.topology.discovery.cm")
 public interface ClouderaManagerServiceDiscoveryMessages {
 
+  @Message(level = MessageLevel.INFO, text = "Discovering cluster: {0} ({1})")
+  void discoveringCluster(String clusterName, String version);
+
   @Message(level = MessageLevel.INFO, text = "Discovered cluster: {0} ({1})")
   void discoveredCluster(String clusterName, String version);
 
   @Message(level = MessageLevel.INFO, text = "Performing cluster discovery for \"{0}\"")
   void discoveringCluster(String clusterName);
 
+  @Message(level = MessageLevel.INFO, text = "Discovering service: {0} ({1}) ...")
+  void discoveringService(String serviceName, String serviceType);
+
   @Message(level = MessageLevel.INFO, text = "Discovered service: {0} ({1})")
   void discoveredService(String serviceName, String serviceType);
+
+  @Message(level = MessageLevel.INFO, text = "Skipping service discovery: {0} ({1})")
+  void skipServiceDiscovery(String serviceName, String serviceType);
+
+  @Message(level = MessageLevel.INFO, text = "Discovering service role: {0} ({1}) ...")
+  void discoveringServiceRole(String roleName, String roleType);
 
   @Message(level = MessageLevel.INFO, text = "Discovered service role: {0} ({1})")
   void discoveredServiceRole(String roleName, String roleType);
@@ -69,13 +81,16 @@ public interface ClouderaManagerServiceDiscoveryMessages {
            text = "Encountered an error during cluster ({0}) discovery: {1}")
   void clusterDiscoveryError(String clusterName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.INFO, text = "Sleeping {0} second(s) before retrying Cloudera Manager service discovery for the {1}. time")
+  void retryDiscovery(long retrySleep, int retryAttempt);
+
   @Message(level = MessageLevel.ERROR,
            text = "Failed to access the service configurations for cluster ({0}) discovery: {1}")
   void failedToAccessServiceConfigs(String clusterName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.ERROR,
-           text = "Failed to access the service role configurations for cluster ({0}) discovery: {1}")
-  void failedToAccessServiceRoleConfigs(String clusterName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+      text = "Failed to access the service role configurations ({0} / {1}) for cluster ({2}) discovery: {3}")
+  void failedToAccessServiceRoleConfigs(String serviceName, String roleName, String clusterName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.ERROR,
            text = "No address for Cloudera Manager service discovery has been configured.")
@@ -210,4 +225,34 @@ public interface ClouderaManagerServiceDiscoveryMessages {
 
   @Message(level = MessageLevel.ERROR, text = "Failed to configure truststore")
   void failedToConfigureTruststore();
+
+  @Message(level = MessageLevel.DEBUG, text = "Looking up cluster services from service discovery repository...")
+  void lookupClusterServicesFromRepository();
+
+  @Message(level = MessageLevel.DEBUG, text = "Looking up service configuration from service discovery repository...")
+  void lookupServiceConfigsFromRepository();
+
+  @Message(level = MessageLevel.DEBUG, text = "Looking up roles from service discovery repository...")
+  void lookupRolesFromRepository();
+
+  @Message(level = MessageLevel.DEBUG, text = "Looking up role configuration from service discovery repository...")
+  void lookupRoleConfigsFromRepository();
+
+  @Message(level = MessageLevel.DEBUG, text = "Looking up cluster services from the configured Cloudera Manager discovery endpoint...")
+  void lookupClusterServicesFromCM();
+
+  @Message(level = MessageLevel.DEBUG, text = "Looking up service configuration from the configured Cloudera Manager discovery endpoint...")
+  void lookupServiceConfigsFromCM();
+
+  @Message(level = MessageLevel.DEBUG, text = "Looking up roles from the configured Cloudera Manager discovery endpoint...")
+  void lookupRolesFromCM();
+
+  @Message(level = MessageLevel.DEBUG, text = "Looking up role configuration from the configured Cloudera Manager discovery endpoint...")
+  void lookupRoleConfigsFromCM();
+
+  @Message(level = MessageLevel.DEBUG, text = "Clearing service discovery repository...")
+  void clearServiceDiscoveryRepository();
+
+  @Message(level = MessageLevel.WARN, text = "The configured maximum retry attempts of {0} may overlap with the configured polling interval settings; using {1} retry attempts")
+  void updateMaxRetryAttempts(int configured, int actual);
 }

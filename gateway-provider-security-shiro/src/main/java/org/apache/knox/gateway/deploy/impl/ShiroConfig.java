@@ -33,6 +33,7 @@ public class ShiroConfig {
     String sectionName;
     String value;
 
+    params.putIfAbsent("main.invalidRequest", "org.apache.shiro.web.filter.InvalidRequestFilter");
     params.putIfAbsent("main.invalidRequest.blockSemicolon", "false");
     params.putIfAbsent("main.invalidRequest.blockBackslash", "false");
     params.putIfAbsent("main.invalidRequest.blockNonAscii", "false");

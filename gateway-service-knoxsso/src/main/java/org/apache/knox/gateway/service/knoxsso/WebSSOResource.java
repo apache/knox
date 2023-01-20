@@ -17,6 +17,10 @@
  */
 package org.apache.knox.gateway.service.knoxsso;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static org.apache.knox.gateway.services.GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -40,16 +44,16 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.WebApplicationException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditor;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
@@ -58,14 +62,11 @@ import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.session.control.ConcurrentSessionVerifier;
 import org.apache.knox.gateway.util.CookieUtils;
 import org.apache.knox.gateway.util.RegExUtils;
 import org.apache.knox.gateway.util.Urls;
 import org.apache.knox.gateway.util.WhitelistUtils;
-
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-import static org.apache.knox.gateway.services.GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE;
 
 @Path( WebSSOResource.RESOURCE_PATH )
 public class WebSSOResource {
@@ -75,6 +76,7 @@ public class WebSSOResource {
   private static final String SSO_COOKIE_SECURE_ONLY_INIT_PARAM = "knoxsso.cookie.secure.only";
   private static final String SSO_COOKIE_MAX_AGE_INIT_PARAM = "knoxsso.cookie.max.age";
   private static final String SSO_COOKIE_DOMAIN_SUFFIX_PARAM = "knoxsso.cookie.domain.suffix";
+  private static final String SSO_COOKIE_SAMESITE_PARAM = "knoxsso.cookie.samesite";
   private static final String SSO_COOKIE_TOKEN_TTL_PARAM = "knoxsso.token.ttl";
   private static final String SSO_COOKIE_TOKEN_AUDIENCES_PARAM = "knoxsso.token.audiences";
   private static final String SSO_COOKIE_TOKEN_SIG_ALG = "knoxsso.token.sigalg";
@@ -83,6 +85,7 @@ public class WebSSOResource {
   private static final String SSO_SIGNINGKEY_KEYSTORE_NAME = "knoxsso.signingkey.keystore.name";
   private static final String SSO_SIGNINGKEY_KEYSTORE_ALIAS = "knoxsso.signingkey.keystore.alias";
   private static final String SSO_SIGNINGKEY_KEYSTORE_PASSPHRASE_ALIAS = "knoxsso.signingkey.keystore.passphrase.alias";
+  private static final String SSO_TOKEN_ISSUER = "knoxsso.token.issuer";
 
   /* parameters expected by knoxsso */
   private static final String SSO_EXPECTED_PARAM = "knoxsso.expected.params";
@@ -91,7 +94,8 @@ public class WebSSOResource {
   private static final String ORIGINAL_URL_REQUEST_PARAM = "originalUrl";
   private static final String ORIGINAL_URL_COOKIE_NAME = "original-url";
   private static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
-  private static final long TOKEN_TTL_DEFAULT = 30000L;
+  private static final String SSO_COOKIE_SAMESITE_DEFAULT = "Strict";
+  public static final long TOKEN_TTL_DEFAULT = 15000 * 60;
   static final String RESOURCE_PATH = "/api/v1/websso";
   private String cookieName;
   private boolean secureOnly = true;
@@ -104,6 +108,9 @@ public class WebSSOResource {
   private String signatureAlgorithm;
   private List<String> ssoExpectedparams = new ArrayList<>();
   private String clusterName;
+  private String tokenIssuer;
+
+  private String sameSiteValue;
 
   @Context
   HttpServletRequest request;
@@ -123,12 +130,20 @@ public class WebSSOResource {
     String enableSessionStr = context.getInitParameter(SSO_ENABLE_SESSION_PARAM);
     this.enableSession = Boolean.parseBoolean(enableSessionStr);
 
+    this.tokenIssuer = StringUtils.isBlank(context.getInitParameter(SSO_TOKEN_ISSUER))
+            ? JWTokenAttributes.DEFAULT_ISSUER
+            : context.getInitParameter(SSO_TOKEN_ISSUER);
+
     setSignatureAlogrithm();
 
     final String expectedParams = context.getInitParameter(SSO_EXPECTED_PARAM);
     if (expectedParams != null) {
       ssoExpectedparams = Arrays.asList(expectedParams.split(","));
     }
+
+    this.sameSiteValue = StringUtils.isBlank(context.getInitParameter(SSO_COOKIE_SAMESITE_PARAM))
+            ? SSO_COOKIE_SAMESITE_DEFAULT
+            : context.getInitParameter(SSO_COOKIE_SAMESITE_PARAM);
   }
 
   private void setSignatureAlogrithm() throws AliasServiceException {
@@ -209,6 +224,14 @@ public class WebSSOResource {
   }
 
   private Response getAuthenticationToken(int statusCode) {
+    if (!enableSession) {
+      // invalidate the session to avoid autologin
+      // Coverity CID 1352857
+      HttpSession session = request.getSession(false);
+      if (session != null) {
+        session.invalidate();
+      }
+    }
     GatewayServices services =
                 (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     boolean removeOriginalUrlCookie = true;
@@ -249,9 +272,14 @@ public class WebSSOResource {
       original = originalUrlCookies.get(0).getValue();
     }
 
+    Principal p = request.getUserPrincipal();
+    ConcurrentSessionVerifier verifier = services.getService(ServiceType.CONCURRENT_SESSION_VERIFIER);
+    if (!verifier.verifySessionForUser(p.getName())) {
+      throw new WebApplicationException("Too many sessions for user: " + request.getUserPrincipal().getName(), Response.Status.FORBIDDEN);
+    }
+
     AliasService as = services.getService(ServiceType.ALIAS_SERVICE);
     JWTokenAuthority tokenAuthority = services.getService(ServiceType.TOKEN_SERVICE);
-    Principal p = request.getUserPrincipal();
 
     try {
       String signingKeystoreName = context.getInitParameter(SSO_SIGNINGKEY_KEYSTORE_NAME);
@@ -262,13 +290,24 @@ public class WebSSOResource {
         signingKeystorePassphrase = as.getPasswordFromAliasForCluster(clusterName, signingKeystorePassphraseAlias);
       }
 
-      final JWTokenAttributes jwtAttributes = new JWTokenAttributesBuilder().setPrincipal(p).setAudiences(targetAudiences).setAlgorithm(signatureAlgorithm).setExpires(getExpiry())
-          .setSigningKeystoreName(signingKeystoreName).setSigningKeystoreAlias(signingKeystoreAlias).setSigningKeystorePassphrase(signingKeystorePassphrase).build();
+      final JWTokenAttributes jwtAttributes = new JWTokenAttributesBuilder()
+              .setIssuer(tokenIssuer)
+              .setUserName(p.getName())
+              .setAudiences(targetAudiences)
+              .setAlgorithm(signatureAlgorithm)
+              .setExpires(getExpiry())
+              .setSigningKeystoreName(signingKeystoreName)
+              .setSigningKeystoreAlias(signingKeystoreAlias)
+              .setSigningKeystorePassphrase(signingKeystorePassphrase)
+              .build();
       JWT token = tokenAuthority.issueToken(jwtAttributes);
 
       // Coverity CID 1327959
-      if( token != null ) {
-        addJWTHadoopCookie( original, token );
+      if (token != null) {
+        if (!verifier.registerToken(p.getName(), token)) {
+          throw new WebApplicationException("Too many sessions for user: " + request.getUserPrincipal().getName(), Response.Status.FORBIDDEN);
+        }
+        addJWTHadoopCookie(original, token);
       }
 
       if (removeOriginalUrlCookie) {
@@ -294,14 +333,7 @@ public class WebSSOResource {
       // todo log return error response
     }
 
-    if (!enableSession) {
-      // invalidate the session to avoid autologin
-      // Coverity CID 1352857
-      HttpSession session = request.getSession(false);
-      if( session != null ) {
-        session.invalidate();
-      }
-    }
+
 
     return Response.seeOther(location).entity("{ \"redirectTo\" : " + original + " }").build();
   }
@@ -381,7 +413,7 @@ public class WebSSOResource {
       if (maxAge != -1) {
         setCookie.append("; Max-Age=").append(maxAge);
       }
-      setCookie.append("; SameSite=None");
+      setCookie.append("; SameSite=").append(this.sameSiteValue);
       response.setHeader("Set-Cookie", setCookie.toString());
       LOGGER.addedJWTCookie();
     } catch (Exception e) {

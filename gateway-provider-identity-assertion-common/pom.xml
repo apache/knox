@@ -21,7 +21,7 @@
     <parent>
         <groupId>org.apache.knox</groupId>
         <artifactId>gateway</artifactId>
-        <version>1.6.0-SNAPSHOT</version>
+        <version>2.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>gateway-provider-identity-assertion-common</artifactId>
@@ -36,6 +36,10 @@
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-spi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-spi-common</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
@@ -85,8 +89,21 @@
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-util</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.jboss.shrinkwrap.descriptors</groupId>
+            <artifactId>shrinkwrap-descriptors-api-javaee</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.shrinkwrap</groupId>
+            <artifactId>shrinkwrap-api</artifactId>
+        </dependency>
 
 
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-server</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-test-utils</artifactId>
@@ -104,10 +121,15 @@
             <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.apache.velocity</groupId>
-            <artifactId>velocity</artifactId>
+            <artifactId>velocity-engine-core</artifactId>
             <scope>test</scope>
         </dependency>
 

@@ -91,13 +91,13 @@ public interface SpiGatewayMessages {
             text = "The dispatch to {0} was disallowed because it fails the dispatch whitelist validation. See documentation for dispatch whitelisting." )
   void dispatchDisallowed(String uri);
 
-  @Message( level = MessageLevel.DEBUG, text = "HTTP client connection timeout is set to {0} for {1}" )
+  @Message( level = MessageLevel.INFO, text = "HTTP client connection timeout is set to {0} ms for {1}" )
   void setHttpClientConnectionTimeout(int connectionTimeout, String serviceRole);
 
-  @Message( level = MessageLevel.DEBUG, text = "HTTP client socket timeout is set to {0} for {1}" )
-  void setHttpClientSocketTimeout(int csocketTimeout, String serviceRole);
+  @Message( level = MessageLevel.INFO, text = "HTTP client socket timeout is set to {0} ms for {1}" )
+  void setHttpClientSocketTimeout(int socketTimeout, String serviceRole);
 
-  @Message( level = MessageLevel.DEBUG, text = "replayBufferSize is set to {0} for {1}" )
+  @Message( level = MessageLevel.INFO, text = "replayBufferSize is set to {0} for {1}" )
   void setReplayBufferSize(int replayBufferSize, String serviceRole);
 
   @Message( level = MessageLevel.DEBUG, text = "Using two way SSL in {0}" )
@@ -108,4 +108,10 @@ public interface SpiGatewayMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "Skipped adding outbound header {0} and value {1}" )
   void skippedOutboundHeader(String header, String value);
+
+  @Message( level = MessageLevel.INFO, text = "HTTP client retry count is set to {0} for {1}" )
+  void setRetryCount(int retryCount, String serviceRole);
+
+  @Message( level = MessageLevel.INFO, text = "HTTP client retry non safe request is set to {0} for {1}" )
+  void setRetryNonIndependent(boolean retryNonIndependent, String serviceRole);
 }

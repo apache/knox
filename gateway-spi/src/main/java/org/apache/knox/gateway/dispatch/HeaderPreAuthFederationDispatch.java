@@ -38,7 +38,7 @@ import java.security.Principal;
  *
  * @since 1.1.0
  */
-public class HeaderPreAuthFederationDispatch extends DefaultDispatch {
+public class HeaderPreAuthFederationDispatch extends ConfigurableDispatch {
 
   String headerName = "SM_USER";
 
@@ -69,6 +69,4 @@ public class HeaderPreAuthFederationDispatch extends DefaultDispatch {
     final HttpResponse inboundResponse = executeOutboundRequest(outboundRequest);
     writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
   }
-
-
 }

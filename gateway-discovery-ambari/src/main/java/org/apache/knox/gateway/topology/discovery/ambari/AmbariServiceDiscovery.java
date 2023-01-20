@@ -39,6 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -194,36 +195,6 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
         return TYPE;
     }
 
-
-    @Override
-    public Map<String, Cluster> discover(GatewayConfig gatewayConfig, ServiceDiscoveryConfig discoveryConfig) {
-        Map<String, Cluster> clusters = new HashMap<>();
-
-        init(gatewayConfig);
-
-        String discoveryAddress = discoveryConfig.getAddress();
-
-        // Invoke Ambari REST API to discover the available clusters
-        String clustersDiscoveryURL = String.format(Locale.ROOT, "%s" + AMBARI_CLUSTERS_URI, discoveryAddress);
-
-        JSONObject json = restClient.invoke(clustersDiscoveryURL, discoveryConfig.getUser(), discoveryConfig.getPasswordAlias());
-
-        // Parse the cluster names from the response, and perform the cluster discovery
-        JSONArray clusterItems = (JSONArray) json.get("items");
-        for (Object clusterItem : clusterItems) {
-            String clusterName = (String) ((JSONObject)((JSONObject) clusterItem).get("Clusters")).get("cluster_name");
-            try {
-                Cluster c = discover(gatewayConfig, discoveryConfig, clusterName);
-                clusters.put(clusterName, c);
-            } catch (Exception e) {
-                log.clusterDiscoveryError(clusterName, e);
-            }
-        }
-
-        return clusters;
-    }
-
-
     @Override
     public Cluster discover(GatewayConfig gatewayConfig, ServiceDiscoveryConfig config, String clusterName) {
         AmbariCluster cluster = null;
@@ -353,6 +324,11 @@ class AmbariServiceDiscovery implements ServiceDiscovery {
         }
 
         return cluster;
+    }
+
+    @Override
+    public Cluster discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config, String clusterName, Collection<String> includedServices) {
+      throw new UnsupportedOperationException("Filtering Ambari service discovery by service names is not supported!");
     }
 
 }

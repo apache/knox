@@ -32,10 +32,12 @@ import java.nio.file.Paths;
 import java.security.KeyStoreException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -79,7 +81,6 @@ import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.validation.TopologyValidator;
-import org.apache.log4j.PropertyConfigurator;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
@@ -110,6 +111,7 @@ public class KnoxCLI extends Configured implements Tool {
       "   [" + CertCreateCommand.USAGE + "]\n" +
       "   [" + CertExportCommand.USAGE + "]\n" +
       "   [" + AliasCreateCommand.USAGE + "]\n" +
+      "   [" + BatchAliasCreateCommand.USAGE + "]\n" +
       "   [" + AliasDeleteCommand.USAGE + "]\n" +
       "   [" + AliasListCommand.USAGE + "]\n" +
       "   [" + RedeployCommand.USAGE + "]\n" +
@@ -253,6 +255,12 @@ public class KnoxCLI extends Configured implements Tool {
           printKnoxShellUsage();
           return -1;
         }
+      } else if (args[i].equals("create-aliases")) {
+        command = new BatchAliasCreateCommand();
+        if (args.length < 3 || "--help".equals(alias)) {
+          printKnoxShellUsage();
+          return -1;
+        }
       } else if (args[i].equals("create-cert")) {
         command = new CertCreateCommand();
         if ((args.length > i + 1) && args[i + 1].equals("--help")) {
@@ -282,13 +290,22 @@ public class KnoxCLI extends Configured implements Tool {
       } else if (args[i].equals("list-alias")) {
         command = new AliasListCommand();
       } else if (args[i].equals("--value")) {
-        if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
+        if (i + 1 >= args.length || args[i + 1].startsWith("-")) {
           printKnoxShellUsage();
           return -1;
         }
         this.value = args[++i];
-        if ( command instanceof MasterCreateCommand ) {
+        if (command instanceof MasterCreateCommand) {
           this.master = this.value;
+        } else if (command instanceof BatchAliasCreateCommand) {
+          ((BatchAliasCreateCommand) command).addValue(value);
+        }
+      } else if (args[i].equals("--alias")) {
+        if (command instanceof BatchAliasCreateCommand) {
+          ((BatchAliasCreateCommand) command).addName(args[++i]);
+        } else {
+          printKnoxShellUsage();
+          return -1;
         }
       } else if ( args[i].equals("version") ) {
         command = new VersionCommand();
@@ -706,8 +723,8 @@ public class KnoxCLI extends Configured implements Tool {
           }
 
           if ("PEM".equalsIgnoreCase(type) || type == null) {
-            X509CertificateUtil.writeCertificateToFile(cert, new File(keyStoreDir + "gateway-identity.pem"));
-            out.println("Certificate gateway-identity has been successfully exported to: " + keyStoreDir + "gateway-identity.pem");
+            X509CertificateUtil.writeCertificateToFile(cert, new File(keyStoreDir + "gateway-client-trust.pem"));
+            out.println("Certificate gateway-identity has been successfully exported to: " + keyStoreDir + "gateway-client-trust.pem");
           } else if ("JKS".equalsIgnoreCase(type)) {
             X509CertificateUtil.writeCertificateToJks(cert, new File(keyStoreDir + "gateway-client-trust.jks"));
             out.println("Certificate gateway-identity has been successfully exported to: " + keyStoreDir + "gateway-client-trust.jks");
@@ -906,32 +923,6 @@ public class KnoxCLI extends Configured implements Tool {
    public String getUsage() {
      return USAGE + ":\n\n" + DESC;
    }
-
-    protected char[] promptUserForPassword() {
-      char[] password = null;
-      Console c = System.console();
-      if (c == null) {
-        System.err
-            .println("No console to fetch password from user.Consider setting via --generate or --value.");
-        System.exit(1);
-      }
-
-      boolean noMatch;
-      do {
-        char[] newPassword1 = c.readPassword("Enter password: ");
-        char[] newPassword2 = c.readPassword("Enter password again: ");
-        noMatch = !Arrays.equals(newPassword1, newPassword2);
-        if (noMatch) {
-          c.format("Passwords don't match. Try again.%n");
-        } else {
-          password = Arrays.copyOf(newPassword1, newPassword1.length);
-        }
-        Arrays.fill(newPassword1, ' ');
-        Arrays.fill(newPassword2, ' ');
-      } while (noMatch);
-      return password;
-    }
-
  }
 
  public class AliasDeleteCommand extends Command {
@@ -977,6 +968,104 @@ public class KnoxCLI extends Configured implements Tool {
    }
 
  }
+
+  public class BatchAliasCreateCommand extends Command {
+    public static final String USAGE = "create-aliases " +
+            "--alias alias1 [--value value1] " +
+            "--alias alias2 [--value value2] " +
+            "--alias aliasN [--value valueN] ... " +
+            "[--cluster clustername] " +
+            "[--generate]";
+    public static final String DESC = "The create-aliases command will create multiple aliases\n"
+            + "and secret pairs within the same credential store for the\n"
+            + "indicated --cluster otherwise within the gateway\n"
+            + "credential store. The actual secret may be specified via\n"
+            + "the --value option or --generate (will create a random secret\n"
+            + "for you) or user will be prompt to provide password.";
+
+    private List<String> names = new ArrayList<>();
+    private List<String> values = new ArrayList<>();
+
+    public void addName(String alias) {
+      if (names.contains(alias)) {
+        out.println("Duplicated alias " + alias);
+        System.exit(1);
+      }
+      names.add(alias);
+      values.add(null);
+    }
+
+    public void addValue(String value) {
+      values.set(values.size() -1, value);
+    }
+
+    @Override
+    public void execute() throws Exception {
+      Map<String, String> aliases = toMap();
+      List<String> generated = new ArrayList<>();
+      AliasService as = getAliasService();
+      if (cluster == null) {
+        cluster = "__gateway";
+      }
+      for (Map.Entry<String, String> entry : aliases.entrySet()) {
+        if (entry.getValue() == null) {
+          if (Boolean.parseBoolean(generate)) {
+            entry.setValue(PasswordUtils.generatePassword(16));
+            generated.add(entry.getKey());
+          } else {
+            entry.setValue(new String(promptUserForPassword()));
+          }
+        }
+      }
+      as.addAliasesForCluster(cluster, aliases);
+      if (!generated.isEmpty()) {
+        out.println(generated.size() + " alias(es) have been successfully generated: " + generated);
+      }
+      List<String> created = new ArrayList<>(aliases.keySet());
+      created.removeAll(generated);
+      if (!created.isEmpty()) {
+        out.println(created.size() + " alias(es) have been successfully created: " + created);
+      }
+    }
+
+    private Map<String, String> toMap() {
+      Map<String,String> aliases = new LinkedHashMap<>();
+      for (int i = 0; i < names.size(); i++) {
+        aliases.put(names.get(i), values.get(i));
+      }
+      return aliases;
+    }
+
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+  }
+
+  public static char[] promptUserForPassword() {
+    char[] password = null;
+    Console c = System.console();
+    if (c == null) {
+      System.err
+              .println("No console to fetch password from user.Consider setting via --generate or --value.");
+      System.exit(1);
+    }
+
+    boolean noMatch;
+    do {
+      char[] newPassword1 = c.readPassword("Enter password: ");
+      char[] newPassword2 = c.readPassword("Enter password again: ");
+      noMatch = !Arrays.equals(newPassword1, newPassword2);
+      if (noMatch) {
+        c.format("Passwords don't match. Try again.%n");
+      } else {
+        password = Arrays.copyOf(newPassword1, newPassword1.length);
+      }
+      Arrays.fill(newPassword1, ' ');
+      Arrays.fill(newPassword2, ' ');
+    } while (noMatch);
+    return password;
+  }
 
  public class MasterCreateCommand extends Command {
   public static final String USAGE = "create-master [--force] [--master mastersecret] [--generate]";
@@ -1088,7 +1177,7 @@ public class KnoxCLI extends Configured implements Tool {
       ts.reloadTopologies();
       if (cluster != null) {
         if (validateClusterName(cluster, ts)) {
-          ts.redeployTopologies(cluster);
+          ts.redeployTopology(cluster);
         }
         else {
           out.println("Invalid cluster name provided. Nothing to redeploy.");
@@ -2339,7 +2428,6 @@ public class KnoxCLI extends Configured implements Tool {
   }
 
   public static void main(String[] args) throws Exception {
-    PropertyConfigurator.configure( System.getProperty( "log4j.configuration" ) );
     int res = ToolRunner.run(new GatewayConfigImpl(), new KnoxCLI(), args);
     System.exit(res);
   }

@@ -35,7 +35,9 @@ public enum ServiceType {
   SSL_SERVICE("SSLService"),
   TOKEN_SERVICE("TokenService"),
   TOKEN_STATE_SERVICE("TokenStateService"),
-  TOPOLOGY_SERVICE("TopologyService");
+  TOPOLOGY_SERVICE("TopologyService"),
+  CONCURRENT_SESSION_VERIFIER("ConcurrentSessionVerifier"),
+  REMOTE_CONFIGURATION_MONITOR("RemoteConfigurationMonitor");
 
   private final String serviceTypeName;
   private final String shortName;

@@ -153,10 +153,12 @@ public class HashicorpVaultAliasService extends AbstractAliasService {
 
   @Override
   public char[] getPasswordFromAliasForCluster(String clusterName, String alias, boolean generate) throws AliasServiceException {
-    if(generate) {
-      getPasswordFromAliasForCluster(clusterName, alias);
+    char[] password = getPasswordFromAliasForCluster(clusterName, alias);
+    if (password == null && generate) {
+      generateAliasForCluster(clusterName, alias);
+      password = getPasswordFromAliasForCluster(clusterName, alias);
     }
-    return getPasswordFromAliasForCluster(clusterName, alias);
+    return password;
   }
 
   @Override

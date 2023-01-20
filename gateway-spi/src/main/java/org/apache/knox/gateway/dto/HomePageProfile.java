@@ -34,6 +34,7 @@ public class HomePageProfile {
   static final String GPI_TOKENS = GPI_PREFIX + "tokens";
   static final String TOPOLOGIES = "topologies";
   static final String TOPOLOGY_PREFIX = "top_";
+  static final String GPI_WEBSHELL = GPI_PREFIX + "webshell";
   static final String ALL_TOPOLOGIES = TOPOLOGY_PREFIX + "all";
 
   private final Map<String, String> profileElements = new HashMap<>();
@@ -45,6 +46,7 @@ public class HomePageProfile {
     addElement(GPI_ADMIN_API, profileConfiguration);
     addElement(GPI_METADATA_API, profileConfiguration);
     addElement(GPI_TOKENS, profileConfiguration);
+    addElement(GPI_WEBSHELL, profileConfiguration);
     addTopologies(profileConfiguration);
   }
 
@@ -71,7 +73,7 @@ public class HomePageProfile {
   }
 
   public static Collection<String> getFullProfileElements() {
-    return Arrays.asList(GPI_VERSION, GPI_CERT, GPI_ADMIN_UI, GPI_ADMIN_API, GPI_METADATA_API, GPI_TOKENS);
+    return Arrays.asList(GPI_VERSION, GPI_CERT, GPI_ADMIN_UI, GPI_ADMIN_API, GPI_METADATA_API, GPI_TOKENS, GPI_WEBSHELL);
   }
 
   public static Collection<String> getThinProfileElemens() {

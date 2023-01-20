@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,9 +46,7 @@ class PropertiesFileServiceDiscovery implements ServiceDiscovery {
         return TYPE;
     }
 
-    @Override
-    public Map<String, ServiceDiscovery.Cluster> discover(GatewayConfig gatewayConfig,
-                                                          ServiceDiscoveryConfig discoveryConfig) {
+    private Map<String, ServiceDiscovery.Cluster> discover(ServiceDiscoveryConfig discoveryConfig) {
 
         Map<String, ServiceDiscovery.Cluster> result = new HashMap<>();
 
@@ -110,8 +109,13 @@ class PropertiesFileServiceDiscovery implements ServiceDiscovery {
     public ServiceDiscovery.Cluster discover(GatewayConfig          gwConfig,
                                              ServiceDiscoveryConfig discoveryConfig,
                                              String                 clusterName) {
-        Map<String, ServiceDiscovery.Cluster> clusters = discover(gwConfig, discoveryConfig);
+        Map<String, ServiceDiscovery.Cluster> clusters = discover(discoveryConfig);
         return clusters.get(clusterName);
+    }
+
+    @Override
+    public ServiceDiscovery.Cluster discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config, String clusterName, Collection<String> includedServices) {
+      return discover(gwConfig, config, clusterName);
     }
 
 

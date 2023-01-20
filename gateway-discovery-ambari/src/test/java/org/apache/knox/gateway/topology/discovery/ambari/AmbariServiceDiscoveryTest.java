@@ -197,30 +197,6 @@ public class AmbariServiceDiscoveryTest {
     }
 
     @Test
-    public void testBulkClusterDiscovery() throws Exception {
-        final String discoveryAddress = "http://ambarihost:8080";
-        final String clusterName = "anotherCluster";
-        ServiceDiscovery sd = new TestAmbariServiceDiscovery(clusterName);
-
-        GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
-        EasyMock.replay(gc);
-
-        ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
-        EasyMock.expect(sdc.getAddress()).andReturn(discoveryAddress).anyTimes();
-        EasyMock.expect(sdc.getUser()).andReturn(null).anyTimes();
-        EasyMock.replay(sdc);
-
-        Map<String, ServiceDiscovery.Cluster> clusters = sd.discover(gc, sdc);
-        assertNotNull(clusters);
-        assertEquals(1, clusters.size());
-        ServiceDiscovery.Cluster cluster = clusters.get(clusterName);
-        assertNotNull(cluster);
-        assertEquals(clusterName, cluster.getName());
-        assertTrue(AmbariCluster.class.isAssignableFrom(cluster.getClass()));
-        assertEquals(6, ((AmbariCluster) cluster).getComponents().size());
-    }
-
-    @Test
     public void testClusterDiscoveryWithExternalComponentConfigAugmentation() throws Exception {
         final String discoveryAddress = "http://ambarihost:8080";
         final String clusterName = "myCluster";

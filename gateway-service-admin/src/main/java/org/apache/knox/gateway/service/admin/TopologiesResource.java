@@ -128,8 +128,8 @@ public class TopologiesResource {
           }
 
           // For any read-only override topology, mark it as generated to discourage modification.
-          final List<String> ambariManagedTopos = config.getReadOnlyOverrideTopologyNames();
-          if (ambariManagedTopos.contains(convertedTopology.getName())) {
+          final List<String> managedTopologies = config.getReadOnlyOverrideTopologyNames();
+          if (managedTopologies.contains(convertedTopology.getName())) {
             convertedTopology.setGenerated(true);
           }
 
@@ -361,6 +361,14 @@ public class TopologiesResource {
     // extension.
     String filename = isUpdate ? existing.getName() : getFileNameForResource(name, headers);
 
+    GatewayConfig config =
+            (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    if (providerExists(name, ts) &&
+            config.getReadOnlyOverrideProviderNames().contains(FilenameUtils.getBaseName(name))) {
+      log.disallowedOverwritingGeneratedProvider(name);
+      return status(Response.Status.CONFLICT).entity("{ \"error\" : \"Cannot overwrite existing generated provider: " + name + "\" }").build();
+    }
+
     if (ts.deployProviderConfiguration(filename, content)) {
       try {
         if (isUpdate) {
@@ -398,8 +406,14 @@ public class TopologiesResource {
 
     GatewayServices gs =
             (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-
     TopologyService ts = gs.getService(ServiceType.TOPOLOGY_SERVICE);
+    GatewayConfig config =
+            (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    if ((descriptorExists(name, ts) || topologyExists(name, ts))
+            && config.getReadOnlyOverrideTopologyNames().contains(FilenameUtils.getBaseName(name))) {
+      log.disallowedOverwritingGeneratedDescriptor(name);
+      return status(Response.Status.CONFLICT).entity("{ \"error\" : \"Cannot overwrite existing generated topology: " + name + "\" }").build();
+    }
 
     File existing = getExistingConfigFile(ts.getDescriptors(), name);
     boolean isUpdate = (existing != null);
@@ -424,6 +438,20 @@ public class TopologiesResource {
     return response;
   }
 
+  public boolean topologyExists(String fileName, TopologyService topologyService) {
+    return topologyService.getTopologies().stream()
+            .anyMatch(topology -> topology.getName().equals(FilenameUtils.getBaseName(fileName)));
+  }
+
+  public boolean descriptorExists(String fileName, TopologyService topologyService) {
+    return topologyService.getDescriptors().stream()
+            .anyMatch(file -> FilenameUtils.getBaseName(file.getName()).equals(FilenameUtils.getBaseName(fileName)));
+  }
+
+  public boolean providerExists(String fileName, TopologyService topologyService) {
+    return topologyService.getProviderConfigurations().stream()
+            .anyMatch(file -> FilenameUtils.getBaseName(file.getName()).equals(FilenameUtils.getBaseName(fileName)));
+  }
 
   @GET
   @Produces({APPLICATION_JSON})

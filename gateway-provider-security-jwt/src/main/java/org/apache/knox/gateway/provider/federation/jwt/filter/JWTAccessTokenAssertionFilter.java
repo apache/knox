@@ -19,7 +19,6 @@ package org.apache.knox.gateway.provider.federation.jwt.filter;
 
 import java.io.IOException;
 import java.security.AccessController;
-import java.security.Principal;
 import java.text.ParseException;
 import java.util.HashMap;
 
@@ -32,11 +31,12 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.filter.security.AbstractIdentityAssertionFilter;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
-import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
@@ -52,10 +52,12 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
   private static final String TOKEN_TYPE = "token_type";
   private static final String ACCESS_TOKEN = "access_token";
   private static final String BEARER = "Bearer ";
+  public static final String ISSUER = "knox.token.issuer";
   private static JWTMessages log = MessagesFactory.get( JWTMessages.class );
   private long validity;
   private JWTokenAuthority authority;
   private ServiceRegistry sr;
+  private String tokenIssuer;
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
@@ -69,6 +71,10 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
     GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     authority = services.getService(ServiceType.TOKEN_SERVICE);
     sr = services.getService(ServiceType.SERVICE_REGISTRY_SERVICE);
+
+    this.tokenIssuer = StringUtils.isBlank(filterConfig.getInitParameter(JWTAccessTokenAssertionFilter.ISSUER))
+            ? JWTokenAttributes.DEFAULT_ISSUER
+            : filterConfig.getInitParameter(JWTAccessTokenAssertionFilter.ISSUER);
   }
 
   @Override
@@ -140,15 +146,15 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
   private String getAccessToken(final String principalName, String serviceName, long expires) {
     String accessToken = null;
 
-    Principal p = new Principal() {
-      @Override
-      public String getName() {
-        return principalName;
-      }
-    };
     JWT token;
     try {
-      final JWTokenAttributes jwtAttributes = new JWTokenAttributesBuilder().setPrincipal(p).setAudiences(serviceName).setAlgorithm(signatureAlgorithm).setExpires(expires).build();
+      final JWTokenAttributes jwtAttributes = new JWTokenAttributesBuilder()
+              .setIssuer(tokenIssuer)
+              .setUserName(principalName)
+              .setAudiences(serviceName)
+              .setAlgorithm(signatureAlgorithm)
+              .setExpires(expires)
+              .build();
       token = authority.issueToken(jwtAttributes);
       // Coverity CID 1327961
       if( token != null ) {

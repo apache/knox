@@ -44,7 +44,7 @@ import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.text.ParseException;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Locale;
 import java.util.Set;
 
@@ -163,11 +163,7 @@ public class AccessTokenFederationFilter implements Filter {
 
   private Subject createSubjectFromToken(JWTToken token) {
     final String principal = token.getPrincipal();
-
-    HashSet emptySet = new HashSet();
-    Set<Principal> principals = new HashSet<>();
-    Principal p = new PrimaryPrincipal(principal);
-    principals.add(p);
+    final Set<Principal> principals = Collections.singleton(new PrimaryPrincipal(principal));
 
     // The newly constructed Sets check whether this Subject has been set read-only
     // before permitting subsequent modifications. The newly created Sets also prevent
@@ -176,6 +172,6 @@ public class AccessTokenFederationFilter implements Filter {
     // To modify the Principals Set, the caller must have AuthPermission("modifyPrincipals").
     // To modify the public credential Set, the caller must have AuthPermission("modifyPublicCredentials").
     // To modify the private credential Set, the caller must have AuthPermission("modifyPrivateCredentials").
-    return new javax.security.auth.Subject(true, principals, emptySet, emptySet);
+    return new javax.security.auth.Subject(true, principals, Collections.emptySet(), Collections.emptySet());
   }
 }

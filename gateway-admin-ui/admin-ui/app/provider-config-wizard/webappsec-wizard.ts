@@ -69,7 +69,7 @@ export class WebAppSecurityWizard extends CategoryWizard implements ProviderCont
         let configType = WebAppSecurityWizard.typeConfigMap.get(this.selectedType);
         if (configType) {
             this.providerConfig = Object.create(configType.prototype) as WebAppSecurityContributor;
-            this.providerConfig.constructor.apply(this.providerConfig);
+            this.providerConfig = this.providerConfig.constructor.apply(this.providerConfig);
             (this.providerConfig as WebAppSecurityContributor).setType(this.selectedType);
         } else {
             console.debug('WebAppSecurityWizard --> No provider configuration type mapped for ' + this.selectedType);

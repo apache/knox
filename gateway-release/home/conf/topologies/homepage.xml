@@ -47,10 +47,6 @@
             <value>false</value>
          </param>
          <param>
-            <name>xframe.options.enabled</name>
-            <value>true</value>
-         </param>
-         <param>
             <name>xframe.options</name>
             <value>SAMEORIGIN</value>
          </param>
@@ -64,6 +60,22 @@
          <role>identity-assertion</role>
          <name>Default</name>
          <enabled>true</enabled>
+         <param>
+            <name>hadoop.proxyuser.impersonation.enabled</name>
+            <value>false</value>
+         </param>
+         <param>
+            <name>hadoop.proxyuser.admin.users</name>
+            <value>*</value>
+         </param>
+         <param>
+            <name>hadoop.proxyuser.admin.groups</name>
+            <value>*</value>
+         </param>
+         <param>
+            <name>hadoop.proxyuser.admin.hosts</name>
+            <value>*</value>
+         </param>
       </provider>
    </gateway>
    <service>
@@ -97,14 +109,21 @@
           <name>knox.token.renewer.whitelist</name>
           <value>admin</value>
       </param>
+      <param>
+          <name>knox.token.type</name>
+          <value>JWT</value>
+      </param>
    </service>
    <application>
-      <name>tokengen</name>
+      <name>token-generation</name>
    </application>
    <application>
       <name>home</name>
    </application>
    <application>
       <name>token-management</name>
+   </application>
+   <application>      
+      <name>webshell-ui</name>
    </application>
 </topology>

@@ -16,14 +16,11 @@
  */
 package org.apache.knox.gateway.topology.monitor;
 
-import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
+import org.apache.knox.gateway.services.Service;
 
-public interface RemoteConfigurationMonitor {
-
-    void start() throws Exception;
-
-    void stop() throws Exception;
-
-    RemoteConfigurationRegistryClient getClient();
-
+public interface RemoteConfigurationMonitor extends Service {
+    boolean createProvider(String name, String content);
+    boolean createDescriptor(String name, String content);
+    boolean deleteProvider(String name);
+    boolean deleteDescriptor(String name);
 }

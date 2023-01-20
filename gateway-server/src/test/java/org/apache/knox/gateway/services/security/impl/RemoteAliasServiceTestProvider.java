@@ -88,7 +88,8 @@ public class RemoteAliasServiceTestProvider implements RemoteAliasServiceProvide
 
     @Override
     public char[] getPasswordFromAliasForCluster(String clusterName, String alias) {
-      return aliases.getOrDefault(clusterName, new HashMap<>()).get(alias).toCharArray();
+      String value = aliases.getOrDefault(clusterName, new HashMap<>()).get(alias);
+      return value == null ? null : value.toCharArray();
     }
 
     @Override

@@ -46,6 +46,9 @@ public interface JWTMessages {
   @Message( level = MessageLevel.WARN, text = "Expected Bearer token is missing." )
   void missingBearerToken();
 
+  @Message( level = MessageLevel.WARN, text = "Expected valid cookie is missing." )
+  void missingValidCookie();
+
   @Message( level = MessageLevel.INFO, text = "Unable to verify token: {0}" )
   void unableToVerifyToken(@StackTrace( level = MessageLevel.ERROR) Exception e);
 
@@ -92,4 +95,7 @@ public interface JWTMessages {
 
   @Message( level = MessageLevel.INFO, text = "Missing token: {0}")
   void missingTokenFromHeader(Pair<JWTFederationFilter.TokenType, String> wireToken);
+
+  @Message( level = MessageLevel.INFO, text = "Unexpected Issuer for token {0} ({1})." )
+  void unexpectedTokenIssuer(String tokenDisplayText, String tokenId);
 }

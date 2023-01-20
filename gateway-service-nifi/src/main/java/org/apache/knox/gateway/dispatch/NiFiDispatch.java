@@ -29,7 +29,7 @@ import java.io.InputStream;
 import java.util.Locale;
 import java.util.Set;
 
-public class NiFiDispatch extends DefaultDispatch {
+public class NiFiDispatch extends ConfigurableDispatch {
 
   @Override
   protected void executeRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) throws IOException {

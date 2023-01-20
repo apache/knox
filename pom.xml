@@ -27,7 +27,7 @@
 
     <groupId>org.apache.knox</groupId>
     <artifactId>gateway</artifactId>
-    <version>1.6.0-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>gateway</name>
@@ -70,6 +70,7 @@
         <module>gateway-i18n-logging-log4j</module>
         <module>gateway-i18n-logging-sl4j</module>
         <module>gateway-spi</module>
+        <module>gateway-spi-common</module>
         <module>gateway-discovery-ambari</module>
         <module>gateway-discovery-cm</module>
         <module>gateway-performance-test</module>
@@ -99,10 +100,12 @@
         <module>gateway-provider-identity-assertion-regex</module>
         <module>gateway-provider-identity-assertion-switchcase</module>
         <module>gateway-provider-identity-assertion-pseudo</module>
+        <module>gateway-provider-identity-assertion-no-doas</module>
         <module>gateway-provider-jersey</module>
         <module>gateway-provider-ha</module>
         <module>gateway-service-admin</module>
         <module>gateway-service-as</module>
+        <module>gateway-service-auth</module>
         <module>gateway-service-hbase</module>
         <module>gateway-service-hive</module>
         <module>gateway-service-impala</module>
@@ -145,6 +148,8 @@
         <module>knox-homepage-ui</module>
         <module>gateway-openapi-ui</module>
         <module>knox-token-management-ui</module>
+        <module>knox-webshell-ui</module>
+        <module>knox-token-generation-ui</module>
     </modules>
 
     <properties>
@@ -166,13 +171,13 @@
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
         <cglib.version>3.3.0</cglib.version>
         <checkstyle.version>8.38</checkstyle.version>
-        <cloudera-manager.version>7.0.3</cloudera-manager.version>
+        <cloudera-manager.version>7.8.1</cloudera-manager.version>
         <cloudera-manager-api-swagger.version>${cloudera-manager.version}</cloudera-manager-api-swagger.version>
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
         <commons-cli.version>1.4</commons-cli.version>
         <commons-codec.version>1.15</commons-codec.version>
         <commons-collections.version>3.2.2</commons-collections.version>
-        <commons-compress.version>1.20</commons-compress.version>
+        <commons-compress.version>1.21</commons-compress.version>
         <commons-configuration.version>1.10</commons-configuration.version>
         <commons-digester3.version>3.2</commons-digester3.version>
         <commons-io.version>2.8.0</commons-io.version>
@@ -180,16 +185,17 @@
         <commons-lang3.version>3.11</commons-lang3.version>
         <commons-logging.version>1.2</commons-logging.version>
         <commons-math3.version>3.6.1</commons-math3.version>
-        <commons-net.version>3.7.2</commons-net.version>
-        <commons-text.version>1.9</commons-text.version>
+        <commons-net.version>3.9.0</commons-net.version>
+        <commons-text.version>1.10.0</commons-text.version>
         <cors-filter.version>2.9.1</cors-filter.version>
         <cryptacular.version>1.2.4</cryptacular.version>
         <curator.version>4.3.0</curator.version>
         <dependency-check-maven.version>6.0.3</dependency-check-maven.version>
         <derby.db.version>10.14.2.0</derby.db.version> <!-- 10.15.1.3 requires Java 9 -->
+        <hsql.db.version>2.7.1</hsql.db.version>
         <dockerfile-maven-plugin.version>1.4.13</dockerfile-maven-plugin.version>
         <dom4j.version>2.1.3</dom4j.version>
-        <easymock.version>4.2</easymock.version>
+        <easymock.version>4.3</easymock.version>
         <eclipselink.version>2.7.8</eclipselink.version>
         <ehcache.version>2.6.11</ehcache.version>
         <exec-maven-plugin.version>3.0.0</exec-maven-plugin.version>
@@ -198,10 +204,10 @@
         <forbiddenapis.version>3.1</forbiddenapis.version>
         <frontend-maven-plugin.version>1.11.0</frontend-maven-plugin.version>
         <glassfish-jaxb.version>2.3.3</glassfish-jaxb.version>
-        <gson.version>2.8.6</gson.version>
+        <gson.version>2.8.9</gson.version>
         <groovy.version>3.0.7</groovy.version>
         <guava.version>28.2-jre</guava.version>
-        <hadoop.version>3.2.1</hadoop.version>
+        <hadoop.version>3.2.4</hadoop.version>
         <hamcrest.version>2.2</hamcrest.version>
         <hamcrest-json.version>0.2</hamcrest-json.version>
         <httpclient.version>4.5.13</httpclient.version>
@@ -219,64 +225,74 @@
         <jaxws-ri.version>2.3.3</jaxws-ri.version>
         <jakarta.xml.bind.version>2.3.2</jakarta.xml.bind.version>
         <jakarta.activation.version>1.2.2</jakarta.activation.version>
-        <java-support.version>7.5.2</java-support.version>
+        <java-support.version>7.5.1</java-support.version>
         <javassist.version>3.27.0-GA</javassist.version>
         <jboss-logging.version>3.4.1.Final</jboss-logging.version>
         <jee-pac4j.version>5.0.0</jee-pac4j.version>
         <jericho-html.version>3.4</jericho-html.version>
         <jersey.version>2.6</jersey.version>
-        <jetty.version>9.4.34.v20201102</jetty.version>
+        <jetty.version>9.4.48.v20220622</jetty.version>
         <jline.version>2.14.6</jline.version>
         <jna.version>5.6.0</jna.version>
         <joda-time.version>2.10.8</joda-time.version>
         <json-path.version>2.5.0</json-path.version>
-        <json-smart.version>2.3</json-smart.version>
-        <junit.version>4.13.1</junit.version>
+        <json-smart.version>2.4.8</json-smart.version>
+        <junit.version>4.13.2</junit.version>
         <lang-tag.version>1.5</lang-tag.version>
         <libpam4j.version>1.11</libpam4j.version>
-        <log4j.version>1.2.17</log4j.version>
-        <log4j2.version>2.14.0</log4j2.version>
+        <log4j2.version>2.17.1</log4j2.version>
         <maven-checkstyle-plugin.version>3.1.1</maven-checkstyle-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.1.2</maven-dependency-plugin.version>
         <maven-enforcer-plugin.version>3.0.0-M3</maven-enforcer-plugin.version>
         <maven-pmd-plugin.version>3.12.0</maven-pmd-plugin.version>
         <metrics.version>4.1.16</metrics.version>
-        <mina.version>2.0.21</mina.version>
-        <netty.version>4.1.56.Final</netty.version>
+        <mina.version>2.0.22</mina.version>
+        <mockito.version>4.8.1</mockito.version>
+        <netty.version>4.1.77.Final</netty.version>
         <nimbus-jose-jwt.version>8.14.1</nimbus-jose-jwt.version>
-        <nodejs.version>v12.18.2</nodejs.version>
+        <nodejs.version>v14.15.0</nodejs.version>
         <okhttp.version>2.7.5</okhttp.version>
         <opensaml.version>3.4.5</opensaml.version>
-        <pac4j.version>4.3.0</pac4j.version>
-        <postgresql.version>42.2.19</postgresql.version>
-        <mysql.version>8.0.25</mysql.version>
-        <protobuf.version>3.14.0</protobuf.version>
+        <pac4j.version>4.5.6</pac4j.version>
+        <postgresql.version>42.4.1</postgresql.version>
+        <mysql.version>8.0.28</mysql.version>
+        <protobuf.version>3.16.3</protobuf.version>
+        <powermock.version>2.0.9</powermock.version>
+        <purejavacomm.version>0.0.11.1</purejavacomm.version>
+        <pty4j.version>0.11.4</pty4j.version>
         <rest-assured.version>4.3.3</rest-assured.version>
-        <shiro.version>1.7.0</shiro.version>
+        <shiro.version>1.10.0</shiro.version>
         <shrinkwrap.version>1.2.6</shrinkwrap.version>
         <shrinkwrap.descriptors.version>2.0.0</shrinkwrap.descriptors.version>
         <slf4j.version>1.7.30</slf4j.version>
         <spotbugs.version>4.2.0</spotbugs.version>
         <spotbugs-maven-plugin.version>4.1.4</spotbugs-maven-plugin.version>
-        <spring.version>5.3.2</spring.version>
-        <spring-vault.version>2.3.0</spring-vault.version>
+        <spring.version>5.3.21</spring.version>
+        <spring-vault.version>2.3.2</spring-vault.version>
         <stax-ex.version>1.8.3</stax-ex.version>
         <stax2-api.version>4.2.1</stax2-api.version>
+        <system-stubs-junit4.version>1.1.0</system-stubs-junit4.version>
         <swagger-annotations.version>1.6.2</swagger-annotations.version>
         <swagger-maven-plugin.version>3.1.7</swagger-maven-plugin.version>
         <taglibs-standard.version>1.2.5</taglibs-standard.version>
         <testcontainers.version>1.15.1</testcontainers.version>
         <txw2.version>2.4.0-b180830.0438</txw2.version>
-        <velocity.version>1.7</velocity.version>
-        <woodstox-core.version>6.1.1</woodstox-core.version>
-        <xmlsec.version>2.1.5</xmlsec.version>
+        <velocity.version>2.3</velocity.version>
+        <woodstox-core.version>6.4.0</woodstox-core.version>
+        <xmlsec.version>2.1.8</xmlsec.version>
         <xmltool.version>3.3</xmltool.version>
         <xml-jaxb.version>2.3.0</xml-jaxb.version>
         <xml-matchers.version>0.10</xml-matchers.version>
         <zookeeper.version>3.5.7</zookeeper.version>
     </properties>
-
+    <repositories>
+        <repository>
+            <id>jcenter</id>
+            <name>jcenter</name>
+            <url>https://jcenter.bintray.com</url>
+        </repository>
+    </repositories>
     <profiles>
         <profile>
             <id>package</id>
@@ -439,6 +455,7 @@
                         <exclude>**/.project/**</exclude>
                         <exclude>**/.settings/**</exclude>
                         <exclude>**/.classpath/**</exclude>
+                        <exclude>**/.checkstyle/**</exclude>
                         <exclude>src/stage.txt</exclude>
                         <exclude>src/vote.txt</exclude>
                         <exclude>**/*.iml</exclude>
@@ -900,6 +917,11 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-spi-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-security-jwt</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -976,6 +998,11 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-identity-assertion-switchcase</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-provider-identity-assertion-no-doas</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1071,6 +1098,11 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-service-as</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-service-auth</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1240,12 +1272,22 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.knox</groupId>
+                <artifactId>knox-webshell-ui</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-openapi-ui</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>knox-token-management-ui</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>knox-token-generation-ui</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1278,6 +1320,11 @@
                 <version>${jetty.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-servlets</artifactId>
+                <version>${jetty.version}</version>
             </dependency>
             <!-- Need these additional due to classifier tests -->
             <dependency>
@@ -1505,6 +1552,36 @@
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-auth</artifactId>
                 <version>${hadoop.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-reload4j</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-annotations</artifactId>
+                <version>${hadoop.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>jdk.tools</groupId>
+                        <artifactId>jdk.tools</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>
@@ -1516,6 +1593,18 @@
                     <exclusion>
                         <groupId>jdk.tools</groupId>
                         <artifactId>jdk.tools</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
                     </exclusion>
                     <exclusion>
                         <groupId>org.codehaus.jackson</groupId>
@@ -1615,6 +1704,10 @@
                         <artifactId>commons-math</artifactId>
                     </exclusion>
                     <exclusion>
+                        <groupId>jdk.tools</groupId>
+                        <artifactId>jdk.tools</artifactId>
+                    </exclusion>
+                    <exclusion>
                         <groupId>org.apache.hadoop</groupId>
                         <artifactId>hadoop-annotations</artifactId>
                     </exclusion>
@@ -1669,6 +1762,10 @@
                     <exclusion>
                         <groupId>com.sun.jersey</groupId>
                         <artifactId>jersey-servlet</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-reload4j</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -1864,15 +1961,13 @@
             </dependency>
 
             <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>${slf4j.version}</version>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-bom</artifactId>
+                <version>${log4j2.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
             </dependency>
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-log4j12</artifactId>
-                <version>${slf4j.version}</version>
-            </dependency>
+
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>jcl-over-slf4j</artifactId>
@@ -1880,15 +1975,14 @@
             </dependency>
 
             <dependency>
-                <groupId>log4j</groupId>
-                <artifactId>log4j</artifactId>
-                <version>${log4j.version}</version>
-            </dependency>
-
-            <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-api</artifactId>
+                <artifactId>log4j-slf4j-impl</artifactId>
                 <version>${log4j2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
             </dependency>
 
             <dependency>
@@ -1945,6 +2039,18 @@
                     <exclusion>
                         <groupId>com.google.code.findbugs</groupId>
                         <artifactId>jsr305</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -2089,6 +2195,17 @@
                 <artifactId>mysql-connector-java</artifactId>
                 <version>${mysql.version}</version>
             </dependency>
+            <!-- Webshell support -->
+            <dependency>
+                <groupId>org.jetbrains.pty4j</groupId>
+                <artifactId>pty4j</artifactId>
+                <version>${pty4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jetbrains.pty4j</groupId>
+                <artifactId>purejavacomm</artifactId>
+                <version>${purejavacomm.version}</version>
+            </dependency>
             <!-- pac4j Dependencies -->
             <dependency>
                 <groupId>org.pac4j</groupId>
@@ -2125,12 +2242,6 @@
                 <groupId>org.pac4j</groupId>
                 <artifactId>pac4j-oidc</artifactId>
                 <version>${pac4j.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.mockito</groupId>
-                        <artifactId>mockito-core</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.pac4j</groupId>
@@ -2187,6 +2298,26 @@
             <dependency>
                 <groupId>org.opensaml</groupId>
                 <artifactId>opensaml-security-api</artifactId>
+                <version>${opensaml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.opensaml</groupId>
+                <artifactId>opensaml-security-impl</artifactId>
+                <version>${opensaml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.opensaml</groupId>
+                <artifactId>opensaml-messaging-api</artifactId>
+                <version>${opensaml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.opensaml</groupId>
+                <artifactId>opensaml-storage-api</artifactId>
+                <version>${opensaml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.opensaml</groupId>
+                <artifactId>opensaml-profile-api</artifactId>
                 <version>${opensaml.version}</version>
             </dependency>
 
@@ -2357,6 +2488,37 @@
             </dependency>
 
             <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-module-junit4</artifactId>
+                <version>${powermock.version}</version>
+                <scope>test</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.objenesis</groupId>
+                        <artifactId>objenesis</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-api-easymock</artifactId>
+                <version>${powermock.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-core</artifactId>
+                <version>${powermock.version}</version>
+                <scope>test</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.objenesis</groupId>
+                        <artifactId>objenesis</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
                 <groupId>org.apache.derby</groupId>
                 <artifactId>derby</artifactId>
                 <version>${derby.db.version}</version>
@@ -2376,9 +2538,8 @@
 
             <dependency>
                 <groupId>org.apache.velocity</groupId>
-                <artifactId>velocity</artifactId>
+                <artifactId>velocity-engine-core</artifactId>
                 <version>${velocity.version}</version>
-                <!--scope>test</scope-->
             </dependency>
 
             <dependency>
@@ -2424,6 +2585,18 @@
                 <groupId>org.testcontainers</groupId>
                 <artifactId>vault</artifactId>
                 <version>${testcontainers.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.hsqldb</groupId>
+                <artifactId>hsqldb</artifactId>
+                <version>${hsql.db.version}</version>
+                <classifier>jdk8</classifier>
+            </dependency>
+            <dependency>
+                <groupId>uk.org.webcompere</groupId>
+                <artifactId>system-stubs-junit4</artifactId>
+                <version>${system-stubs-junit4.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>

@@ -49,6 +49,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.dto.HomePageProfile;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasService;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
@@ -142,6 +143,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String GRAPHITE_METRICS_REPORTING_FREQUENCY = GATEWAY_CONFIG_FILE_PREFIX + ".graphite.metrics.reporting.frequency";
   public static final String GATEWAY_IDLE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".idle.timeout";
   public static final String REMOTE_IP_HEADER_NAME = GATEWAY_CONFIG_FILE_PREFIX + ".remote.ip.header.name";
+  private static final String JETTY_MAX_FORM_CONTENT_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".jetty.max.form.content.size";
+  private static final String JETTY_MAX_FORM_KEYS = GATEWAY_CONFIG_FILE_PREFIX + ".jetty.max.form.keys";
 
   /* @since 0.10 Websocket config variables */
   public static final String WEBSOCKET_FEATURE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.feature.enabled";
@@ -153,6 +156,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String WEBSOCKET_ASYNC_WRITE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.async.write.timeout";
   public static final String WEBSOCKET_IDLE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.idle.timeout";
   public static final String WEBSOCKET_MAX_WAIT_BUFFER_COUNT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.wait.buffer.count";
+
+
+  /* @since 2.0.0 WebShell config variables */
+  public static final String WEBSHELL_FEATURE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".webshell.feature.enabled";
+  public static final String WEBSHELL_AUDIT_LOGGING_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".webshell.audit.logging.enabled";
+  public static final String WEBSHELL_MAX_CONCURRENT_SESSIONS = GATEWAY_CONFIG_FILE_PREFIX + ".webshell.max.concurrent.sessions";
+  public static final String WEBSHELL_READ_BUFFER_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".webshell.read.buffer.size";
 
   /**
    * Properties for for gateway port mapping feature
@@ -174,6 +184,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String SSL_EXCLUDE_PROTOCOLS = "ssl.exclude.protocols";
   private static final String SSL_INCLUDE_CIPHERS = "ssl.include.ciphers";
   private static final String SSL_EXCLUDE_CIPHERS = "ssl.exclude.ciphers";
+  private static final String SSL_RENEGOTIATION = "ssl.renegotiation";
   // END BACKWARD COMPATIBLE BLOCK
 
   public static final String DEFAULT_HTTP_PORT = "8888";
@@ -185,6 +196,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String DESCRIPTORS_DIR_NAME = "descriptors";
   public static final String REMOTE_ALIAS_SERVICE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".remote.alias.service.enabled";
   public static final String STRICT_TOPOLOGY_VALIDATION = GATEWAY_CONFIG_FILE_PREFIX + ".strict.topology.validation";
+  private static final String TOPOLOGY_REDEPLOYMENT_REQUIRES_CHANGES = GATEWAY_CONFIG_FILE_PREFIX + ".topology.redeploy.requires.changes";
 
   /**
    * Comma-separated list of topology names, which should be forcibly treated as read-only.
@@ -192,6 +204,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
    */
   public static final String READ_ONLY_OVERRIDE_TOPOLOGIES =
                                                     GATEWAY_CONFIG_FILE_PREFIX + ".read.only.override.topologies";
+
+  public static final String READ_ONLY_OVERRIDE_PROVIDERS =
+                                                    GATEWAY_CONFIG_FILE_PREFIX + ".read.only.override.providers";
 
   /* Websocket defaults */
   public static final boolean DEFAULT_WEBSOCKET_FEATURE_ENABLED = false;
@@ -203,6 +218,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT = 60000;
   public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT = 300000;
   public static final int DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT = 100;
+
+  public static final boolean DEFAULT_WEBSHELL_FEATURE_ENABLED = false;
+  public static final boolean DEFAULT_WEBSHELL_AUDIT_LOGGING_ENABLED = false;
+  public static final int DEFAULT_WEBSHELL_MAX_CONCURRENT_SESSIONS = 3;
+  public static final int DEFAULT_WEBSHELL_READ_BUFFER_SIZE = 1024;
+
 
   public static final boolean DEFAULT_GATEWAY_PORT_MAPPING_ENABLED = true;
   public static final boolean DEFAULT_REMOTE_ALIAS_SERVICE_ENABLED = true;
@@ -223,6 +244,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   static final String REMOTE_CONFIG_MONITOR_CLIENT_NAME = GATEWAY_CONFIG_FILE_PREFIX + ".remote.config.monitor.client";
   static final String REMOTE_CONFIG_MONITOR_CLIENT_ALLOW_READ_ACCESS =
                                                   REMOTE_CONFIG_MONITOR_CLIENT_NAME + ".allowUnauthenticatedReadAccess";
+
+  private static final String REMOTE_CONFIG_MONITOR_DB_POLLING_INTERVAL_SECONDS = GATEWAY_CONFIG_FILE_PREFIX + ".remote.config.monitor.db.poll.interval.seconds";
+  private static final long REMOTE_CONFIG_MONITOR_DB_POLLING_INTERVAL_SECONDS_DEFAULT = 30;
+
+  private static final String REMOTE_CONFIG_MONITOR_DB_POLLING_CLEANUP_INTERVAL_SECONDS = GATEWAY_CONFIG_FILE_PREFIX + ".remote.config.monitor.db.cleanup.interval.seconds";
+  private static final int REMOTE_CONFIG_MONITOR_DB_POLLING_CLEANUP_INTERVAL_DEFAULT = 3 * 60 * 60;
 
   /* @since 1.1.0 Default discovery configuration */
   static final String DEFAULT_DISCOVERY_ADDRESS = GATEWAY_CONFIG_FILE_PREFIX + ".discovery.default.address";
@@ -256,6 +283,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final String CLOUDERA_MANAGER_DESCRIPTORS_MONITOR_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.descriptors.monitor.interval";
   private static final String CLOUDERA_MANAGER_ADVANCED_SERVICE_DISCOVERY_CONF_MONITOR_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.advanced.service.discovery.config.monitor.interval";
+  private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_REPOSITORY_CACHE_ENTRY_TTL = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.repository.cache.entry.ttl";
+  private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_MAX_RETRY_ATTEMPS = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.maximum.retry.attemps";
 
   private static final String KNOX_TOKEN_EVICTION_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.eviction.interval";
   private static final String KNOX_TOKEN_EVICTION_GRACE_PERIOD = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.eviction.grace.period";
@@ -287,6 +316,20 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String GATEWAY_DATABASE_VERIFY_SERVER_CERT =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.verify.server.cert";
   private static final String GATEWAY_DATABASE_TRUSTSTORE_FILE =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.truststore.file";
 
+  // Concurrent session properties
+  private static final String GATEWAY_SESSION_VERIFICATION_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".session.verification";
+  private static final String GATEWAY_SESSION_VERIFICATION_PRIVILEGED_USER_LIMIT = GATEWAY_SESSION_VERIFICATION_PREFIX + ".privileged.user.limit";
+  private static final String GATEWAY_SESSION_VERIFICATION_NON_PRIVILEGED_USER_LIMIT = GATEWAY_SESSION_VERIFICATION_PREFIX + ".non.privileged.user.limit";
+  private static final int GATEWAY_SESSION_VERIFICATION_PRIVILEGED_USER_LIMIT_DEFAULT = 3;
+  private static final int GATEWAY_SESSION_VERIFICATION_NON_PRIVILEGED_USER_LIMIT_DEFAULT = 2;
+  private static final String GATEWAY_SESSION_VERIFICATION_PRIVILEGED_USERS = GATEWAY_SESSION_VERIFICATION_PREFIX + ".privileged.users";
+  private static final String GATEWAY_SESSION_VERIFICATION_UNLIMITED_USERS = GATEWAY_SESSION_VERIFICATION_PREFIX + ".unlimited.users";
+  private static final String GATEWAY_SESSION_VERIFICATION_EXPIRED_TOKENS_CLEANING_PERIOD = GATEWAY_SESSION_VERIFICATION_PREFIX + ".expired.tokens.cleaning.period";
+  private static final long GATEWAY_SESSION_VERIFICATION_EXPIRED_TOKENS_CLEANING_PERIOD_DEFAULT = TimeUnit.MINUTES.toSeconds(30);
+
+  private static final String GATEWAY_SERVLET_ASYNC_SUPPORTED = GATEWAY_CONFIG_FILE_PREFIX + ".servlet.async.supported";
+  private static final boolean GATEWAY_SERVLET_ASYNC_SUPPORTED_DEFAULT = false;
+
   public GatewayConfigImpl() {
     init();
   }
@@ -307,6 +350,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private String getGatewayHomeDir() {
     return get(GATEWAY_HOME_VAR, System.getProperty(GATEWAY_HOME_VAR, System.getenv(GATEWAY_HOME_VAR)));
+  }
+
+  // directory for saving the PIDs spawned by knox
+  @Override
+  public String getGatewayPIDDir(){
+    String pidDir = getGatewayHomeDir() + File.separator + "pids";
+    return FilenameUtils.normalize(pidDir);
   }
 
   @Override
@@ -459,8 +509,14 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public String getGatewayHost() {
-    return get( HTTP_HOST, "0.0.0.0" );
+  public List<String> getGatewayHost() {
+    String hosts = get( HTTP_HOST, "0.0.0.0" );
+    String[] hostArray = hosts.split(",");
+    List<String> hostIps = new ArrayList<>();
+    for (String host : hostArray) {
+      hostIps.add(host.trim());
+    }
+    return hostIps;
   }
 
   @Override
@@ -504,10 +560,14 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public InetSocketAddress getGatewayAddress() throws UnknownHostException {
-    String host = getGatewayHost();
+  public List<InetSocketAddress> getGatewayAddress() throws UnknownHostException {
+    List<String> hostIps = getGatewayHost();
     int port = getGatewayPort();
-    return new InetSocketAddress( host, port );
+    List<InetSocketAddress> socketAddressList = new ArrayList<>();
+    for (String host : hostIps) {
+      socketAddressList.add(new InetSocketAddress( host, port ));
+    }
+    return socketAddressList;
   }
 
   @Override
@@ -584,6 +644,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
       list = Arrays.asList(value.trim().split("\\s*,\\s*"));
     }
     return list;
+  }
+
+  @Override
+  public boolean isSSLRenegotiationAllowed() {
+    return getBoolean(SSL_RENEGOTIATION, true);
   }
 
   @Override
@@ -870,8 +935,27 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isWebsocketEnabled() {
-    final String result = get( WEBSOCKET_FEATURE_ENABLED, Boolean.toString(DEFAULT_WEBSOCKET_FEATURE_ENABLED));
-    return Boolean.parseBoolean(result);
+    return getBoolean(WEBSOCKET_FEATURE_ENABLED, DEFAULT_WEBSOCKET_FEATURE_ENABLED);
+  }
+
+  @Override
+  public boolean isWebShellEnabled() {
+    return getBoolean(WEBSHELL_FEATURE_ENABLED, DEFAULT_WEBSHELL_FEATURE_ENABLED);
+  }
+
+  @Override
+  public boolean isWebShellAuditLoggingEnabled(){
+    return getBoolean(WEBSHELL_AUDIT_LOGGING_ENABLED, DEFAULT_WEBSHELL_AUDIT_LOGGING_ENABLED);
+  }
+
+  @Override
+  public int getMaximumConcurrentWebshells(){
+    return getInt( WEBSHELL_MAX_CONCURRENT_SESSIONS, DEFAULT_WEBSHELL_MAX_CONCURRENT_SESSIONS);
+  }
+
+  @Override
+  public int getWebShellReadBufferSize(){
+    return getInt( WEBSHELL_READ_BUFFER_SIZE, DEFAULT_WEBSHELL_READ_BUFFER_SIZE);
   }
 
   @Override
@@ -1080,6 +1164,18 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public List<String> getReadOnlyOverrideProviderNames() {
+    List<String> topologyNames = new ArrayList<>();
+
+    String value = get(READ_ONLY_OVERRIDE_PROVIDERS);
+    if (value != null && !value.isEmpty()) {
+      topologyNames.addAll(Arrays.asList(value.trim().split("\\s*,\\s*")));
+    }
+
+    return topologyNames;
+  }
+
+  @Override
   public String getKnoxAdminGroups() {
     return get(KNOX_ADMIN_GROUPS, null);
   }
@@ -1131,6 +1227,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public boolean topologyRedeploymentRequiresChanges() {
+    return getBoolean(TOPOLOGY_REDEPLOYMENT_REQUIRES_CHANGES, false);
+  }
+
+  @Override
   public List<String> getXForwardContextAppendServices() {
     String value = get( X_FORWARD_CONTEXT_HEADER_APPEND_SERVICES );
     if ( value != null && !value.isEmpty() && !"none".equalsIgnoreCase(value.trim()) ) {
@@ -1160,6 +1261,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public long getClouderaManagerAdvancedServiceDiscoveryConfigurationMonitoringInterval() {
     return getLong(CLOUDERA_MANAGER_ADVANCED_SERVICE_DISCOVERY_CONF_MONITOR_INTERVAL, -1L);
+  }
+
+  @Override
+  public long getClouderaManagerServiceDiscoveryRepositoryEntryTTL() {
+    return getLong(CLOUDERA_MANAGER_SERVICE_DISCOVERY_REPOSITORY_CACHE_ENTRY_TTL, DEFAULT_CM_SERVICE_DISCOVERY_CACHE_ENTRY_TTL);
+  }
+
+  @Override
+  public int getClouderaManagerServiceDiscoveryMaximumRetryAttempts() {
+    return getInt(CLOUDERA_MANAGER_SERVICE_DISCOVERY_MAX_RETRY_ATTEMPS, DEFAULT_CM_SERVICE_DISCOVERY_MAX_RETRY_ATTEMPTS);
   }
 
   @Override
@@ -1304,4 +1415,55 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return get(GATEWAY_DATABASE_TRUSTSTORE_FILE);
   }
 
+  @Override
+  public int getJettyMaxFormContentSize() {
+    return getInt(JETTY_MAX_FORM_CONTENT_SIZE, ContextHandler.DEFAULT_MAX_FORM_CONTENT_SIZE);
+  }
+
+  @Override
+  public int getJettyMaxFormKeys() {
+    return getInt(JETTY_MAX_FORM_KEYS, ContextHandler.DEFAULT_MAX_FORM_KEYS);
+  }
+
+  @Override
+  public int getPrivilegedUsersConcurrentSessionLimit() {
+    return getInt(GATEWAY_SESSION_VERIFICATION_PRIVILEGED_USER_LIMIT, GATEWAY_SESSION_VERIFICATION_PRIVILEGED_USER_LIMIT_DEFAULT);
+  }
+
+  @Override
+  public int getNonPrivilegedUsersConcurrentSessionLimit() {
+    return getInt(GATEWAY_SESSION_VERIFICATION_NON_PRIVILEGED_USER_LIMIT, GATEWAY_SESSION_VERIFICATION_NON_PRIVILEGED_USER_LIMIT_DEFAULT);
+  }
+
+  @Override
+  public Set<String> getSessionVerificationPrivilegedUsers() {
+    final Collection<String> privilegedUsers = getTrimmedStringCollection(GATEWAY_SESSION_VERIFICATION_PRIVILEGED_USERS);
+    return privilegedUsers == null ? Collections.emptySet() : new HashSet<>(privilegedUsers);
+  }
+
+  @Override
+  public Set<String> getSessionVerificationUnlimitedUsers() {
+    final Collection<String> nonPrivilegedUsers = getTrimmedStringCollection(GATEWAY_SESSION_VERIFICATION_UNLIMITED_USERS);
+    return nonPrivilegedUsers == null ? Collections.emptySet() : new HashSet<>(nonPrivilegedUsers);
+  }
+
+  @Override
+  public long getDbRemoteConfigMonitorPollingInterval() {
+    return getLong(REMOTE_CONFIG_MONITOR_DB_POLLING_INTERVAL_SECONDS, REMOTE_CONFIG_MONITOR_DB_POLLING_INTERVAL_SECONDS_DEFAULT);
+  }
+
+  @Override
+  public int getDbRemoteConfigMonitorCleanUpInterval() {
+    return getInt(REMOTE_CONFIG_MONITOR_DB_POLLING_CLEANUP_INTERVAL_SECONDS, REMOTE_CONFIG_MONITOR_DB_POLLING_CLEANUP_INTERVAL_DEFAULT);
+  }
+
+  @Override
+  public long getConcurrentSessionVerifierExpiredTokensCleaningPeriod() {
+    return getLong(GATEWAY_SESSION_VERIFICATION_EXPIRED_TOKENS_CLEANING_PERIOD, GATEWAY_SESSION_VERIFICATION_EXPIRED_TOKENS_CLEANING_PERIOD_DEFAULT);
+  }
+
+  @Override
+  public boolean isAsyncSupported() {
+    return getBoolean(GATEWAY_SERVLET_ASYNC_SUPPORTED, GATEWAY_SERVLET_ASYNC_SUPPORTED_DEFAULT);
+  }
 }

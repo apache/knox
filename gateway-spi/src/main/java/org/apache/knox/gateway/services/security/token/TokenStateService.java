@@ -203,4 +203,13 @@ public interface TokenStateService extends Service {
    */
   Collection<KnoxToken> getTokens(String userName);
 
+  /**
+   * @param createdBy the user name that identified the CREATED_BY metadata (the
+   *                  person who created the token for the token's user as 'doAs'
+   * @return a collection of tokens associated to the given 'created by' user;
+   *         it's an empty collection if there is no associated token found in the
+   *         underlying token management backend
+   */
+  Collection<KnoxToken> getDoAsTokens(String createdBy);
+
 }

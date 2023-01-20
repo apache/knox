@@ -39,7 +39,6 @@ import org.apache.knox.gateway.service.definition.ServiceDefinitionChangeListene
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
-import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.services.topology.monitor.DescriptorsMonitor;
@@ -54,8 +53,8 @@ import org.apache.knox.gateway.topology.TopologyProvider;
 import org.apache.knox.gateway.topology.Version;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
+import org.apache.knox.gateway.topology.monitor.RemoteConfigurationMonitorServiceFactory;
 import org.apache.knox.gateway.topology.monitor.RemoteConfigurationMonitor;
-import org.apache.knox.gateway.topology.monitor.RemoteConfigurationMonitorFactory;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorFactory;
 import org.apache.knox.gateway.topology.validation.TopologyValidator;
@@ -79,6 +78,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -88,6 +88,8 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
     TopologyProvider, FileFilter, FileAlterationListener, ServiceDefinitionChangeListener {
 
   private static final JAXBContext jaxbContext = getJAXBContext();
+  private static final String TOPOLOGY_CLOSING_XML_ELEMENT = "</topology>";
+  private static final String REDEPLOY_TIME_TEMPLATE = "   <redeployTime>%d</redeployTime>\n" + TOPOLOGY_CLOSING_XML_ELEMENT;
 
   private static final Auditor auditor = AuditServiceFactory.getAuditService().getAuditor(
     AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
@@ -179,32 +181,21 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
         }
       }
 
-      long start = System.currentTimeMillis();
-      long limit = 1000L; // One second.
-      long elapsed = 1;
-      while (elapsed <= limit) {
-        try {
-          long origTimestamp = topologyFile.lastModified();
-          long setTimestamp = Math.max(System.currentTimeMillis(), topologyFile.lastModified() + elapsed);
-          if(topologyFile.setLastModified(setTimestamp)) {
-            long newTimstamp = topologyFile.lastModified();
-            if(newTimstamp > origTimestamp) {
-              break;
-            } else {
-              Thread.sleep(10);
-              elapsed = System.currentTimeMillis() - start;
-            }
-          } else {
-            auditor.audit(Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY,
-                ActionOutcome.FAILURE);
-            log.failedToRedeployTopology(topology.getName());
-            break;
-          }
-        } catch (InterruptedException e) {
-          auditor.audit(Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
-          log.failedToRedeployTopology(topology.getName(), e);
-          Thread.currentThread().interrupt();
-        }
+      // Since KNOX-2689, updating the topology file's timestamp is not enough.
+      // We need to make an actual change in the topology XML to redeploy it
+      // This change is: updating a new XML element called redeployTime
+      try {
+        final String currentTopologyContent = FileUtils.readFileToString(topologyFile, StandardCharsets.UTF_8);
+        String updated = currentTopologyContent.replaceAll("^*<redeployTime>.*", "");
+
+        //add the current timestamp
+        updated = updated.replace(TOPOLOGY_CLOSING_XML_ELEMENT, String.format(Locale.getDefault(), REDEPLOY_TIME_TEMPLATE, System.currentTimeMillis()));
+
+        //save the updated content in the file
+        FileUtils.write(topologyFile, updated, StandardCharsets.UTF_8);
+      } catch (IOException e) {
+        auditor.audit(Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
+        log.failedToRedeployTopology(topology.getName(), e);
       }
     } catch (SAXException e) {
       auditor.audit(Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
@@ -226,7 +217,7 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
     for (Entry<File, Topology> newTopology : newTopologies.entrySet()) {
       if (oldTopologies.containsKey(newTopology.getKey())) {
         Topology oldTopology = oldTopologies.get(newTopology.getKey());
-        if (newTopology.getValue().getTimestamp() > oldTopology.getTimestamp()) {
+        if (shouldMarkTopologyUpdated(newTopology.getValue(), oldTopology)) {
           events.add(new TopologyEvent(TopologyEvent.Type.UPDATED, newTopology.getValue()));
         }
       } else {
@@ -234,6 +225,18 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
       }
     }
     return events;
+  }
+
+  private boolean shouldMarkTopologyUpdated(Topology newTopology, Topology oldTopology) {
+    final boolean timestampUpdated = newTopology.getTimestamp() > oldTopology.getTimestamp();
+    final boolean topologyChanged = !oldTopology.equals(newTopology);
+    if (topologyChanged) {
+      // if topology is changed, an UPDATE event has to be triggered no matter what
+      return true;
+    } else {
+      // topology is not changed
+      return config.topologyRedeploymentRequiresChanges() ? false : timestampUpdated;
+    }
   }
 
   private File calculateAbsoluteTopologiesDir(GatewayConfig config) {
@@ -326,14 +329,12 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
   }
 
   @Override
-  public void redeployTopologies(String topologyName) {
-
+  public void redeployTopology(String topologyName) {
     for (Topology topology : getTopologies()) {
       if (topologyName == null || topologyName.equals(topology.getName())) {
         redeployTopology(topology);
       }
     }
-
   }
 
   @Override
@@ -344,7 +345,9 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
         Map<File, Topology> newTopologies = loadTopologies(topologiesDirectory);
         List<TopologyEvent> events = createChangeEvents(oldTopologies, newTopologies);
         topologies = newTopologies;
-        notifyChangeListeners(events);
+        if (!events.isEmpty()) {
+          notifyChangeListeners(events);
+        }
       }
     } catch (Exception e) {
       // Maybe it makes sense to throw exception
@@ -415,14 +418,8 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
 
     // If the remote configuration registry is being employed, persist it there also
     if (remoteMonitor != null) {
-      RemoteConfigurationRegistryClient client = remoteMonitor.getClient();
-      if (client != null) {
-        String entryPath = "/knox/config/shared-providers/" + name;
-        client.createEntry(entryPath, content);
-        result = (client.getEntryData(entryPath) != null);
-      }
+      remoteMonitor.createProvider(name, content);
     }
-
     return result;
   }
 
@@ -461,7 +458,10 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
 
       // If the remote config monitor is configured, attempt to delete the provider configuration from the remote
       // registry, even if it does not exist locally.
-      deleteRemoteEntry("/knox/config/shared-providers", name);
+      if (remoteMonitor != null) {
+        // If the remote config monitor is configured, delete the descriptor from the remote registry
+        remoteMonitor.deleteProvider(providerConfig.getName()); // use file name with extension
+      }
 
       // Whether the remote configuration registry is being employed or not, delete the local file if it exists
       result = providerConfig == null || !providerConfig.exists() || providerConfig.delete();
@@ -482,12 +482,7 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
 
     // If the remote configuration registry is being employed, persist it there also
     if (remoteMonitor != null) {
-      RemoteConfigurationRegistryClient client = remoteMonitor.getClient();
-      if (client != null) {
-        String entryPath = "/knox/config/descriptors/" + name;
-        client.createEntry(entryPath, content);
-        result = (client.getEntryData(entryPath) != null);
-      }
+      return remoteMonitor.createDescriptor(name, content);
     }
 
     return result;
@@ -508,12 +503,14 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
   public boolean deleteDescriptor(String name) {
     boolean result;
 
-    // If the remote config monitor is configured, delete the descriptor from the remote registry
-    deleteRemoteEntry("/knox/config/descriptors", name);
-
     // Whether the remote configuration registry is being employed or not, delete the local file
     File descriptor = getExistingFile(descriptorsDirectory, name);
     result = (descriptor == null) || descriptor.delete();
+
+    if (remoteMonitor != null && descriptor != null) {
+      // If the remote config monitor is configured, delete the descriptor from the remote registry
+      remoteMonitor.deleteDescriptor(descriptor.getName());
+    }
 
     return result;
   }
@@ -657,42 +654,14 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
       log.configuredMonitoringProviderConfigChangesInDirectory(sharedProvidersDirectory.getAbsolutePath());
 
       // Initialize the remote configuration monitor, if it has been configured
-      remoteMonitor = RemoteConfigurationMonitorFactory.get(config);
+      if (gwServices != null) { // if it was called from knoxcli, we don't have gwServices
+        RemoteConfigurationMonitorServiceFactory provider = new RemoteConfigurationMonitorServiceFactory();
+        remoteMonitor = (RemoteConfigurationMonitor) provider.create(gwServices, ServiceType.REMOTE_CONFIGURATION_MONITOR, config, Collections.emptyMap());
+      }
+
     } catch (Exception e) {
       throw new ServiceLifecycleException(e.getMessage(), e);
     }
-  }
-
-  /**
-   * Delete the entry in the remote configuration registry, which matches the specified resource name.
-   *
-   * @param entryParent The remote registry path in which the entry exists.
-   * @param name        The name of the entry (typically without any file extension).
-   *
-   * @return true, if the entry is deleted, or did not exist; otherwise, false.
-   */
-  private boolean deleteRemoteEntry(String entryParent, String name) {
-    boolean result = true;
-
-    if (remoteMonitor != null) {
-      RemoteConfigurationRegistryClient client = remoteMonitor.getClient();
-      if (client != null) {
-        List<String> existingProviderConfigs = client.listChildEntries(entryParent);
-        for (String entryName : existingProviderConfigs) {
-          if (FilenameUtils.getBaseName(entryName).equals(name)) {
-            String entryPath = entryParent + "/" + entryName;
-            client.deleteEntry(entryPath);
-            result = !client.entryExists(entryPath);
-            if (!result) {
-              log.failedToDeletedRemoteConfigFile("descriptor", name);
-            }
-            break;
-          }
-        }
-      }
-    }
-
-    return result;
   }
 
   /**

@@ -17,34 +17,40 @@
  */
 package org.apache.knox.test.log;
 
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.Core;
+import org.apache.logging.log4j.core.Filter;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Property;
+import org.apache.logging.log4j.core.config.plugins.Plugin;
+import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
+import org.apache.logging.log4j.core.config.plugins.PluginElement;
+import org.apache.logging.log4j.core.config.plugins.PluginFactory;
+
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.apache.log4j.AppenderSkeleton;
-import org.apache.log4j.spi.LoggingEvent;
+@Plugin(
+    name = "CollectAppender",
+    category = Core.CATEGORY_NAME,
+    elementType = Appender.ELEMENT_TYPE)
+public class CollectAppender extends AbstractAppender {
+  public static final BlockingQueue<LogEvent> queue = new LinkedBlockingQueue<>();
 
-public class CollectAppender extends AppenderSkeleton {
-
-  public CollectAppender() {
-    super();
+  private CollectAppender(String name, Filter filter) {
+    super(name, filter, null, false, Property.EMPTY_ARRAY);
   }
 
-  public static final BlockingQueue<LoggingEvent> queue = new LinkedBlockingQueue<>();
+  @PluginFactory
+  public static CollectAppender createAppender(
+      @PluginAttribute("name") String name,
+      @PluginElement("Filter") Filter filter) {
+    return new CollectAppender(name, filter);
+  }
 
   @Override
-  protected void append( LoggingEvent event ) {
-    event.getProperties();
+  public void append(LogEvent event) {
     queue.add( event );
   }
-
-  @Override
-  public void close() {
-    closed = true;
-  }
-
-  @Override
-  public boolean requiresLayout() {
-    return false;
-  }
-
 }

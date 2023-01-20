@@ -29,7 +29,7 @@ import java.nio.charset.StandardCharsets;
  *
  * @since 1.1.0
  */
-public class URLDecodingDispatch extends DefaultDispatch {
+public class URLDecodingDispatch extends ConfigurableDispatch {
 
   public URLDecodingDispatch() {
     super();

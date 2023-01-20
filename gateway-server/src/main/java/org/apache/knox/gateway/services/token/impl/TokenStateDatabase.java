@@ -19,26 +19,22 @@ package org.apache.knox.gateway.services.token.impl;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.sql.DataSource;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.IOUtils;
 import org.apache.knox.gateway.services.security.token.KnoxToken;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
+import org.apache.knox.gateway.util.JDBCUtils;
 
 public class TokenStateDatabase {
   private static final String TOKENS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenDatabaseTable.sql";
@@ -59,6 +55,9 @@ public class TokenStateDatabase {
   private static final String GET_TOKENS_BY_USER_NAME_SQL = "SELECT kt.token_id, kt.issue_time, kt.expiration, kt.max_lifetime, ktm.md_name, ktm.md_value FROM " + TOKENS_TABLE_NAME
       + " kt, " + TOKEN_METADATA_TABLE_NAME + " ktm WHERE kt.token_id = ktm.token_id AND kt.token_id IN (SELECT token_id FROM " + TOKEN_METADATA_TABLE_NAME + " WHERE md_name = '" + TokenMetadata.USER_NAME + "' AND md_value = ? )"
       + " ORDER BY kt.issue_time";
+  private static final String GET_TOKENS_CREATED_BY_USER_NAME_SQL = "SELECT kt.token_id, kt.issue_time, kt.expiration, kt.max_lifetime, ktm.md_name, ktm.md_value FROM " + TOKENS_TABLE_NAME
+      + " kt, " + TOKEN_METADATA_TABLE_NAME + " ktm WHERE kt.token_id = ktm.token_id AND kt.token_id IN (SELECT token_id FROM " + TOKEN_METADATA_TABLE_NAME + " WHERE md_name = '" + TokenMetadata.CREATED_BY + "' AND md_value = ? )"
+      + " ORDER BY kt.issue_time";
 
   private final DataSource dataSource;
 
@@ -69,28 +68,8 @@ public class TokenStateDatabase {
   }
 
   private void createTableIfNotExists(String tableName, String createSqlFileName) throws Exception {
-    if (!isTableExists(tableName)) {
-      createTable(createSqlFileName);
-    }
-  }
-
-  private boolean isTableExists(String tableName) throws SQLException {
-    boolean exists = false;
-    try (Connection connection = dataSource.getConnection()) {
-      final DatabaseMetaData dbMetadata = connection.getMetaData();
-      final String tableNameToCheck = dbMetadata.storesUpperCaseIdentifiers() ? tableName : tableName.toLowerCase(Locale.ROOT);
-      try (ResultSet tables = dbMetadata.getTables(connection.getCatalog(), null, tableNameToCheck, null)) {
-        exists = tables.next();
-      }
-    }
-    return exists;
-  }
-
-  private void createTable(String createSqlFileName) throws Exception {
-    final InputStream is = TokenStateDatabase.class.getClassLoader().getResourceAsStream(createSqlFileName);
-    final String createTableSql = IOUtils.toString(is, UTF_8);
-    try (Connection connection = dataSource.getConnection(); Statement createTableStatment = connection.createStatement();) {
-      createTableStatment.execute(createTableSql);
+    if (!JDBCUtils.isTableExists(tableName, dataSource)) {
+      JDBCUtils.createTable(createSqlFileName, dataSource, TokenStateDatabase.class.getClassLoader());
     }
   }
 
@@ -203,11 +182,19 @@ public class TokenStateDatabase {
   }
 
   Collection<KnoxToken> getTokens(String userName) throws SQLException {
+    return fetchTokens(userName, GET_TOKENS_BY_USER_NAME_SQL);
+  }
+
+  Collection<KnoxToken> getDoAsTokens(String userName) throws SQLException {
+    return fetchTokens(userName, GET_TOKENS_CREATED_BY_USER_NAME_SQL);
+  }
+
+  private Collection<KnoxToken> fetchTokens(String userName, String sql) throws SQLException {
     Map<String, KnoxToken> tokenMap = new LinkedHashMap<>();
-    try (Connection connection = dataSource.getConnection(); PreparedStatement getTokenIdsStatement = connection.prepareStatement(GET_TOKENS_BY_USER_NAME_SQL)) {
+    try (Connection connection = dataSource.getConnection(); PreparedStatement getTokenIdsStatement = connection.prepareStatement(sql)) {
       getTokenIdsStatement.setString(1, userName);
       try (ResultSet rs = getTokenIdsStatement.executeQuery()) {
-        while(rs.next()) {
+        while (rs.next()) {
           String tokenId = rs.getString(1);
           long issueTime = rs.getLong(2);
           long expiration = rs.getLong(3);

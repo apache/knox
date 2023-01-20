@@ -20,6 +20,7 @@ package org.apache.knox.gateway.filter;
 import java.io.IOException;
 import java.security.Principal;
 import java.security.PrivilegedExceptionAction;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -33,6 +34,7 @@ import javax.servlet.ServletResponse;
 
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.AuditContext;
 import org.apache.knox.gateway.audit.api.AuditService;
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.audit.api.Auditor;
@@ -82,6 +84,7 @@ public class ShiroSubjectIdentityAdapter implements Filter {
       this.chain = chain;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Void call() throws Exception {
       PrivilegedExceptionAction<Void> action = new PrivilegedExceptionAction<Void>() {
@@ -98,11 +101,12 @@ public class ShiroSubjectIdentityAdapter implements Filter {
       }
 
       final String principal = shiroSubject.getPrincipal().toString();
-      HashSet emptySet = new HashSet();
       Set<Principal> principals = new HashSet<>();
       Principal p = new PrimaryPrincipal(principal);
       principals.add(p);
-      auditService.getContext().setUsername( principal ); //KM: Audit Fix
+      AuditContext context = auditService.getContext();
+      context.setUsername( principal );
+      auditService.attachContext(context);
       String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
       auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
 
@@ -138,7 +142,7 @@ public class ShiroSubjectIdentityAdapter implements Filter {
       // To modify the Principals Set, the caller must have AuthPermission("modifyPrincipals").
       // To modify the public credential Set, the caller must have AuthPermission("modifyPublicCredentials").
       // To modify the private credential Set, the caller must have AuthPermission("modifyPrivateCredentials").
-      javax.security.auth.Subject subject = new javax.security.auth.Subject(true, principals, emptySet, emptySet);
+      javax.security.auth.Subject subject = new javax.security.auth.Subject(true, principals, Collections.emptySet(), Collections.emptySet());
       javax.security.auth.Subject.doAs( subject, action );
 
       return null;

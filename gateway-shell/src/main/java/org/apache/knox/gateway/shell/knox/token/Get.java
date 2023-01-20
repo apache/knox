@@ -20,8 +20,11 @@ package org.apache.knox.gateway.shell.knox.token;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Callable;
 
+import org.apache.http.NameValuePair;
 import org.apache.knox.gateway.shell.AbstractRequest;
 import org.apache.knox.gateway.shell.BasicResponse;
 import org.apache.knox.gateway.shell.KnoxSession;
@@ -37,13 +40,18 @@ import org.apache.knox.gateway.shell.KnoxShellException;
 public class Get {
   public static class Request extends AbstractRequest<Response> {
     Request(KnoxSession session) {
-      this(session, null);
+      this(session, null, Collections.emptyList());
     }
 
     Request(KnoxSession session, String doAsUser) {
+      this(session, doAsUser, Collections.emptyList());
+    }
+
+    Request(KnoxSession session, String doAsUser, List<NameValuePair> queryParameters) {
       super(session, doAsUser);
       try {
         URIBuilder uri = uri(Token.SERVICE_PATH);
+        uri.addParameters(queryParameters);
         requestURI = uri.build();
       } catch (URISyntaxException e) {
         throw new KnoxShellException(e);

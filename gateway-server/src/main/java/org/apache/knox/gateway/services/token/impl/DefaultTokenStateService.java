@@ -29,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.management.InstanceAlreadyExistsException;
@@ -420,8 +421,23 @@ public class DefaultTokenStateService implements TokenStateService {
 
   @Override
   public Collection<KnoxToken> getTokens(String userName) {
+    return fetchTokens(userName, false);
+  }
+
+  @Override
+  public Collection<KnoxToken> getDoAsTokens(String createdBy) {
+    return fetchTokens(createdBy, true);
+  }
+
+  private Collection<KnoxToken> fetchTokens(String userName, boolean createdBy) {
     final Collection<KnoxToken> tokens = new TreeSet<>();
-    metadataMap.entrySet().stream().filter(entry -> entry.getValue().getUserName().equals(userName)).forEach(metadata -> {
+    final Predicate<Map.Entry<String, TokenMetadata>> filterPredicate;
+    if (createdBy) {
+      filterPredicate = entry -> userName.equals(entry.getValue().getCreatedBy());
+    } else {
+      filterPredicate = entry -> userName.equals(entry.getValue().getUserName());
+    }
+    metadataMap.entrySet().stream().filter(filterPredicate).forEach(metadata -> {
       String tokenId = metadata.getKey();
       try {
         tokens.add(new KnoxToken(tokenId, getTokenIssueTime(tokenId), getTokenExpiration(tokenId), getMaxLifetime(tokenId), metadata.getValue()));

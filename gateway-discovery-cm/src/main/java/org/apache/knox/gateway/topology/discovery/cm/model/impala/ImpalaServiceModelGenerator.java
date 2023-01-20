@@ -22,6 +22,7 @@ import com.cloudera.api.swagger.model.ApiRole;
 import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
+import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGeneratorHandleResponse;
 import org.apache.knox.gateway.topology.discovery.cm.model.AbstractServiceModelGenerator;
 
 import java.util.Locale;
@@ -31,6 +32,11 @@ public class ImpalaServiceModelGenerator extends AbstractServiceModelGenerator {
   public static final String SERVICE      = "IMPALA";
   public static final String SERVICE_TYPE = "IMPALA";
   public static final String ROLE_TYPE    = "IMPALAD";
+
+  public static final String SPECIALIZATION        = "impalad_specialization";
+  public static final String NO_SPEC               = "NO_SPECIALIZATION";
+  public static final String COORDINATOR_ONLY_SPEC = "COORDINATOR_ONLY";
+  public static final String EXECUTOR_ONLY_SPEC    = "EXECUTOR_ONLY";
 
   static final String SSL_ENABLED = "client_services_ssl_enabled";
   static final String HTTP_PORT   = "hs2_http_port";
@@ -53,6 +59,29 @@ public class ImpalaServiceModelGenerator extends AbstractServiceModelGenerator {
   @Override
   public ServiceModel.Type getModelType() {
     return ServiceModel.Type.API;
+  }
+
+  @Override
+  public ServiceModelGeneratorHandleResponse handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
+    boolean result = false;
+    String configurationIssue = null;
+
+    if (super.handles(service, serviceConfig, role, roleConfig).handled()) {
+      // If the Imapala daemon's specialization is "coordinator only" or "no specialization", then we'll handle it
+      final String specialization = getRoleConfigValue(roleConfig, SPECIALIZATION);
+      if (specialization == null) {
+        configurationIssue = "Missing configuration: " + SPECIALIZATION;
+      } else {
+        result = NO_SPEC.equals(specialization) || COORDINATOR_ONLY_SPEC.equals(specialization);
+      }
+    }
+
+    final ServiceModelGeneratorHandleResponse response = new ServiceModelGeneratorHandleResponse(result);
+    if (configurationIssue != null) {
+      response.addConfigurationIssue(configurationIssue);
+    }
+
+    return response;
   }
 
   @Override

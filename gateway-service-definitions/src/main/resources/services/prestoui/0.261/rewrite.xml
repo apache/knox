@@ -1,0 +1,45 @@
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+    <rule dir="IN" name="PRESTOUI/prestoui/inbound" pattern="*://*:*/**/prestoui/">
+        <rewrite template="{$serviceUrl[PRESTOUI]}/ui/"/>
+    </rule>
+    <rule dir="IN" name="PRESTOUI/prestoui/inbound" pattern="*://*:*/**/prestoui/{**}">
+        <rewrite template="{$serviceUrl[PRESTOUI]}/ui/{**}"/>
+    </rule>
+        <rule dir="IN" name="PRESTOUI/prestoui/inbound/presto/vendor" pattern="*://*:*/**/prestoui/vendor/{**}?{**}">
+        <rewrite template="{$serviceUrl[PRESTOUI]}/ui/vendor/{**}?{**}"/>
+    </rule>
+    <rule dir="IN" name="PRESTOUI/prestoui/inbound/presto/assets" pattern="*://*:*/**/prestoui/assets/{**}?{**}">
+        <rewrite template="{$serviceUrl[PRESTOUI]}/ui/assets/{**}?{**}"/>
+    </rule>
+
+    <rule dir="IN" name="PRESTOUI/prestoui/inbound/presto/dist" pattern="*://*:*/**/prestoui/dist/{**}?{**}">
+        <rewrite template="{$serviceUrl[PRESTOUI]}/ui/dist/{**}?{**}"/>
+    </rule>
+    <rule dir="IN" name="PRESTOUI/prestoui/inbound/presto/api" pattern="*://*:*/**/prestoui/v1/{**}?{**}">
+        <rewrite template="{$serviceUrl[PRESTOUI]}/v1/{**}?{**}"/>
+    </rule>
+        <rule dir="OUT" name="PRESTOUI/prestoui/outbound/api" pattern="/v1/{**}">
+         <rewrite template="{$frontend[url]}/prestoui/v1/{**}"/>
+    </rule>
+        <filter name="PRESTOUI/prestoui/outbound/body">
+        <content type="application/javascript">
+        <apply path="/v1/[\w]+" rule="PRESTOUI/prestoui/outbound/api"/>
+        </content>
+    </filter>
+</rules>

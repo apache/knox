@@ -34,6 +34,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.topology.impl.DefaultTopologyService;
+import org.apache.knox.gateway.topology.simple.DiscoveryException;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorHandler;
 
 public class DescriptorsMonitor extends FileAlterationListenerAdaptor implements FileFilter {
@@ -123,6 +124,8 @@ public class DescriptorsMonitor extends FileAlterationListenerAdaptor implements
       for (List<String> descs : providerConfigReferences.values()) {
         descs.remove(descriptorName);
       }
+    } catch (DiscoveryException e) {
+      LOG.failedToDiscoverClusterServices(e.getClusterName(), e.getTopologyName(), e);
     } catch (Exception e) {
       LOG.simpleDescriptorHandlingError(file.getName(), e);
     }

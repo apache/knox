@@ -20,7 +20,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.BufferedHttpEntity;
-import org.apache.knox.gateway.dispatch.DefaultDispatch;
+import org.apache.knox.gateway.dispatch.ConfigurableDispatch;
 import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.ha.provider.HaProvider;
 import org.apache.knox.gateway.ha.provider.impl.HaServiceConfigConstants;
@@ -35,7 +35,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class  RMHaBaseDispatcher extends DefaultDispatch {
+class  RMHaBaseDispatcher extends ConfigurableDispatch {
     private static final String FAILOVER_COUNTER_ATTRIBUTE = "dispatch.ha.failover.counter";
     private static final String LOCATION = "Location";
     private static final RMMessages LOG = MessagesFactory.get(RMMessages.class);

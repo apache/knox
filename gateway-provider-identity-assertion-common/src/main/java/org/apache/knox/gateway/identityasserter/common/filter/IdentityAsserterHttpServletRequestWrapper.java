@@ -46,16 +46,22 @@ import java.util.Map;
 
 public class IdentityAsserterHttpServletRequestWrapper extends HttpServletRequestWrapper {
 
-private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.class );
+  protected static final SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.class );
 
   private static final String PRINCIPAL_PARAM = "user.name";
   private static final String DOAS_PRINCIPAL_PARAM = "doAs";
+  private List<String> impersonationParamsList;
 
   private String username;
 
   public IdentityAsserterHttpServletRequestWrapper( HttpServletRequest request, String principal ) {
+    this(request, principal, Collections.EMPTY_LIST);
+  }
+
+  public IdentityAsserterHttpServletRequestWrapper( HttpServletRequest request, String principal, List impersonationParamsList ) {
     super(request);
     username = principal;
+    this.impersonationParamsList = impersonationParamsList;
   }
 
   @Override
@@ -143,7 +149,7 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
     return params;
   }
 
-  private Map<String, List<String>> getParams()
+  protected Map<String, List<String>> getParams()
       throws UnsupportedEncodingException {
     return getParams( super.getQueryString() );
   }
@@ -181,18 +187,22 @@ private static SpiGatewayMessages log = MessagesFactory.get( SpiGatewayMessages.
     return q;
   }
 
-  private List<String> getImpersonationParamNames() {
-    // TODO: let's have service definitions register their impersonation
-    // params in a future release and get this list from a central registry.
-    // This will provide better coverage of protection by removing any
-    // prepopulated impersonation params.
-    ArrayList<String> principalParamNames = new ArrayList<>();
-    principalParamNames.add(DOAS_PRINCIPAL_PARAM);
-    principalParamNames.add(PRINCIPAL_PARAM);
-    return principalParamNames;
+  protected List<String> getImpersonationParamNames() {
+    /**
+     *  If for some reason impersonationParamsList is empty e.g. some component using
+     *  old api then return the default list. This is for backwards compatibility.
+     **/
+    if(impersonationParamsList == null || impersonationParamsList.isEmpty()) {
+      ArrayList<String> principalParamNames = new ArrayList<>();
+      principalParamNames.add(DOAS_PRINCIPAL_PARAM);
+      principalParamNames.add(PRINCIPAL_PARAM);
+      return principalParamNames;
+    } else {
+      return impersonationParamsList;
+    }
   }
 
-  private Map<String, List<String>> scrubOfExistingPrincipalParams(
+  protected Map<String, List<String>> scrubOfExistingPrincipalParams(
       Map<String, List<String>> params, List<String> principalParamNames) {
     HashSet<String> remove = new HashSet<>();
     for (String paramKey : params.keySet()) {

@@ -34,6 +34,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.apache.knox.gateway.GatewayFilter;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.context.ContextAttributes;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.SignatureVerificationCache;
@@ -123,6 +124,8 @@ public class HadoopAuthFilterTest {
     topology.setName("Sample");
 
     ServletContext servletContext = createMock(ServletContext.class);
+    servletContext.setAttribute(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE, Boolean.TRUE);
+    EasyMock.expectLastCall();
     expect(servletContext.getAttribute("signer.secret.provider.object")).andReturn(null).atLeastOnce();
 
     FilterConfig filterConfig = createMock(FilterConfig.class);
@@ -138,6 +141,7 @@ public class HadoopAuthFilterTest {
     expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
     expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(null).anyTimes();
+    expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
 
     Properties configProperties = createMock(Properties.class);
     expect(configProperties.getProperty("signature.secret.file")).andReturn("signature.secret.file").atLeastOnce();
@@ -196,11 +200,12 @@ public class HadoopAuthFilterTest {
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
 
     GatewayFilter.Holder filterConfig = createMock(GatewayFilter.Holder.class);
-    expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(Collections.emptyList()));
+    expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(Collections.emptyList())).anyTimes();
     expect(filterConfig.getInitParameter(GatewayConfig.PROXYUSER_SERVICES_IGNORE_DOAS)).andReturn("service").atLeastOnce();
     expect(filterConfig.getInitParameter("config.prefix")).andReturn("some.prefix").atLeastOnce();
     expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(null).anyTimes();
+    expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
 
 
     EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -211,6 +216,8 @@ public class HadoopAuthFilterTest {
 
     final ServletContext servletContext = createMock(ServletContext.class);
     expect(servletContext.getAttribute("signer.secret.provider.object")).andReturn(null).atLeastOnce();
+    servletContext.setAttribute(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE, Boolean.TRUE);
+    EasyMock.expectLastCall();
     expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
 
     final HadoopAuthFilter hadoopAuthFilter = createMockBuilder(HadoopAuthFilter.class).addMockedMethod("getConfiguration", String.class, FilterConfig.class).withConstructor()
@@ -242,12 +249,13 @@ public class HadoopAuthFilterTest {
     HttpServletRequest request_semicolon = EasyMock.createNiceMock(HttpServletRequest.class);
 
     GatewayFilter.Holder filterConfig = createMock(GatewayFilter.Holder.class);
-    expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(Collections.emptyList()));
+    expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(Collections.emptyList())).anyTimes();
     expect(filterConfig.getInitParameter(GatewayConfig.PROXYUSER_SERVICES_IGNORE_DOAS)).andReturn("service").atLeastOnce();
     expect(filterConfig.getInitParameter("config.prefix")).andReturn("some.prefix").atLeastOnce();
     expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
     /* update the default list to use favicon.ico */
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(request_semicolon_path).anyTimes();
+    expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     /* capture errors */
@@ -268,6 +276,8 @@ public class HadoopAuthFilterTest {
 
     final ServletContext servletContext = createMock(ServletContext.class);
     expect(servletContext.getAttribute("signer.secret.provider.object")).andReturn(null).atLeastOnce();
+    servletContext.setAttribute(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE, Boolean.TRUE);
+    EasyMock.expectLastCall();
     expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
 
     final HadoopAuthFilter hadoopAuthFilter = createMockBuilder(HadoopAuthFilter.class).addMockedMethod("getConfiguration", String.class, FilterConfig.class).withConstructor()
@@ -300,12 +310,13 @@ public class HadoopAuthFilterTest {
     HttpServletRequest request_query = EasyMock.createNiceMock(HttpServletRequest.class);
 
     GatewayFilter.Holder filterConfig = createMock(GatewayFilter.Holder.class);
-    expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(Collections.emptyList()));
+    expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(Collections.emptyList())).anyTimes();
     expect(filterConfig.getInitParameter(GatewayConfig.PROXYUSER_SERVICES_IGNORE_DOAS)).andReturn("service").atLeastOnce();
     expect(filterConfig.getInitParameter("config.prefix")).andReturn("some.prefix").atLeastOnce();
     expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
     /* update the default list to use favicon.ico */
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(request_semicolon_path).anyTimes();
+    expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     /* capture errors */
@@ -326,6 +337,8 @@ public class HadoopAuthFilterTest {
 
     final ServletContext servletContext = createMock(ServletContext.class);
     expect(servletContext.getAttribute("signer.secret.provider.object")).andReturn(null).atLeastOnce();
+    servletContext.setAttribute(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE, Boolean.TRUE);
+    EasyMock.expectLastCall();
     expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
 
     final HadoopAuthFilter hadoopAuthFilter = createMockBuilder(HadoopAuthFilter.class).addMockedMethod("getConfiguration", String.class, FilterConfig.class).withConstructor()
@@ -358,12 +371,13 @@ public class HadoopAuthFilterTest {
     HttpServletRequest request_ampersand = EasyMock.createNiceMock(HttpServletRequest.class);
 
     GatewayFilter.Holder filterConfig = createMock(GatewayFilter.Holder.class);
-    expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(Collections.emptyList()));
+    expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(Collections.emptyList())).anyTimes();
     expect(filterConfig.getInitParameter(GatewayConfig.PROXYUSER_SERVICES_IGNORE_DOAS)).andReturn("service").atLeastOnce();
     expect(filterConfig.getInitParameter("config.prefix")).andReturn("some.prefix").atLeastOnce();
     expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
     /* update the default list to use favicon.ico */
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(request_semicolon_path).anyTimes();
+    expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     /* capture errors */
@@ -384,6 +398,8 @@ public class HadoopAuthFilterTest {
 
     final ServletContext servletContext = createMock(ServletContext.class);
     expect(servletContext.getAttribute("signer.secret.provider.object")).andReturn(null).atLeastOnce();
+    servletContext.setAttribute(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE, Boolean.TRUE);
+    EasyMock.expectLastCall();
     expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
 
     final HadoopAuthFilter hadoopAuthFilter = createMockBuilder(HadoopAuthFilter.class).addMockedMethod("getConfiguration", String.class, FilterConfig.class).withConstructor()
@@ -416,12 +432,13 @@ public class HadoopAuthFilterTest {
     HttpServletRequest request_dash = EasyMock.createNiceMock(HttpServletRequest.class);
 
     GatewayFilter.Holder filterConfig = createMock(GatewayFilter.Holder.class);
-    expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(Collections.emptyList()));
+    expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(Collections.emptyList())).anyTimes();
     expect(filterConfig.getInitParameter(GatewayConfig.PROXYUSER_SERVICES_IGNORE_DOAS)).andReturn("service").atLeastOnce();
     expect(filterConfig.getInitParameter("config.prefix")).andReturn("some.prefix").atLeastOnce();
     expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
     /* update the default list to use favicon.ico */
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(request_semicolon_path).anyTimes();
+    expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     /* capture errors */
@@ -442,6 +459,8 @@ public class HadoopAuthFilterTest {
 
     final ServletContext servletContext = createMock(ServletContext.class);
     expect(servletContext.getAttribute("signer.secret.provider.object")).andReturn(null).atLeastOnce();
+    servletContext.setAttribute(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE, Boolean.TRUE);
+    EasyMock.expectLastCall();
     expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
 
     final HadoopAuthFilter hadoopAuthFilter = createMockBuilder(HadoopAuthFilter.class).addMockedMethod("getConfiguration", String.class, FilterConfig.class).withConstructor()
@@ -475,12 +494,13 @@ public class HadoopAuthFilterTest {
 
 
     GatewayFilter.Holder filterConfig = createMock(GatewayFilter.Holder.class);
-    expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(Collections.emptyList()));
+    expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(Collections.emptyList())).anyTimes();
     expect(filterConfig.getInitParameter(GatewayConfig.PROXYUSER_SERVICES_IGNORE_DOAS)).andReturn("service").atLeastOnce();
     expect(filterConfig.getInitParameter("config.prefix")).andReturn("some.prefix").atLeastOnce();
     expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
     /* update the default list to use favicon.ico */
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(request_semicolon_path).anyTimes();
+    expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     /* capture errors */
@@ -501,6 +521,8 @@ public class HadoopAuthFilterTest {
 
     final ServletContext servletContext = createMock(ServletContext.class);
     expect(servletContext.getAttribute("signer.secret.provider.object")).andReturn(null).atLeastOnce();
+    servletContext.setAttribute(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE, Boolean.TRUE);
+    EasyMock.expectLastCall();
     expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
 
     final HadoopAuthFilter hadoopAuthFilter = createMockBuilder(HadoopAuthFilter.class).addMockedMethod("getConfiguration", String.class, FilterConfig.class).withConstructor()
@@ -549,11 +571,12 @@ public class HadoopAuthFilterTest {
 
   private HadoopAuthFilter testIfJwtSupported(String supportJwt) throws Exception {
     final GatewayFilter.Holder filterConfig = createMock(GatewayFilter.Holder.class);
-    expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(Collections.emptyList()));
+    expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(Collections.emptyList())).anyTimes();
     expect(filterConfig.getInitParameter(GatewayConfig.PROXYUSER_SERVICES_IGNORE_DOAS)).andReturn("service").atLeastOnce();
     expect(filterConfig.getInitParameter("config.prefix")).andReturn("some.prefix").atLeastOnce();
     expect(filterConfig.getInitParameter("support.jwt")).andReturn(supportJwt).anyTimes();
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(null).anyTimes();
+    expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
     final boolean isJwtSupported = Boolean.parseBoolean(supportJwt);
     if (isJwtSupported) {
       expect(filterConfig.getInitParameter(JWTFederationFilter.KNOX_TOKEN_AUDIENCES)).andReturn(null).anyTimes();
@@ -564,7 +587,10 @@ public class HadoopAuthFilterTest {
       expect(filterConfig.getInitParameter(JWTFederationFilter.JWT_UNAUTHENTICATED_PATHS_PARAM)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(AbstractJWTFilter.JWT_EXPECTED_ISSUER)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(AbstractJWTFilter.JWT_EXPECTED_SIGALG)).andReturn(null).anyTimes();
+      expect(filterConfig.getInitParameter(JWTFederationFilter.ALLOWED_JWS_TYPES)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(SignatureVerificationCache.TOKENS_VERIFIED_CACHE_MAX)).andReturn(null).anyTimes();
+      expect(filterConfig.getInitParameter(JWTFederationFilter.KNOX_TOKEN_USE_COOKIE)).andReturn(null).anyTimes();
+      expect(filterConfig.getInitParameter(JWTFederationFilter.KNOX_TOKEN_COOKIE_NAME)).andReturn(null).anyTimes();
     }
 
     final ServletContext servletContext = createMock(ServletContext.class);
@@ -574,6 +600,8 @@ public class HadoopAuthFilterTest {
       expect(servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(null).anyTimes();
     }
     expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
+    servletContext.setAttribute(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE, Boolean.TRUE);
+    EasyMock.expectLastCall();
 
     final HadoopAuthFilter hadoopAuthFilter = createMockBuilder(HadoopAuthFilter.class).addMockedMethod("getConfiguration", String.class, FilterConfig.class).withConstructor()
         .createMock();

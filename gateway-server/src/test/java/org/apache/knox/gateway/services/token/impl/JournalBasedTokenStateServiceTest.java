@@ -318,13 +318,13 @@ public class JournalBasedTokenStateServiceTest extends DefaultTokenStateServiceT
     }
 
     private static Map<String, Long> getTokenExpirationsField(TokenStateService tss) throws Exception {
-        Field tokenExpirationsField = tss.getClass().getSuperclass().getDeclaredField("tokenExpirations");
+        Field tokenExpirationsField = tss.getClass().getSuperclass().getSuperclass().getDeclaredField("tokenExpirations");
         tokenExpirationsField.setAccessible(true);
         return (Map<String, Long>) tokenExpirationsField.get(tss);
     }
 
     private static Map<String, Long> getMaxTokenLifetimesField(TokenStateService tss) throws Exception {
-        Field maxTokenLifetimesField = tss.getClass().getSuperclass().getDeclaredField("maxTokenLifetimes");
+        Field maxTokenLifetimesField = tss.getClass().getSuperclass().getSuperclass().getDeclaredField("maxTokenLifetimes");
         maxTokenLifetimesField.setAccessible(true);
         return (Map<String, Long>) maxTokenLifetimesField.get(tss);
     }

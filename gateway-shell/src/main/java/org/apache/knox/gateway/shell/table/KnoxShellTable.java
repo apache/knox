@@ -289,6 +289,32 @@ public class KnoxShellTable {
     return this;
   }
 
+  /**
+   * Trims the String value of whitespace for each of the values in a column
+   * given the column name.
+   * @param colIndex
+   * @return table
+   */
+  public KnoxShellTable trim(String colName) {
+    int colIndex = headers.indexOf(colName);
+    return trim(colIndex);
+  }
+
+  /**
+   * Trims the String value of whitespace for each of the values in a column
+   * given the column index.
+   * @param colIndex
+   * @return table
+   */
+  public KnoxShellTable trim(int colIndex) {
+    List<Comparable<? extends Object>> col = values(colIndex);
+    for (int i = 0; i < col.size(); i++) {
+      String v = (String) col.get(i);
+      rows.get(i).set(colIndex, v.trim());
+    }
+    return this;
+  }
+
   public List<String> getHeaders() {
     return headers == null || headers.isEmpty() ? null : headers;
   }

@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -60,8 +61,11 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServerInfoService;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.registry.ServiceDefinitionRegistry;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
+import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
@@ -101,9 +105,26 @@ public class KnoxMetadataResource {
           String.format(Locale.ROOT, "https://knox.apache.org/books/knox-%s/user-guide.html#Admin+API", getAdminApiBookVersion(serviceInfoService.getBuildVersion())));
       final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
       proxyInfo.setAdminUiUrl(getBaseGatewayUrl(config) + "/manager/admin-ui/");
+      proxyInfo.setWebShellUrl(getBaseGatewayUrl(config) + "/homepage/webshell-ui/index.html");
+      setTokenManagementEnabledFlag(proxyInfo, gatewayServices);
+      proxyInfo.setEnableWebshell(String.valueOf(config.isWebShellEnabled()));
     }
 
     return proxyInfo;
+  }
+
+  private void setTokenManagementEnabledFlag(final GeneralProxyInformation proxyInfo, final GatewayServices gatewayServices) {
+    try {
+      final AliasService aliasService = gatewayServices.getService(ServiceType.ALIAS_SERVICE);
+      final List<String> aliases = aliasService.getAliasesForCluster(AliasService.NO_CLUSTER_NAME);
+      final boolean tokenManagementEnabled = aliases.contains(TokenMAC.KNOX_TOKEN_HASH_KEY_ALIAS_NAME);
+      proxyInfo.setEnableTokenManagement(Boolean.toString(tokenManagementEnabled));
+      if (!tokenManagementEnabled) {
+        LOG.tokenManagementDisabled();
+      }
+    } catch (AliasServiceException e) {
+      LOG.failedToFetchGatewayAliasList(e.getMessage(), e);
+    }
   }
 
   private String getAdminApiBookVersion(String buildVersion) {

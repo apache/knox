@@ -36,6 +36,28 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.KeyLengthException;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.crypto.MACVerifier;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.jwk.source.RemoteJWKSet;
+import com.nimbusds.jose.proc.BadJOSEException;
+import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier;
+import com.nimbusds.jose.proc.JOSEObjectTypeVerifier;
+import com.nimbusds.jose.proc.JWSKeySelector;
+import com.nimbusds.jose.proc.JWSVerificationKeySelector;
+import com.nimbusds.jose.proc.SecurityContext;
+import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
+import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
+import com.nimbusds.jwt.proc.DefaultJWTProcessor;
+import com.nimbusds.jwt.proc.JWTClaimsSetVerifier;
 import org.apache.knox.gateway.GatewayResources;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -52,26 +74,6 @@ import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
-
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.KeyLengthException;
-import com.nimbusds.jose.crypto.MACSigner;
-import com.nimbusds.jose.crypto.MACVerifier;
-import com.nimbusds.jose.crypto.RSASSASigner;
-import com.nimbusds.jose.crypto.RSASSAVerifier;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.jwk.source.RemoteJWKSet;
-import com.nimbusds.jose.proc.BadJOSEException;
-import com.nimbusds.jose.proc.JWSKeySelector;
-import com.nimbusds.jose.proc.JWSVerificationKeySelector;
-import com.nimbusds.jose.proc.SecurityContext;
-import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
-import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
-import com.nimbusds.jwt.proc.DefaultJWTProcessor;
-import com.nimbusds.jwt.proc.JWTClaimsSetVerifier;
 
 public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   private static final GatewayResources RESOURCES = ResourcesFactory.get(GatewayResources.class);
@@ -101,25 +103,16 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
 
   @Override
   public JWT issueToken(JWTokenAttributes jwtAttributes) throws TokenServiceException {
-    String[] claimArray = new String[6];
-    claimArray[0] = "KNOXSSO";
-    claimArray[1] = jwtAttributes.getPrincipal().getName();
-    claimArray[2] = null;
-    if (jwtAttributes.getExpires() == -1) {
-      claimArray[3] = null;
-    }
-    else {
-      claimArray[3] = String.valueOf(jwtAttributes.getExpires());
-    }
     final String algorithm = jwtAttributes.getAlgorithm();
     if(SUPPORTED_HMAC_SIG_ALGS.contains(algorithm)) {
-      claimArray[4] = null;
-      claimArray[5] = null;
+      jwtAttributes.setKid(null);
+      jwtAttributes.setJku(null);
     } else {
-      claimArray[4] = cachedSigningKeyID.isPresent() ? cachedSigningKeyID.get() : null;
-      claimArray[5] = jwtAttributes.getJku();
+      jwtAttributes.setKid(cachedSigningKeyID.isPresent() ? cachedSigningKeyID.get() : null);
     }
-    final JWT token = SUPPORTED_PKI_SIG_ALGS.contains(algorithm) || SUPPORTED_HMAC_SIG_ALGS.contains(algorithm) ? new JWTToken(algorithm, claimArray, jwtAttributes.getAudiences(), jwtAttributes.isManaged()) : null;
+    final JWT token = SUPPORTED_PKI_SIG_ALGS.contains(algorithm) || SUPPORTED_HMAC_SIG_ALGS.contains(algorithm)
+        ? new JWTToken(jwtAttributes)
+        : null;
     if (token != null) {
       if (SUPPORTED_HMAC_SIG_ALGS.contains(algorithm)) {
         signTokenWithHMAC(token);
@@ -228,7 +221,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   }
 
   @Override
-  public boolean verifyToken(JWT token, String jwksurl, String algorithm) throws TokenServiceException {
+  public boolean verifyToken(JWT token, String jwksurl, String algorithm, Set<JOSEObjectType> allowedJwsTypes) throws TokenServiceException {
     boolean verified = false;
     try {
       if (algorithm != null && jwksurl != null) {
@@ -241,6 +234,8 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
         jwtProcessor.setJWSKeySelector(keySelector);
         JWTClaimsSetVerifier<SecurityContext> claimsVerifier = new DefaultJWTClaimsVerifier<>();
         jwtProcessor.setJWTClaimsSetVerifier(claimsVerifier);
+        final JOSEObjectTypeVerifier<SecurityContext> objectTypeVerifier = new DefaultJOSEObjectTypeVerifier<>(allowedJwsTypes);
+        jwtProcessor.setJWSTypeVerifier(objectTypeVerifier);
 
         // Process the token
         SecurityContext ctx = null; // optional context parameter, not required here

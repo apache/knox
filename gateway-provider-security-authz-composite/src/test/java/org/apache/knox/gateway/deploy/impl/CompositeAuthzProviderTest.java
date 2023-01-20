@@ -21,16 +21,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
+
 
 import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
 import org.apache.knox.gateway.descriptor.ResourceDescriptor;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
+import static org.junit.Assert.assertEquals;
 
 public class CompositeAuthzProviderTest {
   @Test
@@ -58,10 +59,43 @@ public class CompositeAuthzProviderTest {
   public void testParsingProviderNames() throws Exception {
     String names = "AclsAuthz,   SomeOther,TheOtherOne";
     CompositeAuthzDeploymentContributor c = new CompositeAuthzDeploymentContributor();
-    String[] providerNames = c.parseProviderNames(names);
-    assertEquals(providerNames.length, 3);
-    assertEquals(providerNames[0], "AclsAuthz");
-    assertEquals(providerNames[1], "SomeOther");
-    assertEquals(providerNames[2], "TheOtherOne");
+    List providerNames = c.parseProviderNames(names);
+    assertEquals(3, providerNames.size());
+    assertEquals("AclsAuthz", providerNames.get(0));
+    assertEquals("SomeOther", providerNames.get(1));
+    assertEquals("TheOtherOne", providerNames.get(2));
+  }
+
+  @Test
+  public void testingParsingProviderNames() throws Exception {
+    String testnames = " SpaceBefore,SpaceAfter , SpaceBeforeandAfter ,NoSpaces,   MoreSpaces   ";
+    CompositeAuthzDeploymentContributor c = new CompositeAuthzDeploymentContributor();
+    List providerNames = c.parseProviderNames(testnames);
+    assertEquals(5, providerNames.size());
+    assertEquals("SpaceBefore", providerNames.get(0));
+    assertEquals("SpaceAfter", providerNames.get(1));
+    assertEquals("SpaceBeforeandAfter", providerNames.get(2));
+    assertEquals("NoSpaces", providerNames.get(3));
+    assertEquals("MoreSpaces", providerNames.get(4));
+  }
+  @Test
+
+  public void testingNullandEmptyProviderNames() throws Exception {
+    String testnames = "";
+    CompositeAuthzDeploymentContributor c = new CompositeAuthzDeploymentContributor();
+    List providerNames = c.parseProviderNames(testnames);
+    assertEquals(0,providerNames.size());
+    assertEquals(Collections.emptyList(), providerNames);
+
+    testnames = "  ";
+    providerNames = c.parseProviderNames(testnames);
+    assertEquals(0, providerNames.size());
+    assertEquals(Collections.emptyList(), providerNames);
+
+    testnames = null;
+    providerNames = c.parseProviderNames(testnames);
+    assertEquals(0,providerNames.size());
+    assertEquals(Collections.emptyList(), providerNames);
   }
 }
+

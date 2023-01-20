@@ -21,18 +21,18 @@ import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.http.HttpStatus;
 import org.apache.knox.gateway.audit.api.CorrelationContext;
-import org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationService;
+import org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationContext;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.test.log.CollectAppender;
-import org.apache.log4j.spi.LoggingEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LogEvent;
 import org.hamcrest.MatcherAssert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.OutputStream;
@@ -57,7 +57,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class GatewayCorrelationIdTest {
-  private static final Logger LOG = LoggerFactory.getLogger( GatewayCorrelationIdTest.class );
+  private static final Logger LOG = LogManager.getLogger( GatewayCorrelationIdTest.class );
 
   public static GatewayConfig config;
   public static GatewayServer gateway;
@@ -201,8 +201,8 @@ public class GatewayCorrelationIdTest {
 
     // Use a set to make sure to dedupe any requestIds to get only unique ones
     Set<String> requestIds = new HashSet<>();
-    for (LoggingEvent accessEvent : CollectAppender.queue) {
-      CorrelationContext cc = (CorrelationContext)accessEvent.getMDC( Log4jCorrelationService.MDC_CORRELATION_CONTEXT_KEY );
+    for (LogEvent accessEvent : CollectAppender.queue) {
+      CorrelationContext cc = Log4jCorrelationContext.of(accessEvent);
       // There are some events that do not have a CorrelationContext associated (ie: deploy)
       if(cc != null) {
         requestIds.add(cc.getRequestId());
@@ -210,7 +210,7 @@ public class GatewayCorrelationIdTest {
     }
 
     // There should be a unique correlation id for each request
-    assertThat(requestIds.size(), is(numberTotalRequests));
+    assertThat(numberTotalRequests, is(requestIds.size()));
 
     LOG_EXIT();
   }

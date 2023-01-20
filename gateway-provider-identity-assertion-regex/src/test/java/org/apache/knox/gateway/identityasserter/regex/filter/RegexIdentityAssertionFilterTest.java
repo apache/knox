@@ -27,6 +27,7 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 
 import java.security.Principal;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -40,6 +41,8 @@ public class RegexIdentityAssertionFilterTest {
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.replay( config );
@@ -64,6 +67,8 @@ public class RegexIdentityAssertionFilterTest {
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.expect(config.getInitParameter( "output" ) ).andReturn( "test-output" ).anyTimes();
     EasyMock.replay( config );
@@ -77,6 +82,8 @@ public class RegexIdentityAssertionFilterTest {
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.expect(config.getInitParameter( "input" ) ).andReturn( "(.*)@.*" ).anyTimes();
     EasyMock.expect(config.getInitParameter( "output" ) ).andReturn( "prefix_{1}_suffix" ).anyTimes();
@@ -94,6 +101,8 @@ public class RegexIdentityAssertionFilterTest {
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.replay( config );
     EasyMock.replay( context );
@@ -112,6 +121,8 @@ public class RegexIdentityAssertionFilterTest {
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.expect(config.getInitParameter( "input" ) ).andReturn( "(.*)@(.*?)\\..*" ).anyTimes();
     EasyMock.expect(config.getInitParameter( "output" ) ).andReturn( "prefix_{1}_suffix:{[2]}" ).anyTimes();
@@ -139,6 +150,8 @@ public class RegexIdentityAssertionFilterTest {
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     EasyMock.expect(config.getInitParameter( "input" ) ).andReturn( "([^@]*)(@.*)?" ).anyTimes();
     EasyMock.expect(config.getInitParameter( "output" ) ).andReturn( "prefix_{1}_suffix" ).anyTimes();

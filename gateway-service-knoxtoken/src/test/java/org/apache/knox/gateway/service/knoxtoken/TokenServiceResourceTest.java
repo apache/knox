@@ -19,51 +19,18 @@ package org.apache.knox.gateway.service.knoxtoken;
 
 import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.KNOX_TOKEN_USER_LIMIT;
 import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.KNOX_TOKEN_USER_LIMIT_DEFAULT;
+import static org.apache.knox.gateway.service.knoxtoken.TokenResource.KNOX_TOKEN_ISSUER;
+import static org.apache.knox.gateway.service.knoxtoken.TokenResource.KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION;
+import static org.apache.knox.gateway.service.knoxtoken.TokenResource.TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED;
+import static org.apache.knox.gateway.services.security.token.JWTokenAttributes.DEFAULT_ISSUER;
+import static org.apache.knox.gateway.services.security.token.impl.JWTToken.KNOX_GROUPS_CLAIM;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.KeyLengthException;
-import com.nimbusds.jose.crypto.RSASSASigner;
-import com.nimbusds.jose.crypto.RSASSAVerifier;
-
-import org.apache.commons.codec.digest.HmacAlgorithms;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.security.PrimaryPrincipal;
-import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.apache.knox.gateway.services.ServiceType;
-import org.apache.knox.gateway.services.GatewayServices;
-import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
-import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
-import org.apache.knox.gateway.services.security.token.KnoxToken;
-import org.apache.knox.gateway.services.security.token.TokenMetadata;
-import org.apache.knox.gateway.services.security.token.TokenStateService;
-import org.apache.knox.gateway.services.security.token.TokenUtils;
-import org.apache.knox.gateway.services.security.token.UnknownTokenException;
-import org.apache.knox.gateway.services.security.token.impl.JWT;
-import org.apache.knox.gateway.services.security.token.impl.JWTToken;
-import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
-import org.apache.knox.gateway.services.token.impl.JDBCTokenStateService;
-import org.apache.knox.gateway.util.JsonUtils;
-import org.easymock.EasyMock;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import javax.security.auth.Subject;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Response;
 
 import java.io.IOException;
 import java.security.KeyPair;
@@ -81,6 +48,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -92,6 +61,52 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Predicate;
+import javax.security.auth.Subject;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.KeyLengthException;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
+import org.apache.commons.codec.digest.HmacAlgorithms;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.context.ContextAttributes;
+import org.apache.knox.gateway.security.ImpersonatedPrincipal;
+import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
+import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.KnoxToken;
+import org.apache.knox.gateway.services.security.token.PersistentTokenStateService;
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
+import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
+import org.apache.knox.gateway.services.token.impl.JDBCTokenStateService;
+import org.apache.knox.gateway.util.AuthFilterUtils;
+import org.apache.knox.gateway.util.JsonUtils;
+import org.easymock.EasyMock;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * Some tests for the token service
@@ -142,6 +157,12 @@ public class TokenServiceResourceTest {
   private void configureCommonExpectations(Map<String, String> contextExpectations, String expectedSubjectDN, Boolean serverManagedTssEnabled) throws Exception {
     context = EasyMock.createNiceMock(ServletContext.class);
     contextExpectations.forEach((key, value) -> EasyMock.expect(context.getInitParameter(key)).andReturn(value).anyTimes());
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.enumeration(contextExpectations.keySet())).anyTimes();
+    EasyMock.expect(context.getAttribute("org.apache.knox.gateway.gateway.cluster")).andReturn("topology1").anyTimes();
+    if (contextExpectations.containsKey(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE)) {
+       EasyMock.expect(context.getAttribute(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE)).andReturn(Boolean.parseBoolean(contextExpectations.get(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE))).anyTimes();
+     }
+
     request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
     Principal principal = EasyMock.createNiceMock(Principal.class);
@@ -151,6 +172,13 @@ public class TokenServiceResourceTest {
     if (contextExpectations.containsKey(TokenResource.LIFESPAN)) {
       EasyMock.expect(request.getParameter(TokenResource.LIFESPAN)).andReturn(contextExpectations.get(TokenResource.LIFESPAN)).anyTimes();
     }
+    if (contextExpectations.containsKey(TokenResource.KNOX_TOKEN_INCLUDE_GROUPS)) {
+      EasyMock.expect(request.getParameter(TokenResource.KNOX_TOKEN_INCLUDE_GROUPS)).andReturn(contextExpectations.get(TokenResource.KNOX_TOKEN_INCLUDE_GROUPS)).anyTimes();
+    }
+    if (contextExpectations.containsKey(TokenResource.QUERY_PARAMETER_DOAS)) {
+      EasyMock.expect(request.getParameter(TokenResource.QUERY_PARAMETER_DOAS)).andReturn(contextExpectations.get(TokenResource.QUERY_PARAMETER_DOAS)).anyTimes();
+    }
+    EasyMock.expect(request.getParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
 
     GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services).anyTimes();
@@ -641,8 +669,8 @@ public class TokenServiceResourceTest {
     validateSuccessfulRenewalResponse(renewalResponse);
     String responseContent = (String) renewalResponse.getEntity();
     assertNotNull(responseContent);
-    Map<String, String> json = parseJSONResponse(responseContent);
-    assertTrue(Boolean.parseBoolean(json.get("renewed")));
+    Map<String, Object> json = parseJSONResponse(responseContent);
+    assertTrue(Boolean.parseBoolean((String)json.get("renewed")));
     assertNotNull(json.get("expires")); // Should get back the original expiration from the token itself
   }
 
@@ -658,8 +686,8 @@ public class TokenServiceResourceTest {
     validateSuccessfulRenewalResponse(renewalResponse);
     String responseContent = (String) renewalResponse.getEntity();
     assertNotNull(responseContent);
-    Map<String, String> json = parseJSONResponse(responseContent);
-    assertTrue(Boolean.parseBoolean(json.get("renewed")));
+    Map<String, Object> json = parseJSONResponse(responseContent);
+    assertTrue(Boolean.parseBoolean((String)json.get("renewed")));
     assertNotNull(json.get("expires")); // Should get back the original expiration from the token itself
   }
 
@@ -675,8 +703,8 @@ public class TokenServiceResourceTest {
     validateSuccessfulRenewalResponse(renewalResponse);
     String responseContent = (String) renewalResponse.getEntity();
     assertNotNull(responseContent);
-    Map<String, String> json = parseJSONResponse(responseContent);
-    assertTrue(Boolean.parseBoolean(json.get("renewed")));
+    Map<String, Object> json = parseJSONResponse(responseContent);
+    assertTrue(Boolean.parseBoolean((String)json.get("renewed")));
     assertNotNull(json.get("expires")); // Should get back the original expiration from the token itself
   }
 
@@ -824,6 +852,12 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRevocation_Enabled_RevokeOwnToken() throws Exception {
     final Response renewalResponse = doTestTokenRevocation(true, null, createTestSubject(USER_NAME));
+    validateSuccessfulRevocationResponse(renewalResponse);
+  }
+
+  @Test
+  public void testTokenRevocation_Enabled_RevokeImpersonatedToken() throws Exception {
+    final Response renewalResponse = doTestTokenRevocation(true, null, createTestSubject(USER_NAME), "impersonatedUserName");
     validateSuccessfulRevocationResponse(renewalResponse);
   }
 
@@ -983,12 +1017,12 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testConfiguredTokenLimitPerUser() throws Exception {
-    testLimitingTokensPerUser(String.valueOf(KNOX_TOKEN_USER_LIMIT_DEFAULT), KNOX_TOKEN_USER_LIMIT_DEFAULT);
+    testLimitingTokensPerUser(KNOX_TOKEN_USER_LIMIT_DEFAULT, KNOX_TOKEN_USER_LIMIT_DEFAULT);
   }
 
   @Test
   public void testUnlimitedTokensPerUser() throws Exception {
-    testLimitingTokensPerUser(String.valueOf("-1"), 100);
+    testLimitingTokensPerUser(-1, 100);
   }
 
   @Test
@@ -1005,7 +1039,7 @@ public class TokenServiceResourceTest {
     for (int i = 0; i < numberOfPreExistingTokens; i++) {
       tr.doGet();
     }
-    Response getKnoxTokensResponse = tr.getUserTokens(USER_NAME);
+    Response getKnoxTokensResponse = getUserTokensResponse(tr);
     Collection<String> tokens = ((Map<String, Collection<String>>) JsonUtils.getObjectFromJsonString(getKnoxTokensResponse.getEntity().toString()))
             .get("tokens");
     assertEquals(tokens.size(), numberOfPreExistingTokens);
@@ -1019,19 +1053,48 @@ public class TokenServiceResourceTest {
     assertTrue(response.getEntity().toString().contains("Unable to get token - token limit exceeded."));
   }
 
+  private Response getUserTokensResponse(TokenResource tokenResource) {
+    return getUserTokensResponse(tokenResource, false);
+  }
+
+  private Response getUserTokensResponse(TokenResource tokenResource, boolean createdBy) {
+    final MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
+    queryParameters.put(createdBy ? "createdBy" : "userName", Arrays.asList(USER_NAME));
+    final UriInfo uriInfo = EasyMock.createNiceMock(UriInfo.class);
+    EasyMock.expect(uriInfo.getQueryParameters()).andReturn(queryParameters).anyTimes();
+    EasyMock.replay(uriInfo);
+    return tokenResource.getUserTokens(uriInfo);
+  }
+
   @Test
   public void testTokenLimitPerUserExceeded() throws Exception {
     try {
-      testLimitingTokensPerUser(String.valueOf("10"), 11);
+      testLimitingTokensPerUser(10, 11);
       fail("Exception should have been thrown");
     } catch (Exception e) {
       assertTrue(e.getMessage().contains("Unable to get token - token limit exceeded."));
     }
   }
 
-  private void testLimitingTokensPerUser(String configuredLimit, int numberOfTokens) throws Exception {
+  @Test
+  public void testTokenLimitPerUserExceededShouldRevokeOldestToken() throws Exception {
+    try {
+      testLimitingTokensPerUser(10, 11, true);
+    } catch (Exception e) {
+      fail("Exception should NOT have been thrown");
+    }
+  }
+
+  private void testLimitingTokensPerUser(int configuredLimit, int numberOfTokens) throws Exception {
+    testLimitingTokensPerUser(configuredLimit, numberOfTokens, false);
+  }
+
+  private void testLimitingTokensPerUser(int configuredLimit, int numberOfTokens, boolean revokeOldestToken) throws Exception {
     final Map<String, String> contextExpectations = new HashMap<>();
-    contextExpectations.put(KNOX_TOKEN_USER_LIMIT, configuredLimit);
+    contextExpectations.put(KNOX_TOKEN_USER_LIMIT, String.valueOf(configuredLimit));
+    if (revokeOldestToken) {
+      contextExpectations.put(KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION, TokenResource.UserLimitExceededAction.REMOVE_OLDEST.name());
+    }
     configureCommonExpectations(contextExpectations, Boolean.TRUE);
 
     final TokenResource tr = new TokenResource();
@@ -1040,15 +1103,210 @@ public class TokenServiceResourceTest {
     tr.init();
 
     for (int i = 0; i < numberOfTokens; i++) {
-      final Response getTokenResponse = tr.doGet();
+      final Response getTokenResponse = Subject.doAs(createTestSubject(USER_NAME), (PrivilegedAction<Response>) () -> tr.doGet());
       if (getTokenResponse.getStatus() != Response.Status.OK.getStatusCode()) {
         throw new Exception(getTokenResponse.getEntity().toString());
       }
     }
-    final Response getKnoxTokensResponse = tr.getUserTokens(USER_NAME);
+    final Response getKnoxTokensResponse = getUserTokensResponse(tr);
     final Collection<String> tokens = ((Map<String, Collection<String>>) JsonUtils.getObjectFromJsonString(getKnoxTokensResponse.getEntity().toString()))
         .get("tokens");
-    assertEquals(tokens.size(), numberOfTokens);
+    assertEquals(tokens.size(), revokeOldestToken ? configuredLimit : numberOfTokens);
+  }
+
+  @Test
+  public void testCreateImpersonatedToken() throws Exception {
+    testCreateImpersonatedToken(true);
+  }
+
+  @Test
+  public void testImpersonationDisabled() throws Exception {
+    testCreateImpersonatedToken(false);
+  }
+
+  private void testCreateImpersonatedToken(boolean enableImpersonation) throws Exception {
+    final String impersonatedUser = "testUser";
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put(TokenResource.QUERY_PARAMETER_DOAS, impersonatedUser);
+    contextExpectations.put(AuthFilterUtils.PROXYUSER_PREFIX + "." + USER_NAME + ".users", impersonatedUser);
+    contextExpectations.put(AuthFilterUtils.PROXYUSER_PREFIX + "." + USER_NAME + ".hosts", "*");
+    contextExpectations.put(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE, Boolean.toString(enableImpersonation));
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+
+    final TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    final Subject subject = createTestSubject(USER_NAME);
+    if (enableImpersonation) {
+      subject.getPrincipals().add(new ImpersonatedPrincipal(impersonatedUser));
+    }
+    Subject.doAs(subject,  (PrivilegedAction<Response>) () -> tr.doGet());
+
+    final Response getKnoxTokensResponse = getUserTokensResponse(tr, enableImpersonation);
+    final Collection<LinkedHashMap<String, Object>> tokens = ((Map<String, Collection<LinkedHashMap<String, Object>>>) JsonUtils
+        .getObjectFromJsonString(getKnoxTokensResponse.getEntity().toString())).get("tokens");
+    final LinkedHashMap<String, Object> knoxToken = tokens.iterator().next();
+    final Map<String, String> metadata = (Map<String, String>) knoxToken.get("metadata");
+    if (enableImpersonation) {
+      assertEquals(metadata.get("createdBy"), USER_NAME);
+      assertEquals(metadata.get("userName"), impersonatedUser);
+    } else {
+      assertNull(metadata.get("createdBy"));
+      assertEquals(USER_NAME, metadata.get("userName"));
+    }
+  }
+
+  @Test
+  public void testDefaultIssuer() throws Exception {
+    Map<String, String> contextExpectations = new HashMap<>();
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response response = tr.doGet();
+    assertEquals(200, response.getStatus());
+
+    String accessToken = getTagValue(response.getEntity().toString(), "access_token");
+    Map<String, Object> payload = parseJSONResponse(JWTToken.parseToken(accessToken).getPayload());
+    assertEquals(DEFAULT_ISSUER, payload.get("iss"));
+  }
+
+  @Test
+  public void testConfiguredIssuer() throws Exception {
+    Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put(KNOX_TOKEN_ISSUER, "test issuer");
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response response = tr.doGet();
+    assertEquals(200, response.getStatus());
+
+    String accessToken = getTagValue(response.getEntity().toString(), "access_token");
+    Map<String, Object> payload = parseJSONResponse(JWTToken.parseToken(accessToken).getPayload());
+    assertEquals("test issuer", payload.get("iss"));
+  }
+
+  @Test
+  public void testGroupsAddedToToken() throws Exception {
+    Set<String> groups = new HashSet<>(Arrays.asList("group1", "group2"));
+    Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put(TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED, "true");
+    contextExpectations.put(TokenResource.KNOX_TOKEN_INCLUDE_GROUPS, "true");
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+
+    TokenResource tr = new TokenResource() {
+      @Override
+      protected Set<String> groups() {
+        return groups;
+      }
+    };
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response response = tr.doGet();
+    assertEquals(200, response.getStatus());
+
+    String accessToken = getTagValue(response.getEntity().toString(), "access_token");
+    Map<String, Object> payload = parseJSONResponse(JWTToken.parseToken(accessToken).getPayload());
+    assertEquals(new ArrayList<>(groups), payload.get(KNOX_GROUPS_CLAIM));
+  }
+
+  @Test
+  public void testNoGroupsAddedToTokenByDefault() throws Exception {
+    Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put(TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED, "true");
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+
+    TokenResource tr = new TokenResource() {
+      @Override
+      protected Set<String> groups() {
+        return new HashSet<>(Arrays.asList("group1", "group2"));
+      }
+    };
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response response = tr.doGet();
+    assertEquals(200, response.getStatus());
+
+    String accessToken = getTagValue(response.getEntity().toString(), "access_token");
+    Map<String, Object> payload = parseJSONResponse(JWTToken.parseToken(accessToken).getPayload());
+    assertFalse(payload.containsKey(KNOX_GROUPS_CLAIM));
+  }
+
+  @Test
+  public void testBadRequestWhenGroupsAreRequestedToBeIncludedInTokenButItIsDisabledByServer() throws Exception {
+    Set<String> groups = new HashSet<>(Arrays.asList("group1", "group2"));
+    Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put(TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED, "false");
+    contextExpectations.put(TokenResource.KNOX_TOKEN_INCLUDE_GROUPS, "true");
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+
+    TokenResource tr = new TokenResource() {
+      @Override
+      protected Set<String> groups() {
+        return groups;
+      }
+    };
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response response = tr.doGet();
+    assertEquals(400, response.getStatus());
+  }
+
+  @Test
+  public void passcodeShouldNotBeInResponseIfTokenStateServiceIsDisabled() throws Exception {
+    testPasscodeToken(false, false, false);
+  }
+
+  @Test
+  public void passcodeShouldNotBeInResponseIfTokenStateServiceIsNotPersistent() throws Exception {
+    testPasscodeToken(true, false, false);
+  }
+
+  @Test
+  public void passcodeShouldBeInResponseIfTokenStateServiceIsEnabledAndPersistent() throws Exception {
+    testPasscodeToken(true, true, true);
+  }
+
+  private void testPasscodeToken(boolean serverManagedTssEnabled, boolean usePersistentTokenStore, boolean expectPasscodeInResponse) throws Exception {
+    try {
+      if (usePersistentTokenStore) {
+        tss = new PersistentTestTokenStateService();
+      }
+      configureCommonExpectations(new HashMap<>(), serverManagedTssEnabled);
+
+      final TokenResource tr = new TokenResource();
+      tr.context = context;
+      tr.request = request;
+      tr.init();
+
+      // Issue a token
+      final Response response = tr.doGet();
+      assertEquals(200, response.getStatus());
+      final String retString = response.getEntity().toString();
+      final String passcode = getTagValue(retString, TokenResource.PASSCODE);
+      if (expectPasscodeInResponse) {
+        assertNotNull(passcode);
+      } else {
+        assertNull(passcode);
+      }
+    } finally {
+      tss = new TestTokenStateService();
+    }
   }
 
   /**
@@ -1131,6 +1389,11 @@ public class TokenServiceResourceTest {
     return doTestTokenLifecyle(TokenLifecycleOperation.Revoke, isTokenStateServerManaged, renewers, caller);
   }
 
+  private Response doTestTokenRevocation(final Boolean isTokenStateServerManaged, final String renewers, final Subject caller, String impersonatedUser)
+      throws Exception {
+    return doTestTokenLifecyle(TokenLifecycleOperation.Revoke, isTokenStateServerManaged, null, renewers, null, caller, impersonatedUser).getValue();
+  }
+
   /**
    * @param operation     A TokenLifecycleOperation
    * @param serverManaged true, if server-side token state management should be enabled; Otherwise, false or null.
@@ -1168,6 +1431,11 @@ public class TokenServiceResourceTest {
     return doTestTokenLifecyle(operation, serviceLevelConfig, null, renewers, maxTokenLifetime, caller);
   }
 
+  private Map.Entry<TestTokenStateService, Response> doTestTokenLifecyle(final TokenLifecycleOperation operation, final Boolean serviceLevelConfig,
+      final Boolean gatewayLevelConfig, final String renewers, final Long maxTokenLifetime, final Subject caller) throws Exception {
+    return doTestTokenLifecyle(operation, serviceLevelConfig, gatewayLevelConfig, renewers, maxTokenLifetime, caller, null);
+  }
+
   /**
    * @param operation          A TokenLifecycleOperation
    * @param serviceLevelConfig true, if server-side token state management should be enabled at the service level;
@@ -1187,7 +1455,8 @@ public class TokenServiceResourceTest {
                                                                          final Boolean                 gatewayLevelConfig,
                                                                          final String                  renewers,
                                                                          final Long                    maxTokenLifetime,
-                                                                         final Subject                 caller) throws Exception {
+                                                                         final Subject                 caller,
+                                                                         final String impersonatedUser) throws Exception {
 
     final Map<String, String> contextExpectations = new HashMap<>();
     contextExpectations.put("knox.token.audiences", "recipient1,recipient2");
@@ -1200,6 +1469,13 @@ public class TokenServiceResourceTest {
       }
     }
     contextExpectations.put("knox.token.renewer.whitelist", renewers);
+
+    if (StringUtils.isNotBlank(impersonatedUser)) {
+      contextExpectations.put(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE, "true");
+      contextExpectations.put(TokenResource.QUERY_PARAMETER_DOAS, impersonatedUser);
+      contextExpectations.put(AuthFilterUtils.PROXYUSER_PREFIX + "." + USER_NAME + ".users", impersonatedUser);
+      contextExpectations.put(AuthFilterUtils.PROXYUSER_PREFIX + "." + USER_NAME + ".hosts", "*");
+    }
 
     configureCommonExpectations(contextExpectations, gatewayLevelConfig);
 
@@ -1266,12 +1542,12 @@ public class TokenServiceResourceTest {
     String responseContent = (String) response.getEntity();
     assertNotNull(responseContent);
     assertFalse(responseContent.isEmpty());
-    Map<String, String> json = parseJSONResponse(responseContent);
-    boolean result = Boolean.valueOf(json.get("renewed"));
+    Map<String, Object> json = parseJSONResponse(responseContent);
+    boolean result = Boolean.valueOf((String)json.get("renewed"));
     assertEquals(expectedResult, result);
     assertEquals(expectedMessage, json.get("error"));
     if (expectedCode != null) {
-      assertEquals(expectedCode.toInt(), Integer.parseInt(json.get("code")));
+      assertEquals(expectedCode.toInt(), json.get("code"));
     }
   }
 
@@ -1289,17 +1565,20 @@ public class TokenServiceResourceTest {
     String responseContent = (String) response.getEntity();
     assertNotNull(responseContent);
     assertFalse(responseContent.isEmpty());
-    Map<String, String> json = parseJSONResponse(responseContent);
-    boolean result = Boolean.valueOf(json.get("revoked"));
+    Map<String, Object> json = parseJSONResponse(responseContent);
+    boolean result = Boolean.valueOf((String)json.get("revoked"));
     assertEquals(expectedResult, result);
     assertEquals(expectedMessage, json.get("error"));
     if (expectedCode != null) {
-      assertEquals(expectedCode.toInt(), Integer.parseInt(json.get("code")));
+      assertEquals(expectedCode.toInt(), json.get("code"));
     }
   }
 
 
   private String getTagValue(String token, String tagName) {
+    if (!token.contains(tagName)) {
+      return null;
+    }
     String searchString = tagName + "\":";
     String value = token.substring(token.indexOf(searchString) + searchString.length());
     if (value.startsWith("\"")) {
@@ -1330,8 +1609,8 @@ public class TokenServiceResourceTest {
     return s;
   }
 
-  private static Map<String, String> parseJSONResponse(final String response) throws IOException {
-    return (new ObjectMapper()).readValue(response, new TypeReference<Map<String, String>>(){});
+  private static Map<String, Object> parseJSONResponse(final String response) throws IOException {
+    return (new ObjectMapper()).readValue(response, new TypeReference<Map<String, Object>>(){});
   }
 
 
@@ -1394,6 +1673,10 @@ public class TokenServiceResourceTest {
 
     @Override
     public void revokeToken(String tokenId) {
+      issueTimes.remove(tokenId);
+      expirationData.remove(tokenId);
+      maxLifetimes.remove(tokenId);
+      tokenMetadata.remove(tokenId);
     }
 
     @Override
@@ -1443,11 +1726,26 @@ public class TokenServiceResourceTest {
 
     @Override
     public Collection<KnoxToken> getTokens(String userName) {
+      return fetchTokens(userName, false);
+    }
+
+    @Override
+    public Collection<KnoxToken> getDoAsTokens(String createdBy) {
+      return fetchTokens(createdBy, true);
+    }
+
+    private Collection<KnoxToken> fetchTokens(String userName, boolean createdBy) {
       final Collection<KnoxToken> tokens = new TreeSet<>();
-      tokenMetadata.entrySet().stream().filter(entry -> entry.getValue().getUserName().equals(userName)).forEach(metadata -> {
+      final Predicate<Map.Entry<String, TokenMetadata>> filterPredicate;
+      if (createdBy) {
+        filterPredicate = entry -> userName.equals(entry.getValue().getCreatedBy());
+      } else {
+        filterPredicate = entry -> userName.equals(entry.getValue().getUserName());
+      }
+      tokenMetadata.entrySet().stream().filter(filterPredicate).forEach(metadata -> {
         String tokenId = metadata.getKey();
         try {
-          tokens.add(new KnoxToken(tokenId, getTokenIssueTime(tokenId), getTokenExpiration(tokenId), 0L, metadata.getValue()));
+          tokens.add(new KnoxToken(tokenId, getTokenIssueTime(tokenId), getTokenExpiration(tokenId), getMaxLifetime(tokenId), metadata.getValue()));
         } catch (UnknownTokenException e) {
           // NOP
         }
@@ -1466,6 +1764,9 @@ public class TokenServiceResourceTest {
     @Override
     public void stop() throws ServiceLifecycleException {
     }
+  }
+
+  private static class PersistentTestTokenStateService extends TestTokenStateService implements PersistentTokenStateService {
   }
 
   private static class TestJWTokenAuthority implements JWTokenAuthority {
@@ -1488,7 +1789,7 @@ public class TokenServiceResourceTest {
     public JWT issueToken(JWTokenAttributes jwtAttributes) {
       String[] claimArray = new String[6];
       claimArray[0] = "KNOXSSO";
-      claimArray[1] = jwtAttributes.getPrincipal().getName();
+      claimArray[1] = jwtAttributes.getUserName();
       claimArray[2] = null;
       if (jwtAttributes.getExpires() == -1) {
         claimArray[3] = null;
@@ -1498,7 +1799,8 @@ public class TokenServiceResourceTest {
       claimArray[4] = "E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA";
       claimArray[5] = jwtAttributes.getJku();
 
-      JWT token = new JWTToken(jwtAttributes.getAlgorithm(), claimArray, jwtAttributes.getAudiences());
+      jwtAttributes.setKid("E0LDZulQ0XE_otJ5aoQtQu-RnXv8hU-M9U4dD7vDioA");
+      JWT token = new JWTToken(jwtAttributes);
       JWSSigner signer = new RSASSASigner(privateKey);
       token.sign(signer);
 
@@ -1513,7 +1815,7 @@ public class TokenServiceResourceTest {
     }
 
     @Override
-    public boolean verifyToken(JWT token, String jwksurl, String algorithm) {
+    public boolean verifyToken(JWT token, String jwksurl, String algorithm, Set<JOSEObjectType> allowedJwsTypes) {
      return false;
     }
   }

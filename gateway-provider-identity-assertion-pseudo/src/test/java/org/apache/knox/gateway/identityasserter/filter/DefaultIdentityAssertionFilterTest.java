@@ -17,8 +17,10 @@
  */
 package org.apache.knox.gateway.identityasserter.filter;
 
+import org.apache.knox.gateway.context.ContextAttributes;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.GatewayServices;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
@@ -27,7 +29,9 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 import java.security.Principal;
 import java.util.Arrays;
+import java.util.Collections;
 
+import static org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor.IMPERSONATION_PARAMS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -41,7 +45,12 @@ public class DefaultIdentityAssertionFilterTest {
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).andReturn("topology1").anyTimes();
+    context.setAttribute(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE, Boolean.FALSE);
+    EasyMock.expectLastCall();
     EasyMock.replay( config );
     EasyMock.replay( context );
 
@@ -61,9 +70,15 @@ public class DefaultIdentityAssertionFilterTest {
     config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "lmccay,kminder=hdfs;newuser=mapred" ).anyTimes();
     EasyMock.expect(config.getInitParameter("group.principal.mapping") ).andReturn( "kminder=group1;lmccay=mrgroup,mrducks" ).anyTimes();
+    EasyMock.expect(config.getInitParameter(IMPERSONATION_PARAMS) ).andReturn("doAs").anyTimes();
     context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).andReturn("topology1").anyTimes();
+    context.setAttribute(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE, Boolean.FALSE);
+    EasyMock.expectLastCall();
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
-    EasyMock.replay( config );
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.replay( context, config );
     filter.init(config);
     username = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
     String[] mappedGroups = filter.mapGroupPrincipals(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName(), subject);
@@ -81,9 +96,15 @@ public class DefaultIdentityAssertionFilterTest {
     config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "lmccay,kminder=hdfs;newuser=mapred" ).anyTimes();
     EasyMock.expect(config.getInitParameter("group.principal.mapping") ).andReturn( "kminder=group1;lmccay=mrgroup,mrducks" ).anyTimes();
+    EasyMock.expect(config.getInitParameter(IMPERSONATION_PARAMS) ).andReturn("doAs").anyTimes();
     context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).andReturn("topology1").anyTimes();
+    context.setAttribute(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE, Boolean.FALSE);
+    EasyMock.expectLastCall();
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
-    EasyMock.replay( config );
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.replay( context, config );
     filter.init(config);
     username = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
     mappedGroups = filter.mapGroupPrincipals(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName(), subject);
@@ -113,6 +134,8 @@ public class DefaultIdentityAssertionFilterTest {
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     ServletContext context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.replay( config );
     EasyMock.replay( context );
 
@@ -134,6 +157,8 @@ public class DefaultIdentityAssertionFilterTest {
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "lmccay,kminder=hdfs;newuser=mapred" ).anyTimes();
     EasyMock.expect(context.getInitParameter("group.principal.mapping") ).andReturn( "kminder=group1;lmccay=mrgroup,mrducks" ).anyTimes();
     EasyMock.replay( config );
@@ -156,6 +181,8 @@ public class DefaultIdentityAssertionFilterTest {
     EasyMock.expect(config.getInitParameter("principal.mapping") ).andReturn( "" ).anyTimes();
     context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(config.getServletContext() ).andReturn( context ).anyTimes();
+    EasyMock.expect(context.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     EasyMock.expect(context.getInitParameter("principal.mapping") ).andReturn( "lmccay,kminder=hdfs;newuser=mapred" ).anyTimes();
     EasyMock.expect(context.getInitParameter("group.principal.mapping") ).andReturn( "kminder=group1;lmccay=mrgroup,mrducks" ).anyTimes();
     EasyMock.replay( config );

@@ -127,5 +127,4 @@ public abstract class ServiceDeploymentContributorBase extends DeploymentContrib
     }
     context.contributeFilter( service, resource, role, name, params );
   }
-
 }

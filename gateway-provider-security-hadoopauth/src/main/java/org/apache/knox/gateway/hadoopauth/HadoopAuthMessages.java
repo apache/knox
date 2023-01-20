@@ -50,4 +50,5 @@ public interface HadoopAuthMessages {
 
   @Message(level=MessageLevel.WARN, text="{1} alias is NOT stored on neither topology ({0}) nor gateway levels.")
   void noAliasStored(String cluster, String alias);
+
 }

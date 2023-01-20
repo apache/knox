@@ -41,7 +41,6 @@ import org.apache.http.message.BasicHttpRequest;
 import org.apache.http.util.EntityUtils;
 import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.category.ReleaseTest;
-import org.apache.log4j.PropertyConfigurator;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -190,7 +189,6 @@ public class SecureClusterTest {
 
   @Test
   public void basicGetUserHomeRequest() throws Exception {
-    setupLogging();
     CloseableHttpClient client = getHttpClient();
     String method = "GET";
     String uri = driver.getClusterUrl() + "/webhdfs/v1?op=GETHOMEDIRECTORY";
@@ -219,10 +217,6 @@ public class SecureClusterTest {
     return HttpClients.custom()
         .setDefaultCredentialsProvider(credentialsProvider)
         .build();
-  }
-
-  private static void setupLogging() {
-    PropertyConfigurator.configure(ClassLoader.getSystemResource("log4j.properties"));
   }
 
   private static File setupJaasConf(File baseDir, String keyTabFile, String principal) throws IOException {

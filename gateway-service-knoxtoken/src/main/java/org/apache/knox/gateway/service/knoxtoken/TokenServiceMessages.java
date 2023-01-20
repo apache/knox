@@ -86,4 +86,14 @@ public interface TokenServiceMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Unable to get token for user {0}: token limit exceeded")
   void tokenLimitExceeded(String userName);
+
+  @Message( level = MessageLevel.INFO, text = "{0}")
+  void generalInfoMessage(String message);
+
+  @Message( level = MessageLevel.DEBUG, text = "Token impersonation successful: {0}/{1}" )
+  void tokenImpersonationSuccess(String userName, String doAs);
+
+  @Message( level = MessageLevel.DEBUG, text = "Token impersonation failed: {0}" )
+  void tokenImpersonationFailed(@StackTrace Throwable t);
+
 }

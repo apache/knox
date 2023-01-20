@@ -2,7 +2,7 @@
     <div class="panel-heading">
         <h4 class="panel-title">
             {{ getTitleSubject() }} Detail
-            <span *ngIf="showEditOptions() == false" style="padding-left: 15%;" class="text-danger text-center"> Read Only (generated file) </span>
+            <span *ngIf="showEditOptions() === false" style="padding-left: 15%;" class="text-danger text-center"> Read Only (generated file) </span>
             <span *ngIf="hasSelectedResource()" class="pull-right">{{resourceService.getResourceDisplayName(resource)}}</span>
         </h4>
     </div>
