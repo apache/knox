@@ -23,6 +23,7 @@ import static org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServi
 import java.security.KeyStore;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import javax.net.ssl.SSLContext;
 import javax.security.auth.Subject;
@@ -55,10 +56,10 @@ public class DiscoveryApiClient extends ApiClient {
 
   private ServiceDiscoveryConfig config;
 
-  public DiscoveryApiClient(ServiceDiscoveryConfig discoveryConfig, AliasService aliasService,
+  public DiscoveryApiClient(GatewayConfig gatewayConfig, ServiceDiscoveryConfig discoveryConfig, AliasService aliasService,
       KeyStore trustStore) {
     this.config = discoveryConfig;
-    configure(aliasService, trustStore);
+    configure(gatewayConfig, aliasService, trustStore);
   }
 
   ServiceDiscoveryConfig getConfig() {
@@ -69,7 +70,7 @@ public class DiscoveryApiClient extends ApiClient {
     return isKerberos;
   }
 
-  private void configure(AliasService aliasService, KeyStore trustStore) {
+  private void configure(GatewayConfig gatewayConfig, AliasService aliasService, KeyStore trustStore) {
     String apiAddress = config.getAddress();
     apiAddress += (apiAddress.endsWith("/") ? API_PATH : "/" + API_PATH);
 
@@ -134,7 +135,7 @@ public class DiscoveryApiClient extends ApiClient {
       }
     }
 
-    configureSsl(trustStore);
+    configureSsl(gatewayConfig, trustStore);
   }
 
   @Override
@@ -161,13 +162,23 @@ public class DiscoveryApiClient extends ApiClient {
     return username;
   }
 
-  private void configureSsl(KeyStore trustStore) {
+  private void configureSsl(GatewayConfig gatewayConfig, KeyStore trustStore) {
     final SSLContext truststoreSSLContext = TruststoreSSLContextUtils.getTruststoreSSLContext(trustStore);
 
     if (truststoreSSLContext != null) {
       final ConnectionSpec.Builder connectionSpecBuilder = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS);
-      connectionSpecBuilder.cipherSuites(truststoreSSLContext.getSupportedSSLParameters().getCipherSuites());
-      connectionSpecBuilder.tlsVersions(truststoreSSLContext.getSupportedSSLParameters().getProtocols());
+      final List<String> includedSslCiphers = gatewayConfig.getIncludedSSLCiphers();
+      if (includedSslCiphers == null || includedSslCiphers.isEmpty()) {
+        connectionSpecBuilder.cipherSuites(truststoreSSLContext.getSupportedSSLParameters().getCipherSuites());
+      } else {
+        connectionSpecBuilder.cipherSuites(includedSslCiphers.toArray(new String[0]));
+      }
+      final Set<String> includedSslProtocols = gatewayConfig.getIncludedSSLProtocols();
+      if (includedSslProtocols.isEmpty()) {
+        connectionSpecBuilder.tlsVersions(truststoreSSLContext.getSupportedSSLParameters().getProtocols());
+      } else {
+        connectionSpecBuilder.tlsVersions(includedSslProtocols.toArray(new String[0]));
+      }
       getHttpClient().setConnectionSpecs(Arrays.asList(connectionSpecBuilder.build()));
       getHttpClient().setSslSocketFactory(truststoreSSLContext.getSocketFactory());
     } else {

@@ -147,14 +147,14 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
     return TYPE;
   }
 
-  private DiscoveryApiClient getClient(ServiceDiscoveryConfig discoveryConfig) {
+  private DiscoveryApiClient getClient(GatewayConfig gatewayConfig, ServiceDiscoveryConfig discoveryConfig) {
     String discoveryAddress = discoveryConfig.getAddress();
     if (discoveryAddress == null || discoveryAddress.isEmpty()) {
       log.missingDiscoveryAddress();
       throw new IllegalArgumentException("Missing or invalid discovery address.");
     }
 
-    DiscoveryApiClient client = new DiscoveryApiClient(discoveryConfig, aliasService, truststore);
+    DiscoveryApiClient client = new DiscoveryApiClient(gatewayConfig, discoveryConfig, aliasService, truststore);
     client.setDebugging(debug);
     return client;
   }
@@ -195,7 +195,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
                                          ServiceDiscoveryConfig discoveryConfig,
                                          String                 clusterName,
                                          Collection<String>     includedServices) {
-    return discover(gatewayConfig, discoveryConfig, clusterName, includedServices, getClient(discoveryConfig));
+    return discover(gatewayConfig, discoveryConfig, clusterName, includedServices, getClient(gatewayConfig, discoveryConfig));
   }
 
   protected ClouderaManagerCluster discover(GatewayConfig          gatewayConfig,

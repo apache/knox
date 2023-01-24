@@ -304,6 +304,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public Set<String> getIncludedSSLProtocols() {
+    return Collections.singleton("TLSv1.2");
+  }
+
+  @Override
   public List<String> getExcludedSSLProtocols() {
     List<String> protocols = new ArrayList<>();
     protocols.add("SSLv3");

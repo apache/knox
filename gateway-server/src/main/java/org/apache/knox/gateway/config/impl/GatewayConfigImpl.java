@@ -181,6 +181,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   // backward compatibility.
   // LET'S NOT CONTINUE THIS PATTERN BUT LEAVE THEM FOR NOW.
   private static final String SSL_ENABLED = "ssl.enabled";
+  private static final String SSL_INCLUDE_PROTOCOLS = "ssl.include.protocols";
   private static final String SSL_EXCLUDE_PROTOCOLS = "ssl.exclude.protocols";
   private static final String SSL_INCLUDE_CIPHERS = "ssl.include.ciphers";
   private static final String SSL_EXCLUDE_CIPHERS = "ssl.exclude.ciphers";
@@ -614,6 +615,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getFrontendUrl() {
     return get( FRONTEND_URL, null );
+  }
+
+  @Override
+  public Set<String> getIncludedSSLProtocols() {
+    final Collection<String> includedSslProtocols = getTrimmedStringCollection(SSL_INCLUDE_PROTOCOLS);
+    return includedSslProtocols == null ? Collections.emptySet() : new HashSet<>(includedSslProtocols);
   }
 
   @Override
