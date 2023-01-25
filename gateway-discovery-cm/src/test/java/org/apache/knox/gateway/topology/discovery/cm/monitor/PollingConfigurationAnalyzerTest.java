@@ -23,6 +23,7 @@ import com.cloudera.api.swagger.model.ApiEventCategory;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.knox.gateway.GatewayServer;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.topology.TopologyService;
@@ -297,6 +298,11 @@ public class PollingConfigurationAnalyzerTest {
       e.printStackTrace();
     }
 
+    final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gatewayConfig.getIncludedSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
+    EasyMock.expect(gatewayConfig.getIncludedSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
+    EasyMock.replay(gatewayConfig);
+
     // Mock the service discovery details
     ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
     EasyMock.expect(sdc.getCluster()).andReturn(clusterName).anyTimes();
@@ -345,7 +351,7 @@ public class PollingConfigurationAnalyzerTest {
       setGatewayServices(gws);
 
       // Create the monitor
-      TestablePollingConfigAnalyzer pca = new TestablePollingConfigAnalyzer(configCache);
+      TestablePollingConfigAnalyzer pca = new TestablePollingConfigAnalyzer(gatewayConfig, configCache);
       pca.setInterval(5);
 
       // Start the polling thread
@@ -434,6 +440,11 @@ public class PollingConfigurationAnalyzerTest {
 
   private TestablePollingConfigAnalyzer buildPollingConfigAnalyzer(final String address, final String clusterName,
       final Map<String, ServiceConfigurationModel> serviceConfigurationModels, ChangeListener listener) {
+    final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gatewayConfig.getIncludedSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
+    EasyMock.expect(gatewayConfig.getIncludedSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
+    EasyMock.replay(gatewayConfig);
+
     // Mock the service discovery details
     ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
     EasyMock.expect(sdc.getCluster()).andReturn(clusterName).anyTimes();
@@ -452,7 +463,7 @@ public class PollingConfigurationAnalyzerTest {
     EasyMock.expect(configCache.getClusterServiceConfigurations(address, clusterName)).andReturn(serviceConfigurationModels).anyTimes();
     EasyMock.replay(configCache);
 
-    return new TestablePollingConfigAnalyzer(configCache, listener);
+    return new TestablePollingConfigAnalyzer(gatewayConfig, configCache, listener);
   }
 
   private void doTestEventWithConfigChange(final ApiEvent event, final String clusterName) {
@@ -617,13 +628,13 @@ public class PollingConfigurationAnalyzerTest {
     private final Map<String, List<ApiEvent>> restartEvents = new HashMap<>();
     private final Map<String, ServiceConfigurationModel> serviceConfigModels = new HashMap<>();
 
-    TestablePollingConfigAnalyzer(ClusterConfigurationCache cache) {
-      this(cache, null);
+    TestablePollingConfigAnalyzer(GatewayConfig gatewayConfig, ClusterConfigurationCache cache) {
+      this(gatewayConfig, cache, null);
     }
 
-    TestablePollingConfigAnalyzer(ClusterConfigurationCache   cache,
+    TestablePollingConfigAnalyzer(GatewayConfig gatewayConfig, ClusterConfigurationCache   cache,
                                   ConfigurationChangeListener listener) {
-      super(cache, null, null, listener, 20);
+      super(gatewayConfig, cache, null, null, listener, 20);
     }
 
     void addRestartEvent(final String service, final ApiEvent restartEvent) {

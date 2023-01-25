@@ -30,14 +30,17 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.apache.knox.gateway.config.ConfigurationException;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.i18n.GatewaySpiMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.util.TruststoreSSLContextUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyStore;
 import java.util.Base64;
 
 class RESTInvoker {
@@ -46,12 +49,13 @@ class RESTInvoker {
     private static final String DEFAULT_PWD_ALIAS  = "ambari.discovery.password";
 
     private static final AmbariServiceDiscoveryMessages log = MessagesFactory.get(AmbariServiceDiscoveryMessages.class);
+    private static final GatewaySpiMessages LOGGER = MessagesFactory.get(GatewaySpiMessages.class);
 
     private static final int DEFAULT_TIMEOUT = 10000;
 
     private AliasService aliasService;
 
-    private KeystoreService keystoreService;
+    private KeyStore truststore;
 
     private CloseableHttpClient httpClient;
 
@@ -61,7 +65,13 @@ class RESTInvoker {
 
     RESTInvoker(GatewayConfig config, AliasService aliasService, KeystoreService keystoreService) {
         this.aliasService = aliasService;
-        this.keystoreService = keystoreService;
+        if (keystoreService != null) {
+          try {
+            truststore = keystoreService.getTruststoreForHttpClient();
+          } catch (KeystoreServiceException e) {
+            LOGGER.failedToLoadTruststore(e.getMessage(), e);
+          }
+        }
 
         // Initialize the HTTP client
         this.httpClient = getHttpClient(config);
@@ -69,7 +79,7 @@ class RESTInvoker {
 
     private CloseableHttpClient getHttpClient(GatewayConfig config) {
       return HttpClientBuilder.create()
-                 .setSSLContext(TruststoreSSLContextUtils.getTruststoreSSLContext(keystoreService))
+                 .setSSLContext(TruststoreSSLContextUtils.getTruststoreSSLContext(truststore))
                  .setDefaultRequestConfig(getRequestConfig(config))
                  .build();
     }

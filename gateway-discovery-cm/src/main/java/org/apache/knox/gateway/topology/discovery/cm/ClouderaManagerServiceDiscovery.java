@@ -27,11 +27,13 @@ import com.cloudera.api.swagger.model.ApiServiceConfig;
 import com.cloudera.api.swagger.model.ApiServiceList;
 import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.i18n.GatewaySpiMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
@@ -39,6 +41,7 @@ import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.monitor.ClouderaManagerClusterConfigurationMonitor;
 
 import java.net.ConnectException;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -61,6 +64,8 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
 
   private static final ClouderaManagerServiceDiscoveryMessages log =
                                         MessagesFactory.get(ClouderaManagerServiceDiscoveryMessages.class);
+
+  private static final GatewaySpiMessages LOGGER = MessagesFactory.get(GatewaySpiMessages.class);
 
   static final String API_PATH = "api/v32";
 
@@ -86,7 +91,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
   private boolean debug;
 
   private AliasService aliasService;
-  private KeystoreService keystoreService;
+  private KeyStore truststore;
 
   private ClouderaManagerClusterConfigurationMonitor configChangeMonitor;
 
@@ -104,7 +109,14 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
     GatewayServices gwServices = GatewayServer.getGatewayServices();
     if (gwServices != null) {
       this.aliasService = gwServices.getService(ServiceType.ALIAS_SERVICE);
-      this.keystoreService = gwServices.getService(ServiceType.KEYSTORE_SERVICE);
+      KeystoreService keystoreService = gwServices.getService(ServiceType.KEYSTORE_SERVICE);
+      if (keystoreService != null) {
+        try {
+          truststore = keystoreService.getTruststoreForHttpClient();
+        } catch (KeystoreServiceException e) {
+          LOGGER.failedToLoadTruststore(e.getMessage(), e);
+        }
+      }
     }
     this.debug = debug;
     this.configChangeMonitor = getConfigurationChangeMonitor();
@@ -135,14 +147,14 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
     return TYPE;
   }
 
-  private DiscoveryApiClient getClient(ServiceDiscoveryConfig discoveryConfig) {
+  private DiscoveryApiClient getClient(GatewayConfig gatewayConfig, ServiceDiscoveryConfig discoveryConfig) {
     String discoveryAddress = discoveryConfig.getAddress();
     if (discoveryAddress == null || discoveryAddress.isEmpty()) {
       log.missingDiscoveryAddress();
       throw new IllegalArgumentException("Missing or invalid discovery address.");
     }
 
-    DiscoveryApiClient client = new DiscoveryApiClient(discoveryConfig, aliasService, keystoreService);
+    DiscoveryApiClient client = new DiscoveryApiClient(gatewayConfig, discoveryConfig, aliasService, truststore);
     client.setDebugging(debug);
     return client;
   }
@@ -183,7 +195,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
                                          ServiceDiscoveryConfig discoveryConfig,
                                          String                 clusterName,
                                          Collection<String>     includedServices) {
-    return discover(gatewayConfig, discoveryConfig, clusterName, includedServices, getClient(discoveryConfig));
+    return discover(gatewayConfig, discoveryConfig, clusterName, includedServices, getClient(gatewayConfig, discoveryConfig));
   }
 
   protected ClouderaManagerCluster discover(GatewayConfig          gatewayConfig,

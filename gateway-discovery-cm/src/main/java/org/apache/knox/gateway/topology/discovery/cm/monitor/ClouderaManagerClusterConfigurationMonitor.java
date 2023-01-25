@@ -87,7 +87,7 @@ public class ClouderaManagerClusterConfigurationMonitor implements ClusterConfig
     this.executorService = Executors.newSingleThreadExecutor(tf);
 
     // Initialize the internal monitor
-    internalMonitor = new PollingConfigurationAnalyzer(configCache, aliasService, keystoreService, this);
+    internalMonitor = new PollingConfigurationAnalyzer(config, configCache, aliasService, keystoreService, this);
 
     // Override the default polling interval if it has been configured
     // (org.apache.knox.gateway.topology.discovery.cm.monitor.interval)
