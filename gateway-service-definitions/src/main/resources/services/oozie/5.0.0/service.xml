@@ -39,14 +39,23 @@
         </samples>
     </metadata>
     <routes>
-        <route path="/oozie/**?**">
-            <rewrite apply="OOZIE/oozie/configuration" to="request.body"/>
+        <route path="/oozie/">
+            <rewrite apply="OOZIE/oozie/root" to="request.url"/>
+        </route>
+        <route path="/oozie/**">
+            <rewrite apply="OOZIE/oozie/root" to="request.url"/>
         </route>
         <route path="/oozie/v1/**?**">
             <rewrite apply="OOZIE/oozie/configuration" to="request.body"/>
+            <rewrite apply="OOZIE/oozie/v1" to="request.url"/>
         </route>
         <route path="/oozie/v2/**?**">
             <rewrite apply="OOZIE/oozie/configuration" to="request.body"/>
+            <rewrite apply="OOZIE/oozie/v2" to="request.url"/>
+        </route>
+        <route path="/oozie/**?**">
+            <rewrite apply="OOZIE/oozie/configuration" to="request.body"/>
+            <rewrite apply="OOZIE/oozie/root" to="request.url"/>
         </route>
     </routes>
     <testURLs>
