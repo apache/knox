@@ -184,7 +184,11 @@ public class GatewayFilter implements Filter {
       Chain chain = match.getValue();
       servletRequest.setAttribute( AbstractGatewayFilter.TARGET_SERVICE_ROLE, chain.getResourceRole() );
       try {
-        chain.doFilter( servletRequest, servletResponse );
+        chain.doFilter(
+                UrlEncodedFormRequest.isUrlEncodedForm(servletRequest)
+                  ? new UrlEncodedFormRequest((HttpServletRequest) servletRequest)
+                  : servletRequest,
+                servletResponse);
       } catch( IOException | RuntimeException | ThreadDeath | ServletException e ) {
         LOG.failedToExecuteFilter( e );
         auditor.audit( Action.ACCESS, contextWithPathAndQuery, ResourceType.URI, ActionOutcome.FAILURE );

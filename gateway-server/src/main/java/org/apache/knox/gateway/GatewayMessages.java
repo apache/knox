@@ -775,4 +775,8 @@ public interface GatewayMessages {
   @Message(level = MessageLevel.INFO,
           text = "Initializing remote configuration db. Sync interval={0} seconds. Clean up interval={1} seconds.")
   void initDbRemoteConfigMonitor(long syncIntervalSeconds, int cleanUpPeriodSeconds);
+
+  @Message(level = MessageLevel.DEBUG,
+          text = "Request {0} is wrapped to url encoded form request.")
+  void wrappingRequestToUrlEncodedFormRequest(String requestURI);
 }
