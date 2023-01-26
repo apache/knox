@@ -25,8 +25,8 @@ Release build file for the Apache Knox Gateway
 <property name="gateway-project" value="knox"/>
 <property name="gateway-artifact" value="knox"/>
 <property name="knoxshell-artifact" value="knoxshell"/>
-<property name="gateway-version" value="2.0.0-SNAPSHOT"/>
-<property name="release-manager" value="kminder"/>
+<property name="gateway-version" value="2.0.0"/>
+<property name="release-manager" value="pzampino"/>
 
 <property name="gateway-home" value="${gateway-artifact}-${gateway-version}"/>
 
