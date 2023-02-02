@@ -276,7 +276,7 @@ public class SimpleDescriptorHandlerFuncTest {
 
   private static final class NoOpServiceDiscovery implements ServiceDiscovery {
     static final String TYPE = "NO_OP";
-    static int discoveryCalled = 0;
+    static int discoveryCalled;
 
     @Override
     public String getType() {
