@@ -29,7 +29,7 @@ public interface SimpleDescriptorMessages {
     void discoveryNotConfiguredForDescriptor(String descriptorName);
 
     @Message(level = MessageLevel.INFO,
-            text = "The \"{0}\" descriptor does not include discovery-type.")
+            text = "The \"{0}\" descriptor does not include discovery-type or discovery-address.")
     void missingDiscoveryTypeInDescriptor(String descriptorName);
 
     @Message(level = MessageLevel.WARN,
