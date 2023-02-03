@@ -142,6 +142,12 @@ public interface ClouderaManagerServiceDiscoveryMessages {
            text = "Terminating monitoring of {1} @ {0} for configuration changes because there are no referencing descriptors.")
   void stoppingConfigMonitoring(String discoverySource, String clusterName);
 
+  @Message(level = MessageLevel.WARN, text = "Missing property in previously saved service discovery configuration {0}")
+  void missingServiceDiscoveryConfigProperty(String propertyName);
+
+  @Message(level = MessageLevel.DEBUG, text = "There is no cluster configuration for {0} @ {1} to check yet.")
+  void noClusterConfiguration(String clusterName, String discoveryAddress);
+
   @Message(level = MessageLevel.DEBUG, text = "Checking {0} @ {1} for configuration changes...")
   void checkingClusterConfiguration(String clusterName, String discoveryAddress);
 

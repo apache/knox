@@ -204,6 +204,10 @@ public class PollingConfigurationAnalyzer implements Runnable {
         for (Map.Entry<String, List<String>> entry : configCache.getClusterNames().entrySet()) {
           String address = entry.getKey();
           for (String clusterName : entry.getValue()) {
+            if (configCache.getDiscoveryConfig(address, clusterName) == null) {
+              log.noClusterConfiguration(clusterName, address);
+              continue;
+            }
             log.checkingClusterConfiguration(clusterName, address);
 
             // Check here for existing descriptor references, and add to the removal list if there are not any
@@ -234,10 +238,10 @@ public class PollingConfigurationAnalyzer implements Runnable {
         }
         clustersToStopMonitoring.clear(); // reset the removal list
 
-        waitFor(interval);
       } catch (Exception e) {
         log.clouderaManagerConfigurationChangesMonitoringError(e);
       }
+      waitFor(interval);
     }
 
     log.stoppedClouderaManagerConfigMonitor();
