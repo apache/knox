@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.topology.simple;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -210,8 +211,7 @@ public class SimpleDescriptorHandler {
      */
     private static boolean shouldPerformDiscovery(final SimpleDescriptor desc) {
         // If there is a discovery type specified, then discovery should be performed
-        final String discoveryType = desc.getDiscoveryType();
-        if (discoveryType != null && !discoveryType.isEmpty()) {
+        if (StringUtils.isNotBlank(desc.getDiscoveryType()) && StringUtils.isNotBlank(desc.getDiscoveryAddress())) {
             return true;
         }
         log.missingDiscoveryTypeInDescriptor(desc.getName());
