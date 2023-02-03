@@ -16,14 +16,20 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm.monitor;
 
-import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
-import org.junit.Test;
-
-import java.util.Set;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.Set;
+
+import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
+import org.junit.Test;
 
 
 public class DiscoveryConfigurationFileStoreTest extends AbstractConfigurationStoreTest {
@@ -57,6 +63,25 @@ public class DiscoveryConfigurationFileStoreTest extends AbstractConfigurationSt
       configStore.remove(original.getAddress(), original.getCluster());
 
       // Verify file is gone
+      assertEquals(0, listFiles(DATA_DIR).size());
+    }
+  }
+
+  @Test
+  public void testLoadingEmptyFile() throws IOException {
+    final DiscoveryConfigurationFileStore configStore = new DiscoveryConfigurationFileStore(createGatewayConfig());
+    final ServiceDiscoveryConfig serviceDiscoveryConfig = createConfig("http://myhost:1234", "myCluster", "iam", "pwd.alias");
+    try {
+      configStore.store(serviceDiscoveryConfig);
+      final File persistenceFile = configStore.getPersistenceFile(serviceDiscoveryConfig.getAddress(), serviceDiscoveryConfig.getCluster());
+      assertTrue(persistenceFile.length() > 0);
+      //truncate file content
+      FileChannel.open(Paths.get(persistenceFile.getAbsolutePath()), StandardOpenOption.WRITE).truncate(0).close();
+      assertEquals(0, persistenceFile.length());
+      final Set<ServiceDiscoveryConfig> persistedConfigs = configStore.getAll();
+      assertTrue(persistedConfigs.isEmpty());
+    } finally {
+      configStore.remove(serviceDiscoveryConfig.getAddress(), serviceDiscoveryConfig.getCluster());
       assertEquals(0, listFiles(DATA_DIR).size());
     }
   }

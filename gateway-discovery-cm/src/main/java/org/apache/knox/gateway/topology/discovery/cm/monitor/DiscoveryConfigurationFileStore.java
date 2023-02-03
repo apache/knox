@@ -17,6 +17,7 @@
 package org.apache.knox.gateway.topology.discovery.cm.monitor;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 
@@ -86,27 +87,34 @@ public class DiscoveryConfigurationFileStore extends AbstractConfigurationStore
         try (InputStream in = Files.newInputStream(persisted.toPath())) {
           props.load(in);
 
-          result.add(new ServiceDiscoveryConfig() {
-            @Override
-            public String getAddress() {
-              return props.getProperty(PROP_CLUSTER_SOURCE);
-            }
+          if (StringUtils.isBlank(props.getProperty(PROP_CLUSTER_SOURCE))) {
+            log.missingServiceDiscoveryConfigProperty(PROP_CLUSTER_SOURCE);
+          } else if (StringUtils.isBlank(props.getProperty(PROP_CLUSTER_NAME))) {
+            log.missingServiceDiscoveryConfigProperty(PROP_CLUSTER_NAME);
+          } else {
+            result.add(new ServiceDiscoveryConfig() {
+              @Override
+              public String getAddress() {
+                return props.getProperty(PROP_CLUSTER_SOURCE);
+              }
 
-            @Override
-            public String getCluster() {
-              return props.getProperty(PROP_CLUSTER_NAME);
-            }
+              @Override
+              public String getCluster() {
+                return props.getProperty(PROP_CLUSTER_NAME);
+              }
 
-            @Override
-            public String getUser() {
-              return props.getProperty(PROP_CLUSTER_USER);
-            }
+              @Override
+              public String getUser() {
+                return props.getProperty(PROP_CLUSTER_USER);
+              }
 
-            @Override
-            public String getPasswordAlias() {
-              return props.getProperty(PROP_CLUSTER_ALIAS);
-            }
-          });
+              @Override
+              public String getPasswordAlias() {
+                return props.getProperty(PROP_CLUSTER_ALIAS);
+              }
+            });
+          }
+
         } catch (IOException e) {
           log.failedToLoadClusterMonitorServiceDiscoveryConfig(getMonitorType(), e);
         }
