@@ -108,6 +108,7 @@ public class SimpleDescriptorHandlerFuncTest {
           "            <param><name>localhost</name><value>sandbox,sandbox.hortonworks.com</value></param>\n" +
           "        </provider>\n" +
           "    </gateway>\n";
+  public static final String DISCOVERY_ADDRESS = "http://dummy_address";
 
 
   /*
@@ -147,7 +148,7 @@ public class SimpleDescriptorHandlerFuncTest {
       // Mock out the simple descriptor
       SimpleDescriptor testDescriptor = EasyMock.createNiceMock(SimpleDescriptor.class);
       EasyMock.expect(testDescriptor.getName()).andReturn("mysimpledescriptor").anyTimes();
-      EasyMock.expect(testDescriptor.getDiscoveryAddress()).andReturn(null).anyTimes();
+      EasyMock.expect(testDescriptor.getDiscoveryAddress()).andReturn(DISCOVERY_ADDRESS).anyTimes();
       EasyMock.expect(testDescriptor.getDiscoveryType()).andReturn(discoveryType).anyTimes();
       EasyMock.expect(testDescriptor.getDiscoveryUser()).andReturn(null).anyTimes();
       EasyMock.expect(testDescriptor.getProviderConfig()).andReturn(providerConfig.getAbsolutePath()).anyTimes();
@@ -245,6 +246,7 @@ public class SimpleDescriptorHandlerFuncTest {
       assertEquals("Unexpected alias value (should be master secret + topology name.",
                    testMasterSecret + testDescriptor.getName(), capturedPwd.getValue());
 
+      assertEquals(1, NoOpServiceDiscovery.discoveryCalled);
     } catch (Exception e) {
       e.printStackTrace();
       fail(e.getMessage());
@@ -274,6 +276,7 @@ public class SimpleDescriptorHandlerFuncTest {
 
   private static final class NoOpServiceDiscovery implements ServiceDiscovery {
     static final String TYPE = "NO_OP";
+    static int discoveryCalled;
 
     @Override
     public String getType() {
@@ -290,12 +293,12 @@ public class SimpleDescriptorHandlerFuncTest {
 
         @Override
         public List<String> getServiceURLs(String serviceName) {
-          return null;
+          return Collections.emptyList();
         }
 
         @Override
         public List<String> getServiceURLs(String serviceName, Map<String, String> serviceParams) {
-          return null;
+          return Collections.emptyList();
         }
 
         @Override
@@ -307,6 +310,7 @@ public class SimpleDescriptorHandlerFuncTest {
 
     @Override
     public Cluster discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config, String clusterName, Collection<String> includedServices) {
+      discoveryCalled++;
       return discover(gwConfig, config, clusterName);
     }
   }
