@@ -69,7 +69,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
   static final String REGEX_SPLIT_SERVICE_PATH = "^((?:[^/]*/){3}[^/]*)";
 
   static final String REGEX_WEBSHELL_REQUEST_PATH =
-          "^(" + SECURE_WEBSOCKET_PROTOCOL_STRING+"|"+WEBSOCKET_PROTOCOL_STRING + ")[^/]+:[0-9]+/[^/]+/webshell$";
+          "^(" + SECURE_WEBSOCKET_PROTOCOL_STRING+"|"+WEBSOCKET_PROTOCOL_STRING + ")[^/]+/[^/]+/webshell$";
 
   private static final int POOL_SIZE = 10;
   private final AtomicInteger concurrentWebshells;

@@ -95,6 +95,33 @@ public class GatewayWebsocketHandlerTest {
         Assert.assertTrue(gatewayWebsocketHandler.createWebSocket(req,resp) instanceof WebshellWebSocketAdapter);
     }
 
+    @Test
+    public void testValidWebShellRequestThroughLB() throws Exception{
+      // mock GatewayConfig and GatewayServices
+      GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+      EasyMock.expect(gatewayConfig.isWebShellEnabled()).andReturn(true).anyTimes();
+      EasyMock.expect(gatewayConfig.getMaximumConcurrentWebshells()).andReturn(3).anyTimes();
+      GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
+      // mock ServletUpgradeRequest and ServletUpgradeResponse
+      ServletUpgradeRequest req = EasyMock.createNiceMock(ServletUpgradeRequest.class);
+      URI requestURI = new URI("wss://www.local.com/gateway/webshell");
+      EasyMock.expect(req.getRequestURI()).andReturn(requestURI).anyTimes();
+      ServletUpgradeResponse resp = EasyMock.createNiceMock(ServletUpgradeResponse.class);
+
+      JWTValidator jwtValidator = EasyMock.createNiceMock(JWTValidator.class);
+      EasyMock.expect(jwtValidator.validate()).andReturn(true).anyTimes();
+      PowerMock.mockStatic(JWTValidatorFactory.class);
+      EasyMock.expect(JWTValidatorFactory.create(req, gatewayServices, gatewayConfig)).andReturn(jwtValidator).anyTimes();
+
+      WebshellWebSocketAdapter webshellWebSocketAdapter = PowerMock.createMock(WebshellWebSocketAdapter.class);
+      PowerMock.expectNew(WebshellWebSocketAdapter.class,isA(ExecutorService.class) , isA(GatewayConfig.class), isA(JWTValidator.class), isA(AtomicInteger.class)).andReturn(webshellWebSocketAdapter);
+      EasyMock.replay(req,resp,gatewayServices,gatewayConfig,jwtValidator);
+      PowerMock.replayAll();
+
+      GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(gatewayConfig,gatewayServices);
+      Assert.assertTrue(gatewayWebsocketHandler.createWebSocket(req,resp) instanceof WebshellWebSocketAdapter);
+    }
+
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
