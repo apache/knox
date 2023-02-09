@@ -1,4 +1,301 @@
 ------------------------------------------------------------------------------
+Release Notes - Apache Knox - Version 2.0.0
+------------------------------------------------------------------------------
+** New Feature
+    * [KNOX-2631] - KnoxSSO for Secure Shell Access
+    * [KNOX-2703] - Make acceptable JWT types configurable
+    * [KNOX-2776] - Concurrent Session Limit for UIs
+
+** Improvement
+    * [KNOX-1462] - Migrate from Log4j 1.x to 2.x
+    * [KNOX-1608] - Remove gateway-adapter module
+    * [KNOX-1609] - Remove Livy /v1/ from service definition
+    * [KNOX-1675] - Migrate to URLEncodingUtils from HttpUtils
+    * [KNOX-1961] - KnoxPamRealm and KnoxCacheManager are not compatible
+    * [KNOX-2364] - Extend KnoxShell Filesystem Command to be able to put Strings as Files
+    * [KNOX-2482] - Bump version dependencies December 2020
+    * [KNOX-2680] - Centralized Source of Cluster Configuration Details for Discovery
+    * [KNOX-2689] - Avoid redeploying an unchanged topology
+    * [KNOX-2692] - Topology redeployment should be configurable
+    * [KNOX-2699] - Expired tokens should not be enabled/disabled
+    * [KNOX-2711] - Add trino ui support in service definition
+    * [KNOX-2712] - Adding arbitrary metadata to a Knox Token
+    * [KNOX-2713] - Improve user limit handling when fetching Knox Tokens
+    * [KNOX-2714] - Adding doAs support for KnoxToken service
+    * [KNOX-2727] - spring4shell CVE means spring upgrades needed
+    * [KNOX-2734] - Exclude token passcode from KnoxToken responses when server-managed state is disabled.
+    * [KNOX-2737] - Make maxFormContentSize and maxFormKeys configurable in Knox's embedded Jetty server
+    * [KNOX-2740] -  Impersonation-related fields should be displayed only if that's enabled in the topology for the KnoxToken service
+    * [KNOX-2742] - CM service discovery retry may be needed
+    * [KNOX-2746] - Add presto and presto ui support in service definition
+    * [KNOX-2771] - Log HTTP client config parameters such as socket timeouts with info level
+    * [KNOX-2773] - Log replay buffer size with info level
+    * [KNOX-2798] - Add a trim method to KnoxShellTable to trim all values in a Column
+    * [KNOX-2806] - Implement a new DoS security provider
+    * [KNOX-2808] - Log proxyuser authentication outcome for Knox Tokens
+    * [KNOX-2833] - Ozone integration for Apache Knox
+    * [KNOX-2834] - Take care of existing javascript upgrades by dependabot
+    * [KNOX-2864] - Make TLS protocol and cipher suites configurable with CM service discovery
+    * [KNOX-2874] - Typos in JDBC token state service config docs
+
+** Bug
+    * [KNOX-1423] - Document Zookeeper URL Manager behaviour for HA services
+    * [KNOX-2019] - Documentation update for new config 'gateway.websocket.max.wait.buffer.count' in gateway-site.xml 
+    * [KNOX-2531] - Kill Application button in YARN does not work through KNOX
+    * [KNOX-2540] - “NoSuchMethodErrors” due to multiple versions of org.apache.curator:curator-client
+    * [KNOX-2684] - Getting 500 error after clicking logout link
+    * [KNOX-2693] - When topology is updated twice consecutively with 275ms delay then redeployed topology doesnt have 2nd updates
+    * [KNOX-2701] - Knox topology for Impala includes non-coordinator hosts
+    * [KNOX-2705] - Make sure correlation id is passed down in gateway.log
+    * [KNOX-2708] - HeaderPreAuthFederationDispatch should extend ConfigurableDispatch
+    * [KNOX-2709] - Documentation of knox should be updated for ha provider
+    * [KNOX-2717] - upgrade shiro due to security issue
+    * [KNOX-2718] - upgrade xmlsec due to security issue
+    * [KNOX-2721] - upgrade jetty to 9.4.45 due to cves
+    * [KNOX-2722] - upgrade commons-compress due to CVEs
+    * [KNOX-2724] - Add HBase UI proxying for Named Queue Logs
+    * [KNOX-2733] - Support configurable value for saml.keyStoreType property in pac4j
+    * [KNOX-2738] - On Fresh install JDBCTokenStateService initiation failed
+    * [KNOX-2750] - upgrade gson due to security issue
+    * [KNOX-2753] - upgrade mina due to security issue
+    * [KNOX-2756] - NPE occurred while getting service discovery types
+    * [KNOX-2757] - Mutually exclusive filter params in the HadoopGroupProvider identity-assertion provider
+    * [KNOX-2761] - KnoxShell does not reflect KNOX-2661
+    * [KNOX-2762] - Whitespaces around delimiters in composite provider names gives NullPointerException
+    * [KNOX-2766] - "disableLoadBalancingForUserAgents" property for HA dispatch cannot be set.
+    * [KNOX-2767] - Bump @angular/core from 5.2.11 to 11.0.5
+    * [KNOX-2770] - KnoxToken doAs won't work with HadoopAuth filter
+    * [KNOX-2774] - "usage: sleep seconds" messages in terminal after starting knox
+    * [KNOX-2782] - Knox CLI user-auth-test command failure
+    * [KNOX-2800] - Knox tokens created for impersonated user doesn't honor configured per user limit value
+    * [KNOX-2804] - HadoopXmlResource parser should handle unescaped XML entries
+    * [KNOX-2805] - getUserTokens api should return all tokens which are matching either of the same metadata name passed as query param
+    * [KNOX-2807] - Restart of HIVE_ON_TEZ causes a Knox topology redeploy
+    * [KNOX-2825] - Only add "Default" provider iff it is found in the provider contributor map
+    * [KNOX-2827] - isDispatchAllowed should cut off path segments from the URL
+    * [KNOX-2837] - Document KnoxShell Feature
+    * [KNOX-2841] - Oozie "root" rewrite rule's pattern is too open
+    * [KNOX-2857] - Fix proxyuser impersonation config in homepage
+    * [KNOX-2860] - Cannot build knox-webshell-ui
+    * [KNOX-2861] - Upgrade cloudera manager api
+    * [KNOX-2863] - LB does not work when session cookie is not the first cookie
+    * [KNOX-2869] - Possible NPE at CM cluster configuration monitor startup
+    * [KNOX-2872] - Webshell does not work with loadbalancer
+
+** Test
+    * [KNOX-2840] - SecureKnoxShellTest broken
+    * [KNOX-2845] - GatewayAdminTopologyFuncTest#testPutTopology failing
+
+** Task
+    * [KNOX-2346] - Remove unused maxRetryAttempts and retrySleep
+    * [KNOX-2665] - Knox redirecting.jsp parsing error
+    * [KNOX-2682] - Switch to 2.0.0-SNAPSHOT in pom.xml
+    * [KNOX-2685] - Hide token management on Home Page
+    * [KNOX-2702] - Upgrade Log4j to 2.17.1
+    * [KNOX-2741] -  Upgrade to velocity 2.3 due to CVE-2020-13936
+    * [KNOX-2751] - Make service dispatches configurable
+    * [KNOX-2802] - Document Service Definition management on Admin UI
+    * [KNOX-2811] - Rewrite Knox tokengen in Angular
+    * [KNOX-2812] - Document the new Rate Limiting filter in Knox's webappsec provider
+    * [KNOX-2814] - Run shellcheck in Github Actions
+    * [KNOX-2815] - Document smolnar's changes in 2.0.0
+    * [KNOX-2829] - Change the default value of knox.token.impersonation.enabled
+    * [KNOX-2830] - Remove TravisCI integration from Apache Knox
+    * [KNOX-2831] - Knox token impersonation in multiple topologies
+    * [KNOX-2832] - Convert JettyDOS provider to a rate limiting option in webappsec
+    * [KNOX-2838] - Document KNOX-2726
+    * [KNOX-2839] - Refactor impersonation from KnoxToken service
+    * [KNOX-2850] - Take care of existing java upgrades by dependabot
+    * [KNOX-2851] - Support additional username/password settings in PostgeSQL
+    * [KNOX-2852] - Bump decode-uri-component from 0.2.0 to 0.2.2 in Knox UIs
+    * [KNOX-2853] - Bumps hsqldb from 2.4.0 to 2.7.1.
+    * [KNOX-2856] - Document changes in KNOX-2839
+    * [KNOX-2865] - Accessing parameters of a x-www-form-urlencoded request consumes the request body
+    * [KNOX-2871] - Refine should perform discovery check
+    * [KNOX-2873] - Upgrade curator version to 5.4.0 and zookeeper to  3.8.1
+    * [KNOX-2879] - pty4j depends on log4j1
+
+** Sub-task
+    * [KNOX-2668] - Documentation for Log4j2 changes and migration guide
+    * [KNOX-2777] - Implement concurrent session verifier
+    * [KNOX-2778] - Enforce concurrent session limit in KnoxSSO
+    * [KNOX-2788] - Implement deleting expired tokens and make Verifier disableable
+    * [KNOX-2789] - Refine privileged/non-privileged group settings
+    * [KNOX-2790] - Split ConcurrentSessionVerifier.verifySessionForUser
+    * [KNOX-2792] - New Knox service to add custom auth headers in the response
+    * [KNOX-2793] - New Knox service to populate Bearer token in response
+    * [KNOX-2794] - Add cookie auth support in JWT federation provider
+    * [KNOX-2803] - Document the changes in KNOX-2791
+    * [KNOX-2817] - Document KNOX-2736 Knox clients should support retry/failover
+    * [KNOX-2818] - Document KNOX-2752 knoxcli should support batch alias creation 
+    * [KNOX-2843] - Document SQL DB based topology monitor
+
+------------------------------------------------------------------------------
+Release Notes - Apache Knox - Version 1.6.1
+------------------------------------------------------------------------------
+** Security fixes
+    * [KNOX-2697] - Upgrade Log4j2 to 2.16
+
+** Bug
+    * [KNOX-2665] - Knox redirecting.jsp parsing error
+
+------------------------------------------------------------------------------
+Release Notes - Apache Knox - Version 1.6.0
+------------------------------------------------------------------------------
+** New Feature
+    * [KNOX-1031] - Apache Hadoop Timeline Server REST API support
+    * [KNOX-1033] - Apache Tez UI support
+    * [KNOX-1641] - Separate <policy> and <dispatch> elements in service.xml controlled by a secure flag
+    * [KNOX-2187] - Add metadata to service definitions
+    * [KNOX-2527] - Support HMAC signature/verification in JWT token authority
+    * [KNOX-2570] - Support for JWKS endpoint
+    * [KNOX-2571] - Knox Homepage Profiles
+    * [KNOX-2579] - Make token passcode secure in DB token state backend
+    * [KNOX-2555] - Add a Token Generation Page for Acquiring JWT Tokens for integration
+    * [KNOX-2624] - Introducing token management page
+
+** Improvement
+    * [KNOX-1080] - Custom dispatch for NiFi should be moved to its own package
+    * [KNOX-1237] - Knox DSL should support HBase Stateless Scanner
+    * [KNOX-1920] - KnoxSSOut for SSO through Proxy with SSOCookieProvider
+    * [KNOX-2095] - Many errors (E.G. 504s) being masked as 500 errors
+    * [KNOX-2252] - Use newly added `context` to calculate the routes in service.xml
+    * [KNOX-2470] - Bump version dependencies November 2020
+    * [KNOX-2530] - Support qualifying service params for CM discovery control
+    * [KNOX-2533] - Qualifying service params for discovery improvements
+    * [KNOX-2539] - Enhance JWTProvider to accept token via HTTP Basic
+    * [KNOX-2542] - Token-based providers should check expiration before verifying tokens
+    * [KNOX-2544] - Token-based providers should cache successful token verifications
+    * [KNOX-2547] - Token-based providers should perform signature verification last
+    * [KNOX-2551] - Token state management improvements
+    * [KNOX-2556] - Enhance JWTProvider to accept knox.id as Passcode Token
+    * [KNOX-2559] - Adding functionality to append headers in Configurable Dispatch
+    * [KNOX-2575] - Add `kid` and `jku` claims to JWT tokens issues by Knox
+    * [KNOX-2594] - Add includeSubDomains to HSTS Support in WebAppSec Provider
+    * [KNOX-2595] - Create KNOX_TOKENS table if not exists
+    * [KNOX-2599] - Improve tokengen UI
+    * [KNOX-2600] - Configure PostgreSQL datasource with JDBC URL
+    * [KNOX-2602] - Add token status in JDBC token state management
+    * [KNOX-2603] - Passcode token verification event should be cached
+    * [KNOX-2613] - The Knox Token Generation UI should validate 'comment' length.
+    * [KNOX-2617] - Copy-to-clipboard icons needed on Token Generation page
+    * [KNOX-2618] - Need to add INFO level eviction logs for debugging
+    * [KNOX-2622] - Support Deflate Encoding for the Inbound Response
+    * [KNOX-2623] - Token generation page improvements
+    * [KNOX-2625] - Enhance KnoxSSO to Support Session Timeout and Logout
+    * [KNOX-2627] - Limiting the number of Knox tokens per user
+    * [KNOX-2653] - Update Atlas Service definition for knox logout/timeout in KNOX-2625
+    * [KNOX-2662] - Show TLS certs on Knox Home page using the token profile
+    * [KNOX-2664] - Users should revoke their own tokens
+    * [KNOX-2667] - Update Ranger Service definition for knox logout/timeout in KNOX-2625
+    * [KNOX-2672] - Handle gateway-level aliases in Hadoop authentication filter
+    * [KNOX-2675] - Oozie Console URL on the web UI should be a Knox URL
+
+** Test
+    * [KNOX-2474] - RemoteConfigurationRegistryJAASConfigTest fails due to invalid auth
+
+** Task
+    * [KNOX-2552] - Add the tokenid to the JSON response payload for KnoxToken service
+    * [KNOX-2553] - Add token management flag in generated JWT tokens
+    * [KNOX-2554] - Implement JDBC TokenStateService
+    * [KNOX-2557] - Add username and comment into token state  metadata
+    * [KNOX-2596] - Change supported DB type for Postgres SQL
+    * [KNOX-2597] - Fallback to AliasBasedTokenStateService in case of DB errors
+    * [KNOX-2598] - Add SSL support to JDBCTokenStateService
+    * [KNOX-2637] - New Knox CLI command to generate a valid JWK secret
+    * [KNOX-2640] - Remove hibernate dependency
+    * [KNOX-2657] - Token generation page improvements
+    * [KNOX-2658] - JDBCTokenStateService is not HA-compatible
+    * [KNOX-2661] - Consolidate HTTP methods in TokenResource
+
+** Bug
+    * [KNOX-755] - retry logic for replayBuffer limit errors is incorrect.
+    * [KNOX-1334] - Knox Service Defs for UIs in AWS EMR Deployments
+    * [KNOX-1361] - Path rewrites for websockets not being handled correctly
+    * [KNOX-1586] - YARN v1 and v2 UI - Handle http vs https for node links
+    * [KNOX-2456] - SHS links sometimes broken on FINISHED jobs page
+    * [KNOX-2475] - url creation failure caused by spaces in url
+    * [KNOX-2476] - Incorrect URLs produced for failover when accessing NiFi UI
+    * [KNOX-2478] - Cleanup HA Dispatch Implementation
+    * [KNOX-2479] - set-cookie headers broken when spaces between attributes are missing
+    * [KNOX-2529] - Update pom versions to 1.6.0-SNAPSHOT
+    * [KNOX-2532] - Unable to set 'None' for the SwitchCase identity provider on the Admin UI.
+    * [KNOX-2538] - JSESSIONID cookie missing when Zeppelin UI proxied via Knox
+    * [KNOX-2541] - Typo in gateway-site.xml
+    * [KNOX-2543] - Intermittent NoHttpResponseException errors
+    * [KNOX-2545] - The new configuration enableStickySession should not loadbalance requests.
+    * [KNOX-2548] - ConcurrentModificationException while verifying JWT token
+    * [KNOX-2549] - Knox CM discovery may lose relevant audit events
+    * [KNOX-2550] - Spark3 UI is missing from Knox Home page
+    * [KNOX-2560] - Add support for KnoxCLI to be able to query/persist alias from remote ZK instance
+    * [KNOX-2562] - TokenStateService getTokenMetadata method should throw UnknownTokenException
+    * [KNOX-2566] - JWT Token Signature Verification Caching NPE
+    * [KNOX-2572] - Unique token identifiers still being logged in entirety
+    * [KNOX-2573] - Service discovery should support HiveServer2 transport mode all
+    * [KNOX-2577] - [Livy Service] Application and container log links should point to YARN UI v2
+    * [KNOX-2578] - TokenResource logging token UUIDs
+    * [KNOX-2582] - Unauthenticated paths support for authentication providers
+    * [KNOX-2601] - ZeppelinUI created multiple sessions when going via Knox
+    * [KNOX-2605] - Knox Token Generation UI should have Validation checks for invalid lifetimes
+    * [KNOX-2606] - Knox Token Generation fails to generate token with lifetime of 1year(365 days)
+    * [KNOX-2608] - JWT tokens issues by Knox should have `kid` and `jku` as part of JOSE Headers
+    * [KNOX-2616] - Trailing slashes added in service URLs on the Knox Home page
+    * [KNOX-2620] - Signature algorithm mismatch in JWKS resource
+    * [KNOX-2621] - Consolidate HTTP error codes in JWT federation filter
+    * [KNOX-2628] - AliasBasedTokenStateService does not revoke all aliases
+    * [KNOX-2632] - Copy-to-clipboard does not work on Token Generation page with Firefox
+    * [KNOX-2633] - Knox token client data parsing does not handle multiple '=' signs
+    * [KNOX-2634] - ODBC connection broken when HA Loadbalancing config is enabled
+    * [KNOX-2647] -  [Spark History UI Service] Executor logs (stdout/stderr) links are broken with JobHostory Service
+    * [KNOX-2666] - Add support for gateway name in rewrite rules
+    * [KNOX-2669] - Account for samesite property in Knox logout
+    * [KNOX-2670] - AliasBasedTokenStateService does not throw UnknownTokenException at revocation time
+    * [KNOX-2671] - From knox homepage clicking logout returns 500 error code
+    * [KNOX-2673] - Clean up cookies after logout
+    * [KNOX-2678] - Expired tokens are not removed from the in-memory cache
+    * [KNOX-2679] - Trim Pac4j entitlements to avoid cookie too large issue.
+
+** Upgrades
+    * [KNOX-2283] - Upgrade curator to 5.1.0 and zookeeper to 3.6.2
+    * [KNOX-2483] - Upgrade hibernate to 5.4.18.Final+
+    * [KNOX-2485] - Upgrade testcontainers to 1.15.1
+    * [KNOX-2486] - Upgrade rest-assured to 4.3.3
+    * [KNOX-2487] - Upgrade json-path to 2.5.0
+    * [KNOX-2488] - Upgrade spring-vault to 2.2.3.RELEASE
+    * [KNOX-2489] - Upgrade netty to 4.1.55.Final
+    * [KNOX-2490] - Upgrade spring to 5.3.2
+    * [KNOX-2491] - Upgrade caffeine to 2.8.8
+    * [KNOX-2492] - Upgrade groovy to 3.0.7
+    * [KNOX-2493] - Upgrade jackson to 2.11.4
+    * [KNOX-2494] - Upgrade httpcore to 4.4.14
+    * [KNOX-2495] - Upgrade httpclient to 4.5.13
+    * [KNOX-2496] - Upgrade junit to 4.13.1
+    * [KNOX-2497] - Upgrade dependency-check-maven to 6.0.3
+    * [KNOX-2498] - Upgrade jacoco-maven-plugin to 0.8.6
+    * [KNOX-2499] - Upgrade asm to 9.0
+    * [KNOX-2500] - Upgrade commons-net to 3.7.2
+    * [KNOX-2501] - Upgrade spotbugs-maven-plugin to 4.1.4
+    * [KNOX-2502] - Upgrade joda-time to 2.10.8
+    * [KNOX-2503] - Upgrade findsecbugs to 1.11.0
+    * [KNOX-2504] - Upgrade bcprov-jdk15on to 1.67
+    * [KNOX-2505] - Upgrade log4j to 2.14.0
+    * [KNOX-2506] - Upgrade protobuf-java to 3.14.0
+    * [KNOX-2507] - Upgrade metrics to 4.1.16
+    * [KNOX-2508] - Upgrade frontend-maven-plugin to 1.11.0
+    * [KNOX-2512] - Upgrade cors-filter to 2.9.1
+    * [KNOX-2513] - Upgrade checkstyle to 8.38
+    * [KNOX-2514] - Upgrade spotbugs to 4.2.0
+    * [KNOX-2516] - Upgrade pac4j to 4.3.0
+    * [KNOX-2518] - Upgrade spring-vault to 2.3.0
+    * [KNOX-2519] - Upgrade eclipselink to 2.7.8
+    * [KNOX-2520] - Upgrade netty to 4.1.56.Final
+    * [KNOX-2521] - Upgrade glassfish jaxb to 2.3.3
+    * [KNOX-2522] - Upgrade hibernate to 5.4.26.Final
+    * [KNOX-2523] - Upgrade java-support to 7.5.2
+    * [KNOX-2524] - Upgrade lang-tag to 1.5
+    * [KNOX-2525] - Upgrade stax2-api to 4.2.1
+
+------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 1.5.0
 ------------------------------------------------------------------------------
 ** New Features
