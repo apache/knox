@@ -25,7 +25,7 @@ Release Notes - Apache Knox - Version 2.0.0
     * [KNOX-2727] - spring4shell CVE means spring upgrades needed
     * [KNOX-2734] - Exclude token passcode from KnoxToken responses when server-managed state is disabled.
     * [KNOX-2737] - Make maxFormContentSize and maxFormKeys configurable in Knox's embedded Jetty server
-    * [KNOX-2740] - Impersonation-related fields should be displayed only if that's enabled in the topology for the KnoxToken service
+    * [KNOX-2740] -  Impersonation-related fields should be displayed only if that's enabled in the topology for the KnoxToken service
     * [KNOX-2742] - CM service discovery retry may be needed
     * [KNOX-2746] - Add presto and presto ui support in service definition
     * [KNOX-2771] - Log HTTP client config parameters such as socket timeouts with info level
@@ -36,6 +36,7 @@ Release Notes - Apache Knox - Version 2.0.0
     * [KNOX-2833] - Ozone integration for Apache Knox
     * [KNOX-2834] - Take care of existing javascript upgrades by dependabot
     * [KNOX-2864] - Make TLS protocol and cipher suites configurable with CM service discovery
+    * [KNOX-2874] - Typos in JDBC token state service config docs
 
 ** Bug
     * [KNOX-1423] - Document Zookeeper URL Manager behaviour for HA services
@@ -78,6 +79,8 @@ Release Notes - Apache Knox - Version 2.0.0
     * [KNOX-2860] - Cannot build knox-webshell-ui
     * [KNOX-2861] - Upgrade cloudera manager api
     * [KNOX-2863] - LB does not work when session cookie is not the first cookie
+    * [KNOX-2869] - Possible NPE at CM cluster configuration monitor startup
+    * [KNOX-2872] - Webshell does not work with loadbalancer
 
 ** Test
     * [KNOX-2840] - SecureKnoxShellTest broken
@@ -89,7 +92,7 @@ Release Notes - Apache Knox - Version 2.0.0
     * [KNOX-2682] - Switch to 2.0.0-SNAPSHOT in pom.xml
     * [KNOX-2685] - Hide token management on Home Page
     * [KNOX-2702] - Upgrade Log4j to 2.17.1
-    * [KNOX-2741] - Upgrade to velocity 2.3 due to CVE-2020-13936
+    * [KNOX-2741] -  Upgrade to velocity 2.3 due to CVE-2020-13936
     * [KNOX-2751] - Make service dispatches configurable
     * [KNOX-2802] - Document Service Definition management on Admin UI
     * [KNOX-2811] - Rewrite Knox tokengen in Angular
@@ -108,6 +111,9 @@ Release Notes - Apache Knox - Version 2.0.0
     * [KNOX-2853] - Bumps hsqldb from 2.4.0 to 2.7.1.
     * [KNOX-2856] - Document changes in KNOX-2839
     * [KNOX-2865] - Accessing parameters of a x-www-form-urlencoded request consumes the request body
+    * [KNOX-2871] - Refine should perform discovery check
+    * [KNOX-2873] - Upgrade curator version to 5.4.0 and zookeeper to  3.8.1
+    * [KNOX-2879] - pty4j depends on log4j1
 
 ** Sub-task
     * [KNOX-2668] - Documentation for Log4j2 changes and migration guide
@@ -122,6 +128,7 @@ Release Notes - Apache Knox - Version 2.0.0
     * [KNOX-2803] - Document the changes in KNOX-2791
     * [KNOX-2817] - Document KNOX-2736 Knox clients should support retry/failover
     * [KNOX-2818] - Document KNOX-2752 knoxcli should support batch alias creation 
+    * [KNOX-2843] - Document SQL DB based topology monitor
 
 ------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 1.6.1
