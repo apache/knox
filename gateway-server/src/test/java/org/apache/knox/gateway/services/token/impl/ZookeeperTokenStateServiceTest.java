@@ -25,32 +25,33 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
+import java.io.File;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 
-import org.apache.curator.test.InstanceSpec;
-import org.apache.curator.test.TestingCluster;
-import org.apache.curator.test.TestingZooKeeperServer;
+import com.google.common.io.Files;
+import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.service.config.remote.zk.ZooKeeperClientService;
 import org.apache.knox.gateway.service.config.remote.zk.ZooKeeperClientServiceProvider;
 import org.apache.knox.gateway.services.GatewayServices;
-import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
-import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
+import org.apache.knox.test.TestUtils;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.server.embedded.ExitHandler;
+import org.apache.zookeeper.server.embedded.ZooKeeperServerEmbedded;
 import org.easymock.EasyMock;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -62,36 +63,49 @@ public class ZookeeperTokenStateServiceTest {
 
   @ClassRule
   public static final TemporaryFolder testFolder = new TemporaryFolder();
-
   private static final String CONFIG_MONITOR_NAME = "remoteConfigMonitorClient";
   private static final long SHORT_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL = 2L;
   private static final long LONG_TOKEN_STATE_ALIAS_PERSISTENCE_INTERVAL = 5L;
-  private static TestingCluster zkNodes;
+  private static ZooKeeperServerEmbedded zkServer;
+  private static ZooKeeper zkClient;
+  private static File tempDir;
 
   @BeforeClass
   public static void configureAndStartZKCluster() throws Exception {
-    // Configure security for the ZK cluster instances
-    final Map<String, Object> customInstanceSpecProps = new HashMap<>();
-    customInstanceSpecProps.put("authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
-    customInstanceSpecProps.put("requireClientAuthScheme", "sasl");
-    customInstanceSpecProps.put("admin.enableServer", false);
+    tempDir = Files.createTempDir();
+    Properties configuration = new Properties();
+    int port = TestUtils.findFreePort();
+    configuration.setProperty("clientPort", String.valueOf(port));
+    configuration.put("authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
+    configuration.put("requireClientAuthScheme", "sasl");
+    configuration.put("admin.enableServer", "false");
+    zkServer = ZooKeeperServerEmbedded
+            .builder()
+            .exitHandler(ExitHandler.LOG_ONLY)
+            .baseDir(tempDir.toPath())
+            .configuration(configuration)
+            .build();
+    zkServer.start();
 
-    // Define the test cluster (with 2 nodes)
-    List<InstanceSpec> instanceSpecs = new ArrayList<>();
-    for (int i = 0; i < 2; i++) {
-      InstanceSpec is = new InstanceSpec(null, -1, -1, -1, false, (i + 1), -1, -1, customInstanceSpecProps);
-      instanceSpecs.add(is);
-    }
-    zkNodes = new TestingCluster(instanceSpecs);
-
-    // Start the cluster
-    zkNodes.start();
+    CountDownLatch latch = new CountDownLatch(1);
+    zkClient = new ZooKeeper("localhost:" + port, 40000, event -> {
+      System.out.println("event " + event);
+      latch.countDown();
+    });
+    latch.await();
   }
 
   @AfterClass
   public static void tearDownSuite() throws Exception {
-    // Shutdown the ZK cluster
-    zkNodes.close();
+    if (tempDir != null) {
+      FileUtils.deleteDirectory(tempDir);
+    }
+    if (zkClient != null) {
+      zkClient.close();
+    }
+    if (zkServer != null) {
+      zkServer.close();
+    }
   }
 
   @Test
@@ -178,11 +192,11 @@ public class ZookeeperTokenStateServiceTest {
 
   }
 
-  private ZookeeperTokenStateService setupZkTokenStateService(long persistenceInterval) throws IOException, KeystoreServiceException, ServiceLifecycleException {
+  private ZookeeperTokenStateService setupZkTokenStateService(long persistenceInterval) throws Exception {
     // mocking GatewayConfig
     final GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
     expect(gc.getRemoteRegistryConfigurationNames()).andReturn(Collections.singletonList(CONFIG_MONITOR_NAME)).anyTimes();
-    final String registryConfig = REMOTE_CONFIG_REGISTRY_TYPE + "=" + ZooKeeperClientService.TYPE + ";" + REMOTE_CONFIG_REGISTRY_ADDRESS + "=" + zkNodes.getConnectString();
+    final String registryConfig = REMOTE_CONFIG_REGISTRY_TYPE + "=" + ZooKeeperClientService.TYPE + ";" + REMOTE_CONFIG_REGISTRY_ADDRESS + "=" + zkServer.getConnectionString();
     expect(gc.getRemoteRegistryConfiguration(CONFIG_MONITOR_NAME)).andReturn(registryConfig).anyTimes();
     expect(gc.getRemoteConfigurationMonitorClientName()).andReturn(CONFIG_MONITOR_NAME).anyTimes();
     expect(gc.getAlgorithm()).andReturn("AES").anyTimes();
@@ -216,12 +230,7 @@ public class ZookeeperTokenStateServiceTest {
     return zktokenStateService;
   }
 
-  private boolean zkNodeExists(String nodeName) {
-    for (TestingZooKeeperServer server : zkNodes.getServers()) {
-      if (server.getQuorumPeer().getActiveServer().getZKDatabase().getNode(nodeName) != null) {
-        return true;
-      }
-    }
-    return false;
+  private boolean zkNodeExists(String nodeName) throws InterruptedException, KeeperException {
+    return zkClient.exists(nodeName, false) != null;
   }
 }
