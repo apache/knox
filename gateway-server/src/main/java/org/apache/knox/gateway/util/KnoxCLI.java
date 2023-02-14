@@ -74,6 +74,7 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClient;
 import org.apache.knox.gateway.services.config.client.RemoteConfigurationRegistryClientService;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.MasterService;
@@ -103,6 +104,7 @@ public class KnoxCLI extends Configured implements Tool {
 
   private static final Collection<String> SUPPORTED_JWK_ALGORITHMS = Stream
       .of(JWSAlgorithm.HS256.getName(), JWSAlgorithm.HS384.getName(), JWSAlgorithm.HS512.getName()).collect(Collectors.toSet());
+  private static final String ALIAS_PREFIX = "${ALIAS=";
   private static final String USAGE_PREFIX = "KnoxCLI {cmd} [options]";
   private static final String COMMANDS =
       "   [--help]\n" +
@@ -1525,7 +1527,7 @@ public class KnoxCLI extends Configured implements Tool {
         username = getSystemUsername(t);
         password = getSystemPassword(t);
         result = authenticateUser(ini, new UsernamePasswordToken(username, password));
-      } catch (MissingUsernameException | NoSuchProviderException | MissingPasswordException | NullPointerException e) {
+      } catch (MissingUsernameException | NoSuchProviderException | MissingPasswordException | NullPointerException | AliasServiceException e) {
         out.println(e.toString());
       }
       return result;
@@ -1554,13 +1556,18 @@ public class KnoxCLI extends Configured implements Tool {
      * @param t - topology configuration to use
      * @return - the systemPassword specified in topology. null if non-existent
      */
-    private char[] getSystemPassword(Topology t) throws NoSuchProviderException, MissingPasswordException{
+    private char[] getSystemPassword(Topology t) throws NoSuchProviderException, MissingPasswordException, AliasServiceException {
       final String SYSTEM_PASSWORD = "main.ldapRealm.contextFactory.systemPassword";
       String pass;
       Provider shiro = t.getProvider("authentication", "ShiroProvider");
       if(shiro != null){
         Map<String, String> params = shiro.getParams();
         pass = params.get(SYSTEM_PASSWORD);
+        if (pass.startsWith(ALIAS_PREFIX) && pass.endsWith("}")) {
+          final String alias = pass.substring("${ALIAS=".length(), pass.length() - 1);
+          out.println(String.format(Locale.getDefault(), "System password is stored as an alias %s; looking it up...", alias));
+          pass = String.valueOf(getAliasService().getPasswordFromAliasForCluster(cluster, alias));
+        }
       } else {
         throw new NoSuchProviderException("ShiroProvider", "authentication", t.getName());
       }

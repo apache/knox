@@ -941,7 +941,30 @@ public class KnoxCLITest {
             "1 alias(es) have been successfully created: [alias1]"));
   }
 
-  private class GatewayConfigMock extends GatewayConfigImpl{
+  @Test
+  public void testSystemUserAuthTest() throws Exception {
+    final String cluster = "sandbox";
+    final String alias = "ldapsystempassword";
+    final AliasService aliasService = KnoxCLI.getGatewayServices().getService(ServiceType.ALIAS_SERVICE);
+    try {
+      aliasService.addAliasForCluster(cluster, alias, "admin-password");
+      outContent.reset();
+      final GatewayConfigMock gatewayConfig = new GatewayConfigMock();
+      final URL topoURL = ClassLoader.getSystemResource("conf-demo/conf/topologies/" + cluster + ".xml");
+      gatewayConfig.setConfDir( new File(topoURL.getFile()).getParentFile().getParent() );
+      final KnoxCLI cli = new KnoxCLI();
+      cli.setConf(gatewayConfig);
+      final String[] args = { "system-user-auth-test", "--cluster", cluster };
+      final int rc = cli.run(args);
+      assertEquals(0, rc);
+      assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains(
+          "System password is stored as an alias " + alias + "; looking it up..."));
+    } finally {
+      aliasService.removeAliasForCluster(cluster, alias);
+    }
+  }
+
+  private class GatewayConfigMock extends GatewayConfigImpl {
     private String confDir;
     public void setConfDir(String location) {
       confDir = location;
