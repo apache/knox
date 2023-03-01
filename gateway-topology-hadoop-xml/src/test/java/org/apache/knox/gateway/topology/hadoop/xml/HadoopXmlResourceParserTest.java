@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -56,12 +57,16 @@ public class HadoopXmlResourceParserTest {
   private GatewayConfig gatewayConfigMock;
   private HadoopXmlResourceParser hadoopXmlResourceParser;
   private File providersDir;
+  private List<String> readOnlyProviders = new ArrayList<>();
+  private List<String> readOnlyTopologies = new ArrayList<>();
 
   @Before
   public void setUp() throws IOException {
     providersDir = tempDir.newFolder("shared-providers");
     gatewayConfigMock = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfigMock.getGatewayProvidersConfigDir()).andReturn(providersDir.getAbsolutePath()).anyTimes();
+    EasyMock.expect(gatewayConfigMock.getReadOnlyOverrideProviderNames()).andReturn(readOnlyProviders).anyTimes();
+    EasyMock.expect(gatewayConfigMock.getReadOnlyOverrideTopologyNames()).andReturn(readOnlyTopologies).anyTimes();
     EasyMock.replay(gatewayConfigMock);
     hadoopXmlResourceParser = new HadoopXmlResourceParser(gatewayConfigMock);
   }
@@ -76,6 +81,32 @@ public class HadoopXmlResourceParserTest {
     validateTopology1Descriptors(descriptorsIterator.next());
     validateTopology2Descriptors(descriptorsIterator.next(), true);
     validateTestDescriptorProviderConfigs(parserResult.getProviders(), "ldap://localhost:33389");
+  }
+
+  @Test
+  public void testFilteredDescriptorName() throws Exception {
+    readOnlyTopologies.add("topology1");
+    final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptor.xml").getPath();
+    final HadoopXmlResourceParserResult parserResult = hadoopXmlResourceParser.parse(testConfigPath);
+    final Set<SimpleDescriptor> descriptors = parserResult.getDescriptors();
+    assertEquals(1, descriptors.size());
+    final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
+    validateTopology2Descriptors(descriptorsIterator.next(), true);
+    validateTestDescriptorProviderConfigs(parserResult.getProviders(), "ldap://localhost:33389");
+  }
+
+  @Test
+  public void testFilteredProviderName() throws Exception {
+    readOnlyProviders.add("knoxsso");
+    final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptor.xml").getPath();
+    final HadoopXmlResourceParserResult parserResult = hadoopXmlResourceParser.parse(testConfigPath);
+    final Set<SimpleDescriptor> descriptors = parserResult.getDescriptors();
+    assertEquals(2, descriptors.size());
+    final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
+    validateTopology1Descriptors(descriptorsIterator.next());
+    validateTopology2Descriptors(descriptorsIterator.next(), true);
+    assertEquals(1, parserResult.getProviders().size());
+    assertNotNull(parserResult.getProviders().get("admin"));
   }
 
   @Test
