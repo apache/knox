@@ -60,9 +60,18 @@ public interface HadoopXmlResourceMessages {
   @Message(level = MessageLevel.ERROR, text = "Error while producing Knox descriptor: {0}")
   void failedToProduceKnoxDescriptor(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.ERROR, text = "Error while producing Knox provider: {0}")
+  void failedToProduceKnoxProvider(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
   @Message(level = MessageLevel.WARN, text = "Service {0} is disabled. It will NOT be added in {1}")
   void serviceDisabled(String serviceName, String descriptorName);
 
   @Message(level = MessageLevel.INFO, text = "Updated advanced service discovery configuration for {0}.")
   void updatedAdvanceServiceDiscoverytConfiguration(String topologyName);
+
+  @Message(level = MessageLevel.WARN, text = "Skipping read only descriptor: {0}.")
+  void skipReadOnlyDescriptor(String name);
+
+  @Message(level = MessageLevel.WARN, text = "Skipping read only provider: {0}.")
+  void skipReadOnlyProvider(String key);
 }

@@ -73,8 +73,10 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
 
   private final Map<String, AdvancedServiceDiscoveryConfig> advancedServiceDiscoveryConfigMap;
   private final String sharedProvidersDir;
+  private final GatewayConfig gatewayConfig;
 
   public HadoopXmlResourceParser(GatewayConfig gatewayConfig) {
+    this.gatewayConfig = gatewayConfig;
     this.advancedServiceDiscoveryConfigMap = new ConcurrentHashMap<>();
     this.sharedProvidersDir = gatewayConfig.getGatewayProvidersConfigDir();
   }
@@ -131,21 +133,29 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
       if (xmlConfigurationKey.startsWith(CONFIG_NAME_PROVIDER_CONFIGS_PREFIX)) {
         final String[] providerConfigurations = xmlConfigurationKey.replace(CONFIG_NAME_PROVIDER_CONFIGS_PREFIX, "").split(",");
         Arrays.asList(providerConfigurations).stream().map(providerConfigurationName -> providerConfigurationName.trim()).forEach(providerConfigurationName -> {
-          final File providerConfigFile = resolveProviderConfiguration(providerConfigurationName);
-          try {
-            final ProviderConfiguration providerConfiguration = getProviderConfiguration(providers, providerConfigFile, providerConfigurationName);
-            providerConfiguration.setReadOnly(true);
-            providerConfiguration.saveOrUpdateProviders(parseProviderConfigurations(xmlDescriptor.getValue(), providerConfiguration));
-            providers.put(providerConfigurationName, providerConfiguration);
-          } catch (Exception e) {
-            log.failedToParseProviderConfiguration(providerConfigurationName, e.getMessage(), e);
+          if (gatewayConfig.getReadOnlyOverrideProviderNames().contains(providerConfigurationName)) {
+            log.skipReadOnlyProvider(providerConfigurationName);
+          } else {
+            final File providerConfigFile = resolveProviderConfiguration(providerConfigurationName);
+            try {
+              final ProviderConfiguration providerConfiguration = getProviderConfiguration(providers, providerConfigFile, providerConfigurationName);
+              providerConfiguration.setReadOnly(true);
+              providerConfiguration.saveOrUpdateProviders(parseProviderConfigurations(xmlDescriptor.getValue(), providerConfiguration));
+              providers.put(providerConfigurationName, providerConfiguration);
+            } catch (Exception e) {
+              log.failedToParseProviderConfiguration(providerConfigurationName, e.getMessage(), e);
+            }
           }
         });
       } else {
         if (topologyName == null || xmlConfigurationKey.equals(topologyName)) {
-          SimpleDescriptor descriptor = parseXmlDescriptor(xmlConfigurationKey, xmlDescriptor.getValue());
-          if (descriptor != null) {
-            descriptors.add(descriptor);
+          if (gatewayConfig.getReadOnlyOverrideTopologyNames().contains(xmlConfigurationKey)) {
+            log.skipReadOnlyDescriptor(xmlConfigurationKey);
+          } else {
+            SimpleDescriptor descriptor = parseXmlDescriptor(xmlConfigurationKey, xmlDescriptor.getValue());
+            if (descriptor != null) {
+              descriptors.add(descriptor);
+            }
           }
         }
       }

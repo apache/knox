@@ -111,7 +111,7 @@ public class HadoopXmlResourceMonitor implements AdvancedServiceDiscoveryConfigC
           LOG.resourceDidNotChange(key, "shared provider");
         }
       } catch (IOException e) {
-        e.printStackTrace();
+        LOG.failedToProduceKnoxProvider(e.getMessage(), e);
       }
     });
   }
