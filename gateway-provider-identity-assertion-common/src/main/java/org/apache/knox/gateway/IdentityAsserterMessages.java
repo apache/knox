@@ -61,6 +61,6 @@ public interface IdentityAsserterMessages {
   @Message( level = MessageLevel.DEBUG, text = "Proxy user Authentication successful" )
   void hadoopAuthProxyUserSuccess();
 
-  @Message( level = MessageLevel.DEBUG, text = "Proxy user Authentication failed: {0}" )
+  @Message( level = MessageLevel.ERROR, text = "Proxy user Authentication failed: {0}" )
   void hadoopAuthProxyUserFailed(@StackTrace Throwable t);
 }
