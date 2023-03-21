@@ -69,10 +69,12 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
 
   private static final Map<String, String> urlToHashLookup = new HashMap<>();
   private static final Map<String, String> hashToUrlLookup = new HashMap<>();
+  private static final List<String> idempotentRequests = Arrays.asList("POST", "PATCH", "CONNECT");
 
   private boolean loadBalancingEnabled = HaServiceConfigConstants.DEFAULT_LOAD_BALANCING_ENABLED;
   private boolean stickySessionsEnabled = HaServiceConfigConstants.DEFAULT_STICKY_SESSIONS_ENABLED;
   private boolean noFallbackEnabled = HaServiceConfigConstants.DEFAULT_NO_FALLBACK_ENABLED;
+  private boolean failoverNonIdempotentRequestEnabled = HaServiceConfigConstants.DEFAULT_FAILOVER_NON_IDEMPOTENT;
   private String stickySessionCookieName = HaServiceConfigConstants.DEFAULT_STICKY_SESSION_COOKIE_NAME;
   private List<String> disableLoadBalancingForUserAgents = Arrays.asList(HaServiceConfigConstants.DEFAULT_DISABLE_LB_USER_AGENTS);
 
@@ -97,6 +99,7 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
       maxFailoverAttempts = serviceConfig.getMaxFailoverAttempts();
       failoverSleep = serviceConfig.getFailoverSleep();
       loadBalancingEnabled = serviceConfig.isLoadBalancingEnabled();
+      failoverNonIdempotentRequestEnabled = serviceConfig.isFailoverNonIdempotentRequestEnabled();
 
       /* enforce dependency */
       stickySessionsEnabled = loadBalancingEnabled && serviceConfig.isStickySessionEnabled();
@@ -213,8 +216,14 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
       inboundResponse = executeOutboundRequest(outboundRequest);
       writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
     } catch ( IOException e ) {
-      LOG.errorConnectingToServer(outboundRequest.getURI().toString(), e);
-      failoverRequest(outboundRequest, inboundRequest, outboundResponse, inboundResponse, e);
+      /* if non-idempotent requests are not allowed to failover */
+      if(!failoverNonIdempotentRequestEnabled && idempotentRequests.stream().anyMatch(outboundRequest.getMethod()::equalsIgnoreCase)) {
+        LOG.cannotFailoverToNonIdempotentRequest(outboundRequest.getMethod());
+        throw e;
+      } else {
+        LOG.errorConnectingToServer(outboundRequest.getURI().toString(), e);
+        failoverRequest(outboundRequest, inboundRequest, outboundResponse, inboundResponse, e);
+      }
     }
   }
 

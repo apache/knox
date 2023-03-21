@@ -41,6 +41,14 @@ public interface HaServiceConfigConstants {
    String STICKY_SESSION_COOKIE_NAME = "stickySessionCookieName";
 
    /**
+    * For non-idempotent requests such as
+    * POST, PATCH, CONNECT
+    * should we failover?
+    * default is false (no).
+    */
+   String FAILOVER_NON_IDEMPOTENT = "failoverNonIdempotentRequestEnabled";
+
+   /**
     * Disable loadbalancing feature based on user agent.
     * The code will look for "contains" match
     */
@@ -57,6 +65,8 @@ public interface HaServiceConfigConstants {
    boolean DEFAULT_LOAD_BALANCING_ENABLED = false;
 
    boolean DEFAULT_NO_FALLBACK_ENABLED = false;
+
+   boolean DEFAULT_FAILOVER_NON_IDEMPOTENT = false;
 
    String DEFAULT_STICKY_SESSION_COOKIE_NAME = "KNOX_BACKEND";
 
