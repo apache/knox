@@ -17,15 +17,13 @@
  */
 package org.apache.knox.gateway.hdfs.dispatch;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.BufferedHttpEntity;
-import org.apache.knox.gateway.config.Configure;
 import org.apache.knox.gateway.filter.AbstractGatewayFilter;
-import org.apache.knox.gateway.ha.provider.HaProvider;
-import org.apache.knox.gateway.ha.provider.HaServiceConfig;
-import org.apache.knox.gateway.ha.provider.impl.HaServiceConfigConstants;
+import org.apache.knox.gateway.ha.dispatch.ConfigurableHADispatch;
 import org.apache.knox.gateway.hdfs.i18n.WebHdfsMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
@@ -38,13 +36,10 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class AbstractHdfsHaDispatch extends HdfsHttpClientDispatch {
+public abstract class AbstractHdfsHaDispatch extends ConfigurableHADispatch {
 
   private static final String FAILOVER_COUNTER_ATTRIBUTE = "dispatch.ha.failover.counter";
   private static final WebHdfsMessages LOG = MessagesFactory.get(WebHdfsMessages.class);
-  private int maxFailoverAttempts = HaServiceConfigConstants.DEFAULT_MAX_FAILOVER_ATTEMPTS;
-  private int failoverSleep = HaServiceConfigConstants.DEFAULT_FAILOVER_SLEEP;
-  private HaProvider haProvider;
 
   public AbstractHdfsHaDispatch() throws ServletException {
     super();
@@ -53,23 +48,10 @@ public abstract class AbstractHdfsHaDispatch extends HdfsHttpClientDispatch {
   @Override
   public void init() {
      super.init();
-     if (haProvider != null) {
-       HaServiceConfig serviceConfig = haProvider.getHaDescriptor().getServiceConfig(getResourceRole());
-       maxFailoverAttempts = serviceConfig.getMaxFailoverAttempts();
-       failoverSleep = serviceConfig.getFailoverSleep();
-     }
    }
-
-  public HaProvider getHaProvider() {
-    return haProvider;
-  }
 
   abstract String getResourceRole();
 
-  @Configure
-  public void setHaProvider(HaProvider haProvider) {
-    this.haProvider = haProvider;
-  }
 
   @Override
   protected void executeRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) throws IOException {
@@ -78,14 +60,35 @@ public abstract class AbstractHdfsHaDispatch extends HdfsHttpClientDispatch {
          inboundResponse = executeOutboundRequest(outboundRequest);
          writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
       } catch (StandbyException e) {
-         LOG.errorReceivedFromStandbyNode(e);
-         failoverRequest(outboundRequest, inboundRequest, outboundResponse, inboundResponse, e);
+        /* if non-idempotent requests are not allowed to failover */
+        if(!failoverNonIdempotentRequestEnabled && idempotentRequests.stream().anyMatch(outboundRequest.getMethod()::equalsIgnoreCase)) {
+          LOG.cannotFailoverToNonIdempotentRequest(outboundRequest.getMethod());
+          throw e;
+        } else {
+          LOG.errorReceivedFromStandbyNode(e);
+          failoverRequest(outboundRequest, inboundRequest, outboundResponse,
+              inboundResponse, e);
+        }
       } catch (SafeModeException e) {
-         LOG.errorReceivedFromSafeModeNode(e);
-         failoverRequest(outboundRequest, inboundRequest, outboundResponse, inboundResponse, e);
+        /* if non-idempotent requests are not allowed to failover */
+        if(!failoverNonIdempotentRequestEnabled && idempotentRequests.stream().anyMatch(outboundRequest.getMethod()::equalsIgnoreCase)) {
+          LOG.cannotFailoverToNonIdempotentRequest(outboundRequest.getMethod());
+          throw e;
+        } else {
+          LOG.errorReceivedFromSafeModeNode(e);
+          failoverRequest(outboundRequest, inboundRequest, outboundResponse,
+              inboundResponse, e);
+        }
       } catch (IOException e) {
-         LOG.errorConnectingToServer(outboundRequest.getURI().toString(), e);
-         failoverRequest(outboundRequest, inboundRequest, outboundResponse, inboundResponse, e);
+        /* if non-idempotent requests are not allowed to failover */
+        if(!failoverNonIdempotentRequestEnabled && idempotentRequests.stream().anyMatch(outboundRequest.getMethod()::equalsIgnoreCase)) {
+          LOG.cannotFailoverToNonIdempotentRequest(outboundRequest.getMethod());
+          throw e;
+        } else {
+          LOG.errorConnectingToServer(outboundRequest.getURI().toString(), e);
+          failoverRequest(outboundRequest, inboundRequest, outboundResponse,
+              inboundResponse, e);
+        }
       }
    }
 
@@ -110,7 +113,8 @@ public abstract class AbstractHdfsHaDispatch extends HdfsHttpClientDispatch {
       super.writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
    }
 
-  private void failoverRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse, HttpResponse inboundResponse, Exception exception) throws IOException {
+  @Override
+  protected void failoverRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse, HttpResponse inboundResponse, Exception exception) throws IOException {
       LOG.failedToConnectTo(outboundRequest.getURI().toString());
       AtomicInteger counter = (AtomicInteger) inboundRequest.getAttribute(FAILOVER_COUNTER_ATTRIBUTE);
       if (counter == null) {
@@ -142,4 +146,18 @@ public abstract class AbstractHdfsHaDispatch extends HdfsHttpClientDispatch {
          }
       }
    }
+
+  /**
+   * This method ensures that the request InputStream is not acquired
+   * prior to a dispatch to a component such as a namenode that doesn't
+   * the request body. The side effect of this is that the client does
+   * not get a 100 continue from Knox which will trigger the client to
+   * send the entire payload before redirect to the target component
+   * like a datanode and have to send it again.
+   */
+  @Override
+  protected HttpEntity createRequestEntity(HttpServletRequest request)
+      throws IOException {
+    return null;
+  }
 }

@@ -61,20 +61,20 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
 
   protected static final HaDispatchMessages LOG = MessagesFactory.get(HaDispatchMessages.class);
 
-  private int maxFailoverAttempts = HaServiceConfigConstants.DEFAULT_MAX_FAILOVER_ATTEMPTS;
+  protected int maxFailoverAttempts = HaServiceConfigConstants.DEFAULT_MAX_FAILOVER_ATTEMPTS;
 
-  private int failoverSleep = HaServiceConfigConstants.DEFAULT_FAILOVER_SLEEP;
+  protected int failoverSleep = HaServiceConfigConstants.DEFAULT_FAILOVER_SLEEP;
 
-  private HaProvider haProvider;
+  protected HaProvider haProvider;
 
   private static final Map<String, String> urlToHashLookup = new HashMap<>();
   private static final Map<String, String> hashToUrlLookup = new HashMap<>();
-  private static final List<String> idempotentRequests = Arrays.asList("POST", "PATCH", "CONNECT");
+  protected static final List<String> idempotentRequests = Arrays.asList("POST", "PATCH", "CONNECT");
 
   private boolean loadBalancingEnabled = HaServiceConfigConstants.DEFAULT_LOAD_BALANCING_ENABLED;
   private boolean stickySessionsEnabled = HaServiceConfigConstants.DEFAULT_STICKY_SESSIONS_ENABLED;
   private boolean noFallbackEnabled = HaServiceConfigConstants.DEFAULT_NO_FALLBACK_ENABLED;
-  private boolean failoverNonIdempotentRequestEnabled = HaServiceConfigConstants.DEFAULT_FAILOVER_NON_IDEMPOTENT;
+  protected boolean failoverNonIdempotentRequestEnabled = HaServiceConfigConstants.DEFAULT_FAILOVER_NON_IDEMPOTENT;
   private String stickySessionCookieName = HaServiceConfigConstants.DEFAULT_STICKY_SESSION_COOKIE_NAME;
   private List<String> disableLoadBalancingForUserAgents = Arrays.asList(HaServiceConfigConstants.DEFAULT_DISABLE_LB_USER_AGENTS);
 
