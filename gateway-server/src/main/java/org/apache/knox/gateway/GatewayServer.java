@@ -694,10 +694,10 @@ public class GatewayServer {
 
     cleanupTopologyDeployments();
 
+    handleHadoopXmlResources();
+
     // Start the topology monitor.
     monitor.startMonitor();
-
-    handleHadoopXmlResources();
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
 
