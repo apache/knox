@@ -59,33 +59,19 @@ public abstract class AbstractHdfsHaDispatch extends ConfigurableHADispatch {
       try {
          inboundResponse = executeOutboundRequest(outboundRequest);
          writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
-      } catch (StandbyException e) {
+      } catch (StandbyException | SafeModeException | IOException e) {
         /* if non-idempotent requests are not allowed to failover */
-        if(!failoverNonIdempotentRequestEnabled && idempotentRequests.stream().anyMatch(outboundRequest.getMethod()::equalsIgnoreCase)) {
-          LOG.cannotFailoverToNonIdempotentRequest(outboundRequest.getMethod());
+        if(!failoverNonIdempotentRequestEnabled && nonIdempotentRequests.stream().anyMatch(outboundRequest.getMethod()::equalsIgnoreCase)) {
+          LOG.cannotFailoverNonIdempotentRequest(outboundRequest.getMethod(), e.toString());
           throw e;
         } else {
-          LOG.errorReceivedFromStandbyNode(e);
-          failoverRequest(outboundRequest, inboundRequest, outboundResponse,
-              inboundResponse, e);
-        }
-      } catch (SafeModeException e) {
-        /* if non-idempotent requests are not allowed to failover */
-        if(!failoverNonIdempotentRequestEnabled && idempotentRequests.stream().anyMatch(outboundRequest.getMethod()::equalsIgnoreCase)) {
-          LOG.cannotFailoverToNonIdempotentRequest(outboundRequest.getMethod());
-          throw e;
-        } else {
-          LOG.errorReceivedFromSafeModeNode(e);
-          failoverRequest(outboundRequest, inboundRequest, outboundResponse,
-              inboundResponse, e);
-        }
-      } catch (IOException e) {
-        /* if non-idempotent requests are not allowed to failover */
-        if(!failoverNonIdempotentRequestEnabled && idempotentRequests.stream().anyMatch(outboundRequest.getMethod()::equalsIgnoreCase)) {
-          LOG.cannotFailoverToNonIdempotentRequest(outboundRequest.getMethod());
-          throw e;
-        } else {
-          LOG.errorConnectingToServer(outboundRequest.getURI().toString(), e);
+          if(e instanceof StandbyException) {
+            LOG.errorReceivedFromStandbyNode(e);
+          } else if(e instanceof SafeModeException) {
+            LOG.errorReceivedFromSafeModeNode(e);
+          } else {
+            LOG.errorConnectingToServer(outboundRequest.getURI().toString(), e);
+          }
           failoverRequest(outboundRequest, inboundRequest, outboundResponse,
               inboundResponse, e);
         }

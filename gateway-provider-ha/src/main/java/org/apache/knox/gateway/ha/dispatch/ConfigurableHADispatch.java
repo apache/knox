@@ -69,7 +69,7 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
 
   private static final Map<String, String> urlToHashLookup = new HashMap<>();
   private static final Map<String, String> hashToUrlLookup = new HashMap<>();
-  protected static final List<String> idempotentRequests = Arrays.asList("POST", "PATCH", "CONNECT");
+  protected static final List<String> nonIdempotentRequests = Arrays.asList("POST", "PATCH", "CONNECT");
 
   private boolean loadBalancingEnabled = HaServiceConfigConstants.DEFAULT_LOAD_BALANCING_ENABLED;
   private boolean stickySessionsEnabled = HaServiceConfigConstants.DEFAULT_STICKY_SESSIONS_ENABLED;
@@ -217,8 +217,8 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
       writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
     } catch ( IOException e ) {
       /* if non-idempotent requests are not allowed to failover */
-      if(!failoverNonIdempotentRequestEnabled && idempotentRequests.stream().anyMatch(outboundRequest.getMethod()::equalsIgnoreCase)) {
-        LOG.cannotFailoverToNonIdempotentRequest(outboundRequest.getMethod());
+      if(!failoverNonIdempotentRequestEnabled && nonIdempotentRequests.stream().anyMatch(outboundRequest.getMethod()::equalsIgnoreCase)) {
+        LOG.cannotFailoverNonIdempotentRequest(outboundRequest.getMethod());
         throw e;
       } else {
         LOG.errorConnectingToServer(outboundRequest.getURI().toString(), e);
