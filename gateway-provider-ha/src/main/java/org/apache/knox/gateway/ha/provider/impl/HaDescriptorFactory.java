@@ -42,10 +42,62 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
     final boolean loadBalancingEnabled = Boolean.parseBoolean(configMap.getOrDefault(CONFIG_LOAD_BALANCING_ENABLED, Boolean.toString(DEFAULT_LOAD_BALANCING_ENABLED)));
     final boolean noFallbackEnabled = Boolean.parseBoolean(configMap.getOrDefault(CONFIG_NO_FALLBACK_ENABLED, Boolean.toString(DEFAULT_NO_FALLBACK_ENABLED)));
     final String stickySessionCookieName = configMap.getOrDefault(STICKY_SESSION_COOKIE_NAME, DEFAULT_STICKY_SESSION_COOKIE_NAME);
-
+    final boolean failoverNonIdempotentRequestEnabled = Boolean.parseBoolean(configMap.getOrDefault(FAILOVER_NON_IDEMPOTENT, Boolean.toString(DEFAULT_FAILOVER_NON_IDEMPOTENT)));
     final String disableLoadBalancingForUserAgentsConfig = configMap.getOrDefault(DISABLE_LB_USER_AGENTS, DEFAULT_DISABLE_LB_USER_AGENTS);
     return createServiceConfig(serviceName, enabled, maxFailoverAttempts, failoverSleep, zookeeperEnsemble, zookeeperNamespace, stickySessionsEnabled, loadBalancingEnabled,
-            stickySessionCookieName, noFallbackEnabled, disableLoadBalancingForUserAgentsConfig);
+            stickySessionCookieName, noFallbackEnabled, disableLoadBalancingForUserAgentsConfig, failoverNonIdempotentRequestEnabled);
+  }
+
+  public static HaServiceConfig createServiceConfig(String serviceName, String enabledValue,
+      String maxFailoverAttemptsValue, String failoverSleepValue,
+      String zookeeperEnsemble, String zookeeperNamespace,
+      String loadBalancingEnabledValue, String stickySessionsEnabledValue,
+      String stickySessionCookieNameValue, String noFallbackEnabledValue,
+      String disableLoadBalancingForUserAgentsValue, String failoverNonIdempotentRequestEnabledValue) {
+
+    boolean enabled = DEFAULT_ENABLED;
+    int maxFailoverAttempts = DEFAULT_MAX_FAILOVER_ATTEMPTS;
+    int failoverSleep = DEFAULT_FAILOVER_SLEEP;
+    boolean stickySessionsEnabled = DEFAULT_STICKY_SESSIONS_ENABLED;
+    boolean loadBalancingEnabled = DEFAULT_LOAD_BALANCING_ENABLED;
+    boolean noFallbackEnabled = DEFAULT_NO_FALLBACK_ENABLED;
+    String stickySessionCookieName = DEFAULT_STICKY_SESSION_COOKIE_NAME;
+    String disableLoadBalancingForUserAgentsConfig = DEFAULT_DISABLE_LB_USER_AGENTS;
+    boolean failoverNonIdempotentRequestEnabled = DEFAULT_FAILOVER_NON_IDEMPOTENT;
+
+    if (enabledValue != null && !enabledValue.trim().isEmpty()) {
+      enabled = Boolean.parseBoolean(enabledValue);
+    }
+    if (maxFailoverAttemptsValue != null && !maxFailoverAttemptsValue.trim().isEmpty()) {
+      maxFailoverAttempts = Integer.parseInt(maxFailoverAttemptsValue);
+    }
+    if (failoverSleepValue != null && !failoverSleepValue.trim().isEmpty()) {
+      failoverSleep = Integer.parseInt(failoverSleepValue);
+    }
+    if (stickySessionsEnabledValue != null && !stickySessionsEnabledValue.trim().isEmpty()) {
+      stickySessionsEnabled = Boolean.parseBoolean(stickySessionsEnabledValue);
+    }
+    if (loadBalancingEnabledValue != null && !loadBalancingEnabledValue.trim().isEmpty()) {
+      loadBalancingEnabled = Boolean.parseBoolean(loadBalancingEnabledValue);
+    }
+    if (stickySessionCookieNameValue != null && !stickySessionCookieNameValue.trim().isEmpty()) {
+      stickySessionCookieName = stickySessionCookieNameValue;
+    }
+    if (noFallbackEnabledValue != null && !noFallbackEnabledValue.trim().isEmpty()) {
+      noFallbackEnabled = Boolean.parseBoolean(noFallbackEnabledValue);
+    }
+    if(StringUtils.isNotBlank(disableLoadBalancingForUserAgentsValue)) {
+      disableLoadBalancingForUserAgentsConfig = disableLoadBalancingForUserAgentsValue;
+    }
+
+    if (failoverNonIdempotentRequestEnabledValue != null && !failoverNonIdempotentRequestEnabledValue.trim().isEmpty()) {
+      failoverNonIdempotentRequestEnabled = Boolean.parseBoolean(failoverNonIdempotentRequestEnabledValue);
+    }
+
+    return createServiceConfig(serviceName, enabled, maxFailoverAttempts, failoverSleep, zookeeperEnsemble, zookeeperNamespace, stickySessionsEnabled, loadBalancingEnabled,
+        stickySessionCookieName, noFallbackEnabled, disableLoadBalancingForUserAgentsConfig, failoverNonIdempotentRequestEnabled);
+
+
   }
 
   /**
@@ -70,49 +122,18 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
                                                      String loadBalancingEnabledValue, String stickySessionsEnabledValue,
                                                      String stickySessionCookieNameValue, String noFallbackEnabledValue,
                                                      String disableLoadBalancingForUserAgentsValue) {
-      boolean enabled = DEFAULT_ENABLED;
-      int maxFailoverAttempts = DEFAULT_MAX_FAILOVER_ATTEMPTS;
-      int failoverSleep = DEFAULT_FAILOVER_SLEEP;
-      boolean stickySessionsEnabled = DEFAULT_STICKY_SESSIONS_ENABLED;
-      boolean loadBalancingEnabled = DEFAULT_LOAD_BALANCING_ENABLED;
-      boolean noFallbackEnabled = DEFAULT_NO_FALLBACK_ENABLED;
-      String stickySessionCookieName = DEFAULT_STICKY_SESSION_COOKIE_NAME;
-      String disableLoadBalancingForUserAgentsConfig = DEFAULT_DISABLE_LB_USER_AGENTS;
-      if (enabledValue != null && !enabledValue.trim().isEmpty()) {
-         enabled = Boolean.parseBoolean(enabledValue);
-      }
-      if (maxFailoverAttemptsValue != null && !maxFailoverAttemptsValue.trim().isEmpty()) {
-         maxFailoverAttempts = Integer.parseInt(maxFailoverAttemptsValue);
-      }
-      if (failoverSleepValue != null && !failoverSleepValue.trim().isEmpty()) {
-         failoverSleep = Integer.parseInt(failoverSleepValue);
-      }
-      if (stickySessionsEnabledValue != null && !stickySessionsEnabledValue.trim().isEmpty()) {
-         stickySessionsEnabled = Boolean.parseBoolean(stickySessionsEnabledValue);
-      }
-      if (loadBalancingEnabledValue != null && !loadBalancingEnabledValue.trim().isEmpty()) {
-         loadBalancingEnabled = Boolean.parseBoolean(loadBalancingEnabledValue);
-      }
-      if (stickySessionCookieNameValue != null && !stickySessionCookieNameValue.trim().isEmpty()) {
-         stickySessionCookieName = stickySessionCookieNameValue;
-      }
-      if (noFallbackEnabledValue != null && !noFallbackEnabledValue.trim().isEmpty()) {
-         noFallbackEnabled = Boolean.parseBoolean(noFallbackEnabledValue);
-      }
-      if(StringUtils.isNotBlank(disableLoadBalancingForUserAgentsValue)) {
-        disableLoadBalancingForUserAgentsConfig = disableLoadBalancingForUserAgentsValue;
-      }
 
-     return createServiceConfig(serviceName, enabled, maxFailoverAttempts, failoverSleep, zookeeperEnsemble, zookeeperNamespace, stickySessionsEnabled, loadBalancingEnabled,
-             stickySessionCookieName, noFallbackEnabled, disableLoadBalancingForUserAgentsConfig);
+     return createServiceConfig(serviceName, enabledValue, maxFailoverAttemptsValue, failoverSleepValue, zookeeperEnsemble, zookeeperNamespace, loadBalancingEnabledValue, stickySessionsEnabledValue,
+         stickySessionCookieNameValue, noFallbackEnabledValue, disableLoadBalancingForUserAgentsValue, Boolean.toString(DEFAULT_FAILOVER_NON_IDEMPOTENT));
    }
 
-  private static DefaultHaServiceConfig createServiceConfig(final String serviceName, final boolean enabled,
+  public static DefaultHaServiceConfig createServiceConfig(final String serviceName, final boolean enabled,
           final int maxFailoverAttempts, final int failoverSleepValue,
           final String zookeeperEnsemble, final String zookeeperNamespace,
           final boolean stickySessionsEnabled, final boolean loadBalancingEnabled,
           final String stickySessionCookieName,
-          final boolean noFallbackEnabled, final String disableStickySessionForUserAgents) {
+          final boolean noFallbackEnabled, final String disableStickySessionForUserAgents,
+          final boolean failoverNonIdempotentRequestEnabled) {
     DefaultHaServiceConfig serviceConfig = new DefaultHaServiceConfig(serviceName);
     serviceConfig.setEnabled(enabled);
     serviceConfig.setMaxFailoverAttempts(maxFailoverAttempts);
@@ -124,6 +145,7 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
     serviceConfig.setStickySessionCookieName(stickySessionCookieName);
     serviceConfig.setNoFallbackEnabled(noFallbackEnabled);
     serviceConfig.setDisableStickySessionForUserAgents(disableStickySessionForUserAgents);
+    serviceConfig.setFailoverNonIdempotentRequestEnabled(failoverNonIdempotentRequestEnabled);
     return serviceConfig;
   }
 

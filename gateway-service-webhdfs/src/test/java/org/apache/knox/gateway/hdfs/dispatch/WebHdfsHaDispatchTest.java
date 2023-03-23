@@ -93,6 +93,7 @@ public class WebHdfsHaDispatchTest {
       CloseableHttpClient client = builder.build();
       dispatch.setHttpClient(client);
       dispatch.setHaProvider(provider);
+      dispatch.setServiceRole(serviceName);
       dispatch.init();
       long startTime = System.currentTimeMillis();
       try {
