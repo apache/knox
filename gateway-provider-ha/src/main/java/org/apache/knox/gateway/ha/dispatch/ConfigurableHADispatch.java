@@ -218,7 +218,7 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
     } catch ( IOException e ) {
       /* if non-idempotent requests are not allowed to failover */
       if(!failoverNonIdempotentRequestEnabled && nonIdempotentRequests.stream().anyMatch(outboundRequest.getMethod()::equalsIgnoreCase)) {
-        LOG.cannotFailoverNonIdempotentRequest(outboundRequest.getMethod());
+        LOG.cannotFailoverNonIdempotentRequest(outboundRequest.getMethod(), e.toString());
         throw e;
       } else {
         LOG.errorConnectingToServer(outboundRequest.getURI().toString(), e);

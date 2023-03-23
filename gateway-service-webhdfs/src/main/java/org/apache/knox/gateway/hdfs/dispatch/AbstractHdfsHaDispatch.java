@@ -65,18 +65,14 @@ public abstract class AbstractHdfsHaDispatch extends ConfigurableHADispatch {
           LOG.cannotFailoverNonIdempotentRequest(outboundRequest.getMethod(), e.toString());
           throw e;
         } else {
-          if(e instanceof StandbyException) {
-            LOG.errorReceivedFromStandbyNode(e);
-          } else if(e instanceof SafeModeException) {
-            LOG.errorReceivedFromSafeModeNode(e);
-          } else {
-            LOG.errorConnectingToServer(outboundRequest.getURI().toString(), e);
-          }
+          printExceptionLogMessage(e, outboundRequest.getURI().toString());
           failoverRequest(outboundRequest, inboundRequest, outboundResponse,
               inboundResponse, e);
         }
       }
    }
+
+
 
   /**
     * Checks for specific outbound response codes/content to trigger a retry or failover
@@ -145,5 +141,20 @@ public abstract class AbstractHdfsHaDispatch extends ConfigurableHADispatch {
   protected HttpEntity createRequestEntity(HttpServletRequest request)
       throws IOException {
     return null;
+  }
+
+  /**
+   * Helper method that prints descriptive log messages about the exception thrown.
+   * @param e Exception
+   * @param uri outbound uri
+   */
+  private void printExceptionLogMessage(final Exception e, String uri) {
+    if(e instanceof StandbyException) {
+      LOG.errorReceivedFromStandbyNode(e);
+    } else if(e instanceof SafeModeException) {
+      LOG.errorReceivedFromSafeModeNode(e);
+    } else {
+      LOG.errorConnectingToServer(uri, e);
+    }
   }
 }
