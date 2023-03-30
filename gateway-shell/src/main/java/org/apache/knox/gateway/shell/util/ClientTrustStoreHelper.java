@@ -19,6 +19,7 @@ package org.apache.knox.gateway.shell.util;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.security.KeyStore;
 
 /**
  * Provides useful helper methods related to gateway client trust store
@@ -33,6 +34,7 @@ public class ClientTrustStoreHelper {
   private static final String ENV_GATEWAY_CLIENT_TRUSTSTORE_DIR = "GATEWAY_CLIENT_TRUSTSTORE_DIR";
   private static final String ENV_GATEWAY_CLIENT_TRUSTSTORE_FILENAME = "GATEWAY_CLIENT_TRUSTSTORE_FILENAME";
   private static final String ENV_GATEWAY_CLIENT_TRUSTSTORE_PASSWORD = "GATEWAY_CLIENT_TRUSTSTORE_PASS";
+  private static final String ENV_GATEWAY_CLIENT_TRUSTSTORE_TYPE = "GATEWAY_CLIENT_TRUSTSTORE_TYPE";
 
   public static File getClientTrustStoreFile() {
     final String truststoreDir = fetchTrustStoreAttribute(ENV_GATEWAY_CLIENT_TRUSTSTORE_DIR, DEFAULT_GATEWAY_CLIENT_TRUSTSTORE_DIR);
@@ -42,6 +44,10 @@ public class ClientTrustStoreHelper {
 
   public static String getClientTrustStoreFilePassword() {
     return fetchTrustStoreAttribute(ENV_GATEWAY_CLIENT_TRUSTSTORE_PASSWORD, DEFAULT_GATEWAY_CLIENT_TRUSTSTORE_PASSWORD);
+  }
+
+  public static String getClientTrustStoreType() {
+    return fetchTrustStoreAttribute(ENV_GATEWAY_CLIENT_TRUSTSTORE_TYPE, KeyStore.getDefaultType());
   }
 
   private static String fetchTrustStoreAttribute(String environmentVariableName, String defaultValue) {

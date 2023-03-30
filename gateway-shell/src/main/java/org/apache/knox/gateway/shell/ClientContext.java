@@ -20,7 +20,9 @@ package org.apache.knox.gateway.shell;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.MapConfiguration;
 import org.apache.commons.configuration.SubsetConfiguration;
+import org.apache.commons.lang3.StringUtils;
 
+import java.security.KeyStore;
 import java.util.HashMap;
 
 public class ClientContext {
@@ -172,10 +174,10 @@ public class ClientContext {
       return this;
     }
 
-    public ConnectionContext withTruststore(final String truststoreLocation,
-        final String truststorePass) {
+    public ConnectionContext withTruststore(final String truststoreLocation, final String truststorePass, final String truststoreType) {
       configuration.addProperty("truststoreLocation", truststoreLocation);
       configuration.addProperty("truststorePass", truststorePass);
+      configuration.addProperty("truststoreType", truststoreType);
       return this;
     }
 
@@ -190,6 +192,11 @@ public class ClientContext {
 
     public String truststorePass() {
       return configuration.getString("truststorePass");
+    }
+
+    public String truststoreType() {
+      final String truststoreType = configuration.getString("truststoreType");
+      return StringUtils.isBlank(truststoreType) ? KeyStore.getDefaultType() : truststoreType;
     }
 
     public String endpointPublicCertPem() {
