@@ -175,10 +175,12 @@ public class KnoxSession implements Closeable {
                                    Map<String,String> headers,
                                    String             truststoreLocation,
                                    String             truststorePass  ) throws URISyntaxException {
-    KnoxSession instance = new KnoxSession(ClientContext.with(url)
-                                                        .connection()
-                                                        .withTruststore(truststoreLocation, truststorePass)
-                                                        .end());
+    return login(url, headers, truststoreLocation, truststorePass, null);
+  }
+
+  public static KnoxSession login(String url, Map<String, String> headers, String truststoreLocation, String truststorePass, String truststoreType)
+      throws URISyntaxException {
+    final KnoxSession instance = new KnoxSession(ClientContext.with(url).connection().withTruststore(truststoreLocation, truststorePass, truststoreType).end());
     instance.setHeaders(headers);
     return instance;
   }
@@ -187,11 +189,13 @@ public class KnoxSession implements Closeable {
     return new KnoxSession(ClientContext.with(username, password, url));
   }
 
-  public static KnoxSession login( String url, String username, String password,
-      String truststoreLocation, String truststorePass ) throws URISyntaxException {
+  public static KnoxSession login( String url, String username, String password, String truststoreLocation, String truststorePass ) throws URISyntaxException {
+    return login(url, username, password, truststoreLocation, truststorePass, null);
+  }
 
+  public static KnoxSession login( String url, String username, String password, String truststoreLocation, String truststorePass, String truststoreType) throws URISyntaxException {
     return new KnoxSession(ClientContext.with(username, password, url)
-        .connection().withTruststore(truststoreLocation, truststorePass).end());
+        .connection().withTruststore(truststoreLocation, truststorePass, truststoreType).end());
   }
 
   public static KnoxSession login(ClientContext context) throws URISyntaxException {
@@ -405,7 +409,7 @@ public class KnoxSession implements Closeable {
       }
       try {
         byte[] bytes = Base64.decodeBase64(pem);
-        KeyStore keystore = KeyStore.getInstance("JKS");
+        KeyStore keystore = KeyStore.getInstance(clientContext.connection().truststoreType());
         keystore.load(null);
         keystore.setCertificateEntry("knox-gateway", generateCertificateFromBytes(bytes));
 
@@ -433,7 +437,7 @@ public class KnoxSession implements Closeable {
 
     if (file.exists()) {
       try (InputStream is = Files.newInputStream(file.toPath())) {
-        ks = KeyStore.getInstance("JKS");
+        ks = KeyStore.getInstance(clientContext.connection().truststoreType());
         ks.load(is, truststorePass.toCharArray());
       } catch (KeyStoreException e) {
         throw new KnoxShellException("Unable to create keystore of expected type.", e);
@@ -464,12 +468,14 @@ public class KnoxSession implements Closeable {
 
   protected void discoverTruststoreDetails(ClientContext clientContext) {
     if (clientContext.connection().truststoreLocation() != null &&
-        clientContext.connection().truststorePass() != null) {
+        clientContext.connection().truststorePass() != null &&
+        clientContext.connection().truststoreType()!= null) {
       return;
     } else {
       final String truststoreLocation = ClientTrustStoreHelper.getClientTrustStoreFile().getAbsolutePath();
       final String truststorePass = ClientTrustStoreHelper.getClientTrustStoreFilePassword();
-      clientContext.connection().withTruststore(truststoreLocation, truststorePass);
+      final String truststoreType = ClientTrustStoreHelper.getClientTrustStoreType();
+      clientContext.connection().withTruststore(truststoreLocation, truststorePass, truststoreType);
     }
   }
 
