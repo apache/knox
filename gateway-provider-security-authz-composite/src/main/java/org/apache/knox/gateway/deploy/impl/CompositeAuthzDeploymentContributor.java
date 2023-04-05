@@ -19,7 +19,9 @@ package org.apache.knox.gateway.deploy.impl;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.deploy.DeploymentContext;
+import org.apache.knox.gateway.deploy.DeploymentException;
 import org.apache.knox.gateway.deploy.DeploymentFactory;
+import org.apache.knox.gateway.deploy.ProviderDeploymentContributor;
 import org.apache.knox.gateway.deploy.ProviderDeploymentContributorBase;
 import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
 import org.apache.knox.gateway.descriptor.ResourceDescriptor;
@@ -62,8 +64,13 @@ public class CompositeAuthzDeploymentContributor extends ProviderDeploymentContr
     List<String> names = parseProviderNames(providerNames);
     for (String name : names) {
       getProviderSpecificParams(resource, params, providerParams, name);
-      DeploymentFactory.getProviderContributor("authorization", name)
-              .contributeFilter(context, provider, service, resource, params);
+      ProviderDeploymentContributor contributor = DeploymentFactory.getProviderContributor("authorization", name);
+      if (contributor == null) {
+        throw new DeploymentException(
+                "Invalid composite provider name: " + name + " role: " + provider.getRole() +
+                        " provider: " + provider.getName() + " topology: " + context.getTopology().getName());
+      }
+      contributor.contributeFilter(context, provider, service, resource, params);
       params.clear();
       }
     }
