@@ -549,6 +549,9 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.INFO, text = "Prevented deletion of shared provider configuration because there are referencing descriptors: {0}" )
   void preventedDeletionOfSharedProviderConfiguration(String providerConfigurationPath);
 
+  @Message( level = MessageLevel.INFO, text = "Empty result returned by SimpleDescriptorHandler for decriptor {0}" )
+  void emptyHandleResult(String descriptorName);
+
   @Message( level = MessageLevel.INFO, text = "Generated topology {0} because the associated descriptor {1} changed." )
   void generatedTopologyForDescriptorChange(String topologyName, String descriptorName);
 

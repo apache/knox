@@ -103,6 +103,11 @@ public class SimpleDescriptorHandler {
 
     public static Map<String, File> handle(GatewayConfig config, SimpleDescriptor desc, File srcDirectory, File destDirectory, Service...gatewayServices) {
 
+        if (config.getReadOnlyOverrideTopologyNames().contains(desc.getName())) {
+            log.skipReadOnlyDescriptor(desc.getName());
+            return Collections.emptyMap();
+        }
+
         List<String> declaredServiceNames = new ArrayList<>();
         Set<String> validServiceNames = new TreeSet<>();
         Map<String, String> serviceVersions = new HashMap<>();

@@ -169,6 +169,7 @@ public class SimpleDescriptorHandlerFuncTest {
       GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
       List<InetSocketAddress> gatewayAddress = new ArrayList<>();
       gatewayAddress.add(new InetSocketAddress(0));
+      EasyMock.expect(config.getReadOnlyOverrideTopologyNames()).andReturn(Collections.emptyList()).anyTimes();
       EasyMock.expect(config.getGatewayConfDir()).andReturn(testConfDir.getAbsolutePath()).anyTimes();
       EasyMock.expect(config.getGatewayDataDir()).andReturn(testDataDir.getAbsolutePath()).anyTimes();
       EasyMock.expect(config.getGatewayTopologyDir()).andReturn(testTopoDir.getAbsolutePath()).anyTimes();

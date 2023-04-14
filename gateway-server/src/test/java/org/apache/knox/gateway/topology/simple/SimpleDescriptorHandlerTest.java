@@ -144,6 +144,7 @@ public class SimpleDescriptorHandlerTest {
                                        final String user,
                                        final String pwdAlias) throws Exception {
         GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.expect(gc.getReadOnlyOverrideTopologyNames()).andReturn(Collections.emptyList()).anyTimes();
         EasyMock.replay(gc);
 
         // Write the externalized provider config to a temp file
@@ -256,6 +257,7 @@ public class SimpleDescriptorHandlerTest {
             serviceParameters.put("KNOXSSO", knoxssoParams);
 
             GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+            EasyMock.expect(gc.getReadOnlyOverrideTopologyNames()).andReturn(Collections.emptyList()).anyTimes();
             EasyMock.replay(gc);
 
             // Mock out the simple descriptor
@@ -434,6 +436,7 @@ public class SimpleDescriptorHandlerTest {
             File destDir = (new File(".")).getCanonicalFile();
 
             GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+            EasyMock.expect(gc.getReadOnlyOverrideTopologyNames()).andReturn(Collections.emptyList()).anyTimes();
             EasyMock.replay(gc);
 
             // Mock out the simple descriptor
@@ -547,6 +550,7 @@ public class SimpleDescriptorHandlerTest {
         File destDir = new File(System.getProperty("java.io.tmpdir")).getCanonicalFile();
 
         GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.expect(gc.getReadOnlyOverrideTopologyNames()).andReturn(Collections.emptyList()).anyTimes();
         EasyMock.replay(gc);
 
         // Mock out the simple descriptor
@@ -637,6 +641,7 @@ public class SimpleDescriptorHandlerTest {
             File destDir = new File(System.getProperty("java.io.tmpdir")).getCanonicalFile();
 
             GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+            EasyMock.expect(gc.getReadOnlyOverrideTopologyNames()).andReturn(Collections.emptyList()).anyTimes();
             EasyMock.replay(gc);
 
             // Mock out the simple descriptor
@@ -831,6 +836,7 @@ public class SimpleDescriptorHandlerTest {
       try {
         final File destDir = new File(System.getProperty("java.io.tmpdir")).getCanonicalFile();
         final GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.expect(gc.getReadOnlyOverrideTopologyNames()).andReturn(Collections.emptyList()).anyTimes();
 
         final SimpleDescriptorImpl testDescriptor = new SimpleDescriptorImpl();
         testDescriptor.setProviderConfig(providerConfig.getAbsolutePath());
@@ -865,7 +871,10 @@ public class SimpleDescriptorHandlerTest {
         final File destDir = new File(System.getProperty("java.io.tmpdir")).getCanonicalFile();
         final File descriptorFile = new File(SimpleDescriptorHandlerTest.class.getResource("/conf-full/conf/descriptors/test-topology.json").getFile());
         final GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
-        final Map<String, File> handleResult = SimpleDescriptorHandler.handle(null, descriptorFile, destDir, gatewayServices);
+        GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.expect(gc.getReadOnlyOverrideTopologyNames()).andReturn(Collections.emptyList()).anyTimes();
+        EasyMock.replay(gc);
+        final Map<String, File> handleResult = SimpleDescriptorHandler.handle(gc, descriptorFile, destDir, gatewayServices);
         topologyFile = handleResult.get(SimpleDescriptorHandler.RESULT_TOPOLOGY);
         final Document topologyXml = XmlUtils.readXml(topologyFile);
         assertThat(topologyXml, hasXPath("/topology/service/role", is(equalTo("KNOX"))));
