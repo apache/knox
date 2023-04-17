@@ -95,6 +95,11 @@ public class DescriptorsMonitor extends FileAlterationListenerAdaptor implements
     try {
       // When a simple descriptor has been created or modified, generate the new topology descriptor
       Map<String, File> result = SimpleDescriptorHandler.handle(gatewayConfig, file, topologiesDir, aliasService, GatewayServer.getGatewayServices());
+      if (result.isEmpty()) {
+        LOG.emptyHandleResult(FilenameUtils.getBaseName(file.getAbsolutePath()));
+        return;
+      }
+
       LOG.generatedTopologyForDescriptorChange(result.get(SimpleDescriptorHandler.RESULT_TOPOLOGY).getName(), file.getName());
 
       // Add the provider config reference relationship for handling updates to the provider config

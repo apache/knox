@@ -78,4 +78,6 @@ public interface SimpleDescriptorMessages {
             text = "Skipping redeployment of the {0} topology because it already exists and has not changed." )
     void skippingDeploymentOfGeneratedTopology(String topologyName);
 
+    @Message(level = MessageLevel.WARN, text = "Skipping read only descriptor: {0}.")
+    void skipReadOnlyDescriptor(String name);
 }
