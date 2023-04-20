@@ -279,8 +279,8 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
       for (ApiService service : serviceList) {
         final List<ServiceModelGenerator> modelGenerators = serviceModelGenerators.get(service.getType());
         if (shouldSkipServiceDiscovery(modelGenerators, includedServices)) {
-          log.skipServiceDiscovery(service.getName(), service.getType());
-          continue;
+          //log.skipServiceDiscovery(service.getName(), service.getType());
+          //continue;
         }
         log.discoveringService(service.getName(), service.getType());
         ApiServiceConfig serviceConfig = null;
