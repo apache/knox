@@ -17,7 +17,6 @@
 package org.apache.knox.gateway.topology.hadoop.xml;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
