@@ -74,4 +74,10 @@ public interface HadoopXmlResourceMessages {
 
   @Message(level = MessageLevel.WARN, text = "Skipping read only provider: {0}.")
   void skipReadOnlyProvider(String key);
+
+  @Message(level = MessageLevel.INFO, text = "Found Knox deleted descriptors {0} in {1}")
+  void foundKnoxDeletedDescriptors(String descriptorList, String path);
+
+  @Message(level = MessageLevel.INFO, text = "Found Knox deleted provider configurations {0} in {1}")
+  void foundKnoxDeletedProviderConfigurations(String providerConfigurationList, String path);
 }

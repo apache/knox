@@ -17,6 +17,7 @@
 package org.apache.knox.gateway.topology.hadoop.xml;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,14 +27,19 @@ import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
 class HadoopXmlResourceParserResult {
   final Map<String, ProviderConfiguration> providers;
   final Set<SimpleDescriptor> descriptors;
+  private Set<String> deletedDescriptors;
+  private Set<String> deletedProviders;
 
   HadoopXmlResourceParserResult() {
-    this(Collections.emptyMap(), Collections.emptySet());
+    this(Collections.emptyMap(), Collections.emptySet(), Collections.emptySet(), Collections.emptySet());
   }
 
-  HadoopXmlResourceParserResult(Map<String, ProviderConfiguration> providers, Set<SimpleDescriptor> descriptors) {
+  HadoopXmlResourceParserResult(Map<String, ProviderConfiguration> providers, Set<SimpleDescriptor> descriptors,
+                                Set<String> deletedDescriptors, Set<String> deletedProviders) {
     this.providers = providers;
     this.descriptors = descriptors;
+    this.deletedDescriptors = deletedDescriptors;
+    this.deletedProviders = deletedProviders;
   }
 
   public Map<String, ProviderConfiguration> getProviders() {
@@ -44,4 +50,11 @@ class HadoopXmlResourceParserResult {
     return Collections.unmodifiableSet(descriptors);
   }
 
+  public Set<String> getDeletedDescriptors() {
+    return deletedDescriptors;
+  }
+
+  public Set<String> getDeletedProviders() {
+    return deletedProviders;
+  }
 }
