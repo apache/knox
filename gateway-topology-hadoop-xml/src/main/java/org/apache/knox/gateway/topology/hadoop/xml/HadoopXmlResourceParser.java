@@ -143,11 +143,7 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
       if (xmlConfigurationKey.startsWith(CONFIG_NAME_PROVIDER_CONFIGS_PREFIX)) {
         final String[] providerConfigurations = xmlConfigurationKey.replace(CONFIG_NAME_PROVIDER_CONFIGS_PREFIX, "").split(",");
         Arrays.asList(providerConfigurations).stream().map(providerConfigurationName -> providerConfigurationName.trim()).forEach(providerConfigurationName -> {
-          if (gatewayConfig.getReadOnlyOverrideProviderNames().contains(providerConfigurationName)) {
-            log.skipReadOnlyProvider(providerConfigurationName);
-          } else {
-            parseProvider(providerConfigurationName, xmlDescriptor.getValue(), providers, deletedProviders);
-          }
+          parseProvider(providerConfigurationName, xmlDescriptor.getValue(), providers, deletedProviders);
         });
       } else if (topologyName == null || xmlConfigurationKey.equals(topologyName)) {
           parseDescriptor(xmlConfigurationKey, xmlDescriptor.getValue(), descriptors, deletedDescriptors);
@@ -157,6 +153,10 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
   }
 
   private void parseProvider(String providerConfigurationName, String value, Map<String, ProviderConfiguration> providers, Set<String> deletedProviders) {
+    if (gatewayConfig.getReadOnlyOverrideProviderNames().contains(providerConfigurationName)) {
+      log.skipReadOnlyProvider(providerConfigurationName);
+      return;
+    }
     final File providerConfigFile = resolveProviderConfiguration(providerConfigurationName);
     try {
       final ProviderConfiguration providerConfiguration = getProviderConfiguration(providers, providerConfigFile, providerConfigurationName);
