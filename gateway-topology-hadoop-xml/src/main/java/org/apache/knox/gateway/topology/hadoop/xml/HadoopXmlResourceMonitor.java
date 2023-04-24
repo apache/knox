@@ -50,6 +50,7 @@ public class HadoopXmlResourceMonitor implements AdvancedServiceDiscoveryConfigC
   private static final HadoopXmlResourceMessages LOG = MessagesFactory.get(HadoopXmlResourceMessages.class);
   private final String sharedProvidersDir;
   private final String descriptorsDir;
+  private final String topologiesDir;
   private final long monitoringInterval;
   private final HadoopXmlResourceParser hadoopXmlResourceParser;
   private FileTime lastReloadTime;
@@ -58,6 +59,7 @@ public class HadoopXmlResourceMonitor implements AdvancedServiceDiscoveryConfigC
     this.hadoopXmlResourceParser = hadoopXmlResourceParser;
     this.sharedProvidersDir = gatewayConfig.getGatewayProvidersConfigDir();
     this.descriptorsDir = gatewayConfig.getGatewayDescriptorsDir();
+    this.topologiesDir = gatewayConfig.getGatewayTopologyDir();
     this.monitoringInterval = gatewayConfig.getClouderaManagerDescriptorsMonitoringInterval();
   }
 
@@ -98,12 +100,19 @@ public class HadoopXmlResourceMonitor implements AdvancedServiceDiscoveryConfigC
     final HadoopXmlResourceParserResult result = hadoopXmlResourceParser.parse(descriptorFilePath, topologyName);
     processSharedProviders(result);
     processDescriptors(result);
-    processDeleted(descriptorsDir, result.getDeletedDescriptors());
-    processDeleted(sharedProvidersDir, result.getDeletedProviders());
+    processDeleted(descriptorsDir, result.getDeletedDescriptors(), ".json");
+    processDeleted(topologiesDir, result.getDeletedDescriptors(), ".xml");
+    processDeleted(sharedProvidersDir, result.getDeletedProviders(), ".json");
   }
 
-  private void processDeleted(String parentDirectory, Set<String> deletedFileNames) {
-    deletedFileNames.forEach(each -> new File(parentDirectory, each + ".json").delete());
+  private void processDeleted(String parentDirectory, Set<String> deletedFileNames, String extension) {
+    for (String each : deletedFileNames) {
+      File fileToBeDeleted = new File(parentDirectory, each + extension);
+      if (fileToBeDeleted.exists()) {
+        LOG.deleteFile(fileToBeDeleted.getAbsolutePath());
+        fileToBeDeleted.delete();
+      }
+    }
   }
 
   private void processSharedProviders(final HadoopXmlResourceParserResult result) {
