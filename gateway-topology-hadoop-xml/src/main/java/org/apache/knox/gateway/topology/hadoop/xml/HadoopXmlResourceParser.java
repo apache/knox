@@ -59,7 +59,6 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
   private static final String CONFIG_NAME_PROVIDER_CONFIGS_NAME_PREFIX = "name=";
   private static final String CONFIG_NAME_PROVIDER_CONFIGS_ENABLED_PREFIX = "enabled=";
   private static final String CONFIG_NAME_PROVIDER_CONFIGS_PARAM_PREFIX = "param.";
-  private static final String CONFIG_NAME_PROVIDER_CONFIGS_PARAM_REMOVE = "remove";
 
   //descriptor related constants
   private static final String CONFIG_NAME_DISCOVERY_TYPE = "discoveryType";
@@ -71,7 +70,7 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
   private static final String CONFIG_NAME_APPLICATION_PREFIX = "app";
   private static final String CONFIG_NAME_SERVICE_URL = "url";
   private static final String CONFIG_NAME_SERVICE_VERSION = "version";
-  public static final String REMOVE = "remove";
+  private static final String REMOVE = "remove";
 
   private final Map<String, AdvancedServiceDiscoveryConfig> advancedServiceDiscoveryConfigMap;
   private final String sharedProvidersDir;
@@ -142,9 +141,8 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
       String xmlConfigurationKey = xmlDescriptor.getKey();
       if (xmlConfigurationKey.startsWith(CONFIG_NAME_PROVIDER_CONFIGS_PREFIX)) {
         final String[] providerConfigurations = xmlConfigurationKey.replace(CONFIG_NAME_PROVIDER_CONFIGS_PREFIX, "").split(",");
-        Arrays.asList(providerConfigurations).stream().map(providerConfigurationName -> providerConfigurationName.trim()).forEach(providerConfigurationName -> {
-          parseProvider(providerConfigurationName, xmlDescriptor.getValue(), providers, deletedProviders);
-        });
+        Arrays.stream(providerConfigurations).map(String::trim).forEach(providerConfigurationName ->
+                parseProvider(providerConfigurationName, xmlDescriptor.getValue(), providers, deletedProviders));
       } else if (topologyName == null || xmlConfigurationKey.equals(topologyName)) {
           parseDescriptor(xmlConfigurationKey, xmlDescriptor.getValue(), descriptors, deletedDescriptors);
       }
@@ -224,14 +222,14 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
   private ProviderConfiguration.Provider parseProvider(List<String> configurationPairs, String role, ProviderConfiguration providerConfiguration) {
     final JSONProvider provider = new JSONProvider();
     provider.setRole(role);
-    getParamsForRole(role, providerConfiguration).forEach((key, value) -> provider.addParam(key, value)); //initializing parameters (if any)
+    getParamsForRole(role, providerConfiguration).forEach(provider::addParam); //initializing parameters (if any)
     provider.setEnabled(true); //may be overwritten later, but defaulting to 'true'
     final Set<String> roleConfigurations = configurationPairs.stream().filter(configurationPair -> configurationPair.trim().startsWith(role))
         .map(configurationPair -> configurationPair.replace(role + ".", "").trim()).collect(Collectors.toSet());
     for (String roleConfiguration : roleConfigurations) {
       if (roleConfiguration.startsWith(CONFIG_NAME_PROVIDER_CONFIGS_PARAM_PREFIX)) {
         String[] paramKeyValue = roleConfiguration.replace(CONFIG_NAME_PROVIDER_CONFIGS_PARAM_PREFIX, "").split("=", 2);
-        if (CONFIG_NAME_PROVIDER_CONFIGS_PARAM_REMOVE.equals(paramKeyValue[0])) {
+        if (REMOVE.equals(paramKeyValue[0])) {
           provider.removeParam(paramKeyValue[1]);
         } else {
           provider.addParam(paramKeyValue[0], paramKeyValue[1]);
