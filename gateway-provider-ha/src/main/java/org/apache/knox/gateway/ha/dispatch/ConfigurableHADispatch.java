@@ -219,6 +219,8 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
       /* if non-idempotent requests are not allowed to failover */
       if(!failoverNonIdempotentRequestEnabled && nonIdempotentRequests.stream().anyMatch(outboundRequest.getMethod()::equalsIgnoreCase)) {
         LOG.cannotFailoverNonIdempotentRequest(outboundRequest.getMethod(), e.toString());
+        /* mark endpoint as failed */
+        markEndpointFailed(outboundRequest, inboundRequest);
         throw e;
       } else {
         LOG.errorConnectingToServer(outboundRequest.getURI().toString(), e);
@@ -308,11 +310,8 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
       outboundResponse.sendError(HttpServletResponse.SC_BAD_GATEWAY, "Service connection error, HA failover disabled");
       return;
     }
-    haProvider.markFailedURL(getServiceRole(), outboundRequest.getURI().toString());
-    AtomicInteger counter = (AtomicInteger) inboundRequest.getAttribute(FAILOVER_COUNTER_ATTRIBUTE);
-    if ( counter == null ) {
-      counter = new AtomicInteger(0);
-    }
+    /* mark endpoint as failed */
+    final AtomicInteger counter = markEndpointFailed(outboundRequest, inboundRequest);
     inboundRequest.setAttribute(FAILOVER_COUNTER_ATTRIBUTE, counter);
     if ( counter.incrementAndGet() <= maxFailoverAttempts ) {
       setupUrlHashLookup(); // refresh the url hash after failing a url
@@ -344,6 +343,21 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
         throw new IOException(exception);
       }
     }
+  }
+
+  /**
+   * A helper method that marks an endpoint failed.
+   * @param outboundRequest
+   * @param inboundRequest
+   * @return
+   */
+  private synchronized AtomicInteger markEndpointFailed(final HttpUriRequest outboundRequest, final HttpServletRequest inboundRequest) {
+    haProvider.markFailedURL(getServiceRole(), outboundRequest.getURI().toString());
+    AtomicInteger counter = (AtomicInteger) inboundRequest.getAttribute(FAILOVER_COUNTER_ATTRIBUTE);
+    if ( counter == null ) {
+      counter = new AtomicInteger(0);
+    }
+    return counter;
   }
 
   private String hash(String url) {
