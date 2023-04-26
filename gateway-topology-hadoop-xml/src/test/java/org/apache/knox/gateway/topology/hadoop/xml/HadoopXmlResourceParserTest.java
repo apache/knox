@@ -26,7 +26,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -244,6 +246,14 @@ public class HadoopXmlResourceParserTest {
     assertEquals(address, descriptor.getDiscoveryAddress());
     assertEquals(cluster, descriptor.getCluster());
     assertEquals("ClouderaManager", descriptor.getDiscoveryType());
+  }
+
+  @Test
+  public void testDelete() throws Exception {
+    String testConfigPath = this.getClass().getClassLoader().getResource("testDelete.xml").getPath();
+    HadoopXmlResourceParserResult result = hadoopXmlResourceParser.parse(testConfigPath);
+    assertEquals(new HashSet<>(Arrays.asList("topology1", "topology2")), result.getDeletedDescriptors());
+    assertEquals(new HashSet<>(Arrays.asList("admin", "knoxsso")), result.getDeletedProviders());
   }
 
   private void validateTopology1Descriptors(SimpleDescriptor descriptor) {

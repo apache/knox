@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -97,6 +98,18 @@ public class HadoopXmlResourceMonitor implements AdvancedServiceDiscoveryConfigC
     final HadoopXmlResourceParserResult result = hadoopXmlResourceParser.parse(descriptorFilePath, topologyName);
     processSharedProviders(result);
     processDescriptors(result);
+    processDeleted(descriptorsDir, result.getDeletedDescriptors(), ".json");
+    processDeleted(sharedProvidersDir, result.getDeletedProviders(), ".json");
+  }
+
+  private void processDeleted(String parentDirectory, Set<String> deletedFileNames, String extension) {
+    for (String each : deletedFileNames) {
+      File fileToBeDeleted = new File(parentDirectory, each + extension);
+      if (fileToBeDeleted.exists()) {
+        LOG.deleteFile(fileToBeDeleted.getAbsolutePath());
+        fileToBeDeleted.delete();
+      }
+    }
   }
 
   private void processSharedProviders(final HadoopXmlResourceParserResult result) {
