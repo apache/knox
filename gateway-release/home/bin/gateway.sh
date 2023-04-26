@@ -68,6 +68,40 @@ export APP_ERR_FILE="$APP_LOG_DIR/$APP_NAME.err"
 DEFAULT_APP_RUNNING_IN_FOREGROUND="$GATEWAY_SERVER_RUN_IN_FOREGROUND"
 export APP_RUNNING_IN_FOREGROUND=${KNOX_GATEWAY_RUNNING_IN_FOREGROUND:-$DEFAULT_APP_RUNNING_IN_FOREGROUND}
 
+function startGateway() {
+  printEnv=0
+  while [[ $# -gt 0 ]]
+  do
+    key="$1"
+    case $key in
+      --printEnv)
+       printEnv=1
+       shift # past argument
+       ;;
+      --test-gateway-retry-attempts)
+       export APP_STATUS_TEST_RETRY_ATTEMPTS="$2"
+       shift # past argument
+       shift # past value
+       ;;
+      --test-gateway-retry-sleep)
+       export APP_STATUS_TEST_RETRY_SLEEP="$2"
+       shift # past argument
+       shift # past value
+       ;;
+      *)    # unknown option
+       shift # past argument
+       ;;
+    esac
+  done
+  if [ $printEnv -eq 1 ]; then
+    printEnv
+  fi
+  checkEnv
+  export TEST_APP_STATUS=true
+  # shellcheck disable=SC2119
+  appStart
+}
+
 function main {
    checkJava
 
@@ -76,42 +110,14 @@ function main {
          setupEnv
          ;;
       start)
-         printEnv=0
-         while [[ $# -gt 0 ]]
-         do
-           key="$1"
-
-           case $key in
-             --printEnv)
-               printEnv=1
-               shift # past argument
-               ;;
-             --test-gateway-retry-attempts)
-               export APP_STATUS_TEST_RETRY_ATTEMPTS="$2"
-               shift # past argument
-               shift # past value
-               ;;
-             --test-gateway-retry-sleep)
-               export APP_STATUS_TEST_RETRY_SLEEP="$2"
-               shift # past argument
-               shift # past value
-               ;;
-             *)    # unknown option
-               shift # past argument
-               ;;
-           esac
-         done
-
-         if [ $printEnv -eq 1 ]; then
-           printEnv
-         fi
-         checkEnv
-         export TEST_APP_STATUS=true
-         # shellcheck disable=SC2119
-         appStart
+         startGateway "$@"
          ;;
       stop)   
          appStop
+         ;;
+      restart)
+         appStop
+         startGateway "$@"
          ;;
       status)
          appStatus
