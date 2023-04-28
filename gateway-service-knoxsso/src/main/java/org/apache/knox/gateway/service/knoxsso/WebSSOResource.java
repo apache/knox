@@ -22,11 +22,8 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.apache.knox.gateway.services.GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -252,14 +249,7 @@ public class WebSSOResource {
       // If there is a whitelist defined, then the original URL must be validated against it.
       // If there is no whitelist, then everything is valid.
       if (whitelist != null) {
-        String decodedOriginal = null;
-        try {
-          decodedOriginal = URLDecoder.decode(original, StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-          //
-        }
-
-        validRedirect = RegExUtils.checkWhitelist(whitelist, (decodedOriginal != null ? decodedOriginal : original));
+        validRedirect = RegExUtils.checkBaseUrlAgainstWhitelist(whitelist, original);
       }
 
       if (!validRedirect) {

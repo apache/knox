@@ -145,26 +145,10 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
       }
 
       if (whitelist != null) {
-        String requestURI = request.getRequestURI();
-
-        String decodedURL = requestURI;
-        try {
-          decodedURL = URLDecoder.decode(requestURI, StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-          //
-        }
-        String baseUrl;
-        try {
-          URL url = new URL(decodedURL);
-          baseUrl = new URL(url.getProtocol(), url.getHost(), url.getPort(), "").toString();
-        } catch (MalformedURLException e) {
-          throw new RuntimeException(e);
-        }
-
-        isAllowed = RegExUtils.checkWhitelist(whitelist, baseUrl);
+        isAllowed = RegExUtils.checkBaseUrlAgainstWhitelist(whitelist, request.getRequestURI());
 
         if (!isAllowed) {
-          LOG.dispatchDisallowed(requestURI);
+          LOG.dispatchDisallowed(request.getRequestURI());
         }
     }
 
