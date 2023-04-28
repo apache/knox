@@ -162,10 +162,10 @@ public class WebSSOResourceTest {
     Assert.assertTrue("Failed to match whitelist",
             RegExUtils.checkBaseUrlAgainstWhitelist("^https?:\\/\\/(.*KNOX_GW_DOMAIN)(?::[0-9]+)?(?:\\/.*)?$",
                     "https://KNOX_GW_DOMAIN/path1/path2/path/3?a=1&b=2"));
-    Assert.assertFalse("Failed to match whitelist",
+    Assert.assertFalse("Inappropriately matched whitelist",
             RegExUtils.checkBaseUrlAgainstWhitelist("^https?:\\/\\/(.*KNOX_GW_DOMAIN)(?::[0-9]+)?(?:\\/.*)?$",
             "https://google.com?https://KNOX_GW_DOMAIN"));
-    Assert.assertFalse("Failed to match whitelist",
+    Assert.assertFalse("Inappropriately matched whitelist",
             RegExUtils.checkBaseUrlAgainstWhitelist("^https?:\\/\\/(.*KNOX_GW_DOMAIN)(?::[0-9]+)?(?:\\/.*)?$",
                     "https://google.com/https://KNOX_GW_DOMAIN"));
   }
