@@ -79,7 +79,7 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
   private List<String> disableLoadBalancingForUserAgents = Arrays.asList(HaServiceConfigConstants.DEFAULT_DISABLE_LB_USER_AGENTS);
 
   /**
-   *  This activeURL is used to track urls when LB is turned off for some clients
+   *  This activeURL is used to track urls when LB is turned off for some clients.
    *  The problem we have with selectively turning off LB is that other clients
    *  that use LB can change the state from under the current session where LB is
    *  turned off.
@@ -219,6 +219,8 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
       /* if non-idempotent requests are not allowed to failover */
       if(!failoverNonIdempotentRequestEnabled && nonIdempotentRequests.stream().anyMatch(outboundRequest.getMethod()::equalsIgnoreCase)) {
         LOG.cannotFailoverNonIdempotentRequest(outboundRequest.getMethod(), e.toString());
+        /* mark endpoint as failed */
+        markEndpointFailed(outboundRequest, inboundRequest);
         throw e;
       } else {
         LOG.errorConnectingToServer(outboundRequest.getURI().toString(), e);
@@ -308,14 +310,10 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
       outboundResponse.sendError(HttpServletResponse.SC_BAD_GATEWAY, "Service connection error, HA failover disabled");
       return;
     }
-    haProvider.markFailedURL(getServiceRole(), outboundRequest.getURI().toString());
-    AtomicInteger counter = (AtomicInteger) inboundRequest.getAttribute(FAILOVER_COUNTER_ATTRIBUTE);
-    if ( counter == null ) {
-      counter = new AtomicInteger(0);
-    }
+    /* mark endpoint as failed */
+    final AtomicInteger counter = markEndpointFailed(outboundRequest, inboundRequest);
     inboundRequest.setAttribute(FAILOVER_COUNTER_ATTRIBUTE, counter);
-    if ( counter.incrementAndGet() <= maxFailoverAttempts ) {
-      setupUrlHashLookup(); // refresh the url hash after failing a url
+    if ( counter.get() <= maxFailoverAttempts ) {
       //null out target url so that rewriters run again
       inboundRequest.setAttribute(AbstractGatewayFilter.TARGET_REQUEST_URL_ATTRIBUTE_NAME, null);
       // Make sure to remove the cookie ha cookie from the request
@@ -331,10 +329,6 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
         }
       }
       LOG.failingOverRequest(outboundRequest.getURI().toString());
-
-      /* in case of failover update the activeURL variable */
-      activeURL.set(outboundRequest.getURI().toString());
-
       executeRequest(outboundRequest, inboundRequest, outboundResponse);
     } else {
       LOG.maxFailoverAttemptsReached(maxFailoverAttempts, getServiceRole());
@@ -344,6 +338,30 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
         throw new IOException(exception);
       }
     }
+  }
+
+  /**
+   * A helper method that marks an endpoint failed.
+   * Changes HA Provider state.
+   * Changes ActiveUrl state.
+   * Changes for inbound urls should be handled by calling functions.
+   * @param outboundRequest
+   * @param inboundRequest
+   * @return current failover counter
+   */
+  private synchronized AtomicInteger markEndpointFailed(final HttpUriRequest outboundRequest, final HttpServletRequest inboundRequest) {
+    haProvider.markFailedURL(getServiceRole(), outboundRequest.getURI().toString());
+    AtomicInteger counter = (AtomicInteger) inboundRequest.getAttribute(FAILOVER_COUNTER_ATTRIBUTE);
+    if ( counter == null ) {
+      counter = new AtomicInteger(0);
+    }
+
+    if ( counter.incrementAndGet() <= maxFailoverAttempts ) {
+      setupUrlHashLookup(); // refresh the url hash after failing a url
+      /* in case of failover update the activeURL variable */
+      activeURL.set(outboundRequest.getURI().toString());
+    }
+    return counter;
   }
 
   private String hash(String url) {
