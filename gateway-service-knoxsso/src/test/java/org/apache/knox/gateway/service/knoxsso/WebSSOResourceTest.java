@@ -148,6 +148,29 @@ public class WebSSOResourceTest {
         "/local/resource/"));
   }
 
+  @Test
+  public void testWhitelistMatchingAgainstBaseURL() {
+    Assert.assertTrue("Failed to match whitelist",
+            RegExUtils.checkBaseUrlAgainstWhitelist("^https?:\\/\\/(.*KNOX_GW_DOMAIN)(?::[0-9]+)?(?:\\/.*)?$",
+                    "https://KNOX_GW_DOMAIN"));
+    Assert.assertTrue("Failed to match whitelist",
+            RegExUtils.checkBaseUrlAgainstWhitelist("^https?:\\/\\/(.*KNOX_GW_DOMAIN)(?::[0-9]+)?(?:\\/.*)?$",
+                    "https://KNOX_GW_DOMAIN?a=1&b=2"));
+    Assert.assertTrue("Failed to match whitelist",
+            RegExUtils.checkBaseUrlAgainstWhitelist("^https?:\\/\\/(.*KNOX_GW_DOMAIN)(?::[0-9]+)?(?:\\/.*)?$",
+                    "https://KNOX_GW_DOMAIN?a=1&b=2"));
+    Assert.assertTrue("Failed to match whitelist",
+            RegExUtils.checkBaseUrlAgainstWhitelist("^https?:\\/\\/(.*KNOX_GW_DOMAIN)(?::[0-9]+)?(?:\\/.*)?$",
+                    "https://KNOX_GW_DOMAIN/path1/path2/path/3?a=1&b=2"));
+    Assert.assertFalse("Inappropriately matched whitelist",
+            RegExUtils.checkBaseUrlAgainstWhitelist("^https?:\\/\\/(.*KNOX_GW_DOMAIN)(?::[0-9]+)?(?:\\/.*)?$",
+            "https://google.com?https://KNOX_GW_DOMAIN"));
+    Assert.assertFalse("Inappropriately matched whitelist",
+            RegExUtils.checkBaseUrlAgainstWhitelist("^https?:\\/\\/(.*KNOX_GW_DOMAIN)(?::[0-9]+)?(?:\\/.*)?$",
+                    "https://google.com/https://KNOX_GW_DOMAIN"));
+  }
+
+
   private void configureCommonExpectations(Map<String, String> contextExpectations) throws Exception {
     configureCommonExpectations(contextExpectations, false, false, true);
   }

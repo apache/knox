@@ -32,12 +32,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Locale;
@@ -145,26 +140,10 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
       }
 
       if (whitelist != null) {
-        String requestURI = request.getRequestURI();
-
-        String decodedURL = requestURI;
-        try {
-          decodedURL = URLDecoder.decode(requestURI, StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-          //
-        }
-        String baseUrl;
-        try {
-          URL url = new URL(decodedURL);
-          baseUrl = new URL(url.getProtocol(), url.getHost(), url.getPort(), "").toString();
-        } catch (MalformedURLException e) {
-          throw new RuntimeException(e);
-        }
-
-        isAllowed = RegExUtils.checkWhitelist(whitelist, baseUrl);
+        isAllowed = RegExUtils.checkBaseUrlAgainstWhitelist(whitelist, request.getRequestURI());
 
         if (!isAllowed) {
-          LOG.dispatchDisallowed(requestURI);
+          LOG.dispatchDisallowed(request.getRequestURI());
         }
     }
 
