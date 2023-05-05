@@ -45,12 +45,9 @@ import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -78,15 +75,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
   public static final String CM_SERVICE_TYPE  = "CM";
   public static final String CM_ROLE_TYPE  = "CM_SERVER";
 
-  private static Map<String, List<ServiceModelGenerator>> serviceModelGenerators = new HashMap<>();
-  static {
-    ServiceLoader<ServiceModelGenerator> loader = ServiceLoader.load(ServiceModelGenerator.class);
-    for (ServiceModelGenerator serviceModelGenerator : loader) {
-      List<ServiceModelGenerator> smgList =
-          serviceModelGenerators.computeIfAbsent(serviceModelGenerator.getServiceType(), k -> new ArrayList<>());
-      smgList.add(serviceModelGenerator);
-    }
-  }
+  private ServiceModelGeneratorsHolder serviceModelGeneratorsHolder = ServiceModelGeneratorsHolder.getInstance();
 
   private boolean debug;
 
@@ -277,7 +266,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
       serviceList.add(cmService);
 
       for (ApiService service : serviceList) {
-        final List<ServiceModelGenerator> modelGenerators = serviceModelGenerators.get(service.getType());
+        final List<ServiceModelGenerator> modelGenerators = serviceModelGeneratorsHolder.getServiceModelGenerators(service.getType());
         if (shouldSkipServiceDiscovery(modelGenerators, includedServices)) {
           //log.skipServiceDiscovery(service.getName(), service.getType());
           //continue;
