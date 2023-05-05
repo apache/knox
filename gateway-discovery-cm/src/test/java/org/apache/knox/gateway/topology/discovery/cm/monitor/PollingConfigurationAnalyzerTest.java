@@ -221,8 +221,8 @@ public class PollingConfigurationAnalyzerTest {
 
     // Simulate a successful rolling cluster restart event
     ApiEvent rollingRestartEvent = createApiEvent(clusterName,
-                                                  PollingConfigurationAnalyzer.CM_SERVICE_TYPE,
-                                                  PollingConfigurationAnalyzer.CM_SERVICE,
+                                                  HiveOnTezServiceModelGenerator.SERVICE_TYPE,
+                                                  HiveOnTezServiceModelGenerator.SERVICE,
                                                   PollingConfigurationAnalyzer.ROLLING_RESTART_COMMAND,
                                                   PollingConfigurationAnalyzer.SUCCEEDED_STATUS,
                                                   "EV_CLUSTER_ROLLING_RESTARTED");
@@ -241,7 +241,7 @@ public class PollingConfigurationAnalyzerTest {
     final String clusterName = "Cluster 8";
 
     // Simulate a successful restart waiting for staleness event
-    final ApiEvent rollingRestartEvent = createApiEvent(clusterName, PollingConfigurationAnalyzer.CM_SERVICE_TYPE, PollingConfigurationAnalyzer.CM_SERVICE,
+    final ApiEvent rollingRestartEvent = createApiEvent(clusterName, HiveOnTezServiceModelGenerator.SERVICE_TYPE, HiveOnTezServiceModelGenerator.SERVICE,
         PollingConfigurationAnalyzer.RESTART_WAITING_FOR_STALENESS_SUCCESS_COMMAND, PollingConfigurationAnalyzer.SUCCEEDED_STATUS, "EV_CLUSTER_RESTARTED");
 
     final ChangeListener listener = doTestEvent(rollingRestartEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap());
@@ -254,7 +254,7 @@ public class PollingConfigurationAnalyzerTest {
     final String clusterName = "Cluster 9";
 
     // Simulate a successful restart waiting for staleness event with id = 123
-    final ApiEvent rollingRestartEvent = createApiEvent(clusterName, PollingConfigurationAnalyzer.CM_SERVICE_TYPE, PollingConfigurationAnalyzer.CM_SERVICE,
+    final ApiEvent rollingRestartEvent = createApiEvent(clusterName, HiveOnTezServiceModelGenerator.SERVICE_TYPE, HiveOnTezServiceModelGenerator.SERVICE,
         PollingConfigurationAnalyzer.RESTART_WAITING_FOR_STALENESS_SUCCESS_COMMAND, PollingConfigurationAnalyzer.SUCCEEDED_STATUS, "EV_CLUSTER_RESTARTED",
         "123");
 

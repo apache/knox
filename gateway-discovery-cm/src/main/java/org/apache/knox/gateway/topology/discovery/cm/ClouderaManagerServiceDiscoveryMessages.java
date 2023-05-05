@@ -196,8 +196,8 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   @Message(level = MessageLevel.DEBUG, text = "There is no any activation event found within the given time period")
   void noActivationEventFound();
 
-  @Message(level = MessageLevel.DEBUG, text = "Activation event relevance: {0} = {1}")
-  void activationEventRelevance(String eventId, String relevance);
+  @Message(level = MessageLevel.DEBUG, text = "Activation event relevance: {0} = {1} ({2} / {3} / {4} / {5})")
+  void activationEventRelevance(String eventId, String relevance, String command, String status, String serviceType, boolean serviceModelGeneratorExists);
 
   @Message(level = MessageLevel.DEBUG, text = "Activation event - {0} - has already been processed, skipping ...")
   void activationEventAlreadyProcessed(String eventId);

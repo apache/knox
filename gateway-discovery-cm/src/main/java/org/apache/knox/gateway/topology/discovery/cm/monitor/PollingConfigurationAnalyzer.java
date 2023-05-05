@@ -46,6 +46,7 @@ import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscoveryMessages;
 import org.apache.knox.gateway.topology.discovery.cm.DiscoveryApiClient;
+import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGeneratorsHolder;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorFactory;
 
@@ -140,6 +141,8 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
   // The amount of time before "now" to will check for start events the first time
   private long eventQueryDefaultTimestampOffset = DEFAULT_EVENT_QUERY_DEFAULT_TIMESTAMP_OFFSET;
+
+  private ServiceModelGeneratorsHolder serviceModelGeneratorsHolder = ServiceModelGeneratorsHolder.getInstance();
 
   private boolean isActive;
 
@@ -455,11 +458,18 @@ public class PollingConfigurationAnalyzer implements Runnable {
   @SuppressWarnings("unchecked")
   private boolean isRelevantEvent(ApiEvent event) {
     final Map<String, Object> attributeMap = getAttributeMap(event.getAttributes());
-    final String command =
-            attributeMap.containsKey(COMMAND) ? ((List<String>) attributeMap.get(COMMAND)).get(0) : "";
-    final String status =
-            attributeMap.containsKey(COMMAND_STATUS) ? ((List<String>) attributeMap.get(COMMAND_STATUS)).get(0) : "";
-    return (ACTIVATION_COMMANDS.contains(command) && SUCCEEDED_STATUS.equals(status));
+    final String command = getAttribute(attributeMap, COMMAND);
+    final String status = getAttribute(attributeMap, COMMAND_STATUS);
+    final String serviceType = getAttribute(attributeMap, StartEvent.ATTR_SERVICE_TYPE);
+    final boolean serviceModelGeneratorExists = serviceModelGeneratorsHolder.getServiceModelGenerators(serviceType) != null;
+    final boolean relevant = ACTIVATION_COMMANDS.contains(command) && SUCCEEDED_STATUS.equals(status) && serviceModelGeneratorExists;
+    log.activationEventRelevance(event.getId(), String.valueOf(relevant), command, status, serviceType, serviceModelGeneratorExists);
+    return relevant;
+  }
+
+  @SuppressWarnings("unchecked")
+  private String getAttribute( Map<String, Object> attributeMap, String attributeName) {
+    return attributeMap.containsKey(attributeName) ? ((List<String>) attributeMap.get(attributeName)).get(0) : "";
   }
 
   private Map<String, Object> getAttributeMap(List<ApiEventAttribute> attributes) {
