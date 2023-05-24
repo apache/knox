@@ -134,17 +134,18 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
     HttpServletRequest req = (HttpServletRequest) request;
     HttpServletResponse res = (HttpServletResponse) response;
 
+    /* check for unauthenticated paths to bypass */
+    if(AuthFilterUtils.doesRequestContainUnauthPath(unAuthenticatedPaths, request)) {
+      /* This path is configured as an unauthenticated path let the request through */
+      final Subject sub = new Subject();
+      sub.getPrincipals().add(new PrimaryPrincipal("anonymous"));
+      LOGGER.unauthenticatedPathBypass(req.getRequestURI(), unAuthenticatedPaths.toString());
+      continueWithEstablishedSecurityContext(sub, req, res, chain);
+      return;
+    }
+
     List<Cookie> ssoCookies = CookieUtils.getCookiesForName(req, cookieName);
     if (ssoCookies.isEmpty()) {
-      /* check for unauthenticated paths to bypass */
-      if(AuthFilterUtils.doesRequestContainUnauthPath(unAuthenticatedPaths, request)) {
-        /* This path is configured as an unauthenticated path let the request through */
-        final Subject sub = new Subject();
-        sub.getPrincipals().add(new PrimaryPrincipal("anonymous"));
-        LOGGER.unauthenticatedPathBypass(req.getRequestURI(), unAuthenticatedPaths.toString());
-        continueWithEstablishedSecurityContext(sub, req, res, chain);
-      }
-
       if ("OPTIONS".equals(req.getMethod())) {
         // CORS preflight requests to determine allowed origins and related config
         // must be able to continue without being redirected
