@@ -54,6 +54,6 @@ public interface HaDispatchMessages {
   @Message(level = MessageLevel.ERROR, text = "Unsupported encoding, cause: {0}")
   void unsupportedEncodingException(String cause);
 
-  @Message(level = MessageLevel.ERROR, text = "Request is non-idempotent {0}, failover prevented, to allow non-idempotent requests to failover set 'failoverNonIdempotentRequestEnabled=true' in HA config. Cause {1}")
+  @Message(level = MessageLevel.ERROR, text = "Request is non-idempotent {0}, failover prevented, to allow non-idempotent requests to failover set 'failoverNonIdempotentRequestEnabled=true' in HA config. Non connection related error: {1}")
   void cannotFailoverNonIdempotentRequest(String method, String cause);
 }

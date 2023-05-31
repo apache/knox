@@ -19,11 +19,17 @@ package org.apache.knox.gateway.util;
 
 import org.junit.Test;
 
+import java.io.IOException;
+import java.net.ConnectException;
+import java.net.NoRouteToHostException;
+import java.net.PortUnreachableException;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
+import static org.apache.knox.gateway.util.HttpUtils.isConnectionError;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -211,5 +217,15 @@ public class HttpUtilsTest {
     assertThat( map.containsKey( "qry" ), is( true ) );
     assertThat( map.get( "qry" ).size(), is( 1 ) );
     assertThat( map.get( "qry" ).get(0), is( "Hadoop:service=NameNode,name=NameNodeInfo" ) );
+  }
+
+  @Test
+  public void testRelevantConnectionErrors() {
+    assertThat(isConnectionError(new UnknownHostException()), is(true));
+    assertThat(isConnectionError(new ConnectException()), is(true));
+    assertThat(isConnectionError(new NoRouteToHostException()), is(true));
+    assertThat(isConnectionError(new PortUnreachableException()), is(true));
+    assertThat(isConnectionError(new IOException()), is(false));
+    assertThat(isConnectionError(new RuntimeException()), is(false));
   }
 }
