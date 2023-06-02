@@ -17,8 +17,14 @@
  */
 package org.apache.knox.gateway.util;
 
+import static java.util.Arrays.asList;
+
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.NoRouteToHostException;
+import java.net.SocketException;
 import java.net.URLDecoder;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +34,9 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 public class HttpUtils {
+  private static final List<Class<? extends IOException>> connectionErrors = asList(UnknownHostException.class, NoRouteToHostException.class,
+          SocketException.class);
+
   public static Map<String, List<String>> splitQuery(String queryString)
       throws UnsupportedEncodingException {
     final Map<String, List<String>> queryPairs = new LinkedHashMap<>();
@@ -116,5 +125,23 @@ public class HttpUtils {
       values[ values.length-1 ] = value;
     }
     map.put( name, values );
+  }
+
+  /**
+   * Determine if the specified exception represents an error condition that is related to a connection error.
+   *
+   * @return true, if the exception represents an connection error; otherwise, false.
+   */
+  public static boolean isConnectionError(Throwable exception) {
+    boolean isFailoverException = false;
+    if (exception != null) {
+      for (Class<? extends Exception> exceptionType : connectionErrors) {
+        if (exceptionType.isAssignableFrom(exception.getClass())) {
+          isFailoverException = true;
+          break;
+        }
+      }
+    }
+    return isFailoverException;
   }
 }

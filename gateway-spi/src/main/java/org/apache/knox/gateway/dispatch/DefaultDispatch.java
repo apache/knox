@@ -181,7 +181,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
       // We do not want to expose back end host. port end points to clients, see JIRA KNOX-58
       auditor.audit( Action.DISPATCH, outboundRequest.getURI().toString(), ResourceType.URI, ActionOutcome.FAILURE );
       LOG.dispatchServiceConnectionException( outboundRequest.getURI(), e );
-      throw new IOException( RES.dispatchConnectionError() );
+      throw new IOException(RES.dispatchConnectionError(), e);
     }
     return inboundResponse;
   }
