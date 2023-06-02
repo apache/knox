@@ -74,6 +74,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
 
   public static final String CM_SERVICE_TYPE  = "CM";
   public static final String CM_ROLE_TYPE  = "CM_SERVER";
+  public static final String CORE_SETTINGS_TYPE = "CORE_SETTINGS";
 
   private ServiceModelGeneratorsHolder serviceModelGeneratorsHolder = ServiceModelGeneratorsHolder.getInstance();
 
@@ -273,8 +274,8 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
         }
         log.discoveringService(service.getName(), service.getType());
         ApiServiceConfig serviceConfig = null;
-        /* no reason to check service config for CM service */
-        if(!CM_SERVICE_TYPE.equals(service.getType())) {
+        /* no reason to check service config for CM or CORE_SETTINGS services */
+        if (!CM_SERVICE_TYPE.equals(service.getType()) && !CORE_SETTINGS_TYPE.equals(service.getType())) {
           serviceConfig = getServiceConfig(client.getConfig(), servicesResourceApi, service);
         }
         ApiRoleList roleList = getRoles(client.getConfig(), rolesResourceApi, clusterName, service);
@@ -382,13 +383,13 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
       try {
         log.lookupRolesFromCM();
         /* Populate roles for CM Service since they are not discoverable */
-        if(CM_SERVICE_TYPE.equalsIgnoreCase(serviceName)) {
+        if (CM_SERVICE_TYPE.equalsIgnoreCase(serviceName)) {
           roles = new ApiRoleList();
           final ApiRole cmRole = new ApiRole();
           cmRole.setName(CM_ROLE_TYPE);
           cmRole.setType(CM_ROLE_TYPE);
           roles.addItemsItem(cmRole);
-        } else {
+        } else if (!CORE_SETTINGS_TYPE.equalsIgnoreCase(serviceName)) { //CORE_SETTINGS has no roles, it does not make sense to discover them
           roles = rolesResourceApi.readRoles(clusterName, serviceName, "", VIEW_SUMMARY);
         }
 
