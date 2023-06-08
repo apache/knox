@@ -73,6 +73,9 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.INFO, text = "Loading topologies from directory: {0}" )
   void loadingTopologiesFromDirectory( String topologiesDir );
 
+  @Message( level = MessageLevel.INFO, text = "Loading descriptors from directory: {0}" )
+  void loadingDescriptorsFromDirectory(String descriptorsDir);
+
   @Message( level = MessageLevel.DEBUG, text = "Loading topology file: {0}" )
   void loadingTopologyFile( String fileName );
 

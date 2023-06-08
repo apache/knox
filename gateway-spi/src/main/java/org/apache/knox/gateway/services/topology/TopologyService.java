@@ -56,6 +56,8 @@ public interface TopologyService extends Service, ServiceDefinitionChangeListene
 
   Collection<File> getDescriptors();
 
+  void reloadDescriptors();
+
   void deleteTopology(Topology t);
 
   boolean deleteDescriptor(String name);
