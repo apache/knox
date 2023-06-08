@@ -623,9 +623,15 @@ public class GatewayServer {
     // Load the current topologies.
     // Redeploy autodeploy topologies.
     File topologiesDir = calculateAbsoluteTopologiesDir();
-    log.loadingTopologiesFromDirectory(topologiesDir.getAbsolutePath());
     monitor = services.getService(ServiceType.TOPOLOGY_SERVICE);
+
+    // Descriptors should be reloaded before topology reloading at startup, so that any changes to descriptors
+    // will be realized before Knox deploys "old" topologies that would have re-deployed anyway in a matter of seconds
+    // by the descriptor monitor
+    monitor.reloadDescriptors();
+
     monitor.addTopologyChangeListener(listener);
+    log.loadingTopologiesFromDirectory(topologiesDir.getAbsolutePath());
     monitor.reloadTopologies();
     List<String> autoDeploys = config.getAutoDeployTopologyNames();
     if (autoDeploys != null) {
