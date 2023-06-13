@@ -15,10 +15,9 @@
    limitations under the License.
  -->
 <rules>
-<rule dir="IN" name="OZONEHTTPFS/httpfs/inbound/namenode/root" pattern="*://*:*/**/httpfs/{version}/?{**}">
-<!-- Tested -->
-<rewrite template="{$serviceUrl[OZONEHTTPFS]}/{version}/?{**}"/>
-</rule>
-<filter name="OZONEHTTPFS/httpfs/outbound/namenode/headers">
-</filter>
+    <rule dir="IN" name="OZONE-HTTPFS/httpfs/inbound/root" pattern="*://*:*/**/httpfs/{version}/?{**}">
+        <rewrite template="{$serviceUrl[OZONE-HTTPFS]}/{version}/?{**}"/>
+    </rule>
+    <filter name="OZONE-HTTPFS/httpfs/outbound/headers">
+    </filter>
 </rules>

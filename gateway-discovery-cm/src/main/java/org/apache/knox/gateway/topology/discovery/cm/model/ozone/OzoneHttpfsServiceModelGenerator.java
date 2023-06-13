@@ -30,7 +30,7 @@ public class OzoneHttpfsServiceModelGenerator extends AbstractServiceModelGenera
 
     public static final String SERVICE      = "OZONE-HTTPFS";
     public static final String SERVICE_TYPE = "OZONE";
-    public static final String ROLE_TYPE    = "OZONE_HTTPFS";
+    public static final String ROLE_TYPE    = "HTTPFS_GATEWAY";
 
 
     static final String SSL_ENABLED = "ssl_enabled";

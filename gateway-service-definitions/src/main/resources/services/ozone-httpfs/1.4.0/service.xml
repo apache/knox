@@ -14,27 +14,25 @@
    See the License for the specific language governing permissions and
    limitations under the License.
  -->
-<service role="OZONEHTTPFS" name="httpfs" version="1.4.0">
-<metadata>
-<type>API</type>
-<context>/httpfs</context>
-<shortDesc>Ozone HTTPFS</shortDesc>
-<description>An HTTP REST API which supports the complete FileSystem interface for HTTPFS.</description>
-</metadata>
-<routes>
-<route path="/httpfs/v1/?**">
-<rewrite apply="OZONEHTTPFS/httpfs/inbound/namenode/root" to="request.url"/>
-</route>
-<route path="/httpfs/v1/**?**">
-<rewrite apply="OZONEHTTPFS/httpfs/outbound/namenode/headers" to="response.headers"/>
-<rewrite apply="OZONEHTTPFS/httpfs/outbound/namenode/headers" to="response.body"/>
-</route>
-<route path="/httpfs/v1/~/**?**">
-<rewrite apply="OZONEHTTPFS/httpfs/outbound/namenode/headers" to="response.headers"/>
-</route>
-</routes>
-<!--  <dispatch classname="org.apache.knox.gateway.hdfs.dispatch.HdfsHttpClientDispatch" ha-classname="org.apache.knox.gateway.hdfs.dispatch.WebHdfsHaDispatch"/>  -->
-<testURLs>
-<testURL>/httpfs/v1/?op=LISTSTATUS</testURL>
-</testURLs>
+<service role="OZONE-HTTPFS" name="ozone-httpfs" version="1.4.0">
+    <metadata>
+        <type>API</type>
+        <context>/httpfs</context>
+        <shortDesc>Ozone HttpFS Gateway</shortDesc>
+    </metadata>
+    <routes>
+        <route path="/httpfs/v1/?**">
+            <rewrite apply="OZONE-HTTPFS/httpfs/inbound/root" to="request.url"/>
+        </route>
+        <route path="/httpfs/v1/**?**">
+            <rewrite apply="OZONE-HTTPFS/httpfs/outbound/headers" to="response.headers"/>
+            <rewrite apply="OZONE-HTTPFS/httpfs/outbound/headers" to="response.body"/>
+        </route>
+        <route path="/httpfs/v1/~/**?**">
+            <rewrite apply="OZONE-HTTPFS/httpfs/outbound/headers" to="response.headers"/>
+        </route>
+    </routes>
+    <testURLs>
+        <testURL>/httpfs/v1/?op=LISTSTATUS</testURL>
+    </testURLs>
 </service>
