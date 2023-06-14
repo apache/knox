@@ -62,7 +62,7 @@ public abstract class AbstractHdfsHaDispatch extends ConfigurableHADispatch {
       } catch (StandbyException | SafeModeException | IOException e) {
         /* if non-idempotent requests are not allowed to failover */
         if(!failoverNonIdempotentRequestEnabled && nonIdempotentRequests.stream().anyMatch(outboundRequest.getMethod()::equalsIgnoreCase)) {
-          LOG.cannotFailoverNonIdempotentRequest(outboundRequest.getMethod(), e.toString());
+          LOG.cannotFailoverNonIdempotentRequest(outboundRequest.getMethod(), e.getCause());
           throw e;
         } else {
           printExceptionLogMessage(e, outboundRequest.getURI().toString());

@@ -220,7 +220,7 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
     } catch ( IOException e ) {
       /* if non-idempotent requests are not allowed to failover, unless it's a connection error */
       if(!isConnectionError(e.getCause()) && isNonIdempotentAndNonIdempotentFailoverDisabled(outboundRequest)) {
-        LOG.cannotFailoverNonIdempotentRequest(outboundRequest.getMethod(), e.toString());
+        LOG.cannotFailoverNonIdempotentRequest(outboundRequest.getMethod(), e.getCause());
         /* mark endpoint as failed */
         markEndpointFailed(outboundRequest, inboundRequest);
         throw e;
