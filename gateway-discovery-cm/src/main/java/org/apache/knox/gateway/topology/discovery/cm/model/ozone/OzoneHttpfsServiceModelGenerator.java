@@ -76,7 +76,7 @@ public class OzoneHttpfsServiceModelGenerator extends AbstractServiceModelGenera
             port = getRoleConfigValue(roleConfig, HTTP_PORT);
         }
 
-        ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
+        ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/webhdfs/", scheme, hostname, port));
         model.addRoleProperty(getRoleType(), SSL_ENABLED, sslEnabled);
         model.addRoleProperty(getRoleType(), HTTP_PORT, getRoleConfigValue(roleConfig, HTTP_PORT));
 
