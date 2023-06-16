@@ -65,19 +65,12 @@ public class OzoneHttpfsServiceModelGenerator extends AbstractServiceModelGenera
                                         ApiConfigList    roleConfig) throws ApiException {
         String hostname = role.getHostRef().getHostname();
 
-        String scheme;
-        String port;
-        String sslEnabled = getRoleConfigValue(roleConfig, SSL_ENABLED);
-        if(Boolean.parseBoolean(sslEnabled)) {
-            scheme = "https";
-            port = getRoleConfigValue(roleConfig, HTTP_PORT);
-        } else {
-            scheme = "http";
-            port = getRoleConfigValue(roleConfig, HTTP_PORT);
-        }
+        boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, SSL_ENABLED));
+        String scheme = sslEnabled ? "https" : "http";
+        String port = getRoleConfigValue(roleConfig, HTTP_PORT);
 
         ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/webhdfs/", scheme, hostname, port));
-        model.addRoleProperty(getRoleType(), SSL_ENABLED, sslEnabled);
+        model.addRoleProperty(getRoleType(),SSL_ENABLED, getRoleConfigValue(roleConfig, SSL_ENABLED));
         model.addRoleProperty(getRoleType(), HTTP_PORT, getRoleConfigValue(roleConfig, HTTP_PORT));
 
         return model;
