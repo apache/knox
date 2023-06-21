@@ -22,6 +22,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.apache.knox.gateway.services.GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
@@ -249,7 +250,12 @@ public class WebSSOResource {
       // If there is a whitelist defined, then the original URL must be validated against it.
       // If there is no whitelist, then everything is valid.
       if (whitelist != null) {
-        validRedirect = RegExUtils.checkBaseUrlAgainstWhitelist(whitelist, original);
+        try {
+          validRedirect = RegExUtils.checkBaseUrlAgainstWhitelist(whitelist, original);
+        } catch (MalformedURLException e) {
+          throw new WebApplicationException("Malformed original URL: " + original,
+                  Response.Status.BAD_REQUEST);
+        }
       }
 
       if (!validRedirect) {
