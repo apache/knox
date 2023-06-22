@@ -32,6 +32,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -140,7 +141,12 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
       }
 
       if (whitelist != null) {
-        isAllowed = RegExUtils.checkBaseUrlAgainstWhitelist(whitelist, request.getRequestURI());
+        try {
+          isAllowed = RegExUtils.checkBaseUrlAgainstWhitelist(whitelist, request.getRequestURI());
+        } catch (MalformedURLException e) {
+          LOG.malformedDispatchUrl(request.getRequestURI());
+          isAllowed = false;
+        }
 
         if (!isAllowed) {
           LOG.dispatchDisallowed(request.getRequestURI());

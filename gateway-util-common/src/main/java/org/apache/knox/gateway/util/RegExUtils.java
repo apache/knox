@@ -45,7 +45,7 @@ public class RegExUtils {
     return false;
   }
 
-  public static boolean checkBaseUrlAgainstWhitelist(String whitelist, String fullUrl) {
+  public static boolean checkBaseUrlAgainstWhitelist(String whitelist, String fullUrl) throws MalformedURLException {
     String decodedURL = fullUrl;
     try {
       decodedURL = URLDecoder.decode(fullUrl, StandardCharsets.UTF_8.name());
@@ -53,12 +53,8 @@ public class RegExUtils {
       //
     }
     String baseUrl;
-    try {
-      URL url = new URL(decodedURL);
-      baseUrl = new URL(url.getProtocol(), url.getHost(), url.getPort(), "").toString();
-    } catch (MalformedURLException e) {
-      throw new RuntimeException(e);
-    }
+    URL url = new URL(decodedURL);
+    baseUrl = new URL(url.getProtocol(), url.getHost(), url.getPort(), "").toString();
     return checkWhitelist(whitelist, baseUrl);
   }
 

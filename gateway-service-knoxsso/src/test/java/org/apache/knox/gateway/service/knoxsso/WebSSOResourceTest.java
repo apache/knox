@@ -28,6 +28,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.Field;
 import java.net.HttpCookie;
+import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
@@ -149,7 +150,7 @@ public class WebSSOResourceTest {
   }
 
   @Test
-  public void testWhitelistMatchingAgainstBaseURL() {
+  public void testWhitelistMatchingAgainstBaseURL() throws MalformedURLException {
     Assert.assertTrue("Failed to match whitelist",
             RegExUtils.checkBaseUrlAgainstWhitelist("^https?:\\/\\/(.*KNOX_GW_DOMAIN)(?::[0-9]+)?(?:\\/.*)?$",
                     "https://KNOX_GW_DOMAIN"));
@@ -170,6 +171,10 @@ public class WebSSOResourceTest {
                     "https://google.com/https://KNOX_GW_DOMAIN"));
   }
 
+  @Test(expected = MalformedURLException.class)
+  public void testMalformedOriginalUrl() throws MalformedURLException {
+            RegExUtils.checkBaseUrlAgainstWhitelist(".*", "https://localhost:5003gateway/homepage/home/");
+  }
 
   private void configureCommonExpectations(Map<String, String> contextExpectations) throws Exception {
     configureCommonExpectations(contextExpectations, false, false, true);
