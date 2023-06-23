@@ -398,55 +398,6 @@
                 </plugins>
             </build>
         </profile>
-
-        <!-- Support for JDK 17 -->
-        <profile>
-            <id>surefire-java8+</id>
-            <activation>
-                <jdk>(1.8,)</jdk>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
-                            <argLine>@{argLine} --add-exports java.base/sun.security.x509=ALL-UNNAMED --add-exports java.base/sun.security.pkcs=ALL-UNNAMED --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED --add-opens java.base/sun.security.util=ALL-UNNAMED</argLine>
-                            <excludedGroups>
-                                org.apache.knox.test.category.SlowTests,org.apache.knox.test.category.ManualTests,org.apache.knox.test.category.VerifyTest,org.apache.knox.test.category.ReleaseTest
-                            </excludedGroups>
-                            <systemPropertyVariables>
-                                <project.version>${project.version}</project.version>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>surefire-java8</id>
-            <activation>
-                <jdk>1.8</jdk>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
-                            <excludedGroups>
-                                org.apache.knox.test.category.SlowTests,org.apache.knox.test.category.ManualTests,org.apache.knox.test.category.VerifyTest,org.apache.knox.test.category.ReleaseTest
-                            </excludedGroups>
-                            <systemPropertyVariables>
-                                <project.version>${project.version}</project.version>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-
     </profiles>
 
     <build>
@@ -568,6 +519,22 @@
                 <version>${maven-compiler-plugin.version}</version>
                 <!-- If you are looking to change source/target,
                      change the maven.compiler.{source,target} property -->
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- For JDK 17 builds uncomment the following lines, make sure to remove space between - - (double dash) -->
+                    <!--
+                    <argLine>@{argLine} - -add-exports java.base/sun.security.x509=ALL-UNNAMED - -add-exports java.base/sun.security.pkcs=ALL-UNNAMED - - add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED - -add-opens java.base/sun.security.util=ALL-UNNAMED</argLine>
+                    -->
+                    <excludedGroups>
+                        org.apache.knox.test.category.SlowTests,org.apache.knox.test.category.ManualTests,org.apache.knox.test.category.VerifyTest,org.apache.knox.test.category.ReleaseTest
+                    </excludedGroups>
+                    <systemPropertyVariables>
+                        <project.version>${project.version}</project.version>
+                    </systemPropertyVariables>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
