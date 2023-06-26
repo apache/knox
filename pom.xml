@@ -260,6 +260,7 @@
         <protobuf.version>3.16.3</protobuf.version>
         <powermock.version>2.0.9</powermock.version>
         <purejavacomm.version>0.0.11.1</purejavacomm.version>
+        <!-- After JDK 11 we can use 0.12.4 from maven central -->
         <pty4j.version>0.11.4</pty4j.version>
         <rest-assured.version>4.3.3</rest-assured.version>
         <shiro.version>1.10.0</shiro.version>
@@ -288,9 +289,9 @@
     </properties>
     <repositories>
         <repository>
-            <id>jcenter</id>
-            <name>jcenter</name>
-            <url>https://jcenter.bintray.com</url>
+            <id>jetbrains-pty4j</id>
+            <name>jetbrains-intellij-dependencies</name>
+            <url>https://packages.jetbrains.team/maven/p/ij/intellij-dependencies</url>
         </repository>
     </repositories>
     <profiles>
@@ -399,6 +400,7 @@
             </build>
         </profile>
     </profiles>
+
 
     <build>
         <pluginManagement>
@@ -524,6 +526,10 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <!-- For JDK 17 builds uncomment the following lines, make sure to remove space between - - (double dash) -->
+                    <!--
+                    <argLine>@{argLine} - -add-exports java.base/sun.security.x509=ALL-UNNAMED - -add-exports java.base/sun.security.pkcs=ALL-UNNAMED - - add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED - -add-opens java.base/sun.security.util=ALL-UNNAMED</argLine>
+                    -->
                     <excludedGroups>
                         org.apache.knox.test.category.SlowTests,org.apache.knox.test.category.ManualTests,org.apache.knox.test.category.VerifyTest,org.apache.knox.test.category.ReleaseTest
                     </excludedGroups>

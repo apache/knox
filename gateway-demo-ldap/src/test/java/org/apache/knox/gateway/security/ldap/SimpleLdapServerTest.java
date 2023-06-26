@@ -41,7 +41,7 @@ public class SimpleLdapServerTest {
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
-    ldifFile = new File( ClassLoader.getSystemResource( "users.ldif" ).toURI() );
+    ldifFile = new File( SimpleLdapServerTest.class.getResource( "/users.ldif" ).toURI());
     ldapTransport = new TcpTransport( 0 );
     ldap = new SimpleLdapDirectoryServer( "dc=hadoop,dc=apache,dc=org", ldifFile, ldapTransport );
     ldap.start();
