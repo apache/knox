@@ -32,10 +32,8 @@ Licensed to the Apache Software Foundation (ASF) under one or more
     </rule>
 
     <filter name="OZONE-SCM/filter/doc">
-        <content type="text/html">
+        <content type="*/html">
             <apply path="/docs" rule="OZONE-SCM/rule/docs"/>
-        </content>
-        <content type="*/javascript">
             <apply path="\{\{typestat\.portval\.toLowerCase\(\)\}\}\:\/\/\{\{typestat\.hostname\}\}\:\{\{typestat\.portno\}\}" rule="OZONE-SCM/ozone-scm/outbound/datanode/address"/>
         </content>
     </filter>
