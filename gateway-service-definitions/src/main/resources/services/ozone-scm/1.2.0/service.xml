@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <!--
    Licensed to the Apache Software Foundation (ASF) under one or more
    contributor license agreements.  See the NOTICE file distributed with
@@ -21,8 +22,20 @@
 		<shortDesc>OZONE SCM UI</shortDesc>
 	</metadata>
 	<routes>
+			<!-- SCM routes -->
+			<route path="/ozone-scm/">
+				<rewrite apply="OZONE-SCM/ozone-scm/inbound/request" to="request.url"/>
+				<rewrite apply="OZONE-SCM/ozone-scm/outbound/response" to="response.body"/>
+			</route>
       <route path="/ozone-scm/**">
-         <rewrite apply="OZONE-SCM/filter/doc" to="response.body"/>
-      </route>
+				 <rewrite apply="OZONE-SCM/ozone-scm/inbound/request" to="request.url"/>
+				 <rewrite apply="OZONE-SCM/ozone-scm/outbound/response" to="response.body"/>
+			</route>
+			<!-- documentation route -->
+			<route path="/ozone-scm/documentation/**">
+				<rewrite apply="OZONE-SCM/ozone-scm/documentation/inbound/request" to="request.url"/>
+				<rewrite apply="OZONE-SCM/ozone-scm/documentation/outbound/response" to="response.body"/>
+			</route>
 	</routes>
+	<dispatch classname="org.apache.knox.gateway.dispatch.URLDecodingDispatch" ha-classname="org.apache.knox.gateway.dispatch.URLDecodingDispatch"/>
 </service>
