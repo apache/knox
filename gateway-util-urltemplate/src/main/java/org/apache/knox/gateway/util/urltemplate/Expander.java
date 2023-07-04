@@ -17,6 +17,9 @@
  */
 package org.apache.knox.gateway.util.urltemplate;
 
+import static org.apache.knox.gateway.util.urltemplate.Parser.TEMPLATE_CLOSE_MARKUP;
+import static org.apache.knox.gateway.util.urltemplate.Parser.TEMPLATE_OPEN_MARKUP;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -184,7 +187,7 @@ public class Expander {
             String pattern = value.getOriginalPattern();
             if (pattern != null) {
               builder.append('=');
-              builder.append(pattern);
+              builder.append(unescape(pattern));
             }
             break;
           case (Segment.DEFAULT):
@@ -199,6 +202,15 @@ public class Expander {
         }
       }
     }
+  }
+
+  private static String unescape(String actualPattern) {
+    if (actualPattern == null) {
+      return null;
+    }
+    return actualPattern
+            .replace("\\" + TEMPLATE_OPEN_MARKUP, String.valueOf(TEMPLATE_OPEN_MARKUP))
+            .replace("\\" + TEMPLATE_CLOSE_MARKUP, String.valueOf(TEMPLATE_CLOSE_MARKUP));
   }
 
   private static void expandExtraQuery( Template template, Set<String> names, Params params, StringBuilder builder, AtomicInteger index ) {
