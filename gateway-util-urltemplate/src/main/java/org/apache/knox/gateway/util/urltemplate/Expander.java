@@ -204,11 +204,11 @@ public class Expander {
     }
   }
 
-  private static String unescape(String actualPattern) {
-    if (actualPattern == null) {
+  private static String unescape(String pattern) {
+    if (pattern == null) {
       return null;
     }
-    return actualPattern
+    return pattern
             .replace("\\" + TEMPLATE_OPEN_MARKUP, String.valueOf(TEMPLATE_OPEN_MARKUP))
             .replace("\\" + TEMPLATE_CLOSE_MARKUP, String.valueOf(TEMPLATE_CLOSE_MARKUP));
   }
