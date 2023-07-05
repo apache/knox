@@ -27,10 +27,10 @@
 				<rewrite apply="OZONE-SCM/ozone-scm/inbound/request" to="request.url"/>
 				<rewrite apply="OZONE-SCM/ozone-scm/outbound/response" to="response.body"/>
 			</route>
-      <route path="/ozone-scm/**">
-         <rewrite apply="OZONE-SCM/ozone-scm/inbound/request" to="request.url"/>
-				 <rewrite apply="OZONE-SCM/ozone-scm/outbound/response" to="response.body"/>
-      </route>
+		  <route path="/ozone-scm/**">
+				<rewrite apply="OZONE-SCM/ozone-scm/inbound/request" to="request.url"/>
+				<rewrite apply="OZONE-SCM/ozone-scm/outbound/response" to="response.body"/>
+			</route>
 			<!-- datanode routes -->
 			<route path="/ozone-scm/datanode/">
 				<rewrite apply="OZONE-SCM/ozone-scm/datanode/inbound/request" to="request.url"/>
