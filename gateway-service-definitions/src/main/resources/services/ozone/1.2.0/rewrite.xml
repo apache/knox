@@ -17,16 +17,107 @@ Licensed to the Apache Software Foundation (ASF) under one or more
 
 
 <rules>
-    <rule dir="IN" name="OZONE/ozone/inbound" pattern="*://*:*/**/ozone/{path=**}?{**}">
-        <rewrite template="{$serviceUrl[OZONE]}/{path=**}?{**}"/>
-    </rule>
-    <rule dir="OUT" name="OZONE/ozoneManager/docs">
-        <rewrite template="{gateway.url}/ozone/docs/index.html"/>
+
+    <!-- OM inbound rules -->
+
+    <rule dir="IN" name="OZONE/ozone/inbound/request" pattern="*://*:*/**/ozone/{path=**}?host={host}?{**}">
+        <rewrite template="{host}/{path=**}?{**}"/>
     </rule>
 
-    <filter name="OZONE/ozoneManager/doc">
-        <content type="text/html">
-            <apply path="/docs" rule="OZONE/ozoneManager/docs"/>
+    <!-- OM outbound rules -->
+
+    <rule dir="OUT" name="OZONE/ozone/outbound/filter/omjs" pattern="ozoneManager.js">
+        <rewrite template="{gateway.url}/ozone/ozoneManager.js?host={$inboundurl[host]}"/>
+    </rule>
+
+    <rule dir="OUT" name="OZONE/ozone/outbound/filter/main" pattern="main.html">
+        <rewrite template="main.html?host={$inboundurl[host]}"/>
+    </rule>
+
+    <rule dir="OUT" name="OZONE/ozone/outbound/filter/om-metrics" pattern="om-metrics.html">
+        <rewrite template="om-metrics.html?host={$inboundurl[host]}"/>
+    </rule>
+
+    <rule dir="OUT" name="OZONE/ozone/outbound/filter/omoverview" pattern="om-overview.html">
+        <rewrite template="om-overview.html?host={$inboundurl[host]}"/>
+    </rule>
+
+    <rule dir="OUT" name="OZONE/ozone/outbound/filter/jmx" pattern="/jmx?{**}">
+        <rewrite template="{gateway.url}/ozone/jmx?host={$inboundurl[host]}?{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="OZONE/ozone/outbound/filter/jmx2" pattern="jmx?{**}">
+        <rewrite template="jmx?host={$inboundurl[host]}?{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="OZONE/ozone/outbound/filter/conf" pattern="conf?{**}">
+        <rewrite template="{gateway.url}/ozone/conf?host={$inboundurl[host]}?{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="OZONE/ozone/outbound/filter/logLevel" pattern="logLevel">
+        <rewrite template="{gateway.url}/ozone/logLevel/?host={$inboundurl[host]}"/>
+    </rule>
+
+    <rule dir="OUT" name="OZONE/ozone/outbound/filter/stacks" pattern="stacks">
+        <rewrite template="{gateway.url}/ozone/stacks/?host={$inboundurl[host]}"/>
+    </rule>
+
+    <rule dir="OUT" name="OZONE/ozone/outbound/filter/static">
+        <match pattern="/static/{path=**}">
+            <rewrite template="{gateway.url}/ozone/static/{path=**}?host={$inboundurl[host]}"/>
+        </match>
+    </rule>
+
+    <rule dir="OUT" name="OZONE/ozone/outbound/filter/docs">
+        <rewrite template="{gateway.url}/ozone/documentation/docs/index.html?host={$inboundurl[host]}"/>
+    </rule>
+
+    <!-- OM filter -->
+
+    <filter name="OZONE/ozone/outbound/response">
+        <content type="*/html">
+            <apply path="ozoneManager.js" rule="OZONE/ozone/outbound/filter/omjs"/>
+            <apply path=".*\.js" rule="OZONE/ozone/outbound/filter/static"/>
+            <apply path=".*\.css" rule="OZONE/ozone/outbound/filter/static"/>
+            <apply path="/docs" rule="OZONE/ozone/outbound/filter/docs"/>
+            <apply path="logLevel" rule="OZONE/ozone/outbound/filter/logLevel"/>
+            <apply path="stacks" rule="OZONE/ozone/outbound/filter/stacks"/>
+        </content>
+        <content type="*/javascript">
+            <apply path="main\.html" rule="OZONE/ozone/outbound/filter/main"/>
+            <apply path="om-metrics\.html" rule="OZONE/ozone/outbound/filter/om-metrics"/>
+            <apply path="om-overview\.html" rule="OZONE/ozone/outbound/filter/omoverview"/>
+            <apply path="docs/index\.html" rule="OZONE/ozone/outbound/filter/docs"/>
+            <apply path="static/templates/.*\.html" rule="OZONE/ozone/outbound/filter/static"/>
+            <apply path="/jmx" rule="OZONE/ozone/outbound/filter/jmx"/>
+            <apply path="jmx\?qry" rule="OZONE/ozone/outbound/filter/jmx2"/>
+            <apply path="conf\?cmd" rule="OZONE/ozone/outbound/filter/conf"/>
         </content>
     </filter>
+
+    <!-- documentation inbound rule -->
+
+    <rule dir="IN" name="OZONE/ozone/documentation/inbound/request" pattern="*://*:*/**/ozone/documentation/{path=**}?host={host}?{**}">
+        <rewrite template="{host}/{path=**}?{**}"/>
+    </rule>
+
+    <!-- documentation outbound rule -->
+
+    <rule dir="OUT" name="OZONE/ozone/documentation/outbound/filter/docs">
+        <match pattern="{**}">
+            <rewrite template="{**}?host={$inboundurl[host]}"/>
+        </match>
+    </rule>
+
+    <!-- documentation filter -->
+
+    <filter name="OZONE/ozone/documentation/outbound/response">
+        <content type="*/html">
+            <apply path=".*\.js" rule="OZONE/ozone/documentation/outbound/filter/docs"/>
+            <apply path=".*\.css" rule="OZONE/ozone/documentation/outbound/filter/docs"/>
+            <apply path=".*\.png" rule="OZONE/ozone/documentation/outbound/filter/docs"/>
+            <apply path=".*\.html" rule="OZONE/ozone/documentation/outbound/filter/docs"/>
+        </content>
+    </filter>
+
 </rules>

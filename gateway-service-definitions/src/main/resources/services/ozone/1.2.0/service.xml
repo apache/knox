@@ -21,8 +21,20 @@
 		<shortDesc>OZONE Manager UI</shortDesc>
 	</metadata>
 	<routes>
+			<!-- OM routes -->
+			<route path="/ozone/">
+				<rewrite apply="OZONE/ozone/inbound/request" to="request.url"/>
+				<rewrite apply="OZONE/ozone/outbound/response" to="response.body"/>
+			</route>
       <route path="/ozone/**">
-         <rewrite apply="OZONE/ozoneManager/doc" to="response.body"/>
-      </route>
+				<rewrite apply="OZONE/ozone/inbound/request" to="request.url"/>
+				<rewrite apply="OZONE/ozone/outbound/response" to="response.body"/>
+			</route>
+			<!-- documentation route -->
+			<route path="/ozone/documentation/**">
+				<rewrite apply="OZONE/ozone/documentation/inbound/request" to="request.url"/>
+				<rewrite apply="OZONE/ozone/documentation/outbound/response" to="response.body"/>
+			</route>
 	</routes>
+	<dispatch classname="org.apache.knox.gateway.dispatch.URLDecodingDispatch" ha-classname="org.apache.knox.gateway.dispatch.URLDecodingDispatch"/>
 </service>
