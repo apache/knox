@@ -111,7 +111,7 @@ Licensed to the Apache Software Foundation (ASF) under one or more
             <apply path=".*\.png" rule="OZONE-SCM/ozone-scm/documentation/outbound/filter/docs"/>
             <apply path=".*\.html" rule="OZONE-SCM/ozone-scm/documentation/outbound/filter/docs"/>
         </content>
-    </filter>  
+    </filter>
 
     <!-- outbound rule for the datanode links on SCM UI -->
 
