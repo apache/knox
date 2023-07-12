@@ -410,6 +410,30 @@ public class UrlRewriteProcessorTest {
     processor.destroy();
   }
 
+  @Test
+  public void testRuleWithDoubleBrackets() throws IOException, URISyntaxException {
+    UrlRewriteEnvironment environment = EasyMock.createNiceMock( UrlRewriteEnvironment.class );
+    HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+    HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
+    EasyMock.replay(environment, request, response);
+
+    UrlRewriteProcessor processor = new UrlRewriteProcessor();
+    UrlRewriteRulesDescriptor config = UrlRewriteRulesDescriptorFactory.load(
+            "xml", getTestResourceReader( "rewrite_escape.xml"));
+    processor.initialize(environment, config);
+
+    Template outputUrl = processor.rewrite( null,
+            Parser.parseLiteral("{{prot}}://{{hostname}}:{{portno}}"),
+            UrlRewriter.Direction.OUT,
+            "test_rule");
+
+    assertThat(
+            outputUrl.toString(), is( "GATEWAY?host={{prot}}://{{hostname}}:{{portno}}"));
+
+    processor.destroy();
+  }
+
+
   /**
    * Turn a string containing URL parameters, e.g.
    *
