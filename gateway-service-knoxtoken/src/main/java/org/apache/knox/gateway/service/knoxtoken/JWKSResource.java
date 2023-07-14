@@ -105,7 +105,7 @@ public class JWKSResource {
               + "\"\n}\n").build();
     }
     return Response.ok()
-        .entity(jwks.toJSONObject().toString()).build();
+            .entity(jwks.toString()).type(MediaType.APPLICATION_JSON_TYPE).build();
   }
 
   protected RSAPublicKey getPublicKey(final String keystore) throws KeystoreServiceException, KeyStoreException {
