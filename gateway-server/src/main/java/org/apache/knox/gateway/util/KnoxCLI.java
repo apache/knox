@@ -2303,7 +2303,7 @@ public class KnoxCLI extends Configured implements Tool {
             + "--descriptor-name (optional) name of descriptor json config file (including .json extension) \n"
             + "--topology-name (optional) topology-name can be use instead of --path option, if used, KnoxCLI will attempt to find topology from deployed topologies.\n"
             + "\t if not provided topology name will be used as descriptor name \n"
-            + "--output-path (optional) output directory to save provider and descriptor config files \n"
+            + "--output-dir (optional) output directory to save provider and descriptor config files \n"
             + "\t if not provided config files will be saved in appropriate Knox config directory \n"
             + "--force (optional) force rewriting of existing files, if not used, command will fail when the configs files with same name already exist. \n"
             + "--cluster (optional) cluster name, required for service discovery \n"

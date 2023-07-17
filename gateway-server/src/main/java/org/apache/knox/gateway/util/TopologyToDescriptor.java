@@ -227,7 +227,9 @@ public class TopologyToDescriptor {
               file.getAbsolutePath()));
     }
     /* make sure file and directories are in place */
-    Files.createDirectories(file.toPath().getParent());
+    if (!file.getParentFile().exists()) {
+      Files.createDirectories(file.toPath().getParent());
+    }
     file.createNewFile();
   }
 
