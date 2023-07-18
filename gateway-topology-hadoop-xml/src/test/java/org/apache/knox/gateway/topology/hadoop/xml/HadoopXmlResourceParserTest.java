@@ -234,6 +234,14 @@ public class HadoopXmlResourceParserTest {
     assertService(descriptor, "HIVE", "1.0", Collections.singletonList("http://localhost:456"), expectedServiceParameters);
   }
 
+  @Test
+  public void testInvalidProviderConfig() {
+    String testConfigPath = this.getClass().getClassLoader().getResource("testInvalidProvider.xml").getPath();
+    HadoopXmlResourceParserResult parserResult = hadoopXmlResourceParser.parse(testConfigPath);
+    assertEquals(1, parserResult.getProviders().size());
+    assertNotNull(parserResult.getProviders().get("valid"));
+  }
+
   private void validateTopology2Descriptors(SimpleDescriptor descriptor, boolean nifiExpected) {
     assertTrue(descriptor.isReadOnly());
     assertEquals("topology2", descriptor.getName());
