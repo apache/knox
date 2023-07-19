@@ -238,6 +238,8 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
         provider.setName(roleConfiguration.replace(CONFIG_NAME_PROVIDER_CONFIGS_NAME_PREFIX, ""));
       } else if (roleConfiguration.startsWith(CONFIG_NAME_PROVIDER_CONFIGS_ENABLED_PREFIX)) {
         provider.setEnabled(Boolean.valueOf(roleConfiguration.replace(CONFIG_NAME_PROVIDER_CONFIGS_ENABLED_PREFIX, "")));
+      } else {
+        throw new IllegalArgumentException("Invalid role configuration: " + roleConfiguration + " in provider: " + provider.getName());
       }
     }
     return provider;
