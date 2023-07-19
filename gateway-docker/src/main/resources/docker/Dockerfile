@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM openjdk:8-jre-alpine
+FROM openjdk:8-jre-alpine3.8
 MAINTAINER Apache Knox <dev@knox.apache.org>
 
 # Make sure required packages are available
-RUN apk --no-cache add bash procps ca-certificates && update-ca-certificates
+RUN apk --no-cache add bash procps ca-certificates krb5 && update-ca-certificates
 
 # Create an knox user
 RUN addgroup -S knox && adduser -S -G knox knox
