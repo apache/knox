@@ -418,7 +418,9 @@ public class KnoxCLI extends Configured implements Tool {
         this.discoveryType = args[++i];
       } else if (args[i].equals("--master")) {
         // For testing only
-        if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
+        if( i+1 >= args.length
+                || "--generate".equals(args[i + 1]) // missing value
+                || "--force".equals(args[i + 1])) {
           printKnoxShellUsage();
           return -1;
         }
