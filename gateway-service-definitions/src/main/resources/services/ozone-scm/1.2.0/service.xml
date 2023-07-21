@@ -31,6 +31,15 @@
 				 <rewrite apply="OZONE-SCM/ozone-scm/inbound/request" to="request.url"/>
 				 <rewrite apply="OZONE-SCM/ozone-scm/outbound/response" to="response.body"/>
 			</route>
+			<!-- datanode routes -->
+			<route path="/ozone-scm/datanode/">
+				<rewrite apply="OZONE-SCM/ozone-scm/datanode/inbound/request" to="request.url"/>
+				<rewrite apply="OZONE-SCM/ozone-scm/datanode/outbound/response" to="response.body"/>
+			</route>
+			<route path="/ozone-scm/datanode/**">
+				<rewrite apply="OZONE-SCM/ozone-scm/datanode/inbound/request" to="request.url"/>
+				<rewrite apply="OZONE-SCM/ozone-scm/datanode/outbound/response" to="response.body"/>	 
+			</route>
 			<!-- documentation route -->
 			<route path="/ozone-scm/documentation/**">
 				<rewrite apply="OZONE-SCM/ozone-scm/documentation/inbound/request" to="request.url"/>

@@ -76,6 +76,7 @@ Licensed to the Apache Software Foundation (ASF) under one or more
             <apply path="/docs" rule="OZONE-SCM/ozone-scm/outbound/filter/docs"/>
             <apply path="logLevel" rule="OZONE-SCM/ozone-scm/outbound/filter/logLevel"/>
             <apply path="stacks" rule="OZONE-SCM/ozone-scm/outbound/filter/stacks"/>
+            <apply path="\{\{typestat\.portval\.toLowerCase\(\)\}\}\:\/\/\{\{typestat\.hostname\}\}\:\{\{typestat\.portno\}\}" rule="OZONE-SCM/ozone-scm/outbound/datanode/address"/>
         </content>
         <content type="*/javascript">
             <apply path="main\.html" rule="OZONE-SCM/ozone-scm/outbound/filter/main"/>
@@ -110,6 +111,85 @@ Licensed to the Apache Software Foundation (ASF) under one or more
             <apply path=".*\.css" rule="OZONE-SCM/ozone-scm/documentation/outbound/filter/docs"/>
             <apply path=".*\.png" rule="OZONE-SCM/ozone-scm/documentation/outbound/filter/docs"/>
             <apply path=".*\.html" rule="OZONE-SCM/ozone-scm/documentation/outbound/filter/docs"/>
+        </content>
+    </filter>
+
+    <!-- outbound rule for the datanode links on SCM UI -->
+
+    <rule dir="OUT" name="OZONE-SCM/ozone-scm/outbound/datanode/address">
+        <match pattern="{{typestat.portval.toLowerCase()}}://{{typestat.hostname}}:{{typestat.portno}}"/>
+        <rewrite template="{gateway.url}/ozone-scm/datanode/index.html?host={{typestat.portval.toLowerCase()}}://{{typestat.hostname}}:{{typestat.portno}} "/>
+    </rule>
+
+    <!-- datanode inbound rules -->
+
+    <rule dir="IN" name="OZONE-SCM/ozone-scm/datanode/inbound/request" pattern="*://*:*/**/ozone-scm/datanode/{path=**}?host={host}?{**}">
+        <rewrite template="{host}/{path=**}?{**}"/>
+    </rule>
+
+    <!-- datanode outbound rules -->
+
+    <rule dir="OUT" name="OZONE-SCM/ozone-scm/datanode/outbound/filter/dnjs" pattern="dn.js">
+        <rewrite template="{gateway.url}/ozone-scm/datanode/dn.js?host={$inboundurl[host]}"/>
+    </rule>
+
+    <rule dir="OUT" name="OZONE-SCM/ozone-scm/datanode/outbound/filter/main" pattern="main.html">
+        <rewrite template="main.html?host={$inboundurl[host]}"/>
+    </rule>
+
+    <rule dir="OUT" name="OZONE-SCM/ozone-scm/datanode/outbound/filter/dnoverview" pattern="dn-overview.html">
+        <rewrite template="dn-overview.html?host={$inboundurl[host]}"/>
+    </rule>
+
+    <rule dir="OUT" name="OZONE-SCM/ozone-scm/datanode/outbound/filter/jmx" pattern="/jmx?{**}">
+        <rewrite template="{gateway.url}/ozone-scm/datanode/jmx?host={$inboundurl[host]}?{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="OZONE-SCM/ozone-scm/datanode/outbound/filter/jmx2" pattern="jmx?{**}">
+        <rewrite template="jmx?host={$inboundurl[host]}?{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="OZONE-SCM/ozone-scm/datanode/outbound/filter/conf" pattern="conf?{**}">
+        <rewrite template="{gateway.url}/ozone-scm/datanode/conf?host={$inboundurl[host]}?{**}"/>
+    </rule>
+
+    <rule dir="OUT" name="OZONE-SCM/ozone-scm/datanode/outbound/filter/logLevel" pattern="logLevel">
+        <rewrite template="{gateway.url}/ozone-scm/datanode/logLevel/?host={$inboundurl[host]}"/>
+    </rule>
+
+    <rule dir="OUT" name="OZONE-SCM/ozone-scm/datanode/outbound/filter/stacks" pattern="stacks">
+        <rewrite template="{gateway.url}/ozone-scm/datanode/stacks/?host={$inboundurl[host]}"/>
+    </rule>
+
+    <rule dir="OUT" name="OZONE-SCM/ozone-scm/datanode/outbound/filter/static">
+        <match pattern="/static/{path=**}">
+            <rewrite template="{gateway.url}/ozone-scm/datanode/static/{path=**}?host={$inboundurl[host]}"/>
+        </match>
+    </rule>
+
+    <rule dir="OUT" name="OZONE-SCM/ozone-scm/datanode/outbound/filter/docs">
+        <rewrite template="{gateway.url}/ozone-scm/documentation/docs/index.html?host={$inboundurl[host]}"/>
+    </rule>
+
+    <!-- datanode filter -->
+
+    <filter name="OZONE-SCM/ozone-scm/datanode/outbound/response">
+        <content type="*/html">
+            <apply path="dn.js" rule="OZONE-SCM/ozone-scm/datanode/outbound/filter/dnjs"/>
+            <apply path=".*\.js" rule="OZONE-SCM/ozone-scm/datanode/outbound/filter/static"/>
+            <apply path=".*\.css" rule="OZONE-SCM/ozone-scm/datanode/outbound/filter/static"/>
+            <apply path="/docs" rule="OZONE-SCM/ozone-scm/datanode/outbound/filter/docs"/>
+            <apply path="logLevel" rule="OZONE-SCM/ozone-scm/datanode/outbound/filter/logLevel"/>
+            <apply path="stacks" rule="OZONE-SCM/ozone-scm/datanode/outbound/filter/stacks"/>
+        </content>
+        <content type="*/javascript">
+            <apply path="main\.html" rule="OZONE-SCM/ozone-scm/datanode/outbound/filter/main"/>
+            <apply path="dn-overview\.html" rule="OZONE-SCM/ozone-scm/datanode/outbound/filter/dnoverview"/>
+            <apply path="docs/index\.html" rule="OZONE-SCM/ozone-scm/datanode/outbound/filter/docs"/>
+            <apply path="static/templates/.*\.html" rule="OZONE-SCM/ozone-scm/datanode/outbound/filter/static"/>
+            <apply path="/jmx" rule="OZONE-SCM/ozone-scm/datanode/outbound/filter/jmx"/>
+            <apply path="jmx\?qry" rule="OZONE-SCM/ozone-scm/datanode/outbound/filter/jmx2"/>
+            <apply path="conf\?cmd" rule="OZONE-SCM/ozone-scm/datanode/outbound/filter/conf"/>
         </content>
     </filter>
 
