@@ -292,7 +292,10 @@ public class KnoxCLI extends Configured implements Tool {
       } else if (args[i].equals("list-alias")) {
         command = new AliasListCommand();
       } else if (args[i].equals("--value")) {
-        if (i + 1 >= args.length || args[i + 1].startsWith("-")) {
+        if (i + 1 >= args.length
+                || "--generate".equals(args[i + 1]) // missing value
+                || "--cluster".equals(args[i + 1])
+                || "--master".equals(args[i + 1])) {
           printKnoxShellUsage();
           return -1;
         }
