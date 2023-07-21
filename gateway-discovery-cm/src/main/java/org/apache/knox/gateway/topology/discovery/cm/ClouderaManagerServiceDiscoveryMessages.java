@@ -253,6 +253,9 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   @Message(level = MessageLevel.DEBUG, text = "Looking up roles from the configured Cloudera Manager discovery endpoint...")
   void lookupRolesFromCM();
 
+  @Message(level = MessageLevel.DEBUG, text = "No roles to look up for this service.")
+  void noRoles();
+
   @Message(level = MessageLevel.DEBUG, text = "Looking up role configuration from the configured Cloudera Manager discovery endpoint...")
   void lookupRoleConfigsFromCM();
 

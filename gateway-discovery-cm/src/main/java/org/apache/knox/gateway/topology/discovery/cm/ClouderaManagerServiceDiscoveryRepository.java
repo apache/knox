@@ -176,8 +176,10 @@ class ClouderaManagerServiceDiscoveryRepository {
     }
 
     public void addRoles(ApiRoleList roles) {
-      for (ApiRole role : roles.getItems()) {
-        roleConfigsMap.put(role, new ApiConfigList());
+      if (roles != null && roles.getItems() != null) {
+        for (ApiRole role : roles.getItems()) {
+          roleConfigsMap.put(role, new ApiConfigList());
+        }
       }
     }
 
