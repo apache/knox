@@ -100,6 +100,7 @@ public class ImpalaServiceModelGenerator extends AbstractServiceModelGenerator {
     ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/", scheme, hostname, port));
     model.addServiceProperty(SSL_ENABLED, getServiceConfigValue(serviceConfig, SSL_ENABLED));
     model.addRoleProperty(getRoleType(), HTTP_PORT, port);
+    model.addRoleProperty(getRoleType(), SPECIALIZATION, getRoleConfigValue(roleConfig, SPECIALIZATION));
 
     return model;
   }
