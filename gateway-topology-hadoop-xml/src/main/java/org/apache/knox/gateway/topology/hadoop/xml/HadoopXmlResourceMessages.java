@@ -16,6 +16,8 @@
  */
 package org.apache.knox.gateway.topology.hadoop.xml;
 
+import java.nio.file.attribute.FileTime;
+
 import org.apache.knox.gateway.i18n.messages.Message;
 import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
@@ -30,8 +32,8 @@ public interface HadoopXmlResourceMessages {
   @Message(level = MessageLevel.INFO, text = "Monitoring Knox resources in Hadoop style XML configurations is disabled.")
   void disableMonitoringHadoopXmlResources();
 
-  @Message(level = MessageLevel.INFO, text = "Parsing  Knox resources in Hadoop style XML {0}. Looking up {1}...")
-  void parseHadoopXmlResource(String path, String topologyName);
+  @Message(level = MessageLevel.INFO, text = "Parsing  Knox resources in Hadoop style XML {0}...")
+  void parseHadoopXmlResource(String path);
 
   @Message(level = MessageLevel.INFO, text = "Found Knox descriptors {0} in {1}")
   void foundKnoxDescriptors(String descriptorList, String path);
@@ -53,6 +55,12 @@ public interface HadoopXmlResourceMessages {
 
   @Message(level = MessageLevel.ERROR, text = "Parsing XML configuration {0} failed: {1}")
   void failedToParseXmlConfiguration(String path, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.DEBUG, text = "Processing Hadoop XML resource {0} (force = {1}; lastReloadTime = {2}; lastModified = {3})")
+  void processHadoopXmlResource(String descriptorPath, boolean force, FileTime lastReloadTime, FileTime lastModifiedTime);
+
+  @Message(level = MessageLevel.DEBUG, text = "Skipping Hadoop XML resource monitoring of {0} (force = {1}; lastReloadTime = {2}; lastModified = {3})")
+  void skipMonitorHadoopXmlResource(String descriptorPath, boolean force, FileTime lastReloadTime, FileTime lastModifiedTime);
 
   @Message(level = MessageLevel.ERROR, text = "Error while monitoring Hadoop style XML configuration {0}: {1}")
   void failedToMonitorHadoopXmlResource(String descriptorPath, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);

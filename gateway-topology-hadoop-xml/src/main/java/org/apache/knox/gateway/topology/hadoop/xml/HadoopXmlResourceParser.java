@@ -83,32 +83,20 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
   }
 
   /**
-   * Produces a set of {@link SimpleDescriptor}s from the specified file. Parses ALL descriptors listed in the given file.
-   *
-   * @param path
-   *          The path to the configuration file which holds descriptor information in a pre-defined format.
-   * @return A SimpleDescriptor based on the contents of the given file.
-   */
-  public HadoopXmlResourceParserResult parse(String path) {
-    return parse(path, null);
-  }
-
-  /**
    * Produces a set of {@link SimpleDescriptor}s from the specified file.
    *
    * @param path
    *          The path to the configuration file which holds descriptor information in a pre-defined format.
-   * @param topologyName
    *          if set, the parser should only parse a descriptor with the same name
    * @return A SimpleDescriptor based on the contents of the given file.
    */
-  public HadoopXmlResourceParserResult parse(String path, String topologyName) {
+  public HadoopXmlResourceParserResult parse(String path) {
     try {
-      log.parseHadoopXmlResource(path, topologyName == null ? "all topologies" : topologyName);
+      log.parseHadoopXmlResource(path);
       final Configuration xmlConfiguration = new Configuration(false);
       xmlConfiguration.addResource(Paths.get(path).toUri().toURL());
       xmlConfiguration.reloadConfiguration();
-      final HadoopXmlResourceParserResult parserResult = parseXmlConfig(xmlConfiguration, topologyName);
+      final HadoopXmlResourceParserResult parserResult = parseXmlConfig(xmlConfiguration);
       logParserResult(path, parserResult);
       return parserResult;
     } catch (Exception e) {
@@ -132,7 +120,7 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
     }
   }
 
-  private HadoopXmlResourceParserResult parseXmlConfig(Configuration xmlConfiguration, String topologyName) {
+  private HadoopXmlResourceParserResult parseXmlConfig(Configuration xmlConfiguration) {
     final Map<String, ProviderConfiguration> providers = new LinkedHashMap<>();
     final Set<SimpleDescriptor> descriptors = new LinkedHashSet<>();
     Set<String> deletedDescriptors = new HashSet<>();
@@ -143,8 +131,8 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
         final String[] providerConfigurations = xmlConfigurationKey.replace(CONFIG_NAME_PROVIDER_CONFIGS_PREFIX, "").split(",");
         Arrays.stream(providerConfigurations).map(String::trim).forEach(providerConfigurationName ->
                 parseProvider(providerConfigurationName, xmlDescriptor.getValue(), providers, deletedProviders));
-      } else if (topologyName == null || xmlConfigurationKey.equals(topologyName)) {
-          parseDescriptor(xmlConfigurationKey, xmlDescriptor.getValue(), descriptors, deletedDescriptors);
+      } else {
+        parseDescriptor(xmlConfigurationKey, xmlDescriptor.getValue(), descriptors, deletedDescriptors);
       }
     });
     return new HadoopXmlResourceParserResult(providers, descriptors, deletedDescriptors, deletedProviders);
