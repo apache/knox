@@ -120,6 +120,30 @@ public class ClouderaManagerServiceDiscoveryRepositoryTest {
   }
 
   @Test
+  public void testAddNullRoles() throws Exception {
+    repository.registerCluster(serviceDiscoveryConfig);
+    final ApiService service = EasyMock.createNiceMock(ApiService.class);
+    EasyMock.expect(service.getName()).andReturn(ClouderaManagerServiceDiscovery.CORE_SETTINGS_TYPE).anyTimes();
+    EasyMock.replay(service);
+    repository.addService(serviceDiscoveryConfig, service);
+    repository.addRoles(serviceDiscoveryConfig, service, null);
+    assertNull(repository.getRoles(serviceDiscoveryConfig, service).getItems());
+  }
+
+  @Test
+  public void testAddNullRoleItems() throws Exception {
+    repository.registerCluster(serviceDiscoveryConfig);
+    final ApiService service = EasyMock.createNiceMock(ApiService.class);
+    EasyMock.expect(service.getName()).andReturn(ClouderaManagerServiceDiscovery.CORE_SETTINGS_TYPE).anyTimes();
+    final ApiRoleList roles = EasyMock.createNiceMock(ApiRoleList.class);
+    EasyMock.expect(roles.getItems()).andReturn(null).anyTimes();
+    EasyMock.replay(service, roles);
+    repository.addService(serviceDiscoveryConfig, service);
+    repository.addRoles(serviceDiscoveryConfig, service, roles);
+    assertNull(repository.getRoles(serviceDiscoveryConfig, service).getItems());
+  }
+
+  @Test
   public void testAddRoleConfig() throws Exception {
     final String serviceName = "HDFS-1";
     final String roleName = "NAMENODE-1";

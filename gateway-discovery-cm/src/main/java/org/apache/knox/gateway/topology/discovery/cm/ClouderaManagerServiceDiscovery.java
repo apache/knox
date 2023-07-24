@@ -279,14 +279,14 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
           serviceConfig = getServiceConfig(client.getConfig(), servicesResourceApi, service);
         }
         ApiRoleList roleList = getRoles(client.getConfig(), rolesResourceApi, clusterName, service);
-        if (roleList != null) {
+        if (roleList != null && roleList.getItems() != null) {
           for (ApiRole role : roleList.getItems()) {
             String roleName = role.getName();
             log.discoveringServiceRole(roleName, role.getType());
 
             ApiConfigList roleConfig = null;
-            /* no reason to check role config for CM service */
-            if (!CM_SERVICE_TYPE.equals(service.getType())) {
+            /* no reason to check role config for CM or CORE_SETTINGS services */
+            if (!CM_SERVICE_TYPE.equals(service.getType())  && !CORE_SETTINGS_TYPE.equals(service.getType())) {
               roleConfig = getRoleConfig(client.getConfig(), rolesResourceApi, service, role);
             }
 
@@ -381,7 +381,6 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
       // no roles in the repository -> query CM
       final String serviceName = service.getName();
       try {
-        log.lookupRolesFromCM();
         /* Populate roles for CM Service since they are not discoverable */
         if (CM_SERVICE_TYPE.equalsIgnoreCase(serviceName)) {
           roles = new ApiRoleList();
@@ -390,11 +389,16 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
           cmRole.setType(CM_ROLE_TYPE);
           roles.addItemsItem(cmRole);
         } else if (!CORE_SETTINGS_TYPE.equalsIgnoreCase(serviceName)) { //CORE_SETTINGS has no roles, it does not make sense to discover them
+          log.lookupRolesFromCM();
           roles = rolesResourceApi.readRoles(clusterName, serviceName, "", VIEW_SUMMARY);
+        } else {
+          log.noRoles();
         }
 
         // make sure that role is populated in the service discovery repository to avoid subsequent CM calls
-        repository.addRoles(serviceDiscoveryConfig, service, roles);
+        if (roles != null && roles.getItems() != null) {
+          repository.addRoles(serviceDiscoveryConfig, service, roles);
+        }
       } catch (ApiException e) {
         log.failedToAccessServiceRoleConfigs(serviceName, "N/A", clusterName, e);
         throw e;
