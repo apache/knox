@@ -625,10 +625,10 @@ public class GatewayServer {
     File topologiesDir = calculateAbsoluteTopologiesDir();
     monitor = services.getService(ServiceType.TOPOLOGY_SERVICE);
 
-    // Descriptors should be reloaded before topology reloading at startup, so that any changes to descriptors
+    // Shared providers and descriptors should be reloaded before topology reloading at startup, so that any changes to descriptors
     // will be realized before Knox deploys "old" topologies that would have re-deployed anyway in a matter of seconds
     // by the descriptor monitor
-    monitor.reloadDescriptors();
+    handleHadoopXmlResources();
 
     monitor.addTopologyChangeListener(listener);
     log.loadingTopologiesFromDirectory(topologiesDir.getAbsolutePath());
@@ -699,8 +699,6 @@ public class GatewayServer {
     }
 
     cleanupTopologyDeployments();
-
-    handleHadoopXmlResources();
 
     // Start the topology monitor.
     monitor.startMonitor();
