@@ -36,7 +36,7 @@ public class ImpalaServiceModelGeneratorTest extends AbstractServiceModelGenerat
     final Map<String, String> roleConfig = new HashMap<>();
     roleConfig.put(ImpalaServiceModelGenerator.HTTP_PORT, "1357");
 
-    validateServiceModel(createServiceModel(serviceConfig, roleConfig), serviceConfig, roleConfig);
+    validateServiceModel(createServiceModel(serviceConfig, roleConfig), serviceConfig, roleConfig, false);
   }
 
   @Override
