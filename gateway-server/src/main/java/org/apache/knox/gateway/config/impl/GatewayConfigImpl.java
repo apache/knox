@@ -1496,4 +1496,20 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return usersCanSeeAllTokens == null ? false : usersCanSeeAllTokens.contains(userName);
   }
 
+  @Override
+  public Map<String, Collection<String>> getApplicationPathAliases() {
+    return getPathAliases(".application");
+  }
+
+  private Map<String, Collection<String>> getPathAliases(String qualifier) {
+    final String prefix = GATEWAY_CONFIG_FILE_PREFIX + qualifier + DEPLOYMENT_PATH_ALIAS;
+    final Map<String, Collection<String>> pathAliases = new HashMap<>();
+    this.forEach(config -> {
+      if (config.getKey().startsWith(prefix)) {
+        pathAliases.put(config.getKey().substring(prefix.length()).toLowerCase(Locale.getDefault()), getTrimmedStringCollection(config.getKey()));
+      }
+    });
+    return pathAliases;
+  }
+
 }

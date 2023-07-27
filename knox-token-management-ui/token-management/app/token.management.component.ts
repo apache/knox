@@ -32,7 +32,9 @@ import {SelectionModel} from '@angular/cdk/collections';
 
 export class TokenManagementComponent implements OnInit {
 
-    tokenGenerationPageURL = window.location.pathname.replace(new RegExp('token-management/.*'), 'token-generation/index.html');
+    pathParts = window.location.pathname.split('/');
+    topologyContext = '/' + this.pathParts[1] + '/' + this.pathParts[2] + '/';
+    tokenGenerationPageURL = this.topologyContext + 'token-generation/index.html';
 
     userName: string;
     canSeeAllTokens: boolean;

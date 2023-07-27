@@ -1062,4 +1062,9 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return false;
   }
 
+  @Override
+  public Map<String, Collection<String>> getApplicationPathAliases() {
+    return Collections.emptyMap();
+  }
+
 }

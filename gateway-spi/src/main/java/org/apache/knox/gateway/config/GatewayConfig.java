@@ -115,6 +115,8 @@ public interface GatewayConfig {
 
   String DEFAULT_API_SERVICES_VIEW_VERSION = "v1";
 
+  String DEPLOYMENT_PATH_ALIAS = ".path.alias.";
+
   /**
    * The location of the gateway configuration.
    * Subdirectories will be: topologies
@@ -893,5 +895,7 @@ public interface GatewayConfig {
    *         userName) on the Token Management page; <code>false</code> otherwise
    */
   boolean canSeeAllTokens(String userName);
+
+  Map<String, Collection<String>> getApplicationPathAliases();
 
 }

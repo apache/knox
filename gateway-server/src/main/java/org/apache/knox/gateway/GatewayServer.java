@@ -926,6 +926,9 @@ public class GatewayServer {
         contexts.removeHandler( oldContext );
       }
       contexts.addHandler( newContext );
+
+      processApplicationPathAliases(warDir, topology);
+
       if( contexts.isRunning() && !newContext.isRunning() ) {
         newContext.start();
         if(!newContext.isAvailable()) {
@@ -937,6 +940,18 @@ public class GatewayServer {
       auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE );
       log.failedToDeployTopology( topology.getName(), e );
     }
+  }
+
+  private void processApplicationPathAliases(File warDir, Topology topology) {
+    final Map<String, Collection<String>> applicationPathAliases = config.getApplicationPathAliases();
+    applicationPathAliases.forEach((appName, aliases) -> {
+      if (warDir.getName().contains(appName) && !aliases.isEmpty()) {
+        aliases.forEach(alias -> {
+          WebAppContext aliasContext = createWebAppContext(topology, warDir, alias);
+          contexts.addHandler(aliasContext);
+        });
+      }
+    });
   }
 
   private synchronized void internalDeactivateTopology( Topology topology ) {
