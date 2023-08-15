@@ -54,6 +54,7 @@ public class HadoopXmlResourceMonitor implements AdvancedServiceDiscoveryConfigC
   private static final HadoopXmlResourceMessages LOG = MessagesFactory.get(HadoopXmlResourceMessages.class);
   private final String sharedProvidersDir;
   private final String descriptorsDir;
+  private final String topologyDir;
   private final long monitoringInterval;
   private final HadoopXmlResourceParser hadoopXmlResourceParser;
   private final Map<Path, FileTime> lastReloadTimes;
@@ -63,6 +64,7 @@ public class HadoopXmlResourceMonitor implements AdvancedServiceDiscoveryConfigC
     this.hadoopXmlResourceParser = hadoopXmlResourceParser;
     this.sharedProvidersDir = gatewayConfig.getGatewayProvidersConfigDir();
     this.descriptorsDir = gatewayConfig.getGatewayDescriptorsDir();
+    this.topologyDir = gatewayConfig.getGatewayTopologyDir();
     this.monitoringInterval = gatewayConfig.getClouderaManagerDescriptorsMonitoringInterval();
     this.lastReloadTimes = new ConcurrentHashMap<>();
   }
@@ -109,6 +111,7 @@ public class HadoopXmlResourceMonitor implements AdvancedServiceDiscoveryConfigC
     final HadoopXmlResourceParserResult result = hadoopXmlResourceParser.parse(descriptorFilePath);
     processSharedProviders(result);
     processDescriptors(result);
+    processDeleted(topologyDir, result.getDeletedDescriptors(), ".xml");
     processDeleted(descriptorsDir, result.getDeletedDescriptors(), ".json");
     processDeleted(sharedProvidersDir, result.getDeletedProviders(), ".json");
   }
