@@ -37,7 +37,8 @@ public abstract class AbstractGatewayFilter implements Filter {
   public static final String TARGET_REQUEST_URL_ATTRIBUTE_NAME = "targetRequestUrl";
   public static final String SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME = "sourceRequestContextUrl";
   public static final String TARGET_SERVICE_ROLE = "targetServiceRole";
-//  public static final String RESPONSE_STREAMER_ATTRIBUTE_NAME = "responseStreamer";
+  public static final String DEFAULT_TOPOLOGY_FORWARD_ATTRIBUTE_NAME = "defaultTopologyForward";
+  //  public static final String RESPONSE_STREAMER_ATTRIBUTE_NAME = "responseStreamer";
   private static final GatewaySpiMessages LOG = MessagesFactory.get( GatewaySpiMessages.class );
 
   private FilterConfig config;

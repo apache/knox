@@ -46,8 +46,8 @@ public class CookieScopeResponseWrapper extends GatewayResponseWrapper {
     public void addHeader(String name, String value) {
         if (SET_COOKIE.equals(name)) {
             String updatedCookie;
-            if (value.contains(COOKIE_PATH)) {
-                updatedCookie = value.replace(COOKIE_PATH, scopePath);
+            if (hasCookiePathAttribute(value)) {
+                updatedCookie = value.replaceAll("(?i)" + COOKIE_PATH, scopePath);
             } else {
                 // append the scope path
                 updatedCookie = String.format(Locale.ROOT, "%s %s;", value, scopePath);
@@ -56,6 +56,11 @@ public class CookieScopeResponseWrapper extends GatewayResponseWrapper {
         } else {
             super.addHeader(name, value);
         }
+    }
+
+    private boolean hasCookiePathAttribute(String value) {
+        return value != null
+                && value.toLowerCase(Locale.ROOT).contains(COOKIE_PATH.toLowerCase(Locale.ROOT));
     }
 
     @Override
