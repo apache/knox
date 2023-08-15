@@ -47,13 +47,15 @@ public class SimpleDescriptorFactoryTest {
 
     @Test
     public void testParseJSONSimpleDescriptor() throws Exception {
-        testParseSimpleDescriptor(FileType.JSON);
+        testParseSimpleDescriptor(FileType.JSON, false);
+        testParseSimpleDescriptor(FileType.JSON, true);
     }
 
     @Test
     public void testParseYAMLSimpleDescriptor() throws Exception {
-        testParseSimpleDescriptor(FileType.YML);
-        testParseSimpleDescriptor(FileType.YAML);
+        testParseSimpleDescriptor(FileType.YML, true);
+        testParseSimpleDescriptor(FileType.YAML, false);
+        testParseSimpleDescriptor(FileType.YAML, true);
     }
 
     @Test
@@ -102,7 +104,7 @@ public class SimpleDescriptorFactoryTest {
     }
 
 
-    private void testParseSimpleDescriptor(FileType type) throws Exception {
+    private void testParseSimpleDescriptor(FileType type, boolean provisionEncryptQueryStringCredential) throws Exception {
         final String   discoveryType    = "AMBARI";
         final String   discoveryAddress = "http://c6401.ambari.apache.org:8080";
         final String   discoveryUser    = "joeblow";
@@ -128,9 +130,10 @@ public class SimpleDescriptorFactoryTest {
                                            discoveryUser,
                                            providerConfig,
                                            clusterName,
+                                           provisionEncryptQueryStringCredential,
                                            services);
             SimpleDescriptor sd = SimpleDescriptorFactory.parse(testFile.getAbsolutePath());
-            validateSimpleDescriptor(sd, discoveryType, discoveryAddress, providerConfig, clusterName, services);
+            validateSimpleDescriptor(sd, discoveryType, discoveryAddress, providerConfig, clusterName, provisionEncryptQueryStringCredential, services);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -175,10 +178,11 @@ public class SimpleDescriptorFactoryTest {
                                            discoveryUser,
                                            providerConfig,
                                            clusterName,
+                                           true,
                                            services,
                                            serviceVersions);
             SimpleDescriptor sd = SimpleDescriptorFactory.parse(testFile.getAbsolutePath());
-            validateSimpleDescriptor(sd, discoveryType, discoveryAddress, providerConfig, clusterName, services, serviceVersions);
+            validateSimpleDescriptor(sd, discoveryType, discoveryAddress, providerConfig, clusterName, true, services, serviceVersions);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -238,11 +242,12 @@ public class SimpleDescriptorFactoryTest {
                                            discoveryUser,
                                            providerConfig,
                                            clusterName,
+                                           true,
                                            services,
                                            null,
                                            serviceParams);
             SimpleDescriptor sd = SimpleDescriptorFactory.parse(testFile.getAbsolutePath());
-            validateSimpleDescriptor(sd, discoveryType, discoveryAddress, providerConfig, clusterName, services, null, serviceParams);
+            validateSimpleDescriptor(sd, discoveryType, discoveryAddress, providerConfig, clusterName, true, services, null, serviceParams);
         } finally {
             if (testFile != null) {
                 try {
@@ -289,6 +294,7 @@ public class SimpleDescriptorFactoryTest {
                                            discoveryUser,
                                            providerConfig,
                                            clusterName,
+                                           true,
                                            null,
                                            null,
                                            null,
@@ -300,6 +306,7 @@ public class SimpleDescriptorFactoryTest {
                                      discoveryAddress,
                                      providerConfig,
                                      clusterName,
+                                     true,
                                      null,
                                      null,
                                      null,
@@ -378,6 +385,7 @@ public class SimpleDescriptorFactoryTest {
                                            discoveryUser,
                                            providerConfig,
                                            clusterName,
+                                           true,
                                            services,
                                            null,
                                            serviceParams,
@@ -389,6 +397,7 @@ public class SimpleDescriptorFactoryTest {
                                      discoveryAddress,
                                      providerConfig,
                                      clusterName,
+                                     true,
                                      services,
                                      null,
                                      serviceParams,
@@ -428,6 +437,7 @@ public class SimpleDescriptorFactoryTest {
                                      String                    discoveryUser,
                                      String                    providerConfig,
                                      String                    clusterName,
+                                     boolean provisionEncryptQueryStringCredential,
                                      Map<String, List<String>> services) throws Exception {
         return writeDescriptorFile(type,
                                    path,
@@ -436,6 +446,7 @@ public class SimpleDescriptorFactoryTest {
                                    discoveryUser,
                                    providerConfig,
                                    clusterName,
+                                   provisionEncryptQueryStringCredential,
                                    services,
                                    null);
     }
@@ -447,6 +458,7 @@ public class SimpleDescriptorFactoryTest {
                                      String                    discoveryUser,
                                      String                    providerConfig,
                                      String                    clusterName,
+                                     boolean provisionEncryptQueryStringCredential,
                                      Map<String, List<String>> services,
                                      Map<String, String>       serviceVersions) throws Exception {
         return writeDescriptorFile(type,
@@ -456,6 +468,7 @@ public class SimpleDescriptorFactoryTest {
                                    discoveryUser,
                                    providerConfig,
                                    clusterName,
+                                   provisionEncryptQueryStringCredential,
                                    services,
                                    serviceVersions,
                                    null);
@@ -468,6 +481,7 @@ public class SimpleDescriptorFactoryTest {
                                      String                           discoveryUser,
                                      String                           providerConfig,
                                      String                           clusterName,
+                                     boolean provisionEncryptQueryStringCredential,
                                      Map<String, List<String>>        services,
                                      Map<String, String>              serviceVersions,
                                      Map<String, Map<String, String>> serviceParams) throws Exception {
@@ -478,6 +492,7 @@ public class SimpleDescriptorFactoryTest {
                                    discoveryUser,
                                    providerConfig,
                                    clusterName,
+                                   provisionEncryptQueryStringCredential,
                                    services,
                                    serviceVersions,
                                    serviceParams,
@@ -493,6 +508,7 @@ public class SimpleDescriptorFactoryTest {
                                      String                           discoveryUser,
                                      String                           providerConfig,
                                      String                           clusterName,
+                                     boolean provisionEncryptQueryStringCredential,
                                      Map<String, List<String>>        services,
                                      Map<String, String>              serviceVersions,
                                      Map<String, Map<String, String>> serviceParams,
@@ -507,6 +523,7 @@ public class SimpleDescriptorFactoryTest {
                                    discoveryUser,
                                    providerConfig,
                                    clusterName,
+                                   provisionEncryptQueryStringCredential,
                                    services,
                                    serviceVersions,
                                    serviceParams,
@@ -521,6 +538,7 @@ public class SimpleDescriptorFactoryTest {
                                    discoveryUser,
                                    providerConfig,
                                    clusterName,
+                                   provisionEncryptQueryStringCredential,
                                    services,
                                    serviceVersions,
                                    serviceParams,
@@ -538,6 +556,7 @@ public class SimpleDescriptorFactoryTest {
                            String                           discoveryUser,
                            String                           providerConfig,
                            String                           clusterName,
+                           boolean provisionEncryptQueryStringCredential,
                            Map<String, List<String>>        services,
                            Map<String, String>              serviceVersions,
                            Map<String, Map<String, String>> serviceParams,
@@ -552,6 +571,9 @@ public class SimpleDescriptorFactoryTest {
         fw.write("\"discovery-user\":\"" + discoveryUser + "\",\n");
         fw.write("\"provider-config-ref\":\"" + providerConfig + "\",\n");
         fw.write("\"cluster\":\"" + clusterName + "\"");
+        if (!provisionEncryptQueryStringCredential) {
+          fw.write("\"provision-encrypt-query-string-credential\":\"" + provisionEncryptQueryStringCredential + "\"");
+        }
 
         if (services != null && !services.isEmpty()) {
           fw.write(",\n\"services\":[\n");
@@ -632,6 +654,7 @@ public class SimpleDescriptorFactoryTest {
                            String                           discoveryUser,
                            String                           providerConfig,
                            String                           clusterName,
+                           boolean provisionEncryptQueryStringCredential,
                            Map<String, List<String>>        services,
                            Map<String, String>              serviceVersions,
                            Map<String, Map<String, String>> serviceParams,
@@ -647,6 +670,9 @@ public class SimpleDescriptorFactoryTest {
         fw.write("discovery-user: " + discoveryUser + "\n");
         fw.write("provider-config-ref: " + providerConfig + "\n");
         fw.write("cluster: " + clusterName + "\n");
+        if (!provisionEncryptQueryStringCredential) {
+          fw.write("provision-encrypt-query-string-credential: " + provisionEncryptQueryStringCredential + "\n");
+        }
 
         if (services != null && !services.isEmpty()) {
           fw.write("services:\n");
@@ -705,8 +731,9 @@ public class SimpleDescriptorFactoryTest {
                                           String                    discoveryAddress,
                                           String                    providerConfig,
                                           String                    clusterName,
+                                          boolean provisionEncryptQueryStringCredential,
                                           Map<String, List<String>> expectedServices) {
-        validateSimpleDescriptor(sd, discoveryType, discoveryAddress, providerConfig, clusterName, expectedServices, null);
+        validateSimpleDescriptor(sd, discoveryType, discoveryAddress, providerConfig, clusterName, provisionEncryptQueryStringCredential, expectedServices, null);
     }
 
 
@@ -715,9 +742,10 @@ public class SimpleDescriptorFactoryTest {
                                           String                    discoveryAddress,
                                           String                    providerConfig,
                                           String                    clusterName,
+                                          boolean provisionEncryptQueryStringCredential,
                                           Map<String, List<String>> expectedServices,
                                           Map<String, String>       expectedServiceVersions) {
-        validateSimpleDescriptor(sd, discoveryType, discoveryAddress, providerConfig, clusterName, expectedServices, expectedServiceVersions, null);
+        validateSimpleDescriptor(sd, discoveryType, discoveryAddress, providerConfig, clusterName, provisionEncryptQueryStringCredential, expectedServices, expectedServiceVersions, null);
     }
 
 
@@ -726,6 +754,7 @@ public class SimpleDescriptorFactoryTest {
                                           String                           discoveryAddress,
                                           String                           providerConfig,
                                           String                           clusterName,
+                                          boolean provisionEncryptQueryStringCredential,
                                           Map<String, List<String>>        expectedServices,
                                           Map<String, String>              expectedServiceVersions,
                                           Map<String, Map<String, String>> expectedServiceParameters) {
@@ -734,6 +763,7 @@ public class SimpleDescriptorFactoryTest {
                                  discoveryAddress,
                                  providerConfig,
                                  clusterName,
+                                 provisionEncryptQueryStringCredential,
                                  expectedServices,
                                  expectedServiceVersions,
                                  expectedServiceParameters,
@@ -746,6 +776,7 @@ public class SimpleDescriptorFactoryTest {
                                           String                           discoveryAddress,
                                           String                           providerConfig,
                                           String                           clusterName,
+                                          boolean provisionEncryptQueryStringCredential,
                                           Map<String, List<String>>        expectedServices,
                                           Map<String, String>              expectedServiceVersions,
                                           Map<String, Map<String, String>> expectedServiceParameters,
@@ -756,6 +787,7 @@ public class SimpleDescriptorFactoryTest {
         assertEquals(discoveryAddress, sd.getDiscoveryAddress());
         assertEquals(providerConfig, sd.getProviderConfig());
         assertEquals(clusterName, sd.getCluster());
+        assertEquals(provisionEncryptQueryStringCredential, sd.isProvisionEncryptQueryStringCredential());
 
         List<SimpleDescriptor.Service> actualServices = sd.getServices();
 

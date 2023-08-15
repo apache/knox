@@ -48,6 +48,9 @@ public class SimpleDescriptorImpl implements SimpleDescriptor {
     @JsonProperty("cluster")
     private String cluster;
 
+    @JsonProperty("provision-encrypt-query-string-credential")
+    private boolean provisionEncryptQueryStringCredential = true;
+
     @JsonProperty("services")
     private List<Service> services;
 
@@ -126,6 +129,15 @@ public class SimpleDescriptorImpl implements SimpleDescriptor {
 
     public void setReadOnly(boolean readOnly) {
       this.readOnly = readOnly;
+    }
+
+    @Override
+    public boolean isProvisionEncryptQueryStringCredential() {
+      return provisionEncryptQueryStringCredential;
+    }
+
+    public void setProvisionEncryptQueryStringCredential(boolean provisionEncryptQueryStringCredential) {
+      this.provisionEncryptQueryStringCredential = provisionEncryptQueryStringCredential;
     }
 
     public void addService(Service service) {
