@@ -17,13 +17,17 @@
 package org.apache.knox.gateway.topology.hadoop.xml;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.topology.simple.ProviderConfiguration;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
 
 class HadoopXmlResourceParserResult {
+  private static final HadoopXmlResourceMessages LOG = MessagesFactory.get(HadoopXmlResourceMessages.class);
   final Map<String, ProviderConfiguration> providers;
   final Set<SimpleDescriptor> descriptors;
   private final Set<String> deletedDescriptors;
@@ -38,7 +42,21 @@ class HadoopXmlResourceParserResult {
     this.providers = providers;
     this.descriptors = descriptors;
     this.deletedDescriptors = deletedDescriptors;
-    this.deletedProviders = deletedProviders;
+    this.deletedProviders = nonReferencedProviders(deletedProviders, descriptors);
+  }
+
+  private Set<String> nonReferencedProviders(Set<String> deletedProviders, Set<SimpleDescriptor> descriptors) {
+    Set<String> referencedProviders = descriptors.stream()
+            .map(SimpleDescriptor::getProviderConfig).collect(Collectors.toSet());
+    Set<String> result = new HashSet<>();
+    for (String provider : deletedProviders) {
+      if (referencedProviders.contains(provider)) {
+        LOG.notDeletingReferenceProvider(provider);
+      } else {
+        result.add(provider);
+      }
+    }
+    return result;
   }
 
   public Map<String, ProviderConfiguration> getProviders() {

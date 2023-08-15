@@ -248,6 +248,13 @@ public class HadoopXmlResourceParserTest {
     assertEquals(new HashSet<>(Arrays.asList("admin", "knoxsso")), result.getDeletedProviders());
   }
 
+  @Test
+  public void testReferencedProviderIsNotDeleted() throws Exception {
+    String testConfigPath = this.getClass().getClassLoader().getResource("testDelete2.xml").getPath();
+    HadoopXmlResourceParserResult result = hadoopXmlResourceParser.parse(testConfigPath);
+    assertEquals(new HashSet<>(Arrays.asList("unused")), result.getDeletedProviders());
+  }
+
   private void validateTopology1Descriptors(SimpleDescriptor descriptor) {
     assertTrue(descriptor.isReadOnly());
     assertEquals("topology1", descriptor.getName());

@@ -91,4 +91,7 @@ public interface HadoopXmlResourceMessages {
 
   @Message(level = MessageLevel.INFO, text = "Deleting file {0}")
   void deleteFile(String name);
+
+  @Message(level = MessageLevel.WARN, text = "Not deleting provider {0} as it is referenced by on ore more descriptors.")
+  void notDeletingReferenceProvider(String provider);
 }
