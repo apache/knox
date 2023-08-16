@@ -153,6 +153,7 @@ public class SimpleDescriptorHandlerFuncTest {
       EasyMock.expect(testDescriptor.getDiscoveryUser()).andReturn(null).anyTimes();
       EasyMock.expect(testDescriptor.getProviderConfig()).andReturn(providerConfig.getAbsolutePath()).anyTimes();
       EasyMock.expect(testDescriptor.getCluster()).andReturn(clusterName).anyTimes();
+      EasyMock.expect(testDescriptor.isProvisionEncryptQueryStringCredential()).andReturn(true).anyTimes();
       List<SimpleDescriptor.Service> serviceMocks = new ArrayList<>();
       for (String serviceName : serviceURLs.keySet()) {
         SimpleDescriptor.Service svc = EasyMock.createNiceMock(SimpleDescriptor.Service.class);

@@ -42,6 +42,8 @@ public interface SimpleDescriptor {
 
     boolean isReadOnly();
 
+    boolean isProvisionEncryptQueryStringCredential();
+
     List<Service> getServices();
 
     Service getService(String serviceName);

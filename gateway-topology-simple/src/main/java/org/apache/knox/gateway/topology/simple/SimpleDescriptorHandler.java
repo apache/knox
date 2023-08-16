@@ -191,7 +191,7 @@ public class SimpleDescriptorHandler {
         // when the topology is deployed. This is to support Knox HA deployments, where multiple Knox instances are
         // generating topologies based on a shared remote descriptor, and they must all be able to encrypt/decrypt
         // query params with the same credentials. (KNOX-1136)
-        if (!provisionQueryParamEncryptionCredential(desc.getName(), gws)) {
+        if (desc.isProvisionEncryptQueryStringCredential() && !provisionQueryParamEncryptionCredential(desc.getName(), gws)) {
             log.unableCreatePasswordForEncryption(desc.getName());
         }
 
