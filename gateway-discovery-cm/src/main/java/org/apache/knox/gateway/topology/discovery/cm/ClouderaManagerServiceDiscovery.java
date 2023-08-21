@@ -41,6 +41,9 @@ import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.monitor.ClouderaManagerClusterConfigurationMonitor;
 
 import java.net.ConnectException;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -234,7 +237,9 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
     if (maxRetryAttempts > 0 && maxRetryAttempts > retryAttempts.getAndIncrement()) {
       final Throwable cause = e.getCause();
       if (cause != null) {
-        if (ConnectException.class.isAssignableFrom(cause.getClass())) {
+        if (SocketException.class.isAssignableFrom(cause.getClass())
+                || SocketTimeoutException.class.isAssignableFrom(cause.getClass())
+                || UnknownHostException.class.isAssignableFrom(cause.getClass())) {
           return true;
         }
       }
