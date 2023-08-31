@@ -30,6 +30,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Locale;
 import java.util.Map;
 
 public class InstrumentedGatewayFilter extends GatewayFilter {
@@ -91,7 +92,7 @@ public class InstrumentedGatewayFilter extends GatewayFilter {
       HttpServletRequest httpServletRequest = (HttpServletRequest) request;
       builder.append(InstrUtils.getResourcePath(httpServletRequest.getPathInfo()));
       builder.append('.');
-      builder.append(httpServletRequest.getMethod());
+      builder.append(httpServletRequest.getMethod().toLowerCase(Locale.ROOT));
       builder.append("-requests");
     }
     return metricRegistry.timer(builder.toString());
