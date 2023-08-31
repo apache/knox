@@ -45,7 +45,7 @@ public class CookieScopeServletFilter extends AbstractGatewayFilter {
   @Override
   protected void doFilter( HttpServletRequest request, HttpServletResponse response, FilterChain chain )
       throws IOException, ServletException {
-    if ("true".equals(request.getAttribute(DEFAULT_TOPOLOGY_FORWARD_ATTRIBUTE_NAME))) {
+    if (Boolean.parseBoolean((String)request.getAttribute(DEFAULT_TOPOLOGY_FORWARD_ATTRIBUTE_NAME))) {
       LOG.ignoringCookiePathScopeForDefaultTopology();
       chain.doFilter(request, response);
     } else {
