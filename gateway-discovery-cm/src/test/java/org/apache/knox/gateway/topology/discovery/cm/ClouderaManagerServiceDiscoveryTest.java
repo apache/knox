@@ -62,7 +62,7 @@ import org.easymock.EasyMock;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
-import java.net.ConnectException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1352,7 +1352,7 @@ public class ClouderaManagerServiceDiscoveryTest {
     @Override
     public <T> ApiResponse<T> execute(Call call, Type returnType) throws ApiException {
       if (executeCount.getAndIncrement() < GatewayConfig.DEFAULT_CM_SERVICE_DISCOVERY_MAX_RETRY_ATTEMPTS - 2) {
-        throw new ApiException(new ConnectException("Failed to connect to CM HOST"));
+        throw new ApiException(new SocketTimeoutException("Failed to connect to CM HOST"));
       }
       return super.execute(call, returnType);
     }
