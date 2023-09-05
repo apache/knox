@@ -61,6 +61,15 @@ public class CookieScopeResponseWrapperTest {
   }
 
   @Test
+  public void testRootLowerCasePath() {
+    CookieScopeResponseWrapper underTest = new CookieScopeResponseWrapper(mock, "gw");
+    underTest.addHeader("Set-Cookie", "SESSIONID=jn0zexg59r1jo1n66hd7tg5anl; path=/; HttpOnly;");
+
+    Assert.assertEquals("Set-Cookie", captureKey.getValue());
+    Assert.assertEquals("SESSIONID=jn0zexg59r1jo1n66hd7tg5anl; Path=/gw/; HttpOnly;", captureValue.getValue());
+  }
+
+  @Test
   public void testMultiSegmentPath() {
     CookieScopeResponseWrapper underTest = new CookieScopeResponseWrapper(mock, "some/path");
     underTest.addHeader("Set-Cookie", "SESSIONID=jn0zexg59r1jo1n66hd7tg5anl; Path=/; HttpOnly;");

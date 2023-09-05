@@ -90,4 +90,7 @@ public interface GatewaySpiMessages {
 
   @Message(level=MessageLevel.DEBUG, text="Creating impersonation provider in {0} / {1} with prefix {2} and config {3}")
   void createImpersonationProvider(String topology, String role, String prefix, String properties);
+
+  @Message(level=MessageLevel.DEBUG, text="Ignoring cookie path scope filter for default topology")
+  void ignoringCookiePathScopeForDefaultTopology();
 }
