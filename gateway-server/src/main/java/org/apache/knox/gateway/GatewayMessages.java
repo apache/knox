@@ -18,6 +18,7 @@
 package org.apache.knox.gateway;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Date;
@@ -31,8 +32,6 @@ import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.topology.monitor.db.LocalDirectory;
-
-import java.io.IOException;
 
 @Messages(logger="org.apache.knox.gateway")
 public interface GatewayMessages {
@@ -785,4 +784,20 @@ public interface GatewayMessages {
   @Message(level = MessageLevel.DEBUG,
           text = "Request {0} is wrapped to url encoded form request.")
   void wrappingRequestToUrlEncodedFormRequest(String requestURI);
+
+  @Message(level = MessageLevel.INFO,
+          text = "Checking gateway status. Deployed topologies: {0}. Waiting for: {1}")
+  void checkingGatewayStatus(Set<String> deployedTopologies, Set<String> missingTopologies);
+
+  @Message(level = MessageLevel.INFO,
+          text = "Checking gateway status. No topologies to check")
+  void checkingGatewayStatus();
+
+  @Message(level = MessageLevel.INFO,
+          text = "Collected topologies for health check: {0}")
+  void collectedTopologiesForHealthCheck(Set<String> result);
+
+  @Message(level = MessageLevel.INFO,
+          text = "Starting gateway status checker service. Topologies to check: {0}")
+  void startingStatusMonitor(Set<String> topologyNames);
 }

@@ -43,6 +43,7 @@ import org.apache.knox.gateway.services.registry.ServiceRegistry;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.SSLService;
 import org.apache.knox.gateway.services.topology.TopologyService;
+import org.apache.knox.gateway.services.topology.impl.GatewayStatusChecker;
 import org.apache.knox.gateway.topology.Application;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.TopologyEvent;
@@ -146,6 +147,7 @@ public class GatewayServer {
   private TopologyListener listener;
   private Map<String, WebAppContext> deployments;
   private AtomicBoolean stopped = new AtomicBoolean(false);
+  private GatewayStatusChecker gatewayStatusChecker;
 
   public static void main( String[] args ) {
     try {
@@ -630,6 +632,10 @@ public class GatewayServer {
     // by the descriptor monitor
     handleHadoopXmlResources();
 
+    // at this point descriptors are supposed to be generated from hxr
+    gatewayStatusChecker = services.getService(ServiceType.GATEWAY_STATUS_CHECKER);
+    gatewayStatusChecker.initTopologiesToCheck(config);
+
     monitor.addTopologyChangeListener(listener);
     log.loadingTopologiesFromDirectory(topologiesDir.getAbsolutePath());
     monitor.reloadTopologies();
@@ -1038,6 +1044,7 @@ public class GatewayServer {
           log.redeployedTopology( topology.getName() );
         }
         cleanupTopologyDeployments( deployDir, topology );
+        gatewayStatusChecker.onTopologyReady(topology.getName());
       } catch( Throwable e ) {
         auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE );
         log.failedToDeployTopology( topology.getName(), e );

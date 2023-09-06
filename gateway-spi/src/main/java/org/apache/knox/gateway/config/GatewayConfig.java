@@ -873,6 +873,8 @@ public interface GatewayConfig {
 
   long getConcurrentSessionVerifierExpiredTokensCleaningPeriod();
 
+  Set<String> getHealthCheckTopologies();
+
   /**
    * @return true if the async supported flag is enabled in jetty gateway servlet; false otherwise (defaults to false)
    */
