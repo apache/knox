@@ -30,10 +30,11 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 
-public class GatewayStatusChecker implements Service {
+public class GatewayStatusService implements Service {
   private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
   private final Set<String> deployedTopologies = new HashSet<>();
   private Set<String> topologyNamesToCheck = new HashSet<>();
+  private GatewayConfig config;
 
   public synchronized void onTopologyReady(String topologyName) {
     deployedTopologies.add(topologyName);
@@ -56,7 +57,7 @@ public class GatewayStatusChecker implements Service {
    * In the later case this should be called at startup, after the hadoop xml resource parser
    * already generated the descriptors from the hxr
    */
-  public synchronized void initTopologiesToCheck(GatewayConfig config) {
+  public synchronized void initTopologiesToCheck() {
     Set<String> healthCheckTopologies = config.getHealthCheckTopologies();
     if (healthCheckTopologies.isEmpty()) {
       topologyNamesToCheck = collectTopologies(config);
@@ -84,7 +85,9 @@ public class GatewayStatusChecker implements Service {
     }
   }
   @Override
-  public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {}
+  public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
+    this.config = config;
+  }
 
   @Override
   public void start() throws ServiceLifecycleException {}

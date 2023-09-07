@@ -20,7 +20,7 @@ package org.apache.knox.gateway.service.health;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
-import org.apache.knox.gateway.services.topology.impl.GatewayStatusChecker;
+import org.apache.knox.gateway.services.topology.impl.GatewayStatusService;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -78,12 +78,16 @@ public class PingResource {
     response.setHeader(CACHE_CONTROL, NO_CACHE);
     response.setContentType(CONTENT_TYPE);
     try (PrintWriter writer = response.getWriter()) {
-      writer.println(OK);
+      writer.println(getPingContent());
     } catch (IOException ioe) {
       log.logException("ping", ioe);
       return Response.serverError().entity(String.format(Locale.ROOT, "Failed to reply correctly due to : %s ", ioe)).build();
     }
     return Response.ok().build();
+  }
+
+  String getPingContent() {
+    return OK;
   }
 
   @GET
@@ -95,7 +99,7 @@ public class PingResource {
     response.setContentType(CONTENT_TYPE);
     GatewayServices services = (GatewayServices) request.getServletContext()
             .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    GatewayStatusChecker statusChecker = services.getService(ServiceType.GATEWAY_STATUS_CHECKER);
+    GatewayStatusService statusChecker = services.getService(ServiceType.GATEWAY_STATUS_SERVICE);
     try (PrintWriter writer = response.getWriter()) {
       writer.println(statusChecker.status() ? OK : PENDING);
     } catch (IOException e) {

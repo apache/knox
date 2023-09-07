@@ -27,16 +27,17 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
-public class GatewayStatusCheckerTest {
+public class GatewayStatusServiceTest {
 
   @Test
-  public void testReadyStatus() {
-    GatewayStatusChecker statusChecker = new GatewayStatusChecker();
-    assertFalse(statusChecker.status());
+  public void testReadyStatus() throws Exception {
+    GatewayStatusService statusChecker = new GatewayStatusService();
     GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    statusChecker.init(config, null);
+    assertFalse(statusChecker.status());
     EasyMock.expect(config.getHealthCheckTopologies()).andReturn(new HashSet<>(Arrays.asList("t1", "t2"))).anyTimes();
     EasyMock.replay(config);
-    statusChecker.initTopologiesToCheck(config);
+    statusChecker.initTopologiesToCheck();
     statusChecker.onTopologyReady("t1");
     assertFalse(statusChecker.status());
     statusChecker.onTopologyReady("t2");

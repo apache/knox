@@ -81,7 +81,7 @@ public class DefaultGatewayServices extends AbstractGatewayServices {
 
     addService(ServiceType.CONCURRENT_SESSION_VERIFIER, gatewayServiceFactory.create(this, ServiceType.CONCURRENT_SESSION_VERIFIER, config, options));
 
-    addService(ServiceType.GATEWAY_STATUS_CHECKER, gatewayServiceFactory.create(this, ServiceType.GATEWAY_STATUS_CHECKER, config, options));
+    addService(ServiceType.GATEWAY_STATUS_SERVICE, gatewayServiceFactory.create(this, ServiceType.GATEWAY_STATUS_SERVICE, config, options));
   }
 
   @Override

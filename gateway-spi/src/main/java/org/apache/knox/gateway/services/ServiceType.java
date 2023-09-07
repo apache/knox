@@ -38,7 +38,7 @@ public enum ServiceType {
   TOPOLOGY_SERVICE("TopologyService"),
   CONCURRENT_SESSION_VERIFIER("ConcurrentSessionVerifier"),
   REMOTE_CONFIGURATION_MONITOR("RemoteConfigurationMonitor"),
-  GATEWAY_STATUS_CHECKER("GatewayStatusChecker");
+  GATEWAY_STATUS_SERVICE("GatewayStatusService");
 
   private final String serviceTypeName;
   private final String shortName;

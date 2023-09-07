@@ -28,22 +28,22 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
-import org.apache.knox.gateway.services.topology.impl.GatewayStatusChecker;
+import org.apache.knox.gateway.services.topology.impl.GatewayStatusService;
 
 public class GatewayStatusCheckerFactory extends AbstractServiceFactory {
 
   @Override
   protected Service createService(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation) throws ServiceLifecycleException {
-    return new GatewayStatusChecker();
+    return new GatewayStatusService();
   }
 
   @Override
   protected ServiceType getServiceType() {
-    return ServiceType.GATEWAY_STATUS_CHECKER;
+    return ServiceType.GATEWAY_STATUS_SERVICE;
   }
 
   @Override
   protected Collection<String> getKnownImplementations() {
-    return unmodifiableList(asList(GatewayStatusChecker.class.getName()));
+    return unmodifiableList(asList(GatewayStatusService.class.getName()));
   }
 }
