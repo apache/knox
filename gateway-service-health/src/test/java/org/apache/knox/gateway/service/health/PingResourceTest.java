@@ -24,6 +24,6 @@ public class PingResourceTest {
   @Test
   public void testPingCdoGetontent() {
     PingResource pr = new PingResource();
-    Assert.assertEquals(PingResource.OK, pr.OK);
+    Assert.assertEquals(pr.getPingContent(), pr.OK);
   }
 }
