@@ -17,6 +17,7 @@
 package org.apache.knox.gateway.topology.hadoop.xml;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -264,6 +265,7 @@ public class HadoopXmlResourceParserTest {
     assertEquals("alias", descriptor.getDiscoveryPasswordAlias());
     assertEquals("Cluster 1", descriptor.getCluster());
     assertEquals("topology1-provider", descriptor.getProviderConfig());
+    assertTrue(descriptor.isProvisionEncryptQueryStringCredential());
     assertEquals(2, descriptor.getApplications().size());
 
     assertApplication(descriptor, "knoxauth", Collections.singletonMap("param1.name", "param1.value"));
@@ -289,6 +291,7 @@ public class HadoopXmlResourceParserTest {
     assertEquals("http://host:456", descriptor.getDiscoveryAddress());
     assertEquals("Cluster 2", descriptor.getCluster());
     assertEquals("topology2-provider", descriptor.getProviderConfig());
+    assertFalse(descriptor.isProvisionEncryptQueryStringCredential());
     assertTrue(descriptor.getApplications().isEmpty());
 
     final Map<String, String> expectedServiceParameters = Stream.of(new String[][] { { "httpclient.connectionTimeout", "5m" }, { "httpclient.socketTimeout", "100m" }, })

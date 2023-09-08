@@ -67,6 +67,7 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
   private static final String CONFIG_NAME_DISCOVERY_PASSWORD_ALIAS = "discoveryPasswordAlias";
   private static final String CONFIG_NAME_DISCOVERY_CLUSTER = "cluster";
   private static final String CONFIG_NAME_PROVIDER_CONFIG_REFERENCE = "providerConfigRef";
+  private static final String CONFIG_NAME_PROVISION_ENCRYPT_QUERY_STRING_CREDENTIAL = "provisionEncryptQueryStringCredential";
   private static final String CONFIG_NAME_APPLICATION_PREFIX = "app";
   private static final String CONFIG_NAME_SERVICE_URL = "url";
   private static final String CONFIG_NAME_SERVICE_VERSION = "version";
@@ -265,6 +266,9 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
           break;
         case CONFIG_NAME_PROVIDER_CONFIG_REFERENCE:
           descriptor.setProviderConfig(parameterPairParts[1].trim());
+          break;
+        case CONFIG_NAME_PROVISION_ENCRYPT_QUERY_STRING_CREDENTIAL:
+          descriptor.setProvisionEncryptQueryStringCredential(Boolean.valueOf(parameterPairParts[1].trim()));
           break;
         default:
           if (parameterName.startsWith(CONFIG_NAME_APPLICATION_PREFIX)) {
