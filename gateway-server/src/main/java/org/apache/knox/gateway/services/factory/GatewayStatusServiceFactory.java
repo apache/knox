@@ -30,7 +30,7 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.topology.impl.GatewayStatusService;
 
-public class GatewayStatusCheckerFactory extends AbstractServiceFactory {
+public class GatewayStatusServiceFactory extends AbstractServiceFactory {
 
   @Override
   protected Service createService(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation) throws ServiceLifecycleException {

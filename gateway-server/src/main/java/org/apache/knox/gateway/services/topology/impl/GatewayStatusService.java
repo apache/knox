@@ -42,7 +42,7 @@ public class GatewayStatusService implements Service {
 
   public synchronized boolean status() {
     if (topologyNamesToCheck.isEmpty()) {
-      LOG.checkingGatewayStatus();
+      LOG.noTopologiesToCheck();
       return false;
     }
     Set<String> missing = new HashSet<>(topologyNamesToCheck);
@@ -87,6 +87,7 @@ public class GatewayStatusService implements Service {
   @Override
   public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
     this.config = config;
+    // this is soon to collect the topologies, topologies are collected in initTopologiesToCheck
   }
 
   @Override

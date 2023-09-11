@@ -31,16 +31,16 @@ public class GatewayStatusServiceTest {
 
   @Test
   public void testReadyStatus() throws Exception {
-    GatewayStatusService statusChecker = new GatewayStatusService();
+    GatewayStatusService statusService = new GatewayStatusService();
     GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
-    statusChecker.init(config, null);
-    assertFalse(statusChecker.status());
+    statusService.init(config, null);
+    assertFalse(statusService.status());
     EasyMock.expect(config.getHealthCheckTopologies()).andReturn(new HashSet<>(Arrays.asList("t1", "t2"))).anyTimes();
     EasyMock.replay(config);
-    statusChecker.initTopologiesToCheck();
-    statusChecker.onTopologyReady("t1");
-    assertFalse(statusChecker.status());
-    statusChecker.onTopologyReady("t2");
-    assertTrue(statusChecker.status());
+    statusService.initTopologiesToCheck();
+    statusService.onTopologyReady("t1");
+    assertFalse(statusService.status());
+    statusService.onTopologyReady("t2");
+    assertTrue(statusService.status());
   }
 }

@@ -791,13 +791,13 @@ public interface GatewayMessages {
 
   @Message(level = MessageLevel.INFO,
           text = "Checking gateway status. No topologies to check")
-  void checkingGatewayStatus();
+  void noTopologiesToCheck();
 
   @Message(level = MessageLevel.INFO,
           text = "Collected topologies for health check: {0}")
   void collectedTopologiesForHealthCheck(Set<String> result);
 
   @Message(level = MessageLevel.INFO,
-          text = "Starting gateway status checker service. Topologies to check: {0}")
+          text = "Starting gateway status service. Topologies to check: {0}")
   void startingStatusMonitor(Set<String> topologyNames);
 }
