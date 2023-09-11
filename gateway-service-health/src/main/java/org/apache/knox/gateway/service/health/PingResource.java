@@ -18,6 +18,9 @@
 package org.apache.knox.gateway.service.health;
 
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.topology.impl.GatewayStatusService;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -39,8 +42,9 @@ import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 @Path(PingResource.RESOURCE_PATH)
 public class PingResource {
   static final String VERSION_TAG = "v1";
-  static final String RESOURCE_PATH = "/" + VERSION_TAG + "/ping";
-  public static final String CONTENT = "OK";
+  static final String RESOURCE_PATH = "/" + VERSION_TAG;
+  public static final String OK = "OK";
+  public static final String PENDING = "PENDING";
   private static HealthServiceMessages log = MessagesFactory.get(HealthServiceMessages.class);
   private static final String CONTENT_TYPE = "text/plain";
   private static final String CACHE_CONTROL = "Cache-Control";
@@ -57,12 +61,14 @@ public class PingResource {
 
   @GET
   @Produces({APPLICATION_JSON, TEXT_PLAIN})
+  @Path("ping")
   public Response doGet() {
     return getPingResponse();
   }
 
   @POST
   @Produces({APPLICATION_JSON, TEXT_PLAIN})
+  @Path("ping")
   public Response doPost() {
     return getPingResponse();
   }
@@ -81,7 +87,26 @@ public class PingResource {
   }
 
   String getPingContent() {
-    return CONTENT;
+    return OK;
+  }
+
+  @GET
+  @Produces({TEXT_PLAIN})
+  @Path("gateway-status")
+  public Response status() {
+    response.setStatus(HttpServletResponse.SC_OK);
+    response.setHeader(CACHE_CONTROL, NO_CACHE);
+    response.setContentType(CONTENT_TYPE);
+    GatewayServices services = (GatewayServices) request.getServletContext()
+            .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    GatewayStatusService statusService = services.getService(ServiceType.GATEWAY_STATUS_SERVICE);
+    try (PrintWriter writer = response.getWriter()) {
+      writer.println(statusService.status() ? OK : PENDING);
+    } catch (IOException e) {
+      log.logException("status", e);
+      return Response.serverError().entity(String.format(Locale.ROOT, "Failed to reply correctly due to : %s ", e)).build();
+    }
+    return Response.ok().build();
   }
 
 }

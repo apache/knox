@@ -72,7 +72,8 @@ public class HadoopXmlResourceMonitor implements AdvancedServiceDiscoveryConfigC
   public void setupMonitor() {
     if (monitoringInterval > 0) {
       final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(new BasicThreadFactory.Builder().namingPattern("ClouderaManagerDescriptorMonitor-%d").build());
-      executorService.scheduleAtFixedRate(() -> monitorClouderaManagerDescriptors(false), 0, monitoringInterval, TimeUnit.MILLISECONDS);
+      monitorClouderaManagerDescriptors(false); // call it explicitly first to generate descriptors up front, so that the health checker can pick them up
+      executorService.scheduleAtFixedRate(() -> monitorClouderaManagerDescriptors(false), monitoringInterval, monitoringInterval, TimeUnit.MILLISECONDS);
       LOG.monitoringHadoopXmlResources(descriptorsDir);
     }
   }

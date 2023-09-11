@@ -1043,6 +1043,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public Set<String> getHealthCheckTopologies() {
+    return Collections.emptySet();
+  }
+
+  @Override
   public boolean isAsyncSupported() {
     return false;
   }

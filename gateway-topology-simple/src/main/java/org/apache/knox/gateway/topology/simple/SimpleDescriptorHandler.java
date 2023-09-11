@@ -91,7 +91,7 @@ public class SimpleDescriptorHandler {
 
     private static final Map<String, ServiceDiscovery> discoveryInstances = new HashMap<>();
 
-    private static final Set<String> ALLOWED_SERVICES_WITHOUT_URLS_AND_PARAMS = Collections.unmodifiableSet(Stream.of("KNOX", "KNOX-METADATA", "KNOXSSOUT", "KNOX-SESSION").collect(Collectors.toSet()));
+    private static final Set<String> ALLOWED_SERVICES_WITHOUT_URLS_AND_PARAMS = Collections.unmodifiableSet(Stream.of("KNOX", "KNOX-METADATA", "KNOXSSOUT", "KNOX-SESSION", "HEALTH").collect(Collectors.toSet()));
 
     public static Map<String, File> handle(GatewayConfig config, File desc, File destDirectory, Service...gatewayServices) throws IOException {
         return handle(config, SimpleDescriptorFactory.parse(desc.getAbsolutePath()), desc.getParentFile(), destDirectory, gatewayServices);

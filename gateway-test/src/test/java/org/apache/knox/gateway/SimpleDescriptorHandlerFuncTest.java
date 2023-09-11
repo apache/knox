@@ -25,6 +25,7 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.services.topology.TopologyService;
+import org.apache.knox.gateway.services.topology.impl.GatewayStatusService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryType;
@@ -225,6 +226,10 @@ public class SimpleDescriptorHandlerFuncTest {
       EasyMock.expect(ts.getTopologies()).andReturn(Collections.emptyList()).anyTimes();
       EasyMock.replay(ts);
       EasyMock.expect(gatewayServices.getService(ServiceType.TOPOLOGY_SERVICE)).andReturn(ts).anyTimes();
+
+      GatewayStatusService statusService = EasyMock.createNiceMock(GatewayStatusService.class);
+      EasyMock.replay(statusService);
+      EasyMock.expect(gatewayServices.getService(ServiceType.GATEWAY_STATUS_SERVICE)).andReturn(statusService).anyTimes();
 
       EasyMock.replay(gatewayServices);
 
