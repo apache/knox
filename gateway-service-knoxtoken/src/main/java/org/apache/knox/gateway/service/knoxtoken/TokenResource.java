@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -450,7 +451,14 @@ public class TokenResource {
 
       final String userName = uriInfo.getQueryParameters().getFirst("userName");
       final String createdBy = uriInfo.getQueryParameters().getFirst("createdBy");
-      final Collection<KnoxToken> userTokens = createdBy == null ? tokenStateService.getTokens(userName) : tokenStateService.getDoAsTokens(createdBy);
+      final String userNameOrCreatedBy = uriInfo.getQueryParameters().getFirst("userNameOrCreatedBy");
+      final Collection<KnoxToken> userTokens;
+      if (userNameOrCreatedBy == null) {
+        userTokens = createdBy == null ? tokenStateService.getTokens(userName) : tokenStateService.getDoAsTokens(createdBy);
+      } else {
+        userTokens = new HashSet<>(tokenStateService.getTokens(userNameOrCreatedBy));
+        userTokens.addAll(tokenStateService.getDoAsTokens(userNameOrCreatedBy));
+      }
       final Collection<KnoxToken> tokens = new TreeSet<>();
       if (metadataMap.isEmpty()) {
         tokens.addAll(userTokens);
@@ -568,12 +576,17 @@ public class TokenResource {
       try {
         final String revoker = SubjectUtils.getCurrentEffectivePrincipalName();
         final String tokenId = getTokenId(token);
-        if (triesToRevokeOwnToken(tokenId, revoker) || allowedRenewers.contains(revoker)) {
-            tokenStateService.revokeToken(tokenId);
-            log.revokedToken(getTopologyName(),
-                Tokens.getTokenDisplayText(token),
-                Tokens.getTokenIDDisplayText(tokenId),
-                revoker);
+        if (isKnoxSsoCookie(tokenId)) {
+          errorStatus = Response.Status.FORBIDDEN;
+          error = "SSO cookie (" + Tokens.getTokenIDDisplayText(tokenId) + ") cannot not be revoked." ;
+          errorCode = ErrorCode.UNAUTHORIZED;
+        }
+        if (StringUtils.isBlank(error) && (triesToRevokeOwnToken(tokenId, revoker) || allowedRenewers.contains(revoker))) {
+          tokenStateService.revokeToken(tokenId);
+          log.revokedToken(getTopologyName(),
+              Tokens.getTokenDisplayText(token),
+              Tokens.getTokenIDDisplayText(tokenId),
+              revoker);
         } else {
           errorStatus = Response.Status.FORBIDDEN;
           error = "Caller (" + revoker + ") not authorized to revoke tokens.";
@@ -601,6 +614,11 @@ public class TokenResource {
     }
 
     return resp;
+  }
+
+  private boolean isKnoxSsoCookie(String tokenId) throws UnknownTokenException {
+    final TokenMetadata metadata = tokenStateService.getTokenMetadata(tokenId);
+    return metadata == null ? false : metadata.isKnoxSsoCookie();
   }
 
   private boolean triesToRevokeOwnToken(String tokenId, String revoker) throws UnknownTokenException {

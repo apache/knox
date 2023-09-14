@@ -18,6 +18,8 @@
 export class Metadata {
     enabled: boolean;
     userName: string;
+    createdBy: string;
+    knoxSsoCookie: boolean;
     comment: string;
     customMetadataMap: Map<string, string>;
 }

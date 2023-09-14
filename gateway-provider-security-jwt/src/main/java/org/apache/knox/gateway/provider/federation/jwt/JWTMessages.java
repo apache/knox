@@ -61,6 +61,9 @@ public interface JWTMessages {
   @Message( level = MessageLevel.DEBUG, text = "Sending redirect to: {0}" )
   void sendRedirectToLoginURL(String loginURL);
 
+  @Message( level = MessageLevel.INFO, text = "Sending redirect to global logout URL: {0}" )
+  void sendRedirectToLogoutURL(String logoutURL);
+
   @Message( level = MessageLevel.WARN, text = "Configuration for authentication provider URL is missing - will derive default URL." )
   void missingAuthenticationProviderUrlConfiguration();
 
@@ -98,4 +101,7 @@ public interface JWTMessages {
 
   @Message( level = MessageLevel.INFO, text = "Unexpected Issuer for token {0} ({1})." )
   void unexpectedTokenIssuer(String tokenDisplayText, String tokenId);
+
+  @Message( level = MessageLevel.WARN, text = "Invalid SSO cookie found! Cleaning up..." )
+  void invalidSsoCookie();
 }

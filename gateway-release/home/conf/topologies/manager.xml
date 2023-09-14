@@ -51,6 +51,11 @@
          <role>federation</role>
          <name>SSOCookieProvider</name>
          <enabled>true</enabled>
+         <param>
+            <!-- since 2.1.0: KnoxSSO cookie validation -->
+            <name>knox.token.exp.server-managed</name>
+            <value>false</value>
+         </param>
       </provider>
       <provider>
          <role>identity-assertion</role>

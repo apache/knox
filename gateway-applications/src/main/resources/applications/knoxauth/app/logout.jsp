@@ -46,6 +46,17 @@
         <script src="libs/bower/jquery/js/jquery-3.5.1.min.js" ></script>
 
         <script type="text/javascript" src="js/knoxauth.js"></script>
+
+       <%
+       final boolean autoGlobalLogout = "1".equals(request.getParameter("autoGlobalLogout"));
+       if (autoGlobalLogout) {%>
+           <script type="text/javascript">
+              window.onload=function() {
+                  window.setTimeout(document.getElementById("globalLogoutForm").submit(), 10);
+              };
+          </script>
+       <%}%>
+
     <%
         String originalUrl = request.getParameter("originalUrl");
         Topology topology = (Topology)request.getSession().getServletContext().getAttribute("org.apache.knox.gateway.topology");
@@ -123,8 +134,6 @@
           response.setHeader("Location", globalLogoutPageURL);
           return;
         }
-
-
     %>
 
     <!-- Helper function to delete cookie -->
@@ -177,18 +186,20 @@
         <%
             if (globalLogoutPageURL != null && !globalLogoutPageURL.isEmpty()) {
         %>
-              <p style="color: white;display: block">
+              <form method="POST" action="#" id="globalLogoutForm">
+                <div>
                 If you would like to logout of the Knox SSO session, you need to do so from
                 the configured SSO provider. Subsequently, authentication will be required to access
                 any SSO protected resources. Note that this may or may not invalidate any previously
                 established application sessions. Application sessions are subject to their application
                 specific session cookies and timeouts.
-                <a href="<%= request.getRequestURI() %>?globalLogout=1" >Global Logout</a>
-              </p>
+                <input type="hidden" name="globalLogout" value="1" id="globalLogoutUrl"/>
+                <button type="submit" style="background: none!important; border: none; padding: 0!important; color: #06A; text-decoration: none; cursor: pointer;">Global Logout</button>
+              </form>
           </div>
         <%
             }
-        } 
+        }
         else {
         %>
         <div style="background: gray;text-color: white;text-align:center;">

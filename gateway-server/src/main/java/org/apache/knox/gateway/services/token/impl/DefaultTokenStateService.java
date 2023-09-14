@@ -350,7 +350,7 @@ public class DefaultTokenStateService implements TokenStateService {
   }
 
   /**
-   * Method that deletes expired tokens based on the token timestamp.
+   * Method that deletes expired tokens based on the token timestamp as well as disabled KnoxSSO cookies.
    */
   protected void evictExpiredTokens() {
     if (readyForEviction()) {

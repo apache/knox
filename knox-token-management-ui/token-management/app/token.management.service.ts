@@ -26,8 +26,7 @@ import {KnoxToken} from './knox.token';
 export class TokenManagementService {
     sessionUrl = window.location.pathname.replace(new RegExp('token-management/.*'), 'session/api/v1/sessioninfo');
     apiUrl = window.location.pathname.replace(new RegExp('token-management/.*'), 'knoxtoken/api/v1/token/');
-    getKnoxTokensUrl = this.apiUrl + 'getUserTokens?userName=';
-    getDoAsKnoxTokensUrl = this.apiUrl + 'getUserTokens?createdBy=';
+    getKnoxTokensUrl = this.apiUrl + 'getUserTokens?userNameOrCreatedBy=';
     enableKnoxTokenUrl = this.apiUrl + 'enable';
     disableKnoxTokenUrl = this.apiUrl + 'disable';
     revokeKnoxTokenUrl = this.apiUrl + 'revoke';
@@ -35,11 +34,10 @@ export class TokenManagementService {
 
     constructor(private http: HttpClient) {}
 
-    getKnoxTokens(userName: string, impersonated: boolean): Promise<KnoxToken[]> {
+    getKnoxTokens(userName: string): Promise<KnoxToken[]> {
         let headers = new HttpHeaders();
         headers = this.addJsonHeaders(headers);
-        let urlToUse = impersonated ? this.getDoAsKnoxTokensUrl : this.getKnoxTokensUrl;
-        return this.http.get(urlToUse + userName, { headers: headers})
+        return this.http.get(this.getKnoxTokensUrl + userName, { headers: headers})
             .toPromise()
             .then(response => response['tokens'] as KnoxToken[])
             .catch((err: HttpErrorResponse) => {

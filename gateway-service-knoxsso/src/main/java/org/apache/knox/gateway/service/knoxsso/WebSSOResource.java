@@ -57,12 +57,15 @@ import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
+import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.session.control.ConcurrentSessionVerifier;
 import org.apache.knox.gateway.util.CookieUtils;
 import org.apache.knox.gateway.util.RegExUtils;
+import org.apache.knox.gateway.util.Tokens;
 import org.apache.knox.gateway.util.Urls;
 import org.apache.knox.gateway.util.WhitelistUtils;
 
@@ -107,6 +110,7 @@ public class WebSSOResource {
   private List<String> ssoExpectedparams = new ArrayList<>();
   private String clusterName;
   private String tokenIssuer;
+  private TokenStateService tokenStateService;
 
   private String sameSiteValue;
 
@@ -142,6 +146,13 @@ public class WebSSOResource {
     this.sameSiteValue = StringUtils.isBlank(context.getInitParameter(SSO_COOKIE_SAMESITE_PARAM))
             ? SSO_COOKIE_SAMESITE_DEFAULT
             : context.getInitParameter(SSO_COOKIE_SAMESITE_PARAM);
+
+    final GatewayServices services = (GatewayServices) context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    if (services != null) {
+      if (TokenUtils.isServerManagedTokenStateEnabled(context)) {
+        tokenStateService = services.getService(ServiceType.TOKEN_STATE_SERVICE);
+      }
+    }
   }
 
   private void setSignatureAlogrithm() throws AliasServiceException {
@@ -295,6 +306,7 @@ public class WebSSOResource {
               .setSigningKeystoreName(signingKeystoreName)
               .setSigningKeystoreAlias(signingKeystoreAlias)
               .setSigningKeystorePassphrase(signingKeystorePassphrase)
+              .setManaged(tokenStateService != null)
               .build();
       JWT token = tokenAuthority.issueToken(jwtAttributes);
 
@@ -303,6 +315,7 @@ public class WebSSOResource {
         if (!verifier.registerToken(p.getName(), token)) {
           throw new WebApplicationException("Too many sessions for user: " + request.getUserPrincipal().getName(), Response.Status.FORBIDDEN);
         }
+        saveToken(token);
         addJWTHadoopCookie(original, token);
       }
 
@@ -425,5 +438,22 @@ public class WebSSOResource {
     c.setMaxAge(0);
     c.setPath(RESOURCE_PATH);
     response.addCookie(c);
+  }
+
+  // Optional token state service persistence
+  private void saveToken(JWT token) {
+    if (tokenStateService != null) {
+      final String tokenId = TokenUtils.getTokenId(token);
+      final long issueTime = System.currentTimeMillis();
+      tokenStateService.addToken(tokenId, issueTime, token.getExpiresDate().getTime(), tokenStateService.getDefaultMaxLifetimeDuration());
+      final TokenMetadata tokenMetadata = new TokenMetadata(token.getSubject());
+      tokenMetadata.setKnoxSsoCookie(true);
+      tokenStateService.addMetadata(tokenId, tokenMetadata);
+      LOGGER.storedToken(getTopologyName(), Tokens.getTokenDisplayText(token.toString()), Tokens.getTokenIDDisplayText(tokenId));
+    }
+  }
+
+  private String getTopologyName() {
+    return (String) context.getAttribute("org.apache.knox.gateway.gateway.cluster");
   }
 }

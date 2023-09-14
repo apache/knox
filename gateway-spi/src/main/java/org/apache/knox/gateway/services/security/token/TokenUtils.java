@@ -57,27 +57,25 @@ public class TokenUtils {
    * @return true, if server-managed state is enabled; Otherwise, false.
    */
   public static boolean isServerManagedTokenStateEnabled(FilterConfig filterConfig) {
-    boolean isServerManaged = false;
-
-    // First, check for explicit provider-level configuration
     String providerParamValue = filterConfig.getInitParameter(TokenStateService.CONFIG_SERVER_MANAGED);
-
-    // If there is no provider-level configuration
-    if (providerParamValue == null || providerParamValue.isEmpty()) {
-      // Fall back to the gateway-level default
-      ServletContext context = filterConfig.getServletContext();
-      if (context != null) {
-        GatewayConfig config = (GatewayConfig) context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
-        isServerManaged = (config != null) && config.isServerManagedTokenStateEnabled();
-      }
-    } else {
-      // Otherwise, apply the provider-level configuration
-      isServerManaged = Boolean.valueOf(providerParamValue);
-    }
-
-    return isServerManaged;
+    return isServerManagedTokenStateEnabled(providerParamValue, filterConfig.getServletContext());
   }
 
+  public static boolean isServerManagedTokenStateEnabled(ServletContext context) {
+    final String serviceParamValue = context.getInitParameter(TokenStateService.CONFIG_SERVER_MANAGED);
+    return isServerManagedTokenStateEnabled(serviceParamValue, context);
+  }
+
+  private static boolean isServerManagedTokenStateEnabled(String parameterValue, ServletContext context) {
+    if (parameterValue == null || parameterValue.isEmpty()) {
+      // Fall back to the gateway-level default
+      GatewayConfig config = (GatewayConfig) context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+      return (config != null) && config.isServerManagedTokenStateEnabled();
+    } else {
+      // Otherwise, apply the service-level configuration
+      return Boolean.valueOf(parameterValue);
+    }
+  }
   /**
    * @return <code>configuredSignatureAlgorithm</code> if any OR the default HMAC algorithm if {@link #useHMAC(char[], String)} is
    *         <code>true</code>; the default RSA algorithm otherwise

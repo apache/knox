@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.pac4j.filter;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.pac4j.Pac4jMessages;
 import org.apache.knox.gateway.pac4j.config.ClientConfigurationDecorator;
@@ -32,6 +33,9 @@ import org.apache.knox.gateway.services.security.CryptoService;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.MasterService;
+import org.apache.knox.gateway.session.SessionInvalidator;
+import org.apache.knox.gateway.session.SessionInvalidators;
+import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.pac4j.config.client.PropertiesConfigFactory;
 import org.pac4j.config.client.PropertiesConstants;
 import org.pac4j.core.client.Client;
@@ -54,6 +58,8 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -73,7 +79,7 @@ import java.util.Map;
  *
  * @since 0.8.0
  */
-public class Pac4jDispatcherFilter implements Filter {
+public class Pac4jDispatcherFilter implements Filter, SessionInvalidator {
   private static final String ALIAS_PREFIX = "${ALIAS=";
   private static Pac4jMessages log = MessagesFactory.get(Pac4jMessages.class);
 
@@ -234,6 +240,8 @@ public class Pac4jDispatcherFilter implements Filter {
 
     config.setSessionStore(sessionStore);
 
+    SessionInvalidators.KNOX_SSO_INVALIDATOR.registerSessionInvalidator(this);
+
   }
 
   /**
@@ -322,5 +330,16 @@ public class Pac4jDispatcherFilter implements Filter {
   }
 
   @Override
-  public void destroy() { }
+  public void onAuthenticationError(HttpServletRequest request, HttpServletResponse response) {
+    final GatewayConfig gatewayConfig = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    if (gatewayConfig != null && gatewayConfig.getGlobalLogoutPageUrl() != null) {
+      AuthFilterUtils.markDoGlobalLogoutInRequest(request);
+    }
+  }
+
+  @Override
+  public void destroy() {
+    SessionInvalidators.KNOX_SSO_INVALIDATOR.unregisterSessionInvalidator(this);
+  }
+
 }
