@@ -19,6 +19,7 @@ import {Service} from './service';
 export class TopologyInformation {
     topology: string;
     pinned: boolean;
+    apiServicesViewVersion: string;
     apiServices: Service[];
     uiServices: Service[];
 }

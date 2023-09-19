@@ -36,12 +36,13 @@ public class TopologyInformationWrapper {
     return topologies;
   }
 
-  public void addTopology(String name, boolean pinned, Set<ServiceModel> apiServices, Set<ServiceModel> uiServices) {
+  public void addTopology(String name, boolean pinned, String apiServicesViewVersion, Set<ServiceModel> apiServices, Set<ServiceModel> uiServices) {
     final TopologyInformation topology = new TopologyInformation();
     topology.setTopologyName(name);
     topology.setPinned(pinned);
     topology.setApiServices(apiServices);
     topology.setUiServices(uiServices);
+    topology.setApiServicesViewVersion(apiServicesViewVersion);
     this.topologies.add(topology);
   }
 

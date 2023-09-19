@@ -242,7 +242,7 @@ public class KnoxMetadataResource {
               }
             });
           });
-          topologies.addTopology(topology.getName(), isPinnedTopology(topology.getName(), config), new TreeSet<>(apiServices), new TreeSet<>(uiServices));
+          topologies.addTopology(topology.getName(), isPinnedTopology(topology.getName(), config), config.getApiServicesViewVersionOnHomepage(), new TreeSet<>(apiServices), new TreeSet<>(uiServices));
         }
       }
     }
