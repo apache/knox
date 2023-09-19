@@ -58,6 +58,8 @@
           },
           "configurations": {
             "production": {
+              "buildOptimizer": false,
+              "aot": false,
               "fileReplacements": [
                 {
                   "replace": "home/environments/environment.ts",
@@ -68,6 +70,7 @@
             },
             "development": {
               "buildOptimizer": false,
+              "aot": false,
               "optimization": false,
               "vendorChunk": true,
               "extractLicenses": false,

@@ -32,6 +32,9 @@ public class TopologyInformation implements Comparable<TopologyInformation>{
   @XmlElement(name = "pinned")
   private boolean pinned;
 
+  @XmlElement(name = "apiServicesViewVersion")
+  private String apiServicesViewVersion;
+
   @XmlElement(name = "service")
   @XmlElementWrapper(name = "apiServices")
   private Set<ServiceModel> apiServices;
@@ -54,6 +57,14 @@ public class TopologyInformation implements Comparable<TopologyInformation>{
 
   public void setPinned(boolean pinned) {
     this.pinned = pinned;
+  }
+
+  public void setApiServicesViewVersion(String apiServicesViewVersion) {
+    this.apiServicesViewVersion = apiServicesViewVersion;
+  }
+
+  public String getApiServicesViewVersion() {
+    return apiServicesViewVersion;
   }
 
   public Set<ServiceModel> getApiServices() {

@@ -113,6 +113,8 @@ public interface GatewayConfig {
 
   int DEFAULT_CM_SERVICE_DISCOVERY_MAX_RETRY_ATTEMPTS = 3;
 
+  String DEFAULT_API_SERVICES_VIEW_VERSION = "v1";
+
   /**
    * The location of the gateway configuration.
    * Subdirectories will be: topologies
@@ -794,6 +796,11 @@ public interface GatewayConfig {
   Set<String> getPinnedTopologiesOnHomepage();
 
   /**
+   * @return the API services view version (v1/v2) on Knox homepage
+   */
+  String getApiServicesViewVersionOnHomepage();
+
+  /**
    * @return returns whether know token permissive validation is enabled
    */
   boolean isKnoxTokenPermissiveValidationEnabled();
@@ -879,4 +886,5 @@ public interface GatewayConfig {
    * @return true if the async supported flag is enabled in jetty gateway servlet; false otherwise (defaults to false)
    */
   boolean isAsyncSupported();
+
 }
