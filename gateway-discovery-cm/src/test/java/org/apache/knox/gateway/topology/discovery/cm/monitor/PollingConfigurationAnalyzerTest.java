@@ -381,6 +381,38 @@ public class PollingConfigurationAnalyzerTest {
     }
   }
 
+  @Test
+  public void testNotificationSentAfterDownScaleEvent() {
+    final String clusterName = "Cluster T";
+
+    final List<ApiEventAttribute> revisionEventAttrs = new ArrayList<>();
+    revisionEventAttrs.add(createEventAttribute("CLUSTER", clusterName));
+    revisionEventAttrs.add(createEventAttribute("SERVICE_TYPE", HiveOnTezServiceModelGenerator.SERVICE_TYPE));
+    revisionEventAttrs.add(createEventAttribute("SERVICE", HiveOnTezServiceModelGenerator.SERVICE));
+    revisionEventAttrs.add(createEventAttribute("ROLE_TYPE", HiveOnTezServiceModelGenerator.ROLE_TYPE));
+    revisionEventAttrs.add(createEventAttribute("REVISION", "215"));
+    revisionEventAttrs.add(createEventAttribute("EVENTCODE", PollingConfigurationAnalyzer.EVENT_CODE_ROLE_DELETED));
+    final ApiEvent revisionEvent = createApiEvent(ApiEventCategory.AUDIT_EVENT, revisionEventAttrs, null);
+
+    doTestEventWithConfigChange(revisionEvent, clusterName);
+  }
+
+  @Test
+  public void testNotificationSentAfterUpScaleEvent() {
+    final String clusterName = "Cluster T";
+
+    final List<ApiEventAttribute> revisionEventAttrs = new ArrayList<>();
+    revisionEventAttrs.add(createEventAttribute("CLUSTER", clusterName));
+    revisionEventAttrs.add(createEventAttribute("SERVICE_TYPE", HiveOnTezServiceModelGenerator.SERVICE_TYPE));
+    revisionEventAttrs.add(createEventAttribute("SERVICE", HiveOnTezServiceModelGenerator.SERVICE));
+    revisionEventAttrs.add(createEventAttribute("ROLE_TYPE", HiveOnTezServiceModelGenerator.ROLE_TYPE));
+    revisionEventAttrs.add(createEventAttribute("REVISION", "215"));
+    revisionEventAttrs.add(createEventAttribute("EVENTCODE", PollingConfigurationAnalyzer.EVENT_CODE_ROLE_CREATED));
+    final ApiEvent revisionEvent = createApiEvent(ApiEventCategory.AUDIT_EVENT, revisionEventAttrs, null);
+
+    doTestEventWithConfigChange(revisionEvent, clusterName);
+  }
+
   private void doTestStartEvent(final ApiEventCategory category) {
     final String clusterName = "My Cluster";
     final String serviceType = NameNodeServiceModelGenerator.SERVICE_TYPE;
@@ -392,7 +424,7 @@ public class PollingConfigurationAnalyzerTest {
     apiEventAttrs.add(createEventAttribute("SERVICE", service));
     ApiEvent apiEvent = createApiEvent(category, apiEventAttrs, null);
 
-    PollingConfigurationAnalyzer.StartEvent restartEvent = new PollingConfigurationAnalyzer.StartEvent(apiEvent);
+    PollingConfigurationAnalyzer.RelevantEvent restartEvent = new PollingConfigurationAnalyzer.RelevantEvent(apiEvent);
     assertNotNull(restartEvent);
     assertEquals(clusterName, restartEvent.getClusterName());
     assertEquals(serviceType, restartEvent.getServiceType());
