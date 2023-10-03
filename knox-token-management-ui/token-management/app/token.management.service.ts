@@ -21,11 +21,13 @@ import Swal from 'sweetalert2';
 import 'rxjs/add/operator/toPromise';
 
 import {KnoxToken} from './knox.token';
+import {SessionInformation} from './session.information';
 
 @Injectable()
 export class TokenManagementService {
     sessionUrl = window.location.pathname.replace(new RegExp('token-management/.*'), 'session/api/v1/sessioninfo');
     apiUrl = window.location.pathname.replace(new RegExp('token-management/.*'), 'knoxtoken/api/v1/token/');
+    getAllKnoxTokensUrl = this.apiUrl + 'getUserTokens?allTokens=true';
     getKnoxTokensUrl = this.apiUrl + 'getUserTokens?userNameOrCreatedBy=';
     enableKnoxTokenUrl = this.apiUrl + 'enable';
     disableKnoxTokenUrl = this.apiUrl + 'disable';
@@ -34,10 +36,11 @@ export class TokenManagementService {
 
     constructor(private http: HttpClient) {}
 
-    getKnoxTokens(userName: string): Promise<KnoxToken[]> {
+    getKnoxTokens(userName: string, canSeeAllTokens: boolean): Promise<KnoxToken[]> {
         let headers = new HttpHeaders();
         headers = this.addJsonHeaders(headers);
-        return this.http.get(this.getKnoxTokensUrl + userName, { headers: headers})
+        let url = canSeeAllTokens ? this.getAllKnoxTokensUrl : (this.getKnoxTokensUrl + userName);
+        return this.http.get(url, { headers: headers})
             .toPromise()
             .then(response => response['tokens'] as KnoxToken[])
             .catch((err: HttpErrorResponse) => {
@@ -85,14 +88,14 @@ export class TokenManagementService {
             });
     }
 
-    getUserName(): Promise<string> {
+    getSessionInformation(): Promise<SessionInformation> {
         let headers = new HttpHeaders();
         headers = this.addJsonHeaders(headers);
         return this.http.get(this.sessionUrl, { headers: headers})
             .toPromise()
-            .then(response => response['sessioninfo'].user as string)
+            .then(response => response['sessioninfo'] as SessionInformation)
             .catch((err: HttpErrorResponse) => {
-                console.debug('TokenManagementService --> getUserName() --> ' + this.sessionUrl + '\n  error: ' + err.message);
+                console.debug('TokenManagementService --> getSessionInformation() --> ' + this.sessionUrl + '\n  error: ' + err.message);
                 if (err.status === 401) {
                     window.location.assign(document.location.pathname);
                 } else {

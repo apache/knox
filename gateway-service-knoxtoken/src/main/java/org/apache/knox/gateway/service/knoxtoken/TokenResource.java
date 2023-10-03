@@ -452,8 +452,11 @@ public class TokenResource {
       final String userName = uriInfo.getQueryParameters().getFirst("userName");
       final String createdBy = uriInfo.getQueryParameters().getFirst("createdBy");
       final String userNameOrCreatedBy = uriInfo.getQueryParameters().getFirst("userNameOrCreatedBy");
+      final boolean allTokens = Boolean.parseBoolean(uriInfo.getQueryParameters().getFirst("allTokens"));
       final Collection<KnoxToken> userTokens;
-      if (userNameOrCreatedBy == null) {
+      if (allTokens) {
+        userTokens = tokenStateService.getAllTokens();
+      } else if (userNameOrCreatedBy == null) {
         userTokens = createdBy == null ? tokenStateService.getTokens(userName) : tokenStateService.getDoAsTokens(createdBy);
       } else {
         userTokens = new HashSet<>(tokenStateService.getTokens(userNameOrCreatedBy));

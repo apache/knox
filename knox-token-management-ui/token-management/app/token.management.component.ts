@@ -34,15 +34,16 @@ export class TokenManagementComponent implements OnInit {
     tokenGenerationPageURL = window.location.pathname.replace(new RegExp('token-management/.*'), 'token-generation/index.html');
 
     userName: string;
+    canSeeAllTokens: boolean;
     knoxTokens: MatTableDataSource<KnoxToken> = new MatTableDataSource();
     allKnoxTokens: KnoxToken[];
-    knoxTokensWithoutDisabledKnoxSsoCookies: KnoxToken[];
 
     displayedColumns = ['tokenId', 'issued', 'expires', 'userName', 'impersonated', 'knoxSso', 'comment', 'metadata', 'actions'];
     @ViewChild('knoxTokensPaginator') paginator: MatPaginator;
     @ViewChild('knoxTokensSort') sort: MatSort = new MatSort();
 
     showDisabledKnoxSsoCookies: boolean;
+    showMyTokensOnly: boolean;
 
     constructor(private tokenManagementService: TokenManagementService) {
         this.showDisabledKnoxSsoCookies = true;
@@ -86,9 +87,18 @@ export class TokenManagementComponent implements OnInit {
         this.actualizeTokensToDisplay();
     }
 
+    onChangeShowMyTokensOnly(value: MatSlideToggleChange) {
+        this.showMyTokensOnly = value.checked;
+        this.actualizeTokensToDisplay();
+    }
+
     ngOnInit(): void {
         console.debug('TokenManagementComponent --> ngOnInit()');
-        this.tokenManagementService.getUserName().then(userName => this.setUserName(userName));
+        this.tokenManagementService.getSessionInformation()
+            .then(sessionInformation => {
+	          this.canSeeAllTokens = sessionInformation.canSeeAllTokens;
+	          this.setUserName(sessionInformation.user);
+            });
     }
 
     setUserName(userName: string) {
@@ -96,31 +106,40 @@ export class TokenManagementComponent implements OnInit {
         this.fetchKnoxTokens();
     }
 
-    isDisabledKnoxSsoCookie(token: KnoxToken): boolean {
-        return token.metadata.knoxSsoCookie && !token.metadata.enabled;
+    userCanSeeAllTokens(): boolean {
+        return this.canSeeAllTokens;
     }
 
     fetchKnoxTokens(): void {
-        this.tokenManagementService.getKnoxTokens(this.userName).then(tokens => this.updateTokens(tokens));
+        this.tokenManagementService.getKnoxTokens(this.userName, this.canSeeAllTokens)
+            .then(tokens => this.updateTokens(tokens));
+    }
+
+    private isMyToken(token: KnoxToken): boolean {
+	    return token.metadata.userName === this.userName || (token.metadata.createdBy && token.metadata.createdBy === this.userName);
+    }
+
+    private isDisabledKnoxSsoCookie(token: KnoxToken): boolean {
+        return token.metadata.knoxSsoCookie && !token.metadata.enabled;
     }
 
     private updateTokens(tokens: KnoxToken[]): void {
         this.allKnoxTokens = tokens;
-        this.knoxTokensWithoutDisabledKnoxSsoCookies = [] as KnoxToken[];
-        tokens.forEach(token => {
-            if (!this.isDisabledKnoxSsoCookie(token)) {
-              this.knoxTokensWithoutDisabledKnoxSsoCookies.push(token);
-            }
-        });
         this.actualizeTokensToDisplay();
     }
 
     private actualizeTokensToDisplay(): void {
-	    if (this.showDisabledKnoxSsoCookies) {
-            this.knoxTokens.data = this.allKnoxTokens;
-         } else {
-            this.knoxTokens.data = this.knoxTokensWithoutDisabledKnoxSsoCookies;
+	    let tokensToDisplay = this.allKnoxTokens;
+
+        if (!this.showDisabledKnoxSsoCookies) {
+            tokensToDisplay = tokensToDisplay.filter(token => !this.isDisabledKnoxSsoCookie(token));
+        }
+
+        if (this.showMyTokensOnly) {
+             tokensToDisplay = tokensToDisplay.filter(token => this.isMyToken(token));
          }
+
+         this.knoxTokens.data = tokensToDisplay;
 
          setTimeout(() => {
             this.knoxTokens.paginator = this.paginator;

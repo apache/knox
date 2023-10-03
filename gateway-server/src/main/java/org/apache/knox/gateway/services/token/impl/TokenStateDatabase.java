@@ -52,11 +52,11 @@ public class TokenStateDatabase {
   private static final String ADD_METADATA_SQL = "INSERT INTO " + TOKEN_METADATA_TABLE_NAME + "(token_id, md_name, md_value) VALUES(?, ?, ?)";
   private static final String UPDATE_METADATA_SQL = "UPDATE " + TOKEN_METADATA_TABLE_NAME + " SET md_value = ? WHERE token_id = ? AND md_name = ?";
   private static final String GET_METADATA_SQL = "SELECT md_name, md_value FROM " + TOKEN_METADATA_TABLE_NAME + " WHERE token_id = ?";
-  private static final String GET_TOKENS_BY_USER_NAME_SQL = "SELECT kt.token_id, kt.issue_time, kt.expiration, kt.max_lifetime, ktm.md_name, ktm.md_value FROM " + TOKENS_TABLE_NAME
-      + " kt, " + TOKEN_METADATA_TABLE_NAME + " ktm WHERE kt.token_id = ktm.token_id AND kt.token_id IN (SELECT token_id FROM " + TOKEN_METADATA_TABLE_NAME + " WHERE md_name = '" + TokenMetadata.USER_NAME + "' AND md_value = ? )"
+  private static final String GET_ALL_TOKENS_SQL = "SELECT kt.token_id, kt.issue_time, kt.expiration, kt.max_lifetime, ktm.md_name, ktm.md_value FROM " + TOKENS_TABLE_NAME
+      + " kt, " + TOKEN_METADATA_TABLE_NAME + " ktm WHERE kt.token_id = ktm.token_id";
+  private static final String GET_TOKENS_BY_USER_NAME_SQL = GET_ALL_TOKENS_SQL + " AND kt.token_id IN (SELECT token_id FROM " + TOKEN_METADATA_TABLE_NAME + " WHERE md_name = '" + TokenMetadata.USER_NAME + "' AND md_value = ? )"
       + " ORDER BY kt.issue_time";
-  private static final String GET_TOKENS_CREATED_BY_USER_NAME_SQL = "SELECT kt.token_id, kt.issue_time, kt.expiration, kt.max_lifetime, ktm.md_name, ktm.md_value FROM " + TOKENS_TABLE_NAME
-      + " kt, " + TOKEN_METADATA_TABLE_NAME + " ktm WHERE kt.token_id = ktm.token_id AND kt.token_id IN (SELECT token_id FROM " + TOKEN_METADATA_TABLE_NAME + " WHERE md_name = '" + TokenMetadata.CREATED_BY + "' AND md_value = ? )"
+  private static final String GET_TOKENS_CREATED_BY_USER_NAME_SQL = GET_ALL_TOKENS_SQL + " AND kt.token_id IN (SELECT token_id FROM " + TOKEN_METADATA_TABLE_NAME + " WHERE md_name = '" + TokenMetadata.CREATED_BY + "' AND md_value = ? )"
       + " ORDER BY kt.issue_time";
 
   private final DataSource dataSource;
@@ -181,6 +181,10 @@ public class TokenStateDatabase {
     return metadataName.equals(TokenMetadata.PASSCODE) ? new String(Base64.decodeBase64(metadataValue.getBytes(UTF_8)), UTF_8) : metadataValue;
   }
 
+  Collection<KnoxToken> getAllTokens() throws SQLException {
+    return fetchTokens(null, GET_ALL_TOKENS_SQL);
+  }
+
   Collection<KnoxToken> getTokens(String userName) throws SQLException {
     return fetchTokens(userName, GET_TOKENS_BY_USER_NAME_SQL);
   }
@@ -192,7 +196,9 @@ public class TokenStateDatabase {
   private Collection<KnoxToken> fetchTokens(String userName, String sql) throws SQLException {
     Map<String, KnoxToken> tokenMap = new LinkedHashMap<>();
     try (Connection connection = dataSource.getConnection(); PreparedStatement getTokenIdsStatement = connection.prepareStatement(sql)) {
-      getTokenIdsStatement.setString(1, userName);
+      if (userName != null) {
+        getTokenIdsStatement.setString(1, userName);
+      }
       try (ResultSet rs = getTokenIdsStatement.executeQuery()) {
         while (rs.next()) {
           String tokenId = rs.getString(1);

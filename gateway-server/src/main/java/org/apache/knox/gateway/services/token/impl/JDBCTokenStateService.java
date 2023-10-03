@@ -295,6 +295,16 @@ public class JDBCTokenStateService extends AbstractPersistentTokenStateService {
   }
 
   @Override
+  public Collection<KnoxToken> getAllTokens() {
+    try {
+      return tokenDatabase.getAllTokens();
+    } catch (SQLException e) {
+      log.errorFetchingAllTokensFromDatabase(e.getMessage(), e);
+      return Collections.emptyList();
+    }
+  }
+
+  @Override
   public Collection<KnoxToken> getTokens(String userName) {
     try {
       return tokenDatabase.getTokens(userName);

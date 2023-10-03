@@ -20,8 +20,16 @@
             <span class="glyphicon glyphicon-refresh"></span>
         </button>
         <span style="float: right;">
-            <mat-slide-toggle (change)="onChangeShowDisabledCookies($event)" [(ngModel)]="showDisabledKnoxSsoCookies" [color]="green">
+            <mat-slide-toggle (change)="onChangeShowDisabledCookies($event)" [(ngModel)]="showDisabledKnoxSsoCookies">
               Show Disabled KnoxSSO Cookies
+            </mat-slide-toggle>
+        </span>
+    </div>
+
+    <div *ngIf="userCanSeeAllTokens()">
+        <span style="float: right;">
+            <mat-slide-toggle (change)="onChangeShowMyTokensOnly($event)" [(ngModel)]="showMyTokensOnly">
+              Show My Tokens Only
             </mat-slide-toggle>
         </span>
     </div>
