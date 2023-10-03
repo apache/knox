@@ -24,6 +24,7 @@ import {MatSortModule} from '@angular/material/sort';
 import {MatPaginatorModule} from '@angular/material/paginator';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {MatInputModule} from '@angular/material/input';
+import {MatSlideToggleModule} from '@angular/material/slide-toggle';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 
@@ -46,7 +47,8 @@ import {TokenManagementService} from './token.management.service';
         MatSortModule,
         MatPaginatorModule,
         MatProgressSpinnerModule,
-        MatInputModule
+        MatInputModule,
+        MatSlideToggleModule
     ],
     declarations: [TokenManagementComponent],
     providers: [TokenManagementService],

@@ -19,8 +19,12 @@
         <button type="button" title="Refresh Knox Tokens" (click)="fetchKnoxTokens();">
             <span class="glyphicon glyphicon-refresh"></span>
         </button>
+        <span style="float: right;">
+            <mat-slide-toggle (change)="onChangeShowDisabledCookies($event)" [(ngModel)]="showDisabledKnoxSsoCookies" [color]="green">
+              Show Disabled KnoxSSO Cookies
+            </mat-slide-toggle>
+        </span>
     </div>
-
 
     <div class="table-responsive" style="width:100%; overflow: auto; overflow-y: auto; padding: 10px 0px 0px 0px;">
         <mat-form-field [floatLabel]="always" appearance="fill" #search>

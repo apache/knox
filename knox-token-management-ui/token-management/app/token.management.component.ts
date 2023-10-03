@@ -20,6 +20,7 @@ import {KnoxToken} from './knox.token';
 import {MatTableDataSource} from '@angular/material/table';
 import {MatPaginator} from '@angular/material/paginator';
 import {MatSort} from '@angular/material/sort';
+import {MatSlideToggleChange} from '@angular/material/slide-toggle';
 
 @Component({
     selector: 'app-token-management',
@@ -34,20 +35,17 @@ export class TokenManagementComponent implements OnInit {
 
     userName: string;
     knoxTokens: MatTableDataSource<KnoxToken> = new MatTableDataSource();
+    allKnoxTokens: KnoxToken[];
+    knoxTokensWithoutDisabledKnoxSsoCookies: KnoxToken[];
 
     displayedColumns = ['tokenId', 'issued', 'expires', 'userName', 'impersonated', 'knoxSso', 'comment', 'metadata', 'actions'];
     @ViewChild('knoxTokensPaginator') paginator: MatPaginator;
     @ViewChild('knoxTokensSort') sort: MatSort = new MatSort();
 
-    toggleBoolean(propertyName: string) {
-        this[propertyName] = !this[propertyName];
-    }
-
-    enableServiceText(enableServiceText: string) {
-        this[enableServiceText] = true;
-    }
+    showDisabledKnoxSsoCookies: boolean;
 
     constructor(private tokenManagementService: TokenManagementService) {
+        this.showDisabledKnoxSsoCookies = true;
         let isMatch: (record: KnoxToken, filter: String) => boolean = (record, filter) => {
           let normalizedFilter = filter.trim().toLocaleLowerCase();
           let matchesTokenId = record.tokenId.toLocaleLowerCase().includes(normalizedFilter);
@@ -83,6 +81,11 @@ export class TokenManagementComponent implements OnInit {
         };
     }
 
+    onChangeShowDisabledCookies(value: MatSlideToggleChange) {
+        this.showDisabledKnoxSsoCookies = value.checked;
+        this.actualizeTokensToDisplay();
+    }
+
     ngOnInit(): void {
         console.debug('TokenManagementComponent --> ngOnInit()');
         this.tokenManagementService.getUserName().then(userName => this.setUserName(userName));
@@ -93,12 +96,36 @@ export class TokenManagementComponent implements OnInit {
         this.fetchKnoxTokens();
     }
 
+    isDisabledKnoxSsoCookie(token: KnoxToken): boolean {
+        return token.metadata.knoxSsoCookie && !token.metadata.enabled;
+    }
+
     fetchKnoxTokens(): void {
-        this.tokenManagementService.getKnoxTokens(this.userName).then(tokens => this.knoxTokens.data = tokens);
-        setTimeout(() => {
+        this.tokenManagementService.getKnoxTokens(this.userName).then(tokens => this.updateTokens(tokens));
+    }
+
+    private updateTokens(tokens: KnoxToken[]): void {
+        this.allKnoxTokens = tokens;
+        this.knoxTokensWithoutDisabledKnoxSsoCookies = [] as KnoxToken[];
+        tokens.forEach(token => {
+            if (!this.isDisabledKnoxSsoCookie(token)) {
+              this.knoxTokensWithoutDisabledKnoxSsoCookies.push(token);
+            }
+        });
+        this.actualizeTokensToDisplay();
+    }
+
+    private actualizeTokensToDisplay(): void {
+	    if (this.showDisabledKnoxSsoCookies) {
+            this.knoxTokens.data = this.allKnoxTokens;
+         } else {
+            this.knoxTokens.data = this.knoxTokensWithoutDisabledKnoxSsoCookies;
+         }
+
+         setTimeout(() => {
             this.knoxTokens.paginator = this.paginator;
             this.knoxTokens.sort = this.sort;
-        });
+         });
     }
 
     disableToken(tokenId: string) {
