@@ -21,6 +21,7 @@ import {MatTableDataSource} from '@angular/material/table';
 import {MatPaginator} from '@angular/material/paginator';
 import {MatSort} from '@angular/material/sort';
 import {MatSlideToggleChange} from '@angular/material/slide-toggle';
+import {SelectionModel} from '@angular/cdk/collections';
 
 @Component({
     selector: 'app-token-management',
@@ -36,14 +37,19 @@ export class TokenManagementComponent implements OnInit {
     userName: string;
     canSeeAllTokens: boolean;
     knoxTokens: MatTableDataSource<KnoxToken> = new MatTableDataSource();
+    selection = new SelectionModel<KnoxToken>(true, []);
     allKnoxTokens: KnoxToken[];
 
-    displayedColumns = ['tokenId', 'issued', 'expires', 'userName', 'impersonated', 'knoxSso', 'comment', 'metadata', 'actions'];
+    displayedColumns = ['select', 'tokenId', 'issued', 'expires', 'userName', 'impersonated', 'knoxSso', 'comment', 'metadata', 'actions'];
     @ViewChild('knoxTokensPaginator') paginator: MatPaginator;
     @ViewChild('knoxTokensSort') sort: MatSort = new MatSort();
 
     showDisabledKnoxSsoCookies: boolean;
     showMyTokensOnly: boolean;
+
+    showDisableSelectedTokensButton: boolean;
+    showEnableSelectedTokensButton: boolean;
+    showRevokeSelectedTokensButton: boolean;
 
     constructor(private tokenManagementService: TokenManagementService) {
         this.showDisabledKnoxSsoCookies = true;
@@ -125,6 +131,8 @@ export class TokenManagementComponent implements OnInit {
 
     private updateTokens(tokens: KnoxToken[]): void {
         this.allKnoxTokens = tokens;
+        this.selection.clear();
+        this.showHideBatchOperations();
         this.actualizeTokensToDisplay();
     }
 
@@ -151,12 +159,32 @@ export class TokenManagementComponent implements OnInit {
         this.tokenManagementService.setEnabledDisabledFlag(false, tokenId).then((response: string) => this.fetchKnoxTokens());
     }
 
+    disableSelectedTokens(): void {
+        this.tokenManagementService.setEnabledDisabledFlagsInBatch(false, this.getSelectedTokenIds())
+            .then((response: string) => this.fetchKnoxTokens());
+    }
+
+    private getSelectedTokenIds(): string[] {
+        let selectedTokenIds = [] as string[];
+        this.selection.selected.forEach(token => selectedTokenIds.push(token.tokenId));
+        return selectedTokenIds;
+    }
+
     enableToken(tokenId: string) {
         this.tokenManagementService.setEnabledDisabledFlag(true, tokenId).then((response: string) => this.fetchKnoxTokens());
     }
 
+    enableSelectedTokens(): void {
+        this.tokenManagementService.setEnabledDisabledFlagsInBatch(true, this.getSelectedTokenIds())
+            .then((response: string) => this.fetchKnoxTokens());
+    }
+
     revokeToken(tokenId: string) {
         this.tokenManagementService.revokeToken(tokenId).then((response: string) => this.fetchKnoxTokens());
+    }
+
+    revokeSelectedTokens() {
+        this.tokenManagementService.revokeTokensInBatch(this.getSelectedTokenIds()).then((response: string) => this.fetchKnoxTokens());
     }
 
     gotoTokenGenerationPage() {
@@ -184,14 +212,60 @@ export class TokenManagementComponent implements OnInit {
       return Array.from(mdMap);
     }
 
-    isKnoxSSoCookie(knoxToken: KnoxToken): boolean {
+    isKnoxSsoCookie(knoxToken: KnoxToken): boolean {
       return knoxToken.metadata.knoxSsoCookie;
+    }
+
+    isDisabledKnoxSSoCookie(knoxToken: KnoxToken): boolean {
+      return this.isKnoxSsoCookie(knoxToken) && !knoxToken.metadata.enabled;
     }
 
     applyFilter(filterValue: string) {
         filterValue = filterValue.trim(); // Remove whitespace
         filterValue = filterValue.toLowerCase(); // Datasource defaults to lowercase matches
         this.knoxTokens.filter = filterValue;
+    }
+
+    /** Whether the number of selected elements matches the total number of rows. */
+    isAllSelected(): boolean {
+      const numSelected = this.selection.selected.length;
+      const numRows = this.knoxTokens.filteredData.length;
+      return numSelected === numRows;
+    }
+
+    /** Selects all rows if they are not all selected; otherwise clear selection. */
+    masterToggle(): void {
+        if (this.isAllSelected()) {
+            this.selection.clear();
+        } else {
+            this.knoxTokens.filteredData.forEach(row => {
+	            if (!this.isDisabledKnoxSsoCookie(row)) {
+                    this.selection.select(row);
+                }
+            });
+        }
+        this.showHideBatchOperations();
+    }
+
+    onRowSelectionChange(knoxToken: KnoxToken): void {
+        this.selection.toggle(knoxToken);
+        this.showHideBatchOperations();
+    }
+
+    showHideBatchOperations() {
+	    if (this.selection.isEmpty()) {
+		    this.showDisableSelectedTokensButton = false;
+            this.showEnableSelectedTokensButton = false;
+            this.showRevokeSelectedTokensButton = false;
+	    } else {
+            this.showDisableSelectedTokensButton = true;
+            this.showEnableSelectedTokensButton = true;
+            this.showRevokeSelectedTokensButton = this.selectionHasZeroKnoxSsoCookie(); // KnoxSSO cookies must not be revoked
+	    }
+    }
+
+    private selectionHasZeroKnoxSsoCookie(): boolean {
+        return this.selection.selected.every(token => !token.metadata.knoxSsoCookie);
     }
 
 }

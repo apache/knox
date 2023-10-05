@@ -36,6 +36,9 @@ public interface TokenServiceMessages {
   @Message( level = MessageLevel.INFO, text = "Knox Token service ({0}) revoked token {1} ({2}) (renewer={3})")
   void revokedToken(String topologyName, String tokenDisplayText, String tokenId, String renewer);
 
+  @Message( level = MessageLevel.INFO, text = "Knox Token service ({0}) set enabled flag to {1} on token {2}")
+  void setEnabledFlag(String topologyName, boolean enabled, String tokenId);
+
   @Message( level = MessageLevel.ERROR, text = "Unable to issue token.")
   void unableToIssueToken(@StackTrace( level = MessageLevel.DEBUG) Exception e);
 

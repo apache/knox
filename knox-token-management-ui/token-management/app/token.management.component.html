@@ -41,9 +41,28 @@
         </mat-form-field>
 
         <mat-table [dataSource]="knoxTokens" matSort #knoxTokensSort="matSort">
+            <ng-container matColumnDef="select">
+                <mat-header-cell *matHeaderCellDef>
+                    <mat-checkbox (change)="$event ? masterToggle() : null"
+                        [checked]="selection.hasValue() && isAllSelected()"
+                        [indeterminate]="selection.hasValue() && !isAllSelected()">
+                    </mat-checkbox>
+                </mat-header-cell>
+                <mat-cell *matCellDef="let knoxToken">
+                    <mat-checkbox *ngIf="!isDisabledKnoxSSoCookie(knoxToken)"
+                        (click)="$event.stopPropagation()"
+                        (change)="$event ? onRowSelectionChange(knoxToken) : null"
+                        [checked]="selection.isSelected(knoxToken)">
+                    </mat-checkbox>
+                </mat-cell>
+            </ng-container>
+
             <ng-container matColumnDef="tokenId">
                 <mat-header-cell *matHeaderCellDef mat-sort-header="tokenId" style="text-align: center; justify-content: center;">Token ID</mat-header-cell>
-                <mat-cell *matCellDef="let knoxToken" style="text-align: center; justify-content: center;">{{knoxToken.tokenId}}</mat-cell>
+                <mat-cell *matCellDef="let knoxToken" style="text-align: center; justify-content: center;">
+                  <div *ngIf="knoxToken.metadata.enabled">{{knoxToken.tokenId}}</div>
+                  <div *ngIf="!knoxToken.metadata.enabled" style="color:orange">{{knoxToken.tokenId}}</div>
+                </mat-cell>
             </ng-container>
 
             <ng-container matColumnDef="issued">
@@ -75,8 +94,8 @@
             <ng-container matColumnDef="knoxSso">
                 <mat-header-cell *matHeaderCellDef mat-sort-header="knoxSso" style="text-align: center; justify-content: center;">KnoxSSO</mat-header-cell>
                 <mat-cell *matCellDef="let knoxToken" style="text-align: center; justify-content: center;">
-                  <img *ngIf="isKnoxSSoCookie(knoxToken)" src="assets/green_checkmark.svg" style="height:20px; width:auto" />
-                  <img *ngIf="!isKnoxSSoCookie(knoxToken)" src="assets/red_cross_circle.svg" style="height:20px; width:auto" />
+                  <img *ngIf="isKnoxSsoCookie(knoxToken)" src="assets/green_checkmark.svg" style="height:20px; width:auto" />
+                  <img *ngIf="!isKnoxSsoCookie(knoxToken)" src="assets/red_cross_circle.svg" style="height:20px; width:auto" />
                 </mat-cell>
             </ng-container>
 
@@ -100,9 +119,9 @@
                 <mat-header-cell *matHeaderCellDef style="text-align: center; justify-content: center;">Actions</mat-header-cell>
                 <mat-cell *matCellDef="let knoxToken">
                     <button *ngIf="knoxToken.metadata.enabled && !isTokenExpired(knoxToken.expirationLong)" (click)="disableToken(knoxToken.tokenId);">Disable</button>
-                    <button *ngIf="!isKnoxSSoCookie(knoxToken) && !knoxToken.metadata.enabled && !isTokenExpired(knoxToken.expirationLong)" (click)="enableToken(knoxToken.tokenId);">Enable</button>
-                    <button *ngIf="!isKnoxSSoCookie(knoxToken)" (click)="revokeToken(knoxToken.tokenId);">Revoke</button>
-                    <p *ngIf="isKnoxSSoCookie(knoxToken) && !knoxToken.metadata.enabled" style="color:orange">Previously Disabled SSO Cookie!</p>
+                    <button *ngIf="!isKnoxSsoCookie(knoxToken) && !knoxToken.metadata.enabled && !isTokenExpired(knoxToken.expirationLong)" (click)="enableToken(knoxToken.tokenId);">Enable</button>
+                    <button *ngIf="!isKnoxSsoCookie(knoxToken)" (click)="revokeToken(knoxToken.tokenId);">Revoke</button>
+                    <p *ngIf="isDisabledKnoxSsoCookie(knoxToken)" style="color:orange">Previously Disabled SSO Cookie!</p>
                 </mat-cell>
             </ng-container>
 
@@ -111,6 +130,12 @@
 
         </mat-table>
         <mat-paginator #knoxTokensPaginator [pageSizeOptions]="[5, 10, 25, 100]" [pageSize]="25" [showFirstLastButtons]="true"></mat-paginator>
+    </div>
+
+    <div>
+        <button *ngIf="showDisableSelectedTokensButton" type="button" (click)="disableSelectedTokens();">&nbsp;Disable Selected Tokens&nbsp;&nbsp;</button>
+        <button *ngIf="showEnableSelectedTokensButton" type="button" (click)="enableSelectedTokens();">&nbsp;Enable Selected Tokens&nbsp;&nbsp;</button>
+        <button *ngIf="showRevokeSelectedTokensButton" type="button" (click)="revokeSelectedTokens();">&nbsp;Revoke Selected Tokens&nbsp;</button>
     </div>
 </div>
 

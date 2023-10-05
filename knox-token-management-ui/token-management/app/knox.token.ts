@@ -25,4 +25,8 @@ export class KnoxToken {
     expirationLong: number;
     maxLifetime: string;
     metadata: Metadata;
+
+    public toString = (): string => {
+        return 'KnoxToken (tokenId: ${this.tokenId})';
+    };
 }
