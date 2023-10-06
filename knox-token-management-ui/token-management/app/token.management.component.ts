@@ -34,17 +34,10 @@ export class TokenManagementComponent implements OnInit {
 
     userName: string;
     knoxTokens: MatTableDataSource<KnoxToken> = new MatTableDataSource();
-    doAsKnoxTokens: MatTableDataSource<KnoxToken> = new MatTableDataSource();
-    impersonationEnabled: boolean;
 
-    displayedColumns = ['tokenId', 'issued', 'expires', 'comment', 'metadata', 'actions'];
-    @ViewChild('ownPaginator') paginator: MatPaginator;
-    @ViewChild('ownSort') sort: MatSort = new MatSort();
-
-    impersonationDisplayedColumns = ['impersonation.tokenId', 'impersonation.issued', 'impersonation.expires', 'impersonation.comment',
-                                     'impersonation.metadata', 'impersonation.user.name'];
-    @ViewChild('impersonationPaginator') impersonationPaginator: MatPaginator;
-    @ViewChild('impersonationSort') impersonationSort: MatSort = new MatSort();
+    displayedColumns = ['tokenId', 'issued', 'expires', 'userName', 'impersonated', 'knoxSso', 'comment', 'metadata', 'actions'];
+    @ViewChild('knoxTokensPaginator') paginator: MatPaginator;
+    @ViewChild('knoxTokensSort') sort: MatSort = new MatSort();
 
     toggleBoolean(propertyName: string) {
         this[propertyName] = !this[propertyName];
@@ -55,10 +48,12 @@ export class TokenManagementComponent implements OnInit {
     }
 
     constructor(private tokenManagementService: TokenManagementService) {
-        let isMatch: (record: KnoxToken, filter: String, impersonated: boolean) => boolean = (record, filter, impersonated) => {
+        let isMatch: (record: KnoxToken, filter: String) => boolean = (record, filter) => {
           let normalizedFilter = filter.trim().toLocaleLowerCase();
           let matchesTokenId = record.tokenId.toLocaleLowerCase().includes(normalizedFilter);
           let matchesComment = record.metadata.comment && record.metadata.comment.toLocaleLowerCase().includes(normalizedFilter);
+          let matchesUserName = record.metadata.userName.toLocaleLowerCase().includes(normalizedFilter);
+          let matchesCreatedBy = record.metadata.createdBy && record.metadata.createdBy.toLocaleLowerCase().includes(normalizedFilter);
           let matchesCustomMetadata = false;
           if (record.metadata.customMetadataMap) {
             for (let entry of Array.from(Object.entries(record.metadata.customMetadataMap))) {
@@ -71,35 +66,19 @@ export class TokenManagementComponent implements OnInit {
             matchesCustomMetadata = true; // nothing to match
           }
 
-          let matchesImpersonatedUserName = false;  // doAs username should be checked only if impersonation is enabled
-          if (impersonated) {
-              matchesImpersonatedUserName = record.metadata.userName.toLocaleLowerCase().includes(normalizedFilter);
-          }
-
-          return matchesTokenId || matchesComment || matchesCustomMetadata || matchesImpersonatedUserName;
+          return matchesTokenId || matchesComment || matchesCustomMetadata || matchesUserName || matchesCreatedBy;
         };
 
         this.knoxTokens.filterPredicate = function (record, filter) {
-	      return isMatch(record, filter, false);
-        };
-
-        this.doAsKnoxTokens.filterPredicate = function (record, filter) {
-          return isMatch(record, filter, true);
+	      return isMatch(record, filter);
         };
 
         this.knoxTokens.sortingDataAccessor = (item, property) => {
            switch(property) {
              case 'metadata.comment': return item.metadata.comment;
-             default: return item[property];
-           }
-        };
-
-        this.doAsKnoxTokens.sortingDataAccessor = (item, property) => {
-           let normalizedPropertyName = property.replace('impersonation.', '');
-           switch(normalizedPropertyName) {
-             case 'metadata.comment': return item.metadata.comment;
              case 'metadata.username': return item.metadata.userName;
-             default: return item[normalizedPropertyName];
+             case 'metadata.createdBy': return item.metadata.createdBy;
+             default: return item[property];
            }
         };
     }
@@ -107,51 +86,31 @@ export class TokenManagementComponent implements OnInit {
     ngOnInit(): void {
         console.debug('TokenManagementComponent --> ngOnInit()');
         this.tokenManagementService.getUserName().then(userName => this.setUserName(userName));
-        this.tokenManagementService.getImpersonationEnabled()
-            .then(impersonationEnabled => this.impersonationEnabled = impersonationEnabled === 'true');
     }
 
     setUserName(userName: string) {
         this.userName = userName;
-        this.fetchAllKnoxTokens();
+        this.fetchKnoxTokens();
     }
 
-    fetchAllKnoxTokens(): void {
-        this.fetchKnoxTokens(false);
-        this.fetchKnoxTokens(true);
-    }
-
-    fetchKnoxTokens(impersonated: boolean): void {
-        this.tokenManagementService.getKnoxTokens(this.userName, impersonated)
-            .then(tokens => this.populateTokens(impersonated, tokens));
-    }
-
-    populateTokens(impersonated: boolean, tokens: KnoxToken[]) {
-        if (impersonated) {
-            this.doAsKnoxTokens.data = tokens;
-            setTimeout(() => {
-                this.doAsKnoxTokens.paginator = this.impersonationPaginator;
-                this.doAsKnoxTokens.sort = this.impersonationSort;
-            });
-        } else {
-            this.knoxTokens.data = tokens;
-            setTimeout(() => {
-                this.knoxTokens.paginator = this.paginator;
-                this.knoxTokens.sort = this.sort;
-            });
-        }
+    fetchKnoxTokens(): void {
+        this.tokenManagementService.getKnoxTokens(this.userName).then(tokens => this.knoxTokens.data = tokens);
+        setTimeout(() => {
+            this.knoxTokens.paginator = this.paginator;
+            this.knoxTokens.sort = this.sort;
+        });
     }
 
     disableToken(tokenId: string) {
-        this.tokenManagementService.setEnabledDisabledFlag(false, tokenId).then((response: string) => this.fetchAllKnoxTokens());
+        this.tokenManagementService.setEnabledDisabledFlag(false, tokenId).then((response: string) => this.fetchKnoxTokens());
     }
 
     enableToken(tokenId: string) {
-        this.tokenManagementService.setEnabledDisabledFlag(true, tokenId).then((response: string) => this.fetchAllKnoxTokens());
+        this.tokenManagementService.setEnabledDisabledFlag(true, tokenId).then((response: string) => this.fetchKnoxTokens());
     }
 
     revokeToken(tokenId: string) {
-        this.tokenManagementService.revokeToken(tokenId).then((response: string) => this.fetchAllKnoxTokens());
+        this.tokenManagementService.revokeToken(tokenId).then((response: string) => this.fetchKnoxTokens());
     }
 
     gotoTokenGenerationPage() {
@@ -170,26 +129,23 @@ export class TokenManagementComponent implements OnInit {
         return this.isTokenExpired(expiration) ? 'red' : 'green';
     }
 
-    isImpersonationEnabled(): boolean {
-        return this.impersonationEnabled;
-    }
-
     getCustomMetadataArray(knoxToken: KnoxToken): [string, string][] {
       let mdMap = new Map();
       if (knoxToken.metadata.customMetadataMap) {
-        mdMap = knoxToken.metadata.customMetadataMap;
+        mdMap = new Map(Object.entries(knoxToken.metadata.customMetadataMap));
       }
-      return Array.from(Object.entries(mdMap));
+
+      return Array.from(mdMap);
     }
 
-    applyFilter(impersonated: boolean, filterValue: string) {
+    isKnoxSSoCookie(knoxToken: KnoxToken): boolean {
+      return knoxToken.metadata.knoxSsoCookie;
+    }
+
+    applyFilter(filterValue: string) {
         filterValue = filterValue.trim(); // Remove whitespace
         filterValue = filterValue.toLowerCase(); // Datasource defaults to lowercase matches
-        if (impersonated) {
-            this.doAsKnoxTokens.filter = filterValue;
-        } else {
-            this.knoxTokens.filter = filterValue;
-        }
+        this.knoxTokens.filter = filterValue;
     }
 
 }

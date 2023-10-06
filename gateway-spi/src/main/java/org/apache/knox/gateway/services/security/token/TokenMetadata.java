@@ -36,7 +36,8 @@ public class TokenMetadata {
   public static final String ENABLED = "enabled";
   public static final String PASSCODE = "passcode";
   public static final String CREATED_BY = "createdBy";
-  private static final List<String> KNOWN_MD_NAMES = Arrays.asList(USER_NAME, COMMENT, ENABLED, PASSCODE, CREATED_BY);
+  public static final String KNOX_SSO_COOKIE = "knoxSSOCookie";
+  private static final List<String> KNOWN_MD_NAMES = Arrays.asList(USER_NAME, COMMENT, ENABLED, PASSCODE, CREATED_BY, KNOX_SSO_COOKIE);
 
   private final Map<String, String> metadataMap = new HashMap<>();
 
@@ -116,6 +117,14 @@ public class TokenMetadata {
 
   public String getCreatedBy() {
     return getMetadata(CREATED_BY);
+  }
+
+  public void setKnoxSsoCookie(boolean knoxSsoCookie) {
+    saveMetadata(KNOX_SSO_COOKIE, String.valueOf(knoxSsoCookie));
+  }
+
+  public boolean isKnoxSsoCookie() {
+    return Boolean.parseBoolean(getMetadata(KNOX_SSO_COOKIE));
   }
 
   public String toJSON() {

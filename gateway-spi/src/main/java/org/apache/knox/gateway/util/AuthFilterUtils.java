@@ -46,6 +46,7 @@ public class AuthFilterUtils {
   public static final String PROXYUSER_PREFIX = "hadoop.proxyuser";
   public static final String QUERY_PARAMETER_DOAS = "doAs";
   public static final String REAL_USER_NAME_ATTRIBUTE = "real.user.name";
+  public static final String DO_GLOBAL_LOGOUT_ATTRIBUTE = "do.global.logout";
 
   private static final GatewaySpiMessages LOG = MessagesFactory.get(GatewaySpiMessages.class);
   private static final Map<String, Map<String, ImpersonationProvider>> TOPOLOGY_IMPERSONATION_PROVIDERS = new ConcurrentHashMap<>();
@@ -239,6 +240,14 @@ public class AuthFilterUtils {
    */
   public static List<String> getInitParameterNamesAsList(FilterConfig filterConfig) {
     return filterConfig.getInitParameterNames() == null ? Collections.emptyList() : Collections.list(filterConfig.getInitParameterNames());
+  }
+
+  public static void markDoGlobalLogoutInRequest(HttpServletRequest request) {
+    request.setAttribute(DO_GLOBAL_LOGOUT_ATTRIBUTE, "true");
+  }
+
+  public static boolean shouldDoGlobalLogout(HttpServletRequest request) {
+    return request.getAttribute(DO_GLOBAL_LOGOUT_ATTRIBUTE) == null ? false : Boolean.parseBoolean((String) request.getAttribute(DO_GLOBAL_LOGOUT_ATTRIBUTE));
   }
 
 }

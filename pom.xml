@@ -492,6 +492,7 @@
                         <exclude>atlassian-ide-plugin.xml</exclude>
                         <exclude>**/PULL_REQUEST_TEMPLATE*</exclude>
                         <exclude>**/new-service-definition-template.xml</exclude>
+                        <exclude>**/token-management/**/assets/**</exclude>
                     </excludes>
                 </configuration>
             </plugin>

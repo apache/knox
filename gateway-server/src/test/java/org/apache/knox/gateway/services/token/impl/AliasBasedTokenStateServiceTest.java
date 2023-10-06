@@ -113,6 +113,7 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
                      System.currentTimeMillis(),
                      token.getExpiresDate().getTime(),
                      maxTokenLifetime);
+        tss.addMetadata(token.getClaim(JWTToken.KNOX_ID_CLAIM),  new TokenMetadata("alice"));
         assertTrue("Expected the token to have expired.", tss.isExpired(token));
       }
 
