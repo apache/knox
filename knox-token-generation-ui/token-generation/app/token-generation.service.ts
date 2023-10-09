@@ -26,11 +26,11 @@ export class TokenGenService {
     readonly tssStatusRequestURL: string;
 
     constructor(private http: HttpClient) {
-        const loginPageSuffix = 'token-generation/index.html';
         const knoxtokenURL = 'knoxtoken/api/v1/token';
         const tssStatusURL = 'knoxtoken/api/v1/token/getTssStatus';
 
-        let topologyContext = window.location.pathname.replace(loginPageSuffix, '');
+        let pathParts = window.location.pathname.split('/');
+        let topologyContext = '/' + pathParts[1] + '/' + pathParts[2] + '/';
         let temporaryURL = topologyContext.substring(0, topologyContext.lastIndexOf('/'));
         this.baseURL = temporaryURL.substring(0, temporaryURL.lastIndexOf('/') + 1);
         this.tokenURL = topologyContext + knoxtokenURL;
