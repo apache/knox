@@ -62,7 +62,7 @@ public class NameNodeServiceModelGenerator extends AbstractServiceModelGenerator
                                       ApiServiceConfig serviceConfig,
                                       ApiRole          role,
                                       ApiConfigList    roleConfig,
-                                      ApiServiceConfig coreConfig) throws ApiException {
+                                      ApiServiceConfig coreSettingsConfig) throws ApiException {
     boolean haEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, AUTOFAILOVER_ENABLED));
     String serviceUrl;
     if (haEnabled) {

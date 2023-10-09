@@ -52,7 +52,7 @@ public class HdfsUIServiceModelGenerator extends NameNodeServiceModelGenerator {
     String hostname = role.getHostRef().getHostname();
     String scheme;
     String port;
-    String sslEnabledConfig = getCoreOrServiceConfig(coreSettingsConfig, serviceConfig, SSL_ENABLED);
+    String sslEnabledConfig = getCoreOrServiceConfig(serviceConfig, coreSettingsConfig, SSL_ENABLED);
     boolean sslEnabled = Boolean.parseBoolean(sslEnabledConfig);
     if(sslEnabled) {
       scheme = "https";

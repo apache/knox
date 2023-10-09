@@ -47,8 +47,8 @@ public class YarnUIServiceModelGenerator extends ResourceManagerServiceModelGene
                                       ApiServiceConfig serviceConfig,
                                       ApiRole          role,
                                       ApiConfigList    roleConfig,
-                                      ApiServiceConfig coreConfig) throws ApiException {
-    ServiceModel model = createServiceModel(generateURL(service, serviceConfig, role, roleConfig, coreConfig));
+                                      ApiServiceConfig coreSettingsConfig) throws ApiException {
+    ServiceModel model = createServiceModel(generateURL(service, serviceConfig, role, roleConfig, coreSettingsConfig));
     model.addRoleProperty(getRoleType(), RM_HTTP_PORT, getRoleConfigValue(roleConfig, RM_HTTP_PORT));
     model.addRoleProperty(getRoleType(), RM_HTTPS_PORT, getRoleConfigValue(roleConfig, RM_HTTPS_PORT));
 
@@ -78,13 +78,13 @@ public class YarnUIServiceModelGenerator extends ResourceManagerServiceModelGene
     return String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port);
   }
 
-  private boolean isSSLEnabled(ApiService service, ApiServiceConfig serviceConfig, ApiServiceConfig coreConfig)
+  private boolean isSSLEnabled(ApiService service, ApiServiceConfig serviceConfig, ApiServiceConfig coreSettingsConfig)
       throws ApiException {
     ServicesResourceApi servicesResourceApi = new ServicesResourceApi(getClient());
     String clusterName = service.getClusterRef().getClusterName();
     String hdfsService = getServiceConfigValue(serviceConfig, "hdfs_service");
     ApiServiceConfig hdfsServiceConfig = servicesResourceApi.readServiceConfig(clusterName, hdfsService, "full");
-    return Boolean.parseBoolean(getCoreOrServiceConfig(coreConfig, hdfsServiceConfig, "hdfs_hadoop_ssl_enabled"));
+    return Boolean.parseBoolean(getCoreOrServiceConfig(hdfsServiceConfig, coreSettingsConfig, "hdfs_hadoop_ssl_enabled"));
   }
 
 }

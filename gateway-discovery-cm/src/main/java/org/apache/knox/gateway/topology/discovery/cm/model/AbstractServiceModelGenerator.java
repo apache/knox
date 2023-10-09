@@ -86,11 +86,11 @@ public abstract class AbstractServiceModelGenerator implements ServiceModelGener
     return new ServiceModelGeneratorHandleResponse(getServiceType().equals(service.getType()) && getRoleType().equals(role.getType()));
   }
 
-  protected String getCoreOrServiceConfig(ApiServiceConfig coreConfig, ApiServiceConfig serviceConfig, String configName) {
-    if (coreConfig != null) {
+  protected String getCoreOrServiceConfig(ApiServiceConfig serviceConfig, ApiServiceConfig coreSettingsConfig, String configName) {
+    if (coreSettingsConfig != null) {
       // in Legacy Cloudera Manager API Clients Compatibility certain configs,
       // such as hdfs_hadoop_ssl_enabled are in the CORE_CONFIG
-      String configValue = getServiceConfigValue(coreConfig, configName);
+      String configValue = getServiceConfigValue(coreSettingsConfig, configName);
       if (configValue != null) {
         return configValue;
       }

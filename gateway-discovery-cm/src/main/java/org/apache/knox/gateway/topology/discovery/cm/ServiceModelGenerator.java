@@ -45,8 +45,5 @@ public interface ServiceModelGenerator {
 
   ServiceModelGeneratorHandleResponse handles(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig);
 
-  /**
-   * Implementations that requires CORE_SETTINGS service config should overide this method, instead of the one without coreSettings
-   */
-  ServiceModel generateService(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig, ApiServiceConfig coreSettings) throws ApiException;
+  ServiceModel generateService(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig, ApiServiceConfig coreSettingsConfig) throws ApiException;
 }
