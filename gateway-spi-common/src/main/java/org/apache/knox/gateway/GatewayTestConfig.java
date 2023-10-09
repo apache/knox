@@ -1057,4 +1057,9 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return false;
   }
 
+  @Override
+  public boolean canSeeAllTokens(String userName) {
+    return false;
+  }
+
 }

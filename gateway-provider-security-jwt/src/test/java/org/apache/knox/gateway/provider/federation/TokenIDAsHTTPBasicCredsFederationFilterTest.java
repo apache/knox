@@ -487,6 +487,11 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
         }
 
         @Override
+        public Collection<KnoxToken> getAllTokens() {
+           return fetchTokens(null, false);
+        }
+
+        @Override
         public Collection<KnoxToken> getTokens(String userName) {
           return fetchTokens(userName, false);
         }
@@ -499,10 +504,14 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
         private Collection<KnoxToken> fetchTokens(String userName, boolean createdBy) {
           final Collection<KnoxToken> tokens = new TreeSet<>();
           final Predicate<Map.Entry<String, TokenMetadata>> filterPredicate;
-          if (createdBy) {
-            filterPredicate = entry -> userName.equals(entry.getValue().getCreatedBy());
+          if (userName == null) {
+            filterPredicate = entry -> true;
           } else {
-            filterPredicate = entry -> userName.equals(entry.getValue().getUserName());
+            if (createdBy) {
+              filterPredicate = entry -> userName.equals(entry.getValue().getCreatedBy());
+            } else {
+              filterPredicate = entry -> userName.equals(entry.getValue().getUserName());
+            }
           }
           tokenMetadata.entrySet().stream().filter(filterPredicate).forEach(metadata -> {
             String tokenId = metadata.getKey();

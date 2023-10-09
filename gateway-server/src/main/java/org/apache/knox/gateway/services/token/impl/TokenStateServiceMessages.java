@@ -253,6 +253,9 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.ERROR, text = "An error occurred while fetching metadata for {0} from the database : {1}")
   void errorFetchingMetadataFromDatabase(String tokenId, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.ERROR, text = "An error occurred while fetching all tokens from the database : {0}")
+  void errorFetchingAllTokensFromDatabase(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
   @Message(level = MessageLevel.ERROR, text = "An error occurred while fetching tokens for user {0} from the database : {1}")
   void errorFetchingTokensForUserFromDatabase(String userName, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 

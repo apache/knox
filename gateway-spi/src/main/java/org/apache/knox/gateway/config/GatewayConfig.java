@@ -887,4 +887,11 @@ public interface GatewayConfig {
    */
   boolean isAsyncSupported();
 
+  /**
+   * @return <code>true</code> if the supplied user is allowed to see all tokens
+   *         (i.e. not only tokens where userName or createdBy equals to the
+   *         userName) on the Token Management page; <code>false</code> otherwise
+   */
+  boolean canSeeAllTokens(String userName);
+
 }

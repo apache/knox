@@ -34,6 +34,9 @@ public class SessionInformation {
   @XmlElement
   private String globalLogoutPageUrl;
 
+  @XmlElement
+  private boolean canSeeAllTokens;
+
   public String getUser() {
     return user;
   }
@@ -64,6 +67,14 @@ public class SessionInformation {
 
   public void setGlobalLogoutPageUrl(String globalLogoutPageUrl) {
     this.globalLogoutPageUrl = globalLogoutPageUrl;
+  }
+
+  public boolean isCanSeeAllTokens() {
+    return canSeeAllTokens;
+  }
+
+  public void setCanSeeAllTokens(boolean canSeeAllTokens) {
+    this.canSeeAllTokens = canSeeAllTokens;
   }
 
 }

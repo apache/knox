@@ -15,18 +15,10 @@
  * limitations under the License.
  */
 
-import {Metadata} from './metadata';
-
-export class KnoxToken {
-    tokenId: string;
-    issueTime: string;
-    issueTimeLong: number;
-    expiration: string;
-    expirationLong: number;
-    maxLifetime: string;
-    metadata: Metadata;
-
-    public toString = (): string => {
-        return 'KnoxToken (tokenId: ${this.tokenId})';
-    };
+export class SessionInformation {
+    user: string;
+    logoutUrl: string;
+    logoutPageUrl: string;
+    globalLgoutPageUrl: string;
+    canSeeAllTokens: boolean;
 }
