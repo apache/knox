@@ -56,10 +56,10 @@ public class OozieServiceModelGenerator extends AbstractServiceModelGenerator {
   }
 
   @Override
-  public ServiceModel generateService(ApiService       service,
-                                      ApiServiceConfig serviceConfig,
-                                      ApiRole          role,
-                                      ApiConfigList    roleConfig) {
+  public ServiceModel generateService(ApiService service,
+                                 ApiServiceConfig serviceConfig,
+                                 ApiRole role,
+                                 ApiConfigList roleConfig, ApiServiceConfig coreSettingsConfig) {
     String hostname = role.getHostRef().getHostname();
     String scheme;
     String port;

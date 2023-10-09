@@ -59,7 +59,7 @@ public class FlinkServiceModelGenerator extends AbstractServiceModelGenerator {
   }
 
   @Override
-  public ServiceModel generateService(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) throws ApiException {
+  public ServiceModel generateService(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig, ApiServiceConfig coreConfig) throws ApiException {
     final String hostname = role.getHostRef().getHostname();
     final String port = getRoleConfigValue(roleConfig, WEB_PORT);
     final boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, SSL_ENABLED));

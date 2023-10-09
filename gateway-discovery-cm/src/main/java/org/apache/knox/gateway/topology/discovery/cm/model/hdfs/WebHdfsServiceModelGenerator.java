@@ -55,8 +55,8 @@ public class WebHdfsServiceModelGenerator extends HdfsUIServiceModelGenerator {
   }
 
   @Override
-  public ServiceModel generateService(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) throws ApiException {
-    ServiceModel parent = super.generateService(service, serviceConfig, role, roleConfig);
+  public ServiceModel generateService(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig, ApiServiceConfig coreSettingsConfig) throws ApiException {
+    ServiceModel parent = super.generateService(service, serviceConfig, role, roleConfig, coreSettingsConfig);
     String serviceUrl = parent.getServiceUrl() + WEBHDFS_SUFFIX;
 
     ServiceModel model = createServiceModel(serviceUrl);

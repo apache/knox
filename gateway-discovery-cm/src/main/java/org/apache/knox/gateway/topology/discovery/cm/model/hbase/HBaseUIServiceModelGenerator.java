@@ -55,10 +55,10 @@ public class HBaseUIServiceModelGenerator extends AbstractServiceModelGenerator 
   }
 
   @Override
-  public ServiceModel generateService(ApiService       service,
-                                      ApiServiceConfig serviceConfig,
-                                      ApiRole          role,
-                                      ApiConfigList    roleConfig) {
+  public ServiceModel generateService(ApiService service,
+                                 ApiServiceConfig serviceConfig,
+                                 ApiRole role,
+                                 ApiConfigList roleConfig, ApiServiceConfig coreSettingsConfig) {
     String hostname = role.getHostRef().getHostname();
     String scheme;
     String port = getRoleConfigValue(roleConfig, MASTER_INFO_PORT); // TODO: Is there an SSL port, or is this property re-used?
