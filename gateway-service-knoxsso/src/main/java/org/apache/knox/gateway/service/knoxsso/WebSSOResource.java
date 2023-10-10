@@ -398,7 +398,8 @@ public class WebSSOResource {
   }
 
   private void addJWTHadoopCookie(String original, JWT token) {
-    LOGGER.addingJWTCookie(token.toString());
+    final String logSafeToken = Tokens.getTokenDisplayText(token.toString());
+    LOGGER.addingJWTCookie(logSafeToken);
     /*
      * In order to account for google chrome changing default value
      * of SameSite from None to Lax we need to craft Set-Cookie
@@ -424,7 +425,7 @@ public class WebSSOResource {
       }
       setCookie.append("; SameSite=").append(this.sameSiteValue);
       response.setHeader("Set-Cookie", setCookie.toString());
-      LOGGER.addedJWTCookie();
+      LOGGER.addedJWTCookie(logSafeToken);
     } catch (Exception e) {
       LOGGER.unableAddCookieToResponse(e.getMessage(),
           Arrays.toString(e.getStackTrace()));
