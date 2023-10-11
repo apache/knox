@@ -45,15 +45,10 @@ public class GatewayStatusService implements Service {
       LOG.noTopologiesToCheck();
       return false;
     }
-    Set<String> missing = pendingTopologies();
-    LOG.checkingGatewayStatus(deployedTopologies, missing);
-    return missing.isEmpty();
-  }
-
-  public synchronized Set<String> pendingTopologies() {
     Set<String> missing = new HashSet<>(topologyNamesToCheck);
     missing.removeAll(deployedTopologies);
-    return missing;
+    LOG.checkingGatewayStatus(deployedTopologies, missing);
+    return missing.isEmpty();
   }
 
   /**

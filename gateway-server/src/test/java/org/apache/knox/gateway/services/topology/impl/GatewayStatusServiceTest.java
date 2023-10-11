@@ -17,12 +17,10 @@
  */
 package org.apache.knox.gateway.services.topology.impl;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -44,21 +42,5 @@ public class GatewayStatusServiceTest {
     assertFalse(statusService.status());
     statusService.onTopologyReady("t2");
     assertTrue(statusService.status());
-  }
-
-  @Test
-  public void testPendingTopologies() throws Exception {
-    GatewayStatusService statusService = new GatewayStatusService();
-    GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
-    statusService.init(config, null);
-    assertFalse(statusService.status());
-    EasyMock.expect(config.getHealthCheckTopologies()).andReturn(new HashSet<>(Arrays.asList("t1", "t2"))).anyTimes();
-    EasyMock.replay(config);
-    statusService.initTopologiesToCheck();
-    assertEquals(new HashSet<>(Arrays.asList("t1", "t2")), statusService.pendingTopologies());
-    statusService.onTopologyReady("t1");
-    assertEquals(new HashSet<>(Arrays.asList("t2")), statusService.pendingTopologies());
-    statusService.onTopologyReady("t2");
-    assertEquals(Collections.emptySet(), statusService.pendingTopologies());
   }
 }

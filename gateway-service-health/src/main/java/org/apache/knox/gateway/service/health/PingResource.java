@@ -101,7 +101,7 @@ public class PingResource {
             .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     GatewayStatusService statusService = services.getService(ServiceType.GATEWAY_STATUS_SERVICE);
     try (PrintWriter writer = response.getWriter()) {
-      writer.println(statusService.status() ? OK : PENDING + ": " + statusService.pendingTopologies());
+      writer.println(statusService.status() ? OK : PENDING);
     } catch (IOException e) {
       log.logException("status", e);
       return Response.serverError().entity(String.format(Locale.ROOT, "Failed to reply correctly due to : %s ", e)).build();
