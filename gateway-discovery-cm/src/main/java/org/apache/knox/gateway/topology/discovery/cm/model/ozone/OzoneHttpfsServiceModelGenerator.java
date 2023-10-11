@@ -59,10 +59,10 @@ public class OzoneHttpfsServiceModelGenerator extends AbstractServiceModelGenera
     }
 
     @Override
-    public ServiceModel generateService(ApiService       service,
-                                        ApiServiceConfig serviceConfig,
-                                        ApiRole          role,
-                                        ApiConfigList    roleConfig) throws ApiException {
+    public ServiceModel generateService(ApiService service,
+                                   ApiServiceConfig serviceConfig,
+                                   ApiRole role,
+                                   ApiConfigList roleConfig, ApiServiceConfig coreSettingsConfig) throws ApiException {
         String hostname = role.getHostRef().getHostname();
 
         boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, SSL_ENABLED));

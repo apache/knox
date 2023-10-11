@@ -38,10 +38,11 @@ public class ResourceManagerUIServiceModelGenerator extends YarnUIServiceModelGe
   }
 
   @Override
-  protected String generateURL(ApiService       service,
+  protected String generateURL(ApiService service,
                                ApiServiceConfig serviceConfig,
-                               ApiRole          role,
-                               ApiConfigList    roleConfig) throws ApiException {
-    return (super.generateURL(service, serviceConfig, role, roleConfig) + RM_WS_SUFFIX);
+                               ApiRole role,
+                               ApiConfigList roleConfig,
+                               ApiServiceConfig coreConfig) throws ApiException {
+    return (super.generateURL(service, serviceConfig, role, roleConfig, coreConfig) + RM_WS_SUFFIX);
   }
 }

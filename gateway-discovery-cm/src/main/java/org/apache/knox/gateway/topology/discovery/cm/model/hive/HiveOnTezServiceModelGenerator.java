@@ -49,11 +49,11 @@ public class HiveOnTezServiceModelGenerator extends HiveServiceModelGenerator {
   }
 
   @Override
-  public ServiceModel generateService(ApiService       service,
-                                      ApiServiceConfig serviceConfig,
-                                      ApiRole          role,
-                                      ApiConfigList    roleConfig) throws ApiException {
-    ServiceModel model = super.generateService(service, serviceConfig, role, roleConfig);
+  public ServiceModel generateService(ApiService service,
+                                 ApiServiceConfig serviceConfig,
+                                 ApiRole role,
+                                 ApiConfigList roleConfig, ApiServiceConfig coreSettingsConfig) throws ApiException {
+    ServiceModel model = super.generateService(service, serviceConfig, role, roleConfig, coreSettingsConfig);
     model.addRoleProperty(getRoleType(),
                           HIVEONTEZ_HTTP_PORT,
                           getRoleConfigValue(roleConfig, HIVEONTEZ_HTTP_PORT));

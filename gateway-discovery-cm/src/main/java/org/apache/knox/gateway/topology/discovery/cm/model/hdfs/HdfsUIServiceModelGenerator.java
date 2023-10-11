@@ -47,11 +47,13 @@ public class HdfsUIServiceModelGenerator extends NameNodeServiceModelGenerator {
   public ServiceModel generateService(ApiService       service,
                                       ApiServiceConfig serviceConfig,
                                       ApiRole          role,
-                                      ApiConfigList    roleConfig) throws ApiException {
+                                      ApiConfigList    roleConfig,
+                                      ApiServiceConfig coreSettingsConfig) throws ApiException {
     String hostname = role.getHostRef().getHostname();
     String scheme;
     String port;
-    boolean sslEnabled = Boolean.parseBoolean(getServiceConfigValue(serviceConfig, SSL_ENABLED));
+    String sslEnabledConfig = getCoreOrServiceConfig(serviceConfig, coreSettingsConfig, SSL_ENABLED);
+    boolean sslEnabled = Boolean.parseBoolean(sslEnabledConfig);
     if(sslEnabled) {
       scheme = "https";
       port = getRoleConfigValue(roleConfig, HTTPS_PORT);
@@ -62,11 +64,11 @@ public class HdfsUIServiceModelGenerator extends NameNodeServiceModelGenerator {
     String namenodeUrl = String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port);
 
     ServiceModel model = createServiceModel(namenodeUrl);
-    model.addServiceProperty(SSL_ENABLED, getServiceConfigValue(serviceConfig, SSL_ENABLED));
+    model.addServiceProperty(SSL_ENABLED, sslEnabledConfig);
     model.addRoleProperty(role.getType(), HTTPS_PORT, getRoleConfigValue(roleConfig, HTTPS_PORT));
     model.addRoleProperty(role.getType(), HTTP_PORT, getRoleConfigValue(roleConfig, HTTP_PORT));
 
-    ServiceModel parent = super.generateService(service, serviceConfig, role, roleConfig);
+    ServiceModel parent = super.generateService(service, serviceConfig, role, roleConfig, coreSettingsConfig);
     addParentModelMetadata(model, parent);
 
     return model;
