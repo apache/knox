@@ -713,26 +713,26 @@ public class TokenResource {
     return error == null ? response : error;
   }
 
-  private Response setTokenEnabledFlag(String tokenId, boolean enabled, boolean batch) {
+  private Response setTokenEnabledFlag(String tokenId, boolean enable, boolean batch) {
     String error = "";
     ErrorCode errorCode = ErrorCode.UNKNOWN;
     if (tokenStateService == null) {
-      error = "Unable to " + (enabled ? "enable" : "disable") + " tokens because token management is not configured";
+      error = "Unable to " + (enable ? "enable" : "disable") + " tokens because token management is not configured";
       errorCode = ErrorCode.CONFIGURATION_ERROR;
     } else {
       try {
         final TokenMetadata tokenMetadata = tokenStateService.getTokenMetadata(tokenId);
-        if (!batch && enabled && tokenMetadata.isEnabled()) {
+        if (!batch && enable && tokenMetadata.isEnabled()) {
           error = "Token is already enabled";
           errorCode = ErrorCode.ALREADY_ENABLED;
-        } else if (!batch && !enabled && !tokenMetadata.isEnabled()) {
+        } else if (!batch && !enable && !tokenMetadata.isEnabled()) {
           error = "Token is already disabled";
           errorCode = ErrorCode.ALREADY_DISABLED;
-        } else if (enabled && tokenMetadata.isKnoxSsoCookie()) {
+        } else if (enable && tokenMetadata.isKnoxSsoCookie() && !tokenMetadata.isEnabled()) {
           error = "Disabled KnoxSSO Cookies cannot not be enabled";
           errorCode = ErrorCode.DISABLED_KNOXSSO_COOKIE;
         } else {
-          tokenMetadata.setEnabled(enabled);
+          tokenMetadata.setEnabled(enable);
           tokenStateService.addMetadata(tokenId, tokenMetadata);
         }
       } catch (UnknownTokenException e) {
@@ -742,8 +742,8 @@ public class TokenResource {
     }
 
     if (error.isEmpty()) {
-      log.setEnabledFlag(getTopologyName(), enabled, Tokens.getTokenIDDisplayText(tokenId));
-      return Response.status(Response.Status.OK).entity("{\n  \"setEnabledFlag\": \"true\",\n  \"isEnabled\": \"" + enabled + "\"\n}\n").build();
+      log.setEnabledFlag(getTopologyName(), enable, Tokens.getTokenIDDisplayText(tokenId));
+      return Response.status(Response.Status.OK).entity("{\n  \"setEnabledFlag\": \"true\",\n  \"isEnabled\": \"" + enable + "\"\n}\n").build();
     } else {
       log.badSetEnabledFlagRequest(getTopologyName(), Tokens.getTokenIDDisplayText(tokenId), error);
       return Response.status(Response.Status.BAD_REQUEST).entity("{\n  \"setEnabledFlag\": \"false\",\n  \"error\": \"" + error + "\",\n  \"code\": " + errorCode.toInt() + "\n}\n").build();
