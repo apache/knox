@@ -33,6 +33,7 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -821,7 +822,13 @@ public class TokenResource {
 
     if (tokenStateService != null) {
       if (tokenLimitPerUser != -1) { // if -1 => unlimited tokens for all users
-        final Collection<KnoxToken> userTokens = tokenStateService.getTokens(userName);
+        final Collection<KnoxToken> allUserTokens = tokenStateService.getTokens(userName);
+        final Collection<KnoxToken> userTokens = new LinkedList<>();
+        allUserTokens.stream().forEach(token -> {
+          if(!token.getMetadata().isKnoxSsoCookie()) {
+            userTokens.add(token);
+          }
+        });
         if (userTokens.size() >= tokenLimitPerUser) {
           log.tokenLimitExceeded(userName);
           if (UserLimitExceededAction.RETURN_ERROR == userLimitExceededAction) {
