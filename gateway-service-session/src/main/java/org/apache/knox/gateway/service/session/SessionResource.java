@@ -31,6 +31,7 @@ import javax.ws.rs.core.Context;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.SubjectUtils;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
 
 @Singleton
 @Path("session/api/v1/")
@@ -57,8 +58,9 @@ public class SessionResource {
       sessionInfo.setLogoutUrl(logoutUrl);
       sessionInfo.setLogoutPageUrl(getLogoutPageUrl(config));
       sessionInfo.setGlobalLogoutPageUrl(getGlobalLogoutPageUrl(config));
-      sessionInfo.setCanSeeAllTokens(config.canSeeAllTokens(user));
     }
+    sessionInfo.setCanSeeAllTokens(config != null ? config.canSeeAllTokens(user) : false);
+    sessionInfo.setCurrentKnoxSsoCookieTokenId((String) this.request.getAttribute(TokenUtils.ATTR_CURRENT_KNOXSSO_COOKIE_TOKEN_ID));
 
     return sessionInfo;
   }

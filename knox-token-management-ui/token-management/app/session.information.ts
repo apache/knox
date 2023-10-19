@@ -21,4 +21,5 @@ export class SessionInformation {
     logoutPageUrl: string;
     globalLgoutPageUrl: string;
     canSeeAllTokens: boolean;
+    currentKnoxSsoCookieTokenId: string;
 }

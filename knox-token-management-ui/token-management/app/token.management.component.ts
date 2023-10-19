@@ -38,6 +38,7 @@ export class TokenManagementComponent implements OnInit {
 
     userName: string;
     canSeeAllTokens: boolean;
+    currentKnoxSsoCookieTokenId: string;
     knoxTokens: MatTableDataSource<KnoxToken> = new MatTableDataSource();
     selection = new SelectionModel<KnoxToken>(true, []);
     allKnoxTokens: KnoxToken[];
@@ -104,8 +105,9 @@ export class TokenManagementComponent implements OnInit {
         console.debug('TokenManagementComponent --> ngOnInit()');
         this.tokenManagementService.getSessionInformation()
             .then(sessionInformation => {
-	          this.canSeeAllTokens = sessionInformation.canSeeAllTokens;
-	          this.setUserName(sessionInformation.user);
+              this.canSeeAllTokens = sessionInformation.canSeeAllTokens;
+              this.currentKnoxSsoCookieTokenId = sessionInformation.currentKnoxSsoCookieTokenId;
+              this.setUserName(sessionInformation.user);
             });
     }
 
@@ -268,6 +270,14 @@ export class TokenManagementComponent implements OnInit {
 
     private selectionHasZeroKnoxSsoCookie(): boolean {
         return this.selection.selected.every(token => !token.metadata.knoxSsoCookie);
+    }
+
+    getFontWeight(token: KnoxToken): string {
+        return this.isCurrentKnoxSsoCookietoken(token) ? 'bold' : 'normal';
+    }
+
+    private isCurrentKnoxSsoCookietoken(token: KnoxToken): boolean {
+        return this.isKnoxSsoCookie(token) && token.tokenId === this.currentKnoxSsoCookieTokenId;
     }
 
 }
