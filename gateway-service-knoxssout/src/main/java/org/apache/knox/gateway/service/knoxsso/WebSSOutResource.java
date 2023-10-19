@@ -18,9 +18,15 @@
 package org.apache.knox.gateway.service.knoxsso;
 
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.session.control.ConcurrentSessionVerifier;
+import org.apache.knox.gateway.util.Tokens;
 import org.apache.knox.gateway.util.Urls;
 
 import javax.annotation.PostConstruct;
@@ -35,6 +41,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.MalformedURLException;
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -118,11 +125,33 @@ public class WebSSOutResource {
       if (gwServices != null) {
         ConcurrentSessionVerifier verifier = gwServices.getService(ServiceType.CONCURRENT_SESSION_VERIFIER);
         verifier.sessionEndedForUser(request.getUserPrincipal().getName(), ssoCookie.get().getValue());
+        removeKnoxSsoCookie(ssoCookie.get(), gwServices);
       }
     } else {
       log.couldNotFindCookieWithTokenToRemove(cookieName, request.getUserPrincipal().getName());
     }
     return rc;
+  }
+
+  private void removeKnoxSsoCookie(Cookie ssoCookie, GatewayServices gwServices) {
+    final TokenStateService tokenStateService = gwServices.getService(ServiceType.TOKEN_STATE_SERVICE);
+    if (tokenStateService!= null) {
+      try {
+        final JWTToken jwt = new JWTToken(ssoCookie.getValue());
+        tokenStateService.revokeToken(jwt);
+        final String revoker = SubjectUtils.getCurrentEffectivePrincipalName();
+        log.revokedToken(getTopologyName(),
+            Tokens.getTokenDisplayText(ssoCookie.getValue()),
+            Tokens.getTokenIDDisplayText(TokenUtils.getTokenId(jwt)),
+            revoker);
+      } catch (ParseException | UnknownTokenException e) {
+        // NOP: cookie maybe invalid or token management was disabled anyway
+      }
+    }
+  }
+
+  private String getTopologyName() {
+    return (String) context.getAttribute("org.apache.knox.gateway.gateway.cluster");
   }
 
   private Optional<Cookie> findCookie(String cookieName) {

@@ -22,6 +22,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
@@ -165,6 +166,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
           JWT token = new JWTToken(wireToken);
           if (validateToken(req, res, chain, token)) {
             Subject subject = createSubjectFromToken(token);
+            request.setAttribute(TokenUtils.ATTR_CURRENT_KNOXSSO_COOKIE_TOKEN_ID, token.getClaim(JWTToken.KNOX_ID_CLAIM));
             continueWithEstablishedSecurityContext(subject, req, res, chain);
 
             // we found a valid cookie we don't need to keep checking anymore

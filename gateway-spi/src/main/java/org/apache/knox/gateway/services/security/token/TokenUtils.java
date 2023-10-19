@@ -33,6 +33,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.util.LinkedHashMap;
 
 public class TokenUtils {
+  public static final String ATTR_CURRENT_KNOXSSO_COOKIE_TOKEN_ID = "currentKnoxSsoCookieTokenId";
   public static final String SIGNING_HMAC_SECRET_ALIAS = "gateway.signing.hmac.secret";
   private static final String DEFAULT_RSA_SIG_ALG = "RS256";
   private static final String DEFAULT_HMAC_SIG_ALG = "HS256";

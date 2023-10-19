@@ -28,4 +28,7 @@ public interface KnoxSSOutMessages {
 
   @Message(level = MessageLevel.WARN, text = "Could not find cookie with the name: {0} in the request to be removed from the concurrent session counter for user: {1}. ")
   void couldNotFindCookieWithTokenToRemove(String cookieName, String username);
+
+  @Message( level = MessageLevel.INFO, text = "Knox Token service ({0}) revoked token {1} ({2}) (renewer={3})")
+  void revokedToken(String topologyName, String tokenDisplayText, String tokenId, String renewer);
 }
