@@ -101,12 +101,12 @@
 
             <ng-container matColumnDef="comment">
                 <mat-header-cell *matHeaderCellDef mat-sort-header="metadata.comment" style="text-align: center; justify-content: center;">Comment</mat-header-cell>
-                <mat-cell *matCellDef="let knoxToken" style="text-align: center; justify-content: center;">{{knoxToken.metadata.comment}}</mat-cell>
+                <mat-cell *matCellDef="let knoxToken" style="text-align: center; justify-content: center; word-wrap:break-word; word-break: break-word;">{{knoxToken.metadata.comment}}</mat-cell>
             </ng-container>
 
             <ng-container matColumnDef="metadata">
                 <mat-header-cell *matHeaderCellDef style="text-align: center; justify-content: center;">Additional Metadata</mat-header-cell>
-                <mat-cell *matCellDef="let knoxToken" style="text-align: center; justify-content: center;">
+                <mat-cell *matCellDef="let knoxToken" style="text-align: center; justify-content: center; word-wrap:break-word; word-break: break-word;">
                    <ul>
                        <li *ngFor="let metadata of getCustomMetadataArray(knoxToken)">
                            {{metadata[0]}} = {{metadata[1]}}
