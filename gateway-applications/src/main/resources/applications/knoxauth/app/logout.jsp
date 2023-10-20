@@ -59,6 +59,7 @@
 
     <%
         String originalUrl = request.getParameter("originalUrl");
+        originalUrl = originalUrl.replaceAll("&", "%26");
         Topology topology = (Topology)request.getSession().getServletContext().getAttribute("org.apache.knox.gateway.topology");
         String whitelist = null;
         String cookieName = null;
