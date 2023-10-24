@@ -347,7 +347,7 @@ public class WebSSOResource {
     return Response.seeOther(location).entity("{ \"redirectTo\" : " + original + " }").build();
   }
 
-  private String getOriginalUrlFromQueryParams() {
+  protected String getOriginalUrlFromQueryParams() {
     String original = request.getParameter(ORIGINAL_URL_REQUEST_PARAM);
     StringBuilder buf = new StringBuilder(original);
 
@@ -362,7 +362,8 @@ public class WebSSOResource {
           && !original.contains(entry.getKey() + "=")
           && !ssoExpectedparams.contains(entry.getKey())) {
 
-        if(first) {
+        /* Only add ? if not already present. See KNOX-2973 */
+        if(first && (buf.lastIndexOf("?") == -1) ) {
           buf.append('?');
           first = false;
         }

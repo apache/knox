@@ -772,6 +772,114 @@ public class WebSSOResourceTest {
   }
 
   /**
+   * Test for cases where originalUrl has host and port parameters.
+   * @throws Exception
+   */
+  @Test
+  public void testGetOriginalUrlFromQueryParamsWithHostPort() throws Exception {
+    /* &port=1001 is missing in the original URL because it gets stripped
+    out during request.getParameter(ORIGINAL_URL_REQUEST_PARAM) operation */
+    final String ORIG_URL_VALUE = "https://local.site/gateway/sandbox/hbase/webui/master?host=local.site";
+    final String ORIGINAL_URL= "originalUrl="+ORIG_URL_VALUE;
+    final String PORT_VALUE = "1001";
+    Map<String, String[]> params = new HashMap<>();
+    params.put("originalUrl", new String[] {ORIG_URL_VALUE});
+    params.put("port", new String[] {PORT_VALUE});
+
+    HttpServletRequest req = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(req.getParameter("originalUrl")).andReturn(ORIGINAL_URL);
+    EasyMock.expect(req.getParameterMap()).andReturn(params);
+    EasyMock.expect(req.getParameterMap()).andReturn(Collections.emptyMap());
+    EasyMock.expect(req.getServletContext()).andReturn(context).anyTimes();
+
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(req.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    EasyMock.replay(req);
+
+    WebSSOResource webSSOResource = new WebSSOResource();
+
+
+    webSSOResource.request = req;
+    String result = webSSOResource.getOriginalUrlFromQueryParams();
+
+    /* make sure there no additional '?' at the end of ORIG_URL_VALUE */
+    assertEquals(ORIGINAL_URL+"&port="+PORT_VALUE, result);
+  }
+
+  /**
+   * Test for cases where originalUrl has host parameter.
+   * @throws Exception
+   */
+  @Test
+  public void testGetOriginalUrlFromQueryParamsWithHost() throws Exception {
+    final String ORIG_URL_VALUE = "https://local.site/gateway/sandbox/hbase/webui/master?host=local.site";
+    final String ORIGINAL_URL= "originalUrl="+ORIG_URL_VALUE;
+    Map<String, String[]> params = new HashMap<>();
+    params.put("originalUrl", new String[] {ORIG_URL_VALUE});
+
+    HttpServletRequest req = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(req.getParameter("originalUrl")).andReturn(ORIGINAL_URL);
+    EasyMock.expect(req.getParameterMap()).andReturn(params);
+    EasyMock.expect(req.getParameterMap()).andReturn(Collections.emptyMap());
+    EasyMock.expect(req.getServletContext()).andReturn(context).anyTimes();
+
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(req.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    EasyMock.replay(req);
+
+    WebSSOResource webSSOResource = new WebSSOResource();
+
+
+    webSSOResource.request = req;
+    String result = webSSOResource.getOriginalUrlFromQueryParams();
+
+    /* make sure there no additional '?' at the end of ORIG_URL_VALUE */
+    assertEquals(ORIGINAL_URL, result);
+  }
+
+
+  /**
+   * Test for cases where originalUrl does not have host and port parameters.
+   * normal case.
+   * @throws Exception
+   */
+  @Test
+  public void testGetOriginalUrlFromQueryParams() throws Exception {
+    /* &port=1001 is missing in the original URL because it gets stripped
+    out during request.getParameter(ORIGINAL_URL_REQUEST_PARAM) operation */
+    final String ORIG_URL_VALUE = "https://local.site/gateway/sandbox/hbase/webui/master";
+    final String ORIGINAL_URL= "originalUrl="+ORIG_URL_VALUE;
+    Map<String, String[]> params = new HashMap<>();
+    params.put("originalUrl", new String[] {ORIG_URL_VALUE});
+
+    HttpServletRequest req = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(req.getParameter("originalUrl")).andReturn(ORIGINAL_URL);
+    EasyMock.expect(req.getParameterMap()).andReturn(params);
+    EasyMock.expect(req.getParameterMap()).andReturn(Collections.emptyMap());
+    EasyMock.expect(req.getServletContext()).andReturn(context).anyTimes();
+
+    Principal principal = EasyMock.createNiceMock(Principal.class);
+    EasyMock.expect(principal.getName()).andReturn("alice").anyTimes();
+    EasyMock.expect(req.getUserPrincipal()).andReturn(principal).anyTimes();
+
+    EasyMock.replay(req);
+
+    WebSSOResource webSSOResource = new WebSSOResource();
+
+
+    webSSOResource.request = req;
+    String result = webSSOResource.getOriginalUrlFromQueryParams();
+
+    /* make sure there no additional '?' at the end of ORIG_URL_VALUE */
+    assertEquals(ORIGINAL_URL, result);
+  }
+
+
+  /**
    * A wrapper for HttpServletResponseWrapper to store the cookies
    */
   private static class CookieResponseWrapper extends HttpServletResponseWrapper {
