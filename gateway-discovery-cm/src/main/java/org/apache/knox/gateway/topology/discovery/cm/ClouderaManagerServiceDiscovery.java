@@ -253,8 +253,6 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
 
     log.discoveringCluster(clusterName);
 
-    repository.registerCluster(client.getConfig());
-
     Set<ServiceModel> serviceModels = new HashSet<>();
 
     List<ApiService> serviceList = getClusterServices(client.getConfig(), servicesResourceApi);
@@ -340,7 +338,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
   private List<ApiService> getClusterServices(ServiceDiscoveryConfig serviceDiscoveryConfig, ServicesResourceApi servicesResourceApi) throws ApiException {
     log.lookupClusterServicesFromRepository();
     List<ApiService> services = repository.getServices(serviceDiscoveryConfig);
-    if (services == null || services.isEmpty()) {
+    if (services.isEmpty()) {
       try {
         log.lookupClusterServicesFromCM();
         final ApiServiceList serviceList = servicesResourceApi.readServices(serviceDiscoveryConfig.getCluster(), VIEW_SUMMARY);
