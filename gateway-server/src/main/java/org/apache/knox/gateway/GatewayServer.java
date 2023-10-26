@@ -649,16 +649,10 @@ public class GatewayServer {
     final ServiceDefinitionRegistry serviceDefinitionRegistry = services.getService(ServiceType.SERVICE_DEFINITION_REGISTRY);
     serviceDefinitionRegistry.addServiceDefinitionChangeListener(monitor);
 
-    final Collection<Topology> topologies = monitor.getTopologies();
     final Map<String, Integer> topologyPortMap = config.getGatewayPortMappings();
 
-    // List of all the topology that are deployed
-    final List<String> deployedTopologyList = new ArrayList<>();
-
-    for (final Topology t : topologies) {
-      deployedTopologyList.add(t.getName());
-    }
-
+    // List of all the topology that are deployed (or will be deployed soon)
+    final Set<String> deployedTopologyList = gatewayStatusService.collectTopologies(config);
 
     // Check whether the configured topologies for port mapping exist, if not
     // log WARN message and continue
@@ -768,7 +762,7 @@ public class GatewayServer {
    */
   private void checkMappedTopologiesExist(
       final Map<String, Integer> configTopologies,
-      final List<String> topologies) {
+      final Set<String> topologies) {
     for(final Map.Entry<String, Integer> entry : configTopologies.entrySet()) {
       // If the topologies defined in gateway-config.xml are not found in gateway
       if (!topologies.contains(entry.getKey())) {

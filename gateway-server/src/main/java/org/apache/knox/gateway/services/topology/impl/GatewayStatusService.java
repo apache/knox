@@ -61,17 +61,17 @@ public class GatewayStatusService implements Service {
     Set<String> healthCheckTopologies = config.getHealthCheckTopologies();
     if (healthCheckTopologies.isEmpty()) {
       topologyNamesToCheck = collectTopologies(config);
+      LOG.collectedTopologiesForHealthCheck(topologyNamesToCheck);
     } else {
       topologyNamesToCheck = healthCheckTopologies;
     }
     LOG.startingStatusMonitor(topologyNamesToCheck);
   }
 
-  private Set<String> collectTopologies(GatewayConfig config) {
-    Set<String> result = new HashSet<>();
+  public Set<String> collectTopologies(GatewayConfig config) {
+    final Set<String> result = new HashSet<>();
     collectFiles(result, config.getGatewayTopologyDir(), ".xml");
     collectFiles(result, config.getGatewayDescriptorsDir(), ".json");
-    LOG.collectedTopologiesForHealthCheck(result);
     return result;
   }
 
