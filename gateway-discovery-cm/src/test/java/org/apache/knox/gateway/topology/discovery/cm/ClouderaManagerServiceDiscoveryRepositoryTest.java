@@ -56,14 +56,13 @@ public class ClouderaManagerServiceDiscoveryRepositoryTest {
   @Before
   public void setUp() {
     repository.clear();
-    assertNull(repository.getServices(serviceDiscoveryConfig));
     repository.setCacheEntryTTL(GatewayConfig.DEFAULT_CM_SERVICE_DISCOVERY_CACHE_ENTRY_TTL);
+    assertTrue(repository.getServices(serviceDiscoveryConfig).isEmpty());
   }
 
   @Test
   public void testRegisterCluster() throws Exception {
-    assertNull(repository.getServices(serviceDiscoveryConfig));
-    repository.registerCluster(serviceDiscoveryConfig);
+    assertTrue(repository.getServices(serviceDiscoveryConfig).isEmpty());
     final List<ApiService> services = repository.getServices(serviceDiscoveryConfig);
     assertNotNull(services);
     assertTrue(services.isEmpty());
@@ -72,7 +71,6 @@ public class ClouderaManagerServiceDiscoveryRepositoryTest {
   @Test
   public void testAddService() throws Exception {
     final String serviceName = "HDFS-1";
-    repository.registerCluster(serviceDiscoveryConfig);
     assertFalse(containsService(serviceName));
     final ApiService service = EasyMock.createNiceMock(ApiService.class);
     EasyMock.expect(service.getName()).andReturn(serviceName).anyTimes();
@@ -86,7 +84,6 @@ public class ClouderaManagerServiceDiscoveryRepositoryTest {
     final String serviceName = "HDFS-1";
     final String serviceConfigName = "myServiceConfigName";
     final String serviceConfigValue = "myServiceConfigValue";
-    repository.registerCluster(serviceDiscoveryConfig);
     final ApiService service = EasyMock.createNiceMock(ApiService.class);
     EasyMock.expect(service.getName()).andReturn(serviceName).anyTimes();
     final ApiConfig serviceConfig = EasyMock.createNiceMock(ApiConfig.class);
@@ -105,7 +102,6 @@ public class ClouderaManagerServiceDiscoveryRepositoryTest {
   public void testAddRole() throws Exception {
     final String serviceName = "HDFS-1";
     final String roleName = "NAMENODE-1";
-    repository.registerCluster(serviceDiscoveryConfig);
     final ApiService service = EasyMock.createNiceMock(ApiService.class);
     EasyMock.expect(service.getName()).andReturn(serviceName).anyTimes();
     final ApiRole role = EasyMock.createNiceMock(ApiRole.class);
@@ -121,7 +117,6 @@ public class ClouderaManagerServiceDiscoveryRepositoryTest {
 
   @Test
   public void testAddNullRoles() throws Exception {
-    repository.registerCluster(serviceDiscoveryConfig);
     final ApiService service = EasyMock.createNiceMock(ApiService.class);
     EasyMock.expect(service.getName()).andReturn(ClouderaManagerServiceDiscovery.CORE_SETTINGS_TYPE).anyTimes();
     EasyMock.replay(service);
@@ -132,7 +127,6 @@ public class ClouderaManagerServiceDiscoveryRepositoryTest {
 
   @Test
   public void testAddNullRoleItems() throws Exception {
-    repository.registerCluster(serviceDiscoveryConfig);
     final ApiService service = EasyMock.createNiceMock(ApiService.class);
     EasyMock.expect(service.getName()).andReturn(ClouderaManagerServiceDiscovery.CORE_SETTINGS_TYPE).anyTimes();
     final ApiRoleList roles = EasyMock.createNiceMock(ApiRoleList.class);
@@ -150,7 +144,6 @@ public class ClouderaManagerServiceDiscoveryRepositoryTest {
     final String roleConfigName = "myRoleConfig";
     final String roleConfigValue = "myRoleConfigValue";
 
-    repository.registerCluster(serviceDiscoveryConfig);
     final ApiService service = EasyMock.createNiceMock(ApiService.class);
     EasyMock.expect(service.getName()).andReturn(serviceName).anyTimes();
     final ApiRole role = EasyMock.createNiceMock(ApiRole.class);
@@ -174,6 +167,7 @@ public class ClouderaManagerServiceDiscoveryRepositoryTest {
   public void testCacheAutoEviction() throws Exception {
     final long entryTTL = 1;
     repository.setCacheEntryTTL(entryTTL);
+    repository.clear();
     testAddService();
     TimeUnit.SECONDS.sleep(entryTTL + 1);
     assertFalse(containsService("HDFS-1"));

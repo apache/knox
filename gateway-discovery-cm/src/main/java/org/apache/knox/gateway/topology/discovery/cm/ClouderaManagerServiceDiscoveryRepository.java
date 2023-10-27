@@ -59,23 +59,18 @@ class ClouderaManagerServiceDiscoveryRepository {
     repository.clear();
   }
 
-  void registerCluster(ServiceDiscoveryConfig serviceDiscoveryConfig) {
-    repository.putIfAbsent(RepositoryKey.of(serviceDiscoveryConfig), Caffeine.newBuilder().expireAfterWrite(Duration.ofSeconds(cacheEntryTTL)).build());
-  }
-
   void addService(ServiceDiscoveryConfig serviceDiscoveryConfig, ApiService service) {
     getClusterServices(serviceDiscoveryConfig).put(service, new ServiceDetails());
   }
 
   List<ApiService> getServices(ServiceDiscoveryConfig serviceDiscoveryConfig) {
     final Cache<ApiService, ServiceDetails> clusterServices = getClusterServices(serviceDiscoveryConfig);
-    return clusterServices == null ? null
-        : clusterServices.asMap().entrySet().stream().filter(entry -> entry.getValue() != null).map(entry -> entry.getKey())
+    return clusterServices.asMap().entrySet().stream().filter(entry -> entry.getValue() != null).map(entry -> entry.getKey())
             .collect(Collectors.toList());
   }
 
   private Cache<ApiService, ServiceDetails> getClusterServices(ServiceDiscoveryConfig serviceDiscoveryConfig) {
-    return repository.get(RepositoryKey.of(serviceDiscoveryConfig));
+    return repository.computeIfAbsent(RepositoryKey.of(serviceDiscoveryConfig), (k) -> Caffeine.newBuilder().expireAfterWrite(Duration.ofSeconds(cacheEntryTTL)).build());
   }
 
   void addServiceConfig(ServiceDiscoveryConfig serviceDiscoveryConfig, ApiService service, ApiServiceConfig serviceConfig) {
