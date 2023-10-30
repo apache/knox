@@ -262,14 +262,18 @@ export class TokenManagementComponent implements OnInit {
             this.showEnableSelectedTokensButton = false;
             this.showRevokeSelectedTokensButton = false;
 	    } else {
-            this.showDisableSelectedTokensButton = true;
-            this.showEnableSelectedTokensButton = true;
+            this.showDisableSelectedTokensButton = this.selectionHasZeroExpiredToken(); // expired tokens must not be disabled
+            this.showEnableSelectedTokensButton = this.selectionHasZeroExpiredToken();  // expired tokens must not be enabled
             this.showRevokeSelectedTokensButton = this.selectionHasZeroKnoxSsoCookie(); // KnoxSSO cookies must not be revoked
 	    }
     }
 
     private selectionHasZeroKnoxSsoCookie(): boolean {
         return this.selection.selected.every(token => !token.metadata.knoxSsoCookie);
+    }
+
+    private selectionHasZeroExpiredToken(): boolean {
+        return this.selection.selected.every(token => !this.isTokenExpired(token.expirationLong));
     }
 
     getFontWeight(token: KnoxToken): string {
