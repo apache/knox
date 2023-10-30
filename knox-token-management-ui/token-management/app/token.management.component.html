@@ -137,5 +137,16 @@
         <button *ngIf="showEnableSelectedTokensButton" type="button" (click)="enableSelectedTokens();">&nbsp;Enable Selected Tokens&nbsp;&nbsp;</button>
         <button *ngIf="showRevokeSelectedTokensButton" type="button" (click)="revokeSelectedTokens();">&nbsp;Revoke Selected Tokens&nbsp;</button>
     </div>
+
+    <div *ngIf="!selection.isEmpty() && !showDisableSelectedTokensButton" style="margin-top: 25px;">
+        <img src="assets/yellow_tip.png" style="height:30px; width:auto" /> Expired tokens cannot be disabled in batches (nor individually).
+    </div>
+    <div *ngIf="!selection.isEmpty() && !showEnableSelectedTokensButton" style="margin-top: 25px;">
+        <img src="assets/yellow_tip.png" style="height:30px; width:auto" /> Expired tokens cannot be enabed in batches (nor individually).
+    </div>
+    <div *ngIf="!selection.isEmpty() && !showRevokeSelectedTokensButton" style="margin-top: 25px;">
+        <img src="assets/yellow_tip.png" style="height:30px; width:auto" /> KnoxSSO Cookies cannot be revoked in batches (nor individually).
+    </div>
+
 </div>
 
