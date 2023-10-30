@@ -27,4 +27,7 @@ public interface AuthMessages {
   @Message(level = MessageLevel.ERROR, text = "There was a problem extracting authenticated principal from request.")
   void noPrincipalFound();
 
+  @Message(level = MessageLevel.INFO, text = "Serving request for path: {0}")
+  void pathValue(String path);
+
 }
