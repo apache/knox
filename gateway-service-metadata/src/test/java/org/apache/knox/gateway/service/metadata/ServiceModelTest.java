@@ -21,12 +21,17 @@ import static org.apache.knox.gateway.service.metadata.ServiceModel.HIVE_SERVICE
 import static org.apache.knox.gateway.service.metadata.ServiceModel.HIVE_SERVICE_URL_TEMPLATE;
 import static org.apache.knox.gateway.service.metadata.ServiceModel.SERVICE_URL_TEMPLATE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.knox.gateway.service.definition.Metadata;
+import org.apache.knox.gateway.service.definition.Sample;
 import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Version;
 import org.easymock.EasyMock;
@@ -230,5 +235,37 @@ public class ServiceModelTest {
     EasyMock.replay(service, metadata);
     assertEquals(String.format(Locale.ROOT, SERVICE_URL_TEMPLATE, SERVER_SCHEME, SERVER_NAME, SERVER_PORT, gatewayPath, topologyName,
         context.replace("{{SCHEME}}", "https").replace("{{HOST}}", "localhost").replace("{{PORT}}", "5555")), serviceModel.getServiceUrl());
+  }
+
+  @Test
+  public void shouldReturnProperSampleValueEvenIfPathDoesNotStartWithSlash() throws Exception {
+    final ServiceModel serviceModel = new ServiceModel();
+    final String gatewayPath = "gateway";
+    final String topologyName = "sandbox";
+    serviceModel.setGatewayPath(gatewayPath);
+    serviceModel.setTopologyName(topologyName);
+    serviceModel.setRequest(setUpHttpRequestMock());
+
+    final Metadata metadata = EasyMock.createNiceMock(Metadata.class);
+    final Sample sampleStartsWithSlash = new Sample();
+    sampleStartsWithSlash.setDescription("sampleStartsWithSlash");
+    sampleStartsWithSlash.setMethod("PUT");
+    sampleStartsWithSlash.setPath("/sampleStartsWithSlashPath/operation");
+    final Sample sampleStartsWithoutSlash = new Sample();
+    sampleStartsWithoutSlash.setDescription("sampleStartsWithoutSlash");
+    sampleStartsWithoutSlash.setPath("sampleStartsWithoutSlashPath/operation"); // note the missing starting slash
+    EasyMock.expect(metadata.getSamples()).andReturn(Arrays.asList(sampleStartsWithSlash, sampleStartsWithoutSlash)).anyTimes();
+    serviceModel.setServiceMetadata(metadata);
+
+    final String context = "/testContext";
+    EasyMock.expect(metadata.getContext()).andReturn(context).anyTimes();
+    EasyMock.replay(metadata);
+    final List<Sample> samples = serviceModel.getSamples();
+    assertNotNull(samples);
+    assertFalse(samples.isEmpty());
+    assertEquals(2, samples.size());
+
+    assertEquals(samples.get(0).getValue(), "curl -iv -X PUT \"https://localhost:8443/gateway/sandbox/testContext/sampleStartsWithSlashPath/operation\"");
+    assertEquals(samples.get(1).getValue(), "curl -iv -X GET \"https://localhost:8443/gateway/sandbox/testContext/sampleStartsWithoutSlashPath/operation\"");
   }
 }
