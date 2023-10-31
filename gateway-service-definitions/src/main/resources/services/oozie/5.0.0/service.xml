@@ -25,12 +25,12 @@
             <sample>
                 <description>Fetch the supported Oozie protocol versions by the server</description>
                 <method>GET</method>
-                <path>oozie/versions</path>
+                <path>/oozie/versions</path>
             </sample>
              <sample>
                 <description>Fetch the system status</description>
                 <method>GET</method>
-                <path>oozie/v1/admin/status</path>
+                <path>/oozie/v1/admin/status</path>
             </sample>
             <sample>
                 <description>You may check out Apache Oozie's REST API documentation here</description>

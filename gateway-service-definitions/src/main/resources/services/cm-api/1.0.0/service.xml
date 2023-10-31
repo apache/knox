@@ -30,12 +30,12 @@
             <sample>
                 <description>Fetch all CM-managed clusters</description>
                 <method>GET</method>
-                <path>clusters</path>
+                <path>/v41/clusters</path>
             </sample>
             <sample>
                 <description>Fetches HDFS service details from cluster named 'c1'</description>
                 <method>GET</method>
-                <path>clusters/c1/services/HDFS</path>
+                <path>/v41/clusters/c1/services/HDFS</path>
             </sample>
             <sample>
                 <description>You can checkout CM's API (v41) document here</description>
