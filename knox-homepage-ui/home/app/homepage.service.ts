@@ -132,20 +132,6 @@ export class HomepageService {
     }
 
     private handleError(error: HttpErrorResponse): Promise<any> {
-        // location.reload();
-        let refresh;
-        this.route.queryParams.subscribe(params => {
-          refresh = params['refresh'];
-          console.debug('refresh = ' + refresh);
-          if (refresh) {
-            console.debug('Refreshing page...', window.location.href);
-            let url = window.location.pathname.replace(new RegExp('refresh=1/.*'), '?');
-            // var url = window.location.pathname;
-
-            // window.location.assign(url);
-            window.location.reload();
-          }
-        });
         Swal.fire({
             icon: 'error',
             title: 'Oops!',

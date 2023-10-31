@@ -90,17 +90,13 @@
 
         boolean validRedirect = false;
         String origUrl = request.getParameter("originalUrl");
-        String del = "?";
-        if (origUrl != null && origUrl.contains("?")) {
-          del = "&";
-        }
         if (origUrl != null) {
           validRedirect = RegExUtils.checkWhitelist(whitelist, origUrl);
         }
         if (("1".equals(request.getParameter("returnToApp")))) {
           if (validRedirect) {
-          	response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
-          	response.setHeader("Location",originalUrl + del + "refresh=1");
+            response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+            response.setHeader("Location", originalUrl);
             return;
           }
         }
