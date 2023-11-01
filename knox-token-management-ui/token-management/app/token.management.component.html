@@ -59,7 +59,7 @@
 
             <ng-container matColumnDef="tokenId">
                 <mat-header-cell *matHeaderCellDef mat-sort-header="tokenId" style="text-align: center; justify-content: center;">Token ID</mat-header-cell>
-                <mat-cell *matCellDef="let knoxToken" style="text-align: center; justify-content: center;" [style.font-weight]="getFontWeight(knoxToken)">
+                <mat-cell *matCellDef="let knoxToken" style="text-align: center; justify-content: center; word-wrap:break-word; word-break: break-word;" [style.font-weight]="getFontWeight(knoxToken)">
                   <div *ngIf="knoxToken.metadata.enabled">{{knoxToken.tokenId}}</div>
                   <div *ngIf="!knoxToken.metadata.enabled" style="color:orange">{{knoxToken.tokenId}}</div>
                 </mat-cell>
@@ -67,17 +67,17 @@
 
             <ng-container matColumnDef="issued">
                 <mat-header-cell *matHeaderCellDef mat-sort-header="issueTime" style="text-align: center; justify-content: center;">Issued</mat-header-cell>
-                <mat-cell *matCellDef="let knoxToken" style="text-align: center; justify-content: center;" [style.font-weight]="getFontWeight(knoxToken)">{{formatDateTime(knoxToken.issueTimeLong)}}</mat-cell>
+                <mat-cell *matCellDef="let knoxToken" style="text-align: center; justify-content: center; word-wrap:break-word; word-break: break-word;" [style.font-weight]="getFontWeight(knoxToken)">{{formatDateTime(knoxToken.issueTimeLong)}}</mat-cell>
             </ng-container>
 
             <ng-container matColumnDef="expires">
                 <mat-header-cell *matHeaderCellDef mat-sort-header="expiration" style="text-align: center; justify-content: center;">Expires</mat-header-cell>
-                <mat-cell *matCellDef="let knoxToken" [style.color]="getExpirationColor(knoxToken.expirationLong)" style="text-align: center; justify-content: center;" [style.font-weight]="getFontWeight(knoxToken)">{{formatDateTime(knoxToken.expirationLong)}}</mat-cell>
+                <mat-cell *matCellDef="let knoxToken" [style.color]="getExpirationColor(knoxToken.expirationLong)" style="text-align: center; justify-content: center; word-wrap:break-word; word-break: break-word;" [style.font-weight]="getFontWeight(knoxToken)">{{formatDateTime(knoxToken.expirationLong)}}</mat-cell>
             </ng-container>
 
             <ng-container matColumnDef="userName">
                 <mat-header-cell *matHeaderCellDef mat-sort-header="userName" style="text-align: center; justify-content: center;">User Name</mat-header-cell>
-                <mat-cell *matCellDef="let knoxToken" style="text-align: center; justify-content: center;" [style.font-weight]="getFontWeight(knoxToken)">{{knoxToken.metadata.userName}}</mat-cell>
+                <mat-cell *matCellDef="let knoxToken" style="text-align: center; justify-content: center; word-wrap:break-word; word-break: break-word;" [style.font-weight]="getFontWeight(knoxToken)">{{knoxToken.metadata.userName}}</mat-cell>
             </ng-container>
 
             <ng-container matColumnDef="impersonated">
