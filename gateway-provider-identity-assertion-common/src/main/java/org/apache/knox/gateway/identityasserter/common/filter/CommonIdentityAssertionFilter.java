@@ -19,6 +19,7 @@ package org.apache.knox.gateway.identityasserter.common.filter;
 
 import static org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor.IMPERSONATION_PARAMS;
 import static org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor.ROLE;
+import static org.apache.knox.gateway.identityasserter.common.filter.VirtualGroupMapper.addRequestFunctions;
 
 import java.io.IOException;
 import java.security.AccessController;
@@ -32,7 +33,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
-
 import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -50,6 +50,7 @@ import org.apache.knox.gateway.IdentityAsserterMessages;
 import org.apache.knox.gateway.context.ContextAttributes;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.plang.AbstractSyntaxTree;
+import org.apache.knox.gateway.plang.Interpreter;
 import org.apache.knox.gateway.plang.Parser;
 import org.apache.knox.gateway.plang.SyntaxException;
 import org.apache.knox.gateway.security.GroupPrincipal;
@@ -67,6 +68,7 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
   public static final String VIRTUAL_GROUP_MAPPING_PREFIX = "group.mapping.";
   public static final String GROUP_PRINCIPAL_MAPPING = "group.principal.mapping";
   public static final String PRINCIPAL_MAPPING = "principal.mapping";
+  public static final String ADVANCED_PRINCIPAL_MAPPING = "advanced.principal.mapping";
   private static final String PRINCIPAL_PARAM = "user.name";
   private static final String DOAS_PRINCIPAL_PARAM = "doAs";
   static final String IMPERSONATION_ENABLED_PARAM = AuthFilterUtils.PROXYUSER_PREFIX + ".impersonation.enabled";
@@ -77,6 +79,7 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
   /* List of all default and configured impersonation params */
   protected final List<String> impersonationParamsList = new ArrayList<>();
   protected boolean impersonationEnabled;
+  private AbstractSyntaxTree advancedPrincipalMapping;
   private String topologyName;
 
   @Override
@@ -97,6 +100,7 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
         throw new ServletException("Unable to load principal mapping table.", e);
       }
     }
+    advancedPrincipalMapping = parseAdvancedPrincipalMapping(filterConfig);
 
     final List<String> initParameterNames = AuthFilterUtils.getInitParameterNamesAsList(filterConfig);
 
@@ -104,6 +108,14 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
 
     initImpersonationParamsList(filterConfig);
     initProxyUserConfiguration(filterConfig, initParameterNames);
+  }
+
+  private AbstractSyntaxTree parseAdvancedPrincipalMapping(FilterConfig filterConfig) {
+    String expression = filterConfig.getInitParameter(ADVANCED_PRINCIPAL_MAPPING);
+    if (StringUtils.isBlank(expression)) {
+      expression = filterConfig.getServletContext().getInitParameter(ADVANCED_PRINCIPAL_MAPPING);
+    }
+    return StringUtils.isBlank(expression) ? null : parser.parse(expression);
   }
 
   /*
@@ -228,7 +240,12 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     // mapping principal name using user principal mapping (if configured)
     mappedPrincipalName = mapUserPrincipalBase(mappedPrincipalName);
     mappedPrincipalName = mapUserPrincipal(mappedPrincipalName);
-
+    if (advancedPrincipalMapping != null) {
+      String result = evalAdvancedPrincipalMapping(request, subject, mappedPrincipalName);
+      if (result != null) {
+        mappedPrincipalName = result;
+      }
+    }
     String[] mappedGroups = mapGroupPrincipalsBase(mappedPrincipalName, subject);
     String[] groups = mapGroupPrincipals(mappedPrincipalName, subject);
     String[] virtualGroups = virtualGroupMapper.mapGroups(mappedPrincipalName, combine(subject, groups), request).toArray(new String[0]);
@@ -239,6 +256,20 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
 
 
     continueChainAsPrincipal(wrapper, response, chain, mappedPrincipalName, unique(groups));
+  }
+
+  private String evalAdvancedPrincipalMapping(ServletRequest request, Subject subject, String originalPrincipal) {
+    Interpreter interpreter = new Interpreter();
+    interpreter.addConstant("username", originalPrincipal);
+    interpreter.addConstant("groups", groups(subject));
+    addRequestFunctions(request, interpreter);
+    Object mappedPrincipal = interpreter.eval(advancedPrincipalMapping);
+    if (mappedPrincipal instanceof String) {
+      return (String)mappedPrincipal;
+    } else {
+      LOG.invalidAdvancedPrincipalMappingResult(originalPrincipal, advancedPrincipalMapping, mappedPrincipal);
+      return null;
+    }
   }
 
   private String handleProxyUserImpersonation(ServletRequest request, Subject subject) throws AuthorizationException {
