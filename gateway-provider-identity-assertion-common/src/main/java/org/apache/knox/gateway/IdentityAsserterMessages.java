@@ -64,6 +64,6 @@ public interface IdentityAsserterMessages {
   @Message( level = MessageLevel.ERROR, text = "Proxy user Authentication failed: {0}" )
   void hadoopAuthProxyUserFailed(@StackTrace Throwable t);
 
-  @Message( level = MessageLevel.WARN, text = "Invalid result: {2}. Expected String when evaluating mapping: {1} for user: {2}.")
+  @Message( level = MessageLevel.WARN, text = "Invalid result: {2}. Expected String when evaluating mapping: {1} for user: {0}.")
   void invalidAdvancedPrincipalMappingResult(String principalName, AbstractSyntaxTree mapping, Object result);
 }
