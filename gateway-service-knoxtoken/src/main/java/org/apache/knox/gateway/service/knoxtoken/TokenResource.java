@@ -96,6 +96,15 @@ import org.apache.knox.gateway.util.Tokens;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 
+/**
+ * @deprecated The public REST API endpoints in this class (bound to
+ *             '/knoxtoken/v1/api/token/...') are no longer acceptable for
+ *             token-related operations. Please use the
+ *             '/knoxtoken/v2/api/token/...' path instead.
+ *
+ * @see TokenResourceV2
+ */
+@Deprecated
 @Singleton
 @Path(TokenResource.RESOURCE_PATH)
 public class TokenResource {
@@ -137,15 +146,15 @@ public class TokenResource {
   private static final long TOKEN_TTL_DEFAULT = 30000L;
   static final String TOKEN_API_PATH = "knoxtoken/api/v1";
   static final String RESOURCE_PATH = TOKEN_API_PATH + "/token";
-  static final String GET_USER_TOKENS = "/getUserTokens";
-  static final String GET_TSS_STATUS_PATH = "/getTssStatus";
-  static final String RENEW_PATH = "/renew";
-  static final String REVOKE_PATH = "/revoke";
-  static final String BATCH_REVOKE_PATH = "/revokeTokens";
-  static final String ENABLE_PATH = "/enable";
-  static final String BATCH_ENABLE_PATH = "/enableTokens";
-  static final String DISABLE_PATH = "/disable";
-  static final String BATCH_DISABLE_PATH = "/disableTokens";
+  protected static final String GET_USER_TOKENS = "/getUserTokens";
+  protected static final String GET_TSS_STATUS_PATH = "/getTssStatus";
+  protected static final String RENEW_PATH = "/renew";
+  protected static final String REVOKE_PATH = "/revoke";
+  protected static final String BATCH_REVOKE_PATH = "/revokeTokens";
+  protected static final String ENABLE_PATH = "/enable";
+  protected static final String BATCH_ENABLE_PATH = "/enableTokens";
+  protected static final String DISABLE_PATH = "/disable";
+  protected static final String BATCH_DISABLE_PATH = "/disableTokens";
   private static final String TARGET_ENDPOINT_PULIC_CERT_PEM = TOKEN_PARAM_PREFIX + "target.endpoint.cert.pem";
   static final String QUERY_PARAMETER_DOAS = "doAs";
   private static final String IMPERSONATION_ENABLED_TEXT = "impersonationEnabled";
@@ -501,9 +510,15 @@ public class TokenResource {
     return Response.status(Response.Status.OK).entity(JsonUtils.renderAsJsonString(tokenStateServiceStatusMap)).build();
   }
 
-  @PUT
+  /**
+   * @deprecated This method is no longer acceptable for token renewal. Please
+   *             use the '/knoxtoken/v2/api/token/renew' path; instead which is a
+   *             PUT HTTP request.
+   */
+  @POST
   @Path(RENEW_PATH)
   @Produces({APPLICATION_JSON})
+  @Deprecated
   public Response renew(String token) {
     Response resp;
 
@@ -586,9 +601,15 @@ public class TokenResource {
     return error == null ? response : error;
   }
 
-  @DELETE
+  /**
+   * @deprecated This method is no longer acceptable for token revocation. Please
+   *             use the '/knoxtoken/v2/api/token/revoke' path; instead which is a
+   *             DELETE HTTP request.
+   */
+  @POST
   @Path(REVOKE_PATH)
   @Produces({APPLICATION_JSON})
+  @Deprecated
   public Response revoke(String token) {
     Response resp;
 

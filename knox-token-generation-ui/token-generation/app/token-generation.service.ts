@@ -26,8 +26,8 @@ export class TokenGenService {
     readonly tssStatusRequestURL: string;
 
     constructor(private http: HttpClient) {
-        const knoxtokenURL = 'knoxtoken/api/v1/token';
-        const tssStatusURL = 'knoxtoken/api/v1/token/getTssStatus';
+        const knoxtokenURL = 'knoxtoken/api/v2/token';
+        const tssStatusURL = 'knoxtoken/api/v2/token/getTssStatus';
 
         let pathParts = window.location.pathname.split('/');
         let topologyContext = '/' + pathParts[1] + '/' + pathParts[2] + '/';
