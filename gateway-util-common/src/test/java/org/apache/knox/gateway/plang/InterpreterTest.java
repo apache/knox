@@ -145,6 +145,76 @@ public class InterpreterTest {
     }
 
     @Test
+    public void testAdd() {
+        assertEquals(10L, eval("(+ 5 5)"));
+        assertEquals(10d, eval("(+ 5.0 5)"));
+        assertEquals(10d, eval("(+ 5 5.0)"));
+        assertEquals(10d, eval("(+ 5.0 5.0)"));
+        assertEquals(5.7d, eval("(+ 2.5 3.2)"));
+        assertEquals(8.2d, eval("(+ 5 3.2)"));
+        assertEquals(9L, eval("(+ 7 2)"));
+        assertEquals(5L, eval("(+ (strlen 'ab') 3)"));
+        assertEquals(5d, eval("(+ (strlen 'ab') 3.0)"));
+    }
+
+    @Test(expected = TypeException.class)
+    public void testAddInvalidType() {
+        eval("(+ 'apple' 'orange')");
+    }
+
+    @Test
+    public void testSub() {
+        assertEquals(10L, eval("(- 15 5)"));
+        assertEquals(10d, eval("(- 15.0 5)"));
+        assertEquals(10d, eval("(- 15 5.0)"));
+        assertEquals(10d, eval("(- 15.0 5.0)"));
+        assertEquals(2.3d, eval("(- 5.5 3.2)"));
+        assertEquals(1.8d, (double)eval("(- 5 3.2)"), 0.01d);
+        assertEquals(5L, eval("(- 7 2)"));
+        assertEquals(1L, eval("(- (strlen 'abcd') 3)"));
+        assertEquals(1d, eval("(- (strlen 'abcd') 3.0)"));
+    }
+
+    @Test(expected = TypeException.class)
+    public void testSubInvalidType() {
+        eval("(- 'apple' 'orange')");
+    }
+
+    @Test
+    public void testMul() {
+        assertEquals(50L, eval("(* 10 5)"));
+        assertEquals(50d, eval("(* 10.0 5)"));
+        assertEquals(50d, eval("(* 10 5.0)"));
+        assertEquals(50d, eval("(* 10.0 5.0)"));
+        assertEquals(17.6d, eval("(* 5.5 3.2)"));
+        assertEquals(16d, eval("(* 5 3.2)"));
+        assertEquals(14L, eval("(* 7 2)"));
+        assertEquals(6L, eval("(* (strlen 'ab') 3)"));
+        assertEquals(6d, eval("(* (strlen 'ab') 3.0)"));
+    }
+
+    @Test(expected = TypeException.class)
+    public void testMulInvalidType() {
+        eval("(* 'apple' 'orange')");
+    }
+
+    @Test
+    public void testDiv() {
+        assertEquals(2d, eval("(/ 10 5)"));
+        assertEquals(2d, eval("(/ 10.0 5)"));
+        assertEquals(2d, eval("(/ 10 5.0)"));
+        assertEquals(2d, eval("(/ 10.0 5.0)"));
+        assertEquals(1.71875d, eval("(/ 5.5 3.2)"));
+        assertEquals(1.5625d, eval("(/ 5 3.2)"));
+        assertEquals(3.5d, eval("(/ 7 2)"));
+    }
+
+    @Test(expected = TypeException.class)
+    public void testDivInvalidType() {
+        eval("(/ 'apple' 'orange')");
+    }
+
+    @Test
     public void testComplex() {
         assertTrue((boolean)eval("(and (not false) (or (not (or (not true) (not false) )) true))"));
     }
@@ -334,6 +404,13 @@ public class InterpreterTest {
         expected.clear();
         expected.put("apple123", true);
         assertEquals(expected, eval("(hash  (lowercase (concat 'Apple' '123'))   (and (< 10 12) (> 10 1)))"));
+    }
+
+    @Test
+    public void testHashMapLookup() {
+        assertEquals(2L, eval("(at 1 (hash   1 2   'a' 'b'))"));
+        assertEquals("b", eval("(at 'a' (hash   1 2   'a' 'b'))"));
+        assertNull(eval("(at 'b' (hash   1 2   'a' 'b'))"));
     }
 
     @Test(expected = ArityException.class)

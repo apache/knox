@@ -59,10 +59,15 @@ public class Interpreter {
         addFunction("not", Arity.UNARY, args -> !(boolean)args.get(0));
         addFunction("=", Arity.BINARY, args -> equalTo(args.get(0), args.get(1)));
         addFunction("!=", Arity.BINARY, args -> !equalTo(args.get(0), args.get(1)));
+        // The comparisons are floating point based, we might need proper integer-integer comparison in the future
         addFunction("<", Arity.BINARY, args ->  ((Number)args.get(0)).doubleValue() < ((Number)args.get(1)).doubleValue());
         addFunction("<=", Arity.BINARY, args ->  ((Number)args.get(0)).doubleValue() <= ((Number)args.get(1)).doubleValue());
         addFunction(">", Arity.BINARY, args ->  ((Number)args.get(0)).doubleValue() > ((Number)args.get(1)).doubleValue());
         addFunction(">=", Arity.BINARY, args ->  ((Number)args.get(0)).doubleValue() >= ((Number)args.get(1)).doubleValue());
+        addFunction("+", Arity.BINARY, args -> add((Number)args.get(0), (Number)args.get(1)));
+        addFunction("-", Arity.BINARY, args -> sub((Number)args.get(0), (Number)args.get(1)));
+        addFunction("*", Arity.BINARY, args -> mul((Number)args.get(0), (Number)args.get(1)));
+        addFunction("/", Arity.BINARY, args -> div((Number)args.get(0), (Number)args.get(1)));
         addFunction("match", Arity.BINARY, args ->
             args.get(0) instanceof String
                 ? Pattern.matches((String)args.get(1), (String)args.get(0))
@@ -100,15 +105,70 @@ public class Interpreter {
             args.forEach(arg -> LOG.info(arg == null ? "null" : arg.toString()));
             return false;
         });
-        addFunction("hash", Arity.even(), args -> { // create a hashmap, number of arguments must be an even number
+        addFunction("hash", Arity.even(), args -> { // create a hashmap, number of arguments must be an even number, this is needed for the RegExp lookup table
             Map<Object,Object> map = new HashMap<>();
             for (int i = 0; i < args.size() -1; i+=2) {
                 map.put(args.get(i), args.get(i +1));
             }
             return map;
         });
+        addFunction("at", Arity.BINARY, args -> ((Map<Object,Object>)args.get(1)).get(args.get(0)));
         constants.put("true", true);
         constants.put("false", false);
+    }
+
+    private Number add(Number a, Number b) {
+        if (isFloatingPoint(a) && isFloatingPoint(b)) {
+            return a.doubleValue() + b.doubleValue();
+        } else if (isInteger(a) && isInteger(b)) {
+            return a.longValue() + b.longValue();
+        } else if (isInteger(a) && isFloatingPoint(b)) {
+            return a.longValue() + b.doubleValue();
+        } else if (isFloatingPoint(a) && isInteger(b)) {
+            return a.doubleValue() + b.longValue();
+        } else {
+            throw new TypeException("Unsupported operands: (+ " + a + " " + b + ")", null);
+        }
+    }
+
+    private Number sub(Number a, Number b) {
+        if (isFloatingPoint(a) && isFloatingPoint(b)) {
+            return a.doubleValue() - b.doubleValue();
+        } else if (isInteger(a) && isInteger(b)) {
+            return a.longValue() - b.longValue();
+        } else if (isInteger(a) && isFloatingPoint(b)) {
+            return a.longValue() - b.doubleValue();
+        } else if (isFloatingPoint(a) && isInteger(b)) {
+            return a.doubleValue() - b.longValue();
+        } else {
+            throw new TypeException("Unsupported operands: (- " + a + " " + b + ")", null);
+        }
+    }
+
+    private Number mul(Number a, Number b) {
+        if (isFloatingPoint(a) && isFloatingPoint(b)) {
+            return a.doubleValue() * b.doubleValue();
+        } else if (isInteger(a) && isInteger(b)) {
+            return a.longValue() * b.longValue();
+        } else if (isInteger(a) && isFloatingPoint(b)) {
+            return a.longValue() * b.doubleValue();
+        } else if (isFloatingPoint(a) && isInteger(b)) {
+            return a.doubleValue() * b.longValue();
+        } else {
+            throw new TypeException("Unsupported operands: (* " + a + " " + b + ")", null);
+        }
+    }
+
+    private Number div(Number a, Number b) {
+        return a.doubleValue() / b.doubleValue(); // div will always result a floating point result to
+    }
+
+    private static boolean isInteger(Number n) {
+        return n instanceof Long || n instanceof Integer;
+    }
+
+    private static boolean isFloatingPoint(Number n) {
+        return n instanceof Double || n instanceof Float;
     }
 
     private static boolean equalTo(Object a, Object b) {
