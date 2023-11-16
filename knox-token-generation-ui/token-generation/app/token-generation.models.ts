@@ -50,3 +50,12 @@ export interface TokenData {
     lifespanHours: number;
     lifespanMins: number;
  }
+
+export class SessionInformation {
+    user: string;
+    logoutUrl: string;
+    logoutPageUrl: string;
+    globalLgoutPageUrl: string;
+    canSeeAllTokens: boolean;
+    currentKnoxSsoCookieTokenId: string;
+}

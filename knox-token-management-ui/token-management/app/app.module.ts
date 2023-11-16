@@ -32,6 +32,7 @@ import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 
 import {TokenManagementComponent} from './token.management.component';
 import {TokenManagementService} from './token.management.service';
+import {SessionInformationComponent} from './session.information.component';
 
 @NgModule({
     imports: [BrowserModule,
@@ -52,9 +53,9 @@ import {TokenManagementService} from './token.management.service';
         MatSlideToggleModule,
         MatCheckboxModule
     ],
-    declarations: [TokenManagementComponent],
+    declarations: [TokenManagementComponent, SessionInformationComponent],
     providers: [TokenManagementService],
-    bootstrap: [TokenManagementComponent]
+    bootstrap: [TokenManagementComponent, SessionInformationComponent]
 })
 export class AppModule {
 }
