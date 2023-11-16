@@ -47,6 +47,7 @@ import {ResourceDetailComponent} from './resource-detail/resource-detail.compone
 import {ProviderConfigSelectorComponent} from './provider-config-selector/provider-config-selector.component';
 import {NewDescWizardComponent} from './new-desc-wizard/new-desc-wizard.component';
 import {ProviderConfigWizardComponent} from './provider-config-wizard/provider-config-wizard.component';
+import {SessionInformationComponent} from './sessionInformation/session.information.component';
 
 @NgModule({
     imports: [BrowserModule,
@@ -74,7 +75,8 @@ import {ProviderConfigWizardComponent} from './provider-config-wizard/provider-c
         ResourceDetailComponent,
         ProviderConfigSelectorComponent,
         NewDescWizardComponent,
-        ProviderConfigWizardComponent
+        ProviderConfigWizardComponent,
+        SessionInformationComponent
     ],
     providers: [TopologyService,
         ServiceDefinitionService,
@@ -85,7 +87,8 @@ import {ProviderConfigWizardComponent} from './provider-config-wizard/provider-c
         {provide: APP_BASE_HREF, useValue: '/'}
     ],
     bootstrap: [AppComponent,
-        GatewayVersionComponent
+        GatewayVersionComponent,
+        SessionInformationComponent
     ]
 })
 export class AppModule {

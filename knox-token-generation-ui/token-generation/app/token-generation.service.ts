@@ -17,13 +17,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import Swal from 'sweetalert2';
-import { TokenData, TokenRequestParams, TokenResultData, TssStatusData } from './token-generation.models';
+import { TokenData, TokenRequestParams, TokenResultData, TssStatusData, SessionInformation } from './token-generation.models';
 
 @Injectable()
 export class TokenGenService {
     readonly baseURL: string;
     readonly tokenURL: string;
     readonly tssStatusRequestURL: string;
+    readonly sessionUrl: string;
 
     constructor(private http: HttpClient) {
         const knoxtokenURL = 'knoxtoken/api/v2/token';
@@ -35,6 +36,7 @@ export class TokenGenService {
         this.baseURL = temporaryURL.substring(0, temporaryURL.lastIndexOf('/') + 1);
         this.tokenURL = topologyContext + knoxtokenURL;
         this.tssStatusRequestURL = topologyContext + tssStatusURL;
+        this.sessionUrl = topologyContext + 'session/api/v1/sessioninfo';
     }
 
     getTokenStateServiceStatus(): Promise<TssStatusData> {
@@ -68,6 +70,22 @@ export class TokenGenService {
                 return this.handleError(error);
             }
         });
+    }
+
+    getSessionInformation(): Promise<SessionInformation> {
+        let headers = new HttpHeaders();
+        headers = this.addHeaders(headers);
+        return this.http.get(this.sessionUrl, { headers: headers})
+            .toPromise()
+            .then(response => response['sessioninfo'] as SessionInformation)
+            .catch((err: HttpErrorResponse) => {
+                console.debug('TokenManagementService --> getSessionInformation() --> ' + this.sessionUrl + '\n  error: ' + err.message);
+                if (err.status === 401) {
+                    window.location.assign(document.location.pathname);
+                } else {
+                    return this.handleError(err);
+                }
+            });
     }
 
     getGeneratedTokenData(params: TokenRequestParams): Promise<TokenResultData> {
