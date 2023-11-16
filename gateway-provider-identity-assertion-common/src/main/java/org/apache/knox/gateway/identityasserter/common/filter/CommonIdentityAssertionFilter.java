@@ -68,7 +68,7 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
   public static final String VIRTUAL_GROUP_MAPPING_PREFIX = "group.mapping.";
   public static final String GROUP_PRINCIPAL_MAPPING = "group.principal.mapping";
   public static final String PRINCIPAL_MAPPING = "principal.mapping";
-  public static final String ADVANCED_PRINCIPAL_MAPPING = "advanced.principal.mapping";
+  public static final String ADVANCED_PRINCIPAL_MAPPING = "expression.principal.mapping";
   private static final String PRINCIPAL_PARAM = "user.name";
   private static final String DOAS_PRINCIPAL_PARAM = "doAs";
   static final String IMPERSONATION_ENABLED_PARAM = AuthFilterUtils.PROXYUSER_PREFIX + ".impersonation.enabled";
@@ -79,7 +79,7 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
   /* List of all default and configured impersonation params */
   protected final List<String> impersonationParamsList = new ArrayList<>();
   protected boolean impersonationEnabled;
-  private AbstractSyntaxTree advancedPrincipalMapping;
+  private AbstractSyntaxTree expressionPrincipalMapping;
   private String topologyName;
 
   @Override
@@ -100,7 +100,7 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
         throw new ServletException("Unable to load principal mapping table.", e);
       }
     }
-    advancedPrincipalMapping = parseAdvancedPrincipalMapping(filterConfig);
+    expressionPrincipalMapping = parseAdvancedPrincipalMapping(filterConfig);
 
     final List<String> initParameterNames = AuthFilterUtils.getInitParameterNamesAsList(filterConfig);
 
@@ -240,7 +240,7 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     // mapping principal name using user principal mapping (if configured)
     mappedPrincipalName = mapUserPrincipalBase(mappedPrincipalName);
     mappedPrincipalName = mapUserPrincipal(mappedPrincipalName);
-    if (advancedPrincipalMapping != null) {
+    if (expressionPrincipalMapping != null) {
       String result = evalAdvancedPrincipalMapping(request, subject, mappedPrincipalName);
       if (result != null) {
         mappedPrincipalName = result;
@@ -263,11 +263,11 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     interpreter.addConstant("username", originalPrincipal);
     interpreter.addConstant("groups", groups(subject));
     addRequestFunctions(request, interpreter);
-    Object mappedPrincipal = interpreter.eval(advancedPrincipalMapping);
+    Object mappedPrincipal = interpreter.eval(expressionPrincipalMapping);
     if (mappedPrincipal instanceof String) {
       return (String)mappedPrincipal;
     } else {
-      LOG.invalidAdvancedPrincipalMappingResult(originalPrincipal, advancedPrincipalMapping, mappedPrincipal);
+      LOG.invalidAdvancedPrincipalMappingResult(originalPrincipal, expressionPrincipalMapping, mappedPrincipal);
       return null;
     }
   }

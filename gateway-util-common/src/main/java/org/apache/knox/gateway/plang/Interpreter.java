@@ -76,7 +76,7 @@ public class Interpreter {
         addFunction("size", Arity.UNARY, args -> ((Collection<?>) args.get(0)).size());
         addFunction("empty", Arity.UNARY, args -> ((Collection<?>) args.get(0)).isEmpty());
         addFunction("username", Arity.UNARY, args -> constants.get("username").equals(args.get(0)));
-        addFunction("member", Arity.UNARY, args -> ((List<String>)constants.get("groups")).contains((String)args.get(0)));
+        addFunction("member", Arity.UNARY, args -> ((Collection<String>)constants.get("groups")).contains((String)args.get(0)));
         addFunction("lowercase", Arity.UNARY, args -> ((String)args.get(0)).toLowerCase(Locale.getDefault()));
         addFunction("uppercase", Arity.UNARY, args -> ((String)args.get(0)).toUpperCase(Locale.getDefault()));
         addFunction("concat", Arity.min(1), args -> args.stream().map(Object::toString).collect(Collectors.joining()));
