@@ -25,7 +25,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import org.apache.knox.gateway.identityasserter.regex.filter.RegexTemplate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -44,17 +46,28 @@ public class Interpreter {
     }
 
     public Interpreter() {
-        specialForms.put("or", args -> {
-            Arity.min(1).check("or", args);
-            return args.stream().anyMatch(each -> (boolean)eval(each));
-        });
-        specialForms.put("and", args -> {
-            Arity.min(1).check("and", args);
-            return args.stream().allMatch(each -> (boolean)eval(each));
+        addSpecialForm(Arity.min(1), "or", args -> args.stream().anyMatch(each -> (boolean)eval(each)));
+        addSpecialForm(Arity.min(1), "and", args -> args.stream().allMatch(each -> (boolean)eval(each)));
+        addSpecialForm(Arity.between(2, 3), "if", args -> {
+            if ((boolean)eval(args.get(0))) {
+                return eval(args.get(1));
+            } else if (args.size() == 3) {
+                return eval(args.get(2));
+            }
+            return null;
         });
         addFunction("not", Arity.UNARY, args -> !(boolean)args.get(0));
         addFunction("=", Arity.BINARY, args -> equalTo(args.get(0), args.get(1)));
         addFunction("!=", Arity.BINARY, args -> !equalTo(args.get(0), args.get(1)));
+        // The comparisons are floating point based, we might need proper integer-integer comparison in the future
+        addFunction("<", Arity.BINARY, args ->  ((Number)args.get(0)).doubleValue() < ((Number)args.get(1)).doubleValue());
+        addFunction("<=", Arity.BINARY, args ->  ((Number)args.get(0)).doubleValue() <= ((Number)args.get(1)).doubleValue());
+        addFunction(">", Arity.BINARY, args ->  ((Number)args.get(0)).doubleValue() > ((Number)args.get(1)).doubleValue());
+        addFunction(">=", Arity.BINARY, args ->  ((Number)args.get(0)).doubleValue() >= ((Number)args.get(1)).doubleValue());
+        addFunction("+", Arity.BINARY, args -> add((Number)args.get(0), (Number)args.get(1)));
+        addFunction("-", Arity.BINARY, args -> sub((Number)args.get(0), (Number)args.get(1)));
+        addFunction("*", Arity.BINARY, args -> mul((Number)args.get(0), (Number)args.get(1)));
+        addFunction("/", Arity.BINARY, args -> div((Number)args.get(0), (Number)args.get(1)));
         addFunction("match", Arity.BINARY, args ->
             args.get(0) instanceof String
                 ? Pattern.matches((String)args.get(1), (String)args.get(0))
@@ -63,15 +76,99 @@ public class Interpreter {
         addFunction("size", Arity.UNARY, args -> ((Collection<?>) args.get(0)).size());
         addFunction("empty", Arity.UNARY, args -> ((Collection<?>) args.get(0)).isEmpty());
         addFunction("username", Arity.UNARY, args -> constants.get("username").equals(args.get(0)));
-        addFunction("member", Arity.UNARY, args -> ((List<String>)constants.get("groups")).contains((String)args.get(0)));
+        addFunction("member", Arity.UNARY, args -> ((Collection<String>)constants.get("groups")).contains((String)args.get(0)));
         addFunction("lowercase", Arity.UNARY, args -> ((String)args.get(0)).toLowerCase(Locale.getDefault()));
         addFunction("uppercase", Arity.UNARY, args -> ((String)args.get(0)).toUpperCase(Locale.getDefault()));
+        addFunction("concat", Arity.min(1), args -> args.stream().map(Object::toString).collect(Collectors.joining()));
+        addFunction("substr", Arity.min(2), args ->
+                args.size() == 2
+                    ? ((String)args.get(0)).substring(((Number)args.get(1)).intValue())
+                    : ((String)args.get(0)).substring(((Number)args.get(1)).intValue(), ((Number)args.get(2)).intValue())
+        );
+        addFunction("strlen", Arity.UNARY, args -> ((String)args.get(0)).length());
+        addFunction("starts-with", Arity.BINARY, args -> ((String)args.get(0)).startsWith((String)args.get(1)));
+        addFunction("ends-with", Arity.BINARY, args -> ((String)args.get(0)).endsWith((String)args.get(1)));
+        addFunction("contains", Arity.BINARY, args -> ((String)args.get(1)).contains((String)args.get(0)));
+        addFunction("index-of", Arity.BINARY, args -> ((String)args.get(1)).indexOf((String)args.get(0)));
+        addFunction("regex-template", Arity.between(3, 5), args -> {
+            String str = (String) args.get(0);
+            String regex = (String) args.get(1);
+            String template = (String) args.get(2);
+            if (args.size() == 3) {
+                return new RegexTemplate(regex, template, null, false).apply(str);
+            } else {
+                boolean useOriginalOnLookupFailure = args.size() >= 5 && (boolean) args.get(4);
+                return new RegexTemplate(regex, template, (Map)args.get(3), useOriginalOnLookupFailure).apply(str);
+            }
+        });
         addFunction("print", Arity.min(1), args -> { // for debugging
             args.forEach(arg -> LOG.info(arg == null ? "null" : arg.toString()));
             return false;
         });
+        addFunction("hash", Arity.even(), args -> { // create a hashmap, number of arguments must be an even number, this is needed for the RegExp lookup table
+            Map<Object,Object> map = new HashMap<>();
+            for (int i = 0; i < args.size() -1; i+=2) {
+                map.put(args.get(i), args.get(i +1));
+            }
+            return map;
+        });
+        addFunction("at", Arity.BINARY, args -> ((Map<Object,Object>)args.get(1)).get(args.get(0)));
         constants.put("true", true);
         constants.put("false", false);
+    }
+
+    private Number add(Number a, Number b) {
+        if (isFloatingPoint(a) && isFloatingPoint(b)) {
+            return a.doubleValue() + b.doubleValue();
+        } else if (isInteger(a) && isInteger(b)) {
+            return a.longValue() + b.longValue();
+        } else if (isInteger(a) && isFloatingPoint(b)) {
+            return a.longValue() + b.doubleValue();
+        } else if (isFloatingPoint(a) && isInteger(b)) {
+            return a.doubleValue() + b.longValue();
+        } else {
+            throw new TypeException("Unsupported operands: (+ " + a + " " + b + ")", null);
+        }
+    }
+
+    private Number sub(Number a, Number b) {
+        if (isFloatingPoint(a) && isFloatingPoint(b)) {
+            return a.doubleValue() - b.doubleValue();
+        } else if (isInteger(a) && isInteger(b)) {
+            return a.longValue() - b.longValue();
+        } else if (isInteger(a) && isFloatingPoint(b)) {
+            return a.longValue() - b.doubleValue();
+        } else if (isFloatingPoint(a) && isInteger(b)) {
+            return a.doubleValue() - b.longValue();
+        } else {
+            throw new TypeException("Unsupported operands: (- " + a + " " + b + ")", null);
+        }
+    }
+
+    private Number mul(Number a, Number b) {
+        if (isFloatingPoint(a) && isFloatingPoint(b)) {
+            return a.doubleValue() * b.doubleValue();
+        } else if (isInteger(a) && isInteger(b)) {
+            return a.longValue() * b.longValue();
+        } else if (isInteger(a) && isFloatingPoint(b)) {
+            return a.longValue() * b.doubleValue();
+        } else if (isFloatingPoint(a) && isInteger(b)) {
+            return a.doubleValue() * b.longValue();
+        } else {
+            throw new TypeException("Unsupported operands: (* " + a + " " + b + ")", null);
+        }
+    }
+
+    private Number div(Number a, Number b) {
+        return a.doubleValue() / b.doubleValue(); // div will always result a floating point result to
+    }
+
+    private static boolean isInteger(Number n) {
+        return n instanceof Long || n instanceof Integer;
+    }
+
+    private static boolean isFloatingPoint(Number n) {
+        return n instanceof Double || n instanceof Float;
     }
 
     private static boolean equalTo(Object a, Object b) {
@@ -84,6 +181,13 @@ public class Interpreter {
 
     public void addConstant(String name, Object value) {
         constants.put(name, value);
+    }
+
+    private void addSpecialForm(Arity arity, String name, SpecialForm form) {
+        specialForms.put(name, parameters -> {
+            arity.check(name, parameters);
+            return form.call(parameters);
+        });
     }
 
     public void addFunction(String name, Arity arity, Func func) {

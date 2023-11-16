@@ -25,6 +25,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.HashMap;
+
 import org.junit.Test;
 
 public class InterpreterTest {
@@ -79,6 +81,42 @@ public class InterpreterTest {
     }
 
     @Test
+    public void testLessThan() {
+        assertTrue((boolean)eval("(< 1 10)"));
+        assertTrue((boolean)eval("(< 1.21 1.32)"));
+        assertFalse((boolean)eval("(< 1 1)"));
+        assertFalse((boolean)eval("(< 10 1)"));
+        assertFalse((boolean)eval("(< 1.31 1.30)"));
+    }
+
+    @Test
+    public void testLessEqThan() {
+        assertTrue((boolean)eval("(<= 1 10)"));
+        assertTrue((boolean)eval("(<= 1.21 1.32)"));
+        assertTrue((boolean)eval("(<= 1 1)"));
+        assertFalse((boolean)eval("(<= 10 1)"));
+        assertFalse((boolean)eval("(<= 1.31 1.30)"));
+    }
+
+    @Test
+    public void testGreaterThan() {
+        assertFalse((boolean)eval("(> 1 10)"));
+        assertFalse((boolean)eval("(> 1.21 1.32)"));
+        assertFalse((boolean)eval("(> 1 1)"));
+        assertTrue((boolean)eval("(> 10 1)"));
+        assertTrue((boolean)eval("(> 1.31 1.30)"));
+    }
+
+    @Test
+    public void testGreaterEqThan() {
+        assertFalse((boolean)eval("(>= 1 10)"));
+        assertFalse((boolean)eval("(>= 1.21 1.32)"));
+        assertTrue((boolean)eval("(>= 1 1)"));
+        assertTrue((boolean)eval("(>= 10 1)"));
+        assertTrue((boolean)eval("(>= 1.31 1.30)"));
+    }
+
+    @Test
     public void testOr() {
         assertTrue((boolean)eval("(or true true)"));
         assertTrue((boolean)eval("(or true false)"));
@@ -104,6 +142,76 @@ public class InterpreterTest {
         assertTrue((boolean)eval("(not false)"));
         assertFalse((boolean)eval("(not (not false))"));
         assertTrue((boolean)eval("(not (not true))"));
+    }
+
+    @Test
+    public void testAdd() {
+        assertEquals(10L, eval("(+ 5 5)"));
+        assertEquals(10d, eval("(+ 5.0 5)"));
+        assertEquals(10d, eval("(+ 5 5.0)"));
+        assertEquals(10d, eval("(+ 5.0 5.0)"));
+        assertEquals(5.7d, eval("(+ 2.5 3.2)"));
+        assertEquals(8.2d, eval("(+ 5 3.2)"));
+        assertEquals(9L, eval("(+ 7 2)"));
+        assertEquals(5L, eval("(+ (strlen 'ab') 3)"));
+        assertEquals(5d, eval("(+ (strlen 'ab') 3.0)"));
+    }
+
+    @Test(expected = TypeException.class)
+    public void testAddInvalidType() {
+        eval("(+ 'apple' 'orange')");
+    }
+
+    @Test
+    public void testSub() {
+        assertEquals(10L, eval("(- 15 5)"));
+        assertEquals(10d, eval("(- 15.0 5)"));
+        assertEquals(10d, eval("(- 15 5.0)"));
+        assertEquals(10d, eval("(- 15.0 5.0)"));
+        assertEquals(2.3d, eval("(- 5.5 3.2)"));
+        assertEquals(1.8d, (double)eval("(- 5 3.2)"), 0.01d);
+        assertEquals(5L, eval("(- 7 2)"));
+        assertEquals(1L, eval("(- (strlen 'abcd') 3)"));
+        assertEquals(1d, eval("(- (strlen 'abcd') 3.0)"));
+    }
+
+    @Test(expected = TypeException.class)
+    public void testSubInvalidType() {
+        eval("(- 'apple' 'orange')");
+    }
+
+    @Test
+    public void testMul() {
+        assertEquals(50L, eval("(* 10 5)"));
+        assertEquals(50d, eval("(* 10.0 5)"));
+        assertEquals(50d, eval("(* 10 5.0)"));
+        assertEquals(50d, eval("(* 10.0 5.0)"));
+        assertEquals(17.6d, eval("(* 5.5 3.2)"));
+        assertEquals(16d, eval("(* 5 3.2)"));
+        assertEquals(14L, eval("(* 7 2)"));
+        assertEquals(6L, eval("(* (strlen 'ab') 3)"));
+        assertEquals(6d, eval("(* (strlen 'ab') 3.0)"));
+    }
+
+    @Test(expected = TypeException.class)
+    public void testMulInvalidType() {
+        eval("(* 'apple' 'orange')");
+    }
+
+    @Test
+    public void testDiv() {
+        assertEquals(2d, eval("(/ 10 5)"));
+        assertEquals(2d, eval("(/ 10.0 5)"));
+        assertEquals(2d, eval("(/ 10 5.0)"));
+        assertEquals(2d, eval("(/ 10.0 5.0)"));
+        assertEquals(1.71875d, eval("(/ 5.5 3.2)"));
+        assertEquals(1.5625d, eval("(/ 5 3.2)"));
+        assertEquals(3.5d, eval("(/ 7 2)"));
+    }
+
+    @Test(expected = TypeException.class)
+    public void testDivInvalidType() {
+        eval("(/ 'apple' 'orange')");
     }
 
     @Test
@@ -170,6 +278,144 @@ public class InterpreterTest {
     public void testShortCircuitConditionals() {
         assertTrue((boolean)eval("(or true (invalid-expression 1 2 3))"));
         assertFalse((boolean)eval("(and false (invalid-expression 1 2 3))"));
+    }
+
+    @Test
+    public void testIf() {
+        assertNull(eval("(if false (invalid-expression))"));
+        assertEquals("testStr", eval("(if true 'testStr')"));
+    }
+
+    @Test
+    public void testIfElse() {
+        assertEquals("apple", eval("(if false (invalid-expression) (lowercase 'APPLE'))"));
+        assertEquals("orange", eval("(if true (lowercase 'ORANGE') (invalid-expression) )"));
+    }
+
+    @Test(expected = ArityException.class)
+    public void testIfWrongNumberOfArgs() {
+        eval("(if true 1 2 3)");
+    }
+
+    @Test
+    public void testConcat() {
+        assertEquals("asdf", eval("(concat 'asdf')"));
+        assertEquals("asdfjkl", eval("(concat 'asdf' 'jkl')"));
+        assertEquals("asdfjklqwerty", eval("(concat 'asdf' 'jkl' 'qwerty')"));
+        assertEquals("orange APPLE", eval("(concat (lowercase 'ORANGE') ' ' (uppercase 'apple'))"));
+        assertEquals("123", eval("(concat 1 2 3)"));
+    }
+
+    @Test
+    public void testSubStr1() {
+        assertEquals("123456789", eval("(substr '123456789' 0)"));
+        assertEquals("456789", eval("(substr '123456789' 3)"));
+        assertEquals("9", eval("(substr '123456789' 8)"));
+        assertEquals("", eval("(substr '123456789' 9)"));
+    }
+
+    @Test
+    public void testSubStr2() {
+        assertEquals("123456789", eval("(substr '123456789' 0 9)"));
+        assertEquals("", eval("(substr '123456789' 9 9)"));
+        assertEquals("123", eval("(substr '123456789' 0 3)"));
+        assertEquals("3", eval("(substr '123456789' 2 3)"));
+        assertEquals("345", eval("(substr '123456789' 2 5)"));
+    }
+
+    @Test
+    public void testStrLen() {
+        assertEquals(0, eval("(strlen '')"));
+        assertEquals(5, eval("(strlen (uppercase 'apple'))"));
+    }
+
+    @Test
+    public void testStartsWith() {
+        assertTrue((boolean)eval("(starts-with '' '')"));
+        assertTrue((boolean)eval("(starts-with 'apple' '')"));
+        assertTrue((boolean)eval("(starts-with 'apple' 'ap')"));
+        assertTrue((boolean)eval("(starts-with 'apple' 'app')"));
+        assertTrue((boolean)eval("(starts-with 'apple' 'appl')"));
+        assertTrue((boolean)eval("(starts-with 'apple' 'apple')"));
+        assertFalse((boolean)eval("(starts-with 'apple' 'applex')"));
+        assertFalse((boolean)eval("(starts-with '' 'a')"));
+    }
+
+    @Test
+    public void testEndsWith() {
+        assertTrue((boolean)eval("(ends-with '' '')"));
+        assertTrue((boolean)eval("(ends-with 'apple' '')"));
+        assertTrue((boolean)eval("(ends-with 'apple' 'e')"));
+        assertTrue((boolean)eval("(ends-with 'apple' 'ple')"));
+        assertTrue((boolean)eval("(ends-with 'apple' 'apple' )"));
+        assertFalse((boolean)eval("(ends-with 'apple' 'xapple' )"));
+        assertFalse((boolean)eval("(ends-with '' 'a')"));
+    }
+
+    @Test
+    public void testStrIn() {
+        assertTrue((boolean)eval("(contains 'ppl' 'apple')"));
+        assertTrue((boolean)eval("(contains '' 'apple')"));
+        assertTrue((boolean)eval("(contains 'a' 'apple')"));
+        assertFalse((boolean)eval("(contains 'x' 'apple')"));
+    }
+
+    @Test
+    public void testStrIndex() {
+        assertEquals(1, eval("(index-of 'ppl' 'apple')"));
+        assertEquals(-1, eval("(index-of 'xx' 'apple')"));
+    }
+
+    @Test
+    public void testRegexpGroup() {
+        assertEquals("user.1", eval("(regex-template 'prefix_user-1_suffix' 'prefix_(\\w+)\\-(\\d)_suffix' '{1}.{2}')"));
+        assertEquals("123", eval("(regex-template 'usr123' 'usr(\\d+)' '{1}')"));
+        assertEquals("usr123", eval("(regex-template 'usr123' 'usr\\d+' '{0}')"));
+        assertEquals("{0}", eval("(regex-template 'admin' '\\d+' '{0}')"));
+    }
+
+    @Test
+    public void testRegexpGroupWithLookup() {
+        // See RegexTemplateTest
+        String script = "(regex-template 'nobody@us.imaginary.tld' '(.*)@(.*?)\\..*' '{1}_{[2]}' (hash   'us' 'USA'   'ca' 'CANADA'))";
+        assertEquals("nobody_USA", eval(script));
+
+        script = "(regex-template 'member@us.apache.org' '(.*)@(.*?)\\..*' 'prefix_{1}:{[2]}_suffix' (hash   'us' 'USA'   'ca' 'CANADA'))";
+        assertEquals("prefix_member:USA_suffix", eval(script));
+
+        script = "(regex-template 'member@ca.apache.org' '(.*)@(.*?)\\..*' 'prefix_{1}:{[2]}_suffix' (hash   'us' 'USA'   'ca' 'CANADA'))";
+        assertEquals("prefix_member:CANADA_suffix", eval(script));
+
+        script = "(regex-template 'member@uk.apache.org' '(.*)@(.*?)\\..*' 'prefix_{1}:{[2]}_suffix' (hash   'us' 'USA'   'ca' 'CANADA'))";
+        assertEquals("prefix_member:_suffix", eval(script));
+
+        script = "(regex-template 'member@uk.apache.org' '(.*)@(.*?)\\..*' 'prefix_{1}:{[2]}_suffix' (hash   'us' 'USA'   'ca' 'CANADA') true)";
+        assertEquals("prefix_member:uk_suffix", eval(script));
+    }
+
+    @Test
+    public void testHashMaps() {
+        HashMap<Object, Object> expected = new HashMap<>();
+        assertEquals(expected, eval("(hash)"));
+        expected.put(1L , 2L);
+        assertEquals(expected, eval("(hash   1 2)"));
+        expected.put("a", "b");
+        assertEquals(expected, eval("(hash   1 2   'a' 'b')"));
+        expected.clear();
+        expected.put("apple123", true);
+        assertEquals(expected, eval("(hash  (lowercase (concat 'Apple' '123'))   (and (< 10 12) (> 10 1)))"));
+    }
+
+    @Test
+    public void testHashMapLookup() {
+        assertEquals(2L, eval("(at 1 (hash   1 2   'a' 'b'))"));
+        assertEquals("b", eval("(at 'a' (hash   1 2   'a' 'b'))"));
+        assertNull(eval("(at 'b' (hash   1 2   'a' 'b'))"));
+    }
+
+    @Test(expected = ArityException.class)
+    public void testHashMapInvalid() {
+        eval("(hash 'key1' 'value1' 'key2')");
     }
 
     private Object eval(String script) {

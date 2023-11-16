@@ -111,6 +111,8 @@ public class CommonIdentityAssertionFilterTest {
     EasyMock.replay(servletContext);
     FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
     EasyMock.expect(config.getServletContext()).andReturn(servletContext).anyTimes();
+    EasyMock.expect(config.getInitParameter(CommonIdentityAssertionFilter.ADVANCED_PRINCIPAL_MAPPING)).
+            andReturn("username").anyTimes();
     EasyMock.expect(config.getInitParameter(CommonIdentityAssertionFilter.GROUP_PRINCIPAL_MAPPING)).
         andReturn("*=everyone;lmccay=test-virtual-group").once();
     EasyMock.expect(config.getInitParameter(CommonIdentityAssertionFilter.PRINCIPAL_MAPPING)).
@@ -272,6 +274,7 @@ public class CommonIdentityAssertionFilterTest {
     EasyMock.expect(servletContext.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).andReturn("topology1").anyTimes();
     EasyMock.expect(servletContext.getInitParameter(CommonIdentityAssertionFilter.PRINCIPAL_MAPPING)).andReturn(null).anyTimes();
     EasyMock.expect(servletContext.getInitParameter(CommonIdentityAssertionFilter.GROUP_PRINCIPAL_MAPPING)).andReturn(null).anyTimes();
+    EasyMock.expect(servletContext.getInitParameter(CommonIdentityAssertionFilter.ADVANCED_PRINCIPAL_MAPPING)).andReturn("username").anyTimes();
     EasyMock.expect(servletContext.getInitParameterNames()).andReturn(Collections.enumeration(filterConfigParameterNames)).anyTimes();
     EasyMock.expect(servletContext.getInitParameter(IMPERSONATION_PARAMS)).andReturn("doAs").anyTimes();
     if (!configuredInHadoopAuth) {
