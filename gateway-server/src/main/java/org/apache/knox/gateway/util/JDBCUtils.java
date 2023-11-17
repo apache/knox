@@ -36,6 +36,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.hsqldb.jdbc.JDBCDataSource;
+import org.mariadb.jdbc.MariaDbDataSource;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.postgresql.jdbc.SslMode;
 import org.postgresql.ssl.NonValidatingFactory;
@@ -46,6 +47,7 @@ import com.mysql.cj.jdbc.MysqlDataSource;
 public class JDBCUtils {
   public static final String POSTGRESQL_DB_TYPE = "postgresql";
   public static final String MYSQL_DB_TYPE = "mysql";
+  public static final String MARIA_DB_TYPE = "mariadb";
   public static final String DERBY_DB_TYPE = "derbydb";
   public static final String HSQL = "hsql";
   public static final String DATABASE_USER_ALIAS_NAME = "gateway_database_user";
@@ -61,6 +63,8 @@ public class JDBCUtils {
       return createHsqlDatasource(gatewayConfig, aliasService);
     } else if (MYSQL_DB_TYPE.equalsIgnoreCase(gatewayConfig.getDatabaseType())) {
       return createMySqlDataSource(gatewayConfig, aliasService);
+    } else if (MARIA_DB_TYPE.equalsIgnoreCase(gatewayConfig.getDatabaseType())) {
+      return createMariaDbDataSource(gatewayConfig);
     }
     throw new IllegalArgumentException("Invalid database type: " + gatewayConfig.getDatabaseType());
   }
@@ -152,6 +156,14 @@ public class JDBCUtils {
       } else {
         dataSource.setVerifyServerCertificate(false);
       }
+    }
+  }
+
+  private static DataSource createMariaDbDataSource(GatewayConfig gatewayConfig) throws SQLException {
+    if (gatewayConfig.getDatabaseConnectionUrl() != null) {
+      return new MariaDbDataSource(gatewayConfig.getDatabaseConnectionUrl());
+    } else {
+      throw new IllegalArgumentException("MariaDB Java Datasource requires a connection string!");
     }
   }
 

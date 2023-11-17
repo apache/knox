@@ -30,6 +30,7 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.easymock.EasyMock;
 import org.junit.Test;
+import org.mariadb.jdbc.MariaDbDataSource;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.postgresql.ssl.NonValidatingFactory;
 
@@ -198,4 +199,42 @@ public class JDBCUtilsTest {
     assertEquals(connectionUrl, dataSource.getUrl());
     EasyMock.verify(gatewayConfig);
   }
+
+  @Test
+  public void shouldReturnMariaDbDatasource() throws Exception {
+    final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(JDBCUtils.MARIA_DB_TYPE).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseConnectionUrl()).andReturn("jdbc:mariadb://localhost:1234").anyTimes();
+    EasyMock.replay(gatewayConfig);
+    assertTrue(JDBCUtils.getDataSource(gatewayConfig, null) instanceof MariaDbDataSource);
+  }
+
+  @Test
+  public void shoulFailToReturnMariaDbDatasourceIfConnectionUrlIsMissing() throws Exception {
+    testMariaDbFailure("MariaDB Java Datasource requires a connection string!", null);
+  }
+
+  @Test
+  public void shoulFailToReturnMariaDbDatasourceIfConnectionUrlIsWrong() throws Exception {
+    final String wrongConnectionUrl = "jdbc:mariadbb://localhost:1234"; // typo in the protocol
+    testMariaDbFailure("Wrong mariaDB url: " + wrongConnectionUrl, wrongConnectionUrl);
+  }
+
+  private void testMariaDbFailure(String expectedError, String connectionUrl) {
+    boolean error = false;
+    try {
+      final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+      EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(JDBCUtils.MARIA_DB_TYPE).anyTimes();
+      if (connectionUrl != null) {
+        EasyMock.expect(gatewayConfig.getDatabaseConnectionUrl()).andReturn(connectionUrl).anyTimes();
+      }
+      EasyMock.replay(gatewayConfig);
+      JDBCUtils.getDataSource(gatewayConfig, null);
+    } catch (Exception e) {
+      error = true;
+      assertEquals(expectedError, e.getMessage());
+    }
+    assertTrue(error);
+  }
+
 }
