@@ -33,14 +33,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.topology.discovery.advanced.AdvancedServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.simple.ProviderConfiguration;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor.Application;
@@ -129,50 +127,26 @@ public class HadoopXmlResourceParserTest {
   }
 
   @Test
-  public void testCMDescriptorParserWithNotEnabledServices() throws Exception {
-    final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptor.xml").getPath();
-
-    final Properties advancedConfigurationTopology1 = new Properties();
-    advancedConfigurationTopology1.put(buildEnabledParameter("topology1", "HIVE"), "false");
-    advancedConfigurationTopology1.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_TOPOLOGY_NAME, "topology1");
-    hadoopXmlResourceParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfigurationTopology1);
-
-    final Properties advancedConfigurationTopology2 = new Properties();
-    advancedConfigurationTopology2.put(buildEnabledParameter("topology2", "NIFI"), "false");
-    advancedConfigurationTopology2.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_TOPOLOGY_NAME, "topology2");
-    hadoopXmlResourceParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfigurationTopology2);
+  public void testDescriptorParserWithServices() throws Exception {
+    final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptorWithServiceList.xml").getPath();
 
     final Set<SimpleDescriptor> descriptors = hadoopXmlResourceParser.parse(testConfigPath).getDescriptors();
-    assertEquals(2, descriptors.size());
+    assertEquals(1, descriptors.size());
     final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
-    SimpleDescriptor topology1 = descriptorsIterator.next();
+    final SimpleDescriptor topology1 = descriptorsIterator.next();
     assertNotNull(topology1);
-    // topology1 comes with HIVE which is disabled
-    assertTrue(topology1.getServices().isEmpty());
-
-    SimpleDescriptor topology2 = descriptorsIterator.next();
-    assertNotNull(topology2);
-    // topology1 comes with ATLAS and NIFI but the latter one is disabled
-    validateTopology2Descriptors(topology2, false);
-  }
-
-  @Test
-  public void testCMDescriptorParserWithEnabledNotListedServiceInTopology1() throws Exception {
-    final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptor.xml").getPath();
-    final Properties advancedConfiguration = new Properties();
-    advancedConfiguration.put(buildEnabledParameter("topology1", "oozie"), "true"); //it should not matter if service name is lowercase advanced configuration
-    advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_TOPOLOGY_NAME, "topology1");
-    hadoopXmlResourceParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfiguration);
-    final Set<SimpleDescriptor> descriptors = hadoopXmlResourceParser.parse(testConfigPath).getDescriptors();
-    final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
-    SimpleDescriptor descriptor = descriptorsIterator.next();
-    assertNotNull(descriptor);
-    // topology1 comes without OOZIE but it's enabled in topology1 -> OOZIE should be added without any url/version/parameter
-    assertService(descriptor, "OOZIE", null, null, null);
-
-    descriptor = descriptorsIterator.next();
-    validateTopology2Descriptors(descriptor, true);
-    assertNull(descriptor.getService("OOZIE"));
+    // services= NIFI,ATLAS ,hive, hue ,IMPALA#
+    // + RANGER and FLINK service declarations in separate lines
+    assertEquals(7, topology1.getServices().size());
+    assertNotNull(topology1.getService("NIFI"));
+    assertNotNull(topology1.getService("ATLAS"));
+    assertNotNull(topology1.getService("HIVE")); //should be uppercase
+    assertNotNull(topology1.getService("HUE")); //should be uppercase
+    assertNotNull(topology1.getService("IMPALA"));
+    assertNotNull(topology1.getService("RANGER"));
+    assertNotNull(topology1.getService("FLINK"));
+    assertEquals("3.0", topology1.getService("FLINK").getVersion());
+    assertNull(topology1.getService("AMBARI"));
   }
 
   @Test
@@ -217,28 +191,6 @@ public class HadoopXmlResourceParserTest {
     testConfigPath = this.getClass().getClassLoader().getResource("testDescriptorWithAdminProviderConfigRemovedUserDnTemplate.xml").getPath();
     parserResult = hadoopXmlResourceParser.parse(testConfigPath);
     validateTestDescriptorProviderConfigs(parserResult.getProviders(), "ldap://localhost:33389", true, false);
-  }
-
-  private String buildEnabledParameter(String topologyName, String serviceName) {
-    return AdvancedServiceDiscoveryConfig.PARAMETER_NAME_PREFIX_ENABLED_SERVICE + topologyName + AdvancedServiceDiscoveryConfig.PARAMETER_NAME_POSTFIX_ENABLED_SERVICE + serviceName;
-  }
-
-  @Test
-  public void testSettingDiscoveryDetails() throws Exception {
-    final String address = "http://myCmHost:7180";
-    final String cluster = "My Test Cluster";
-    final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptorWithoutDiscoveryDetails.xml").getPath();
-    final Properties advancedConfiguration = new Properties();
-    advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_TOPOLOGY_NAME, "topology1");
-    advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_DISCOVERY_ADDRESS, address);
-    advancedConfiguration.put(AdvancedServiceDiscoveryConfig.PARAMETER_NAME_DISCOVERY_CLUSTER, cluster);
-    hadoopXmlResourceParser.onAdvancedServiceDiscoveryConfigurationChange(advancedConfiguration);
-    final Set<SimpleDescriptor> descriptors = hadoopXmlResourceParser.parse(testConfigPath).getDescriptors();
-    final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
-    SimpleDescriptor descriptor = descriptorsIterator.next();
-    assertEquals(address, descriptor.getDiscoveryAddress());
-    assertEquals(cluster, descriptor.getCluster());
-    assertEquals("ClouderaManager", descriptor.getDiscoveryType());
   }
 
   @Test

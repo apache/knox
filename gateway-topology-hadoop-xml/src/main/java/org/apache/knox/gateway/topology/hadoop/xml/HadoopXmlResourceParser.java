@@ -23,20 +23,16 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.topology.discovery.advanced.AdvancedServiceDiscoveryConfig;
-import org.apache.knox.gateway.topology.discovery.advanced.AdvancedServiceDiscoveryConfigChangeListener;
 import org.apache.knox.gateway.topology.simple.JSONProviderConfiguration;
 import org.apache.knox.gateway.topology.simple.JSONProviderConfiguration.JSONProvider;
 import org.apache.knox.gateway.topology.simple.ProviderConfiguration;
@@ -50,7 +46,7 @@ import org.apache.knox.gateway.topology.simple.SimpleDescriptorImpl.ServiceImpl;
  * Parses Knox descriptors and provider configurations from Hadoop style XML config
  *
  */
-public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigChangeListener {
+public class HadoopXmlResourceParser {
   private static final HadoopXmlResourceMessages log = MessagesFactory.get(HadoopXmlResourceMessages.class);
 
   //shared provider related constants
@@ -71,15 +67,14 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
   private static final String CONFIG_NAME_APPLICATION_PREFIX = "app";
   private static final String CONFIG_NAME_SERVICE_URL = "url";
   private static final String CONFIG_NAME_SERVICE_VERSION = "version";
+  private static final String CONFIG_NAME_SERVICES = "services";
   private static final String REMOVE = "remove";
 
-  private final Map<String, AdvancedServiceDiscoveryConfig> advancedServiceDiscoveryConfigMap;
   private final String sharedProvidersDir;
   private final GatewayConfig gatewayConfig;
 
   public HadoopXmlResourceParser(GatewayConfig gatewayConfig) {
     this.gatewayConfig = gatewayConfig;
-    this.advancedServiceDiscoveryConfigMap = new ConcurrentHashMap<>();
     this.sharedProvidersDir = gatewayConfig.getGatewayProvidersConfigDir();
   }
 
@@ -270,6 +265,9 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
         case CONFIG_NAME_PROVISION_ENCRYPT_QUERY_STRING_CREDENTIAL:
           descriptor.setProvisionEncryptQueryStringCredential(Boolean.valueOf(parameterPairParts[1].trim()));
           break;
+        case CONFIG_NAME_SERVICES:
+          Arrays.asList(parameterPairParts[1].trim().split(",", -1)).forEach(serviceName -> descriptor.addService(emptyService(serviceName)));
+          break;
         default:
           if (parameterName.startsWith(CONFIG_NAME_APPLICATION_PREFIX)) {
             parseApplication(descriptor, configurationPair.trim());
@@ -280,11 +278,6 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
         }
       }
 
-      final AdvancedServiceDiscoveryConfig advancedServiceDiscoveryConfig = advancedServiceDiscoveryConfigMap.get(name);
-      if (advancedServiceDiscoveryConfig != null) {
-        setDiscoveryDetails(descriptor, advancedServiceDiscoveryConfig);
-        addEnabledServices(descriptor, advancedServiceDiscoveryConfig);
-      }
       return descriptor;
     } catch (Exception e) {
       log.failedToParseDescriptor(name, e.getMessage(), e);
@@ -292,31 +285,10 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
     }
   }
 
-  private void setDiscoveryDetails(SimpleDescriptorImpl descriptor, AdvancedServiceDiscoveryConfig advancedServiceDiscoveryConfig) {
-    if (StringUtils.isBlank(descriptor.getDiscoveryAddress())) {
-      descriptor.setDiscoveryAddress(advancedServiceDiscoveryConfig.getDiscoveryAddress());
-    }
-
-    if (StringUtils.isBlank(descriptor.getCluster())) {
-      descriptor.setCluster(advancedServiceDiscoveryConfig.getDiscoveryCluster());
-    }
-
-    if (StringUtils.isBlank(descriptor.getDiscoveryType())) {
-      descriptor.setDiscoveryType("ClouderaManager");
-    }
-  }
-
-  /*
-   * Adds any enabled service which is not listed in the CM descriptor
-   */
-  private void addEnabledServices(SimpleDescriptorImpl descriptor, AdvancedServiceDiscoveryConfig advancedServiceDiscoveryConfig) {
-    advancedServiceDiscoveryConfig.getEnabledServiceNames().forEach(enabledServiceName -> {
-      if (descriptor.getService(enabledServiceName) == null) {
-        ServiceImpl service = new ServiceImpl();
-        service.setName(enabledServiceName);
-        descriptor.addService(service);
-      }
-    });
+  private ServiceImpl emptyService(String serviceName) {
+    final ServiceImpl service = new ServiceImpl();
+    service.setName(serviceName.trim().toUpperCase(Locale.ROOT));
+    return service;
   }
 
   /**
@@ -354,7 +326,7 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
    * <li><code>$SERVICE_NAME:version=$VERSION</code> (optional)</li>
    * <li><code>$SERVICE_NAME[:$PARAMETER_NAME=$PARAMETER_VALUE] (optional)</code></li>
    * </ul>
-   * Sample application configurations:
+   * Sample service configurations:
    * <ul>
    * <li>HIVE:url=http://localhost:123</li>
    * <li>HIVE:version=1.0</li>
@@ -364,50 +336,31 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
   private void parseService(SimpleDescriptorImpl descriptor, String configurationPair) {
     final String[] serviceParts = configurationPair.split(":");
     final String serviceName = serviceParts[0].trim();
-    if (isServiceEnabled(descriptor.getName(), serviceName)) {
-      ServiceImpl service = (ServiceImpl) descriptor.getService(serviceName);
-      if (service == null) {
-        service = new ServiceImpl();
-        service.setName(serviceName);
-        descriptor.addService(service);
-      }
 
-      if (serviceParts.length > 1) {
-        // configuration value may contain ":" (for instance http://host:port) -> considering a configuration name/value pair everything after '$SERVICE_NAME:'
-        final String serviceConfiguration = configurationPair.substring(serviceName.length() + 1).trim();
-        final String[] serviceConfigurationParts = serviceConfiguration.split("=", 2);
-        final String serviceConfigurationName = serviceConfigurationParts[0].trim();
-        final String serviceConfigurationValue = serviceConfigurationParts[1].trim();
-        switch (serviceConfigurationName) {
-        case CONFIG_NAME_SERVICE_URL:
-          service.addUrl(serviceConfigurationValue);
-          break;
-        case CONFIG_NAME_SERVICE_VERSION:
-          service.setVersion(serviceConfigurationValue);
-          break;
-        default:
-          service.addParam(serviceConfigurationName, serviceConfigurationValue);
-          break;
-        }
-      }
-    } else {
-      log.serviceDisabled(serviceName, descriptor.getName());
+    ServiceImpl service = (ServiceImpl) descriptor.getService(serviceName);
+    if (service == null) {
+      service = emptyService(serviceName);
+      descriptor.addService(service);
     }
-  }
 
-  private boolean isServiceEnabled(String descriptorName, String serviceName) {
-    return advancedServiceDiscoveryConfigMap.containsKey(descriptorName) ? advancedServiceDiscoveryConfigMap.get(descriptorName).isServiceEnabled(serviceName) : true;
-  }
-
-  @Override
-  public void onAdvancedServiceDiscoveryConfigurationChange(Properties newConfiguration) {
-    final AdvancedServiceDiscoveryConfig advancedServiceDiscoveryConfig = new AdvancedServiceDiscoveryConfig(newConfiguration);
-    final String topologyName = advancedServiceDiscoveryConfig.getTopologyName();
-    if (StringUtils.isBlank(topologyName)) {
-      throw new IllegalArgumentException("Invalid advanced service discovery configuration: topology name is missing!");
+    if (serviceParts.length > 1) {
+      // configuration value may contain ":" (for instance http://host:port) -> considering a configuration name/value pair everything after '$SERVICE_NAME:'
+      final String serviceConfiguration = configurationPair.substring(serviceName.length() + 1).trim();
+      final String[] serviceConfigurationParts = serviceConfiguration.split("=", 2);
+      final String serviceConfigurationName = serviceConfigurationParts[0].trim();
+      final String serviceConfigurationValue = serviceConfigurationParts[1].trim();
+      switch (serviceConfigurationName) {
+      case CONFIG_NAME_SERVICE_URL:
+        service.addUrl(serviceConfigurationValue);
+        break;
+      case CONFIG_NAME_SERVICE_VERSION:
+        service.setVersion(serviceConfigurationValue);
+        break;
+      default:
+        service.addParam(serviceConfigurationName, serviceConfigurationValue);
+        break;
+      }
     }
-    advancedServiceDiscoveryConfigMap.put(topologyName, advancedServiceDiscoveryConfig);
-    log.updatedAdvanceServiceDiscoverytConfiguration(topologyName);
   }
 
 }

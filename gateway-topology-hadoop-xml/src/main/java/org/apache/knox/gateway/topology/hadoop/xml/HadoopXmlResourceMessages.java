@@ -56,11 +56,11 @@ public interface HadoopXmlResourceMessages {
   @Message(level = MessageLevel.ERROR, text = "Parsing XML configuration {0} failed: {1}")
   void failedToParseXmlConfiguration(String path, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
-  @Message(level = MessageLevel.DEBUG, text = "Processing Hadoop XML resource {0} (force = {1}; lastReloadTime = {2}; lastModified = {3})")
-  void processHadoopXmlResource(String descriptorPath, boolean force, FileTime lastReloadTime, FileTime lastModifiedTime);
+  @Message(level = MessageLevel.DEBUG, text = "Processing Hadoop XML resource {0} (lastReloadTime = {1}; lastModified = {2})")
+  void processHadoopXmlResource(String descriptorPath, FileTime lastReloadTime, FileTime lastModifiedTime);
 
-  @Message(level = MessageLevel.DEBUG, text = "Skipping Hadoop XML resource monitoring of {0} (force = {1}; lastReloadTime = {2}; lastModified = {3})")
-  void skipMonitorHadoopXmlResource(String descriptorPath, boolean force, FileTime lastReloadTime, FileTime lastModifiedTime);
+  @Message(level = MessageLevel.DEBUG, text = "Skipping Hadoop XML resource monitoring of {0} (lastReloadTime = {1}; lastModified = {2})")
+  void skipMonitorHadoopXmlResource(String descriptorPath, FileTime lastReloadTime, FileTime lastModifiedTime);
 
   @Message(level = MessageLevel.ERROR, text = "Error while monitoring Hadoop style XML configuration {0}: {1}")
   void failedToMonitorHadoopXmlResource(String descriptorPath, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
@@ -70,9 +70,6 @@ public interface HadoopXmlResourceMessages {
 
   @Message(level = MessageLevel.ERROR, text = "Error while producing Knox provider: {0}")
   void failedToProduceKnoxProvider(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
-
-  @Message(level = MessageLevel.WARN, text = "Service {0} is disabled. It will NOT be added in {1}")
-  void serviceDisabled(String serviceName, String descriptorName);
 
   @Message(level = MessageLevel.INFO, text = "Updated advanced service discovery configuration for {0}.")
   void updatedAdvanceServiceDiscoverytConfiguration(String topologyName);

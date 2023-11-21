@@ -48,7 +48,6 @@ import org.apache.knox.gateway.topology.Application;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.TopologyEvent;
 import org.apache.knox.gateway.topology.TopologyListener;
-import org.apache.knox.gateway.topology.discovery.advanced.AdvancedServiceDiscoveryConfigurationMonitor;
 import org.apache.knox.gateway.topology.hadoop.xml.HadoopXmlResourceMonitor;
 import org.apache.knox.gateway.topology.hadoop.xml.HadoopXmlResourceParser;
 import org.apache.knox.gateway.trace.AccessHandler;
@@ -719,10 +718,6 @@ public class GatewayServer {
   private void handleHadoopXmlResources() {
     final HadoopXmlResourceParser hadoopXmlResourceParser = new HadoopXmlResourceParser(config);
     final HadoopXmlResourceMonitor hadoopXmlResourceMonitor = new HadoopXmlResourceMonitor(config, hadoopXmlResourceParser);
-    final AdvancedServiceDiscoveryConfigurationMonitor advancedServiceDiscoveryConfigurationMonitor = new AdvancedServiceDiscoveryConfigurationMonitor(config);
-    advancedServiceDiscoveryConfigurationMonitor.registerListener(hadoopXmlResourceParser);
-    advancedServiceDiscoveryConfigurationMonitor.registerListener(hadoopXmlResourceMonitor);
-    advancedServiceDiscoveryConfigurationMonitor.init();
     hadoopXmlResourceMonitor.setupMonitor();
   }
 
