@@ -1603,7 +1603,7 @@
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-mapreduce-client-core</artifactId>
                 <version>${hadoop.version}</version>
-		<scope>provided</scope>
+		        <scope>provided</scope>
                 <exclusions>
                     <exclusion>
                         <groupId>jdk.tools</groupId>
@@ -2449,6 +2449,11 @@
                         <artifactId>error_prone_annotations</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>${docker-maven-plugin.version}</version>
             </dependency>
 
             <!-- ********** ********** ********** ********** ********** ********** -->
