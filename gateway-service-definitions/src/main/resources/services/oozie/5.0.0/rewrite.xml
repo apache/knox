@@ -116,13 +116,7 @@
                 <detect path="name" value="mapred.input.dir">
                     <apply path="value" rule="OOZIE/oozie/hdfs-path"/>
                 </detect>
-                <detect path="name" value="inputDir">
-                    <apply path="value" rule="OOZIE/oozie/hdfs-path"/>
-                </detect>
                 <detect path="name" value="mapred.output.dir">
-                    <apply path="value" rule="OOZIE/oozie/hdfs-path"/>
-                </detect>
-                <detect path="name" value="outputDir">
                     <apply path="value" rule="OOZIE/oozie/hdfs-path"/>
                 </detect>
             </buffer>
