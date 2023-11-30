@@ -16,18 +16,17 @@
  */
 package org.apache.knox.gateway.util;
 
-import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.ssl.SSLContexts;
-import org.apache.knox.gateway.i18n.GatewaySpiMessages;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.services.security.KeystoreService;
-import org.apache.knox.gateway.services.security.KeystoreServiceException;
-
-import javax.net.ssl.SSLContext;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+
+import javax.net.ssl.SSLContext;
+
+import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.ssl.SSLContexts;
+import org.apache.knox.gateway.i18n.GatewaySpiMessages;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 public class TruststoreSSLContextUtils {
   private static final GatewaySpiMessages LOGGER = MessagesFactory.get(GatewaySpiMessages.class);
@@ -35,21 +34,18 @@ public class TruststoreSSLContextUtils {
   private TruststoreSSLContextUtils() {
   }
 
-  public static SSLContext getTruststoreSSLContext(KeystoreService keystoreService) {
+  public static SSLContext getTruststoreSSLContext(KeyStore truststore) {
     SSLContext sslContext = null;
     try {
-      if(keystoreService != null) {
-        KeyStore truststore = keystoreService.getTruststoreForHttpClient();
-        if (truststore != null) {
-          SSLContextBuilder sslContextBuilder = SSLContexts.custom();
-          sslContextBuilder.loadTrustMaterial(truststore, null);
-          sslContext = sslContextBuilder.build();
-        }
+      if (truststore != null) {
+        SSLContextBuilder sslContextBuilder = SSLContexts.custom();
+        sslContextBuilder.loadTrustMaterial(truststore, null);
+        sslContext = sslContextBuilder.build();
       }
-    } catch (KeystoreServiceException | NoSuchAlgorithmException | KeyStoreException
-                 | KeyManagementException e) {
+    } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
       LOGGER.failedToLoadTruststore(e.getMessage(), e);
     }
     return sslContext;
   }
+
 }

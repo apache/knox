@@ -304,6 +304,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public Set<String> getIncludedSSLProtocols() {
+    return Collections.singleton("TLSv1.2");
+  }
+
+  @Override
   public List<String> getExcludedSSLProtocols() {
     List<String> protocols = new ArrayList<>();
     protocols.add("SSLv3");
@@ -906,6 +911,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return Collections.emptySet();
   }
 
+  @Override
+  public String getApiServicesViewVersionOnHomepage() {
+    return DEFAULT_API_SERVICES_VIEW_VERSION;
+  }
+
   /**
    * @return returns whether know token permissive failure is enabled
    */
@@ -1038,7 +1048,23 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public Set<String> getHealthCheckTopologies() {
+    return Collections.emptySet();
+  }
+
+  @Override
   public boolean isAsyncSupported() {
     return false;
   }
+
+  @Override
+  public boolean canSeeAllTokens(String userName) {
+    return false;
+  }
+
+  @Override
+  public Map<String, Collection<String>> getApplicationPathAliases() {
+    return Collections.emptyMap();
+  }
+
 }

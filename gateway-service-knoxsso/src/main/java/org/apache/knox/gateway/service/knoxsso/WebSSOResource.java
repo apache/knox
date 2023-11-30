@@ -22,11 +22,9 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.apache.knox.gateway.services.GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,12 +57,15 @@ import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
+import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.session.control.ConcurrentSessionVerifier;
 import org.apache.knox.gateway.util.CookieUtils;
 import org.apache.knox.gateway.util.RegExUtils;
+import org.apache.knox.gateway.util.Tokens;
 import org.apache.knox.gateway.util.Urls;
 import org.apache.knox.gateway.util.WhitelistUtils;
 
@@ -109,6 +110,7 @@ public class WebSSOResource {
   private List<String> ssoExpectedparams = new ArrayList<>();
   private String clusterName;
   private String tokenIssuer;
+  private TokenStateService tokenStateService;
 
   private String sameSiteValue;
 
@@ -144,6 +146,13 @@ public class WebSSOResource {
     this.sameSiteValue = StringUtils.isBlank(context.getInitParameter(SSO_COOKIE_SAMESITE_PARAM))
             ? SSO_COOKIE_SAMESITE_DEFAULT
             : context.getInitParameter(SSO_COOKIE_SAMESITE_PARAM);
+
+    final GatewayServices services = (GatewayServices) context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    if (services != null) {
+      if (TokenUtils.isServerManagedTokenStateEnabled(context)) {
+        tokenStateService = services.getService(ServiceType.TOKEN_STATE_SERVICE);
+      }
+    }
   }
 
   private void setSignatureAlogrithm() throws AliasServiceException {
@@ -252,14 +261,12 @@ public class WebSSOResource {
       // If there is a whitelist defined, then the original URL must be validated against it.
       // If there is no whitelist, then everything is valid.
       if (whitelist != null) {
-        String decodedOriginal = null;
         try {
-          decodedOriginal = URLDecoder.decode(original, StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-          //
+          validRedirect = RegExUtils.checkBaseUrlAgainstWhitelist(whitelist, original);
+        } catch (MalformedURLException e) {
+          throw new WebApplicationException("Malformed original URL: " + original,
+                  Response.Status.BAD_REQUEST);
         }
-
-        validRedirect = RegExUtils.checkWhitelist(whitelist, (decodedOriginal != null ? decodedOriginal : original));
       }
 
       if (!validRedirect) {
@@ -299,6 +306,7 @@ public class WebSSOResource {
               .setSigningKeystoreName(signingKeystoreName)
               .setSigningKeystoreAlias(signingKeystoreAlias)
               .setSigningKeystorePassphrase(signingKeystorePassphrase)
+              .setManaged(tokenStateService != null)
               .build();
       JWT token = tokenAuthority.issueToken(jwtAttributes);
 
@@ -307,6 +315,7 @@ public class WebSSOResource {
         if (!verifier.registerToken(p.getName(), token)) {
           throw new WebApplicationException("Too many sessions for user: " + request.getUserPrincipal().getName(), Response.Status.FORBIDDEN);
         }
+        saveToken(token);
         addJWTHadoopCookie(original, token);
       }
 
@@ -338,7 +347,7 @@ public class WebSSOResource {
     return Response.seeOther(location).entity("{ \"redirectTo\" : " + original + " }").build();
   }
 
-  private String getOriginalUrlFromQueryParams() {
+  protected String getOriginalUrlFromQueryParams() {
     String original = request.getParameter(ORIGINAL_URL_REQUEST_PARAM);
     StringBuilder buf = new StringBuilder(original);
 
@@ -353,7 +362,8 @@ public class WebSSOResource {
           && !original.contains(entry.getKey() + "=")
           && !ssoExpectedparams.contains(entry.getKey())) {
 
-        if(first) {
+        /* Only add ? if not already present. See KNOX-2973 */
+        if(first && (buf.lastIndexOf("?") == -1) ) {
           buf.append('?');
           first = false;
         }
@@ -389,7 +399,8 @@ public class WebSSOResource {
   }
 
   private void addJWTHadoopCookie(String original, JWT token) {
-    LOGGER.addingJWTCookie(token.toString());
+    final String logSafeToken = Tokens.getTokenDisplayText(token.toString());
+    LOGGER.addingJWTCookie(logSafeToken);
     /*
      * In order to account for google chrome changing default value
      * of SameSite from None to Lax we need to craft Set-Cookie
@@ -415,7 +426,7 @@ public class WebSSOResource {
       }
       setCookie.append("; SameSite=").append(this.sameSiteValue);
       response.setHeader("Set-Cookie", setCookie.toString());
-      LOGGER.addedJWTCookie();
+      LOGGER.addedJWTCookie(logSafeToken);
     } catch (Exception e) {
       LOGGER.unableAddCookieToResponse(e.getMessage(),
           Arrays.toString(e.getStackTrace()));
@@ -429,5 +440,22 @@ public class WebSSOResource {
     c.setMaxAge(0);
     c.setPath(RESOURCE_PATH);
     response.addCookie(c);
+  }
+
+  // Optional token state service persistence
+  private void saveToken(JWT token) {
+    if (tokenStateService != null) {
+      final String tokenId = TokenUtils.getTokenId(token);
+      final long issueTime = System.currentTimeMillis();
+      tokenStateService.addToken(tokenId, issueTime, token.getExpiresDate().getTime(), tokenStateService.getDefaultMaxLifetimeDuration());
+      final TokenMetadata tokenMetadata = new TokenMetadata(token.getSubject());
+      tokenMetadata.setKnoxSsoCookie(true);
+      tokenStateService.addMetadata(tokenId, tokenMetadata);
+      LOGGER.storedToken(getTopologyName(), Tokens.getTokenDisplayText(token.toString()), Tokens.getTokenIDDisplayText(tokenId));
+    }
+  }
+
+  private String getTopologyName() {
+    return (String) context.getAttribute("org.apache.knox.gateway.gateway.cluster");
   }
 }

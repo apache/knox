@@ -39,8 +39,8 @@ public interface KnoxSSOMessages {
   @Message( level = MessageLevel.ERROR, text = "Original URL not found in request.")
   void originalURLNotFound();
 
-  @Message( level = MessageLevel.INFO, text = "JWT cookie successfully added.")
-  void addedJWTCookie();
+  @Message( level = MessageLevel.INFO, text = "JWT cookie {0} successfully added.")
+  void addedJWTCookie(String token);
 
   @Message( level = MessageLevel.ERROR, text = "Unable to issue token.")
   void unableToIssueToken(@StackTrace( level = MessageLevel.DEBUG) Exception e);
@@ -60,4 +60,7 @@ public interface KnoxSSOMessages {
   @Message( level = MessageLevel.ERROR, text = "The original URL: {0} for redirecting back after authentication is " +
       "not valid according to the configured whitelist: {1}. See documentation for KnoxSSO Whitelisting.")
   void whiteListMatchFail(String original, String whitelist);
+
+  @Message( level = MessageLevel.INFO, text = "Knox Token service ({0}) stored state for token {1} ({2})")
+  void storedToken(String topologyName, String tokenDisplayText, String tokenId);
 }

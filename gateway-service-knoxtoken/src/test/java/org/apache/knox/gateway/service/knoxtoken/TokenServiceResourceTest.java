@@ -1102,16 +1102,34 @@ public class TokenServiceResourceTest {
     tr.context = context;
     tr.init();
 
+    // add some KnoxSSO Cookie, they should not be considered during token limit
+    // calculation
+    final int numberOfKnoxSsoCookies = 5;
+    for (int i = 0; i < numberOfKnoxSsoCookies; i++) {
+      final Response tokenResponse = acquireToken(tr);
+
+      final String tokenId = getTagValue(tokenResponse.getEntity().toString(), "token_id");
+      assertNotNull(tokenId);
+      final TokenMetadata tokenMetadata = new TokenMetadata(USER_NAME);
+      tokenMetadata.setKnoxSsoCookie(true);
+      tss.addMetadata(tokenId, tokenMetadata);
+    }
+
     for (int i = 0; i < numberOfTokens; i++) {
-      final Response getTokenResponse = Subject.doAs(createTestSubject(USER_NAME), (PrivilegedAction<Response>) () -> tr.doGet());
-      if (getTokenResponse.getStatus() != Response.Status.OK.getStatusCode()) {
-        throw new Exception(getTokenResponse.getEntity().toString());
-      }
+      acquireToken(tr);
     }
     final Response getKnoxTokensResponse = getUserTokensResponse(tr);
     final Collection<String> tokens = ((Map<String, Collection<String>>) JsonUtils.getObjectFromJsonString(getKnoxTokensResponse.getEntity().toString()))
         .get("tokens");
-    assertEquals(tokens.size(), revokeOldestToken ? configuredLimit : numberOfTokens);
+    assertEquals(tokens.size(), revokeOldestToken ? configuredLimit + numberOfKnoxSsoCookies : numberOfTokens + numberOfKnoxSsoCookies);
+  }
+
+  private Response acquireToken(TokenResource tokenResource) throws Exception {
+    final Response getTokenResponse = Subject.doAs(createTestSubject(USER_NAME), (PrivilegedAction<Response>) () -> tokenResource.doGet());
+    if (getTokenResponse.getStatus() != Response.Status.OK.getStatusCode()) {
+      throw new Exception(getTokenResponse.getEntity().toString());
+    }
+    return getTokenResponse;
   }
 
   @Test
@@ -1725,6 +1743,11 @@ public class TokenServiceResourceTest {
     }
 
     @Override
+    public Collection<KnoxToken> getAllTokens() {
+      return fetchTokens(null, false);
+    }
+
+    @Override
     public Collection<KnoxToken> getTokens(String userName) {
       return fetchTokens(userName, false);
     }
@@ -1737,10 +1760,14 @@ public class TokenServiceResourceTest {
     private Collection<KnoxToken> fetchTokens(String userName, boolean createdBy) {
       final Collection<KnoxToken> tokens = new TreeSet<>();
       final Predicate<Map.Entry<String, TokenMetadata>> filterPredicate;
-      if (createdBy) {
-        filterPredicate = entry -> userName.equals(entry.getValue().getCreatedBy());
+      if (userName == null) {
+        filterPredicate = entry -> true;
       } else {
-        filterPredicate = entry -> userName.equals(entry.getValue().getUserName());
+        if (createdBy) {
+          filterPredicate = entry -> userName.equals(entry.getValue().getCreatedBy());
+        } else {
+          filterPredicate = entry -> userName.equals(entry.getValue().getUserName());
+        }
       }
       tokenMetadata.entrySet().stream().filter(filterPredicate).forEach(metadata -> {
         String tokenId = metadata.getKey();

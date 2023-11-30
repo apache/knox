@@ -20,15 +20,16 @@ import { HttpClientModule } from '@angular/common/http';
 import { TokenGenerationComponent } from './token-generation.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { TokenGenService } from './token-generation.service';
+import { SessionInformationComponent } from './session.information.component';
 
 @NgModule({
     imports: [BrowserModule,
         HttpClientModule,
         ReactiveFormsModule
     ],
-    declarations: [TokenGenerationComponent],
+    declarations: [TokenGenerationComponent, SessionInformationComponent],
     providers: [TokenGenService],
-    bootstrap: [TokenGenerationComponent]
+    bootstrap: [TokenGenerationComponent, SessionInformationComponent]
 })
 export class AppModule {
 }

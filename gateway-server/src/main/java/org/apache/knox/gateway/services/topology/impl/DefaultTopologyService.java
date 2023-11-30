@@ -551,10 +551,12 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
     }
 
     // Trigger descriptor discovery (KNOX-2301)
-    triggerDescriptorDiscovery();
+    reloadDescriptors();
   }
 
-  private void triggerDescriptorDiscovery() {
+  @Override
+  public void reloadDescriptors() {
+    log.loadingDescriptorsFromDirectory(descriptorsDirectory.getAbsolutePath());
     for (File descriptor : getDescriptors()) {
       descriptorsMonitor.onFileChange(descriptor);
     }

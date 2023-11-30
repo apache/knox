@@ -60,6 +60,14 @@ function buildAppJavaOpts {
       addAppJavaOpts "${APP_JAVA_LIB_PATH}"
     fi
 
+    # Add properties to enable Knox to run on JDK 17
+    JAVA_VERSION=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
+    CHECK_VERSION_17="17"
+    if [[ "$JAVA_VERSION" == *"$CHECK_VERSION_17"* ]]; then
+        echo "Java version is $CHECK_VERSION_17. Adding properties to enable Knox to run on JDK 17"
+        addAppJavaOpts " --add-exports java.base/sun.security.x509=ALL-UNNAMED --add-exports java.base/sun.security.pkcs=ALL-UNNAMED --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED --add-opens java.base/sun.security.util=ALL-UNNAMED"
+    fi
+
     # echo "APP_JAVA_OPTS =" "${APP_JAVA_OPTS[@]}"
 }
 

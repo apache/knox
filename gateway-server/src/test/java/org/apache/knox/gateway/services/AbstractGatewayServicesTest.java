@@ -65,6 +65,7 @@ public class AbstractGatewayServicesTest {
         ServiceType.SERVICE_REGISTRY_SERVICE,
         ServiceType.CONCURRENT_SESSION_VERIFIER,
         ServiceType.REMOTE_CONFIGURATION_MONITOR,
+        ServiceType.GATEWAY_STATUS_SERVICE
     };
 
     assertNotEquals(ServiceType.values(), orderedServiceTypes);

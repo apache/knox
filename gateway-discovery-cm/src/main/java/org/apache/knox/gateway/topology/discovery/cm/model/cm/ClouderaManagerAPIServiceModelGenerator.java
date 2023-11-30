@@ -71,7 +71,7 @@ public class ClouderaManagerAPIServiceModelGenerator
    */
   @Override
   public ServiceModel generateService(ApiService service,
-      ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig)
+                                 ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig, ApiServiceConfig coreSettingsConfig)
       throws ApiException {
 
     final String basePath = getClient().getBasePath();

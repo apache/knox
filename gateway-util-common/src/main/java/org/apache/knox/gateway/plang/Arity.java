@@ -39,4 +39,22 @@ public interface Arity {
             }
         };
     }
+
+    static Arity even() {
+        return (methodName, params) -> {
+            if (params.size() % 2 != 0) {
+                throw new ArityException("wrong number of arguments in call to '" + methodName
+                        + "'. Expected even number of arguments, got " + params.size() + ".");
+            }
+        };
+    }
+
+    static Arity between(int min, int max) {
+        return (methodName, params) -> {
+            if (params.size() < min || params.size() > max) {
+                throw new ArityException("wrong number of arguments in call to '" + methodName
+                        + "'. Expected at least " + min + ", at max " + max + " arguments, got " + params.size() + ".");
+            }
+        };
+    }
 }

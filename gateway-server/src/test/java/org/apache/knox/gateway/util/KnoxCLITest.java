@@ -483,6 +483,67 @@ public class KnoxCLITest {
   }
 
   @Test
+  public void testMissingAliasValue() throws Exception {
+    outContent.reset();
+    String[] args1 = {"create-alias", "alias1", "--value"};
+    int rc;
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf(new GatewayConfigImpl());
+    rc = cli.run(args1);
+    assertEquals(-1, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains(KnoxCLI.AliasCreateCommand.USAGE));
+  }
+
+  @Test
+  public void testIncorrectCombinationOfValueAndGenerate() throws Exception {
+    outContent.reset();
+    String[] args1 = {"create-alias", "alias1", "--value", "--generate"};
+    int rc;
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf(new GatewayConfigImpl());
+    rc = cli.run(args1);
+    assertEquals(-1, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains(KnoxCLI.AliasCreateCommand.USAGE));
+  }
+
+  @Test
+  public void testGeneratingAliasWithLeadingDash() throws Exception {
+    outContent.reset();
+    String[] args1 = {"create-alias", "alias1", "--value", "---testvalue1---", "--master", "master"};
+    int rc;
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf(new GatewayConfigImpl());
+    rc = cli.run(args1);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("alias1 has been successfully " +
+            "created."));
+  }
+
+  @Test
+  public void testIncorrectCombinationOfValuesAndGenerate() throws Exception {
+    outContent.reset();
+    String[] args1 = {"create-aliases", "--alias", "alias1", "--value", "--cluster"};
+    int rc;
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf(new GatewayConfigImpl());
+    rc = cli.run(args1);
+    assertEquals(-1, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains(KnoxCLI.AliasCreateCommand.USAGE));
+  }
+
+  @Test
+  public void testMissingValueForBatchAliasCreation() throws Exception {
+    outContent.reset();
+    String[] args1 = {"create-aliases", "--alias", "alias1", "--value", "--alias", "alias2", "--value", "value1"};
+    int rc;
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf(new GatewayConfigImpl());
+    rc = cli.run(args1);
+    assertEquals(-1, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains(KnoxCLI.AliasCreateCommand.USAGE));
+  }
+
+  @Test
   public void testListAndDeleteOfAliasForInvalidClusterName() throws Exception {
     outContent.reset();
     String[] args1 =
@@ -941,7 +1002,30 @@ public class KnoxCLITest {
             "1 alias(es) have been successfully created: [alias1]"));
   }
 
-  private class GatewayConfigMock extends GatewayConfigImpl{
+  @Test
+  public void testSystemUserAuthTest() throws Exception {
+    final String cluster = "sandbox";
+    final String alias = "ldapsystempassword";
+    final AliasService aliasService = KnoxCLI.getGatewayServices().getService(ServiceType.ALIAS_SERVICE);
+    try {
+      aliasService.addAliasForCluster(cluster, alias, "admin-password");
+      outContent.reset();
+      final GatewayConfigMock gatewayConfig = new GatewayConfigMock();
+      final URL topoURL = ClassLoader.getSystemResource("conf-demo/conf/topologies/" + cluster + ".xml");
+      gatewayConfig.setConfDir( new File(topoURL.getFile()).getParentFile().getParent() );
+      final KnoxCLI cli = new KnoxCLI();
+      cli.setConf(gatewayConfig);
+      final String[] args = { "system-user-auth-test", "--cluster", cluster };
+      final int rc = cli.run(args);
+      assertEquals(0, rc);
+      assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains(
+          "System password is stored as an alias " + alias + "; looking it up..."));
+    } finally {
+      aliasService.removeAliasForCluster(cluster, alias);
+    }
+  }
+
+  private class GatewayConfigMock extends GatewayConfigImpl {
     private String confDir;
     public void setConfDir(String location) {
       confDir = location;

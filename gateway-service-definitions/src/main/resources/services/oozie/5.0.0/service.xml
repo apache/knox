@@ -25,12 +25,12 @@
             <sample>
                 <description>Fetch the supported Oozie protocol versions by the server</description>
                 <method>GET</method>
-                <path>oozie/versions</path>
+                <path>/oozie/versions</path>
             </sample>
              <sample>
                 <description>Fetch the system status</description>
                 <method>GET</method>
-                <path>oozie/v1/admin/status</path>
+                <path>/oozie/v1/admin/status</path>
             </sample>
             <sample>
                 <description>You may check out Apache Oozie's REST API documentation here</description>
@@ -39,14 +39,23 @@
         </samples>
     </metadata>
     <routes>
-        <route path="/oozie/**?**">
-            <rewrite apply="OOZIE/oozie/configuration" to="request.body"/>
+        <route path="/oozie/">
+            <rewrite apply="OOZIE/oozie/root" to="request.url"/>
+        </route>
+        <route path="/oozie/**">
+            <rewrite apply="OOZIE/oozie/root" to="request.url"/>
         </route>
         <route path="/oozie/v1/**?**">
             <rewrite apply="OOZIE/oozie/configuration" to="request.body"/>
+            <rewrite apply="OOZIE/oozie/v1" to="request.url"/>
         </route>
         <route path="/oozie/v2/**?**">
             <rewrite apply="OOZIE/oozie/configuration" to="request.body"/>
+            <rewrite apply="OOZIE/oozie/v2" to="request.url"/>
+        </route>
+        <route path="/oozie/**?**">
+            <rewrite apply="OOZIE/oozie/configuration" to="request.body"/>
+            <rewrite apply="OOZIE/oozie/root" to="request.url"/>
         </route>
     </routes>
     <testURLs>

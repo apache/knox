@@ -17,24 +17,26 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import Swal from 'sweetalert2';
-import { TokenData, TokenRequestParams, TokenResultData, TssStatusData } from './token-generation.models';
+import { TokenData, TokenRequestParams, TokenResultData, TssStatusData, SessionInformation } from './token-generation.models';
 
 @Injectable()
 export class TokenGenService {
     readonly baseURL: string;
     readonly tokenURL: string;
     readonly tssStatusRequestURL: string;
+    readonly sessionUrl: string;
 
     constructor(private http: HttpClient) {
-        const loginPageSuffix = 'token-generation/index.html';
-        const knoxtokenURL = 'knoxtoken/api/v1/token';
-        const tssStatusURL = 'knoxtoken/api/v1/token/getTssStatus';
+        const knoxtokenURL = 'knoxtoken/api/v2/token';
+        const tssStatusURL = 'knoxtoken/api/v2/token/getTssStatus';
 
-        let topologyContext = window.location.pathname.replace(loginPageSuffix, '');
+        let pathParts = window.location.pathname.split('/');
+        let topologyContext = '/' + pathParts[1] + '/' + pathParts[2] + '/';
         let temporaryURL = topologyContext.substring(0, topologyContext.lastIndexOf('/'));
         this.baseURL = temporaryURL.substring(0, temporaryURL.lastIndexOf('/') + 1);
         this.tokenURL = topologyContext + knoxtokenURL;
         this.tssStatusRequestURL = topologyContext + tssStatusURL;
+        this.sessionUrl = topologyContext + 'session/api/v1/sessioninfo';
     }
 
     getTokenStateServiceStatus(): Promise<TssStatusData> {
@@ -70,6 +72,22 @@ export class TokenGenService {
         });
     }
 
+    getSessionInformation(): Promise<SessionInformation> {
+        let headers = new HttpHeaders();
+        headers = this.addHeaders(headers);
+        return this.http.get(this.sessionUrl, { headers: headers})
+            .toPromise()
+            .then(response => response['sessioninfo'] as SessionInformation)
+            .catch((err: HttpErrorResponse) => {
+                console.debug('TokenManagementService --> getSessionInformation() --> ' + this.sessionUrl + '\n  error: ' + err.message);
+                if (err.status === 401) {
+                    window.location.assign(document.location.pathname);
+                } else {
+                    return this.handleError(err);
+                }
+            });
+    }
+
     getGeneratedTokenData(params: TokenRequestParams): Promise<TokenResultData> {
         let headers = new HttpHeaders();
         headers = this.addHeaders(headers);
@@ -97,7 +115,7 @@ export class TokenGenService {
                 accessPasscode: tokenData.passcode,
                 expiry: new Date(tokenData.expires_in).toLocaleString(),
                 homepageURL: this.baseURL + tokenData.homepage_url,
-                targetURL: window.location.protocol + '//' + window.location.host + '/' + this.baseURL + tokenData.target_url
+                targetURL: window.location.protocol + '//' + window.location.host + this.baseURL + tokenData.target_url
             };
         })
         .catch((error: HttpErrorResponse) => {

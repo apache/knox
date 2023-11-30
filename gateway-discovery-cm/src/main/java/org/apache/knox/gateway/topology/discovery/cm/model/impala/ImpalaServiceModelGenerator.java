@@ -85,10 +85,10 @@ public class ImpalaServiceModelGenerator extends AbstractServiceModelGenerator {
   }
 
   @Override
-  public ServiceModel generateService(ApiService       service,
-                                      ApiServiceConfig serviceConfig,
-                                      ApiRole          role,
-                                      ApiConfigList    roleConfig) throws ApiException {
+  public ServiceModel generateService(ApiService service,
+                                 ApiServiceConfig serviceConfig,
+                                 ApiRole role,
+                                 ApiConfigList roleConfig, ApiServiceConfig coreSettingsConfig) throws ApiException {
     String hostname = role.getHostRef().getHostname();
 
     boolean sslEnabled = Boolean.parseBoolean(getServiceConfigValue(serviceConfig, SSL_ENABLED));
@@ -100,6 +100,7 @@ public class ImpalaServiceModelGenerator extends AbstractServiceModelGenerator {
     ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/", scheme, hostname, port));
     model.addServiceProperty(SSL_ENABLED, getServiceConfigValue(serviceConfig, SSL_ENABLED));
     model.addRoleProperty(getRoleType(), HTTP_PORT, port);
+    model.addRoleProperty(getRoleType(), SPECIALIZATION, getRoleConfigValue(roleConfig, SPECIALIZATION));
 
     return model;
   }

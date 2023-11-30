@@ -39,6 +39,7 @@ limitations under the License.
         discoveryAddress=http://host:456#
         cluster=Cluster 2#
         providerConfigRef=topology2-provider#
+        provisionEncryptQueryStringCredential=false#
         ATLAS-API:url=http://localhost:456#
         ATLAS-API:httpclient.connectionTimeout=5m#
         ATLAS-API:httpclient.socketTimeout=100m#

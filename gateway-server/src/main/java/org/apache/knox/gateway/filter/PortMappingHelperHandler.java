@@ -16,6 +16,8 @@
  */
 package org.apache.knox.gateway.filter;
 
+import static org.apache.knox.gateway.filter.AbstractGatewayFilter.DEFAULT_TOPOLOGY_FORWARD_ATTRIBUTE_NAME;
+
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -42,7 +44,6 @@ import java.util.Map;
  */
 public class PortMappingHelperHandler extends HandlerWrapper {
   private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
-
   private final GatewayConfig config;
   private final String defaultTopologyRedirectContext;
 
@@ -148,6 +149,7 @@ public class PortMappingHelperHandler extends HandlerWrapper {
 
     final String newTarget = defaultTopologyRedirectContext + target;
     LOG.defaultTopologyForward(target, newTarget);
+    request.setAttribute(DEFAULT_TOPOLOGY_FORWARD_ATTRIBUTE_NAME, "true");
     super.handle(newTarget, baseRequest, newRequest, response);
   }
 }

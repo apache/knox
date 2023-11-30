@@ -33,7 +33,7 @@ public interface HadoopAuthMessages {
   @Message( level = MessageLevel.DEBUG, text = "Proxy user Authentication successful" )
   void hadoopAuthProxyUserSuccess();
 
-  @Message( level = MessageLevel.DEBUG, text = "Proxy user Authentication failed: {0}" )
+  @Message( level = MessageLevel.ERROR, text = "Proxy user Authentication failed: {0}" )
   void hadoopAuthProxyUserFailed(@StackTrace Throwable t);
 
   @Message( level = MessageLevel.DEBUG, text = "Initialized the JWT federation filter" )

@@ -73,7 +73,7 @@ public class VirtualGroupMapper {
         return (boolean)result;
     }
 
-    private void addRequestFunctions(ServletRequest req, Interpreter interpreter) {
+    public static void addRequestFunctions(ServletRequest req, Interpreter interpreter) {
         if (req instanceof HttpServletRequest) {
             interpreter.addFunction("request-attribute", Arity.UNARY, params ->
                     ensureNotNull(req.getAttribute((String)params.get(0))));
@@ -84,11 +84,11 @@ public class VirtualGroupMapper {
         }
     }
 
-    private String ensureNotNull(Object value) {
+    private static String ensureNotNull(Object value) {
         return value == null ? "" : value.toString();
     }
 
-    private Object sessionAttribute(HttpServletRequest req, String key) {
+    private static Object sessionAttribute(HttpServletRequest req, String key) {
         HttpSession session = req.getSession(false);
         return session != null ? session.getAttribute(key) : "";
     }

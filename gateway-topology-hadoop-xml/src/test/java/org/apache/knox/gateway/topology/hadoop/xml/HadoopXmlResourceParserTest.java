@@ -17,6 +17,7 @@
 package org.apache.knox.gateway.topology.hadoop.xml;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -25,7 +26,10 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -56,12 +60,16 @@ public class HadoopXmlResourceParserTest {
   private GatewayConfig gatewayConfigMock;
   private HadoopXmlResourceParser hadoopXmlResourceParser;
   private File providersDir;
+  private List<String> readOnlyProviders = new ArrayList<>();
+  private List<String> readOnlyTopologies = new ArrayList<>();
 
   @Before
   public void setUp() throws IOException {
     providersDir = tempDir.newFolder("shared-providers");
     gatewayConfigMock = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfigMock.getGatewayProvidersConfigDir()).andReturn(providersDir.getAbsolutePath()).anyTimes();
+    EasyMock.expect(gatewayConfigMock.getReadOnlyOverrideProviderNames()).andReturn(readOnlyProviders).anyTimes();
+    EasyMock.expect(gatewayConfigMock.getReadOnlyOverrideTopologyNames()).andReturn(readOnlyTopologies).anyTimes();
     EasyMock.replay(gatewayConfigMock);
     hadoopXmlResourceParser = new HadoopXmlResourceParser(gatewayConfigMock);
   }
@@ -79,11 +87,29 @@ public class HadoopXmlResourceParserTest {
   }
 
   @Test
-  public void testCMDescriptorParserOnlyTopology2() throws Exception {
+  public void testFilteredDescriptorName() throws Exception {
+    readOnlyTopologies.add("topology1");
     final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptor.xml").getPath();
-    final Set<SimpleDescriptor> descriptors = hadoopXmlResourceParser.parse(testConfigPath, "topology2").getDescriptors();
+    final HadoopXmlResourceParserResult parserResult = hadoopXmlResourceParser.parse(testConfigPath);
+    final Set<SimpleDescriptor> descriptors = parserResult.getDescriptors();
     assertEquals(1, descriptors.size());
-    validateTopology2Descriptors(descriptors.iterator().next(), true);
+    final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
+    validateTopology2Descriptors(descriptorsIterator.next(), true);
+    validateTestDescriptorProviderConfigs(parserResult.getProviders(), "ldap://localhost:33389");
+  }
+
+  @Test
+  public void testFilteredProviderName() throws Exception {
+    readOnlyProviders.add("knoxsso");
+    final String testConfigPath = this.getClass().getClassLoader().getResource("testDescriptor.xml").getPath();
+    final HadoopXmlResourceParserResult parserResult = hadoopXmlResourceParser.parse(testConfigPath);
+    final Set<SimpleDescriptor> descriptors = parserResult.getDescriptors();
+    assertEquals(2, descriptors.size());
+    final Iterator<SimpleDescriptor> descriptorsIterator = descriptors.iterator();
+    validateTopology1Descriptors(descriptorsIterator.next());
+    validateTopology2Descriptors(descriptorsIterator.next(), true);
+    assertEquals(1, parserResult.getProviders().size());
+    assertNotNull(parserResult.getProviders().get("admin"));
   }
 
   @Test
@@ -215,6 +241,21 @@ public class HadoopXmlResourceParserTest {
     assertEquals("ClouderaManager", descriptor.getDiscoveryType());
   }
 
+  @Test
+  public void testDelete() throws Exception {
+    String testConfigPath = this.getClass().getClassLoader().getResource("testDelete.xml").getPath();
+    HadoopXmlResourceParserResult result = hadoopXmlResourceParser.parse(testConfigPath);
+    assertEquals(new HashSet<>(Arrays.asList("topology1", "topology2")), result.getDeletedDescriptors());
+    assertEquals(new HashSet<>(Arrays.asList("admin", "knoxsso")), result.getDeletedProviders());
+  }
+
+  @Test
+  public void testReferencedProviderIsNotDeleted() throws Exception {
+    String testConfigPath = this.getClass().getClassLoader().getResource("testDelete2.xml").getPath();
+    HadoopXmlResourceParserResult result = hadoopXmlResourceParser.parse(testConfigPath);
+    assertEquals(new HashSet<>(Arrays.asList("unused")), result.getDeletedProviders());
+  }
+
   private void validateTopology1Descriptors(SimpleDescriptor descriptor) {
     assertTrue(descriptor.isReadOnly());
     assertEquals("topology1", descriptor.getName());
@@ -224,6 +265,7 @@ public class HadoopXmlResourceParserTest {
     assertEquals("alias", descriptor.getDiscoveryPasswordAlias());
     assertEquals("Cluster 1", descriptor.getCluster());
     assertEquals("topology1-provider", descriptor.getProviderConfig());
+    assertTrue(descriptor.isProvisionEncryptQueryStringCredential());
     assertEquals(2, descriptor.getApplications().size());
 
     assertApplication(descriptor, "knoxauth", Collections.singletonMap("param1.name", "param1.value"));
@@ -234,6 +276,14 @@ public class HadoopXmlResourceParserTest {
     assertService(descriptor, "HIVE", "1.0", Collections.singletonList("http://localhost:456"), expectedServiceParameters);
   }
 
+  @Test
+  public void testInvalidProviderConfig() {
+    String testConfigPath = this.getClass().getClassLoader().getResource("testInvalidProvider.xml").getPath();
+    HadoopXmlResourceParserResult parserResult = hadoopXmlResourceParser.parse(testConfigPath);
+    assertEquals(1, parserResult.getProviders().size());
+    assertNotNull(parserResult.getProviders().get("valid"));
+  }
+
   private void validateTopology2Descriptors(SimpleDescriptor descriptor, boolean nifiExpected) {
     assertTrue(descriptor.isReadOnly());
     assertEquals("topology2", descriptor.getName());
@@ -241,6 +291,7 @@ public class HadoopXmlResourceParserTest {
     assertEquals("http://host:456", descriptor.getDiscoveryAddress());
     assertEquals("Cluster 2", descriptor.getCluster());
     assertEquals("topology2-provider", descriptor.getProviderConfig());
+    assertFalse(descriptor.isProvisionEncryptQueryStringCredential());
     assertTrue(descriptor.getApplications().isEmpty());
 
     final Map<String, String> expectedServiceParameters = Stream.of(new String[][] { { "httpclient.connectionTimeout", "5m" }, { "httpclient.socketTimeout", "100m" }, })

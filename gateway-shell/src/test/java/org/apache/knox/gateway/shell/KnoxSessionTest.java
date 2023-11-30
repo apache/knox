@@ -27,11 +27,14 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.bootstrap.HttpServer;
 import org.apache.http.impl.bootstrap.ServerBootstrap;
+import org.apache.knox.gateway.shell.ClientContext.ConnectionContext;
 import org.junit.Test;
 
 import javax.security.auth.Subject;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.URISyntaxException;
+import java.security.KeyStore;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.List;
@@ -197,6 +200,15 @@ public class KnoxSessionTest {
     } finally {
       server.stop();
     }
+  }
+
+  @Test
+  public void testTrustStoreTypeConfig() throws URISyntaxException {
+    final String url = "https://localhost:8443/gateway/dt";
+    ConnectionContext connectionContext = ClientContext.with(url).connection().withTruststore(null, null, null);
+    assertEquals(KeyStore.getDefaultType(), connectionContext.truststoreType());
+    connectionContext = ClientContext.with("https://localhost:8443/gateway/dt").connection().withTruststore(null, null, "BCFKS");
+    assertEquals("BCFKS", connectionContext.truststoreType());
   }
 
   public static int findFreePort() throws IOException {

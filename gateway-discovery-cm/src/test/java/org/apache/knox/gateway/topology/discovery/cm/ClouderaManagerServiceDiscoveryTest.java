@@ -33,7 +33,6 @@ import com.cloudera.api.swagger.model.ApiServiceList;
 import com.squareup.okhttp.Call;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.model.atlas.AtlasAPIServiceModelGenerator;
@@ -63,7 +62,7 @@ import org.easymock.EasyMock;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
-import java.net.ConnectException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1184,12 +1183,14 @@ public class ClouderaManagerServiceDiscoveryTest {
       EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryMaximumRetryAttempts()).andReturn(GatewayConfig.DEFAULT_CM_SERVICE_DISCOVERY_MAX_RETRY_ATTEMPTS).anyTimes();
       EasyMock.expect(gwConf.getClusterMonitorPollingInterval(ClouderaManagerClusterConfigurationMonitor.getType())).andReturn(10).anyTimes();
     }
+    EasyMock.expect(gwConf.getIncludedSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
+    EasyMock.expect(gwConf.getIncludedSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
     EasyMock.replay(gwConf);
 
     ServiceDiscoveryConfig sdConfig = createMockDiscoveryConfig(clusterName);
 
     // Create the test client for providing test response content
-    TestDiscoveryApiClient mockClient = testRetry ? new TestFaultyDiscoveryApiClient(sdConfig, null, null) : new TestDiscoveryApiClient(sdConfig, null, null);
+    TestDiscoveryApiClient mockClient = testRetry ? new TestFaultyDiscoveryApiClient(gwConf, sdConfig, null) : new TestDiscoveryApiClient(gwConf, sdConfig, null);
 
     // Prepare the service list response for the cluster
     ApiServiceList serviceList = EasyMock.createNiceMock(ApiServiceList.class);
@@ -1318,9 +1319,8 @@ public class ClouderaManagerServiceDiscoveryTest {
 
     protected AtomicInteger executeCount = new AtomicInteger(0);
 
-    TestDiscoveryApiClient(ServiceDiscoveryConfig sdConfig, AliasService aliasService,
-                           KeystoreService keystoreService) {
-      super(sdConfig, aliasService, keystoreService);
+    TestDiscoveryApiClient(GatewayConfig gatewayConfig, ServiceDiscoveryConfig sdConfig, AliasService aliasService) {
+      super(gatewayConfig, sdConfig, aliasService, null);
     }
 
     void addResponse(Type type, ApiResponse<?> response) {
@@ -1345,15 +1345,14 @@ public class ClouderaManagerServiceDiscoveryTest {
 
   private static class TestFaultyDiscoveryApiClient extends TestDiscoveryApiClient {
 
-    TestFaultyDiscoveryApiClient(ServiceDiscoveryConfig sdConfig, AliasService aliasService,
-                           KeystoreService keystoreService) {
-      super(sdConfig, aliasService, keystoreService);
+    TestFaultyDiscoveryApiClient(GatewayConfig gatewayConfig, ServiceDiscoveryConfig sdConfig, AliasService aliasService) {
+      super(gatewayConfig, sdConfig, aliasService);
     }
 
     @Override
     public <T> ApiResponse<T> execute(Call call, Type returnType) throws ApiException {
       if (executeCount.getAndIncrement() < GatewayConfig.DEFAULT_CM_SERVICE_DISCOVERY_MAX_RETRY_ATTEMPTS - 2) {
-        throw new ApiException(new ConnectException("Failed to connect to CM HOST"));
+        throw new ApiException(new SocketTimeoutException("Failed to connect to CM HOST"));
       }
       return super.execute(call, returnType);
     }

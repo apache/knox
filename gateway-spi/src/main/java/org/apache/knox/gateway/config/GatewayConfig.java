@@ -113,6 +113,10 @@ public interface GatewayConfig {
 
   int DEFAULT_CM_SERVICE_DISCOVERY_MAX_RETRY_ATTEMPTS = 3;
 
+  String DEFAULT_API_SERVICES_VIEW_VERSION = "v1";
+
+  String DEPLOYMENT_PATH_ALIAS = ".path.alias.";
+
   /**
    * The location of the gateway configuration.
    * Subdirectories will be: topologies
@@ -176,6 +180,8 @@ public interface GatewayConfig {
   List<InetSocketAddress> getGatewayAddress() throws UnknownHostException;
 
   boolean isSSLEnabled();
+
+  Set<String> getIncludedSSLProtocols();
 
   List<String> getExcludedSSLProtocols();
 
@@ -792,6 +798,11 @@ public interface GatewayConfig {
   Set<String> getPinnedTopologiesOnHomepage();
 
   /**
+   * @return the API services view version (v1/v2) on Knox homepage
+   */
+  String getApiServicesViewVersionOnHomepage();
+
+  /**
    * @return returns whether know token permissive validation is enabled
    */
   boolean isKnoxTokenPermissiveValidationEnabled();
@@ -871,8 +882,20 @@ public interface GatewayConfig {
 
   long getConcurrentSessionVerifierExpiredTokensCleaningPeriod();
 
+  Set<String> getHealthCheckTopologies();
+
   /**
    * @return true if the async supported flag is enabled in jetty gateway servlet; false otherwise (defaults to false)
    */
   boolean isAsyncSupported();
+
+  /**
+   * @return <code>true</code> if the supplied user is allowed to see all tokens
+   *         (i.e. not only tokens where userName or createdBy equals to the
+   *         userName) on the Token Management page; <code>false</code> otherwise
+   */
+  boolean canSeeAllTokens(String userName);
+
+  Map<String, Collection<String>> getApplicationPathAliases();
+
 }

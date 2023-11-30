@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.topology.simple;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -90,7 +91,7 @@ public class SimpleDescriptorHandler {
 
     private static final Map<String, ServiceDiscovery> discoveryInstances = new HashMap<>();
 
-    private static final Set<String> ALLOWED_SERVICES_WITHOUT_URLS_AND_PARAMS = Collections.unmodifiableSet(Stream.of("KNOX", "KNOX-METADATA", "KNOXSSOUT", "KNOX-SESSION").collect(Collectors.toSet()));
+    private static final Set<String> ALLOWED_SERVICES_WITHOUT_URLS_AND_PARAMS = Collections.unmodifiableSet(Stream.of("KNOX", "KNOX-METADATA", "KNOXSSOUT", "KNOX-SESSION", "HEALTH").collect(Collectors.toSet()));
 
     public static Map<String, File> handle(GatewayConfig config, File desc, File destDirectory, Service...gatewayServices) throws IOException {
         return handle(config, SimpleDescriptorFactory.parse(desc.getAbsolutePath()), desc.getParentFile(), destDirectory, gatewayServices);
@@ -101,6 +102,11 @@ public class SimpleDescriptorHandler {
     }
 
     public static Map<String, File> handle(GatewayConfig config, SimpleDescriptor desc, File srcDirectory, File destDirectory, Service...gatewayServices) {
+
+        if (config.getReadOnlyOverrideTopologyNames().contains(desc.getName())) {
+            log.skipReadOnlyDescriptor(desc.getName());
+            return Collections.emptyMap();
+        }
 
         List<String> declaredServiceNames = new ArrayList<>();
         Set<String> validServiceNames = new TreeSet<>();
@@ -185,7 +191,7 @@ public class SimpleDescriptorHandler {
         // when the topology is deployed. This is to support Knox HA deployments, where multiple Knox instances are
         // generating topologies based on a shared remote descriptor, and they must all be able to encrypt/decrypt
         // query params with the same credentials. (KNOX-1136)
-        if (!provisionQueryParamEncryptionCredential(desc.getName(), gws)) {
+        if (desc.isProvisionEncryptQueryStringCredential() && !provisionQueryParamEncryptionCredential(desc.getName(), gws)) {
             log.unableCreatePasswordForEncryption(desc.getName());
         }
 
@@ -210,8 +216,7 @@ public class SimpleDescriptorHandler {
      */
     private static boolean shouldPerformDiscovery(final SimpleDescriptor desc) {
         // If there is a discovery type specified, then discovery should be performed
-        final String discoveryType = desc.getDiscoveryType();
-        if (discoveryType != null && !discoveryType.isEmpty()) {
+        if (StringUtils.isNotBlank(desc.getDiscoveryType()) && StringUtils.isNotBlank(desc.getDiscoveryAddress())) {
             return true;
         }
         log.missingDiscoveryTypeInDescriptor(desc.getName());

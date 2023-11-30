@@ -19,6 +19,7 @@ package org.apache.knox.gateway.topology.hadoop.xml;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -58,7 +59,6 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
   private static final String CONFIG_NAME_PROVIDER_CONFIGS_NAME_PREFIX = "name=";
   private static final String CONFIG_NAME_PROVIDER_CONFIGS_ENABLED_PREFIX = "enabled=";
   private static final String CONFIG_NAME_PROVIDER_CONFIGS_PARAM_PREFIX = "param.";
-  private static final String CONFIG_NAME_PROVIDER_CONFIGS_PARAM_REMOVE = "remove";
 
   //descriptor related constants
   private static final String CONFIG_NAME_DISCOVERY_TYPE = "discoveryType";
@@ -67,27 +67,20 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
   private static final String CONFIG_NAME_DISCOVERY_PASSWORD_ALIAS = "discoveryPasswordAlias";
   private static final String CONFIG_NAME_DISCOVERY_CLUSTER = "cluster";
   private static final String CONFIG_NAME_PROVIDER_CONFIG_REFERENCE = "providerConfigRef";
+  private static final String CONFIG_NAME_PROVISION_ENCRYPT_QUERY_STRING_CREDENTIAL = "provisionEncryptQueryStringCredential";
   private static final String CONFIG_NAME_APPLICATION_PREFIX = "app";
   private static final String CONFIG_NAME_SERVICE_URL = "url";
   private static final String CONFIG_NAME_SERVICE_VERSION = "version";
+  private static final String REMOVE = "remove";
 
   private final Map<String, AdvancedServiceDiscoveryConfig> advancedServiceDiscoveryConfigMap;
   private final String sharedProvidersDir;
+  private final GatewayConfig gatewayConfig;
 
   public HadoopXmlResourceParser(GatewayConfig gatewayConfig) {
+    this.gatewayConfig = gatewayConfig;
     this.advancedServiceDiscoveryConfigMap = new ConcurrentHashMap<>();
     this.sharedProvidersDir = gatewayConfig.getGatewayProvidersConfigDir();
-  }
-
-  /**
-   * Produces a set of {@link SimpleDescriptor}s from the specified file. Parses ALL descriptors listed in the given file.
-   *
-   * @param path
-   *          The path to the configuration file which holds descriptor information in a pre-defined format.
-   * @return A SimpleDescriptor based on the contents of the given file.
-   */
-  public HadoopXmlResourceParserResult parse(String path) {
-    return parse(path, null);
   }
 
   /**
@@ -95,17 +88,16 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
    *
    * @param path
    *          The path to the configuration file which holds descriptor information in a pre-defined format.
-   * @param topologyName
    *          if set, the parser should only parse a descriptor with the same name
    * @return A SimpleDescriptor based on the contents of the given file.
    */
-  public HadoopXmlResourceParserResult parse(String path, String topologyName) {
+  public HadoopXmlResourceParserResult parse(String path) {
     try {
-      log.parseHadoopXmlResource(path, topologyName == null ? "all topologies" : topologyName);
+      log.parseHadoopXmlResource(path);
       final Configuration xmlConfiguration = new Configuration(false);
       xmlConfiguration.addResource(Paths.get(path).toUri().toURL());
       xmlConfiguration.reloadConfiguration();
-      final HadoopXmlResourceParserResult parserResult = parseXmlConfig(xmlConfiguration, topologyName);
+      final HadoopXmlResourceParserResult parserResult = parseXmlConfig(xmlConfiguration);
       logParserResult(path, parserResult);
       return parserResult;
     } catch (Exception e) {
@@ -116,41 +108,74 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
 
   private void logParserResult(String path, final HadoopXmlResourceParserResult parserResult) {
     if (!parserResult.getDescriptors().isEmpty()) {
-      log.foundKnoxDescriptors(String.join(", ", parserResult.getDescriptors().stream().map(descriptor -> descriptor.getName()).collect(Collectors.toSet())), path);
+      log.foundKnoxDescriptors(String.join(", ", parserResult.getDescriptors().stream().map(SimpleDescriptor::getName).collect(Collectors.toSet())), path);
     }
     if (!parserResult.getProviders().isEmpty()) {
-      log.foundKnoxProviderConfigurations(String.join(", ", parserResult.getProviders().keySet().stream().collect(Collectors.toSet())), path);
+      log.foundKnoxProviderConfigurations(String.join(", ", new HashSet<>(parserResult.getProviders().keySet())), path);
+    }
+    if (!parserResult.getDeletedDescriptors().isEmpty()) {
+      log.foundKnoxDeletedDescriptors(String.join(", ", parserResult.getDeletedDescriptors()), path);
+    }
+    if (!parserResult.getDeletedProviders().isEmpty()) {
+      log.foundKnoxDeletedProviderConfigurations(String.join(", ", parserResult.getDeletedProviders()), path);
     }
   }
 
-  private HadoopXmlResourceParserResult parseXmlConfig(Configuration xmlConfiguration, String topologyName) {
+  private HadoopXmlResourceParserResult parseXmlConfig(Configuration xmlConfiguration) {
     final Map<String, ProviderConfiguration> providers = new LinkedHashMap<>();
     final Set<SimpleDescriptor> descriptors = new LinkedHashSet<>();
+    Set<String> deletedDescriptors = new HashSet<>();
+    Set<String> deletedProviders = new HashSet<>();
     xmlConfiguration.forEach(xmlDescriptor -> {
       String xmlConfigurationKey = xmlDescriptor.getKey();
       if (xmlConfigurationKey.startsWith(CONFIG_NAME_PROVIDER_CONFIGS_PREFIX)) {
         final String[] providerConfigurations = xmlConfigurationKey.replace(CONFIG_NAME_PROVIDER_CONFIGS_PREFIX, "").split(",");
-        Arrays.asList(providerConfigurations).stream().map(providerConfigurationName -> providerConfigurationName.trim()).forEach(providerConfigurationName -> {
-          final File providerConfigFile = resolveProviderConfiguration(providerConfigurationName);
-          try {
-            final ProviderConfiguration providerConfiguration = getProviderConfiguration(providers, providerConfigFile, providerConfigurationName);
-            providerConfiguration.setReadOnly(true);
-            providerConfiguration.saveOrUpdateProviders(parseProviderConfigurations(xmlDescriptor.getValue(), providerConfiguration));
-            providers.put(providerConfigurationName, providerConfiguration);
-          } catch (Exception e) {
-            log.failedToParseProviderConfiguration(providerConfigurationName, e.getMessage(), e);
-          }
-        });
+        Arrays.stream(providerConfigurations).map(String::trim).forEach(providerConfigurationName ->
+                parseProvider(providerConfigurationName, xmlDescriptor.getValue(), providers, deletedProviders));
       } else {
-        if (topologyName == null || xmlConfigurationKey.equals(topologyName)) {
-          SimpleDescriptor descriptor = parseXmlDescriptor(xmlConfigurationKey, xmlDescriptor.getValue());
-          if (descriptor != null) {
-            descriptors.add(descriptor);
-          }
-        }
+        parseDescriptor(xmlConfigurationKey, xmlDescriptor.getValue(), descriptors, deletedDescriptors);
       }
     });
-    return new HadoopXmlResourceParserResult(providers, descriptors);
+    return new HadoopXmlResourceParserResult(providers, descriptors, deletedDescriptors, deletedProviders);
+  }
+
+  private void parseProvider(String providerConfigurationName, String value, Map<String, ProviderConfiguration> providers, Set<String> deletedProviders) {
+    if (gatewayConfig.getReadOnlyOverrideProviderNames().contains(providerConfigurationName)) {
+      log.skipReadOnlyProvider(providerConfigurationName);
+      return;
+    }
+    final File providerConfigFile = resolveProviderConfiguration(providerConfigurationName);
+    try {
+      final ProviderConfiguration providerConfiguration = getProviderConfiguration(providers, providerConfigFile, providerConfigurationName);
+      providerConfiguration.setReadOnly(true);
+      if (isRemoved(value)) {
+        deletedProviders.add(providerConfigurationName);
+      } else {
+        providerConfiguration.saveOrUpdateProviders(parseProviderConfigurations(value, providerConfiguration));
+        providers.put(providerConfigurationName, providerConfiguration);
+      }
+    } catch (Exception e) {
+      log.failedToParseProviderConfiguration(providerConfigurationName, e.getMessage(), e);
+    }
+  }
+
+  private void parseDescriptor(String topologyName, String value, Set<SimpleDescriptor> descriptors, Set<String> deletedDescriptors) {
+    if (gatewayConfig.getReadOnlyOverrideTopologyNames().contains(topologyName)) {
+      log.skipReadOnlyDescriptor(topologyName);
+      return;
+    }
+    if (isRemoved(value)) {
+      deletedDescriptors.add(topologyName);
+    } else {
+      SimpleDescriptor descriptor = parseXmlDescriptor(topologyName, value);
+      if (descriptor != null) {
+        descriptors.add(descriptor);
+      }
+    }
+  }
+
+  private boolean isRemoved(String value) {
+    return value.trim().equalsIgnoreCase(REMOVE);
   }
 
   private ProviderConfiguration getProviderConfiguration(Map<String, ProviderConfiguration> providers, File providerConfigFile, String providerConfigName)
@@ -186,14 +211,14 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
   private ProviderConfiguration.Provider parseProvider(List<String> configurationPairs, String role, ProviderConfiguration providerConfiguration) {
     final JSONProvider provider = new JSONProvider();
     provider.setRole(role);
-    getParamsForRole(role, providerConfiguration).forEach((key, value) -> provider.addParam(key, value)); //initializing parameters (if any)
+    getParamsForRole(role, providerConfiguration).forEach(provider::addParam); //initializing parameters (if any)
     provider.setEnabled(true); //may be overwritten later, but defaulting to 'true'
     final Set<String> roleConfigurations = configurationPairs.stream().filter(configurationPair -> configurationPair.trim().startsWith(role))
         .map(configurationPair -> configurationPair.replace(role + ".", "").trim()).collect(Collectors.toSet());
     for (String roleConfiguration : roleConfigurations) {
       if (roleConfiguration.startsWith(CONFIG_NAME_PROVIDER_CONFIGS_PARAM_PREFIX)) {
         String[] paramKeyValue = roleConfiguration.replace(CONFIG_NAME_PROVIDER_CONFIGS_PARAM_PREFIX, "").split("=", 2);
-        if (CONFIG_NAME_PROVIDER_CONFIGS_PARAM_REMOVE.equals(paramKeyValue[0])) {
+        if (REMOVE.equals(paramKeyValue[0])) {
           provider.removeParam(paramKeyValue[1]);
         } else {
           provider.addParam(paramKeyValue[0], paramKeyValue[1]);
@@ -202,6 +227,8 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
         provider.setName(roleConfiguration.replace(CONFIG_NAME_PROVIDER_CONFIGS_NAME_PREFIX, ""));
       } else if (roleConfiguration.startsWith(CONFIG_NAME_PROVIDER_CONFIGS_ENABLED_PREFIX)) {
         provider.setEnabled(Boolean.valueOf(roleConfiguration.replace(CONFIG_NAME_PROVIDER_CONFIGS_ENABLED_PREFIX, "")));
+      } else {
+        throw new IllegalArgumentException("Invalid role configuration: " + roleConfiguration + " in provider: " + provider.getName());
       }
     }
     return provider;
@@ -239,6 +266,9 @@ public class HadoopXmlResourceParser implements AdvancedServiceDiscoveryConfigCh
           break;
         case CONFIG_NAME_PROVIDER_CONFIG_REFERENCE:
           descriptor.setProviderConfig(parameterPairParts[1].trim());
+          break;
+        case CONFIG_NAME_PROVISION_ENCRYPT_QUERY_STRING_CREDENTIAL:
+          descriptor.setProvisionEncryptQueryStringCredential(Boolean.valueOf(parameterPairParts[1].trim()));
           break;
         default:
           if (parameterName.startsWith(CONFIG_NAME_APPLICATION_PREFIX)) {

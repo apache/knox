@@ -181,6 +181,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   // backward compatibility.
   // LET'S NOT CONTINUE THIS PATTERN BUT LEAVE THEM FOR NOW.
   private static final String SSL_ENABLED = "ssl.enabled";
+  private static final String SSL_INCLUDE_PROTOCOLS = "ssl.include.protocols";
   private static final String SSL_EXCLUDE_PROTOCOLS = "ssl.exclude.protocols";
   private static final String SSL_INCLUDE_CIPHERS = "ssl.include.ciphers";
   private static final String SSL_EXCLUDE_CIPHERS = "ssl.exclude.ciphers";
@@ -280,6 +281,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String X_FORWARD_CONTEXT_HEADER_APPEND_SERVICES = GATEWAY_CONFIG_FILE_PREFIX + ".xforwarded.header.context.append.servicename";
 
   private static final String TOKEN_STATE_SERVER_MANAGED = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.exp.server-managed";
+  private static final String USERS_CAN_SEE_ALL_TOKENS = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.management.users.can.see.all.tokens";
 
   private static final String CLOUDERA_MANAGER_DESCRIPTORS_MONITOR_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.descriptors.monitor.interval";
   private static final String CLOUDERA_MANAGER_ADVANCED_SERVICE_DISCOVERY_CONF_MONITOR_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.advanced.service.discovery.config.monitor.interval";
@@ -301,6 +303,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String KNOX_HOMEPAGE_PROFILE_PREFIX =  "knox.homepage.profile.";
   private static final String KNOX_HOMEPAGE_PINNED_TOPOLOGIES =  "knox.homepage.pinned.topologies";
   private static final String KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES =  "knox.homepage.hidden.topologies";
+  private static final String KNOX_HOMEPAGE_API_SERVICES_VIEW_VERSION = "knox.homepage.api.services.view.version";
+
   private static final Set<String> KNOX_HOMEPAGE_HIDDEN_TOPOLOGIES_DEFAULT = new HashSet<>(Arrays.asList("admin", "manager", "knoxsso", "metadata", "homepage"));
   private static final String KNOX_HOMEPAGE_LOGOUT_ENABLED =  "knox.homepage.logout.enabled";
   private static final String GLOBAL_LOGOUT_PAGE_URL = "knox.global.logout.page.url";
@@ -329,6 +333,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final String GATEWAY_SERVLET_ASYNC_SUPPORTED = GATEWAY_CONFIG_FILE_PREFIX + ".servlet.async.supported";
   private static final boolean GATEWAY_SERVLET_ASYNC_SUPPORTED_DEFAULT = false;
+
+  private static final String GATEWAY_HEALTH_CHECK_TOPOLOGIES = GATEWAY_CONFIG_FILE_PREFIX + ".health.check.topologies";
 
   public GatewayConfigImpl() {
     init();
@@ -614,6 +620,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getFrontendUrl() {
     return get( FRONTEND_URL, null );
+  }
+
+  @Override
+  public Set<String> getIncludedSSLProtocols() {
+    final Collection<String> includedSslProtocols = getTrimmedStringCollection(SSL_INCLUDE_PROTOCOLS);
+    return includedSslProtocols == null ? Collections.emptySet() : new HashSet<>(includedSslProtocols);
   }
 
   @Override
@@ -1316,6 +1328,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return pinnedTopologies == null ? Collections.emptySet() : new HashSet<>(pinnedTopologies);
   }
 
+  @Override
+  public String getApiServicesViewVersionOnHomepage() {
+    return getTrimmed(KNOX_HOMEPAGE_API_SERVICES_VIEW_VERSION, DEFAULT_API_SERVICES_VIEW_VERSION);
+  }
+
   /**
    * @return returns whether know token permissive failure is enabled
    */
@@ -1463,7 +1480,36 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public Set<String> getHealthCheckTopologies() {
+    final Collection<String> topologies = getTrimmedStringCollection(GATEWAY_HEALTH_CHECK_TOPOLOGIES);
+    return topologies == null ? Collections.emptySet() : new HashSet<>(topologies);
+  }
+
+  @Override
   public boolean isAsyncSupported() {
     return getBoolean(GATEWAY_SERVLET_ASYNC_SUPPORTED, GATEWAY_SERVLET_ASYNC_SUPPORTED_DEFAULT);
   }
+
+  @Override
+  public boolean canSeeAllTokens(String userName) {
+    final Collection<String> usersCanSeeAllTokens = getTrimmedStringCollection(USERS_CAN_SEE_ALL_TOKENS);
+    return usersCanSeeAllTokens == null ? false : usersCanSeeAllTokens.contains(userName);
+  }
+
+  @Override
+  public Map<String, Collection<String>> getApplicationPathAliases() {
+    return getPathAliases(".application");
+  }
+
+  private Map<String, Collection<String>> getPathAliases(String qualifier) {
+    final String prefix = GATEWAY_CONFIG_FILE_PREFIX + qualifier + DEPLOYMENT_PATH_ALIAS;
+    final Map<String, Collection<String>> pathAliases = new HashMap<>();
+    this.forEach(config -> {
+      if (config.getKey().startsWith(prefix)) {
+        pathAliases.put(config.getKey().substring(prefix.length()).toLowerCase(Locale.getDefault()), getTrimmedStringCollection(config.getKey()));
+      }
+    });
+    return pathAliases;
+  }
+
 }

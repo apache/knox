@@ -25,6 +25,7 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.services.topology.TopologyService;
+import org.apache.knox.gateway.services.topology.impl.GatewayStatusService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryType;
@@ -108,6 +109,7 @@ public class SimpleDescriptorHandlerFuncTest {
           "            <param><name>localhost</name><value>sandbox,sandbox.hortonworks.com</value></param>\n" +
           "        </provider>\n" +
           "    </gateway>\n";
+  public static final String DISCOVERY_ADDRESS = "http://dummy_address";
 
 
   /*
@@ -147,11 +149,12 @@ public class SimpleDescriptorHandlerFuncTest {
       // Mock out the simple descriptor
       SimpleDescriptor testDescriptor = EasyMock.createNiceMock(SimpleDescriptor.class);
       EasyMock.expect(testDescriptor.getName()).andReturn("mysimpledescriptor").anyTimes();
-      EasyMock.expect(testDescriptor.getDiscoveryAddress()).andReturn(null).anyTimes();
+      EasyMock.expect(testDescriptor.getDiscoveryAddress()).andReturn(DISCOVERY_ADDRESS).anyTimes();
       EasyMock.expect(testDescriptor.getDiscoveryType()).andReturn(discoveryType).anyTimes();
       EasyMock.expect(testDescriptor.getDiscoveryUser()).andReturn(null).anyTimes();
       EasyMock.expect(testDescriptor.getProviderConfig()).andReturn(providerConfig.getAbsolutePath()).anyTimes();
       EasyMock.expect(testDescriptor.getCluster()).andReturn(clusterName).anyTimes();
+      EasyMock.expect(testDescriptor.isProvisionEncryptQueryStringCredential()).andReturn(true).anyTimes();
       List<SimpleDescriptor.Service> serviceMocks = new ArrayList<>();
       for (String serviceName : serviceURLs.keySet()) {
         SimpleDescriptor.Service svc = EasyMock.createNiceMock(SimpleDescriptor.Service.class);
@@ -168,6 +171,7 @@ public class SimpleDescriptorHandlerFuncTest {
       GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
       List<InetSocketAddress> gatewayAddress = new ArrayList<>();
       gatewayAddress.add(new InetSocketAddress(0));
+      EasyMock.expect(config.getReadOnlyOverrideTopologyNames()).andReturn(Collections.emptyList()).anyTimes();
       EasyMock.expect(config.getGatewayConfDir()).andReturn(testConfDir.getAbsolutePath()).anyTimes();
       EasyMock.expect(config.getGatewayDataDir()).andReturn(testDataDir.getAbsolutePath()).anyTimes();
       EasyMock.expect(config.getGatewayTopologyDir()).andReturn(testTopoDir.getAbsolutePath()).anyTimes();
@@ -223,6 +227,10 @@ public class SimpleDescriptorHandlerFuncTest {
       EasyMock.replay(ts);
       EasyMock.expect(gatewayServices.getService(ServiceType.TOPOLOGY_SERVICE)).andReturn(ts).anyTimes();
 
+      GatewayStatusService statusService = EasyMock.createNiceMock(GatewayStatusService.class);
+      EasyMock.replay(statusService);
+      EasyMock.expect(gatewayServices.getService(ServiceType.GATEWAY_STATUS_SERVICE)).andReturn(statusService).anyTimes();
+
       EasyMock.replay(gatewayServices);
 
       // Start a GatewayService with the GatewayServices mock
@@ -245,6 +253,7 @@ public class SimpleDescriptorHandlerFuncTest {
       assertEquals("Unexpected alias value (should be master secret + topology name.",
                    testMasterSecret + testDescriptor.getName(), capturedPwd.getValue());
 
+      assertEquals(1, NoOpServiceDiscovery.discoveryCalled);
     } catch (Exception e) {
       e.printStackTrace();
       fail(e.getMessage());
@@ -274,6 +283,7 @@ public class SimpleDescriptorHandlerFuncTest {
 
   private static final class NoOpServiceDiscovery implements ServiceDiscovery {
     static final String TYPE = "NO_OP";
+    static int discoveryCalled;
 
     @Override
     public String getType() {
@@ -290,12 +300,12 @@ public class SimpleDescriptorHandlerFuncTest {
 
         @Override
         public List<String> getServiceURLs(String serviceName) {
-          return null;
+          return Collections.emptyList();
         }
 
         @Override
         public List<String> getServiceURLs(String serviceName, Map<String, String> serviceParams) {
-          return null;
+          return Collections.emptyList();
         }
 
         @Override
@@ -307,6 +317,7 @@ public class SimpleDescriptorHandlerFuncTest {
 
     @Override
     public Cluster discover(GatewayConfig gwConfig, ServiceDiscoveryConfig config, String clusterName, Collection<String> includedServices) {
+      discoveryCalled++;
       return discover(gwConfig, config, clusterName);
     }
   }

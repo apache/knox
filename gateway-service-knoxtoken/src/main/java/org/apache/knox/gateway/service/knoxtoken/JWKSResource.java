@@ -39,6 +39,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -105,7 +106,7 @@ public class JWKSResource {
               + "\"\n}\n").build();
     }
     return Response.ok()
-        .entity(jwks.toJSONObject().toString()).build();
+            .entity(jwks.toString()).type(MediaType.APPLICATION_JSON_TYPE).build();
   }
 
   protected RSAPublicKey getPublicKey(final String keystore) throws KeystoreServiceException, KeyStoreException {

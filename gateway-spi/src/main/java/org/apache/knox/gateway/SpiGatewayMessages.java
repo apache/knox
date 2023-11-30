@@ -114,4 +114,7 @@ public interface SpiGatewayMessages {
 
   @Message( level = MessageLevel.INFO, text = "HTTP client retry non safe request is set to {0} for {1}" )
   void setRetryNonIndependent(boolean retryNonIndependent, String serviceRole);
+
+  @Message( level = MessageLevel.DEBUG, text = "Malformed dispatch URL: {0}" )
+  void malformedDispatchUrl(String url);
 }

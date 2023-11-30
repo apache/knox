@@ -480,6 +480,7 @@ public class JettySSLServiceTest {
     expect(config.getTrustAllCerts()).andReturn(false).atLeastOnce();
     expect(config.getIncludedSSLCiphers()).andReturn(null).atLeastOnce();
     expect(config.getExcludedSSLCiphers()).andReturn(null).atLeastOnce();
+    expect(config.getIncludedSSLProtocols()).andReturn(null).atLeastOnce();
     expect(config.getExcludedSSLProtocols()).andReturn(null).atLeastOnce();
     expect(config.isSSLRenegotiationAllowed()).andReturn(true).atLeastOnce();
     return config;

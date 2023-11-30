@@ -84,7 +84,8 @@ public abstract class AbstractServiceModelGeneratorTest extends AbstractCMDiscov
       model = newGenerator().generateService(createApiServiceMock(getServiceType()),
                                              createApiServiceConfigMock(serviceConfig),
                                              createApiRoleMock(getRoleType()),
-                                             createApiConfigListMock(roleConfig));
+                                             createApiConfigListMock(roleConfig),
+              null);
     } catch (ApiException e) {
       fail(e.getMessage());
     }

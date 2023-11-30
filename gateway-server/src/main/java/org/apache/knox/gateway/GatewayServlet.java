@@ -185,13 +185,8 @@ public class GatewayServlet implements Servlet, Filter {
   private static GatewayFilter createFilter( InputStream stream, ServletContext servletContext ) throws ServletException {
     try {
       GatewayFilter filter = null;
-      if( stream != null ) {
-        try (InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)){
-          GatewayDescriptor descriptor = GatewayDescriptorFactory.load("xml", reader);
-          filter = GatewayFactory.create( descriptor );
-        } finally {
-          stream.close();
-        }
+      if (stream != null) {
+        filter = GatewayFactory.create(createGatewayDescriptor(stream));
       }
       GatewayConfig gatewayConfig = (GatewayConfig) servletContext.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
       if (gatewayConfig.isMetricsEnabled()) {
@@ -207,6 +202,14 @@ public class GatewayServlet implements Servlet, Filter {
       return filter;
     } catch( IOException | URISyntaxException e ) {
       throw new ServletException( e );
+    }
+  }
+
+  private static synchronized GatewayDescriptor createGatewayDescriptor(InputStream stream) throws IOException {
+    try (InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)){
+      return GatewayDescriptorFactory.load("xml", reader);
+    } finally {
+      stream.close();
     }
   }
 

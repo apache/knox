@@ -178,7 +178,8 @@ public class ServiceModel implements Comparable<ServiceModel> {
           resolvedSample.setValue(sample.getValue());
         } else {
           final String method = StringUtils.isBlank(sample.getMethod()) ? "GET" : sample.getMethod();
-          resolvedSample.setValue(String.format(Locale.ROOT, CURL_SAMPLE_TEMPLATE, method, getServiceUrl(), sample.getPath()));
+          final String path = sample.getPath().startsWith("/") ? sample.getPath() : ("/" + sample.getPath());
+          resolvedSample.setValue(String.format(Locale.ROOT, CURL_SAMPLE_TEMPLATE, method, getServiceUrl(), path));
         }
         samples.add(resolvedSample);
       });

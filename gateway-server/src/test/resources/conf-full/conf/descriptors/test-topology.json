@@ -1,5 +1,6 @@
 {
    "provider-config-ref": "test-providers",
+   "provision-encrypt-query-string-credential": "false",
    "services": [
       {
         "name": "KNOX"

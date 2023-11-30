@@ -33,22 +33,27 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 import org.apache.knox.gateway.GatewayServer;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.i18n.GatewaySpiMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscoveryMessages;
 import org.apache.knox.gateway.topology.discovery.cm.DiscoveryApiClient;
+import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGeneratorsHolder;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.security.KeyStore;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -56,6 +61,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -86,9 +92,15 @@ public class PollingConfigurationAnalyzer implements Runnable {
   static final String CM_SERVICE_TYPE = "ManagerServer";
   static final String CM_SERVICE      = "ClouderaManager";
 
+  public static final String EVENT_CODE_ROLE_DELETED = "EV_ROLE_DELETED";
+  public static final String EVENT_CODE_ROLE_CREATED = "EV_ROLE_CREATED";
+
   // Collection of those commands which represent the potential activation of service configuration changes
-  private static final Collection<String> ACTIVATION_COMMANDS = Arrays.asList(START_COMMAND, RESTART_COMMAND, ROLLING_RESTART_COMMAND,
+  private static final Collection<String> START_COMMANDS = Arrays.asList(START_COMMAND, RESTART_COMMAND, ROLLING_RESTART_COMMAND,
       RESTART_WAITING_FOR_STALENESS_SUCCESS_COMMAND);
+
+  private static final Collection<String> DELETED_EVENT_CODES = Arrays.asList(EVENT_CODE_ROLE_DELETED);
+  private static final Collection<String> CREATED_EVENT_CODES = Arrays.asList(EVENT_CODE_ROLE_CREATED);
 
   // The format of the filter employed when start events are queried from ClouderaManager
   private static final String EVENTS_QUERY_FORMAT =
@@ -105,6 +117,8 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
   private static final ClouderaManagerServiceDiscoveryMessages log = MessagesFactory.get(ClouderaManagerServiceDiscoveryMessages.class);
 
+  private static final GatewaySpiMessages LOGGER = MessagesFactory.get(GatewaySpiMessages.class);
+
   // Fully-qualified cluster name delimiter
   private static final String FQCN_DELIM = "::";
 
@@ -115,7 +129,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
   private AliasService aliasService;
 
-  private KeystoreService keystoreService;
+  private KeyStore truststore;
 
   private TopologyService topologyService;
 
@@ -135,23 +149,38 @@ public class PollingConfigurationAnalyzer implements Runnable {
   // The amount of time before "now" to will check for start events the first time
   private long eventQueryDefaultTimestampOffset = DEFAULT_EVENT_QUERY_DEFAULT_TIMESTAMP_OFFSET;
 
+  private ServiceModelGeneratorsHolder serviceModelGeneratorsHolder = ServiceModelGeneratorsHolder.getInstance();
+
   private boolean isActive;
 
-  PollingConfigurationAnalyzer(final ClusterConfigurationCache   configCache,
+  private final GatewayConfig gatewayConfig;
+
+  PollingConfigurationAnalyzer(final GatewayConfig gatewayConfig,
+                               final ClusterConfigurationCache   configCache,
                                final AliasService                aliasService,
                                final KeystoreService             keystoreService,
                                final ConfigurationChangeListener changeListener) {
-    this(configCache, aliasService, keystoreService, changeListener, DEFAULT_POLLING_INTERVAL);
+    this(gatewayConfig, configCache, aliasService, keystoreService, changeListener, DEFAULT_POLLING_INTERVAL);
   }
 
-  PollingConfigurationAnalyzer(final ClusterConfigurationCache   configCache,
+  PollingConfigurationAnalyzer(final GatewayConfig gatewayConfig,
+                               final ClusterConfigurationCache   configCache,
                                final AliasService                aliasService,
                                final KeystoreService             keystoreService,
                                final ConfigurationChangeListener changeListener,
                                int                               interval) {
+    this.gatewayConfig = gatewayConfig;
     this.configCache     = configCache;
     this.aliasService    = aliasService;
-    this.keystoreService = keystoreService;
+
+    if (keystoreService != null) {
+      try {
+        truststore = keystoreService.getTruststoreForHttpClient();
+      } catch (KeystoreServiceException e) {
+        LOGGER.failedToLoadTruststore(e.getMessage(), e);
+      }
+    }
+
     this.changeListener  = changeListener;
     this.interval        = interval;
     this.processedEvents = Caffeine.newBuilder().expireAfterAccess(interval * 3, TimeUnit.SECONDS).maximumSize(1000).build();
@@ -185,6 +214,10 @@ public class PollingConfigurationAnalyzer implements Runnable {
         for (Map.Entry<String, List<String>> entry : configCache.getClusterNames().entrySet()) {
           String address = entry.getKey();
           for (String clusterName : entry.getValue()) {
+            if (configCache.getDiscoveryConfig(address, clusterName) == null) {
+              log.noClusterConfiguration(clusterName, address);
+              continue;
+            }
             log.checkingClusterConfiguration(clusterName, address);
 
             // Check here for existing descriptor references, and add to the removal list if there are not any
@@ -196,14 +229,16 @@ public class PollingConfigurationAnalyzer implements Runnable {
             // Configuration changes don't mean anything without corresponding service start/restarts. Therefore, monitor
             // start events, and check the configuration only of the restarted service(s) to identify changes
             // that should trigger re-discovery.
-            final List<StartEvent> relevantEvents = getRelevantEvents(address, clusterName);
+            final List<RelevantEvent> relevantEvents = getRelevantEvents(address, clusterName);
 
             // If there are no recent start events, then nothing to do now
             if (!relevantEvents.isEmpty()) {
               // If a change has occurred, notify the listeners
-              if (hasConfigChanged(address, clusterName, relevantEvents)) {
+              if (hasConfigChanged(address, clusterName, relevantEvents) || hasScaleEvent(relevantEvents)) {
                 notifyChangeListener(address, clusterName);
               }
+              // these events should not be processed again even if the next CM query result contains them
+              relevantEvents.forEach(re -> processedEvents.put(re.auditEvent.getId(), 1L));
             }
           }
         }
@@ -215,16 +250,43 @@ public class PollingConfigurationAnalyzer implements Runnable {
         }
         clustersToStopMonitoring.clear(); // reset the removal list
 
-        waitFor(interval);
       } catch (Exception e) {
         log.clouderaManagerConfigurationChangesMonitoringError(e);
       }
+      waitFor(interval);
     }
 
     log.stoppedClouderaManagerConfigMonitor();
   }
 
-  private boolean hasConfigChanged(String address, String clusterName, List<StartEvent> relevantEvents) {
+  private boolean hasScaleEvent(List<RelevantEvent> relevantEvents) {
+    boolean found = false;
+    for (RelevantEvent event: relevantEvents) {
+      if (alreadyProcessed(event)) {
+        log.activationEventAlreadyProcessed(event.auditEvent.getId());
+        continue;
+      }
+      if (event.getRole() != null) {
+        if (event.isRoleAddedEvent()) {
+          log.foundUpScaleEvent(event.getRole(), event.getHosts());
+          found = true;
+          break;
+        }
+        if (event.isRoleDeletedEvent()) {
+          log.foundDownScaleEvent(event.getRole(), event.getHosts());
+          found = true;
+          break;
+        }
+      }
+    }
+    return found;
+  }
+
+  private boolean alreadyProcessed(RelevantEvent event) {
+    return processedEvents.getIfPresent(event.auditEvent.getId()) != null;
+  }
+
+  private boolean hasConfigChanged(String address, String clusterName, List<RelevantEvent> relevantEvents) {
     // If there are start events, then check the previously-recorded properties for the same service to
     // identify if the configuration has changed
     final Map<String, ServiceConfigurationModel> serviceConfigurations =
@@ -234,9 +296,13 @@ public class PollingConfigurationAnalyzer implements Runnable {
     final List<String> handledServiceTypes = new ArrayList<>();
 
     boolean configHasChanged = false;
-    for (StartEvent re : relevantEvents) {
-      if (processedEvents.getIfPresent(re.auditEvent.getId()) != null) {
+    for (RelevantEvent re : relevantEvents) {
+      if (alreadyProcessed(re)) {
         log.activationEventAlreadyProcessed(re.auditEvent.getId());
+        continue;
+      }
+
+      if (re.isRoleAddedEvent() || re.isRoleDeletedEvent()) {
         continue;
       }
 
@@ -282,9 +348,6 @@ public class PollingConfigurationAnalyzer implements Runnable {
         break; // No need to continue checking once we've identified one reason to perform discovery again
       }
     }
-
-    // these events should not be processed again even if the next CM query result contains them
-    relevantEvents.forEach(re -> processedEvents.put(re.auditEvent.getId(), 1L));
 
     return configHasChanged;
   }
@@ -383,7 +446,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
    */
   private DiscoveryApiClient getApiClient(final ServiceDiscoveryConfig discoveryConfig) {
     return clients.computeIfAbsent(discoveryConfig.getAddress(),
-                                   c -> new DiscoveryApiClient(discoveryConfig, aliasService, keystoreService));
+                                   c -> new DiscoveryApiClient(gatewayConfig, discoveryConfig, aliasService, truststore));
   }
 
   /**
@@ -394,8 +457,8 @@ public class PollingConfigurationAnalyzer implements Runnable {
    *
    * @return A List of StartEvent objects for service start events since the last time they were queried.
    */
-  private List<StartEvent> getRelevantEvents(final String address, final String clusterName) {
-    List<StartEvent> relevantEvents = new ArrayList<>();
+  private List<RelevantEvent> getRelevantEvents(final String address, final String clusterName) {
+    List<RelevantEvent> relevantEvents = new ArrayList<>();
 
     // Get the last event query timestamp
     Instant lastTimestamp = getEventQueryTimestamp(address, clusterName);
@@ -420,8 +483,8 @@ public class PollingConfigurationAnalyzer implements Runnable {
       log.noActivationEventFound();
     } else {
       for (ApiEvent event : events) {
-        if(isRelevantEvent(event)) {
-          relevantEvents.add(new StartEvent(event));
+        if(isStartEvent(event) || isScaleEvent(event)) {
+          relevantEvents.add(new RelevantEvent(event));
         }
       }
     }
@@ -430,13 +493,31 @@ public class PollingConfigurationAnalyzer implements Runnable {
   }
 
   @SuppressWarnings("unchecked")
-  private boolean isRelevantEvent(ApiEvent event) {
+  private boolean isStartEvent(ApiEvent event) {
     final Map<String, Object> attributeMap = getAttributeMap(event.getAttributes());
-    final String command =
-            attributeMap.containsKey(COMMAND) ? ((List<String>) attributeMap.get(COMMAND)).get(0) : "";
-    final String status =
-            attributeMap.containsKey(COMMAND_STATUS) ? ((List<String>) attributeMap.get(COMMAND_STATUS)).get(0) : "";
-    return (ACTIVATION_COMMANDS.contains(command) && SUCCEEDED_STATUS.equals(status));
+    final String command = getAttribute(attributeMap, COMMAND);
+    final String status = getAttribute(attributeMap, COMMAND_STATUS);
+    final String serviceType = getAttribute(attributeMap, RelevantEvent.ATTR_SERVICE_TYPE);
+    final boolean serviceModelGeneratorExists = serviceModelGeneratorsHolder.getServiceModelGenerators(serviceType) != null;
+    final boolean relevant = START_COMMANDS.contains(command) && SUCCEEDED_STATUS.equals(status) && serviceModelGeneratorExists;
+    log.activationEventRelevance(event.getId(), String.valueOf(relevant), command, status, serviceType, serviceModelGeneratorExists);
+    return relevant;
+  }
+
+  private boolean isScaleEvent(ApiEvent event) {
+    final Map<String, Object> attributeMap = getAttributeMap(event.getAttributes());
+    final String serviceType = getAttribute(attributeMap, RelevantEvent.ATTR_SERVICE_TYPE);
+    final String eventCode = getAttribute(attributeMap, RelevantEvent.ATTR_EVENT_CODE);
+    final boolean serviceModelGeneratorExists = serviceModelGeneratorsHolder.getServiceModelGenerators(serviceType) != null;
+    final boolean relevant = serviceModelGeneratorExists &&
+            (CREATED_EVENT_CODES.contains(eventCode) || DELETED_EVENT_CODES.contains(eventCode));
+    log.scaleEventRelevance(event.getId(), String.valueOf(relevant), eventCode, serviceType, relevant);
+    return relevant;
+  }
+
+  @SuppressWarnings("unchecked")
+  private String getAttribute( Map<String, Object> attributeMap, String attributeName) {
+    return attributeMap.containsKey(attributeName) ? ((List<String>) attributeMap.get(attributeName)).get(0) : "";
   }
 
   private Map<String, Object> getAttributeMap(List<ApiEventAttribute> attributes) {
@@ -572,11 +653,14 @@ public class PollingConfigurationAnalyzer implements Runnable {
   /**
    * Internal representation of a ClouderaManager service start event
    */
-  static final class StartEvent {
+  static final class RelevantEvent {
 
     private static final String ATTR_CLUSTER      = "CLUSTER";
     private static final String ATTR_SERVICE_TYPE = "SERVICE_TYPE";
     private static final String ATTR_SERVICE      = "SERVICE";
+    private static final String ATTR_ROLE         = "ROLE_TYPE";
+    private static final String ATTR_HOST         = "HOSTS";
+    private static final String ATTR_EVENT_CODE   = "EVENTCODE";
 
     private static List<String> attrsOfInterest = new ArrayList<>();
 
@@ -584,14 +668,20 @@ public class PollingConfigurationAnalyzer implements Runnable {
       attrsOfInterest.add(ATTR_CLUSTER);
       attrsOfInterest.add(ATTR_SERVICE_TYPE);
       attrsOfInterest.add(ATTR_SERVICE);
+      attrsOfInterest.add(ATTR_ROLE);
+      attrsOfInterest.add(ATTR_HOST);
+      attrsOfInterest.add(ATTR_EVENT_CODE);
     }
 
     private ApiEvent auditEvent;
     private String clusterName;
     private String serviceType;
     private String service;
+    private String role;
+    private String eventCode;
+    private Set<String> hosts = new HashSet<>();
 
-    StartEvent(final ApiEvent auditEvent) {
+    RelevantEvent(final ApiEvent auditEvent) {
       if (ApiEventCategory.AUDIT_EVENT != auditEvent.getCategory()) {
         throw new IllegalArgumentException("Invalid event category " + auditEvent.getCategory().getValue());
       }
@@ -619,6 +709,22 @@ public class PollingConfigurationAnalyzer implements Runnable {
       return service;
     }
 
+    Set<String> getHosts() {
+      return hosts;
+    }
+
+    String getRole() {
+      return role;
+    }
+
+    boolean isRoleAddedEvent() {
+      return EVENT_CODE_ROLE_CREATED.equals(eventCode);
+    }
+
+    boolean isRoleDeletedEvent() {
+      return EVENT_CODE_ROLE_DELETED.equals(eventCode);
+    }
+
     private void setPropertyFromAttribute(final ApiEventAttribute attribute) {
       switch (attribute.getName()) {
         case ATTR_CLUSTER:
@@ -630,9 +736,19 @@ public class PollingConfigurationAnalyzer implements Runnable {
         case ATTR_SERVICE:
           service = attribute.getValues().get(0);
           break;
+        case ATTR_HOST:
+          if (attribute.getValues() != null && !attribute.getValues().isEmpty()) {
+            hosts.addAll(attribute.getValues());
+          }
+          break;
+        case ATTR_ROLE:
+          role = attribute.getValues().get(0);
+          break;
+        case ATTR_EVENT_CODE:
+          eventCode = attribute.getValues().get(0);
+          break;
         default:
       }
     }
   }
-
 }

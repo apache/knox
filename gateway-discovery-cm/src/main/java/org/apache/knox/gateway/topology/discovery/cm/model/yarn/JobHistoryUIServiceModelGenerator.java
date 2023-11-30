@@ -59,12 +59,13 @@ public class JobHistoryUIServiceModelGenerator extends AbstractServiceModelGener
   public ServiceModel generateService(ApiService       service,
                                       ApiServiceConfig serviceConfig,
                                       ApiRole          role,
-                                      ApiConfigList    roleConfig) throws ApiException {
+                                      ApiConfigList    roleConfig,
+                                      ApiServiceConfig coreSettingsConfig) throws ApiException {
     String hostname = role.getHostRef().getHostname();
     String scheme;
     String port;
 
-    if(isSSLEnabled(service, serviceConfig)) {
+    if(isSSLEnabled(service, serviceConfig, coreSettingsConfig)) {
       scheme = "https";
       port = getRoleConfigValue(roleConfig, HTTPS_PORT);
     } else {
@@ -79,13 +80,13 @@ public class JobHistoryUIServiceModelGenerator extends AbstractServiceModelGener
     return model;
   }
 
-  private boolean isSSLEnabled(ApiService service, ApiServiceConfig serviceConfig)
+  private boolean isSSLEnabled(ApiService service, ApiServiceConfig serviceConfig, ApiServiceConfig coreSettingsConfig)
       throws ApiException {
     ServicesResourceApi servicesResourceApi = new ServicesResourceApi(getClient());
     String clusterName = service.getClusterRef().getClusterName();
     String hdfsService = getServiceConfigValue(serviceConfig, "hdfs_service");
     ApiServiceConfig hdfsServiceConfig = servicesResourceApi.readServiceConfig(clusterName, hdfsService, "full");
-    return Boolean.parseBoolean(getServiceConfigValue(hdfsServiceConfig, "hdfs_hadoop_ssl_enabled"));
+    return Boolean.parseBoolean(getCoreOrServiceConfig(hdfsServiceConfig, coreSettingsConfig, "hdfs_hadoop_ssl_enabled"));
   }
 
 }

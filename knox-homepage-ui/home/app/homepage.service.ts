@@ -27,8 +27,10 @@ import {SessionInformation} from './sessionInformation/session.information';
 
 @Injectable()
 export class HomepageService {
-    apiUrl = window.location.pathname.replace(new RegExp('home/.*'), 'api/v1/metadata/');
-    sessionUrl = window.location.pathname.replace(new RegExp('home/.*'), 'session/api/v1/sessioninfo');
+    pathParts = window.location.pathname.split('/');
+    topologyContext = '/' + this.pathParts[1] + '/' + this.pathParts[2] + '/';
+    apiUrl = this.topologyContext + 'api/v1/metadata/';
+    sessionUrl = this.topologyContext + 'session/api/v1/sessioninfo';
     generalProxyInformationUrl = this.apiUrl + 'info';
     publicCertUrl = this.apiUrl + 'publicCert?type=';
     topologiesUrl = this.apiUrl + 'topologies';
@@ -130,20 +132,6 @@ export class HomepageService {
     }
 
     private handleError(error: HttpErrorResponse): Promise<any> {
-        // location.reload();
-        let refresh;
-        this.route.queryParams.subscribe(params => {
-          refresh = params['refresh'];
-          console.debug('refresh = ' + refresh);
-          if (refresh) {
-            console.debug('Refreshing page...', window.location.href);
-            let url = window.location.pathname.replace(new RegExp('refresh=1/.*'), '?');
-            // var url = window.location.pathname;
-
-            // window.location.assign(url);
-            window.location.reload();
-          }
-        });
         Swal.fire({
             icon: 'error',
             title: 'Oops!',

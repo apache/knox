@@ -27,9 +27,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.filter.rewrite.impl.CookieScopeResponseWrapper;
+import org.apache.knox.gateway.i18n.GatewaySpiMessages;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 public class CookieScopeServletFilter extends AbstractGatewayFilter {
-
+  private static final GatewaySpiMessages LOG = MessagesFactory.get(GatewaySpiMessages.class);
   private String gatewayPath;
   private String topologyName;
 
@@ -43,7 +45,12 @@ public class CookieScopeServletFilter extends AbstractGatewayFilter {
   @Override
   protected void doFilter( HttpServletRequest request, HttpServletResponse response, FilterChain chain )
       throws IOException, ServletException {
-    chain.doFilter(request, new CookieScopeResponseWrapper(response, gatewayPath, topologyName));
+    if (Boolean.parseBoolean((String)request.getAttribute(DEFAULT_TOPOLOGY_FORWARD_ATTRIBUTE_NAME))) {
+      LOG.ignoringCookiePathScopeForDefaultTopology();
+      chain.doFilter(request, response);
+    } else {
+      chain.doFilter(request, new CookieScopeResponseWrapper(response, gatewayPath, topologyName));
+    }
   }
 
 }

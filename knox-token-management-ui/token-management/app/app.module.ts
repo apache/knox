@@ -24,12 +24,15 @@ import {MatSortModule} from '@angular/material/sort';
 import {MatPaginatorModule} from '@angular/material/paginator';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {MatInputModule} from '@angular/material/input';
+import {MatSlideToggleModule} from '@angular/material/slide-toggle';
+import {MatCheckboxModule} from '@angular/material/checkbox';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 
 
 import {TokenManagementComponent} from './token.management.component';
 import {TokenManagementService} from './token.management.service';
+import {SessionInformationComponent} from './session.information.component';
 
 @NgModule({
     imports: [BrowserModule,
@@ -46,11 +49,13 @@ import {TokenManagementService} from './token.management.service';
         MatSortModule,
         MatPaginatorModule,
         MatProgressSpinnerModule,
-        MatInputModule
+        MatInputModule,
+        MatSlideToggleModule,
+        MatCheckboxModule
     ],
-    declarations: [TokenManagementComponent],
+    declarations: [TokenManagementComponent, SessionInformationComponent],
     providers: [TokenManagementService],
-    bootstrap: [TokenManagementComponent]
+    bootstrap: [TokenManagementComponent, SessionInformationComponent]
 })
 export class AppModule {
 }

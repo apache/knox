@@ -239,6 +239,7 @@ public class DefaultTopologyServiceTest {
       Map<String, String> c = new HashMap<>();
 
       GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+      EasyMock.expect(config.getReadOnlyOverrideTopologyNames()).andReturn(Collections.emptyList()).anyTimes();
       EasyMock.expect(config.getGatewayTopologyDir()).andReturn(topologyDir.getAbsolutePath()).anyTimes();
       EasyMock.expect(config.getGatewayConfDir()).andReturn(descriptorsDir.getParentFile().getAbsolutePath()).anyTimes();
       EasyMock.replay(config);
@@ -363,6 +364,7 @@ public class DefaultTopologyServiceTest {
       Map<String, String> c = new HashMap<>();
 
       GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+      EasyMock.expect(config.getReadOnlyOverrideTopologyNames()).andReturn(Collections.emptyList()).anyTimes();
       EasyMock.expect(config.getGatewayTopologyDir()).andReturn(topologyDir.getAbsolutePath()).anyTimes();
       EasyMock.expect(config.getGatewayConfDir()).andReturn(descriptorsDir.getParentFile().getAbsolutePath()).anyTimes();
       EasyMock.replay(config);
@@ -462,6 +464,7 @@ public class DefaultTopologyServiceTest {
       Map<String, String> c = new HashMap<>();
 
       GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+      EasyMock.expect(config.getReadOnlyOverrideTopologyNames()).andReturn(Collections.emptyList()).anyTimes();
       EasyMock.expect(config.getGatewayTopologyDir()).andReturn(topologyDir.getAbsolutePath()).anyTimes();
       EasyMock.expect(config.getGatewayConfDir()).andReturn(descriptorsDir.getParentFile().getAbsolutePath()).anyTimes();
       EasyMock.replay(config);

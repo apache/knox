@@ -17,6 +17,11 @@
  */
 package org.apache.knox.gateway.util;
 
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,6 +43,19 @@ public class RegExUtils {
       }
     }
     return false;
+  }
+
+  public static boolean checkBaseUrlAgainstWhitelist(String whitelist, String fullUrl) throws MalformedURLException {
+    String decodedURL = fullUrl;
+    try {
+      decodedURL = URLDecoder.decode(fullUrl, StandardCharsets.UTF_8.name());
+    } catch (UnsupportedEncodingException e) {
+      //
+    }
+    String baseUrl;
+    URL url = new URL(decodedURL);
+    baseUrl = new URL(url.getProtocol(), url.getHost(), url.getPort(), "").toString();
+    return checkWhitelist(whitelist, baseUrl);
   }
 
 }

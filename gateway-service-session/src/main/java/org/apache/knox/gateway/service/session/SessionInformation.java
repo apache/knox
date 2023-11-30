@@ -34,6 +34,12 @@ public class SessionInformation {
   @XmlElement
   private String globalLogoutPageUrl;
 
+  @XmlElement
+  private boolean canSeeAllTokens;
+
+  @XmlElement
+  private String currentKnoxSsoCookieTokenId;
+
   public String getUser() {
     return user;
   }
@@ -64,6 +70,22 @@ public class SessionInformation {
 
   public void setGlobalLogoutPageUrl(String globalLogoutPageUrl) {
     this.globalLogoutPageUrl = globalLogoutPageUrl;
+  }
+
+  public boolean isCanSeeAllTokens() {
+    return canSeeAllTokens;
+  }
+
+  public void setCanSeeAllTokens(boolean canSeeAllTokens) {
+    this.canSeeAllTokens = canSeeAllTokens;
+  }
+
+  public String getCurrentKnoxSsoCookieTokenId() {
+    return currentKnoxSsoCookieTokenId;
+  }
+
+  public void setCurrentKnoxSsoCookieTokenId(String currentKnoxSsoCookieTokenId) {
+    this.currentKnoxSsoCookieTokenId = currentKnoxSsoCookieTokenId;
   }
 
 }

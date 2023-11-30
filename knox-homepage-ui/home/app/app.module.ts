@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 import {NgModule} from '@angular/core';
+import {DataTableModule} from 'angular2-datatable';
 import {BrowserModule} from '@angular/platform-browser';
 import {HttpClientModule, HttpClientXsrfModule} from '@angular/common/http';
 import {MatGridListModule} from '@angular/material/grid-list';
@@ -31,6 +32,7 @@ import {HomepageService} from './homepage.service';
     imports: [BrowserModule,
         HttpClientModule,
         HttpClientXsrfModule,
+        DataTableModule,
         MatGridListModule,
         BsModalModule,
         RouterModule.forRoot([])

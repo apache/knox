@@ -17,16 +17,20 @@
  */
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
+import org.apache.http.HttpHeaders;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.session.SessionInvalidators;
 import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.CertificateUtils;
 import org.apache.knox.gateway.util.CookieUtils;
+import org.apache.knox.gateway.util.Urls;
 import org.eclipse.jetty.http.MimeTypes;
 
 import javax.security.auth.Subject;
@@ -71,7 +75,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
   private String cookieName;
   private String authenticationProviderUrl;
   private String gatewayPath;
-  private Set<String> unAuthenticatedPaths = new HashSet(20);
+  private Set<String> unAuthenticatedPaths = new HashSet<>(20);
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
@@ -134,17 +138,18 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
     HttpServletRequest req = (HttpServletRequest) request;
     HttpServletResponse res = (HttpServletResponse) response;
 
+    /* check for unauthenticated paths to bypass */
+    if(AuthFilterUtils.doesRequestContainUnauthPath(unAuthenticatedPaths, request)) {
+      /* This path is configured as an unauthenticated path let the request through */
+      final Subject sub = new Subject();
+      sub.getPrincipals().add(new PrimaryPrincipal("anonymous"));
+      LOGGER.unauthenticatedPathBypass(req.getRequestURI(), unAuthenticatedPaths.toString());
+      continueWithEstablishedSecurityContext(sub, req, res, chain);
+      return;
+    }
+
     List<Cookie> ssoCookies = CookieUtils.getCookiesForName(req, cookieName);
     if (ssoCookies.isEmpty()) {
-      /* check for unauthenticated paths to bypass */
-      if(AuthFilterUtils.doesRequestContainUnauthPath(unAuthenticatedPaths, request)) {
-        /* This path is configured as an unauthenticated path let the request through */
-        final Subject sub = new Subject();
-        sub.getPrincipals().add(new PrimaryPrincipal("anonymous"));
-        LOGGER.unauthenticatedPathBypass(req.getRequestURI(), unAuthenticatedPaths.toString());
-        continueWithEstablishedSecurityContext(sub, req, res, chain);
-      }
-
       if ("OPTIONS".equals(req.getMethod())) {
         // CORS preflight requests to determine allowed origins and related config
         // must be able to continue without being redirected
@@ -161,6 +166,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
           JWT token = new JWTToken(wireToken);
           if (validateToken(req, res, chain, token)) {
             Subject subject = createSubjectFromToken(token);
+            request.setAttribute(TokenUtils.ATTR_CURRENT_KNOXSSO_COOKIE_TOKEN_ID, token.getClaim(JWTToken.KNOX_ID_CLAIM));
             continueWithEstablishedSecurityContext(subject, req, res, chain);
 
             // we found a valid cookie we don't need to keep checking anymore
@@ -174,7 +180,10 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
 
       // There were no valid cookies found so redirect to login url
       if(res != null && !res.isCommitted()) {
-        sendRedirectToLoginURL(req, res);
+        // only if the Location header is not set already by a session invalidator
+        if (res.getHeader(HttpHeaders.LOCATION) == null) {
+          sendRedirectToLoginURL(req, res);
+        }
       }
     }
   }
@@ -187,8 +196,23 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
   }
 
   @Override
-  protected void handleValidationError(HttpServletRequest request, HttpServletResponse response,
-                                       int status, String error) throws IOException {
+  protected void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status, String error) throws IOException {
+    if (error != null && error.startsWith("Token") && error.endsWith("disabled")) {
+      LOGGER.invalidSsoCookie();
+      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+      removeAuthenticationToken(request, response);
+      SessionInvalidators.KNOX_SSO_INVALIDATOR.getSessionInvalidators().forEach(sessionInvalidator -> {
+        sessionInvalidator.onAuthenticationError(request, response);
+      });
+      if (AuthFilterUtils.shouldDoGlobalLogout(request)) {
+        final String redirectTo = constructGlobalLogoutUrl(request);
+        LOGGER.sendRedirectToLogoutURL(redirectTo);
+        response.setHeader(HttpHeaders.LOCATION, redirectTo);
+        response.sendRedirect(redirectTo);
+        return;
+      }
+    }
+
     /* We don't need redirect if this is a XHR request */
     if (request.getHeader(XHR_HEADER) != null &&
             request.getHeader(XHR_HEADER).equalsIgnoreCase(XHR_VALUE)) {
@@ -203,6 +227,12 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
       String loginURL = constructLoginURL(request);
       response.sendRedirect(loginURL);
     }
+  }
+
+  private String constructGlobalLogoutUrl(HttpServletRequest request) {
+    final StringBuilder logoutUrlBuilder = new StringBuilder(deriveDefaultAuthenticationProviderUrl(request, true));
+    logoutUrlBuilder.append('&').append(ORIGINAL_URL_QUERY_PARAM).append(deriveDefaultAuthenticationProviderUrl(request, false)); //orignalUrl=WebSSO login
+    return logoutUrlBuilder.toString();
   }
 
   /**
@@ -229,13 +259,17 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
         + request.getRequestURL().append(getOriginalQueryString(request));
   }
 
+  public String deriveDefaultAuthenticationProviderUrl(HttpServletRequest request) {
+    return deriveDefaultAuthenticationProviderUrl(request, false);
+  }
+
   /**
    * Derive a provider URL from the request assuming that the
    * KnoxSSO endpoint is local to the endpoint serving this request.
    * @param request origin request
    * @return url that is based on KnoxSSO endpoint
    */
-  public String deriveDefaultAuthenticationProviderUrl(HttpServletRequest request) {
+  public String deriveDefaultAuthenticationProviderUrl(HttpServletRequest request, boolean logout) {
     String providerURL = null;
     String scheme;
     String host;
@@ -251,7 +285,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
       if (!host.contains(":") && port != -1) {
         sb.append(':').append(port);
       }
-      sb.append('/').append(gatewayPath).append("/knoxsso/api/v1/websso");
+      sb.append('/').append(gatewayPath).append(logout ? "/knoxsso/knoxauth/logout.jsp?autoGlobalLogout=1" : "/knoxsso/api/v1/websso");
       providerURL = sb.toString();
     } catch (MalformedURLException e) {
       LOGGER.failedToDeriveAuthenticationProviderUrl(e);
@@ -263,5 +297,23 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
   private String getOriginalQueryString(HttpServletRequest request) {
     String originalQueryString = request.getQueryString();
     return (originalQueryString == null) ? "" : "?" + originalQueryString;
+  }
+
+  private void removeAuthenticationToken(HttpServletRequest request, HttpServletResponse response) {
+    final Cookie c = new Cookie(cookieName, null);
+    c.setMaxAge(0);
+    c.setPath("/");
+    try {
+      String domainName = Urls.getDomainName(request.getRequestURL().toString(), null);
+      if(domainName != null) {
+        c.setDomain(domainName);
+      }
+    } catch (MalformedURLException e) {
+      //log.problemWithCookieDomainUsingDefault();
+      // we are probably not going to be able to
+      // remove the cookie due to this error but it
+      // isn't necessarily not going to work.
+    }
+    response.addCookie(c);
   }
 }

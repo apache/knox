@@ -57,6 +57,14 @@
                 <value>simple</value>
             </param>
             <param>
+               <name>main.ldapRealm.contextFactory.systemUsername</name>
+               <value>uid=admin,ou=people,dc=hadoop,dc=apache,dc=org</value>
+            </param>
+            <param>
+               <name>main.ldapRealm.contextFactory.systemPassword</name>
+               <value>${ALIAS=ldapsystempassword}</value>
+            </param>
+            <param>
                 <name>urls./**</name>
                 <value>authcBasic</value>
             </param>

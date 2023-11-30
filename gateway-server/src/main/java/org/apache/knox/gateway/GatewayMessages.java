@@ -18,6 +18,7 @@
 package org.apache.knox.gateway;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Date;
@@ -31,8 +32,6 @@ import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.topology.monitor.db.LocalDirectory;
-
-import java.io.IOException;
 
 @Messages(logger="org.apache.knox.gateway")
 public interface GatewayMessages {
@@ -72,6 +71,9 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.INFO, text = "Loading topologies from directory: {0}" )
   void loadingTopologiesFromDirectory( String topologiesDir );
+
+  @Message( level = MessageLevel.INFO, text = "Loading descriptors from directory: {0}" )
+  void loadingDescriptorsFromDirectory(String descriptorsDir);
 
   @Message( level = MessageLevel.DEBUG, text = "Loading topology file: {0}" )
   void loadingTopologyFile( String fileName );
@@ -549,6 +551,9 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.INFO, text = "Prevented deletion of shared provider configuration because there are referencing descriptors: {0}" )
   void preventedDeletionOfSharedProviderConfiguration(String providerConfigurationPath);
 
+  @Message( level = MessageLevel.INFO, text = "Empty result returned by SimpleDescriptorHandler for decriptor {0}" )
+  void emptyHandleResult(String descriptorName);
+
   @Message( level = MessageLevel.INFO, text = "Generated topology {0} because the associated descriptor {1} changed." )
   void generatedTopologyForDescriptorChange(String topologyName, String descriptorName);
 
@@ -775,4 +780,24 @@ public interface GatewayMessages {
   @Message(level = MessageLevel.INFO,
           text = "Initializing remote configuration db. Sync interval={0} seconds. Clean up interval={1} seconds.")
   void initDbRemoteConfigMonitor(long syncIntervalSeconds, int cleanUpPeriodSeconds);
+
+  @Message(level = MessageLevel.DEBUG,
+          text = "Request {0} is wrapped to url encoded form request.")
+  void wrappingRequestToUrlEncodedFormRequest(String requestURI);
+
+  @Message(level = MessageLevel.INFO,
+          text = "Checking gateway status. Deployed topologies: {0}. Waiting for: {1}")
+  void checkingGatewayStatus(Set<String> deployedTopologies, Set<String> missingTopologies);
+
+  @Message(level = MessageLevel.INFO,
+          text = "Checking gateway status. No topologies to check")
+  void noTopologiesToCheck();
+
+  @Message(level = MessageLevel.INFO,
+          text = "Collected topologies for health check: {0}")
+  void collectedTopologiesForHealthCheck(Set<String> result);
+
+  @Message(level = MessageLevel.INFO,
+          text = "Starting gateway status service. Topologies to check: {0}")
+  void startingStatusMonitor(Set<String> topologyNames);
 }

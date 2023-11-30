@@ -16,16 +16,31 @@
 -->
 <rules>
 
-    <rule dir="IN" name="OOZIE/oozie/root" pattern="http*://*:*/**/oozie/{**}?{**}">
-        <rewrite template="{$serviceUrl[OOZIE]}/{**}?{**}"/>
+    <rule dir="IN" name="OOZIE/oozie/root" flow="OR">
+        <match pattern="http://*:*/**/oozie/{**}?{**}">
+            <rewrite template="{$serviceUrl[OOZIE]}/{**}?{**}"/>
+        </match>
+        <match pattern="https://*:*/**/oozie/{**}?{**}">
+            <rewrite template="{$serviceUrl[OOZIE]}/{**}?{**}"/>
+        </match>
     </rule>
 
-    <rule dir="IN" name="OOZIE/oozie/v1" pattern="*://*:*/**/oozie/v1/{**}?{**}">
-        <rewrite template="{$serviceUrl[OOZIE]}/v1/{**}?{**}"/>
+    <rule dir="IN" name="OOZIE/oozie/v1" flow="OR">
+        <match pattern="http://*:*/**/oozie/v1/{**}?{**}">
+            <rewrite template="{$serviceUrl[OOZIE]}/v1/{**}?{**}"/>
+        </match>
+        <match pattern="https://*:*/**/oozie/v1/{**}?{**}">
+            <rewrite template="{$serviceUrl[OOZIE]}/v1/{**}?{**}"/>
+        </match>
     </rule>
 
-    <rule dir="IN" name="OOZIE/oozie/v2" pattern="*://*:*/**/oozie/v2/{**}?{**}">
-        <rewrite template="{$serviceUrl[OOZIE]}/v2/{**}?{**}"/>
+    <rule dir="IN" name="OOZIE/oozie/v2" flow="OR">
+        <match pattern="http://*:*/**/oozie/v2/{**}?{**}">
+            <rewrite template="{$serviceUrl[OOZIE]}/v2/{**}?{**}"/>
+        </match>
+        <match pattern="https://*:*/**/oozie/v2/{**}?{**}">
+            <rewrite template="{$serviceUrl[OOZIE]}/v2/{**}?{**}"/>
+        </match>
     </rule>
 
     <rule name="OOZIE/oozie/user-name">

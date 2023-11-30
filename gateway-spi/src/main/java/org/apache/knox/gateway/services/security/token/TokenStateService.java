@@ -196,6 +196,11 @@ public interface TokenStateService extends Service {
   TokenMetadata getTokenMetadata(String tokenId) throws UnknownTokenException;
 
   /**
+   * @return a collection of all the existing (not yet evicted) tokens
+   */
+  Collection<KnoxToken> getAllTokens();
+
+  /**
    * @param userName The name of the user to get tokens for
    * @return a collection of tokens associated to the given user; it's an empty
    *         collection if there is no associated token found in the underlying

@@ -32,6 +32,8 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -45,6 +47,7 @@ import javax.inject.Singleton;
 import javax.security.auth.Subject;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -55,6 +58,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.google.gson.Gson;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.KeyLengthException;
 import com.nimbusds.jose.crypto.MACSigner;
@@ -92,6 +96,15 @@ import org.apache.knox.gateway.util.Tokens;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 
+/**
+ * @deprecated The public REST API endpoints in this class (bound to
+ *             '/knoxtoken/v1/api/token/...') are no longer acceptable for
+ *             token-related operations. Please use the
+ *             '/knoxtoken/v2/api/token/...' path instead.
+ *
+ * @see TokenResourceV2
+ */
+@Deprecated
 @Singleton
 @Path(TokenResource.RESOURCE_PATH)
 public class TokenResource {
@@ -133,18 +146,22 @@ public class TokenResource {
   private static final long TOKEN_TTL_DEFAULT = 30000L;
   static final String TOKEN_API_PATH = "knoxtoken/api/v1";
   static final String RESOURCE_PATH = TOKEN_API_PATH + "/token";
-  static final String GET_USER_TOKENS = "/getUserTokens";
-  static final String GET_TSS_STATUS_PATH = "/getTssStatus";
-  static final String RENEW_PATH = "/renew";
-  static final String REVOKE_PATH = "/revoke";
-  static final String ENABLE_PATH = "/enable";
-  static final String DISABLE_PATH = "/disable";
+  protected static final String GET_USER_TOKENS = "/getUserTokens";
+  protected static final String GET_TSS_STATUS_PATH = "/getTssStatus";
+  protected static final String RENEW_PATH = "/renew";
+  protected static final String REVOKE_PATH = "/revoke";
+  protected static final String BATCH_REVOKE_PATH = "/revokeTokens";
+  protected static final String ENABLE_PATH = "/enable";
+  protected static final String BATCH_ENABLE_PATH = "/enableTokens";
+  protected static final String DISABLE_PATH = "/disable";
+  protected static final String BATCH_DISABLE_PATH = "/disableTokens";
   private static final String TARGET_ENDPOINT_PULIC_CERT_PEM = TOKEN_PARAM_PREFIX + "target.endpoint.cert.pem";
   static final String QUERY_PARAMETER_DOAS = "doAs";
   private static final String IMPERSONATION_ENABLED_TEXT = "impersonationEnabled";
   public static final String KNOX_TOKEN_INCLUDE_GROUPS = TOKEN_PARAM_PREFIX + "include.groups";
   public static final String KNOX_TOKEN_ISSUER = TOKEN_PARAM_PREFIX + "issuer";
   private static TokenServiceMessages log = MessagesFactory.get(TokenServiceMessages.class);
+  private static final Gson GSON = new Gson();
   private long tokenTTL = TOKEN_TTL_DEFAULT;
   private String tokenType;
   private String tokenTTLAsText;
@@ -188,7 +205,8 @@ public class TokenResource {
     INVALID_TOKEN(40),
     UNKNOWN_TOKEN(50),
     ALREADY_DISABLED(60),
-    ALREADY_ENABLED(70);
+    ALREADY_ENABLED(70),
+    DISABLED_KNOXSSO_COOKIE(80);
 
     private final int code;
 
@@ -450,7 +468,17 @@ public class TokenResource {
 
       final String userName = uriInfo.getQueryParameters().getFirst("userName");
       final String createdBy = uriInfo.getQueryParameters().getFirst("createdBy");
-      final Collection<KnoxToken> userTokens = createdBy == null ? tokenStateService.getTokens(userName) : tokenStateService.getDoAsTokens(createdBy);
+      final String userNameOrCreatedBy = uriInfo.getQueryParameters().getFirst("userNameOrCreatedBy");
+      final boolean allTokens = Boolean.parseBoolean(uriInfo.getQueryParameters().getFirst("allTokens"));
+      final Collection<KnoxToken> userTokens;
+      if (allTokens) {
+        userTokens = tokenStateService.getAllTokens();
+      } else if (userNameOrCreatedBy == null) {
+        userTokens = createdBy == null ? tokenStateService.getTokens(userName) : tokenStateService.getDoAsTokens(createdBy);
+      } else {
+        userTokens = new HashSet<>(tokenStateService.getTokens(userNameOrCreatedBy));
+        userTokens.addAll(tokenStateService.getDoAsTokens(userNameOrCreatedBy));
+      }
       final Collection<KnoxToken> tokens = new TreeSet<>();
       if (metadataMap.isEmpty()) {
         tokens.addAll(userTokens);
@@ -482,9 +510,15 @@ public class TokenResource {
     return Response.status(Response.Status.OK).entity(JsonUtils.renderAsJsonString(tokenStateServiceStatusMap)).build();
   }
 
-  @PUT
+  /**
+   * @deprecated This method is no longer acceptable for token renewal. Please
+   *             use the '/knoxtoken/v2/api/token/renew' path; instead which is a
+   *             PUT HTTP request.
+   */
+  @POST
   @Path(RENEW_PATH)
   @Produces({APPLICATION_JSON})
+  @Deprecated
   public Response renew(String token) {
     Response resp;
 
@@ -552,8 +586,30 @@ public class TokenResource {
   }
 
   @DELETE
+  @Path(BATCH_REVOKE_PATH)
+  @Produces({APPLICATION_JSON})
+  public Response revokeTokens(String tokenIds) {
+    final List<String> ids = GSON.fromJson(tokenIds, List.class);
+    Response response = null;
+    Response error = null;
+    for (String tokenId : ids) {
+      response = revoke(tokenId);
+      if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+        error = response;
+      }
+    }
+    return error == null ? response : error;
+  }
+
+  /**
+   * @deprecated This method is no longer acceptable for token revocation. Please
+   *             use the '/knoxtoken/v2/api/token/revoke' path; instead which is a
+   *             DELETE HTTP request.
+   */
+  @POST
   @Path(REVOKE_PATH)
   @Produces({APPLICATION_JSON})
+  @Deprecated
   public Response revoke(String token) {
     Response resp;
 
@@ -568,12 +624,16 @@ public class TokenResource {
       try {
         final String revoker = SubjectUtils.getCurrentEffectivePrincipalName();
         final String tokenId = getTokenId(token);
-        if (triesToRevokeOwnToken(tokenId, revoker) || allowedRenewers.contains(revoker)) {
-            tokenStateService.revokeToken(tokenId);
-            log.revokedToken(getTopologyName(),
-                Tokens.getTokenDisplayText(token),
-                Tokens.getTokenIDDisplayText(tokenId),
-                revoker);
+        if (isKnoxSsoCookie(tokenId)) {
+          errorStatus = Response.Status.FORBIDDEN;
+          error = "SSO cookie (" + Tokens.getTokenIDDisplayText(tokenId) + ") cannot not be revoked." ;
+          errorCode = ErrorCode.UNAUTHORIZED;
+        } else if (triesToRevokeOwnToken(tokenId, revoker) || allowedRenewers.contains(revoker)) {
+          tokenStateService.revokeToken(tokenId);
+          log.revokedToken(getTopologyName(),
+              Tokens.getTokenDisplayText(token),
+              Tokens.getTokenIDDisplayText(tokenId),
+              revoker);
         } else {
           errorStatus = Response.Status.FORBIDDEN;
           error = "Caller (" + revoker + ") not authorized to revoke tokens.";
@@ -603,6 +663,11 @@ public class TokenResource {
     return resp;
   }
 
+  private boolean isKnoxSsoCookie(String tokenId) throws UnknownTokenException {
+    final TokenMetadata metadata = tokenStateService.getTokenMetadata(tokenId);
+    return metadata == null ? false : metadata.isKnoxSsoCookie();
+  }
+
   private boolean triesToRevokeOwnToken(String tokenId, String revoker) throws UnknownTokenException {
     final TokenMetadata metadata = tokenStateService.getTokenMetadata(tokenId);
     final String tokenUserName = metadata == null ? "" : metadata.getUserName();
@@ -630,33 +695,66 @@ public class TokenResource {
   @Path(ENABLE_PATH)
   @Produces({ APPLICATION_JSON })
   public Response enable(String tokenId) {
-    return setTokenEnabledFlag(tokenId, true);
+    return setTokenEnabledFlag(tokenId, true, false);
+  }
+
+  @PUT
+  @Path(BATCH_ENABLE_PATH)
+  @Consumes({ APPLICATION_JSON })
+  @Produces({ APPLICATION_JSON })
+  public Response enableTokens(String tokenIds) {
+    return setTokenEnabledFlags(tokenIds, true);
   }
 
   @PUT
   @Path(DISABLE_PATH)
   @Produces({ APPLICATION_JSON })
   public Response disable(String tokenId) {
-    return setTokenEnabledFlag(tokenId, false);
+    return setTokenEnabledFlag(tokenId, false, false);
   }
 
-  private Response setTokenEnabledFlag(String tokenId, boolean enabled) {
+  @PUT
+  @Path(BATCH_DISABLE_PATH)
+  @Consumes({ APPLICATION_JSON })
+  @Produces({ APPLICATION_JSON })
+  public Response disableTokens(String tokenIds) {
+    return setTokenEnabledFlags(tokenIds, false);
+  }
+
+  @SuppressWarnings("unchecked")
+  private Response setTokenEnabledFlags(String tokenIds, boolean enabled) {
+    final List<String> ids = GSON.fromJson(tokenIds, List.class);
+    Response response = null;
+    Response error = null;
+    for (String tokenId : ids) {
+      response = setTokenEnabledFlag(tokenId, enabled, true);
+      if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+        error = response;
+      }
+    }
+    return error == null ? response : error;
+  }
+
+  private Response setTokenEnabledFlag(String tokenId, boolean enable, boolean batch) {
     String error = "";
     ErrorCode errorCode = ErrorCode.UNKNOWN;
     if (tokenStateService == null) {
-      error = "Unable to " + (enabled ? "enable" : "disable") + " tokens because token management is not configured";
+      error = "Unable to " + (enable ? "enable" : "disable") + " tokens because token management is not configured";
       errorCode = ErrorCode.CONFIGURATION_ERROR;
     } else {
       try {
         final TokenMetadata tokenMetadata = tokenStateService.getTokenMetadata(tokenId);
-        if (enabled && tokenMetadata.isEnabled()) {
+        if (!batch && enable && tokenMetadata.isEnabled()) {
           error = "Token is already enabled";
           errorCode = ErrorCode.ALREADY_ENABLED;
-        } else if (!enabled && !tokenMetadata.isEnabled()) {
+        } else if (!batch && !enable && !tokenMetadata.isEnabled()) {
           error = "Token is already disabled";
           errorCode = ErrorCode.ALREADY_DISABLED;
+        } else if (enable && tokenMetadata.isKnoxSsoCookie() && !tokenMetadata.isEnabled()) {
+          error = "Disabled KnoxSSO Cookies cannot not be enabled";
+          errorCode = ErrorCode.DISABLED_KNOXSSO_COOKIE;
         } else {
-          tokenMetadata.setEnabled(enabled);
+          tokenMetadata.setEnabled(enable);
           tokenStateService.addMetadata(tokenId, tokenMetadata);
         }
       } catch (UnknownTokenException e) {
@@ -664,8 +762,10 @@ public class TokenResource {
         errorCode = ErrorCode.UNKNOWN_TOKEN;
       }
     }
+
     if (error.isEmpty()) {
-      return Response.status(Response.Status.OK).entity("{\n  \"setEnabledFlag\": \"true\",\n  \"isEnabled\": \"" + enabled + "\"\n}\n").build();
+      log.setEnabledFlag(getTopologyName(), enable, Tokens.getTokenIDDisplayText(tokenId));
+      return Response.status(Response.Status.OK).entity("{\n  \"setEnabledFlag\": \"true\",\n  \"isEnabled\": \"" + enable + "\"\n}\n").build();
     } else {
       log.badSetEnabledFlagRequest(getTopologyName(), Tokens.getTokenIDDisplayText(tokenId), error);
       return Response.status(Response.Status.BAD_REQUEST).entity("{\n  \"setEnabledFlag\": \"false\",\n  \"error\": \"" + error + "\",\n  \"code\": " + errorCode.toInt() + "\n}\n").build();
@@ -743,7 +843,13 @@ public class TokenResource {
 
     if (tokenStateService != null) {
       if (tokenLimitPerUser != -1) { // if -1 => unlimited tokens for all users
-        final Collection<KnoxToken> userTokens = tokenStateService.getTokens(userName);
+        final Collection<KnoxToken> allUserTokens = tokenStateService.getTokens(userName);
+        final Collection<KnoxToken> userTokens = new LinkedList<>();
+        allUserTokens.stream().forEach(token -> {
+          if(!token.getMetadata().isKnoxSsoCookie()) {
+            userTokens.add(token);
+          }
+        });
         if (userTokens.size() >= tokenLimitPerUser) {
           log.tokenLimitExceeded(userName);
           if (UserLimitExceededAction.RETURN_ERROR == userLimitExceededAction) {

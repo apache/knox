@@ -27,7 +27,7 @@
 
     <groupId>org.apache.knox</groupId>
     <artifactId>gateway</artifactId>
-    <version>2.0.0-SNAPSHOT</version>
+    <version>2.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>gateway</name>
@@ -189,7 +189,7 @@
         <commons-text.version>1.10.0</commons-text.version>
         <cors-filter.version>2.9.1</cors-filter.version>
         <cryptacular.version>1.2.4</cryptacular.version>
-        <curator.version>4.3.0</curator.version>
+        <curator.version>5.4.0</curator.version>
         <dependency-check-maven.version>6.0.3</dependency-check-maven.version>
         <derby.db.version>10.14.2.0</derby.db.version> <!-- 10.15.1.3 requires Java 9 -->
         <hsql.db.version>2.7.1</hsql.db.version>
@@ -257,9 +257,11 @@
         <pac4j.version>4.5.6</pac4j.version>
         <postgresql.version>42.4.1</postgresql.version>
         <mysql.version>8.0.28</mysql.version>
+        <mariadb.connector.version>3.3.0</mariadb.connector.version>
         <protobuf.version>3.16.3</protobuf.version>
         <powermock.version>2.0.9</powermock.version>
         <purejavacomm.version>0.0.11.1</purejavacomm.version>
+        <!-- After JDK 11 we can use 0.12.4 from maven central -->
         <pty4j.version>0.11.4</pty4j.version>
         <rest-assured.version>4.3.3</rest-assured.version>
         <shiro.version>1.10.0</shiro.version>
@@ -284,13 +286,13 @@
         <xmltool.version>3.3</xmltool.version>
         <xml-jaxb.version>2.3.0</xml-jaxb.version>
         <xml-matchers.version>0.10</xml-matchers.version>
-        <zookeeper.version>3.5.7</zookeeper.version>
+        <zookeeper.version>3.8.1</zookeeper.version>
     </properties>
     <repositories>
         <repository>
-            <id>jcenter</id>
-            <name>jcenter</name>
-            <url>https://jcenter.bintray.com</url>
+            <id>jetbrains-pty4j</id>
+            <name>jetbrains-intellij-dependencies</name>
+            <url>https://packages.jetbrains.team/maven/p/ij/intellij-dependencies</url>
         </repository>
     </repositories>
     <profiles>
@@ -400,6 +402,7 @@
         </profile>
     </profiles>
 
+
     <build>
         <pluginManagement>
             <plugins>
@@ -490,6 +493,7 @@
                         <exclude>atlassian-ide-plugin.xml</exclude>
                         <exclude>**/PULL_REQUEST_TEMPLATE*</exclude>
                         <exclude>**/new-service-definition-template.xml</exclude>
+                        <exclude>**/token-management/**/assets/**</exclude>
                     </excludes>
                 </configuration>
             </plugin>
@@ -524,6 +528,10 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <!-- For JDK 17 builds uncomment the following lines, make sure to remove space between - - (double dash) -->
+                    <!--
+                    <argLine>@{argLine} - -add-exports java.base/sun.security.x509=ALL-UNNAMED - -add-exports java.base/sun.security.pkcs=ALL-UNNAMED - - add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED - -add-opens java.base/sun.security.util=ALL-UNNAMED</argLine>
+                    -->
                     <excludedGroups>
                         org.apache.knox.test.category.SlowTests,org.apache.knox.test.category.ManualTests,org.apache.knox.test.category.VerifyTest,org.apache.knox.test.category.ReleaseTest
                     </excludedGroups>
@@ -574,6 +582,11 @@
                                 <requireJavaVersion>
                                     <version>[1.8,)</version>
                                 </requireJavaVersion>
+                                <bannedDependencies>
+                                    <excludes>
+                                        <exclude>log4j:log4j</exclude>
+                                    </excludes>
+                                </bannedDependencies>
                             </rules>
                         </configuration>
                     </execution>
@@ -2195,11 +2208,29 @@
                 <artifactId>mysql-connector-java</artifactId>
                 <version>${mysql.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.mariadb.jdbc</groupId>
+                <artifactId>mariadb-java-client</artifactId>
+                <version>3.3.0</version>
+                <exclusions>
+                    <exclusion>
+                       <groupId>com.github.waffle</groupId>
+                       <artifactId>waffle-jna</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
             <!-- Webshell support -->
             <dependency>
                 <groupId>org.jetbrains.pty4j</groupId>
                 <artifactId>pty4j</artifactId>
                 <version>${pty4j.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.jetbrains.pty4j</groupId>

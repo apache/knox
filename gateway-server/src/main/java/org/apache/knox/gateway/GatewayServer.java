@@ -43,6 +43,7 @@ import org.apache.knox.gateway.services.registry.ServiceRegistry;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.SSLService;
 import org.apache.knox.gateway.services.topology.TopologyService;
+import org.apache.knox.gateway.services.topology.impl.GatewayStatusService;
 import org.apache.knox.gateway.topology.Application;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.TopologyEvent;
@@ -146,6 +147,7 @@ public class GatewayServer {
   private TopologyListener listener;
   private Map<String, WebAppContext> deployments;
   private AtomicBoolean stopped = new AtomicBoolean(false);
+  private GatewayStatusService gatewayStatusService;
 
   public static void main( String[] args ) {
     try {
@@ -623,9 +625,19 @@ public class GatewayServer {
     // Load the current topologies.
     // Redeploy autodeploy topologies.
     File topologiesDir = calculateAbsoluteTopologiesDir();
-    log.loadingTopologiesFromDirectory(topologiesDir.getAbsolutePath());
     monitor = services.getService(ServiceType.TOPOLOGY_SERVICE);
+
+    // Shared providers and descriptors should be reloaded before topology reloading at startup, so that any changes to descriptors
+    // will be realized before Knox deploys "old" topologies that would have re-deployed anyway in a matter of seconds
+    // by the descriptor monitor
+    handleHadoopXmlResources();
+
+    // at this point descriptors are supposed to be generated from hxr
+    gatewayStatusService = services.getService(ServiceType.GATEWAY_STATUS_SERVICE);
+    gatewayStatusService.initTopologiesToCheck();
+
     monitor.addTopologyChangeListener(listener);
+    log.loadingTopologiesFromDirectory(topologiesDir.getAbsolutePath());
     monitor.reloadTopologies();
     List<String> autoDeploys = config.getAutoDeployTopologyNames();
     if (autoDeploys != null) {
@@ -637,16 +649,10 @@ public class GatewayServer {
     final ServiceDefinitionRegistry serviceDefinitionRegistry = services.getService(ServiceType.SERVICE_DEFINITION_REGISTRY);
     serviceDefinitionRegistry.addServiceDefinitionChangeListener(monitor);
 
-    final Collection<Topology> topologies = monitor.getTopologies();
     final Map<String, Integer> topologyPortMap = config.getGatewayPortMappings();
 
-    // List of all the topology that are deployed
-    final List<String> deployedTopologyList = new ArrayList<>();
-
-    for (final Topology t : topologies) {
-      deployedTopologyList.add(t.getName());
-    }
-
+    // List of all the topology that are deployed (or will be deployed soon)
+    final Set<String> deployedTopologyList = gatewayStatusService.collectTopologies(config);
 
     // Check whether the configured topologies for port mapping exist, if not
     // log WARN message and continue
@@ -696,8 +702,6 @@ public class GatewayServer {
 
     // Start the topology monitor.
     monitor.startMonitor();
-
-    handleHadoopXmlResources();
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
 
@@ -758,7 +762,7 @@ public class GatewayServer {
    */
   private void checkMappedTopologiesExist(
       final Map<String, Integer> configTopologies,
-      final List<String> topologies) {
+      final Set<String> topologies) {
     for(final Map.Entry<String, Integer> entry : configTopologies.entrySet()) {
       // If the topologies defined in gateway-config.xml are not found in gateway
       if (!topologies.contains(entry.getKey())) {
@@ -916,6 +920,9 @@ public class GatewayServer {
         contexts.removeHandler( oldContext );
       }
       contexts.addHandler( newContext );
+
+      processApplicationPathAliases(warDir, topology);
+
       if( contexts.isRunning() && !newContext.isRunning() ) {
         newContext.start();
         if(!newContext.isAvailable()) {
@@ -927,6 +934,18 @@ public class GatewayServer {
       auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE );
       log.failedToDeployTopology( topology.getName(), e );
     }
+  }
+
+  private void processApplicationPathAliases(File warDir, Topology topology) {
+    final Map<String, Collection<String>> applicationPathAliases = config.getApplicationPathAliases();
+    applicationPathAliases.forEach((appName, aliases) -> {
+      if (warDir.getName().contains(appName) && !aliases.isEmpty()) {
+        aliases.forEach(alias -> {
+          WebAppContext aliasContext = createWebAppContext(topology, warDir, alias);
+          contexts.addHandler(aliasContext);
+        });
+      }
+    });
   }
 
   private synchronized void internalDeactivateTopology( Topology topology ) {
@@ -1034,6 +1053,7 @@ public class GatewayServer {
           log.redeployedTopology( topology.getName() );
         }
         cleanupTopologyDeployments( deployDir, topology );
+        gatewayStatusService.onTopologyReady(topology.getName());
       } catch( Throwable e ) {
         auditor.audit( Action.DEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE );
         log.failedToDeployTopology( topology.getName(), e );

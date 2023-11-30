@@ -21,25 +21,31 @@ import Swal from 'sweetalert2';
 import 'rxjs/add/operator/toPromise';
 
 import {KnoxToken} from './knox.token';
+import {SessionInformation} from './session.information';
 
 @Injectable()
 export class TokenManagementService {
-    sessionUrl = window.location.pathname.replace(new RegExp('token-management/.*'), 'session/api/v1/sessioninfo');
-    apiUrl = window.location.pathname.replace(new RegExp('token-management/.*'), 'knoxtoken/api/v1/token/');
-    getKnoxTokensUrl = this.apiUrl + 'getUserTokens?userName=';
-    getDoAsKnoxTokensUrl = this.apiUrl + 'getUserTokens?createdBy=';
+    pathParts = window.location.pathname.split('/');
+    topologyContext = '/' + this.pathParts[1] + '/' + this.pathParts[2] + '/';
+    sessionUrl = this.topologyContext + 'session/api/v1/sessioninfo';
+    apiUrl = this.topologyContext + 'knoxtoken/api/v2/token/';
+    getKnoxTokensUrl = this.apiUrl + 'getUserTokens?userNameOrCreatedBy=';
+    getAllKnoxTokensUrl = this.apiUrl + 'getUserTokens?allTokens=true';
     enableKnoxTokenUrl = this.apiUrl + 'enable';
+    enableKnoxTokensBatchUrl = this.apiUrl + 'enableTokens';
     disableKnoxTokenUrl = this.apiUrl + 'disable';
+    disableKnoxTokensBatchUrl = this.apiUrl + 'disableTokens';
     revokeKnoxTokenUrl = this.apiUrl + 'revoke';
+    revokeKnoxTokensBatchUrl = this.apiUrl + 'revokeTokens';
     getTssStatusUrl = this.apiUrl + 'getTssStatus';
 
     constructor(private http: HttpClient) {}
 
-    getKnoxTokens(userName: string, impersonated: boolean): Promise<KnoxToken[]> {
+    getKnoxTokens(userName: string, canSeeAllTokens: boolean): Promise<KnoxToken[]> {
         let headers = new HttpHeaders();
         headers = this.addJsonHeaders(headers);
-        let urlToUse = impersonated ? this.getDoAsKnoxTokensUrl : this.getKnoxTokensUrl;
-        return this.http.get(urlToUse + userName, { headers: headers})
+        let url = canSeeAllTokens ? this.getAllKnoxTokensUrl : (this.getKnoxTokensUrl + userName);
+        return this.http.get(url, { headers: headers})
             .toPromise()
             .then(response => response['tokens'] as KnoxToken[])
             .catch((err: HttpErrorResponse) => {
@@ -70,6 +76,24 @@ export class TokenManagementService {
             });
     }
 
+    setEnabledDisabledFlagsInBatch(enable: boolean, tokenIds: string[]): Promise<string> {
+        let xheaders = new HttpHeaders();
+        xheaders = this.addJsonHeaders(xheaders);
+        let urlToUse = enable ? this.enableKnoxTokensBatchUrl : this.disableKnoxTokensBatchUrl;
+        return this.http.put(urlToUse, JSON.stringify(tokenIds), {headers: xheaders, responseType: 'text'})
+            .toPromise()
+            .then(response => response)
+            .catch((err: HttpErrorResponse) => {
+                console.debug('TokenManagementService --> setEnabledDisabledFlagsInBatch() --> ' + urlToUse
+                              + '\n  error: ' + err.status + ' ' + err.message);
+                if (err.status === 401) {
+                    window.location.assign(document.location.pathname);
+                } else {
+                    return this.handleError(err);
+                }
+            });
+    }
+
     revokeToken(tokenId: string) {
         let xheaders = new HttpHeaders();
         xheaders = this.addJsonHeaders(xheaders);
@@ -87,14 +111,32 @@ export class TokenManagementService {
             });
     }
 
-    getUserName(): Promise<string> {
+    revokeTokensInBatch(tokenIds: string[]) {
+        let xheaders = new HttpHeaders();
+        xheaders = this.addJsonHeaders(xheaders);
+        return this.http.request('DELETE', this.revokeKnoxTokensBatchUrl,
+                                 {headers: xheaders, body: JSON.stringify(tokenIds), responseType: 'text'})
+            .toPromise()
+            .then(response => response)
+            .catch((err: HttpErrorResponse) => {
+                console.debug('TokenManagementService --> revokeTokensInBatch() --> ' + this.revokeKnoxTokensBatchUrl
+                              + '\n  error: ' + err.status + ' ' + err.message);
+                if (err.status === 401) {
+                    window.location.assign(document.location.pathname);
+                } else {
+                    return this.handleError(err);
+                }
+            });
+    }
+
+    getSessionInformation(): Promise<SessionInformation> {
         let headers = new HttpHeaders();
         headers = this.addJsonHeaders(headers);
         return this.http.get(this.sessionUrl, { headers: headers})
             .toPromise()
-            .then(response => response['sessioninfo'].user as string)
+            .then(response => response['sessioninfo'] as SessionInformation)
             .catch((err: HttpErrorResponse) => {
-                console.debug('TokenManagementService --> getUserName() --> ' + this.sessionUrl + '\n  error: ' + err.message);
+                console.debug('TokenManagementService --> getSessionInformation() --> ' + this.sessionUrl + '\n  error: ' + err.message);
                 if (err.status === 401) {
                     window.location.assign(document.location.pathname);
                 } else {

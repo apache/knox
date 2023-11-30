@@ -118,6 +118,7 @@ public class JDBCTokenStateServiceTest {
     String id1 = "token1";
     String id2 = "token2";
     String id3 = "token3";
+    String createdBy3 = "createdBy3";
 
     long issueTime1 = 1;
     long expiration1 = 1;
@@ -144,15 +145,39 @@ public class JDBCTokenStateServiceTest {
 
     List<KnoxToken> user2Tokens = new ArrayList<>(jdbcTokenStateService.getTokens(user2));
     assertEquals(1, user2Tokens.size());
-    assertToken(user2Tokens.get(0), id3, expiration3, comment3, issueTime3);
+    KnoxToken token3 = user2Tokens.get(0);
+    assertToken(token3, id3, expiration3, comment3, issueTime3);
+
+    // check doAs tokens
+    TokenMetadata token3Metadata = new TokenMetadata(token3.getMetadata().getUserName());
+    token3Metadata.add(TokenMetadata.CREATED_BY, createdBy3);
+    jdbcTokenStateService.addMetadata(id3, token3Metadata);
+    List<KnoxToken> createdBy3Tokens = new ArrayList<>(jdbcTokenStateService.getDoAsTokens(createdBy3));
+    assertEquals(1, createdBy3Tokens.size());
+    KnoxToken createdBy3Token = createdBy3Tokens.get(0);
+    assertToken(createdBy3Token, id3, expiration3, comment3, issueTime3, createdBy3);
+
+    // check all tokens
+    List<KnoxToken> allTokens = new ArrayList<>(jdbcTokenStateService.getAllTokens());
+    assertEquals(3, allTokens.size());
+    assertToken(allTokens.get(0), id1, expiration1, comment1, issueTime1);
+    assertToken(allTokens.get(1), id2, expiration2, comment2, issueTime2);
+    assertToken(allTokens.get(2), id3, expiration3, comment3, issueTime3, createdBy3);
   }
 
   private void assertToken(KnoxToken knoxToken, String tokenId, long expiration, String comment, long issueTime) {
+    assertToken(knoxToken, tokenId, expiration, comment, issueTime, null);
+  }
+
+  private void assertToken(KnoxToken knoxToken, String tokenId, long expiration, String comment, long issueTime, String createdBy) {
     SimpleDateFormat df = new SimpleDateFormat(KnoxToken.DATE_FORMAT, Locale.getDefault());
     assertEquals(tokenId, knoxToken.getTokenId());
     assertEquals(df.format(new Date(issueTime)), knoxToken.getIssueTime());
     assertEquals(df.format(new Date(expiration)), knoxToken.getExpiration());
     assertEquals(comment, knoxToken.getMetadata().getComment());
+    if (createdBy != null) {
+      assertEquals(createdBy, knoxToken.getMetadata().getCreatedBy());
+    }
   }
 
   private void saveToken(String user, String tokenId, long issueTime, long expiration, String comment) {

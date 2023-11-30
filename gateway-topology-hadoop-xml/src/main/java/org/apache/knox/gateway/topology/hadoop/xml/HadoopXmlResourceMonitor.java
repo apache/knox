@@ -24,10 +24,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
+import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
@@ -49,54 +54,77 @@ public class HadoopXmlResourceMonitor implements AdvancedServiceDiscoveryConfigC
   private static final HadoopXmlResourceMessages LOG = MessagesFactory.get(HadoopXmlResourceMessages.class);
   private final String sharedProvidersDir;
   private final String descriptorsDir;
+  private final String topologyDir;
   private final long monitoringInterval;
   private final HadoopXmlResourceParser hadoopXmlResourceParser;
-  private FileTime lastReloadTime;
+  private final Map<Path, FileTime> lastReloadTimes;
+  private final Lock monitorLock = new ReentrantLock();
 
   public HadoopXmlResourceMonitor(GatewayConfig gatewayConfig, HadoopXmlResourceParser hadoopXmlResourceParser) {
     this.hadoopXmlResourceParser = hadoopXmlResourceParser;
     this.sharedProvidersDir = gatewayConfig.getGatewayProvidersConfigDir();
     this.descriptorsDir = gatewayConfig.getGatewayDescriptorsDir();
+    this.topologyDir = gatewayConfig.getGatewayTopologyDir();
     this.monitoringInterval = gatewayConfig.getClouderaManagerDescriptorsMonitoringInterval();
+    this.lastReloadTimes = new ConcurrentHashMap<>();
   }
 
   public void setupMonitor() {
     if (monitoringInterval > 0) {
       final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(new BasicThreadFactory.Builder().namingPattern("ClouderaManagerDescriptorMonitor-%d").build());
-      executorService.scheduleAtFixedRate(() -> monitorClouderaManagerDescriptors(null), 0, monitoringInterval, TimeUnit.MILLISECONDS);
+      monitorClouderaManagerDescriptors(false); // call it explicitly first to generate descriptors up front, so that the health checker can pick them up
+      executorService.scheduleAtFixedRate(() -> monitorClouderaManagerDescriptors(false), monitoringInterval, monitoringInterval, TimeUnit.MILLISECONDS);
       LOG.monitoringHadoopXmlResources(descriptorsDir);
-    } else {
-      LOG.disableMonitoringHadoopXmlResources();
     }
   }
 
-  private void monitorClouderaManagerDescriptors(String topologyName) {
+  private void monitorClouderaManagerDescriptors(boolean force) {
     final File[] clouderaManagerDescriptorFiles = new File(descriptorsDir).listFiles((FileFilter) new SuffixFileFilter(HADOOP_XML_RESOURCE_FILE_EXTENSION));
     for (File clouderaManagerDescriptorFile : clouderaManagerDescriptorFiles) {
-      monitorClouderaManagerDescriptor(Paths.get(clouderaManagerDescriptorFile.getAbsolutePath()), topologyName);
+      monitorClouderaManagerDescriptor(Paths.get(clouderaManagerDescriptorFile.getAbsolutePath()), force);
     }
   }
 
-  private void monitorClouderaManagerDescriptor(Path clouderaManagerDescriptorFile, String topologyName) {
+  private void monitorClouderaManagerDescriptor(Path clouderaManagerDescriptorFile, boolean force) {
+    monitorLock.lock();
     try {
       if (Files.isReadable(clouderaManagerDescriptorFile)) {
         final FileTime lastModifiedTime = Files.getLastModifiedTime(clouderaManagerDescriptorFile);
-        if (topologyName != null || lastReloadTime == null || lastReloadTime.compareTo(lastModifiedTime) < 0) {
-          lastReloadTime = lastModifiedTime;
-          processClouderaManagerDescriptor(clouderaManagerDescriptorFile.toString(), topologyName);
+        FileTime lastReloadTime = lastReloadTimes.get(clouderaManagerDescriptorFile);
+        if (force || lastReloadTime == null || lastReloadTime.compareTo(lastModifiedTime) < 0) {
+          lastReloadTimes.put(clouderaManagerDescriptorFile, lastModifiedTime);
+          LOG.processHadoopXmlResource(clouderaManagerDescriptorFile.toString(), force, lastReloadTime, lastModifiedTime);
+          processClouderaManagerDescriptor(clouderaManagerDescriptorFile.toString());
+        } else {
+          LOG.skipMonitorHadoopXmlResource(clouderaManagerDescriptorFile.toString(), force, lastReloadTime, lastModifiedTime);
         }
       } else {
         LOG.failedToMonitorHadoopXmlResource(clouderaManagerDescriptorFile.toString(), "File is not readable!", null);
       }
     } catch (IOException e) {
       LOG.failedToMonitorHadoopXmlResource(clouderaManagerDescriptorFile.toString(), e.getMessage(), e);
+    } finally {
+      monitorLock.unlock();
     }
   }
 
-  private void processClouderaManagerDescriptor(String descriptorFilePath, String topologyName) {
-    final HadoopXmlResourceParserResult result = hadoopXmlResourceParser.parse(descriptorFilePath, topologyName);
+  private void processClouderaManagerDescriptor(String descriptorFilePath) {
+    final HadoopXmlResourceParserResult result = hadoopXmlResourceParser.parse(descriptorFilePath);
     processSharedProviders(result);
     processDescriptors(result);
+    processDeleted(topologyDir, result.getDeletedDescriptors(), ".xml");
+    processDeleted(descriptorsDir, result.getDeletedDescriptors(), ".json");
+    processDeleted(sharedProvidersDir, result.getDeletedProviders(), ".json");
+  }
+
+  private void processDeleted(String parentDirectory, Set<String> deletedFileNames, String extension) {
+    for (String each : deletedFileNames) {
+      File fileToBeDeleted = new File(parentDirectory, each + extension);
+      if (fileToBeDeleted.exists()) {
+        LOG.deleteFile(fileToBeDeleted.getAbsolutePath());
+        fileToBeDeleted.delete();
+      }
+    }
   }
 
   private void processSharedProviders(final HadoopXmlResourceParserResult result) {
@@ -111,7 +139,7 @@ public class HadoopXmlResourceMonitor implements AdvancedServiceDiscoveryConfigC
           LOG.resourceDidNotChange(key, "shared provider");
         }
       } catch (IOException e) {
-        e.printStackTrace();
+        LOG.failedToProduceKnoxProvider(e.getMessage(), e);
       }
     });
   }
@@ -147,6 +175,6 @@ public class HadoopXmlResourceMonitor implements AdvancedServiceDiscoveryConfigC
     if (StringUtils.isBlank(topologyName)) {
       throw new IllegalArgumentException("Invalid advanced service discovery configuration: topology name is missing!");
     }
-    monitorClouderaManagerDescriptors(topologyName);
+    monitorClouderaManagerDescriptors(true);
   }
 }

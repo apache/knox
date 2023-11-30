@@ -23,6 +23,7 @@ import com.cloudera.api.swagger.model.ApiEventCategory;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.knox.gateway.GatewayServer;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.topology.TopologyService;
@@ -220,8 +221,8 @@ public class PollingConfigurationAnalyzerTest {
 
     // Simulate a successful rolling cluster restart event
     ApiEvent rollingRestartEvent = createApiEvent(clusterName,
-                                                  PollingConfigurationAnalyzer.CM_SERVICE_TYPE,
-                                                  PollingConfigurationAnalyzer.CM_SERVICE,
+                                                  HiveOnTezServiceModelGenerator.SERVICE_TYPE,
+                                                  HiveOnTezServiceModelGenerator.SERVICE,
                                                   PollingConfigurationAnalyzer.ROLLING_RESTART_COMMAND,
                                                   PollingConfigurationAnalyzer.SUCCEEDED_STATUS,
                                                   "EV_CLUSTER_ROLLING_RESTARTED");
@@ -240,7 +241,7 @@ public class PollingConfigurationAnalyzerTest {
     final String clusterName = "Cluster 8";
 
     // Simulate a successful restart waiting for staleness event
-    final ApiEvent rollingRestartEvent = createApiEvent(clusterName, PollingConfigurationAnalyzer.CM_SERVICE_TYPE, PollingConfigurationAnalyzer.CM_SERVICE,
+    final ApiEvent rollingRestartEvent = createApiEvent(clusterName, HiveOnTezServiceModelGenerator.SERVICE_TYPE, HiveOnTezServiceModelGenerator.SERVICE,
         PollingConfigurationAnalyzer.RESTART_WAITING_FOR_STALENESS_SUCCESS_COMMAND, PollingConfigurationAnalyzer.SUCCEEDED_STATUS, "EV_CLUSTER_RESTARTED");
 
     final ChangeListener listener = doTestEvent(rollingRestartEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap());
@@ -253,7 +254,7 @@ public class PollingConfigurationAnalyzerTest {
     final String clusterName = "Cluster 9";
 
     // Simulate a successful restart waiting for staleness event with id = 123
-    final ApiEvent rollingRestartEvent = createApiEvent(clusterName, PollingConfigurationAnalyzer.CM_SERVICE_TYPE, PollingConfigurationAnalyzer.CM_SERVICE,
+    final ApiEvent rollingRestartEvent = createApiEvent(clusterName, HiveOnTezServiceModelGenerator.SERVICE_TYPE, HiveOnTezServiceModelGenerator.SERVICE,
         PollingConfigurationAnalyzer.RESTART_WAITING_FOR_STALENESS_SUCCESS_COMMAND, PollingConfigurationAnalyzer.SUCCEEDED_STATUS, "EV_CLUSTER_RESTARTED",
         "123");
 
@@ -296,6 +297,11 @@ public class PollingConfigurationAnalyzerTest {
     } catch (IOException e) {
       e.printStackTrace();
     }
+
+    final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gatewayConfig.getIncludedSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
+    EasyMock.expect(gatewayConfig.getIncludedSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
+    EasyMock.replay(gatewayConfig);
 
     // Mock the service discovery details
     ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
@@ -345,7 +351,7 @@ public class PollingConfigurationAnalyzerTest {
       setGatewayServices(gws);
 
       // Create the monitor
-      TestablePollingConfigAnalyzer pca = new TestablePollingConfigAnalyzer(configCache);
+      TestablePollingConfigAnalyzer pca = new TestablePollingConfigAnalyzer(gatewayConfig, configCache);
       pca.setInterval(5);
 
       // Start the polling thread
@@ -375,6 +381,38 @@ public class PollingConfigurationAnalyzerTest {
     }
   }
 
+  @Test
+  public void testNotificationSentAfterDownScaleEvent() {
+    final String clusterName = "Cluster T";
+
+    final List<ApiEventAttribute> revisionEventAttrs = new ArrayList<>();
+    revisionEventAttrs.add(createEventAttribute("CLUSTER", clusterName));
+    revisionEventAttrs.add(createEventAttribute("SERVICE_TYPE", HiveOnTezServiceModelGenerator.SERVICE_TYPE));
+    revisionEventAttrs.add(createEventAttribute("SERVICE", HiveOnTezServiceModelGenerator.SERVICE));
+    revisionEventAttrs.add(createEventAttribute("ROLE_TYPE", HiveOnTezServiceModelGenerator.ROLE_TYPE));
+    revisionEventAttrs.add(createEventAttribute("REVISION", "215"));
+    revisionEventAttrs.add(createEventAttribute("EVENTCODE", PollingConfigurationAnalyzer.EVENT_CODE_ROLE_DELETED));
+    final ApiEvent revisionEvent = createApiEvent(ApiEventCategory.AUDIT_EVENT, revisionEventAttrs, null);
+
+    doTestEventWithConfigChange(revisionEvent, clusterName);
+  }
+
+  @Test
+  public void testNotificationSentAfterUpScaleEvent() {
+    final String clusterName = "Cluster T";
+
+    final List<ApiEventAttribute> revisionEventAttrs = new ArrayList<>();
+    revisionEventAttrs.add(createEventAttribute("CLUSTER", clusterName));
+    revisionEventAttrs.add(createEventAttribute("SERVICE_TYPE", HiveOnTezServiceModelGenerator.SERVICE_TYPE));
+    revisionEventAttrs.add(createEventAttribute("SERVICE", HiveOnTezServiceModelGenerator.SERVICE));
+    revisionEventAttrs.add(createEventAttribute("ROLE_TYPE", HiveOnTezServiceModelGenerator.ROLE_TYPE));
+    revisionEventAttrs.add(createEventAttribute("REVISION", "215"));
+    revisionEventAttrs.add(createEventAttribute("EVENTCODE", PollingConfigurationAnalyzer.EVENT_CODE_ROLE_CREATED));
+    final ApiEvent revisionEvent = createApiEvent(ApiEventCategory.AUDIT_EVENT, revisionEventAttrs, null);
+
+    doTestEventWithConfigChange(revisionEvent, clusterName);
+  }
+
   private void doTestStartEvent(final ApiEventCategory category) {
     final String clusterName = "My Cluster";
     final String serviceType = NameNodeServiceModelGenerator.SERVICE_TYPE;
@@ -386,7 +424,7 @@ public class PollingConfigurationAnalyzerTest {
     apiEventAttrs.add(createEventAttribute("SERVICE", service));
     ApiEvent apiEvent = createApiEvent(category, apiEventAttrs, null);
 
-    PollingConfigurationAnalyzer.StartEvent restartEvent = new PollingConfigurationAnalyzer.StartEvent(apiEvent);
+    PollingConfigurationAnalyzer.RelevantEvent restartEvent = new PollingConfigurationAnalyzer.RelevantEvent(apiEvent);
     assertNotNull(restartEvent);
     assertEquals(clusterName, restartEvent.getClusterName());
     assertEquals(serviceType, restartEvent.getServiceType());
@@ -434,6 +472,11 @@ public class PollingConfigurationAnalyzerTest {
 
   private TestablePollingConfigAnalyzer buildPollingConfigAnalyzer(final String address, final String clusterName,
       final Map<String, ServiceConfigurationModel> serviceConfigurationModels, ChangeListener listener) {
+    final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gatewayConfig.getIncludedSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
+    EasyMock.expect(gatewayConfig.getIncludedSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
+    EasyMock.replay(gatewayConfig);
+
     // Mock the service discovery details
     ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
     EasyMock.expect(sdc.getCluster()).andReturn(clusterName).anyTimes();
@@ -452,7 +495,7 @@ public class PollingConfigurationAnalyzerTest {
     EasyMock.expect(configCache.getClusterServiceConfigurations(address, clusterName)).andReturn(serviceConfigurationModels).anyTimes();
     EasyMock.replay(configCache);
 
-    return new TestablePollingConfigAnalyzer(configCache, listener);
+    return new TestablePollingConfigAnalyzer(gatewayConfig, configCache, listener);
   }
 
   private void doTestEventWithConfigChange(final ApiEvent event, final String clusterName) {
@@ -617,13 +660,13 @@ public class PollingConfigurationAnalyzerTest {
     private final Map<String, List<ApiEvent>> restartEvents = new HashMap<>();
     private final Map<String, ServiceConfigurationModel> serviceConfigModels = new HashMap<>();
 
-    TestablePollingConfigAnalyzer(ClusterConfigurationCache cache) {
-      this(cache, null);
+    TestablePollingConfigAnalyzer(GatewayConfig gatewayConfig, ClusterConfigurationCache cache) {
+      this(gatewayConfig, cache, null);
     }
 
-    TestablePollingConfigAnalyzer(ClusterConfigurationCache   cache,
+    TestablePollingConfigAnalyzer(GatewayConfig gatewayConfig, ClusterConfigurationCache   cache,
                                   ConfigurationChangeListener listener) {
-      super(cache, null, null, listener, 20);
+      super(gatewayConfig, cache, null, null, listener, 20);
     }
 
     void addRestartEvent(final String service, final ApiEvent restartEvent) {

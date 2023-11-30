@@ -72,10 +72,10 @@ public class ImpalaUIServiceModelGenerator extends AbstractServiceModelGenerator
   }
 
   @Override
-  public ServiceModel generateService(ApiService       service,
-                                      ApiServiceConfig serviceConfig,
-                                      ApiRole          role,
-                                      ApiConfigList    roleConfig) throws ApiException {
+  public ServiceModel generateService(ApiService service,
+                                 ApiServiceConfig serviceConfig,
+                                 ApiRole role,
+                                 ApiConfigList roleConfig, ApiServiceConfig coreSettingsConfig) throws ApiException {
     String hostname = role.getHostRef().getHostname();
 
     String sslEnabled = getServiceConfigValue(serviceConfig, SSL_ENABLED);

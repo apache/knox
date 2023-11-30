@@ -29,7 +29,7 @@ public interface SimpleDescriptorMessages {
     void discoveryNotConfiguredForDescriptor(String descriptorName);
 
     @Message(level = MessageLevel.INFO,
-            text = "The \"{0}\" descriptor does not include discovery-type.")
+            text = "The \"{0}\" descriptor does not include discovery-type or discovery-address.")
     void missingDiscoveryTypeInDescriptor(String descriptorName);
 
     @Message(level = MessageLevel.WARN,
@@ -78,4 +78,6 @@ public interface SimpleDescriptorMessages {
             text = "Skipping redeployment of the {0} topology because it already exists and has not changed." )
     void skippingDeploymentOfGeneratedTopology(String topologyName);
 
+    @Message(level = MessageLevel.WARN, text = "Skipping read only descriptor: {0}.")
+    void skipReadOnlyDescriptor(String name);
 }

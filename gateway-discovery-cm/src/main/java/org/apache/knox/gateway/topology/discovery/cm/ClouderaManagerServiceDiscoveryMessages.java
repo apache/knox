@@ -16,6 +16,8 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm;
 
+import java.util.Set;
+
 import com.cloudera.api.swagger.client.ApiException;
 import org.apache.knox.gateway.i18n.messages.Message;
 import org.apache.knox.gateway.i18n.messages.MessageLevel;
@@ -142,6 +144,12 @@ public interface ClouderaManagerServiceDiscoveryMessages {
            text = "Terminating monitoring of {1} @ {0} for configuration changes because there are no referencing descriptors.")
   void stoppingConfigMonitoring(String discoverySource, String clusterName);
 
+  @Message(level = MessageLevel.WARN, text = "Missing property in previously saved service discovery configuration {0}")
+  void missingServiceDiscoveryConfigProperty(String propertyName);
+
+  @Message(level = MessageLevel.DEBUG, text = "There is no cluster configuration for {0} @ {1} to check yet.")
+  void noClusterConfiguration(String clusterName, String discoveryAddress);
+
   @Message(level = MessageLevel.DEBUG, text = "Checking {0} @ {1} for configuration changes...")
   void checkingClusterConfiguration(String clusterName, String discoveryAddress);
 
@@ -190,8 +198,11 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   @Message(level = MessageLevel.DEBUG, text = "There is no any activation event found within the given time period")
   void noActivationEventFound();
 
-  @Message(level = MessageLevel.DEBUG, text = "Activation event relevance: {0} = {1}")
-  void activationEventRelevance(String eventId, String relevance);
+  @Message(level = MessageLevel.DEBUG, text = "Activation event relevance: {0} = {1} ({2} / {3} / {4} / {5})")
+  void activationEventRelevance(String eventId, String relevance, String command, String status, String serviceType, boolean serviceModelGeneratorExists);
+
+  @Message(level = MessageLevel.DEBUG, text = "Scale event relevance: {0} = {1} ({2} / {3} / {4})")
+  void scaleEventRelevance(String eventId, String relevance, String eventCode, String serviceType, boolean serviceModelGeneratorExists);
 
   @Message(level = MessageLevel.DEBUG, text = "Activation event - {0} - has already been processed, skipping ...")
   void activationEventAlreadyProcessed(String eventId);
@@ -247,6 +258,9 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   @Message(level = MessageLevel.DEBUG, text = "Looking up roles from the configured Cloudera Manager discovery endpoint...")
   void lookupRolesFromCM();
 
+  @Message(level = MessageLevel.DEBUG, text = "No roles to look up for this service.")
+  void noRoles();
+
   @Message(level = MessageLevel.DEBUG, text = "Looking up role configuration from the configured Cloudera Manager discovery endpoint...")
   void lookupRoleConfigsFromCM();
 
@@ -255,4 +269,10 @@ public interface ClouderaManagerServiceDiscoveryMessages {
 
   @Message(level = MessageLevel.WARN, text = "The configured maximum retry attempts of {0} may overlap with the configured polling interval settings; using {1} retry attempts")
   void updateMaxRetryAttempts(int configured, int actual);
+
+  @Message(level = MessageLevel.DEBUG, text = "Found upscale event for role: {0} hosts: {1}")
+  void foundUpScaleEvent(String role, Set<String> hosts);
+
+  @Message(level = MessageLevel.DEBUG, text = "Found downscale event for role: {0} hosts: {1}")
+  void foundDownScaleEvent(String role, Set<String> hosts);
 }
