@@ -70,16 +70,16 @@
             <value>false</value>
          </param>
          <param>
-            <name>hadoop.proxyuser.admin.users</name>
-            <value>*</value>
+            <name>hadoop.proxyuser.changeme.users</name>
+            <value>NONE</value>
          </param>
          <param>
-            <name>hadoop.proxyuser.admin.groups</name>
-            <value>*</value>
+            <name>hadoop.proxyuser.changeme.groups</name>
+            <value>NONE</value>
          </param>
          <param>
-            <name>hadoop.proxyuser.admin.hosts</name>
-            <value>*</value>
+            <name>hadoop.proxyuser.changeme.hosts</name>
+            <value>NONE</value>
          </param>
       </provider>
    </gateway>
