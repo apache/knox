@@ -2454,6 +2454,24 @@
                 <groupId>io.fabric8</groupId>
                 <artifactId>docker-maven-plugin</artifactId>
                 <version>${docker-maven-plugin.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.cloud.tools</groupId>
+                        <artifactId>jib-core</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.github.jnr</groupId>
+                        <artifactId>jnr-unixsocket</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.yaml</groupId>
+                        <artifactId>snakeyaml</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <!-- ********** ********** ********** ********** ********** ********** -->
