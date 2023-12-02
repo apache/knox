@@ -34,6 +34,10 @@
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-release</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>docker-maven-plugin</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -59,7 +63,12 @@
         </plugins>
     </build>
     <profiles>
-        <!-- Profile for building official Docker images. Not bound to build phases since that would require anyone build to have the Docker engine installed on their machine -->
+        <!--
+        Profile for building official Docker images.
+        Not bound to build phases since that would require anyone build to have the
+        Docker engine installed on their machine.
+        Builds multi arch docker images, based on ${docker.platforms} property see: https://dmp.fabric8.io/#docker:build
+         -->
         <profile>
             <id>docker</id>
             <build>
@@ -89,47 +98,53 @@
                         </executions>
                     </plugin>
                     <plugin>
-                        <groupId>com.spotify</groupId>
-                        <artifactId>dockerfile-maven-plugin</artifactId>
-                        <version>${dockerfile-maven-plugin.version}</version>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <version>${docker-maven-plugin.version}</version>
                         <configuration>
-                            <contextDirectory>${project.build.outputDirectory}/docker</contextDirectory>
-                            <buildArgs>
-                                <RELEASE_FILE>knox-${project.version}.zip</RELEASE_FILE>
-                            </buildArgs>
+                            <images>
+                                <image>
+                                    <alias>knox-gateway-buildx</alias>
+                                    <name>knox-gateway:${project.version}</name>
+
+                                    <build>
+                                        <contextDir>${project.build.outputDirectory}/docker</contextDir>
+                                        <args>
+                                            <RELEASE_FILE>knox-${project.version}.zip</RELEASE_FILE>
+                                            <ENTRYPOINT>gateway-entrypoint.sh</ENTRYPOINT>
+                                            <EXPOSE_PORT>8443</EXPOSE_PORT>
+                                        </args>
+                                        <entryPoint>gateway-entrypoint.sh</entryPoint>
+                                        <buildx>
+                                            <platforms>
+                                                <platform>${docker.platforms}</platform>
+                                            </platforms>
+                                        </buildx>
+                                    </build>
+                                </image>
+
+                                <image>
+                                    <alias>knox-demo-ldap-buildx</alias>
+                                    <name>knox-demo-ldap:${project.version}</name>
+                                    <build>
+                                        <contextDir>${project.build.outputDirectory}/docker</contextDir>
+                                        <args>
+                                            <RELEASE_FILE>knox-${project.version}.zip</RELEASE_FILE>
+                                            <ENTRYPOINT>ldap-entrypoint.sh</ENTRYPOINT>
+                                            <EXPOSE_PORT>33389</EXPOSE_PORT>
+                                        </args>
+                                        <entryPoint>ldap-entrypoint.sh</entryPoint>
+                                    </build>
+                                </image>
+                            </images>
                         </configuration>
                         <executions>
                             <execution>
-                                <id>gateway</id>
-                                <phase>package</phase>
+                                <id>default</id>
                                 <goals>
                                     <goal>build</goal>
-                                    <goal>tag</goal>
                                 </goals>
-                                <configuration>
-                                    <repository>apache/knox-gateway</repository>
-                                    <tag>${project.version}</tag>
-                                    <buildArgs>
-                                        <ENTRYPOINT>gateway-entrypoint.sh</ENTRYPOINT>
-                                        <EXPOSE_PORT>8443</EXPOSE_PORT>
-                                    </buildArgs>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>ldap</id>
                                 <phase>package</phase>
-                                <goals>
-                                    <goal>build</goal>
-                                    <goal>tag</goal>
-                                </goals>
-                                <configuration>
-                                    <repository>apache/knox-demo-ldap</repository>
-                                    <tag>${project.version}</tag>
-                                    <buildArgs>
-                                        <ENTRYPOINT>ldap-entrypoint.sh</ENTRYPOINT>
-                                        <EXPOSE_PORT>33389</EXPOSE_PORT>
-                                    </buildArgs>
-                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
