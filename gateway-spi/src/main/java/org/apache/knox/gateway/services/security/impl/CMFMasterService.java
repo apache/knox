@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.services.security.impl;
 
-import de.thetaphi.forbiddenapis.SuppressForbidden;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.net.ntp.TimeStamp;
@@ -146,7 +145,7 @@ public class CMFMasterService {
       FileUtils.writeLines(masterFile, StandardCharsets.UTF_8.name(), lines);
 
       // restrict os permissions to only the user running this process
-      chmod("600", masterFile);
+      org.apache.knox.gateway.util.FileUtils.chmod("600", masterFile);
     } catch (IOException e) {
       LOG.failedToPersistMasterSecret(e);
     }
@@ -175,32 +174,5 @@ public class CMFMasterService {
         LOG.failedToInitializeFromPersistentMaster(masterFile.getName(), e);
         throw e;
       }
-  }
-
-  @SuppressForbidden
-  private void chmod(String args, File file) throws IOException {
-      // TODO: move to Java 7 NIO support to add windows as well
-      // TODO: look into the following for Windows: Runtime.getRuntime().exec("attrib -r myFile");
-      if (isUnixEnv()) {
-          //args and file should never be null.
-          if (args == null || file == null) {
-            throw new IllegalArgumentException("nullArg");
-          }
-          if (!file.exists()) {
-            throw new IOException("fileNotFound");
-          }
-
-          // " +" regular expression for 1 or more spaces
-          final String[] argsString = args.split(" +");
-          List<String> cmdList = new ArrayList<>();
-          cmdList.add("/bin/chmod");
-          cmdList.addAll(Arrays.asList(argsString));
-          cmdList.add(file.getAbsolutePath());
-          new ProcessBuilder(cmdList).start();
-      }
-  }
-
-  private boolean isUnixEnv() {
-    return (File.separatorChar == '/');
   }
 }

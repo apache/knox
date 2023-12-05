@@ -24,7 +24,7 @@ import static org.junit.Assert.assertTrue;
 
 
 import com.mysql.cj.jdbc.MysqlDataSource;
-import org.apache.derby.jdbc.ClientDataSource;
+import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
@@ -135,23 +135,19 @@ public class JDBCUtilsTest {
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(EasyMock.anyString())).andReturn(null).anyTimes();
     EasyMock.replay(gatewayConfig, aliasService);
-    assertTrue(JDBCUtils.getDataSource(gatewayConfig, aliasService) instanceof ClientDataSource);
+    assertTrue(JDBCUtils.getDataSource(gatewayConfig, aliasService) instanceof EmbeddedDataSource);
   }
 
   @Test
   public void derbyDataSourceShouldHaveProperConnectionProperties() throws Exception {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(JDBCUtils.DERBY_DB_TYPE).anyTimes();
-    EasyMock.expect(gatewayConfig.getDatabaseHost()).andReturn("localhost").anyTimes();
-    EasyMock.expect(gatewayConfig.getDatabasePort()).andReturn(1527).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("sampleDatabase");
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(JDBCUtils.DATABASE_USER_ALIAS_NAME)).andReturn("user".toCharArray()).anyTimes();
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(JDBCUtils.DATABASE_PASSWORD_ALIAS_NAME)).andReturn("password".toCharArray()).anyTimes();
     EasyMock.replay(gatewayConfig, aliasService);
-    final ClientDataSource dataSource = (ClientDataSource) JDBCUtils.getDataSource(gatewayConfig, aliasService);
-    assertEquals("localhost", dataSource.getServerName());
-    assertEquals(1527, dataSource.getPortNumber());
+    final EmbeddedDataSource dataSource = (EmbeddedDataSource) JDBCUtils.getDataSource(gatewayConfig, aliasService);
     assertEquals("sampleDatabase", dataSource.getDatabaseName());
     assertEquals("user", dataSource.getUser());
     assertEquals("password", dataSource.getPassword());

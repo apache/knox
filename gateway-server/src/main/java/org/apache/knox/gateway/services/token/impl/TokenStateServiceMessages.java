@@ -261,4 +261,14 @@ public interface TokenStateServiceMessages {
 
   @Message(level = MessageLevel.ERROR, text = "An error occurred while fetching impersonation tokens for user {0} from the database : {1}")
   void errorFetchingDoAsTokensForUserFromDatabase(String userName, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.WARN, text = "The configured TokenStateService implementation, {0}, is deprecated!")
+  void deprecatedServiceUsage(String className);
+
+  @Message(level = MessageLevel.INFO, text = "Skipping token migration!")
+  void skipTokenMigration();
+
+  @Message(level = MessageLevel.INFO, text = "{0}")
+  void info(String message);
+
 }

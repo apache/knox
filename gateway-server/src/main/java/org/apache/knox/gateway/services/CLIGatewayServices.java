@@ -53,6 +53,8 @@ public class CLIGatewayServices extends AbstractGatewayServices {
     addService(ServiceType.CRYPTO_SERVICE, gatewayServiceFactory.create(this, ServiceType.CRYPTO_SERVICE, config, options));
 
     addService(ServiceType.TOPOLOGY_SERVICE, gatewayServiceFactory.create(this, ServiceType.TOPOLOGY_SERVICE, config, options));
+
+    addService(ServiceType.TOKEN_STATE_SERVICE, gatewayServiceFactory.create(this, ServiceType.TOKEN_STATE_SERVICE, config, options));
   }
 
   @Override

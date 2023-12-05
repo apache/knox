@@ -539,6 +539,7 @@
                     </excludedGroups>
                     <systemPropertyVariables>
                         <project.version>${project.version}</project.version>
+                        <derby.stream.error.file>/dev/null</derby.stream.error.file>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
@@ -558,6 +559,9 @@
                             <includes>
                                 <include>**/*.java</include>
                             </includes>
+                            <systemPropertyVariables>
+                                <derby.stream.error.file>/dev/null</derby.stream.error.file>
+                            </systemPropertyVariables>
                         </configuration>
                     </execution>
                 </executions>

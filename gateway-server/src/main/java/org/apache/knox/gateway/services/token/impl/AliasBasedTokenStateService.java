@@ -52,13 +52,15 @@ import org.apache.knox.gateway.util.Tokens;
 
 /**
  * A TokenStateService implementation based on the AliasService.
+ *
+ * @deprecated Since 2.1.0
  */
 public class AliasBasedTokenStateService extends AbstractPersistentTokenStateService implements TokenStatePeristerMonitorListener {
 
   static final String TOKEN_ALIAS_SUFFIX_DELIM   = "--";
-  static final String TOKEN_ISSUE_TIME_POSTFIX   = TOKEN_ALIAS_SUFFIX_DELIM + "iss";
-  static final String TOKEN_MAX_LIFETIME_POSTFIX = TOKEN_ALIAS_SUFFIX_DELIM + "max";
-  static final String TOKEN_META_POSTFIX         = TOKEN_ALIAS_SUFFIX_DELIM + "meta";
+  public static final String TOKEN_ISSUE_TIME_POSTFIX   = TOKEN_ALIAS_SUFFIX_DELIM + "iss";
+  public static final String TOKEN_MAX_LIFETIME_POSTFIX = TOKEN_ALIAS_SUFFIX_DELIM + "max";
+  public static final String TOKEN_META_POSTFIX         = TOKEN_ALIAS_SUFFIX_DELIM + "meta";
 
   protected AliasService aliasService;
 
@@ -80,6 +82,7 @@ public class AliasBasedTokenStateService extends AbstractPersistentTokenStateSer
 
   @Override
   public void init(final GatewayConfig config, final Map<String, String> options) throws ServiceLifecycleException {
+    log.deprecatedServiceUsage(this.getClass().getCanonicalName());
     super.init(config, options);
     if (aliasService == null) {
       throw new ServiceLifecycleException("The required AliasService reference has not been set.");

@@ -28,6 +28,7 @@ import io.restassured.response.Response;
 import io.restassured.specification.ResponseSpecification;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -149,6 +150,7 @@ public class GatewayBasicFuncTest {
   public static void setUpBeforeClass() throws Exception {
     LOG_ENTER();
     GatewayTestConfig config = new GatewayTestConfig();
+    driver.config = config;
     driver.setResourceBase(GatewayBasicFuncTest.class);
     driver.setupLdap(0);
     driver.setupService("WEBHDFS", "http://" + TEST_HOST + ":50070/webhdfs", "/cluster/webhdfs", USE_MOCK_SERVICES);
@@ -3710,8 +3712,7 @@ public class GatewayBasicFuncTest {
 
     String[] args = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", gatewayAddress.getHostName(),
         "--port", gatewayPort, "--u", "kminder","--p", "kminder-password" };
-    KnoxCLI cli = new KnoxCLI();
-    cli.run(args);
+    getKnoxCli().run(args);
 
     Assume.assumeTrue("Gateway port should not contain status code",
         !gatewayPort.contains("404") && !gatewayPort.contains("403"));
@@ -3724,8 +3725,7 @@ public class GatewayBasicFuncTest {
     String[] args2 = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", gatewayAddress.getHostName(),
         "--port", gatewayPort};
 
-    cli = new KnoxCLI();
-    cli.run(args2);
+    getKnoxCli().run(args2);
     assertThat(outContent.toString(StandardCharsets.UTF_8.name()), (containsString("Username and/or password not supplied. Expect HTTP 401 Unauthorized responses.")));
     outContent.reset();
 
@@ -3733,8 +3733,7 @@ public class GatewayBasicFuncTest {
     String[] args3 = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", "bad-host",
         "--port", "0", "--u", "guest", "--p", "guest-password" };
 
-    cli = new KnoxCLI();
-    cli.run(args3);
+    getKnoxCli().run(args3);
     assertThat(outContent.toString(StandardCharsets.UTF_8.name()).toLowerCase(Locale.ROOT),
         either(containsString("nodename nor servname provided")).or(containsString("name or service not known"))
             .or(containsString("//bad-host:0/")));
@@ -3743,8 +3742,7 @@ public class GatewayBasicFuncTest {
     String[] args4 = {"service-test", "--master", "knox", "--cluster", driver.clusterName, "--hostname", gatewayAddress.getHostName(),
         "--port", "543", "--u", "mapred", "--p", "mapred-password" };
 
-    cli = new KnoxCLI();
-    cli.run(args4);
+    getKnoxCli().run(args4);
     assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("failed: Connection refused"));
     outContent.reset();
 
@@ -3752,14 +3750,19 @@ public class GatewayBasicFuncTest {
     String[] args5 = {"service-test", "--master", "knox", "--hostname", gatewayAddress.getHostName(),
         "--port", "543", "--u", "mapred", "--p", "mapred-password" };
 
-    cli = new KnoxCLI();
-    cli.run(args5);
+    getKnoxCli().run(args5);
     assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("--cluster argument is required"));
     outContent.reset();
 
 //    Reset the out content
     System.setOut(out);
     LOG_EXIT();
+  }
+
+  private KnoxCLI getKnoxCli() {
+    final KnoxCLI cli = new KnoxCLI();
+    cli.setConf((Configuration) driver.config);
+    return cli;
   }
 
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )

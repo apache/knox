@@ -188,9 +188,9 @@ export class TokenGenerationComponent implements OnInit {
   private decideTssMessage() {
     if (this.tssStatus.tokenManagementEnabled) {
       if (this.tssStatus.allowedTssForTokengen) {
-        if (this.tssStatus.actualTssBackend === 'AliasBasedTokenStateService') {
-          this.setTssMessage('warning', `Token management backend is configured to store tokens in keystores.
-            This is only valid non-HA environments!`);
+        if (this.tssStatus.actualTssBackend === 'DerbyDBTokenStateService') {
+          this.setTssMessage('warning', `Token management backend is configured to store tokens in a Derby DB on local file system.
+            This is only valid in non-HA environments!`);
         } else {
           this.setTssMessage('info', 'Token management backend is properly configured for HA and production deployments.');
         }

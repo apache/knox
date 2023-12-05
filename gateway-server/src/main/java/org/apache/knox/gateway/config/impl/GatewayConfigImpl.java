@@ -280,8 +280,14 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   /* property that specifies list of services for which we need to append service name to the X-Forward-Context header */
   public static final String X_FORWARD_CONTEXT_HEADER_APPEND_SERVICES = GATEWAY_CONFIG_FILE_PREFIX + ".xforwarded.header.context.append.servicename";
 
-  private static final String TOKEN_STATE_SERVER_MANAGED = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.exp.server-managed";
-  private static final String USERS_CAN_SEE_ALL_TOKENS = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.management.users.can.see.all.tokens";
+  private static final String KNOX_TOKEN_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token";
+  private static final String TOKEN_STATE_SERVER_MANAGED = KNOX_TOKEN_PREFIX + ".exp.server-managed";
+  private static final String USERS_CAN_SEE_ALL_TOKENS = KNOX_TOKEN_PREFIX + ".management.users.can.see.all.tokens";
+  private static final String SKIP_TOKEN_MIGRATION= KNOX_TOKEN_PREFIX + ".migration.skip";
+  private static final String ARCHIVE_MIGRATED_TOKENS= KNOX_TOKEN_PREFIX + ".migration.archive.tokens";
+  private static final String MIGRATE_EXPIRED_TOKENS= KNOX_TOKEN_PREFIX + ".migration.include.expired.tokens";
+  private static final String TOKEN_MIGRATION_PRINTS_VERBOSE_MESSAGES= KNOX_TOKEN_PREFIX + ".migration.verbose";
+  private static final String TOKEN_MIGRATION_PROGRESS_COUNT= KNOX_TOKEN_PREFIX + ".migration.progress.count";
 
   private static final String CLOUDERA_MANAGER_DESCRIPTORS_MONITOR_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.descriptors.monitor.interval";
   private static final String CLOUDERA_MANAGER_ADVANCED_SERVICE_DISCOVERY_CONF_MONITOR_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.advanced.service.discovery.config.monitor.interval";
@@ -295,12 +301,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final long CLOUDERA_MANAGER_SERVICE_DISCOVERY_READ_TIMEOUT_DEFAULT = 10000;
   private static final long CLOUDERA_MANAGER_SERVICE_DISCOVERY_WRITE_TIMEOUT_DEFAULT = 10000;
 
-  private static final String KNOX_TOKEN_EVICTION_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.eviction.interval";
-  private static final String KNOX_TOKEN_EVICTION_GRACE_PERIOD = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.eviction.grace.period";
-  private static final String KNOX_TOKEN_ALIAS_PERSISTENCE_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.state.alias.persistence.interval";
-  private static final String KNOX_TOKEN_PERMISSIVE_VALIDATION_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.permissive.validation";
-  private static final String KNOX_TOKEN_HASH_ALGORITHM = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.hash.algorithm";
-  public static final String KNOX_TOKEN_USER_LIMIT = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.limit.per.user";
+  private static final String KNOX_TOKEN_EVICTION_INTERVAL = KNOX_TOKEN_PREFIX + ".eviction.interval";
+  private static final String KNOX_TOKEN_EVICTION_GRACE_PERIOD = KNOX_TOKEN_PREFIX + ".eviction.grace.period";
+  private static final String KNOX_TOKEN_ALIAS_PERSISTENCE_INTERVAL = KNOX_TOKEN_PREFIX + ".state.alias.persistence.interval";
+  private static final String KNOX_TOKEN_PERMISSIVE_VALIDATION_ENABLED = KNOX_TOKEN_PREFIX + ".permissive.validation";
+  private static final String KNOX_TOKEN_HASH_ALGORITHM = KNOX_TOKEN_PREFIX + ".hash.algorithm";
+  public static final String KNOX_TOKEN_USER_LIMIT = KNOX_TOKEN_PREFIX + ".limit.per.user";
   private static final long KNOX_TOKEN_EVICTION_INTERVAL_DEFAULT = TimeUnit.MINUTES.toSeconds(5);
   private static final long KNOX_TOKEN_EVICTION_GRACE_PERIOD_DEFAULT = TimeUnit.HOURS.toSeconds(24);
   private static final long KNOX_TOKEN_ALIAS_PERSISTENCE_INTERVAL_DEFAULT = TimeUnit.SECONDS.toSeconds(15);
@@ -318,11 +324,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String KNOX_INCOMING_XFORWARDED_ENABLED = "gateway.incoming.xforwarded.enabled";
 
   //Gateway Database related properties
-  private static final String GATEWAY_DATABASE_TYPE = GATEWAY_CONFIG_FILE_PREFIX + ".database.type";
-  private static final String GATEWAY_DATABASE_CONN_URL = GATEWAY_CONFIG_FILE_PREFIX + ".database.connection.url";
-  private static final String GATEWAY_DATABASE_HOST =  GATEWAY_CONFIG_FILE_PREFIX + ".database.host";
-  private static final String GATEWAY_DATABASE_PORT =  GATEWAY_CONFIG_FILE_PREFIX + ".database.port";
-  private static final String GATEWAY_DATABASE_NAME =  GATEWAY_CONFIG_FILE_PREFIX + ".database.name";
+  public static final String GATEWAY_DATABASE_TYPE = GATEWAY_CONFIG_FILE_PREFIX + ".database.type";
+  public static final String GATEWAY_DATABASE_CONN_URL = GATEWAY_CONFIG_FILE_PREFIX + ".database.connection.url";
+  public static final String GATEWAY_DATABASE_HOST =  GATEWAY_CONFIG_FILE_PREFIX + ".database.host";
+  public static final String GATEWAY_DATABASE_PORT =  GATEWAY_CONFIG_FILE_PREFIX + ".database.port";
+  public static final String GATEWAY_DATABASE_NAME =  GATEWAY_CONFIG_FILE_PREFIX + ".database.name";
   private static final String GATEWAY_DATABASE_SSL_ENABLED =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.enabled";
   private static final String GATEWAY_DATABASE_VERIFY_SERVER_CERT =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.verify.server.cert";
   private static final String GATEWAY_DATABASE_TRUSTSTORE_FILE =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.truststore.file";
@@ -1532,6 +1538,31 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
       }
     });
     return pathAliases;
+  }
+
+  @Override
+  public boolean skipTokenMigration() {
+    return getBoolean(SKIP_TOKEN_MIGRATION, false);
+  }
+
+  @Override
+  public boolean archiveMigratedTokens() {
+    return getBoolean(ARCHIVE_MIGRATED_TOKENS, false);
+  }
+
+  @Override
+  public boolean migrateExpiredTokens() {
+    return getBoolean(MIGRATE_EXPIRED_TOKENS, false);
+  }
+
+  @Override
+  public boolean printVerboseTokenMigrationMessages() {
+    return getBoolean(TOKEN_MIGRATION_PRINTS_VERBOSE_MESSAGES, true);
+  }
+
+  @Override
+  public int getTokenMigrationProgressCount() {
+    return getInt(TOKEN_MIGRATION_PROGRESS_COUNT, 10);
   }
 
 }

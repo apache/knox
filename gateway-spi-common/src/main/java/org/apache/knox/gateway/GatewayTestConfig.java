@@ -961,7 +961,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public String getDatabaseType() {
-    return null;
+    return "derbydb";
   }
 
   @Override
@@ -981,9 +981,8 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public String getDatabaseName() {
-    return null;
+    return Paths.get(getGatewaySecurityDir(), "tokens").toString();
   }
-
 
   @Override
   public boolean isDatabaseSslEnabled() {
@@ -1081,4 +1080,30 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public long getServiceDiscoveryWriteTimeoutMillis() {
     return -1;
   }
+
+  @Override
+  public boolean skipTokenMigration() {
+    return true;
+  }
+
+  @Override
+  public boolean archiveMigratedTokens() {
+    return false;
+  }
+
+  @Override
+  public boolean migrateExpiredTokens() {
+    return false;
+  }
+
+  @Override
+  public boolean printVerboseTokenMigrationMessages() {
+    return false;
+  }
+
+  @Override
+  public int getTokenMigrationProgressCount() {
+    return 1;
+  }
+
 }
