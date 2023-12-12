@@ -25,9 +25,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -36,19 +35,16 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.topology.discovery.advanced.AdvancedServiceDiscoveryConfig;
-import org.apache.knox.gateway.topology.discovery.advanced.AdvancedServiceDiscoveryConfigChangeListener;
 import org.apache.knox.gateway.util.JsonUtils;
 
 /**
  * Monitoring KNOX_DESCRIPTOR_DIR for *.hxr files - which is a Hadoop XML configuration - and processing those files if they were modified
  * since the last time it they were processed
  */
-public class HadoopXmlResourceMonitor implements AdvancedServiceDiscoveryConfigChangeListener {
+public class HadoopXmlResourceMonitor {
 
   private static final String HADOOP_XML_RESOURCE_FILE_EXTENSION = ".hxr";
   private static final HadoopXmlResourceMessages LOG = MessagesFactory.get(HadoopXmlResourceMessages.class);
@@ -72,31 +68,31 @@ public class HadoopXmlResourceMonitor implements AdvancedServiceDiscoveryConfigC
   public void setupMonitor() {
     if (monitoringInterval > 0) {
       final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(new BasicThreadFactory.Builder().namingPattern("ClouderaManagerDescriptorMonitor-%d").build());
-      monitorClouderaManagerDescriptors(false); // call it explicitly first to generate descriptors up front, so that the health checker can pick them up
-      executorService.scheduleAtFixedRate(() -> monitorClouderaManagerDescriptors(false), monitoringInterval, monitoringInterval, TimeUnit.MILLISECONDS);
+      monitorClouderaManagerDescriptors(); // call it explicitly first to generate descriptors up front, so that the health checker can pick them up
+      executorService.scheduleAtFixedRate(() -> monitorClouderaManagerDescriptors(), monitoringInterval, monitoringInterval, TimeUnit.MILLISECONDS);
       LOG.monitoringHadoopXmlResources(descriptorsDir);
     }
   }
 
-  private void monitorClouderaManagerDescriptors(boolean force) {
+  private void monitorClouderaManagerDescriptors() {
     final File[] clouderaManagerDescriptorFiles = new File(descriptorsDir).listFiles((FileFilter) new SuffixFileFilter(HADOOP_XML_RESOURCE_FILE_EXTENSION));
     for (File clouderaManagerDescriptorFile : clouderaManagerDescriptorFiles) {
-      monitorClouderaManagerDescriptor(Paths.get(clouderaManagerDescriptorFile.getAbsolutePath()), force);
+      monitorClouderaManagerDescriptor(Paths.get(clouderaManagerDescriptorFile.getAbsolutePath()));
     }
   }
 
-  private void monitorClouderaManagerDescriptor(Path clouderaManagerDescriptorFile, boolean force) {
+  private void monitorClouderaManagerDescriptor(Path clouderaManagerDescriptorFile) {
     monitorLock.lock();
     try {
       if (Files.isReadable(clouderaManagerDescriptorFile)) {
         final FileTime lastModifiedTime = Files.getLastModifiedTime(clouderaManagerDescriptorFile);
         FileTime lastReloadTime = lastReloadTimes.get(clouderaManagerDescriptorFile);
-        if (force || lastReloadTime == null || lastReloadTime.compareTo(lastModifiedTime) < 0) {
+        if (lastReloadTime == null || lastReloadTime.compareTo(lastModifiedTime) < 0) {
           lastReloadTimes.put(clouderaManagerDescriptorFile, lastModifiedTime);
-          LOG.processHadoopXmlResource(clouderaManagerDescriptorFile.toString(), force, lastReloadTime, lastModifiedTime);
+          LOG.processHadoopXmlResource(clouderaManagerDescriptorFile.toString(), lastReloadTime, lastModifiedTime);
           processClouderaManagerDescriptor(clouderaManagerDescriptorFile.toString());
         } else {
-          LOG.skipMonitorHadoopXmlResource(clouderaManagerDescriptorFile.toString(), force, lastReloadTime, lastModifiedTime);
+          LOG.skipMonitorHadoopXmlResource(clouderaManagerDescriptorFile.toString(), lastReloadTime, lastModifiedTime);
         }
       } else {
         LOG.failedToMonitorHadoopXmlResource(clouderaManagerDescriptorFile.toString(), "File is not readable!", null);
@@ -169,12 +165,4 @@ public class HadoopXmlResourceMonitor implements AdvancedServiceDiscoveryConfigC
     return true;
   }
 
-  @Override
-  public void onAdvancedServiceDiscoveryConfigurationChange(Properties newConfiguration) {
-    final String topologyName = new AdvancedServiceDiscoveryConfig(newConfiguration).getTopologyName();
-    if (StringUtils.isBlank(topologyName)) {
-      throw new IllegalArgumentException("Invalid advanced service discovery configuration: topology name is missing!");
-    }
-    monitorClouderaManagerDescriptors(true);
-  }
 }
