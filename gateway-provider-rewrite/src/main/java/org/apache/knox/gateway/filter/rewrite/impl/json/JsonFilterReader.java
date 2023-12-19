@@ -77,6 +77,11 @@ class JsonFilterReader extends Reader {
     bufferingLevel = null;
     bufferingConfig = null;
     this.config = config;
+    jsonParserConfigInit();
+  }
+
+  private void jsonParserConfigInit() {
+    parser.enable(com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_NON_NUMERIC_NUMBERS);
   }
 
   @Override
