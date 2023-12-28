@@ -155,6 +155,9 @@
   <rule dir="OUT" name="HDFSUI/hdfs/outbound/logs/files" pattern="/logs/{**}">
     <rewrite template="{gateway.url}/hdfs/logs/{**}?host={$inboundurl[host]}"/>
   </rule>
+  <rule dir="OUT" name="HDFSUI/hdfs/outbound/topology" pattern="topology">
+    <rewrite template="{gateway.url}/hdfs/topology/?host={$inboundurl[host]}"/>
+  </rule>
 
   <!-- for explorer page rewrite -->
   <rule dir="OUT" name="HDFSUI/hdfs/outbound/explorerhtml/tab-overview" pattern="dfshealth.html#tab-overview">
