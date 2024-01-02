@@ -581,7 +581,7 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.ERROR, text = "An error occurred while processing {0} : {1}" )
   void simpleDescriptorHandlingError(String simpleDesc,
-                                     @StackTrace(level = MessageLevel.DEBUG) Exception e);
+                                     @StackTrace(level = MessageLevel.INFO) Exception e);
 
   @Message(level = MessageLevel.DEBUG, text = "Successfully wrote configuration: {0}")
   void wroteConfigurationFile(String filePath);
