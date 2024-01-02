@@ -93,6 +93,15 @@ public class JsonFilterReaderTest {
   }
 
   @Test
+  public void testNaN() throws IOException {
+    String inputJson = "NaN";
+    StringReader inputReader = new StringReader( inputJson );
+    JsonFilterReader filterReader = new TestJsonFilterReader( inputReader, null );
+    String outputJson = new String( IOUtils.toCharArray( filterReader ) );
+    JsonAssert.with(outputJson).assertThat("$", is(inputJson));
+  }
+
+  @Test
   public void testNull() throws IOException {
     String inputJson = "null";
     StringReader inputReader = new StringReader( inputJson );
