@@ -42,6 +42,7 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.topology.TopologyService;
+import org.apache.knox.gateway.services.topology.impl.GatewayStatusService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscoveryMessages;
@@ -155,6 +156,8 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
   private final GatewayConfig gatewayConfig;
 
+  private GatewayStatusService gatewayStatusService;
+
   PollingConfigurationAnalyzer(final GatewayConfig gatewayConfig,
                                final ClusterConfigurationCache   configCache,
                                final AliasService                aliasService,
@@ -207,56 +210,68 @@ public class PollingConfigurationAnalyzer implements Runnable {
     log.startedClouderaManagerConfigMonitor(interval);
     isActive = true;
 
+    boolean gatewayStatusOk = false;
     while (isActive) {
-      try {
-        final List<String> clustersToStopMonitoring = new ArrayList<>();
-
-        for (Map.Entry<String, List<String>> entry : configCache.getClusterNames().entrySet()) {
-          String address = entry.getKey();
-          for (String clusterName : entry.getValue()) {
-            if (configCache.getDiscoveryConfig(address, clusterName) == null) {
-              log.noClusterConfiguration(clusterName, address);
-              continue;
-            }
-            log.checkingClusterConfiguration(clusterName, address);
-
-            // Check here for existing descriptor references, and add to the removal list if there are not any
-            if (!clusterReferencesExist(address, clusterName)) {
-              clustersToStopMonitoring.add(address + FQCN_DELIM + clusterName);
-              continue;
-            }
-
-            // Configuration changes don't mean anything without corresponding service start/restarts. Therefore, monitor
-            // start events, and check the configuration only of the restarted service(s) to identify changes
-            // that should trigger re-discovery.
-            final List<RelevantEvent> relevantEvents = getRelevantEvents(address, clusterName);
-
-            // If there are no recent start events, then nothing to do now
-            if (!relevantEvents.isEmpty()) {
-              // If a change has occurred, notify the listeners
-              if (hasConfigChanged(address, clusterName, relevantEvents) || hasScaleEvent(relevantEvents)) {
-                notifyChangeListener(address, clusterName);
-              }
-              // these events should not be processed again even if the next CM query result contains them
-              relevantEvents.forEach(re -> processedEvents.put(re.auditEvent.getId(), 1L));
-            }
-          }
-        }
-
-        // Remove outdated entries from the cache
-        for (String fqcn : clustersToStopMonitoring) {
-          String[] parts = fqcn.split(FQCN_DELIM);
-          stopMonitoring(parts[0], parts[1]);
-        }
-        clustersToStopMonitoring.clear(); // reset the removal list
-
-      } catch (Exception e) {
-        log.clouderaManagerConfigurationChangesMonitoringError(e);
+      if (!gatewayStatusOk) {
+        gatewayStatusOk = getGatewayStatusService() != null && getGatewayStatusService().status();
+      }
+      if (gatewayStatusOk) {
+        monitorClusterConfigurationChanges();
+      } else {
+        log.gatewayIsNotYetReadyToMonitorClouderaManagerConfigs();
       }
       waitFor(interval);
     }
 
     log.stoppedClouderaManagerConfigMonitor();
+  }
+
+  private void monitorClusterConfigurationChanges() {
+    try {
+      final List<String> clustersToStopMonitoring = new ArrayList<>();
+
+      for (Map.Entry<String, List<String>> entry : configCache.getClusterNames().entrySet()) {
+        String address = entry.getKey();
+        for (String clusterName : entry.getValue()) {
+          if (configCache.getDiscoveryConfig(address, clusterName) == null) {
+            log.noClusterConfiguration(clusterName, address);
+            continue;
+          }
+          log.checkingClusterConfiguration(clusterName, address);
+
+          // Check here for existing descriptor references, and add to the removal list if there are not any
+          if (!clusterReferencesExist(address, clusterName)) {
+            clustersToStopMonitoring.add(address + FQCN_DELIM + clusterName);
+            continue;
+          }
+
+          // Configuration changes don't mean anything without corresponding service start/restarts. Therefore, monitor
+          // start events, and check the configuration only of the restarted service(s) to identify changes
+          // that should trigger re-discovery.
+          final List<RelevantEvent> relevantEvents = getRelevantEvents(address, clusterName);
+
+          // If there are no recent start events, then nothing to do now
+          if (!relevantEvents.isEmpty()) {
+            // If a change has occurred, notify the listeners
+            if (hasConfigChanged(address, clusterName, relevantEvents) || hasScaleEvent(relevantEvents)) {
+              notifyChangeListener(address, clusterName);
+            }
+            // these events should not be processed again even if the next CM query result contains them
+            relevantEvents.forEach(re -> processedEvents.put(re.auditEvent.getId(), 1L));
+          }
+        }
+      }
+
+      // Remove outdated entries from the cache
+      for (String fqcn : clustersToStopMonitoring) {
+        String[] parts = fqcn.split(FQCN_DELIM);
+        stopMonitoring(parts[0], parts[1]);
+      }
+      clustersToStopMonitoring.clear(); // reset the removal list
+
+    } catch (Exception e) {
+      log.clouderaManagerConfigurationChangesMonitoringError(e);
+    }
   }
 
   private boolean hasScaleEvent(List<RelevantEvent> relevantEvents) {
@@ -370,6 +385,16 @@ public class PollingConfigurationAnalyzer implements Runnable {
       }
     }
     return ccms;
+  }
+
+  private GatewayStatusService getGatewayStatusService() {
+    if (gatewayStatusService == null) {
+      final GatewayServices gatewayServices = GatewayServer.getGatewayServices();
+      if (gatewayServices != null) {
+        gatewayStatusService = gatewayServices.getService(ServiceType.GATEWAY_STATUS_SERVICE);
+      }
+    }
+    return gatewayStatusService;
   }
 
   /**

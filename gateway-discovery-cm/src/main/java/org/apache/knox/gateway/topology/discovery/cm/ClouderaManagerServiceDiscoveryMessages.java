@@ -133,6 +133,10 @@ public interface ClouderaManagerServiceDiscoveryMessages {
            text = "Started ClouderaManager cluster configuration monitor (checking every {0} seconds)")
   void startedClouderaManagerConfigMonitor(long pollingInterval);
 
+  @Message(level = MessageLevel.INFO,
+      text = "The Knox Gateway is not yet ready to monitor ClouderaManager cluster configuration changes.")
+  void gatewayIsNotYetReadyToMonitorClouderaManagerConfigs();
+
   @Message(level = MessageLevel.INFO, text = "Stopping ClouderaManager cluster configuration monitor")
   void stoppingClouderaManagerConfigMonitor();
 

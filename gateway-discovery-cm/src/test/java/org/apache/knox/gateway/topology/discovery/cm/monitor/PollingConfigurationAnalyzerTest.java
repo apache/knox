@@ -27,11 +27,13 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.topology.TopologyService;
+import org.apache.knox.gateway.services.topology.impl.GatewayStatusService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.model.hdfs.NameNodeServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.hive.HiveOnTezServiceModelGenerator;
 import org.easymock.EasyMock;
+import org.junit.After;
 import org.junit.Test;
 
 import java.io.File;
@@ -57,6 +59,11 @@ import static org.junit.Assert.assertTrue;
 
 
 public class PollingConfigurationAnalyzerTest {
+
+  @After
+  public void tearDown() {
+    setGatewayServices(null);
+  }
 
   @Test(expected = IllegalArgumentException.class)
   public void testRestartEventWithWrongApiEventCategory() {
@@ -341,11 +348,16 @@ public class PollingConfigurationAnalyzerTest {
                                               return null;
                                             }).once();
 
+    //GatewayStatusService mock
+    final GatewayStatusService gatewayStatusService = EasyMock.createNiceMock(GatewayStatusService.class);
+    EasyMock.expect(gatewayStatusService.status()).andReturn(Boolean.TRUE).anyTimes();
+
     // GatewayServices mock
     GatewayServices gws = EasyMock.createNiceMock(GatewayServices.class);
     EasyMock.expect(gws.getService(ServiceType.TOPOLOGY_SERVICE)).andReturn(ts).anyTimes();
     EasyMock.expect(gws.getService(ServiceType.CLUSTER_CONFIGURATION_MONITOR_SERVICE)).andReturn(ccms).anyTimes();
-    EasyMock.replay(ts, ccms, gws);
+    EasyMock.expect(gws.getService(ServiceType.GATEWAY_STATUS_SERVICE)).andReturn(gatewayStatusService).anyTimes();
+    EasyMock.replay(ts, ccms, gatewayStatusService, gws);
 
     try {
       setGatewayServices(gws);
@@ -413,6 +425,26 @@ public class PollingConfigurationAnalyzerTest {
     doTestEventWithConfigChange(revisionEvent, clusterName);
   }
 
+  @Test
+  public void shouldNotPerformClusterConfigurationChangeMonitoringIfKnoxGatewayIsNotYetReady() {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster 10";
+
+    // Simulate a successful restart waiting for staleness event with id = 123
+    final ApiEvent rollingRestartEvent = createApiEvent(clusterName, HiveOnTezServiceModelGenerator.SERVICE_TYPE, HiveOnTezServiceModelGenerator.SERVICE,
+        PollingConfigurationAnalyzer.RESTART_WAITING_FOR_STALENESS_SUCCESS_COMMAND, PollingConfigurationAnalyzer.SUCCEEDED_STATUS, "EV_CLUSTER_RESTARTED",
+        "123");
+
+    final ChangeListener listener = new ChangeListener();
+    final TestablePollingConfigAnalyzer pca = buildPollingConfigAnalyzer(address, clusterName, Collections.emptyMap(), listener, false);
+
+    // this should NOT trigger a notification because the Knox Gateway is not yet
+    // ready (by GatewayStatusService.status())
+    listener.clearNotification();
+    doTestEvent(rollingRestartEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap(), pca);
+    assertFalse("Unexpected change notification", listener.wasNotified(address, clusterName));
+  }
+
   private void doTestStartEvent(final ApiEventCategory category) {
     final String clusterName = "My Cluster";
     final String serviceType = NameNodeServiceModelGenerator.SERVICE_TYPE;
@@ -472,6 +504,11 @@ public class PollingConfigurationAnalyzerTest {
 
   private TestablePollingConfigAnalyzer buildPollingConfigAnalyzer(final String address, final String clusterName,
       final Map<String, ServiceConfigurationModel> serviceConfigurationModels, ChangeListener listener) {
+    return buildPollingConfigAnalyzer(address, clusterName, serviceConfigurationModels, listener, true);
+  }
+
+  private TestablePollingConfigAnalyzer buildPollingConfigAnalyzer(final String address, final String clusterName,
+      final Map<String, ServiceConfigurationModel> serviceConfigurationModels, ChangeListener listener, boolean isKnoxGatewayReady) {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfig.getIncludedSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
     EasyMock.expect(gatewayConfig.getIncludedSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
@@ -494,6 +531,19 @@ public class PollingConfigurationAnalyzerTest {
     EasyMock.expect(configCache.getClusterNames()).andReturn(clusterNames).anyTimes();
     EasyMock.expect(configCache.getClusterServiceConfigurations(address, clusterName)).andReturn(serviceConfigurationModels).anyTimes();
     EasyMock.replay(configCache);
+
+    if (isKnoxGatewayReady) {
+      // GatewayStatusService mock
+      final GatewayStatusService gatewayStatusService = EasyMock.createNiceMock(GatewayStatusService.class);
+      EasyMock.expect(gatewayStatusService.status()).andReturn(Boolean.TRUE).anyTimes();
+
+      // GatewayServices mock
+      GatewayServices gws = EasyMock.createNiceMock(GatewayServices.class);
+      EasyMock.expect(gws.getService(ServiceType.GATEWAY_STATUS_SERVICE)).andReturn(gatewayStatusService).anyTimes();
+      EasyMock.replay(gatewayStatusService, gws);
+
+      setGatewayServices(gws);
+    }
 
     return new TestablePollingConfigAnalyzer(gatewayConfig, configCache, listener);
   }
