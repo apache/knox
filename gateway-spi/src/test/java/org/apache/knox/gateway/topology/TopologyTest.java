@@ -90,6 +90,25 @@ public class TopologyTest {
   }
 
   @Test
+  public void testGettingMultipleProvidersReturnsTheFirstEnabled() {
+    Topology topology = new Topology();
+
+    Provider disabledProvider = new Provider();
+    disabledProvider.setRole("identity-assertion");
+    disabledProvider.setName("disabled_prov");
+    disabledProvider.setEnabled(false);
+    topology.addProvider(disabledProvider);
+
+    Provider enabledProvider = new Provider();
+    enabledProvider.setName("enabled_prov");
+    enabledProvider.setRole("identity-assertion");
+    enabledProvider.setEnabled(true);
+    topology.addProvider(enabledProvider);
+
+    assertEquals("enabled_prov", topology.getProvider("identity-assertion", null).getName());
+  }
+
+  @Test
   public void testEmptyTopologiesWithSameName() {
     final String name = "tName";
     Topology t1 = createTopology(name, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
