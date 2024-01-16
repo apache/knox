@@ -21,6 +21,7 @@ import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
 import org.apache.knox.gateway.descriptor.ResourceDescriptor;
 import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Service;
+import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.Version;
 
 import java.net.URISyntaxException;
@@ -82,7 +83,9 @@ public abstract class ServiceDeploymentContributorBase extends DeploymentContrib
   protected void addIdentityAssertionFilter( DeploymentContext context, Service service, ResourceDescriptor resource) {
     if( topologyContainsProviderType( context, "authentication" ) ||
         topologyContainsProviderType( context, "federation"  ) ) {
-      context.contributeFilter( service, resource, "identity-assertion", null, null );
+      Topology topology = context.getTopology();
+      Provider activeProvider = topology.getProvider("identity-assertion", null);
+      context.contributeFilter(service, resource, "identity-assertion", activeProvider != null ? activeProvider.getName() : null, null);
     }
   }
 

@@ -157,7 +157,10 @@ public class Topology {
         provider = nameMap.get( name );
       }
       else {
-        provider = (Provider) nameMap.values().toArray()[0];
+        provider = nameMap.values().stream()
+                .filter(Provider::isEnabled)
+                .findFirst()
+                .orElse((Provider) nameMap.values().toArray()[0]);
       }
     }
     return provider;
