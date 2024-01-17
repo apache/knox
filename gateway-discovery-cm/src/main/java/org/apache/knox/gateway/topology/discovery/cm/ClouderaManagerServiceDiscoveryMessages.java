@@ -19,7 +19,6 @@ package org.apache.knox.gateway.topology.discovery.cm;
 import java.util.Set;
 
 import com.cloudera.api.swagger.client.ApiException;
-import com.squareup.okhttp.OkHttpClient;
 import org.apache.knox.gateway.i18n.messages.Message;
 import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
