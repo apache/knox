@@ -1067,4 +1067,18 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return Collections.emptyMap();
   }
 
+  @Override
+  public long getServiceDiscoveryConnectTimeoutMillis() {
+    return -1;
+  }
+
+  @Override
+  public long getServiceDiscoveryReadTimeoutMillis() {
+    return -1;
+  }
+
+  @Override
+  public long getServiceDiscoveryWriteTimeoutMillis() {
+    return -1;
+  }
 }
