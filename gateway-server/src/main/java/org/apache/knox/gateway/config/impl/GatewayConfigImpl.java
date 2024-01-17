@@ -291,9 +291,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_READ_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.read.timeout.msec";
   private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_WRITE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.write.timeout.msec";
 
-  private static final long CLOUDERA_MANAGER_SERVICE_DISCOVERY_CONNECT_TIMEOUT_DEFAULT = 10000;
-  private static final long CLOUDERA_MANAGER_SERVICE_DISCOVERY_READ_TIMEOUT_DEFAULT = 10000;
-  private static final long CLOUDERA_MANAGER_SERVICE_DISCOVERY_WRITE_TIMEOUT_DEFAULT = 10000;
+  private static final long CLOUDERA_MANAGER_SERVICE_DISCOVERY_CONNECT_TIMEOUT_DEFAULT = 20000;
+  private static final long CLOUDERA_MANAGER_SERVICE_DISCOVERY_READ_TIMEOUT_DEFAULT = 20000;
+  private static final long CLOUDERA_MANAGER_SERVICE_DISCOVERY_WRITE_TIMEOUT_DEFAULT = 20000;
 
   private static final String KNOX_TOKEN_EVICTION_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.eviction.interval";
   private static final String KNOX_TOKEN_EVICTION_GRACE_PERIOD = GATEWAY_CONFIG_FILE_PREFIX + ".knox.token.eviction.grace.period";
