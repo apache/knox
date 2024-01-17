@@ -276,6 +276,6 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   @Message(level = MessageLevel.DEBUG, text = "Found downscale event for role: {0} hosts: {1}")
   void foundDownScaleEvent(String role, Set<String> hosts);
 
-  @Message(level = MessageLevel.DEBUG, text = "Service discovery client connect timeout {0}ms, read timeout {1}ms, write timeout {2}ms")
+  @Message(level = MessageLevel.DEBUG, text = "Service discovery client connect timeout {0} ms, read timeout {1} ms, write timeout {2} ms")
   void discoveryClientTimeout(long connectTimeout, long readTimeout, long writeTimeout);
 }
