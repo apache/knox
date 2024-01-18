@@ -20,6 +20,8 @@ package org.apache.knox.gateway.topology.simple;
 import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.validation.TopologyValidator;
 import org.apache.knox.gateway.util.XmlUtils;
 import org.easymock.EasyMock;
@@ -35,6 +37,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -870,20 +873,39 @@ public class SimpleDescriptorHandlerTest {
       try {
         final File destDir = new File(System.getProperty("java.io.tmpdir")).getCanonicalFile();
         final File descriptorFile = new File(SimpleDescriptorHandlerTest.class.getResource("/conf-full/conf/descriptors/test-topology.json").getFile());
+        final TopologyService topologyService = EasyMock.createNiceMock(TopologyService.class);
+        EasyMock.expect(topologyService.getTopologies()).andReturn(Collections.emptyList()).anyTimes();
         final GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
+        EasyMock.expect(gatewayServices.getService(ServiceType.TOPOLOGY_SERVICE)).andReturn(topologyService).anyTimes();
         GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
         EasyMock.expect(gc.getReadOnlyOverrideTopologyNames()).andReturn(Collections.emptyList()).anyTimes();
-        EasyMock.replay(gc);
+        EasyMock.replay(topologyService, gatewayServices, gc);
         final Map<String, File> handleResult = SimpleDescriptorHandler.handle(gc, descriptorFile, destDir, gatewayServices);
         topologyFile = handleResult.get(SimpleDescriptorHandler.RESULT_TOPOLOGY);
         final Document topologyXml = XmlUtils.readXml(topologyFile);
         assertThat(topologyXml, hasXPath("/topology/service/role", is(equalTo("KNOX"))));
         assertThat(topologyXml, hasXPath("/topology/gateway/provider/name", is(equalTo("ShiroProvider"))));
+        verifyUserSearchFilterParam(topologyXml);
       } finally {
         if (topologyFile != null) {
           topologyFile.delete();
         }
       }
+    }
+
+    private void verifyUserSearchFilterParam(final Document topologyXml) throws XPathExpressionException {
+      final XPath xpath = XPathFactory.newInstance().newXPath();
+      final NodeList providerNodes = (NodeList) xpath.compile("/topology/gateway/provider").evaluate(topologyXml, XPathConstants.NODESET);
+      assertEquals(1, providerNodes.getLength());
+      final Node shiroProviderNode = providerNodes.item(0);
+      final NodeList shiroParamNodes = (NodeList) xpath.compile("param").evaluate(shiroProviderNode, XPathConstants.NODESET);
+      assertEquals(12, shiroParamNodes.getLength());
+      final Node userSearchFilterNode = shiroParamNodes.item(7);
+      // name
+      assertEquals(userSearchFilterNode.getChildNodes().item(1).getChildNodes().item(0).getNodeValue(), "main.ldapRealm.userSearchFilter");
+      // value
+      assertEquals(userSearchFilterNode.getChildNodes().item(3).getChildNodes().item(0).getNodeValue(),
+          "(&(&(objectclass=person)(sAMAccountName={0}))(|(memberOf=CN=SecXX-users,OU=ManagedGroups,OU=Groups,OU=XX,OU=xx,DC=xx,DC=int)(memberOf=CN=SecXX-rls-serviceuser,OU=ManagedGroups,OU=Groups,OU=XX,OU=xx,DC=xx,DC=int)))");
     }
 
     private File writeProviderConfig(String path, String content) throws IOException {

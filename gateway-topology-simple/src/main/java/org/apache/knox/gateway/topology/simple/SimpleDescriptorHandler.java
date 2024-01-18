@@ -471,7 +471,7 @@ public class SimpleDescriptorHandler {
                 for (Map.Entry<String, String> param : provider.getParams().entrySet()) {
                     sw.write("            <param>\n");
                     sw.write("                <name>" + param.getKey() + "</name>\n");
-                    sw.write("                <value>" + StringEscapeUtils.escapeXml11(param.getValue()) + "</value>\n");
+                    sw.write("                <value>" + getXmlEscapedValue(param.getValue()) + "</value>\n");
                     sw.write("            </param>\n");
                 }
 
@@ -565,7 +565,7 @@ public class SimpleDescriptorHandler {
                         if (!(svcParam.getKey().toLowerCase(Locale.ROOT)).startsWith(SimpleDescriptor.DISCOVERY_PARAM_PREFIX)) {
                             sw.write("        <param>\n");
                             sw.write("            <name>" + svcParam.getKey() + "</name>\n");
-                            sw.write("            <value>" + StringEscapeUtils.escapeXml11(svcParam.getValue()) + "</value>\n");
+                            sw.write("            <value>" + getXmlEscapedValue(svcParam.getValue()) + "</value>\n");
                             sw.write("        </param>\n");
                         }
                     }
@@ -595,7 +595,7 @@ public class SimpleDescriptorHandler {
                         for (Entry<String, String> entry : appParams.entrySet()) {
                             sw.write("        <param>\n");
                             sw.write("            <name>" + entry.getKey() + "</name>\n");
-                            sw.write("            <value>" + StringEscapeUtils.escapeXml11(entry.getValue()) + "</value>\n");
+                            sw.write("            <value>" + getXmlEscapedValue(entry.getValue()) + "</value>\n");
                             sw.write("        </param>\n");
                         }
                     }
@@ -633,6 +633,15 @@ public class SimpleDescriptorHandler {
         result.put(RESULT_TOPOLOGY, topologyDescriptor);
 
         return result;
+    }
+
+    /*
+     * First, undoes any previous manual XML escape.
+     * Second applies XML-escape on the result of the first step.
+     */
+    private static String getXmlEscapedValue(String value) {
+      final String unescapedValue = StringEscapeUtils.unescapeXml(value);
+      return StringEscapeUtils.escapeXml10(unescapedValue);
     }
 
     /**

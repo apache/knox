@@ -11,7 +11,7 @@
       "main.ldapRealm.contextFactory.authenticationMechanism" : "simple",
       "main.ldapRealm.contextFactory.url" : "ldap://localhost:33389",
       "main.ldapRealm.userDnTemplate" : "uid=0ou=people,dc=hadoop,dc=apache,dc=org",
-      "main.ldapRealm.userSearchFilter" : "(&(&(objectclass=person)(sAMAccountName={0}))(|(memberOf=CN=SecXX-users,OU=ManagedGroups,OU=Groups,OU=XX,OU=xx,DC=xx,DC=int)(memberOf=CN=SecXX-rls-serviceuser,OU=ManagedGroups,OU=Groups,OU=XX,OU=xx,DC=xx,DC=int)))",
+      "main.ldapRealm.userSearchFilter" : "(&(&amp;(objectclass=person)(sAMAccountName={0}))(|(memberOf=CN=SecXX-users,OU=ManagedGroups,OU=Groups,OU=XX,OU=xx,DC=xx,DC=int)(memberOf=CN=SecXX-rls-serviceuser,OU=ManagedGroups,OU=Groups,OU=XX,OU=xx,DC=xx,DC=int)))",
       "redirectToUrl" : "/${GATEWAY_PATH}/knoxsso/knoxauth/login.html",
       "restrictedCookies" : "rememberme,WWW-Authenticate",
       "sessionTimeout" : "30",
