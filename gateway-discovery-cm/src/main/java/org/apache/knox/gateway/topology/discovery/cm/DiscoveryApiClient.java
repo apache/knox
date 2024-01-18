@@ -24,10 +24,16 @@ import java.security.KeyStore;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-
+import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
 import javax.security.auth.Subject;
 
+import com.cloudera.api.swagger.client.ApiClient;
+import com.cloudera.api.swagger.client.Pair;
+import com.cloudera.api.swagger.client.auth.Authentication;
+import com.cloudera.api.swagger.client.auth.HttpBasicAuth;
+import com.squareup.okhttp.ConnectionSpec;
+import com.squareup.okhttp.OkHttpClient;
 import org.apache.knox.gateway.config.ConfigurationException;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -37,12 +43,6 @@ import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.auth.AuthUtils;
 import org.apache.knox.gateway.topology.discovery.cm.auth.SpnegoAuthInterceptor;
 import org.apache.knox.gateway.util.TruststoreSSLContextUtils;
-
-import com.cloudera.api.swagger.client.ApiClient;
-import com.cloudera.api.swagger.client.Pair;
-import com.cloudera.api.swagger.client.auth.Authentication;
-import com.cloudera.api.swagger.client.auth.HttpBasicAuth;
-import com.squareup.okhttp.ConnectionSpec;
 
 /**
  * Cloudera Manager ApiClient extension for service discovery.
@@ -134,8 +134,17 @@ public class DiscoveryApiClient extends ApiClient {
         getHttpClient().interceptors().add(spnegoInterceptor);
       }
     }
+    configureTimeouts(gatewayConfig);
 
     configureSsl(gatewayConfig, trustStore);
+  }
+
+  private void configureTimeouts(GatewayConfig config) {
+    OkHttpClient client = getHttpClient();
+    client.setConnectTimeout(config.getServiceDiscoveryConnectTimeoutMillis(), TimeUnit.MILLISECONDS);
+    client.setReadTimeout(config.getServiceDiscoveryReadTimeoutMillis(), TimeUnit.MILLISECONDS);
+    client.setWriteTimeout(config.getServiceDiscoveryWriteTimeoutMillis(), TimeUnit.MILLISECONDS);
+    log.discoveryClientTimeout(client.getConnectTimeout(), client.getReadTimeout(), client.getWriteTimeout());
   }
 
   @Override

@@ -898,4 +898,9 @@ public interface GatewayConfig {
 
   Map<String, Collection<String>> getApplicationPathAliases();
 
+  long getServiceDiscoveryConnectTimeoutMillis();
+
+  long getServiceDiscoveryReadTimeoutMillis();
+
+  long getServiceDiscoveryWriteTimeoutMillis();
 }
