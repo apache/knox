@@ -62,6 +62,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
   public static final String SSO_EXPECTED_AUDIENCES = "sso.expected.audiences";
   public static final String SSO_AUTHENTICATION_PROVIDER_URL = "sso.authentication.provider.url";
   public static final String SSO_VERIFICATION_PEM = "sso.token.verification.pem";
+  public static final String SSO_IDLE_TIMEOUT_SECONDS = "sso.idle.timeout.seconds";
   public static final String X_FORWARDED_HOST = "X-Forwarded-Host";
   public static final String X_FORWARDED_PORT = "X-Forwarded-Port";
   public static final String X_FORWARDED_PROTO = "X-Forwarded-Proto";
@@ -113,6 +114,12 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
 
     // gateway path for deriving an idp url when missing
     setGatewayPath(filterConfig);
+
+    final String ssoIdleTimeoutSeconds = filterConfig.getInitParameter(SSO_IDLE_TIMEOUT_SECONDS);
+    if (ssoIdleTimeoutSeconds != null) {
+      idleTimeoutSeconds = Long.parseLong(ssoIdleTimeoutSeconds);
+      LOGGER.configuredIdleTimeout(idleTimeoutSeconds, topologyName);
+    }
 
     configureExpectedParameters(filterConfig);
   }
@@ -197,7 +204,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
 
   @Override
   protected void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status, String error) throws IOException {
-    if (error != null && error.startsWith("Token") && error.endsWith("disabled")) {
+    if (isInvalidSsoCookie(error)) {
       LOGGER.invalidSsoCookie();
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
       removeAuthenticationToken(request, response);
@@ -227,6 +234,10 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
       String loginURL = constructLoginURL(request);
       response.sendRedirect(loginURL);
     }
+  }
+
+  private boolean isInvalidSsoCookie(String error) {
+    return error != null && error.startsWith(TOKEN_PREFIX) && (error.endsWith(DISABLED_POSTFIX) || error.endsWith(IDLE_TIMEOUT_POSTFIX));
   }
 
   private String constructGlobalLogoutUrl(HttpServletRequest request) {

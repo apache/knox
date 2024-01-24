@@ -104,4 +104,11 @@ public interface JWTMessages {
 
   @Message( level = MessageLevel.WARN, text = "Invalid SSO cookie found! Cleaning up..." )
   void invalidSsoCookie();
+
+  @Message( level = MessageLevel.WARN, text = "User {0} with SSO token {1} exceeded the configured idle timeout of {2} seconds." )
+  void idleTimoutExceeded(String principal, String tokenId, long idleTimeout);
+
+  @Message( level = MessageLevel.INFO, text = "Idle timeout has been configured to {0} seconds in {1}" )
+  void configuredIdleTimeout(long idleTimeout, String topology);
+
 }

@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.services.security.token;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -37,9 +38,14 @@ public class TokenMetadata {
   public static final String PASSCODE = "passcode";
   public static final String CREATED_BY = "createdBy";
   public static final String KNOX_SSO_COOKIE = "knoxSSOCookie";
-  private static final List<String> KNOWN_MD_NAMES = Arrays.asList(USER_NAME, COMMENT, ENABLED, PASSCODE, CREATED_BY, KNOX_SSO_COOKIE);
+  public static final String LAST_USED_AT = "lastUsedAt";
+  private static final List<String> KNOWN_MD_NAMES = Arrays.asList(USER_NAME, COMMENT, ENABLED, PASSCODE, CREATED_BY, KNOX_SSO_COOKIE, LAST_USED_AT);
 
   private final Map<String, String> metadataMap = new HashMap<>();
+
+  public TokenMetadata() {
+    //creates an instance with an empty metadata map
+  }
 
   public TokenMetadata(String userName) {
     this(userName, null);
@@ -125,6 +131,15 @@ public class TokenMetadata {
 
   public boolean isKnoxSsoCookie() {
     return Boolean.parseBoolean(getMetadata(KNOX_SSO_COOKIE));
+  }
+
+  public void useTokenNow() {
+    saveMetadata(LAST_USED_AT, Instant.now().toString());
+  }
+
+  public Instant getLastUsedAt() {
+    final String lastUsedAt = getMetadata(LAST_USED_AT);
+    return lastUsedAt == null ? null : Instant.parse(lastUsedAt);
   }
 
   public String toJSON() {

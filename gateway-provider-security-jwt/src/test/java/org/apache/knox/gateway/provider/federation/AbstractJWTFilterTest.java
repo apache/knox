@@ -51,6 +51,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
@@ -1084,6 +1086,14 @@ public abstract class AbstractJWTFilterTest  {
   }
 
   static class DummyServletOutputStream extends ServletOutputStream {
+
+      byte[] data;
+
+      @Override
+      public void write(byte[] b) throws IOException {
+          data = b;
+      }
+
       @Override
       public void write(int b) {
       }
@@ -1095,6 +1105,10 @@ public abstract class AbstractJWTFilterTest  {
       @Override
       public boolean isReady() {
         return false;
+      }
+
+      public byte[] getData() {
+        return data;
       }
   }
 
