@@ -134,6 +134,7 @@ public class KnoxCLI extends Configured implements Tool {
       "   [" + RemoteRegistryGetACLCommand.USAGE + "]\n" +
       "   [" + TopologyConverter.USAGE + "]\n" +
       "   [" + JWKGenerator.USAGE  + "]\n" +
+      "   [" + GenerateDescriptorCommand.USAGE + "]\n" +
       "   [" + TokenMigration.USAGE  + "]\n";
 
   /** allows stdout to be captured if necessary */
@@ -173,6 +174,8 @@ public class KnoxCLI extends Configured implements Tool {
   private String discoveryUser;
   private String discoveryPasswordAlias;
   private String discoveryType;
+  private String serviceName;
+  private String urlsFilePath;
 
   // For testing only
   private String master;
@@ -388,11 +391,23 @@ public class KnoxCLI extends Configured implements Tool {
         }
         this.topologyName = args[++i];
       } else if (args[i].equals("--descriptor-name")) {
-        if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
+        if (i + 1 >= args.length || args[i + 1].startsWith("-")) {
           printKnoxShellUsage();
           return -1;
         }
         this.descriptorName = args[++i];
+      } else if (args[i].equals("--service-name")) {
+        if (i + 1 >= args.length || args[i + 1].startsWith("-")) {
+          printKnoxShellUsage();
+          return -1;
+        }
+        this.serviceName = args[++i];
+      } else if (args[i].equals("--service-urls-file")) {
+        if (i + 1 >= args.length || args[i + 1].startsWith("-")) {
+          printKnoxShellUsage();
+          return -1;
+        }
+        this.urlsFilePath = args[++i];
       } else if (args[i].equals("--output-dir")) {
         if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
           printKnoxShellUsage();
@@ -519,8 +534,14 @@ public class KnoxCLI extends Configured implements Tool {
       } else if (args[i].equalsIgnoreCase("convert-topology")) {
         if (args.length >= 5) {
           command = new TopologyConverter();
+        } else {
+          printKnoxShellUsage();
+          return -1;
         }
-        else {
+      } else if (args[i].equalsIgnoreCase("generate-descriptor")) {
+        if (args.length >= 4) {
+          command = new GenerateDescriptorCommand();
+        } else {
           printKnoxShellUsage();
           return -1;
         }
@@ -2315,7 +2336,7 @@ public class KnoxCLI extends Configured implements Tool {
 
     public static final String USAGE =
         "convert-topology --path \"path/to/topology.xml\" --provider-name my-provider.json [--descriptor-name my-descriptor.json] "
-            + "[--topology-name topologyName] [--output-path \"path/to/configs/\"] [--force] [--cluster clusterName] [--discovery-url url] "
+            + "[--topology-name topologyName] [--output-dir \"path/to/configs/\"] [--force] [--cluster clusterName] [--discovery-url url] "
             + "[--discovery-user discoveryUser] [--discovery-pwd-alias discoveryPasswordAlias] [--discovery-type discoveryType]";
     public static final String DESC =
         "Convert Knox topology file to provider and descriptor config files \n"
@@ -2400,6 +2421,55 @@ public class KnoxCLI extends Configured implements Tool {
           "Provider " + providerName + " and descriptor " + descriptorName
               + " generated for topology " + topoName
               + "\n");
+    }
+
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+
+  }
+
+  public class GenerateDescriptorCommand extends Command {
+
+    public static final String USAGE =
+            "generate-descriptor --service-urls-file \"path/to/urls.txt\" --service-name SERVICE_NAME \n" +
+                    "--provider-name my-provider.json --descriptor-name my-descriptor.json \n" +
+                    "[--output-dir /path/to/output_dir] \n" +
+                    "[--force] \n";
+    public static final String DESC =
+            "Create Knox topology descriptor file for one service\n"
+                    + "Options are as follows: \n"
+                    + "--service-urls-file (required) path to a text file containing service urls \n"
+                    + "--service-name (required) the name of the service, such as WEBHDFS, IMPALAUI or HIVE \n"
+                    + "--descriptor-name (required) name of descriptor to be created \n"
+                    + "--provider-name (required) name of the referenced shared provider \n"
+                    + "--output-dir (optional) output directory to save the descriptor file \n"
+                    + "--force (optional) force rewriting of existing files, if not used, command will fail when the configs files with same name already exist. \n";
+
+    @Override
+    public void execute() throws Exception {
+      if (StringUtils.isBlank(FilenameUtils.getExtension(providerName))
+              || StringUtils.isBlank(FilenameUtils.getExtension(descriptorName))) {
+        throw new IllegalArgumentException("JSON extension is required for provider and descriptor file names");
+      }
+      if (StringUtils.isBlank(urlsFilePath) ) {
+        throw new IllegalArgumentException("Missing --service-urls-file");
+      }
+      if (!new File(urlsFilePath).isFile()) {
+        throw new IllegalArgumentException(urlsFilePath + " does not exist");
+      }
+      if (StringUtils.isBlank(serviceName)) {
+        throw new IllegalArgumentException("Missing --service-name");
+      }
+      File outputDir = StringUtils.isBlank(KnoxCLI.this.outputDir) ? new File(".") : new File(KnoxCLI.this.outputDir);
+
+      DescriptorGenerator generator =
+              new DescriptorGenerator(descriptorName, providerName, serviceName, ServiceUrls.fromFile(new File(urlsFilePath)));
+      generator.saveDescriptor(
+              outputDir, force);
+
+      out.println("Descriptor " + descriptorName + " was successfully saved to " + outputDir.getAbsolutePath() + "\n");
     }
 
     @Override
