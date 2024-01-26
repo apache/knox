@@ -37,6 +37,14 @@ ARG ENTRYPOINT
 COPY ${ENTRYPOINT} /home/knox/knox/entrypoint.sh
 RUN chmod +x /home/knox/knox/entrypoint.sh
 
+# Add the Amazon Root CA certificates
+RUN mkdir /home/knox/cacrts
+ADD --chown=knox:knox \
+    http://www.awstrust.com/repository/AmazonRootCA1.cer \
+    http://www.awstrust.com/repository/AmazonRootCA2.cer \
+    http://www.awstrust.com/repository/AmazonRootCA3.cer \
+    http://www.awstrust.com/repository/AmazonRootCA4.cer /home/knox/cacrts/
+
 WORKDIR /home/knox/knox
 
 # Expose the default port as a convenience
