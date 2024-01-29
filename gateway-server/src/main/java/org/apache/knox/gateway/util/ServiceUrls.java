@@ -14,6 +14,10 @@ import org.apache.commons.lang3.StringUtils;
 public class ServiceUrls {
   private final List<String> urls;
 
+  public static ServiceUrls fromFile(String urlsFilePath) {
+    return fromFile(new File(urlsFilePath));
+  }
+
   public static ServiceUrls fromFile(File urlsFilePath) {
     try {
       List<String> lines = FileUtils.readLines(urlsFilePath, Charset.defaultCharset()).stream()

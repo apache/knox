@@ -2346,7 +2346,7 @@ public class KnoxCLI extends Configured implements Tool {
             + "--descriptor-name (optional) name of descriptor json config file (including .json extension) \n"
             + "--topology-name (optional) topology-name can be use instead of --path option, if used, KnoxCLI will attempt to find topology from deployed topologies.\n"
             + "\t if not provided topology name will be used as descriptor name \n"
-            + "--output-dir (optional) output directory to save provider and descriptor config files \n"
+            + "--output-dir (optional) output directory to save provider and descriptor config files. Default is the current working directory. \n"
             + "\t if not provided config files will be saved in appropriate Knox config directory \n"
             + "--force (optional) force rewriting of existing files, if not used, command will fail when the configs files with same name already exist. \n"
             + "--cluster (optional) cluster name, required for service discovery \n"
@@ -2449,6 +2449,15 @@ public class KnoxCLI extends Configured implements Tool {
 
     @Override
     public void execute() throws Exception {
+      validateParams();
+      File outputDir = StringUtils.isBlank(KnoxCLI.this.outputDir) ? new File(".") : new File(KnoxCLI.this.outputDir);
+      DescriptorGenerator generator =
+              new DescriptorGenerator(descriptorName, providerName, serviceName, ServiceUrls.fromFile(urlsFilePath));
+      generator.saveDescriptor(outputDir, force);
+      out.println("Descriptor " + descriptorName + " was successfully saved to " + outputDir.getAbsolutePath() + "\n");
+    }
+
+    private void validateParams() {
       if (StringUtils.isBlank(FilenameUtils.getExtension(providerName))
               || StringUtils.isBlank(FilenameUtils.getExtension(descriptorName))) {
         throw new IllegalArgumentException("JSON extension is required for provider and descriptor file names");
@@ -2462,14 +2471,6 @@ public class KnoxCLI extends Configured implements Tool {
       if (StringUtils.isBlank(serviceName)) {
         throw new IllegalArgumentException("Missing --service-name");
       }
-      File outputDir = StringUtils.isBlank(KnoxCLI.this.outputDir) ? new File(".") : new File(KnoxCLI.this.outputDir);
-
-      DescriptorGenerator generator =
-              new DescriptorGenerator(descriptorName, providerName, serviceName, ServiceUrls.fromFile(new File(urlsFilePath)));
-      generator.saveDescriptor(
-              outputDir, force);
-
-      out.println("Descriptor " + descriptorName + " was successfully saved to " + outputDir.getAbsolutePath() + "\n");
     }
 
     @Override
