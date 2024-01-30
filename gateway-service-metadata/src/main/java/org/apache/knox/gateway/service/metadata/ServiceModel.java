@@ -17,12 +17,18 @@
  */
 package org.apache.knox.gateway.service.metadata;
 
+import static java.lang.String.format;
+import static java.util.Locale.ROOT;
+
 import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -60,7 +66,6 @@ public class ServiceModel implements Comparable<ServiceModel> {
   private String gatewayPath;
   private Service service;
   private Metadata serviceMetadata;
-  private String serviceUrl;
 
   public void setRequest(HttpServletRequest request) {
     this.request = request;
@@ -80,10 +85,6 @@ public class ServiceModel implements Comparable<ServiceModel> {
 
   public void setServiceMetadata(Metadata serviceMetadata) {
     this.serviceMetadata = serviceMetadata;
-  }
-
-  public void setServiceUrl(String serviceUrl) {
-    this.serviceUrl = serviceUrl;
   }
 
   @XmlElement
@@ -124,40 +125,52 @@ public class ServiceModel implements Comparable<ServiceModel> {
     return serviceMetadata == null ? ("/" + getServiceName().toLowerCase(Locale.ROOT)) : serviceMetadata.getContext();
   }
 
-  @XmlElement
-  public String getServiceUrl() {
-    String context = getContext();
+  @XmlElement(name = "serviceUrls")
+  public List<String> getServiceUrls() {
+    final Set<String> resolvedServiceUrls = new TreeSet<>();
+    final String context = getContext();
+
     if (HIVE_SERVICE_NAME.equals(getServiceName())) {
-      return String.format(Locale.ROOT, HIVE_SERVICE_URL_TEMPLATE, request.getServerName(), request.getServerPort(), gatewayPath, topologyName);
+      resolvedServiceUrls.add(format(ROOT, HIVE_SERVICE_URL_TEMPLATE, request.getServerName(), request.getServerPort(), gatewayPath, topologyName));
     } else if (IMPALA_SERVICE_NAME.equals(getServiceName())) {
-      return String.format(Locale.ROOT, IMPALA_SERVICE_URL_TEMPLATE, request.getServerName(), request.getServerPort(), gatewayPath, topologyName);
+      resolvedServiceUrls.add(format(ROOT, IMPALA_SERVICE_URL_TEMPLATE, request.getServerName(), request.getServerPort(), gatewayPath, topologyName));
     } else {
-      return getServiceUrl(context);
+      if (service != null && service.getUrls() != null && !service.getUrls().isEmpty()) {
+        this.service.getUrls().forEach(serviceUrl -> {
+          resolvedServiceUrls.add(getServiceUrl(context, serviceUrl));
+        });
+      } else {
+        // fall back to the service URL fetched from the 'service' instance, if any
+        resolvedServiceUrls.add(getServiceUrl(context, null));
+      }
     }
+    return Arrays.asList(resolvedServiceUrls.toArray(new String[0]));
   }
 
-  private String getServiceUrl(String context) {
-    final String resolvedContext = resolvePlaceholdersFromBackendUrl(context);
+  private String getServiceUrl(String context, String serviceUrl) {
+    final String resolvedContext = resolvePlaceholdersFromBackendUrl(context, serviceUrl);
     return String.format(Locale.ROOT, SERVICE_URL_TEMPLATE, request.getScheme(), request.getServerName(), request.getServerPort(), gatewayPath, topologyName, resolvedContext);
   }
 
-  private String resolvePlaceholdersFromBackendUrl(String resolveable) {
+  private String resolvePlaceholdersFromBackendUrl(String resolveable, String serviceUrl) {
     String toBeResolved = resolveable;
     if (toBeResolved != null) {
-      final String backendUrlString = getBackendServiceUrl();
+      final String backendUrlString = getBackendServiceUrl(serviceUrl);
 
-      if (toBeResolved.indexOf("{{BACKEND_HOST}}") > -1) {
-        toBeResolved = toBeResolved.replace("{{BACKEND_HOST}}", backendUrlString);
-      }
+      if (StringUtils.isNotBlank(backendUrlString)) {
+        if (toBeResolved.indexOf("{{BACKEND_HOST}}") > -1) {
+          toBeResolved = toBeResolved.replace("{{BACKEND_HOST}}", backendUrlString);
+        }
 
-      if (toBeResolved.indexOf("{{SCHEME}}") > -1 || toBeResolved.indexOf("{{HOST}}") > -1 || toBeResolved.indexOf("{{PORT}}") > -1) {
-        try {
-          final URL backendUrl = new URL(backendUrlString);
-          toBeResolved = toBeResolved.replace("{{SCHEME}}", backendUrl.getProtocol());
-          toBeResolved = toBeResolved.replace("{{HOST}}", backendUrl.getHost());
-          toBeResolved = toBeResolved.replace("{{PORT}}", String.valueOf(backendUrl.getPort()));
-        } catch (MalformedURLException e) {
-          throw new UncheckedIOException("Error while converting " + backendUrlString + " to a URL", e);
+        if (toBeResolved.indexOf("{{SCHEME}}") > -1 || toBeResolved.indexOf("{{HOST}}") > -1 || toBeResolved.indexOf("{{PORT}}") > -1) {
+          try {
+            final URL backendUrl = new URL(backendUrlString);
+            toBeResolved = toBeResolved.replace("{{SCHEME}}", backendUrl.getProtocol());
+            toBeResolved = toBeResolved.replace("{{HOST}}", backendUrl.getHost());
+            toBeResolved = toBeResolved.replace("{{PORT}}", String.valueOf(backendUrl.getPort()));
+          } catch (MalformedURLException e) {
+            throw new UncheckedIOException("Error while converting '" + backendUrlString + "' to a URL", e);
+          }
         }
       }
     }
@@ -165,7 +178,7 @@ public class ServiceModel implements Comparable<ServiceModel> {
     return toBeResolved;
   }
 
-  String getBackendServiceUrl() {
+  String getBackendServiceUrl(String serviceUrl) {
     final String backendServiceUrl = serviceUrl == null ? (service == null ? "" : service.getUrl()) : serviceUrl;
     return backendServiceUrl == null ? "" : backendServiceUrl;
   }
@@ -183,7 +196,9 @@ public class ServiceModel implements Comparable<ServiceModel> {
         } else {
           final String method = StringUtils.isBlank(sample.getMethod()) ? "GET" : sample.getMethod();
           final String path = sample.getPath().startsWith("/") ? sample.getPath() : ("/" + sample.getPath());
-          resolvedSample.setValue(String.format(Locale.ROOT, CURL_SAMPLE_TEMPLATE, method, getServiceUrl(), path));
+          final String serviceUrl = getServiceUrls().isEmpty() ? (service == null ? "$SERVICE_URL" : service.getUrl())
+              : getServiceUrls().stream().findFirst().get();
+          resolvedSample.setValue(String.format(Locale.ROOT, CURL_SAMPLE_TEMPLATE, method, serviceUrl, path));
         }
         samples.add(resolvedSample);
       });
@@ -201,19 +216,19 @@ public class ServiceModel implements Comparable<ServiceModel> {
     }
     final ServiceModel serviceModel = (ServiceModel) obj;
     return new EqualsBuilder().append(topologyName, serviceModel.topologyName).append(gatewayPath, serviceModel.gatewayPath).append(getServiceName(), serviceModel.getServiceName())
-        .append(getVersion(), serviceModel.getVersion()).append(serviceMetadata, serviceModel.serviceMetadata).append(getServiceUrl(), serviceModel.getServiceUrl()).isEquals();
+        .append(getVersion(), serviceModel.getVersion()).append(serviceMetadata, serviceModel.serviceMetadata).append(getServiceUrls(), serviceModel.getServiceUrls()).isEquals();
   }
 
   @Override
   public int hashCode() {
-    return new HashCodeBuilder(17, 37).append(topologyName).append(gatewayPath).append(getServiceName()).append(getVersion()).append(serviceMetadata).append(getServiceUrl())
+    return new HashCodeBuilder(17, 37).append(topologyName).append(gatewayPath).append(getServiceName()).append(getVersion()).append(serviceMetadata).append(getServiceUrls())
         .toHashCode();
   }
 
   @Override
   public String toString() {
     return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).append(topologyName).append(gatewayPath).append(getServiceName()).append(getVersion())
-        .append(serviceMetadata).append(getServiceUrl()).toString();
+        .append(serviceMetadata).append(getServiceUrls()).toString();
   }
 
   @Override
@@ -221,7 +236,7 @@ public class ServiceModel implements Comparable<ServiceModel> {
     final int byServiceName = getServiceName().compareTo(other.getServiceName());
     if (byServiceName == 0) {
       final int byVersion = getVersion().compareTo(getVersion());
-      return byVersion == 0 ? getBackendServiceUrl().compareTo(other.getBackendServiceUrl()) : byVersion;
+      return byVersion == 0 ? Integer.compare(getServiceUrls().size(), other.getServiceUrls().size()) : byVersion;
     }
     return byServiceName;
   }

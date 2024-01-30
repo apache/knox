@@ -229,9 +229,8 @@ public class KnoxMetadataResource {
           Set<ServiceModel> apiServices = new HashSet<>();
           Set<ServiceModel> uiServices = new HashSet<>();
           topology.getServices().stream().filter(service -> !UNREAL_SERVICES.contains(service.getRole())).forEach(service -> {
-            service.getUrls().forEach(serviceUrl -> {
-              ServiceModel serviceModel = getServiceModel(request, config.getGatewayPath(), topology.getName(), service, getServiceMetadata(serviceDefinitionRegistry, service),
-                  serviceUrl);
+            if (!service.getUrls().isEmpty()) {
+              final ServiceModel serviceModel = getServiceModel(request, config.getGatewayPath(), topology.getName(), service, getServiceMetadata(serviceDefinitionRegistry, service));
               if (ServiceModel.Type.UI == serviceModel.getType()) {
                 uiServices.add(serviceModel);
               } else if (ServiceModel.Type.API_AND_UI == serviceModel.getType()) {
@@ -240,7 +239,7 @@ public class KnoxMetadataResource {
               } else {
                 apiServices.add(serviceModel);
               }
-            });
+            }
           });
           topologies.addTopology(topology.getName(), isPinnedTopology(topology.getName(), config), config.getApiServicesViewVersionOnHomepage(), new TreeSet<>(apiServices), new TreeSet<>(uiServices));
         }
@@ -264,14 +263,13 @@ public class KnoxMetadataResource {
     return serviceDefinition.isPresent() ? serviceDefinition.get().getService().getMetadata() : null;
   }
 
-  private ServiceModel getServiceModel(HttpServletRequest request, String gatewayPath, String topologyName, Service service, Metadata serviceMetadata, String serviceUrl) {
+  private ServiceModel getServiceModel(HttpServletRequest request, String gatewayPath, String topologyName, Service service, Metadata serviceMetadata) {
     final ServiceModel serviceModel = new ServiceModel();
     serviceModel.setRequest(request);
     serviceModel.setGatewayPath(gatewayPath);
     serviceModel.setTopologyName(topologyName);
     serviceModel.setService(service);
     serviceModel.setServiceMetadata(serviceMetadata);
-    serviceModel.setServiceUrl(serviceUrl);
     return serviceModel;
   }
 

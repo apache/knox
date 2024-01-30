@@ -34,3 +34,7 @@ mat-grid-tile-footer figcaption h3 {
   transition: all 0.3s linear;
   visibility: visible;
 }
+
+/deep/ .groupServiceInformationModal {
+    width: 80%;
+}

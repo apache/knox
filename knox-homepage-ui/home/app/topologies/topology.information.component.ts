@@ -34,9 +34,14 @@ export class TopologyInformationsComponent implements OnInit {
     @ViewChild('apiServiceInformationModal')
     apiServiceInformationModal: BsModalComponent;
 
+    @ViewChild('groupServiceInformationModal')
+    groupServiceInformationModal: BsModalComponent;
+
     topologies: TopologyInformation[];
     desiredTopologies: string[];
     selectedApiService: Service;
+    selectedGroupService: Service;
+    filteredServiceUrls: string[];
 
     setTopologies(topologies: TopologyInformation[]) {
         this.topologies = topologies;
@@ -106,4 +111,26 @@ export class TopologyInformationsComponent implements OnInit {
         this.apiServiceInformationModal.open('lg');
     }
 
+    openGroupServiceInformationModal(groupService: Service) {
+        this.selectedGroupService = groupService;
+        this.filteredServiceUrls = this.selectedGroupService.serviceUrls;
+        this.groupServiceInformationModal.open();
+    }
+
+    getServiceUrlHostAndPort(serviceUrl: string): string {
+	    let hostStart = serviceUrl.indexOf('host=');
+        if (hostStart > 0 ) {
+            return ' - ' + serviceUrl.slice(hostStart).replace('host=', '').replace('&port=', ':')
+                   .replace('https://', '').replace('http://', '');
+        }
+	    return '';
+    }
+
+    filterServiceUrls(filterText: string): void {
+	    if (filterText === '') {
+		    this.filteredServiceUrls = this.selectedGroupService.serviceUrls;
+	    } else {
+		    this.filteredServiceUrls = this.selectedGroupService.serviceUrls.filter(serviceUrl => serviceUrl.includes(filterText));
+        }
+    }
 }

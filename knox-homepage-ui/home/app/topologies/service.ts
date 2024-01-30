@@ -20,7 +20,7 @@ export class Service {
     description: string;
     serviceName: string;
     version: string;
-    serviceUrl: string;
+    serviceUrls: string[];
     shortDesc: string;
     type: string;
     context: string;
