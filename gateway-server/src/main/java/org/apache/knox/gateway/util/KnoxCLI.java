@@ -2462,11 +2462,11 @@ public class KnoxCLI extends Configured implements Tool {
     @Override
     public void execute() throws Exception {
       validateParams();
-      File outputDir = StringUtils.isBlank(KnoxCLI.this.outputDir) ? new File(".") : new File(KnoxCLI.this.outputDir);
+      File output = StringUtils.isBlank(outputDir) ? new File(".") : new File(outputDir);
       DescriptorGenerator generator =
               new DescriptorGenerator(descriptorName, providerName, serviceName, ServiceUrls.fromFile(urlsFilePath), params);
-      generator.saveDescriptor(outputDir, force);
-      out.println("Descriptor " + descriptorName + " was successfully saved to " + outputDir.getAbsolutePath() + "\n");
+      generator.saveDescriptor(output, force);
+      out.println("Descriptor " + descriptorName + " was successfully saved to " + output.getAbsolutePath() + "\n");
     }
 
     private void validateParams() {
