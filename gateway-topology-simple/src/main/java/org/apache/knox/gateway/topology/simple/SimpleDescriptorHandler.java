@@ -31,12 +31,11 @@ import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.discovery.DefaultServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryFactory;
+import org.xml.sax.SAXParseException;
 
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
@@ -677,11 +676,14 @@ public class SimpleDescriptorHandler {
             }
 
             if (existing != null) {
-                try (InputStream in = new ByteArrayInputStream(generatedContent.getBytes(StandardCharsets.UTF_8))) {
-                    Topology generatedTopology = topologyService.parse(in);
+                try {
+                    Topology generatedTopology = topologyService.parse(generatedContent);
                     generatedTopology.setName(topologyName);
                     // If the generated topology is different from the existing, then it should be persisted
                     result = !existing.equals(generatedTopology);
+                } catch (SAXParseException e) {
+                    log.errorComparingGeneratedTopology(topologyName, e);
+                    log.faultyGeneratedContent(generatedContent);
                 } catch (Exception e) {
                     log.errorComparingGeneratedTopology(topologyName, e);
                 }

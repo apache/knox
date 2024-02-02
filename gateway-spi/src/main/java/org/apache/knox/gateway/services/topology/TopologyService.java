@@ -26,7 +26,6 @@ import org.xml.sax.SAXException;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -78,6 +77,6 @@ public interface TopologyService extends Service, ServiceDefinitionChangeListene
    * @throws IOException Exception thrown parsing input stream.
    * @throws SAXException Exception thrown parsing xml.
    */
-  Topology parse(InputStream content) throws IOException, SAXException;
+  Topology parse(String content) throws IOException, SAXException;
 
 }

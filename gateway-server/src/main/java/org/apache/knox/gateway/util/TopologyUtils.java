@@ -35,7 +35,7 @@ public final class TopologyUtils {
                                                                  new AmbariFormatXmlTopologyRules());
 
 
-  public static Topology parse(final String content) throws IOException, SAXException {
+  public static synchronized Topology parse(final String content) throws IOException, SAXException {
     Topology result;
 
     TopologyBuilder builder = digesterLoader.newDigester().parse(new StringReader(content));
@@ -44,7 +44,7 @@ public final class TopologyUtils {
     return result;
   }
 
-  public static Topology parse(final InputStream content) throws IOException, SAXException {
+  public static synchronized Topology parse(final InputStream content) throws IOException, SAXException {
     Topology result;
 
     TopologyBuilder builder = digesterLoader.newDigester().parse(content);
