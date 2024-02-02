@@ -38,6 +38,8 @@ import org.apache.knox.gateway.util.Tokens;
  * A Zookeeper Token State Service is actually an Alias based TSS where the 'alias service' happens to be the 'zookeeper' implementation.
  * This means the only important thing that should be overridden here is the init method where the underlying alias service is configured
  * properly.
+ *
+ * @deprecated Since 2.1.0
  */
 public class ZookeeperTokenStateService extends AliasBasedTokenStateService implements RemoteTokenStateChangeListener {
 
@@ -55,6 +57,7 @@ public class ZookeeperTokenStateService extends AliasBasedTokenStateService impl
 
   @Override
   public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
+    log.deprecatedServiceUsage(this.getClass().getCanonicalName());
     final ZookeeperRemoteAliasService zookeeperAliasService = (ZookeeperRemoteAliasService) aliasServiceFactory.create(gatewayServices, ALIAS_SERVICE, config, options,
         ZookeeperRemoteAliasService.class.getName());
     options.put(ZookeeperRemoteAliasService.OPTION_NAME_SHOULD_CREATE_TOKENS_SUB_NODE, "true");

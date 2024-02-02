@@ -34,20 +34,32 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.token.KnoxToken;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
+import org.apache.knox.gateway.services.security.token.TokenMigrationTarget;
 import org.apache.knox.gateway.services.security.token.TokenStateServiceException;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.util.JDBCUtils;
+import org.apache.knox.gateway.util.TokenMigrationTool;
 import org.apache.knox.gateway.util.Tokens;
 
-public class JDBCTokenStateService extends AbstractPersistentTokenStateService {
+public class JDBCTokenStateService extends AbstractPersistentTokenStateService implements TokenMigrationTarget {
   private AliasService aliasService; // connection username/pw and passcode HMAC secret are stored here
   private TokenStateDatabase tokenDatabase;
   private AtomicBoolean initialized = new AtomicBoolean(false);
   private Lock initLock = new ReentrantLock(true);
   private Lock addMetadataLock = new ReentrantLock(true);
 
+  private boolean skipTokenMigration;
+  private boolean archiveMigratedTokens;
+  private boolean migrateExpiredTokens;
+  private boolean verboseTokenMigration;
+  private int tokenMigrationProgressCount;
+
   public void setAliasService(AliasService aliasService) {
     this.aliasService = aliasService;
+  }
+
+  protected AliasService getAliasService() {
+    return aliasService;
   }
 
   @Override
@@ -65,9 +77,30 @@ public class JDBCTokenStateService extends AbstractPersistentTokenStateService {
         } catch (Exception e) {
           throw new ServiceLifecycleException("Error while initiating JDBCTokenStateService: " + e, e);
         }
+
+        this.skipTokenMigration = config.skipTokenMigration();
+        this.archiveMigratedTokens = config.archiveMigratedTokens();
+        this.migrateExpiredTokens = config.migrateExpiredTokens();
+        this.verboseTokenMigration = config.printVerboseTokenMigrationMessages();
+        this.tokenMigrationProgressCount = config.getTokenMigrationProgressCount();
       } finally {
         initLock.unlock();
       }
+    }
+  }
+
+  @Override
+  public void start() throws ServiceLifecycleException {
+    super.start();
+    if (skipTokenMigration) {
+      log.skipTokenMigration();
+    } else {
+      final TokenMigrationTool tokenMigrationTool = new TokenMigrationTool(aliasService, this, null);
+      tokenMigrationTool.setArchiveMigratedTokens(archiveMigratedTokens);
+      tokenMigrationTool.setProgressCount(tokenMigrationProgressCount);
+      tokenMigrationTool.setVerbose(verboseTokenMigration);
+      tokenMigrationTool.setMigrateExpiredTokens(migrateExpiredTokens);
+      tokenMigrationTool.migrateTokensFromGatewayCredentialStore();
     }
   }
 

@@ -78,6 +78,8 @@ import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.MasterService;
+import org.apache.knox.gateway.services.security.token.TokenMigrationTarget;
+import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Topology;
@@ -131,7 +133,8 @@ public class KnoxCLI extends Configured implements Tool {
       "   [" + RemoteRegistryDeleteDescriptorCommand.USAGE + "]\n" +
       "   [" + RemoteRegistryGetACLCommand.USAGE + "]\n" +
       "   [" + TopologyConverter.USAGE + "]\n" +
-      "   [" + JWKGenerator.USAGE  + "]\n";
+      "   [" + JWKGenerator.USAGE  + "]\n" +
+      "   [" + TokenMigration.USAGE  + "]\n";
 
   /** allows stdout to be captured if necessary */
   public PrintStream out = System.out;
@@ -152,6 +155,10 @@ public class KnoxCLI extends Configured implements Tool {
   private String pass;
   private boolean groups;
   private JWSAlgorithm jwsAlgorithm = JWSAlgorithm.HS256;
+  private int progressCount = 10;
+  private boolean archiveMigratedTokens;
+  private boolean migrateExpiredTokens;
+  private boolean verbose;
   private String alias;
 
   private String remoteRegistryClient;
@@ -529,6 +536,16 @@ public class KnoxCLI extends Configured implements Tool {
         }
       } else if (args[i].equalsIgnoreCase("--saveAlias")) {
         alias = args[++i];
+      } else if (args[i].equalsIgnoreCase("migrate-tokens") ) {
+        command = new TokenMigration();
+      } else if (args[i].equalsIgnoreCase("--progressCount") ) {
+        progressCount = Integer.parseInt(args[++i]);
+      } else if (args[i].equalsIgnoreCase("--archiveMigrated") ) {
+        archiveMigratedTokens = Boolean.parseBoolean(args[++i]);
+      } else if (args[i].equalsIgnoreCase("--migrateExpiredTokens") ) {
+        migrateExpiredTokens = Boolean.parseBoolean(args[++i]);
+      } else if (args[i].equalsIgnoreCase("--verbose") ) {
+        verbose = Boolean.parseBoolean(args[++i]);
       } else {
         printKnoxShellUsage();
         return -1;
@@ -2426,6 +2443,45 @@ public class KnoxCLI extends Configured implements Tool {
       } catch (JOSEException e) {
         throw new RuntimeException("Error while generating " + keyLength + " bits JWK secret", e);
       }
+    }
+  }
+
+  public class TokenMigration extends Command {
+
+    static final String USAGE = "migrate-tokens [--progressCount num] [--verbose true|false] [--archivedMigrated true|false] [--migrateExpiredTokens true|false]";
+    static final String DESC =
+        "Migrates previously created Knox Tokens from the Gateway credential store into the configured JDBC TokenStateService backend.\n"
+            + "Options are as follows: \n"
+            + "--progressCount (optional) indicates the number of tokens after this tool displays progress on the standard output. Defaults to 10.\n"
+            + "--archiveMigrated (optional) a boolean flag indicating if migrated tokens should not be removed completely. "
+            + "Instead, tokens are going to be archived in a separate keystore called __tokens-credentials.jceks. Defaults to false\n"
+            + "--verbose (optional) a boolean flag that controls of a more verbose output on the STDOUT when processing tokens. Defaults to false.\n"
+            + "--migrateExpiredTokens (optional) a boolean flag indicating whether already expired tokens should be migrated into the configure TSS backend. Defaults to false";
+
+    @Override
+    public void execute() throws Exception {
+      final TokenStateService tokenStateService = services.getService(ServiceType.TOKEN_STATE_SERVICE);
+      if (isTokenMigrationTarget(tokenStateService)) {
+        out.println("Migrating tokens from __gateway credential store into the configured TokenStateService backend...");
+        final TokenMigrationTool tokenMigrationTool = new TokenMigrationTool(getAliasService(), tokenStateService, out);
+        tokenMigrationTool.setArchiveMigratedTokens(archiveMigratedTokens);
+        tokenMigrationTool.setMigrateExpiredTokens(migrateExpiredTokens);
+        tokenMigrationTool.setProgressCount(progressCount);
+        tokenMigrationTool.setVerbose(verbose);
+        tokenMigrationTool.migrateTokensFromGatewayCredentialStore();
+      } else {
+        out.println("This tool is meant to migrate tokens into a JDBC TokenStateService backend. However, the currently configured one ("
+            + tokenStateService.getClass().getCanonicalName() + ") does not fulfill this requirement!");
+      }
+    }
+
+    private boolean isTokenMigrationTarget(TokenStateService tokenStateService) {
+      return tokenStateService instanceof TokenMigrationTarget;
+    }
+
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
     }
   }
 

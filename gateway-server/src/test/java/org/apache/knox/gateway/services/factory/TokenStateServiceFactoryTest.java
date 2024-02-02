@@ -23,56 +23,81 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.token.impl.AliasBasedTokenStateService;
 import org.apache.knox.gateway.services.token.impl.DefaultTokenStateService;
+import org.apache.knox.gateway.services.token.impl.DerbyDBTokenStateService;
 import org.apache.knox.gateway.services.token.impl.JournalBasedTokenStateService;
 import org.apache.knox.gateway.services.token.impl.ZookeeperTokenStateService;
-import org.junit.Before;
 import org.junit.Test;
 
 public class TokenStateServiceFactoryTest extends ServiceFactoryTest {
 
   private final TokenStateServiceFactory serviceFactory = new TokenStateServiceFactory();
 
-  @Before
-  public void setUp() throws Exception {
-    initConfig();
-  }
-
   @Test
   public void testBasics() throws Exception {
+    initConfig();
     super.testBasics(serviceFactory, ServiceType.MASTER_SERVICE, ServiceType.TOKEN_STATE_SERVICE);
   }
 
   @Test
   public void shouldReturnDefaultTokenStateService() throws Exception {
+    initConfig();
     TokenStateService tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, gatewayConfig, options,
         DefaultTokenStateService.class.getName());
     assertTrue(tokenStateService instanceof DefaultTokenStateService);
   }
 
   @Test
-  public void shouldReturnAliasBasedTokenStateServiceByDefault() throws Exception {
-    TokenStateService tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, gatewayConfig, options, "");
-    assertTrue(tokenStateService instanceof AliasBasedTokenStateService);
-    assertTrue(isAliasServiceSet(tokenStateService));
+  public void shouldReturnDerbyDBTokenStateServiceByDefault() throws Exception {
+    TokenStateService tokenStateService = null;
+    try {
+      initConfig(true);
+      tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, gatewayConfig, options, "");
+      assertTrue(tokenStateService instanceof DerbyDBTokenStateService);
+    } finally {
+      if (tokenStateService != null) {
+        tokenStateService.stop();
+      }
+    }
   }
 
   @Test
   public void shouldReturnAliasBasedTokenStateService() throws Exception {
-    final TokenStateService tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, gatewayConfig, options,
-        AliasBasedTokenStateService.class.getName());
+    initConfig();
+    final TokenStateService tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, gatewayConfig,
+        options, AliasBasedTokenStateService.class.getName());
     assertTrue(tokenStateService instanceof AliasBasedTokenStateService);
     assertTrue(isAliasServiceSet(tokenStateService));
   }
 
   @Test
   public void shouldReturnJournalTokenStateService() throws Exception {
+    initConfig();
     assertTrue(serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, gatewayConfig, options,
         JournalBasedTokenStateService.class.getName()) instanceof JournalBasedTokenStateService);
   }
 
   @Test
   public void shouldReturnZookeeperTokenStateService() throws Exception {
+    initConfig();
     assertTrue(serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, gatewayConfig, options,
         ZookeeperTokenStateService.class.getName()) instanceof ZookeeperTokenStateService);
+  }
+
+  @Test
+  public void shouldReturnDerbyDatabaseTokenStateService() throws Exception {
+    TokenStateService tokenStateService = null;
+    try {
+      initConfig(true);
+      tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, gatewayConfig, options,
+          DerbyDBTokenStateService.class.getName());
+      assertTrue(tokenStateService instanceof DerbyDBTokenStateService);
+      assertTrue(isAliasServiceSetOnParent(tokenStateService));
+      assertTrue(isMasterServiceSet(tokenStateService));
+    } finally {
+      if (tokenStateService != null) {
+        tokenStateService.stop();
+      }
+    }
+
   }
 }

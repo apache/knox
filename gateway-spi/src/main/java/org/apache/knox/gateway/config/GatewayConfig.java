@@ -903,4 +903,35 @@ public interface GatewayConfig {
   long getServiceDiscoveryReadTimeoutMillis();
 
   long getServiceDiscoveryWriteTimeoutMillis();
+
+  /**
+   * @return <code>true</code> if token migration must be skipped when a
+   *         JDBC-based TSS starts; <code>false</code> otherwise
+   */
+  boolean skipTokenMigration();
+
+  /**
+   * @return <code>true</code> if migrated tokens must be archived when a
+   *         JDBC-based starts; <code>false</code> otherwise
+   */
+  boolean archiveMigratedTokens();
+
+  /**
+   * @return <code>true</code> if expired tokens must be migrated when a
+   *         JDBC-based starts; <code>false</code> otherwise
+   */
+  boolean migrateExpiredTokens();
+
+  /**
+   * @return <code>true</code> if the token migration tool should print verbose
+   *         messages when a JDBC-based starts; <code>false</code> otherwise
+   */
+  boolean printVerboseTokenMigrationMessages();
+
+  /**
+   * @return the number of tokens after the token migration tool displays progress
+   *         in the logs when a JDBC-based TSS starts.
+   */
+  int getTokenMigrationProgressCount();
+
 }

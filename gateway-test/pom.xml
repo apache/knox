@@ -246,6 +246,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-common</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.zookeeper</groupId>
             <artifactId>zookeeper</artifactId>
             <scope>test</scope>
@@ -327,6 +333,7 @@
                     <reuseForks>false</reuseForks>
                     <systemPropertyVariables>
                         <project.version>${project.version}</project.version>
+                        <derby.stream.error.file>/dev/null</derby.stream.error.file>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>

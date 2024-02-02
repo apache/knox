@@ -31,7 +31,7 @@ import javax.sql.DataSource;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.derby.jdbc.ClientDataSource;
+import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
@@ -111,13 +111,11 @@ public class JDBCUtils {
   }
 
   private static DataSource createDerbyDatasource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException {
-    final ClientDataSource derbyDatasource = new ClientDataSource();
-    derbyDatasource.setDatabaseName(gatewayConfig.getDatabaseName());
-    derbyDatasource.setServerName(gatewayConfig.getDatabaseHost());
-    derbyDatasource.setPortNumber(gatewayConfig.getDatabasePort());
-    derbyDatasource.setUser(getDatabaseUser(aliasService));
-    derbyDatasource.setPassword(getDatabasePassword(aliasService));
-    return derbyDatasource;
+    final EmbeddedDataSource embeddedDataSource = new EmbeddedDataSource();
+    embeddedDataSource.setDatabaseName(gatewayConfig.getDatabaseName());
+    embeddedDataSource.setUser(getDatabaseUser(aliasService));
+    embeddedDataSource.setPassword(getDatabasePassword(aliasService));
+    return embeddedDataSource;
   }
 
 
@@ -195,8 +193,15 @@ public class JDBCUtils {
   public static void createTable(String createSqlFileName, DataSource dataSource, ClassLoader classLoader) throws Exception {
     final InputStream is = classLoader.getResourceAsStream(createSqlFileName);
     String createTableSql = IOUtils.toString(is, UTF_8);
+    if (isDerbyDatasource(dataSource)) {
+      createTableSql = createTableSql.replaceAll("IF NOT EXISTS ", "");
+    }
     try (Connection connection = dataSource.getConnection(); Statement createTableStatment = connection.createStatement();) {
       createTableStatment.execute(createTableSql);
     }
+  }
+
+  private static boolean isDerbyDatasource(DataSource dataSource) {
+    return dataSource.getClass().getName().contains("derby");
   }
 }

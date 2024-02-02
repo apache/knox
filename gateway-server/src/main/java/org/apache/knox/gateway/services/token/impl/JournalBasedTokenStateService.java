@@ -32,12 +32,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * @deprecated Since 2.1.0
+ */
 public class JournalBasedTokenStateService extends AbstractPersistentTokenStateService {
 
     private TokenStateJournal journal;
 
     @Override
     public void init(final GatewayConfig config, final Map<String, String> options) throws ServiceLifecycleException {
+        log.deprecatedServiceUsage(this.getClass().getCanonicalName());
         super.init(config, options);
 
         try {

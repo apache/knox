@@ -884,6 +884,11 @@ public class KnoxCLITest {
     assertThat( master2, not( is( master ) ) );
     assertThat( rc, is( 0 ) );
     assertThat(outContent.toString(StandardCharsets.UTF_8.name()), containsString("Master secret has been persisted to disk."));
+
+    // Need to delete the master file so that the it will not interfere with other tests
+    if( masterFile.exists() ) {
+      assertThat( "Failed to delete existing master file.", masterFile.delete(), is( true ) );
+    }
   }
 
   @Test
@@ -1320,7 +1325,7 @@ public class KnoxCLITest {
     } else {
       assertThat(commandOutput, containsString(alias + " has been successfully created."));
 
-      final AliasService aliasService = KnoxCLI.getGatewayServices().getService(ServiceType.ALIAS_SERVICE);
+      final AliasService aliasService = cli.getGatewayServices().getService(ServiceType.ALIAS_SERVICE);
       assertNotNull(new String(aliasService.getPasswordFromAliasForGateway(alias)));
     }
 
