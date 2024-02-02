@@ -44,7 +44,6 @@ public class DescriptorGeneratorTest {
           Arrays.asList("http://amagyar-1.test.site:25000/", "http://amagyar-2.test.site:25000");
 
   private static final Map<String,String> PARAMS = new HashMap<>();
-  
   static { PARAMS.put("KEY_1", "VAL_1"); }
 
   @Rule
