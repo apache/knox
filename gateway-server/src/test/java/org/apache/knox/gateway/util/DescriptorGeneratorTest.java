@@ -22,7 +22,9 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
@@ -40,12 +42,17 @@ public class DescriptorGeneratorTest {
   private static final String IMPALA_UI = "IMPALAUI";
   private static final List<String> URLS =
           Arrays.asList("http://amagyar-1.test.site:25000/", "http://amagyar-2.test.site:25000");
+
+  private static final Map<String,String> PARAMS = new HashMap<String,String>() {{
+    put("KEY_1", "VAL_1");
+  }};
+
   @Rule
   public TemporaryFolder folder= new TemporaryFolder();
 
   @Test
   public void testCreateDescriptor() throws Exception {
-    DescriptorGenerator generator = new DescriptorGenerator(TEST_DESC_1, TEST_PROV_1, IMPALA_UI, new ServiceUrls(URLS));
+    DescriptorGenerator generator = new DescriptorGenerator(TEST_DESC_1, TEST_PROV_1, IMPALA_UI, new ServiceUrls(URLS), PARAMS);
     File outputDir = folder.newFolder().getAbsoluteFile();
     File outputFile = new File(outputDir, TEST_DESC_1);
     generator.saveDescriptor(outputDir, false);
@@ -59,11 +66,14 @@ public class DescriptorGeneratorTest {
     Topology.Service service = result.getServices().get(0);
     assertEquals(IMPALA_UI, service.getRole());
     assertEquals(URLS, service.getUrls());
+    assertEquals(1, service.getParams().size());
+    assertEquals("KEY_1", service.getParams().get(0).getName());
+    assertEquals("VAL_1", service.getParams().get(0).getValue());
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testOutputAlreadyExists() throws Exception {
-    DescriptorGenerator generator = new DescriptorGenerator(TEST_DESC_1, TEST_PROV_1, IMPALA_UI, new ServiceUrls(URLS));
+    DescriptorGenerator generator = new DescriptorGenerator(TEST_DESC_1, TEST_PROV_1, IMPALA_UI, new ServiceUrls(URLS), PARAMS);
     File outputDir = folder.newFolder().getAbsoluteFile();
     File outputFile = new File(outputDir, TEST_DESC_1);
     outputFile.createNewFile();

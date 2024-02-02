@@ -43,6 +43,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -176,6 +177,7 @@ public class KnoxCLI extends Configured implements Tool {
   private String discoveryType;
   private String serviceName;
   private String urlsFilePath;
+  private final TreeMap<String, String> params = new TreeMap<>();
 
   // For testing only
   private String master;
@@ -539,8 +541,15 @@ public class KnoxCLI extends Configured implements Tool {
           return -1;
         }
       } else if (args[i].equalsIgnoreCase("generate-descriptor")) {
-        if (args.length >= 4) {
+        if (args.length >= 7) {
           command = new GenerateDescriptorCommand();
+        } else {
+          printKnoxShellUsage();
+          return -1;
+        }
+      } else if (args[i].equalsIgnoreCase("--param")) {
+        if (i + 2 < args.length) {
+          params.put(args[++i], args[++i]);
         } else {
           printKnoxShellUsage();
           return -1;
@@ -2436,6 +2445,8 @@ public class KnoxCLI extends Configured implements Tool {
             "generate-descriptor --service-urls-file \"path/to/urls.txt\" --service-name SERVICE_NAME \n" +
                     "--provider-name my-provider.json --descriptor-name my-descriptor.json \n" +
                     "[--output-dir /path/to/output_dir] \n" +
+                    "[--param key1 value1] \n" +
+                    "[--param key2 value2] \n" +
                     "[--force] \n";
     public static final String DESC =
             "Create Knox topology descriptor file for one service\n"
@@ -2445,6 +2456,7 @@ public class KnoxCLI extends Configured implements Tool {
                     + "--descriptor-name (required) name of descriptor to be created \n"
                     + "--provider-name (required) name of the referenced shared provider \n"
                     + "--output-dir (optional) output directory to save the descriptor file \n"
+                    + "--param (optional) service param name and value \n"
                     + "--force (optional) force rewriting of existing files, if not used, command will fail when the configs files with same name already exist. \n";
 
     @Override
@@ -2452,7 +2464,7 @@ public class KnoxCLI extends Configured implements Tool {
       validateParams();
       File outputDir = StringUtils.isBlank(KnoxCLI.this.outputDir) ? new File(".") : new File(KnoxCLI.this.outputDir);
       DescriptorGenerator generator =
-              new DescriptorGenerator(descriptorName, providerName, serviceName, ServiceUrls.fromFile(urlsFilePath));
+              new DescriptorGenerator(descriptorName, providerName, serviceName, ServiceUrls.fromFile(urlsFilePath), params);
       generator.saveDescriptor(outputDir, force);
       out.println("Descriptor " + descriptorName + " was successfully saved to " + outputDir.getAbsolutePath() + "\n");
     }

@@ -20,8 +20,11 @@ package org.apache.knox.gateway.util;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,23 +38,25 @@ public class DescriptorGenerator {
   private final String providerName;
   private final String serviceName;
   private final ServiceUrls serviceUrls;
+  private final Map<String, String> params;
 
   static {
     /* skip printing out null fields */
     mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
   }
 
-  public DescriptorGenerator(String descriptorName, String providerName, String serviceName, ServiceUrls serviceUrls) {
+  public DescriptorGenerator(String descriptorName, String providerName, String serviceName, ServiceUrls serviceUrls, Map<String, String> params) {
     this.descriptorName = descriptorName;
     this.providerName = providerName;
     this.serviceName = serviceName.toUpperCase(Locale.ROOT);
     this.serviceUrls = serviceUrls;
+    this.params = params;
   }
 
   public void saveDescriptor(File outputDir, boolean forceOverwrite) {
     File outputFile = new File(outputDir, descriptorName);
     if (outputFile.exists() && !forceOverwrite) {
-      throw new IllegalArgumentException(outputFile + "already exists");
+      throw new IllegalArgumentException(outputFile + " already exists");
     }
     DescriptorConfiguration descriptor = new DescriptorConfiguration();
     descriptor.setName(FilenameUtils.removeExtension(descriptorName));
@@ -59,6 +64,7 @@ public class DescriptorGenerator {
     Topology.Service service = new Topology.Service();
     service.setRole(serviceName);
     service.setUrls(serviceUrls.toList());
+    setParams(service, params);
     descriptor.setServices(Arrays.asList(service));
     try {
       mapper.writerWithDefaultPrettyPrinter()
@@ -66,5 +72,13 @@ public class DescriptorGenerator {
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
+  }
+
+  private void setParams(Topology.Service service, Map<String, String> params) {
+    List<Topology.Param> paramList = new ArrayList<>();
+    for (Map.Entry<String, String> each : params.entrySet()) {
+      paramList.add(new Topology.Param(each.getKey(), each.getValue()));
+    }
+    service.setParams(paramList);
   }
 }
