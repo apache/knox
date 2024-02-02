@@ -177,7 +177,7 @@ public class KnoxCLI extends Configured implements Tool {
   private String discoveryType;
   private String serviceName;
   private String urlsFilePath;
-  private final TreeMap<String, String> params = new TreeMap<>();
+  private final Map<String, String> params = new TreeMap<>();
 
   // For testing only
   private String master;
