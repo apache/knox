@@ -38,18 +38,31 @@
         <!-- UI services -->
         <mat-grid-list cols="4" rowHeight="130px">
             <mat-grid-tile *ngFor="let service of topology.uiServices.service" [colspan]="1" [rowspan]="1">
-                 <a href="{{service.serviceUrl}}" target="_blank" *ngIf="!this['enableServiceText_' + service.serviceName.toLowerCase()]">
+
+                <!-- Services with 1 service URL -->
+                <div *ngIf="service.serviceUrls.length === 1">
+                    <a href="{{service.serviceUrls[0]}}" target="_blank" *ngIf="!this['enableServiceText_' + service.serviceName.toLowerCase()]">
+                        <img src="assets/service-logos/{{service.serviceName.toLowerCase()}}.png" height="50px" (error)="enableServiceText('enableServiceText_' + service.serviceName.toLowerCase())"/>
+                    </a>
+                    <a href="{{service.serviceUrls[0]}}" target="_blank" *ngIf="this['enableServiceText_' + service.serviceName.toLowerCase()]">
+                        {{service.shortDesc}}
+                    </a>
+                    <mat-grid-tile-footer class="tile-shortDesc">
+                        <h3>{{service.shortDesc}} <span class="small" *ngIf="service.version">(v{{service.version}})</span></h3>
+                    </mat-grid-tile-footer>
+                    <mat-grid-tile-footer class="tile-longDesc" style="height:100px;">
+                        <h3>{{service.description}}</h3>
+                    </mat-grid-tile-footer>
+                </div>
+
+                <!-- Services with more than 1 service URL -->
+                <div *ngIf="service.serviceUrls.length > 1" (click)="openGroupServiceInformationModal(service)">
                     <img src="assets/service-logos/{{service.serviceName.toLowerCase()}}.png" height="50px" (error)="enableServiceText('enableServiceText_' + service.serviceName.toLowerCase())"/>
-                </a>
-                 <a href="{{service.serviceUrl}}" target="_blank" *ngIf="this['enableServiceText_' + service.serviceName.toLowerCase()]">
-                    {{service.shortDesc}}
-                </a>
-                <mat-grid-tile-footer class="tile-shortDesc">
-                    <h3>{{service.shortDesc}} <span class="small" *ngIf="service.version">(v{{service.version}})</span></h3>
-                </mat-grid-tile-footer>
-                <mat-grid-tile-footer class="tile-longDesc" style="height:100px;">
-                    <h3>{{service.description}}</h3>
-                </mat-grid-tile-footer>
+                    <mat-grid-tile-footer class="tile-shortDesc">
+                        <h3>{{service.shortDesc}} ({{service.serviceUrls.length}})</h3>
+                    </mat-grid-tile-footer>
+                </div>
+
             </mat-grid-tile>
         </mat-grid-list>
 
@@ -75,7 +88,10 @@
                         {{service.shortDesc}} <span class="small" *ngIf="service.version">(v{{service.version}})</span>
                     </td>
                     <td>
-                        <a href="{{service.serviceUrl}}">{{service.serviceUrl}}</a>
+                        <ng-container *ngFor="let serviceUrl of service.serviceUrls">
+                            <a href="{{serviceUrl}}">{{serviceUrl}}</a>
+                            <br *ngIf="service.serviceUrls.length > 1" />
+                        </ng-container>
                     </td>
                 </tr>
             </tbody>
@@ -141,7 +157,7 @@
                        <div *ngIf="!selectedApiService.samples || selectedApiService.samples.sample.length < 1">
                          <tr><td style="font-weight: bold;">There is no any sample found in service metadata</td></tr>
                          <tr>
-                           <td>&nbsp;You may check out the service's documentation and find out how to use its REST API. The service's URL is <a href="{{selectedApiService.serviceUrl}}" target="_blank">{{selectedApiService.serviceUrl}}</a></td>
+                           <td>&nbsp;You may check out the service's documentation and find out how to use its REST API. The service's URL is <a href="{{selectedApiService.serviceUrls[0]}}" target="_blank">{{selectedApiService.serviceUrls[0]}}</a></td>
                          </tr>
                        </div>
                      </table>
@@ -149,8 +165,42 @@
                </tr>
            </table>
        </div>
+       
     </bs-modal-body>
     <bs-modal-footer>
         <button type="button" class="btn btn-primary btn-sm" (click)="apiServiceInformationModal.close()">Close</button>
+    </bs-modal-footer>
+</bs-modal>
+
+
+<bs-modal #groupServiceInformationModal cssClass="groupServiceInformationModal" [animation]="true">
+    <bs-modal-header [showDismiss]="true" *ngIf="selectedGroupService">
+        <h4 class="modal-title">{{selectedGroupService.shortDesc}} <span class="small" *ngIf="selectedGroupService.version">(v{{selectedGroupService.version}})</span></h4>
+    </bs-modal-header>
+     <bs-modal-body *ngIf="selectedGroupService">
+         <span>
+             {{selectedGroupService.description}}
+         </span>
+         <br/><br/>
+         <span align="center">
+            <input type="text" placeholder="Search by hostname, port..." (input)="filterServiceUrls($event.target.value)" style="width: 50%">
+         </span>
+
+        <mat-grid-list cols="4" rowHeight="130px">
+            <mat-grid-tile *ngFor="let serviceUrl of filteredServiceUrls" [colspan]="1" [rowspan]="1">
+                <a href="{{serviceUrl}}" target="_blank" *ngIf="!this['enableServiceText_' + selectedGroupService.serviceName.toLowerCase()]">
+                    <img src="assets/service-logos/{{selectedGroupService.serviceName.toLowerCase()}}.png" height="50px" (error)="enableServiceText('enableServiceText_' + selectedGroupService.serviceName.toLowerCase())"/>
+                </a>
+                <a href="{{serviceUrl}}" target="_blank" *ngIf="this['enableServiceText_' + selectedGroupService.serviceName.toLowerCase()]">
+                    {{selectedGroupService.shortDesc}}
+                </a>
+                <mat-grid-tile-footer class="tile-shortDesc">
+                    <h3>{{selectedGroupService.shortDesc}} {{getServiceUrlHostAndPort(serviceUrl)}}</h3>
+                </mat-grid-tile-footer>
+            </mat-grid-tile>
+        </mat-grid-list>
+     </bs-modal-body>
+    <bs-modal-footer>
+        <button type="button" class="btn btn-primary btn-sm" (click)="groupServiceInformationModal.close()">Close</button>
     </bs-modal-footer>
 </bs-modal>
