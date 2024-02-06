@@ -25,6 +25,7 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -85,6 +86,10 @@ public abstract class AbstractJWTFilter implements Filter {
   public static final String JWT_EXPECTED_ISSUER = "jwt.expected.issuer";
   public static final String JWT_DEFAULT_ISSUER = "KNOXSSO";
 
+  public static final String TOKEN_PREFIX = "Token ";
+  public static final String DISABLED_POSTFIX = " is disabled";
+  public static final String IDLE_TIMEOUT_POSTFIX = " exceeded idle timeout";
+
   /**
    * If specified, this configuration property refers to the signature algorithm which a received
    * token must match. Otherwise, the default value "RS256" is used
@@ -111,6 +116,8 @@ public abstract class AbstractJWTFilter implements Filter {
 
   private TokenStateService tokenStateService;
   private TokenMAC tokenMAC;
+  protected long idleTimeoutSeconds = -1;
+  protected String topologyName;
 
   @Override
   public abstract void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
@@ -144,8 +151,7 @@ public abstract class AbstractJWTFilter implements Filter {
     }
 
     // Setup the verified tokens cache
-    String topologyName =
-              (context != null) ? (String) context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE) : null;
+    topologyName = context != null ? (String) context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE) : null;
     signatureVerificationCache = SignatureVerificationCache.getInstance(topologyName, filterConfig);
   }
 
@@ -338,16 +344,23 @@ public abstract class AbstractJWTFilter implements Filter {
           if (audValid) {
             Date nbf = token.getNotBeforeDate();
             if (nbf == null || new Date().after(nbf)) {
-              if (isTokenEnabled(tokenId)) {
-                if (verifyTokenSignature(token)) {
-                  return true;
+              final TokenMetadata tokenMetadata = tokenStateService == null ? null : tokenStateService.getTokenMetadata(tokenId);
+              if (isTokenEnabled(tokenMetadata)) {
+                if (isIdleTimeoutLimitNotExceeded(tokenMetadata)) {
+                  if (verifyTokenSignature(token)) {
+                    markLastUsedAt(tokenId, tokenMetadata);
+                    return true;
+                  } else {
+                    log.failedToVerifyTokenSignature(displayableToken, displayableTokenId);
+                    handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
+                  }
                 } else {
-                  log.failedToVerifyTokenSignature(displayableToken, displayableTokenId);
-                  handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
+                  log.idleTimoutExceeded(token.getSubject(), displayableTokenId, idleTimeoutSeconds);
+                  handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, TOKEN_PREFIX + displayableTokenId + IDLE_TIMEOUT_POSTFIX);
                 }
               } else {
                 log.disabledToken(displayableTokenId);
-                handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, "Token " + displayableTokenId + " is disabled");
+                handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, TOKEN_PREFIX + displayableTokenId + DISABLED_POSTFIX);
               }
             } else {
               log.notBeforeCheckFailed();
@@ -381,9 +394,27 @@ public abstract class AbstractJWTFilter implements Filter {
     return false;
   }
 
-  private boolean isTokenEnabled(String tokenId) throws UnknownTokenException {
-    final TokenMetadata tokenMetadata = tokenStateService == null ? null : tokenStateService.getTokenMetadata(tokenId);
+  private boolean isTokenEnabled(TokenMetadata tokenMetadata) throws UnknownTokenException {
     return tokenMetadata == null ? true : tokenMetadata.isEnabled();
+  }
+
+  private boolean isIdleTimeoutLimitNotExceeded(TokenMetadata tokenMetadata) throws UnknownTokenException {
+    if (idleTimeoutSeconds > 0) {
+      final Instant lastUsedAt = tokenMetadata == null ? null : tokenMetadata.getLastUsedAt();
+      final Instant idleTimeoutLimit = lastUsedAt == null ? null : lastUsedAt.plusSeconds(idleTimeoutSeconds);
+      return idleTimeoutLimit == null ? true : (tokenMetadata.isKnoxSsoCookie() && idleTimeoutLimit.isAfter(Instant.now()));
+    }
+    return true; // no idle timeout is configured -> ignore idleness check
+  }
+
+  private void markLastUsedAt(String tokenId, TokenMetadata tokenMetadata) throws UnknownTokenException {
+    if (tokenMetadata != null && tokenMetadata.isKnoxSsoCookie()) {
+      // to avoid updating every single metadata value, we create a new token metadata
+      // instance only with the updated "LAST_USED_AT" information
+      final TokenMetadata updatedTokenMetadata = new TokenMetadata();
+      updatedTokenMetadata.useTokenNow();
+      tokenStateService.addMetadata(tokenId, updatedTokenMetadata);
+    }
   }
 
   protected boolean validateToken(final HttpServletRequest request,
@@ -398,12 +429,20 @@ public abstract class AbstractJWTFilter implements Filter {
         if (tokenId != null) {
           final String displayableTokenId = Tokens.getTokenIDDisplayText(tokenId);
           if (tokenIsStillValid(tokenId)) {
-            if (isTokenEnabled(tokenId)) {
-              if (hasSignatureBeenVerified(passcode) || validatePasscode(tokenId, passcode)) {
-                return true;
+            final TokenMetadata tokenMetadata = tokenStateService == null ? null : tokenStateService.getTokenMetadata(tokenId);
+            if (isTokenEnabled(tokenMetadata)) {
+              if (isIdleTimeoutLimitNotExceeded(tokenMetadata)) {
+                if (hasSignatureBeenVerified(passcode) || validatePasscode(tokenId, passcode)) {
+                  markLastUsedAt(tokenId, tokenMetadata);
+                  return true;
+                } else {
+                  log.wrongPasscodeToken(tokenId);
+                  handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid passcode");
+                }
               } else {
-                log.wrongPasscodeToken(tokenId);
-                handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid passcode");
+                // tokenMetadata at this point cannot be null (see isIdleTimeoutLimitNotExceeded(...))
+                log.idleTimoutExceeded(tokenMetadata.getUserName(), displayableTokenId, idleTimeoutSeconds);
+                handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, "Token " + displayableTokenId + " exceeded idle timeout");
               }
             } else {
               log.disabledToken(displayableTokenId);

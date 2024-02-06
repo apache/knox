@@ -21,7 +21,9 @@ import static org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFe
 import static org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter.XHR_VALUE;
 import static org.junit.Assert.fail;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
+import java.time.Instant;
 import java.util.Properties;
 import java.util.Date;
 import java.util.Set;
@@ -36,6 +38,8 @@ import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
+import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Before;
@@ -324,6 +328,43 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
     String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
     Assert.assertNotNull("LoginURL should not be null.", loginURL);
     Assert.assertEquals(loginURL, "https://remotehost/notgateway/knoxsso/api/v1/websso?originalUrl=" + "https://remotehost/resource");
+  }
+
+  @Test
+  public void testIdleTimoutExceeded() throws Exception {
+    final TokenStateService tokenStateService = EasyMock.createNiceMock(TokenStateService.class);
+    final TokenMetadata tokenMetadata = EasyMock.createNiceMock(TokenMetadata.class);
+    EasyMock.expect(tokenMetadata.isEnabled()).andReturn(true).anyTimes();
+    EasyMock.expect(tokenMetadata.getLastUsedAt()).andReturn(Instant.now().minusSeconds(10));
+    EasyMock.expect(tokenStateService.getTokenMetadata(EasyMock.anyString())).andReturn(tokenMetadata).anyTimes();
+
+    final Properties filterConfig = new Properties();
+    filterConfig.setProperty(SSOCookieFederationFilter.SSO_IDLE_TIMEOUT_SECONDS, "1");
+    filterConfig.setProperty(TokenStateService.CONFIG_SERVER_MANAGED, "true");
+    handler.init(new TestFilterConfig(filterConfig, tokenStateService));
+    ((TestSSOCookieFederationProvider) handler).setTokenService(new TestJWTokenAuthority(publicKey));
+
+    final SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice", new Date(new Date().getTime() + 5000), privateKey);
+    final Cookie cookie = new Cookie("hadoop-jwt", jwt.serialize());
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getCookies()).andReturn(new Cookie[] { cookie }).anyTimes();
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    EasyMock.expect(request.getHeader(XHR_HEADER)).andReturn(XHR_VALUE).anyTimes();
+
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+    final DummyServletOutputStream reponseOutputStream = new DummyServletOutputStream();
+    EasyMock.expect(response.getOutputStream()).andReturn(reponseOutputStream).anyTimes();
+
+    EasyMock.replay(request, response, tokenStateService, tokenMetadata);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+    Assert.assertNotNull(reponseOutputStream.getData());
+    final String errorResponse = new String(reponseOutputStream.getData(), StandardCharsets.UTF_8);
+    Assert.assertTrue(errorResponse.startsWith(SSOCookieFederationFilter.TOKEN_PREFIX));
+    Assert.assertTrue(errorResponse.endsWith(SSOCookieFederationFilter.IDLE_TIMEOUT_POSTFIX));
   }
 
   @Override
