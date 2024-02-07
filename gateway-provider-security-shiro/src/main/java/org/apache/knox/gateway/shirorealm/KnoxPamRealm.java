@@ -133,19 +133,7 @@ public class KnoxPamRealm extends AuthorizingRealm {
   @Override
   protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token)
       throws AuthenticationException {
-    PAM pam = null;
-    UnixUser user = null;
-    try {
-      pam = new PAM(this.getService());
-      UsernamePasswordToken upToken = (UsernamePasswordToken) token;
-      user = pam.authenticate(upToken.getUsername(), new String(upToken.getPassword()));
-    } catch (PAMException e) {
-      handleAuthFailure(token, e.getMessage(), e);
-    } finally {
-      if(pam != null) {
-        pam.dispose();
-      }
-    }
+    UnixUser user = lookupUnixUser(token);
 
     HashRequest hashRequest = new HashRequest.Builder()
                                   .setSource(token.getCredentials())
@@ -159,6 +147,23 @@ public class KnoxPamRealm extends AuthorizingRealm {
     }
     return new SimpleAuthenticationInfo(new UnixUserPrincipal(user), credentialsHash.toHex(),
         credentialsHash.getSalt(), getName());
+  }
+
+  private synchronized UnixUser lookupUnixUser(AuthenticationToken token) {
+    PAM pam = null;
+    UnixUser user = null;
+    try {
+      pam = new PAM(this.getService());
+      UsernamePasswordToken upToken = (UsernamePasswordToken) token;
+      user = pam.authenticate(upToken.getUsername(), new String(upToken.getPassword()));
+    } catch (PAMException e) {
+      handleAuthFailure(token, e.getMessage(), e);
+    } finally {
+      if(pam != null) {
+        pam.dispose();
+      }
+    }
+    return user;
   }
 
   private void handleAuthFailure(AuthenticationToken token, String errorMessage, Exception e) {
