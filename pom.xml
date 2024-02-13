@@ -239,7 +239,7 @@
         <json-smart.version>2.4.8</json-smart.version>
         <junit.version>4.13.2</junit.version>
         <lang-tag.version>1.5</lang-tag.version>
-        <libpam4j.version>1.11</libpam4j.version>
+        <libpam4j.version>5.1.0</libpam4j.version>
         <log4j2.version>2.17.1</log4j2.version>
         <maven-checkstyle-plugin.version>3.1.1</maven-checkstyle-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
@@ -2039,7 +2039,7 @@
             </dependency>
 
             <dependency>
-                <groupId>org.kohsuke</groupId>
+                <groupId>org.glassfish.main.libpam4j</groupId>
                 <artifactId>libpam4j</artifactId>
                 <version>${libpam4j.version}</version>
             </dependency>
