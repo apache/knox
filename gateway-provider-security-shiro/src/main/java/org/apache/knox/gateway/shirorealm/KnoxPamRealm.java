@@ -87,7 +87,7 @@ public class KnoxPamRealm extends AuthorizingRealm {
 
   private static final AuditService auditService = AuditServiceFactory.getAuditService();
   private static final Auditor auditor = auditService.getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
-          AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
+      AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
 
   private final HashService hashService = new DefaultHashService();
   private final KnoxShiroMessages shiroLog = MessagesFactory.get(KnoxShiroMessages.class);
@@ -132,7 +132,7 @@ public class KnoxPamRealm extends AuthorizingRealm {
 
   @Override
   protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token)
-          throws AuthenticationException {
+      throws AuthenticationException {
     PAM pam = null;
     UnixUser user = null;
     try {
@@ -148,9 +148,9 @@ public class KnoxPamRealm extends AuthorizingRealm {
     }
 
     HashRequest hashRequest = new HashRequest.Builder()
-            .setSource(token.getCredentials())
-            .setAlgorithmName(HASHING_ALGORITHM)
-            .build();
+                                  .setSource(token.getCredentials())
+                                  .setAlgorithmName(HASHING_ALGORITHM)
+                                  .build();
     Hash credentialsHash = hashService.computeHash(hashRequest);
 
     /* Coverity Scan CID 1361684 */
@@ -158,12 +158,12 @@ public class KnoxPamRealm extends AuthorizingRealm {
       handleAuthFailure(token, "Failed to compute hash", null);
     }
     return new SimpleAuthenticationInfo(new UnixUserPrincipal(user), credentialsHash.toHex(),
-            credentialsHash.getSalt(), getName());
+        credentialsHash.getSalt(), getName());
   }
 
   private void handleAuthFailure(AuthenticationToken token, String errorMessage, Exception e) {
     auditor.audit(Action.AUTHENTICATION, token.getPrincipal().toString(),
-            ResourceType.PRINCIPAL, ActionOutcome.FAILURE, errorMessage);
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE, errorMessage);
     shiroLog.failedLoginInfo(token);
 
     if (e != null) {
