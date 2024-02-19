@@ -61,6 +61,7 @@ public class DefaultHttpClientFactoryTest {
     expect(gatewayConfig.getHttpClientMaxConnections()).andReturn(32).once();
     expect(gatewayConfig.getHttpClientConnectionTimeout()).andReturn(20000).once();
     expect(gatewayConfig.getHttpClientSocketTimeout()).andReturn(20000).once();
+    expect(gatewayConfig.getHttpClientCookieSpec()).andReturn("standard").anyTimes();
 
     GatewayServices gatewayServices = createMock(GatewayServices.class);
     expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
@@ -209,6 +210,7 @@ public class DefaultHttpClientFactoryTest {
     GatewayConfig gatewayConfig = createMock(GatewayConfig.class);
     expect(gatewayConfig.getHttpClientConnectionTimeout()).andReturn(20000).once();
     expect(gatewayConfig.getHttpClientSocketTimeout()).andReturn(20000).once();
+    expect(gatewayConfig.getHttpClientCookieSpec()).andReturn("standard").anyTimes();
 
     ServletContext servletContext = createMock(ServletContext.class);
     expect(servletContext.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).atLeastOnce();
@@ -246,6 +248,7 @@ public class DefaultHttpClientFactoryTest {
     expect(gatewayConfig.getHttpClientMaxConnections()).andReturn(32).anyTimes();
     expect(gatewayConfig.getHttpClientConnectionTimeout()).andReturn(20000).anyTimes();
     expect(gatewayConfig.getHttpClientSocketTimeout()).andReturn(20000).anyTimes();
+    expect(gatewayConfig.getHttpClientCookieSpec()).andReturn("standard").anyTimes();
 
     GatewayServices gatewayServices = createMock(GatewayServices.class);
     expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).anyTimes();
