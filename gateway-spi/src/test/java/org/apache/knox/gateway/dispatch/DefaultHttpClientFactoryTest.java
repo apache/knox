@@ -79,6 +79,7 @@ public class DefaultHttpClientFactoryTest {
     expect(filterConfig.getInitParameter("httpclient.socketTimeout")).andReturn(null).once();
     expect(filterConfig.getInitParameter("serviceRole")).andReturn(null).once();
     expect(filterConfig.getInitParameter("retryCount")).andReturn(null).once();
+    expect(filterConfig.getInitParameter("httpclient.cookieSpec")).andReturn(null).anyTimes();
 
     replay(keystoreService, gatewayConfig, gatewayServices, servletContext, filterConfig);
 
@@ -220,6 +221,7 @@ public class DefaultHttpClientFactoryTest {
     expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
     expect(filterConfig.getInitParameter("httpclient.connectionTimeout")).andReturn(null).once();
     expect(filterConfig.getInitParameter("httpclient.socketTimeout")).andReturn(null).once();
+    expect(filterConfig.getInitParameter("httpclient.cookieSpec")).andReturn(null).anyTimes();
 
     replay(gatewayConfig, servletContext, filterConfig);
 
@@ -264,6 +266,7 @@ public class DefaultHttpClientFactoryTest {
     expect(filterConfigSafe.getInitParameter("httpclient.maxConnections")).andReturn(null).once();
     expect(filterConfigSafe.getInitParameter("httpclient.connectionTimeout")).andReturn(null).once();
     expect(filterConfigSafe.getInitParameter("httpclient.socketTimeout")).andReturn(null).once();
+    expect(filterConfigSafe.getInitParameter("httpclient.cookieSpec")).andReturn(null).anyTimes();
     expect(filterConfigSafe.getInitParameter("serviceRole")).andReturn(null).once();
     expect(filterConfigSafe.getInitParameter("retryCount")).andReturn("3").anyTimes();
     expect(filterConfigSafe.getInitParameter("retryNonSafeRequest")).andReturn(null).anyTimes();
@@ -277,6 +280,7 @@ public class DefaultHttpClientFactoryTest {
     expect(filterConfigUnSafe.getInitParameter("serviceRole")).andReturn(null).once();
     expect(filterConfigUnSafe.getInitParameter("retryCount")).andReturn("3").anyTimes();
     expect(filterConfigUnSafe.getInitParameter("retryNonSafeRequest")).andReturn("true").anyTimes();
+    expect(filterConfigUnSafe.getInitParameter("httpclient.cookieSpec")).andReturn(null).anyTimes();
 
     replay(keystoreService, gatewayConfig, gatewayServices, servletContext, filterConfigSafe, filterConfigUnSafe);
 
