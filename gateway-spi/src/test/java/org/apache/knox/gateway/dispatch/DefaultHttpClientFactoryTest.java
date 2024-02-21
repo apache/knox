@@ -29,6 +29,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
@@ -61,7 +62,7 @@ public class DefaultHttpClientFactoryTest {
     expect(gatewayConfig.getHttpClientMaxConnections()).andReturn(32).once();
     expect(gatewayConfig.getHttpClientConnectionTimeout()).andReturn(20000).once();
     expect(gatewayConfig.getHttpClientSocketTimeout()).andReturn(20000).once();
-    expect(gatewayConfig.getHttpClientCookieSpec()).andReturn("standard").anyTimes();
+    expect(gatewayConfig.getHttpClientCookieSpec()).andReturn(CookieSpecs.STANDARD).anyTimes();
 
     GatewayServices gatewayServices = createMock(GatewayServices.class);
     expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
@@ -210,7 +211,7 @@ public class DefaultHttpClientFactoryTest {
     GatewayConfig gatewayConfig = createMock(GatewayConfig.class);
     expect(gatewayConfig.getHttpClientConnectionTimeout()).andReturn(20000).once();
     expect(gatewayConfig.getHttpClientSocketTimeout()).andReturn(20000).once();
-    expect(gatewayConfig.getHttpClientCookieSpec()).andReturn("standard").anyTimes();
+    expect(gatewayConfig.getHttpClientCookieSpec()).andReturn(CookieSpecs.STANDARD).anyTimes();
 
     ServletContext servletContext = createMock(ServletContext.class);
     expect(servletContext.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).atLeastOnce();
@@ -248,7 +249,7 @@ public class DefaultHttpClientFactoryTest {
     expect(gatewayConfig.getHttpClientMaxConnections()).andReturn(32).anyTimes();
     expect(gatewayConfig.getHttpClientConnectionTimeout()).andReturn(20000).anyTimes();
     expect(gatewayConfig.getHttpClientSocketTimeout()).andReturn(20000).anyTimes();
-    expect(gatewayConfig.getHttpClientCookieSpec()).andReturn("standard").anyTimes();
+    expect(gatewayConfig.getHttpClientCookieSpec()).andReturn(CookieSpecs.STANDARD).anyTimes();
 
     GatewayServices gatewayServices = createMock(GatewayServices.class);
     expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).anyTimes();

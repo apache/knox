@@ -1568,7 +1568,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public String getHttpClientCookieSpec() {
-    return get(HTTP_CLIENT_COOKIE_SPEC, null);
+    return get(HTTP_CLIENT_COOKIE_SPEC);
   }
 
 }

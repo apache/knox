@@ -376,10 +376,12 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
   }
 
   private static String getCookieSpec(FilterConfig filterConfig) {
+    String cookieSpec = filterConfig.getInitParameter("httpclient.cookieSpec");
+    if (StringUtils.isNotBlank(cookieSpec)) {
+      return cookieSpec;
+    }
     GatewayConfig globalConfig =
             (GatewayConfig)filterConfig.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
-    return globalConfig != null
-            ? globalConfig.getHttpClientCookieSpec()
-            : filterConfig.getInitParameter("httpclient.cookieSpec");
+    return globalConfig != null ? globalConfig.getHttpClientCookieSpec() : null;
   }
 }
