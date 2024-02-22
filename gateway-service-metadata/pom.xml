@@ -78,5 +78,9 @@
             <groupId>io.swagger</groupId>
             <artifactId>swagger-annotations</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.kstruct</groupId>
+            <artifactId>gethostname4j</artifactId>
+        </dependency>
     </dependencies>
 </project>

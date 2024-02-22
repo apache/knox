@@ -27,6 +27,7 @@ import java.util.Set;
 public class HomePageProfile {
   static final String GPI_PREFIX = "gpi_";
   static final String GPI_VERSION = GPI_PREFIX + "version";
+  static final String GPI_HOSTNAME = GPI_PREFIX + "hostname";
   static final String GPI_CERT = GPI_PREFIX + "cert";
   static final String GPI_ADMIN_UI = GPI_PREFIX + "admin_ui";
   static final String GPI_ADMIN_API = GPI_PREFIX + "admin_api";
@@ -41,6 +42,7 @@ public class HomePageProfile {
 
   public HomePageProfile(Collection<String> profileConfiguration) {
     addElement(GPI_VERSION, profileConfiguration);
+    addElement(GPI_HOSTNAME, profileConfiguration);
     addElement(GPI_CERT, profileConfiguration);
     addElement(GPI_ADMIN_UI, profileConfiguration);
     addElement(GPI_ADMIN_API, profileConfiguration);
@@ -73,14 +75,14 @@ public class HomePageProfile {
   }
 
   public static Collection<String> getFullProfileElements() {
-    return Arrays.asList(GPI_VERSION, GPI_CERT, GPI_ADMIN_UI, GPI_ADMIN_API, GPI_METADATA_API, GPI_TOKENS, GPI_WEBSHELL);
+    return Arrays.asList(GPI_VERSION, GPI_HOSTNAME, GPI_CERT, GPI_ADMIN_UI, GPI_ADMIN_API, GPI_METADATA_API, GPI_TOKENS, GPI_WEBSHELL);
   }
 
   public static Collection<String> getThinProfileElemens() {
-    return Arrays.asList(GPI_VERSION, GPI_CERT);
+    return Arrays.asList(GPI_VERSION, GPI_HOSTNAME, GPI_CERT);
   }
 
   public static Collection<String> getTokenProfileElements() {
-    return Arrays.asList(GPI_VERSION, GPI_CERT, GPI_TOKENS);
+    return Arrays.asList(GPI_VERSION, GPI_HOSTNAME, GPI_CERT, GPI_TOKENS);
   }
 }

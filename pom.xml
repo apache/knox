@@ -203,6 +203,7 @@
         <findsecbugs-plugin.version>1.11.0</findsecbugs-plugin.version>
         <forbiddenapis.version>3.1</forbiddenapis.version>
         <frontend-maven-plugin.version>1.11.0</frontend-maven-plugin.version>
+        <gethostname4j.version>1.0.0</gethostname4j.version>
         <glassfish-jaxb.version>2.3.3</glassfish-jaxb.version>
         <gson.version>2.8.9</gson.version>
         <groovy.version>3.0.7</groovy.version>
@@ -1559,6 +1560,18 @@
                 <groupId>com.google.code.gson</groupId>
                 <artifactId>gson</artifactId>
                 <version>${gson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.kstruct</groupId>
+                <artifactId>gethostname4j</artifactId>
+                <version>${gethostname4j.version}</version>
+                <exclusions>
+                     <exclusion>
+                          <groupId>net.java.dev.jna</groupId>
+                          <artifactId>jna-platform</artifactId>
+                     </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>

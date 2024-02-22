@@ -33,6 +33,7 @@ export class GeneralProxyInformationComponent implements OnInit {
     constructor(private homepageService: HomepageService, private route: ActivatedRoute) {
         this['showGeneralProxyInformation'] = false;
         this['showKnoxVersion'] = true;
+        this['showKnoxHostname'] = true;
         this['showPublicCerts'] = true;
         this['showAdminUI'] = true;
         this['showAdminAPI'] = true;
@@ -44,6 +45,13 @@ export class GeneralProxyInformationComponent implements OnInit {
     getVersion() {
         if (this.generalProxyInformation) {
             return this.generalProxyInformation.version;
+          }
+          return '';
+    }
+
+    getHostname() {
+        if (this.generalProxyInformation) {
+            return this.generalProxyInformation.hostname;
           }
           return '';
     }
@@ -118,6 +126,7 @@ export class GeneralProxyInformationComponent implements OnInit {
     setProfileFlags(profile: JSON) {
     	    console.debug('Setting GPI profile flags...');
         this['showKnoxVersion'] = (profile['gpi_version'] === 'true');
+        this['showKnoxHostname'] = (profile['gpi_hostname'] === 'true');
         this['showPublicCerts'] = (profile['gpi_cert'] === 'true');
         this['showAdminUI'] = (profile['gpi_admin_ui'] === 'true');
         this['showAdminAPI'] = (profile['gpi_admin_api'] === 'true');

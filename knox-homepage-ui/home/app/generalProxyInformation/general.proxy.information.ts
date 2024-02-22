@@ -17,6 +17,7 @@
 
 export class GeneralProxyInformation {
     version: string;
+    hostname: string;
     adminUiUrl: string;
     webShellUrl: string;
     adminApiBookUrl: string;
