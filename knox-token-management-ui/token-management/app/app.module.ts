@@ -33,6 +33,7 @@ import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {TokenManagementComponent} from './token.management.component';
 import {TokenManagementService} from './token.management.service';
 import {SessionInformationComponent} from './session.information.component';
+import {SafeHtmlPipe} from './session.information.component';
 
 @NgModule({
     imports: [BrowserModule,
@@ -53,7 +54,7 @@ import {SessionInformationComponent} from './session.information.component';
         MatSlideToggleModule,
         MatCheckboxModule
     ],
-    declarations: [TokenManagementComponent, SessionInformationComponent],
+    declarations: [TokenManagementComponent, SessionInformationComponent, SafeHtmlPipe],
     providers: [TokenManagementService],
     bootstrap: [TokenManagementComponent, SessionInformationComponent]
 })

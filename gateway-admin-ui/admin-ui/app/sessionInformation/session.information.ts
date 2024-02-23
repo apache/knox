@@ -20,4 +20,5 @@ export class SessionInformation {
     logoutUrl: string;
     logoutPageUrl: string;
     globalLgoutPageUrl: string;
+    bannerText: string;
 }

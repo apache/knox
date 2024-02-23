@@ -26,6 +26,7 @@ import {APP_BASE_HREF} from '@angular/common';
 import {GeneralProxyInformationComponent} from './generalProxyInformation/general.proxy.information.component';
 import {TopologyInformationsComponent} from './topologies/topology.information.component';
 import {SessionInformationComponent} from './sessionInformation/session.information.component';
+import {SafeHtmlPipe} from './sessionInformation/session.information.component';
 import {HomepageService} from './homepage.service';
 
 @NgModule({
@@ -39,7 +40,8 @@ import {HomepageService} from './homepage.service';
     ],
     declarations: [GeneralProxyInformationComponent,
                    TopologyInformationsComponent,
-                   SessionInformationComponent
+                   SessionInformationComponent,
+                   SafeHtmlPipe
     ],
     providers: [HomepageService,
       {
