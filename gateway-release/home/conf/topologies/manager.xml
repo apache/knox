@@ -81,6 +81,9 @@
       </provider>
    </gateway>
    <service>
+      <role>KNOX-SESSION</role>
+   </service>
+   <service>
       <role>KNOX</role>
    </service>
    <application>
