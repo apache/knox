@@ -1106,4 +1106,9 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return 1;
   }
 
+  @Override
+  public String getHttpClientCookieSpec() {
+    return null;
+  }
+
 }

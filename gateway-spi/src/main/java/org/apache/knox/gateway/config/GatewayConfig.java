@@ -934,4 +934,8 @@ public interface GatewayConfig {
    */
   int getTokenMigrationProgressCount();
 
+  /**
+   * @return CookieSpec for the HTTP client used by the dispatch, see org.apache.http.client.config.CookieSpecs
+   */
+  String getHttpClientCookieSpec();
 }

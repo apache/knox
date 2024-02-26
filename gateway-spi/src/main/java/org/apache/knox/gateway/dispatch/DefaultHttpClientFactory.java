@@ -238,6 +238,11 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
       builder.setSocketTimeout( socketTimeout );
       LOG.setHttpClientSocketTimeout(socketTimeout, serviceRole == null ? "N/A" : serviceRole);
     }
+    String cookieSpec = getCookieSpec(config);
+    if (cookieSpec != null) {
+      LOG.setHttpClientCookieSpec(cookieSpec);
+      builder.setCookieSpec(cookieSpec);
+    }
 
     // HttpClient 4.5.7 is broken for %2F handling with url normalization.
     // However, HttpClient 4.5.8+ (HTTPCLIENT-1968) has reasonable url
@@ -368,5 +373,15 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
         .appendMillis().toFormatter();
     Period p = Period.parse( s, f );
     return p.toStandardDuration().getMillis();
+  }
+
+  private static String getCookieSpec(FilterConfig filterConfig) {
+    String cookieSpec = filterConfig.getInitParameter("httpclient.cookieSpec");
+    if (StringUtils.isNotBlank(cookieSpec)) {
+      return cookieSpec;
+    }
+    GatewayConfig globalConfig =
+            (GatewayConfig)filterConfig.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    return globalConfig != null ? globalConfig.getHttpClientCookieSpec() : null;
   }
 }

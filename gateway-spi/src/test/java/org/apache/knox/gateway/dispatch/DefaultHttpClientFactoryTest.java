@@ -29,6 +29,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
@@ -61,6 +62,7 @@ public class DefaultHttpClientFactoryTest {
     expect(gatewayConfig.getHttpClientMaxConnections()).andReturn(32).once();
     expect(gatewayConfig.getHttpClientConnectionTimeout()).andReturn(20000).once();
     expect(gatewayConfig.getHttpClientSocketTimeout()).andReturn(20000).once();
+    expect(gatewayConfig.getHttpClientCookieSpec()).andReturn(CookieSpecs.STANDARD).anyTimes();
 
     GatewayServices gatewayServices = createMock(GatewayServices.class);
     expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
@@ -77,6 +79,7 @@ public class DefaultHttpClientFactoryTest {
     expect(filterConfig.getInitParameter("httpclient.socketTimeout")).andReturn(null).once();
     expect(filterConfig.getInitParameter("serviceRole")).andReturn(null).once();
     expect(filterConfig.getInitParameter("retryCount")).andReturn(null).once();
+    expect(filterConfig.getInitParameter("httpclient.cookieSpec")).andReturn(null).anyTimes();
 
     replay(keystoreService, gatewayConfig, gatewayServices, servletContext, filterConfig);
 
@@ -209,6 +212,7 @@ public class DefaultHttpClientFactoryTest {
     GatewayConfig gatewayConfig = createMock(GatewayConfig.class);
     expect(gatewayConfig.getHttpClientConnectionTimeout()).andReturn(20000).once();
     expect(gatewayConfig.getHttpClientSocketTimeout()).andReturn(20000).once();
+    expect(gatewayConfig.getHttpClientCookieSpec()).andReturn(CookieSpecs.STANDARD).anyTimes();
 
     ServletContext servletContext = createMock(ServletContext.class);
     expect(servletContext.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).atLeastOnce();
@@ -217,6 +221,7 @@ public class DefaultHttpClientFactoryTest {
     expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
     expect(filterConfig.getInitParameter("httpclient.connectionTimeout")).andReturn(null).once();
     expect(filterConfig.getInitParameter("httpclient.socketTimeout")).andReturn(null).once();
+    expect(filterConfig.getInitParameter("httpclient.cookieSpec")).andReturn(null).anyTimes();
 
     replay(gatewayConfig, servletContext, filterConfig);
 
@@ -246,6 +251,7 @@ public class DefaultHttpClientFactoryTest {
     expect(gatewayConfig.getHttpClientMaxConnections()).andReturn(32).anyTimes();
     expect(gatewayConfig.getHttpClientConnectionTimeout()).andReturn(20000).anyTimes();
     expect(gatewayConfig.getHttpClientSocketTimeout()).andReturn(20000).anyTimes();
+    expect(gatewayConfig.getHttpClientCookieSpec()).andReturn(CookieSpecs.STANDARD).anyTimes();
 
     GatewayServices gatewayServices = createMock(GatewayServices.class);
     expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).anyTimes();
@@ -260,6 +266,7 @@ public class DefaultHttpClientFactoryTest {
     expect(filterConfigSafe.getInitParameter("httpclient.maxConnections")).andReturn(null).once();
     expect(filterConfigSafe.getInitParameter("httpclient.connectionTimeout")).andReturn(null).once();
     expect(filterConfigSafe.getInitParameter("httpclient.socketTimeout")).andReturn(null).once();
+    expect(filterConfigSafe.getInitParameter("httpclient.cookieSpec")).andReturn(null).anyTimes();
     expect(filterConfigSafe.getInitParameter("serviceRole")).andReturn(null).once();
     expect(filterConfigSafe.getInitParameter("retryCount")).andReturn("3").anyTimes();
     expect(filterConfigSafe.getInitParameter("retryNonSafeRequest")).andReturn(null).anyTimes();
@@ -273,6 +280,7 @@ public class DefaultHttpClientFactoryTest {
     expect(filterConfigUnSafe.getInitParameter("serviceRole")).andReturn(null).once();
     expect(filterConfigUnSafe.getInitParameter("retryCount")).andReturn("3").anyTimes();
     expect(filterConfigUnSafe.getInitParameter("retryNonSafeRequest")).andReturn("true").anyTimes();
+    expect(filterConfigUnSafe.getInitParameter("httpclient.cookieSpec")).andReturn(null).anyTimes();
 
     replay(keystoreService, gatewayConfig, gatewayServices, servletContext, filterConfigSafe, filterConfigUnSafe);
 
