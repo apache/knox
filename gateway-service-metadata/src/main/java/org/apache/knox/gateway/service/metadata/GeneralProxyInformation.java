@@ -32,6 +32,10 @@ public class GeneralProxyInformation {
   private String version;
 
   @XmlElement
+  @ApiModelProperty(value = "The name of the host where this Knox Gateway is running")
+  private String hostname;
+
+  @XmlElement
   @ApiModelProperty(value = "The Admin UI URL")
   private String adminUiUrl;
 
@@ -57,6 +61,14 @@ public class GeneralProxyInformation {
 
   public void setVersion(String version) {
     this.version = version;
+  }
+
+  public String getHostname() {
+    return hostname;
+  }
+
+  public void setHostname(String hostname) {
+    this.hostname = hostname;
   }
 
   public String getAdminUiUrl() {

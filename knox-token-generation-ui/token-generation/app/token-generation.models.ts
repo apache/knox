@@ -58,4 +58,5 @@ export class SessionInformation {
     globalLgoutPageUrl: string;
     canSeeAllTokens: boolean;
     currentKnoxSsoCookieTokenId: string;
+    bannerText: string;
 }

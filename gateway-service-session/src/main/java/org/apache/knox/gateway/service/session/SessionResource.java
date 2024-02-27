@@ -68,6 +68,7 @@ public class SessionResource {
     }
     sessionInfo.setCanSeeAllTokens(config != null ? config.canSeeAllTokens(user) : false);
     sessionInfo.setCurrentKnoxSsoCookieTokenId((String) this.request.getAttribute(TokenUtils.ATTR_CURRENT_KNOXSSO_COOKIE_TOKEN_ID));
+    sessionInfo.setBannerText(config != null ? config.getBannerText() : "");
 
     return sessionInfo;
   }

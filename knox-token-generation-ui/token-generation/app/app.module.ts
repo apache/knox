@@ -21,13 +21,14 @@ import { TokenGenerationComponent } from './token-generation.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { TokenGenService } from './token-generation.service';
 import { SessionInformationComponent } from './session.information.component';
+import { SafeHtmlPipe } from './session.information.component';
 
 @NgModule({
     imports: [BrowserModule,
         HttpClientModule,
         ReactiveFormsModule
     ],
-    declarations: [TokenGenerationComponent, SessionInformationComponent],
+    declarations: [TokenGenerationComponent, SessionInformationComponent, SafeHtmlPipe],
     providers: [TokenGenService],
     bootstrap: [TokenGenerationComponent, SessionInformationComponent]
 })

@@ -40,6 +40,9 @@ public class SessionInformation {
   @XmlElement
   private String currentKnoxSsoCookieTokenId;
 
+  @XmlElement
+  private String bannerText;
+
   public String getUser() {
     return user;
   }
@@ -86,6 +89,14 @@ public class SessionInformation {
 
   public void setCurrentKnoxSsoCookieTokenId(String currentKnoxSsoCookieTokenId) {
     this.currentKnoxSsoCookieTokenId = currentKnoxSsoCookieTokenId;
+  }
+
+  public String getBannerText() {
+    return bannerText;
+  }
+
+  public void setBannerText(String bannerText) {
+    this.bannerText = bannerText;
   }
 
 }

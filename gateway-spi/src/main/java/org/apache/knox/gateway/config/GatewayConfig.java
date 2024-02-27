@@ -938,4 +938,10 @@ public interface GatewayConfig {
    * @return CookieSpec for the HTTP client used by the dispatch, see org.apache.http.client.config.CookieSpecs
    */
   String getHttpClientCookieSpec();
+
+  /**
+   * @return a text that should be displayed on all Knox UIs within the banner on the top.
+   */
+  String getBannerText();
+
 }

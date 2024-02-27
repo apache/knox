@@ -14,9 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
+import {Component, OnInit, Pipe, PipeTransform} from '@angular/core';
+import {DomSanitizer} from '@angular/platform-browser';
 import {HomepageService} from '../homepage.service';
 import {SessionInformation} from './session.information';
+
+@Pipe({ name: 'safeHtml' })
+export class SafeHtmlPipe implements PipeTransform {
+  constructor(private sanitizer: DomSanitizer) {}
+
+  transform(value) {
+    return this.sanitizer.bypassSecurityTrustHtml(value);
+  }
+}
 
 @Component({
     selector: 'app-session-information',
@@ -57,6 +67,14 @@ export class SessionInformationComponent implements OnInit {
             return this.sessionInformation.logoutPageUrl;
         }
         return null;
+    }
+
+    getBannerText() {
+        if (this.sessionInformation) {
+            console.debug('SessionInformationComponent --> getBannerHtml() --> ' + this.sessionInformation.bannerText);
+            return this.sessionInformation.bannerText;
+        }
+        return '';
     }
 
     logout() {

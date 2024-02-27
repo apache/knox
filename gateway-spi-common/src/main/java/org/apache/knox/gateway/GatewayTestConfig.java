@@ -1111,4 +1111,9 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return null;
   }
 
+  @Override
+  public String getBannerText() {
+    return null;
+  }
+
 }

@@ -48,6 +48,7 @@ import {ProviderConfigSelectorComponent} from './provider-config-selector/provid
 import {NewDescWizardComponent} from './new-desc-wizard/new-desc-wizard.component';
 import {ProviderConfigWizardComponent} from './provider-config-wizard/provider-config-wizard.component';
 import {SessionInformationComponent} from './sessionInformation/session.information.component';
+import {SafeHtmlPipe} from './sessionInformation/session.information.component';
 
 @NgModule({
     imports: [BrowserModule,
@@ -76,7 +77,8 @@ import {SessionInformationComponent} from './sessionInformation/session.informat
         ProviderConfigSelectorComponent,
         NewDescWizardComponent,
         ProviderConfigWizardComponent,
-        SessionInformationComponent
+        SessionInformationComponent,
+        SafeHtmlPipe
     ],
     providers: [TopologyService,
         ServiceDefinitionService,

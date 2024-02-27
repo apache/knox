@@ -72,6 +72,8 @@ import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.util.JsonUtils;
 import org.apache.knox.gateway.util.X509CertificateUtil;
 
+import com.kstruct.gethostname4j.Hostname;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
@@ -101,6 +103,7 @@ public class KnoxMetadataResource {
       final ServerInfoService serviceInfoService = gatewayServices.getService(ServiceType.SERVER_INFO_SERVICE);
       final String versionInfo = serviceInfoService.getBuildVersion() + " (hash=" + serviceInfoService.getBuildHash() + ")";
       proxyInfo.setVersion(versionInfo);
+      proxyInfo.setHostname(Hostname.getHostname());
       proxyInfo.setAdminApiBookUrl(
           String.format(Locale.ROOT, "https://knox.apache.org/books/knox-%s/user-guide.html#Admin+API", getAdminApiBookVersion(serviceInfoService.getBuildVersion())));
       final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);

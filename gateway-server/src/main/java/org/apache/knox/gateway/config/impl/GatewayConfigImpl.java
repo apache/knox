@@ -324,6 +324,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String GLOBAL_LOGOUT_PAGE_URL = "knox.global.logout.page.url";
   private static final String KNOX_INCOMING_XFORWARDED_ENABLED = "gateway.incoming.xforwarded.enabled";
 
+  private static final String UI_BANNER_TEXT = GATEWAY_CONFIG_FILE_PREFIX + ".ui.banner.text";
+
   //Gateway Database related properties
   public static final String GATEWAY_DATABASE_TYPE = GATEWAY_CONFIG_FILE_PREFIX + ".database.type";
   public static final String GATEWAY_DATABASE_CONN_URL = GATEWAY_CONFIG_FILE_PREFIX + ".database.connection.url";
@@ -1569,6 +1571,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getHttpClientCookieSpec() {
     return get(HTTP_CLIENT_COOKIE_SPEC);
+  }
+
+  @Override
+  public String getBannerText() {
+    return get(UI_BANNER_TEXT, "");
   }
 
 }

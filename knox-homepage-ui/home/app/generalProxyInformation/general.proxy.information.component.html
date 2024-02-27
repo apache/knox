@@ -26,6 +26,10 @@
                 <td>Knox Version</td>
                 <td>{{ getVersion() }}</td>
             </tr>
+            <tr *ngIf="this['showKnoxHostname']">
+                <td>Hostname</td>
+                <td>{{ getHostname() }}</td>
+            </tr>
             <tr *ngIf="this['showPublicCerts']">
                 <td>TLS Public Certificate</td>
                 <td>
