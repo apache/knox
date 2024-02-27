@@ -86,9 +86,6 @@
    <service>
       <role>KNOX</role>
    </service>
-   <service>
-      <role>KNOX-SESSION</role>
-   </service>
    <application>
       <name>admin-ui</name>
    </application>
