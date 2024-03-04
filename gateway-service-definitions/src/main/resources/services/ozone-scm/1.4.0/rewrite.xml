@@ -76,7 +76,7 @@ Licensed to the Apache Software Foundation (ASF) under one or more
             <apply path="/docs" rule="OZONE-SCM/ozone-scm/outbound/filter/docs"/>
             <apply path="logLevel" rule="OZONE-SCM/ozone-scm/outbound/filter/logLevel"/>
             <apply path="stacks" rule="OZONE-SCM/ozone-scm/outbound/filter/stacks"/>
-            <apply path="\{\{typestat\.portval\.toLowerCase\(\)\}\}\:\/\/\{\{typestat\.hostname\}\}\:\{\{typestat\.portno\}\}" rule="OZONE-SCM/ozone-scm/outbound/datanode/address"/>
+            <apply path="\{\{typestat\.protocol\}\}\:\/\/\{\{typestat\.hostname\}\}\:\{\{typestat\.port\}\}" rule="OZONE-SCM/ozone-scm/outbound/datanode/address"/>
         </content>
         <content type="*/javascript">
             <apply path="main\.html" rule="OZONE-SCM/ozone-scm/outbound/filter/main"/>
@@ -117,8 +117,8 @@ Licensed to the Apache Software Foundation (ASF) under one or more
     <!-- outbound rule for the datanode links on SCM UI -->
 
     <rule dir="OUT" name="OZONE-SCM/ozone-scm/outbound/datanode/address">
-        <match pattern="{{typestat.portval.toLowerCase()}}://{{typestat.hostname}}:{{typestat.portno}}"/>
-        <rewrite template="{gateway.url}/ozone-scm/datanode/index.html?host={{typestat.portval.toLowerCase()}}://{{typestat.hostname}}:{{typestat.portno}} "/>
+        <match pattern="{{typestat.protocol}}://{{typestat.hostname}}:{{typestat.port}}"/>
+        <rewrite template="{gateway.url}/ozone-scm/datanode/index.html?host={{typestat.protocol}}://{{typestat.hostname}}:{{typestat.port}} "/>
     </rule>
 
     <!-- datanode inbound rules -->
