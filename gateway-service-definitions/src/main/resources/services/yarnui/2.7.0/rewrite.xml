@@ -220,13 +220,6 @@
     </content>
 </filter>
 
-<filter name="YARNUI/yarn/outbound/filter/nodes">
-    <content type="*/html">
-        <apply path="(?!http:)//[^/':,]+:[\d]+" rule="YARNUI/yarn/outbound/node3"/>
-    </content>
-</filter>
-
-
 <rule dir="OUT" name="YARNUI/yarn/outbound/apps/app">
     <rewrite template="{$frontend[url]}/yarn/cluster/app"/>
 </rule>
@@ -278,10 +271,6 @@ https://knox_host:knox_port/gateway/yarnui/yarn/nodemanager/node/containerlogs/c
 <rule dir="OUT" name="YARNUI/yarn/outbound/node2">
     <match pattern="{scheme}://{host}:{port}"/>
     <rewrite template="{$frontend[url]}/yarn/nodemanager/node?{scheme}?{host}?{port}"/>
-</rule>
-<rule dir="OUT" name="YARNUI/yarn/outbound/node3">
-    <match pattern="//{host}:{port}"/>
-    <rewrite template="{$frontend[url]}/yarn/nodemanager/node?scheme=http?{host}?{port}"/>
 </rule>
 
 <rule dir="OUT" name="YARNUI/yarn/outbound/node/containerlogs2" pattern="*://*:*/node/containerlogs/{**}?{**}">
