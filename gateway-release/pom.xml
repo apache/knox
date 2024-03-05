@@ -360,6 +360,10 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-provider-security-authz-path-acls</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-provider-security-authz-composite</artifactId>
         </dependency>
         <dependency>
