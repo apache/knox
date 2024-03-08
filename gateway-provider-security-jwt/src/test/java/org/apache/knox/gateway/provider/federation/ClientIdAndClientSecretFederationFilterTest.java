@@ -18,6 +18,7 @@ package org.apache.knox.gateway.provider.federation;
 
 
 import org.easymock.EasyMock;
+import org.junit.Test;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -32,6 +33,7 @@ public class ClientIdAndClientSecretFederationFilterTest extends TokenIDAsHTTPBa
     }
 
     @Override
+    @Test
     public void testInvalidUsername() throws Exception {
         // there is no way to specify an invalid username for
         // client credentials flow or at least no meaningful way
@@ -41,6 +43,7 @@ public class ClientIdAndClientSecretFederationFilterTest extends TokenIDAsHTTPBa
     }
 
     @Override
+    @Test
     public void testInvalidJWTForPasscode() throws Exception {
         // there is no way to specify an invalid username for
         // client credentials flow or at least no meaningful way
