@@ -96,6 +96,8 @@ public abstract class AbstractJWTFilter implements Filter {
    */
   public static final String JWT_EXPECTED_SIGALG = "jwt.expected.sigalg";
   public static final String JWT_DEFAULT_SIGALG = "RS256";
+  public static final String TYPE = "type";
+  public static final String CLIENT_ID = "CLIENT_ID";
 
   static JWTMessages log = MessagesFactory.get( JWTMessages.class );
 
@@ -300,8 +302,23 @@ public abstract class AbstractJWTFilter implements Filter {
 
   public Subject createSubjectFromTokenIdentifier(final String tokenId) throws UnknownTokenException {
     TokenMetadata metadata = tokenStateService.getTokenMetadata(tokenId);
+    String username = null;
     if (metadata != null) {
-      return createSubjectFromTokenData(metadata.getUserName(), null);
+      String type =  metadata.getMetadata(TYPE);
+      // using tokenID and passcode as CLIENT_ID and CLIENT_SECRET will
+      // result in a metadata item called "type". If the valid is set
+      // to CLIENT_ID then it will be assumed to be a CLIENT_ID and we
+      // will use the token id as the username. Since we don't know the
+      // token id until it is created, the username is always the same
+      // in the record. Using the token id makes it a unique username for
+      // audit and the like.
+      if (CLIENT_ID.equalsIgnoreCase(type)) {
+        username = tokenId;
+      }
+      else {
+        username = metadata.getUserName();
+      }
+      return createSubjectFromTokenData(username, null);
     }
     return null;
   }
