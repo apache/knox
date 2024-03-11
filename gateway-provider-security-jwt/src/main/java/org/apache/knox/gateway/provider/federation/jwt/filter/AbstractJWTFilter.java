@@ -306,7 +306,7 @@ public abstract class AbstractJWTFilter implements Filter {
     if (metadata != null) {
       String type =  metadata.getMetadata(TYPE);
       // using tokenID and passcode as CLIENT_ID and CLIENT_SECRET will
-      // result in a metadata item called "type". If the valid is set
+      // result in a metadata item called "type". If the value is set
       // to CLIENT_ID then it will be assumed to be a CLIENT_ID and we
       // will use the token id as the username. Since we don't know the
       // token id until it is created, the username is always the same

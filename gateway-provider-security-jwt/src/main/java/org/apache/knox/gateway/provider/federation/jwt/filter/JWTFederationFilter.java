@@ -241,38 +241,43 @@ public class JWTFederationFilter extends AbstractJWTFilter {
           }
       }
 
-      /*
-      POST /{tenant}/oauth2/v2.0/token HTTP/1.1
-      Host: login.microsoftonline.com:443
-      Content-Type: application/x-www-form-urlencoded
+      parsed = parseFromClientCredentialsFlow(request);
 
-      client_id=535fb089-9ff3-47b6-9bfb-4f1264799865
-      &scope=https%3A%2F%2Fgraph.microsoft.com%2F.default
-      &client_secret=sampleCredentials
-      &grant_type=client_credentials
-       */
-
-      // Let's check whether this is a client credentials oauth request or whether
-      // the token has been configured for another usecase specific header
       if (parsed == null) {
-          String grantType = request.getParameter(GRANT_TYPE);
-          if (CLIENT_CREDENTIALS.equals(grantType)) {
-            // this is indeed a client credentials flow client_id and
-            // client_secret are expected now the client_id will be in
-            // the token as the token_id so we will get that later
-            token = request.getParameter(CLIENT_SECRET);
-            parsed = Pair.of(TokenType.Passcode, token);
-          }
-          else {
-            token = request.getParameter(this.paramName);
-            if (token != null) {
-              parsed = Pair.of(TokenType.JWT, token);
-            }
-          }
+        token = request.getParameter(this.paramName);
+        if (token != null) {
+          parsed = Pair.of(TokenType.JWT, token);
+        }
       }
 
       return parsed;
   }
+
+    private Pair<TokenType, String> parseFromClientCredentialsFlow(ServletRequest request) {
+      Pair<TokenType, String> parsed = null;
+      String token = null;
+
+      /*
+        POST /{tenant}/oauth2/v2.0/token HTTP/1.1
+        Host: login.microsoftonline.com:443
+        Content-Type: application/x-www-form-urlencoded
+
+        client_id=535fb089-9ff3-47b6-9bfb-4f1264799865
+        &scope=https%3A%2F%2Fgraph.microsoft.com%2F.default
+        &client_secret=sampleCredentials
+        &grant_type=client_credentials
+       */
+
+      String grantType = request.getParameter(GRANT_TYPE);
+      if (CLIENT_CREDENTIALS.equals(grantType)) {
+        // this is indeed a client credentials flow client_id and
+        // client_secret are expected now the client_id will be in
+        // the token as the token_id so we will get that later
+        token = request.getParameter(CLIENT_SECRET);
+        parsed = Pair.of(TokenType.Passcode, token);
+      }
+      return parsed;
+    }
 
     private Pair<TokenType, String> parseFromHTTPBasicCredentials(final String header) {
       Pair<TokenType, String> parsed = null;
