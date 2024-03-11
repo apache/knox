@@ -241,7 +241,9 @@ public class JWTFederationFilter extends AbstractJWTFilter {
           }
       }
 
-      parsed = parseFromClientCredentialsFlow(request);
+      if (parsed == null) {
+        parsed = parseFromClientCredentialsFlow(request);
+      }
 
       if (parsed == null) {
         token = request.getParameter(this.paramName);
