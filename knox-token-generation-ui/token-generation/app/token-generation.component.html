@@ -29,7 +29,7 @@
             <label *ngIf="comment.invalid" style="color: red;"><i class="icon-warning"></i>Invalid comment!</label>
 
             <label><i class="icon-info"></i> Configured maximum lifetime: </label>
-            <label>{{tssStatus.maximumLifetimeText}}</label>
+            <label>{{tssStatus.maximumLifetimeText}} <i class="icon-exclamation" *ngIf="'Unlimited lifetime' === tssStatus.maximumLifetimeText"></i></label>
             <div *ngIf="tssStatus.lifespanInputEnabled">
                 <label><i class="icon-time"></i> Lifetime (days, hours, mins):</label>
                 <table>

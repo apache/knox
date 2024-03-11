@@ -53,7 +53,8 @@ export class TokenGenService {
                 return {
                     tokenManagementEnabled: responseData.tokenManagementEnabled === 'true',
                     maximumLifetimeText: responseData.maximumLifetimeText,
-                    maximumLifetimeSeconds: responseData.maximumLifetimeSeconds,
+                    // the '+' character at the beginning converts the incoming string to a number
+                    maximumLifetimeSeconds: +responseData.maximumLifetimeSeconds,
                     lifespanInputEnabled: responseData.lifespanInputEnabled === 'true',
                     impersonationEnabled: responseData.impersonationEnabled === 'true',
                     configuredTssBackend: responseData.configuredTssBackend,
