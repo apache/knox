@@ -392,9 +392,10 @@ public class DefaultTokenStateService implements TokenStateService {
    * @return true, if the associated token state can be evicted; Otherwise, false.
    */
   protected boolean needsEviction(final String tokenId) throws UnknownTokenException {
+    final long tokenExpiration = getTokenExpiration(tokenId, false);
     // If the expiration time(+ grace period) has already passed, it should be considered expired
-    long expirationWithGrace = getTokenExpiration(tokenId, false) + TimeUnit.SECONDS.toMillis(tokenEvictionGracePeriod);
-    return (expirationWithGrace <= System.currentTimeMillis());
+    long expirationWithGrace = tokenExpiration + TimeUnit.SECONDS.toMillis(tokenEvictionGracePeriod);
+    return tokenExpiration > 0 && (expirationWithGrace <= System.currentTimeMillis());
   }
 
   /**

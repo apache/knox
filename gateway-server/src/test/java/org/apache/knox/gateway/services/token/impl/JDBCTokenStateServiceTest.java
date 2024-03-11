@@ -260,9 +260,13 @@ public class JDBCTokenStateServiceTest {
       final String tokenId = UUID.randomUUID().toString();
       jdbcTokenStateService.addToken(tokenId, 1, 1, 1);
     }
-    assertEquals(tokenCount, getLongTokenAttributeFromDatabase(null, GET_TOKENS_COUNT_SQL));
+
+    //add another token that never expires
+    jdbcTokenStateService.addToken(UUID.randomUUID().toString(), 1, -1, 1);
+
+    assertEquals(tokenCount + 1, getLongTokenAttributeFromDatabase(null, GET_TOKENS_COUNT_SQL));
     jdbcTokenStateService.evictExpiredTokens();
-    assertEquals(0, getLongTokenAttributeFromDatabase(null, GET_TOKENS_COUNT_SQL));
+    assertEquals(1, getLongTokenAttributeFromDatabase(null, GET_TOKENS_COUNT_SQL));  //the one that never expires should remain
   }
 
   private long getLongTokenAttributeFromDatabase(String tokenId, String sql) throws SQLException {

@@ -60,7 +60,7 @@ public class KnoxToken implements Comparable<KnoxToken>{
   }
 
   public String getExpiration() {
-    return KNOX_TOKEN_TS_FORMAT.get().format(new Date(expiration));
+    return expiration < 0 ? "Never" : KNOX_TOKEN_TS_FORMAT.get().format(new Date(expiration));
   }
 
   public long getExpirationLong() {
