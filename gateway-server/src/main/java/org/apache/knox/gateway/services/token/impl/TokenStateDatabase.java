@@ -43,8 +43,8 @@ public class TokenStateDatabase {
   static final String TOKEN_METADATA_TABLE_NAME = "KNOX_TOKEN_METADATA";
   private static final String ADD_TOKEN_SQL = "INSERT INTO " + TOKENS_TABLE_NAME + "(token_id, issue_time, expiration, max_lifetime) VALUES(?, ?, ?, ?)";
   private static final String REMOVE_TOKEN_SQL = "DELETE FROM " + TOKENS_TABLE_NAME + " WHERE token_id = ?";
-  private static final String GET_EXPIRED_TOKENS_SQL = "SELECT token_id FROM " + TOKENS_TABLE_NAME + " WHERE expiration < ?";
-  private static final String REMOVE_EXPIRED_TOKENS_SQL = "DELETE FROM " + TOKENS_TABLE_NAME + " WHERE expiration < ?";
+  private static final String GET_EXPIRED_TOKENS_SQL = "SELECT token_id FROM " + TOKENS_TABLE_NAME + " WHERE expiration < ? AND expiration > 0";
+  private static final String REMOVE_EXPIRED_TOKENS_SQL = "DELETE FROM " + TOKENS_TABLE_NAME + " WHERE expiration < ? AND expiration > 0";
   static final String GET_TOKEN_ISSUE_TIME_SQL = "SELECT issue_time FROM " + TOKENS_TABLE_NAME + " WHERE token_id = ?";
   static final String GET_TOKEN_EXPIRATION_SQL = "SELECT expiration FROM " + TOKENS_TABLE_NAME + " WHERE token_id = ?";
   private static final String UPDATE_TOKEN_EXPIRATION_SQL = "UPDATE " + TOKENS_TABLE_NAME + " SET expiration = ? WHERE token_id = ?";

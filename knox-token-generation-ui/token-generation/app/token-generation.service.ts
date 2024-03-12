@@ -114,7 +114,7 @@ export class TokenGenService {
                 accessToken: tokenData.access_token,
                 user: jwtJson.sub,
                 accessPasscode: tokenData.passcode,
-                expiry: new Date(tokenData.expires_in).toLocaleString(),
+                expiry: tokenData.expires_in < 0 ? 'Never expires' : new Date(tokenData.expires_in).toLocaleString(),
                 homepageURL: this.baseURL + tokenData.homepage_url,
                 targetURL: window.location.protocol + '//' + window.location.host + this.baseURL + tokenData.target_url
             };
