@@ -17,22 +17,6 @@
  */
 package org.apache.knox.gateway.filter;
 
-import java.io.IOException;
-import java.security.Principal;
-import java.security.PrivilegedExceptionAction;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.knox.gateway.ShiroMessages;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
@@ -47,6 +31,21 @@ import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.security.Principal;
+import java.security.PrivilegedExceptionAction;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.Callable;
 
 public class ShiroSubjectIdentityAdapter implements Filter {
   private static final ShiroMessages LOG = MessagesFactory.get(ShiroMessages.class);
@@ -106,15 +105,16 @@ public class ShiroSubjectIdentityAdapter implements Filter {
        * shiro.
        */
       if (shiroSubject == null || shiroSubject.getPrincipal() == null) {
-        LOG.unauthenticatedPathBypass(((HttpServletRequest) request).getRequestURI());
+        LOG.unauthenticatedPathBypass(
+            ((HttpServletRequest) request).getRequestURI());
         final String principal = "anonymous";
         javax.security.auth.Subject subject = new javax.security.auth.Subject();
         subject.getPrincipals().add(new PrimaryPrincipal(principal));
         AuditContext context = auditService.getContext();
-        context.setUsername( principal );
+        context.setUsername(principal);
         auditService.attachContext(context);
-        javax.security.auth.Subject.doAs( subject, action );
-    } else {
+        javax.security.auth.Subject.doAs(subject, action);
+      } else {
 
         final String principal = shiroSubject.getPrincipal().toString();
         Set<Principal> principals = new HashSet<>();
@@ -123,14 +123,17 @@ public class ShiroSubjectIdentityAdapter implements Filter {
         AuditContext context = auditService.getContext();
         context.setUsername(principal);
         auditService.attachContext(context);
-        String sourceUri = (String) request.getAttribute(AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME);
+        String sourceUri = (String) request.getAttribute(
+            AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME);
         auditor.audit(Action.AUTHENTICATION, sourceUri, ResourceType.URI,
             ActionOutcome.SUCCESS);
 
         Set<String> userGroups;
         // map ldap groups saved in session to Java Subject GroupPrincipal(s)
-        if (SecurityUtils.getSubject().getSession().getAttribute(SUBJECT_USER_GROUPS) != null) {
-          userGroups = (Set<String>) SecurityUtils.getSubject().getSession().getAttribute(SUBJECT_USER_GROUPS);
+        if (SecurityUtils.getSubject().getSession()
+            .getAttribute(SUBJECT_USER_GROUPS) != null) {
+          userGroups = (Set<String>) SecurityUtils.getSubject().getSession()
+              .getAttribute(SUBJECT_USER_GROUPS);
         } else { // KnoxLdapRealm case
           if (shiroSubject.getPrincipal() instanceof String) {
             userGroups = new HashSet<>(shiroSubject.getPrincipals().asSet());
