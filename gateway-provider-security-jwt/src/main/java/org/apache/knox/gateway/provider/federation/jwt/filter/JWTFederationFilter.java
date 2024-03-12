@@ -58,6 +58,9 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   private static final JWTMessages LOGGER = MessagesFactory.get( JWTMessages.class );
   /* A semicolon separated list of paths that need to bypass authentication */
   public static final String JWT_UNAUTHENTICATED_PATHS_PARAM = "jwt.unauthenticated.path.list";
+  public static final String GRANT_TYPE = "grant_type";
+  public static final String CLIENT_CREDENTIALS = "client_credentials";
+  public static final String CLIENT_SECRET = "client_secret";
 
   public enum TokenType {
     JWT, Passcode;
@@ -239,14 +242,44 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       }
 
       if (parsed == null) {
-          token = request.getParameter(this.paramName);
-          if (token != null) {
-            parsed = Pair.of(TokenType.JWT, token);
-          }
+        parsed = parseFromClientCredentialsFlow(request);
+      }
+
+      if (parsed == null) {
+        token = request.getParameter(this.paramName);
+        if (token != null) {
+          parsed = Pair.of(TokenType.JWT, token);
+        }
       }
 
       return parsed;
   }
+
+    private Pair<TokenType, String> parseFromClientCredentialsFlow(ServletRequest request) {
+      Pair<TokenType, String> parsed = null;
+      String token = null;
+
+      /*
+        POST /{tenant}/oauth2/v2.0/token HTTP/1.1
+        Host: login.microsoftonline.com:443
+        Content-Type: application/x-www-form-urlencoded
+
+        client_id=535fb089-9ff3-47b6-9bfb-4f1264799865
+        &scope=https%3A%2F%2Fgraph.microsoft.com%2F.default
+        &client_secret=sampleCredentials
+        &grant_type=client_credentials
+       */
+
+      String grantType = request.getParameter(GRANT_TYPE);
+      if (CLIENT_CREDENTIALS.equals(grantType)) {
+        // this is indeed a client credentials flow client_id and
+        // client_secret are expected now the client_id will be in
+        // the token as the token_id so we will get that later
+        token = request.getParameter(CLIENT_SECRET);
+        parsed = Pair.of(TokenType.Passcode, token);
+      }
+      return parsed;
+    }
 
     private Pair<TokenType, String> parseFromHTTPBasicCredentials(final String header) {
       Pair<TokenType, String> parsed = null;
