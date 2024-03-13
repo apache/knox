@@ -25,4 +25,7 @@ import org.apache.knox.gateway.i18n.messages.Messages;
 public interface ShiroMessages {
   @Message(level = MessageLevel.INFO, text = "Request {0} matches unauthenticated path configured in topology, letting it through" )
   void unauthenticatedPathBypass(String uri);
+
+  @Message( level = MessageLevel.WARN, text = "Invalid URL pattern for rule: {0}" )
+  void invalidURLPattern(String rule);
 }

@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.filter;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.ShiroMessages;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
@@ -29,6 +30,9 @@ import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.util.urltemplate.Matcher;
+import org.apache.knox.gateway.util.urltemplate.Parser;
+import org.apache.knox.gateway.util.urltemplate.Template;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 
@@ -40,10 +44,16 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.security.Principal;
 import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -54,9 +64,39 @@ public class ShiroSubjectIdentityAdapter implements Filter {
   private static Auditor auditor = auditService.getAuditor(
       AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
       AuditConstants.KNOX_COMPONENT_NAME );
+  private static final String SHIRO_URL_CONFIG = "urls";
+  /* Map of shiro url configs */
+  private static Map<String,String> urls = new HashMap<>();
+
+  /* List of URLs with anon authentication */
+  private static List<Matcher> anonUrls = new ArrayList<>();
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
+    /* Create a shiro urls config map  */
+    final Enumeration<String> params = filterConfig.getInitParameterNames();
+    while (params.hasMoreElements()) {
+      String param = params.nextElement();
+      if (StringUtils.startsWithIgnoreCase(param, SHIRO_URL_CONFIG)) {
+        String value = filterConfig.getInitParameter(param);
+        final String pathParam = param.substring(param.indexOf('.') + 1);
+        urls.put(pathParam, value);
+        if("anon".equalsIgnoreCase(value)) {
+          final Template urlPatternTemplate;
+          final Matcher urlMatcher = new Matcher();
+          try {
+            urlPatternTemplate = Parser.parseTemplate(pathParam);
+            urlMatcher.add(urlPatternTemplate, pathParam);
+            anonUrls.add(urlMatcher);
+          } catch (URISyntaxException e) {
+            LOG.invalidURLPattern(param);
+            throw new ServletException(e);
+          }
+
+        }
+
+      }
+    }
   }
 
   @Override
@@ -105,6 +145,11 @@ public class ShiroSubjectIdentityAdapter implements Filter {
        * shiro.
        */
       if (shiroSubject == null || shiroSubject.getPrincipal() == null) {
+
+        if(!isRequestPathInShiroConfig(((HttpServletRequest)request))) {
+          throw new IllegalStateException("Unable to determine authenticated user from Shiro, please check that your Knox Shiro configuration is correct");
+        }
+
         LOG.unauthenticatedPathBypass(
             ((HttpServletRequest) request).getRequestURI());
         final String principal = "anonymous";
@@ -171,5 +216,33 @@ public class ShiroSubjectIdentityAdapter implements Filter {
 
       return null;
     }
+  }
+
+  /**
+   * A helper function that checks whether the request path is defined in shiro
+   * config, specifically under the urls section with anon authentication. e.g.
+   * <param>
+   * <name>urls./knoxtoken/api/v1/jwks.json</name>
+   * <value>anon</value>
+   * </param>
+   *
+   * @param request
+   * @return true if request has anon auth.
+   * @throws URISyntaxException
+   */
+  private static boolean isRequestPathInShiroConfig(
+      final HttpServletRequest request) throws URISyntaxException {
+    boolean isPathInConfig = false;
+    final String requestContextPath = StringUtils.startsWith(
+        request.getPathInfo(), "/") ?
+        request.getPathInfo() :
+        "/" + request.getPathInfo();
+    final Template requestUrlTemplate = Parser.parseLiteral(requestContextPath);
+    for (final Matcher m : anonUrls) {
+      if (m.match(requestUrlTemplate) != null) {
+        isPathInConfig = true;
+      }
+    }
+    return isPathInConfig;
   }
 }

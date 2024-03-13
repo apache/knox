@@ -48,12 +48,16 @@ public class GatewayShiroAuthTest {
     private static final Logger LOG = LoggerFactory.getLogger(GatewayShiroAuthTest.class);
     private static final String SHIRO_URL_PATTERN_VALID = "/**";
     private static final String SHIRO_URL_PATTERN_INVALID = "/invalid/**";
+    private static final String SHIRO_URL_PATTERN_JWKS = "/knoxtoken/api/v1/jwks.json";
     private static final String USERNAME = "guest";
     private static final String PASSWORD = "guest-password";
     private static final String TOPOLOGY_VALID = "shiro-test-cluster";
     private static final String TOPOLOGY_IN_VALID_URL = "shiro-test-cluster-invalid";
     private static final String TOPOLOGY_BLOCK_UNSAFE_CHARS = "shiro-test-cluster-unsafe";
+    private static final String TOPOLOGY_JWKS_URL = "shiro-test-jwks";
+    private static final String TOPOLOGY_INVALID_JWKS_URL = "shiro-test-invalid-jwks";
     private static final String SERVICE_RESOURCE_NAME = "/test-service-path/test-service-resource";
+    private static final String SERVICE_TOKEN_STATE_NAME = "/knoxtoken/api/v1/jwks.json";
     public static GatewayConfig config;
     public static GatewayServer gateway;
     public static String gatewayUrl;
@@ -114,6 +118,18 @@ public class GatewayShiroAuthTest {
         File unsafe_descriptor = new File(topoDir, TOPOLOGY_BLOCK_UNSAFE_CHARS+".xml");
         try (OutputStream stream = Files.newOutputStream(unsafe_descriptor.toPath())) {
             createTopology(SHIRO_URL_PATTERN_VALID, true ).toStream(stream);
+        }
+
+        /* create a topology with valid shiro url */
+        File jwks_descriptor = new File(topoDir, TOPOLOGY_JWKS_URL+".xml");
+        try (OutputStream stream = Files.newOutputStream(jwks_descriptor.toPath())) {
+            createJWKSTestTopology(SHIRO_URL_PATTERN_JWKS).toStream(stream);
+        }
+
+        /* create a topology with valid shiro url */
+        File jwks_invalid_descriptor = new File(topoDir, TOPOLOGY_INVALID_JWKS_URL+".xml");
+        try (OutputStream stream = Files.newOutputStream(jwks_invalid_descriptor.toPath())) {
+            createJWKSTestTopology("/some-random-path/*").toStream(stream);
         }
 
         DefaultGatewayServices srvcs = new DefaultGatewayServices();
@@ -215,6 +231,40 @@ public class GatewayShiroAuthTest {
         }
     }
 
+    private static XMLTag createJWKSTestTopology(final String pattern) {
+            return XMLDoc.newDocument(true)
+                .addRoot("topology")
+                .addTag("gateway")
+                .addTag("provider")
+                .addTag("role").addText("authentication")
+                .addTag("name").addText("ShiroProvider")
+                .addTag("enabled").addText("true")
+                .addTag("param")
+                .addTag("name").addText("main.ldapRealm")
+                .addTag("value").addText("org.apache.knox.gateway.shirorealm.KnoxLdapRealm").gotoParent()
+                .addTag("param")
+                .addTag("name").addText("main.ldapRealm.userDnTemplate")
+                .addTag("value").addText("uid={0},ou=people,dc=hadoop,dc=apache,dc=org").gotoParent()
+                .addTag("param")
+                .addTag("name").addText("main.ldapRealm.contextFactory.url")
+                .addTag("value").addText(driver.getLdapUrl()).gotoParent()
+                .addTag("param")
+                .addTag("name").addText("main.ldapRealm.contextFactory.authenticationMechanism")
+                .addTag("value").addText("simple").gotoParent()
+                .addTag("param")
+                .addTag("name").addText("urls." + pattern)
+                .addTag("value").addText("anon").gotoParent().gotoParent()
+                .addTag("provider")
+                .addTag("role").addText("identity-assertion")
+                .addTag("enabled").addText("true")
+                .addTag("name").addText("Default").gotoParent()
+                .addTag("provider")
+                .gotoRoot()
+                .addTag("service")
+                .addTag("role").addText("KNOXTOKEN")
+                .gotoRoot();
+    }
+
     /**
      * Make sure semicolons are allowed in the URL out-of-the-box
      */
@@ -264,6 +314,30 @@ public class GatewayShiroAuthTest {
                 // make sure valid use of semicolon
                 .body(containsString(expectedResponse))
                 .when().get(serviceUrl);
+    }
+
+    /**
+     * Test a case where configured shiro url is invalid and there is auth failure.
+     */
+    @Test
+    public void testJWKSEndpointShiro() {
+        final String serviceUrl = gatewayUrl + '/' + TOPOLOGY_JWKS_URL + SERVICE_TOKEN_STATE_NAME;
+        given()
+            .auth().none()
+            .then()
+            .statusCode(HttpStatus.SC_OK)
+            .contentType("")
+            .body(containsString("{\"keys\":[{\"kty\":\"RSA\""))
+            .when().get(serviceUrl);
+    }
+
+    /**
+     * Test a case where configured shiro url is invalid and there is auth failure.
+     */
+    @Test
+    public void testUnConfiguredJWKSEndpointShiro() {
+        final String serviceUrl = gatewayUrl + '/' + TOPOLOGY_INVALID_JWKS_URL + SERVICE_TOKEN_STATE_NAME;
+        testShiroAuthFailure(HttpStatus.SC_INTERNAL_SERVER_ERROR, serviceUrl, "Unable to determine authenticated user from Shiro, please check that your Knox Shiro configuration is correct");
     }
 
 }
