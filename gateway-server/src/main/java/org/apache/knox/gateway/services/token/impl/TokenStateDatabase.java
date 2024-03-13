@@ -78,7 +78,7 @@ public class TokenStateDatabase {
       addTokenStatement.setString(1, tokenId);
       addTokenStatement.setLong(2, issueTime);
       addTokenStatement.setLong(3, expiration);
-      addTokenStatement.setLong(4, issueTime + maxLifetimeDuration);
+      addTokenStatement.setLong(4, maxLifetimeDuration < 0 ? maxLifetimeDuration : issueTime + maxLifetimeDuration);
       return addTokenStatement.executeUpdate() == 1;
     }
   }

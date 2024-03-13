@@ -196,10 +196,10 @@ public class JDBCTokenStateService extends AbstractPersistentTokenStateService i
 
   @Override
   protected long getMaxLifetime(String tokenId) {
-    long maxLifetime = super.getMaxLifetime(tokenId);
+    long maxLifetime = super.getMaxLifetime(tokenId);  // returns 0, if not found in memory
 
     // If there is no result from the in-memory collection, proceed to check the Database
-    if (maxLifetime < 1L) {
+    if (maxLifetime == 0L) {
       try {
         maxLifetime = tokenDatabase.getMaxLifetime(tokenId);
         log.fetchedMaxLifetimeFromDatabase(Tokens.getTokenIDDisplayText(tokenId), maxLifetime);

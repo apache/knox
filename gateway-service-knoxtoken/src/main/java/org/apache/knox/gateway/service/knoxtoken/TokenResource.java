@@ -97,14 +97,12 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 
 /**
- * @deprecated The public REST API endpoints in this class (bound to
- *             '/knoxtoken/v1/api/token/...') are no longer acceptable for
- *             token-related operations. Please use the
- *             '/knoxtoken/v2/api/token/...' path instead.
+ * Some of the public REST API endpoints in this class (bound to
+ * '/knoxtoken/v1/api/token/...') are no longer acceptable for token-related
+ * operations. Please use the '/knoxtoken/v2/api/token/...' path instead.
  *
  * @see TokenResourceV2
  */
-@Deprecated
 @Singleton
 @Path(TokenResource.RESOURCE_PATH)
 public class TokenResource {
@@ -206,7 +204,8 @@ public class TokenResource {
     UNKNOWN_TOKEN(50),
     ALREADY_DISABLED(60),
     ALREADY_ENABLED(70),
-    DISABLED_KNOXSSO_COOKIE(80);
+    DISABLED_KNOXSSO_COOKIE(80),
+    TOKEN_EXPIRED(90);
 
     private final int code;
 
@@ -549,13 +548,14 @@ public class TokenResource {
       if (allowedRenewers.contains(renewer)) {
         try {
           JWTToken jwt = new JWTToken(token);
-          // If renewal fails, it should be an exception
-          expiration = tokenStateService.renewToken(jwt,
-                                                    renewInterval.orElse(tokenStateService.getDefaultRenewInterval()));
-          log.renewedToken(getTopologyName(),
-                           Tokens.getTokenDisplayText(token),
-                           Tokens.getTokenIDDisplayText(TokenUtils.getTokenId(jwt)),
-                           renewer);
+          if (tokenStateService.isExpired(jwt)) {
+            errorCode = ErrorCode.TOKEN_EXPIRED;
+            error = "Expired tokens must not be renewed.";
+          } else {
+            // If renewal fails, it should be an exception
+            expiration = tokenStateService.renewToken(jwt, renewInterval.orElse(tokenStateService.getDefaultRenewInterval()));
+            log.renewedToken(getTopologyName(), Tokens.getTokenDisplayText(token), Tokens.getTokenIDDisplayText(TokenUtils.getTokenId(jwt)), renewer);
+          }
         } catch (ParseException e) {
           log.invalidToken(getTopologyName(), Tokens.getTokenDisplayText(token), e);
           errorCode = ErrorCode.INVALID_TOKEN;
