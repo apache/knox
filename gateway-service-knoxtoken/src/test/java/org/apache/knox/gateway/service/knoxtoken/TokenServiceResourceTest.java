@@ -1130,7 +1130,7 @@ public class TokenServiceResourceTest {
       final String tokenId = getTagValue(tokenResponse.getEntity().toString(), "token_id");
       assertNotNull(tokenId);
       final TokenMetadata tokenMetadata = new TokenMetadata(USER_NAME);
-      tokenMetadata.setKnoxSsoCookie(true);
+      tokenMetadata.markKnoxSsoCookie();
       tss.addMetadata(tokenId, tokenMetadata);
     }
 
