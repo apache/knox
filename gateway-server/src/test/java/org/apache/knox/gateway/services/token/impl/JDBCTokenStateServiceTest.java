@@ -112,6 +112,15 @@ public class JDBCTokenStateServiceTest {
   }
 
   @Test
+  public void testAddTokenThatCanAlwaysBeRenewed() throws Exception {
+    final String tokenId = UUID.randomUUID().toString();
+    jdbcTokenStateService.addToken(tokenId, System.currentTimeMillis(), System.currentTimeMillis() + 30, -1);
+
+    assertEquals(-1L, jdbcTokenStateService.getMaxLifetime(tokenId));
+    assertEquals(-1L, getLongTokenAttributeFromDatabase(tokenId, TokenStateDatabase.GET_MAX_LIFETIME_SQL));
+  }
+
+  @Test
   public void testAddTokensForMultipleUsers() throws Exception {
     String user1 = "user1";
     String user2 = "user2";

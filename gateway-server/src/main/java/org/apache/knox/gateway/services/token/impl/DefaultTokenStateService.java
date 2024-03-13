@@ -270,12 +270,13 @@ public class DefaultTokenStateService implements TokenStateService {
     return getTokenExpiration(token) <= System.currentTimeMillis();
   }
 
-  protected void setMaxLifetime(final String token, long parsedMaxLifeTime) {
-    maxTokenLifetimes.put(token, parsedMaxLifeTime);
+  protected void setMaxLifetime(final String token, long maxLifeTime) {
+    maxTokenLifetimes.put(token, maxLifeTime);
   }
 
   protected void setMaxLifetime(final String token, long issueTime, long maxLifetimeDuration) {
-    maxTokenLifetimes.put(token, issueTime + maxLifetimeDuration);
+    final long maxLifetime = maxLifetimeDuration < 0 ? maxLifetimeDuration : issueTime + maxLifetimeDuration;
+    setMaxLifetime(token, maxLifetime);
   }
 
   /**
@@ -313,8 +314,9 @@ public class DefaultTokenStateService implements TokenStateService {
   }
 
   protected boolean hasRemainingRenewals(final String tokenId, long renewInterval) {
+    final long maximumTokenLifetime = getMaxLifetime(tokenId);
     // If the current time + buffer + the renewal interval is less than the max lifetime for the token?
-    return ((System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(30) + renewInterval) < getMaxLifetime(tokenId));
+    return maximumTokenLifetime < 0 ? true : ((System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(30) + renewInterval) < maximumTokenLifetime);
   }
 
   protected long getMaxLifetime(final String tokenId) {

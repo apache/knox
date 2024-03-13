@@ -68,7 +68,7 @@ public class KnoxToken implements Comparable<KnoxToken>{
   }
 
   public String getMaxLifetime() {
-    return KNOX_TOKEN_TS_FORMAT.get().format(new Date(maxLifetime));
+    return maxLifetime < 0 ? "Unbounded" : KNOX_TOKEN_TS_FORMAT.get().format(new Date(maxLifetime));
   }
 
   public long getMaxLifetimeLong() {

@@ -89,6 +89,7 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.KnoxToken;
@@ -784,6 +785,24 @@ public class TokenServiceResourceTest {
     assertEquals(10L, tss.getMaxLifetime(token) - tss.getIssueTime(token));
   }
 
+  @Test
+  public void testTokenRenewalShouldFailOnExpiredTokens() throws Exception {
+    final long tokenTTL = 1;
+    final String renewer = "yarn";
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put(TokenStateService.CONFIG_SERVER_MANAGED, "true");
+    contextExpectations.put("knox.token.ttl", String.valueOf(tokenTTL));
+    contextExpectations.put("knox.token.renewer.whitelist", renewer);
+    Thread.sleep(tokenTTL + 10); // so that the token is expired
+    configureCommonExpectations(contextExpectations);
+    final TokenResource tokenResource = new TokenResource();
+    final String accessToken = getAccessToken(tokenResource);
+
+    final Response renewalResponse = requestTokenRenewal(tokenResource, accessToken, createTestSubject(renewer));
+    assertEquals(Response.Status.BAD_REQUEST, renewalResponse.getStatusInfo());
+    assertTrue(renewalResponse.getEntity().toString().contains("Expired tokens must not be renewed."));
+    assertTrue(renewalResponse.getEntity().toString().contains("\"code\": " + TokenResource.ErrorCode.TOKEN_EXPIRED.toInt()));
+  }
 
   @Test
   public void testTokenRevocation_ServerManagedStateNotConfigured() throws Exception {
@@ -1497,19 +1516,8 @@ public class TokenServiceResourceTest {
 
     configureCommonExpectations(contextExpectations, gatewayLevelConfig);
 
-    TokenResource tr = new TokenResource();
-    tr.request = request;
-    tr.context = context;
-    tr.init();
-
-    // Request a token
-    Response retResponse = tr.doGet();
-    assertEquals(200, retResponse.getStatus());
-
-    // Parse the response
-    String retString = retResponse.getEntity().toString();
-    String accessToken = getTagValue(retString, "access_token");
-    assertNotNull(accessToken);
+    final TokenResource tr = new TokenResource();
+    final String accessToken = getAccessToken(tr);
 
     Response response;
     switch (operation) {
@@ -1524,6 +1532,22 @@ public class TokenServiceResourceTest {
     }
 
     return new AbstractMap.SimpleEntry<>(tss, response);
+  }
+
+  private String getAccessToken(TokenResource tokenResource) throws KeyLengthException, AliasServiceException, ServiceLifecycleException {
+    tokenResource.request = request;
+    tokenResource.context = context;
+    tokenResource.init();
+
+    // Request a token
+    final Response retResponse = tokenResource.doGet();
+    assertEquals(200, retResponse.getStatus());
+
+    // Parse the response
+    final String retString = retResponse.getEntity().toString();
+    final String accessToken = getTagValue(retString, "access_token");
+    assertNotNull(accessToken);
+    return accessToken;
   }
 
   private static Response requestTokenRenewal(final TokenResource tr, final String tokenData, final Subject caller) {
@@ -1681,6 +1705,10 @@ public class TokenServiceResourceTest {
 
     @Override
     public boolean isExpired(JWTToken token) {
+      try {
+        return getTokenExpiration(token) <= System.currentTimeMillis();
+      } catch (UnknownTokenException e) {
+      }
       return false;
     }
 
@@ -1719,7 +1747,7 @@ public class TokenServiceResourceTest {
 
     @Override
     public long getTokenExpiration(JWT token) throws UnknownTokenException {
-      return 0;
+      return getTokenExpiration(TokenUtils.getTokenId(token));
     }
 
     @Override
