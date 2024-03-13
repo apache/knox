@@ -422,10 +422,12 @@
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-discovery-ambari</artifactId>
         </dependency>
+<!--
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-discovery-cm</artifactId>
         </dependency>
+-->
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-adapter</artifactId>
