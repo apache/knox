@@ -32,6 +32,7 @@ import org.jboss.shrinkwrap.descriptor.api.webcommon30.SessionConfigType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ShiroDeploymentContributor extends ProviderDeploymentContributorBase {
 
@@ -43,7 +44,9 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
   private static final String SESSION_TIMEOUT = "sessionTimeout";
   private static final String REMEMBER_ME = "rememberme";
   private static final String SHRIO_CONFIG_FILE_NAME = "shiro.ini";
+  private static final String SHIRO_URL_CONFIG = "urls";
   private static final int DEFAULT_SESSION_TIMEOUT = 30; // 30min
+
 
   @Override
   public String getRole() {
@@ -132,6 +135,17 @@ public class ShiroDeploymentContributor extends ProviderDeploymentContributorBas
 
     resource.addFilter().name( getName() ).role(
         getRole() ).impl( SHIRO_FILTER_CLASSNAME ).params( params );
+
+    /* Collect all shiro `urls.` params and them as filter params to POST_FILTER_CLASSNAME  */
+    Map<String, String> shiroURLs = providerParams.entrySet().stream().filter(e -> e.getKey().startsWith(SHIRO_URL_CONFIG)).collect(
+        Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+   for(final Map.Entry<String, String> m: shiroURLs.entrySet()) {
+     params.add( resource.createFilterParam()
+         .name( m.getKey() )
+         .value( m.getValue() ) );
+   }
+
     resource.addFilter().name( "Post" + getName() ).role(
         getRole() ).impl( POST_FILTER_CLASSNAME ).params( params );
   }
