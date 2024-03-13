@@ -33,6 +33,18 @@
     <name>build-tools</name>
     <description>The Apache Knox Project Build Tools</description>
     <url>https://knox.apache.org/</url>
+<distributionManagement>
+    <repository>
+      <id>nexus-releases</id>
+      <name>Releases</name>
+     <url>https://repo1.acceldata.dev/repository/odp-release/</url>
+   </repository>
+   <snapshotRepository>
+     <id>nexus-snapshots</id>
+     <name>Snapshot</name>
+     <url>https://repo1.acceldata.dev/repository/odp-snapshot/</url>
+   </snapshotRepository>
+ </distributionManagement>
 
     <scm>
         <connection>scm:git:https://gitbox.apache.org/repos/asf/knox.git</connection>
